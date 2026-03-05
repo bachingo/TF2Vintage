@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2006, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -24,29 +24,29 @@ public:
 	C_ObjectDispenser();
 	~C_ObjectDispenser();
 
-	int GetUpgradeLevel(void) { return m_iUpgradeLevel; }
-
-	virtual void GetStatusText( wchar_t *pStatus, int iMaxStatusLen );
-
 	int GetMetalAmmoCount() { return m_iAmmoMetal; }
 
 	CUtlVector< CHandle<C_TFPlayer> > m_hHealingTargets;
 
 	virtual void OnDataChanged( DataUpdateType_t updateType );
+	virtual void ClientThink() OVERRIDE;
 
-	virtual void SetDormant( bool bDormant );
-
+	virtual void SetInvisibilityLevel( float flValue );
 	void UpdateEffects( void );
+	void StopEffects( bool bRemoveAll = false );
 
 	virtual void UpdateDamageEffects( BuildingDamageLevel_t damageLevel );
+
+	virtual int GetMaxMetal( void );
 
 	bool m_bUpdateHealingTargets;
 
 private:
 
-	int  m_iAmmoMetal;
-	bool m_bStealthed;
-	bool m_bStealthedLast;
+
+	int m_iState;
+	int m_iAmmoMetal;
+	int m_iMiniBombCounter;
 
 	bool m_bPlayingSound;
 
@@ -57,9 +57,6 @@ private:
 	};
 	CUtlVector<healingtargeteffects_t> m_hHealingTargetEffects;
 
-	CNewParticleEffect *m_pDamageEffects;
-
-private:
 	C_ObjectDispenser( const C_ObjectDispenser & ); // not defined, not accessible
 };
 
@@ -73,9 +70,11 @@ public:
 
 protected:
 	virtual void OnTickActive( C_BaseObject *pObj, C_TFPlayer *pLocalPlayer );
+	virtual bool IsVisible() OVERRIDE;
 
 private:
 	vgui::RotatingProgressBar *m_pAmmoProgress;
+	CHandle< C_ObjectDispenser > m_hDispenser;
 };
 
 class CDispenserControlPanel_Red : public CDispenserControlPanel
@@ -91,7 +90,7 @@ class CDispenserControlPanel_Green : public CDispenserControlPanel
 	DECLARE_CLASS( CDispenserControlPanel_Green, CDispenserControlPanel );
 
 public:
-	CDispenserControlPanel_Green( vgui::Panel *parent, const char *panelName) : CDispenserControlPanel(parent, panelName ) {}
+	CDispenserControlPanel_Green( vgui::Panel *parent, const char *panelName ) : CDispenserControlPanel( parent, panelName ) {}
 };
 
 class CDispenserControlPanel_Yellow : public CDispenserControlPanel
@@ -99,15 +98,13 @@ class CDispenserControlPanel_Yellow : public CDispenserControlPanel
 	DECLARE_CLASS( CDispenserControlPanel_Yellow, CDispenserControlPanel );
 
 public:
-	CDispenserControlPanel_Yellow( vgui::Panel *parent, const char *panelName) : CDispenserControlPanel(parent, panelName ) {}
+	CDispenserControlPanel_Yellow( vgui::Panel *parent, const char *panelName ) : CDispenserControlPanel( parent, panelName ) {}
 };
 
 class C_ObjectCartDispenser : public C_ObjectDispenser
 {
 	DECLARE_CLASS( C_ObjectCartDispenser, C_ObjectDispenser );
-
 public:
 	DECLARE_CLIENTCLASS();
 };
-
 #endif	//C_OBJ_DISPENSER_H

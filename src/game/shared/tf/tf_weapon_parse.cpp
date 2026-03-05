@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2003, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -8,8 +8,6 @@
 #include "tf_weapon_parse.h"
 #include "tf_shareddefs.h"
 #include "tf_playerclass_shared.h"
-#include "activitylist.h"
-#include "tf_gamerules.h"
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -63,6 +61,7 @@ CTFWeaponInfo::~CTFWeaponInfo()
 //-----------------------------------------------------------------------------
 void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 {
+	int i;
 
 	BaseClass::Parse( pKeyValuesData, szWeaponName );
 
@@ -74,7 +73,7 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flPunchAngle			= pKeyValuesData->GetFloat( "PunchAngle", 0.0f );
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeFireDelay		= pKeyValuesData->GetFloat( "TimeFireDelay", 0.0f );
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeIdle			= pKeyValuesData->GetFloat( "TimeIdle", 0.0f );
-	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeIdleEmpty		= pKeyValuesData->GetFloat( "TimeIdleEmpty", 0.0f );
+	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeIdleEmpty		= pKeyValuesData->GetFloat( "TimeIdleEmpy", 0.0f );
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeReloadStart	= pKeyValuesData->GetFloat( "TimeReloadStart", 0.0f );
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeReload			= pKeyValuesData->GetFloat( "TimeReload", 0.0f );
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_bDrawCrosshair		= pKeyValuesData->GetInt( "DrawCrosshair", 1 ) > 0;
@@ -84,14 +83,14 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_iProjectile = TF_PROJECTILE_NONE;
 	const char *pszProjectileType = pKeyValuesData->GetString( "ProjectileType", "projectile_none" );
 
-	for ( int i = 0; i < TF_NUM_PROJECTILES; i++ )
+	for ( i=0;i<TF_NUM_PROJECTILES;i++ )
 	{
 		if ( FStrEq( pszProjectileType, g_szProjectileNames[i] ) )
 		{
 			m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_iProjectile = i;
 			break;
 		}
-	}
+	}	 
 
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flProjectileSpeed	= pKeyValuesData->GetFloat( "ProjectileSpeed", 0.0f );
 
@@ -124,7 +123,7 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_WeaponData[TF_WEAPON_SECONDARY_MODE].m_iProjectile = m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_iProjectile;
 	pszProjectileType = pKeyValuesData->GetString( "Secondary_ProjectileType", "projectile_none" );
 
-	for ( int i = 0; i < TF_NUM_PROJECTILES; i++ )
+	for ( i=0;i<TF_NUM_PROJECTILES;i++ )
 	{
 		if ( FStrEq( pszProjectileType, g_szProjectileNames[i] ) )
 		{
@@ -133,29 +132,39 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 		}
 	}	
 
-	CUtlString szWeaponType = pKeyValuesData->GetString( "WeaponType" );
+	const char *pszWeaponType = pKeyValuesData->GetString( "WeaponType" );
 
-	int iType = -1;
-	if ( szWeaponType == "primary" )
-		iType = TF_WPN_TYPE_PRIMARY;
-	else if ( szWeaponType == "secondary" )
-		iType = TF_WPN_TYPE_SECONDARY;
-	else if ( szWeaponType == "melee" )
-		iType = TF_WPN_TYPE_MELEE;
-	else if ( szWeaponType == "grenade" )
-		iType = TF_WPN_TYPE_GRENADE;
-	else if ( szWeaponType == "building" )
-		iType = TF_WPN_TYPE_BUILDING;
-	else if ( szWeaponType == "pda" )
-		iType = TF_WPN_TYPE_PDA;
-	else if ( szWeaponType == "item1" )
-		iType = TF_WPN_TYPE_ITEM1;
-	else if ( szWeaponType == "item2" )
-		iType = TF_WPN_TYPE_ITEM2;
-
-	if ( iType >= 0 )
+	if ( !Q_strcmp( pszWeaponType, "primary" ) )
 	{
-		m_iWeaponType = iType;
+		m_iWeaponType = TF_WPN_TYPE_PRIMARY;
+	}
+	else if ( !Q_strcmp( pszWeaponType, "secondary" ) )
+	{
+		m_iWeaponType = TF_WPN_TYPE_SECONDARY;
+	}
+	else if ( !Q_strcmp( pszWeaponType, "melee" ) )
+	{
+		m_iWeaponType = TF_WPN_TYPE_MELEE;
+	}
+	else if ( !Q_strcmp( pszWeaponType, "grenade" ) )
+	{
+		m_iWeaponType = TF_WPN_TYPE_GRENADE;
+	}
+	else if ( !Q_strcmp( pszWeaponType, "building" ) )
+	{
+		m_iWeaponType = TF_WPN_TYPE_BUILDING;
+	}
+	else if ( !Q_strcmp( pszWeaponType, "pda" ) )
+	{
+		m_iWeaponType = TF_WPN_TYPE_PDA;
+	}
+	else if ( !Q_strcmp( pszWeaponType, "item1" ) )
+	{
+		m_iWeaponType = TF_WPN_TYPE_ITEM1;
+	}
+	else if ( !Q_strcmp( pszWeaponType, "item2" ) )
+	{
+		m_iWeaponType = TF_WPN_TYPE_ITEM2;
 	}
 
 	// Grenade data.
@@ -167,7 +176,6 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_bLowerWeapon			= ( pKeyValuesData->GetInt( "LowerMainWeapon", 0 ) != 0 );
 	m_bHasTeamSkins_Viewmodel	= ( pKeyValuesData->GetInt( "HasTeamSkins_Viewmodel", 0 ) != 0 );
 	m_bHasTeamSkins_Worldmodel	= ( pKeyValuesData->GetInt( "HasTeamSkins_Worldmodel", 0 ) != 0 );
-
 
 	// Model muzzleflash
 	const char *pszMuzzleFlashModel = pKeyValuesData->GetString( "MuzzleFlashModel", NULL );

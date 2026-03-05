@@ -15,7 +15,7 @@
 #include "engine/IEngineSound.h"
 #include "soundenvelope.h"
 
-#if defined( TF_DLL ) || defined ( TF_VINTAGE )
+#ifdef TF_DLL
 #include "tf_shareddefs.h"
 #include "tf_gamerules.h"
 #endif
@@ -85,7 +85,7 @@ CTeamControlPoint::CTeamControlPoint()
 	m_flUnlockTime = -1;
 	m_bBotsIgnore = false;
 
-#if defined ( TF_DLL ) || defined ( TF_VINTAGE )
+#ifdef  TF_DLL
 	UseClientSideAnimation();
 #endif
 }
@@ -102,7 +102,7 @@ void CTeamControlPoint::Spawn( void )
 		m_iDefaultOwner = TEAM_UNASSIGNED;
 	}
 
-#if defined ( TF_DLL ) || defined ( TF_VINTAGE )
+#ifdef TF_DLL
 	if ( m_iszCaptureStartSound == NULL_STRING )
 	{
 		m_iszCaptureStartSound = AllocPooledString( "Hologram.Start" );
@@ -241,11 +241,11 @@ void CTeamControlPoint::Precache( void )
 			PrecacheMaterial( STRING( m_TeamData[i].iszIcon ) );
 			m_TeamData[i].iIcon = GetMaterialIndex( STRING( m_TeamData[i].iszIcon ) );
 			Assert( m_TeamData[i].iIcon != 0 );
+		}
 
-			if ( !m_TeamData[i].iIcon )
-			{
-				Warning( "Invalid hud icon material for team %d in control point '%s' ( point index %d )\n", i, GetDebugName(), GetPointIndex() );
-			}
+		if ( !m_TeamData[i].iIcon )
+		{
+			Warning( "Invalid hud icon material for team %d in control point '%s' ( point index %d )\n", i, GetDebugName(), GetPointIndex() );
 		}
 
 		if ( m_TeamData[i].iszOverlay != NULL_STRING )
@@ -271,7 +271,7 @@ void CTeamControlPoint::Precache( void )
 		PrecacheScriptSound( STRING( m_iszWarnSound ) );
 	}
 
-#if defined ( TF_DLL ) || defined ( TF_VINTAGE )
+#ifdef TF_DLL
 	PrecacheScriptSound( "Announcer.ControlPointContested" );
 	PrecacheScriptSound( "Announcer.ControlPointContested_Neutral" );
 #endif
@@ -311,7 +311,7 @@ void CTeamControlPoint::HandleScoring( int iTeam )
 		CTeamControlPointMaster *pMaster = g_hControlPointMasters.Count() ? g_hControlPointMasters[0] : NULL;
 		if ( pMaster && !pMaster->WouldNewCPOwnerWinGame( this, iTeam ) )
 		{
-#if defined ( TF_DLL ) || defined ( TF_VINTAGE )
+#ifdef TF_DLL
 			if ( TeamplayRoundBasedRules()->GetGameType() == TF_GAMETYPE_ESCORT )
 			{
 				CBroadcastRecipientFilter filter;
@@ -684,6 +684,13 @@ void CTeamControlPoint::InternalSetOwner( int iCapTeam, bool bMakeSound, int iNu
 		{
 			SendCapString( m_iTeam, iNumCappers, pCappingPlayers );
 		}
+
+#ifdef TF_DLL
+		if ( TFGameRules() && TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
+		{
+			TFGameRules()->DropHalloweenSoulPackToTeam( 5, GetAbsOrigin(), m_iTeam, TEAM_SPECTATOR );
+		}
+#endif
 	}
 
 	// Have control point master check the win conditions now!
@@ -1082,14 +1089,12 @@ void CTeamControlPoint::InputSetUnlockTime( inputdata_t &inputdata )
 //-----------------------------------------------------------------------------
 void CTeamControlPoint::UnlockThink( void )
 {
-	if (m_flUnlockTime > 0 && m_flUnlockTime < gpGlobals->curtime && TeamplayRoundBasedRules())
+	if ( m_flUnlockTime > 0 && 
+		 m_flUnlockTime < gpGlobals->curtime && 
+		 ( TeamplayRoundBasedRules() && TeamplayRoundBasedRules()->State_Get() == GR_STATE_RND_RUNNING ) )
 	{
-		if ((TeamplayGameRules()->GetGameType() == TF_GAMETYPE_ARENA && TeamplayRoundBasedRules()->State_Get() == GR_STATE_STALEMATE)
-			|| (TeamplayRoundBasedRules()->State_Get() == GR_STATE_RND_RUNNING))
-		{
-			InternalSetLocked(false);
-			return;
-		}
+		InternalSetLocked( false );
+		return;
 	}
 
 	SetContextThink( &CTeamControlPoint::UnlockThink, gpGlobals->curtime + 0.1, CONTROL_POINT_UNLOCK_THINK );

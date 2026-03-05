@@ -51,6 +51,7 @@ public:
 
 public:
 	// ITFChargeUpWeapon
+	virtual bool CanCharge( void ) { return true; }
 	virtual float GetChargeBeginTime( void ) { return m_flChargeBeginTime; }
 	virtual float GetChargeMaxTime( void );
 	virtual const char *GetChargeSound( void ) { return "Weapon_Grenade_Mirv.ChargeUp"; }

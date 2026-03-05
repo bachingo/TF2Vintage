@@ -1,200 +1,381 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose:		
+// Purpose: 
 //
 // $NoKeywords: $
 //=============================================================================
 
 #include "cbase.h"
-#include "c_tf_player.h"
-#include "tf_weapon_invis.h"
-#include "tf_wearable_demoshield.h"
-#include "tf_weapon_sword.h"
-#include "tf_weapon_bat_wood.h"
-#include "tf_weapon_lunchbox_drink.h"
-#include "tf_weapon_lunchbox.h"
+#include "tf_hud_itemeffectmeter.h"
+#include "tf_weapon_bat.h"
 #include "tf_weapon_jar.h"
+#include "tf_weapon_jar_gas.h"
+#include "tf_weapon_sword.h"
 #include "tf_weapon_buff_item.h"
+#include "tf_weapon_lunchbox.h"
 #include "tf_weapon_shotgun.h"
 #include "tf_weapon_sniperrifle.h"
 #include "tf_weapon_rocketlauncher.h"
-#include "tf_weapon_revolver.h"
-#include "tf_weapon_knife.h"
-#include "tf_weapon_flaregun.h"
-#include "tf_weapon_particlecannon.h"
+#include "tf_weapon_particle_cannon.h"
 #include "tf_weapon_raygun.h"
+#include "tf_weapon_flaregun.h"
+#include "tf_weapon_revolver.h"
 #include "tf_weapon_flamethrower.h"
-#include "tf_weapon_rocketpack.h"
+#include "tf_weapon_knife.h"
+#include "tf_item_powerup_bottle.h"
+#include "tf_imagepanel.h"
+#include "c_tf_weapon_builder.h"
+#include "tf_weapon_minigun.h"
+#include "tf_weapon_medigun.h"
+#include "tf_weapon_throwable.h"
 #include "tf_weapon_smg.h"
-#include "tf_powerup_bottle.h"
-#include "iclientmode.h"
-#include "ienginevgui.h"
-#include <vgui/ILocalize.h>
-#include <vgui/ISurface.h>
-#include <vgui/IVGui.h>
-#include <vgui_controls/EditablePanel.h>
-#include <vgui_controls/ProgressBar.h>
-#include <vgui_controls/AnimationController.h>
-#include "hud.h"
-#include "hudelement.h"
-#include "engine/IEngineSound.h"
-#include "tf_controls.h"
+#include "halloween/tf_weapon_spellbook.h"
+#include "tf_logic_halloween_2014.h"
+#include <game/client/iviewport.h>
+#include "tf_weapon_rocketpack.h"
+#include "tf_weapon_bonesaw.h"
+#include "tf_weapon_slap.h"
+
+#include <vgui_controls/ImagePanel.h>
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+static const char *GetDefaultMeterTextForLoadoutPosition( int iLoadout )
+{
+	const char *pszRetVal = "";
+	switch ( iLoadout )
+	{
+	case LOADOUT_POSITION_PRIMARY:
+		pszRetVal = "#TF_PrimaryMeter";
+		break;
+	case LOADOUT_POSITION_SECONDARY:
+		pszRetVal = "#TF_SecondaryMeter";
+		break;
+	case LOADOUT_POSITION_MELEE:
+		pszRetVal = "#TF_MeleeMeter";
+		break;
+	}
+
+	return pszRetVal;
+}
+
+#define DECLARE_ITEM_EFFECT_METER( weaponClass, weaponType, beeps, resfile ) \
+	hNewMeter = new CHudItemEffectMeter_Weapon< weaponClass >( pszElementName, pPlayer, weaponType, beeps, resfile ); \
+	if ( hNewMeter ) \
+	{ \
+		gHUD.AddHudElement( hNewMeter ); \
+		outMeters.AddToHead( hNewMeter ); \
+		hNewMeter->SetVisible( false ); \
+	}
+
+
+extern ConVar tf_rocketpack_cost;
+
+
 using namespace vgui;
 
-ConVar tf2v_show_killstreak_counter( "tf2v_show_killstreak_counter", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Displays the Killstreak counter on the HUD.", true, 0.0f, true, 1.0f );
-
-extern ConVar tf2v_use_new_cleaners;
-extern ConVar tf2v_new_chocolate_behavior;
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-class CHudItemEffectMeter : public CHudElement, public EditablePanel
-{
-	DECLARE_CLASS_SIMPLE( CHudItemEffectMeter, EditablePanel );
-
-public:
-	CHudItemEffectMeter( const char *pElementName, C_TFPlayer *pPlayer );
-
-	virtual void    ApplySchemeSettings( IScheme *scheme );
-	virtual void    PerformLayout( void );
-	virtual bool	ShouldDraw( void );
-
-	virtual void    Update( C_TFPlayer *pPlayer );
-
-	virtual int     GetCount( void )                    { return -1; }
-	virtual float   GetProgress( void );
-	virtual const char* GetLabelText( void );
-	virtual const char* GetIconName( void )				{ return ""; }
-	virtual const char* GetResourceName( void )         { return "resource/UI/HudItemEffectMeter.res"; }
-	virtual Color	GetFgColor( void )					{ return COLOR_WHITE; }
-	virtual bool    ShouldBeep( void );
-	virtual bool    ShouldFlash( void )                 { return false; }
-	virtual bool    IsEnabled( void ) OVERRIDE          { return m_bEnabled; }
-
-	virtual CBaseAnimating* GetItem( void ) const		{ return m_hItem; }
-	void            SetItem( CBaseAnimating *pItem )    { m_hItem = pItem; }
-
-private:
-	ContinuousProgressBar *m_pEffectMeter;
-	CExLabel *m_pEffectMeterLabel;
-
-	CPanelAnimationVarAliasType( int, m_iXOffset, "x_offset", "0", "proportional_int" );
-
-	CHandle<CBaseAnimating> m_hItem;
-	float					m_flOldCharge;
-
-protected:
-	CHandle<CTFPlayer>		m_hPlayer;
-	bool					m_bEnabled;
-};
+IMPLEMENT_AUTO_LIST( IHudItemEffectMeterAutoList );
+											
+CItemEffectMeterManager g_ItemEffectMeterManager;
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-class CHudItemEffectMeterKillstreak : public CHudItemEffectMeter
+CItemEffectMeterManager::~CItemEffectMeterManager()
 {
-	DECLARE_CLASS_SIMPLE( CHudItemEffectMeterKillstreak, CHudItemEffectMeter );
-public:
-	CHudItemEffectMeterKillstreak( const char *pElementName, C_TFPlayer *pPlayer )
-		: CHudItemEffectMeter( pElementName, pPlayer )
-	{
-	}
-
-	virtual int     GetCount(void);
-	virtual bool    IsEnabled(void);
-	virtual const char* GetLabelText(void)				{ return "#TF_KillStreak"; }
-	virtual const char* GetResourceName(void)			{ return "resource/UI/HudItemEffectMeter_Killstreak.res"; }
-};
-
+	ClearExistingMeters();
+}
 
 //-----------------------------------------------------------------------------
-// Purpose: Templatized item effect meter elements
+// Purpose: 
 //-----------------------------------------------------------------------------
-template<typename Class>
-class CHudItemEffectMeterTemp : public CHudItemEffectMeter
+void CItemEffectMeterManager::ClearExistingMeters()
 {
-	DECLARE_CLASS( CHudItemEffectMeterTemp<Class>, CHudItemEffectMeter );
-public:
-	CHudItemEffectMeterTemp( const char *pElementName, C_TFPlayer *pPlayer, bool bShouldBeep = true, const char *pResourceName = nullptr )
-		: CHudItemEffectMeter( pElementName, pPlayer ), m_pszResource( pResourceName ), m_bBeeps( bShouldBeep )
+	for ( int i=0; i<m_Meters.Count(); i++ )
 	{
+		gHUD.RemoveHudElement( m_Meters[i].Get() );
+		delete m_Meters[i].Get();
 	}
+	m_Meters.RemoveAll();
+}
 
-	virtual int     GetCount( void )          { return -1; }
-	virtual float   GetProgress( void );
-	virtual const char* GetLabelText( void );
-	virtual const char* GetResourceName( void );
-	virtual const char* GetIconName( void );
-	virtual Color	GetFgColor( void )        { return COLOR_WHITE; }
-	virtual bool    ShouldBeep( void )        { return m_bBeeps; }
-	virtual bool    ShouldFlash( void )       { return false; }
-	virtual bool    IsEnabled( void );
-	virtual bool	ShouldDraw(void);
-
-	virtual Class*  GetWeapon( void );
-
-private:
-	const char *m_pszResource;
-	bool m_bBeeps;
-};
-
-
-class CHudItemEffects : public CAutoGameSystemPerFrame, public CGameEventListener
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int CItemEffectMeterManager::GetNumEnabled( void )
 {
-public:
-	CHudItemEffects();
-	virtual ~CHudItemEffects();
+	int nCount = 0;
 
-	virtual bool Init( void );
-	virtual void Shutdown( void );
-	virtual void Update( float frametime );
-
-	virtual void FireGameEvent( IGameEvent *event );
-
-	void SetPlayer( C_TFPlayer *pPlayer );
-	void ClearMeters( void );
-
-	inline void AddItemMeter( CHudItemEffectMeter *pMeter )
+	for ( int i = 0; i < m_Meters.Count(); i++ )
 	{
-		DHANDLE<CHudItemEffectMeter> hndl;
-		hndl = pMeter;
-		if ( hndl )
+		if ( m_Meters[i] && m_Meters[i]->IsEnabled() )
 		{
-			gHUD.AddHudElement( hndl.Get() );
-			m_pEffectBars.AddToHead( hndl );
-			hndl->SetVisible( false );
+			nCount++;
 		}
 	}
 
-	static CUtlVector< DHANDLE<CHudItemEffectMeter> > m_pEffectBars;
-
-private:
-	CHandle<C_TFPlayer> m_hPlayer;
-};
-CUtlVector< DHANDLE<CHudItemEffectMeter> > CHudItemEffects::m_pEffectBars;
+	return nCount;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CHudItemEffectMeter::CHudItemEffectMeter( const char *pElementName, C_TFPlayer *pPlayer )
-	: BaseClass( NULL, pElementName ), CHudElement( pElementName )
+void CItemEffectMeterManager::SetPlayer( C_TFPlayer* pPlayer )
 {
-	SetParent( g_pClientMode->GetViewport() );
+	StopListeningForAllEvents();
+	ListenForGameEvent( "post_inventory_application" );	
+	ListenForGameEvent( "localplayer_pickup_weapon" );
+	ListenForGameEvent( "localplayer_respawn" );
 
-	m_pEffectMeter = new ContinuousProgressBar( this, "ItemEffectMeter" );
-	m_pEffectMeterLabel = new CExLabel( this, "ItemEffectMeterLabel", "" );
+	ClearExistingMeters();
 
-	SetHiddenBits( HIDEHUD_MISCSTATUS );
+	if ( pPlayer )
+	{
+		CHudItemEffectMeter::CreateHudElementsForClass( pPlayer, m_Meters );
+	}
+}
 
-	m_hItem = NULL;
-	m_hPlayer = pPlayer;
-	m_bEnabled = true;
-	m_flOldCharge = 1.0f;
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CItemEffectMeterManager::Update( C_TFPlayer* pPlayer )
+{
+	for ( int i=0; i<m_Meters.Count(); i++ )
+	{
+		if ( m_Meters[i] )
+		{
+			m_Meters[i]->Update( pPlayer );
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CItemEffectMeterManager::FireGameEvent( IGameEvent *event )
+{
+	const char *type = event->GetName();
+
+	bool bNeedsUpdate = false;
+
+	if ( FStrEq( "localplayer_pickup_weapon", type ) ||
+		 FStrEq( "localplayer_respawn", type ) )
+	{
+		bNeedsUpdate = true;
+	}
+	else if ( FStrEq( "post_inventory_application", type ) )
+	{
+		// Force a refresh. Our items may have changed causing us to now draw, etc.
+		// This creates a new game logic object which will re-cache necessary item data.
+		int iUserID = event->GetInt( "userid" );
+		C_TFPlayer* pPlayer = ToTFPlayer( C_TFPlayer::GetLocalPlayer() );
+		if ( pPlayer && pPlayer->GetUserID() == iUserID )
+		{
+			bNeedsUpdate = true;
+		}
+	}
+
+	if ( bNeedsUpdate )
+	{
+		SetPlayer( C_TFPlayer::GetLocalTFPlayer() );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CHudItemEffectMeter::CHudItemEffectMeter( const char *pszElementName, C_TFPlayer* pPlayer ) : CHudElement( pszElementName ), BaseClass( NULL, "HudItemEffectMeter" )
+{
+	Panel *pParent = g_pClientMode->GetViewport();
+	SetParent( pParent );
+
+	m_pLabel = new Label( this, "ItemEffectMeterLabel", "" );
+
+	SetHiddenBits( HIDEHUD_MISCSTATUS | HIDEHUD_CLOAK_AND_FEIGN );
+
+	m_pPlayer		= pPlayer;
+	m_bEnabled		= true;
+	m_flOldProgress = 1.f;
+	m_nState		= -1;
+
+	m_pItemEffectIcon = NULL;
+
+	RegisterForRenderGroup( "inspect_panel" );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CHudItemEffectMeter::~CHudItemEffectMeter()
+{
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CHudItemEffectMeter::CreateHudElementsForClass( C_TFPlayer* pPlayer, CUtlVector< vgui::DHANDLE< CHudItemEffectMeter > >& outMeters )
+{
+	vgui::DHANDLE< CHudItemEffectMeter > hNewMeter;
+	const char* pszElementName = "HudItemEffectMeter";
+	int iClass = pPlayer->GetPlayerClass()->GetClassIndex();
+
+	static CSchemaAttributeDefHandle attrMeterType( "item_meter_charge_type" );
+
+	auto lambdaAddItemEffectMeter = [&]( const char* pszItemClass, bool bBeep )
+	{
+		for ( int iLoadout = FIRST_LOADOUT_SLOT_WITH_CHARGE_METER; iLoadout<=LAST_LOADOUT_SLOT_WITH_CHARGE_METER; ++iLoadout )
+		{
+			CEconEntity *pEconItem = dynamic_cast<CEconEntity *>( pPlayer->GetEntityForLoadoutSlot( iLoadout, true ) );
+			if ( !pEconItem )
+				continue;
+
+			CEconItemView* pItem = pEconItem->GetAttributeContainer()->GetItem();
+
+			if ( !pItem || !pItem->GetStaticData() || !FStrEq( pItem->GetStaticData()->GetItemClass(), pszItemClass ) )
+				continue;
+
+			static CSchemaAttributeDefHandle attrMeterLabel( "meter_label" );
+			attrib_value_t retval;
+
+		
+			if ( !FindAttribute( pItem, attrMeterType, &retval ) )
+				return;
+
+			if ( retval == ATTRIBUTE_METER_TYPE_NONE )
+				return;
+		
+			const char *pszLabelText = "";
+			CAttribute_String attrModule;
+			if ( !pItem->FindAttribute( attrMeterLabel, &attrModule ) || !attrModule.has_value() )
+			{
+				pszLabelText = GetDefaultMeterTextForLoadoutPosition( iLoadout );
+			}
+			else
+			{
+				pszLabelText = attrModule.value().c_str();
+			}
+
+			hNewMeter = new CHudItemEffectMeter_ItemAttribute( pszElementName, pPlayer, (loadout_positions_t)iLoadout, pszLabelText, bBeep );
+			if ( hNewMeter )
+			{
+				gHUD.AddHudElement( hNewMeter );
+				outMeters.AddToHead( hNewMeter );
+				hNewMeter->SetVisible( false );
+			}
+
+			return;
+		}
+	};
+
+	switch ( iClass )
+	{
+	case TF_CLASS_SCOUT:
+		DECLARE_ITEM_EFFECT_METER( CTFBat_Wood, TF_WEAPON_BAT_WOOD, true, NULL );
+		DECLARE_ITEM_EFFECT_METER( CTFBat_Giftwrap, TF_WEAPON_BAT_GIFTWRAP, true, NULL );
+		DECLARE_ITEM_EFFECT_METER( CTFLunchBox_Drink, TF_WEAPON_LUNCHBOX, true, "resource/UI/HudItemEffectMeter_Scout.res" );
+		DECLARE_ITEM_EFFECT_METER( CTFJarMilk, TF_WEAPON_JAR_MILK, true, "resource/UI/HudItemEffectMeter_Scout.res" );
+		DECLARE_ITEM_EFFECT_METER( CTFSodaPopper, TF_WEAPON_SODA_POPPER, true, "resource/UI/HudItemEffectMeter_SodaPopper.res" );
+		DECLARE_ITEM_EFFECT_METER( CTFPEPBrawlerBlaster, TF_WEAPON_PEP_BRAWLER_BLASTER, true, "resource/UI/HudItemEffectMeter_SodaPopper.res" );
+		DECLARE_ITEM_EFFECT_METER( CTFCleaver, TF_WEAPON_CLEAVER, true, "resource/UI/HudItemEffectMeter_Cleaver.res" );
+		break;
+
+	case TF_CLASS_HEAVYWEAPONS:
+	{
+		lambdaAddItemEffectMeter( "tf_weapon_lunchbox", true );
+		DECLARE_ITEM_EFFECT_METER( CTFMinigun, TF_WEAPON_MINIGUN, true, "resource/UI/HudItemEffectMeter_Heavy.res" );
+		break;
+	}
+
+	case TF_CLASS_SNIPER:
+	{
+		DECLARE_ITEM_EFFECT_METER( CTFJar, TF_WEAPON_JAR, true, NULL );
+		DECLARE_ITEM_EFFECT_METER( CTFSniperRifleDecap, TF_WEAPON_SNIPERRIFLE_DECAP, false, "resource/UI/HudItemEffectMeter_Sniper.res" );
+		DECLARE_ITEM_EFFECT_METER( CTFSniperRifle, TF_WEAPON_SNIPERRIFLE, true, "resource/UI/HudItemEffectMeter_SniperFocus.res" );
+		DECLARE_ITEM_EFFECT_METER( CTFChargedSMG, TF_WEAPON_CHARGED_SMG, false, NULL );
+		lambdaAddItemEffectMeter( "tf_wearable_razorback", true );
+		break;
+	}
+	case TF_CLASS_DEMOMAN:
+		DECLARE_ITEM_EFFECT_METER( CTFSword, TF_WEAPON_SWORD, false, "resource/UI/HudItemEffectMeter_Demoman.res" );
+		break;
+
+	case TF_CLASS_SOLDIER:
+		DECLARE_ITEM_EFFECT_METER( CTFBuffItem, TF_WEAPON_BUFF_ITEM, true, NULL );
+		DECLARE_ITEM_EFFECT_METER( CTFParticleCannon, TF_WEAPON_PARTICLE_CANNON, false, "resource/UI/HUDItemEffectMeter_ParticleCannon.res" );
+		DECLARE_ITEM_EFFECT_METER( CTFRaygun, TF_WEAPON_RAYGUN, false, "resource/UI/HUDItemEffectMeter_Raygun.res" );
+		DECLARE_ITEM_EFFECT_METER( CTFRocketLauncher_AirStrike, TF_WEAPON_ROCKETLAUNCHER, false, "resource/UI/HudItemEffectMeter_Demoman.res" );
+		break;
+
+	case TF_CLASS_SPY:
+		DECLARE_ITEM_EFFECT_METER( CTFKnife, TF_WEAPON_KNIFE, true, "resource/UI/HUDItemEffectMeter_SpyKnife.res" );
+
+		hNewMeter = new CHudItemEffectMeter( pszElementName, pPlayer );
+		if ( hNewMeter )
+		{
+			gHUD.AddHudElement( hNewMeter );
+			outMeters.AddToHead( hNewMeter );
+			hNewMeter->SetVisible( false );
+		}
+
+		DECLARE_ITEM_EFFECT_METER( C_TFWeaponBuilder, TF_WEAPON_BUILDER, true, "resource/UI/HudItemEffectMeter_Sapper.res" );
+		DECLARE_ITEM_EFFECT_METER( CTFRevolver, TF_WEAPON_REVOLVER, false, "resource/UI/HUDItemEffectMeter_Spy.res" );
+
+		break;
+
+	case TF_CLASS_ENGINEER:
+		DECLARE_ITEM_EFFECT_METER( CTFShotgun_Revenge, TF_WEAPON_SENTRY_REVENGE, false, "resource/UI/HUDItemEffectMeter_Engineer.res" );
+		DECLARE_ITEM_EFFECT_METER( CTFDRGPomson, TF_WEAPON_DRG_POMSON, false, "resource/UI/HUDItemEffectMeter_Pomson.res" );
+		DECLARE_ITEM_EFFECT_METER( CTFRevolver, TF_WEAPON_REVOLVER, false, "resource/UI/HUDItemEffectMeter_Spy.res" );
+		break;
+
+	case TF_CLASS_PYRO:
+	{
+		DECLARE_ITEM_EFFECT_METER( CTFFlameThrower, TF_WEAPON_FLAMETHROWER, true, "resource/UI/HudItemEffectMeter_Pyro.res" );
+		DECLARE_ITEM_EFFECT_METER( CTFFlareGun_Revenge, TF_WEAPON_FLAREGUN_REVENGE, false, "resource/UI/HUDItemEffectMeter_Engineer.res" );
+		DECLARE_ITEM_EFFECT_METER( CTFRocketPack, TF_WEAPON_ROCKETPACK, false, "resource/UI/HudRocketPack.res" );
+		lambdaAddItemEffectMeter( "tf_weapon_jar_gas", true );
+		lambdaAddItemEffectMeter( "tf_weapon_rocketlauncher_fireball", false );
+		break;
+	}
+	case TF_CLASS_MEDIC:
+		DECLARE_ITEM_EFFECT_METER( CWeaponMedigun, TF_WEAPON_MEDIGUN, true, "resource/UI/HudItemEffectMeter_Scout.res" );
+		DECLARE_ITEM_EFFECT_METER( CTFBonesaw, TF_WEAPON_BONESAW, false, "resource/UI/HUDItemEffectMeter_Organs.res" );
+		break;
+	}
+
+	// ALL CLASS
+	DECLARE_ITEM_EFFECT_METER( CTFThrowable, TF_WEAPON_THROWABLE, true, "resource/UI/HudItemEffectMeter_Action.res" );
+
+	// Kill Streak
+	DECLARE_ITEM_EFFECT_METER( CTFWeaponBase, TF_WEAPON_NONE, false, "resource/UI/HudItemEffectMeter_KillStreak.res" );
+
+	DECLARE_ITEM_EFFECT_METER( CTFSpellBook, TF_WEAPON_SPELLBOOK, true, "resource/UI/HudItemEffectMeter_KartCharge.res" );
+	/*hNewMeter = new CHudItemEffectMeter_HalloweenSouls( pszElementName, pPlayer );
+	if ( hNewMeter )
+	{
+		gHUD.AddHudElement( hNewMeter );
+		outMeters.AddToHead( hNewMeter );
+		hNewMeter->SetVisible( false );
+	}*/
+
+	// Mvm canteen
+	hNewMeter = new CHudItemEffectMeter_Weapon< CTFPowerupBottle >( pszElementName, pPlayer, TF_WEAPON_NONE, true, "resource/UI/HudItemEffectMeter_PowerupBottle.res" );
+	if ( hNewMeter )
+	{
+		gHUD.AddHudElement( hNewMeter );
+		outMeters.AddToHead( hNewMeter );
+		hNewMeter->SetVisible( false );
+	}
+
+	hNewMeter = new CHudItemEffectMeter_Rune( pszElementName, pPlayer );
+	if ( hNewMeter )
+	{
+		gHUD.AddHudElement( hNewMeter );
+		outMeters.AddToHead( hNewMeter );
+		hNewMeter->SetVisible( false );
+	}
+
 }
 
 //-----------------------------------------------------------------------------
@@ -202,55 +383,73 @@ CHudItemEffectMeter::CHudItemEffectMeter( const char *pElementName, C_TFPlayer *
 //-----------------------------------------------------------------------------
 void CHudItemEffectMeter::ApplySchemeSettings( IScheme *pScheme )
 {
+	// load control settings...
+	LoadControlSettings( GetResFile() );
+
 	BaseClass::ApplySchemeSettings( pScheme );
 
-	// load control settings...
-	LoadControlSettings( GetResourceName() );
+	SetLabelText();
 
-	if ( m_pEffectMeterLabel )
+	m_pItemEffectIcon = dynamic_cast< CTFImagePanel* >( FindChildByName( "ItemEffectIcon" ) );
+	if ( m_pItemEffectIcon )
 	{
-		wchar_t *pszLocalized = g_pVGuiLocalize->Find( GetLabelText() );
-		if ( pszLocalized )
-			m_pEffectMeterLabel->SetText( pszLocalized );
-		else
-			m_pEffectMeterLabel->SetText( GetLabelText() );
+		m_pItemEffectIcon->SetImage( GetIconName() );
 	}
 
-	CTFImagePanel *pIcon = dynamic_cast<CTFImagePanel *>( FindChildByName( "ItemEffectIcon" ) );
-	if ( pIcon )
+	m_vecProgressBars.Purge();
+	for ( int i = 0; i < GetNumProgressBar(); ++i )
 	{
-		pIcon->SetImage( GetIconName() );
+		CFmtStr strEffectMeter;
+		const char *pszProgressBarName = "ItemEffectMeter";
+		if ( i != 0 )
+		{
+			strEffectMeter.sprintf( "ItemEffectMeter%d", i + 1 );
+			pszProgressBarName = strEffectMeter;
+		}
+		ContinuousProgressBar *pProgressBar = dynamic_cast< ContinuousProgressBar* >( FindChildByName( pszProgressBarName ) );
+		if ( pProgressBar )
+		{
+			m_vecProgressBars.AddToTail( pProgressBar );
+		}
+		else
+		{
+			Warning( "%s missing ContinuousProgressBar field \"%s\"\n", GetResFile(), pszProgressBarName );
+		}
 	}
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CHudItemEffectMeter::PerformLayout( void )
+void CHudItemEffectMeter::PerformLayout()
 {
 	BaseClass::PerformLayout();
 
-	int iNumPanels = 0;
-	CHudItemEffectMeter *pLastMeter = nullptr;
-	for ( int i = 0; i < CHudItemEffects::m_pEffectBars.Count(); ++i )
+	// update icon
+	if ( m_pItemEffectIcon )
 	{
-		CHudItemEffectMeter *pMeter = CHudItemEffects::m_pEffectBars[i];
-		if ( pMeter && pMeter->IsEnabled() )
-		{
-			iNumPanels++;
-			pLastMeter = pMeter;
-		}
+		m_pItemEffectIcon->SetImage( GetIconName() );
 	}
 
-	CTFPlayer *pPlayer = CTFPlayer::GetLocalTFPlayer();
-	if ( pPlayer && pPlayer->Weapon_OwnsThisID( TF_WEAPON_MEDIGUN ) )
-		iNumPanels++;
+	// update label text
+	SetLabelText();
 
-	if ( iNumPanels > 1 && pLastMeter )
+	if ( ShouldAutoAdjustPosition() )
 	{
-		int x = 0, y = 0;
-		GetPos( x, y );
-		SetPos( x - m_iXOffset, y );
+		// slide over by 1 for medic
+		int iOffset = 0;
+		C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+		if ( pPlayer && pPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_MEDIC )
+		{
+			iOffset = 1;
+		}
+
+		if ( g_ItemEffectMeterManager.GetNumEnabled() + iOffset > 1 )
+		{
+			int xPos = 0, yPos = 0;
+			GetPos( xPos, yPos );
+			SetPos( xPos - m_iXOffset, yPos );
+		}
 	}
 }
 
@@ -259,63 +458,136 @@ void CHudItemEffectMeter::PerformLayout( void )
 //-----------------------------------------------------------------------------
 bool CHudItemEffectMeter::ShouldDraw( void )
 {
-	bool bResult = false;
+	bool bShouldDraw = true;
 
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
-	if ( pPlayer && pPlayer->IsAlive() && IsEnabled() )
-		bResult = CHudElement::ShouldDraw();
-	if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_GHOST_MODE ) )
-		bResult = false;
-
-	if ( bResult != IsVisible() )
+	if ( !pPlayer || !pPlayer->IsAlive() || pPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_GHOST_MODE ) )
 	{
-		SetVisible( bResult );
-		if ( bResult )
-			InvalidateLayout( false, true );
+		bShouldDraw = false;
+	}
+	else if ( CTFMinigameLogic::GetMinigameLogic() && CTFMinigameLogic::GetMinigameLogic()->GetActiveMinigame() )
+	{
+		bShouldDraw = false;
+	}
+	else if ( TFGameRules() && TFGameRules()->ShowMatchSummary() )
+	{
+		bShouldDraw = false;
+	}
+	else if ( IsEnabled() )
+	{
+		bShouldDraw = CHudElement::ShouldDraw();
+	}
+	else
+	{
+		bShouldDraw = false;
 	}
 
-	return bResult;
+	if ( IsVisible() != bShouldDraw )
+	{
+		SetVisible( bShouldDraw );
+
+		if ( bShouldDraw )
+		{
+			// if we're going to be visible, redo our layout
+			InvalidateLayout( false, true );
+		}
+	}
+
+	return bShouldDraw;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CHudItemEffectMeter::Update( C_TFPlayer *pPlayer )
+void CHudItemEffectMeter::Update( C_TFPlayer* pPlayer )
 {
-	if ( !pPlayer || !pPlayer->IsAlive() )
-	{
-		m_flOldCharge = 1.0f;
+	if ( !IsEnabled() )
 		return;
-	}
 
-	if ( m_pEffectMeter && IsEnabled() )
+	if ( !pPlayer )
+		return;
+
+	// Progress counts override progress bars.
+	int iCount = GetCount();
+	if ( iCount >= 0 )
 	{
-		if ( GetCount() >= 0 )
-			SetDialogVariable( "progresscount", GetCount() );
-
-		float flCharge = GetProgress();
-		m_pEffectMeter->SetProgress( flCharge );
-
-		// Play a ding when full charged.
-		if ( m_flOldCharge < 1.0f && flCharge >= 1.0f && ShouldBeep() )
+		if ( ShowPercentSymbol() )
 		{
-			CLocalPlayerFilter filter;
-			C_BaseEntity::EmitSound( filter, SOUND_FROM_LOCAL_PLAYER, "TFPlayer.Recharged" );
-		}
-
-		if ( ShouldFlash() )
-		{
-			// Meter is depleting
-			int r = 10 * ( (int)( gpGlobals->realtime * 10.0f ) % 10 ) + 160;
-			m_pEffectMeter->SetFgColor( Color( r, 0, 0, 255 ) );
+			SetDialogVariable( "progresscount", VarArgs( "%d%%", iCount ) );
 		}
 		else
 		{
-			m_pEffectMeter->SetFgColor( GetFgColor() );
+			SetDialogVariable( "progresscount", iCount );
 		}
-
-		m_flOldCharge = flCharge;
 	}
+
+	float flProgress = GetProgress();
+
+	// Play a sound if we are refreshed.
+	if ( C_TFPlayer::GetLocalTFPlayer() && flProgress >= 1.f && m_flOldProgress < 1.f &&
+		pPlayer->IsAlive() && ShouldBeep() )
+	{
+		m_flOldProgress = flProgress;
+		C_TFPlayer::GetLocalTFPlayer()->EmitSound( GetBeepSound() );
+	}
+	else
+	{
+		m_flOldProgress = flProgress;
+	}
+
+	const float flMaxProgressPerBar = 1.f / GetNumProgressBar();
+
+	// Update the meter GUI element.
+	FOR_EACH_VEC( m_vecProgressBars, i )
+	{
+		float flCurrentBarProgress = Min( flProgress - flMaxProgressPerBar * i, flMaxProgressPerBar );
+		m_vecProgressBars[i]->SetProgress( RemapValClamped( flCurrentBarProgress, 0.f, flMaxProgressPerBar, 0.f, 1.f ) );
+
+		// Flash the bar if this class implementation requires it.
+		if ( ShouldFlash() )
+		{
+			int color_offset = ( ( int )( gpGlobals->realtime * 10 ) ) % 10;
+			int red = 160 + ( color_offset * 10 );
+			m_vecProgressBars[i]->SetFgColor( Color( red, 0, 0, 255 ) );
+		}
+		else
+		{
+			m_vecProgressBars[i]->SetFgColor( GetProgressBarColor() );
+		}
+	}
+
+	// update these when state changes
+	int nCurrentState = GetState();
+	if ( m_nState != nCurrentState )
+	{
+		InvalidateLayout();
+
+		m_nState = nCurrentState;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+const char*	CHudItemEffectMeter::GetLabelText( void )
+{
+	if ( m_pPlayer && m_pPlayer->IsPlayerClass( TF_CLASS_SPY ) )
+	{
+		CTFWeaponInvis *pWpn = (CTFWeaponInvis *)m_pPlayer->Weapon_OwnsThisID( TF_WEAPON_INVIS );
+		if ( pWpn )
+		{
+			if ( pWpn->HasFeignDeath() )
+			{
+				return "#TF_Feign";
+			}
+			else if ( pWpn->HasMotionCloak() )
+			{
+				return "#TF_CloakDagger";
+			}
+		}
+	}
+
+	return "#TF_CLOAK"; 
 }
 
 //-----------------------------------------------------------------------------
@@ -323,581 +595,938 @@ void CHudItemEffectMeter::Update( C_TFPlayer *pPlayer )
 //-----------------------------------------------------------------------------
 float CHudItemEffectMeter::GetProgress( void )
 {
-	if ( m_hPlayer && m_hPlayer->IsAlive() )
-	{
-		return m_hPlayer->m_Shared.GetSpyCloakMeter() / 100;
-	}
-
-	return 1.0f;
+	if ( m_pPlayer )
+		return m_pPlayer->m_Shared.GetSpyCloakMeter() / 100.0f;
+	else
+		return 1.f;
 }
 
-const char *CHudItemEffectMeter::GetLabelText( void )
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CHudItemEffectMeter::SetLabelText( const char *pszText /*= NULL*/ )
 {
-	if ( m_hPlayer )
+	const char *pszLabel = ( pszText && pszText[0] ) ? pszText : GetLabelText();
+
+	const wchar_t *pLocalized = g_pVGuiLocalize->Find( pszLabel );
+	if ( pLocalized )
 	{
-		CTFWeaponInvis *pInvis = (CTFWeaponInvis *)m_hPlayer->Weapon_OwnsThisID( TF_WEAPON_INVIS );
-		if ( pInvis )
+		wchar_t wszLabel[128];
+		V_wcsncpy( wszLabel, pLocalized, sizeof( wszLabel ) );
+
+		wchar_t wszFinalLabel[128];
+		UTIL_ReplaceKeyBindings( wszLabel, 0, wszFinalLabel, sizeof( wszFinalLabel ), ::input->IsSteamControllerActive() ? GAME_ACTION_SET_FPSCONTROLS : GAME_ACTION_SET_NONE );
+
+		m_pLabel->SetText( wszFinalLabel, true );
+	}
+	else
+	{
+		m_pLabel->SetText( pszLabel );
+	}
+
+	m_pLabel->SetFgColor( GetLabelTextColor() );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Tracks the weapon's regen.
+//-----------------------------------------------------------------------------
+template <class T>
+CHudItemEffectMeter_Weapon<T>::CHudItemEffectMeter_Weapon( const char* pszElementName, C_TFPlayer* pPlayer, int iWeaponID, bool bBeeps, const char* pszResFile )
+	: CHudItemEffectMeter( pszElementName, pPlayer )
+{
+	m_iWeaponID = iWeaponID;
+	m_bBeeps = bBeeps;
+	m_pszResFile = pszResFile;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+template <class T>
+const char* CHudItemEffectMeter_Weapon<T>::GetResFile( void )
+{
+	if ( m_pszResFile )
+	{
+		return m_pszResFile;
+	}
+	else
+	{
+		return "resource/UI/HudItemEffectMeter.res";
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Caches the weapon reference.
+//-----------------------------------------------------------------------------
+template <class T>
+T* CHudItemEffectMeter_Weapon<T>::GetWeapon( void )
+{
+	if ( m_bEnabled && m_pPlayer && !m_hWeapon )
+	{
+		m_hWeapon = dynamic_cast<T*>( m_pPlayer->Weapon_OwnsThisID( m_iWeaponID ) );
+		if ( !m_hWeapon )
 		{
-			if ( pInvis->HasFeignDeath() )
-				return "#TF_Feign";
-			if ( pInvis->HasMotionCloak() )
-				return "#TF_CloakDagger";
+			m_bEnabled = false;
 		}
 	}
 
-	return "#TF_Cloak";
+	return m_hWeapon;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CHudItemEffectMeter::ShouldBeep( void )
+template <class T>
+bool CHudItemEffectMeter_Weapon<T>::IsEnabled( void )
 {
-	if ( m_hPlayer && m_hPlayer->IsAlive() )
-	{
-		C_TFWeaponInvis *pWatch = static_cast<C_TFWeaponInvis *>( m_hPlayer->Weapon_OwnsThisID( TF_WEAPON_INVIS ) );
-		if ( pWatch && !pWatch->HasFeignDeath() )
-			return false;
-	}
-
-	return true;
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-template<typename Class>
-float CHudItemEffectMeterTemp<Class>::GetProgress( void )
-{
-	Class *pWeapon = GetWeapon();
+	T *pWeapon = GetWeapon();
 	if ( pWeapon )
-		return pWeapon->GetEffectBarProgress();
-
-	return CHudItemEffectMeter::GetProgress();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-template<typename Class>
-const char *CHudItemEffectMeterTemp<Class>::GetLabelText( void )
-{
-	Class *pWeapon = GetWeapon();
-	if ( pWeapon )
-		return pWeapon->GetEffectLabelText();
-
-	return CHudItemEffectMeter::GetLabelText();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-template<typename Class>
-const char *CHudItemEffectMeterTemp<Class>::GetIconName( void )
-{
-	Class *pWeapon = GetWeapon();
-	if ( pWeapon )
-		return pWeapon->GetEffectIconName();
-
-	return CHudItemEffectMeter::GetLabelText();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-template<typename Class>
-const char *CHudItemEffectMeterTemp<Class>::GetResourceName( void )
-{
-	if ( m_pszResource )
-		return m_pszResource;
-
-	return CHudItemEffectMeter::GetResourceName();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-template<typename Class>
-bool CHudItemEffectMeterTemp<Class>::IsEnabled( void )
-{
-	if ( GetWeapon() )
 		return true;
-
+	
 	return CHudItemEffectMeter::IsEnabled();
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-template<typename Class>
-bool CHudItemEffectMeterTemp<Class>::ShouldDraw( void )
+template <class T>
+float CHudItemEffectMeter_Weapon<T>::GetProgress( void )
 {
+	T *pWeapon = GetWeapon();
+	if ( pWeapon )
+	{
+		return pWeapon->GetProgress();
+	}
+	else
+	{
+		return 0.f;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+template <class T>
+void CHudItemEffectMeter_Weapon<T>::Update( C_TFPlayer* pPlayer )
+{
+	CHudItemEffectMeter::Update( pPlayer );
+}
+
+//-----------------------------------------------------------------------------
+template <class T>
+bool CHudItemEffectMeter_Weapon<T>::ShouldDraw( )
+{
+	return CHudItemEffectMeter::ShouldDraw();
+}
+//-----------------------------------------------------------------------------
+// Specializations for meters that do unique things follow...
+//-----------------------------------------------------------------------------
+
+
+//-----------------------------------------------------------------------------
+template <>
+bool CHudItemEffectMeter_Weapon<CTFWeaponBase>::IsEnabled( void )
+{
+	C_TFPlayer *pTFPlayer = C_TFPlayer::GetLocalTFPlayer();
+
+	if ( pTFPlayer )
+	{
+		int iKillStreak = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFPlayer, iKillStreak, killstreak_tier );
+		return iKillStreak != 0;
+	}
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+template <>
+int CHudItemEffectMeter_Weapon<CTFWeaponBase>::GetCount( void )
+{
+	C_TFPlayer *pTFPlayer = C_TFPlayer::GetLocalTFPlayer();
+
+	if ( pTFPlayer )
+	{
+		return pTFPlayer->m_Shared.GetStreak( CTFPlayerShared::kTFStreak_Kills );
+	}
+	return 0;
+}
+
+//-----------------------------------------------------------------------------
+template <>
+const char*	CHudItemEffectMeter_Weapon<CTFWeaponBase>::GetLabelText( void )
+{
+	return "TF_KillStreak";
+}
+
+//-----------------------------------------------------------------------------
+template <>
+bool CHudItemEffectMeter_Weapon<CTFWeaponBase>::IsKillstreakMeter( void )
+{
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Specialization for the sword (to differentiate it from other sword-type weapons)
+//-----------------------------------------------------------------------------
+template <>
+CTFSword* CHudItemEffectMeter_Weapon<CTFSword>::GetWeapon( void )
+{
+	if ( m_bEnabled && m_pPlayer && !m_hWeapon )
+	{
+		m_hWeapon = dynamic_cast<CTFSword*>( m_pPlayer->Weapon_OwnsThisID( m_iWeaponID ) );
+
+		if ( m_hWeapon && !m_hWeapon->CanDecapitate() )
+			m_hWeapon = NULL;
+
+		if ( !m_hWeapon )
+		{
+			m_bEnabled = false;
+		}
+	}
+
+	return m_hWeapon;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Specialization for demoman head count.
+//-----------------------------------------------------------------------------
+template <>
+int CHudItemEffectMeter_Weapon<CTFSword>::GetCount( void )
+{
+	CTFSword *pWeapon = GetWeapon();
+	if ( pWeapon )
+	{
+		return pWeapon->GetCount();
+	}
+	else
+	{
+		return 0.f;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Soldier buff charge bar specialization for flashing...
+//-----------------------------------------------------------------------------
+template <>
+bool CHudItemEffectMeter_Weapon<CTFBuffItem>::ShouldFlash( void )
+{
+	CTFBuffItem *pWeapon = GetWeapon();
+	if ( pWeapon )
+	{
+		return pWeapon->EffectMeterShouldFlash();
+	}
+	else
+	{
+		return false;
+	}
+}
+
+//-----------------------------------------------------------------------------
+template <>
+bool CHudItemEffectMeter_Weapon<CTFBuffItem>::ShouldDraw()
+{
+	if ( !m_pPlayer )
+		return false;
+
+	CTFBuffItem *pWeapon = GetWeapon();
+	if ( !pWeapon )
+		return false;
+
+	// do not draw for the parachute
+	if ( pWeapon->GetBuffType() == EParachute )
+		return false;
+	
 	return CHudItemEffectMeter::ShouldDraw();
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-template<typename Class>
-Class *CHudItemEffectMeterTemp<Class>::GetWeapon( void )
+template <>
+bool CHudItemEffectMeter_Weapon<CTFFlameThrower>::IsEnabled( void )
 {
-	if ( GetItem() == NULL )
-	{
-		if ( m_hPlayer )
-		{
-			for ( int i = 0; i < m_hPlayer->WeaponCount(); ++i )
-			{
-				Class *pWeapon = dynamic_cast<Class *>( m_hPlayer->GetWeapon( i ) );
-				if ( pWeapon )
-				{
-					SetItem( pWeapon );
-					break;
-				}
-			}
-		}
-
-		if ( !GetItem() )
-			m_bEnabled = false;
-	}
-
-	return static_cast<Class *>( GetItem() );
-}
-
-//-----------------------------------------------------------------------------
-// C_TFSword Specialization
-//-----------------------------------------------------------------------------
-template<>
-bool CHudItemEffectMeterTemp<C_TFSword>::IsEnabled( void )
-{
-	if ( GetWeapon() && GetWeapon()->CanDecapitate() )
-		return true;
-
-	return false;
-}
-
-template<>
-int CHudItemEffectMeterTemp<C_TFSword>::GetCount( void )
-{
-	if ( m_hPlayer )
-	{
-		C_TFSword *pSword = GetWeapon();
-		if ( pSword && pSword->CanDecapitate() )
-			return m_hPlayer->m_Shared.GetDecapitationCount();
-	}
-
-	return -1;
-}
-
-//-----------------------------------------------------------------------------
-// C_TFShotgun_Revenge Specialization
-//-----------------------------------------------------------------------------
-template<>
-bool CHudItemEffectMeterTemp<C_TFShotgun_Revenge>::IsEnabled( void )
-{
-	if ( GetWeapon() )
-		return true;
-
-	return false;
-}
-
-template<>
-int CHudItemEffectMeterTemp<C_TFShotgun_Revenge>::GetCount( void )
-{
-	if ( m_hPlayer )
-	{
-		C_TFShotgun_Revenge *pRevenge = GetWeapon();
-		if ( pRevenge && pRevenge->CanGetRevengeCrits() )
-			return m_hPlayer->m_Shared.GetRevengeCritCount();
-	}
-
-	return -1;
-}
-
-//-----------------------------------------------------------------------------
-// C_TFFlareGun_Revenge Specialization
-//-----------------------------------------------------------------------------
-template<>
-bool CHudItemEffectMeterTemp<C_TFFlareGun_Revenge>::IsEnabled( void )
-{
-	if ( GetWeapon() )
-		return true;
-
-	return false;
-}
-
-template<>
-int CHudItemEffectMeterTemp<C_TFFlareGun_Revenge>::GetCount( void )
-{
-	if ( m_hPlayer )
-	{
-		C_TFFlareGun_Revenge *pRevenge = GetWeapon();
-		if ( pRevenge && pRevenge->CanGetAirblastCrits() )
-			return m_hPlayer->m_Shared.GetAirblastCritCount();
-	}
-
-	return -1;
-}
-
-
-//-----------------------------------------------------------------------------
-// C_TFBuffItem Specialization
-//-----------------------------------------------------------------------------
-template<>
-bool CHudItemEffectMeterTemp<C_TFBuffItem>::ShouldFlash( void )
-{
-	if ( !m_hPlayer )
+	if ( !m_pPlayer )
 		return false;
 
-	if ( m_hPlayer->m_Shared.GetRageProgress() >= 100.0f )
-		return true;
+	CTFFlameThrower *pWeapon = GetWeapon();
+	if ( !pWeapon )
+		return false;
 
-	return m_hPlayer->m_Shared.IsRageActive();
+	return ( pWeapon->GetBuffType() > 0 );
 }
 
 //-----------------------------------------------------------------------------
-// C_TFSniperRifle_Decap Specialization
+// Purpose: Pyro rage bar specialization for flashing...
 //-----------------------------------------------------------------------------
-template<>
-int CHudItemEffectMeterTemp<C_TFSniperRifle_Decap>::GetCount( void )
+template <>
+bool CHudItemEffectMeter_Weapon<CTFFlameThrower>::ShouldFlash( void )
 {
-	if ( m_hPlayer )
+	CTFFlameThrower *pWeapon = GetWeapon();
+	if ( pWeapon )
 	{
-		C_TFSniperRifle_Decap *pSniperRifle = GetWeapon();
-		if ( pSniperRifle )
-			return m_hPlayer->m_Shared.GetHeadshotCount();
+		return pWeapon->EffectMeterShouldFlash();
+	}
+	else
+	{
+		return false;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Soda Popper Flash
+//-----------------------------------------------------------------------------
+template <>
+bool CHudItemEffectMeter_Weapon<CTFSodaPopper>::ShouldFlash( void )
+{
+	if ( !m_pPlayer )
+		return false;
+
+	return m_pPlayer->m_Shared.GetScoutHypeMeter() >= 100.0f;
+}
+
+//-----------------------------------------------------------------------------
+// Charged SMG Flash
+//-----------------------------------------------------------------------------
+template <>
+bool CHudItemEffectMeter_Weapon<CTFChargedSMG>::ShouldFlash( void )
+{
+	if ( !m_pPlayer )
+		return false;
+
+	CTFChargedSMG* pWeapon = GetWeapon();
+	if ( !pWeapon )
+		return false;
+
+	return pWeapon->ShouldFlashChargeBar();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Heavy rage bar in MvM
+//-----------------------------------------------------------------------------
+template <>
+bool CHudItemEffectMeter_Weapon< CTFMinigun >::IsEnabled( void )
+{
+	if ( !m_pPlayer )
+		return false;
+
+	CTFMinigun *pWeapon = GetWeapon();
+	if ( !pWeapon )
+		return false;
+
+	bool bVisible = false;
+
+
+	int iRage = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( m_pPlayer, iRage, generate_rage_on_dmg );
+	if ( iRage )
+	{
+		bVisible = true;
 	}
 
-	return -1;
+	return bVisible;
 }
 
 //-----------------------------------------------------------------------------
-// C_TFSniperRifle Specialization
+// Purpose:
 //-----------------------------------------------------------------------------
-template<>
-bool CHudItemEffectMeterTemp<C_TFSniperRifle>::IsEnabled( void )
+template <>
+bool CHudItemEffectMeter_Weapon< CTFMinigun >::ShouldFlash( void )
 {
-	if ( GetWeapon() )
+	CTFMinigun *pWeapon = GetWeapon();
+	if ( pWeapon )
 	{
-		C_TFSniperRifle *pSniperRifle = GetWeapon();
-		if ( pSniperRifle && pSniperRifle->HasFocus() )
-			return true;
+		return pWeapon->EffectMeterShouldFlash();
 	}
-
-	return false;
-}
-
-template<>
-float CHudItemEffectMeterTemp<C_TFSniperRifle>::GetProgress( void )
-{
-	if ( m_hPlayer )
+	else
 	{
-		return m_hPlayer->m_Shared.GetFocusLevel() / 100.0;
+		return false;
 	}
-
-	return 0.0;
 }
 
-//-----------------------------------------------------------------------------
-// C_TFRocketLauncher_Airstrike Specialization
-//-----------------------------------------------------------------------------
-template<>
-int CHudItemEffectMeterTemp<C_TFRocketLauncher_Airstrike>::GetCount( void )
+static const char *pszClassIcons[] = {
+	"",
+	"../hud/leaderboard_class_scout",
+	"../hud/leaderboard_class_sniper",
+	"../hud/leaderboard_class_soldier",
+	"../hud/leaderboard_class_demo",
+	"../hud/leaderboard_class_medic",
+	"../hud/leaderboard_class_heavy",
+	"../hud/leaderboard_class_pyro",
+	"../hud/leaderboard_class_spy",
+	"../hud/leaderboard_class_engineer",
+};
+
+template <>
+void CHudItemEffectMeter_Weapon< CTFMinigun >::Update( C_TFPlayer* pPlayer )
 {
-	if ( m_hPlayer )
+	CTFMinigun *pWeapon = GetWeapon();
+	if ( pWeapon )
 	{
-		C_TFRocketLauncher_Airstrike *pRocketLauncher = GetWeapon();
-		if ( pRocketLauncher )
-			return m_hPlayer->m_Shared.GetStrikeCount();
-	}
-
-	return -1;
-}
-
-//-----------------------------------------------------------------------------
-// C_TFRevolver Specialization
-//-----------------------------------------------------------------------------
-template<>
-bool CHudItemEffectMeterTemp<C_TFRevolver>::IsEnabled( void )
-{
-	if ( GetWeapon() )
-	{
-		C_TFRevolver *pRevolver = GetWeapon();
-		if ( pRevolver && pRevolver->HasSapperCrits() )
-			return true;
-	}
-
-	return false;
-}
-
-template<>
-int CHudItemEffectMeterTemp<C_TFRevolver>::GetCount( void )
-{
-	if ( m_hPlayer )
-	{
-		C_TFRevolver *pRevolver = GetWeapon();
-		if ( pRevolver && pRevolver->HasSapperCrits() )
-			return m_hPlayer->m_Shared.GetSapperKillCount();
-	}
-
-	return 0;
-}
-
-//-----------------------------------------------------------------------------
-// C_TFPepBrawlBlaster Specialization
-//-----------------------------------------------------------------------------
-template<>
-float CHudItemEffectMeterTemp<C_TFPepBrawlBlaster>::GetProgress( void )
-{
-	if ( m_hPlayer && IsEnabled() )
-		return m_hPlayer->m_Shared.GetHypeMeter() / 100;
-
-	return 1.0f;
-}
-
-
-//-----------------------------------------------------------------------------
-// C_TFSodaPopper Specialization
-//-----------------------------------------------------------------------------
-template<>
-float CHudItemEffectMeterTemp<C_TFSodaPopper>::GetProgress( void )
-{
-	if ( m_hPlayer && IsEnabled() )
-		return m_hPlayer->m_Shared.GetHypeMeter() / 100;
-
-	return 1.0f;
-}
-
-//-----------------------------------------------------------------------------
-// C_TFParticleCannon Specialization
-//-----------------------------------------------------------------------------
-template<>
-float CHudItemEffectMeterTemp<C_TFParticleCannon>::GetProgress( void )
-{
-	C_TFParticleCannon *pParticleCannon = GetWeapon();
-	if ( pParticleCannon )
-		return pParticleCannon->GetEnergyPercentage();
-
-	return 1.0f;
-}
-
-//-----------------------------------------------------------------------------
-// C_TFRaygun Specialization
-//-----------------------------------------------------------------------------
-template<>
-float CHudItemEffectMeterTemp<C_TFRaygun>::GetProgress( void )
-{
-	C_TFRaygun *pRayGun = GetWeapon();
-	if ( pRayGun )
-		return pRayGun->GetEnergyPercentage();
-
-	return 1.0f;
-}
-
-//-----------------------------------------------------------------------------
-// C_TFDRGPomson Specialization
-//-----------------------------------------------------------------------------
-template<>
-float CHudItemEffectMeterTemp<C_TFDRGPomson>::GetProgress( void )
-{
-	C_TFDRGPomson *pPomson = GetWeapon();
-	if ( pPomson )
-		return pPomson->GetEnergyPercentage();
-
-	return 1.0f;
-}
-
-
-//-----------------------------------------------------------------------------
-// C_TFFlameThrower Specialization
-//-----------------------------------------------------------------------------
-template<>
-bool CHudItemEffectMeterTemp<C_TFFlameThrower>::IsEnabled( void )
-{
-	if ( GetWeapon() )
-	{
-		C_TFFlameThrower *pFlamethrower = GetWeapon();
-		if ( pFlamethrower && pFlamethrower->HasMmmph() )
-			return true;
-	}
-
-	return false;
-}
-
-template<>
-float CHudItemEffectMeterTemp<C_TFFlameThrower>::GetProgress( void )
-{
-	if ( m_hPlayer && IsEnabled() )
-		return m_hPlayer->m_Shared.GetFireRage() / 100;
-
-	return 1.0f;
-}
-
-//-----------------------------------------------------------------------------
-// C_TFSMG_Charged Specialization
-//-----------------------------------------------------------------------------
-template<>
-bool CHudItemEffectMeterTemp<C_TFSMG_Charged>::IsEnabled( void )
-{
-	if ( tf2v_use_new_cleaners.GetBool() )
-		return true;
-
-	return false;
-}
-
-template<>
-bool CHudItemEffectMeterTemp<C_TFSMG_Charged>::ShouldBeep( void )
-{
-	if ( tf2v_use_new_cleaners.GetBool() )
-		return true;
-
-	return false;
-}
-
-template<>
-bool CHudItemEffectMeterTemp<C_TFSMG_Charged>::ShouldFlash( void )
-{
-	if ( tf2v_use_new_cleaners.GetBool() )
-		return true;
-
-	return false;
-}
-
-template<>
-float CHudItemEffectMeterTemp<C_TFSMG_Charged>::GetProgress( void )
-{
-	if ( m_hPlayer && IsEnabled() )
-		return m_hPlayer->m_Shared.GetCrikeyMeter() / 100;
-
-	return 1.0f;
-}
-
-//-----------------------------------------------------------------------------
-// C_TFKnife Specialization
-//-----------------------------------------------------------------------------
-template<>
-bool CHudItemEffectMeterTemp<C_TFKnife>::IsEnabled( void )
-{
-	if ( GetWeapon() )
-	{
-		C_TFKnife *pKnife = GetWeapon();
-		if ( pKnife && pKnife->CanExtinguish() )
-			return true;
-	}
-
-	return false;
-}
-
-//-----------------------------------------------------------------------------
-// C_TFLunchBox Specialization
-//-----------------------------------------------------------------------------
-template<>
-bool CHudItemEffectMeterTemp<C_TFLunchBox>::IsEnabled( void )
-{
-	if ( GetWeapon() )
-	{
-		C_TFLunchBox *pFood = GetWeapon();
-		if ( !tf2v_new_chocolate_behavior.GetBool() && pFood->IsChocolateOrFishcake() )
-			return false;
-
-		return true;
-	}
-
-	return false;
-}
-
-//-----------------------------------------------------------------------------
-// C_TFPowerupBottle Specialization
-//-----------------------------------------------------------------------------
-template<>
-C_TFPowerupBottle *CHudItemEffectMeterTemp<C_TFPowerupBottle>::GetWeapon( void )
-{
-	if ( GetItem() == NULL )
-	{
-		if ( m_hPlayer )
+		float fKillComboFireRateBoost = 0.0f;
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, fKillComboFireRateBoost, kill_combo_fire_rate_boost );
+		if ( fKillComboFireRateBoost > 0.0f )
 		{
-			for ( int i = 0; i < m_hPlayer->GetNumWearables(); ++i )
+			SetControlVisible( "ItemEffectMeterLabel2", true );
+
+			int nKillComboClass = pWeapon->GetKillComboClass();
+			int nKillComboCount = pWeapon->GetKillComboCount();
+
+			ImagePanel *( pImagePanel[3] ) =
 			{
-				C_TFPowerupBottle *pBottle = dynamic_cast<C_TFPowerupBottle *>( m_hPlayer->GetWearable( i ) );
-				if ( pBottle )
+				assert_cast< ImagePanel* >( FindChildByName( "KillComboClassIcon1" ) ),
+				assert_cast< ImagePanel* >( FindChildByName( "KillComboClassIcon2" ) ),
+				assert_cast< ImagePanel* >( FindChildByName( "KillComboClassIcon3" ) )
+			};
+
+			for ( int i = 0; i < ARRAYSIZE( pImagePanel ); ++i )
+			{
+				if ( !pImagePanel[i] )
+					continue;
+
+				if ( nKillComboCount > i )
 				{
-					SetItem( pBottle );
-					break;
+					pImagePanel[i]->SetImage( pszClassIcons[nKillComboClass] );
+					pImagePanel[i]->SetVisible( true );
+				}
+				else
+				{
+					pImagePanel[i]->SetVisible( false );
 				}
 			}
 		}
+		else
+		{
+			SetControlVisible( "ItemEffectMeterLabel2", false );
+			SetControlVisible( "KillComboClassIcon1", false );
+			SetControlVisible( "KillComboClassIcon2", false );
+			SetControlVisible( "KillComboClassIcon3", false );
+		}
+	}
+	CHudItemEffectMeter::Update( pPlayer );
+}
 
-		if ( !GetItem() )
-			m_bEnabled = false;
+//-----------------------------------------------------------------------------
+// Purpose: Specialization for engineer revenge count.
+//-----------------------------------------------------------------------------
+template <>
+int CHudItemEffectMeter_Weapon<CTFShotgun_Revenge>::GetCount( void )
+{
+	CTFShotgun_Revenge *pWeapon = GetWeapon();
+	if ( pWeapon )
+	{
+		return pWeapon->GetCount();
+	}
+	else
+	{
+		return 0.f;
+	}
+}
+
+template <>
+bool CHudItemEffectMeter_Weapon<CTFFlareGun_Revenge>::IsEnabled( void )
+{
+	if ( !m_pPlayer )
+		return false;
+
+	CTFFlareGun_Revenge *pWeapon = GetWeapon();
+	return pWeapon && pWeapon->IsActiveByLocalPlayer();
+}
+
+template <>
+int CHudItemEffectMeter_Weapon<CTFFlareGun_Revenge>::GetCount( void )
+{
+	CTFFlareGun_Revenge *pWeapon = GetWeapon();
+	if ( pWeapon )
+	{
+		return pWeapon->GetCount();
+	}
+	else
+	{
+		return 0.f;
+	}
+}
+
+template <>
+const char *CHudItemEffectMeter_Weapon<CTFRocketPack>::GetLabelText( void )
+{
+	CTFRocketPack *pRocketpack = GetWeapon();
+	if ( pRocketpack )
+	{
+		return pRocketpack->IsEnabled() ? "#TF_RocketPack_Charges" : "#TF_RocketPack_Disabled";
 	}
 
-	return static_cast<C_TFPowerupBottle *>( GetItem() );
+	return CHudItemEffectMeter::GetLabelText();
 }
 
 template <>
-bool CHudItemEffectMeterTemp<C_TFPowerupBottle>::IsEnabled( void )
+const char *CHudItemEffectMeter_Weapon<CTFRocketPack>::GetIconName( void )
 {
-	CTFPowerupBottle *pPowerupBottle = GetWeapon();
-	if ( pPowerupBottle )
-		return ( pPowerupBottle->GetNumCharges() > 0 );
+	CTFRocketPack *pRocketpack = GetWeapon();
+	if ( pRocketpack && pRocketpack->IsEnabled() )
+	{
 
-	return false;
+		// enabled
+		return "../hud/pyro_jetpack";
+	}
+
+	// disabled
+	return "../hud/pyro_jetpack_off2";
 }
 
 template <>
-int CHudItemEffectMeterTemp<C_TFPowerupBottle>::GetCount( void )
+int CHudItemEffectMeter_Weapon<CTFRocketPack>::GetNumProgressBar( void ) const
 {
-	CTFPowerupBottle *pPowerupBottle = GetWeapon();
-	if ( pPowerupBottle )
-		return pPowerupBottle->GetNumCharges();
-	
+	return 2;
+}
+
+template <>
+Color CHudItemEffectMeter_Weapon<CTFRocketPack>::GetProgressBarColor( void )
+{	
+	if ( m_pPlayer )
+	{
+		if ( !m_pPlayer->m_Shared.IsRocketPackReady() )
+		{
+			return Color( 255, 0, 0, 255 );
+		}
+		else
+		{
+			return Color( 255, 255, 255, 255 );
+		}
+	}
+
+	return CHudItemEffectMeter::GetProgressBarColor();
+}
+
+template <>
+float CHudItemEffectMeter_Weapon<CTFRocketPack>::GetProgress( void )
+{
+	if ( m_pPlayer )
+		return m_pPlayer->m_Shared.GetRocketPackCharge() / 100.0f;
 	return 0;
 }
 
-
-//-----------------------------------------------------------------------------
-// Killstreak Specialization
-//-----------------------------------------------------------------------------
-bool CHudItemEffectMeterKillstreak::IsEnabled( void )
+template <>
+Color CHudItemEffectMeter_Weapon<CTFRocketPack>::GetLabelTextColor( void )
 {
-	if ( tf2v_show_killstreak_counter.GetBool() )
+	CTFRocketPack *pRocketpack = GetWeapon();
+	if ( pRocketpack )
 	{
-		if ( m_hPlayer && m_hPlayer->m_Shared.InCond( TF_COND_DISGUISED ) )
-			return false;
+		return pRocketpack->IsEnabled() ? Color( 235, 235, 235, 255 ) : Color( 178, 178, 178, 255 );
+	}
 
-		return true;
+	return CHudItemEffectMeter::GetLabelTextColor();
+}
+
+template <>
+int CHudItemEffectMeter_Weapon<CTFRocketPack>::GetState( void )
+{
+	CTFRocketPack *pRocketpack = GetWeapon();
+	if ( pRocketpack )
+	{
+		enum
+		{
+			ROCKETPACK_DISABLED = 0,
+			ROCKETPACK_ENABLED,
+			ROCKETPACK_WAITFORPASSENGER,
+			ROCKETPACK_HASPASSENGER
+		};
+
+		if ( pRocketpack && pRocketpack->IsEnabled() )
+		{
+
+			return ROCKETPACK_ENABLED;
+		}
+
+		return ROCKETPACK_DISABLED;
+	}
+
+	return CHudItemEffectMeter::GetState();
+}
+
+template <>
+bool CHudItemEffectMeter_Weapon<CTFRocketPack>::ShouldAutoAdjustPosition( void ) const
+{
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+template <>
+int CHudItemEffectMeter_Weapon<CTFSniperRifleDecap>::GetCount( void )
+{
+	CTFSniperRifleDecap *pWeapon = GetWeapon();
+	if ( pWeapon )
+	{
+		return pWeapon->GetCount();
+	}
+	else
+	{
+		return 0.f;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------		    
+template <>
+Color CHudItemEffectMeter_Weapon<CTFParticleCannon>::GetProgressBarColor( void )
+{
+	CTFParticleCannon *pWeapon = GetWeapon();
+	
+	if ( pWeapon && pWeapon->CanChargeFire() )
+		return Color( 255, 255, 255, 255 );
+	else
+		return Color( 255, 0, 0, 255 );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+template <>
+int CHudItemEffectMeter_Weapon<CTFRevolver>::GetCount( void )
+{
+	CTFRevolver *pWeapon = GetWeapon();
+	if ( pWeapon )
+	{
+		return pWeapon->GetCount();
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+template <>
+bool CHudItemEffectMeter_Weapon<CTFRevolver>::IsEnabled( void )
+{
+	CTFRevolver *pWeapon = GetWeapon();
+	if ( pWeapon )
+	{
+		int iExtraDamageOnHit = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, iExtraDamageOnHit, extra_damage_on_hit );
+		return pWeapon->SapperKillsCollectCrits() || iExtraDamageOnHit;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+//-----------------------------------------------------------------------------
+template <>
+bool CHudItemEffectMeter_Weapon<CTFRevolver>::ShowPercentSymbol( void )
+{
+	CTFRevolver *pWeapon = GetWeapon();
+	if ( pWeapon )
+	{
+		int iExtraDamageOnHit = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, iExtraDamageOnHit, extra_damage_on_hit );
+		return iExtraDamageOnHit;
+	}
+	
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+template <>
+bool CHudItemEffectMeter_Weapon<CTFKnife>::IsEnabled( void )
+{
+	CTFKnife *pWeapon = GetWeapon();
+	if ( pWeapon )
+	{
+		return pWeapon->GetKnifeType() == KNIFE_ICICLE;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+template <>
+bool CHudItemEffectMeter_Weapon<CTFSniperRifle>::IsEnabled( void )
+{
+	if ( !m_pPlayer )
+		return false;
+
+	CTFSniperRifle *pWeapon = GetWeapon();
+	if ( !pWeapon )
+		return false;
+
+	return ( pWeapon->GetBuffType() > 0 );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+template <>
+bool CHudItemEffectMeter_Weapon<CTFSniperRifle>::ShouldFlash( void )
+{
+	CTFSniperRifle *pWeapon = GetWeapon();
+	if ( pWeapon )
+	{
+		return pWeapon->EffectMeterShouldFlash();
+	}
+	else
+	{
+		return false;
+	}
+}
+
+template <>
+const char*	CHudItemEffectMeter_Weapon<CTFSniperRifle>::GetBeepSound( void )
+{
+	CTFSniperRifle *pWeapon = GetWeapon();
+	if ( pWeapon && pWeapon->GetBuffType() > 0 )
+	{
+		return "Weapon_Bison.SingleCrit";
+	}
+
+	return CHudItemEffectMeter::GetBeepSound();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+template <>
+bool CHudItemEffectMeter_Weapon<C_TFWeaponBuilder>::IsEnabled( void )
+{
+	if ( !m_pPlayer )
+		return false;
+
+	return ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+template <>
+bool CHudItemEffectMeter_Weapon<C_TFWeaponBuilder>::ShouldBeep( void )
+{
+	if ( !m_pPlayer )
+		return false;
+
+	int iRoboSapper = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( m_pPlayer, iRoboSapper, robo_sapper );
+
+	return ( iRoboSapper > 0 );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+template <>
+bool CHudItemEffectMeter_Weapon<C_TFWeaponBuilder>::ShouldFlash( void )
+{
+	if ( !m_pPlayer )
+		return false;
+
+	C_TFWeaponBuilder *pWeapon = GetWeapon();
+	if ( pWeapon )
+	{
+		return pWeapon->EffectMeterShouldFlash();
+	}
+	else
+	{
+		return false;
+	}
+}
+
+template <>
+CTFPowerupBottle* CHudItemEffectMeter_Weapon<CTFPowerupBottle>::GetWeapon( void )
+{
+	if ( m_bEnabled && m_pPlayer && !m_hWeapon )
+	{
+		for ( int i = 0; i < m_pPlayer->GetNumWearables(); ++i )
+		{
+			m_hWeapon = dynamic_cast<CTFPowerupBottle*>( m_pPlayer->GetWearable( i ) );
+			if ( m_hWeapon )
+			{
+				break;
+			}
+		}
+
+		if ( !m_hWeapon )
+		{
+			m_bEnabled = false;
+		}
+	}
+
+	return m_hWeapon;
+}
+
+template <>
+bool CHudItemEffectMeter_Weapon<CTFPowerupBottle>::IsEnabled( void )
+{
+	if ( !m_pPlayer )
+		return false;
+
+	CTFPowerupBottle *pPowerupBottle = GetWeapon();
+	if ( pPowerupBottle )
+	{
+		return ( pPowerupBottle->GetNumCharges() > 0 );
 	}
 
 	return false;
 }
 
-int CHudItemEffectMeterKillstreak::GetCount( void )
+template <>
+int CHudItemEffectMeter_Weapon<CTFPowerupBottle>::GetCount( void )
 {
-	if ( m_hPlayer )
-		return m_hPlayer->m_Shared.GetKillstreakCount();
-
-	return -1;
+	CTFPowerupBottle *pPowerupBottle = GetWeapon();
+	if ( pPowerupBottle )
+	{
+		return pPowerupBottle->GetNumCharges();
+	}
+	else
+	{
+		return 0;
+	}
 }
 
-#define NEW_WEAPON_METER(class, beeps, resource) \
-	new CHudItemEffectMeterTemp< class >( "HudItemEffectMeter", pPlayer, beeps, resource )
-
-CHudItemEffects::CHudItemEffects()
-	: CAutoGameSystemPerFrame( "HudItemEffects" )
+template <>
+const char* CHudItemEffectMeter_Weapon<CTFPowerupBottle>::GetIconName( void )
 {
+	CTFPowerupBottle *pPowerupBottle = GetWeapon();
+	if ( pPowerupBottle )
+	{
+		return pPowerupBottle->GetEffectIconName();
+	}
+
+	return CHudItemEffectMeter::GetIconName();
 }
 
-CHudItemEffects::~CHudItemEffects()
+//-----------------------------------------------------------------------------
+// Purpose: Medic "rage" bar in MvM
+//-----------------------------------------------------------------------------
+template <>
+bool CHudItemEffectMeter_Weapon< CWeaponMedigun >::IsEnabled( void )
 {
+	if ( !m_pPlayer )
+		return false;
+
+	int iRage = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( m_pPlayer, iRage, generate_rage_on_heal );
+	if ( !iRage )
+		return false;
+
+	CWeaponMedigun *pWeapon = GetWeapon();
+	if ( !pWeapon )
+		return false;
+
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+template <>
+bool CHudItemEffectMeter_Weapon<CWeaponMedigun>::ShouldFlash( void )
+{
+	CWeaponMedigun *pWeapon = GetWeapon();
+	if ( pWeapon )
+	{
+		return pWeapon->EffectMeterShouldFlash();
+	}
+	else
+	{
+		return false;
+	}
+}
+
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+template <>
+bool CHudItemEffectMeter_Weapon< CTFLunchBox >::IsEnabled( void )
+{
+	return CHudItemEffectMeter::IsEnabled();
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CHudItemEffects::Init( void )
+template <>
+float CHudItemEffectMeter_Weapon< CTFLunchBox >::GetProgress( void )
 {
-	ListenForGameEvent( "localplayer_respawn" );
-	ListenForGameEvent( "post_inventory_application" );
+	if ( m_pPlayer )
+		return m_pPlayer->m_Shared.GetItemChargeMeter( LOADOUT_POSITION_SECONDARY ) / 100.f;
+	
+	return 0.f;
+}
+
+//-----------------------------------------------------------------------------
+// CTFThrowable
+//-----------------------------------------------------------------------------
+template <>
+bool CHudItemEffectMeter_Weapon<CTFThrowable>::IsEnabled( void )
+{
+	CTFThrowable *pWep = dynamic_cast<CTFThrowable*>( GetWeapon() );
+	if ( pWep )
+	{
+		return pWep->ShowHudElement();
+	}
+	return false;
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CHudItemEffectMeter_Rune::CHudItemEffectMeter_Rune( const char *pszElementName, C_TFPlayer* pPlayer ) : CHudItemEffectMeter( pszElementName, pPlayer )
+{
+
+}
+
+//-----------------------------------------------------------------------------
+bool CHudItemEffectMeter_Rune::IsEnabled( void )
+{
+	return m_pPlayer && m_pPlayer->m_Shared.CanRuneCharge();
+}
+
+//-----------------------------------------------------------------------------
+float CHudItemEffectMeter_Rune::GetProgress( void )
+{
+	if ( m_pPlayer )
+		return m_pPlayer->m_Shared.GetRuneCharge() / 100.0f;
+	return 0;
+}
+
+//-----------------------------------------------------------------------------
+bool CHudItemEffectMeter_Rune::ShouldFlash( void )
+{
+	if ( m_pPlayer )
+		return m_pPlayer->m_Shared.IsRuneCharged();
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+bool CHudItemEffectMeter_Rune::ShouldDraw( void )
+{
+	return m_pPlayer && m_pPlayer->m_Shared.CanRuneCharge();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+template <>
+bool CHudItemEffectMeter_Weapon< CTFBonesaw >::IsEnabled( void )
+{
+	if ( !m_pPlayer )
+		return false;
+
+	float flPreserveUber = 0.f;
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_pPlayer, flPreserveUber, ubercharge_preserved_on_spawn_max );
+	if ( !flPreserveUber )
+		return false;
 
 	return true;
 }
@@ -905,122 +1534,178 @@ bool CHudItemEffects::Init( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CHudItemEffects::Shutdown( void )
+template <>
+int CHudItemEffectMeter_Weapon< CTFBonesaw >::GetCount( void )
 {
-	StopListeningForAllEvents();
-	ClearMeters();
+	if ( !m_pPlayer )
+		return 0;
+
+	return m_pPlayer->m_Shared.GetDecapitations();
+}
+
+
+//-----------------------------------------------------------------------------
+// Rocket Launcher AirStrike Headcounter
+//-----------------------------------------------------------------------------
+template <>
+int CHudItemEffectMeter_Weapon<CTFRocketLauncher_AirStrike>::GetCount( void )
+{
+	CTFRocketLauncher_AirStrike *pWeapon = GetWeapon();
+	if ( pWeapon )
+	{
+		return pWeapon->GetCount();
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+//-----------------------------------------------------------------------------
+template <>
+bool CHudItemEffectMeter_Weapon<CTFSpellBook>::IsEnabled( void )
+{
+	if ( !m_pPlayer )
+		return false;
+
+	if ( !m_pPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_KART ) )
+		return false;
+
+	CTFSpellBook *pWep = dynamic_cast<CTFSpellBook*>( GetWeapon() );
+	if ( pWep )
+	{
+		return true;
+	}
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+template <>
+float CHudItemEffectMeter_Weapon<CTFSpellBook>::GetProgress( void )
+{
+	if ( !m_pPlayer )
+		return 0;
+
+	if ( !m_pPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_KART ) )
+		return 0;
+
+	return m_pPlayer->GetKartSpeedBoost();
+}
+
+//-----------------------------------------------------------------------------
+template <>
+int CHudItemEffectMeter_Weapon<CTFSpellBook>::GetCount( void )
+{
+	if ( !m_pPlayer )
+		return 0;
+
+	if ( !m_pPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_KART ) )
+		return 0;
+
+	return m_pPlayer->GetKartHealth();
+}
+//-----------------------------------------------------------------------------
+template <>
+bool CHudItemEffectMeter_Weapon<CTFSpellBook>::ShowPercentSymbol( void )
+{
+	return true;
+}
+//-----------------------------------------------------------------------------
+template <>
+bool CHudItemEffectMeter_Weapon<CTFSpellBook>::ShouldDraw( void )
+{
+	if ( CTFMinigameLogic::GetMinigameLogic() && CTFMinigameLogic::GetMinigameLogic()->GetActiveMinigame() )
+	{
+		if ( m_pPlayer && m_pPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_GHOST_MODE ) )
+			return false;
+
+		IViewPortPanel *scoreboard = gViewPortInterface->FindPanelByName( PANEL_SCOREBOARD );
+		if ( scoreboard && scoreboard->IsVisible() )
+			return false;
+
+		if ( TFGameRules() && ( TFGameRules()->State_Get() != GR_STATE_RND_RUNNING ) )
+			return false;
+
+		return true;
+	}
+	
+	if ( TFGameRules() && TFGameRules()->ShowMatchSummary() )
+	{
+		return false;
+	}
+
+	return CHudItemEffectMeter::ShouldDraw();
+}
+
+
+//-----------------------------------------------------------------------------
+CHudItemEffectMeter_ItemAttribute::CHudItemEffectMeter_ItemAttribute( const char *pszElementName, C_TFPlayer *pPlayer, loadout_positions_t iLoadoutSlot, const char *pszLabelText /*= NULL*/, bool bBeeps /*= true*/ )
+	: CHudItemEffectMeter( pszElementName, pPlayer )
+	, m_pMeterEntity( NULL )
+{
+	m_iLoadoutSlot = iLoadoutSlot;
+	CBaseEntity* pEntity = pPlayer->GetEntityForLoadoutSlot( m_iLoadoutSlot, true );
+	IHasGenericMeter* pMeter = dynamic_cast< IHasGenericMeter* >( pEntity );
+	if ( pMeter )
+	{
+		m_hEntity = pEntity;
+		m_pMeterEntity = pMeter;
+	}
+	else
+	{
+		Assert( false );
+	}
+
+	m_bBeeps = bBeeps;
+	m_strLabelText = pszLabelText;
+
+	if ( !m_hEntity )
+	{
+		m_bEnabled = false;
+	}
+
+	vgui::ivgui()->AddTickSignal( GetVPanel(), 100 ); 
+}
+
+
+const IHasGenericMeter *CHudItemEffectMeter_ItemAttribute::GetItem()
+{
+	return m_hEntity.Get() ? m_pMeterEntity : NULL;
+}
+
+//-----------------------------------------------------------------------------
+float CHudItemEffectMeter_ItemAttribute::GetProgress( void )
+{
+	if ( !GetItem() || !m_pPlayer )
+		return 0.f;
+
+	return m_pPlayer->m_Shared.GetItemChargeMeter( m_iLoadoutSlot ) / 100.f;
+}
+
+//-----------------------------------------------------------------------------
+bool CHudItemEffectMeter_ItemAttribute::ShouldDraw( void )
+{
+	if ( !GetItem() || !GetItem()->ShouldDrawMeter() )
+		return false;
+
+	return CHudItemEffectMeter::ShouldDraw();
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CHudItemEffects::Update( float frametime )
+void CHudItemEffectMeter_ItemAttribute::OnTick( void )
 {
-	if ( !m_hPlayer )
-		return;
-
-	for ( int i = 0; i < m_pEffectBars.Count(); ++i )
+	// if the handle for the item is no longer valid, look for it again
+	if ( !GetItem() )
 	{
-		CHudItemEffectMeter *pMeter = m_pEffectBars[i];
-		if ( pMeter )
-			pMeter->Update( m_hPlayer.Get() );
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Setup elements on player setup
-//-----------------------------------------------------------------------------
-void CHudItemEffects::FireGameEvent( IGameEvent *event )
-{
-	if ( !Q_strcmp( event->GetName(), "post_inventory_application" ) )
-	{
-		int iUserID = event->GetInt( "userid" );
-		C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
-
-		if ( pPlayer && pPlayer->GetUserID() == iUserID )
+		CBaseEntity* pEntity = m_pPlayer->GetEntityForLoadoutSlot( m_iLoadoutSlot, true );
+		if ( pEntity )
 		{
-			SetPlayer( pPlayer );
+			m_hEntity = pEntity;
+			m_pMeterEntity = dynamic_cast< IHasGenericMeter* >( pEntity );
 		}
 	}
-	else if ( !Q_strcmp( event->GetName(), "localplayer_respawn" ) )
-	{
-		SetPlayer( C_TFPlayer::GetLocalTFPlayer() );
-	}
+
+	CHudItemEffectMeter::OnTick();
 }
-
-void CHudItemEffects::ClearMeters( void )
-{
-	for ( int i = 0; i < m_pEffectBars.Count(); ++i )
-	{
-		if ( m_pEffectBars[i] )
-		{
-			gHUD.RemoveHudElement( m_pEffectBars[i].Get() );
-			delete m_pEffectBars[i].Get();
-		}
-	}
-	m_pEffectBars.RemoveAll();
-}
-
-void CHudItemEffects::SetPlayer( C_TFPlayer *pPlayer )
-{
-	if ( !pPlayer )
-	{
-		return;
-	}
-
-	m_hPlayer = pPlayer;
-	ClearMeters();
-
-	AddItemMeter( new CHudItemEffectMeterKillstreak( "HudItemEffectMeter", pPlayer ) );
-	AddItemMeter( new CHudItemEffectMeterTemp<C_TFPowerupBottle>( "HudItemEffectMeter", pPlayer, false, "resource/UI/HudItemEffectMeter_PowerupBottle.res" ) );
-	switch ( pPlayer->GetPlayerClass()->GetClassIndex() )
-	{
-		case TF_CLASS_SCOUT:
-			AddItemMeter( NEW_WEAPON_METER( C_TFBat_Wood, true, NULL ) );
-			AddItemMeter( NEW_WEAPON_METER( C_TFBat_Giftwrap, true, NULL ) );
-			AddItemMeter( NEW_WEAPON_METER( C_TFLunchBox_Drink, true, "resource/UI/HudItemEffectMeter_Scout.res" ) );
-			AddItemMeter( NEW_WEAPON_METER( C_TFJarMilk, true, "resource/UI/HudItemEffectMeter_Scout.res" ) );
-			AddItemMeter( NEW_WEAPON_METER( C_TFPepBrawlBlaster, true, "resource/UI/HudItemEffectMeter_SodaPopper.res" ) );
-			AddItemMeter( NEW_WEAPON_METER( C_TFSodaPopper, true, "resource/UI/HudItemEffectMeter_SodaPopper.res" ) );
-			AddItemMeter( NEW_WEAPON_METER( C_TFCleaver, true, "resource/UI/HudItemEffectMeter_Cleaver.res" ) );
-			break;
-		case TF_CLASS_SNIPER:
-			AddItemMeter( NEW_WEAPON_METER( C_TFJar, true, NULL ) );
-			AddItemMeter( NEW_WEAPON_METER( C_TFSniperRifle_Decap, false, "resource/UI/HudItemEffectMeter_Sniper.res" ) );
-			AddItemMeter( NEW_WEAPON_METER( C_TFSniperRifle, true, "resource/UI/HudItemEffectMeter_Sniperfocus.res" ) );
-			AddItemMeter( NEW_WEAPON_METER( C_TFSMG_Charged, false, NULL ) );
-			break;
-		case TF_CLASS_SOLDIER:
-			AddItemMeter( NEW_WEAPON_METER( C_TFBuffItem, true, NULL ) );
-			AddItemMeter( NEW_WEAPON_METER( C_TFRocketLauncher_Airstrike, false, "resource/UI/HudItemEffectMeter_Demoman.res" ) );
-			AddItemMeter( NEW_WEAPON_METER( C_TFRaygun, false, "resource/UI/HUDItemEffectMeter_Raygun.res" ) );
-			AddItemMeter( NEW_WEAPON_METER( C_TFParticleCannon, false, "resource/UI/HudItemEffectMeter_particlecannon.res" ) );
-			break;
-		case TF_CLASS_DEMOMAN:
-			AddItemMeter( NEW_WEAPON_METER( C_TFSword, false, "resource/UI/HudItemEffectMeter_Demoman.res" ) );
-			break;
-		case TF_CLASS_HEAVYWEAPONS:
-			AddItemMeter( NEW_WEAPON_METER( C_TFLunchBox, true, NULL ) );
-			break;
-		case TF_CLASS_PYRO:
-			AddItemMeter( NEW_WEAPON_METER( C_TFFlareGun_Revenge, false, "resource/UI/HudItemEffectMeter_Engineer.res" ) );
-			AddItemMeter( NEW_WEAPON_METER( C_TFFlameThrower, true, NULL ) );
-			AddItemMeter( NEW_WEAPON_METER( C_TFRaygun, false, "resource/UI/HudItemEffectMeter_raygun.res" ) );
-			AddItemMeter( NEW_WEAPON_METER( C_TFJarGas, true, "resource/UI/HudItemEffectMeter_Pyro.res" ) );
-			AddItemMeter( NEW_WEAPON_METER( C_TFRocketPack, true, "resource/UI/HudRocketPack.res" ) );
-			break;
-		case TF_CLASS_SPY:
-			AddItemMeter( new CHudItemEffectMeter( "HudItemEffectMeter", pPlayer ) );
-			AddItemMeter( NEW_WEAPON_METER( C_TFRevolver, false, "resource/UI/HudItemEffectMeter_Spy.res" ) );
-			AddItemMeter( NEW_WEAPON_METER( C_TFKnife, true, "resource/UI/huditemeffectmeter_spyknife.res" ) );
-			break;
-		case TF_CLASS_ENGINEER:
-			AddItemMeter( NEW_WEAPON_METER( C_TFShotgun_Revenge, false, "resource/UI/HudItemEffectMeter_Engineer.res" ) );
-			AddItemMeter( NEW_WEAPON_METER( C_TFDRGPomson, false, "resource/UI/HudItemEffectMeter_pomson.res" ) );
-			break;
-		default:
-			break;
-	}
-}
-
-static CHudItemEffects g_sItemMeters;

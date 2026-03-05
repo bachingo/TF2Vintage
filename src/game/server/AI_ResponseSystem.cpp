@@ -1457,7 +1457,7 @@ int CResponseSystem::SelectWeightedResponseFromResponseGroup( ResponseGroup *g, 
 	{
 		for ( i = 0; i < fakedDepletes.Count(); i++ )
 		{
-			g->group[ fakedDepletes[ i ] ].depletioncount = 0;;
+			g->group[ fakedDepletes[ i ] ].depletioncount = 0;
 		}
 	}
 
@@ -3041,7 +3041,7 @@ CON_COMMAND( rr_reloadresponsesystems, "Reload all response system scripts." )
 
 	defaultresponsesytem.ReloadAllResponseSystems();
 
-#if defined( TF_DLL ) || defined ( TF_VINTAGE )
+#if defined( TF_DLL )
 	// This is kind of hacky, but I need to get it in for now!
 	if( g_pGameRules->IsMultiplayer() )
 	{

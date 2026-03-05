@@ -24,7 +24,7 @@ using namespace vgui;
 
 //-----------------------------------------------------------------------------
 
-#define NUM_CLASSES_IN_LOADOUT_PANEL		(TF_LAST_NORMAL_CLASS)		// We don't allow unlockables for bosses.
+#define NUM_CLASSES_IN_LOADOUT_PANEL		(TF_LAST_NORMAL_CLASS-1)		// We don't allow unlockables for the civilian
 
 //-----------------------------------------------------------------------------
 // Purpose: Forward declarations

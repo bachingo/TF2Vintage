@@ -21,7 +21,7 @@
 #include "tier0/memdbgon.h"
 
 
-#if defined(TF_CLIENT_DLL) || defined(TF_VINTAGE_CLIENT)
+#ifdef TF_CLIENT_DLL
 static ConVar		scr_centertime( "scr_centertime", "5" );
 #else
 static ConVar		scr_centertime( "scr_centertime", "2" );
@@ -123,7 +123,7 @@ void CCenterStringLabel::ApplySchemeSettings(vgui::IScheme *pScheme)
 	BaseClass::ApplySchemeSettings(pScheme);
 
 	// Use a large font
-	m_hFont = pScheme->GetFont( "Trebuchet24" );
+	m_hFont = pScheme->GetFont( "Trebuchet24", true );
 	assert( m_hFont );
 	SetFont( m_hFont );
 

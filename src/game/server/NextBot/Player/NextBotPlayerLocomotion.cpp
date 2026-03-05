@@ -477,6 +477,17 @@ void PlayerLocomotion::Approach( const Vector &pos, float goalWeight )
 	float ahead = to.Dot( forward );
 	float side = to.Dot( right );
 
+#ifdef NEED_TO_INTEGRATE_MOTION_CONTROLLED_CODE_FROM_L4D_PLAYERS
+	// If we're climbing ledges, we need to stay crouched to prevent player movement code from messing
+	// with our origin.
+	CTerrorPlayer *player = ToTerrorPlayer(m_player);
+	if ( player && player->IsMotionControlledZ( player->GetMainActivity() ) )
+	{
+		playerButtons->PressCrouchButton();
+		return;
+	}
+#endif
+
 	if ( m_player->IsOnLadder() && IsUsingLadder() && ( m_ladderState == ASCENDING_LADDER || m_ladderState == DESCENDING_LADDER ) )
 	{
 		// we are on a ladder and WANT to be on a ladder.
@@ -782,8 +793,8 @@ void PlayerLocomotion::FaceTowards( const Vector &target )
 
 //-----------------------------------------------------------------------------------------------------
 /**
- * Return position of "feet" - point below centroid of bot at feet level
- */
+* Return position of "feet" - point below centroid of bot at feet level
+*/
 const Vector &PlayerLocomotion::GetFeet( void ) const
 {
 	return m_player->GetAbsOrigin();
@@ -811,15 +822,5 @@ float PlayerLocomotion::GetRunSpeed( void ) const
 float PlayerLocomotion::GetWalkSpeed( void ) const
 {
 	return 0.5f * m_player->MaxSpeed();
-}
-
-
-//-----------------------------------------------------------------------------------------------------
-/**
- * Return the entity we are locomoting
- */
-CBaseCombatCharacter *PlayerLocomotion::GetEntity( void ) const
-{
-	return m_player;
 }
 

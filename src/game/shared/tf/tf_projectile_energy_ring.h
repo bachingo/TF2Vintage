@@ -1,20 +1,23 @@
-//====== Copyright © 1996-2013, Valve Corporation, All rights reserved. ========//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: Bison Projectile.
-// baseclass is originally CTFBaseProjectile.
-//=============================================================================//
+// TF Energy Ring Projectile
+//
+//=============================================================================
 #ifndef TF_PROJECTILE_ENERGY_RING_H
 #define TF_PROJECTILE_ENERGY_RING_H
 #ifdef _WIN32
 #pragma once
 #endif
 
-#include "tf_projectile_base.h"
-#ifdef GAME_DLL
-#include "iscorer.h"
+#ifdef CLIENT_DLL
+#include "c_tf_player.h"
+#else
+#include "tf_player.h"
 #endif
 
-// Client specific.
+#include "tf_projectile_base.h"
+#include "tf_weapon_flamethrower.h"
+
 #ifdef CLIENT_DLL
 #define CTFProjectile_EnergyRing C_TFProjectile_EnergyRing
 #endif
@@ -22,49 +25,58 @@
 class CTFProjectile_EnergyRing : public CTFBaseProjectile
 {
 public:
+
 	DECLARE_CLASS( CTFProjectile_EnergyRing, CTFBaseProjectile );
-	DECLARE_DATADESC();
 	DECLARE_NETWORKCLASS();
 
 	CTFProjectile_EnergyRing();
-	~CTFProjectile_EnergyRing();
 
-	static CTFProjectile_EnergyRing *Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL );
+	virtual const char* GetProjectileModelName( void );
+	virtual float GetGravity( void );
+
+	// Creation.
+	static CTFProjectile_EnergyRing *Create( CTFWeaponBaseGun *pLauncher, const Vector& vecOrigin, const QAngle& vecAngles, float fSpeed, float fGravity, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL, Vector vColor1=vec3_origin, Vector vColor2=vec3_origin, bool bCritical=false );	
 	virtual void	Spawn();
 	virtual void	Precache();
+	virtual int		GetWeaponID( void ) const			{ return ShouldPenetrate() ? TF_WEAPON_RAYGUN : TF_WEAPON_DRG_POMSON; }
 
-	virtual int		GetWeaponID( void ) const	{ return UsePenetratingBeam() ? TF_WEAPON_RAYGUN : TF_WEAPON_DRG_POMSON; }
+#ifdef GAME_DLL
+	virtual void	ProjectileTouch( CBaseEntity *pOther ) OVERRIDE;
+	virtual void	ResolveFlyCollisionCustom( trace_t &trace, Vector &vecVelocity ) OVERRIDE;
+#else
+	virtual void	OnDataChanged( DataUpdateType_t updateType ) OVERRIDE;
+#endif
+
+	virtual bool	CanHeadshot() { return false; }
+
+	virtual void	ImpactTeamPlayer( CTFPlayer *pOther ) {}
+
+	virtual float	GetDamage();
+	virtual int		GetDamageCustom() { return TF_DMG_CUSTOM_PLASMA; }
 
 	virtual bool	IsDeflectable() { return false; }
 
-#ifdef GAME_DLL
-	virtual void	ProjectileTouch( CBaseEntity *pOther );
-#else
-	virtual void	OnDataChanged( DataUpdateType_t updateType );
-	virtual void	CreateTrails( void );
-	virtual void	CreateLightEffects( void );
-#endif
+	void			SetColor( int idx, Vector vColor ) { if ( idx==1 ) m_vColor1=vColor; else m_vColor2=vColor; }
 
-	virtual const char *GetProjectileModelName( void );
-	virtual float GetGravity( void )			{ return 0.0f; }
-	virtual float GetDamage( void );
+	float			GetInitialVelocity( void );
 
 private:
-	bool UsePenetratingBeam() const;
-	char const *GetTrailParticleName() const;
-	void PlayImpactEffects( Vector const& vecPos, bool bHitFlesh );
+
+	bool			ShouldPenetrate() const;
+	const char*		GetTrailParticleName() const;
+
+	Vector			m_vColor1;
+	Vector			m_vColor2;
+
+	Vector			m_vecPrevPos;
 
 #ifdef GAME_DLL
-	typedef struct PenTargets_s
-	{
-		EHANDLE hEntity;
-		float flLastHitTime;
-	} PenTargets_t;
-	CUtlVector<PenTargets_t> m_aHitEnemies;
-#else
-	CNewParticleEffect	*m_pRing;
+	float m_flLastHitTime;
+	void PlayImpactEffects( const Vector& vecPos, bool bHitFlesh );
 #endif
 
+protected:
+	float			m_flInitTime;
 };
 
-#endif //TF_PROJECTILE_ENERGY_RING_H
+#endif	//TF_PROJECTILE_ENERGY_RING_H

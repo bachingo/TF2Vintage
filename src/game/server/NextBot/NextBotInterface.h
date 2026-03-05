@@ -54,11 +54,19 @@ public:
 	virtual CBaseCombatCharacter *GetEntity( void ) const	= 0;
 	virtual class NextBotCombatCharacter *GetNextBotCombatCharacter( void ) const	{ return NULL; }
 
+#ifdef TERROR
+	virtual class SurvivorBot *MySurvivorBotPointer() const { return NULL; }
+#endif
+
 	// interfaces are never NULL - return base no-op interfaces at a minimum
 	virtual ILocomotion *	GetLocomotionInterface( void ) const;
 	virtual IBody *			GetBodyInterface( void ) const;
 	virtual IIntention *	GetIntentionInterface( void ) const;
 	virtual IVision *		GetVisionInterface( void ) const;
+	HSCRIPT ScriptGetLocomotionInterface( void ) const { return ToHScript( this->GetLocomotionInterface() ); }
+	HSCRIPT ScriptGetIntentionInterface( void ) const { return ToHScript( this->GetIntentionInterface() ); }
+	HSCRIPT ScriptGetBodyInterface( void ) const { return ToHScript( this->GetBodyInterface() ); }
+	HSCRIPT ScriptGetVisionInterface( void ) const { return ToHScript( this->GetVisionInterface() ); }
 
 	/**
 	 * Attempt to change the bot's position. Return true if successful.
@@ -72,6 +80,9 @@ public:
 	virtual bool IsEnemy( const CBaseEntity *them ) const;			// return true if given entity is our enemy
 	virtual bool IsFriend( const CBaseEntity *them ) const;			// return true if given entity is our friend
 	virtual bool IsSelf( const CBaseEntity *them ) const;			// return true if 'them' is actually me
+	bool ScriptIsEnemy( HSCRIPT hThem ) const { return this->IsEnemy( ToEnt( hThem ) ); }
+	bool ScriptIsFriend( HSCRIPT hThem ) const { return this->IsFriend( ToEnt( hThem ) ); }
+	bool ScriptIsSelf( HSCRIPT hThem ) const { return this->IsSelf( ToEnt( hThem ) ); }
 
 	/**
 	 * Can we climb onto this entity?

@@ -1,59 +1,53 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_taunt.cpp
+// Stand still and play a taunt animation
+// Michael Booth, November 2009
+
 #include "cbase.h"
-#include "../tf_bot.h"
-#include "tf_bot_taunt.h"
+#include "team.h"
+#include "bot/tf_bot.h"
+#include "bot/behavior/tf_bot_taunt.h"
 
 
-CTFBotTaunt::CTFBotTaunt()
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotTaunt::OnStart( CTFBot *me, Action< CTFBot > *priorAction )
 {
-}
+	// wait a short random time so entire mob doesn't taunt in unison
+	m_tauntTimer.Start( RandomFloat( 0, 1.0f ) );
+	m_didTaunt = false;
 
-CTFBotTaunt::~CTFBotTaunt()
-{
-}
-
-
-const char *CTFBotTaunt::GetName( void ) const
-{
-	return "Taunt";
+	return Continue();
 }
 
 
-ActionResult<CTFBot> CTFBotTaunt::OnStart( CTFBot *me, Action<CTFBot> *priorAction )
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot > CTFBotTaunt::Update( CTFBot *me, float interval )
 {
-	m_waitDuration.Start( RandomFloat( 0.0f, 1.0f ) );
-
-	m_bTaunting = false;
-
-	return Action<CTFBot>::Continue();
-}
-
-ActionResult<CTFBot> CTFBotTaunt::Update( CTFBot *me, float dt )
-{
-	if ( !m_waitDuration.IsElapsed() )
+	if ( m_tauntTimer.IsElapsed() )
 	{
-		return Action<CTFBot>::Continue();
+		if ( m_didTaunt )
+		{
+			// Stop taunting after a while
+			if ( m_tauntEndTimer.IsElapsed() && me->m_Shared.GetTauntIndex() == TAUNT_LONG )
+			{
+				me->EndLongTaunt();
+			}
+
+			if ( me->m_Shared.InCond( TF_COND_TAUNTING ) == false )
+			{
+				return Done( "Taunt finished" );
+			}			
+		}
+		else
+		{
+			me->HandleTauntCommand();
+			// Start a timer to end our taunt in case we're still going after awhile
+			m_tauntEndTimer.Start( RandomFloat( 3.f, 5.f ) );	
+			
+			m_didTaunt = true;
+		}
 	}
 
-	if ( !m_bTaunting )
-	{
-		//actor->HandleTauntCommand(0);
-		me->Taunt();
-
-		m_tauntTimer.Start( RandomFloat( 3.0f, 5.0f ) );
-
-		m_bTaunting = true;
-
-		return Action<CTFBot>::Continue();
-	}
-
-	//if (m_tauntTimer.IsElapsed() && actor + 0x2228 == 3) {
-	//	actor->EndLongTaunt();
-	//}
-
-	if ( !me->m_Shared.InCond( TF_COND_TAUNTING ) )
-	{
-		return Action<CTFBot>::Done( "Taunt finished" );
-	}
-
-	return Action<CTFBot>::Continue();
+	return Continue();
 }
+

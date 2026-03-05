@@ -1,156 +1,182 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose:		
+// Purpose: 
 //
 // $NoKeywords: $
-//=============================================================================
+//=============================================================================//
+
 #ifndef TF_HUD_ROBOT_DESTRUCTION_STATUS_H
 #define TF_HUD_ROBOT_DESTRUCTION_STATUS_H
+#ifdef _WIN32
+#pragma once
+#endif
 
 #include "tf_controls.h"
+#include "tf_imagepanel.h"
+#include "hud_controlpointicons.h"
+#include "GameEventListener.h"
 #include "tf_logic_robot_destruction.h"
-#include "tf_hud_objectivestatus.h"
+#include "tf_time_panel.h"
+#include "entity_capture_flag.h"
 
 class CTFHudRobotDestruction_StateImage : public vgui::EditablePanel
 {
 	DECLARE_CLASS_SIMPLE( CTFHudRobotDestruction_StateImage, vgui::EditablePanel );
 public:
-	CTFHudRobotDestruction_StateImage( vgui::Panel *parent, const char *name, const char *pszResFile );
+	CTFHudRobotDestruction_StateImage( Panel *parent, const char *name, const char *pszResFile );
 
-	virtual void	ApplySchemeSettings( vgui::IScheme *pScheme );
-	virtual void	ApplySettings( KeyValues *inResourceData );
-
-	void			SetImageVisible( bool bVisible )	{ m_pImage->SetVisible( bVisible ); }
-
+	virtual void ApplySchemeSettings( IScheme *pScheme ) OVERRIDE;
+	virtual void ApplySettings( KeyValues *inResourceData ) OVERRIDE;
+	
+	void SetImageVisible( bool bVisible ) { m_pImage->SetVisible( bVisible ); }
 protected:
-	vgui::ImagePanel *m_pImage;
-	vgui::ImagePanel *m_pRobotImage;
-	const char *m_pszResFile;
+	vgui::ImagePanel	*m_pImage;
+	vgui::ImagePanel	*m_pRobotImage;
+	const char			*m_pszResFile;
 };
 
+//-----------------------------------------------------------------------------
 class CTFHudRobotDestruction_DeadImage : public CTFHudRobotDestruction_StateImage
 {
 	DECLARE_CLASS_SIMPLE( CTFHudRobotDestruction_DeadImage, CTFHudRobotDestruction_StateImage );
 public:
-	CTFHudRobotDestruction_DeadImage( vgui::Panel *parent, const char *name, const char *pszResFile );
+	CTFHudRobotDestruction_DeadImage( Panel *parent, const char *name, const char *pszResFile  );
 
 	void SetProgress( float flProgress );
-
 private:
 	CTFProgressBar *m_pRespawnProgressBar;
 };
 
+//-----------------------------------------------------------------------------
 class CTFHudRobotDestruction_ActiveImage : public CTFHudRobotDestruction_StateImage
 {
 	DECLARE_CLASS_SIMPLE( CTFHudRobotDestruction_ActiveImage, CTFHudRobotDestruction_StateImage );
 public:
-	CTFHudRobotDestruction_ActiveImage( vgui::Panel *parent, const char *name, const char *pszResFile );
+	CTFHudRobotDestruction_ActiveImage( Panel *parent, const char *name, const char *pszResFile  );
 
-	virtual void ApplySettings( KeyValues *inResourceData );
+	virtual void ApplySettings( KeyValues *inResourceData ) OVERRIDE;
 };
 
-
+//-----------------------------------------------------------------------------
 class CTFHudRobotDestruction_RobotIndicator : public vgui::EditablePanel
 {
 	DECLARE_CLASS_SIMPLE( CTFHudRobotDestruction_RobotIndicator, vgui::EditablePanel );
+
 public:
+
 	CTFHudRobotDestruction_RobotIndicator( vgui::Panel *pParent, const char *pszName, CTFRobotDestruction_RobotGroup *pGroup );
 
-	virtual void	ApplySchemeSettings( vgui::IScheme *pScheme );
-	virtual void	ApplySettings( KeyValues *inResourceData );
-	virtual void	OnTick();
-	virtual void	PerformLayout();
+	virtual void	ApplySchemeSettings( vgui::IScheme *pScheme ) OVERRIDE;
+	virtual void	PerformLayout() OVERRIDE;
+	virtual void	ApplySettings(	KeyValues *inResourceData );
+	virtual void	OnTick() OVERRIDE;
 
 	void			DoUnderAttackBlink();
 	int				GetGroupNumber() const;
 	int				GetTeamNumber() const;
 	void			UpdateState();
-
-	CTFRobotDestruction_RobotGroup *GetGroup( void ) const { return m_hGroup; }
-
-	DHANDLE<CTFHudRobotDestruction_RobotIndicator> m_hRobotIndicator1;
-	DHANDLE<CTFHudRobotDestruction_RobotIndicator> m_hRobotIndicator2;
-
-	ERobotState m_eState;
-
+	eRobotUIState	GetState() const { return m_eState; }
+	const CTFRobotDestruction_RobotGroup *GetGroup() const { return m_hGroup.Get(); }
+	void			SetNextRobotIndicator( CTFHudRobotDestruction_RobotIndicator * pNext ) { m_pNextRobotIndicator = pNext; }
+	void			SetPrevRobotIndicator( CTFHudRobotDestruction_RobotIndicator * pPrev ) { m_pPrevRobotIndicator = pPrev; }
 private:
-	CHandle<CTFRobotDestruction_RobotGroup> m_hGroup;
 
-	CControlPointIconSwoop *m_pSwoop;
-	vgui::EditablePanel *m_pRobotStateContainer;
-	CTFHudRobotDestruction_DeadImage *m_pDeadPanel;
-	CTFHudRobotDestruction_ActiveImage *m_pActivePanel;
-	CTFHudRobotDestruction_StateImage *m_pShieldedPanel;
+	CTFHudRobotDestruction_RobotIndicator *m_pPrevRobotIndicator;
+	CTFHudRobotDestruction_RobotIndicator *m_pNextRobotIndicator;
+	CHandle< CTFRobotDestruction_RobotGroup > m_hGroup;
+	vgui::EditablePanel					*m_pRobotStateContainer;
+	CTFHudRobotDestruction_DeadImage	*m_pDeadPanel;
+	CTFHudRobotDestruction_ActiveImage	*m_pActivePanel;
+	CTFHudRobotDestruction_StateImage	*m_pShieldedPanel;
+
+	float								m_flHealthPercentage;
+	eRobotUIState						m_eState;
+
+	CControlPointIconSwoop * m_pSwoop;
 };
-
 
 class CTFHUDRobotDestruction : public vgui::EditablePanel, public CGameEventListener
 {
 	DECLARE_CLASS_SIMPLE( CTFHUDRobotDestruction, vgui::EditablePanel );
+
 public:
+	typedef CUtlVector< CTFHudRobotDestruction_RobotIndicator* > RobotVector_t;
+
 	CTFHUDRobotDestruction( vgui::Panel *parent, const char *name );
-	virtual ~CTFHUDRobotDestruction();
+	~CTFHUDRobotDestruction();
 
-	virtual void ApplySchemeSettings( vgui::IScheme *pScheme ) OVERRIDE;
 	virtual void ApplySettings( KeyValues *inResourceData ) OVERRIDE;
-	virtual bool IsVisible( void ) OVERRIDE;
-	virtual void FireGameEvent( IGameEvent *pEvent ) OVERRIDE;
-	virtual void OnTick() OVERRIDE;
-	virtual void Paint() OVERRIDE;
-	virtual void PaintBackground() OVERRIDE;
+	virtual void ApplySchemeSettings( vgui::IScheme *pScheme ) OVERRIDE;
 	virtual void PerformLayout() OVERRIDE;
+	virtual bool IsVisible( void ) OVERRIDE;
 	virtual void Reset();
+	virtual void OnTick() OVERRIDE;
+	virtual void PaintBackground() OVERRIDE;
+	virtual void Paint() OVERRIDE;
 
-	void PaintPDPlayerScore( CTFPlayer *pPlayer );
-	void PerformRobotLayout( CUtlVector<CTFHudRobotDestruction_RobotIndicator *> const &vecRobots, int nTeam );
-	void SetPlayingToLabelVisible( bool bVisible );
-	void UpdateCarriedFlagStatus( CBasePlayer *pNewOwner, CCaptureFlag *pFlag );
+	virtual void FireGameEvent( IGameEvent *pEvent ) OVERRIDE;
+
+	void ReinitializeEverything();
+	
 	void UpdateRobotElements();
-	void UpdateStolenFlagStatus( int nTeam, CCaptureFlag *pFlag );
-	void UpdateStolenPoints( int nTeam, vgui::EditablePanel *pContainer );
-
 private:
+	void PaintPDPlayerScore( const CTFPlayer* pPlayer );
 
-	class CProgressPanel : public vgui::ImagePanel, public CGameEventListener
+	void UpdateStolenPoints( int nTeam, EditablePanel* pContainer );
+	void UpdateCarriedFlagStatus( C_BasePlayer *pNewOwner, C_BaseEntity *pFlag );
+	void UpdateStolenFlagStatus( int nTeam, C_BaseEntity *pFlag );
+	void PerformRobotLayout( RobotVector_t& vecRobots, int nTeam );
+	void SetPlayingToLabelVisible( bool bVisible );
+	void UpdateTeamRobotCounts();
+	
+	int					m_nStealLeftEdge;
+	int					m_nStealRightEdge;
+	KeyValues			*m_pRobotIndicatorKVs;
+	CExLabel			*m_pPlayingTo;
+	vgui::Panel			*m_pPlayingToBG;
+	RobotVector_t		m_vecRedRobots;
+	RobotVector_t		m_vecBlueRobots;
+	EditablePanel		*m_pCarriedContainer;
+	vgui::ImagePanel	*m_pCarriedImage;
+	EditablePanel		*m_pScoreContainer;
+	EditablePanel		*m_pProgressBarsContainer;
+	EditablePanel		*m_pBlueStolenContainer;
+	EditablePanel		*m_pBlueDroppedPanel;
+	EditablePanel		*m_pRedStolenContainer;
+	EditablePanel		*m_pRedDroppedPanel;
+	EditablePanel		*m_pBlueScoreValueContainer;
+	EditablePanel		*m_pRedScoreValueContainer;
+	EditablePanel		*m_pCountdownContainer;	 // used in the player destruction .res file
+	CTFImagePanel		*m_pTeamLeaderImage;
+	bool				m_bPlayingRD;
+
+	class CProgressPanel : public ImagePanel, public CGameEventListener
 	{
-		DECLARE_CLASS_SIMPLE( CProgressPanel, vgui::ImagePanel );
+		DECLARE_CLASS_SIMPLE( CProgressPanel, ImagePanel );
 	public:
 
 		CProgressPanel( vgui::Panel *parent, const char *name );
-
+		
 		virtual void ApplySettings( KeyValues *inResourceData ) OVERRIDE;
-		virtual void FireGameEvent( IGameEvent *pEvent ) OVERRIDE;
-		virtual void OnTick() OVERRIDE;
 		virtual void PaintBackground() OVERRIDE;
+		virtual void OnTick() OVERRIDE;
+		virtual void FireGameEvent( IGameEvent * pEvent ) OVERRIDE;
 
-		void CalculateSize()
-		{
-			int nProgressWidth = m_nWide - m_nRightOffset - m_nLeftOffset;
-			m_flXPos = m_bLeftToRight ? m_nX : ( 1.f - m_flCurrentProgress ) * nProgressWidth + m_nX;
-			m_flWidth = m_flCurrentProgress * nProgressWidth;
+		void SetProgress( float flProgress, bool bInstant = false );
+		void Blink();
+		void SetApproachSpeed( float flApproachSpeed ) { m_flApproachSpeed = flApproachSpeed; }
+		void SetColor( const Color& c ) { m_StandardColor = c; }
+	private:
+		void CaptureBounds();
+		void CalculateSize();
 
-			SetBounds( m_flXPos, m_nY, m_flWidth, m_nTall );
-		}
-
-		void SetProgress( float flProgress )
-		{
-			if ( m_flEndProgress != flProgress )
-			{
-				vgui::ivgui()->AddTickSignal( GetVPanel(), 0 );
-				m_flLastTick = gpGlobals->curtime;
-			}
-
-			m_flEndProgress = flProgress;
-		}
-
-		int m_nX;
-		int m_nY;
-		int m_nWide;
-		int m_nTall;
-
-		float m_flXPos;
 		float m_flWidth;
-		float m_flLastScoreUpdate;
+		float m_flXpos;
+		int m_nXOrg;
+		int m_nYOrg;
+		int m_nWideOrg;
+		int m_nTallOrg;
+		float m_flLastScoreTime;
 		float m_flCurrentProgress;
 		float m_flEndProgress;
 		float m_flLastTick;
@@ -165,46 +191,22 @@ private:
 		CPanelAnimationVar( float, m_flBlinkRate, "blink_rate", "3.f" );
 	};
 
-	KeyValues *m_pRobotIndicatorSettings;
-
-	CUtlVector<CTFHudRobotDestruction_RobotIndicator *> m_vecRedRobots;
-	CUtlVector<CTFHudRobotDestruction_RobotIndicator *> m_vecBlueRobots;
-
-	CHandle<CCaptureFlag> m_hRedFlag;
-	CHandle<CCaptureFlag> m_hBlueFlag;
-
-	bool m_bInRobotDestruction;
-
-	CExLabel *m_pPlayingTo;
-	vgui::Panel *m_pPlayingToBG;
-	vgui::EditablePanel *m_pCarriedContainer;
-	vgui::ImagePanel *m_pCarriedImage;
-	vgui::EditablePanel *m_pScoreContainer;
-	vgui::EditablePanel *m_pProgressBarsContainer;
-	vgui::EditablePanel *m_pBlueStolenContainer;
-	vgui::EditablePanel *m_pBlueDroppedPanel;
-	vgui::EditablePanel *m_pRedStolenContainer;
-	vgui::EditablePanel *m_pRedDroppedPanel;
-	vgui::EditablePanel *m_pBlueScoreValueContainer;
-	vgui::EditablePanel *m_pRedScoreValueContainer;
-	vgui::EditablePanel *m_pCountdownContainer;
-	CTFImagePanel *m_pTeamLeaderImage;
 	CProgressPanel *m_pCarriedFlagProgressBar;
-	vgui::EditablePanel *m_pRedVictoryPanel;
+	EditablePanel  *m_pRedVictoryPanel;
 	CProgressPanel *m_pRedProgressBar;
 	CProgressPanel *m_pRedProgressBarEscrow;
-	vgui::EditablePanel *m_pBlueVictoryPanel;
+	EditablePanel  *m_pBlueVictoryPanel;
 	CProgressPanel *m_pBlueProgressBar;
 	CProgressPanel *m_pBlueProgressBarEscrow;
+	CHandle< CCaptureFlag > m_hRedFlag;
+	CHandle< CCaptureFlag > m_hBlueFlag;
 
-	int	m_nStealLeftEdge;
-	int	m_nStealRightEdge;
 	CPanelAnimationVarAliasType( int, m_nStealLeftEdgeOffset, "left_steal_edge_offset", "25", "proportional_int" );
 	CPanelAnimationVarAliasType( int, m_nStealRightEdgeOffset, "right_steal_edge_offset", "100", "proportional_int" );
-	CPanelAnimationVarAliasType( int, m_iRobotXOffset, "robot_x_offset", "6", "proportional_int" );
+	CPanelAnimationVarAliasType( int, m_iRobotXOffset, "robot_x_offset", "6", "proportional_int");
 	CPanelAnimationVarAliasType( int, m_iRobotYOffset, "robot_y_offset", "25", "proportional_int" );
-	CPanelAnimationVarAliasType( int, m_iRobotXStep, "robot_x_step", "5", "proportional_int" );
-	CPanelAnimationVarAliasType( int, m_iRobotYStep, "robot_y_step", "0", "proportional_int" );
+	CPanelAnimationVarAliasType( int, m_iRobotXStep, "robot_x_step", "5", "proportional_int");
+	CPanelAnimationVarAliasType( int, m_iRobotYStep, "robot_y_step", "0", "proportional_int");
 
 	CPanelAnimationVar( Color, m_ColorBlue, "color_blue", "0 0 255 255" );
 	CPanelAnimationVar( Color, m_ColorRed, "color_red", "255 0 0 255" );
@@ -213,4 +215,5 @@ private:
 	CPanelAnimationVar( Color, m_TextColor, "text_color", "255 255 255 255" );
 };
 
-#endif
+#endif	// TF_HUD_ROBOT_DESTRUCTION_STATUS_H
+

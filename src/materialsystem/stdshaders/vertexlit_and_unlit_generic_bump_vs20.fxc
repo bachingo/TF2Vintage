@@ -10,9 +10,6 @@
 //	DYNAMIC: "SKINNING"					"0..1"
 //  DYNAMIC: "MORPHING"					"0..1" [vs30]
 //  DYNAMIC: "NUM_LIGHTS"				"0..2" [vs20]
-//  DYNAMIC: "CASCADED_SHADOW"			"0..1"  [vs30]
-
-// SKIP: ($CASCADED_SHADOW) && ($FLASHLIGHT)
 
 // If using static control flow on Direct3D, we should use the NUM_LIGHTS=0 combo
 //  SKIP: $USE_STATIC_CONTROL_FLOW && ( $NUM_LIGHTS > 0 ) [vs20]
@@ -26,13 +23,13 @@ const float4 cBaseTexCoordTransform[2]	 :  register( SHADER_SPECIFIC_CONST_0 );	
 const float4 cDetailTexCoordTransform[2] :  register( SHADER_SPECIFIC_CONST_4 );	// 4 & 5
 const float4x4 g_FlashlightWorldToTexture :  register( SHADER_SPECIFIC_CONST_6 );	// 6, 7, 8, 9
 
-#if defined(SHADER_MODEL_VS_3_0) && MORPHING
+#ifdef SHADER_MODEL_VS_3_0
 // NOTE: cMorphTargetTextureDim.xy = target dimensions,
 //		 cMorphTargetTextureDim.z = 4tuples/morph
 const float3 cMorphTargetTextureDim			: register( SHADER_SPECIFIC_CONST_10 );
 const float4 cMorphSubrect					: register( SHADER_SPECIFIC_CONST_11 );
 
-sampler2D morphSampler : register( D3DVERTEXTEXTURESAMPLER0, s0 );
+sampler2D morphSampler : register( s0 );
 #endif
 
 
@@ -60,7 +57,7 @@ struct VS_INPUT
 	// Position and normal/tangent deltas
 	float3 vPosFlex			: POSITION1;
 	float3 vNormalFlex		: NORMAL1;
-#if defined(SHADER_MODEL_VS_3_0) && MORPHING
+#ifdef SHADER_MODEL_VS_3_0
 	float vVertexID			: POSITION2;
 #endif
 };
@@ -79,7 +76,7 @@ struct VS_OUTPUT
 	// Stuff that is seen by the pixel shader
 
 	float4 baseTexCoord2_tangentSpaceVertToEyeVectorXY			: TEXCOORD0;
-	float4 lightAtten											: TEXCOORD1;
+	float3 lightAtten											: TEXCOORD1;
 	float4 worldVertToEyeVectorXYZ_tangentSpaceVertToEyeVectorZ	: TEXCOORD2;
 	float3 vWorldNormal											: TEXCOORD3;	// World-space normal
 	float4 vWorldTangent										: TEXCOORD4;
@@ -89,9 +86,10 @@ struct VS_OUTPUT
 	float3 vWorldBinormal										: TEXCOORD5;
 #endif
 	float4 worldPos_projPosZ									: TEXCOORD6;
-	float2 detailTexCoord										: TEXCOORD7;
+	float3 detailTexCoord_atten3								: TEXCOORD7;
+	float4 fogFactorW											: COLOR1;
 
-#if defined( _X360 ) && FLASHLIGHT || CASCADED_SHADOW
+#if defined( _X360 ) && FLASHLIGHT
 	float4 flashlightSpacePos									: TEXCOORD8;
 #endif
 };
@@ -147,8 +145,9 @@ VS_OUTPUT main( const VS_INPUT v )
 	o.vWorldBinormal.xyz = worldTangentT.xyz;
 #endif
 
+	o.fogFactorW = CalcFog( worldPos, vProjPos, g_FogType );
 #if !defined( _X360 )
-	o.fog = CalcFog( worldPos, vProjPos, g_FogType );
+	o.fog = o.fogFactorW;
 #endif
 
  	// Needed for water fog alpha and diffuse lighting
@@ -161,7 +160,8 @@ VS_OUTPUT main( const VS_INPUT v )
 	o.worldVertToEyeVectorXYZ_tangentSpaceVertToEyeVectorZ.xyz = normalize( cEyePos.xyz - worldPos.xyz );
 
 #if defined( SHADER_MODEL_VS_2_0 ) && ( !USE_STATIC_CONTROL_FLOW )
-	o.lightAtten.xyzw = float4(0,0,0,0);
+	o.lightAtten.xyz = float3(0,0,0);
+	o.detailTexCoord_atten3.z = 0.0f;
 	#if ( NUM_LIGHTS > 0 )
 		o.lightAtten.x = GetVertexAttenForLight( worldPos, 0, false );
 	#endif
@@ -172,14 +172,14 @@ VS_OUTPUT main( const VS_INPUT v )
 		o.lightAtten.z = GetVertexAttenForLight( worldPos, 2, false );
 	#endif
 	#if ( NUM_LIGHTS > 3 )
-		o.lightAtten.w = GetVertexAttenForLight( worldPos, 3, false );
+		o.detailTexCoord_atten3.z = GetVertexAttenForLight( worldPos, 3, false );
 	#endif
 #else
 	// Scalar light attenuation
 	o.lightAtten.x = GetVertexAttenForLight( worldPos, 0, true );
 	o.lightAtten.y = GetVertexAttenForLight( worldPos, 1, true );
 	o.lightAtten.z = GetVertexAttenForLight( worldPos, 2, true );
-	o.lightAtten.w = GetVertexAttenForLight( worldPos, 3, true );
+	o.detailTexCoord_atten3.z = GetVertexAttenForLight( worldPos, 3, true );
 #endif
 
 	// Base texture coordinate transform
@@ -187,10 +187,10 @@ VS_OUTPUT main( const VS_INPUT v )
 	o.baseTexCoord2_tangentSpaceVertToEyeVectorXY.y = dot( v.vTexCoord0, cBaseTexCoordTransform[1] );
 
 	// Detail texture coordinate transform
-	o.detailTexCoord.x = dot( v.vTexCoord0, cDetailTexCoordTransform[0] );
-	o.detailTexCoord.y = dot( v.vTexCoord0, cDetailTexCoordTransform[1] );
+	o.detailTexCoord_atten3.x = dot( v.vTexCoord0, cDetailTexCoordTransform[0] );
+	o.detailTexCoord_atten3.y = dot( v.vTexCoord0, cDetailTexCoordTransform[1] );
 
-#if defined( _X360 ) && FLASHLIGHT || CASCADED_SHADOW
+#if defined( _X360 ) && FLASHLIGHT
 	o.flashlightSpacePos = mul( float4( worldPos, 1.0f ), g_FlashlightWorldToTexture );
 #endif
 

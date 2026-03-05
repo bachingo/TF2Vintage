@@ -1,22 +1,14 @@
 // ALL SKIP STATEMENTS THAT AFFECT THIS SHADER!!!
-// ($CASCADED_SHADOW) && ($FLASHLIGHT)
-// ($CASCADED_SHADOW) && ($SEAMLESS_BASE)
-// ($CASCADED_SHADOW) && ($SEAMLESS_DETAIL)
-// $CASCADED_SHADOW && $VERTEXCOLOR
 // $USE_STATIC_CONTROL_FLOW && ( $NUM_LIGHTS > 0 )
 // ($SEPARATE_DETAIL_UVS) && ($SEAMLESS_DETAIL)
 // ($DONT_GAMMA_CONVERT_VERTEX_COLOR && ( ! $VERTEXCOLOR ) )
 // ($TREESWAY) && ($MORPHING)
+// ($TREESWAY) && ($TESSELLATION)
 // ( $TREESWAY ) && ( $SEAMLESS_DETAIL || $SEAMLESS_BASE )
 // defined $LIGHTING_PREVIEW && defined $FASTPATH && $LIGHTING_PREVIEW && $FASTPATH
 
-#ifndef VERTEXLIT_AND_UNLIT_GENERIC_VS20_H
-#define VERTEXLIT_AND_UNLIT_GENERIC_VS20_H
-
-#include "shaderapi/ishaderapi.h"
-#include "shaderapi/ishadershadow.h"
-#include "materialsystem/imaterialvar.h"
-
+#pragma once
+#include "shaderlib/cshader.h"
 class vertexlit_and_unlit_generic_vs20_Static_Index
 {
 	unsigned int m_nVERTEXCOLOR : 2;
@@ -132,7 +124,7 @@ public:
 #endif	// _DEBUG
 	}
 
-	vertexlit_and_unlit_generic_vs20_Static_Index( IShaderShadow* pShaderShadow, IMaterialVar** params )
+	vertexlit_and_unlit_generic_vs20_Static_Index(  )
 	{
 		m_nVERTEXCOLOR = 0;
 		m_nCUBEMAP = 0;
@@ -161,6 +153,9 @@ public:
 	int GetIndex() const
 	{
 		Assert( m_bVERTEXCOLOR && m_bCUBEMAP && m_bHALFLAMBERT && m_bFLASHLIGHT && m_bSEAMLESS_BASE && m_bSEAMLESS_DETAIL && m_bSEPARATE_DETAIL_UVS && m_bUSE_STATIC_CONTROL_FLOW && m_bDONT_GAMMA_CONVERT_VERTEX_COLOR && m_bTREESWAY );
+		AssertMsg( !( m_nSEPARATE_DETAIL_UVS && m_nSEAMLESS_DETAIL ), "Invalid combo combination ( SEPARATE_DETAIL_UVS && SEAMLESS_DETAIL )" );
+		AssertMsg( !( m_nDONT_GAMMA_CONVERT_VERTEX_COLOR && !m_nVERTEXCOLOR ), "Invalid combo combination ( DONT_GAMMA_CONVERT_VERTEX_COLOR && !VERTEXCOLOR )" );
+		AssertMsg( !( m_nTREESWAY && ( m_nSEAMLESS_DETAIL || m_nSEAMLESS_BASE ) ), "Invalid combo combination ( TREESWAY && ( SEAMLESS_DETAIL || SEAMLESS_BASE ) )" );
 		return ( 384 * m_nVERTEXCOLOR ) + ( 768 * m_nCUBEMAP ) + ( 1536 * m_nHALFLAMBERT ) + ( 3072 * m_nFLASHLIGHT ) + ( 6144 * m_nSEAMLESS_BASE ) + ( 12288 * m_nSEAMLESS_DETAIL ) + ( 24576 * m_nSEPARATE_DETAIL_UVS ) + ( 49152 * m_nUSE_STATIC_CONTROL_FLOW ) + ( 98304 * m_nDONT_GAMMA_CONVERT_VERTEX_COLOR ) + ( 196608 * m_nTREESWAY ) + 0;
 	}
 };
@@ -261,7 +256,7 @@ public:
 #endif	// _DEBUG
 	}
 
-	vertexlit_and_unlit_generic_vs20_Dynamic_Index( IShaderDynamicAPI* pShaderAPI )
+	vertexlit_and_unlit_generic_vs20_Dynamic_Index(  )
 	{
 		m_nCOMPRESSED_VERTS = 0;
 		m_nDYNAMIC_LIGHT = 0;
@@ -292,5 +287,3 @@ public:
 
 #define shaderDynamicTest_vertexlit_and_unlit_generic_vs20 vsh_forgot_to_set_dynamic_COMPRESSED_VERTS + vsh_forgot_to_set_dynamic_DYNAMIC_LIGHT + vsh_forgot_to_set_dynamic_STATIC_LIGHT_VERTEX + vsh_forgot_to_set_dynamic_STATIC_LIGHT_LIGHTMAP + vsh_forgot_to_set_dynamic_DOWATERFOG + vsh_forgot_to_set_dynamic_SKINNING + vsh_forgot_to_set_dynamic_LIGHTING_PREVIEW + vsh_forgot_to_set_dynamic_NUM_LIGHTS
 
-
-#endif	// VERTEXLIT_AND_UNLIT_GENERIC_VS20_H

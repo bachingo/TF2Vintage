@@ -1,45 +1,48 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_defend_point.h
+// Move to and defend current point from capture
+// Michael Booth, February 2009
+
 #ifndef TF_BOT_DEFEND_POINT_H
 #define TF_BOT_DEFEND_POINT_H
-#ifdef _WIN32
-#pragma once
-#endif
 
-
-#include "NextBotBehavior.h"
+#include "Path/NextBotPathFollow.h"
 #include "Path/NextBotChasePath.h"
 
-class CTFBotDefendPoint : public Action<CTFBot>
+class CTFBotDefendPoint : public Action< CTFBot >
 {
 public:
-	CTFBotDefendPoint();
-	virtual ~CTFBotDefendPoint();
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
+	virtual ActionResult< CTFBot >	OnResume( CTFBot *me, Action< CTFBot > *interruptingAction );
 
-	virtual const char *GetName() const OVERRIDE;
+	virtual EventDesiredResult< CTFBot > OnContact( CTFBot *me, CBaseEntity *other, CGameTrace *result = NULL );
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
-	virtual ActionResult<CTFBot> OnResume( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
+	virtual EventDesiredResult< CTFBot > OnStuck( CTFBot *me );
+	virtual EventDesiredResult< CTFBot > OnMoveToSuccess( CTFBot *me, const Path *path );
+	virtual EventDesiredResult< CTFBot > OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType reason );
 
-	virtual EventDesiredResult<CTFBot> OnContact( CTFBot *me, CBaseEntity *other, CGameTrace *trace ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnMoveToSuccess( CTFBot *me, const Path *path ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType fail ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnStuck( CTFBot *me ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnTerritoryContested( CTFBot *me, int territoryID ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnTerritoryCaptured( CTFBot *me, int territoryID ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnTerritoryLost( CTFBot *me, int territoryID ) OVERRIDE;
+	virtual EventDesiredResult< CTFBot > OnTerritoryContested( CTFBot *me, int territoryID );
+	virtual EventDesiredResult< CTFBot > OnTerritoryCaptured( CTFBot *me, int territoryID );
+	virtual EventDesiredResult< CTFBot > OnTerritoryLost( CTFBot *me, int territoryID );
+
+	virtual const char *GetName( void ) const	{ return "DefendPoint"; };
 
 private:
-	bool IsPointThreatened( CTFBot *actor );
-	CTFNavArea *SelectAreaToDefendFrom( CTFBot *actor );
-	bool WillBlockCapture( CTFBot *actor ) const;
+	PathFollower m_path;				// for moving to a defense position
+	ChasePath m_chasePath;				// for chasing enemies
 
-	PathFollower m_PathFollower;
-	ChasePath m_ChasePath;
-	CountdownTimer m_pathRecomputeTimer;
-	CountdownTimer unk2;
-	CountdownTimer m_reselectDefenseAreaTimer;
-	CTFNavArea *m_DefenseArea;
-	bool m_bShouldRoam;
+	CountdownTimer m_repathTimer;
+	CountdownTimer m_lookAroundTimer;
+	CountdownTimer m_idleTimer;
+
+	CTFNavArea *m_defenseArea;
+	CTFNavArea *SelectAreaToDefendFrom( CTFBot *me );
+
+	bool IsPointThreatened( CTFBot *me );
+	bool WillBlockCapture( CTFBot *me ) const;
+	bool m_isAllowedToRoam;
 };
 
-#endif
+
+#endif // TF_BOT_DEFEND_POINT_H

@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Engineer's Dispenser
 //
@@ -12,18 +12,74 @@
 #endif
 
 #include "tf_obj.h"
+#include "triggers.h"
 
 class CTFPlayer;
 
-enum
+#define DISPENSER_MAX_HEALTH	150
+
+#define DISPENSER_MINI_MAX_HEALTH	100
+#define DISPENSER_MINI_MAX_LEVEL	1
+#define DISPENSER_MINI_HEAL_RATE	10.0 
+#define DISPENSER_MINI_AMMO_RATE	0.2 
+#define DISPENSER_MINI_AMMO_THINK	0.5
+
+#define SF_DISPENSER_IGNORE_LOS					(SF_BASEOBJ_INVULN<<1)
+#define SF_DISPENSER_DONT_HEAL_DISGUISED_SPIES	(SF_BASEOBJ_INVULN<<2)	
+
+// ------------------------------------------------------------------------ //
+// Repair Trigger
+// ------------------------------------------------------------------------ //
+class CDispenserTouchTrigger : public CBaseTrigger
 {
-	DISPENSER_LEVEL_1 = 0,
-	DISPENSER_LEVEL_2,
-	DISPENSER_LEVEL_3,
+	DECLARE_CLASS( CDispenserTouchTrigger, CBaseTrigger );
+
+public:
+	CDispenserTouchTrigger() {}
+
+	void Spawn( void )
+	{
+		BaseClass::Spawn();
+		AddSpawnFlags( SF_TRIGGER_ALLOW_CLIENTS );
+		InitTrigger();
+	}
+
+	virtual void StartTouch( CBaseEntity *pEntity )
+	{
+		if ( PassesTriggerFilters( pEntity ) )
+		{
+			CBaseEntity *pParent = GetOwnerEntity();
+
+			if ( pParent )
+			{
+				pParent->StartTouch( pEntity );
+			}
+		}
+	}
+
+	virtual void EndTouch( CBaseEntity *pEntity )
+	{
+		if ( PassesTriggerFilters( pEntity ) )
+		{
+			CBaseEntity *pParent = GetOwnerEntity();
+
+			if ( pParent )
+			{
+				pParent->EndTouch( pEntity );
+			}
+		}
+	}
 };
 
-#define SF_IGNORE_LOS	0x0004
-#define SF_NO_DISGUISED_SPY_HEALING	0x0008
+// Ground placed version
+#define DISPENSER_MODEL_PLACEMENT		"models/buildables/dispenser_blueprint.mdl"
+#define DISPENSER_MODEL_BUILDING		"models/buildables/dispenser.mdl"
+#define DISPENSER_MODEL					"models/buildables/dispenser_light.mdl"
+#define DISPENSER_MODEL_BUILDING_LVL2	"models/buildables/dispenser_lvl2.mdl"
+#define DISPENSER_MODEL_LVL2			"models/buildables/dispenser_lvl2_light.mdl"
+#define DISPENSER_MODEL_BUILDING_LVL3	"models/buildables/dispenser_lvl3.mdl"
+#define DISPENSER_MODEL_LVL3			"models/buildables/dispenser_lvl3_light.mdl"
+
 
 // ------------------------------------------------------------------------ //
 // Resupply object that's built by the player
@@ -40,112 +96,148 @@ public:
 
 	static CObjectDispenser* Create(const Vector &vOrigin, const QAngle &vAngles);
 
-	virtual void	Spawn();
-	virtual void	GetControlPanelInfo( int nPanelIndex, const char *&pPanelName );
-	virtual void	Precache();
-	virtual bool	ClientCommand( CTFPlayer *pPlayer, const CCommand &args );
+	virtual void	Spawn() OVERRIDE;
+	virtual void	FirstSpawn( void ) OVERRIDE;
+	virtual void	GetControlPanelInfo( int nPanelIndex, const char *&pPanelName ) OVERRIDE;
+	virtual void	Precache() OVERRIDE;
 
-	virtual void	DetonateObject( void );
+	virtual void	DetonateObject( void ) OVERRIDE;
+	virtual void	DestroyObject( void ) OVERRIDE;		// Silent cleanup
+
 	virtual void	OnGoActive( void );	
-	virtual bool	StartBuilding( CBaseEntity *pBuilder );
-	virtual void	InitializeMapPlacedObject( void );
-	virtual int		DrawDebugTextOverlays(void) ;
-	virtual void	SetModel( const char *pModel );
+	virtual void	StartPlacement( CTFPlayer *pPlayer ) OVERRIDE;
+	virtual bool	StartBuilding( CBaseEntity *pBuilder ) OVERRIDE;
+	virtual void	SetStartBuildingModel( void ) OVERRIDE;
+	virtual int		DrawDebugTextOverlays(void) OVERRIDE;
+	virtual void	SetModel( const char *pModel ) OVERRIDE;
+	virtual void	InitializeMapPlacedObject( void ) OVERRIDE;
+	virtual bool	ShouldBeMiniBuilding( CTFPlayer* pPlayer ) OVERRIDE;
 
-	void RefillThink( void );
-	void DispenseThink( void );
+	virtual bool	IsUpgrading( void ) const OVERRIDE { return ( m_iState == DISPENSER_STATE_UPGRADING ); }
+	virtual void	StartUpgrading( void ) OVERRIDE;
+	virtual void	FinishUpgrading( void ) OVERRIDE;
 
-	virtual float GetDispenserRadius( void );
-	virtual float GetHealRate( void );
-	virtual float GetAmmoRate( void );
+	virtual int		DispenseMetal( CTFPlayer *pPlayer );
+	virtual int		GetAvailableMetal( void ) const;
 
-	virtual int	DispenseMetal( CTFPlayer *pPlayer );
-	virtual int GetAvailableMetal( void ) const { return m_iAmmoMetal; }
+	virtual void RefillThink( void );
+	virtual void DispenseThink( void );
 
-	virtual void StartTouch( CBaseEntity *pOther );
-	virtual void EndTouch( CBaseEntity *pOther );
+	virtual void StartTouch( CBaseEntity *pOther ) OVERRIDE;
+	virtual void Touch( CBaseEntity *pOther ) OVERRIDE;
+	virtual void EndTouch( CBaseEntity *pOther ) OVERRIDE;
 
-	virtual int	ObjectCaps( void ) { return (BaseClass::ObjectCaps() | FCAP_IMPULSE_USE); }
+	virtual const char* GetBuildingModel( int iLevel );
+	virtual const char* GetFinishedModel( int iLevel );
+	virtual const char* GetPlacementModel();
 
-	virtual int GetBaseHealth( void );
+	virtual int	ObjectCaps( void ) OVERRIDE { return (BaseClass::ObjectCaps() | FCAP_IMPULSE_USE); }
 
 	virtual bool DispenseAmmo( CTFPlayer *pPlayer );
 
-	void StartHealing( CBaseEntity *pOther );
+	virtual void DropSpellPickup() { /* DO NOTHING */ }
+	virtual void DropDuckPickup() { /* DO NOTHING */ }
+	virtual void DispenseSouls() { /* Do nothing */}
+
+	virtual float GetHealRate() const;
+	virtual void StartHealing( CBaseEntity *pOther );
 	void StopHealing( CBaseEntity *pOther );
 
 	void AddHealingTarget( CBaseEntity *pOther );
-	void RemoveHealingTarget( CBaseEntity *pOther );
+	bool RemoveHealingTarget( CBaseEntity *pOther );
 	bool IsHealingTarget( CBaseEntity *pTarget );
 
 	bool CouldHealTarget( CBaseEntity *pTarget );
+	virtual float GetDispenserRadius( void );
+
 
 	Vector GetHealOrigin( void );
 
 	CUtlVector< EHANDLE >	m_hHealingTargets;
 
-	virtual bool	OnWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vector vecHitPos );
+	virtual void	MakeMiniBuilding( CTFPlayer* pPlayer ) OVERRIDE;
+	virtual void	MakeCarriedObject( CTFPlayer *pCarrier );
 
-	virtual bool	IsUpgrading( void ) const;
-	virtual int		GetMaxUpgradeLevel( void );
-	virtual char	*GetPlacementModel( void );
+	virtual int		GetBaseHealth( void ) { return DISPENSER_MAX_HEALTH; }
 
-	virtual void	MakeCarriedObject( CTFPlayer *pPlayer );
-	virtual void	DropCarriedObject( CTFPlayer *pPlayer );
+	virtual int		GetMaxUpgradeLevel( void ) OVERRIDE;
+
+	virtual int		GetMiniBuildingStartingHealth( void ) OVERRIDE { return DISPENSER_MINI_MAX_HEALTH; }
+
+	CBaseEntity		*GetTouchTrigger() const { return m_hTouchTrigger; }
+	void			DisableAmmoPickupSound() { m_bPlayAmmoPickupSound = false; }
+	void			DisableGenerateMetalSound() { m_bUseGenerateMetalSound = false; }
 
 private:
-
-	void StartUpgrading( void );
-	void FinishUpgrading( void );
-
+	virtual void PlayActiveSound();
 	void ResetHealingTargets( void );
 
-	virtual void PlayActiveSound( void );
-
 protected:
-	
+
+	// The regular and mini dispenser can be repaired
+	virtual bool CanBeRepaired() const OVERRIDE { return true; }
+
+	CNetworkVar( int, m_iState );
+	CNetworkVar( int, m_iAmmoMetal );
+	CNetworkVar( int, m_iMiniBombCounter );
+
+	bool m_bUseGenerateMetalSound;
+
 	// Entities currently being touched by this trigger
 	CUtlVector< EHANDLE >	m_hTouchingEntities;
 
-	CNetworkVar( int, m_iAmmoMetal );
-	CNetworkVar( bool, m_bStealthed );
-
-	bool m_bPlayRefillSound;
-	bool m_bPlayAmmoPickupSound;
-
-	// Time when the upgrade animation will complete
-	float m_flUpgradeCompleteTime;
-
 	float m_flNextAmmoDispense;
-	float m_flNextStealthThink;
 
-	bool m_bIsUpgrading;
+	bool m_bThrown;
 
+	string_t m_iszCustomTouchTrigger;
 	EHANDLE m_hTouchTrigger;
-	string_t m_szTriggerName;
 
 	DECLARE_DATADESC();
-};
-
-class CObjectCartDispenser : public CObjectDispenser
-{
-	DECLARE_CLASS( CObjectCartDispenser, CObjectDispenser );
-	DECLARE_DATADESC();
-
-public:
-	DECLARE_SERVERCLASS();
-
-	virtual int		GetMaxUpgradeLevel( void ) { return 1; }
-	virtual void	Spawn( void );
-	virtual bool	CanBeUpgraded( CTFPlayer *pPlayer ) { return false; }
-	virtual void	GetControlPanelInfo( int nPanelIndex, const char *&pPanelName ) { return; }
-	virtual void	SetModel( const char *pModel );
-	virtual void	OnGoActive( void );
 
 private:
 
-	CNetworkVar( int, m_iAmmoMetal );
+	CountdownTimer m_spellTimer;
+	CountdownTimer m_duckTimer;
+	CountdownTimer m_soulTimer;
 
+	float m_flPrevRadius;
+	bool m_bPlayAmmoPickupSound;
+};
+
+inline int CObjectDispenser::GetAvailableMetal( void ) const
+{
+	return m_iAmmoMetal;
+}
+
+
+//------------------------------------------------------------------------------
+class CObjectCartDispenser : public CObjectDispenser
+{
+	DECLARE_CLASS( CObjectCartDispenser, CObjectDispenser );
+
+public:
+	DECLARE_SERVERCLASS();
+	DECLARE_DATADESC();
+
+	CObjectCartDispenser();
+
+	virtual void Spawn( void );
+	virtual void OnGoActive( void );
+	virtual void GetControlPanelInfo( int nPanelIndex, const char *&pPanelName );
+
+	virtual int	DispenseMetal( CTFPlayer *pPlayer );
+	virtual void DropSpellPickup();
+	virtual void DropDuckPickup();
+	virtual void DispenseSouls() OVERRIDE;
+
+	virtual bool	CanBeUpgraded( CTFPlayer *pPlayer ){ return false; }
+	virtual void	SetModel( const char *pModel );
+
+	void InputFireHalloweenBonus( inputdata_t &inputdata );
+	void InputSetDispenserLevel( inputdata_t &inputdata );
+	void InputEnable( inputdata_t &inputdata );
+	void InputDisable( inputdata_t &inputdata );
 };
 
 #endif // TF_OBJ_DISPENSER_H

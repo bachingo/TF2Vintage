@@ -16,7 +16,8 @@ namespace discord {
 
 class StoreEvents final {
 public:
-    static void OnEntitlementCreate(void* callbackData, DiscordEntitlement* entitlement)
+    static void DISCORD_CALLBACK OnEntitlementCreate(void* callbackData,
+                                                     DiscordEntitlement* entitlement)
     {
         auto* core = reinterpret_cast<Core*>(callbackData);
         if (!core) {
@@ -27,7 +28,8 @@ public:
         module.OnEntitlementCreate(*reinterpret_cast<Entitlement const*>(entitlement));
     }
 
-    static void OnEntitlementDelete(void* callbackData, DiscordEntitlement* entitlement)
+    static void DISCORD_CALLBACK OnEntitlementDelete(void* callbackData,
+                                                     DiscordEntitlement* entitlement)
     {
         auto* core = reinterpret_cast<Core*>(callbackData);
         if (!core) {
@@ -59,7 +61,7 @@ void StoreManager::FetchSkus(std::function<void(Result)> callback)
     internal_->fetch_skus(internal_, cb.release(), wrapper);
 }
 
-void StoreManager::CountSkus(int32_t* count)
+void StoreManager::CountSkus(std::int32_t* count)
 {
     if (!count) {
         return;
@@ -78,7 +80,7 @@ Result StoreManager::GetSku(Snowflake skuId, Sku* sku)
     return static_cast<Result>(result);
 }
 
-Result StoreManager::GetSkuAt(int32_t index, Sku* sku)
+Result StoreManager::GetSkuAt(std::int32_t index, Sku* sku)
 {
     if (!sku) {
         return Result::InternalError;
@@ -103,7 +105,7 @@ void StoreManager::FetchEntitlements(std::function<void(Result)> callback)
     internal_->fetch_entitlements(internal_, cb.release(), wrapper);
 }
 
-void StoreManager::CountEntitlements(int32_t* count)
+void StoreManager::CountEntitlements(std::int32_t* count)
 {
     if (!count) {
         return;
@@ -123,7 +125,7 @@ Result StoreManager::GetEntitlement(Snowflake entitlementId, Entitlement* entitl
     return static_cast<Result>(result);
 }
 
-Result StoreManager::GetEntitlementAt(int32_t index, Entitlement* entitlement)
+Result StoreManager::GetEntitlementAt(std::int32_t index, Entitlement* entitlement)
 {
     if (!entitlement) {
         return Result::InternalError;

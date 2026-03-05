@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -30,9 +30,12 @@ public:
 
 	virtual void	CreateTrails( void );
 	virtual const char *GetTrailParticleName( void );
+	bool			IsCritical() const { return m_bCritical; }
 
 private:
 	bool	m_bCritical;
+
+	CNewParticleEffect	*pEffect;
 };
 
 #endif // C_TF_PROJECTILE_ROCKET_H

@@ -32,12 +32,6 @@
 #define MINIMUM_TICK_INTERVAL   (0.001)
 #define MAXIMUM_TICK_INTERVAL	(0.1)
 
-#define DEFAULT_CLIENT_TICK_INTERVAL	(0.015)		// 15 msec is the default
-#define MINIMUM_CLIENT_TICK_INTERVAL   (0.001)
-#define MAXIMUM_CLIENT_TICK_INTERVAL	(0.1)
-
-#define DEFAULT_XBOX_CLIENT_VPHYSICS_TICK	0.025	// 25ms ticks on xbox ragdolls
-
 // This is the max # of players the engine can handle
 #define ABSOLUTE_PLAYER_LIMIT 255  // not 256, so we can send the limit as a byte 
 #define ABSOLUTE_PLAYER_LIMIT_DW	( (ABSOLUTE_PLAYER_LIMIT/32) + 1 )
@@ -80,12 +74,13 @@
 #define SIGNED_GUID_LEN 32 // Hashed CD Key (32 hex alphabetic chars + 0 terminator )
 
 // Used for networking ehandles.
-#define NUM_ENT_ENTRY_BITS		(MAX_EDICT_BITS + 1)
+#define NUM_ENT_ENTRY_BITS		(MAX_EDICT_BITS + 2)
 #define NUM_ENT_ENTRIES			(1 << NUM_ENT_ENTRY_BITS)
-#define ENT_ENTRY_MASK			(NUM_ENT_ENTRIES - 1)
 #define INVALID_EHANDLE_INDEX	0xFFFFFFFF
 
-#define NUM_SERIAL_NUM_BITS		(32 - NUM_ENT_ENTRY_BITS)
+#define NUM_SERIAL_NUM_BITS		16 // (32 - NUM_ENT_ENTRY_BITS)
+#define NUM_SERIAL_NUM_SHIFT_BITS (32 - NUM_SERIAL_NUM_BITS)
+#define ENT_ENTRY_MASK			(( 1 << NUM_SERIAL_NUM_BITS) - 1)
 
 
 // Networked ehandles use less bits to encode the serial number.

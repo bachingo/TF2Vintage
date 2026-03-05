@@ -1,93 +1,95 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose:		
 //
-// $NoKeywords: $
+//
 //=============================================================================
 #include "cbase.h"
-#include "tf_bot.h"
-#include "tf_bot_mvm_engineer_teleport_spawn.h"
-#include "player_vs_environment/tf_population_manager.h"
-#include "player_vs_environment/tf_populators.h"
+#include "nav_mesh.h"
+#include "tf_player.h"
+#include "tf_obj.h"
+#include "tf_gamerules.h"
+#include "bot/tf_bot.h"
+#include "tf_obj_sentrygun.h"
+#include "bot/behavior/engineer/mvm_engineer/tf_bot_mvm_engineer_teleport_spawn.h"
+#include "bot/map_entities/tf_bot_hint_entity.h"
+#include "string_t.h"
 #include "tf_fx.h"
+#include "player_vs_environment/tf_population_manager.h"
 
-
-CTFBotMvMEngineerTeleportSpawn::CTFBotMvMEngineerTeleportSpawn( CBaseTFBotHintEntity *hint, bool non_silent )
+//---------------------------------------------------------------------------------------------
+CTFBotMvMEngineerTeleportSpawn::CTFBotMvMEngineerTeleportSpawn( CBaseTFBotHintEntity* pHint, bool bFirstTeleportSpawn )
 {
-	m_hintEntity = hint;
-	m_bNonSilent = non_silent;
-}
-
-CTFBotMvMEngineerTeleportSpawn::~CTFBotMvMEngineerTeleportSpawn()
-{
+	m_hintEntity = pHint;
+	m_bFirstTeleportSpawn = bFirstTeleportSpawn;
 }
 
 
-const char *CTFBotMvMEngineerTeleportSpawn::GetName() const
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotMvMEngineerTeleportSpawn::OnStart( CTFBot *me, Action< CTFBot > *priorAction )
 {
-	return "MvMEngineerTeleportSpawn";
-}
-
-
-ActionResult<CTFBot> CTFBotMvMEngineerTeleportSpawn::OnStart( CTFBot *me, Action<CTFBot> *priorAction )
-{
-	if ( !me->HasAttribute( CTFBot::AttributeType::TELEPORTTOHINT ) )
-		return Action<CTFBot>::Done( "Cannot teleport to hint with out Attributes TeleportToHint" );
-
-	return Action<CTFBot>::Continue();
-}
-
-ActionResult<CTFBot> CTFBotMvMEngineerTeleportSpawn::Update( CTFBot *me, float dt )
-{
-	if ( !m_ctPushAway.HasStarted() )
+	if ( !me->HasAttribute( CTFBot::TELEPORT_TO_HINT ) )
 	{
-		m_ctPushAway.Start( 0.1f );
-
-		if ( m_hintEntity != nullptr )
-		{
-			TFGameRules()->PushAllPlayersAway( this->m_hintEntity->GetAbsOrigin(),
-											   400.0f, 500.0f, TF_TEAM_RED, nullptr );
-		}
-
-		return Action<CTFBot>::Continue();
+		return Done( "Cannot teleport to hint with out Attributes TeleportToHint" );
 	}
 
-	if ( !m_ctPushAway.IsElapsed() )
-		return Action<CTFBot>::Continue();
+	return Continue();
+}
 
-	if ( m_hintEntity == nullptr )
-		return Action<CTFBot>::Done( "Cannot teleport to hint as m_hintEntity is NULL" );
 
-	Vector tele_pos = this->m_hintEntity->GetAbsOrigin();
-	QAngle tele_ang = this->m_hintEntity->GetAbsAngles();
-
-	me->Teleport( &tele_pos, &tele_ang, nullptr );
-
-	CPVSFilter filter( tele_pos );
-
-	TE_TFParticleEffect( filter, 0.0f, "teleported_blue", tele_pos, vec3_angle );
-	TE_TFParticleEffect( filter, 0.0f, "player_sparkles_blue", tele_pos, vec3_angle );
-
-	if ( m_bNonSilent )
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotMvMEngineerTeleportSpawn::Update( CTFBot *me, float interval )
+{
+	if ( !m_teleportDelay.HasStarted() )
 	{
-		TE_TFParticleEffect( filter, 0.0f, "teleported_mvm_bot", tele_pos, vec3_angle );
-		me->EmitSound( "Engineer.MvM_BattleCry07" );
-		m_hintEntity->EmitSound( "MvM.Robot_Engineer_Spawn" );
+		m_teleportDelay.Start( 0.1f );
+		if ( m_hintEntity )
+			TFGameRules()->PushAllPlayersAway( m_hintEntity->GetAbsOrigin(), 400, 500, TF_TEAM_RED );
+	}
+	else if ( m_teleportDelay.IsElapsed() )
+	{
+		if ( !m_hintEntity )
+			return Done( "Cannot teleport to hint as m_hintEntity is NULL" );
 
-		if ( g_pPopulationManager )
+		// teleport the engineer to the sentry spawn point
+		QAngle angles = m_hintEntity->GetAbsAngles();
+		Vector origin = m_hintEntity->GetAbsOrigin();
+		origin.z += 10.f; // move up off the around a little bit to prevent the engineer from getting stuck in the ground
+
+		me->Teleport( &origin, &angles, NULL );
+
+		CPVSFilter filter( origin );
+		TE_TFParticleEffect( filter, 0.0, "teleported_blue", origin, vec3_angle );
+		TE_TFParticleEffect( filter, 0.0, "player_sparkles_blue", origin, vec3_angle );
+
+		if ( m_bFirstTeleportSpawn )
 		{
-			CWave *pWave = g_pPopulationManager->GetCurrentWave();
-			if ( pWave != nullptr )
-			{
-				if ( pWave->m_nNumEngineersTeleportSpawned == 0 )
-					TFGameRules()->BroadcastSound( 255, "Announcer.MvM_First_Engineer_Teleport_Spawned" );
-				else
-					TFGameRules()->BroadcastSound( 255, "Announcer.MvM_Another_Engineer_Teleport_Spawned" );
+			// notify players that engineer's teleported into the map
+			TE_TFParticleEffect( filter, 0.0, "teleported_mvm_bot", origin, vec3_angle );
+			me->EmitSound( "Engineer.MVM_BattleCry07" );
+			m_hintEntity->EmitSound( "MVM.Robot_Engineer_Spawn" );
 
-				++pWave->m_nNumEngineersTeleportSpawned;
+			if ( g_pPopulationManager )
+			{
+				CWave *pWave = g_pPopulationManager->GetCurrentWave();
+				if ( pWave )
+				{
+					if ( pWave->NumEngineersTeleportSpawned() == 0 )
+					{
+						TFGameRules()->BroadcastSound( 255, "Announcer.MVM_First_Engineer_Teleport_Spawned" );
+					}
+					else
+					{
+						TFGameRules()->BroadcastSound( 255, "Announcer.MVM_Another_Engineer_Teleport_Spawned" );
+					}
+
+					pWave->IncrementEngineerTeleportSpawned();
+				}
 			}
 		}
+
+		return Done( "Teleported" );
 	}
 
-	return Action<CTFBot>::Done( "Teleported" );
+	return Continue();
 }
+

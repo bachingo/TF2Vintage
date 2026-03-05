@@ -1,786 +1,938 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Short Circuit.
+// Purpose: 
 //
 //=============================================================================
+
 #include "cbase.h"
 #include "tf_weapon_mechanical_arm.h"
-#include "tf_fx_shared.h"
-#include "tf_weaponbase_rocket.h"
-#include "particle_parse.h"
-// Client specific.
-#ifdef CLIENT_DLL
-#include "c_tf_player.h"
-#include "tf_viewmodel.h"
-#include "c_tf_viewmodeladdon.h"
-#include "iefx.h"
-#include "dlight.h"
-// Server specific.
-#else
+#include "in_buttons.h"
+
+#if !defined( CLIENT_DLL )
 #include "tf_player.h"
-#include "soundent.h"
-#include "tf_gamerules.h"
 #include "tf_gamestats.h"
 #include "ilagcompensationmanager.h"
-#include "effect_dispatch_data.h"
-#include "Sprite.h"
-#include "func_nogrenades.h"
-#endif
-
-// memdbgon must be the last include file in a .cpp file!!!
-#include "tier0/memdbgon.h"
-
-#ifdef CLIENT_DLL
-extern ConVar tf2v_muzzlelight;
+#include "particle_parse.h"
+#include "tf_fx.h"
+#include "tf_weapon_grenade_pipebomb.h"
+#include "tf_team.h"
+#include "tf_passtime_logic.h"
+#include "tf_gamerules.h"
 #else
-extern ConVar tf_debug_damage;
+#include "c_tf_player.h"
 #endif
-extern ConVar tf2v_use_new_short_circuit;
 
-#define TF_WEAPON_MECHANICALARM_MODEL	"models/empty.mdl"
-#define TF_WEAPON_MECHANICALARM_RADIUS	80.0f
+
+
+//=============================================================================
+//
+// tables.
+//
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFMechanicalArm, DT_TFMechanicalArm )
 
 BEGIN_NETWORK_TABLE( CTFMechanicalArm, DT_TFMechanicalArm )
 END_NETWORK_TABLE()
 
-#if defined( CLIENT_DLL )
 BEGIN_PREDICTION_DATA( CTFMechanicalArm )
 END_PREDICTION_DATA()
-#endif
 
 LINK_ENTITY_TO_CLASS( tf_weapon_mechanical_arm, CTFMechanicalArm );
 PRECACHE_WEAPON_REGISTER( tf_weapon_mechanical_arm );
 
-BEGIN_DATADESC( CTFMechanicalArm )
-END_DATADESC()
 
-#define AMMO_PROJECTILE_SHOCK 15
-#define AMMO_PROJECTILE_BALL 65
-#define AMMO_PROJECTILE_SHOCK_REFUND 5
+#define		AMMO_PER_PROJECTILE_SHOCK		5
 
+const float tf_mecharm_orb_size = 100.f;
+const float tf_mecharm_orb_speed = 700.f;
+const int tf_mecharm_orb_cost = 65;
+const int tf_mecharm_orb_zap_targets = 2;
+const int tf_mecharm_orb_zap_damage = 15;
+const float tf_mecharm_orb_lifetime = 1.2f;
+
+
+//=============================================================================
+//
+// CTFMechanicalArm
+//
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  :  - 
+// Purpose:
 //-----------------------------------------------------------------------------
 CTFMechanicalArm::CTFMechanicalArm()
 {
+#ifdef CLIENT_DLL
+	m_pParticleBeamEffect = NULL;
+	m_pParticleBeamSpark = NULL;
+	m_pEffectOwner = NULL;
+#endif // CLIENT_DLL
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Input  :  - 
-//-----------------------------------------------------------------------------
 CTFMechanicalArm::~CTFMechanicalArm()
 {
 #ifdef CLIENT_DLL
-	StopParticleBeam();
-#endif
+	if ( m_pEffectOwner )
+	{
+		if ( m_pParticleBeamEffect )
+		{
+			m_pEffectOwner->ParticleProp()->StopEmissionAndDestroyImmediately( m_pParticleBeamEffect );
+			m_pParticleBeamEffect = NULL;
+		}
+
+		if ( m_pParticleBeamSpark )
+		{
+			m_pEffectOwner->ParticleProp()->StopEmissionAndDestroyImmediately( m_pParticleBeamSpark );
+			m_pParticleBeamSpark = NULL;
+		}
+
+		m_pEffectOwner = NULL;
+	}
+#endif // CLIENT_DLL
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFMechanicalArm::Precache( void )
+void CTFMechanicalArm::Precache()
 {
 	BaseClass::Precache();
-	PrecacheScriptSound( "TFPlayer.AirBlastImpact" );
+
+	PrecacheParticleSystem( "dxhr_arm_muzzleflash" );
+	PrecacheParticleSystem( "dxhr_arm_muzzleflash2" );
 	PrecacheParticleSystem( "dxhr_arm_impact" );
-	PrecacheParticleSystem( "dxhr_sniper_fizzle" );
+	PrecacheScriptSound( "Weapon_Upgrade.ExplosiveHeadshot" );
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
-void CTFMechanicalArm::Spawn( void )
+bool CTFMechanicalArm::ShockAttack( void )
 {
-	BaseClass::Spawn();
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( !pOwner )
+		return false;
+
+	if ( pOwner->GetWaterLevel() == WL_Eyes )
+		return false;
+
+	// Enough ammo to shock at least one target?
+	if ( pOwner->GetAmmoCount( m_iPrimaryAmmoType ) < tf_mecharm_orb_cost )
+		return false;
+
+#ifdef GAME_DLL
+	if ( pOwner->m_Shared.IsStealthed() )
+	{
+		pOwner->RemoveInvisibility();
+	}
+
+	// Remove the base cost for attempting to fire, regardless of what we hit
+	pOwner->RemoveAmmo( tf_mecharm_orb_cost, m_iPrimaryAmmoType );
+#endif
+
+	return true;
+}
+
+#ifdef GAME_DLL
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFMechanicalArm::IsValidVictim( CTFPlayer *pOwner, CBaseEntity *pTarget )
+{
+	if ( pTarget == NULL )
+		return false;
+
+	if ( pTarget == pOwner )
+		return false;
+
+	if ( pTarget->IsPlayer() && pTarget->GetTeamNumber() == TEAM_SPECTATOR )
+		return false;
+
+	if ( pTarget->GetTeamNumber() == pOwner->GetTeamNumber() )
+		return false;
+
+	if ( pTarget->IsPlayer() && !pTarget->IsAlive() )
+		return false;
+
+	if ( !pTarget->IsDeflectable() && !FClassnameIs( pTarget, "prop_physics" ) )
+		return false;
+
+	if ( pOwner->FVisible( pTarget, MASK_SOLID_BRUSHONLY ) == false )
+		return false;
+
+	if ( g_pPasstimeLogic && ( g_pPasstimeLogic->GetBall() == pTarget ) )
+		return false;
+
+	return true;
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
-void CTFMechanicalArm::PrimaryAttack()
+void CTFMechanicalArm::ShockVictim( CTFPlayer *pOwner, CBaseEntity *pTarget )
 {
-	m_bReloadedThroughAnimEvent = false;
+	// Projectile
+	if ( !pTarget->IsPlayer() )
+	{
+		pTarget->SetThink( &BaseClass::SUB_Remove );
+		pTarget->SetNextThink( gpGlobals->curtime );
+		pTarget->SetTouch( NULL );
+		pTarget->AddEffects( EF_NODRAW );
+		pTarget->RemoveFlag( FL_GRENADE );
+	}
+	
+	// deal damage
+	CTakeDamageInfo info;
+	info.SetDamageType( DMG_SHOCK );
+	info.SetAttacker( pOwner );
+	info.SetInflictor( this );
+	info.SetWeapon( this );
+	info.SetDamage( 20 );
+	info.SetDamagePosition( pTarget->WorldSpaceCenter() );
+	pTarget->TakeDamage( info );
 
-	CTFPlayer *pOwner = GetTFPlayerOwner();
+	// Achievement
+	CTFGrenadePipebombProjectile *pPipebomb = dynamic_cast<CTFGrenadePipebombProjectile*>( pTarget );
+	if ( pPipebomb && pPipebomb->HasStickyEffects() )
+	{
+		// If we are near a building, award achievement progress.
+		CTFTeam *pTeam = pOwner->GetTFTeam();
+		if ( pTeam )
+		{
+			for ( int j = 0; j < pTeam->GetNumObjects(); j++ )
+			{
+				CBaseObject *pTemp = pTeam->GetObject( j );
+				if ( pTemp && ( pTemp->ObjectType() != OBJ_ATTACHMENT_SAPPER ) )
+				{
+					if ( ( pTemp->GetAbsOrigin().DistTo( pPipebomb->GetAbsOrigin() ) < 100 ) &&
+						( pTemp->FVisible( pPipebomb, MASK_SOLID_BRUSHONLY ) ) )
+					{
+						pOwner->AwardAchievement( ACHIEVEMENT_TF_ENGINEER_DESTROY_STICKIES, 1 );
+						break; // Only one award per sticky.
+					}
+				}
+			}
+		}
+	}
+}
+#endif
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFMechanicalArm::SecondaryAttack( void )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
 	if ( !pOwner )
 		return;
 
-	if ( pOwner->GetWaterLevel() == WL_Eyes )
+	// Are we capable of firing again?
+	if ( m_flNextSecondaryAttack > gpGlobals->curtime )
 		return;
 
-	BaseClass::PrimaryAttack();
+	if ( m_iPrimaryAmmoType == TF_AMMO_METAL )
+	{
+		if ( ( GetAmmoPerShot() > GetOwner()->GetAmmoCount( m_iPrimaryAmmoType ) ) ||
+			( pOwner->GetWaterLevel() == WL_Eyes ) )
+		{
+			WeaponSound( EMPTY );
+			m_flNextSecondaryAttack = gpGlobals->curtime + 0.67f;
+			return;
+		}
+	}
 
-	Vector vecForward; 
-	QAngle angShot = pOwner->EyeAngles();
-	AngleVectors( angShot, &vecForward );
-	Vector vecSrc = pOwner->Weapon_ShootPosition();
-	Vector vecEnd = vecSrc + vecForward * m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flRange;
+	if ( !CanAttack() )
+		return;
 
-	trace_t tr;
-	UTIL_TraceLine(vecSrc, vecEnd, MASK_SOLID | CONTENTS_HITBOX, this, COLLISION_GROUP_PLAYER, &tr);
+	if ( ShockAttack() )
+	{
+		WeaponSound( SPECIAL3 );
+#ifdef GAME_DLL
+		Vector vecForward, vecRight, vecUp;
+		AngleVectors( pOwner->EyeAngles(), &vecForward, &vecRight, &vecUp );
+
+		float fRight = 8.f;
+		if ( IsViewModelFlipped() )
+		{
+			fRight *= -1;
+		}
+// 		Vector vecSrc = pOwner->Weapon_ShootPosition();
+// 		vecSrc = vecSrc + ( vecUp * -9.0f ) + ( vecRight * 7.0f ) + ( vecForward * 3.0f );
+		Vector vecSrc = pOwner->EyePosition()
+			+ ( vecForward * 40.f )
+			+ ( vecRight * 15.f )
+			+ ( vecUp * -10.f );
+
+		QAngle angForward = pOwner->EyeAngles();
+
+		trace_t trace;
+		Vector vecEye = pOwner->EyePosition();
+		CTraceFilterSimple traceFilter( this, COLLISION_GROUP_PROJECTILE );
+		UTIL_TraceHull( vecEye, vecSrc, -Vector( 8.f, 8.f, 8.f ), Vector( 8.f, 8.f, 8.f ), MASK_SOLID_BRUSHONLY, &traceFilter, &trace );
+		if ( !trace.DidHit() )
+		{
+			CTFProjectile_MechanicalArmOrb *pOrb = static_cast< CTFProjectile_MechanicalArmOrb* >( CBaseEntity::CreateNoSpawn( "tf_projectile_mechanicalarmorb", vecSrc, angForward, pOwner ) );
+			if ( pOrb )
+			{
+				pOrb->SetOwnerEntity( pOwner );
+				pOrb->SetLauncher( this );
+
+				Vector vForward;
+				AngleVectors( angForward, &vForward, NULL, NULL );
+
+				pOrb->SetAbsVelocity( vForward * tf_mecharm_orb_speed );
+
+				pOrb->ChangeTeam( pOwner->GetTeamNumber() );
+				pOrb->SetCritical( false );
+
+				DispatchSpawn( pOrb );
+			}
+		}
+#endif // GAME_DLL
+	}
+	else
+	{
+		WeaponSound( EMPTY );
+	}
 
 #ifdef CLIENT_DLL
-	C_BaseEntity *pEffectOwner = GetWeaponForEffect();
-	if ( pEffectOwner )
- 	{
-		m_pZap = pEffectOwner->ParticleProp()->Create( "dxhr_arm_muzzleflash", PATTACH_POINT_FOLLOW, "muzzle" );
-		if ( m_pZap )
-			m_pZap->SetControlPoint( 1, tr.endpos );
-
-		if ( pEffectOwner )
-			pEffectOwner->ParticleProp()->Create( "dxhr_sniper_fizzle", PATTACH_POINT_FOLLOW, "muzzle" );
-	}
+	// Play an effect on the client so they have some kind of visual feedback that something happened
+	int iParticleAttachment = LookupAttachment( "muzzle" );
+	CNewParticleEffect* pEffect = ParticleProp()->Create( "dxhr_sniper_fizzle", PATTACH_POINT_FOLLOW, iParticleAttachment );
+	ParticleProp()->AddControlPoint( pEffect, 1, this, PATTACH_POINT_FOLLOW, "muzzle" );
 #endif
+
+	SendWeaponAnim( ACT_VM_PRIMARYATTACK );
+
+	pOwner->SetAnimation( PLAYER_ATTACK1 );
+
+	m_flNextPrimaryAttack = gpGlobals->curtime + 0.67f;
+	m_flNextSecondaryAttack = gpGlobals->curtime + 0.67f;
 }
 
 #ifdef CLIENT_DLL
+void CTFMechanicalArm::OnDataChanged( DataUpdateType_t updateType )
+{
+	BaseClass::OnDataChanged( updateType );
+
+	UpdateParticleBeam();
+}
+
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CTFMechanicalArm::StopParticleBeam( void )
 {
-	ParticleProp()->StopEmission( m_pZap );
-	m_pZap = NULL;
+	if ( !m_pEffectOwner )
+		return;
+
+	// Different owners, kill the old effect
+	if ( m_pParticleBeamEffect )
+	{
+		m_pEffectOwner->ParticleProp()->StopEmissionAndDestroyImmediately( m_pParticleBeamEffect );
+		m_pParticleBeamEffect = NULL;
+	}
+
+	if ( m_pParticleBeamSpark )
+	{
+		m_pEffectOwner->ParticleProp()->StopEmissionAndDestroyImmediately( m_pParticleBeamSpark );
+		m_pParticleBeamSpark = NULL;
+	}
+
+	m_pEffectOwner = NULL;
 }
-#endif
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
-void CTFMechanicalArm::SecondaryAttack()
+void CTFMechanicalArm::UpdateParticleBeam()
 {
-	if ( tf2v_use_new_short_circuit.GetBool() )
-		LaunchElectricalBall();
-	else
-		LaunchElectricalShock();
+	// Update Particle
+	// If we are attacking, update the particle (make it render)
+	CTFPlayer *pFiringPlayer = ToTFPlayer( GetOwnerEntity() );
+	if ( !pFiringPlayer )
+	{
+		StopParticleBeam();
+		return;
+	}
+
+	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
+	C_BaseEntity *pEffectOwner = this;
+	if ( pLocalPlayer == pFiringPlayer )
+	{
+		pEffectOwner = pLocalPlayer->GetRenderedWeaponModel();
+		if ( !pEffectOwner )
+		{
+			StopParticleBeam();
+			return;
+		}
+	}
+
+	if ( m_pEffectOwner && m_pEffectOwner != pEffectOwner )
+	{
+		StopParticleBeam();
+		return;
+	}
+
+	if ( m_flNextSecondaryAttack > gpGlobals->curtime )
+	{
+		StopParticleBeam();
+		return;
+	}
+
+	m_pEffectOwner = pEffectOwner;
+
+	// Constantly perform the shock attack and update control points if attack is down and we've already fired
+	if ( pFiringPlayer 
+		&& pFiringPlayer->m_nButtons & IN_ATTACK 
+		&& pFiringPlayer->GetActiveWeapon() == this 
+		&& pFiringPlayer->GetWaterLevel() != WL_Eyes
+		&& pFiringPlayer->m_flNextAttack < gpGlobals->curtime )
+	{
+		trace_t tr;
+		Vector vecAiming;
+		pFiringPlayer->EyeVectors( &vecAiming );
+		Vector vecEnd = pFiringPlayer->EyePosition() + vecAiming * 256.0f;
+		UTIL_TraceLine( pFiringPlayer->EyePosition(), vecEnd, ( MASK_SHOT & ~CONTENTS_HITBOX ), pFiringPlayer, DMG_GENERIC, &tr );
+
+		// Line laser
+		if ( !m_pParticleBeamEffect )
+		{
+			const char *pszEffectName = "dxhr_arm_muzzleflash2";
+			m_pParticleBeamEffect = pEffectOwner->ParticleProp()->Create( pszEffectName, PATTACH_POINT_FOLLOW, "muzzle" );
+		}
+		if ( m_pParticleBeamEffect )
+		{
+			Vector vEndPos = tr.endpos - pFiringPlayer->GetAbsOrigin();
+			pEffectOwner->ParticleProp()->AddControlPoint( m_pParticleBeamEffect, 1, pFiringPlayer, PATTACH_ABSORIGIN_FOLLOW, NULL, vEndPos );
+		}
+
+		// Spark
+		if ( !m_pParticleBeamSpark && tr.m_pEnt && tr.m_pEnt->IsPlayer( ) )
+		{
+			m_pParticleBeamSpark = pEffectOwner->ParticleProp( )->Create( "dxhr_arm_impact", PATTACH_ABSORIGIN_FOLLOW );
+		}
+		else if ( m_pParticleBeamSpark && (!tr.m_pEnt || !tr.m_pEnt->IsPlayer() ) )
+		{
+			m_pEffectOwner->ParticleProp()->StopEmissionAndDestroyImmediately( m_pParticleBeamSpark );
+			m_pParticleBeamSpark = NULL;
+		}
+
+		if ( m_pParticleBeamSpark )
+		{
+			Vector vEndPos = tr.endpos - pFiringPlayer->GetAbsOrigin();
+			pEffectOwner->ParticleProp( )->AddControlPoint( m_pParticleBeamSpark, 1, pFiringPlayer, PATTACH_ABSORIGIN_FOLLOW, NULL, vEndPos );
+		}
+	}
+	else if ( m_pEffectOwner )
+	{
+		StopParticleBeam( );
+	}
 }
-
+#endif // CLIENT_DLL
 
 //-----------------------------------------------------------------------------
-// Purpose: Launches a straight electrical shock, destroying projectiles. Old Secondary.
+// Purpose:
 //-----------------------------------------------------------------------------
-void CTFMechanicalArm::LaunchElectricalShock()
+void CTFMechanicalArm::PrimaryAttack()
 {
-	m_bReloadedThroughAnimEvent = false;
-
-	CTFPlayer *pOwner = GetTFPlayerOwner();
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
 	if ( !pOwner )
 		return;
 
-	if ( pOwner->GetWaterLevel() >= WL_Eyes )
+	float flFireDelay = ApplyFireDelay( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay );
+
+	if ( m_iPrimaryAmmoType == TF_AMMO_METAL )
 	{
-		WeaponSound( EMPTY );
-		return;
-	}
-
-	if ( pOwner->GetAmmoCount( m_iPrimaryAmmoType ) < ( AMMO_PROJECTILE_SHOCK ) )
-	{
-		WeaponSound( EMPTY );
-		return;
-	}
-	
-	SendWeaponAnim( ACT_VM_PRIMARYATTACK );
-	WeaponSound( SPECIAL3 );
-
-	// Share our vector data.
-	// Client handles the visuals, server handles the damage.
-
-	Vector vecForward; 
-	QAngle angShot = pOwner->EyeAngles();
-	AngleVectors( angShot, &vecForward );
-	Vector vecSrc = pOwner->Weapon_ShootPosition();
-	Vector vecEnd = vecSrc + vecForward * m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flRange;
-
-	// Make a trace. This doesn't do anything for deleting projectiles but does damage + gives client a visual ending.
-	trace_t tr;
-	UTIL_TraceLine(vecSrc, vecEnd, MASK_SOLID, this, COLLISION_GROUP_DEBRIS, &tr);
-
-#ifdef GAME_DLL
-	pOwner->NoteWeaponFired();
-
-	pOwner->SpeakWeaponFire();
-	CTF_GameStats.Event_PlayerFiredWeapon( pOwner, false );
-
-	// Move other players back to history positions based on local player's lag
-	lagcompensation->StartLagCompensation(pOwner, pOwner->GetCurrentCommand());
-	
-	// Do a check on where we fire to see what we delete.
-	int nDeletedProjectiles = 0;
-	
-	// Set up a box around our shot.
-	Vector vecSize = Vector( 128, 128, 64 );
-	float flBlastDist = Max(Max(vecSize.x, vecSize.y), vecSize.z);
-	Vector vecOrigin = 	pOwner->EyePosition() + vecForward * flBlastDist;
-	
-	CBaseEntity *pList[64];
-	int count = UTIL_EntitiesInBox( pList, 64, vecOrigin - vecSize, vecOrigin + vecSize, FL_CLIENT|FL_GRENADE );
-	for ( int i = 0; i < count; i++ )
-	{
-		CBaseEntity *pEntity = pList[i];
-			
-		if ( !pEntity )
-			continue;
-
-		if ( pEntity == pOwner )
-			continue;
-
-		// Don't affect teammate projectiles.
-		if ( InSameTeam( pEntity ) )
-			continue;
-		
-		// Base projectile, delete it.
-		CBaseProjectile *pProj = dynamic_cast<CBaseProjectile *>( pList[i] );
-		if ( pProj )
+		if ( ( GetAmmoPerShot() > GetOwner()->GetAmmoCount( m_iPrimaryAmmoType ) ) ||
+			( pOwner->GetWaterLevel( ) == WL_Eyes ) )
 		{
-			pEntity->EmitSound("Weapon_BarretsArm.Fizzle");
-			UTIL_Remove(pEntity);
-			nDeletedProjectiles++;
-			continue;
-		}
-		
-		// Base grenade, delete it.
-		CBaseGrenade *pGren = dynamic_cast<CBaseGrenade *>(pList[i]);
-		if ( pGren )
-		{
-			pEntity->EmitSound("Weapon_BarretsArm.Fizzle");
-			UTIL_Remove(pEntity);
-			nDeletedProjectiles++;
-			continue;
+			WeaponSound( EMPTY );
+			m_flNextPrimaryAttack = gpGlobals->curtime + flFireDelay;
+			return;
 		}
 	}
 
-	lagcompensation->FinishLagCompensation( pOwner );
-	
-	int nAmmoCost = ( nDeletedProjectiles * AMMO_PROJECTILE_SHOCK_REFUND) - AMMO_PROJECTILE_SHOCK;
-	
-	// Refund our ammo if we blew up enough projectiles.
-	if (nAmmoCost > 0)
-		pOwner->GiveAmmo(nAmmoCost, m_iPrimaryAmmoType);
-	else if (nAmmoCost < 0)	// Deduct ammo.
-		pOwner->RemoveAmmo( nAmmoCost, m_iPrimaryAmmoType );
+	// Are we capable of firing again?
+	if ( m_flNextPrimaryAttack > gpGlobals->curtime )
+		return;
 
-#else
-	C_BaseEntity *pEffectOwner = GetWeaponForEffect();
-	if ( pEffectOwner )
- 	{
-		m_pZap = pEffectOwner->ParticleProp()->Create( "dxhr_arm_muzzleflash", PATTACH_POINT_FOLLOW, "muzzle" );
-		if ( m_pZap )
-			m_pZap->SetControlPoint( 1, tr.endpos );
-
-		if ( pEffectOwner )
-			pEffectOwner->ParticleProp()->Create( "dxhr_sniper_fizzle", PATTACH_POINT_FOLLOW, "muzzle" );
-	}
-#endif
-	// Fire rate is based on the primary fire delay.
-	float flDelay = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
-	CALL_ATTRIB_HOOK_FLOAT( flDelay, mult_postfiredelay );
-	m_flNextPrimaryAttack = m_flNextSecondaryAttack = gpGlobals->curtime + flDelay;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Launches an electrical ball that destroys projectiles. New Secondary.
-//-----------------------------------------------------------------------------
-void CTFMechanicalArm::LaunchElectricalBall()
-{
 	// Get the player owning the weapon.
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if ( !pOwner )
+	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
+	if ( !pPlayer )
 		return;
 
 	if ( !CanAttack() )
 		return;
 
-	if ( pOwner->GetWaterLevel() >= WL_Eyes )
-	{
-		WeaponSound( EMPTY );
-		return;
-	}
+#ifdef GAME_DLL
+	CTF_GameStats.Event_PlayerFiredWeapon( pPlayer, false );
 
-	if ( pOwner->GetAmmoCount( m_iPrimaryAmmoType ) < AMMO_PROJECTILE_BALL )
-	{
-		WeaponSound( EMPTY );
-		return;
-	}
+	int iAmmoPerShot = 0;
+	CALL_ATTRIB_HOOK_INT( iAmmoPerShot, mod_ammo_per_shot );
+	pOwner->RemoveAmmo( iAmmoPerShot, m_iPrimaryAmmoType );
+	
+	//int nAmmoToTake = bShocked ? 0 : GetAmmoPerShot();
+	//pOwner->RemoveAmmo( nAmmoToTake, m_iPrimaryAmmoType );
+
+	FireProjectile( pPlayer );
+#endif
+
+#ifdef CLIENT_DLL
+	// Play an effect on the client so they have some kind of visual feedback that something happened
+	int iParticleAttachment = LookupAttachment( "muzzle" );
+	CNewParticleEffect* pEffect = ParticleProp()->Create( "dxhr_sniper_fizzle", PATTACH_POINT_FOLLOW, iParticleAttachment );
+	ParticleProp()->AddControlPoint( pEffect, 1, this,  PATTACH_POINT_FOLLOW, "muzzle" );
+#endif
+
+	WeaponSound( SINGLE );
+
+	// Set the weapon mode.
+	m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
 
 	SendWeaponAnim( ACT_VM_PRIMARYATTACK );
-	WeaponSound( SPECIAL3 );
 
-#ifdef CLIENT_DLL
-	C_BaseEntity *pEffectOwner = GetWeaponForEffect();
-	if ( pEffectOwner )
- 	{
-		if ( pEffectOwner )
-			pEffectOwner->ParticleProp()->Create( "dxhr_sniper_fizzle", PATTACH_POINT_FOLLOW, "muzzle" );
+	pPlayer->SetAnimation( PLAYER_ATTACK1 );
+
+	// Set next attack times.
+	m_flNextPrimaryAttack = gpGlobals->curtime + flFireDelay;
+
+	SetWeaponIdleTime( gpGlobals->curtime + SequenceDuration() );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+int CTFMechanicalArm::GetAmmoPerShot( void )
+{
+	// Used by normal fire code, we only decrement ammo on ticks which uses an Attr
+	return 0;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFMechanicalArm::UpdateBodygroups( CBaseCombatCharacter* pOwner, int iState )
+{
+	if ( !pOwner )
+		return false;
+
+	iState = pOwner->GetActiveWeapon() == this;
+
+	bool res = BaseClass::UpdateBodygroups( pOwner, iState );
+
+	CTFPlayer *pTFOwner = ToTFPlayer( pOwner );
+	if ( pTFOwner )
+	{
+		CBaseViewModel *pVM = pTFOwner->GetViewModel();
+		if ( pVM )
+		{
+			pVM->SetBodygroup( 1, iState );
+		}
 	}
-#else
-	pOwner->NoteWeaponFired();
 
-	pOwner->SpeakWeaponFire();
-	CTF_GameStats.Event_PlayerFiredWeapon( pOwner, false );
-
-	// Move other players back to history positions based on local player's lag
-	lagcompensation->StartLagCompensation(pOwner, pOwner->GetCurrentCommand());
-
-
-	// Launch a ball.
-	CTFProjectile_MechanicalArmOrb::Create(this, pOwner->Weapon_ShootPosition(), pOwner->EyeAngles(), pOwner, pOwner);
-
-	CSoundEnt::InsertSound( SOUND_COMBAT, GetAbsOrigin(), SOUNDENT_VOLUME_MACHINEGUN, 1.0, pOwner, SOUNDENT_CHANNEL_WEAPON );
-
-	lagcompensation->FinishLagCompensation( pOwner );
-#endif
-
-	pOwner->RemoveAmmo( AMMO_PROJECTILE_BALL, m_iPrimaryAmmoType );
-
-	m_flNextPrimaryAttack = m_flNextSecondaryAttack = gpGlobals->curtime + 0.5f;
+	return res;
 }
 
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
-void CTFMechanicalArm::PlayWeaponShootSound( void )
-{
-	WeaponSound( SINGLE );
-}
-
-
-#ifdef CLIENT_DLL
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFMechanicalArm::OnDataChanged( DataUpdateType_t updateType )
-{
-	BaseClass::OnDataChanged( updateType );
-
-	if ( !m_bInAttack )
-		StopParticleBeam();
-}
-#endif
-
-//=============================================================================
-//
-// Orb projectile.
-//
-
-BEGIN_DATADESC( CTFProjectile_MechanicalArmOrb )
-END_DATADESC()
-
-LINK_ENTITY_TO_CLASS( tf_projectile_energyorb, CTFProjectile_MechanicalArmOrb );
-PRECACHE_REGISTER( tf_projectile_energyorb );
-
 IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_MechanicalArmOrb, DT_TFProjectile_MechanicalArmOrb )
 BEGIN_NETWORK_TABLE( CTFProjectile_MechanicalArmOrb, DT_TFProjectile_MechanicalArmOrb )
 END_NETWORK_TABLE()
 
+LINK_ENTITY_TO_CLASS( tf_projectile_mechanicalarmorb, CTFProjectile_MechanicalArmOrb );
+PRECACHE_WEAPON_REGISTER( tf_projectile_mechanicalarmorb );
+
+const char *pszParticleRed = "dxhr_lightningball_parent_red";
+const char *pszParticleBlue = "dxhr_lightningball_parent_blue";
+
 //-----------------------------------------------------------------------------
-// Purpose: Constructor
+// Purpose:
 //-----------------------------------------------------------------------------
 CTFProjectile_MechanicalArmOrb::CTFProjectile_MechanicalArmOrb()
 {
-
+#ifdef CLIENT_DLL
+	m_pTrailParticle = NULL;
+#endif // CLIENT_DLL
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Destructor
+// Purpose:
 //-----------------------------------------------------------------------------
 CTFProjectile_MechanicalArmOrb::~CTFProjectile_MechanicalArmOrb()
 {
 #ifdef CLIENT_DLL
-	ParticleProp()->StopEmissionAndDestroyImmediately( m_pOrb );
-	ParticleProp()->StopEmissionAndDestroyImmediately( m_pOrbLightning );
-	m_pOrb = NULL;
-	m_pOrbLightning = NULL;
-#else
-	m_bCollideWithTeammates = false;
-#endif
+	if ( m_pTrailParticle )
+	{
+		ParticleProp()->StopEmissionAndDestroyImmediately( m_pTrailParticle );
+		m_pTrailParticle = NULL;
+	}
+#endif // CLIENT_DLL
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Spawn function
-//-----------------------------------------------------------------------------
-void CTFProjectile_MechanicalArmOrb::Spawn()
-{
-	SetModel( TF_WEAPON_MECHANICALARM_MODEL );
-	BaseClass::Spawn();
-	SetMoveType( MOVETYPE_FLY, MOVECOLLIDE_FLY_CUSTOM );
-	AddEFlags( EFL_NO_WATER_VELOCITY_CHANGE );
-	SetGravity( 0.0f );
-
-	SetSolid( SOLID_NONE );
-	SetSolidFlags( FSOLID_NOT_SOLID );
-	SetCollisionGroup( COLLISION_GROUP_NONE );
-
-	m_takedamage = DAMAGE_NO;
-
-#ifdef GAME_DLL
-	float flRadius = 0.01f;
-	UTIL_SetSize( this, -Vector( flRadius, flRadius, flRadius ), Vector( flRadius, flRadius, flRadius ) );
-	m_flDetonateTime = gpGlobals->curtime + 2.0f;
-
-	// Setup the think function.
-	SetThink( &CTFProjectile_MechanicalArmOrb::OrbThink );
-	SetNextThink( gpGlobals->curtime + 0.15f );
-#endif
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: 
 //-----------------------------------------------------------------------------
 void CTFProjectile_MechanicalArmOrb::Precache()
 {
-	PrecacheModel( TF_WEAPON_MECHANICALARM_MODEL );
+	BaseClass::Precache();
+	
+	PrecacheModel( "models/weapons/w_models/w_drg_ball.mdl" );
+	PrecacheParticleSystem( pszParticleRed );
+	PrecacheParticleSystem( pszParticleBlue );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFProjectile_MechanicalArmOrb::Spawn()
+{
+	BaseClass::Spawn();
+
+	SetModel( "models/weapons/w_models/w_drg_ball.mdl" );
 
 #ifdef GAME_DLL
-	PrecacheModel( NOGRENADE_SPRITE );
-#endif
+	SetSolid( SOLID_BBOX );
+	SetMoveType( MOVETYPE_FLY, MOVECOLLIDE_FLY_CUSTOM );
+	SetSolidFlags( FSOLID_TRIGGER | FSOLID_NOT_SOLID );
+	SetRenderMode( kRenderTransAlpha );
+	SetRenderColorA( 1 );
+ 	CollisionProp()->SetCollisionBounds( Vector( -1.f, -1.f, -1.f ), Vector( 1.f, 1.f, 1.f ) );
+	SetCollisionGroup( TFCOLLISION_GROUP_ROCKET_BUT_NOT_WITH_OTHER_ROCKETS );
+	
+	AddEFlags( EFL_NO_WATER_VELOCITY_CHANGE );
+	AddEffects( EF_NOSHADOW );
+	SetGravity( 0.f );
+	SetTouch( &CTFBaseRocket::RocketTouch );
+	AddFlag( FL_GRENADE );
 
-	PrecacheTeamParticles( "dxhr_lightningball_parent_%s" );
-	PrecacheTeamParticles( "dxhr_lightningball_hit_%s" );
-	PrecacheParticleSystem( "drg_cow_explosioncore_normal" );
-	PrecacheParticleSystem( "drg_cow_explosioncore_normal_blue" );
-
-	PrecacheScriptSound( "Halloween.spell_lightning_impact" );
-	PrecacheScriptSound( "Weapon_BarretsArm.Fizzle" );
-
-	BaseClass::Precache();
+	SetContextThink( &CTFProjectile_MechanicalArmOrb::OrbThink, gpGlobals->curtime, "OrbThink" );
+	SetContextThink( &CTFProjectile_MechanicalArmOrb::ExplodeAndRemove, gpGlobals->curtime + tf_mecharm_orb_lifetime, "ExplodeAndRemoveThink" );
+	m_flOrbNextAttackTime = -1.f;
+#endif // GAME_DLL
 }
 
 #ifdef GAME_DLL
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-CTFProjectile_MechanicalArmOrb *CTFProjectile_MechanicalArmOrb::Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, CBaseEntity *pScorer )
+bool CTFProjectile_MechanicalArmOrb::ShouldProjectileIgnore( CBaseEntity *pOther )
 {
-	CTFProjectile_MechanicalArmOrb *pOrb = static_cast<CTFProjectile_MechanicalArmOrb*>(CBaseEntity::CreateNoSpawn("tf_projectile_energyorb", vecOrigin, vecAngles, pOwner));
+	Assert( pOther );
+	if ( !pOther )
+		return true;
 
-	if ( pOrb )
-	{
-		// Set team.
-		pOrb->ChangeTeam( pOwner->GetTeamNumber() );
+	if ( pOther->IsWorld() )
+		return false;
 
-		// Set scorer.
-		pOrb->SetScorer( pScorer );
+	if ( GetOwnerEntity() == pOther )
+		return true;
 
-		// Set firing weapon.
-		pOrb->SetLauncher( pWeapon );
+	if ( !pOther->IsSolid() || pOther->IsSolidFlagSet( FSOLID_VOLUME_CONTENTS ) )
+		return true;
 
-		// Spawn.
-		DispatchSpawn( pOrb );
+	if ( pOther->GetCollisionGroup() == TFCOLLISION_GROUP_RESPAWNROOMS )
+		return true;
 
-		// Setup the initial velocity.
-		Vector vecForward, vecRight, vecUp;
-		AngleVectors( vecAngles, &vecForward, &vecRight, &vecUp );
+	if ( pOther->IsFuncLOD() )
+		return true;
 
-		float flVelocity = 800;
-		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flVelocity, mult_projectile_speed );
+	const trace_t *pTrace = &CBaseEntity::GetTouchTrace();
+	if ( pTrace->surface.flags & CONTENTS_LADDER )
+		return true;
 
-		Vector vecVelocity = vecForward * flVelocity;
-		pOrb->SetAbsVelocity( vecVelocity );
-		pOrb->SetupInitialTransmittedGrenadeVelocity( vecVelocity );
+	if ( !ShouldTouchNonWorldSolid( pOther, pTrace ) )
+		return true;
 
-		// Setup the initial angles.
-		QAngle angles;
-		VectorAngles( vecVelocity, angles );
-		pOrb->SetAbsAngles( angles );
-		
-		float flGravity = 0.0f;
-		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flGravity, mod_rocket_gravity );
-
-		return pOrb;
-	}
-
-	return pOrb;
+	return false;
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Think method
-//-----------------------------------------------------------------------------
-void CTFProjectile_MechanicalArmOrb::OrbThink( void )
-{
-	if ( tf_debug_damage.GetBool() )
-		NDebugOverlay::Sphere( GetAbsOrigin(), GetAbsAngles(), TF_WEAPON_MECHANICALARM_RADIUS, 0, 255, 0, 0, false, 0 );
-
-	SetNextThink( gpGlobals->curtime + 0.15f );
-
-	if ( gpGlobals->curtime > m_flDetonateTime )
-	{
-		ExplodeAndRemove();
-		return;
-	}
-
-	CheckForPlayers();
-	CheckForProjectiles();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFProjectile_MechanicalArmOrb::CheckForPlayers( void )
-{
- 	CBaseEntity *pEntity = NULL;
- 	for ( CEntitySphereQuery sphere( GetAbsOrigin(), TF_WEAPON_MECHANICALARM_RADIUS ); ( pEntity = sphere.GetCurrentEntity() ) != NULL; sphere.NextEntity() )
-	{
-		if ( !pEntity )
-			continue;
-
-		if ( InSameTeam( pEntity ) )
-			continue;
-
- 		Vector vecHitPoint;
-		pEntity->CollisionProp()->CalcNearestPoint( GetAbsOrigin(), &vecHitPoint );
-		Vector vecDir = vecHitPoint - GetAbsOrigin();
- 		if ( vecDir.LengthSqr() < ( TF_WEAPON_MECHANICALARM_RADIUS * TF_WEAPON_MECHANICALARM_RADIUS ) && ( ( pEntity->IsCombatCharacter() || pEntity->ClassMatches( "prop_physics" ) || pEntity->ClassMatches( "item_item_crate" ) ) ) && pEntity->m_takedamage == DAMAGE_YES )
-		{
-			EHANDLE hOther = pEntity;
-			m_hZapTargets.AddToTail( hOther );
-			ZapPlayer( pEntity );
-		}
-		else
-		{
-			EHANDLE hOther = pEntity;
-			m_hZapTargets.FindAndRemove( hOther );
-		}
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFProjectile_MechanicalArmOrb::CheckForProjectiles( void )
-{
- 	CBaseEntity *pEntity = NULL;
- 	for ( CEntitySphereQuery sphere( GetAbsOrigin(), TF_WEAPON_MECHANICALARM_RADIUS ); ( pEntity = sphere.GetCurrentEntity() ) != NULL; sphere.NextEntity() )
-	{
-		if ( !pEntity )
-			continue;
-
-		if ( InSameTeam( pEntity ) )
-			continue;
-
- 		Vector vecHitPoint;
-		pEntity->CollisionProp()->CalcNearestPoint( GetAbsOrigin(), &vecHitPoint );
-		Vector vecDir = vecHitPoint - GetAbsOrigin();
- 		if ( vecDir.LengthSqr() < ( TF_WEAPON_MECHANICALARM_RADIUS * TF_WEAPON_MECHANICALARM_RADIUS ) )
-		{
-			// epic collide
-			CTFProjectile_MechanicalArmOrb *pOrb = dynamic_cast<CTFProjectile_MechanicalArmOrb *>( pEntity );
-			if ( pOrb )
-				ExplodeAndRemove();
-
-			// delete
-			CBaseProjectile *pProj = dynamic_cast<CBaseProjectile *>( pEntity );
-			if (pProj)
-			{
-				EHANDLE hOther = pProj;
-				m_hZapTargets.AddToTail(hOther);
-				CSprite *pGlowSprite = CSprite::SpriteCreate(NOGRENADE_SPRITE, pProj->GetAbsOrigin(), false);
-				if (pGlowSprite)
-				{
-					pGlowSprite->SetTransparency(kRenderGlow, 255, 255, 255, 255, kRenderFxFadeFast);
-					pGlowSprite->SetThink(&CSprite::SUB_Remove);
-					pGlowSprite->SetNextThink(gpGlobals->curtime + 0.25);
-				}
-				pEntity->EmitSound("Weapon_BarretsArm.Fizzle");
-				UTIL_Remove(pEntity);
-			}
-		}
-		else
-		{
-			EHANDLE hOther = pEntity;
-			m_hZapTargets.FindAndRemove( hOther );
-		}
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CTFProjectile_MechanicalArmOrb::RocketTouch( CBaseEntity *pOther )
 {
-	// Verify a correct "other."
-	Assert( pOther );
+	if ( pOther->IsPlayer() )
+		return;
 
-	if ( pOther->IsSolidFlagSet( FSOLID_TRIGGER | FSOLID_VOLUME_CONTENTS ) )
+	const trace_t *pTrace = &CBaseEntity::GetTouchTrace();
+	if ( pTrace->surface.flags & SURF_SKY )
 	{
-		if ( !pOther->ClassMatches( "entity_medigun_shield" ) )
-			return;
+		UTIL_Remove( this );
+		return;
 	}
 
+	if ( ShouldProjectileIgnore( pOther ) )
+		return;
+
+	// End if we run into something
 	ExplodeAndRemove();
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
-void CTFProjectile_MechanicalArmOrb::Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir )
+void CTFProjectile_MechanicalArmOrb::ExplodeAndRemove( void )
 {
-	// Get rocket's speed.
-	float flVel = GetAbsVelocity().Length();
+	// Particle
+	const char *pszParticleName = ( GetTeamNumber() == TF_TEAM_BLUE ) ? "drg_cow_explosioncore_normal_blue" : "drg_cow_explosioncore_normal";
 
-	QAngle angForward;
-	VectorAngles( vecDir, angForward );
+	CPVSFilter filter( GetAbsOrigin() );
+	TE_TFParticleEffect( filter, 0.f, pszParticleName, GetAbsOrigin(), vec3_angle );
 
-	// Now change rocket's direction.
-	SetAbsAngles( angForward );
-	SetAbsVelocity( vecDir * flVel );
+	EmitSound( filter, entindex(), "Halloween.spell_lightning_impact" );
 
-	// And change owner.
-	IncremenentDeflected();
-	SetOwnerEntity( pDeflectedBy );
-	ChangeTeam( pDeflectedBy->GetTeamNumber() );
-	SetScorer( pDeflectedBy );
+	// Go out with a bang
+	CheckForPlayers( 16 );
+
+#ifdef CLIENT_DLL
+	if ( m_pTrailParticle )
+	{
+		ParticleProp()->StopEmissionAndDestroyImmediately( m_pTrailParticle );
+		m_pTrailParticle = NULL;
+	}
+#endif // CLIENT_DLL
+
+	SetContextThink( &CBaseGrenade::SUB_Remove, gpGlobals->curtime, "RemoveThink" );
+	return;
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Called when we've collided with another entity
+// Purpose:
 //-----------------------------------------------------------------------------
-void CTFProjectile_MechanicalArmOrb::ZapPlayer( /*CTakeDamageInfo const&, trace_t *pTrace,*/ CBaseEntity *pOther )
+void CTFProjectile_MechanicalArmOrb::ZapPlayer( const CTakeDamageInfo &info, trace_t *pTrace, CTFPlayer *pTFPlayer )
 {
-	m_hEnemy = pOther;
+	if ( !pTrace )
+		return;
 
-	// Damage.
-	CBaseEntity *pAttacker = GetOwnerEntity();
-	IScorer *pScorerInterface = dynamic_cast<IScorer*>( pAttacker );
-	if ( pScorerInterface )
-		pAttacker = pScorerInterface->GetScorer();
+	if ( !pTFPlayer )
+		return;
 
-	float flDamage = 15;
+	// Shoot a beam at them
+	CPVSFilter filter( pTFPlayer->WorldSpaceCenter() );
+	Vector vStart = WorldSpaceCenter();
+	Vector vEnd = pTFPlayer->EyePosition();
+	const char *pszHitEffect = ( GetTeamNumber() == TF_TEAM_BLUE ) ? "dxhr_lightningball_hit_blue" : "dxhr_lightningball_hit_red";
+	te_tf_particle_effects_control_point_t controlPoint = { PATTACH_ABSORIGIN, vEnd };
+	TE_TFParticleEffectComplex( filter, 0.0f, pszHitEffect, vStart, QAngle( 0, 0, 0 ), NULL, &controlPoint, pTFPlayer, PATTACH_CUSTOMORIGIN );
 
-	CTakeDamageInfo info( GetOwnerEntity(), pAttacker, m_hLauncher.Get(), flDamage, DMG_DISSOLVE, TF_DMG_CUSTOM_PLASMA );
-	pOther->TakeDamage( info );
-	info.SetReportedPosition( pAttacker->GetAbsOrigin() );	
-	EmitSound( "Halloween.spell_lightning_impact" );
-
+	// Hurt 'em.
+	Vector dir;
+	AngleVectors( GetAbsAngles(), &dir );
+	pTFPlayer->DispatchTraceAttack( info, dir, pTrace );
 	ApplyMultiDamage();
 }
 
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-CBasePlayer *CTFProjectile_MechanicalArmOrb::GetScorer(void)
+void CTFProjectile_MechanicalArmOrb::CheckForPlayers( int nNumToZap )
 {
-	return dynamic_cast<CBasePlayer *>(m_Scorer.Get());
+	CTFPlayer *pTFOwner = ToTFPlayer( GetOwnerEntity() );
+	if ( !pTFOwner )
+		return;
+
+	CTakeDamageInfo info;
+	info.SetAttacker( pTFOwner );
+	info.SetInflictor( this );
+	info.SetWeapon( GetLauncher() );
+	info.SetDamage( tf_mecharm_orb_zap_damage );
+	info.SetDamageCustom( TF_DMG_CUSTOM_PLASMA );
+	info.SetDamagePosition( GetAbsOrigin() );
+	info.SetDamageType( DMG_SHOCK );
+
+	CBaseEntity *pListOfEntities[5];
+	int iEntities = UTIL_EntitiesInSphere( pListOfEntities, 5, GetAbsOrigin(), tf_mecharm_orb_size, FL_CLIENT | FL_FAKECLIENT | FL_NPC );
+
+	// Shuffle the list
+	for ( int i = iEntities - 1; i > 0; --i )
+	{
+		V_swap( pListOfEntities[i], pListOfEntities[RandomInt( 0, i )] );
+	}
+
+	CTraceFilterIgnoreTeammates tracefilter( this, COLLISION_GROUP_NONE, GetTeamNumber() );
+
+	// Zap as many targets as we're told to, if we can
+	int nHits = 0;
+	for ( int i = 0; i < iEntities && nHits < nNumToZap; ++i )
+	{
+		CBaseEntity* pTarget = pListOfEntities[i];
+		if ( !pTarget )
+			continue;
+
+		if ( !pTarget->IsAlive() )
+			continue;
+
+		if ( pTFOwner->InSameTeam( pTarget ) )
+			continue;
+
+		if ( !FVisible( pTarget, MASK_OPAQUE ) )
+			continue;
+
+		CTFPlayer *pTFPlayer = ToTFPlayer( pTarget );
+		if ( pTFPlayer )
+		{
+			if ( pTFPlayer->m_Shared.InCond( TF_COND_PHASE ) || pTFPlayer->m_Shared.InCond( TF_COND_PASSTIME_INTERCEPTION ) )
+				continue;
+
+			if ( pTFPlayer->m_Shared.IsInvulnerable() )
+				continue;
+		}
+
+		trace_t trace;
+		UTIL_TraceLine( GetAbsOrigin(), pTarget->GetAbsOrigin(), ( MASK_SHOT & ~( CONTENTS_HITBOX ) ), &tracefilter, &trace );
+		if ( trace.DidHitWorld() )
+			continue;
+
+		ZapPlayer( info, &trace, pTFPlayer );
+		++nHits;
+	}
+
+	// We zapped someone.  Play a sound
+	if ( nHits > 0 )
+	{
+		EmitSound( "TFPlayer.MedicChargedDeath" );
+
+		// If the owner is close, zap them too -- to punish shoot-the-floor patterns
+		if ( ( pTFOwner->GetAbsOrigin() - GetAbsOrigin() ).LengthSqr() < Square( 80.f ) )
+		{
+			trace_t trace;
+			UTIL_TraceLine( GetAbsOrigin(), pTFOwner->GetAbsOrigin(), ( MASK_SHOT & ~( CONTENTS_HITBOX ) ), &tracefilter, &trace );
+			ZapPlayer( info, &trace, pTFOwner );
+		}
+	}
+
+	m_flOrbNextAttackTime = gpGlobals->curtime + 0.15f;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CTFProjectile_MechanicalArmOrb::SetScorer( CBaseEntity *pScorer )
+void CTFProjectile_MechanicalArmOrb::CheckForProjectiles( void )
 {
-	m_Scorer = pScorer;
+	const int nMaxEnts = 16;
+	const float flRadius = tf_mecharm_orb_size * 1.5f;	// Bloat it a little
+
+	Vector vecPos = GetAbsOrigin();
+	CBaseEntity	*pObjects[nMaxEnts];
+	int nCount = UTIL_EntitiesInSphere( pObjects, nMaxEnts, vecPos, flRadius, FL_GRENADE );
+
+	//NDebugOverlay::Sphere( vecPos, flRadius, 0, 255, 0, false, 0.35f );
+
+	CTFPlayer *pTFOwner = ToTFPlayer( GetOwnerEntity() );
+
+	bool bAnnihilate = false;
+
+	// Destroy projectiles along the way
+	for ( int i = 0; i < nCount; i++ )
+	{
+		if ( !pObjects[i] )
+			continue;
+
+		if ( pObjects[i] == this )
+			continue;
+
+		if ( pObjects[i]->InSameTeam( this ) )
+			continue;
+
+		if ( pObjects[i]->GetAbsOrigin().DistToSqr( GetAbsOrigin() ) > Square( tf_mecharm_orb_size ) )
+			continue;
+
+		if ( !FVisible( pObjects[i], MASK_SOLID ) )
+			continue;
+
+		CBaseProjectile *pProjectile = dynamic_cast< CBaseProjectile* >( pObjects[i] );
+		if ( pProjectile && pProjectile->IsDestroyable( true ) )
+		{
+			CPVSFilter filter( WorldSpaceCenter() );
+			const char *pszHitEffect = ( GetTeamNumber() == TF_TEAM_BLUE ) ? "dxhr_lightningball_hit_blue" : "dxhr_lightningball_hit_red";
+			te_tf_particle_effects_control_point_t controlPoint = { PATTACH_ABSORIGIN, pObjects[i]->GetAbsOrigin() };
+			TE_TFParticleEffectComplex( filter, 0.0f, pszHitEffect, WorldSpaceCenter(), QAngle( 0, 0, 0 ), NULL, &controlPoint, pProjectile, PATTACH_CUSTOMORIGIN );
+
+			EmitSound( "Weapon_Upgrade.ExplosiveHeadshot" );
+
+			// If we touch another orb, then we need to annihilate.  Destroy the other orb, and also destroy ourselves
+			CTFProjectile_MechanicalArmOrb* pOtherOrb = dynamic_cast< CTFProjectile_MechanicalArmOrb* >( pProjectile );
+			if ( pOtherOrb )
+			{
+				pOtherOrb->ExplodeAndRemove();
+				bAnnihilate = true;
+			}
+			else
+			{
+				pProjectile->Destroy( true, false );
+			}
+
+			if ( pTFOwner )
+			{
+				CTF_GameStats.Event_PlayerAwardBonusPoints( pTFOwner, NULL, 2 );
+			}
+		}
+	}
+
+	// We hit another orb.  Destroy ourselves
+	if ( bAnnihilate )
+	{
+		ExplodeAndRemove();
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFProjectile_MechanicalArmOrb::OrbThink( void )
+{
+	if ( gpGlobals->curtime >= m_flOrbNextAttackTime )
+	{
+		CheckForPlayers( tf_mecharm_orb_zap_targets );
+	}
+
+	CheckForProjectiles();
+
+	SetContextThink( &CTFProjectile_MechanicalArmOrb::OrbThink, gpGlobals->curtime + 0.1f, "OrbThink" );
 }
 #endif
 
+#ifdef CLIENT_DLL
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFProjectile_MechanicalArmOrb::ExplodeAndRemove( void )
-{
-	// Invisible.
-	SetModelName( NULL_STRING );
-	AddSolidFlags( FSOLID_NOT_SOLID );
-	m_takedamage = DAMAGE_NO;
-
-#ifdef CLIENT_DLL
-	if ( GetTeamNumber() == TF_TEAM_RED )
-		DispatchParticleEffect( "drg_cow_explosioncore_normal", WorldSpaceCenter(), vec3_angle );
-	else
-		DispatchParticleEffect( "drg_cow_explosioncore_normal_blue", WorldSpaceCenter(), vec3_angle );
-#endif
-	EmitSound( "Halloween.spell_lightning_impact" );
-
-#ifdef GAME_DLL
-	// Remove.
-	UTIL_Remove( this );
-	if ( tf_debug_damage.GetBool() )
-		NDebugOverlay::Sphere( GetAbsOrigin(), GetAbsAngles(), TF_WEAPON_MECHANICALARM_RADIUS, 0, 100, 0, 0, false, 1 );
-#endif
-}
-
-#ifdef CLIENT_DLL
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void C_TFProjectile_MechanicalArmOrb::OnDataChanged( DataUpdateType_t updateType )
+void CTFProjectile_MechanicalArmOrb::OnDataChanged( DataUpdateType_t updateType )
 {
 	BaseClass::OnDataChanged( updateType );
 
 	if ( updateType == DATA_UPDATE_CREATED )
 	{
+		m_iTeamNumPrev = GetTeamNumber();
 		CreateTrails();
-		CreateLightEffects();
 	}
-
-	/*if ( m_pOrbLightning )
+	else if ( updateType == DATA_UPDATE_DATATABLE_CHANGED )
 	{
-		for ( int i = 0; i < m_hZapTargets.Count(); i++ )
+		if ( m_iTeamNumPrev != GetTeamNumber() )
 		{
-			C_BaseEntity *pTarget = m_hZapTargets[i].Get();
-			if ( pTarget )
-				m_pOrbLightning->SetControlPoint( 1, pTarget->WorldSpaceCenter() );
-			else
-				m_pOrbLightning->SetControlPoint( 1, GetAbsOrigin() );
-		}
-	}*/
-}
+			m_iTeamNumPrev = GetTeamNumber();
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void C_TFProjectile_MechanicalArmOrb::CreateTrails( void )
-{
-	if ( IsDormant() )
-		return;
-
-	m_pOrb = ParticleProp()->Create( GetTrailParticleName(), PATTACH_POINT_FOLLOW, "empty" );
-	//m_pOrbLightning = ParticleProp()->Create( ConstructTeamParticle( "dxhr_lightningball_hit_%s", GetTeamNumber() ), PATTACH_POINT_FOLLOW, "empty" );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void C_TFProjectile_MechanicalArmOrb::CreateLightEffects( void )
-{
-	// Handle the dynamic light
-	if ( tf2v_muzzlelight.GetBool() )
-	{
-		AddEffects( EF_DIMLIGHT );
-
-		dlight_t *dl;
-		if ( IsEffectActive( EF_DIMLIGHT ) )
-		{	
-			dl = effects->CL_AllocDlight( LIGHT_INDEX_TE_DYNAMIC + index );
-			dl->origin = GetAbsOrigin();
-			switch ( GetTeamNumber() )
+			if ( m_pTrailParticle )
 			{
-			case TF_TEAM_RED:
-				dl->color.r = 255; dl->color.g = 30; dl->color.b = 10;
-				break;
-
-			case TF_TEAM_BLUE:
-				dl->color.r = 10; dl->color.g = 30; dl->color.b = 255;
-				break;
+				ParticleProp()->StopEmissionAndDestroyImmediately( m_pTrailParticle );
+				m_pTrailParticle = NULL;
 			}
-			dl->radius = 300.0f;
-			dl->die = gpGlobals->curtime + 0.1;
-
-			//tempents->RocketFlare( GetAbsOrigin() );
+			CreateTrails();
 		}
 	}
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
-const char *CTFProjectile_MechanicalArmOrb::GetTrailParticleName( void )
+void CTFProjectile_MechanicalArmOrb::CreateTrails( void )
 {
-	return ConstructTeamParticle( "dxhr_lightningball_parent_%s", GetTeamNumber() );
+	BaseClass::CreateTrails();
+
+	if ( !m_pTrailParticle )
+	{
+		m_pTrailParticle = ParticleProp()->Create( ( GetTeamNumber() == TF_TEAM_BLUE ? pszParticleBlue : pszParticleRed ), PATTACH_ABSORIGIN_FOLLOW );
+	}
 }
-#endif
+#endif // CLIENT_DLL

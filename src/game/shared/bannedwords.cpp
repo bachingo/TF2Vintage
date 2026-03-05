@@ -8,7 +8,6 @@
 #include "utlmap.h"
 #include "filesystem.h"
 #include "filesystem_helpers.h"
-#include "tier1/fileio.h"
 #include "bannedwords.h"
 #include "utlmemory.h"
 #include "utlbuffer.h"

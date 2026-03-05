@@ -1,22 +1,19 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
-//
-// Purpose:		
-//
-// $NoKeywords: $
-//=============================================================================
+//========= Copyright Valve Corporation, All rights reserved. ============//
 #include "cbase.h"
+
 #include "c_entity_currencypack.h"
+#include "c_tf_player.h"
 
 IMPLEMENT_CLIENTCLASS_DT( C_CurrencyPack, DT_CurrencyPack, CCurrencyPack )
 	RecvPropBool( RECVINFO( m_bDistributed ) ),
 END_RECV_TABLE()
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 C_CurrencyPack::C_CurrencyPack()
 {
+	m_bDistributed = false;
+
 	m_pGlowEffect = NULL;
+	m_bShouldGlowForLocalPlayer = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -26,6 +23,7 @@ C_CurrencyPack::~C_CurrencyPack()
 {
 	DestroyGlowEffect();
 }
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -40,6 +38,7 @@ void C_CurrencyPack::OnDataChanged( DataUpdateType_t updateType )
 	}
 }
 
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -52,16 +51,17 @@ void C_CurrencyPack::ClientThink()
 //-----------------------------------------------------------------------------
 void C_CurrencyPack::UpdateGlowEffect( void )
 {
+	// destroy the existing effect
 	if ( m_pGlowEffect )
-		DestroyGlowEffect();
-
-	if ( m_bShouldGlow )
 	{
-		m_pGlowEffect = new CGlowObject( 
-			this, 
-			m_bDistributed ? Vector( 150, 0, 0 ) : Vector( 0, 150, 0 ),
-			1.0,
-			true );
+		DestroyGlowEffect();
+	}
+
+	// create a new effect if we have a cart
+	if ( m_bShouldGlowForLocalPlayer )
+	{
+		Vector color = m_bDistributed ? Vector( 150, 0, 0 ) : Vector( 0, 150, 0 );
+		m_pGlowEffect = new CGlowObject( this, color, 1.0, true );
 	}
 }
 

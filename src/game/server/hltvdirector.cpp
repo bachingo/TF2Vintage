@@ -70,7 +70,7 @@ static float WeightedAngle( Vector vec1, Vector vec2)
 	return a*a;	// vectors are facing opposite direction
 }
 
-#if !defined( CSTRIKE_DLL ) && !defined( DOD_DLL ) && !defined( TF_DLL ) && !defined( TF_VINTAGE )// add your mod here if you use your own director
+#if !defined( CSTRIKE_DLL ) && !defined( DOD_DLL ) && !defined( TF_DLL )// add your mod here if you use your own director
 
 static CHLTVDirector s_HLTVDirector;	// singleton
 
@@ -354,7 +354,7 @@ void CHLTVDirector::StartDelayMessage()
 
 void CHLTVDirector::StartBestPlayerCameraShot()
 {
-	float flPlayerRanking[MAX_PLAYERS];
+	float flPlayerRanking[MAX_PLAYERS_ARRAY_SAFE];
 
 	memset( flPlayerRanking, 0, sizeof(flPlayerRanking) );
 

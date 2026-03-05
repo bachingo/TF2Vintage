@@ -1,263 +1,342 @@
-#include "cbase.h"
-#include "../../tf_bot.h"
-#include "tf_obj_sentrygun.h"
-#include "tf_weapon_pipebomblauncher.h"
-#include "nav_mesh/tf_nav_mesh.h"
-#include "tf_bot_stickybomb_sentrygun.h"
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_stickybomb_sentrygun.cpp
+// Destroy the given sentrygun with stickybombs
+// Michael Booth, August 2010
 
+#include "cbase.h"
+#include "tf_player.h"
+#include "bot/tf_bot.h"
+#include "bot/behavior/demoman/tf_bot_stickybomb_sentrygun.h"
+#include "tf_weapon_pipebomblauncher.h"
+#include "tf_obj_sentrygun.h"
+#include "NextBotUtil.h"
 
 ConVar tf_bot_sticky_base_range( "tf_bot_sticky_base_range", "800", FCVAR_CHEAT );
 ConVar tf_bot_sticky_charge_rate( "tf_bot_sticky_charge_rate", "0.01", FCVAR_CHEAT, "Seconds of charge per unit range beyond base" );
 
-class DetonatePipebombsReply : public INextBotReply
+
+//---------------------------------------------------------------------------------------------
+CTFBotStickybombSentrygun::CTFBotStickybombSentrygun( CObjectSentrygun *sentrygun )
 {
-	virtual void OnSuccess( INextBot *bot )
-	{
-		CTFBot *actor = ToTFBot( bot->GetEntity() );
-		if ( actor->GetActiveWeapon() != actor->Weapon_GetSlot( 1 ) )
-			actor->Weapon_Switch( actor->Weapon_GetSlot( 1 ) );
-
-		actor->PressAltFireButton();
-	}
-};
-static DetonatePipebombsReply detReply;
-
-
-CTFBotStickybombSentrygun::CTFBotStickybombSentrygun( CObjectSentrygun *pSentry )
-{
-	m_hSentry = pSentry;
-	m_bOpportunistic = false;
-}
-
-CTFBotStickybombSentrygun::CTFBotStickybombSentrygun( CObjectSentrygun *pSentry, float flPitch, float flYaw, float flChargePerc )
-{
-	m_hSentry = pSentry;
-	m_bOpportunistic = true;
-	m_flDesiredPitch = flPitch;
-	m_flDesiredYaw = flYaw;
-	m_flDesiredCharge = flChargePerc;
+	m_sentrygun = sentrygun;
+	m_hasGivenAim = false;
 }
 
 
-const char *CTFBotStickybombSentrygun::GetName() const
+//---------------------------------------------------------------------------------------------
+CTFBotStickybombSentrygun::CTFBotStickybombSentrygun( CObjectSentrygun *sentrygun, float aimYaw, float aimPitch, float aimCharge )
 {
-	return "StickybombSentrygun";
+	m_sentrygun = sentrygun;
+	m_hasGivenAim = true;
+	m_givenYaw = aimYaw;
+	m_givenPitch = aimPitch;
+	m_givenCharge = aimCharge;
 }
 
 
-ActionResult<CTFBot> CTFBotStickybombSentrygun::OnStart( CTFBot *me, Action<CTFBot> *priorAction )
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotStickybombSentrygun::OnStart( CTFBot *me, Action< CTFBot > *priorAction )
 {
+	// detonate old set of stickies
 	me->PressAltFireButton();
-	me->StopLookingForEnemies();
+
+	// own our view updating so we can aim
+	me->StopLookingAroundForEnemies();
+
+	m_isFullReloadNeeded = true;
+
+	// STOP
 	me->SetAbsVelocity( vec3_origin );
 
-	m_bReload = true;
-	m_bAimOnTarget = false;
-	m_bChargeShot = false;
+	m_searchPitch = 0.0f;
+	m_hasTarget = false;
+	m_searchTimer.Start( 3.0f );
 
-	m_aimDuration.Start( 3.0f );
+	m_isChargingShot = false;
 
-	if ( m_bOpportunistic )
+	if ( m_hasGivenAim )
 	{
-		m_bAimOnTarget = true;
-		m_vecHome = me->GetAbsOrigin();
-		m_bChargeShot = true;
-		m_flChargeLevel = m_flDesiredCharge;
+		m_hasTarget = true;
 
-		const QAngle angDir( m_flDesiredPitch, m_flDesiredYaw, 0.0f );
-		Vector vecDir = vec3_invalid;
-		AngleVectors( angDir, &vecDir );
+		// remember where we are standing - if we move for any reason, we'll need to re-search
+		m_launchSpot = me->GetAbsOrigin();
 
-		m_vecAimTarget = me->EyePosition() + vecDir * ( TF_PIPEBOMB_MAX_CHARGE_VEL - TF_PIPEBOMB_MIN_CHARGE_VEL );
+		// start charging up the sticky launch
+		m_chargeToLaunch = m_givenCharge;
+		m_isChargingShot = true;
+
+		// aim along given pitch/yaw
+		QAngle angles;
+		angles.x = m_givenPitch;
+		angles.y = m_givenYaw;
+		angles.z = 0.0f;
+
+		Vector aimForward;
+		AngleVectors( angles, &aimForward );
+
+		m_eyeAimTarget = me->EyePosition() + 1500.0f * aimForward;
 	}
 
-	return BaseClass::Continue();
+	return Continue();
 }
 
-ActionResult<CTFBot> CTFBotStickybombSentrygun::Update( CTFBot *me, float dt )
+
+//---------------------------------------------------------------------------------------------
+bool CTFBotStickybombSentrygun::IsAimOnTarget( CTFBot *me, float pitch, float yaw, float charge )
 {
-	CTFWeaponBase *pActive = me->m_Shared.GetActiveTFWeapon();
-	CTFPipebombLauncher *pLauncher = dynamic_cast<CTFPipebombLauncher *>( me->Weapon_GetSlot( 1 ) );
-	if ( pLauncher == nullptr || pActive == nullptr )
-		return BaseClass::Done( "Missing weapon" );
+	// estimate impact spot
+	Vector impactSpot = me->EstimateStickybombProjectileImpactPosition( pitch, yaw, charge );
 
-	if ( pActive->GetWeaponID() != TF_WEAPON_PIPEBOMBLAUNCHER )
-		me->Weapon_Switch( pLauncher );
-
-	if ( m_hSentry == nullptr || !m_hSentry->IsAlive() )
-		return BaseClass::Done( "Sentry destroyed" );
-
-	if ( !m_bAimOnTarget && m_aimDuration.IsElapsed() )
-		return BaseClass::Done( "Can't find aim" );
-
-	if ( m_bReload )
+	// check if impactSpot landed near sentry
+	const float explosionRadius = 75.0f;
+	if ( ( m_sentrygun->WorldSpaceCenter() - impactSpot ).IsLengthLessThan( explosionRadius ) )
 	{
-		const int iClip = Min( me->GetAmmoCount( TF_AMMO_SECONDARY ), pLauncher->GetMaxClip1() );
-		if ( pLauncher->Clip1() >= iClip )
+		trace_t trace;
+		NextBotTraceFilterIgnoreActors filter( NULL, COLLISION_GROUP_NONE );
+
+		UTIL_TraceLine( m_sentrygun->WorldSpaceCenter(), impactSpot, MASK_SOLID_BRUSHONLY, &filter, &trace );
+		if ( !trace.DidHit() )
 		{
-			m_bReload = false;
+			// NDebugOverlay::Cross3D( impactSpot, 10.0f, 100, 255, 0, true, 60.0f );
+			return true;
+		}
+	}
+
+	return false;
+}
+
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotStickybombSentrygun::Update( CTFBot *me, float interval )
+{
+	CTFWeaponBase *myCurrentWeapon = me->m_Shared.GetActiveTFWeapon();
+	CTFPipebombLauncher *stickyLauncher = dynamic_cast< CTFPipebombLauncher * >( me->Weapon_GetSlot( TF_WPN_TYPE_SECONDARY ) );
+
+	if ( !myCurrentWeapon || !stickyLauncher )
+	{
+		return Done( "Missing weapon" );
+	}
+
+	if ( myCurrentWeapon->GetWeaponID() != TF_WEAPON_PIPEBOMBLAUNCHER )
+	{
+		me->Weapon_Switch( stickyLauncher );
+	}
+
+	if ( m_sentrygun == NULL || !m_sentrygun->IsAlive() )
+	{
+		return Done( "Sentry destroyed" );
+	}
+
+	if ( !m_hasTarget && m_searchTimer.IsElapsed() )
+	{
+		return Done( "Can't find aim" );
+	}
+
+	// reload fully
+	if ( m_isFullReloadNeeded )
+	{
+		int maxClip = MIN( stickyLauncher->GetMaxClip1(), me->GetAmmoCount( TF_AMMO_SECONDARY ) );
+
+		if ( stickyLauncher->Clip1() >= maxClip )
+		{
+			// fully reloaded
+			m_isFullReloadNeeded = false;
 		}
 
 		me->PressReloadButton();
 
-		return BaseClass::Continue();
+		return Continue();
 	}
 
-	if ( pLauncher->GetPipeBombCount() >= 3 || me->GetAmmoCount( TF_AMMO_SECONDARY ) <= 0 )
+	int requiredStickyBombs = 3;
+
+	if ( TFGameRules()->IsMannVsMachineMode() )
 	{
-		FOR_EACH_VEC( pLauncher->m_Pipebombs, i )
+		// launch more stickies to make sure we take out beefed-up sentries
+		requiredStickyBombs = 5;
+	}
+
+	if ( stickyLauncher->GetPipeBombCount() >= requiredStickyBombs || me->GetAmmoCount( TF_AMMO_SECONDARY ) <= 0 )
+	{
+		// stickies laid - detonate them once they are on the ground
+		const CUtlVector< CHandle< CTFGrenadePipebombProjectile > > &pipeVector = stickyLauncher->GetPipeBombVector();
+
+		int i;
+		for( i=0; i<pipeVector.Count(); ++i )
 		{
-			if ( !pLauncher->m_Pipebombs[i]->Touched() )
-				return BaseClass::Continue();
+			if ( pipeVector[i].Get() && !pipeVector[i]->m_bTouched )
+			{
+				break;
+			}
 		}
 
-		me->GetBodyInterface()->AimHeadTowards( m_hSentry, IBody::IMPORTANT, 0.5f, &detReply, "Looking toward stickies to detonate" );
-
-		if ( me->GetAmmoCount( TF_AMMO_SECONDARY ) <= 0 )
-			return BaseClass::Done( "Out of ammo" );
-
-		return BaseClass::Continue();
-	}
-
-	if ( m_bChargeShot )
-	{
-		const float flChargeTime = 4.4f * m_flChargeLevel;
-
-		me->GetBodyInterface()->AimHeadTowards( m_vecAimTarget, IBody::CRITICAL, 0.3f, nullptr, "Aiming a sticky bomb at a sentrygun" );
-
-		if ( gpGlobals->curtime - pLauncher->GetChargeBeginTime() < flChargeTime )
+		if ( i == pipeVector.Count() )
 		{
-			me->PressFireButton();
+			// stickies are on the ground
+			me->PressAltFireButton();
+
+			if ( me->GetAmmoCount( TF_AMMO_SECONDARY ) <= 0 )
+			{
+				return Done( "Out of ammo" );
+			}
+		}
+	}
+	else if ( m_isChargingShot )
+	{
+		// fudge charge time a bit longer - better to overshoot
+		float stickyChargeTime = 1.1f * m_chargeToLaunch * TF_PIPEBOMB_MAX_CHARGE_TIME;
+
+		me->GetBodyInterface()->AimHeadTowards( m_eyeAimTarget, IBody::CRITICAL, 0.3f, NULL, "Aiming a sticky bomb at a sentrygun" );
+
+		if ( gpGlobals->curtime - stickyLauncher->GetChargeBeginTime() >= stickyChargeTime )
+		{
+			// let go
+			me->ReleaseFireButton();
+			m_isChargingShot = false;
 		}
 		else
 		{
-			me->ReleaseFireButton();
-			m_bChargeShot = false;
-		}
-
-		return BaseClass::Continue();
-	}
-
-	if ( gpGlobals->curtime <= pLauncher->m_flNextPrimaryAttack )
-		return BaseClass::Continue();
-
-	if ( m_bAimOnTarget )
-	{
-		if ( me->IsRangeGreaterThan( m_vecHome, 1.0f ) )
-		{
-			m_bAimOnTarget = false;
-			m_aimDuration.Reset();
-		}
-
-		if ( m_bAimOnTarget )
-		{
-			m_vecHome = me->GetAbsOrigin();
 			me->PressFireButton();
-
-			return BaseClass::Continue();
 		}
 	}
-
-	QAngle angAim;
-	Vector vecToSentry = me->EyePosition() - m_hSentry->WorldSpaceCenter();
-	VectorAngles( vecToSentry, angAim );
-
-	float flPitch = 0.0, flYaw = 0.0, flCharge = 1.0;
-	for ( int i=100; i; --i )
+	else if ( stickyLauncher->m_flNextPrimaryAttack < gpGlobals->curtime )
 	{
-		float flYawVariance = angAim.y + RandomFloat( -30, 30 );
-		float flRandomPitch = RandomFloat( -85, 85 );
-		float flDesiredCharge = 0;
-
-		if ( vecToSentry.LengthSqr() > Square( tf_bot_sticky_base_range.GetFloat() ) )
-			flDesiredCharge = Square( RandomFloat( 0.1f, 1.0f ) );
-
-		if ( IsAimOnTarget( me, flRandomPitch, flYawVariance, flDesiredCharge ) && flCharge > flDesiredCharge )
+		// if we've moved, we need to re-search
+		if ( m_hasTarget )
 		{
-			m_flChargeLevel = flDesiredCharge;
-			m_bAimOnTarget = true;
-
-			if ( flDesiredCharge < 0.01 )
+			const float tolerance = 1.0f;
+			if ( me->IsRangeGreaterThan( m_launchSpot, tolerance ) )
 			{
-				flPitch = flRandomPitch;
-				flYaw = flYawVariance;
-				break;
+				m_hasTarget = false;
+				m_searchTimer.Reset();
+			}
+		}
+
+		if ( !m_hasTarget )
+		{
+			// search for angle to land sticky near sentry
+			Vector toSentry = m_sentrygun->WorldSpaceCenter() - me->EyePosition();
+			
+			QAngle angles;
+			VectorAngles( toSentry, angles );
+
+			float bestYaw = 0.0f;
+			float bestPitch = 0.0f;
+			float bestCharge = 1.0f;
+
+			const int trials = 100;
+			for( int t=0; t<trials; ++t )
+			{
+				float yaw = angles.y + RandomFloat( -30.0f, 30.0f );
+				// float pitch = ( trials & 0x1 ) ? m_searchPitch : -m_searchPitch;
+				float pitch = RandomFloat( -85.0f, 85.0f );
+
+				float charge = 0.0f;
+				if ( toSentry.IsLengthGreaterThan( tf_bot_sticky_base_range.GetBool() ) )
+				{
+					charge = RandomFloat( 0.1f, 1.0f );
+
+					// skew towards zero - full charge shots are seldom required
+					charge *= charge;
+				}
+
+				if ( IsAimOnTarget( me, pitch, yaw, charge ) )
+				{
+					// found target aim - keep one we find with least required
+					// charge, because we need to be fast in combat
+					if ( charge < bestCharge )
+					{
+						m_hasTarget = true;
+
+						bestCharge = charge;
+						m_chargeToLaunch = bestCharge;
+
+						bestYaw = yaw;
+						bestPitch = pitch;
+
+						if ( bestCharge < 0.01 )
+						{
+							// as quick as possible - no need to search further
+							break;
+						}
+					}
+				}
 			}
 
-			flPitch = flRandomPitch;
-			flYaw = flYawVariance;
-			flCharge = flDesiredCharge;
+			// aim along yaw/pitch to reach impact spot
+			angles.x = bestPitch;
+			angles.y = bestYaw;
+			angles.z = 0.0f;
+
+			Vector aimForward;
+			AngleVectors( angles, &aimForward );
+
+			// always recompute eye aim target so we can update our view
+			m_eyeAimTarget = me->EyePosition() + 500.0f * aimForward;
+			me->GetBodyInterface()->AimHeadTowards( m_eyeAimTarget, IBody::CRITICAL, 0.3f, NULL, "Searching for aim..." );
+		}
+
+		if ( m_hasTarget )
+		{
+			// remember where we are standing - if we move for any reason, we'll need to re-search
+			m_launchSpot = me->GetAbsOrigin();
+
+			// start charging up the sticky launch
+			me->PressFireButton();
+			m_isChargingShot = true;
 		}
 	}
 
-	Vector vecDir;
-	angAim = QAngle( flPitch, flYaw, 0.0f );
-	AngleVectors( angAim, &vecDir );
-
-	m_vecAimTarget = me->EyePosition() + vecDir * 500.0f;
-
-	me->GetBodyInterface()->AimHeadTowards( m_vecAimTarget, IBody::CRITICAL, 0.3f, nullptr, "Searching for aim..." );
-
-	if ( m_bAimOnTarget )
-	{
-		m_vecHome = me->GetAbsOrigin();
-		me->PressFireButton();
-		m_bChargeShot = true;
-	}
-
-	return BaseClass::Continue();
+	return Continue();
 }
 
-void CTFBotStickybombSentrygun::OnEnd( CTFBot *me, Action<CTFBot> *newAction )
+
+//---------------------------------------------------------------------------------------------
+void CTFBotStickybombSentrygun::OnEnd( CTFBot *me, Action< CTFBot > *nextAction )
 {
+	// detonate any stickes left out there
 	me->PressAltFireButton();
 
-	me->WantsToLookForEnemies();
+	me->StartLookingAroundForEnemies();
 }
 
-ActionResult<CTFBot> CTFBotStickybombSentrygun::OnSuspend( CTFBot *me, Action<CTFBot> *newAction )
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot > CTFBotStickybombSentrygun::OnSuspend( CTFBot *me, Action< CTFBot > *interruptingAction )
 {
+	// detonate any stickes left out there
 	me->PressAltFireButton();
 
-	return BaseClass::Done();
+	// this behavior is transitory - if we need to do something else, just give up
+	return Done();
 }
 
 
-EventDesiredResult<CTFBot> CTFBotStickybombSentrygun::OnInjured( CTFBot *me, const CTakeDamageInfo& info )
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotStickybombSentrygun::OnInjured( CTFBot *me, const CTakeDamageInfo &info )
 {
-	return BaseClass::TryDone( RESULT_IMPORTANT, "Ouch!" );
+	return TryDone( RESULT_IMPORTANT, "Ouch!" );
 }
 
 
+//---------------------------------------------------------------------------------------------
+QueryResultType CTFBotStickybombSentrygun::ShouldAttack( const INextBot *me, const CKnownEntity *them ) const
+{
+	return ANSWER_NO;
+}
+
+
+//---------------------------------------------------------------------------------------------
 QueryResultType CTFBotStickybombSentrygun::ShouldHurry( const INextBot *me ) const
 {
+	// while killing a sentry we're "hurrying" so we don't dodge
 	return ANSWER_YES;
 }
 
+
+//---------------------------------------------------------------------------------------------
 QueryResultType CTFBotStickybombSentrygun::ShouldRetreat( const INextBot *me ) const
 {
+	// stay stuck in to try to kill that gun!
 	return ANSWER_NO;
-}
-
-QueryResultType CTFBotStickybombSentrygun::ShouldAttack( const INextBot *me, const CKnownEntity *threat ) const
-{
-	return ANSWER_NO;
-}
-
-
-bool CTFBotStickybombSentrygun::IsAimOnTarget( CTFBot *actor, float pitch, float yaw, float charge )
-{
-	Vector est = actor->EstimateStickybombProjectileImpactPosition( pitch, yaw, charge );
-
-	if ( ( this->m_hSentry->WorldSpaceCenter() - est ).LengthSqr() < Square( 75.0f ) )
-	{
-		trace_t tr;
-		UTIL_TraceLine( this->m_hSentry->WorldSpaceCenter(), est,
-						MASK_SOLID_BRUSHONLY, nullptr, 0, &tr );
-
-		if ( !tr.DidHit() )
-			return true;
-	}
-
-	return false;
 }

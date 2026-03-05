@@ -23,8 +23,6 @@ extern "C" {
 }
 #include "lua_vector.h"
 
-COMPILE_TIME_ASSERT( sizeof( intp ) == sizeof( int ) );
-
 typedef struct
 {
 	ScriptClassDesc_t *m_pClassDesc;
@@ -129,6 +127,23 @@ private:
 	lua_State *L;
 	ConVarRef developer;
 	long long m_nUniqueKeyQueries;
+
+	// Inherited via IScriptVM
+	HSCRIPT LookupFunction(const char *pszFunction, HSCRIPT hScope, bool bNoDelegation) override
+	{
+		return HSCRIPT();
+	}
+	CSquirrelMetamethodDelegateImpl *MakeSquirrelMetamethod_Get(HSCRIPT &hParentObject, const char *pszSlotName, ISquirrelMetamethodDelegate *pDelegate, bool bDeleteDelegateWhenIAmDeleted) override
+	{
+		return nullptr;
+	}
+	void DestroySquirrelMetamethod_Get(CSquirrelMetamethodDelegateImpl *pMetaMethodImpl) override
+	{
+	}
+	int GetKeyValue2(HSCRIPT hScope, int nIterator, ScriptVariant_t *pKey, ScriptVariant_t *pValue) override
+	{
+		return 0;
+	}
 };
 
 CLuaVM::CLuaVM( void )
@@ -703,12 +718,12 @@ void CLuaVM::PushVariant( lua_State *L, ScriptVariant_t const &pVariant )
 		}
 		case FIELD_CHARACTER:
 		{
-			lua_pushstring( L, &pVariant.m_char );
+			lua_pushinteger( L, pVariant.m_char );
 			break;
 		}
 		case FIELD_CSTRING:
 		{
-			char const *szString = pVariant.m_pszString ? pVariant : "";
+			char const *szString = pVariant.m_pszString ? pVariant.m_pszString : "";
 			lua_pushstring( L, szString );
 
 			break;
@@ -789,7 +804,7 @@ int CLuaVM::TranslateCall( lua_State *L )
 		IScriptInstanceHelper *pHelper = pInstance->m_pClassDesc->pHelper;
 		if ( pHelper )
 		{
-			pContext = pHelper->GetProxied( pInstance->m_pInstance );
+			pContext = pHelper->GetProxied( pInstance->m_pInstance, pFuncBinding );
 			if ( pContext == NULL )
 				return SCRIPT_ERROR;
 		}
@@ -808,7 +823,7 @@ int CLuaVM::TranslateCall( lua_State *L )
 		{
 			case FIELD_INTEGER:
 			{
-				parameters[ i ] = lua_tointeger( L, i+2 );
+				parameters[ i ] = (int)lua_tointeger( L, i+2 );
 				break;
 			}
 			case FIELD_FLOAT:
@@ -823,11 +838,7 @@ int CLuaVM::TranslateCall( lua_State *L )
 			}
 			case FIELD_CHARACTER:
 			{
-				char const *pChar = lua_tostring( L, i+2 );
-				if ( pChar == NULL )
-					pChar = "\0";
-
-				parameters[ i ] = *pChar;
+				parameters[ i ] = (char)lua_tointeger( L, i+2 );
 				break;
 			}
 			case FIELD_CSTRING:

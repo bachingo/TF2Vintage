@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2001, Valve LLC, All rights reserved. ============
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Client side C_TFTeam class
 //
@@ -9,7 +9,10 @@
 #include "hud.h"
 #include "recvproxy.h"
 #include "c_tf_team.h"
+#include "c_tf_player.h"
 #include "tf_shareddefs.h"
+#include "tf_gamerules.h"
+#include "c_tf_playerresource.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -46,7 +49,11 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFTeam, DT_TFTeam, CTFTeam )
 	0, 
 	"team_object_array"	),
 
+	RecvPropEHandle( RECVINFO( m_hLeader ) ),
+
 END_RECV_TABLE()
+
+#define TEAM_THINK_RATE 0.5f
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -54,6 +61,7 @@ END_RECV_TABLE()
 C_TFTeam::C_TFTeam()
 {
 	m_nFlagCaptures = 0;
+	m_bUsingCustomTeamName = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -64,28 +72,138 @@ C_TFTeam::~C_TFTeam()
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Get the localized name for the team
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_TFTeam::OnDataChanged( DataUpdateType_t updateType )
+{
+	BaseClass::OnDataChanged( updateType );
+
+	if ( updateType == DATA_UPDATE_CREATED )
+	{
+		SetNextClientThink( gpGlobals->curtime + TEAM_THINK_RATE );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
 //-----------------------------------------------------------------------------
 char* C_TFTeam::Get_Name( void )
 {
-	if ( Q_stricmp( m_szTeamname, "blue" ) == 0 )
+	// Use Get_Localized_Name() instead
+	AssertMsg( false, "Use Get_Localized_Name() instead" );
+	return "";
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_TFTeam::ClientThink()
+{
+	BaseClass::ClientThink();
+
+	UpdateTeamName();
+	SetNextClientThink( gpGlobals->curtime + TEAM_THINK_RATE );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_TFTeam::UpdateTeamName( void )
+{
+	m_bUsingCustomTeamName = false;
+
+	const wchar_t *pwzName = NULL;
+	if ( TFGameRules() && TFGameRules()->IsInTournamentMode() && ( ( m_iTeamNum == TF_TEAM_RED ) || ( m_iTeamNum == TF_TEAM_BLUE ) ) )
 	{
-		return "BLU";
-	}
-	else if ( Q_stricmp( m_szTeamname, "red" ) == 0 )
-	{
-		return "RED";
-	}
-	else if (Q_stricmp(m_szTeamname, "green") == 0)
-	{
-		return "GRN";
-	}
-	else if (Q_stricmp(m_szTeamname, "yellow") == 0)
-	{
-		return "YLW";
+		if ( TFGameRules()->IsCompetitiveMode() )
+		{
+			if ( g_TF_PR && ( g_TF_PR->HasPremadeParties() || g_TF_PR->GetEventTeamStatus() ) )
+			{
+				wchar_t wszTempName[MAX_TEAM_NAME_LENGTH];
+				wchar_t *pFormat = g_pVGuiLocalize->Find( "#TF_Team_PartyLeader" );
+				if ( !pFormat )
+				{
+					pFormat = L"%s";
+				}
+
+				if ( g_TF_PR->GetEventTeamStatus() )
+				{
+					//	GetEventTeamStatus() returns a value in the following range
+					// 	enum WarMatch
+					// 	{
+					// 		NOPE = 0;
+					// 		INVADERS_ARE_PYRO = 1;
+					// 		INVADERS_ARE_HEAVY = 2;
+					// 	};
+					const char *pszTeamName = ( m_iTeamNum == TF_TEAM_BLUE ) ? 
+											  ( g_TF_PR->GetEventTeamStatus() == 1 ? "#TF_Pyro" : "#TF_HWGuy" ) :
+											  ( g_TF_PR->GetEventTeamStatus() == 1 ? "#TF_HWGuy" : "#TF_Pyro" );
+					wchar_t *pwzWarTeam = g_pVGuiLocalize->Find( pszTeamName );
+					V_swprintf_safe( m_wzTeamname, pFormat, pwzWarTeam );
+					m_bUsingCustomTeamName = true;
+					return;
+				}
+				else
+				{
+					int iPlayerIndex = ( m_iTeamNum == TF_TEAM_RED ) ? g_TF_PR->GetPartyLeaderRedTeamIndex() : g_TF_PR->GetPartyLeaderBlueTeamIndex();
+					if ( g_TF_PR->IsConnected( iPlayerIndex ) )
+					{
+						g_pVGuiLocalize->ConvertANSIToUnicode( UTIL_SafeName( g_TF_PR->GetPlayerName( iPlayerIndex ) ), wszTempName, sizeof( wszTempName ) );
+						V_swprintf_safe( m_wzTeamname, pFormat, wszTempName );
+						m_bUsingCustomTeamName = true;
+						return;
+					}
+				}
+			}
+		}
+		else
+		{
+			const char *pTemp = ( m_iTeamNum == TF_TEAM_BLUE ) ? mp_tournament_blueteamname.GetString() : mp_tournament_redteamname.GetString();
+			if ( pTemp && pTemp[0] )
+			{
+				g_pVGuiLocalize->ConvertANSIToUnicode( pTemp, m_wzTeamname, sizeof( m_wzTeamname ) );
+				return;
+			}
+		}
 	}
 
-	return m_szTeamname;
+	if ( m_iTeamNum == TF_TEAM_BLUE )
+	{
+		pwzName = g_pVGuiLocalize->Find( "#TF_BlueTeam_Name" );
+		if ( !pwzName )
+		{
+			pwzName = L"BLU";
+		}
+	}
+	else if ( m_iTeamNum == TF_TEAM_RED )
+	{
+		if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() )
+		{
+			pwzName = g_pVGuiLocalize->Find( "#TF_Defenders" );
+			if ( !pwzName )
+			{
+				pwzName = L"DEFENDERS";
+			}
+		}
+		else
+		{
+			pwzName = g_pVGuiLocalize->Find( "#TF_RedTeam_Name" );
+			if ( !pwzName )
+			{
+				pwzName = L"RED";
+			}
+		}
+	}
+	else if ( m_iTeamNum == TEAM_SPECTATOR )
+	{
+		pwzName = g_pVGuiLocalize->Find( "#TF_Spectators" );
+		if ( !pwzName )
+		{
+			pwzName = L"SPECTATORS";
+		}
+	}
+
+	V_wcscpy_safe( m_wzTeamname, pwzName ? pwzName : L"" );
 }
 
 //-----------------------------------------------------------------------------
@@ -133,4 +251,12 @@ CBaseObject *C_TFTeam::GetObject( int num )
 {
 	Assert( num >= 0 && num < m_aObjects.Count() );
 	return m_aObjects[ num ];
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+C_BasePlayer *C_TFTeam::GetTeamLeader( void )
+{
+	return m_hLeader.Get();
 }

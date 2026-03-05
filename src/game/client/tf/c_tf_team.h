@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2001, Valve LLC, All rights reserved. ============
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Client side CTFTeam class
 //
@@ -18,6 +18,7 @@
 class C_BaseEntity;
 class C_BaseObject;
 class CBaseTechnology;
+class C_TFPlayer;
 
 //-----------------------------------------------------------------------------
 // Purpose: TF's Team manager
@@ -41,10 +42,25 @@ public:
 
 	CUtlVector< CHandle<C_BaseObject> > m_aObjects;
 
+	C_BasePlayer	*GetTeamLeader( void );
+	void			UpdateTeamName( void );
+	const wchar_t *Get_Localized_Name( void ){ return m_wzTeamname; };
+
+	virtual void OnDataChanged( DataUpdateType_t updateType ) OVERRIDE;
+
+	bool IsUsingCustomTeamName( void ) { return m_bUsingCustomTeamName; }
+
+	// IClientThinkable override
+	virtual	void	ClientThink();
+
 private:
 
 	int		m_nFlagCaptures;
 	int		m_iRole;
+
+	CNetworkHandle( C_BasePlayer, m_hLeader );
+	wchar_t	m_wzTeamname[ MAX_TEAM_NAME_LENGTH ];
+	bool m_bUsingCustomTeamName;
 };
 
 C_TFTeam *GetGlobalTFTeam( int iTeamNumber );

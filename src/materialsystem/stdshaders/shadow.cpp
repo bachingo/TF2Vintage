@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -44,7 +44,7 @@ BEGIN_VS_SHADER_FLAGS( Shadow, "Help for Shadow", SHADER_NOT_EDITABLE )
 
 	SHADER_INIT
 	{
-		LoadTexture( BASETEXTURE );
+		LoadTexture( BASETEXTURE, TEXTUREFLAGS_SRGB );
 	}
 
 	SHADER_DRAW

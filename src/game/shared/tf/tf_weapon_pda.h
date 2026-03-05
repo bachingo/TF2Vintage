@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: PDA Weapon
 //
@@ -12,6 +12,9 @@
 
 #include "tf_shareddefs.h"
 #include "tf_weaponbase.h"
+#ifdef CLIENT_DLL
+	#include "tf_hud_base_build_menu.h"
+#endif
 
 // Client specific.
 #if defined( CLIENT_DLL ) 
@@ -19,6 +22,10 @@
 	#define CTFWeaponPDA_Engineer_Build	C_TFWeaponPDA_Engineer_Build
 	#define CTFWeaponPDA_Engineer_Destroy	C_TFWeaponPDA_Engineer_Destroy
 	#define CTFWeaponPDA_Spy		C_TFWeaponPDA_Spy
+	#define CTFWeaponPDA_Spy_Build	C_TFWeaponPDA_Spy_Build
+	
+	#define CTFWeaponPDAExpansion_Dispenser		C_TFWeaponPDAExpansion_Dispenser
+	#define CTFWeaponPDAExpansion_Teleporter	C_TFWeaponPDAExpansion_Teleporter
 #endif
 
 class CTFWeaponPDA : public CTFWeaponBase
@@ -41,6 +48,7 @@ public:
 		virtual void	GetControlPanelInfo( int nPanelIndex, const char *&pPanelName );
 #else
 		virtual float	CalcViewmodelBob( void );
+		virtual CHudBaseBuildMenu *GetBuildMenu() const { return NULL; }
 #endif
 
 	virtual bool	ShouldShowControlPanels( void );
@@ -51,15 +59,23 @@ public:
 	virtual bool	ShouldDrawCrosshair( void )						{ return false; }
 	virtual bool	HasPrimaryAmmo()								{ return true; }
 	virtual bool	CanBeSelected()									{ return true; }
+#ifdef CLIENT_DLL
+	virtual void	OnDataChanged( DataUpdateType_t type ) OVERRIDE;
+	virtual void	UpdateOnRemove() OVERRIDE;
+#endif
 
 	virtual const char *GetPanelName() { return "pda_panel"; }
 
+	virtual bool	CanInspect() const OVERRIDE { return false; }
 
 
 public:	
 	CTFWeaponInfo	*m_pWeaponInfo;
 
 private:
+#ifdef CLIENT_DLL
+	void HideBuildMenu() const;
+#endif
 
 	CTFWeaponPDA( const CTFWeaponPDA & ) {}
 };
@@ -73,6 +89,9 @@ public:
 
 	virtual const char *GetPanelName() { return ""; }
 	virtual int		GetWeaponID( void ) const { return TF_WEAPON_PDA_ENGINEER_BUILD; }
+#ifdef CLIENT_DLL
+	virtual CHudBaseBuildMenu *GetBuildMenu() const OVERRIDE;
+#endif
 };
 
 #ifdef CLIENT_DLL
@@ -89,20 +108,11 @@ public:
 
 	virtual const char *GetPanelName() { return ""; }
 	virtual int		GetWeaponID( void ) const { return TF_WEAPON_PDA_ENGINEER_DESTROY; }
-
-	virtual bool	VisibleInWeaponSelection( void )
-	{
-		if ( IsConsole()
 #ifdef CLIENT_DLL
-			|| tf_build_menu_controller_mode.GetBool() 
-#endif 
-			)
-		{
-			return false;
-		}
+	virtual CHudBaseBuildMenu *GetBuildMenu() const OVERRIDE;
+#endif
 
-		return BaseClass::VisibleInWeaponSelection();
-	}
+	virtual bool	VisibleInWeaponSelection( void );
 };
 
 class CTFWeaponPDA_Spy : public CTFWeaponPDA
@@ -114,14 +124,47 @@ public:
 
 	virtual const char *GetPanelName() { return ""; }
 	virtual int		GetWeaponID( void ) const { return TF_WEAPON_PDA_SPY; }
-	virtual bool	CanBeSelected();
-	virtual bool	VisibleInWeaponSelection();
-
 #ifdef CLIENT_DLL
+	virtual CHudBaseBuildMenu *GetBuildMenu() const OVERRIDE;
 	virtual bool Deploy( void );
 #endif
-	// Reload does nothing since reload key is used for switching disguises.
-	virtual bool Reload( void ) { return false; }
+
+	virtual bool			CanBeSelected( void ) OVERRIDE;
+	virtual bool			VisibleInWeaponSelection( void ) OVERRIDE;
+
+	virtual void			ItemPreFrame( void );					// called each frame by the player PreThink
+	virtual void			ItemBusyFrame( void );					// called each frame by the player PostThink
+	virtual void			ItemHolsterFrame( void );			// called each frame by the player PreThink, if the weapon is holstered
+
+	void	CheckDisguiseTimer( void );
+	void	ProcessDisguiseImpulse( void );
 };
+
+// ********************************************************************************************
+// PDA Expansion Slots
+class CTFWeaponPDAExpansion_Dispenser : public CTFWearable
+{
+	DECLARE_CLASS( CTFWeaponPDAExpansion_Dispenser, CTFWearable );
+
+public:
+	DECLARE_NETWORKCLASS();
+	DECLARE_DATADESC();
+
+	virtual void		Equip( CBasePlayer *pOwner );
+	virtual void		UnEquip( CBasePlayer *pOwner );
+};
+
+class CTFWeaponPDAExpansion_Teleporter : public CTFWearable
+{
+	DECLARE_CLASS( CTFWeaponPDAExpansion_Teleporter, CTFWearable );
+
+public:
+	DECLARE_NETWORKCLASS();
+	DECLARE_DATADESC();
+
+	virtual void		Equip( CBasePlayer *pOwner );
+	virtual void		UnEquip( CBasePlayer *pOwner );
+};
+
 
 #endif // TF_WEAPON_PDA_H

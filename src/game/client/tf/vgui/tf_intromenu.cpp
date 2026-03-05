@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2006, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -6,7 +6,6 @@
 //=============================================================================//
 
 #include "cbase.h"
-
 #include <KeyValues.h>
 #include <vgui/IVGui.h>
 #include <vgui/ISurface.h>
@@ -18,12 +17,13 @@
 #include "tf_shareddefs.h"
 #include "tf_controls.h"
 #include "tf_gamerules.h"
-#ifdef _WIN32
+#ifdef WIN32
 #include "winerror.h"
 #endif
 #include "ixboxsystem.h"
 #include "intromenu.h"
 #include "tf_intromenu.h"
+#include "inputsystem/iinputsystem.h"
 
 // used to determine the action the intro menu should take when OnTick handles a think for us
 enum
@@ -51,17 +51,19 @@ int CaptionsSort( CVideoCaption* const *p1, CVideoCaption* const *p2 )
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CTFIntroMenu::CTFIntroMenu( IViewPort *pViewPort ) : CIntroMenu( pViewPort )
+CTFIntroMenu::CTFIntroMenu( IViewPort *pViewPort ) : BaseClass( pViewPort )
 {
 	m_pVideo = new CTFVideoPanel( this, "VideoPanel" );
 	m_pModel = new CModelPanel( this, "MenuBG" );
-	m_pCaptionLabel = new CExLabel(this, "VideoCaption", "");
+	m_pCaptionLabel = new CExLabel( this, "VideoCaption", "" );
 
 #ifdef _X360
 	m_pFooter = new CTFFooter( this, "Footer" );
 #else
 	m_pBack = new CExButton( this, "Back", "" );
 	m_pOK = new CExButton( this, "Skip", "" );
+	m_pReplayVideo = new CExButton( this, "ReplayVideo", "" );
+	m_pContinue = new CExButton( this, "Continue", "" );
 #endif
 
 	m_iCurrentCaption = 0;
@@ -69,6 +71,15 @@ CTFIntroMenu::CTFIntroMenu( IViewPort *pViewPort ) : CIntroMenu( pViewPort )
 
 	m_flActionThink = -1;
 	m_iAction = INTRO_NONE;
+
+	//=============================================================================
+	// HPE_BEGIN
+	// [msmith] Flag for weather or not we're playing an in game video.
+	//=============================================================================
+	m_bPlayingInGameVideo = false;
+	//=============================================================================
+	// HPE_END
+	//=============================================================================
 
 	vgui::ivgui()->AddTickSignal( GetVPanel() );
 }
@@ -88,7 +99,16 @@ void CTFIntroMenu::ApplySchemeSettings( IScheme *pScheme )
 {
 	BaseClass::ApplySchemeSettings( pScheme );
 
-	LoadControlSettings( "Resource/UI/IntroMenu.res" );
+	if ( ::input->IsSteamControllerActive() )
+	{
+		LoadControlSettings( "Resource/UI/IntroMenu_SC.res" );
+		SetMouseInputEnabled( false );
+	}
+	else
+	{
+		LoadControlSettings( "Resource/UI/IntroMenu.res" );
+		SetMouseInputEnabled( true );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -105,36 +125,40 @@ void CTFIntroMenu::SetNextThink( float flActionThink, int iAction )
 //-----------------------------------------------------------------------------
 void CTFIntroMenu::OnTick()
 {
+	// @note Tom Bui: (yuck)
+	// in training, never show the back button
+	// we do this late, because there's a race condition for when IsInTraining() will return true
+	if ( m_pBack->IsVisible() && TFGameRules() && TFGameRules()->IsInTraining() )
+	{
+		m_pBack->SetVisible(false);
+	}
+
+	//=============================================================================
+	// HPE_BEGIN
+	// [msmith] Used to play a movie during a map.  For training videos.
+	//=============================================================================
+	if ( PendingInGameVideo() && !BaseClass::IsVisible() )
+	{
+		m_pViewPort->ShowPanel( this, true );
+	}
+	//=============================================================================
+	// HPE_END
+	//=============================================================================
+
 	// do we have anything special to do?
-	if ( m_flActionThink > 0 && m_flActionThink < gpGlobals->curtime )
+	else if ( m_flActionThink > 0 && m_flActionThink < gpGlobals->curtime )
 	{
 		if ( m_iAction == INTRO_STARTVIDEO )
 		{
-			if ( m_pVideo )
-			{
-				// turn on the captions if we have them
-				if ( LoadCaptions() )
-				{
-					if ( m_pCaptionLabel && !m_pCaptionLabel->IsVisible() )
-					{
-						m_pCaptionLabel->SetText( " " );
-						m_pCaptionLabel->SetVisible( true );
-					}
-				}
-				else
-				{
-					if ( m_pCaptionLabel && m_pCaptionLabel->IsVisible() )
-					{
-						m_pCaptionLabel->SetVisible( false );
-					}
-				}
-
-				m_pVideo->Activate();
-				m_pVideo->BeginPlayback( TFGameRules()->GetVideoFileForMap() );
-				m_pVideo->MoveToFront();
-
-				m_flVideoStartTime = gpGlobals->curtime;
-			}
+				
+			//=============================================================================
+			// HPE_BEGIN
+			// [msmith] Pulled start video into a separate function.
+			//=============================================================================	
+			StartVideo();
+			//=============================================================================
+			// HPE_END
+			//=============================================================================
 		}
 		else if ( m_iAction == INTRO_BACK )
 		{
@@ -145,9 +169,26 @@ void CTFIntroMenu::OnTick()
 		{
 			m_pViewPort->ShowPanel( this, false );
 
+			//=============================================================================
+			// HPE_BEGIN
+			// [msmith] Used for the client to tell the server that we're watching a movie or not
+			//=============================================================================
+			tf_training_client_message.SetValue( "" );
+			tf_training_client_message.SetValue( TRAINING_CLIENT_MESSAGE_NONE );
+			//=============================================================================
+			// HPE_END
+			//=============================================================================
+
 			if ( GetLocalPlayerTeam() == TEAM_UNASSIGNED )
 			{
-				m_pViewPort->ShowPanel( PANEL_TEAM, true );
+				if ( TFGameRules()->IsInArenaMode() == true && tf_arena_use_queue.GetBool() == true )
+				{
+					m_pViewPort->ShowPanel( PANEL_ARENA_TEAM, true );
+				}
+				else
+				{
+					engine->ClientCmd( "team_ui_setup" );
+				}
 			}
 			else
 			{
@@ -158,8 +199,10 @@ void CTFIntroMenu::OnTick()
 					( GetLocalPlayerTeam() != TEAM_SPECTATOR ) && 
 					( pPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_UNDEFINED ) )
 				{
-					switch( GetLocalPlayerTeam() )
+					if ( tf_arena_force_class.GetBool() == false )
 					{
+						switch( GetLocalPlayerTeam() )
+						{
 						case TF_TEAM_RED:
 							m_pViewPort->ShowPanel( PANEL_CLASS_RED, true );
 							break;
@@ -167,14 +210,7 @@ void CTFIntroMenu::OnTick()
 						case TF_TEAM_BLUE:
 							m_pViewPort->ShowPanel( PANEL_CLASS_BLUE, true );
 							break;
-							
-						case TF_TEAM_GREEN:
-							m_pViewPort->ShowPanel( PANEL_CLASS_GREEN, true );
-							break;
-
-						case TF_TEAM_YELLOW:
-							m_pViewPort->ShowPanel( PANEL_CLASS_YELLOW, true );
-							break;
+						}
 					}
 				}
 			}
@@ -194,6 +230,21 @@ void CTFIntroMenu::OnTick()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+void CTFIntroMenu::OnThink()
+{
+	//Always hide the health... this needs to be done every frame because a message from the server keeps resetting this.
+	C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
+	if ( pLocalPlayer )
+	{
+		pLocalPlayer->m_Local.m_iHideHUD |= HIDEHUD_HEALTH;
+	}
+
+	BaseClass::OnThink();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 bool CTFIntroMenu::LoadCaptions( void )
 {
 	bool bSuccess = false;
@@ -204,38 +255,50 @@ bool CTFIntroMenu::LoadCaptions( void )
 
 	if ( m_pCaptionLabel )
 	{
+		const char *szVideoFileName = GetVideoFileName( false );
 		KeyValues *kvCaptions = NULL;
 		char strFullpath[MAX_PATH];
-
-		Q_strncpy( strFullpath, TFGameRules()->GetVideoFileForMap( false ), MAX_PATH );	// Assume we must play out of the media directory
-		Q_strncat( strFullpath, ".res", MAX_PATH );					// Assume we're a .res extension type
-
-		if ( g_pFullFileSystem->FileExists( strFullpath ) )
+		if ( szVideoFileName != NULL )
 		{
-			kvCaptions = new KeyValues( strFullpath );
+			//=============================================================================
+			// HPE_BEGIN
+			// [msmith] The video may now be either a map video or an in game video.
+			//			Made a function to decide which video name to give back.
+			//=============================================================================
+			Q_strncpy( strFullpath, szVideoFileName, MAX_PATH );	// Assume we must play out of the media directory
+			//=============================================================================
+			// HPE_END
+			//=============================================================================		
+			
+			Q_strncat( strFullpath, ".res", MAX_PATH );					// Assume we're a .res extension type
 
-			if ( kvCaptions )
+			if ( g_pFullFileSystem->FileExists( strFullpath ) )
 			{
-				if ( kvCaptions->LoadFromFile( g_pFullFileSystem, strFullpath ) )
+				kvCaptions = new KeyValues( strFullpath );
+
+				if ( kvCaptions )
 				{
-					for ( KeyValues *pData = kvCaptions->GetFirstSubKey(); pData != NULL; pData = pData->GetNextKey() )
+					if ( kvCaptions->LoadFromFile( g_pFullFileSystem, strFullpath ) )
 					{
-						CVideoCaption *pCaption = new CVideoCaption;
-						if ( pCaption )
+						for ( KeyValues *pData = kvCaptions->GetFirstSubKey(); pData != NULL; pData = pData->GetNextKey() )
 						{
-							pCaption->m_pszString = ReadAndAllocStringValue( pData, "string" );
-							pCaption->m_flStartTime = pData->GetFloat( "start", 0.0 );
-							pCaption->m_flDisplayTime = pData->GetFloat( "length", 3.0 );
+							CVideoCaption *pCaption = new CVideoCaption;
+							if ( pCaption )
+							{
+								pCaption->m_pszString = ReadAndAllocStringValue( pData, "string" );
+								pCaption->m_flStartTime = pData->GetFloat( "start", 0.0 );
+								pCaption->m_flDisplayTime = pData->GetFloat( "length", 3.0 );
 
-							m_Captions.AddToTail( pCaption );
+								m_Captions.AddToTail( pCaption );
 
-							// we have at least one caption to show
-							bSuccess = true;
+								// we have at least one caption to show
+								bSuccess = true;
+							}
 						}
 					}
-				}
 
-				kvCaptions->deleteThis();
+					kvCaptions->deleteThis();
+				}
 			}
 		}
 	}
@@ -254,13 +317,22 @@ bool CTFIntroMenu::LoadCaptions( void )
 //-----------------------------------------------------------------------------
 void CTFIntroMenu::UpdateCaptions( void )
 {
+	//=============================================================================
+	// HPE_BEGIN
+	// [msmith] Timing should be realtime when playing in game becase the curtime is paused.
+	//=============================================================================
+	float testTime = m_bPlayingInGameVideo ? gpGlobals->realtime : gpGlobals->curtime;
+	//=============================================================================
+	// HPE_END
+	//=============================================================================		
+	
 	if ( m_pCaptionLabel && m_pCaptionLabel->IsVisible() && ( m_Captions.Count() > 0 ) )
 	{
 		CVideoCaption *pCaption = m_Captions[m_iCurrentCaption];
 
 		if ( pCaption )
 		{
-			if ( ( pCaption->m_flCaptionStart >= 0 ) && ( pCaption->m_flCaptionStart + pCaption->m_flDisplayTime < gpGlobals->curtime ) )
+			if ( ( pCaption->m_flCaptionStart >= 0 ) && ( pCaption->m_flCaptionStart + pCaption->m_flDisplayTime < testTime ) )
 			{
 				// fade out the caption
 				g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "VideoCaptionFadeOut" );
@@ -275,13 +347,13 @@ void CTFIntroMenu::UpdateCaptions( void )
 				}
 			}
 			// is it time to show the caption?
-			else if ( m_flVideoStartTime + pCaption->m_flStartTime < gpGlobals->curtime )
+			else if ( m_flVideoStartTime + pCaption->m_flStartTime < testTime )
 			{
 				// have we already started this video?
 				if ( pCaption->m_flCaptionStart < 0 )
 				{
 					m_pCaptionLabel->SetText( pCaption->m_pszString );
-					pCaption->m_flCaptionStart = gpGlobals->curtime;
+					pCaption->m_flCaptionStart = testTime;
 
 					// fade in the next caption
 					g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "VideoCaptionFadeIn" );
@@ -296,6 +368,32 @@ void CTFIntroMenu::UpdateCaptions( void )
 //-----------------------------------------------------------------------------
 void CTFIntroMenu::ShowPanel( bool bShow )
 {
+
+	//=============================================================================
+	// HPE_BEGIN:
+	// [msmith]	Don't show the back button when in training.  You can only skip intro
+	//			movies.
+	//=============================================================================
+	m_pBack->SetVisible(true);
+	if ( TFGameRules() && TFGameRules()->IsInTraining() )
+	{
+		m_pBack->SetVisible( false );
+		if ( PendingInGameVideo() == false )
+		{			
+			VideoSystem_t  playbackSystem = VideoSystem::NONE;
+			char resolvedFile[MAX_PATH];
+			if ( g_pVideo != NULL && g_pVideo->LocatePlayableVideoFile( GetVideoFileName(), "GAME", &playbackSystem, resolvedFile, sizeof(resolvedFile) ) != VideoResult::SUCCESS  )
+			{
+				//If we have no movie, no need to show the intro screen on a training mission.
+				bShow = false;
+			}
+		}
+	}
+	//=============================================================================
+	// HPE_END
+	//=============================================================================
+
+
 	if ( BaseClass::IsVisible() == bShow )
 		return;
 
@@ -304,13 +402,39 @@ void CTFIntroMenu::ShowPanel( bool bShow )
 
 	if ( bShow )
 	{
+		InvalidateLayout( true, true );
 		Activate();
-		SetMouseInputEnabled( true );
 
 		if ( m_pVideo )
 		{
-			m_pVideo->Shutdown(); // make sure we're not currently running
+			//=============================================================================
+			// HPE_BEGIN
+			// [msmith] Pulled shutting down the video into a separate function.
+			//			If we're showing an in game video, we need to enable pausing so that
+			//			we can pause the game during the video.
+			//			If we're showing an intro training movie, we also need to tell the server that
+			//			we're whatching the intro movie so that the round does not start until it's over.
+			//			If we are watching an in game video, we do NOT send a message for that because 
+			//			tf_training_client_message will contain the name of the video we're watching.
+			//=============================================================================			
+			ShutdownVideo();
 			SetNextThink( gpGlobals->curtime + m_pVideo->GetStartDelay(), INTRO_STARTVIDEO );
+			
+			if ( TFGameRules() && TFGameRules()->IsInTraining() )
+			{
+				if ( PendingInGameVideo() )
+				{
+					engine->ClientCmd( "sv_pausable 1" );
+				}
+				else
+				{
+					tf_training_client_message.SetValue( TRAINING_CLIENT_MESSAGE_WATCHING_INTRO_MOVIE );
+				}
+			}
+			//=============================================================================
+			// HPE_END
+			//=============================================================================
+
 		}
 
 		if ( m_pModel )
@@ -323,7 +447,20 @@ void CTFIntroMenu::ShowPanel( bool bShow )
 		Shutdown();
 
 		SetVisible( false );
-		SetMouseInputEnabled( false );
+
+		//=============================================================================
+		// HPE_BEGIN
+		// [msmith] We must disable the ability to pause.  If we don't, it looks like
+		//			some other function in TF2 causes the entire game to pause if sv_pausable is enabled.
+		//=============================================================================	
+		if ( TFGameRules() && TFGameRules()->IsInTraining() )
+		{
+			engine->ClientCmd( "sv_pausable 0" );
+		}
+		//=============================================================================
+		// HPE_END
+		//=============================================================================
+	
 	}
 }
 
@@ -332,17 +469,28 @@ void CTFIntroMenu::ShowPanel( bool bShow )
 //-----------------------------------------------------------------------------
 void CTFIntroMenu::OnIntroFinished( void )
 {
-	float flTime = gpGlobals->curtime;
-
-	if ( m_pModel && m_pModel->SetSequence( "UpSlow" ) )
-	{	
-		// wait for the model sequence to finish before going to the next menu
-		flTime = gpGlobals->curtime + m_pVideo->GetEndDelay();
+	// in training we want to give the user the ability to replay the movie
+	if ( TFGameRules() && TFGameRules()->IsInTraining() )
+	{
+		m_pReplayVideo->SetVisible( true );
+		m_pContinue->SetVisible( true );
+		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( this, "IntroMovieContinueBlink" );
+		m_pOK->SetVisible( false );
 	}
+	else
+	{
+		float flTime = gpGlobals->curtime;
 
-	Shutdown();
+		if ( m_pModel && m_pModel->SetSequence( "UpSlow" ) )
+		{
+			// wait for the model sequence to finish before going to the next menu
+			flTime = gpGlobals->curtime + m_pVideo->GetEndDelay();
+		}
 
-	SetNextThink( flTime, INTRO_CONTINUE );
+		Shutdown();
+
+		SetNextThink( flTime, INTRO_CONTINUE );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -372,6 +520,11 @@ void CTFIntroMenu::OnCommand( const char *command )
 		// continue right now
 		SetNextThink( gpGlobals->curtime, INTRO_CONTINUE );
 	}
+	else if ( !Q_strcmp( command, "replayVideo" ) )
+	{
+		ShutdownVideo();
+		SetNextThink( gpGlobals->curtime, INTRO_STARTVIDEO );
+	}
 	else
 	{
 		BaseClass::OnCommand( command );
@@ -383,11 +536,11 @@ void CTFIntroMenu::OnCommand( const char *command )
 //-----------------------------------------------------------------------------
 void CTFIntroMenu::OnKeyCodePressed( KeyCode code )
 {
-	if ( code == KEY_XBUTTON_A )
+	if ( code == KEY_XBUTTON_A || code == STEAMCONTROLLER_A )
 	{
 		OnCommand( "skip" );
 	}
-	else if ( code == KEY_XBUTTON_B )
+	else if ( code == KEY_XBUTTON_B || code == STEAMCONTROLLER_B )
 	{
 		OnCommand( "back" );
 	}
@@ -403,10 +556,14 @@ void CTFIntroMenu::OnKeyCodePressed( KeyCode code )
 //-----------------------------------------------------------------------------
 void CTFIntroMenu::Shutdown( void )
 {
-	if ( m_pVideo )
-	{
-		m_pVideo->Shutdown();
-	}
+	//=============================================================================
+	// HPE_BEGIN
+	// [msmith] Refactored the shutdown video logic into a containing function.
+	//=============================================================================			
+	ShutdownVideo();
+	//=============================================================================
+	// HPE_END
+	//=============================================================================
 
 	if ( m_pCaptionLabel && m_pCaptionLabel->IsVisible() )
 	{
@@ -415,7 +572,127 @@ void CTFIntroMenu::Shutdown( void )
 
 	m_iCurrentCaption = 0;
 	m_flVideoStartTime = 0;
+
 }
 
-const char *COM_GetModDirectory();
 
+
+
+//=============================================================================
+// HPE_BEGIN
+// [msmith] New helper functions
+//=============================================================================	
+void CTFIntroMenu::ShutdownVideo()
+{
+	if ( m_pVideo )
+	{
+		m_pVideo->Shutdown(); // make sure we're not currently running
+	}
+
+	//Make sure we unpause the game if it was paused from an in game play of a video.
+	if ( m_bPlayingInGameVideo )
+	{
+		UnpauseGame();
+	}
+
+	m_bPlayingInGameVideo = false;
+}
+
+bool CTFIntroMenu::PendingInGameVideo( void )
+{
+	if ( TFGameRules() && TFGameRules()->IsInTraining() )
+	{
+		//If the message is a string, it's a video name.
+		return strlen( tf_training_client_message.GetString() ) > 3;
+	}
+	
+	return false;
+}
+
+const char *CTFIntroMenu::GetVideoFileName( bool withExtension )
+{
+	if ( PendingInGameVideo() )
+	{
+		return TFGameRules()->FormatVideoName( tf_training_client_message.GetString(), withExtension );
+	}
+
+	if ( TFGameRules() && TFGameRules()->IsInTraining() )
+	{
+		ConVarRef training_map_video("training_map_video");
+		if ( strlen( training_map_video.GetString() ) > 3 )
+		{
+			return TFGameRules()->FormatVideoName( training_map_video.GetString(), withExtension );
+		}
+	}
+
+	return TFGameRules()->GetVideoFileForMap( withExtension );
+}
+
+void CTFIntroMenu::StartVideo()
+{
+	m_pOK->SetVisible( true );
+	m_pReplayVideo->SetVisible( false );
+	m_pContinue->SetVisible( false );
+	g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( this, "IntroMovieContinueBlinkStop" );
+	if ( m_pVideo )
+	{
+		// turn on the captions if we have them
+		if ( LoadCaptions() )
+		{
+			if ( m_pCaptionLabel && !m_pCaptionLabel->IsVisible() )
+			{
+				m_pCaptionLabel->SetText( " " );
+				m_pCaptionLabel->SetVisible( true );
+				//Make sure the label is fully faded in when starting to play.
+				//It could have been faded out from a prior animation event form an animation effect in a previous video instance.
+				m_pCaptionLabel->SetAlpha( 255 );
+			}
+		}
+		else
+		{
+			if ( m_pCaptionLabel && m_pCaptionLabel->IsVisible() )
+			{
+				m_pCaptionLabel->SetVisible( false );
+			}
+		}
+
+		m_pVideo->Activate();
+
+		if ( PendingInGameVideo() )
+		{
+			m_pVideo->BeginPlayback( GetVideoFileName() );
+			PauseGame();
+			m_bPlayingInGameVideo = true;
+
+			//Since we have started playing the video, we can reset the message string to empty.
+			tf_training_client_message.SetValue( "" );
+		}
+		else
+		{
+			m_pVideo->BeginPlayback( GetVideoFileName() );
+		}
+
+		m_pVideo->MoveToFront();
+
+		m_flVideoStartTime = m_bPlayingInGameVideo ? gpGlobals->realtime : gpGlobals->curtime;
+	}
+}
+
+void CTFIntroMenu::UnpauseGame( void )
+{
+	if ( TFGameRules() && TFGameRules()->IsInTraining() )
+	{
+		engine->ClientCmd( "unpause" );
+	}
+}
+
+void CTFIntroMenu::PauseGame( void )
+{
+	if ( TFGameRules() && TFGameRules()->IsInTraining() )
+	{
+		engine->ClientCmd( "pause" );
+	}
+}
+//=============================================================================
+// HPE_END
+//=============================================================================

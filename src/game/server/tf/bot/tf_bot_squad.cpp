@@ -1,268 +1,293 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
-//
-// Purpose:		
-//
-// $NoKeywords: $
-//=============================================================================
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_squad.h
+// Small groups of TFBot, managed as a unit
+// Michael Booth, November 2009
 
 #include "cbase.h"
 #include "tf_bot.h"
 #include "tf_bot_squad.h"
 
-CTFBotSquad::CTFBotSquad()
+
+//----------------------------------------------------------------------
+CTFBotSquad::CTFBotSquad( void )
 {
-	m_flFormationSize = -1.0f;
+	m_leader = NULL;
+	m_formationSize = -1.0f;
 	m_bShouldPreserveSquad = false;
 }
 
-CTFBotSquad::~CTFBotSquad()
+
+//----------------------------------------------------------------------
+void CTFBotSquad::Join( CTFBot *bot )
 {
+	// first member is the leader
+	if ( m_roster.Count() == 0 )
+	{
+		m_leader = bot;
+	}
+	else if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() )
+	{
+		bot->SetFlagTarget( NULL );
+	}
+
+	m_roster.AddToTail( bot );
 }
 
 
+//----------------------------------------------------------------------
+void CTFBotSquad::Leave( CTFBot *bot )
+{
+	m_roster.FindAndRemove( bot );
+
+	if ( bot == m_leader.Get() )
+	{
+		m_leader = NULL;
+
+		// pick the next living leader that's left in the squad
+		if ( m_bShouldPreserveSquad )
+		{
+			CUtlVector< CTFBot* > members;
+			CollectMembers( &members );
+			if ( members.Count() )
+			{
+				m_leader = members[0];
+			}
+		}
+	}
+	else if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() )
+	{
+		AssertMsg( !bot->HasFlagTaget(), "Squad member shouldn't have a flag target. Always follow the leader." );
+		CCaptureFlag *pFlag = bot->GetFlagToFetch();
+		if ( pFlag )
+		{
+			bot->SetFlagTarget( pFlag );
+		}
+	}
+	
+	if ( GetMemberCount() == 0 )
+	{
+		DisbandAndDeleteSquad();
+	}
+}
+
+
+//----------------------------------------------------------------------
 INextBotEventResponder *CTFBotSquad::FirstContainedResponder( void ) const
 {
-	if ( m_hMembers.IsEmpty() )
-		return nullptr;
-
-	return m_hMembers[0];
-}
-
-INextBotEventResponder *CTFBotSquad::NextContainedResponder( INextBotEventResponder *prev ) const
-{
-	CHandle<CTFBot> hPrev;
-
-	if ( prev != nullptr )
-	{
-		CTFBot *bot_prev = static_cast<CTFBot *>( prev );
-		if ( bot_prev != nullptr )
-			hPrev = bot_prev;
-	}
-
-	int idx = m_hMembers.Find( hPrev );
-	if ( idx != -1 )
-	{
-		return m_hMembers[idx];
-	}
-
-	return nullptr;
+	return m_roster.Count() ? m_roster[0] : NULL;
 }
 
 
-void CTFBotSquad::CollectMembers( CUtlVector<CTFBot *> *members ) const
+//----------------------------------------------------------------------
+INextBotEventResponder *CTFBotSquad::NextContainedResponder( INextBotEventResponder *current ) const
 {
-	members->RemoveAll();
+	CTFBot *currentBot = (CTFBot *)current;
 
-	FOR_EACH_VEC( m_hMembers, i )
+	int i = m_roster.Find( currentBot );
+
+	if ( i == m_roster.InvalidIndex() )
+		return NULL;
+
+	if ( ++i >= m_roster.Count() )
+		return NULL;
+
+	return (CTFBot *)m_roster[i];
+}
+
+
+//----------------------------------------------------------------------
+CTFBot *CTFBotSquad::GetLeader( void ) const
+{
+	return m_leader;
+}
+
+
+//----------------------------------------------------------------------
+void CTFBotSquad::CollectMembers( CUtlVector< CTFBot * > *memberVector ) const
+{
+	for( int i=0; i<m_roster.Count(); ++i )
 	{
-		CTFBot *bot = m_hMembers[i];
-		if ( bot && bot->IsAlive() )
+		if ( m_roster[i] != NULL && m_roster[i]->IsAlive() )
 		{
-			members->AddToTail( m_hMembers[i] );
+			memberVector->AddToTail( m_roster[i] );
 		}
 	}
 }
 
 
+//----------------------------------------------------------------------
 CTFBotSquad::Iterator CTFBotSquad::GetFirstMember( void ) const
 {
-	FOR_EACH_VEC( m_hMembers, i )
-	{
-		CTFBot *bot = m_hMembers[i];
-		if ( bot && bot->IsAlive() )
-		{
-			return {
-				bot,
-				i,
-			};
-		}
-	}
+	// find first non-NULL member
+	for( int i=0; i<m_roster.Count(); ++i )
+		if ( m_roster[i].Get() != NULL && m_roster[i]->IsAlive() )
+			return Iterator( m_roster[i], i );
 
-	return {
-		nullptr,
-		-1,
-	};
+	return InvalidIterator();
 }
 
-CTFBotSquad::Iterator CTFBotSquad::GetNextMember( const Iterator& it ) const
+
+//----------------------------------------------------------------------
+CTFBotSquad::Iterator CTFBotSquad::GetNextMember( const Iterator &it ) const
 {
-	for ( int i = it.index + 1; i < m_hMembers.Count(); ++i )
-	{
-		CTFBot *bot = m_hMembers[i];
-		if ( bot && bot->IsAlive() )
-		{
-			return {
-				bot,
-				i,
-			};
-		}
-	}
+	// find next non-NULL member
+	for( int i=it.m_index+1; i<m_roster.Count(); ++i )
+		if ( m_roster[i].Get() != NULL && m_roster[i]->IsAlive() )
+			return Iterator( m_roster[i], i );
 
-	return {
-		nullptr,
-		-1,
-	};
+	return InvalidIterator();
 }
 
+
+//----------------------------------------------------------------------
 int CTFBotSquad::GetMemberCount( void ) const
 {
+	// count the non-NULL members
 	int count = 0;
-
-	FOR_EACH_VEC( m_hMembers, i )
-	{
-		CTFBot *bot = m_hMembers[i];
-		if ( bot && bot->IsAlive() )
+	for( int i=0; i<m_roster.Count(); ++i )
+		if ( m_roster[i].Get() != NULL && m_roster[i]->IsAlive() )
 			++count;
-	}
 
 	return count;
 }
 
-CTFBot *CTFBotSquad::GetLeader( void ) const
+
+//----------------------------------------------------------------------
+// Return the speed of the slowest member of the squad
+float CTFBotSquad::GetSlowestMemberSpeed( bool includeLeader ) const
 {
-	return m_hLeader;
-}
+	float speed = FLT_MAX;
 
+	int i = includeLeader ? 0 : 1;
 
-void CTFBotSquad::Join( CTFBot *bot )
-{
-	if ( m_hMembers.IsEmpty() )
-		m_hLeader = bot;
-
-	m_hMembers.AddToTail( bot );
-}
-
-void CTFBotSquad::Leave( CTFBot *bot )
-{
-	int idx = m_hMembers.Find( bot );
-	if ( m_hMembers.IsValidIndex( idx ) )
-		m_hMembers.Remove( idx );
-
-	CTFBot *leader = m_hLeader;
-	if ( bot == leader )
+	for( ; i<m_roster.Count(); ++i )
 	{
-		m_hLeader = nullptr;
-
-		if ( m_bShouldPreserveSquad )
+		if ( m_roster[i].Get() != NULL && m_roster[i]->IsAlive() )
 		{
-			CUtlVector<CTFBot *> members;
-			this->CollectMembers( &members );
-
-			if ( !members.IsEmpty() )
-				m_hLeader = members[0];
+			float memberSpeed = m_roster[i]->MaxSpeed();
+			if ( memberSpeed < speed )
+			{
+				speed = memberSpeed;
+			}
 		}
 	}
 
-	if ( this->GetMemberCount() == 0 )
-		this->DisbandAndDeleteSquad();
+	return speed;
 }
 
 
+//----------------------------------------------------------------------
+// Return the speed of the slowest member of the squad, 
+// considering their ideal class speed.
+float CTFBotSquad::GetSlowestMemberIdealSpeed( bool includeLeader ) const
+{
+	float speed = FLT_MAX;
+
+	int i = includeLeader ? 0 : 1;
+
+	for( ; i<m_roster.Count(); ++i )
+	{
+		if ( m_roster[i].Get() != NULL && m_roster[i]->IsAlive() )
+		{
+			float memberSpeed = m_roster[i]->GetPlayerClass()->GetMaxSpeed();
+			if ( memberSpeed < speed )
+			{
+				speed = memberSpeed;
+			}
+		}
+	}
+
+	return speed;
+}
+
+
+//----------------------------------------------------------------------
+// Return the maximum formation error of the squad's memebers.
 float CTFBotSquad::GetMaxSquadFormationError( void ) const
 {
-	float error = 0.0f;
+	float maxError = 0.0f;
 
-	/* exclude squad leader */
-	for ( int i = 1; i < m_hMembers.Count(); ++i )
+	// skip the leader since he's what the formation forms around
+	for( int i=1; i<m_roster.Count(); ++i )
 	{
-		CTFBot *member = m_hMembers[i];
-		if ( member == nullptr || !member->IsAlive() )
-			continue;
-
-		error = Max( error, member->m_flFormationError );
+		if ( m_roster[i].Get() != NULL && m_roster[i]->IsAlive() )
+		{
+			float error = m_roster[i]->GetSquadFormationError();
+			if ( error > maxError )
+			{
+				maxError = error;
+			}
+		}
 	}
 
-	return error;
-}
-
-float CTFBotSquad::GetSlowestMemberIdealSpeed( bool include_leader ) const
-{
-	float speed = FLT_MAX;
-
-	for ( int i = ( include_leader ? 0 : 1 ); i < m_hMembers.Count(); ++i )
-	{
-		CTFBot *member = m_hMembers[i];
-		if ( member == nullptr || !member->IsAlive() )
-			continue;
-
-		speed = Min( speed, member->GetPlayerClass()->GetMaxSpeed() );
-	}
-
-	return speed;
-}
-
-float CTFBotSquad::GetSlowestMemberSpeed( bool include_leader ) const
-{
-	float speed = FLT_MAX;
-
-	for ( int i = ( include_leader ? 0 : 1 ); i < m_hMembers.Count(); ++i )
-	{
-		CTFBot *member = m_hMembers[i];
-		if ( member == nullptr || !member->IsAlive() )
-			continue;
-
-		speed = Min( speed, member->MaxSpeed() );
-	}
-
-	return speed;
+	return maxError;
 }
 
 
-bool CTFBotSquad::IsInFormation( void ) const
-{
-	/* exclude squad leader */
-	for ( int i = 1; i < m_hMembers.Count(); ++i )
-	{
-		CTFBot *member = m_hMembers[i];
-		if ( member == nullptr || !member->IsAlive() )
-			continue;
-
-		if ( member->m_bIsInFormation )
-			continue;
-
-		if ( member->GetLocomotionInterface()->IsStuck() )
-			continue;
-
-		if ( member->IsPlayerClass( TF_CLASS_MEDIC ) )
-			continue;
-
-		if ( member->m_flFormationError > 0.75f )
-			return false;
-	}
-
-	return true;
-}
-
+//----------------------------------------------------------------------
+// Return true if the squad leader needs to wait for members to catch up, ignoring those who have broken ranks
 bool CTFBotSquad::ShouldSquadLeaderWaitForFormation( void ) const
 {
-	/* exclude squad leader */
-	for ( int i = 1; i < m_hMembers.Count(); ++i )
+	// skip the leader since he's what the formation forms around
+	for( int i=1; i<m_roster.Count(); ++i )
 	{
-		CTFBot *member = m_hMembers[i];
-		if ( member == nullptr || !member->IsAlive() )
-			continue;
-
-		if ( member->IsPlayerClass( TF_CLASS_MEDIC ) )
-			continue;
-
-		if ( member->GetLocomotionInterface()->IsStuck() )
-			continue;
-
-		if ( member->m_flFormationError >= 1.0f && !member->m_bIsInFormation )
-			return true;
+		// the squad leader should wait if any member is out of position, but not yet broken ranks
+		if ( m_roster[i].Get() != NULL && m_roster[i]->IsAlive() )
+		{
+			if ( m_roster[i]->GetSquadFormationError() >= 1.0f && 
+				 !m_roster[i]->HasBrokenFormation() && 
+				 !m_roster[i]->GetLocomotionInterface()->IsStuck() &&
+				 !m_roster[i]->IsPlayerClass( TF_CLASS_MEDIC ) )		// Medics do their own thing
+			{
+				// wait for me!
+				return true;
+			}
+		}
 	}
 
 	return false;
 }
 
 
+//----------------------------------------------------------------------
+// Return true if the squad is in formation (everyone is in or nearly in their desired positions)
+bool CTFBotSquad::IsInFormation( void ) const
+{
+	// skip the leader since he's what the formation forms around
+	for( int i=1; i<m_roster.Count(); ++i )
+	{
+		if ( m_roster[i].Get() != NULL && m_roster[i]->IsAlive() )
+		{
+			if ( m_roster[i]->HasBrokenFormation() ||
+				 m_roster[i]->GetLocomotionInterface()->IsStuck() ||
+				 m_roster[i]->IsPlayerClass( TF_CLASS_MEDIC ) )		// Medics do their own thing
+			{
+				// I'm not "in formation"
+				continue;
+			}
+
+			if ( m_roster[i]->GetSquadFormationError() > 0.75f )
+			{
+				// I'm not in position yet
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+//----------------------------------------------------------------------
+// Tell all members to leave the squad and then delete itself
 void CTFBotSquad::DisbandAndDeleteSquad( void )
 {
-	FOR_EACH_VEC( m_hMembers, i )
+	// Tell each member of the squad to remove this reference
+	for( int i=0; i < m_roster.Count(); ++i )
 	{
-		CTFBot *bot = m_hMembers[i];
-		if ( bot != nullptr )
-			bot->m_pSquad = nullptr;
+		if ( m_roster[i].Get() != NULL )
+		{
+			m_roster[i]->DeleteSquad();
+		}
 	}
 
 	delete this;

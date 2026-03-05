@@ -1,4 +1,4 @@
-//========= Copyright � 1996-2007, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -27,14 +27,14 @@
 #include "c_team.h"
 #include "c_tf_team.h"
 #include "c_team_objectiveresource.h"
-#include "c_func_capture_zone.h"
 #include "tf_hud_objectivestatus.h"
-#include "tf_hud_flagstatus.h"
 #include "tf_spectatorgui.h"
 #include "teamplayroundbased_gamerules.h"
 #include "tf_gamerules.h"
 #include "tf_hud_freezepanel.h"
-#include "tier1/fmtstr.h"
+#include "c_func_capture_zone.h"
+#include "clientmode_shared.h"
+#include "tf_hud_mediccallers.h"
 #include "view.h"
 #include "prediction.h"
 #include "tf_logic_robot_destruction.h"
@@ -50,21 +50,115 @@ ConVar tf_rd_flag_ui_mode( "tf_rd_flag_ui_mode", "3", FCVAR_DEVELOPMENTONLY, "Wh
 
 extern ConVar tf_flag_caps_per_round;
 
+void AddSubKeyNamed( KeyValues *pKeys, const char *pszName );
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 CTFArrowPanel::CTFArrowPanel( Panel *parent, const char *name ) : vgui::Panel( parent, name )
 {
 	m_RedMaterial.Init( "hud/objectives_flagpanel_compass_red", TEXTURE_GROUP_VGUI ); 
-	m_BlueMaterial.Init( "hud/objectives_flagpanel_compass_blue", TEXTURE_GROUP_VGUI );
-	m_GreenMaterial.Init("hud/objectives_flagpanel_compass_green", TEXTURE_GROUP_VGUI);
-	m_YellowMaterial.Init("hud/objectives_flagpanel_compass_yellow", TEXTURE_GROUP_VGUI);
+	m_BlueMaterial.Init( "hud/objectives_flagpanel_compass_blue", TEXTURE_GROUP_VGUI ); 
 	m_NeutralMaterial.Init( "hud/objectives_flagpanel_compass_grey", TEXTURE_GROUP_VGUI ); 
+	m_NeutralRedMaterial.Init( "hud/objectives_flagpanel_compass_grey_with_red", TEXTURE_GROUP_VGUI ); 
 
 	m_RedMaterialNoArrow.Init( "hud/objectives_flagpanel_compass_red_noArrow", TEXTURE_GROUP_VGUI ); 
-	m_BlueMaterialNoArrow.Init( "hud/objectives_flagpanel_compass_blue_noArrow", TEXTURE_GROUP_VGUI );
-	m_GreenMaterialNoArrow.Init("hud/objectives_flagpanel_compass_green_noArrow", TEXTURE_GROUP_VGUI);
-	m_YellowMaterialNoArrow.Init("hud/objectives_flagpanel_compass_yellow_noArrow", TEXTURE_GROUP_VGUI);
+	m_BlueMaterialNoArrow.Init( "hud/objectives_flagpanel_compass_blue_noArrow", TEXTURE_GROUP_VGUI ); 
+
+	m_pMaterial = m_NeutralMaterial;
+	m_bUseRed = false;
+	m_flNextColorSwitch = 0.0f;
+
+	ivgui()->AddTickSignal( GetVPanel(), 100 );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFArrowPanel::OnTick( void )
+{
+	if ( !m_hEntity.Get() )
+		return;
+
+	C_BaseEntity *pEnt = m_hEntity.Get();
+	m_pMaterial = m_NeutralMaterial;
+
+	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
+
+	if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() )
+	{
+		if ( m_bUseRed )
+		{
+			m_pMaterial = m_NeutralRedMaterial;
+		}
+		else
+		{
+			m_pMaterial = m_NeutralMaterial;
+		}
+
+		if ( pEnt && TFGameRules()->GetMannVsMachineAlarmStatus() == true ) 
+		{
+			CCaptureFlag *pFlag = dynamic_cast<CCaptureFlag *>( pEnt );
+			if ( pFlag && pFlag->IsStolen() )
+			{
+				if ( m_flNextColorSwitch < gpGlobals->curtime )
+				{
+					m_flNextColorSwitch = gpGlobals->curtime + 0.2f;
+					m_bUseRed = !m_bUseRed;
+				}
+			}
+			else
+			{
+				m_bUseRed = false;
+			}
+		}
+		else
+		{
+			m_bUseRed = false;
+		}
+	}
+	else
+	{
+		// figure out what material we need to use
+		if ( pEnt->GetTeamNumber() == TF_TEAM_RED )
+		{
+			m_pMaterial = m_RedMaterial;
+
+			if ( pLocalPlayer && ( pLocalPlayer->GetObserverMode() == OBS_MODE_IN_EYE ) )
+			{
+				// is our target a player?
+				C_BaseEntity *pTargetEnt = pLocalPlayer->GetObserverTarget();
+				if ( pTargetEnt && pTargetEnt->IsPlayer() )
+				{
+					// does our target have the flag and are they carrying the flag we're currently drawing?
+					C_TFPlayer *pTarget = static_cast< C_TFPlayer* >( pTargetEnt );
+					if ( pTarget->HasTheFlag() && ( pTarget->GetItem() == pEnt ) )
+					{
+						m_pMaterial = m_RedMaterialNoArrow;
+					}
+				}
+			}
+		}
+		else if ( pEnt->GetTeamNumber() == TF_TEAM_BLUE )
+		{
+			m_pMaterial = m_BlueMaterial;
+
+			if ( pLocalPlayer && ( pLocalPlayer->GetObserverMode() == OBS_MODE_IN_EYE ) )
+			{
+				// is our target a player?
+				C_BaseEntity *pTargetEnt = pLocalPlayer->GetObserverTarget();
+				if ( pTargetEnt && pTargetEnt->IsPlayer() )
+				{
+					// does our target have the flag and are they carrying the flag we're currently drawing?
+					C_TFPlayer *pTarget = static_cast< C_TFPlayer* >( pTargetEnt );
+					if ( pTarget->HasTheFlag() && ( pTarget->GetItem() == pEnt ) )
+					{
+						m_pMaterial = m_BlueMaterialNoArrow;
+					}
+				}
+			}
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -117,92 +211,6 @@ float CTFArrowPanel::GetAngleRotation( void )
 //-----------------------------------------------------------------------------
 void CTFArrowPanel::Paint()
 {
-	if ( !m_hEntity.Get() )
-		return;
-
-	C_BaseEntity *pEnt = m_hEntity.Get();
-	IMaterial *pMaterial = m_NeutralMaterial;
-
-	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
-
-	// figure out what material we need to use
-	if ( pEnt->GetTeamNumber() == TF_TEAM_RED )
-	{
-		pMaterial = m_RedMaterial;
-
-		if ( pLocalPlayer && ( pLocalPlayer->GetObserverMode() == OBS_MODE_IN_EYE ) )
-		{
-			// is our target a player?
-			C_BaseEntity *pTargetEnt = pLocalPlayer->GetObserverTarget();
-			if ( pTargetEnt && pTargetEnt->IsPlayer() )
-			{
-				// does our target have the flag and are they carrying the flag we're currently drawing?
-				C_TFPlayer *pTarget = static_cast< C_TFPlayer* >( pTargetEnt );
-				if ( pTarget->HasTheFlag() && ( pTarget->GetItem() == pEnt ) )
-				{
-					pMaterial = m_RedMaterialNoArrow;
-				}
-			}
-		}
-	}
-	else if ( pEnt->GetTeamNumber() == TF_TEAM_BLUE )
-	{
-		pMaterial = m_BlueMaterial;
-
-		if ( pLocalPlayer && ( pLocalPlayer->GetObserverMode() == OBS_MODE_IN_EYE ) )
-		{
-			// is our target a player?
-			C_BaseEntity *pTargetEnt = pLocalPlayer->GetObserverTarget();
-			if ( pTargetEnt && pTargetEnt->IsPlayer() )
-			{
-				// does our target have the flag and are they carrying the flag we're currently drawing?
-				C_TFPlayer *pTarget = static_cast< C_TFPlayer* >( pTargetEnt );
-				if ( pTarget->HasTheFlag() && ( pTarget->GetItem() == pEnt ) )
-				{
-					pMaterial = m_BlueMaterialNoArrow;
-				}
-			}
-		}
-	}
-	else if (pEnt->GetTeamNumber() == TF_TEAM_GREEN)
-	{
-		pMaterial = m_GreenMaterial;
-
-		if (pLocalPlayer && (pLocalPlayer->GetObserverMode() == OBS_MODE_IN_EYE))
-		{
-			// is our target a player?
-			C_BaseEntity *pTargetEnt = pLocalPlayer->GetObserverTarget();
-			if (pTargetEnt && pTargetEnt->IsPlayer())
-			{
-				// does our target have the flag and are they carrying the flag we're currently drawing?
-				C_TFPlayer *pTarget = static_cast< C_TFPlayer* >(pTargetEnt);
-				if (pTarget->HasTheFlag() && (pTarget->GetItem() == pEnt))
-				{
-					pMaterial = m_GreenMaterialNoArrow;
-				}
-			}
-		}
-	}
-	else if (pEnt->GetTeamNumber() == TF_TEAM_YELLOW)
-	{
-		pMaterial = m_YellowMaterial;
-
-		if (pLocalPlayer && (pLocalPlayer->GetObserverMode() == OBS_MODE_IN_EYE))
-		{
-			// is our target a player?
-			C_BaseEntity *pTargetEnt = pLocalPlayer->GetObserverTarget();
-			if (pTargetEnt && pTargetEnt->IsPlayer())
-			{
-				// does our target have the flag and are they carrying the flag we're currently drawing?
-				C_TFPlayer *pTarget = static_cast< C_TFPlayer* >(pTargetEnt);
-				if (pTarget->HasTheFlag() && (pTarget->GetItem() == pEnt))
-				{
-					pMaterial = m_YellowMaterialNoArrow;
-				}
-			}
-		}
-	}
-
 	int x = 0;
 	int y = 0;
 	ipanel()->GetAbsPos( GetVPanel(), x, y );
@@ -220,7 +228,7 @@ void CTFArrowPanel::Paint()
 	panelRotation.SetTranslation( Vector( x + nWidth/2, y + nHeight/2, 0 ) );
 	pRenderContext->LoadMatrix( panelRotation );
 
-	IMesh *pMesh = pRenderContext->GetDynamicMesh( true, NULL, NULL, pMaterial );
+	IMesh *pMesh = pRenderContext->GetDynamicMesh( true, NULL, NULL, m_pMaterial );
 
 	CMeshBuilder meshBuilder;
 	meshBuilder.Begin( pMesh, MATERIAL_QUADS, 1 );
@@ -267,9 +275,9 @@ bool CTFArrowPanel::IsVisible( void )
 //-----------------------------------------------------------------------------
 CTFFlagStatus::CTFFlagStatus( Panel *parent, const char *name ) : EditablePanel( parent, name )
 {
-	m_pArrow = NULL;
-	m_pStatusIcon = NULL;
-	m_pBriefcase = NULL;
+	m_pArrow = new CTFArrowPanel( this, "Arrow" );
+	m_pStatusIcon = new CTFImagePanel( this, "StatusIcon" );
+	m_pBriefcase = new CTFImagePanel( this, "Briefcase" );
 	m_hEntity = NULL;
 }
 
@@ -280,12 +288,25 @@ void CTFFlagStatus::ApplySchemeSettings( IScheme *pScheme )
 {
 	BaseClass::ApplySchemeSettings( pScheme );
 
-	// load control settings...
-	LoadControlSettings( "resource/UI/FlagStatus.res" );
+	KeyValues *pConditions = NULL;
 
-	m_pArrow = dynamic_cast<CTFArrowPanel *>( FindChildByName( "Arrow" ) );
-	m_pStatusIcon = dynamic_cast<CTFImagePanel *>( FindChildByName( "StatusIcon" ) );
-	m_pBriefcase = dynamic_cast<CTFImagePanel *>( FindChildByName( "Briefcase" ) );
+	if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() )
+	{
+		pConditions = new KeyValues( "conditions" );
+
+		if ( pConditions )
+		{
+			AddSubKeyNamed( pConditions, "if_mvm" );
+		}
+	}
+
+	// load control settings...
+	LoadControlSettings( "resource/UI/FlagStatus.res", NULL, NULL, pConditions );
+
+	if ( pConditions )
+	{
+		pConditions->deleteThis();
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -293,7 +314,8 @@ void CTFFlagStatus::ApplySchemeSettings( IScheme *pScheme )
 //-----------------------------------------------------------------------------
 bool CTFFlagStatus::IsVisible( void )
 {
-	if( IsTakingAFreezecamScreenshot() )
+	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+	if ( pPlayer && pPlayer->GetObserverMode() == OBS_MODE_FREEZECAM )
 		return false;
 
 	return BaseClass::IsVisible();
@@ -307,10 +329,11 @@ void CTFFlagStatus::UpdateStatus( void )
 	if ( m_hEntity.Get() )
 	{
 		CCaptureFlag *pFlag = dynamic_cast<CCaptureFlag *>( m_hEntity.Get() );
-	
+
 		if ( pFlag )
 		{
 			const char *pszImage = "../hud/objectives_flagpanel_ico_flag_home";
+			const char *pszBombImage = "../hud/bomb_dropped";
 
 			if ( pFlag->IsDropped() )
 			{
@@ -319,11 +342,17 @@ void CTFFlagStatus::UpdateStatus( void )
 			else if ( pFlag->IsStolen() )
 			{
 				pszImage = "../hud/objectives_flagpanel_ico_flag_moving";
+				pszBombImage = "../hud/bomb_carried";
 			}
 
 			if ( m_pStatusIcon )
 			{
 				m_pStatusIcon->SetImage( pszImage );
+			}
+
+			if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() && m_pBriefcase )
+			{
+				m_pBriefcase->SetImage( pszBombImage );
 			}
 		}
 	}
@@ -339,10 +368,20 @@ CTFHudFlagObjectives::CTFHudFlagObjectives( Panel *parent, const char *name ) : 
 	m_bFlagAnimationPlayed = false;
 	m_bCarryingFlag = false;
 	m_pSpecCarriedImage = NULL;
+	m_pPoisonImage = NULL;
+	m_pPoisonTimeLabel = NULL;
 
-	vgui::ivgui()->AddTickSignal( GetVPanel() );
+	m_pRedFlag = new CTFFlagStatus( this, "RedFlag" );
+	m_pBlueFlag = new CTFFlagStatus( this, "BlueFlag" );
+
+	m_bPlayingHybrid_CTF_CP = false;
+	m_bPlayingSpecialDeliveryMode = false;
+
+	vgui::ivgui()->AddTickSignal( GetVPanel(), 250 );
 
 	ListenForGameEvent( "flagstatus_update" );
+
+	m_nNumValidFlags = -1;
 }
 
 //-----------------------------------------------------------------------------
@@ -365,39 +404,91 @@ void CTFHudFlagObjectives::ApplySchemeSettings( IScheme *pScheme )
 
 	KeyValues *pConditions = NULL;
 
-	if ( TFGameRules() && TFGameRules()->IsInHybridCTF_CPMode() )
+	bool bHybrid = TFGameRules() && TFGameRules()->IsPlayingHybrid_CTF_CP();
+	bool bMVM = TFGameRules() && TFGameRules()->IsMannVsMachineMode();
+	bool bSpecialDeliveryMode = TFGameRules() && TFGameRules()->IsPlayingSpecialDeliveryMode();
+
+	int nNumFlags = 0;
+
+	if ( m_pRedFlag && m_pRedFlag->GetEntity() != NULL )
 	{
-		pConditions = new KeyValues( "conditions" );
-		AddSubKeyNamed( pConditions, "if_hybrid" );
+		nNumFlags++;
 	}
-	else if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() )
+	
+	if ( m_pBlueFlag && m_pBlueFlag->GetEntity() != NULL )
 	{
-		pConditions = new KeyValues( "conditions" );
-		AddSubKeyNamed( pConditions, "if_mvm" );
-	}
-	else if ( TFGameRules() && TFGameRules()->IsInSpecialDeliveryMode() )
-	{
-		pConditions = new KeyValues( "conditions" );
-		AddSubKeyNamed( pConditions, "if_specialdelivery" );
+		nNumFlags++;
 	}
 
+	if ( nNumFlags == 2 && m_pRedFlag->GetEntity() == m_pBlueFlag->GetEntity() )
+	{
+		// They're both pointing at the same flag! There's really only 1
+		nNumFlags = 1;
+	}
+
+	if ( nNumFlags == 0 )
+	{
+		pConditions = new KeyValues( "conditions" );
+		if ( pConditions )
+		{
+			AddSubKeyNamed( pConditions, "if_no_flags" );
+		}
+
+		if ( bSpecialDeliveryMode )
+		{
+			AddSubKeyNamed( pConditions, "if_specialdelivery" );
+		}
+	}
+	else
+	{
+		if ( bHybrid || ( nNumFlags == 1 ) || bMVM || bSpecialDeliveryMode )
+		{
+			pConditions = new KeyValues( "conditions" );
+			if ( pConditions )
+			{
+				if ( bHybrid )
+				{
+					AddSubKeyNamed( pConditions, "if_hybrid" );
+				}
+
+				if ( nNumFlags == 1 || bSpecialDeliveryMode )
+				{
+					AddSubKeyNamed( pConditions, "if_hybrid_single" );
+				}
+				else if ( nNumFlags == 2 )
+				{
+					AddSubKeyNamed( pConditions, "if_hybrid_double" );
+				}
+
+				if ( bMVM )
+				{
+					AddSubKeyNamed( pConditions, "if_mvm" );
+				}
+
+				if ( bSpecialDeliveryMode )
+				{
+					AddSubKeyNamed( pConditions, "if_specialdelivery" );
+				}
+			}
+		}
+	}
+	
 	// load control settings...
 	LoadControlSettings( "resource/UI/HudObjectiveFlagPanel.res", NULL, NULL, pConditions );
 
-	m_pCarriedImage = dynamic_cast<CTFImagePanel *>( FindChildByName( "CarriedImage" ) );
+	m_pCarriedImage = dynamic_cast<ImagePanel *>( FindChildByName( "CarriedImage" ) );
 	m_pPlayingTo = dynamic_cast<CExLabel *>( FindChildByName( "PlayingTo" ) );
-	m_pPlayingToBG = dynamic_cast<CTFImagePanel *>( FindChildByName( "PlayingToBG" ) );
-	m_pRedFlag = dynamic_cast<CTFFlagStatus *>( FindChildByName( "RedFlag" ) );
-	m_pBlueFlag = dynamic_cast<CTFFlagStatus *>( FindChildByName( "BlueFlag" ) );
-	m_pGreenFlag = dynamic_cast<CTFFlagStatus *>( FindChildByName( "GreenFlag" ) );
-	m_pYellowFlag = dynamic_cast<CTFFlagStatus *>( FindChildByName( "YellowFlag" ) );
-	
+	m_pPlayingToBG = FindChildByName( "PlayingToBG" );
+
 	m_pCapturePoint = dynamic_cast<CTFArrowPanel *>( FindChildByName( "CaptureFlag" ) );
 
 	m_pSpecCarriedImage = dynamic_cast<ImagePanel *>( FindChildByName( "SpecCarriedImage" ) );
 
+	m_pPoisonImage = dynamic_cast<ImagePanel *>( FindChildByName( "PoisonIcon" ) );
+	m_pPoisonTimeLabel = dynamic_cast<CExLabel *>( FindChildByName( "PoisonTimeLabel" ) );
+
 	// outline is always on, so we need to init the alpha to 0
-	CTFImagePanel *pOutline = dynamic_cast<CTFImagePanel *>( FindChildByName( "OutlineImage" ) );
+	vgui::Panel *pOutline = FindChildByName( "OutlineImage" );
 	if ( pOutline )
 	{
 		pOutline->SetAlpha( 0 );
@@ -418,35 +509,7 @@ void CTFHudFlagObjectives::Reset()
 {
 	g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "FlagOutlineHide" );
 
-	if ( m_pCarriedImage && m_pCarriedImage->IsVisible() )
-	{
-		m_pCarriedImage->SetVisible( false );
-	}
-
-	if ( m_pBlueFlag && !m_pBlueFlag->IsVisible() )
-	{
-		m_pBlueFlag->SetVisible( true );
-	}
-
-	if ( m_pRedFlag && !m_pRedFlag->IsVisible() )
-	{
-		m_pRedFlag->SetVisible( true );
-	}
-	
-	if (m_pGreenFlag && !m_pGreenFlag->IsVisible())
-	{
-		m_pGreenFlag->SetVisible(true);
-	}
-
-	if (m_pYellowFlag && !m_pYellowFlag->IsVisible())
-	{
-		m_pYellowFlag->SetVisible(true);
-	}
-
-	if ( m_pSpecCarriedImage && m_pSpecCarriedImage->IsVisible() )
-	{
-		m_pSpecCarriedImage->SetVisible( false );
-	}
+	UpdateStatus();
 }
 
 //-----------------------------------------------------------------------------
@@ -473,34 +536,94 @@ void CTFHudFlagObjectives::SetPlayingToLabelVisible( bool bVisible )
 //-----------------------------------------------------------------------------
 void CTFHudFlagObjectives::OnTick()
 {
-	// iterate through the flags to set their position in our HUD
-	for ( int i = 0; i < ICaptureFlagAutoList::AutoList().Count(); i++ )
-	{
-		CCaptureFlag *pFlag = static_cast<CCaptureFlag *>( ICaptureFlagAutoList::AutoList()[i] );
+	int nNumValidFlags = 0;
 
-		if ( pFlag )
+	// check that our blue panel still points at a valid flag
+	if ( m_pBlueFlag && m_pBlueFlag->GetEntity() )
+	{
+		CCaptureFlag *pFlag = dynamic_cast< CCaptureFlag* >( m_pBlueFlag->GetEntity() );
+		if ( !pFlag || pFlag->IsDisabled() )
 		{
-			if (!pFlag->IsDisabled())
+			m_pBlueFlag->SetEntity( NULL );
+		}
+	}
+
+	// check that our red panel still points at a valid flag
+	if ( m_pRedFlag && m_pRedFlag->GetEntity() )
+	{
+		CCaptureFlag *pFlag = dynamic_cast< CCaptureFlag* >( m_pRedFlag->GetEntity() );
+		if ( !pFlag || pFlag->IsDisabled() )
+		{
+			m_pRedFlag->SetEntity( NULL );
+		}
+	}
+
+	// iterate through the flags to set their position in our HUD
+	for ( int i = 0; i<ICaptureFlagAutoList::AutoList().Count(); i++ )
+	{
+		CCaptureFlag *pFlag = static_cast< CCaptureFlag* >( ICaptureFlagAutoList::AutoList()[i] );
+
+		if ( !pFlag->IsDisabled() || pFlag->IsVisibleWhenDisabled() )
+		{
+			if ( pFlag->GetTeamNumber() == TF_TEAM_RED )
 			{
-				if (m_pRedFlag && pFlag->GetTeamNumber() == TF_TEAM_RED)
+				if ( m_pRedFlag )
 				{
-					m_pRedFlag->SetEntity(pFlag);
-				}
-				else if (m_pBlueFlag && pFlag->GetTeamNumber() == TF_TEAM_BLUE)
-				{
-					m_pBlueFlag->SetEntity(pFlag);
-				}
-				else if (m_pGreenFlag && pFlag->GetTeamNumber() == TF_TEAM_GREEN)
-				{
-					m_pGreenFlag->SetEntity(pFlag);
-				}
-				else if (m_pYellowFlag && pFlag->GetTeamNumber() == TF_TEAM_YELLOW)
-				{
-					m_pYellowFlag->SetEntity(pFlag);
+					bool bNeedsUpdate = m_pRedFlag->GetEntity() != pFlag;
+					m_pRedFlag->SetEntity( pFlag );
+					if ( bNeedsUpdate )
+					{
+						UpdateStatus();
+					}
 				}
 			}
+			else if ( pFlag->GetTeamNumber() == TF_TEAM_BLUE )
+			{
+				if ( m_pBlueFlag )
+				{
+					bool bNeedsUpdate = m_pBlueFlag->GetEntity() != pFlag;
+					m_pBlueFlag->SetEntity( pFlag );
+					if ( bNeedsUpdate )
+					{
+						UpdateStatus();
+					}
+				}
+			}
+			else if ( pFlag->GetTeamNumber() == TEAM_UNASSIGNED )
+			{
+				if ( m_pBlueFlag && !m_pBlueFlag->GetEntity() )
+				{
+					m_pBlueFlag->SetEntity( pFlag );
+
+					if ( !m_pBlueFlag->IsVisible() )
+					{
+						m_pBlueFlag->SetVisible( true );
+					}
+
+					if ( m_pRedFlag && m_pRedFlag->IsVisible()  )
+					{
+						m_pRedFlag->SetVisible( false );
+					}
+				}
+				else if ( m_pRedFlag && !m_pRedFlag->GetEntity() )
+				{
+					// make sure both panels aren't pointing at the same entity
+					if ( !m_pBlueFlag || ( pFlag != m_pBlueFlag->GetEntity() ) )
+					{
+						m_pRedFlag->SetEntity( pFlag );
+							
+						if ( !m_pRedFlag->IsVisible() )
+						{
+							m_pRedFlag->SetVisible( true );
+						}
+					}
+				}
+			}
+
+			nNumValidFlags++;
 		}
 
+		// VGUI callout panels
 		if ( CTFRobotDestructionLogic::GetRobotDestructionLogic() && CTFRobotDestructionLogic::GetRobotDestructionLogic()->GetType() == CTFRobotDestructionLogic::TYPE_ROBOT_DESTRUCTION )
 		{
 			if ( tf_rd_flag_ui_mode.GetInt() && !pFlag->IsDisabled() && !pFlag->IsHome() )
@@ -511,10 +634,15 @@ void CTFHudFlagObjectives::OnTick()
 		}
 	}
 
-	// Hide the capture counter on Special Delivery.
-	if (!TFGameRules() || (TFGameRules() && !TFGameRules()->IsInSpecialDeliveryMode()))
+	if ( m_nNumValidFlags != nNumValidFlags )
 	{
-		// are we playing captures for rounds?
+		m_nNumValidFlags = nNumValidFlags;
+		InvalidateLayout( false, true );
+	}
+
+	// are we playing captures for rounds?
+	if ( !TFGameRules() || ( !TFGameRules()->IsPlayingHybrid_CTF_CP() && !TFGameRules()->IsPlayingSpecialDeliveryMode() && !TFGameRules()->IsMannVsMachineMode() ) )
+	{
 		if ( tf_flag_caps_per_round.GetInt() > 0 )
 		{
 			C_TFTeam *pTeam = GetGlobalTFTeam( TF_TEAM_BLUE );
@@ -527,18 +655,6 @@ void CTFHudFlagObjectives::OnTick()
 			if ( pTeam )
 			{
 				SetDialogVariable( "redscore", pTeam->GetFlagCaptures() );
-			}
-			
-			pTeam = GetGlobalTFTeam( TF_TEAM_GREEN );
-			if ( pTeam )
-			{
-				SetDialogVariable( "greenscore", pTeam->GetFlagCaptures() );
-			}
-			
-			pTeam = GetGlobalTFTeam( TF_TEAM_YELLOW );
-			if ( pTeam )
-			{
-				SetDialogVariable( "yellowscore", pTeam->GetFlagCaptures() );
 			}
 
 			SetPlayingToLabelVisible( true );
@@ -557,18 +673,6 @@ void CTFHudFlagObjectives::OnTick()
 			{
 				SetDialogVariable( "redscore", pTeam->Get_Score() );
 			}
-			
-			pTeam = GetGlobalTFTeam( TF_TEAM_GREEN );
-			if ( pTeam )
-			{
-				SetDialogVariable( "greenscore", pTeam->Get_Score() );
-			}
-			
-			pTeam = GetGlobalTFTeam( TF_TEAM_YELLOW );
-			if ( pTeam )
-			{
-				SetDialogVariable( "yellowscore", pTeam->Get_Score() );
-			}
 
 			SetPlayingToLabelVisible( false );
 		}
@@ -576,59 +680,115 @@ void CTFHudFlagObjectives::OnTick()
 
 	// check the local player to see if they're spectating, OBS_MODE_IN_EYE, and the target entity is carrying the flag
 	bool bSpecCarriedImage = false;
+	CCaptureFlag *pPoisonFlag = NULL;
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
-	if ( pPlayer && ( pPlayer->GetObserverMode() == OBS_MODE_IN_EYE ) )
+	if ( pPlayer )
 	{
-		// does our target have the flag?
-		C_BaseEntity *pEnt = pPlayer->GetObserverTarget();
-		if ( pEnt && pEnt->IsPlayer() )
+		if ( pPlayer->GetObserverMode() == OBS_MODE_IN_EYE )
 		{
-			C_TFPlayer *pTarget = static_cast< C_TFPlayer* >( pEnt );
-			if ( pTarget->HasTheFlag() )
+			// does our target have the flag?
+			C_BaseEntity *pEnt = pPlayer->GetObserverTarget();
+			if ( pEnt && pEnt->IsPlayer() )
 			{
-				bSpecCarriedImage = true;
-
-				CCaptureFlag *pPlayerFlag = dynamic_cast<CCaptureFlag*>(pTarget->GetItem());
-
-				if ( m_pSpecCarriedImage )
+				C_TFPlayer *pTarget = static_cast< C_TFPlayer* >( pEnt );
+				if ( pTarget->HasTheFlag() )
 				{
-					char szHudIcon[ MAX_PATH ];
-					pPlayerFlag->GetHudIcon( pPlayerFlag->GetTeamNumber(), szHudIcon, sizeof( szHudIcon ) );
-					m_pSpecCarriedImage->SetImage(szHudIcon);
+					bSpecCarriedImage = true;
+					if ( pTarget->GetTeamNumber() == TF_TEAM_RED )
+					{
+						if ( m_pSpecCarriedImage )
+						{
+							m_pSpecCarriedImage->SetImage( "../hud/objectives_flagpanel_carried_blue" );
+						}
+					}
+					else
+					{
+						if ( m_pSpecCarriedImage )
+						{
+							m_pSpecCarriedImage->SetImage( "../hud/objectives_flagpanel_carried_red" );
+						}
+					}
 				}
+			}
+		}
+
+		if ( pPlayer->HasTheFlag() && TFGameRules()->IsPowerupMode() )
+		{
+			CCaptureFlag *pFlag = dynamic_cast<CCaptureFlag *>( pPlayer->GetItem() );
+			if ( pFlag )
+			{
+				pPoisonFlag = pFlag;
 			}
 		}
 	}
 
-	if ( bSpecCarriedImage )
+	if ( m_pSpecCarriedImage )
 	{
-		if ( m_pSpecCarriedImage && !m_pSpecCarriedImage->IsVisible() )
-		{
-			m_pSpecCarriedImage->SetVisible( true );
-		}
+		m_pSpecCarriedImage->SetVisible( bSpecCarriedImage );
 	}
-	else
+
+	if ( m_pPoisonImage )
 	{
-		if ( m_pSpecCarriedImage && m_pSpecCarriedImage->IsVisible() )
+		m_pPoisonImage->SetVisible( pPoisonFlag && pPoisonFlag->IsPoisonous() );
+	}
+
+	if ( m_pPoisonTimeLabel )
+	{
+		m_pPoisonTimeLabel->SetVisible( pPoisonFlag && pPoisonFlag->GetPoisonTime() > 0.f && !pPoisonFlag->IsPoisonous() );
+		if ( m_pPoisonTimeLabel->IsVisible() )
 		{
-			m_pSpecCarriedImage->SetVisible( false );
+			int nNumSecondsToPoisonous = pPoisonFlag->GetPoisonTime() - gpGlobals->curtime;
+			m_pPoisonTimeLabel->SetText( CFmtStr( "%d", nNumSecondsToPoisonous ) );
 		}
 	}
 
+	if ( TFGameRules() )
+	{
+		if ( m_bPlayingHybrid_CTF_CP != TFGameRules()->IsPlayingHybrid_CTF_CP() )
+		{
+			m_bPlayingHybrid_CTF_CP = TFGameRules()->IsPlayingHybrid_CTF_CP();
+			InvalidateLayout( false, true );
+		}
+
+		if ( m_bPlayingSpecialDeliveryMode != TFGameRules()->IsPlayingSpecialDeliveryMode() )
+		{
+			m_bPlayingSpecialDeliveryMode = TFGameRules()->IsPlayingSpecialDeliveryMode();
+			InvalidateLayout( false, true );
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFHudFlagObjectives::UpdateStatus( void )
+void CTFHudFlagObjectives::SetCarriedImage( const char *pchIcon )
+{
+	if ( m_pCarriedImage )
+	{
+		m_pCarriedImage->SetImage( pchIcon );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFHudFlagObjectives::UpdateStatus( C_BasePlayer *pNewOwner /*= NULL*/, C_BaseEntity *pFlagEntity /*= NULL*/ )
 {
 	C_TFPlayer *pLocalPlayer = ToTFPlayer( C_BasePlayer::GetLocalPlayer() );
 
 	// are we carrying a flag?
 	CCaptureFlag *pPlayerFlag = NULL;
-	if ( pLocalPlayer && pLocalPlayer->HasItem() && ( pLocalPlayer->GetItem()->GetItemID() == TF_ITEM_CAPTURE_FLAG ) )
+	if ( pLocalPlayer && pLocalPlayer->HasItem() && pLocalPlayer->GetItem()->GetItemID() == TF_ITEM_CAPTURE_FLAG )
 	{
-		pPlayerFlag = dynamic_cast<CCaptureFlag*>( pLocalPlayer->GetItem() );
+		if ( !pNewOwner || pNewOwner == pLocalPlayer )
+		{
+			pPlayerFlag = dynamic_cast< CCaptureFlag* >( pLocalPlayer->GetItem() );
+		}
+	}
+
+	if ( !pPlayerFlag && pLocalPlayer && pLocalPlayer == pNewOwner )
+	{
+		pPlayerFlag = dynamic_cast< CCaptureFlag* >( pFlagEntity );
 	}
 
 	if ( pPlayerFlag )
@@ -637,78 +797,62 @@ void CTFHudFlagObjectives::UpdateStatus( void )
 
 		// make sure the panels are on, set the initial alpha values, 
 		// set the color of the flag we're carrying, and start the animations
-		if ( m_pCarriedImage && !m_bFlagAnimationPlayed )
+		if ( m_pBlueFlag && m_pBlueFlag->IsVisible() )
+		{
+			m_pBlueFlag->SetVisible( false );
+		}
+
+		if ( m_pRedFlag && m_pRedFlag->IsVisible() )
+		{
+			m_pRedFlag->SetVisible( false );
+		}
+
+		if ( m_pCarriedImage && !m_pCarriedImage->IsVisible() )
+		{
+			int nTeam;
+			if ( pPlayerFlag->GetType() == TF_FLAGTYPE_ATTACK_DEFEND || 
+				 pPlayerFlag->GetType() == TF_FLAGTYPE_TERRITORY_CONTROL || 
+				 pPlayerFlag->GetType() == TF_FLAGTYPE_INVADE || 
+				 pPlayerFlag->GetType() == TF_FLAGTYPE_RESOURCE_CONTROL )
+			{
+				nTeam = ( ( GetLocalPlayerTeam() == TF_TEAM_BLUE ) ? ( TF_TEAM_BLUE ) : ( TF_TEAM_RED ) );
+			}
+			else
+			{
+				// normal CTF behavior (carrying the enemy flag)
+				nTeam = ( ( GetLocalPlayerTeam() == TF_TEAM_RED ) ? ( TF_TEAM_BLUE ) : ( TF_TEAM_RED ) );
+			}
+
+
+			char szImage[ MAX_PATH ];
+			pPlayerFlag->GetHudIcon( nTeam, szImage, sizeof( szImage ) );
+
+			SetCarriedImage( szImage );
+			m_pCarriedImage->SetVisible( true );
+		}
+
+		if ( !m_bFlagAnimationPlayed )
 		{
 			m_bFlagAnimationPlayed = true;
+			g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "FlagOutline" );
+		}
 
-			// Set the correct flag image depending on the flag we're holding
-			switch (pPlayerFlag->GetTeamNumber())
-			{
-				case TF_TEAM_RED:
-					m_pCarriedImage->SetImage("../hud/objectives_flagpanel_carried_red");
-					break;	
-				case TF_TEAM_BLUE:
-					m_pCarriedImage->SetImage("../hud/objectives_flagpanel_carried_blue");
-					break;
-				case TF_TEAM_GREEN:
-					m_pCarriedImage->SetImage("../hud/objectives_flagpanel_carried_green");
-					break;
-				case TF_TEAM_YELLOW:
-					m_pCarriedImage->SetImage("../hud/objectives_flagpanel_carried_yellow");
-					break;
-			}
+		if ( m_pCapturePoint && !m_pCapturePoint->IsVisible() )
+		{
+			m_pCapturePoint->SetVisible( true );
+		}
 
-			if (m_pRedFlag && m_pRedFlag->IsVisible())
+		if ( pLocalPlayer && m_pCapturePoint )
+		{
+			// go through all the capture zones and find ours
+			for ( int i = 0; i<ICaptureZoneAutoList::AutoList().Count(); i++ )
 			{
-				m_pRedFlag->SetVisible(false);
-			}
-
-			if ( m_pBlueFlag && m_pBlueFlag->IsVisible() )
-			{
-				m_pBlueFlag->SetVisible( false );
-			}
-			
-			if (m_pGreenFlag && m_pGreenFlag->IsVisible())
-			{
-				m_pGreenFlag->SetVisible(false);
-			}
-
-			if (m_pYellowFlag && m_pYellowFlag->IsVisible())
-			{
-				m_pYellowFlag->SetVisible(false);
-			}
-
-			if ( !m_pCarriedImage->IsVisible() )
-			{
-				m_pCarriedImage->SetVisible( true );
-			}
-
-			ConVarRef cl_hud_console( "cl_hud_console" );
-			if ( cl_hud_console.IsValid() && cl_hud_console.GetBool() )
-				g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "FlagOutlineConsole" );
-			else
-				g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "FlagOutline" );
-
-			if ( m_pCapturePoint )
-			{
-				if ( !m_pCapturePoint->IsVisible() )
+				C_CaptureZone *pCaptureZone = static_cast< C_CaptureZone* >( ICaptureZoneAutoList::AutoList()[i] );
+				if ( !pCaptureZone->IsDormant() )
 				{
-					m_pCapturePoint->SetVisible( true );
-				}
-
-				if ( pLocalPlayer )
-				{
-					// go through all the capture zones and find ours
-					for ( int i = 0; i < ICaptureZoneAutoList::AutoList().Count(); i++ )
+					if ( pCaptureZone->GetTeamNumber() == pLocalPlayer->GetTeamNumber() && !pCaptureZone->IsDisabled() )
 					{
-						C_CaptureZone *pZone = static_cast<C_CaptureZone *>( ICaptureZoneAutoList::AutoList()[i] );
-						if ( !pZone->IsDormant() )
-						{
-							if ( pZone->GetTeamNumber() == pLocalPlayer->GetTeamNumber() )
-							{
-								m_pCapturePoint->SetEntity( pZone );
-							}
-						}
+						m_pCapturePoint->SetEntity( pCaptureZone );
 					}
 				}
 			}
@@ -720,12 +864,7 @@ void CTFHudFlagObjectives::UpdateStatus( void )
 		if ( m_bCarryingFlag )
 		{
 			m_bCarryingFlag = false;
-
-			ConVarRef cl_hud_console( "cl_hud_console" );
-			if ( cl_hud_console.IsValid() && cl_hud_console.GetBool() )
-				g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "FlagOutlineConsole" );
-			else
-				g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "FlagOutline" );
+			g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "FlagOutline" );
 		}
 
 		m_bFlagAnimationPlayed = false;
@@ -742,44 +881,43 @@ void CTFHudFlagObjectives::UpdateStatus( void )
 
 		if ( m_pBlueFlag )
 		{
-			if ( !m_pBlueFlag->IsVisible() )
+			if ( m_pBlueFlag->GetEntity() != NULL )
 			{
-				m_pBlueFlag->SetVisible( true );
+				if ( !m_pBlueFlag->IsVisible() )
+				{
+					m_pBlueFlag->SetVisible( true );
+				}
+				
+				m_pBlueFlag->UpdateStatus();
 			}
-			
-			m_pBlueFlag->UpdateStatus();
+			else
+			{
+				if ( m_pBlueFlag->IsVisible() )
+				{
+					m_pBlueFlag->SetVisible( false );
+				}
+			}
 		}
 
 		if ( m_pRedFlag )
 		{
-			if ( !m_pRedFlag->IsVisible() )
+			if ( m_pRedFlag->GetEntity() != NULL )
 			{
-				m_pRedFlag->SetVisible( true );
-			}
+				if ( !m_pRedFlag->IsVisible() )
+				{
+					m_pRedFlag->SetVisible( true );
+				}
 
-			m_pRedFlag->UpdateStatus();
-		}
-		
-		if (m_pGreenFlag)
-		{
-			if (!m_pGreenFlag->IsVisible())
+				m_pRedFlag->UpdateStatus();
+			}
+			else
 			{
-				m_pGreenFlag->SetVisible(true);
+				if ( m_pRedFlag->IsVisible() )
+				{
+					m_pRedFlag->SetVisible( false );
+				}
 			}
-
-			m_pGreenFlag->UpdateStatus();
 		}
-
-		if (m_pYellowFlag)
-		{
-			if (!m_pYellowFlag->IsVisible())
-			{
-				m_pYellowFlag->SetVisible(true);
-			}
-
-			m_pYellowFlag->UpdateStatus();
-		}
-		
 	}
 }
 
@@ -790,38 +928,64 @@ void CTFHudFlagObjectives::FireGameEvent( IGameEvent *event )
 {
 	const char *eventName = event->GetName();
 
-	if ( !Q_strcmp( eventName, "flagstatus_update" ) )
+	if ( FStrEq( eventName, "flagstatus_update" ) )
 	{
-		UpdateStatus();
+		int nVictimID = event->GetInt( "userid" );
+		C_BasePlayer *pNewOwner = USERID2PLAYER( nVictimID );
+
+		int nFlagEntIndex = event->GetInt( "entindex" );
+		C_BaseEntity *pFlagEntity = ClientEntityList().GetEnt( nFlagEntIndex );
+
+		UpdateStatus( pNewOwner, pFlagEntity );
 	}
 }
-
-
-CUtlVector<CTFFlagCalloutPanel *> CTFFlagCalloutPanel::sm_FlagCalloutPanels;
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CTFFlagCalloutPanel::CTFFlagCalloutPanel( const char *name )
-	: CHudElement( name ), BaseClass( NULL, name )
+#define FLAG_CALLER_WIDE ( XRES( 30 ) )
+#define FLAG_CALLER_TALL ( YRES( 30 ) )
+#define FLAG_CALLER_ARROW_WIDE ( XRES( 8 ) )
+#define FLAG_CALLER_ARROW_TALL ( YRES( 10 ) )
+#define FLAG_CALLER_DISPLAY_ENEMY_ONE 1
+#define FLAG_CALLER_DISPLAY_ENEMY_ALL 2
+#define FLAG_CALLER_DISPLAY_ALL 3
+
+CUtlVector< CTFFlagCalloutPanel* > CTFFlagCalloutPanel::m_FlagCalloutPanels;
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CTFFlagCalloutPanel::CTFFlagCalloutPanel( const char *pElementName ) : CHudElement( pElementName ), BaseClass( NULL, pElementName )
 {
-	sm_FlagCalloutPanels.AddToTail( this );
+	m_FlagCalloutPanels.AddToTail( this );
 
 	SetParent( g_pClientMode->GetViewport() );
 
 	RegisterForRenderGroup( "mid" );
 	RegisterForRenderGroup( "commentary" );
-
 	SetHiddenBits( HIDEHUD_MISCSTATUS );
 
+	// SetBounds( 0, 0, FLAG_CALLER_WIDE, FLAG_CALLER_TALL );
 	vgui::ivgui()->AddTickSignal( GetVPanel() );
 
 	m_pFlagCalloutPanel = new CTFImagePanel( this, "FlagCalloutPanel" );
 	m_pFlagValueLabel = new Label( this, "FlagValueLabel", "" );
-	m_pFlagStatusIcon = new CTFImagePanel( this, "StatusIcon" );
+	m_pFlagStatusIcon = new CTFImagePanel( this,  "StatusIcon" );
 
-	m_f1 = 1.0f;
-	m_flLastUpdate = 1.0f;
+	m_flRemoveTime = 1.f;
+	m_flFirstDisplayTime = 1.f;
+	m_pArrowMaterial = NULL;
+	m_iDrawArrow = DRAW_ARROW_UP;
+	m_bFlagVisible = false;		// On screen, line-of-sight
+
+	m_flPrevScale = 0.f;
+	m_nPanelWideOrig = 0;
+	m_nPanelTallOrig = 0;
+	m_nLabelWideOrig = 0;
+	m_nLabelTallOrig = 0;
+	m_nIconWideOrig = 0;
+	m_nIconTallOrig = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -829,14 +993,19 @@ CTFFlagCalloutPanel::CTFFlagCalloutPanel( const char *name )
 //-----------------------------------------------------------------------------
 CTFFlagCalloutPanel::~CTFFlagCalloutPanel( void )
 {
-	FOR_EACH_VEC_BACK( sm_FlagCalloutPanels, i )
+	bool bFound = false;
+	FOR_EACH_VEC_BACK( m_FlagCalloutPanels, i )
 	{
-		if ( sm_FlagCalloutPanels[i] == this )
+		if ( m_FlagCalloutPanels[i] == this )
 		{
-			sm_FlagCalloutPanels.Remove( i );
+			m_FlagCalloutPanels.Remove( i );
+			bFound = true;
 			break;
 		}
 	}
+
+	// We should have found the panel and returned earlier
+	Assert( bFound );
 
 	if ( m_pArrowMaterial )
 	{
@@ -845,28 +1014,7 @@ CTFFlagCalloutPanel::~CTFFlagCalloutPanel( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-CTFFlagCalloutPanel *CTFFlagCalloutPanel::AddFlagCalloutIfNotFound( CCaptureFlag *pFlag, float f, Vector const &v )
-{
-	FOR_EACH_VEC( sm_FlagCalloutPanels, i )
-	{
-		if ( sm_FlagCalloutPanels[i]->m_hFlag == pFlag )
-		{
-			return nullptr;
-		}
-	}
-
-	CTFFlagCalloutPanel *pCallout = new CTFFlagCalloutPanel( "FlagCalloutHUD" );
-	if ( pCallout )
-	{
-		pCallout->SetFlag( pFlag, f, v );
-	}
-	return pCallout;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CTFFlagCalloutPanel::ApplySchemeSettings( vgui::IScheme *pScheme )
 {
@@ -875,17 +1023,65 @@ void CTFFlagCalloutPanel::ApplySchemeSettings( vgui::IScheme *pScheme )
 	LoadControlSettings( "resource/UI/FlagCalloutPanel.res" );
 
 	if ( m_pArrowMaterial )
+	{
 		m_pArrowMaterial->DecrementReferenceCount();
-
+	}
 	m_pArrowMaterial = materials->FindMaterial( "HUD/medic_arrow", TEXTURE_GROUP_VGUI );
 	m_pArrowMaterial->IncrementReferenceCount();
 
-	if ( !m_pFlagCalloutPanel || !m_pFlagValueLabel || !m_pFlagStatusIcon )
+	if ( !m_pFlagCalloutPanel )
 		return;
 
-	m_pFlagCalloutPanel->GetSize( m_nPanelWide, m_nPanelTall );
-	m_pFlagValueLabel->GetSize( m_nLabelWide, m_nLabelTall );
-	m_pFlagStatusIcon->GetSize( m_nIconWide, m_nIconTall );
+	if ( !m_pFlagValueLabel )
+		return;
+
+	if ( !m_pFlagStatusIcon )
+		return;
+
+	m_pFlagCalloutPanel->GetSize( m_nPanelWideOrig, m_nPanelTallOrig );
+	m_pFlagValueLabel->GetSize( m_nLabelWideOrig, m_nLabelTallOrig );
+	m_pFlagStatusIcon->GetSize( m_nIconWideOrig, m_nIconTallOrig );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFFlagCalloutPanel::PerformLayout( void )
+{
+	BaseClass::PerformLayout();
+
+	// SetSize( FLAG_CALLER_WIDE, FLAG_CALLER_TALL );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFFlagCalloutPanel::GetCalloutPosition( const Vector &vecDelta, float flRadius, float *xpos, float *ypos, float *flRotation )
+{
+	// Player Data
+	QAngle playerAngles = MainViewAngles();
+
+	Vector forward, right, up( 0.f, 0.f, 1.f );
+	AngleVectors( playerAngles, &forward, NULL, NULL );
+	forward.z = 0.f;
+	VectorNormalize( forward );
+	CrossProduct( up, forward, right );
+	float front = DotProduct( vecDelta, forward );
+	float side = DotProduct( vecDelta, right );
+	*xpos = flRadius * -side;
+	*ypos = flRadius * -front;
+
+	// Get the rotation (yaw)
+	*flRotation = atan2( *xpos, *ypos ) + M_PI;
+	*flRotation *= 180.f / M_PI;
+
+	float yawRadians = -( *flRotation ) * M_PI / 180.f;
+	float ca = cos( yawRadians );
+	float sa = sin( yawRadians );
+
+	// Rotate it around the circle
+	*xpos = (int)( ( ScreenWidth() / 2 ) + ( flRadius * sa ) );
+	*ypos = (int)( ( ScreenHeight() / 2 ) - ( flRadius * ca ) );
 }
 
 //-----------------------------------------------------------------------------
@@ -893,37 +1089,48 @@ void CTFFlagCalloutPanel::ApplySchemeSettings( vgui::IScheme *pScheme )
 //-----------------------------------------------------------------------------
 void CTFFlagCalloutPanel::OnTick( void )
 {
-	const int nUIMode = tf_rd_flag_ui_mode.GetInt();
+	int nDisplayMode = tf_rd_flag_ui_mode.GetInt();
 
-	CTFPlayer *pLocalPlayer = CTFPlayer::GetLocalTFPlayer();
-	if ( !pLocalPlayer || !m_hFlag || m_hFlag->IsHome() || m_hFlag->IsDisabled() || nUIMode == 0 )
+	// Panels self-manage their existence and visibility
+	C_TFPlayer *pLocalTFPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( !pLocalTFPlayer || !m_hFlag || m_hFlag->IsHome() || m_hFlag->IsDisabled() || !nDisplayMode )
 	{
 		MarkForDeletion();
 		return;
 	}
-
+	
 	bool bShouldDraw = ShouldShowFlagIconToLocalPlayer();
-	if ( nUIMode == 1 )
+
+	// Only show the most valuable enemy flag in this mode
+	if ( nDisplayMode == FLAG_CALLER_DISPLAY_ENEMY_ONE )
 	{
 		int nHighestValue = 0;
-		CCaptureFlag *pHighestValueFlag = NULL;
+		CCaptureFlag *pMostValuableFlag = NULL;
+
 		for ( int i = 0; i < ICaptureFlagAutoList::AutoList().Count(); ++i )
 		{
-			CCaptureFlag *pFlag = static_cast<CCaptureFlag *>( ICaptureFlagAutoList::AutoList()[i] );
+			CCaptureFlag *pFlag = static_cast< CCaptureFlag* >( ICaptureFlagAutoList::AutoList()[i] );
 			if ( pFlag && pFlag->GetPointValue() > nHighestValue )
 			{
-				if ( pFlag->IsDisabled() || pFlag->IsHome() || pFlag->InSameTeam( pLocalPlayer ) )
+				if ( pFlag->IsDisabled() )
 					continue;
 
-				if ( nHighestValue < pFlag->GetPointValue() )
+				if ( pFlag->IsHome() )
+					continue;
+
+				if ( pFlag->InSameTeam( pLocalTFPlayer ) )
+					continue;
+
+				if ( pFlag->GetPointValue() > nHighestValue )
 				{
 					nHighestValue = pFlag->GetPointValue();
-					pHighestValueFlag = pFlag;
+					pMostValuableFlag = pFlag;
 				}
 			}
 		}
 
-		if ( pHighestValueFlag != m_hFlag )
+		// If we're not it
+		if ( pMostValuableFlag != m_hFlag )
 			bShouldDraw = false;
 	}
 
@@ -931,8 +1138,8 @@ void CTFFlagCalloutPanel::OnTick( void )
 	{
 		if ( !IsVisible() )
 		{
-			m_flLastUpdate = gpGlobals->curtime;
-			m_flPrevScale = 0;
+			m_flFirstDisplayTime = gpGlobals->curtime;
+			m_flPrevScale = 0.f;
 		}
 
 		SetVisible( bShouldDraw );
@@ -945,161 +1152,100 @@ void CTFFlagCalloutPanel::OnTick( void )
 	if ( !bShouldDraw )
 		return;
 
-	if ( !m_hFlag->IsDropped() && m_hFlag->GetPrevOwner() && !prediction->IsFirstTimePredicted() )
+	bool bCarried = ( !m_hFlag->IsDropped() && m_hFlag->GetPrevOwner() );
+	if ( bCarried && !prediction->IsFirstTimePredicted() )
 		return;
 
-	Vector vecToFlag = m_hFlag->GetAbsOrigin() - pLocalPlayer->GetAbsOrigin();
-	ScaleAndPositionCallout( RemapValClamped( vecToFlag.LengthSqr(), Sqr( 1000 ), Sqr( 4000 ), 1.0f, 0.6f ) );
+	// Adjust scale based on distance
+	Vector vecDistance = m_hFlag->GetAbsOrigin() - pLocalTFPlayer->GetAbsOrigin();
+	ScaleAndPositionCallout( RemapValClamped( vecDistance.LengthSqr(), ( 1000.f * 1000.f ), ( 4000.f * 4000.f ), 1.f, 0.6f ) );
 
-	Vector vecTargetPos = m_hFlag->GetAbsOrigin();
-	if ( !m_hFlag->IsDropped() && m_hFlag->GetPrevOwner() )
-		vecTargetPos = m_hFlag->GetPrevOwner()->GetAbsOrigin();
-
-	Vector vecToTarget = vecTargetPos - MainViewOrigin();
+	// Reposition the callout based on our target's position
+	int iX, iY;
+	Vector vecTarget = ( bCarried ) ? m_hFlag->GetPrevOwner()->GetAbsOrigin() : m_hFlag->GetAbsOrigin();
+	Vector vecDelta = vecTarget - MainViewOrigin();
+	bool bOnScreen = GetVectorInHudSpace( vecTarget, iX, iY );
 	int nHalfWidth = GetWide() / 2;
 
-	int iX = 0, iY = 0;
-	bool bInHudSpace = GetVectorInHudSpace( vecToTarget, iX, iY );
-
-	if ( !bInHudSpace || iX < nHalfWidth || ( ScreenWidth() - nHalfWidth ) < iX )
+	if ( !bOnScreen || iX < nHalfWidth || iX > ScreenWidth() - nHalfWidth )
 	{
-		if ( TFGameRules() && TFGameRules()->IsInRobotDestructionMode() && ( m_flLastUpdate + 5.0 ) < gpGlobals->curtime )
+		// Only show side panel for a short period of time in this mode
+		if ( TFGameRules() && TFGameRules()->IsPlayingRobotDestructionMode() && gpGlobals->curtime > m_flFirstDisplayTime + 5.f )
 		{
-			m_i1 = 0;
+			m_iDrawArrow = DRAW_ARROW_UP;
 			SetAlpha( 0 );
 		}
 		else
 		{
-			vecToTarget.NormalizeInPlace();
-
+			// It's off the screen. Position the callout.
+			VectorNormalize( vecDelta );
+			float xpos, ypos;
 			float flRotation;
-			GetCalloutPosition( vecToTarget, YRES( 100 ), &iX, &iY, &flRotation );
+			float flRadius = YRES( 100 );
+			GetCalloutPosition( vecDelta, flRadius, &xpos, &ypos, &flRotation );
 
-			Vector vecFlagCenter = m_hFlag->WorldSpaceCenter();
-			m_i1 = ( DotProduct( MainViewRight(), vecFlagCenter - MainViewOrigin() ) > 0 ) ? 2 : 1;
+			iX = xpos;
+			iY = ypos;
 
+			Vector vCenter = m_hFlag->WorldSpaceCenter( );
+			if ( MainViewRight().Dot( vCenter - MainViewOrigin() ) > 0 )
+			{
+				m_iDrawArrow = DRAW_ARROW_RIGHT;
+			}
+			else
+			{
+				m_iDrawArrow = DRAW_ARROW_LEFT;
+			}
+
+			// Move the icon there
 			SetPos( iX - nHalfWidth, iY - ( GetTall() / 2 ) );
 			SetAlpha( 128 );
 		}
 	}
 	else
 	{
+		// On screen
+		// If our target isn't visible, we draw transparently
 		trace_t	tr;
-		UTIL_TraceLine( vecToTarget, MainViewOrigin(), MASK_VISIBLE, NULL, COLLISION_GROUP_NONE, &tr );
+		UTIL_TraceLine( vecTarget, MainViewOrigin(), MASK_VISIBLE, NULL, COLLISION_GROUP_NONE, &tr );
 		if ( tr.fraction >= 1.f )
 		{
-			m_bInLOS = true;
+			m_bFlagVisible = true;
 			SetAlpha( 0 );
 			return;
 		}
 		else
 		{
-			m_i1 = 0;
+			m_iDrawArrow = DRAW_ARROW_UP;
 			SetAlpha( 128 );
 			SetPos( iX - nHalfWidth, iY - ( GetTall() / 2 ) );
 		}
 	}
-	
-	m_bInLOS = false;
 
-	if ( !m_pFlagCalloutPanel || !m_pFlagValueLabel || !m_pFlagStatusIcon )
+	m_bFlagVisible = false;
+
+	if ( !m_pFlagCalloutPanel )
 		return;
 
-	const char *pszCalloutImage = NULL;
-	switch ( m_hFlag->GetTeamNumber() )
-	{
-		case TF_TEAM_RED:
-			pszCalloutImage = "../hud/obj_briefcase_red";
-			break;
-		case TF_TEAM_BLUE:
-			pszCalloutImage = "../hud/obj_briefcase_blue";
-			break;
-		case TF_TEAM_GREEN:
-			pszCalloutImage = "../hud/obj_briefcase_green";
-			break;
-		case TF_TEAM_YELLOW:
-			pszCalloutImage = "../hud/obj_briefcase_yellow";
-			break;
-		default:
-			return;
-	}
-	m_pFlagCalloutPanel->SetImage( pszCalloutImage );
+	if ( !m_pFlagValueLabel )
+		return;
 
+	if ( !m_pFlagStatusIcon )
+		return;
+
+	m_pFlagCalloutPanel->SetImage( m_hFlag->GetTeamNumber() == TF_TEAM_BLUE ? "../hud/obj_briefcase_blue" : "../hud/obj_briefcase_red" );
 	m_pFlagValueLabel->SetText( CFmtStr( "%i", m_hFlag->GetPointValue() ) );
 
-	const char *pszIconImage = "../hud/objectives_flagpanel_ico_flag_home";
+	const char *pszImage = "../hud/objectives_flagpanel_ico_flag_home";
 	if ( m_hFlag->IsDropped() )
 	{
-		pszIconImage = "../hud/objectives_flagpanel_ico_flag_dropped";
+		pszImage = "../hud/objectives_flagpanel_ico_flag_dropped";
 	}
 	else if ( m_hFlag->IsStolen() )
 	{
-		pszIconImage = "../hud/objectives_flagpanel_ico_flag_moving";
+		pszImage = "../hud/objectives_flagpanel_ico_flag_moving";
 	}
-	m_pFlagStatusIcon->SetImage( pszIconImage );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFFlagCalloutPanel::Paint( void )
-{
-	if ( m_bInLOS )
-		return;
-
-	BaseClass::Paint();
-
-	if ( m_i1 == 0 )
-		return;
-
-	int iX = 0, iY = 0;
-	GetPos( iX, iY );
-
-	float f1, f2;
-	if ( m_i1 == 1 )
-	{
-		f1 = 0;
-		f2 = 1.0;
-		iX -= XRES( 8 );
-	}
-	else
-	{
-		f1 = 1.0;
-		f2 = 0;
-		iX += m_pFlagCalloutPanel->GetWide();;
-	}
-
-	iY += ( ScreenHeight() - YRES( 10 ) + GetTall() ) * 0.5;
-
-	CMatRenderContextPtr pRenderContext( materials );
-	pRenderContext->Bind( m_pArrowMaterial );
-	IMesh *pMesh = pRenderContext->GetDynamicMesh( true );
-
-	CMeshBuilder meshBuilder;
-	meshBuilder.Begin( pMesh, MATERIAL_QUADS, 1 );
-
-	meshBuilder.Position3f( iX, iY, 0.0f );
-	meshBuilder.TexCoord2f( 0, f1, 0.0f );
-	meshBuilder.Color4ub( 255, 255, 255, 255 );
-	meshBuilder.AdvanceVertex();
-
-	meshBuilder.Position3f( iX + XRES( 8 ), iY, 0.0f );
-	meshBuilder.TexCoord2f( 0, f2, 0.0f );
-	meshBuilder.Color4ub( 255, 255, 255, 255 );
-	meshBuilder.AdvanceVertex();
-
-	meshBuilder.Position3f( iX + XRES( 8 ), iY + YRES( 10 ), 0.0f );
-	meshBuilder.TexCoord2f( 0, f2, 1.0f );
-	meshBuilder.Color4ub( 255, 255, 255, 255 );
-	meshBuilder.AdvanceVertex();
-
-	meshBuilder.Position3f( iX, iY + YRES( 10 ), 0.0f );
-	meshBuilder.TexCoord2f( 0, f1, 1.0f );
-	meshBuilder.Color4ub( 255, 255, 255, 255 );
-	meshBuilder.AdvanceVertex();
-
-	meshBuilder.End();
-	pMesh->Draw();
+	m_pFlagStatusIcon->SetImage( pszImage );
 }
 
 //-----------------------------------------------------------------------------
@@ -1107,8 +1253,8 @@ void CTFFlagCalloutPanel::Paint( void )
 //-----------------------------------------------------------------------------
 void CTFFlagCalloutPanel::PaintBackground( void )
 {
-	CTFPlayer *pLocalPlayer = CTFPlayer::GetLocalTFPlayer();
-	if ( !pLocalPlayer )
+	C_TFPlayer *pLocalTFPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( !pLocalTFPlayer )
 		return;
 
 	if ( !m_hFlag )
@@ -1123,92 +1269,168 @@ void CTFFlagCalloutPanel::PaintBackground( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFFlagCalloutPanel::PerformLayout( void )
+void CTFFlagCalloutPanel::Paint( void )
 {
-	BaseClass::PerformLayout();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFFlagCalloutPanel::GetCalloutPosition( const Vector &vecToTarget, float flRadius, int *xpos, int *ypos, float *flRotation )
-{
-	QAngle viewportAngles = MainViewAngles();
-
-	Vector vecForward;
-	AngleVectors( viewportAngles, &vecForward );
-	vecForward.NormalizeInPlace();
-	vecForward.z = 0;
-
-	float flForward = vecToTarget.Dot( vecForward );
-	float flSide = (vecToTarget.x * vecForward.y - vecToTarget.y * vecForward.x) * flRadius;
-	*flRotation = RAD2DEG( atan2( -flSide * flRadius, -flForward * flRadius ) + M_PI );
-
-	float cos = 0, sin = 0;
-	SinCos( DEG2RAD( -(*flRotation) ), &cos, &sin );
-	*xpos = (int)( ( (float)ScreenWidth() / 2 ) + ( flRadius * sin ) );
-	*ypos = (int)( ( (float)ScreenHeight() / 2 ) - ( flRadius * cos ) );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFFlagCalloutPanel::ScaleAndPositionCallout( float flScale )
-{
-	if ( flScale == m_flPrevScale )
+	// Don't draw side panels if our target is visible. The particle effect will be doing it for us.
+	if ( m_bFlagVisible )
 		return;
 
-	SetSize( ( XRES(30) * flScale ), ( YRES(30) * flScale ) );
+	BaseClass::Paint();
 
-	if ( !m_pFlagCalloutPanel || !m_pFlagValueLabel || !m_pFlagStatusIcon )
+	if ( m_iDrawArrow == DRAW_ARROW_UP )
 		return;
 
-	m_pFlagCalloutPanel->SetSize( ( m_nPanelWide * flScale ), ( m_nPanelTall * flScale ) );
-	m_pFlagCalloutPanel->SetPos( 0, 0 );
+	float uA, uB, yA, yB;
+	int x, y;
+	GetPos( x, y );
+	if ( m_iDrawArrow == DRAW_ARROW_LEFT )
+	{
+		uA = 1.f;
+		uB = 0.f;
+		yA = 0.f;
+		yB = 1.f;
+		x -= FLAG_CALLER_ARROW_WIDE;
+	}
+	else
+	{
+		uA = 0.f;
+		uB = 1.f;
+		yA = 0.f;
+		yB = 1.f;
+		x += m_pFlagCalloutPanel->GetWide();
+	}
 
-	m_pFlagValueLabel->SetSize( ( m_nLabelWide * flScale ), ( m_nLabelTall * flScale ) );
-	const float flLabelX = ( m_pFlagCalloutPanel->GetWide() - m_pFlagValueLabel->GetWide() ) * 0.5f;
-	const float flLabelY = ( m_pFlagCalloutPanel->GetWide() - m_pFlagValueLabel->GetTall() ) * 0.65f;
-	m_pFlagValueLabel->SetPos( flLabelX, flLabelY );
+	int iyindent = ( GetTall() - FLAG_CALLER_ARROW_TALL ) * 0.5f;
+	y += iyindent;
 
-	m_pFlagStatusIcon->SetSize( ( m_nIconWide * flScale ), ( m_nIconTall * flScale ) );
-	const float flIconX = ( m_pFlagCalloutPanel->GetWide() - m_pFlagStatusIcon->GetWide() ) * 1.05f;
-	const float flIconY = ( m_pFlagCalloutPanel->GetWide() - m_pFlagStatusIcon->GetTall() ) * 0.85f;
-	m_pFlagStatusIcon->SetPos( flIconX, flIconY );
+	CMatRenderContextPtr pRenderContext( materials );
+	pRenderContext->Bind( m_pArrowMaterial );
+	IMesh* pMesh = pRenderContext->GetDynamicMesh( true );
 
-	m_flPrevScale = flScale;
+	CMeshBuilder meshBuilder;
+	meshBuilder.Begin( pMesh, MATERIAL_QUADS, 1 );
+
+	meshBuilder.Position3f( x, y, 0.f );
+	meshBuilder.TexCoord2f( 0, uA, yA );
+	meshBuilder.Color4ub( 255, 255, 255, 255 );
+	meshBuilder.AdvanceVertex();
+
+	meshBuilder.Position3f( x + FLAG_CALLER_ARROW_WIDE, y, 0.f );
+	meshBuilder.TexCoord2f( 0, uB, yA );
+	meshBuilder.Color4ub( 255, 255, 255, 255 );
+	meshBuilder.AdvanceVertex();
+
+	meshBuilder.Position3f( x + FLAG_CALLER_ARROW_WIDE, y + FLAG_CALLER_ARROW_TALL, 0.f );
+	meshBuilder.TexCoord2f( 0, uB, yB );
+	meshBuilder.Color4ub( 255, 255, 255, 255 );
+	meshBuilder.AdvanceVertex();
+
+	meshBuilder.Position3f( x, y + FLAG_CALLER_ARROW_TALL, 0.f );
+	meshBuilder.TexCoord2f( 0, uA, yB );
+	meshBuilder.Color4ub( 255, 255, 255, 255 );
+	meshBuilder.AdvanceVertex();
+
+	meshBuilder.End();
+	pMesh->Draw();
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFFlagCalloutPanel::SetFlag( CCaptureFlag *pFlag, float f, Vector const &v )
+void CTFFlagCalloutPanel::SetFlag( CCaptureFlag *pFlag, float flDuration, Vector &vecOffset )
 {
 	m_hFlag = pFlag;
-	m_f1 = gpGlobals->curtime + f;
-	m_v1 = v;
-	m_flLastUpdate = gpGlobals->curtime;
+	m_flRemoveTime = gpGlobals->curtime + flDuration;
+	m_vecOffset = vecOffset;
+	m_flFirstDisplayTime = gpGlobals->curtime;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFFlagCalloutPanel::ShouldShowFlagIconToLocalPlayer( void ) const
+CTFFlagCalloutPanel *CTFFlagCalloutPanel::AddFlagCalloutIfNotFound( CCaptureFlag *pFlag, float flDuration, Vector &vecLocation )
 {
-	CTFPlayer *pLocalPlayer = CTFPlayer::GetLocalTFPlayer();
-	if ( !pLocalPlayer )
+	// How this system works:
+	// CTFHudFlagObjectives::OnTick() will attempt to create one panel per-flag that is stolen.
+	// CTFFlagCalloutPanel::OnTick() tries to manage whether or not the panel is visible, based on the UI mode.
+
+	// See if we have a panel for this flag already
+	FOR_EACH_VEC_BACK( m_FlagCalloutPanels, i )
+	{
+		if ( m_FlagCalloutPanels[i]->m_hFlag == pFlag )
+		{
+			return NULL;
+		}
+	}
+
+	CTFFlagCalloutPanel *pCallout = new CTFFlagCalloutPanel( "FlagCalloutHUD" );
+	if ( pCallout )
+	{
+		pCallout->SetFlag( pFlag, flDuration, vecLocation );
+	}
+	return pCallout;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFFlagCalloutPanel::ShouldShowFlagIconToLocalPlayer( void )
+{
+	C_TFPlayer *pLocalTFPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( !pLocalTFPlayer )
 		return false;
 
-	const int nUIMode = tf_rd_flag_ui_mode.GetInt();
-	if ( m_hFlag->IsStolen() && m_hFlag->InSameTeam( pLocalPlayer ) && nUIMode == 3 )
+	int nDisplayMode = tf_rd_flag_ui_mode.GetInt();
+
+	// In "show all" mode, don't show flags on the local player's team that are being carried
+	if ( m_hFlag->IsStolen() && 
+		 m_hFlag->InSameTeam( pLocalTFPlayer ) &&
+		 nDisplayMode == FLAG_CALLER_DISPLAY_ALL )
 		return false;
 
-	if ( m_hFlag->InSameTeam( pLocalPlayer ) && nUIMode < 3 )
+	// In all other modes, don't show flags on the local player's team
+	if ( m_hFlag->InSameTeam( pLocalTFPlayer ) &&
+		nDisplayMode < FLAG_CALLER_DISPLAY_ALL )
 		return false;
-
-	// We shouldn't be notified of what we're carrying
-	if ( m_hFlag->IsStolen() && pLocalPlayer == m_hFlag->GetPrevOwner() )
+	
+	// Don't show the player running this flag
+	if ( m_hFlag->IsStolen() && pLocalTFPlayer == m_hFlag->GetPrevOwner() )
 		return false;
 
 	return true;
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFFlagCalloutPanel::ScaleAndPositionCallout( float flScale /*= 1.f*/  )
+{
+	if ( flScale == m_flPrevScale )
+		return;
+
+	SetSize( ( FLAG_CALLER_WIDE * flScale ), ( FLAG_CALLER_TALL * flScale ) );
+	
+	if ( !m_pFlagCalloutPanel )
+		return;
+
+	if ( !m_pFlagValueLabel )
+		return;
+
+	if ( !m_pFlagStatusIcon )
+		return;
+
+	// Briefcase - top-left
+	m_pFlagCalloutPanel->SetSize( ( m_nPanelWideOrig * flScale ), ( m_nPanelTallOrig * flScale ) );
+	m_pFlagCalloutPanel->SetPos( 0, 0 );
+	
+	// Label - centered
+	m_pFlagValueLabel->SetSize( ( m_nLabelWideOrig * flScale ), ( m_nLabelTallOrig * flScale ) );
+	m_pFlagValueLabel->SetPos( ( m_pFlagCalloutPanel->GetWide() - m_pFlagValueLabel->GetWide() ) * 0.5f, ( m_pFlagCalloutPanel->GetWide() - m_pFlagValueLabel->GetTall() ) * 0.65f );
+	
+	// Icon - lower-right
+	m_pFlagStatusIcon->SetSize( ( m_nIconWideOrig * flScale ), ( m_nIconTallOrig * flScale ) );
+	m_pFlagStatusIcon->SetPos( ( m_pFlagCalloutPanel->GetWide() - m_pFlagStatusIcon->GetWide() ) * 1.05f, ( m_pFlagCalloutPanel->GetWide() - m_pFlagStatusIcon->GetTall() ) * 0.85f );
+
+	m_flPrevScale = flScale;
+}
+

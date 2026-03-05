@@ -1,4 +1,4 @@
-//======= Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: CTF NoGrenades Zone.
 //
@@ -48,7 +48,7 @@ void CNoGrenadesZone::Precache( void )
 //-----------------------------------------------------------------------------
 // Purpose: Return true if the specified entity is touching this zone
 //-----------------------------------------------------------------------------
-bool CNoGrenadesZone::IsTouching( CBaseEntity *pEntity )
+bool CNoGrenadesZone::IsTouching( const CBaseEntity *pEntity ) const
 {
 	return BaseClass::IsTouching( pEntity );
 }
@@ -105,17 +105,20 @@ void CNoGrenadesZone::SetDisabled( bool bDisabled )
 //-----------------------------------------------------------------------------
 bool InNoGrenadeZone( CBaseEntity *pEntity )
 {
-	CBaseEntity *pTempEnt = NULL;
-	while ( ( pTempEnt = gEntList.FindEntityByClassname( pTempEnt, "func_nogrenades" ) ) != NULL )
+	if ( pEntity )
 	{
-		CNoGrenadesZone *pZone = dynamic_cast<CNoGrenadesZone *>(pTempEnt);
-
-		if ( !pZone->IsDisabled() && pZone->IsTouching( pEntity ) )
+		CBaseEntity *pTempEnt = NULL;
+		while ( ( pTempEnt = gEntList.FindEntityByClassname( pTempEnt, "func_nogrenades" ) ) != NULL )
 		{
-			int iTeam = pZone->GetTeamNumber();
-			if ( !iTeam || ( iTeam && ( pEntity->GetTeamNumber() == iTeam ) ) )
+			CNoGrenadesZone *pZone = dynamic_cast<CNoGrenadesZone *>( pTempEnt );
+
+			if ( !pZone->IsDisabled() && pZone->PointIsWithin( pEntity->GetAbsOrigin() ) )
 			{
-				return true;
+				int iTeam = pZone->GetTeamNumber();
+				if ( !iTeam || ( iTeam && ( pEntity->GetTeamNumber() == iTeam ) ) )
+				{
+					return true;
+				}
 			}
 		}
 	}

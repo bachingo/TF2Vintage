@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2006, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -15,7 +15,7 @@ class CTFMapOverview : public CMapOverview
 {
 	DECLARE_CLASS_SIMPLE( CTFMapOverview, CMapOverview );
 
-	CTFMapOverview(const char *pElementName);
+	CTFMapOverview( const char *pElementName );
 
 	int m_CameraIcons[MAX_TEAMS];
 	int m_CapturePoints[MAX_CONTROL_POINTS];
@@ -68,7 +68,7 @@ private:
 
 	bool m_bDisabled;
 
-	float m_flPlayerChatTime[MAX_PLAYERS];
+	float m_flPlayerChatTime[MAX_PLAYERS_ARRAY_SAFE];
 
 	int m_nMapTextureOverlayID;	// texture id for current overlay image (shown over the current overview image)
 

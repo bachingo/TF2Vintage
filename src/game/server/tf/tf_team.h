@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve LLC, All rights reserved. ============
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 //=============================================================================
 #ifndef TF_TEAM_H
@@ -28,6 +28,10 @@ public:
 	// Classes.
 //	int				GetNumOfClass( TFClass iClass );
 
+	// CTeam
+	virtual void	AddPlayer( CBasePlayer *pPlayer );
+	virtual void	RemovePlayer( CBasePlayer *pPlayer );
+
 	// TF Teams.
 //	CTFTeam			*GetEnemyTeam();
 	void			SetColor( color32 color );
@@ -45,14 +49,24 @@ public:
 
 	// Flag Captures
 	int				GetFlagCaptures( void ) { return m_nFlagCaptures; }
+	int				GetTotalFlagCaptures( void ) const { return m_nTotalFlagCaptures; }
 	void			SetFlagCaptures( int nCaptures ) { m_nFlagCaptures = nCaptures; }
-	void			IncrementFlagCaptures( void ) { m_nFlagCaptures++; }
+	void			IncrementFlagCaptures( void ) { m_nFlagCaptures++; m_nTotalFlagCaptures++; }
 
 	// Roles
 	void			SetRole( int iTeamRole ) { m_iRole = iTeamRole; }
 	int				GetRole( void ) { return m_iRole; }
-	
-	void 			GetOpposingTFTeamList( CUtlVector<CTFTeam *> *pTeamList );
+
+	// KOTH Timers
+	void			AddKOTHTime( int nTime ) { m_flTotalSecondsKOTHPointOwned += nTime; }
+	float			GetKOTHTime() const { return m_flTotalSecondsKOTHPointOwned; }
+
+	// PLR Track
+	void			AddPLRTrack( float flPercentTraveled ) { m_flTotalPLRTrackPercentTraveled += flPercentTraveled; }
+	float			GetTotalPLRTrackPercentTraveled() const { return m_flTotalPLRTrackPercentTraveled; }
+
+	bool			SetTeamLeader( CBasePlayer *pPlayer );
+	CBasePlayer		*GetTeamLeader( void );
 
 private:
 	
@@ -61,6 +75,11 @@ private:
 
 	CNetworkVar( int, m_nFlagCaptures );
 	CNetworkVar( int, m_iRole );
+	int m_nTotalFlagCaptures;
+	float m_flTotalSecondsKOTHPointOwned;
+	float m_flTotalPLRTrackPercentTraveled;
+
+	CNetworkHandle( CBasePlayer, m_hLeader );
 };
 
 class CTFTeamManager

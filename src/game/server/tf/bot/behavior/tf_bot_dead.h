@@ -1,26 +1,23 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_dead.h
+// Push up daisies
+// Michael Booth, May 2009
+
 #ifndef TF_BOT_DEAD_H
 #define TF_BOT_DEAD_H
-#ifdef _WIN32
-#pragma once
-#endif
 
+#include "Path/NextBotChasePath.h"
 
-#include "NextBotBehavior.h"
-
-class CTFBotDead : public Action<CTFBot>
+class CTFBotDead : public Action< CTFBot >
 {
-	DECLARE_CLASS( CTFBotDead, Action<CTFBot> )
 public:
-	CTFBotDead();
-	virtual ~CTFBotDead();
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
 
-	virtual const char *GetName() const OVERRIDE;
-
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
+	virtual const char *GetName( void ) const	{ return "Dead"; };
 
 private:
-	float m_flDeathTimestamp;
+	IntervalTimer m_deadTimer;
 };
 
-#endif
+#endif // TF_BOT_DEAD_H

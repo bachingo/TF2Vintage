@@ -1,65 +1,63 @@
-//========= Copyright � Valve LLC, All rights reserved. =======================
-//
-// Purpose:		
-//
-// $NoKeywords: $
-//=============================================================================
-#ifndef TF_BOT_DELIVER_FLAG__H
-#define TF_BOT_DELIVER_FLAG__H
-#ifdef _WIN32
-#pragma once
-#endif
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_deliver_flag.h
+// Take the flag we are holding to its destination
+// Michael Booth, May 2011
+
+#ifndef TF_BOT_DELIVER_FLAG_H
+#define TF_BOT_DELIVER_FLAG_H
+
+#include "Path/NextBotPathFollow.h"
 
 
-#include "NextBotBehavior.h"
-
-class CTFBotDeliverFlag : public Action<CTFBot>
+//-----------------------------------------------------------------------------
+class CTFBotDeliverFlag : public Action< CTFBot >
 {
-	DECLARE_CLASS( CTFBotDeliverFlag, Action<CTFBot> );
 public:
-	virtual ~CTFBotDeliverFlag() {}
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
+	virtual void					OnEnd( CTFBot *me, Action< CTFBot > *nextAction );
 
-	virtual const char *GetName() const OVERRIDE;
+	virtual QueryResultType ShouldAttack( const INextBot *me, const CKnownEntity *them ) const;
+	virtual QueryResultType ShouldHurry( const INextBot *me ) const;
+	virtual QueryResultType	ShouldRetreat( const INextBot *me ) const;
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
-	virtual void OnEnd( CTFBot *me, Action<CTFBot> *newAction ) OVERRIDE;
+	virtual EventDesiredResult< CTFBot > OnContact( CTFBot *me, CBaseEntity *other, CGameTrace *result = NULL );
 
-	virtual QueryResultType ShouldHurry( const INextBot *me ) const OVERRIDE;
-	virtual QueryResultType ShouldRetreat( const INextBot *me ) const OVERRIDE;
-
-	virtual EventDesiredResult< CTFBot > OnContact( CTFBot *me, CBaseEntity *other, CGameTrace *result = NULL ) OVERRIDE;
+	virtual const char *GetName( void ) const	{ return "DeliverFlag"; };
 
 private:
-	bool UpgradeOverTime( CTFBot *me );
-
-	PathFollower m_PathFollower;
-	CountdownTimer m_recomputePathTimer;
+	PathFollower m_path;
+	CountdownTimer m_repathTimer;
 	float m_flTotalTravelDistance;
+
+	bool UpgradeOverTime( CTFBot *me );
 	CountdownTimer m_upgradeTimer;
-	int m_nUpgradeLevel;
+
+#define DONT_UPGRADE -1
+	int m_upgradeLevel;
+
 	CountdownTimer m_buffPulseTimer;
 };
 
 
-class CTFBotPushToCapturePoint : public Action<CTFBot>
+//-----------------------------------------------------------------------------
+class CTFBotPushToCapturePoint : public Action< CTFBot >
 {
-	DECLARE_CLASS( CTFBotPushToCapturePoint, Action<CTFBot> );
 public:
-	CTFBotPushToCapturePoint( Action<CTFBot> *doneAction )
-		: m_pDoneAction( doneAction ) {}
-	virtual ~CTFBotPushToCapturePoint() {}
+	CTFBotPushToCapturePoint( Action< CTFBot > *nextAction = NULL );
+	virtual ~CTFBotPushToCapturePoint() { }
 
-	virtual const char *GetName() const OVERRIDE;
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
+	virtual EventDesiredResult< CTFBot > OnNavAreaChanged( CTFBot *me, CNavArea *newArea, CNavArea *oldArea );
 
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
-
-	virtual EventDesiredResult<CTFBot> OnNavAreaChanged( CTFBot *me, CNavArea *area1, CNavArea *area2 ) OVERRIDE;
+	virtual const char *GetName( void ) const	{ return "PushToCapturePoint"; };
 
 private:
-	PathFollower m_PathFollower;
-	CountdownTimer m_recomputePathTimer;
-	Action<CTFBot> *m_pDoneAction;
+	PathFollower m_path;
+	CountdownTimer m_repathTimer;
+
+	Action< CTFBot > *m_nextAction;
 };
 
-#endif
+
+#endif // TF_BOT_DELIVER_FLAG_H

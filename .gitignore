@@ -38,29 +38,45 @@ obj*/
 [Dd]ebug*/
 game/bin
 #game/*/bin
+src/_vpc_/*
+src/game/client/_vpc_/*
+src/game/server/_vpc_/*
+src/materialsystem/stdshaders/_vpc_/*
+src/raytrace/_vpc_/*
+src/thirdparty/angelscript_2.32.0/sdk/_vpc_/*
+src/tier1/_vpc_/*
+src/vscript/_vpc_/*
 
 # Manual override of bin folder
-game/*/bin/client.dll
-game/*/bin/client.pdb
-game/*/bin/server.dll
-game/*/bin/server.pdb
-game/*/bin/vscript.dll
-game/*/bin/vscript.pdb
+client.dll
+client.so
+client.pdb
+server.dll
+server.so
+server.pdb
+vscript.dll
+vscript.so
+vscript.pdb
 
 # generated protobuf sources
 generated_proto*/
 
 # library files
-src/lib/public/mathlib.lib
-src/lib/public/mathlib.pdb
-src/lib/public/raytrace.lib
-src/lib/public/raytrace.pdb
-src/lib/public/tier1.lib
-src/lib/public/tier1.pdb
-src/lib/public/vgui_controls.lib
-src/lib/public/vgui_controls.pdb
-src/thirdparty/bullet/build/lib
-src/lib/common/angelscript.lib
+mathlib.lib
+mathlib.a
+mathlib.pdb
+raytrace.lib
+raytrace.a
+raytrace.pdb
+tier1.lib
+tier1.a
+tier1.pdb
+vgui_controls.lib
+vgui_controls.a
+vgui_controls.pdb
+angelscript.lib
+angelscript.a
+angelscript.pdb
 
 # misc files
 fgdlib.lib
@@ -72,6 +88,8 @@ src/Output-Build.txt
 src/utils/vvis_launcher/vvis_launcher.vpc.sentinel
 *.vpc.sentinel
 *_nut.h
+*.vpc_cache
+*.vpc_crc
 
 
 # Files to ignore when considering what GIT should commit.

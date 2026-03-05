@@ -1,13 +1,8 @@
 // ALL SKIP STATEMENTS THAT AFFECT THIS SHADER!!!
 // defined $LIGHTING_PREVIEW && defined $FASTPATH && $LIGHTING_PREVIEW && $FASTPATH
 
-#ifndef TEETH_FLASHLIGHT_VS30_H
-#define TEETH_FLASHLIGHT_VS30_H
-
-#include "shaderapi/ishaderapi.h"
-#include "shaderapi/ishadershadow.h"
-#include "materialsystem/imaterialvar.h"
-
+#pragma once
+#include "shaderlib/cshader.h"
 class teeth_flashlight_vs30_Static_Index
 {
 	unsigned int m_nINTRO : 2;
@@ -24,7 +19,7 @@ public:
 #endif	// _DEBUG
 	}
 
-	teeth_flashlight_vs30_Static_Index( IShaderShadow* pShaderShadow, IMaterialVar** params )
+	teeth_flashlight_vs30_Static_Index(  )
 	{
 		m_nINTRO = 0;
 #ifdef _DEBUG
@@ -91,7 +86,7 @@ public:
 #endif	// _DEBUG
 	}
 
-	teeth_flashlight_vs30_Dynamic_Index( IShaderDynamicAPI* pShaderAPI )
+	teeth_flashlight_vs30_Dynamic_Index(  )
 	{
 		m_nCOMPRESSED_VERTS = 0;
 		m_nDOWATERFOG = 0;
@@ -114,5 +109,3 @@ public:
 
 #define shaderDynamicTest_teeth_flashlight_vs30 vsh_forgot_to_set_dynamic_COMPRESSED_VERTS + vsh_forgot_to_set_dynamic_DOWATERFOG + vsh_forgot_to_set_dynamic_SKINNING + vsh_forgot_to_set_dynamic_MORPHING
 
-
-#endif	// TEETH_FLASHLIGHT_VS30_H

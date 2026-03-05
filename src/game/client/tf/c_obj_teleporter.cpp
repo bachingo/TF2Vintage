@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Client's CObjectTeleporter
 //
@@ -11,6 +11,7 @@
 #include "c_obj_teleporter.h"
 #include "soundenvelope.h"
 #include "vgui/ILocalize.h"
+#include "tf_gamerules.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -27,8 +28,10 @@ using namespace vgui;
 IMPLEMENT_CLIENTCLASS_DT(C_ObjectTeleporter, DT_ObjectTeleporter, CObjectTeleporter)
 	RecvPropInt( RECVINFO(m_iState) ),
 	RecvPropTime( RECVINFO(m_flRechargeTime) ),
+	RecvPropTime( RECVINFO(m_flCurrentRechargeDuration) ),
 	RecvPropInt( RECVINFO(m_iTimesUsed) ),
 	RecvPropFloat( RECVINFO(m_flYawToExit) ),
+	RecvPropBool( RECVINFO(m_bMatchBuilding) ),
 END_RECV_TABLE()
 
 //-----------------------------------------------------------------------------
@@ -36,15 +39,16 @@ END_RECV_TABLE()
 //-----------------------------------------------------------------------------
 C_ObjectTeleporter::C_ObjectTeleporter()
 {
-	m_pChargedEffect = NULL;
-	m_pDirectionEffect = NULL;
-	m_pChargedLeftArmEffect = NULL;
-	m_pChargedRightArmEffect = NULL;
-	m_pDamageEffects = NULL;
+	m_hChargedEffect = NULL;
+	m_hDirectionEffect = NULL;
+	m_hChargedLeftArmEffect = NULL;
+	m_hChargedRightArmEffect = NULL;
 
 	m_iDirectionArrowPoseParam = 0;
 
 	m_pSpinSound = NULL;
+
+	m_bMatchBuilding = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -63,65 +67,6 @@ void C_ObjectTeleporter::UpdateOnRemove( void )
 	BaseClass::UpdateOnRemove();
 }
 
-void C_ObjectTeleporter::GetStatusText( wchar_t *pStatus, int iMaxStatusLen )
-{
-	float flHealthPercent = (float)GetHealth() / (float)GetMaxHealth();
-	wchar_t wszHealthPercent[32];
-	_snwprintf(wszHealthPercent, sizeof(wszHealthPercent)/sizeof(wchar_t) - 1, L"%d%%", (int)( flHealthPercent * 100 ) );
-
-	if ( IsBuilding() )
-	{
-		wchar_t *pszState = g_pVGuiLocalize->Find( "#TF_ObjStatus_Teleporter_Building" );
-
-		if ( pszState )
-		{
-			g_pVGuiLocalize->ConstructString( pStatus, iMaxStatusLen, pszState,
-				1,
-				wszHealthPercent );
-		}
-	}
-	else
-	{
-		wchar_t *pszState = NULL;
-
-		switch( m_iState )
-		{
-			case TELEPORTER_STATE_IDLE:
-				pszState = g_pVGuiLocalize->Find( "#TF_Obj_Teleporter_State_Idle" );
-				break;
-
-			case TELEPORTER_STATE_READY:
-			case TELEPORTER_STATE_SENDING:
-				pszState = g_pVGuiLocalize->Find( "#TF_Obj_Teleporter_State_Ready" );
-				break;
-
-			case TELEPORTER_STATE_RECHARGING:
-				pszState = g_pVGuiLocalize->Find( "#TF_Obj_Teleporter_State_Charging" );
-				break;
-
-			default:
-			case TELEPORTER_STATE_BUILDING:
-				pszState = L"unknown";
-				break;
-		}
-
-		if ( pszState )
-		{
-			wchar_t *pszTemplate = g_pVGuiLocalize->Find( "#TF_ObjStatus_Teleporter" );
-
-			if ( pszTemplate )
-			{
-				g_pVGuiLocalize->ConstructString( pStatus, iMaxStatusLen, pszTemplate,
-					3,
-					m_iUpgradeLevel,
-					wszHealthPercent,
-					pszState );
-			}
-		}
-	}
-}
-
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -130,93 +75,174 @@ void C_ObjectTeleporter::OnPreDataChanged( DataUpdateType_t updateType )
 	BaseClass::OnPreDataChanged( updateType );
 
 	m_iOldState = m_iState;
+	m_bOldMatchBuilding = m_bMatchBuilding;
 }
 
 void C_ObjectTeleporter::StartBuildingEffects()
 {
+	StopBuildingEffects();
+	char szEffect[128];
 
+	// arm glow effects
+	Q_snprintf( szEffect, sizeof(szEffect), "teleporter_arms_circle_%s_blink", ( GetTeamNumber() == TF_TEAM_RED ) ? "red" : "blue" );
 
+	Assert( m_hBuildingLeftArmEffect.m_pObject == NULL );
+	m_hBuildingLeftArmEffect = ParticleProp()->Create( szEffect, PATTACH_POINT_FOLLOW, 1 );
+
+	Assert( m_hBuildingRightArmEffect.m_pObject == NULL );
+	m_hBuildingRightArmEffect = ParticleProp()->Create( szEffect, PATTACH_POINT_FOLLOW, 3 );
 }
 
 void C_ObjectTeleporter::StartChargedEffects()
 {
-	char szEffect[ 128 ];
+	StopChargedEffects();
+	char szEffect[128];
 
-	string_t teamname = MAKE_STRING( GetTeamParticleName( GetTeamNumber() ) );
+	Q_snprintf( szEffect, sizeof(szEffect), "teleporter_%s_charged_level%d", 
+		( GetTeamNumber() == TF_TEAM_RED ) ? "red" : "blue", GetUpgradeLevel() );
 
-	Q_snprintf( szEffect, sizeof( szEffect), "teleporter_%s_charged_level%d", teamname, m_iUpgradeLevel );
-
-	Assert( m_pChargedEffect == NULL );
-	m_pChargedEffect = ParticleProp()->Create( szEffect, PATTACH_ABSORIGIN );
+	Assert( m_hChargedEffect.m_pObject == NULL );
+	m_hChargedEffect = ParticleProp()->Create( szEffect, PATTACH_ABSORIGIN );
 }
 
 void C_ObjectTeleporter::StartActiveEffects()
 {
-	char szEffect[ 128 ];
+	StopActiveEffects();
+	char szEffect[128];
 
-	string_t teamname = MAKE_STRING( GetTeamParticleName( GetTeamNumber() ) );
+	Q_snprintf( szEffect, sizeof(szEffect), "teleporter_%s_%s_level%d", 
+		( GetTeamNumber() == TF_TEAM_RED ) ? "red" : "blue",
+		GetObjectMode() == MODE_TELEPORTER_ENTRANCE ? "entrance" : "exit",
+		GetUpgradeLevel() );
 
-	Q_snprintf( szEffect, sizeof(szEffect), "teleporter_%s_%s_level%d", teamname,
-		( GetObjectMode() == TELEPORTER_TYPE_ENTRANCE ) ? "entrance" : "exit", 
-		m_iUpgradeLevel );
-
-	Assert( m_pDirectionEffect == NULL );
-	m_pDirectionEffect = ParticleProp()->Create( szEffect, PATTACH_ABSORIGIN );
+	Assert( m_hDirectionEffect.m_pObject == NULL );
+	m_hDirectionEffect = ParticleProp()->Create( szEffect, PATTACH_ABSORIGIN );
 
 	// arm glow effects
-	Q_snprintf( szEffect, sizeof(szEffect), "teleporter_arms_circle_%s", teamname );
+	Q_snprintf( szEffect, sizeof(szEffect), "teleporter_arms_circle_%s",
+		( GetTeamNumber() == TF_TEAM_RED ) ? "red" : "blue" );
 
-	Assert( m_pChargedLeftArmEffect == NULL );
-	m_pChargedLeftArmEffect = ParticleProp()->Create( szEffect, PATTACH_POINT_FOLLOW, 1 );
+	Assert( m_hChargedLeftArmEffect.m_pObject == NULL );
+	m_hChargedLeftArmEffect = ParticleProp()->Create( szEffect, PATTACH_POINT_FOLLOW, 1 );
 
-	Assert( m_pChargedRightArmEffect == NULL );
-	m_pChargedRightArmEffect = ParticleProp()->Create( szEffect, PATTACH_POINT_FOLLOW, 3 );
+	Assert( m_hChargedRightArmEffect.m_pObject == NULL );
+	m_hChargedRightArmEffect = ParticleProp()->Create( szEffect, PATTACH_POINT_FOLLOW, 3 );
 
-	if ( !m_pSpinSound )
+	// always reinitializes sound since this only gets called when the sound needs to start or change
+	CSoundEnvelopeController &controller = CSoundEnvelopeController::GetController();
+	if ( m_pSpinSound )
 	{
-		// init the spin sound
-		CSoundEnvelopeController &controller = CSoundEnvelopeController::GetController();
-		char szShootSound[128];
-		Q_snprintf(szShootSound, sizeof(szShootSound), "Building_Teleporter.SpinLevel%d", m_iUpgradeLevel);
-		CLocalPlayerFilter filter;
-		m_pSpinSound = controller.SoundCreate( filter, entindex(), szShootSound );
-		controller.Play( m_pSpinSound, 1.0, 100 );
+		controller.SoundDestroy( m_pSpinSound );
+		m_pSpinSound = NULL;
+	}
+	char szSound[128];
+	Q_snprintf( szSound, sizeof(szSound), "Building_Teleporter.SpinLevel%d", GetUpgradeLevel());
+
+	CLocalPlayerFilter filter;
+	m_pSpinSound = controller.SoundCreate( filter, entindex(), szSound );
+	controller.Play( m_pSpinSound, 1.0, 100 );
+}
+
+void C_ObjectTeleporter::StopBuildingEffects()
+{
+	if ( m_hBuildingLeftArmEffect )
+	{
+		ParticleProp()->StopEmission( m_hBuildingLeftArmEffect );
+		m_hBuildingLeftArmEffect = NULL;
+	}
+
+	if ( m_hBuildingRightArmEffect )
+	{
+		ParticleProp()->StopEmission( m_hBuildingRightArmEffect );
+		m_hBuildingRightArmEffect = NULL;
 	}
 }
 
 void C_ObjectTeleporter::StopChargedEffects()
 {
-	if ( m_pChargedEffect )
+	if ( m_hChargedEffect )
 	{
-		ParticleProp()->StopEmission( m_pChargedEffect );
-		m_pChargedEffect = NULL;
+		ParticleProp()->StopEmission( m_hChargedEffect );
+		m_hChargedEffect = NULL;
 	}
 }
 
 void C_ObjectTeleporter::StopActiveEffects()
 {
-	if ( m_pDirectionEffect )
+	if ( m_hDirectionEffect )
 	{
-		ParticleProp()->StopEmission( m_pDirectionEffect );
-		m_pDirectionEffect = NULL;
+		ParticleProp()->StopEmission( m_hDirectionEffect );
+		m_hDirectionEffect = NULL;
 	}
 
-	if ( m_pChargedLeftArmEffect )
+	if ( m_hChargedLeftArmEffect )
 	{
-		ParticleProp()->StopEmission( m_pChargedLeftArmEffect );
-		m_pChargedLeftArmEffect = NULL;
+		ParticleProp()->StopEmission( m_hChargedLeftArmEffect );
+		m_hChargedLeftArmEffect = NULL;
 	}
 
-	if ( m_pChargedRightArmEffect )
+	if ( m_hChargedRightArmEffect )
 	{
-		ParticleProp()->StopEmission( m_pChargedRightArmEffect );
-		m_pChargedRightArmEffect = NULL;
+		ParticleProp()->StopEmission( m_hChargedRightArmEffect );
+		m_hChargedRightArmEffect = NULL;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_ObjectTeleporter::SetInvisibilityLevel( float flValue )
+{
+	if ( IsEnteringOrExitingFullyInvisible( flValue ) )
+	{
+		UpdateTeleporterEffects();
 	}
 
-	if ( m_pSpinSound )
+	BaseClass::SetInvisibilityLevel( flValue );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_ObjectTeleporter::UpdateTeleporterEffects( void )
+{
+
+	if ( m_bMatchBuilding )
 	{
-		CSoundEnvelopeController::GetController().SoundDestroy( m_pSpinSound );
-		m_pSpinSound = NULL;
+		StartBuildingEffects();
+	}
+	else
+	{
+		StopBuildingEffects();
+	}
+
+	// In MVM, teleporter from invaders act as spawn point. Always play active effect
+	if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() )
+	{
+		if ( m_iState != TELEPORTER_STATE_BUILDING && GetTeamNumber() == TF_TEAM_PVE_INVADERS )
+		{
+			StartChargedEffects();
+			StartActiveEffects();
+			return;
+		}
+	}
+
+	if ( m_iState == TELEPORTER_STATE_READY )
+	{
+		StartChargedEffects();
+	}
+	else
+	{
+		StopChargedEffects();
+	}
+
+	if ( m_iState > TELEPORTER_STATE_IDLE && m_iOldState <= TELEPORTER_STATE_IDLE )
+	{
+		StartActiveEffects();
+	}
+	else if ( ( m_iState <= TELEPORTER_STATE_IDLE || m_iState == TELEPORTER_STATE_UPGRADING ) && m_iOldState > TELEPORTER_STATE_IDLE )
+	{
+		StopActiveEffects();
 	}
 }
 
@@ -227,26 +253,15 @@ void C_ObjectTeleporter::OnDataChanged( DataUpdateType_t updateType )
 {
 	BaseClass::OnDataChanged( updateType );
 
+	if ( m_bOldMatchBuilding != m_bMatchBuilding )
+	{
+		m_bOldMatchBuilding = m_bMatchBuilding;
+		UpdateTeleporterEffects();
+	}
+
 	if ( m_iOldState != m_iState )
 	{
-		if ( m_iState == TELEPORTER_STATE_READY )
-		{
-			StartChargedEffects();
-		}
-		else
-		{
-			StopChargedEffects();
-		}
-
-		if ( m_iState > TELEPORTER_STATE_IDLE && ( m_iOldState <= TELEPORTER_STATE_IDLE || m_iOldState == TELEPORTER_STATE_UPGRADING ) )
-		{
-			StartActiveEffects();
-		}
-		else if ( ( m_iState <= TELEPORTER_STATE_IDLE && m_iOldState > TELEPORTER_STATE_IDLE ) || m_iState == TELEPORTER_STATE_UPGRADING )
-		{
-			StopActiveEffects();
-		}
-
+		UpdateTeleporterEffects();
 		m_iOldState = m_iState;
 	}
 
@@ -289,10 +304,7 @@ CStudioHdr *C_ObjectTeleporter::OnNewModel( void )
 
 	m_iDirectionArrowPoseParam = LookupPoseParameter( "direction" );
 
-	if ( GetObjectMode() == TELEPORTER_TYPE_ENTRANCE )
-	{
-		SetNextClientThink( CLIENT_THINK_ALWAYS );
-	}
+	SetNextClientThink( CLIENT_THINK_ALWAYS );
 
 	return hdr;
 }
@@ -302,44 +314,45 @@ CStudioHdr *C_ObjectTeleporter::OnNewModel( void )
 //-----------------------------------------------------------------------------
 void C_ObjectTeleporter::ClientThink( void )
 {
-	if ( GetObjectMode() == TELEPORTER_TYPE_ENTRANCE && m_iState >= TELEPORTER_STATE_READY )
+	if ( m_iState >= TELEPORTER_STATE_READY )
 	{
 		SetPoseParameter( m_iDirectionArrowPoseParam, m_flYawToExit);
 	}
+
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void C_ObjectTeleporter::GetTargetIDDataString( wchar_t *sDataString, int iMaxLenInBytes )
+void C_ObjectTeleporter::GetTargetIDDataString( OUT_Z_BYTECAP(iMaxLenInBytes) wchar_t *sDataString, int iMaxLenInBytes )
 {
+	Assert( iMaxLenInBytes >= sizeof(sDataString[0]) );
+	wchar_t wzBaseString[MAX_ID_STRING];
+	BaseClass::GetTargetIDDataString( wzBaseString, sizeof( wzBaseString ) );
+
 	sDataString[0] = '\0';
-
-	wchar_t wszIDString[ 128 ];
-
-	BaseClass::GetTargetIDDataString( wszIDString, iMaxLenInBytes );
-
-	if ( m_iState == TELEPORTER_STATE_IDLE )
+	if ( m_iState == TELEPORTER_STATE_RECHARGING && gpGlobals->curtime < m_flRechargeTime )
 	{
-		g_pVGuiLocalize->ConstructString( sDataString, MAX_ID_STRING, g_pVGuiLocalize->Find("#TF_playerid_teleporter_entrance_nomatch" ), 0 );
-	}
-	else if ( m_iState == TELEPORTER_STATE_RECHARGING && gpGlobals->curtime < m_flRechargeTime )
-	{
-		float flPercent = clamp( ( m_flRechargeTime - gpGlobals->curtime ) / g_flTeleporterRechargeTimes[ GetUpgradeLevel() - 1 ], 0.0f, 1.0f );
+		float flPercent = clamp( ( m_flRechargeTime - gpGlobals->curtime ) / m_flCurrentRechargeDuration, 0.0f, 1.0f );
 
 		wchar_t wszRecharging[ 32 ];
 		_snwprintf( wszRecharging, ARRAYSIZE(wszRecharging) - 1, L"%.0f", 100 - (flPercent * 100) );
 		wszRecharging[ ARRAYSIZE(wszRecharging)-1 ] = '\0';
 
-		g_pVGuiLocalize->ConstructString( sDataString, iMaxLenInBytes, g_pVGuiLocalize->Find( "#TF_playerid_object_recharging" ),
+		const char *printFormatString = "#TF_playerid_object_recharging";
+
+		g_pVGuiLocalize->ConstructString( sDataString, iMaxLenInBytes, g_pVGuiLocalize->Find(printFormatString),
 			1,
-			wszRecharging
-			);
+			wszRecharging );
+	}	
+	else if ( m_iState == TELEPORTER_STATE_IDLE )
+	{
+		g_pVGuiLocalize->ConstructString( sDataString, iMaxLenInBytes, g_pVGuiLocalize->Find("#TF_playerid_teleporter_nomatch" ), 0 );
 	}
 
-	V_wcsncat( sDataString, L" ", iMaxLenInBytes >> 2 );
-
-	V_wcsncat( sDataString, wszIDString, iMaxLenInBytes >> 2 );
+	// Concatenate the base level string
+	V_wcsncat( sDataString, L"   ", iMaxLenInBytes / sizeof( wchar_t ) );
+	V_wcsncat( sDataString, wzBaseString, iMaxLenInBytes / sizeof( wchar_t ) );
 }
 
 //-----------------------------------------------------------------------------
@@ -347,14 +360,11 @@ void C_ObjectTeleporter::GetTargetIDDataString( wchar_t *sDataString, int iMaxLe
 //-----------------------------------------------------------------------------
 void C_ObjectTeleporter::UpdateDamageEffects( BuildingDamageLevel_t damageLevel )
 {
-	if ( m_pDamageEffects )
+	if ( m_hDamageEffects )
 	{
-		ParticleProp()->StopEmission( m_pDamageEffects );
-		m_pDamageEffects = NULL;
+		m_hDamageEffects->StopEmission( false, false );
+		m_hDamageEffects = NULL;
 	}
-
-	if ( IsPlacing() )
-		return;
 
 	const char *pszEffect = "";
 
@@ -379,7 +389,7 @@ void C_ObjectTeleporter::UpdateDamageEffects( BuildingDamageLevel_t damageLevel 
 
 	if ( Q_strlen(pszEffect) > 0 )
 	{
-		m_pDamageEffects = ParticleProp()->Create( pszEffect, PATTACH_ABSORIGIN );
+		m_hDamageEffects = ParticleProp()->Create( pszEffect, PATTACH_ABSORIGIN );
 	}
 }
 
@@ -406,4 +416,33 @@ bool C_ObjectTeleporter::IsPlacementPosValid( void )
 	UTIL_TraceHull( vecTestPos, vecTestPos, VEC_HULL_MIN, VEC_HULL_MAX, MASK_SOLID | CONTENTS_PLAYERCLIP, this, COLLISION_GROUP_PLAYER_MOVEMENT, &tr );
 
 	return ( tr.fraction >= 1.0 );
+}
+//-----------------------------------------------------------------------------
+// 
+//-----------------------------------------------------------------------------
+void C_ObjectTeleporter::UpgradeLevelChanged( void )
+{
+	StopActiveEffects();
+	StopChargedEffects();
+
+	if ( m_iState >= TELEPORTER_STATE_READY && m_iState != TELEPORTER_STATE_UPGRADING )
+	{
+		StartActiveEffects();
+		if ( m_iState != TELEPORTER_STATE_RECHARGING )
+		{
+			StartChargedEffects();
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_ObjectTeleporter::OnGoInactive( void )
+{
+	StopActiveEffects();
+	StopBuildingEffects();
+	StopChargedEffects();
+
+	BaseClass::OnGoInactive();
 }

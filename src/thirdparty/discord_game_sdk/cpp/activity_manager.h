@@ -9,7 +9,7 @@ public:
     ~ActivityManager() = default;
 
     Result RegisterCommand(char const* command);
-    Result RegisterSteam(uint32_t steamId);
+    Result RegisterSteam(std::uint32_t steamId);
     void UpdateActivity(Activity const& activity, std::function<void(Result)> callback);
     void ClearActivity(std::function<void(Result)> callback);
     void SendRequestReply(UserId userId,

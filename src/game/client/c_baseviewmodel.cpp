@@ -18,7 +18,7 @@
 #include "tools/bonelist.h"
 #include <KeyValues.h>
 #include "hltvcamera.h"
-#if defined( TF_CLIENT_DLL ) || defined ( TF_VINTAGE_CLIENT )
+#ifdef TF_CLIENT_DLL
 	#include "tf_weaponbase.h"
 #endif
 
@@ -39,10 +39,9 @@
 	ConVar cl_righthand( "cl_righthand", "1", FCVAR_ARCHIVE, "Use right-handed view models." );
 #endif
 
-#if defined( TF_CLIENT_DLL ) || defined ( TF_VINTAGE_CLIENT )
+#ifdef TF_CLIENT_DLL
 	ConVar cl_flipviewmodels( "cl_flipviewmodels", "0", FCVAR_USERINFO | FCVAR_ARCHIVE | FCVAR_NOT_CONNECTED, "Flip view models." );
 #endif
-
 
 void PostToolMessage( HTOOLHANDLE hEntity, KeyValues *msg );
 
@@ -208,7 +207,7 @@ bool C_BaseViewModel::ShouldFlipViewModel()
 	}
 #endif
 
-#if defined( TF_CLIENT_DLL ) || defined ( TF_VINTAGE_CLIENT )
+#ifdef TF_CLIENT_DLL
 	CBaseCombatWeapon *pWeapon = m_hWeapon.Get();
 	if ( pWeapon )
 	{
@@ -310,6 +309,17 @@ int C_BaseViewModel::DrawModel( int flags )
 		
 	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
 	C_BaseCombatWeapon *pWeapon = GetOwningWeapon();
+
+#ifdef TF_CLIENT_DLL
+	CTFWeaponBase* pTFWeapon = dynamic_cast<CTFWeaponBase*>( pWeapon );
+	if ( ( flags & STUDIO_RENDER ) && pTFWeapon && pTFWeapon->m_viewmodelStatTrakAddon )
+	{
+		pTFWeapon->m_viewmodelStatTrakAddon->RemoveEffects( EF_NODRAW );
+		pTFWeapon->m_viewmodelStatTrakAddon->DrawModel( flags );
+		pTFWeapon->m_viewmodelStatTrakAddon->AddEffects( EF_NODRAW );
+	}
+#endif
+
 	int ret;
 	// If the local player's overriding the viewmodel rendering, let him do it
 	if ( pPlayer && pPlayer->IsOverridingViewmodel() )
@@ -338,16 +348,6 @@ int C_BaseViewModel::DrawModel( int flags )
 			pWeapon->ViewModelDrawn( this );
 		}
 	}
-
-#ifdef TF_CLIENT_DLL
-	CTFWeaponBase* pTFWeapon = dynamic_cast<CTFWeaponBase*>( pWeapon );
-	if ( ( flags & STUDIO_RENDER ) && pTFWeapon && pTFWeapon->m_viewmodelStatTrakAddon )
-	{
-		pTFWeapon->m_viewmodelStatTrakAddon->RemoveEffects( EF_NODRAW );
-		pTFWeapon->m_viewmodelStatTrakAddon->DrawModel( flags );
-		pTFWeapon->m_viewmodelStatTrakAddon->AddEffects( EF_NODRAW );
-	}
-#endif
 
 	return ret;
 }

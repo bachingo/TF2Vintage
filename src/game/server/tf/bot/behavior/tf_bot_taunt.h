@@ -1,27 +1,26 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_taunt.h
+// Stand still and play a taunt animation
+// Michael Booth, November 2009
+
 #ifndef TF_BOT_TAUNT_H
 #define TF_BOT_TAUNT_H
-#ifdef _WIN32
-#pragma once
-#endif
 
 
-#include "NextBotBehavior.h"
-
-class CTFBotTaunt : public Action<CTFBot>
+//-----------------------------------------------------------------------------
+class CTFBotTaunt : public Action< CTFBot >
 {
 public:
-	CTFBotTaunt();
-	virtual ~CTFBotTaunt();
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
 
-	virtual const char *GetName( void ) const OVERRIDE;
-
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
+	virtual const char *GetName( void ) const	{ return "Taunt"; };
 
 private:
-	CountdownTimer m_waitDuration;
 	CountdownTimer m_tauntTimer;
-	bool m_bTaunting;
+	CountdownTimer m_tauntEndTimer;
+	bool m_didTaunt;
 };
 
-#endif
+
+#endif // TF_BOT_TAUNT_H

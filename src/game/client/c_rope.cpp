@@ -10,7 +10,7 @@
 #include "view.h"
 #include "env_wind_shared.h"
 #include "input.h"
-#if defined(TF_CLIENT_DLL) || defined(TF_VINTAGE_CLIENT)
+#ifdef TF_CLIENT_DLL
 #include "cdll_util.h"
 #include "tf_gamerules.h"
 #endif
@@ -377,7 +377,7 @@ void CRopeManager::AddToRenderCache( C_RopeKeyframe *pRope )
 	// If we didn't find one, then allocate the mofo.
 	if ( iRenderCache == nRenderCacheCount )
 	{
-		int iRenderCache = m_aRenderCache.AddToTail();
+		iRenderCache = m_aRenderCache.AddToTail();
 		m_aRenderCache[iRenderCache].m_pSolidMaterial = pRope->GetSolidMaterial();
 		if ( m_aRenderCache[iRenderCache].m_pSolidMaterial )
 		{
@@ -642,17 +642,20 @@ bool CRopeManager::IsHolidayLightMode( void )
 	}
 
 #ifdef TF_CLIENT_DLL
-	if ( TFGameRules() && TFGameRules()->IsPowerupMode() )
+	if ( TFGameRules() )
 	{
 		// We don't want to draw the lights for the grapple.
 		// They get left behind for a while and look bad.
-		return false;
+		if ( TFGameRules()->IsPowerupMode() || !TFGameRules()->GetRopesHolidayLightsAllowed() )
+		{
+			return false;
+		}
 	}
 #endif
 
 	bool bDrawHolidayLights = false;
 
-#if defined(USES_ECON_ITEMS) || defined(TF_VINTAGE) || defined(TF_VINTAGE_CLIENT)
+#ifdef USES_ECON_ITEMS
 	if ( !m_bHolidayInitialized && GameRules() )
 	{
 		m_bHolidayInitialized = true;
@@ -662,7 +665,7 @@ bool CRopeManager::IsHolidayLightMode( void )
 	bDrawHolidayLights = m_bDrawHolidayLights;
 	m_nHolidayLightsStyle = 0;
 
-#if defined(TF_CLIENT_DLL) || defined(TF_VINTAGE_CLIENT)
+#ifdef TF_CLIENT_DLL
 	// Turn them on in Pyro-vision too
 	if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
 	{
@@ -1032,6 +1035,8 @@ void C_RopeKeyframe::CPhysicsDelegate::ApplyConstraints( CSimplePhysics::CNode *
 // C_RopeKeyframe
 // ------------------------------------------------------------------------------------ //
 
+int C_RopeKeyframe::s_nLastRopeIndex = 0;
+
 C_RopeKeyframe::C_RopeKeyframe()
 {
 	m_bEndPointAttachmentPositionsDirty = true;
@@ -1054,6 +1059,8 @@ C_RopeKeyframe::C_RopeKeyframe()
 	m_flCurScroll = m_flScrollSpeed = 0;
 	m_TextureScale = 4;	// 4:1
 	m_flImpulse.Init();
+
+	m_nRopeIndex = s_nLastRopeIndex++;
 
 	g_Ropes.AddToTail( this );
 }
@@ -1701,7 +1708,9 @@ void C_RopeKeyframe::BuildRope( RopeSegData_t *pSegmentData, const Vector &vCurr
 
 		if ( !bQueued && RopeManager()->IsHolidayLightMode() && r_rope_holiday_light_scale.GetFloat() > 0.0f )
 		{
-			data.m_nMaterial = reinterpret_cast< int >( this );
+			// misyl: This used to be janky pointer thing,
+			// now it's some global index thing.
+			data.m_nMaterial = m_nRopeIndex;
 			data.m_nHitBox = ( iNode << 8 );
 			data.m_flScale = r_rope_holiday_light_scale.GetFloat();
 			data.m_vOrigin = pSegmentData->m_Segments[nSegmentCount].m_vPos;
@@ -1927,10 +1936,10 @@ bool C_RopeKeyframe::CalculateEndPointAttachment( C_BaseEntity *pEnt, int iAttac
 			if ( !pModel )
 				return false;
 
-			int iAttachment = pModel->LookupAttachment( "buff_attach" );
+			int iAttachmentBuf = pModel->LookupAttachment( "buff_attach" );
 			if ( pAngles )
-				return pModel->GetAttachment( iAttachment, vPos, *pAngles );
-			return pModel->GetAttachment( iAttachment, vPos );
+				return pModel->GetAttachment( iAttachmentBuf, vPos, *pAngles );
+			return pModel->GetAttachment( iAttachmentBuf, vPos );
 		}
 	}
 
@@ -1974,7 +1983,7 @@ bool C_RopeKeyframe::GetEndPointPos( int iPt, Vector &vPos )
 
 IMaterial* C_RopeKeyframe::GetSolidMaterial( void )
 {
-#if defined(TF_CLIENT_DLL) || defined(TF_VINTAGE_CLIENT)
+#ifdef TF_CLIENT_DLL
 	if ( RopeManager()->IsHolidayLightMode() )
 	{
 		if ( RopeManager()->GetHolidayLightStyle() == 1 )

@@ -107,6 +107,7 @@ BEGIN_DATADESC( CBaseTrigger )
 	// Inputs	
 	DEFINE_INPUTFUNC( FIELD_VOID, "Enable", InputEnable ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "Disable", InputDisable ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "DisableAndEndTouch", InputDisableAndEndTouch ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "Toggle", InputToggle ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "TouchTest", InputTouchTest ),
 
@@ -153,6 +154,29 @@ void CBaseTrigger::InputEnable( inputdata_t &inputdata )
 //------------------------------------------------------------------------------
 void CBaseTrigger::InputDisable( inputdata_t &inputdata )
 { 
+	Disable();
+}
+
+//------------------------------------------------------------------------------
+// Purpose: Input handler to call EndTouch on all touching entities, and then
+//			turn off this trigger
+//------------------------------------------------------------------------------
+void CBaseTrigger::InputDisableAndEndTouch( inputdata_t &inputdata )
+{
+	// EndTouch may delete an arbitrary number of entities from the touch list
+	for ( int i = m_hTouchingEntities.Count() - 1; i >= 0; i = m_hTouchingEntities.Count() - 1 )
+	{
+		if ( m_hTouchingEntities[i] )
+		{
+			EndTouch( m_hTouchingEntities[ i ] );
+			Assert( i > m_hTouchingEntities.Count() - 1 );
+		}
+		else
+		{
+			m_hTouchingEntities.Remove( i );
+		}
+	}
+
 	Disable();
 }
 
@@ -370,7 +394,7 @@ bool CBaseTrigger::PassesTriggerFilters(CBaseEntity *pOther)
 		(HasSpawnFlags(SF_TRIGGER_ALLOW_NPCS) && (pOther->GetFlags() & FL_NPC)) ||
 		(HasSpawnFlags(SF_TRIGGER_ALLOW_PUSHABLES) && FClassnameIs(pOther, "func_pushable")) ||
 		(HasSpawnFlags(SF_TRIGGER_ALLOW_PHYSICS) && pOther->GetMoveType() == MOVETYPE_VPHYSICS) 
-#if defined( HL2_EPISODIC ) || defined( TF_DLL ) || defined ( TF_VINTAGE )		
+#if defined( HL2_EPISODIC ) || defined( TF_DLL )		
 		||
 		(	HasSpawnFlags(SF_TRIG_TOUCH_DEBRIS) && 
 			(pOther->GetCollisionGroup() == COLLISION_GROUP_DEBRIS ||
@@ -522,13 +546,6 @@ void CBaseTrigger::EndTouch(CBaseEntity *pOther)
 			}
 			else if ( hOther->IsPlayer() && !hOther->IsAlive() )
 			{
-#ifdef STAGING_ONLY
-				if ( !HushAsserts() )
-				{
-					AssertMsg( false, "Dead player [%s] is still touching this trigger at [%f %f %f]", hOther->GetEntityName().ToCStr(), XYZ( hOther->GetAbsOrigin() ) );
-				}
-				Warning( "Dead player [%s] is still touching this trigger at [%f %f %f]", hOther->GetEntityName().ToCStr(), XYZ( hOther->GetAbsOrigin() ) );
-#endif
 				m_hTouchingEntities.Remove( i );
 			}
 			else
@@ -550,7 +567,7 @@ void CBaseTrigger::EndTouch(CBaseEntity *pOther)
 //-----------------------------------------------------------------------------
 // Purpose: Return true if the specified entity is touching us
 //-----------------------------------------------------------------------------
-bool CBaseTrigger::IsTouching( CBaseEntity *pOther )
+bool CBaseTrigger::IsTouching( const CBaseEntity *pOther ) const
 {
 	EHANDLE hOther;
 	hOther = pOther;
@@ -754,20 +771,6 @@ bool CTriggerHurt::HurtEntity( CBaseEntity *pOther, float damage )
 	bool bPlayerDisconnected = pOther->IsPlayer() && ( ((CBasePlayer *)pOther)->IsConnected() == false );
 	if ( bPlayerDisconnected )
 		return false;
-	
-	// If the entity is a boss, we need to respawn them.
-	if (TFGameRules()->IsBossClass(pOther))
-	{
-		if (pOther->IsAlive())
-		{
-			CTFPlayer *pTFOther = ToTFPlayer(pOther);
-			int iHealthDifference = ( ( pTFOther->GetMaxHealth() ) - ( pTFOther->GetHealth() ) );
-			pTFOther->ForceRespawn();
-			// Instead of calculating trigger damage, we just subtract the lost health from their spawn health.
-			pOther->TakeHealth(iHealthDifference, m_bitsDamageInflict );
-		}
-		return false;
-	}
 
 	if ( damage < 0 )
 	{
@@ -1780,13 +1783,6 @@ int BuildChangeList( levellist_t *pLevelList, int maxList )
 {
 	return CChangeLevel::ChangeList( pLevelList, maxList );
 }
-
-struct collidelist_t
-{
-	const CPhysCollide	*pCollide;
-	Vector			origin;
-	QAngle			angles;
-};
 
 
 // NOTE: This routine is relatively slow.  If you need to use it for per-frame work, consider that fact.
@@ -3101,7 +3097,7 @@ void CTriggerCamera::Enable( void )
 			{
 				if ( pOtherCamera == this )
 				{
-					// what the hell do you think you are doing?
+					// what do you think you are doing?
 					Warning("Viewcontrol %s was enabled twice in a row!\n", GetDebugName());
 					return;
 				}
@@ -3788,7 +3784,7 @@ public:
 			return IMotionEvent::SIM_NOTHING;
 
 		// Get a cosine modulated noise between 5 and 20 that is object specific
-		int nNoiseMod = 5+(int)pObject%15; // 
+		int nNoiseMod = 5+(int)(intp)pObject%15; // 
 
 		// Turn wind yaw direction into a vector and add noise
 		QAngle vWindAngle = vec3_angle;	

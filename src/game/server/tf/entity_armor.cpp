@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: CTF Armor.
 //
@@ -17,7 +17,6 @@
 // CTF Armor defines.
 //
 
-#define TF_ARMOR_MODEL			"models/items/car_battery01.mdl"
 #define TF_ARMOR_PICKUP_SOUND	"Armor.Touch"
 #define TF_ARMOR_CAPACITY		200
 
@@ -33,9 +32,6 @@ LINK_ENTITY_TO_CLASS( item_armor, CArmor );
 //-----------------------------------------------------------------------------
 void CArmor::Spawn( void )
 {
-	Precache();
-	SetModel( TF_ARMOR_MODEL );
-
 	BaseClass::Spawn();
 }
 
@@ -44,8 +40,8 @@ void CArmor::Spawn( void )
 //-----------------------------------------------------------------------------
 void CArmor::Precache( void )
 {
-	PrecacheModel( TF_ARMOR_MODEL );
 	PrecacheScriptSound( TF_ARMOR_PICKUP_SOUND );
+	BaseClass::Precache();
 }
 
 //-----------------------------------------------------------------------------

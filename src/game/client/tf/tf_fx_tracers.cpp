@@ -1,4 +1,4 @@
-//========= Copyright � 1996-2003, Valve LLC, All rights reserved. ============
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Game-specific impact effect hooks
 //
@@ -56,7 +56,7 @@ void FX_TFTracerSound( const Vector &start, const Vector &end, int iTracerType )
 
 			float s, t;
 			IntersectRayWithRay( bullet, listener, s, t );
-			t = clamp( t, 0, 1 );
+			t = clamp( t, 0.f, 1.f );
 			vecListenOrigin.z -= t * LISTENER_HEIGHT;
 		}
 		break;
@@ -83,9 +83,8 @@ void FX_TFTracerSound( const Vector &start, const Vector &end, int iTracerType )
 		VectorNormalize( shotDir );
 
 		CLocalPlayerFilter filter;
-
 		enginesound->EmitSound(	filter, SOUND_FROM_WORLD, CHAN_STATIC, params.soundname, 
-			params.volume, SNDLVL_TO_ATTN(params.soundlevel), 0, params.pitch, 0, &start, &shotDir, NULL, false );
+			params.volume, SNDLVL_TO_ATTN(params.soundlevel), 0, params.pitch, 0, &start, &shotDir, NULL);
 	}
 
 	// Don't play another bullet whiz for this client until this time has run out

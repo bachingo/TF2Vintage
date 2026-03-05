@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -16,6 +16,12 @@
 #ifdef CLIENT_DLL
 #define CTFSyringeGun C_TFSyringeGun
 #endif
+
+enum syringe_weapontypes_t
+{
+	SYRINGE_DEFAULT = 0,
+	SYRINGE_UBER_SCALES_SPEED,
+};
 
 //=============================================================================
 //
@@ -39,11 +45,16 @@ public:
 
 	virtual void	Precache();
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_SYRINGEGUN_MEDIC; }
-	virtual float		GetSpeedMod( void ) const;
+	int				GetSyringeType( void ) const		{ int iMode = 0; CALL_ATTRIB_HOOK_INT( iMode, set_weapon_mode ); return iMode; };
+	virtual bool	Deploy( void );
+	virtual bool	Holster( CBaseCombatWeapon *pSwitchingTo );
+
+	virtual void RemoveProjectileAmmo( CTFPlayer *pPlayer );
+	virtual bool HasPrimaryAmmo( void );
 
 private:
 
-	CTFSyringeGun( CTFSyringeGun const& );
+	CTFSyringeGun( const CTFSyringeGun & ) {}
 };
 
 #endif // TF_WEAPON_SYRINGEGUN_H

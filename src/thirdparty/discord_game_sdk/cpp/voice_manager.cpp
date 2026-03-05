@@ -16,7 +16,7 @@ namespace discord {
 
 class VoiceEvents final {
 public:
-    static void OnSettingsUpdate(void* callbackData)
+    static void DISCORD_CALLBACK OnSettingsUpdate(void* callbackData)
     {
         auto* core = reinterpret_cast<Core*>(callbackData);
         if (!core) {
@@ -107,7 +107,7 @@ Result VoiceManager::SetLocalMute(Snowflake userId, bool mute)
     return static_cast<Result>(result);
 }
 
-Result VoiceManager::GetLocalVolume(Snowflake userId, uint8_t* volume)
+Result VoiceManager::GetLocalVolume(Snowflake userId, std::uint8_t* volume)
 {
     if (!volume) {
         return Result::InternalError;
@@ -118,7 +118,7 @@ Result VoiceManager::GetLocalVolume(Snowflake userId, uint8_t* volume)
     return static_cast<Result>(result);
 }
 
-Result VoiceManager::SetLocalVolume(Snowflake userId, uint8_t volume)
+Result VoiceManager::SetLocalVolume(Snowflake userId, std::uint8_t volume)
 {
     auto result = internal_->set_local_volume(internal_, userId, volume);
     return static_cast<Result>(result);

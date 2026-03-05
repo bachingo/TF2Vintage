@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: CTF AmmoPack.
 //
@@ -11,6 +11,10 @@
 #endif
 
 #include "items.h"
+
+
+#define TF_POWERUP_LIFETIME		30.0f		// normal powerup timeout
+
 
 enum powerupsize_t
 {
@@ -33,40 +37,48 @@ class CTFPowerup : public CItem
 public:
 	DECLARE_CLASS( CTFPowerup, CItem );
 
-	DECLARE_DATADESC();
-
 	CTFPowerup();
 
 	void			Spawn( void );
 	CBaseEntity*	Respawn( void );
-	virtual void	Precache( void );
-	virtual void	Materialize( void );
+	virtual void	Precache();
+	void			Materialize( void );
 	virtual bool	ValidTouch( CBasePlayer *pPlayer );
 	virtual bool	MyTouch( CBasePlayer *pPlayer );
+
+	void			DropSingleInstance( Vector &vecLaunchVel, CBaseCombatCharacter *pThrower, float flThrowerTouchDelay, float flResetTime = 0.1f );
 
 	bool			IsDisabled( void );
 	void			SetDisabled( bool bDisabled );
 
-	virtual float	GetRespawnDelay( void ) 				{ return g_pGameRules->FlItemRespawnTime( this ); }
-	virtual float	GetLifeTime()							{ return 30.0f; }
-
-	void			DropSingleInstance( const Vector &vecVelocity, CBaseCombatCharacter *pOwner, float flUnknown, float flRestTime );
+	virtual float	GetRespawnDelay( void ) { return g_pGameRules->FlItemRespawnTime( this ); }
 
 	// Input handlers
 	void			InputEnable( inputdata_t &inputdata );
 	void			InputDisable( inputdata_t &inputdata );
 	void			InputToggle( inputdata_t &inputdata );
 
-	virtual powerupsize_t	GetPowerupSize( void ) 			{ return POWERUP_FULL; }
-	virtual const char		*GetPowerupModel( void );
-	virtual const char		*GetDefaultPowerupModel( void ) { return NULL; }
+	virtual powerupsize_t	GetPowerupSize( void ) { return POWERUP_FULL; }
 
-	CNetworkVarForDerived( bool, m_bDisabled );
-	CNetworkVarForDerived( bool, m_bRespawning );
+	virtual const char *GetPowerupModel( void );
+	virtual const char *GetDefaultPowerupModel( void ) = 0;
 
-	float 		m_flNextCollideTime;
+	virtual bool	ItemCanBeTouchedByPlayer( CBasePlayer *pPlayer );
 
-	string_t 	m_iszModel;
+	virtual float	GetLifeTime() { return TF_POWERUP_LIFETIME; }
+protected:
+	void			Materialize_Internal( void );
+
+	bool			m_bDisabled;
+	bool			m_bRespawning;
+	bool			m_bThrownSingleInstance;
+	bool			m_bAutoMaterialize;
+
+	string_t		m_iszModel;
+
+	float			m_flThrowerTouchTime;
+
+	DECLARE_DATADESC();
 };
 
 #endif // TF_POWERUP_H

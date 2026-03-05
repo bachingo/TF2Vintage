@@ -3,16 +3,10 @@
 // $SEAMLESS && $RELIEF_MAPPING
 // $BUMPMASK && $RELIEF_MAPPING
 // $BUMPMASK && $SEAMLESS
-// $CASCADED_SHADOW && $LIGHTING_PREVIEW
 // defined $LIGHTING_PREVIEW && defined $FASTPATH && $LIGHTING_PREVIEW && $FASTPATH
 
-#ifndef LIGHTMAPPEDGENERIC_VS20_H
-#define LIGHTMAPPEDGENERIC_VS20_H
-
-#include "shaderapi/ishaderapi.h"
-#include "shaderapi/ishadershadow.h"
-#include "materialsystem/imaterialvar.h"
-
+#pragma once
+#include "shaderlib/cshader.h"
 class lightmappedgeneric_vs20_Static_Index
 {
 	unsigned int m_nENVMAP_MASK : 2;
@@ -117,7 +111,7 @@ public:
 #endif	// _DEBUG
 	}
 
-	lightmappedgeneric_vs20_Static_Index( IShaderShadow* pShaderShadow, IMaterialVar** params )
+	lightmappedgeneric_vs20_Static_Index(  )
 	{
 		m_nENVMAP_MASK = 0;
 		m_nTANGENTSPACE = 0;
@@ -144,6 +138,10 @@ public:
 	int GetIndex() const
 	{
 		Assert( m_bENVMAP_MASK && m_bTANGENTSPACE && m_bBUMPMAP && m_bDIFFUSEBUMPMAP && m_bVERTEXCOLOR && m_bVERTEXALPHATEXBLENDFACTOR && m_bRELIEF_MAPPING && m_bSEAMLESS && m_bBUMPMASK );
+		AssertMsg( !( !m_nBUMPMAP && m_nDIFFUSEBUMPMAP ), "Invalid combo combination ( !BUMPMAP && DIFFUSEBUMPMAP )" );
+		AssertMsg( !( m_nSEAMLESS && m_nRELIEF_MAPPING ), "Invalid combo combination ( SEAMLESS && RELIEF_MAPPING )" );
+		AssertMsg( !( m_nBUMPMASK && m_nRELIEF_MAPPING ), "Invalid combo combination ( BUMPMASK && RELIEF_MAPPING )" );
+		AssertMsg( !( m_nBUMPMASK && m_nSEAMLESS ), "Invalid combo combination ( BUMPMASK && SEAMLESS )" );
 		return ( 8 * m_nENVMAP_MASK ) + ( 16 * m_nTANGENTSPACE ) + ( 32 * m_nBUMPMAP ) + ( 64 * m_nDIFFUSEBUMPMAP ) + ( 128 * m_nVERTEXCOLOR ) + ( 256 * m_nVERTEXALPHATEXBLENDFACTOR ) + ( 512 * m_nRELIEF_MAPPING ) + ( 512 * m_nSEAMLESS ) + ( 1024 * m_nBUMPMASK ) + 0;
 	}
 };
@@ -189,7 +187,7 @@ public:
 #endif	// _DEBUG
 	}
 
-	lightmappedgeneric_vs20_Dynamic_Index( IShaderDynamicAPI* pShaderAPI )
+	lightmappedgeneric_vs20_Dynamic_Index(  )
 	{
 		m_nFASTPATH = 0;
 		m_nDOWATERFOG = 0;
@@ -204,11 +202,10 @@ public:
 	int GetIndex() const
 	{
 		Assert( m_bFASTPATH && m_bDOWATERFOG && m_bLIGHTING_PREVIEW );
+		AssertMsg( !( 1 && ( 1 && ( m_nLIGHTING_PREVIEW && m_nFASTPATH ) ) ), "Invalid combo combination ( 1 && ( 1 && ( LIGHTING_PREVIEW && FASTPATH ) ) )" );
 		return ( 1 * m_nFASTPATH ) + ( 2 * m_nDOWATERFOG ) + ( 4 * m_nLIGHTING_PREVIEW ) + 0;
 	}
 };
 
 #define shaderDynamicTest_lightmappedgeneric_vs20 vsh_forgot_to_set_dynamic_FASTPATH + vsh_forgot_to_set_dynamic_DOWATERFOG + vsh_forgot_to_set_dynamic_LIGHTING_PREVIEW
 
-
-#endif	// LIGHTMAPPEDGENERIC_VS20_H

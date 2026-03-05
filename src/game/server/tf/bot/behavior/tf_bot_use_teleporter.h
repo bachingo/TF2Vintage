@@ -1,39 +1,40 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_use_teleporter.h
+// Ride a friendly teleporter
+// Michael Booth, May 2010
+
 #ifndef TF_BOT_USE_TELEPORTER_H
 #define TF_BOT_USE_TELEPORTER_H
-#ifdef _WIN32
-#pragma once
-#endif
 
+#include "tf_obj_teleporter.h"
+#include "Path/NextBotPathFollow.h"
 
-#include "NextBotBehavior.h"
-
-class CObjectTeleporter;
-
-class CTFBotUseTeleporter : public Action<CTFBot>
+class CTFBotUseTeleporter : public Action< CTFBot >
 {
 public:
 	enum UseHowType
 	{
-		USE_IMMEDIATE,
-		USE_WAIT
+		USE_IF_READY,
+		ALWAYS_USE
 	};
-	
-	CTFBotUseTeleporter(CObjectTeleporter *teleporter, UseHowType how = USE_IMMEDIATE);
-	virtual ~CTFBotUseTeleporter();
-	
-	virtual const char *GetName( void ) const OVERRIDE;
-	
-	virtual ActionResult<CTFBot> OnStart(CTFBot *me, Action<CTFBot> *priorAction) OVERRIDE;
-	virtual ActionResult<CTFBot> Update(CTFBot *me, float dt) OVERRIDE;
-	
+	CTFBotUseTeleporter( CObjectTeleporter *teleporter, UseHowType how = USE_IF_READY );
+
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
+
+	virtual const char *GetName( void ) const	{ return "UseTeleporter"; };
+
 private:
+	CHandle< CObjectTeleporter > m_teleporter;		// the teleporter we're trying to use
+	UseHowType m_how;
+
+	PathFollower m_path;
+	CountdownTimer m_repathTimer;
+
+	bool m_isInTransit;
+
 	bool IsTeleporterAvailable( void ) const;
-	
-	CHandle<CObjectTeleporter> m_hTele;
-	UseHowType m_iHow;
-	PathFollower m_PathFollower;
-	CountdownTimer m_recomputePath;
-	bool m_bTeleported;
 };
 
-#endif
+
+#endif // TF_BOT_USE_TELEPORTER_H

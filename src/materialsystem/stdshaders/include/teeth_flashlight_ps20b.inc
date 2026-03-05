@@ -1,5 +1,4 @@
 // ALL SKIP STATEMENTS THAT AFFECT THIS SHADER!!!
-// !$FLASHLIGHTSHADOWS && $UBERLIGHT
 // defined $HDRTYPE && defined $HDRENABLED && !$HDRTYPE && $HDRENABLED
 // defined $PIXELFOGTYPE && defined $WRITEWATERFOGTODESTALPHA && ( $PIXELFOGTYPE != 1 ) && $WRITEWATERFOGTODESTALPHA
 // defined $LIGHTING_PREVIEW && defined $HDRTYPE && $LIGHTING_PREVIEW && $HDRTYPE != 0
@@ -15,13 +14,8 @@
 // defined $LIGHTING_PREVIEW && defined $FASTPATH && $LIGHTING_PREVIEW && $FASTPATH
 // ($FLASHLIGHT || $FLASHLIGHTSHADOWS) && $LIGHTING_PREVIEW
 
-#ifndef TEETH_FLASHLIGHT_PS20B_H
-#define TEETH_FLASHLIGHT_PS20B_H
-
-#include "shaderapi/ishaderapi.h"
-#include "shaderapi/ishadershadow.h"
-#include "materialsystem/imaterialvar.h"
-
+#pragma once
+#include "shaderlib/cshader.h"
 class teeth_flashlight_ps20b_Static_Index
 {
 	unsigned int m_nCONVERT_TO_SRGB : 2;
@@ -45,7 +39,7 @@ public:
 #endif	// _DEBUG
 	}
 
-	teeth_flashlight_ps20b_Static_Index( IShaderShadow* pShaderShadow, IMaterialVar** params )
+	teeth_flashlight_ps20b_Static_Index(  )
 	{
 		m_nCONVERT_TO_SRGB = g_pHardwareConfig->NeedsShaderSRGBConversion();
 		m_nFLASHLIGHTDEPTHFILTERMODE = 0;
@@ -57,7 +51,7 @@ public:
 	int GetIndex() const
 	{
 		Assert( m_bFLASHLIGHTDEPTHFILTERMODE );
-		return ( 4 * m_nCONVERT_TO_SRGB ) + ( 8 * m_nFLASHLIGHTDEPTHFILTERMODE ) + 0;
+		return ( 6 * m_nCONVERT_TO_SRGB ) + ( 12 * m_nFLASHLIGHTDEPTHFILTERMODE ) + 0;
 	}
 };
 
@@ -75,7 +69,7 @@ class teeth_flashlight_ps20b_Dynamic_Index
 public:
 	void SetPIXELFOGTYPE( int i )
 	{
-		Assert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 2 );
 		m_nPIXELFOGTYPE = i;
 #ifdef _DEBUG
 		m_bPIXELFOGTYPE = true;
@@ -91,7 +85,7 @@ public:
 #endif	// _DEBUG
 	}
 
-	teeth_flashlight_ps20b_Dynamic_Index( IShaderDynamicAPI* pShaderAPI )
+	teeth_flashlight_ps20b_Dynamic_Index(  )
 	{
 		m_nPIXELFOGTYPE = 0;
 		m_nFLASHLIGHTSHADOWS = 0;
@@ -104,11 +98,9 @@ public:
 	int GetIndex() const
 	{
 		Assert( m_bPIXELFOGTYPE && m_bFLASHLIGHTSHADOWS );
-		return ( 1 * m_nPIXELFOGTYPE ) + ( 2 * m_nFLASHLIGHTSHADOWS ) + 0;
+		return ( 1 * m_nPIXELFOGTYPE ) + ( 3 * m_nFLASHLIGHTSHADOWS ) + 0;
 	}
 };
 
 #define shaderDynamicTest_teeth_flashlight_ps20b psh_forgot_to_set_dynamic_PIXELFOGTYPE + psh_forgot_to_set_dynamic_FLASHLIGHTSHADOWS
 
-
-#endif	// TEETH_FLASHLIGHT_PS20B_H

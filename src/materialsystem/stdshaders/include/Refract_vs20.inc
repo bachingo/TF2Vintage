@@ -1,14 +1,9 @@
 // ALL SKIP STATEMENTS THAT AFFECT THIS SHADER!!!
 // defined $LIGHTING_PREVIEW && defined $FASTPATH && $LIGHTING_PREVIEW && $FASTPATH
 
-#ifndef REFRACT_VS20_H
-#define REFRACT_VS20_H
-
-#include "shaderapi/ishaderapi.h"
-#include "shaderapi/ishadershadow.h"
-#include "materialsystem/imaterialvar.h"
-
-class Refract_vs20_Static_Index
+#pragma once
+#include "shaderlib/cshader.h"
+class refract_vs20_Static_Index
 {
 	unsigned int m_nMODEL : 2;
 	unsigned int m_nCOLORMODULATE : 2;
@@ -35,7 +30,7 @@ public:
 #endif	// _DEBUG
 	}
 
-	Refract_vs20_Static_Index( IShaderShadow* pShaderShadow, IMaterialVar** params )
+	refract_vs20_Static_Index(  )
 	{
 		m_nMODEL = 0;
 		m_nCOLORMODULATE = 0;
@@ -52,10 +47,10 @@ public:
 	}
 };
 
-#define shaderStaticTest_Refract_vs20 vsh_forgot_to_set_static_MODEL + vsh_forgot_to_set_static_COLORMODULATE
+#define shaderStaticTest_refract_vs20 vsh_forgot_to_set_static_MODEL + vsh_forgot_to_set_static_COLORMODULATE
 
 
-class Refract_vs20_Dynamic_Index
+class refract_vs20_Dynamic_Index
 {
 	unsigned int m_nCOMPRESSED_VERTS : 2;
 	unsigned int m_nSKINNING : 2;
@@ -82,7 +77,7 @@ public:
 #endif	// _DEBUG
 	}
 
-	Refract_vs20_Dynamic_Index( IShaderDynamicAPI* pShaderAPI )
+	refract_vs20_Dynamic_Index(  )
 	{
 		m_nCOMPRESSED_VERTS = 0;
 		m_nSKINNING = 0;
@@ -99,7 +94,5 @@ public:
 	}
 };
 
-#define shaderDynamicTest_Refract_vs20 vsh_forgot_to_set_dynamic_COMPRESSED_VERTS + vsh_forgot_to_set_dynamic_SKINNING
+#define shaderDynamicTest_refract_vs20 vsh_forgot_to_set_dynamic_COMPRESSED_VERTS + vsh_forgot_to_set_dynamic_SKINNING
 
-
-#endif	// REFRACT_VS20_H

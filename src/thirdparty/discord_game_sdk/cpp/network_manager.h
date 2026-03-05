@@ -41,10 +41,10 @@ public:
      */
     Result SendMessage(NetworkPeerId peerId,
                        NetworkChannelId channelId,
-                       uint8_t* data,
-                       uint32_t dataLength);
+                       std::uint8_t* data,
+                       std::uint32_t dataLength);
 
-    Event<NetworkPeerId, NetworkChannelId, uint8_t*, uint32_t> OnMessage;
+    Event<NetworkPeerId, NetworkChannelId, std::uint8_t*, std::uint32_t> OnMessage;
     Event<char const*> OnRouteUpdate;
 
 private:

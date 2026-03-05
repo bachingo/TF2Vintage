@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -6,6 +6,10 @@
 //=============================================================================//
 
 #include "cbase.h"
+
+#include "inputsystem/iinputsystem.h"
+#include "input.h"
+
 #include "tf_textwindow.h"
 #include <cdll_client_int.h>
 
@@ -61,9 +65,32 @@ void CTFTextWindow::ApplySchemeSettings( IScheme *pScheme )
 {
 	Frame::ApplySchemeSettings( pScheme );  // purposely skipping the CTextWindow version
 
-	LoadControlSettings("Resource/UI/TextWindow.res");
+	if ( ::input->IsSteamControllerActive() )
+	{
+		if ( m_bCustomSvrPage )
+		{
+			LoadControlSettings( "Resource/UI/TextWindowCustomServer_SC.res" );
+		}
+		else
+		{
+			LoadControlSettings( "Resource/UI/TextWindow_SC.res" );
+		}
 
-	Reset();
+		SetMouseInputEnabled( false );
+	}
+	else
+	{
+		if ( m_bCustomSvrPage )
+		{
+			LoadControlSettings( "Resource/UI/TextWindowCustomServer.res" );
+		}
+		else
+		{
+			LoadControlSettings( "Resource/UI/TextWindow.res" );
+		}
+		SetMouseInputEnabled( true );
+	}
+
 
 	if ( m_pHTMLMessage )
 	{
@@ -82,9 +109,34 @@ void CTFTextWindow::Reset( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+void CTFTextWindow::OnThink()
+{
+	//Always hide the health... this needs to be done every frame because a message from the server keeps resetting this.
+	C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
+	if ( pLocalPlayer )
+	{
+		pLocalPlayer->m_Local.m_iHideHUD |= HIDEHUD_HEALTH;
+	}
+
+	BaseClass::OnThink();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFTextWindow::SetData(KeyValues *data)
+{
+	m_bCustomSvrPage = data->GetBool( "customsvr" );
+	InvalidateLayout( false, true );
+	BaseClass::SetData( data );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFTextWindow::Update()
 {
-	CExLabel *pTitle = dynamic_cast<CExLabel *>(FindChildByName("TFMessageTitle"));
+	CExLabel *pTitle = dynamic_cast<CExLabel *>( FindChildByName( "TFMessageTitle" ) );
 	if ( pTitle )
 	{
 		pTitle->SetText( m_szTitle );
@@ -129,6 +181,9 @@ void CTFTextWindow::ShowPanel( bool bShow )
 	if ( IsVisible() == bShow )
 		return;
 
+	// Force use to reevaluate our scheme, in case Steam Controller stuff has changed.
+	InvalidateLayout( true, true );
+
 	BaseClass::ShowPanel( bShow );
 
 	if ( m_pViewPort )
@@ -142,7 +197,7 @@ void CTFTextWindow::ShowPanel( bool bShow )
 //-----------------------------------------------------------------------------
 void CTFTextWindow::OnKeyCodePressed( KeyCode code )
 {
-	if ( code == KEY_XBUTTON_A )
+	if ( code == KEY_XBUTTON_A || code == STEAMCONTROLLER_A )
 	{
 		OnCommand( "okay" );		
 	}
@@ -164,14 +219,12 @@ void CTFTextWindow::PaintBackground()
 //-----------------------------------------------------------------------------
 void CTFTextWindow::OnCommand( const char *command )
 {
-	if ( !Q_strcmp( command, "okay" ) )
+	BaseClass::OnCommand( command );
+
+	// Don't open up the mapinfo if it was a custom server html page
+	if ( !Q_strcmp( command, "okay" ) && !m_bCustomSvrPage )
 	{
-		m_pViewPort->ShowPanel( this, false );
 		m_pViewPort->ShowPanel( PANEL_MAPINFO, true );
-	}
-	else
-	{
-		BaseClass::OnCommand( command );
 	}
 }
 
@@ -193,10 +246,10 @@ void CTFTextWindow::ShowText( const char *text )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFTextWindow::ShowURL( const char *URL )
+void CTFTextWindow::ShowURL( const char *URL, bool bAllowUserToDisable )
 {
-	ShowTitleLabel( false )	;
-	BaseClass::ShowURL( URL );
+	ShowTitleLabel( false );
+	BaseClass::ShowURL( URL, bAllowUserToDisable );
 }
 
 //-----------------------------------------------------------------------------
@@ -213,7 +266,7 @@ void CTFTextWindow::ShowFile( const char *filename )
 //-----------------------------------------------------------------------------
 void CTFTextWindow::ShowTitleLabel( bool show )
 {
-	CExLabel *pTitle = dynamic_cast<CExLabel *>(FindChildByName("TFMessageTitle"));
+	CExLabel *pTitle = dynamic_cast<CExLabel *>( FindChildByName( "TFMessageTitle" ) );
 	if ( pTitle )
 	{
 		pTitle->SetVisible( show );

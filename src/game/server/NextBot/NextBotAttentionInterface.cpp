@@ -37,13 +37,28 @@ void IAttention::Update( void )
 
 
 //------------------------------------------------------------------------------------------
-void IAttention::AttendTo( CBaseEntity *who, const char *reason )
+void IAttention::AttendTo( const CBaseCombatCharacter *who, const char *reason )
 {
 	if ( !IsAwareOf( who ) )
 	{
 		PointOfInterest p;
-		p.m_type = PointOfInterest::ENTITY;
-		p.m_entity = who;
+		p.m_type = PointOfInterest::WHO;
+		p.m_who = who;
+		p.m_duration.Start();
+
+		m_attentionSet.AddToTail( p );
+	}
+}
+
+
+//------------------------------------------------------------------------------------------
+void IAttention::AttendTo( const CBaseEntity *what, const char *reason )
+{
+	if ( !IsAwareOf( what ) )
+	{
+		PointOfInterest p;
+		p.m_type = PointOfInterest::WHAT;
+		p.m_what = what;
 		p.m_duration.Start();
 
 		m_attentionSet.AddToTail( p );
@@ -55,8 +70,8 @@ void IAttention::AttendTo( CBaseEntity *who, const char *reason )
 void IAttention::AttendTo( const Vector &where, IAttention::SignificanceLevel significance, const char *reason )
 {
 	PointOfInterest p;
-	p.m_type = PointOfInterest::POSITION;
-	p.m_position = where;
+	p.m_type = PointOfInterest::WHERE;
+	p.m_where = where;
 	p.m_duration.Start();
 
 	m_attentionSet.AddToTail( p );
@@ -64,17 +79,36 @@ void IAttention::AttendTo( const Vector &where, IAttention::SignificanceLevel si
 
 
 //------------------------------------------------------------------------------------------
-void IAttention::Disregard( CBaseEntity *who, const char *reason )
+void IAttention::Disregard( const CBaseCombatCharacter *who, const char *reason )
 {
-	for( int i=0; i<m_attentionSet.Count(); ++i )
+	FOR_EACH_VEC( m_attentionSet, it )
 	{
-		if ( m_attentionSet[ i ].m_type == PointOfInterest::ENTITY )
+		if ( m_attentionSet[ it ].m_type == PointOfInterest::WHO )
 		{
-			CBaseEntity *myWho = m_attentionSet[ i ].m_entity;
+			CBaseCombatCharacter *myWho = m_attentionSet[ it ].m_who;
 
 			if ( !myWho || myWho->entindex() == who->entindex() )
 			{
-				m_attentionSet.Remove( i );
+				m_attentionSet.Remove( it );
+				return;
+			}
+		}
+	}
+}
+
+
+//------------------------------------------------------------------------------------------
+void IAttention::Disregard( const CBaseEntity *what, const char *reason )
+{
+	FOR_EACH_VEC( m_attentionSet, it )
+	{
+		if ( m_attentionSet[ it ].m_type == PointOfInterest::WHAT )
+		{
+			CBaseCombatCharacter *myWhat = m_attentionSet[ it ].m_what;
+
+			if ( !myWhat || myWhat->entindex() == what->entindex() )
+			{
+				m_attentionSet.Remove( it );
 				return;
 			}
 		}
@@ -86,15 +120,38 @@ void IAttention::Disregard( CBaseEntity *who, const char *reason )
 /**
  * Return true if given actor is in our attending set
  */
-bool IAttention::IsAwareOf( CBaseEntity *who ) const
+bool IAttention::IsAwareOf( const CBaseCombatCharacter *who ) const
 {
-	for( int i=0; i<m_attentionSet.Count(); ++i )
+	FOR_EACH_VEC( m_attentionSet, it )
 	{
-		if ( m_attentionSet[ i ].m_type == PointOfInterest::ENTITY )
+		if ( m_attentionSet[ it ].m_type == PointOfInterest::WHO )
 		{
-			CBaseEntity *myWho = m_attentionSet[ i ].m_entity;
+			CBaseCombatCharacter *myWho = m_attentionSet[ it ].m_who;
 
 			if ( myWho && myWho->entindex() == who->entindex() )
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+
+//------------------------------------------------------------------------------------------
+/**
+ * Return true if given object is in our attending set
+ */
+bool IAttention::IsAwareOf( const CBaseEntity *what ) const
+{
+	FOR_EACH_VEC( m_attentionSet, it )
+	{
+		if ( m_attentionSet[ it ].m_type == PointOfInterest::WHAT )
+		{
+			CBaseEntity *myWhat = m_attentionSet[ it ].m_what;
+
+			if ( myWhat && myWhat->entindex() == what->entindex() )
 			{
 				return true;
 			}

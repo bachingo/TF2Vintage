@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -31,6 +31,7 @@ public:
 	CTFTextWindow( IViewPort *pViewPort );
 	virtual ~CTFTextWindow();
 
+	virtual void SetData(KeyValues *data);
 	virtual void Update();
 	virtual void Reset();
 	virtual void SetVisible(bool state);
@@ -38,9 +39,12 @@ public:
 	virtual void OnKeyCodePressed( vgui::KeyCode code );
 	virtual void ApplySchemeSettings( vgui::IScheme *pScheme );
 	virtual void ShowFile( const char *filename );
-	virtual void ShowURL( const char *URL );
+	virtual void ShowURL( const char *URL, bool bAllowUserToDisable = true );
 	virtual void ShowText( const char *text );
 	void ShowTitleLabel( bool show );
+	virtual void OnThink();
+
+	virtual GameActionSet_t GetPreferredActionSet() { return GAME_ACTION_SET_IN_GAME_HUD; }
 
 public:
 	virtual void PaintBackground();
@@ -51,6 +55,7 @@ protected:
 
 private:
 	CExRichText		*m_pTFTextMessage;
+	bool			m_bCustomSvrPage;
 };
 
 

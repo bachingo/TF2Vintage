@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2007, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -15,6 +15,10 @@
 #include "tf_controls.h"
 #include "tf_imagepanel.h"
 #include "GameEventListener.h"
+#include "hudelement.h"
+
+class CCaptureFlag;
+class CTFFlagCalloutPanel;
 
 //-----------------------------------------------------------------------------
 // Purpose:  Draws the rotated arrow panels
@@ -29,6 +33,7 @@ public:
 	virtual bool IsVisible( void );
 	void SetEntity( EHANDLE hEntity ){ m_hEntity = hEntity; }
 	float GetAngleRotation( void );
+	void OnTick( void );
 
 private:
 
@@ -36,14 +41,15 @@ private:
 
 	CMaterialReference	m_RedMaterial;
 	CMaterialReference	m_BlueMaterial;
-	CMaterialReference	m_GreenMaterial;
-	CMaterialReference	m_YellowMaterial;
 	CMaterialReference	m_NeutralMaterial;
+	CMaterialReference	m_NeutralRedMaterial;
 
 	CMaterialReference	m_RedMaterialNoArrow;
 	CMaterialReference	m_BlueMaterialNoArrow;
-	CMaterialReference	m_GreenMaterialNoArrow;
-	CMaterialReference	m_YellowMaterialNoArrow;
+
+	bool				m_bUseRed;
+	float				m_flNextColorSwitch;
+	IMaterial			*m_pMaterial;
 };
 
 //-----------------------------------------------------------------------------
@@ -68,7 +74,11 @@ public:
 		{
 			m_pArrow->SetEntity( hEntity );
 		}
+
+		UpdateStatus();
 	}
+
+	CBaseEntity *GetEntity( void ){ return m_hEntity.Get(); }
 
 private:
 
@@ -101,74 +111,80 @@ public: // IGameEventListener:
 
 private:
 	
-	void UpdateStatus( void );
+	void UpdateStatus( C_BasePlayer *pNewOwner = NULL, C_BaseEntity *pFlagEntity = NULL );
 	void SetPlayingToLabelVisible( bool bVisible );
+	void SetCarriedImage( const char *pchIcon );
 
 private:
 
-	CTFImagePanel			*m_pCarriedImage;
+	vgui::ImagePanel		*m_pCarriedImage;
 
 	CExLabel				*m_pPlayingTo;
-	CTFImagePanel			*m_pPlayingToBG;
+	vgui::Panel				*m_pPlayingToBG;
 
 	CTFFlagStatus			*m_pRedFlag;
 	CTFFlagStatus			*m_pBlueFlag;
-	CTFFlagStatus			*m_pGreenFlag;
-	CTFFlagStatus			*m_pYellowFlag;
 	CTFArrowPanel			*m_pCapturePoint;
 
 	bool					m_bFlagAnimationPlayed;
 	bool					m_bCarryingFlag;
 
 	vgui::ImagePanel		*m_pSpecCarriedImage;
+
+	vgui::ImagePanel		*m_pPoisonImage;
+	CExLabel				*m_pPoisonTimeLabel;
+
+	bool					m_bPlayingHybrid_CTF_CP;
+	bool					m_bPlayingSpecialDeliveryMode;
+
+	int						m_nNumValidFlags;
 };
 
 //-----------------------------------------------------------------------------
-// Purpose:  
+// Purpose: 
 //-----------------------------------------------------------------------------
 class CTFFlagCalloutPanel : public CHudElement, public vgui::EditablePanel
 {
 	DECLARE_CLASS_SIMPLE( CTFFlagCalloutPanel, vgui::EditablePanel );
-	static CUtlVector<CTFFlagCalloutPanel *> sm_FlagCalloutPanels;
 public:
-
-	CTFFlagCalloutPanel( const char *name );
-	virtual ~CTFFlagCalloutPanel();
-
-	static CTFFlagCalloutPanel *AddFlagCalloutIfNotFound( CCaptureFlag *pFlag, float f, Vector const &v );
+	CTFFlagCalloutPanel( const char *pElementName );
+	~CTFFlagCalloutPanel( void );
 
 	virtual void ApplySchemeSettings( vgui::IScheme *pScheme );
-	virtual void OnTick( void );
-	virtual void Paint( void );
-	virtual void PaintBackground( void );
 	virtual void PerformLayout( void );
-
-	void GetCalloutPosition( const Vector &vecDelta, float flRadius, int *xpos, int *ypos, float *flRotation );
-	void ScaleAndPositionCallout( float flScale );
-	void SetFlag( CCaptureFlag *pFlag, float f, Vector const &v );
-	bool ShouldShowFlagIconToLocalPlayer( void ) const;
+	virtual void OnTick( void );
+	virtual void PaintBackground( void );
+	virtual void Paint( void );
+	
+	void	GetCalloutPosition( const Vector &vecDelta, float flRadius, float *xpos, float *ypos, float *flRotation );
+	void	SetFlag( CCaptureFlag *pFlag, float flDuration, Vector &vecOffset );
+	static CTFFlagCalloutPanel *AddFlagCalloutIfNotFound( CCaptureFlag *pFlag, float flDuration, Vector &vecLocation );
+	bool	ShouldShowFlagIconToLocalPlayer( void );
+	void	ScaleAndPositionCallout( float flScale = 1.f );
+	
+	CHandle< CCaptureFlag > m_hFlag;
 
 private:
-	CHandle<CCaptureFlag> m_hFlag;
+	IMaterial		*m_pArrowMaterial;
+	CTFImagePanel	*m_pFlagCalloutPanel;
+	vgui::Label		*m_pFlagValueLabel;
+	CTFImagePanel	*m_pFlagStatusIcon;
 
-	CTFImagePanel *m_pFlagCalloutPanel;
-	vgui::Label *m_pFlagValueLabel;
-	CTFImagePanel *m_pFlagStatusIcon;
+	float			m_flRemoveTime;
+	float			m_flFirstDisplayTime;
+	Vector			m_vecOffset;
+	int				m_iDrawArrow;
+	bool			m_bFlagVisible;		// LOS
 
-	IMaterial *m_pArrowMaterial;
+	float			m_flPrevScale;
+	int				m_nPanelWideOrig;
+	int				m_nPanelTallOrig;
+	int				m_nLabelWideOrig;
+	int				m_nLabelTallOrig;
+	int				m_nIconWideOrig;
+	int				m_nIconTallOrig;
 
-	float m_f1;
-	float m_flLastUpdate;
-	Vector m_v1;
-	int m_i1;
-	bool m_bInLOS;
-
-	float m_flPrevScale;
-	int m_nPanelWide;
-	int m_nPanelTall;
-	int m_nLabelWide;
-	int m_nLabelTall;
-	int m_nIconWide;
-	int m_nIconTall;
+	static CUtlVector< CTFFlagCalloutPanel* > m_FlagCalloutPanels;
 };
+
 #endif	// TF_HUD_FLAGSTATUS_H

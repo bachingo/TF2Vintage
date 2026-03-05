@@ -1,15 +1,9 @@
 // ALL SKIP STATEMENTS THAT AFFECT THIS SHADER!!!
-// ($CASCADED_SHADOW) && ($FLASHLIGHT)
 // $USE_STATIC_CONTROL_FLOW && ( $NUM_LIGHTS > 0 )
 // defined $LIGHTING_PREVIEW && defined $FASTPATH && $LIGHTING_PREVIEW && $FASTPATH
 
-#ifndef VERTEXLIT_AND_UNLIT_GENERIC_BUMP_VS20_H
-#define VERTEXLIT_AND_UNLIT_GENERIC_BUMP_VS20_H
-
-#include "shaderapi/ishaderapi.h"
-#include "shaderapi/ishadershadow.h"
-#include "materialsystem/imaterialvar.h"
-
+#pragma once
+#include "shaderlib/cshader.h"
 class vertexlit_and_unlit_generic_bump_vs20_Static_Index
 {
 	unsigned int m_nHALFLAMBERT : 2;
@@ -48,7 +42,7 @@ public:
 #endif	// _DEBUG
 	}
 
-	vertexlit_and_unlit_generic_bump_vs20_Static_Index( IShaderShadow* pShaderShadow, IMaterialVar** params )
+	vertexlit_and_unlit_generic_bump_vs20_Static_Index(  )
 	{
 		m_nHALFLAMBERT = 0;
 		m_nUSE_WITH_2B = 0;
@@ -119,7 +113,7 @@ public:
 #endif	// _DEBUG
 	}
 
-	vertexlit_and_unlit_generic_bump_vs20_Dynamic_Index( IShaderDynamicAPI* pShaderAPI )
+	vertexlit_and_unlit_generic_bump_vs20_Dynamic_Index(  )
 	{
 		m_nCOMPRESSED_VERTS = 0;
 		m_nDOWATERFOG = 0;
@@ -142,5 +136,3 @@ public:
 
 #define shaderDynamicTest_vertexlit_and_unlit_generic_bump_vs20 vsh_forgot_to_set_dynamic_COMPRESSED_VERTS + vsh_forgot_to_set_dynamic_DOWATERFOG + vsh_forgot_to_set_dynamic_SKINNING + vsh_forgot_to_set_dynamic_NUM_LIGHTS
 
-
-#endif	// VERTEXLIT_AND_UNLIT_GENERIC_BUMP_VS20_H

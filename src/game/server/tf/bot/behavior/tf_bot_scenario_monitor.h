@@ -1,30 +1,27 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_scenario_monitor.h
+// Behavior layer that interrupts for scenario rules (picked up flag, drop what you're doing and capture, etc)
+// Michael Booth, May 2011
+
 #ifndef TF_BOT_SCENARIO_MONITOR_H
 #define TF_BOT_SCENARIO_MONITOR_H
-#ifdef _WIN32
-#pragma once
-#endif
 
-
-#include "NextBotBehavior.h"
-
-class CTFBotScenarioMonitor : public Action<CTFBot>
+class CTFBotScenarioMonitor : public Action< CTFBot >
 {
-	DECLARE_CLASS( CTFBotScenarioMonitor, Action<CTFBot> );
 public:
-	virtual ~CTFBotScenarioMonitor() {}
+	virtual Action< CTFBot > *InitialContainedAction( CTFBot *me );
 
-	virtual const char *GetName( void ) const OVERRIDE;
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
-
-	virtual Action<CTFBot> *InitialContainedAction( CTFBot *actor ) OVERRIDE;
+	virtual const char *GetName( void ) const	{ return "ScenarioMonitor"; }
 
 private:
-	virtual Action<CTFBot> *DesiredScenarioAndClassAction( CTFBot *actor );
+	CountdownTimer m_ignoreLostFlagTimer;
+	CountdownTimer m_lostFlagTimer;
 
-	CountdownTimer m_fetchFlagDelay;
-	CountdownTimer m_fetchFlagDuration;
+	virtual Action< CTFBot > *DesiredScenarioAndClassAction( CTFBot *me );
 };
 
-#endif
+
+#endif // TF_BOT_SCENARIO_MONITOR_H

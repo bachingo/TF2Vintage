@@ -1,0 +1,13 @@
+[vpc crc file version 3]
+_.GL.HOST_LINUX.HOST_LINUX64.HOST_LINUXALL.LINUX.LINUXALL.NINJA.POSIX.SOURCESDK.TF_/vpcgame:tf2vintage_
+PROJECT.vscript.GAME..PLATFORM.linux64
+64002d06 vscript.vpc
+2093e423 ../vpc_scripts/source_dll_base.vpc
+8ef6e028 ../vpc_scripts/platform_dirs.vpc
+a75746b9 ../vpc_scripts/source_base.vpc
+ef326a62 ../vpc_scripts/definitions/win32_2010.def
+162320bb ../vpc_scripts/source_dll_posix_base.vpc
+0218a46e ../vpc_scripts/version.vpc
+4fb52aa1 ../vpc_scripts/source_posix_base.vpc
+a24aa2d9 ../vpc_scripts/source_posix_ninja.vpc
+10b424ea ../vpc_scripts/source_video_base.vpc

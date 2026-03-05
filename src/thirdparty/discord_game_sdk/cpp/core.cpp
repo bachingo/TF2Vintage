@@ -12,7 +12,7 @@
 
 namespace discord {
 
-Result Core::Create(ClientId clientId, uint64_t flags, Core** instance)
+Result Core::Create(ClientId clientId, std::uint64_t flags, Core** instance)
 {
     if (!instance) {
         return Result::InternalError;
@@ -57,8 +57,6 @@ Result Core::RunCallbacks()
     return static_cast<Result>(result);
 }
 
-#pragma warning(push)
-#pragma warning(disable:4573)
 void Core::SetLogHook(LogLevel minLevel, std::function<void(LogLevel, char const*)> hook)
 {
     setLogHook_.DisconnectAll();
@@ -73,9 +71,8 @@ void Core::SetLogHook(LogLevel minLevel, std::function<void(LogLevel, char const
     };
 
     internal_->set_log_hook(
-      internal_, static_cast<EDiscordLogLevel>(minLevel), &setLogHook_, wrapper );
+      internal_, static_cast<EDiscordLogLevel>(minLevel), &setLogHook_, wrapper);
 }
-#pragma warning(pop)
 
 discord::ApplicationManager& Core::ApplicationManager()
 {

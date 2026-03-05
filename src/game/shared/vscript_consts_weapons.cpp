@@ -15,7 +15,7 @@
 //=============================================================================
 //=============================================================================
 
-BEGIN_SCRIPTENUM( WeaponSound, "Weapon sounds." )
+BEGIN_SCRIPTENUM( EWeaponSound, "Weapon sounds." )
 
 	DEFINE_ENUMCONST( EMPTY, "" )
 	DEFINE_ENUMCONST( SINGLE, "" )
@@ -37,6 +37,18 @@ BEGIN_SCRIPTENUM( WeaponSound, "Weapon sounds." )
 	DEFINE_ENUMCONST( NUM_SHOOT_SOUND_TYPES, "" )
 
 END_SCRIPTENUM();
+
+//=============================================================================
+//=============================================================================
+
+BEGIN_SCRIPTENUM( FFireBulletsFlags, "" )
+
+	DEFINE_ENUMCONST( FIRE_BULLETS_FIRST_SHOT_ACCURATE, "" )
+	DEFINE_ENUMCONST( FIRE_BULLETS_DONT_HIT_UNDERWATER, "" )
+	DEFINE_ENUMCONST( FIRE_BULLETS_ALLOW_WATER_SURFACE_IMPACTS, "" )
+	DEFINE_ENUMCONST( FIRE_BULLETS_TEMPORARY_DANGER_SOUND, "" )
+
+END_SCRIPTENUM()
 
 //=============================================================================
 //=============================================================================

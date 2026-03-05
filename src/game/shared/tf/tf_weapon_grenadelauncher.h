@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 //
 //=============================================================================
@@ -13,7 +13,8 @@
 
 // Client specific.
 #ifdef CLIENT_DLL
-#define CTFGrenadeLauncher C_TFGrenadeLauncher
+#define CTFGrenadeLauncher	C_TFGrenadeLauncher
+#define CTFCannon			C_TFCannon
 #endif
 
 #define TF_GRENADE_LAUNCHER_XBOX_CLIP 6
@@ -39,97 +40,103 @@ public:
 	~CTFGrenadeLauncher();
 
 	virtual void	Spawn( void );
-	virtual void	Precache();
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_GRENADELAUNCHER; }
 	virtual void	SecondaryAttack();
 
+	virtual void FireFullClipAtOnce( void );
+	//virtual CBaseEntity* FirePipeBomb( CTFPlayer *pPlayer, int iPipeBombType );
+
 	virtual bool	Holster( CBaseCombatWeapon *pSwitchingTo );
 	virtual bool	Deploy( void );
-	virtual void	WeaponReset(void);
 	virtual void	PrimaryAttack( void );
-	virtual void	FireFullClipAtOnce( void );
+	virtual void	ItemPostFrame( void );
 	virtual void	Misfire( void );
 	virtual void	WeaponIdle( void );
-	virtual void	ItemPostFrame( void );
+	virtual bool	SendWeaponAnim( int iActivity );
+	virtual void	WeaponReset( void );
 	virtual float	GetProjectileSpeed( void );
 
-	virtual bool	IsBlastImpactWeapon( void ) const { return true; }
+	int			  GetDetonateMode( void ) const;
 
 	virtual bool	Reload( void );
 
-	virtual int GetMaxClip1( void ) const;
-	virtual int GetDefaultClip1( void ) const;
+	virtual int		GetMaxClip1( void ) const;
+	virtual int		GetDefaultClip1( void ) const;
 
-	virtual void SwitchBodyGroups( void );
+	virtual bool	IsBlastImpactWeapon( void ) const { return true; }
 
-	int GetDetonateMode( void ) const;
-
-	// Mortar.
-	bool IsMortar(void) const;
-	float GetMortarTimeLength(void);
-	
 	// ITFChargeUpWeapon
-	// These are inverted compared to the regular to compensate for HUD.
-	virtual float	GetChargeBeginTime(void) { return m_flChargeBeginTime + GetMortarTimeLength(); }
-	virtual float	GetChargeMaxTime( void ) { return m_flChargeBeginTime; }
+	virtual bool CanCharge( void );
+	virtual float GetChargeBeginTime( void );
+	virtual float GetChargeMaxTime( void );
 
-public:
-
-	CBaseEntity *FireProjectileInternal( CTFPlayer *pPlayer );
 	void LaunchGrenade( void );
+
+	void AddDonkVictim( const CBaseEntity* pVictim );
+	bool IsDoubleDonk( const CBaseEntity* pVictim ) const;
 
 private:
 
 	CTFGrenadeLauncher( const CTFGrenadeLauncher & ) {}
+	int m_nLauncherSlot;
 
-	CNetworkVar( float, m_flChargeBeginTime );
+	void FireProjectileInternal( CTFPlayer* pTFPlayer );
+	void PostFire();
+
+	void ResetDetonateTime();
+	float GetMortarDetonateTimeLength();
+
+	CNetworkVar( float, m_flDetonateTime );
+
+	// Barrel rotation needs to be in sync
+	CNetworkVar( int, m_iCurrentTube );	// Which tube is the one we just fired out of
+	CNetworkVar( int, m_iGoalTube );	// Which tube is the one we would like to fire out of next?
+
+	int		m_iBarrelBone;
+	float	m_flBarrelRotateBeginTime;	// What time did we begin the animation to rotate to the next barrel?
+	float	m_flBarrelAngle;	// What is the current rotation of the barrel?
+	bool	m_bCurrentAndGoalTubeEqual;
+
 
 #ifdef CLIENT_DLL
-	void				ToggleCannonFuse();
-	CNewParticleEffect	*m_pCannonFuse;
-#endif
+	void StartChargeEffects();
+	void StopChargeEffects();
 
-	// Donk table.
-	struct Donk_t
+	CNewParticleEffect			*m_pCannonFuseSparkEffect;
+	CNewParticleEffect			*m_pCannonCharge;
+
+	// Barrel spinning (cribbed from Minigun)
+	virtual CStudioHdr *OnNewModel( void );
+	virtual void		StandardBlendingRules( CStudioHdr *hdr, Vector pos[], Quaternion q[], float currentTime, int boneMask );
+
+	virtual	void		OnDataChanged( DataUpdateType_t type );
+
+	void				UpdateBarrelMovement( void );
+
+	virtual void		ViewModelAttachmentBlending( CStudioHdr *hdr, Vector pos[], Quaternion q[], float currentTime, int boneMask );
+#endif // CLIENT_DLL
+
+	virtual void		ItemPreFrame( void );
+
+	struct Donks_t
 	{
-		CHandle <CBaseEntity> m_hDonk;
-		float m_flDonkTime;
+		CHandle <CBaseEntity> m_hVictim;
+		float m_flExpireTime;
 	};
-	CUtlVector<Donk_t> m_DonkVictims;
+
+	CUtlVector< Donks_t > m_vecDonkVictims;
+
 };
 
-// Cannon.
-
-#if defined CLIENT_DLL
-#define CTFCannon C_TFCannon
-#endif
 
 class CTFCannon : public CTFGrenadeLauncher
 {
 public:
-
-	DECLARE_CLASS( CTFCannon, CTFGrenadeLauncher )
-	DECLARE_NETWORKCLASS();
+	DECLARE_CLASS( CTFCannon, CTFGrenadeLauncher );
+	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
 
-	virtual int GetWeaponID( void ) const { return TF_WEAPON_CANNON; }
-};
-
-// Old School Grenade Launcher.
-
-#if defined CLIENT_DLL
-#define CTFGrenadeLauncher_Legacy C_TFGrenadeLauncher_Legacy
-#endif
-
-class CTFGrenadeLauncher_Legacy : public CTFGrenadeLauncher
-{
-public:
-
-	DECLARE_CLASS( CTFGrenadeLauncher_Legacy, CTFGrenadeLauncher )
-	DECLARE_NETWORKCLASS();
-	DECLARE_PREDICTABLE();
-
-	virtual int GetWeaponID( void ) const { return TF_WEAPON_GRENADELAUNCHER_LEGACY; }
+	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_CANNON; }
 };
 
 #endif // TF_WEAPON_GRENADELAUNCHER_H

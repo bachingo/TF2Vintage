@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. ========//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -8,6 +8,7 @@
 #include "tf/tf_shareddefs.h"
 #include "entity_forcerespawn.h"
 #include "tf_player.h"
+#include "tf_gamerules.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -21,6 +22,7 @@ BEGIN_DATADESC( CTFForceRespawn )
 // Inputs.
 DEFINE_INPUTFUNC( FIELD_VOID, "ForceRespawn", InputForceRespawn ),
 DEFINE_INPUTFUNC( FIELD_VOID, "ForceRespawnSwitchTeams", InputForceRespawnSwitchTeams ),
+DEFINE_INPUTFUNC( FIELD_INTEGER, "ForceTeamRespawn", InputForceTeamRespawn ),
 
 // Outputs.
 DEFINE_OUTPUT( m_outputOnForceRespawn, "OnForceRespawn" ),
@@ -41,9 +43,14 @@ CTFForceRespawn::CTFForceRespawn()
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CTFForceRespawn::ForceRespawn( bool bSwitchTeams )
+void CTFForceRespawn::ForceRespawn( bool bSwitchTeams, int nTeam /* = TEAM_UNASSIGNED */, bool bRemoveEverything /* = true */ )
 {
 	int i = 0;
+
+	if ( bRemoveEverything && TFGameRules() )
+	{
+		TFGameRules()->RemoveAllProjectilesAndBuildings();
+	}
 
 	// respawn the players
 	for ( i = 1 ; i <= gpGlobals->maxClients ; i++ )
@@ -51,8 +58,6 @@ void CTFForceRespawn::ForceRespawn( bool bSwitchTeams )
 		CTFPlayer *pPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
 		if ( pPlayer )
 		{
-			pPlayer->RemoveAllOwnedEntitiesFromWorld();
-
 			// Ignore players who aren't on an active team
 			if ( pPlayer->GetTeamNumber() != TF_TEAM_RED && pPlayer->GetTeamNumber() != TF_TEAM_BLUE )
 			{
@@ -65,11 +70,11 @@ void CTFForceRespawn::ForceRespawn( bool bSwitchTeams )
 			{
 				if ( pPlayer->GetTeamNumber() == TF_TEAM_RED )
 				{
-					pPlayer->ForceChangeTeam( TF_TEAM_BLUE );
+					pPlayer->ForceChangeTeam( TF_TEAM_BLUE, true );
 				}
 				else if ( pPlayer->GetTeamNumber() == TF_TEAM_BLUE )
 				{
-					pPlayer->ForceChangeTeam( TF_TEAM_RED );
+					pPlayer->ForceChangeTeam( TF_TEAM_RED, true );
 				}
 			}
 
@@ -81,6 +86,20 @@ void CTFForceRespawn::ForceRespawn( bool bSwitchTeams )
 				continue;
 			}
 
+			if ( nTeam != TEAM_UNASSIGNED )
+			{
+				// Ignore players who aren't on the team we're trying to respawn
+				if ( pPlayer->GetTeamNumber() != nTeam )
+				{
+					continue;
+				}
+				else
+				{
+					// Ignore players on the team that aren't dead
+					if ( pPlayer->IsAlive() )
+						continue;
+				}
+			}
 			
 			pPlayer->ForceRespawn();
 		}
@@ -111,5 +130,14 @@ void CTFForceRespawn::InputForceRespawn( inputdata_t &inputdata )
 void CTFForceRespawn::InputForceRespawnSwitchTeams( inputdata_t &inputdata )
 {
 	ForceRespawn( true );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFForceRespawn::InputForceTeamRespawn( inputdata_t &inputdata )
+{
+	int nTeam = inputdata.value.Int();
+	ForceRespawn( false, nTeam, false );
 }
 

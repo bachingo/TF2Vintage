@@ -6,40 +6,33 @@
 // defined $LIGHTING_PREVIEW && defined $FASTPATHENVMAPCONTRAST && $LIGHTING_PREVIEW && $FASTPATHENVMAPCONTRAST
 // defined $LIGHTING_PREVIEW && defined $FASTPATH && $LIGHTING_PREVIEW && $FASTPATH
 // ($FLASHLIGHT || $FLASHLIGHTSHADOWS) && $LIGHTING_PREVIEW
-// defined $HDRTYPE && defined $HDRENABLED && !$HDRTYPE && $HDRENABLED
-// defined $PIXELFOGTYPE && defined $WRITEWATERFOGTODESTALPHA && ( $PIXELFOGTYPE != 1 ) && $WRITEWATERFOGTODESTALPHA
-// defined $LIGHTING_PREVIEW && defined $HDRTYPE && $LIGHTING_PREVIEW && $HDRTYPE != 0
-// defined $LIGHTING_PREVIEW && defined $FASTPATHENVMAPTINT && $LIGHTING_PREVIEW && $FASTPATHENVMAPTINT
-// defined $LIGHTING_PREVIEW && defined $FASTPATHENVMAPCONTRAST && $LIGHTING_PREVIEW && $FASTPATHENVMAPCONTRAST
-// defined $LIGHTING_PREVIEW && defined $FASTPATH && $LIGHTING_PREVIEW && $FASTPATH
-// ($FLASHLIGHT || $FLASHLIGHTSHADOWS) && $LIGHTING_PREVIEW
 
-#ifndef WATERCHEAP_PS20B_H
-#define WATERCHEAP_PS20B_H
-
-#include "shaderapi/ishaderapi.h"
-#include "shaderapi/ishadershadow.h"
-#include "materialsystem/imaterialvar.h"
-
-class WaterCheap_ps20b_Static_Index
+#pragma once
+#include "shaderlib/cshader.h"
+class watercheap_ps20b_Static_Index
 {
+	unsigned int m_nCONVERT_TO_SRGB : 2;
 	unsigned int m_nMULTITEXTURE : 2;
 	unsigned int m_nFRESNEL : 2;
 	unsigned int m_nBLEND : 2;
 	unsigned int m_nREFRACTALPHA : 2;
 	unsigned int m_nHDRTYPE : 2;
-	unsigned int m_nFLOWMAP : 2;
-	unsigned int m_nFLOW_DEBUG : 2;
+	unsigned int m_nNORMAL_DECODE_MODE : 1;
 #ifdef _DEBUG
 	bool m_bMULTITEXTURE : 1;
 	bool m_bFRESNEL : 1;
 	bool m_bBLEND : 1;
 	bool m_bREFRACTALPHA : 1;
 	bool m_bHDRTYPE : 1;
-	bool m_bFLOWMAP : 1;
-	bool m_bFLOW_DEBUG : 1;
+	bool m_bNORMAL_DECODE_MODE : 1;
 #endif	// _DEBUG
 public:
+	void SetCONVERT_TO_SRGB( int i )
+	{
+		Assert( i >= 0 && i <= 1 );
+		m_nCONVERT_TO_SRGB = i;
+	}
+
 	void SetMULTITEXTURE( int i )
 	{
 		Assert( i >= 0 && i <= 1 );
@@ -85,60 +78,51 @@ public:
 #endif	// _DEBUG
 	}
 
-	void SetFLOWMAP( int i )
+	void SetNORMAL_DECODE_MODE( int i )
 	{
-		Assert( i >= 0 && i <= 1 );
-		m_nFLOWMAP = i;
+		Assert( i >= 0 && i <= 0 );
+		m_nNORMAL_DECODE_MODE = i;
 #ifdef _DEBUG
-		m_bFLOWMAP = true;
+		m_bNORMAL_DECODE_MODE = true;
 #endif	// _DEBUG
 	}
 
-	void SetFLOW_DEBUG( int i )
+	watercheap_ps20b_Static_Index(  )
 	{
-		Assert( i >= 0 && i <= 1 );
-		m_nFLOW_DEBUG = i;
-#ifdef _DEBUG
-		m_bFLOW_DEBUG = true;
-#endif	// _DEBUG
-	}
-
-	WaterCheap_ps20b_Static_Index( IShaderShadow* pShaderShadow, IMaterialVar** params )
-	{
+		m_nCONVERT_TO_SRGB = g_pHardwareConfig->NeedsShaderSRGBConversion();
 		m_nMULTITEXTURE = 0;
 		m_nFRESNEL = 0;
 		m_nBLEND = 0;
 		m_nREFRACTALPHA = 0;
 		m_nHDRTYPE = 0;
-		m_nFLOWMAP = 0;
-		m_nFLOW_DEBUG = 0;
+		m_nNORMAL_DECODE_MODE = 0;
 #ifdef _DEBUG
 		m_bMULTITEXTURE = false;
 		m_bFRESNEL = false;
 		m_bBLEND = false;
 		m_bREFRACTALPHA = false;
 		m_bHDRTYPE = false;
-		m_bFLOWMAP = false;
-		m_bFLOW_DEBUG = false;
+		m_bNORMAL_DECODE_MODE = false;
 #endif	// _DEBUG
 	}
 
 	int GetIndex() const
 	{
-		Assert( m_bMULTITEXTURE && m_bFRESNEL && m_bBLEND && m_bREFRACTALPHA && m_bHDRTYPE && m_bFLOWMAP && m_bFLOW_DEBUG );
-		return ( 4 * m_nMULTITEXTURE ) + ( 8 * m_nFRESNEL ) + ( 16 * m_nBLEND ) + ( 32 * m_nREFRACTALPHA ) + ( 64 * m_nHDRTYPE ) + ( 192 * m_nFLOWMAP ) + ( 384 * m_nFLOW_DEBUG ) + 0;
+		Assert( m_bMULTITEXTURE && m_bFRESNEL && m_bBLEND && m_bREFRACTALPHA && m_bHDRTYPE && m_bNORMAL_DECODE_MODE );
+		return ( 6 * m_nCONVERT_TO_SRGB ) + ( 12 * m_nMULTITEXTURE ) + ( 24 * m_nFRESNEL ) + ( 48 * m_nBLEND ) + ( 96 * m_nREFRACTALPHA ) + ( 192 * m_nHDRTYPE ) + ( 576 * m_nNORMAL_DECODE_MODE ) + 0;
 	}
 };
 
-#define shaderStaticTest_WaterCheap_ps20b psh_forgot_to_set_static_MULTITEXTURE + psh_forgot_to_set_static_FRESNEL + psh_forgot_to_set_static_BLEND + psh_forgot_to_set_static_REFRACTALPHA + psh_forgot_to_set_static_HDRTYPE + psh_forgot_to_set_static_FLOWMAP + psh_forgot_to_set_static_FLOW_DEBUG
+#define shaderStaticTest_watercheap_ps20b psh_forgot_to_set_static_MULTITEXTURE + psh_forgot_to_set_static_FRESNEL + psh_forgot_to_set_static_BLEND + psh_forgot_to_set_static_REFRACTALPHA + psh_forgot_to_set_static_HDRTYPE + psh_forgot_to_set_static_NORMAL_DECODE_MODE
 
 
-class WaterCheap_ps20b_Dynamic_Index
+class watercheap_ps20b_Dynamic_Index
 {
 	unsigned int m_nHDRENABLED : 2;
 	unsigned int m_nPIXELFOGTYPE : 2;
 #ifdef _DEBUG
 	bool m_bHDRENABLED : 1;
+	bool m_bPIXELFOGTYPE : 1;
 #endif	// _DEBUG
 public:
 	void SetHDRENABLED( int i )
@@ -152,27 +136,29 @@ public:
 
 	void SetPIXELFOGTYPE( int i )
 	{
-		Assert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 2 );
 		m_nPIXELFOGTYPE = i;
+#ifdef _DEBUG
+		m_bPIXELFOGTYPE = true;
+#endif	// _DEBUG
 	}
 
-	WaterCheap_ps20b_Dynamic_Index( IShaderDynamicAPI* pShaderAPI )
+	watercheap_ps20b_Dynamic_Index(  )
 	{
 		m_nHDRENABLED = 0;
-		m_nPIXELFOGTYPE = ( pShaderAPI->GetSceneFogMode() == MATERIAL_FOG_LINEAR_BELOW_FOG_Z ) ;
+		m_nPIXELFOGTYPE = 0;
 #ifdef _DEBUG
 		m_bHDRENABLED = false;
+		m_bPIXELFOGTYPE = false;
 #endif	// _DEBUG
 	}
 
 	int GetIndex() const
 	{
-		Assert( m_bHDRENABLED );
+		Assert( m_bHDRENABLED && m_bPIXELFOGTYPE );
 		return ( 1 * m_nHDRENABLED ) + ( 2 * m_nPIXELFOGTYPE ) + 0;
 	}
 };
 
-#define shaderDynamicTest_WaterCheap_ps20b psh_forgot_to_set_dynamic_HDRENABLED
+#define shaderDynamicTest_watercheap_ps20b psh_forgot_to_set_dynamic_HDRENABLED + psh_forgot_to_set_dynamic_PIXELFOGTYPE
 
-
-#endif	// WATERCHEAP_PS20B_H

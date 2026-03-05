@@ -101,3 +101,5 @@
 #define IMPLEMENT_INTENTION_INTERFACE( Actor, InitialAction ) Actor::Actor##Intention::Actor##Intention( Actor *me ) : IIntention( me )	{ m_behavior = new Behavior< Actor >( new InitialAction ); } Actor::Actor##Intention::~Actor##Intention() {	delete m_behavior; } void Actor::Actor##Intention::Reset( void ) { delete m_behavior; m_behavior = new Behavior< Actor >( new InitialAction ); }	void Actor::Actor##Intention::Update( void ) { m_behavior->Update( static_cast< Actor * >( GetBot() ), GetUpdateInterval() ); }
 #define DEFINE_THINKFUNC(function) DEFINE_FUNCTION_RAW( function, BASEPTR )
 #define DEFINE_FIELD(name, fieldtype) _FIELD(name, fieldtype, 1, FTYPEDESC_SAVE, NULL, 0 )
+#define BEGIN_SCRIPTDESC_ROOT(className, description) BEGIN_SCRIPTDESC_ROOT_NAMED( className, #className, description )
+#define ALLOW_SCRIPT_ACCESS() template <typename T> friend ScriptClassDesc_t *GetScriptDesc(T *); template <typename T> friend void InitScriptDesc();

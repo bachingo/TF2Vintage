@@ -22,6 +22,7 @@
 #include "globalstate.h"
 #include "vscript_server.h"
 #include "soundent.h"
+#include "mapentities.h"
 #endif // !CLIENT_DLL
 
 #include "con_nprint.h"
@@ -35,6 +36,7 @@
 #include "tier0/memdbgon.h"
 
 extern IScriptManager *scriptmanager;
+extern bool g_bPermitDirectSoundPrecache;
 
 #ifndef CLIENT_DLL
 void EmitSoundOn( const char *pszSound, HSCRIPT hEnt )
@@ -64,47 +66,68 @@ void EmitSoundOnClient( const char *pszSound, HSCRIPT hEnt, HSCRIPT hPlayer )
 	pEnt->EmitSound( filter, pEnt->entindex(), params );
 }
 
+void StopSoundOn( const char *pszSound, HSCRIPT hEnt )
+{
+	CBaseEntity *pEnt = ToEnt( hEnt );
+	if ( !pEnt || !pszSound || !pszSound[0] )
+		return;
+
+	pEnt->StopSound( pszSound );
+}
+
+void StopAmbientSoundOn( const char *pszSound, HSCRIPT hEnt )
+{
+	CBaseEntity *pEnt = ToEnt( hEnt );
+	if ( !pEnt || !pszSound || !pszSound[0] )
+		return;
+
+	UTIL_EmitAmbientSound( pEnt->entindex(), pEnt->GetAbsOrigin(), pszSound, 0, SNDLVL_NONE, SND_STOP, 0 );
+}
+
 void AddThinkToEnt( HSCRIPT entity, const char *pszFuncName )
 {
 	CBaseEntity *pEntity = ToEnt( entity );
 	if (!pEntity)
 		return;
 
-	pEntity->ScriptSetThinkFunction(pszFuncName, TICK_INTERVAL);
+	pEntity->ScriptSetThinkFunction( pszFuncName, TICK_INTERVAL );
 }
 
 void ParseScriptTableKeyValues( CBaseEntity *pEntity, HSCRIPT hKV )
 {
-	int nIterator = -1;
+	int nIterator = 0;
 	ScriptVariant_t varKey, varValue;
 	while ((nIterator = g_pScriptVM->GetKeyValue( hKV, nIterator, &varKey, &varValue )) != -1)
 	{
-		switch (varValue.m_type)
+		switch (varValue.GetType())
 		{
-			case FIELD_CSTRING:		pEntity->KeyValue( varKey.m_pszString, varValue.m_pszString ); break;
-			case FIELD_INTEGER:		pEntity->KeyValueFromInt( varKey.m_pszString, varValue.m_int ); break;
-			case FIELD_FLOAT:		pEntity->KeyValue( varKey.m_pszString, varValue.m_float ); break;
-			case FIELD_VECTOR:		pEntity->KeyValue( varKey.m_pszString, *varValue.m_pVector ); break;
+			case FIELD_CSTRING:		pEntity->KeyValue( varKey, varValue.Get<CUtlString>() ); break;
+			case FIELD_INTEGER:		pEntity->KeyValueFromInt( varKey, varValue.Get<int>() ); break;
+			case FIELD_FLOAT:		pEntity->KeyValue( varKey, varValue.Get<float>() ); break;
+			case FIELD_VECTOR:		pEntity->KeyValue( varKey, varValue.Get<Vector>() ); break;
 			case FIELD_HSCRIPT:
 			{
-				if ( varValue.m_hScript )
+				if ( !varValue.IsNull() )
 				{
 					// Entity
-					if (ToEnt( varValue.m_hScript ))
+					if (ToEnt( varValue ))
 					{
-						pEntity->KeyValue( varKey.m_pszString, STRING( ToEnt( varValue.m_hScript )->GetEntityName() ) );
+						pEntity->KeyValue( varKey, STRING( ToEnt( varValue )->GetEntityName() ) );
 					}
 
 					// Color
-					else if (Color *color = HScriptToClass<Color>( varValue.m_hScript ))
+					else if (Color *color = HScriptToClass<Color>( varValue ))
 					{
 						char szTemp[64];
 						Q_snprintf( szTemp, sizeof( szTemp ), "%i %i %i %i", color->r(), color->g(), color->b(), color->a() );
-						pEntity->KeyValue( varKey.m_pszString, szTemp );
+						pEntity->KeyValue( varKey, szTemp );
 					}
 				}
 				break;
 			}
+			default:
+				Warning( "Unsupported KeyValue type for key %s (type %s)\n", varKey.Get<CUtlString>().Get(), ScriptFieldTypeName(varValue.GetType()));
+				break;
 		}
 
 		g_pScriptVM->ReleaseValue( varKey );
@@ -112,28 +135,36 @@ void ParseScriptTableKeyValues( CBaseEntity *pEntity, HSCRIPT hKV )
 	}
 }
 
-void PrecacheEntityFromTable( const char *pszClassname, HSCRIPT hKV )
+bool PrecacheEntityFromTable( HSCRIPT hKV )
 {
 	if ( IsEntityCreationAllowedInScripts() == false )
 	{
 		Warning( "VScript error: A script attempted to create an entity mid-game. Due to the server's settings, entity creation from scripts is only allowed during map init.\n" );
-		return;
+		return false;
 	}
 
+	ScriptVariant_t pszClassname;
+	if ( g_pScriptVM->GetValue( hKV, "classname", &pszClassname ) )
+	{
 	// This is similar to UTIL_PrecacheOther(), but we can't check if we can only precache it once.
 	// Probably for the best anyway, as similar classes can still have different precachable properties.
-	CBaseEntity *pEntity = CreateEntityByName( pszClassname );
-	if (!pEntity)
-	{
-		Assert( !"PrecacheEntityFromTable: only works for CBaseEntities" );
-		return;
+		CBaseEntity *pEntity = CreateEntityByName( pszClassname );
+		if ( !pEntity )
+		{
+			Assert( !"PrecacheEntityFromTable: only works for CBaseEntities" );
+			return false;
+		}
+
+		ParseScriptTableKeyValues( pEntity, hKV );
+
+		pEntity->Precache();
+
+		UTIL_RemoveImmediate( pEntity );
+		return true;
 	}
 
-	ParseScriptTableKeyValues( pEntity, hKV );
-
-	pEntity->Precache();
-
-	UTIL_RemoveImmediate( pEntity );
+	Warning( "Hey - your spawntable doesn't have a classname" );
+	return false;
 }
 
 HSCRIPT SpawnEntityFromTable( const char *pszClassname, HSCRIPT hKV )
@@ -159,6 +190,72 @@ HSCRIPT SpawnEntityFromTable( const char *pszClassname, HSCRIPT hKV )
 	pEntity->Activate();
 
 	return ToHScript( pEntity );
+}
+
+bool SpawnEntityGroupFromTable( HSCRIPT hTable )
+{
+	int nNumEntries = g_pScriptVM->GetNumTableEntries( hTable );
+
+	ScriptVariant_t table, innerTable;
+	ScriptVariant_t tableName, innerTableName;
+	int nNumEntites = 0, nIterator = 0;
+	HierarchicalSpawn_t *pSpawnList = (HierarchicalSpawn_t *)alloca( sizeof( HierarchicalSpawn_t ) * nNumEntries + sizeof( HierarchicalSpawn_t ) ); // Need 1 extra to signify the end
+
+	for ( int i = 0; i < nNumEntries; ++i )
+	{
+		nIterator = g_pScriptVM->GetKeyValue( hTable, nIterator, &tableName, &innerTable );
+		g_pScriptVM->GetKeyValue( innerTable, 0, &innerTableName, &table );
+
+		const char *pszClassName = innerTableName;
+		if ( !pszClassName || !pszClassName[0] )
+			break;
+
+		CBaseEntity *pEntity = CreateEntityByName( pszClassName );
+		if ( !pEntity )
+		{
+			Msg( "Failed to spawn group entity %s\n", pszClassName );
+			break;
+		}
+
+		ParseScriptTableKeyValues( pEntity, innerTable );
+		
+		g_pScriptVM->ReleaseValue( table );
+		g_pScriptVM->ReleaseValue( tableName );
+		g_pScriptVM->ReleaseValue( innerTable );
+		g_pScriptVM->ReleaseValue( innerTableName );
+	}
+
+	SpawnHierarchicalList( nNumEntites, pSpawnList, true );
+	return true;
+}
+
+void ScriptSetSkyboxTexture( char const *texture )
+{
+	if ( texture && texture[0] )
+	{
+		const char *suffixes[] ={
+			"rt",
+			"bk",
+			"lf",
+			"ft",
+			"up",
+			"dn"
+		};
+		for ( int i = 0; i < ARRAYSIZE( suffixes ); ++i )
+		{
+			char material[MAX_PATH];
+			V_sprintf_safe( material, "skybox/%s%s", texture, suffixes[i] );
+			PrecacheMaterial( material );
+		}
+
+		static ConVarRef sv_skyname( "sv_skyname" );
+		if ( sv_skyname.IsValid() )
+			sv_skyname.SetValue( texture );
+	}
+	else
+	{
+		DevMsg( "ScriptSetSkyboxTexture has no skybox specified!\n" );
+	}
 }
 #endif
 
@@ -226,7 +323,7 @@ HSCRIPT SpawnEntityFromKeyValues( const char *pszClassname, HSCRIPT hKV )
 
 	gEntList.NotifyCreateEntity( pEntity );
 
-	KeyValues *pKV = HScriptToClass<CScriptKeyValues>(hKV)->GetKeyValues();
+	KeyValues *pKV = HScriptToClass<CScriptKeyValues>(hKV)->m_pKeyValues;
 	for (pKV = pKV->GetFirstSubKey(); pKV != NULL; pKV = pKV->GetNextKey())
 	{
 		pEntity->KeyValue( pKV->GetName(), pKV->GetString() );
@@ -236,15 +333,6 @@ HSCRIPT SpawnEntityFromKeyValues( const char *pszClassname, HSCRIPT hKV )
 	pEntity->Activate();
 
 	return ToHScript( pEntity );
-}
-
-void ScriptDispatchSpawn( HSCRIPT hEntity )
-{
-	CBaseEntity *pEntity = ToEnt( hEntity );
-	if (pEntity)
-	{
-		DispatchSpawn( pEntity );
-	}
 }
 #endif // !CLIENT_DLL
 
@@ -361,6 +449,136 @@ BEGIN_SCRIPTDESC_ROOT( cplane_t, "Handle for accessing cplane_t info." )
 	DEFINE_MEMBERVAR(normal, FIELD_VECTOR, "")
 	DEFINE_MEMBERVAR_NAMED(dist, FIELD_FLOAT, "distance", "")
 END_SCRIPTDESC();
+
+static void TraceToScriptVM( HSCRIPT hTrace, Vector const &vecStart, Vector const &vecEnd, trace_t const &tr )
+{
+	g_pScriptVM->SetValue( hTrace, "fraction", tr.fraction );
+	g_pScriptVM->SetValue( hTrace, "hit", tr.DidHit() );
+	g_pScriptVM->SetValue( hTrace, "plane_normal", tr.plane.normal );
+	g_pScriptVM->SetValue( hTrace, "plane_dist", tr.plane.dist );
+	g_pScriptVM->SetValue( hTrace, "contents", tr.contents );
+	g_pScriptVM->SetValue( hTrace, "allsolid", tr.allsolid );
+	g_pScriptVM->SetValue( hTrace, "enthit", tr.m_pEnt ? tr.m_pEnt->GetScriptInstance() : NULL );
+	g_pScriptVM->SetValue( hTrace, "startsolid", tr.startsolid );
+	g_pScriptVM->SetValue( hTrace, "pos", ( vecEnd - vecStart ) * tr.fraction + vecStart );
+	g_pScriptVM->SetValue( hTrace, "startpos", tr.startpos );
+	g_pScriptVM->SetValue( hTrace, "endpos", tr.endpos );
+	g_pScriptVM->SetValue( hTrace, "surface_name", tr.surface.name );
+	g_pScriptVM->SetValue( hTrace, "surface_flags", tr.surface.flags );
+	g_pScriptVM->SetValue( hTrace, "surface_props", tr.surface.surfaceProps );
+}
+
+static bool ScriptTraceLineEx( HSCRIPT hTrace )
+{
+	Vector vecStart, vecEnd;
+	bool bInvalid = true;
+	ScriptVariant_t value;
+
+	if ( g_pScriptVM->GetValue( hTrace, "start", &value ) )
+	{
+		bInvalid = false;
+		vecStart = value;
+	}
+	else
+	{
+		bInvalid = true;
+	}
+	if ( g_pScriptVM->GetValue( hTrace, "end", &value ) )
+	{
+		bInvalid = false;
+		vecEnd = value;
+	}
+	else
+	{
+		bInvalid = true;
+	}
+
+	if ( bInvalid )
+	{
+		Warning("Didnt supply start and end to Script TraceLineEx call, failing, setting called to false\n");
+		DevMsg("Inputs: start, end, mask, ignore  -- outputs: pos, fraction, hit, enthit, startsolid");
+		return false;
+	}
+
+	int mask = MASK_VISIBLE_AND_NPCS;
+	if ( g_pScriptVM->GetValue( hTrace, "mask", &value ) )
+		mask = value;
+
+	CBaseEntity *pLooker = NULL;
+	if ( g_pScriptVM->GetValue( hTrace, "ignore", &value ) )
+		pLooker = ToEnt( value );
+
+	trace_t tr;
+	UTIL_TraceLine( vecStart, vecEnd, mask, pLooker, COLLISION_GROUP_NONE, &tr );
+	TraceToScriptVM( hTrace, vecStart, vecEnd, tr );
+
+	return true;
+}
+
+static bool ScriptTraceHull( HSCRIPT hTrace )
+{
+	Vector vecStart, vecEnd, vecMins, vecMaxs;
+	bool bInvalid = true;
+	ScriptVariant_t value;
+
+	if ( g_pScriptVM->GetValue( hTrace, "start", &value ) )
+	{
+		bInvalid = false;
+		vecStart = value;
+	}
+	else
+	{
+		bInvalid = true;
+	}
+	if ( g_pScriptVM->GetValue( hTrace, "end", &value ) )
+	{
+		bInvalid = false;
+		vecEnd = value;
+	}
+	else
+	{
+		bInvalid = true;
+	}
+	if ( g_pScriptVM->GetValue( hTrace, "hullmin", &value ) )
+	{
+		bInvalid = false;
+		vecMins = value;
+	}
+	else
+	{
+		bInvalid = true;
+	}
+	if ( g_pScriptVM->GetValue( hTrace, "hullmax", &value ) )
+	{
+		bInvalid = false;
+		vecMaxs = value;
+	}
+	else
+	{
+		bInvalid = true;
+	}
+
+	if ( bInvalid )
+	{
+		Warning("Didnt supply start end, hullmin and hullmax to Script TraceHull call, failing, setting called to false\n");
+		DevMsg("Inputs: ");
+		return false;
+	}
+
+	int mask = MASK_VISIBLE_AND_NPCS;
+	if ( g_pScriptVM->GetValue( hTrace, "mask", &value ) )
+		mask = value;
+
+	CBaseEntity *pLooker = NULL;
+	if ( g_pScriptVM->GetValue( hTrace, "ignore", &value ) )
+		pLooker = ToEnt( value );
+
+	trace_t tr;
+	UTIL_TraceHull( vecStart, vecEnd, vecMins, vecMaxs, mask, pLooker, COLLISION_GROUP_NONE, &tr );
+	TraceToScriptVM( hTrace, vecStart, vecEnd, tr );
+
+	return true;
+}
 
 static HSCRIPT ScriptTraceLineComplex( const Vector &vecStart, const Vector &vecEnd, HSCRIPT entIgnore, int iMask, int iCollisionGroup )
 {
@@ -634,12 +852,60 @@ static void AddPhysVelocity( HSCRIPT hPhys, const Vector& vecVelocity, const Vec
 
 static int ScriptPrecacheModel( const char *modelname )
 {
-	return CBaseEntity::PrecacheModel( modelname );
+	if ( modelname && modelname[0] )
+	{
+		bool allowPrecache = CBaseEntity::IsPrecacheAllowed();
+		CBaseEntity::SetAllowPrecache( true );
+		int nModelIndex = CBaseEntity::PrecacheModel( modelname );
+		CBaseEntity::SetAllowPrecache( allowPrecache );
+
+		return nModelIndex;
+	}
+	
+	Msg( "Script_PrecacheModel: NULL/empty modelname\n" );
+	Log( "Script_PrecacheModel: NULL/empty modelname\n" );
+	return -1;
 }
 
 static void ScriptPrecacheOther( const char *classname )
 {
 	UTIL_PrecacheOther( classname );
+}
+
+static int ScriptPrecacheSound( const char *soundname )
+{
+	if ( soundname && soundname[0] )
+	{
+		bool allowPrecache = CBaseEntity::IsPrecacheAllowed();
+		bool permitSoundPrecache = g_bPermitDirectSoundPrecache;
+
+		CBaseEntity::SetAllowPrecache( true );
+		g_bPermitDirectSoundPrecache = true;
+
+		int nSoundEntry = CBaseEntity::PrecacheSound( soundname );
+
+		CBaseEntity::SetAllowPrecache( allowPrecache );
+		g_bPermitDirectSoundPrecache = permitSoundPrecache;
+
+		return nSoundEntry;
+	}
+
+	return 0;
+}
+
+static bool VScriptPrecacheScriptSound( const char *soundname )
+{
+	if ( soundname && soundname[0] )
+	{
+		bool allowPrecache = CBaseEntity::IsPrecacheAllowed();
+		CBaseEntity::SetAllowPrecache( true );
+		HSOUNDSCRIPTHANDLE handle = CBaseEntity::PrecacheScriptSound( soundname );
+		CBaseEntity::SetAllowPrecache( allowPrecache );
+
+		return handle != -1;
+	}
+
+	return false;
 }
 
 #ifndef CLIENT_DLL
@@ -754,10 +1020,13 @@ void RegisterSharedScriptFunctions()
 #ifndef CLIENT_DLL
 	ScriptRegisterFunction( g_pScriptVM, EmitSoundOn, "Play named sound on an entity." );
 	ScriptRegisterFunction( g_pScriptVM, EmitSoundOnClient, "Play named sound only on the client for the specified player." );
+	ScriptRegisterFunction( g_pScriptVM, StopSoundOn, "" );
+	ScriptRegisterFunction( g_pScriptVM, StopAmbientSoundOn, "" );
 
 	ScriptRegisterFunction( g_pScriptVM, AddThinkToEnt, "This will put a think function onto an entity, or pass null to remove it. This is NOT chained, so be careful." );
 	ScriptRegisterFunction( g_pScriptVM, PrecacheEntityFromTable, "Precache an entity from KeyValues in a table." );
-	ScriptRegisterFunction( g_pScriptVM, SpawnEntityFromTable, "Native function for entity spawning." );
+	ScriptRegisterFunction( g_pScriptVM, SpawnEntityFromTable, "Spawn entity from KeyValues in table - 'name' is entity name, rest are KeyValues for spawn." );
+	ScriptRegisterFunction( g_pScriptVM, SpawnEntityGroupFromTable, "Hierarchically spawn an entity group from a set of spawn tables." );
 #endif // !CLIENT_DLL
 	ScriptRegisterFunction( g_pScriptVM, EntIndexToHScript, "Returns the script handle for the given entity index." );
 
@@ -773,7 +1042,6 @@ void RegisterSharedScriptFunctions()
 #ifndef CLIENT_DLL
 	ScriptRegisterFunction( g_pScriptVM, SaveEntityKVToTable, "Saves an entity's keyvalues to a table." );
 	ScriptRegisterFunction( g_pScriptVM, SpawnEntityFromKeyValues, "Spawns an entity with the keyvalues in a CScriptKeyValues handle." );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptDispatchSpawn, "DispatchSpawn", "Spawns an unspawned entity." );
 #endif
 
 	ScriptRegisterFunction( g_pScriptVM, CreateDamageInfo, "Creates damage info." );
@@ -787,9 +1055,10 @@ void RegisterSharedScriptFunctions()
 	ScriptRegisterFunction( g_pScriptVM, CreateFireBulletsInfo, "Creates FireBullets info." );
 	ScriptRegisterFunction( g_pScriptVM, DestroyFireBulletsInfo, "Destroys FireBullets info." );
 
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptTraceLineEx, "TraceLineEx", "Pass table - Inputs: start, end, mask, ignore  -- outputs: pos, fraction, hit, enthit, allsolid, startpos, endpos, startsolid, plane_normal, plane_dist, surface_name, surface_flags, surface_props" );
 	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptTraceLineComplex, "TraceLineComplex", "Complex version of TraceLine which takes 2 points, an ent to ignore, a trace mask, and a collision group. Returns a handle which can access all trace info." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptTraceHull, "TraceHull", "Pass table - Inputs: start, end, hullmin, hullmax, mask, ignore  -- outputs: pos, fraction, hit, enthit, allsolid, startpos, endpos, startsolid, plane_normal, plane_dist, surface_name, surface_flags, surface_props" );
 	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptTraceHullComplex, "TraceHullComplex", "Takes 2 points, min/max hull bounds, an ent to ignore, a trace mask, and a collision group to trace to a point using a hull. Returns a handle which can access all trace info." );
-
 	// 
 	// VPhysics
 	// 
@@ -805,6 +1074,8 @@ void RegisterSharedScriptFunctions()
 	ScriptRegisterFunction( g_pScriptVM, PrecacheMaterial, "Precaches a material for later usage." );
 	ScriptRegisterFunction( g_pScriptVM, PrecacheParticleSystem, "Precaches a particle system for later usage." );
 	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptPrecacheOther, "PrecacheOther", "Precaches an entity class for later usage." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptPrecacheSound, "PrecacheSound", "Precache a sound." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, VScriptPrecacheScriptSound, "PrecacheScriptSound", "Precache a sound." );
 
 	// 
 	// NPCs
@@ -825,6 +1096,8 @@ void RegisterSharedScriptFunctions()
 
 #ifndef CLIENT_DLL
 	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptPredictedPosition, "PredictedPosition", "Predicts what an entity's position will be in a given amount of time." );
+
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptSetSkyboxTexture, "SetSkyboxTexture", "Sets the current skybox texture" );
 #endif
 
 #ifndef CLIENT_DLL
@@ -837,11 +1110,4 @@ void RegisterSharedScriptFunctions()
 	//ScriptRegisterFunction( g_pScriptVM, GetTickCount, "Simulation ticks" );
 
 	RegisterScriptSingletons();
-
-	ScriptClassDesc_t *pClassDesc = ScriptClassDesc_t::GetDescList();
-	while ( pClassDesc )
-	{
-		g_pScriptVM->RegisterClass( pClassDesc );
-		pClassDesc = pClassDesc->m_pNext;
-	}
 }

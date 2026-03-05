@@ -1,55 +1,69 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_approach_object.h
+// Move near/onto an object
+// Michael Booth, February 2009
+
 #include "cbase.h"
-#include "../tf_bot.h"
-#include "tf_bot_approach_object.h"
+#include "nav_mesh.h"
+#include "tf_player.h"
+#include "bot/tf_bot.h"
+#include "bot/behavior/tf_bot_approach_object.h"
 
+extern ConVar tf_bot_path_lookahead_range;
 
-CTFBotApproachObject::CTFBotApproachObject( CBaseEntity *object, float dist )
+//---------------------------------------------------------------------------------------------
+CTFBotApproachObject::CTFBotApproachObject( CBaseEntity *loot, float range )
 {
-	m_hObject = object;
-	m_flDist  = dist;
-}
-
-CTFBotApproachObject::~CTFBotApproachObject()
-{
-}
-
-
-const char *CTFBotApproachObject::GetName() const
-{
-	return "ApproachObject";
+	m_loot = loot;
+	m_range = range;
 }
 
 
-ActionResult<CTFBot> CTFBotApproachObject::OnStart( CTFBot *me, Action<CTFBot> *priorAction )
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotApproachObject::OnStart( CTFBot *me, Action< CTFBot > *priorAction )
 {
-	m_PathFollower.SetMinLookAheadDistance( me->GetDesiredPathLookAheadRange() );
+	m_path.SetMinLookAheadDistance( me->GetDesiredPathLookAheadRange() );
 
-	return Action<CTFBot>::Continue();
+	return Continue();
 }
 
-ActionResult<CTFBot> CTFBotApproachObject::Update( CTFBot *me, float dt )
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotApproachObject::Update( CTFBot *me, float interval )
 {
-	if ( m_hObject == nullptr )
-		return Action<CTFBot>::Done( "Object is NULL" );
-
-	if ( m_hObject->IsEffectActive( EF_NODRAW ) )
-		return Action<CTFBot>::Done( "Object is NODRAW" );
-
-	if ( me->GetLocomotionInterface()->GetGround() == m_hObject )
-		return Action<CTFBot>::Done( "I'm standing on the object" );
-
-	if ( ( me->GetAbsOrigin() - m_hObject->GetAbsOrigin() ).LengthSqr() < Square( m_flDist ) )
-		return Action<CTFBot>::Done( "Reached object" );
-
-	if ( m_recomputePathTimer.IsElapsed() )
+	if ( m_loot == NULL )
 	{
-		m_recomputePathTimer.Start( RandomFloat( 1.0f, 2.0f ) );
-
-		CTFBotPathCost cost( me, FASTEST_ROUTE );
-		m_PathFollower.Compute( me, m_hObject->GetAbsOrigin(), cost );
+		return Done( "Object is NULL" );
 	}
 
-	m_PathFollower.Update( me );
+	if ( m_loot->IsEffectActive( EF_NODRAW ) )
+	{
+		return Done( "Object is NODRAW" );
+	}
 
-	return Action<CTFBot>::Continue();
+	if ( me->GetLocomotionInterface()->GetGround() == m_loot )
+	{
+		return Done( "I'm standing on the object" );
+	}
+
+	if ( me->IsDistanceBetweenLessThan( m_loot->GetAbsOrigin(), m_range ) )
+	{
+		// in case we can't pick up the loot for some reason
+		return Done( "Reached object" );
+	}
+
+	if ( m_repathTimer.IsElapsed() )
+	{
+		m_repathTimer.Start( RandomFloat( 1.0f, 2.0f ) );
+
+		CTFBotPathCost cost( me, FASTEST_ROUTE );
+		m_path.Compute( me, m_loot->GetAbsOrigin(), cost );
+	}
+
+	// move to the loot
+	m_path.Update( me );
+
+	return Continue();
 }
+
+

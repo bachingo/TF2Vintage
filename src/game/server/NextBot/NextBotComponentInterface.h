@@ -7,6 +7,7 @@
 #define _NEXT_BOT_COMPONENT_INTERFACE_H_
 
 #include "NextBotEventResponderInterface.h"
+#include "vscript_server.h"
 
 class INextBot;
 class Path;
@@ -41,7 +42,7 @@ class INextBotComponent : public INextBotEventResponder
 {
 public:
 	INextBotComponent( INextBot *bot );
-	virtual ~INextBotComponent() { }
+	virtual ~INextBotComponent();
 
 	virtual void Reset( void )	{ m_lastUpdateTime = 0; m_curInterval = TICK_INTERVAL; }				// reset to initial state
 	virtual void Update( void ) = 0;									// update internal state
@@ -51,6 +52,10 @@ public:
 	inline float GetUpdateInterval();
 
 	virtual INextBot *GetBot( void ) const  { return m_bot; }
+
+	//- Script access to component functions ------------------------------------------------------------------
+	DECLARE_ENT_SCRIPTDESC();
+	HSCRIPT GetScriptInstance();
 	
 private:
 	float m_lastUpdateTime;
@@ -60,6 +65,8 @@ private:
 	
 	INextBot *m_bot;
 	INextBotComponent *m_nextComponent;									// simple linked list of components in the bot
+
+	HSCRIPT	m_hScriptInstance;
 };
 
 
@@ -93,6 +100,17 @@ inline bool INextBotComponent::ComputeUpdateInterval()
 inline float INextBotComponent::GetUpdateInterval() 
 { 
 	return m_curInterval; 
+}
+
+inline HSCRIPT ToHScript( INextBotComponent *pNextBotComponent )
+{
+	return ( pNextBotComponent ) ? pNextBotComponent->GetScriptInstance() : NULL;
+}
+
+template <> ScriptClassDesc_t *GetScriptDesc<INextBotComponent>( INextBotComponent * );
+inline INextBotComponent *ToNextBotComponent( HSCRIPT hScript )
+{
+	return ( IsValid( hScript ) ) ? (INextBotComponent *)g_pScriptVM->GetInstanceValue( hScript, GetScriptDescForClass( INextBotComponent ) ) : NULL;
 }
 
 #endif // _NEXT_BOT_COMPONENT_INTERFACE_H_

@@ -1,17 +1,12 @@
 // ALL SKIP STATEMENTS THAT AFFECT THIS SHADER!!!
 // defined $LIGHTING_PREVIEW && defined $FASTPATH && $LIGHTING_PREVIEW && $FASTPATH
 
-#ifndef CABLE_VS20_H
-#define CABLE_VS20_H
-
-#include "shaderapi/ishaderapi.h"
-#include "shaderapi/ishadershadow.h"
-#include "materialsystem/imaterialvar.h"
-
+#pragma once
+#include "shaderlib/cshader.h"
 class cable_vs20_Static_Index
 {
 public:
-	cable_vs20_Static_Index( IShaderShadow* pShaderShadow, IMaterialVar** params )
+	cable_vs20_Static_Index(  )
 	{
 	}
 
@@ -40,7 +35,7 @@ public:
 #endif	// _DEBUG
 	}
 
-	cable_vs20_Dynamic_Index( IShaderDynamicAPI* pShaderAPI )
+	cable_vs20_Dynamic_Index(  )
 	{
 		m_nDOWATERFOG = 0;
 #ifdef _DEBUG
@@ -57,5 +52,3 @@ public:
 
 #define shaderDynamicTest_cable_vs20 vsh_forgot_to_set_dynamic_DOWATERFOG
 
-
-#endif	// CABLE_VS20_H

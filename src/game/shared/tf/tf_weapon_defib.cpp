@@ -8,7 +8,6 @@
 #include "tf_weapon_defib.h"
 #include "decals.h"
 #include "tf_viewmodel.h"
-#include "tf_projectile_stunball.h"
 // Client specific.
 #ifdef CLIENT_DLL
 #include "c_tf_player.h"

@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -16,6 +16,9 @@
 #include "tf_player.h"
 #endif
 
+ConVar tf2v_use_new_split_equalizer("tf2v_use_new_split_equalizer", "0", FCVAR_REPLICATED|FCVAR_NOTIFY, "Splits the Equalizer and Escape Plan into their modern versions.", true, 0, true, 1);
+ConVar tf2v_use_new_equalizer_damage("tf2v_use_new_equalizer_damage", "1", FCVAR_REPLICATED|FCVAR_NOTIFY, "Makes the Equalizer's damage boost use the newer formula.", true, 0, true, 1);
+
 //=============================================================================
 //
 // Weapon Shovel tables.
@@ -31,9 +34,6 @@ END_PREDICTION_DATA()
 LINK_ENTITY_TO_CLASS( tf_weapon_shovel, CTFShovel );
 PRECACHE_WEAPON_REGISTER( tf_weapon_shovel );
 
-ConVar tf2v_use_new_split_equalizer("tf2v_use_new_split_equalizer", "0", FCVAR_REPLICATED|FCVAR_NOTIFY, "Splits the Equalizer and Escape Plan into their modern versions.", true, 0, true, 1);
-ConVar tf2v_use_new_equalizer_damage("tf2v_use_new_equalizer_damage", "1", FCVAR_REPLICATED|FCVAR_NOTIFY, "Makes the Equalizer's damage boost use the newer formula.", true, 0, true, 1);
-
 //=============================================================================
 //
 // Weapon Shovel functions.
@@ -44,68 +44,185 @@ ConVar tf2v_use_new_equalizer_damage("tf2v_use_new_equalizer_damage", "1", FCVAR
 //-----------------------------------------------------------------------------
 CTFShovel::CTFShovel()
 {
+	m_bHolstering = false;
+	m_flLastHealthRatio = 1.f;
 }
 
-int CTFShovel::GetCustomDamageType() const
+// -----------------------------------------------------------------------------
+void CTFShovel::PrimaryAttack()
 {
-	int nShovelWeaponMode = 0;
-	CALL_ATTRIB_HOOK_INT( nShovelWeaponMode, set_weapon_mode );
-	if ( nShovelWeaponMode == 1 || nShovelWeaponMode == 2 )
-		return TF_DMG_CUSTOM_PICKAXE;
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( pPlayer && !(pPlayer->GetFlags() & FL_ONGROUND) )
+	{
+		int iFlappy = 0;
+		CALL_ATTRIB_HOOK_INT( iFlappy, air_jump_on_attack );
+		if ( iFlappy )
+		{
+#ifdef GAME_DLL
+			EmitSound_t params;
+			params.m_pSoundName = "General.banana_slip";
+			params.m_flSoundTime = 0;
+			params.m_pflSoundDuration = 0;
+			//params.m_bWarnOnDirectWaveReference = true;
+			CPASFilter filter( pPlayer->GetAbsOrigin() );
+			params.m_flVolume = 0.1f;
+			params.m_SoundLevel = SNDLVL_25dB;
+			params.m_nPitch = 100.0f;
+			params.m_nFlags |= ( SND_CHANGE_PITCH | SND_CHANGE_VOL );
+			pPlayer->StopSound( "General.banana_slip" );
+			pPlayer->EmitSound( filter, pPlayer->entindex(), params );
+#endif
+			Vector vForce = Vector(0,0,0);
+			if ( pPlayer->GetAbsVelocity().z > 0 )
+			{
+				vForce.z = 275.0f;
+			}
+			else if ( pPlayer->m_Shared.InCond( TF_COND_BLASTJUMPING ) )
+			{
+				vForce.z = 500.0f;
+			}
+			else
+			{
+				vForce.z = 350.0f;
+			}
+			pPlayer->ApplyAbsVelocityImpulse( vForce );
+		}	
+	}
+	
 
-	return TF_DMG_CUSTOM_NONE;
+	BaseClass::PrimaryAttack();
+}
+// -----------------------------------------------------------------------------
+// Purpose:
+// -----------------------------------------------------------------------------
+void CTFShovel::ItemPreFrame( void )
+{
+	return BaseClass::ItemPreFrame();
 }
 
-float CTFShovel::GetSpeedMod( void ) const
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CTFShovel::GetMeleeDamage( CBaseEntity *pTarget, int* piDamageType, int* piCustomDamage )
 {
-	if ( m_bLowered )
-		return 1.0f;
+	float flDamage = BaseClass::GetMeleeDamage( pTarget, piDamageType, piCustomDamage );
+
+	if ( !HasDamageBoost() || ( HasSpeedBoost() && tf2v_use_new_split_equalizer.GetBool() ) )
+		return flDamage;
 
 	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
 	if ( !pOwner )
-		return 1.0f;
+		return 0;
 
-	int nShovelSpeedBoost = 0;
-	CALL_ATTRIB_HOOK_INT( nShovelSpeedBoost, set_weapon_mode );
-	if ( !nShovelSpeedBoost || ( nShovelSpeedBoost == 1 && tf2v_use_new_split_equalizer.GetBool() ) )
-		return 1.0f;
+	float flOwnerHealthRatio = (float) pOwner->GetHealth() / (float) pOwner->GetMaxHealth();
+	// Get the damage output.
+	float flDamageScale = 0;
+	if ( tf2v_use_new_equalizer_damage.GetBool() ) // New algorithm [107.25 - 0.37295 * HP ] converted to ratio output and %HP input.
+		flDamageScale =  RemapValClamped( flOwnerHealthRatio, 0.0f, 1.0f, 1.65f, 0.5025f );
+	else 										 // Old algorithm [162.5 - 0.65 * HP ] converted to ratio output and %HP input.
+		flDamageScale =  RemapValClamped( flOwnerHealthRatio, 0.0f, 1.0f, 2.5f, 0.5f );
 
-	float flFraction = (float)pOwner->GetHealth() / pOwner->GetMaxHealth();
-	if ( flFraction > 0.8f )
-		return 1.0f;
-	else if ( flFraction > 0.6f )
+	return flDamage * flDamageScale;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CTFShovel::GetSpeedMod( void )
+{
+	if ( m_bHolstering || !HasSpeedBoost() || ( HasDamageBoost() && tf2v_use_new_split_equalizer.GetBool() ) )
+		return 1.f;
+
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( !pOwner )
+		return 0;
+
+	float flOwnerHealthRatio = (float) pOwner->GetHealth() / (float) pOwner->GetMaxHealth();
+	if ( flOwnerHealthRatio > 0.8 )
+		return 1.f;
+	else if ( flOwnerHealthRatio > 0.6 )
 		return 1.1f;
-	else if ( flFraction > 0.4f )
+	else if ( flOwnerHealthRatio > 0.4 )
 		return 1.2f;
-	else if ( flFraction > 0.2f )
+	else if ( flOwnerHealthRatio > 0.2 )
 		return 1.4f;
 	else
 		return 1.6f;
 }
 
-float CTFShovel::GetMeleeDamage( CBaseEntity *pTarget, int &iDamageType, int &iCustomDamage )
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFShovel::Deploy( void )
 {
-	float flDmg = BaseClass::GetMeleeDamage( pTarget, iDamageType, iCustomDamage );
-
-	int nShovelDamageBoost = 0;
-	CALL_ATTRIB_HOOK_INT( nShovelDamageBoost, set_weapon_mode );
-	if ( !nShovelDamageBoost || ( nShovelDamageBoost == 2 && tf2v_use_new_split_equalizer.GetBool() ) )
-		return flDmg;
+	bool ret = BaseClass::Deploy();
 
 	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
-	if ( !pOwner )
-		return 0.0f;
+	if ( pOwner && HasSpeedBoost() )
+	{
+		SetContextThink( &CTFShovel::MoveSpeedThink, gpGlobals->curtime + 0.25f, "SHOVEL_SPEED_THINK" );
+	}
 
-	float flFraction = Clamp( ((float)pOwner->GetHealth() / (float)pOwner->GetMaxHealth()), 0.0f, 1.0f );
-	
-	// Get the damage output.
-	float flDamageOutput = 0;
-	if (tf2v_use_new_equalizer_damage.GetBool()) // New algorithm [107.25 - 0.37295 * HP ] converted to ratio output and %HP input.
-		flDamageOutput =  RemapValClamped( flFraction, 0.0f, 1.0f, 1.65f, 0.5025f );
-	else 										 // Old algorithm [162.5 - 0.65 * HP ] converted to ratio output and %HP input.
-		flDamageOutput =  RemapValClamped( flFraction, 0.0f, 1.0f, 2.5f, 0.5f );
-	
-	flDmg *= flDamageOutput;
-
-	return flDmg;
+	return ret;
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFShovel::Holster( CBaseCombatWeapon *pSwitchingTo )
+{
+	m_bHolstering = true;
+	bool ret = BaseClass::Holster( pSwitchingTo );
+	m_bHolstering = false;
+
+	return ret;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFShovel::MoveSpeedThink( void )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( !pOwner || !pOwner->IsAlive() )
+		return;
+
+	if ( this != pOwner->GetActiveWeapon() )
+		return;
+
+	pOwner->TeamFortress_SetSpeed();
+
+	SetContextThink( &CTFShovel::MoveSpeedThink, gpGlobals->curtime + 0.25f, "SHOVEL_SPEED_THINK" );
+}
+
+#ifndef CLIENT_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CTFShovel::GetForceScale( void )
+{
+	if ( HasDamageBoost() )
+	{
+		return BaseClass::GetForceScale() * 2.f;
+	}
+	else
+	{
+		return 1.f;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+int CTFShovel::GetDamageCustom()
+{
+	if ( GetShovelType() == SHOVEL_SPEED_BOOST || GetShovelType() == SHOVEL_DAMAGE_BOOST )
+	{
+		return TF_DMG_CUSTOM_PICKAXE;
+	}
+	else
+	{
+		return BaseClass::GetDamageCustom();
+	}
+}
+#endif

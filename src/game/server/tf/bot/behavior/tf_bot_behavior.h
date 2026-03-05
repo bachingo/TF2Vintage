@@ -1,69 +1,78 @@
-//========= Copyright � Valve LLC, All rights reserved. =======================
-//
-// Purpose:		
-//
-// $NoKeywords: $
-//=============================================================================
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_behavior.h
+// Team Fortress NextBot behaviors
+// Michael Booth, February 2009
 
 #ifndef TF_BOT_BEHAVIOR_H
 #define TF_BOT_BEHAVIOR_H
-#ifdef _WIN32
-#pragma once
-#endif
 
+#include "Path/NextBotPathFollow.h"
 
-#include "NextBotBehavior.h"
-
-class CTFBotMainAction : public Action<CTFBot>
+class CTFBotMainAction : public Action< CTFBot >
 {
-	DECLARE_CLASS( CTFBotMainAction, Action<CTFBot> )
 public:
-	virtual ~CTFBotMainAction() {}
+	virtual Action< CTFBot > *InitialContainedAction( CTFBot *me );
 
-	virtual const char *GetName( void ) const OVERRIDE;
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
+	virtual EventDesiredResult< CTFBot > OnKilled( CTFBot *me, const CTakeDamageInfo &info );
+	virtual EventDesiredResult< CTFBot > OnInjured( CTFBot *me, const CTakeDamageInfo &info );
+	virtual EventDesiredResult< CTFBot > OnContact( CTFBot *me, CBaseEntity *other, CGameTrace *result = NULL );
+	virtual EventDesiredResult< CTFBot > OnStuck( CTFBot *me );
 
-	virtual Action<CTFBot> *InitialContainedAction( CTFBot *actor ) OVERRIDE;
+	virtual EventDesiredResult< CTFBot > OnOtherKilled( CTFBot *me, CBaseCombatCharacter *victim, const CTakeDamageInfo &info );
 
-	virtual EventDesiredResult<CTFBot> OnContact( CTFBot *me, CBaseEntity *other, CGameTrace *trace ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnStuck( CTFBot *me ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnInjured( CTFBot *me, const CTakeDamageInfo& info ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnKilled( CTFBot *me, const CTakeDamageInfo& info ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnOtherKilled( CTFBot *me, CBaseCombatCharacter *who, const CTakeDamageInfo& info ) OVERRIDE;
+	virtual QueryResultType ShouldAttack( const INextBot *me, const CKnownEntity *them ) const;
+	virtual QueryResultType	ShouldRetreat( const INextBot *me ) const;							// is it time to retreat?
+	virtual QueryResultType	ShouldHurry( const INextBot *me ) const;							// are we in a hurry?
 
-	virtual QueryResultType ShouldHurry( const INextBot *me ) const OVERRIDE;
-	virtual QueryResultType ShouldRetreat( const INextBot *me ) const OVERRIDE;
-	virtual QueryResultType ShouldAttack( const INextBot *me, const CKnownEntity *threat ) const OVERRIDE;
-	virtual Vector SelectTargetPoint( const INextBot *me, const CBaseCombatCharacter *them ) const OVERRIDE;
-	virtual QueryResultType IsPositionAllowed( const INextBot *me, const Vector& pos ) const OVERRIDE;
-	virtual const CKnownEntity *SelectMoreDangerousThreat( const INextBot *me, const CBaseCombatCharacter *them, const CKnownEntity *threat1, const CKnownEntity *threat2 ) const OVERRIDE;
+	virtual Vector SelectTargetPoint( const INextBot *me, const CBaseCombatCharacter *subject ) const;		// given a subject, return the world space position we should aim at
+	virtual QueryResultType IsPositionAllowed( const INextBot *me, const Vector &pos ) const;
+
+	virtual const CKnownEntity *	SelectMoreDangerousThreat( const INextBot *me, 
+															   const CBaseCombatCharacter *subject,
+															   const CKnownEntity *threat1, 
+															   const CKnownEntity *threat2 ) const;	// return the more dangerous of the two threats to 'subject', or NULL if we have no opinion
+
+	virtual const char *GetName( void ) const	{ return "MainAction"; };
 
 private:
-	void Dodge( CTFBot *actor );
-	void FireWeaponAtEnemy( CTFBot *actor );
-	const CKnownEntity *GetHealerOfThreat( const CKnownEntity *threat ) const;
-	bool IsImmediateThreat( const CBaseCombatCharacter *who, const CKnownEntity *threat ) const;
-	const CKnownEntity *SelectCloserThreat( CTFBot *actor, const CKnownEntity *threat1, const CKnownEntity *threat2 ) const;
-	const CKnownEntity *SelectMoreDangerousThreatInternal( const INextBot *me, const CBaseCombatCharacter *them, const CKnownEntity *threat1, const CKnownEntity *threat2 ) const;
+	CountdownTimer m_reloadTimer;
+	mutable CountdownTimer m_aimAdjustTimer;
+	mutable float m_aimErrorRadius;
+	mutable float m_aimErrorAngle;
 
-	// TODO 34
-	// TODO 38
-	// TODO 3c
-	// TODO 40
-	// TODO 44
-	mutable CountdownTimer m_sniperAimErrorTimer;
-	mutable float m_flSniperAimErrorRadius;
-	mutable float m_flSniperAimErrorAngle;
-	float m_flYawDelta;
-	float m_flPreviousYaw;
-	IntervalTimer m_sniperSteadyInterval;
-	int m_iDesiredDisguise;
-	bool m_bReloadingBarrage;
-	CHandle<CBaseEntity> m_hLastTouch;
-	float m_flLastTouchTime;
+	float m_yawRate;
+	float m_priorYaw;
+	IntervalTimer m_steadyTimer;
+
+	int m_nextDisguise;
+
+	bool m_isWaitingForFullReload;
+
+	void FireWeaponAtEnemy( CTFBot *me );
+
+	CHandle< CBaseEntity > m_lastTouch;
+	float m_lastTouchTime;
+
+	bool IsImmediateThreat( const CBaseCombatCharacter *subject, const CKnownEntity *threat ) const;
+	const CKnownEntity *SelectCloserThreat( CTFBot *me, const CKnownEntity *threat1, const CKnownEntity *threat2 ) const;
+	const CKnownEntity *GetHealerOfThreat( const CKnownEntity *threat ) const;
+
+	const CKnownEntity *SelectMoreDangerousThreatInternal( const INextBot *me, 
+														   const CBaseCombatCharacter *subject,
+														   const CKnownEntity *threat1, 
+														   const CKnownEntity *threat2 ) const;
+
+
+	void Dodge( CTFBot *me );
+
 	IntervalTimer m_undergroundTimer;
+
+	CountdownTimer m_reevaluateClassTimer;
 };
 
-#endif
+
+
+#endif // TF_BOT_BEHAVIOR_H

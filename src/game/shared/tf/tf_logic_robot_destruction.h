@@ -1,211 +1,133 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose:		
+// Purpose: Entities for use in the Robot Destruction TF2 game mode.
 //
-// $NoKeywords: $
-//=============================================================================
-#ifndef TF_LOGIC_ROBOT_DESTRUCTION_H
-#define TF_LOGIC_ROBOT_DESTRUCTION_H
+//=========================================================================//
+#ifndef LOGIC_ROBOT_DESTRUCTION_H
+#define LOGIC_ROBOT_DESTRUCTION_H
+#pragma once
+
+#include "cbase.h"
 
 #ifdef GAME_DLL
-#include "triggers.h"
-#include "GameEventListener.h"
-#include "tf_player.h"
+	#include "triggers.h"
+	#include "tf_shareddefs.h"
+	#include "GameEventListener.h"
+	#include "entity_capture_flag.h"
 #else
-#include "c_tf_player.h"
+	#include "c_tf_player.h"
 #endif
 
-#include "tf_shareddefs.h"
 
-#if defined(CLIENT_DLL)
-#define CTFRobotDestruction_RobotSpawn	C_TFRobotDestruction_RobotSpawn
-#define CTFRobotDestruction_RobotGroup	C_TFRobotDestruction_RobotGroup
-#define CTFRobotDestructionLogic		C_TFRobotDestructionLogic
+#include "tf_robot_destruction_robot.h"
+
+#ifdef CLIENT_DLL
+	#define CTFRobotDestructionLogic C_TFRobotDestructionLogic
+	#define CTFRobotDestruction_RobotSpawn C_TFRobotDestruction_RobotSpawn
+	#define CTFRobotDestruction_RobotGroup C_TFRobotDestruction_RobotGroup
 #endif
 
-class CTFRobotDestruction_Robot;
-class CTFRobotDestruction_RobotGroup;
-class CTFRobotDestructionLogic;
+#include "props_shared.h"
 
-typedef struct RobotData_s
-{
-	RobotData_s( char const *pszModelName, char const *pszDamagedModelName, char const *pszHurtSound, char const *pszDeathSound, char const *pszCollideSound, char const *pszIdleSound, float flHealthBarOffset )
-		: m_pszModelName(pszModelName), m_pszDamagedModelName(pszDamagedModelName), m_pszHurtSound(pszHurtSound), 
-		m_pszDeathSound(pszDeathSound), m_pszCollideSound(pszCollideSound), m_pszIdleSound(pszIdleSound), m_flHealthBarOffset(flHealthBarOffset) {}
-	void Precache( void );
+#define RD_POINTS_STOLEN_PER_TICK 2
 
-	char const *m_pszModelName;
-	char const *m_pszDamagedModelName;
-	char const *m_pszHurtSound;
-	char const *m_pszDeathSound;
-	char const *m_pszCollideSound;
-	char const *m_pszIdleSound;
-	float m_flHealthBarOffset;
-} RobotData_t;
-
-enum ERobotType
-{
-	ROBOT_TYPE_SMALL,
-	ROBOT_TYPE_MEDIUM,
-	ROBOT_TYPE_LARGE,
-
-	NUM_ROBOT_TYPES,
-};
-extern RobotData_t *g_RobotData[NUM_ROBOT_TYPES];
-
-enum ERobotState
-{
-	ROBOT_STATE_INACTIVE = 0,
-	ROBOT_STATE_ACTIVE,
-	ROBOT_STATE_DEAD,
-	ROBOT_STATE_SHIELDED,
-
-	NUM_ROBOT_STATES
-};
-
-#if defined(GAME_DLL)
-typedef struct RobotSpawnData_s
-{
-	RobotSpawnData_s &operator=( const RobotSpawnData_s &rhs )
-	{
-		m_eType = rhs.m_eType;
-		m_nRobotHealth = rhs.m_nRobotHealth;
-		m_nPoints = rhs.m_nPoints;
-		m_nNumGibs = rhs.m_nNumGibs;
-		m_pszPathName = rhs.m_pszPathName;
-		m_pszGroupName = rhs.m_pszGroupName;
-
-		return *this;
-	}
-
-	ERobotType m_eType;
-	int m_nRobotHealth;
-	int m_nPoints;
-	int m_nNumGibs;
-	const char *m_pszPathName;
-	const char *m_pszGroupName;
-} RobotSpawnData_t;
-
-typedef struct RateLimitedSound_s
-{
-	RateLimitedSound_s( float flDelay )
-		: m_flDelay( flDelay ), m_NextAvailableTime( DefLessFunc( CBaseEntity const * ) ) {}
-	float m_flDelay;
-	CUtlMap<CBaseEntity const *, float> m_NextAvailableTime;
-} RateLimitedSound_t;
-
-class CRobotDestructionVaultTrigger : public CBaseTrigger
-{
-	DECLARE_CLASS( CRobotDestructionVaultTrigger, CBaseTrigger );
-	DECLARE_DATADESC();
-
-public:
-	CRobotDestructionVaultTrigger();
-	virtual void	Precache();
-	virtual void	Spawn();
-
-	virtual bool	PassesTriggerFilters( CBaseEntity *pOther );
-	virtual void	StartTouch( CBaseEntity *pOther );
-	virtual void	EndTouch( CBaseEntity *pOther );
-
-	int				StealPoints( CTFPlayer *pPlayer );
-	void			StealPointsThink();
-
-private:
-	COutputEvent m_OnPointsStolen;
-	COutputEvent m_OnPointsStartStealing;
-	COutputEvent m_OnPointsEndStealing;
-
-	bool m_bStealing;
-};
-#endif
-
+//-----------------------------------------------------------------------------
 class CTFRobotDestruction_RobotSpawn : public CBaseEntity
 {
-	DECLARE_CLASS( CTFRobotDestruction_RobotSpawn, CBaseEntity );
 public:
-	DECLARE_NETWORKCLASS();
 	DECLARE_DATADESC();
+	DECLARE_CLASS( CTFRobotDestruction_RobotSpawn, CBaseEntity )
+	DECLARE_NETWORKCLASS();
 
 	CTFRobotDestruction_RobotSpawn();
 
-	virtual void	Activate( void );
-	virtual void	Precache( void );
-	virtual void	Spawn( void );
-#if defined(GAME_DLL)
-	virtual bool	ShouldCollide( int collisionGroup, int contentsMask ) const;
+	virtual void Spawn() OVERRIDE;
+	virtual void Activate() OVERRIDE;
 
-	void			ClearRobot( void );
-	void			OnRobotKilled( void );
-	void			SpawnRobot( void );
+#ifdef GAME_DLL
+	virtual void Precache() OVERRIDE;
+	virtual bool ShouldCollide( int collisionGroup, int contentsMask ) const OVERRIDE;
 
-	void			InputSpawnRobot( inputdata_t &inputdata );
-
-	CTFRobotDestruction_Robot *GetRobot( void ) const { return m_hRobot.Get(); }
-	void			SetRobotGroup( CTFRobotDestruction_RobotGroup *pGroup ) { m_hRobotGroup.Set( pGroup ); }
-
+	CTFRobotDestruction_Robot* GetRobot() const { return m_hRobot.Get(); }
+	void OnRobotKilled();
+	void ClearRobot();
+	void SpawnRobot();
+	void SetGroup( class CTFRobotDestruction_RobotGroup* pGroup ) { m_hGroup.Set( pGroup ); }
+	// Inputs
+	void InputSpawnRobot( inputdata_t &inputdata );
+	
+#endif
 private:
-	CHandle<CTFRobotDestruction_Robot> m_hRobot;
-	CHandle<CTFRobotDestruction_RobotGroup> m_hRobotGroup;
+	CHandle< CTFRobotDestruction_Robot > m_hRobot;
+#ifdef GAME_DLL
+	CHandle< class CTFRobotDestruction_RobotGroup > m_hGroup;
 	RobotSpawnData_t m_spawnData;
 	COutputEvent m_OnRobotKilled;
 #endif
 };
 
+//-----------------------------------------------------------------------------
 DECLARE_AUTO_LIST( IRobotDestructionGroupAutoList );
 class CTFRobotDestruction_RobotGroup : public CBaseEntity, public IRobotDestructionGroupAutoList
 {
-#if defined(GAME_DLL)
-	static float sm_flNextAllowedAttackAlertTime[TF_TEAM_COUNT];
-#endif
-	DECLARE_CLASS( CTFRobotDestruction_RobotGroup, CBaseEntity );
-public:
-	DECLARE_NETWORKCLASS();
 	DECLARE_DATADESC();
+	DECLARE_CLASS( CTFRobotDestruction_RobotGroup, CBaseEntity )
+	DECLARE_NETWORKCLASS();
+public:
+	virtual ~CTFRobotDestruction_RobotGroup();
+#ifdef GAME_DLL
 
 	CTFRobotDestruction_RobotGroup();
-	virtual ~CTFRobotDestruction_RobotGroup();
 
-#if defined(GAME_DLL)
-	virtual void	Activate( void );
-	virtual void	Spawn( void );
-	virtual int		UpdateTransmitState( void );
+	virtual int		UpdateTransmitState() OVERRIDE { return SetTransmitState( FL_EDICT_ALWAYS ); }
+	virtual void	Spawn() OVERRIDE;
+	virtual void	Activate() OVERRIDE;
+	void	AddToGroup( CTFRobotDestruction_RobotSpawn * pSpawn );
+	void	RemoveFromGroup( CTFRobotDestruction_RobotSpawn * pSpawn );
+	void	UpdateState();
+	void	RespawnRobots();
+	int		GetNumAliveBots() const;
+	float	GetTeamRespawnScale() const	{ return m_flTeamRespawnReductionScale; }
 
-	float			GetTeamRespawnScale() const { return m_flTeamRespawnReductionScale; }
+	// Respawn functions
+	void StopRespawnTimer();
+	void StartRespawnTimerIfNeeded( CTFRobotDestruction_RobotGroup *pMasterGroup );
+	void RespawnCountdownFinish();
 
-	void			AddToGroup( CTFRobotDestruction_RobotSpawn *pSpawn );
-	void			DisableUberForGroup( void );
-	void			EnableUberForGroup( void );
-	int				GetNumAliveBots( void );
-	void			OnRobotAttacked( void );
-	void			OnRobotKilled( void );
-	void			OnRobotSpawned( void );
-	void			RemoveFromGroup( CTFRobotDestruction_RobotSpawn *pSpawn );
-	void			RespawnCountdownFinish( void );
-	void			RespawnRobots( void );
-	void			StartRespawnTimerIfNeeded( CTFRobotDestruction_RobotGroup *pGroup );
-	void			StopRespawnTimer( void );
-	void			UpdateState( void );
+	void EnableUberForGroup();
+	void DisableUberForGroup();
+
+	void OnRobotAttacked();
+	void OnRobotKilled();
+	void OnRobotSpawned();
 #else
-	virtual int		GetTeamNumber( void ) const OVERRIDE { return m_iTeamNum; }
-	virtual void	PostDataUpdate( DataUpdateType_t updateType );
-	virtual void	SetDormant( bool bDormant );
+	virtual void PostDataUpdate( DataUpdateType_t updateType ) OVERRIDE;
+	virtual int GetTeamNumber( void ) const OVERRIDE { return m_iTeamNum; }
+	virtual void SetDormant( bool bDormant ) OVERRIDE;
 #endif
+	const char *GetHUDIcon() const		{ return m_pszHudIcon; }
+	int		GetGroupNumber() const		{ return m_nGroupNumber; }
+	int		GetState() const			{ return m_nState; }
+	float	GetRespawnStartTime() const	{ return m_flRespawnStartTime; }
+	float	GetRespawnEndTime() const	{ return m_flRespawnEndTime; }
+	float	GetLastAttackedTime() const	{ return m_flLastAttackedTime; }
 
 private:
-	IMPLEMENT_NETWORK_VAR_FOR_DERIVED( m_iTeamNum );
-#ifdef GAME_DLL
-	CUtlVector< CHandle<CTFRobotDestruction_RobotSpawn> > m_vecSpawns;
 
+#ifdef GAME_DLL
+	CUtlVector< CTFRobotDestruction_RobotSpawn* > m_vecSpawns;
 	int m_nTeamNumber;
+	IMPLEMENT_NETWORK_VAR_FOR_DERIVED( m_iTeamNum );
 	float m_flRespawnTime;
+	static float m_sflNextAllowedAttackAlertTime[ TF_TEAM_COUNT ];
 	string_t m_iszHudIcon;
 	float m_flTeamRespawnReductionScale;
 
 	COutputEvent m_OnRobotsRespawn;
 	COutputEvent m_OnAllRobotsDead;
+#else
+	int m_iTeamNum;
 #endif
-public:
 	CNetworkString( m_pszHudIcon, MAX_PATH );
 	CNetworkVar( int, m_nGroupNumber );
 	CNetworkVar( int, m_nState );
@@ -214,113 +136,145 @@ public:
 	CNetworkVar( float, m_flLastAttackedTime );
 };
 
+struct RateLimitedSound_t
+{
+	RateLimitedSound_t( float flPause )
+	{
+		m_mapNextAllowedTime.SetLessFunc( DefLessFunc( const CBaseEntity* ) );
+		m_flPause = flPause;
+	}
 
+	float m_flPause;
+	CUtlMap< const CBaseEntity*, float > m_mapNextAllowedTime;
+};
+
+struct TeamSound_t
+{
+	const char *m_pszYourTeam;
+	const char *m_pszTheirTeam;
+};
+
+//-----------------------------------------------------------------------------
 class CTFRobotDestructionLogic : public CBaseEntity
 #ifdef GAME_DLL
 	, public CGameEventListener
 #endif
 {
-	static CTFRobotDestructionLogic *sm_CTFRobotDestructionLogic;
-	DECLARE_CLASS( CTFRobotDestructionLogic, CBaseEntity );
-public:
+	DECLARE_CLASS( CTFRobotDestructionLogic, CBaseEntity )
 	DECLARE_NETWORKCLASS();
-	DECLARE_DATADESC();
+public:
 
-	enum
+	enum EType
 	{
 		TYPE_ROBOT_DESTRUCTION,
 		TYPE_PLAYER_DESTRUCTION,
 	};
 
-	static CTFRobotDestructionLogic *GetRobotDestructionLogic();
+	virtual EType GetType() const { return TYPE_ROBOT_DESTRUCTION; }
 
 	CTFRobotDestructionLogic();
 	virtual ~CTFRobotDestructionLogic();
+	static CTFRobotDestructionLogic* GetRobotDestructionLogic();
 
-	virtual void	Precache( void );
-	virtual void	Spawn( void );
+	virtual void Spawn() OVERRIDE;
+	virtual void Precache() OVERRIDE;
 
-	float			GetFinaleLength() const { return m_flFinaleLength; }
-	float			GetFinaleWinTime( int nTeam ) const;
-	int				GetMaxPoints( void ) const { return m_nMaxPoints; }
-	float			GetRespawnScaleForTeam( int nTeam ) const;
-	int				GetScore( int nTeam ) const;
-	int				GetTargetScore( int nTeam ) const;
+	float	GetRespawnScaleForTeam( int nTeam ) const;
+	int		GetScore( int nTeam ) const;
+	int		GetTargetScore( int nTeam ) const;
+	int		GetMaxPoints() const { return m_nMaxPoints.Get(); }
+	float	GetFinaleWinTime( int nTeam ) const;
+	float	GetFinaleLength() const { return m_flFinaleLength; }
+	void	PlaySoundInfoForScoreEvent( CTFPlayer* pPlayer, bool bPositive, int nNewScore, int nTeam, RDScoreMethod_t eMethod = SCORE_UNDEFINED );
+	RDScoreMethod_t GetLastScoreMethod( int nTeam ) const { return (RDScoreMethod_t)m_eWinningMethod[ nTeam ]; }
 
-#if defined(GAME_DLL)
-	virtual void	Activate( void );
-	virtual void	FireGameEvent( IGameEvent *event );
-	virtual int		UpdateTransmitState( void );
+#ifdef CLIENT_DLL
 
-	void			AddRobotGroup( CTFRobotDestruction_RobotGroup *pGroup );
-	void			ApproachTargetScoresThink( void );
-	int				ApproachTeamTargetScore( int nTeam, int nTargetScore, int nScore );
-	void			BlueTeamWin( void );
-	void			FlagCreated( int nTeam );
-	void			FlagDestroyed( int nTeam );
-	CTFRobotDestruction_Robot *IterateRobots( CTFRobotDestruction_Robot *pIter );
-	void			ManageGameState( void );
-	void			PlaySoundInPlayersEars( CTFPlayer *pSpeaker, EmitSound_t const &params );
-	void			PlaySoundInfoForScoreEvent( CTFPlayer *pSpeaker, bool bEnemyScore, int nScore, int nTeam, ERDScoreMethod eEvent = SCORE_UNDEFINED );
-	void			RedTeamWin( void );
-	void			RobotAttacked( CTFRobotDestruction_Robot *pRobot );
-	void			RobotCreated( CTFRobotDestruction_Robot *pRobot );
-	void			RobotRemoved( CTFRobotDestruction_Robot *pRobot );
-	void			SetMaxPoints( int nPoints ) { m_nMaxPoints = nPoints; }
-	void			ScorePoints( int nTeam, int nPoints, ERDScoreMethod eEvent, CTFPlayer *pScorer );
+	virtual void OnDataChanged( DataUpdateType_t type ) OVERRIDE;
+	virtual void ClientThink() OVERRIDE;
+	const char* GetResFile() const { return STRING( m_szResFile ); }
 
-	void			InputRoundActivate( inputdata_t &inputdata );
-
-	virtual int		GetHealDistance( void ) { return 64; }
 #else
-	virtual void ClientThink();
-	virtual void OnDataChanged( DataUpdateType_t type );
+	DECLARE_DATADESC();
 
-	const char *GetResFile() const { return STRING( m_szResFile ); }
+	virtual void Activate() OVERRIDE;
+	virtual void FireGameEvent( IGameEvent * event ) OVERRIDE;
+
+	virtual int UpdateTransmitState() OVERRIDE { return SetTransmitState( FL_EDICT_ALWAYS ); }
+
+	CTFRobotDestruction_Robot * IterateRobots( CTFRobotDestruction_Robot * ) const;
+	void	RobotCreated( CTFRobotDestruction_Robot *pRobot );
+	void	RobotRemoved( CTFRobotDestruction_Robot *pRobot );
+	void	RobotAttacked( CTFRobotDestruction_Robot *pRobot );
+	float	GetScoringInterval() const { return m_flRobotScoreInterval; }
+	void	ScorePoints( int nTeam, int nPoints, RDScoreMethod_t eMethod, CTFPlayer *pPlayer );
+	void	AddRobotGroup( CTFRobotDestruction_RobotGroup* pGroup );
+	void	ManageGameState();
+	void	FlagCreated( int nTeam );
+	void	FlagDestroyed( int nTeam );
+	
+	void	DBG_SetMaxPoints( int nNewMax ) { m_nMaxPoints.Set( nNewMax ); }
+	void	InputRoundActivate( inputdata_t &inputdata );
+	virtual int GetHealDistance( void ) { return 64; }
 #endif
 
-	virtual int GetType() const { return TYPE_ROBOT_DESTRUCTION; }
-
-	virtual void	SetCountdownEndTime( float flTime ) { m_flCountdownEndTime = flTime; }
-	virtual float	GetCountdownEndTime() { return m_flCountdownEndTime; }
+	virtual void SetCountdownEndTime( float flTime ){ m_flCountdownEndTime = flTime; }
+	virtual float GetCountdownEndTime(){ return m_flCountdownEndTime; }
 	virtual CTFPlayer *GetTeamLeader( int iTeam ) const { return NULL; }
 	virtual string_t GetCountdownImage( void ) { return NULL_STRING; }
-	virtual bool	IsUsingCustomCountdownImage( void ) { return false; }
-#if defined(GAME_DLL)
-	virtual void	OnRedScoreChanged() {}
-	virtual void	OnBlueScoreChanged() {}
-	virtual void	TeamWin( int nTeam );
-#endif
+	virtual bool IsUsingCustomCountdownImage( void ) { return false; }
 
-	// Shared info with CTFPlayerDestructionLogic by using protected
 protected:
-#if defined(GAME_DLL)
-	CUtlVector<CTFRobotDestruction_Robot *> m_vecRobots;
-	CUtlVector<CTFRobotDestruction_RobotGroup *> m_vecRobotGroups;
-	int m_nNumFlags[TF_TEAM_COUNT];
+
+
+#ifdef GAME_DLL
+	virtual void OnRedScoreChanged() {}
+	virtual void OnBlueScoreChanged() {}
+	void	ApproachTargetScoresThink();
+	int		ApproachTeamTargetScore( int nTeam, int nApproachScore, int nCurrentScore );
+	void	PlaySoundInPlayersEars( CTFPlayer* pPlayer, const EmitSound_t& params ) const;
+	void	RedTeamWin();
+	void	BlueTeamWin();
+	virtual void	TeamWin( int nTeam );
+
+	typedef CUtlMap< int, CTFRobotDestruction_RobotGroup* > RobotSpawnMap_t;
+	CUtlVector< CTFRobotDestruction_Robot* > m_vecRobots;
+	CUtlVector< CTFRobotDestruction_RobotGroup * > m_vecSpawnGroups;
 	float m_flLoserRespawnBonusPerBot;
 	float m_flRobotScoreInterval;
+	float m_flNextRedRobotAttackedAlertTime;
+	float m_flNextBlueRobotAttackedAlertTime;
+	int m_nNumFlagsOut[ TF_TEAM_COUNT ];
+	bool m_bEducateNewConnectors;
 	string_t m_iszResFile;
 
-	CUtlMap<char const *, RateLimitedSound_t *> m_RateLimitedSounds;
+	TeamSound_t m_AnnouncerProgressSound;
+	CUtlMap< const char *, RateLimitedSound_t * > m_mapRateLimitedSounds;
 
-	COutputEvent m_OnRedHitZeroPoints;
-	COutputEvent m_OnRedHasPoints;
+	CUtlVector< CTFPlayer* > m_vecEducatedPlayers;
+
+	// Outputs
 	COutputEvent m_OnRedFinalePeriodEnd;
-	COutputEvent m_OnBlueHitZeroPoints;
-	COutputEvent m_OnBlueHasPoints;
 	COutputEvent m_OnBlueFinalePeriodEnd;
+	COutputEvent m_OnBlueHitZeroPoints;
+	COutputEvent m_OnRedHitZeroPoints;
+	COutputEvent m_OnBlueHasPoints;
+	COutputEvent m_OnRedHasPoints;
+	COutputEvent m_OnBlueHitMaxPoints;
+	COutputEvent m_OnRedHitMaxPoints;
+	COutputEvent m_OnBlueLeaveMaxPoints;
+	COutputEvent m_OnRedLeaveMaxPoints;
+
 	COutputEvent m_OnRedFirstFlagStolen;
 	COutputEvent m_OnRedFlagStolen;
 	COutputEvent m_OnRedLastFlagReturned;
 	COutputEvent m_OnBlueFirstFlagStolen;
 	COutputEvent m_OnBlueFlagStolen;
 	COutputEvent m_OnBlueLastFlagReturned;
-	COutputEvent m_OnBlueLeaveMaxPoints;
-	COutputEvent m_OnRedLeaveMaxPoints;
-	COutputEvent m_OnBlueHitMaxPoints;
-	COutputEvent m_OnRedHitMaxPoints;
+#else
+	float		m_flLastTickSoundTime;
 #endif
+	static CTFRobotDestructionLogic* m_sCTFRobotDestructionLogic;
 	CNetworkVar( int, m_nMaxPoints );
 	CNetworkVar( float, m_flFinaleLength );
 	CNetworkVar( float, m_flBlueFinaleEndTime );
@@ -333,7 +287,33 @@ protected:
 	CNetworkVar( float, m_flRedTeamRespawnScale );
 	CNetworkString( m_szResFile, MAX_PATH );
 	CNetworkArray( int, m_eWinningMethod, TF_TEAM_COUNT );
-	CNetworkVar( float, m_flCountdownEndTime );
+	CNetworkVar( float, m_flCountdownEndTime ); // used for player destruction countdown timers
 };
 
-#endif
+#ifdef GAME_DLL
+class CRobotDestructionVaultTrigger : public CBaseTrigger
+{
+	DECLARE_CLASS( CRobotDestructionVaultTrigger, CBaseTrigger );
+	DECLARE_DATADESC();
+
+public:
+	CRobotDestructionVaultTrigger();
+	virtual void Spawn() OVERRIDE;
+	virtual void Precache() OVERRIDE;
+
+	virtual bool PassesTriggerFilters( CBaseEntity *pOther ) OVERRIDE;
+	virtual void StartTouch(CBaseEntity *pOther) OVERRIDE;
+	virtual void EndTouch(CBaseEntity *pOther) OVERRIDE;
+
+private:
+	void StealPointsThink();
+	int StealPoints( CTFPlayer *pPlayer );
+
+	bool m_bIsStealing;
+	COutputEvent m_OnPointsStolen;
+	COutputEvent m_OnPointsStartStealing;
+	COutputEvent m_OnPointsEndStealing;
+};
+
+#endif// GAME_DLL
+#endif// LOGIC_ROBOT_DESTRUCTION_H

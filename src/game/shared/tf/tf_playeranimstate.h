@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2004, Valve LLC, All rights reserved. ============
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -10,7 +10,7 @@
 #endif
 
 #include "convar.h"
-#include "multiplayer_animstate.h"
+#include "../Multiplayer/multiplayer_animstate.h"
 
 #if defined( CLIENT_DLL )
 class C_TFPlayer;
@@ -37,27 +37,53 @@ public:
 
 	virtual void ClearAnimationState();
 	virtual Activity TranslateActivity( Activity actDesired );
+	Activity ActivityOverride( Activity baseAct, bool *pRequired );
 	virtual void Update( float eyeYaw, float eyePitch );
-	virtual Activity CalcMainActivity( void );
 
-	virtual void	DoAnimationEvent( PlayerAnimEvent_t event, int nData = 0 );
-	virtual void	RestartGesture( int iGestureSlot, Activity iGestureActivity, bool bAutoKill = true );
+	void	DoAnimationEvent( PlayerAnimEvent_t event, int nData = 0 );
+	virtual void CheckStunAnimation();
+	virtual Activity CalcMainActivity();
+	virtual void ComputePoseParam_AimYaw( CStudioHdr *pStudioHdr );
 
-	virtual bool	HandleMoving(Activity &idealActivity);
-	virtual bool	HandleJumping(Activity &idealActivity);
-	virtual bool	HandleDucking(Activity &idealActivity);
-	virtual bool	HandleSwimming(Activity &idealActivity);
+	void CheckPasstimeThrowAnimation();
+	void CheckCYOAPDAAnimtion();
 
-	void			CheckStunAnimation( void );
+	virtual float GetCurrentMaxGroundSpeed();
+	virtual float GetGesturePlaybackRate( void );
 
+	bool	HandleMoving( Activity &idealActivity );
+	bool	HandleJumping( Activity &idealActivity );
+	bool	HandleDucking( Activity &idealActivity );
+	bool	HandleSwimming( Activity &idealActivity );
 
+	virtual bool ShouldUpdateAnimState();
+
+	virtual void GetOuterAbsVelocity( Vector& vel );
+
+	bool	IsItemTestingBot( void );
+
+	virtual void RestartGesture( int iGestureSlot, Activity iGestureActivity, bool bAutoKill = true );
+
+	void	SetRenderangles( const QAngle& angles ) { m_angRender = angles; }
+
+	void	Vehicle_LeanAccel( float flInAccel );
 private:
+	void Taunt_ComputePoseParam_MoveX( CStudioHdr *pStudioHdr );
+	void Taunt_ComputePoseParam_MoveY( CStudioHdr *pStudioHdr );
+	void Vehicle_ComputePoseParam_MoveYaw( CStudioHdr *pStudioHdr );
+	void Vehicle_ComputePoseParam_AccelLean( CStudioHdr *pStudioHdr );
 	
 	CTFPlayer   *m_pTFPlayer;
 	bool		m_bInAirWalk;
-
 	float		m_flHoldDeployedPoseUntilTime;
-	float		m_flTauntAnimTime;
+	float		m_flTauntMoveX;
+	float		m_flTauntMoveY;
+	float		m_flVehicleLeanVel;
+	float		m_flVehicleLeanPos;
+	Vector		m_vecSmoothedUp;
+
+	typedef std::pair< int, float > CachedPoseParam_t;
+	CUtlVector< CachedPoseParam_t > m_PlayerPoseParams;
 };
 
 CTFPlayerAnimState *CreateTFPlayerAnimState( CTFPlayer *pPlayer );

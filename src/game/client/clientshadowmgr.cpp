@@ -1242,16 +1242,16 @@ CClientShadowMgr::CClientShadowMgr() :
 //-----------------------------------------------------------------------------
 CON_COMMAND_F( r_shadowdir, "Set shadow direction", FCVAR_CHEAT )
 {
-	Vector dir;
 	if ( args.ArgC() == 1 )
 	{
-		dir = s_ClientShadowMgr.GetShadowDirection();
+		Vector dir = s_ClientShadowMgr.GetShadowDirection();
 		Msg( "%.2f %.2f %.2f\n", dir.x, dir.y, dir.z );
 		return;
 	}
 
 	if ( args.ArgC() == 4 )
 	{
+		Vector dir;
 		dir.x = atof( args[1] );
 		dir.y = atof( args[2] );
 		dir.z = atof( args[3] );
@@ -1261,11 +1261,10 @@ CON_COMMAND_F( r_shadowdir, "Set shadow direction", FCVAR_CHEAT )
 
 CON_COMMAND_F( r_shadowangles, "Set shadow angles", FCVAR_CHEAT )
 {
-	Vector dir;
-	QAngle angles;
 	if (args.ArgC() == 1)
 	{
-		dir = s_ClientShadowMgr.GetShadowDirection();
+		Vector dir = s_ClientShadowMgr.GetShadowDirection();
+		QAngle angles;
 		VectorAngles( dir, angles );
 		Msg( "%.2f %.2f %.2f\n", angles.x, angles.y, angles.z );
 		return;
@@ -1273,6 +1272,8 @@ CON_COMMAND_F( r_shadowangles, "Set shadow angles", FCVAR_CHEAT )
 
 	if (args.ArgC() == 4)
 	{
+		Vector dir;
+		QAngle angles;
 		angles.x = atof( args[1] );
 		angles.y = atof( args[2] );
 		angles.z = atof( args[3] );
@@ -1359,7 +1360,8 @@ bool CClientShadowMgr::Init()
 
 	SetShadowBlobbyCutoffArea( 0.005 );
 
-	m_nMaxDepthTextureShadows = (r_max_shadowtextures.GetInt() > 0) ? r_max_shadowtextures.GetInt() : 4;
+	bool bTools = CommandLine()->CheckParm( "-tools" ) != NULL;
+	m_nMaxDepthTextureShadows = bTools ? 4 : 1;	// Just one shadow depth texture in games, more in tools
 
 	bool bLowEnd = ( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() < 80 );
 
@@ -1689,8 +1691,8 @@ void CClientShadowMgr::SetupRenderToTextureShadow( ClientShadowHandle_t h )
 	// Compute the maximum dimension
 	Vector size;
 	VectorSubtract( maxs, mins, size );
-	float maxSize = Max( size.x, size.y );
-	maxSize = Max( maxSize, size.z );
+	float maxSize = MAX( size.x, size.y );
+	maxSize = MAX( maxSize, size.z );
 
 	// Figure out the texture size
 	// For now, we're going to assume a fixed number of shadow texels
@@ -2188,7 +2190,7 @@ float CClientShadowMgr::ComputeLocalShadowOrigin( IClientRenderable* pRenderable
 //-----------------------------------------------------------------------------
 static inline void SortAbsVectorComponents( const Vector& src, int* pVecIdx )
 {
-	Vector absVec( fabsf(src[0]), fabsf(src[1]), fabsf(src[2]) );
+	Vector absVec( fabs(src[0]), fabs(src[1]), fabs(src[2]) );
 
 	int maxIdx = (absVec[0] > absVec[1]) ? 0 : 1;
 	if (absVec[2] > absVec[maxIdx])
@@ -2326,7 +2328,7 @@ void CClientShadowMgr::ComputeExtraClipPlanes( IClientRenderable* pRenderable,
 }
 
 
-ShadowType_t CClientShadowMgr::GetActualShadowCastType( ClientShadowHandle_t handle ) const
+inline ShadowType_t CClientShadowMgr::GetActualShadowCastType( ClientShadowHandle_t handle ) const
 {
 	if ( handle == CLIENTSHADOW_INVALID_HANDLE )
 	{
@@ -2347,7 +2349,7 @@ ShadowType_t CClientShadowMgr::GetActualShadowCastType( ClientShadowHandle_t han
 	}
 }
 
-ShadowType_t CClientShadowMgr::GetActualShadowCastType( IClientRenderable *pEnt ) const
+inline ShadowType_t CClientShadowMgr::GetActualShadowCastType( IClientRenderable *pEnt ) const
 {
 	return GetActualShadowCastType( pEnt->GetShadowHandle() );
 }
@@ -2359,7 +2361,7 @@ ShadowType_t CClientShadowMgr::GetActualShadowCastType( IClientRenderable *pEnt 
 class CShadowLeafEnum : public ISpatialLeafEnumerator
 {
 public:
-	bool EnumerateLeaf( int leaf, int context )
+	bool EnumerateLeaf( int leaf, intp context )
 	{
 		m_LeafList.AddToTail( leaf );
 		return true;
@@ -2433,12 +2435,12 @@ void CClientShadowMgr::BuildOrthoShadow( IClientRenderable* pRenderable,
 	// We project the two longest sides into the vectors perpendicular
 	// to the projection direction, then add in the projection of the perp direction
 	Vector2D size( boxSize[vecIdx[0]], boxSize[vecIdx[1]] );
-	size.x *= fabsf( DotProduct( vec[vecIdx[0]], xvec ) );
-	size.y *= fabsf( DotProduct( vec[vecIdx[1]], yvec ) );
+	size.x *= fabs( DotProduct( vec[vecIdx[0]], xvec ) );
+	size.y *= fabs( DotProduct( vec[vecIdx[1]], yvec ) );
 
 	// Add the third component into x and y
-	size.x += boxSize[vecIdx[2]] * fabsf( DotProduct( vec[vecIdx[2]], xvec ) );
-	size.y += boxSize[vecIdx[2]] * fabsf( DotProduct( vec[vecIdx[2]], yvec ) );
+	size.x += boxSize[vecIdx[2]] * fabs( DotProduct( vec[vecIdx[2]], xvec ) );
+	size.y += boxSize[vecIdx[2]] * fabs( DotProduct( vec[vecIdx[2]], yvec ) );
 
 	// Bloat a bit, since the shadow wants to extend outside the model a bit
 	size.x += 10.0f;
@@ -2499,7 +2501,10 @@ void CClientShadowMgr::BuildOrthoShadow( IClientRenderable* pRenderable,
 // Visualization....
 //-----------------------------------------------------------------------------
 void CClientShadowMgr::DrawRenderToTextureDebugInfo( IClientRenderable* pRenderable, const Vector& mins, const Vector& maxs )
-{   
+{
+	if ( !debugoverlay )
+		return;
+
 	// Get the object's basis
 	Vector vec[3];
 	AngleVectors( pRenderable->GetRenderAngles(), &vec[0], &vec[1], &vec[2] );
@@ -2600,7 +2605,7 @@ void CClientShadowMgr::BuildRenderToTextureShadow( IClientRenderable* pRenderabl
 	Vector boxSize;
 	VectorSubtract( maxs, mins, boxSize );
 	
-	Vector yvec(0);
+	Vector yvec = vec3_origin;
 	float fProjMax = 0.0f;
 	for( int i = 0; i != 3; ++i )
 	{
@@ -2617,18 +2622,18 @@ void CClientShadowMgr::BuildRenderToTextureShadow( IClientRenderable* pRenderabl
 	VectorNormalize( yvec );
 
 	// Compute the x vector
-	Vector xvec(0);
+	Vector xvec;
 	CrossProduct( yvec, vecShadowDir, xvec );
 
 	// We project the two longest sides into the vectors perpendicular
 	// to the projection direction, then add in the projection of the perp direction
 	Vector2D size;
-	size.x = boxSize.x * fabsf( DotProduct( vec[0], xvec ) ) + 
-		boxSize.y * fabsf( DotProduct( vec[1], xvec ) ) + 
-		boxSize.z * fabsf( DotProduct( vec[2], xvec ) );
-	size.y = boxSize.x * fabsf( DotProduct( vec[0], yvec ) ) + 
-		boxSize.y * fabsf( DotProduct( vec[1], yvec ) ) + 
-		boxSize.z * fabsf( DotProduct( vec[2], yvec ) );
+	size.x = boxSize.x * fabs( DotProduct( vec[0], xvec ) ) + 
+		boxSize.y * fabs( DotProduct( vec[1], xvec ) ) + 
+		boxSize.z * fabs( DotProduct( vec[2], xvec ) );
+	size.y = boxSize.x * fabs( DotProduct( vec[0], yvec ) ) + 
+		boxSize.y * fabs( DotProduct( vec[1], yvec ) ) + 
+		boxSize.z * fabs( DotProduct( vec[2], yvec ) );
 
 	size.x += 2.0f * TEXEL_SIZE_PER_CASTER_SIZE;
 	size.y += 2.0f * TEXEL_SIZE_PER_CASTER_SIZE;
@@ -2681,8 +2686,11 @@ static void LineDrawHelper( const Vector &startShadowSpace, const Vector &endSha
 	Vector3DMultiplyPositionProjective( shadowToWorld, startShadowSpace, startWorldSpace );
 	Vector3DMultiplyPositionProjective( shadowToWorld, endShadowSpace, endWorldSpace );
 
-	debugoverlay->AddLineOverlay( startWorldSpace + Vector( 0.0f, 0.0f, 1.0f ), 
-		endWorldSpace + Vector( 0.0f, 0.0f, 1.0f ), r, g, b, false, -1 );
+	if ( debugoverlay )
+	{
+		debugoverlay->AddLineOverlay( startWorldSpace + Vector( 0.0f, 0.0f, 1.0f ), 
+			endWorldSpace + Vector( 0.0f, 0.0f, 1.0f ), r, g, b, false, -1 );
+	}
 }
 
 static void DebugDrawFrustum( const Vector &vOrigin, const VMatrix &matWorldToFlashlight )
@@ -3062,7 +3070,7 @@ void CClientShadowMgr::PreRender()
 
 	// Transparent shadows must remain dirty, since they were not re-projected
 	int nCount = m_TransparentShadows.Count();
-	for ( int i = 0; i < nCount; ++i )
+	for ( i = 0; i < nCount; ++i )
 	{
 		m_DirtyShadows.Insert( m_TransparentShadows[i] );
 	}
@@ -3292,7 +3300,9 @@ void CClientShadowMgr::UpdateProjectedTextureInternal( ClientShadowHandle_t hand
 		VPROF_BUDGET( "CClientShadowMgr::UpdateProjectedTextureInternal", VPROF_BUDGETGROUP_SHADOW_DEPTH_TEXTURING );
 
 		Assert( ( shadow.m_Flags & SHADOW_FLAGS_SHADOW ) == 0 );
-		shadowmgr->EnableShadow( shadow.m_ShadowHandle, true );
+		ClientShadow_t& shadowClient = m_Shadows[handle];
+
+		shadowmgr->EnableShadow( shadowClient.m_ShadowHandle, true );
 
 		// FIXME: What's the difference between brush and model shadows for light projectors? Answer: nothing.
 		UpdateBrushShadow( NULL, handle );
@@ -4066,11 +4076,11 @@ void CClientShadowMgr::ComputeShadowDepthTextures( const CViewSetup &viewSetup )
 		if ( !bGotShadowDepthTexture )
 		{
 			// If we don't get one, that means we have too many this frame so bind no depth texture
-			static int bitchCount = 0;
-			if( bitchCount < 10 )
+			static int mapCount = 0;
+			if( mapCount < 10 )
 			{
 				Warning( "Too many shadow maps this frame!\n"  );
-				bitchCount++;
+				mapCount++;
 			}
 
 			Assert(0);
@@ -4109,15 +4119,15 @@ void CClientShadowMgr::ComputeShadowDepthTextures( const CViewSetup &viewSetup )
 		}
 
 		// Set depth bias factors specific to this flashlight
-		CMatRenderContextPtr pRenderContext( materials );
-		pRenderContext->SetShadowDepthBiasFactors( flashlightState.m_flShadowSlopeScaleDepthBias, flashlightState.m_flShadowDepthBias );
+		CMatRenderContextPtr pRenderContextMat( materials );
+		pRenderContextMat->SetShadowDepthBiasFactors( flashlightState.m_flShadowSlopeScaleDepthBias, flashlightState.m_flShadowDepthBias );
 
 		// Render to the shadow depth texture with appropriate view
 		view->UpdateShadowDepthTexture( m_DummyColorTexture, shadowDepthTexture, shadowView );
 
 		if ( j <= ( INT_FLASHLIGHT_DEPTHTEXTURE_FALLBACK_LAST - INT_FLASHLIGHT_DEPTHTEXTURE_FALLBACK_FIRST ) )
 		{
-			pRenderContext->SetIntRenderingParameter( INT_FLASHLIGHT_DEPTHTEXTURE_FALLBACK_FIRST + j, reinterpret_cast<int>( &(*shadowDepthTexture) )  );
+			pRenderContext->SetIntRenderingParameter( INT_FLASHLIGHT_DEPTHTEXTURE_FALLBACK_FIRST + j, *reinterpret_cast<int *>( &(*shadowDepthTexture) )  );
 
 			FlashlightState_t state = shadowmgr->GetFlashlightState( shadow.m_ShadowHandle );
 
@@ -4145,16 +4155,18 @@ static void SetupBonesOnBaseAnimating( C_BaseAnimating *&pBaseAnimating )
 }
 
 
-void CClientShadowMgr::ComputeShadowTextures( const CViewSetup &view, int leafCount, LeafIndex_t* pLeafList )
+void CClientShadowMgr::ComputeShadowTextures( const CViewSetup &viewShadow, int leafCount, LeafIndex_t* pLeafList )
 {
 	VPROF_BUDGET( "CClientShadowMgr::ComputeShadowTextures", VPROF_BUDGETGROUP_SHADOW_RENDERING );
 
 	if ( !m_RenderToTextureActive || (r_shadows.GetInt() == 0) || r_shadows_gamecontrol.GetInt() == 0 )
 		return;
 
+	m_bThreaded = false;//( r_threaded_client_shadow_manager.GetBool() && g_pThreadPool->NumIdleThreads() );
+
 	MDLCACHE_CRITICAL_SECTION();
 	// First grab all shadow textures we may want to render
-	int nCount = s_VisibleShadowList.FindShadows( &view, leafCount, pLeafList );
+	int nCount = s_VisibleShadowList.FindShadows( &viewShadow, leafCount, pLeafList );
 	if ( nCount == 0 )
 		return;
 
@@ -4567,7 +4579,7 @@ bool CShadowProxy::Init( IMaterial *pMaterial, KeyValues *pKeyValues )
 
 void CShadowProxy::OnBind( void *pProxyData )
 {
-	unsigned short clientShadowHandle = ( unsigned short )(int)pProxyData&0xffff;
+	unsigned short clientShadowHandle = ( unsigned short )(intp)pProxyData&0xffff;
 	ITexture* pTex = s_ClientShadowMgr.GetShadowTexture( clientShadowHandle );
 	m_BaseTextureVar->SetTextureValue( pTex );
 	if ( ToolsEnabled() )
@@ -4651,7 +4663,7 @@ bool CShadowModelProxy::Init( IMaterial *pMaterial, KeyValues *pKeyValues )
 
 void CShadowModelProxy::OnBind( void *pProxyData )
 {
-	unsigned short clientShadowHandle = ( unsigned short )((int)pProxyData&0xffff);
+	unsigned short clientShadowHandle = ( unsigned short )((intp)pProxyData&0xffff);
 	ITexture* pTex = s_ClientShadowMgr.GetShadowTexture( clientShadowHandle );
 	m_BaseTextureVar->SetTextureValue( pTex );
 

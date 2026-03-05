@@ -1,63 +1,67 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_melee_attack.h
+// Attack a threat with out melee weapon
+// Michael Booth, February 2009
+
 #include "cbase.h"
-#include "../tf_bot.h"
-#include "tf_bot_melee_attack.h"
+#include "bot/tf_bot.h"
+#include "bot/behavior/tf_bot_melee_attack.h"
+
+#include "nav_mesh.h"
+
+extern ConVar tf_bot_path_lookahead_range;
 
 ConVar tf_bot_melee_attack_abandon_range( "tf_bot_melee_attack_abandon_range", "500", FCVAR_CHEAT, "If threat is farther away than this, bot will switch back to its primary weapon and attack" );
 
 
-CTFBotMeleeAttack::CTFBotMeleeAttack( float flAbandonRange )
+//---------------------------------------------------------------------------------------------
+CTFBotMeleeAttack::CTFBotMeleeAttack( float giveUpRange )
 {
-	if ( flAbandonRange < 0.0f )
-	{
-		this->m_flAbandonRange = tf_bot_melee_attack_abandon_range.GetFloat();
-	}
-	else
-	{
-		this->m_flAbandonRange = flAbandonRange;
-	}
-}
-
-CTFBotMeleeAttack::~CTFBotMeleeAttack()
-{
+	m_giveUpRange = giveUpRange < 0.0f ? tf_bot_melee_attack_abandon_range.GetFloat() : giveUpRange;
 }
 
 
-const char *CTFBotMeleeAttack::GetName() const
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotMeleeAttack::OnStart( CTFBot *me, Action< CTFBot > *priorAction )
 {
-	return "MeleeAttack";
+	m_path.SetMinLookAheadDistance( me->GetDesiredPathLookAheadRange() );
+
+	return Continue();
 }
 
 
-ActionResult<CTFBot> CTFBotMeleeAttack::OnStart( CTFBot *me, Action<CTFBot> *priorAction )
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotMeleeAttack::Update( CTFBot *me, float interval )
 {
-	m_ChasePath.SetMinLookAheadDistance( me->GetDesiredPathLookAheadRange() );
-
-	return Action<CTFBot>::Continue();
-}
-
-ActionResult<CTFBot> CTFBotMeleeAttack::Update( CTFBot *me, float dt )
-{
+	// bash the bad guys
 	const CKnownEntity *threat = me->GetVisionInterface()->GetPrimaryKnownThreat();
-	if ( threat == nullptr )
+
+	if ( threat == NULL )
 	{
-		return Action<CTFBot>::Done( "No threat" );
+		return Done( "No threat" );
 	}
 
-	if ( ( threat->GetLastKnownPosition() - me->GetAbsOrigin() ).LengthSqr() > Square( m_flAbandonRange ) )
+	if ( me->IsDistanceBetweenGreaterThan( threat->GetLastKnownPosition(), m_giveUpRange ) )
 	{
-		return Action<CTFBot>::Done( "Threat is too far away for a melee attack" );
+		// threat is too far away for melee
+		return Done( "Threat is too far away for a melee attack" );
 	}
 
-	CBaseCombatWeapon *melee = me->Weapon_GetSlot( 2 );
-	if ( melee != nullptr )
+	// switch to our melee weapon
+	CBaseCombatWeapon *meleeWeapon = me->Weapon_GetSlot( TF_WPN_TYPE_MELEE );
+	if ( meleeWeapon )
 	{
-		me->Weapon_Switch( melee );
+		me->Weapon_Switch( meleeWeapon );
 	}
 
+	// actual head aiming is handled elsewhere
+
+	// just keep swinging
 	me->PressFireButton();
 
+	// chase them down
 	CTFBotPathCost cost( me, FASTEST_ROUTE );
-	m_ChasePath.Update( me, threat->GetEntity(), cost );
+	m_path.Update( me, threat->GetEntity(), cost );
 
-	return Action<CTFBot>::Continue();
+	return Continue();
 }

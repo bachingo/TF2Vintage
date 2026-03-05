@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2002, Valve LLC, All rights reserved. ============
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -20,29 +20,87 @@
 #include "ienginevgui.h"
 #include <game/client/iviewport.h>
 #include "tf_tips.h"
+#include "tf_mapinfo.h"
+#include "vgui_avatarimage.h"
+#include "VGuiMatSurface/IMatSystemSurface.h"
 
 #include "tf_statsummary.h"
 #include <convar.h>
 #include "fmtstr.h"
+#include "tf_gamerules.h"
+#include "tf_gc_client.h"
 
 using namespace vgui;
 
-// Tip portraits
-const char* g_pszTipsClassImages[] = 
+#if defined( REPLAY_ENABLED )
+extern bool g_bIsReplayRewinding;
+#else
+bool g_bIsReplayRewinding = false;
+#endif
+
+const char *g_pszTipsClassImages[] =
 {
-	"class_portraits/all_class",
-	"class_portraits/scout",
-	"class_portraits/sniper",
-	"class_portraits/soldier",
-	"class_portraits/demoman",
-	"class_portraits/medic",
-	"class_portraits/heavy",
-	"class_portraits/pyro",
-	"class_portraits/spy",
-	"class_portraits/engineer",
+	"",						// TF_CLASS_UNDEFINED = 0,
+	"class_portraits/scout",	// TF_CLASS_SCOUT,			
+	"class_portraits/sniper",// TF_CLASS_SNIPER,
+	"class_portraits/soldier",		// TF_CLASS_SOLDIER,
+	"class_portraits/demoman",		// TF_CLASS_DEMOMAN,
+	"class_portraits/medic",		// TF_CLASS_MEDIC,
+	"class_portraits/heavy",	// TF_CLASS_HEAVYWEAPONS,
+	"class_portraits/pyro",	// TF_CLASS_PYRO,
+	"class_portraits/spy",		// TF_CLASS_SPY,
+	"class_portraits/engineer",		// TF_CLASS_ENGINEER,		
+};
+
+ClassDetails_t g_PerClassStatDetails[15] =
+{
+	{ TFSTAT_POINTSSCORED,			ALL_CLASSES,					"#TF_ClassRecord_MostPoints", "#TF_ClassRecord_Alt_MostPoints" },
+	{ TFSTAT_KILLS,					ALL_CLASSES,					"#TF_ClassRecord_MostKills", "#TF_ClassRecord_Alt_MostKills" },
+	{ TFSTAT_KILLASSISTS,			ALL_CLASSES,					"#TF_ClassRecord_MostAssists", "#TF_ClassRecord_Alt_MostAssists" },
+	{ TFSTAT_CAPTURES,				ALL_CLASSES,					"#TF_ClassRecord_MostCaptures", "#TF_ClassRecord_Alt_MostCaptures" },
+	{ TFSTAT_DEFENSES,				ALL_CLASSES,					"#TF_ClassRecord_MostDefenses", "#TF_ClassRecord_Alt_MostDefenses" },
+	{ TFSTAT_DAMAGE,				ALL_CLASSES,					"#TF_ClassRecord_MostDamage", "#TF_ClassRecord_Alt_MostDamage" },
+	{ TFSTAT_BUILDINGSDESTROYED,	ALL_CLASSES,					"#TF_ClassRecord_MostDestruction", "#TF_ClassRecord_Alt_MostDestruction" },
+	{ TFSTAT_DOMINATIONS,			ALL_CLASSES,					"#TF_ClassRecord_MostDominations", "#TF_ClassRecord_Alt_MostDominations" },
+	{ TFSTAT_PLAYTIME,				ALL_CLASSES,					"#TF_ClassRecord_LongestLife", "#TF_ClassRecord_Alt_LongestLife" },
+	{ TFSTAT_HEALING,				MAKESTATFLAG(TF_CLASS_MEDIC) | MAKESTATFLAG(TF_CLASS_ENGINEER) | MAKESTATFLAG(TF_CLASS_HEAVYWEAPONS),	"#TF_ClassRecord_MostHealing", "#TF_ClassRecord_Alt_MostHealing" },
+	{ TFSTAT_INVULNS,				MAKESTATFLAG(TF_CLASS_MEDIC),		"#TF_ClassRecord_MostInvulns", "#TF_ClassRecord_Alt_MostInvulns" },
+	{ TFSTAT_MAXSENTRYKILLS,		MAKESTATFLAG(TF_CLASS_ENGINEER),	"#TF_ClassRecord_MostSentryKills", "#TF_ClassRecord_Alt_MostSentryKills" },
+	{ TFSTAT_TELEPORTS,				MAKESTATFLAG(TF_CLASS_ENGINEER),	"#TF_ClassRecord_MostTeleports", "#TF_ClassRecord_Alt_MostTeleports" },
+	{ TFSTAT_HEADSHOTS,				MAKESTATFLAG(TF_CLASS_SNIPER) | MAKESTATFLAG(TF_CLASS_SPY),		"#TF_ClassRecord_MostHeadshots", "#TF_ClassRecord_Alt_MostHeadshots" },
+	{ TFSTAT_BACKSTABS,				MAKESTATFLAG(TF_CLASS_SPY),			"#TF_ClassRecord_MostBackstabs", "#TF_ClassRecord_Alt_MostBackstabs" },
+};
+
+ClassDetails_t g_PerClassMVMStatDetails[12] =
+{
+	{ TFSTAT_POINTSSCORED,			ALL_CLASSES,					"#TF_ClassRecord_MostPoints", "#TF_ClassRecord_Alt_MostPoints" },
+	{ TFSTAT_KILLS,					ALL_CLASSES,					"#TF_ClassRecord_MostKills", "#TF_ClassRecord_Alt_MostKills" },
+	{ TFSTAT_KILLASSISTS,			ALL_CLASSES,					"#TF_ClassRecord_MostAssists", "#TF_ClassRecord_Alt_MostAssists" },
+	{ TFSTAT_DEFENSES,				ALL_CLASSES,					"#TF_ClassRecord_MostDefenses", "#TF_ClassRecord_Alt_MostDefenses" },
+	{ TFSTAT_DAMAGE,				ALL_CLASSES,					"#TF_ClassRecord_MostDamage", "#TF_ClassRecord_Alt_MostDamage" },
+	{ TFSTAT_PLAYTIME,				ALL_CLASSES,					"#TF_ClassRecord_LongestLife", "#TF_ClassRecord_Alt_LongestLife" },
+	{ TFSTAT_HEALING,				MAKESTATFLAG(TF_CLASS_MEDIC) | MAKESTATFLAG(TF_CLASS_ENGINEER) | MAKESTATFLAG(TF_CLASS_HEAVYWEAPONS),	"#TF_ClassRecord_MostHealing", "#TF_ClassRecord_Alt_MostHealing" },
+	{ TFSTAT_INVULNS,				MAKESTATFLAG(TF_CLASS_MEDIC),		"#TF_ClassRecord_MostInvulns", "#TF_ClassRecord_Alt_MostInvulns" },
+	{ TFSTAT_MAXSENTRYKILLS,		MAKESTATFLAG(TF_CLASS_ENGINEER),	"#TF_ClassRecord_MostSentryKills", "#TF_ClassRecord_Alt_MostSentryKills" },
+	{ TFSTAT_TELEPORTS,				MAKESTATFLAG(TF_CLASS_ENGINEER),	"#TF_ClassRecord_MostTeleports", "#TF_ClassRecord_Alt_MostTeleports" },
+	{ TFSTAT_HEADSHOTS,				MAKESTATFLAG(TF_CLASS_SNIPER) | MAKESTATFLAG(TF_CLASS_SPY),		"#TF_ClassRecord_MostHeadshots", "#TF_ClassRecord_Alt_MostHeadshots" },
+	{ TFSTAT_BACKSTABS,				MAKESTATFLAG(TF_CLASS_SPY),			"#TF_ClassRecord_MostBackstabs", "#TF_ClassRecord_Alt_MostBackstabs" },
 };
 
 CTFStatsSummaryPanel *g_pTFStatsSummaryPanel = NULL;
+
+CUtlVector<CTFStatsSummaryPanel *> g_vecStatPanels;
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void UpdateStatSummaryPanels( CUtlVector<ClassStats_t> &vecClassStats )
+{
+	for ( int i = 0; i < g_vecStatPanels.Count(); i++ )
+	{
+		g_vecStatPanels[i]->SetStats( vecClassStats );
+	}
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Returns the global stats summary panel
@@ -63,7 +121,7 @@ void DestroyStatsSummaryPanel()
 {
 	if ( NULL != g_pTFStatsSummaryPanel )
 	{
-		delete g_pTFStatsSummaryPanel;
+		g_pTFStatsSummaryPanel->MarkForDeletion();
 		g_pTFStatsSummaryPanel = NULL;
 	}
 }
@@ -71,11 +129,22 @@ void DestroyStatsSummaryPanel()
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CTFStatsSummaryPanel::CTFStatsSummaryPanel() : vgui::EditablePanel( NULL, "TFStatsSummary", 
-	vgui::scheme()->LoadSchemeFromFile( "Resource/ClientScheme.res", "ClientScheme" ) )
+CTFStatsSummaryPanel::CTFStatsSummaryPanel() 
+  : BaseClass( NULL, "TFStatsSummary", vgui::scheme()->LoadSchemeFromFile( "Resource/ClientScheme.res", "ClientScheme" ) )
+  ,	m_bShowingLeaderboard( false )
+  , m_bLoadingCommunityMap( false )
+{
+	Init();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Constructor
+//-----------------------------------------------------------------------------
+void CTFStatsSummaryPanel::Init( void )
 {
 	m_bControlsLoaded = false;
 	m_bInteractive = false;
+	m_bEmbedded = false;
 	m_xStartLHBar = 0;
 	m_xStartRHBar = 0;
 	m_iBarHeight = 1;
@@ -89,17 +158,18 @@ CTFStatsSummaryPanel::CTFStatsSummaryPanel() : vgui::EditablePanel( NULL, "TFSta
 	m_pClassComboBox = new vgui::ComboBox( m_pInteractiveHeaders, "ClassCombo", 10, false );	
 	m_pTipImage = new CTFImagePanel( this, "TipImage" );
 	m_pTipText = new vgui::Label( this, "TipText", "" );
-	m_pMapLabel = new CExLabel( this, "MapLabel", "" );
-	m_pMapType = new CExLabel( this, "MapType", "" );
+	m_pMapInfoPanel = NULL;
+	m_pMainBackground = NULL;
+	m_pLeaderboardTitle = NULL;
+	m_pContributedPanel = NULL;
 
 #ifdef _X360
 	m_pFooter = new CTFFooter( this, "Footer" );
 	m_bShowBackButton = false;
 #else
 	m_pNextTipButton = new vgui::Button( this, "NextTipButton", "" );	
-	m_pCloseButton = new vgui::Button( this, "CloseButton", "" );
 	m_pResetStatsButton = new vgui::Button( this, "ResetStatsButton", "" );
-
+	m_pCloseButton = new vgui::Button( this, "CloseButton", "" );	
 #endif
 
 	m_pBarChartComboBoxA->AddActionSignalTarget( this );
@@ -109,6 +179,25 @@ CTFStatsSummaryPanel::CTFStatsSummaryPanel() : vgui::EditablePanel( NULL, "TFSta
 	ListenForGameEvent( "server_spawn" );
 
 	Reset();
+
+	g_vecStatPanels.AddToTail( this );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Constructor
+//-----------------------------------------------------------------------------
+CTFStatsSummaryPanel::CTFStatsSummaryPanel( vgui::Panel *parent ) : BaseClass( parent, "TFStatsSummary", 
+	vgui::scheme()->LoadSchemeFromFile( "Resource/ClientScheme.res", "ClientScheme" ) )
+{
+	Init();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CTFStatsSummaryPanel::~CTFStatsSummaryPanel()
+{
+	g_vecStatPanels.FindAndRemove( this );
 }
 
 //-----------------------------------------------------------------------------
@@ -124,10 +213,23 @@ void CTFStatsSummaryPanel::ShowModal()
 	m_bInteractive = true;
 #endif
 
-	SetParent( enginevgui->GetPanel( PANEL_GAMEDLL ) );
+	SetParent( enginevgui->GetPanel( PANEL_GAMEUIDLL ) );
 	UpdateDialog();
 	SetVisible( true );
 	MoveToFront();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFStatsSummaryPanel::SetupForEmbedded( void )
+{
+	m_bInteractive = true;
+	m_bEmbedded = true;
+
+	UpdateDialog();
+
+	InvalidateLayout( true, true );
 }
 
 //-----------------------------------------------------------------------------
@@ -138,36 +240,38 @@ void CTFStatsSummaryPanel::PerformLayout()
 	BaseClass::PerformLayout();
 
 #ifndef _X360
-	/*if ( m_pTipImage && m_pTipText )
+	if ( m_pTipImage && m_pTipText )
 	{
-		int x1, x2, y, w, t;
-
-		x1 = m_pTipImage->GetXPos();
-		m_pTipText->GetBounds( x2, y, w, t );
-
-		m_pTipText->SetPos( ( ScreenWidth() * 0.0125 ) + ( x1 + w ), y );
-		m_pTipText->InvalidateLayout( false, true ); // have it re-layout the contents so it's wrapped correctly now that we've changed the size
-	}*/
-
-	vgui::Label *pLabel = dynamic_cast<Label *>( FindChildByName( "OnYourWayLabel" ) );
-	if ( pLabel && m_pMapLabel && m_pMapType )
-	{
-		int x1, x2, y;
-		pLabel->GetPos( x1, y );
-		pLabel->SetPos( 0, y );
-
-		m_pMapLabel->GetPos( x2, y );
-		m_pMapLabel->SetPos( x2 - x1, y );
-
-		m_pMapType->GetPos( x2, y );
-		m_pMapType->SetPos( x2 - x1, y );
+		int iX,iY;
+		m_pTipImage->GetPos(iX,iY);
+		int iTX, iTY;
+		m_pTipText->GetPos(iTX, iTY);
+		m_pTipText->SetPos( iX + m_pTipImage->GetWide() + XRES(8), iTY );
 	}
 
 	if ( m_pNextTipButton )
 	{
 		m_pNextTipButton->SizeToContents();
 	}
+
+	if ( m_pResetStatsButton )
+	{
+		m_pResetStatsButton->SizeToContents();
+	}
 #endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFStatsSummaryPanel::OnThink()
+{
+	BaseClass::OnThink();
+
+	if ( m_bShowingLeaderboard )
+	{
+		UpdateLeaderboard();
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -181,12 +285,25 @@ void CTFStatsSummaryPanel::OnCommand( const char *command )
 		UpdateDialog();
 		SetVisible( false );
 		SetParent( (VPANEL) NULL );
-		SetDefaultSelections();
 
 #ifdef _X360
+		SetDefaultSelections();
 		m_bShowBackButton = true;
 #endif
 	}
+#ifndef _X360
+	else if ( 0 == Q_stricmp( command, "resetstatsbutton" ) )
+	{
+		QueryBox *qb = new QueryBox( "#GameUI_Confirm", "#TF_ConfirmResetStats" );
+		if (qb != NULL)
+		{
+			qb->SetOKCommand(new KeyValues("DoResetStats") );
+			qb->AddActionSignalTarget(this);
+			qb->MoveToFront();
+			qb->DoModal();
+		}
+	}
+#endif
 	else if ( 0 == Q_stricmp( command, "nexttip" ) )
 	{
 		UpdateTip();
@@ -220,6 +337,46 @@ void CTFStatsSummaryPanel::SetDefaultSelections()
 	m_pBarChartComboBoxB->ActivateItemByRow( 10 );
 }
 
+
+//-----------------------------------------------------------------------------
+// Purpose: Set the background image based on the current mode
+//-----------------------------------------------------------------------------
+void CTFStatsSummaryPanel::UpdateMainBackground( void )
+{
+	if ( IsPC() )
+	{
+		m_pMainBackground = dynamic_cast<ImagePanel *>( FindChildByName( "MainBackground" ) );
+		if ( m_pMainBackground )
+		{
+			const IMatchGroupDescription* pMatchDesc = GetMatchGroupDescription( GTFGCClientSystem()->GetLiveMatchGroup() );
+
+			// determine if we're in widescreen or not and select the appropriate image
+			int screenWide, screenTall;
+			surface()->GetScreenSize( screenWide, screenTall );
+			float aspectRatio = (float)screenWide/(float)screenTall;
+			bool bIsWidescreen = aspectRatio >= 1.5999f;
+
+			if ( g_bIsReplayRewinding )
+			{
+				m_pMainBackground->SetImage( bIsWidescreen ? "../console/rewind_background_widescreen" : "../console/rewind_background" );
+			}
+			else if ( engine->IsLoadingDemo() || engine->IsPlayingDemo() || engine->IsSkippingPlayback() )
+			{
+				m_pMainBackground->SetImage( bIsWidescreen ? "../console/replay_loading_widescreen" : "../console/replay_loading" );
+			}
+			else if ( pMatchDesc && pMatchDesc->GetMapLoadBackgroundOverride( bIsWidescreen ) ) // Use match override if we have one
+			{
+				m_pMainBackground->SetImage( pMatchDesc->GetMapLoadBackgroundOverride( bIsWidescreen ) );
+			}
+			else
+			{
+				m_pMainBackground->SetImage( bIsWidescreen ? "../console/background01_widescreen" : "../console/background01" );
+			}
+		}
+	}
+}
+
+
 //-----------------------------------------------------------------------------
 // Purpose: Applies scheme settings
 //-----------------------------------------------------------------------------
@@ -228,22 +385,30 @@ void CTFStatsSummaryPanel::ApplySchemeSettings(vgui::IScheme *pScheme)
 	BaseClass::ApplySchemeSettings( pScheme );
 
 	SetProportional( true );
-	LoadControlSettings( "Resource/UI/StatSummary.res" );
+
+	if ( m_bEmbedded )
+	{
+		LoadControlSettings( "Resource/UI/StatSummary_Embedded.res" );
+	}
+	else
+	{
+		LoadControlSettings( "Resource/UI/StatSummary.res" );
+	}
 	m_bControlsLoaded = true;
 
 	// set the background image
-	if ( IsPC() )
-	{
-		ImagePanel *pImagePanel = dynamic_cast<ImagePanel *>( FindChildByName( "MainBackground" ) );
-		if ( pImagePanel )
-		{
-			// determine if we're in widescreen or not and select the appropriate image
-			int screenWide, screenTall;
-			surface()->GetScreenSize( screenWide, screenTall );
-			float aspectRatio = (float)screenWide/(float)screenTall;
-			bool bIsWidescreen = aspectRatio >= 1.6f;
+	UpdateMainBackground();
 
-			pImagePanel->SetImage( bIsWidescreen ? "../console/background01_widescreen" : "../console/background01" );
+	m_pMapInfoPanel = dynamic_cast< EditablePanel *>( FindChildByName( "MapInfo" ) );
+	m_vecLeaderboardEntries.RemoveAll();
+	if ( m_pMapInfoPanel )
+	{
+		for ( int i = 0; i < 10; ++ i )
+		{
+			vgui::EditablePanel *pEntryUI = new vgui::EditablePanel( m_pMapInfoPanel, "LeaderboardEntry" );
+			pEntryUI->ApplySchemeSettings( pScheme );
+			pEntryUI->LoadControlSettings( "Resource/UI/LeaderboardEntry.res" );
+			m_vecLeaderboardEntries.AddToTail( pEntryUI );
 		}
 	}
 
@@ -270,15 +435,26 @@ void CTFStatsSummaryPanel::ApplySchemeSettings(vgui::IScheme *pScheme)
 	m_pClassComboBox->AddItem( "#StatSummary_Label_AsAnyClass", pKeyValues );
 	for ( int iClass = TF_FIRST_NORMAL_CLASS; iClass <= TF_LAST_NORMAL_CLASS; iClass++ )
 	{
+		if ( iClass == TF_CLASS_CIVILIAN )
+			continue;
 		pKeyValues = new KeyValues( "data" );
 		pKeyValues->SetInt( "class", iClass );
 		m_pClassComboBox->AddItem( g_aPlayerClassNames[iClass], pKeyValues );
 	}
 	m_pClassComboBox->ActivateItemByRow( 0 );
 
+	if ( m_pMapInfoPanel )
+	{
+		m_pContributedPanel = dynamic_cast< vgui::EditablePanel* >( m_pMapInfoPanel->FindChildByName( "ContributedLabel" ) );
+	}
+
 	SetDefaultSelections();
 	UpdateDialog();
-	SetVisible( false );
+
+	if ( !m_bEmbedded )
+	{
+		SetVisible( false );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -288,11 +464,11 @@ void CTFStatsSummaryPanel::OnKeyCodePressed( KeyCode code )
 {
 	if ( IsX360() )
 	{
-		if ( code == KEY_XBUTTON_A )
+		if ( code == KEY_XBUTTON_A || code == STEAMCONTROLLER_A )
 		{
 			OnCommand(  "nexttip" )	;
 		}
-		else if ( code == KEY_XBUTTON_B )
+		else if ( code == KEY_XBUTTON_B || code == STEAMCONTROLLER_B )
 		{
 			OnCommand( "vguicancel" );
 		}
@@ -316,21 +492,358 @@ void CTFStatsSummaryPanel::SetStats( CUtlVector<ClassStats_t> &vecClassStats )
 //-----------------------------------------------------------------------------
 void CTFStatsSummaryPanel::ClearMapLabel()
 {
-	SetDialogVariable( "maptype", "" );
-	SetDialogVariable( "mapauthor", "" );
 	SetDialogVariable( "maplabel", "" );
-
-	vgui::Label *pMapAuthorLabel = dynamic_cast<Label *>( FindChildByName("MapAuthorLabel") );
-	if ( pMapAuthorLabel && pMapAuthorLabel->IsVisible() )
-	{
-		pMapAuthorLabel->SetVisible(false);
-	}
+	SetDialogVariable( "maptype", "" );
 
 	vgui::Label *pLabel = dynamic_cast<Label *>( FindChildByName( "OnYourWayLabel" ) );
 	if ( pLabel && pLabel->IsVisible() )
 	{
 		pLabel->SetVisible( false );
 	}
+
+	pLabel = dynamic_cast<Label *>( FindChildByName( "MapType" ) );
+	if ( pLabel && pLabel->IsVisible() )
+	{
+		pLabel->SetVisible( false );
+	}
+
+	if ( m_pContributedPanel )
+	{
+		m_pContributedPanel->SetVisible( false );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFStatsSummaryPanel::ShowMapInfo( bool bShowMapInfo, bool bIsMVM /*= false*/, bool bBackgroundOverride /*= false*/ )
+{
+	if ( m_pMainBackground )
+	{
+		m_pMainBackground->SetVisible( !bShowMapInfo );
+	}
+	m_pPlayerData->SetVisible( bIsMVM || !bShowMapInfo );
+	m_pNextTipButton->SetVisible( m_bInteractive && !bShowMapInfo );
+	m_pResetStatsButton->SetVisible( m_bInteractive && !bShowMapInfo );
+
+	if ( m_pMapInfoPanel )
+	{
+		m_pMapInfoPanel->SetVisible( bShowMapInfo );
+		vgui::Panel* pInfoBG = m_pMapInfoPanel->FindChildByName( "InfoBG" );
+		if ( pInfoBG )
+		{
+			pInfoBG->SetVisible( bShowMapInfo && !bIsMVM && !bBackgroundOverride );
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFStatsSummaryPanel::OnMapLoad( const char *pMapName )
+{
+	if ( g_bIsReplayRewinding || engine->IsLoadingDemo() || engine->IsPlayingDemo() || engine->IsSkippingPlayback() )
+		return;
+
+	bool bWidescreenBackground = false;
+
+	bool bIsMVM = ( pMapName && !Q_strncmp( pMapName, "mvm_", 4 ) );
+	bool bIsMVMBackground = false;
+	const char *pszBackgroundOverride = NULL;
+	const IMatchGroupDescription* pMatchDesc = GetMatchGroupDescription( GTFGCClientSystem()->GetLiveMatchGroup() );
+	if ( pMatchDesc )
+	{
+		int screenWide, screenTall;
+		surface()->GetScreenSize( screenWide, screenTall );
+		float aspectRatio = (float)screenWide/(float)screenTall;
+		bool bWideScreen = aspectRatio >= 1.5999f;
+
+		// Check if there's a widescreen override
+		if( bWideScreen )
+		{
+			pszBackgroundOverride = pMatchDesc->GetMapLoadBackgroundOverride( true );
+			if ( pszBackgroundOverride )
+			{
+				// Success!  We're done
+				bWidescreenBackground = true;
+			}
+		}
+		
+		if ( !bWideScreen && !pszBackgroundOverride )
+		{
+			pszBackgroundOverride = pMatchDesc->GetMapLoadBackgroundOverride( false );
+		}
+		
+	}
+	
+	if ( bIsMVM && !pszBackgroundOverride )
+	{
+		// this will preserve the current behavior for non-matchmaking servers
+		pszBackgroundOverride = "mvm_background_map";
+		bIsMVMBackground = true;
+	}
+
+	bool bIsCommunityMap = false;
+	const char *pAuthors = NULL;
+	
+	const MapDef_t *pMapInfo = GetItemSchema()->GetMasterMapDefByName( pMapName );
+	if ( pMapInfo )
+	{
+		bIsCommunityMap = pMapInfo->IsCommunityMap();
+		pAuthors = pMapInfo->pszAuthorsLocKey;
+	}
+	
+	ShowMapInfo( true, bIsMVM, ( pszBackgroundOverride != NULL ) );
+
+	m_xStartLeaderboard = 0;
+	m_yStartLeaderboard = 0;
+
+	// If we're loading a background map, don't display anything
+	// HACK: Client doesn't get gpGlobals->eLoadType, so just do string compare for now.
+	if ( Q_stristr( pMapName, "background") )
+	{
+		ClearMapLabel();
+	}
+	else
+	{
+		// set the map name in the UI
+		wchar_t wzMapName[255]=L"";
+		g_pVGuiLocalize->ConvertANSIToUnicode( GetMapDisplayName( pMapName ), wzMapName, sizeof( wzMapName ) );
+
+		SetDialogVariable( "maplabel", wzMapName );
+		SetDialogVariable( "maptype", g_pVGuiLocalize->Find( GetMapType( pMapName ) ) );
+
+		vgui::Label *pLabel = dynamic_cast<Label *>( FindChildByName( "OnYourWayLabel" ) );
+		if ( pLabel && !pLabel->IsVisible() )
+		{
+			pLabel->SetVisible( true );
+		}
+
+		pLabel = dynamic_cast<Label *>( FindChildByName( "MapType" ) );
+		if ( pLabel && !pLabel->IsVisible() )
+		{
+			pLabel->SetVisible( true );
+		}
+
+		ImagePanel *pMapImage = m_pMapInfoPanel ? dynamic_cast< ImagePanel *>( m_pMapInfoPanel->FindChildByName( "MapImage" ) ) : NULL;
+		if ( pMapImage )
+		{
+			// load the map image (if it exists for the current map)
+			char szMapImage[ MAX_PATH ];
+			Q_snprintf( szMapImage, sizeof( szMapImage ), "VGUI/maps/menu_photos_%s", pMapName );
+			Q_strlower( szMapImage );
+
+			IMaterial *pMapMaterial = materials->FindMaterial( szMapImage, TEXTURE_GROUP_VGUI, false );
+			if ( pMapMaterial && !IsErrorMaterial( pMapMaterial ) && ( !pszBackgroundOverride || bIsMVMBackground ) )
+			{
+				// take off the vgui/ at the beginning when we set the image
+				Q_snprintf( szMapImage, sizeof( szMapImage ), "maps/menu_photos_%s", pMapName );
+				Q_strlower( szMapImage );
+				pMapImage->SetImage( szMapImage );
+				pMapImage->SetVisible( true );
+			}
+			else
+			{
+				pMapImage->SetVisible( false );
+			}
+		}
+
+		ImagePanel *pBackgroundImage = m_pMapInfoPanel ? dynamic_cast< ImagePanel *>( m_pMapInfoPanel->FindChildByName( "Background" ) ) : NULL;
+		if ( pBackgroundImage )
+		{
+			const char* pszBackgroundImage = pszBackgroundOverride ? pszBackgroundOverride : "stamp_background_map";
+
+			pBackgroundImage->SetImage( pszBackgroundImage );
+
+			// Resize to accomodate the background image coming in
+			if ( bWidescreenBackground )
+			{
+				pBackgroundImage->SetWide( GetWide() );
+			}
+			else 
+			{
+				pBackgroundImage->SetWide( GetTall() * ( 4.f / 3.f ) );
+			}
+
+		}
+
+		if ( bIsMVM )
+		{
+			UpdateClassDetails( true );
+			m_pMapInfoPanel->SetDialogVariable( "map_leaderboard_title", "" );
+			m_pMapInfoPanel->SetDialogVariable( "title", "" );
+			m_pMapInfoPanel->SetDialogVariable( "authors", "" );
+
+			FOR_EACH_VEC( m_vecLeaderboardEntries, i )
+			{
+				EditablePanel *pContainer = dynamic_cast< EditablePanel* >( m_vecLeaderboardEntries[i] );
+				if ( pContainer )
+				{
+					pContainer->SetVisible( false );
+				}
+			}
+		}
+		else
+		{
+			m_pLeaderboardTitle = NULL;
+			// add authors
+			if ( m_pMapInfoPanel )
+			{
+				if ( bIsCommunityMap )
+				{
+					m_pMapInfoPanel->SetDialogVariable( "title", g_pVGuiLocalize->Find( "#TF_MapAuthors_Community_Title" ) );
+					m_pMapInfoPanel->SetDialogVariable( "map_leaderboard_title", "" );
+					m_pMapInfoPanel->SetDialogVariable( "authors", g_pVGuiLocalize->Find( pAuthors ) ); 
+					m_pLeaderboardTitle = m_pMapInfoPanel->FindChildByName( "MapLeaderboardTitle" );
+				}
+				else
+				{
+					m_pMapInfoPanel->SetDialogVariable( "title", g_pVGuiLocalize->Find( "#TF_DuelLeaderboard_Title" ) );
+					m_pMapInfoPanel->SetDialogVariable( "map_leaderboard_title", "" );
+					m_pMapInfoPanel->SetDialogVariable( "authors", "" );
+					m_pLeaderboardTitle = m_pMapInfoPanel->FindChildByName( "Title" );
+				}
+			}
+			if ( m_pLeaderboardTitle )
+			{
+				m_pLeaderboardTitle->GetPos( m_xStartLeaderboard, m_yStartLeaderboard );
+				m_yStartLeaderboard += m_pLeaderboardTitle->GetTall();
+			}
+
+			//  request leaderboard data
+			m_bShowingLeaderboard = true;
+			if ( bIsCommunityMap )
+			{
+				MapInfo_RefreshLeaderboard( pMapName );
+			}
+			else
+			{
+				Leaderboards_Refresh();
+			}
+			m_bLoadingCommunityMap = bIsCommunityMap;
+
+			if ( m_pContributedPanel && steamapicontext && steamapicontext->SteamUser() && steamapicontext->SteamFriends() )
+			{
+				int iDonationAmount = MapInfo_GetDonationAmount( steamapicontext->SteamUser()->GetSteamID().GetAccountID(), pMapName );
+				m_pContributedPanel->SetVisible( iDonationAmount != 0 );
+				if ( iDonationAmount != 0 )
+				{
+					m_pContributedPanel->SetDialogVariable( "playername", steamapicontext->SteamFriends()->GetPersonaName() );
+				}
+			}
+
+			UpdateLeaderboard();
+		}
+	}
+}
+
+void CTFStatsSummaryPanel::UpdateLeaderboard()
+{
+	if ( m_pMapInfoPanel == NULL || steamapicontext == NULL || steamapicontext->SteamUserStats() == NULL || steamapicontext->SteamUser() == NULL )
+		return;
+
+	const int kMaxVisible_Supporters = 5;
+	const int kIdeallyNumVisible_Supporters = 3;
+	const int kMaxVisible_DuelWins = 10;
+	const int kIdeallyNumVisible_DuelWins = 5;
+
+	//  retrieve scores
+	CUtlVector< LeaderboardEntry_t* > scores;
+	bool bVisible = true;
+	int iNumLeaderboardEntries = 0;
+	if ( m_bLoadingCommunityMap )
+	{
+		bVisible = MapInfo_GetLeaderboardInfo( engine->GetLevelName(), scores, iNumLeaderboardEntries, kIdeallyNumVisible_Supporters );
+		wchar_t wzNumEntriesString[256];
+		_snwprintf( wzNumEntriesString, ARRAYSIZE( wzNumEntriesString ), L"%i", iNumLeaderboardEntries );
+		wchar_t wzTitle[256];
+		g_pVGuiLocalize->ConstructString_safe( wzTitle, g_pVGuiLocalize->Find( "#TF_MapDonators_Title" ), 1, wzNumEntriesString );
+		m_pMapInfoPanel->SetDialogVariable( "map_leaderboard_title", wzTitle );
+	}
+	else
+	{
+		bVisible = Leaderboards_GetDuelWins( scores, false );
+		if ( bVisible && scores.Count() < kIdeallyNumVisible_DuelWins )
+		{
+			bVisible = Leaderboards_GetDuelWins( scores, true ) && scores.Count() > 0;
+		}
+		// show old stats
+		m_pPlayerData->SetVisible( bVisible == false );
+		if ( m_pMapInfoPanel )
+		{
+			vgui::Panel* pInfoBG = m_pMapInfoPanel->FindChildByName( "InfoBG" );
+			if ( pInfoBG )
+			{
+				pInfoBG->SetVisible( bVisible );
+			}
+		}
+	}
+
+	const int kMaxVisible = m_bLoadingCommunityMap ? kMaxVisible_Supporters : kMaxVisible_DuelWins;
+
+	// try to show local player in relation to the people in the list
+	if ( bVisible && scores.Count() > 0 && steamapicontext && steamapicontext->SteamUser() && steamapicontext->SteamUserStats() )
+	{
+		int iLocalPlayerIdx = -1;
+		CSteamID localSteamID = steamapicontext->SteamUser()->GetSteamID();
+		FOR_EACH_VEC( scores, i )
+		{
+			const LeaderboardEntry_t *leaderboardEntry = scores[i];
+			if ( leaderboardEntry->m_steamIDUser == localSteamID )
+			{
+				iLocalPlayerIdx = i;
+				break;
+			}
+		}
+		// local player is in the list, but is outside the visible range
+		// so we want to move them to the last spot
+		// and move the closest person above them as well
+		if ( iLocalPlayerIdx >= kMaxVisible )
+		{
+			LeaderboardEntry_t *entryLocalPlayer = scores[iLocalPlayerIdx];
+			LeaderboardEntry_t *closestPlayer = scores[iLocalPlayerIdx - 1];
+			scores[kMaxVisible - 1] = entryLocalPlayer;
+			scores[kMaxVisible - 2] = closestPlayer;
+		}
+	}
+
+	// set avatars and names
+	int x = m_xStartLeaderboard;
+	int y = m_yStartLeaderboard;
+	FOR_EACH_VEC( m_vecLeaderboardEntries, i )
+	{
+		EditablePanel *pContainer = dynamic_cast< EditablePanel* >( m_vecLeaderboardEntries[i] );
+		if ( pContainer )
+		{
+			bool bIsEntryVisible = bVisible && i < scores.Count() && i < kMaxVisible;
+			pContainer->SetVisible( bIsEntryVisible );
+			pContainer->SetPos( x, y );
+			y += pContainer->GetTall();
+			if ( bIsEntryVisible )
+			{
+				const LeaderboardEntry_t *leaderboardEntry = scores[i];
+				const CSteamID &steamID = leaderboardEntry->m_steamIDUser;
+				pContainer->SetDialogVariable( "username", CFmtStr( "%d. %s - %d", leaderboardEntry->m_nGlobalRank, InventoryManager()->PersonaName_Get( steamID.GetAccountID() ), leaderboardEntry->m_nScore ) );
+				CAvatarImagePanel *pAvatar = dynamic_cast< CAvatarImagePanel* >( pContainer->FindChildByName( "AvatarImage" ) );
+				if ( pAvatar )
+				{
+					pAvatar->SetShouldDrawFriendIcon( false );
+					pAvatar->SetPlayer( steamID, k_EAvatarSize32x32 );
+				}
+			}								
+		}			
+	}
+
+	if ( m_pLeaderboardTitle )
+	{
+		bool bShowTitle = bVisible && scores.Count() > 0;
+		if ( m_pLeaderboardTitle->IsVisible() != bShowTitle )
+		{
+			m_pLeaderboardTitle->SetVisible( bShowTitle );
+		}
+	}
+
+	m_bShowingLeaderboard = bVisible;
 }
 
 //-----------------------------------------------------------------------------
@@ -338,6 +851,38 @@ void CTFStatsSummaryPanel::ClearMapLabel()
 //-----------------------------------------------------------------------------
 void CTFStatsSummaryPanel::UpdateDialog()
 {
+	UpdateMainBackground();
+
+	if ( g_bIsReplayRewinding || engine->IsLoadingDemo() || engine->IsPlayingDemo() || engine->IsSkippingPlayback() )
+	{
+		// hide all of the various panels for the other loadscreen modes
+		if ( IsPC() )
+		{
+			ClearMapLabel();
+
+			m_pPlayerData->SetVisible( false );
+			m_pNextTipButton->SetVisible( false );
+			m_pResetStatsButton->SetVisible( false );
+			m_pInteractiveHeaders->SetVisible( false );
+			m_pNonInteractiveHeaders->SetVisible( false );
+			m_pTipText->SetVisible( false );
+			m_pTipImage->SetVisible( false );
+
+			if ( m_pMapInfoPanel )
+			{
+				m_pMapInfoPanel->SetVisible( false );
+
+				vgui::Panel* pInfoBG = m_pMapInfoPanel->FindChildByName( "InfoBG" );
+				if ( pInfoBG )
+				{
+					pInfoBG->SetVisible( false );
+				}
+			}
+		}
+
+		return;
+	}
+
 	RandomSeed( Plat_MSTime() );
 
 	m_iTotalSpawns = 0;
@@ -345,6 +890,9 @@ void CTFStatsSummaryPanel::UpdateDialog()
 	// if we don't have stats for any class, add empty stat entries for them 
 	for ( int iClass = TF_FIRST_NORMAL_CLASS; iClass <= TF_LAST_NORMAL_CLASS; iClass++ )
 	{
+		if ( iClass == TF_CLASS_CIVILIAN )
+			continue; // Ignore the civilian.
+
 		int j;
 		for ( j = 0; j < m_aClassStats.Count(); j++ )
 		{
@@ -398,73 +946,58 @@ void CTFStatsSummaryPanel::UpdateBarCharts()
 		{
 			// get max value of stat being charted so we know how to scale the graph
 			float flVal = GetDisplayValue( m_aClassStats[i], m_statBarGraph[iChart], m_displayBarGraph[iChart] );
-			flMax = max( flVal, flMax );
+			flMax = MAX( flVal, flMax );
 		}
 
 		// draw the bar chart value for each player class
+		// TODO: Fix up after the civilian becomes playable.
+		int iChartBar = 0;
 		for ( int i = 0; i < m_aClassStats.Count(); i++ )
-		{			
+		{	
+			int iClass = m_aClassStats[i].iPlayerClass;
+			if ( iClass == TF_CLASS_CIVILIAN )
+			{
+				continue;
+			}
 			if ( 0 == iChart )
 			{
 				// if this is the first chart, set the class label for each class
-				int iClass = m_aClassStats[i].iPlayerClass;
-				m_pPlayerData->SetDialogVariable( CFmtStr( "class%d", i+1 ), g_pVGuiLocalize->Find( g_aPlayerClassNames[iClass] ) );
+				m_pPlayerData->SetDialogVariable( CFmtStr( "class%d", iChartBar+1 ), g_pVGuiLocalize->Find( g_aPlayerClassNames[iClass] ) );
 			}
 			// draw the bar for this class
-			DisplayBarValue( iChart, i, m_aClassStats[i], m_statBarGraph[iChart], m_displayBarGraph[iChart], flMax );
+			DisplayBarValue( iChart, iChartBar++, m_aClassStats[i], m_statBarGraph[iChart], m_displayBarGraph[iChart], flMax );
 		}
 	}
 }
 
-#define MAKEFLAG(x)	( 1 << x )
-
-#define ALL_CLASSES (1<<31)
-
 //-----------------------------------------------------------------------------
 // Purpose: Updates class details
 //-----------------------------------------------------------------------------
-void CTFStatsSummaryPanel::UpdateClassDetails()
+void CTFStatsSummaryPanel::UpdateClassDetails( bool bIsMVM )
 {
-	struct ClassDetails_t
+	vgui::Label *pTitle = assert_cast< vgui::Label* >( FindChildByName( "RecordsLabel1", true ) );
+	if ( pTitle )
 	{
-		TFStatType_t statType;			// type of stat
-		int			 iFlagsClass;		// bit mask of classes to show this stat for
-		const char * szResourceName;	// name of label resource
-	};
+		pTitle->SetText( bIsMVM ? "#StatSummary_Label_BestMVMMoments" : "#StatSummary_Label_BestMoments" );
+	}
 
-	ClassDetails_t classDetails[] =
-	{
-		{ TFSTAT_POINTSSCORED,			ALL_CLASSES,					"#TF_ClassRecord_MostPoints" },
-		{ TFSTAT_KILLS,					ALL_CLASSES,					"#TF_ClassRecord_MostKills" },
-		{ TFSTAT_KILLASSISTS,			ALL_CLASSES,					"#TF_ClassRecord_MostAssists" },
-		{ TFSTAT_CAPTURES,				ALL_CLASSES,					"#TF_ClassRecord_MostCaptures" },
-		{ TFSTAT_DEFENSES,				ALL_CLASSES,					"#TF_ClassRecord_MostDefenses" },
-		{ TFSTAT_DAMAGE,				ALL_CLASSES,					"#TF_ClassRecord_MostDamage" },
-		{ TFSTAT_BUILDINGSDESTROYED,	ALL_CLASSES,					"#TF_ClassRecord_MostDestruction" },
-		{ TFSTAT_DOMINATIONS,			ALL_CLASSES,					"#TF_ClassRecord_MostDominations" },
-		{ TFSTAT_PLAYTIME,				ALL_CLASSES,					"#TF_ClassRecord_LongestLife" },
-		{ TFSTAT_HEALING,				MAKEFLAG(TF_CLASS_MEDIC) | MAKEFLAG(TF_CLASS_ENGINEER),	"#TF_ClassRecord_MostHealing" },
-		{ TFSTAT_INVULNS,				MAKEFLAG(TF_CLASS_MEDIC),		"#TF_ClassRecord_MostInvulns" },
-		{ TFSTAT_MAXSENTRYKILLS,		MAKEFLAG(TF_CLASS_ENGINEER),	"#TF_ClassRecord_MostSentryKills" },
-		{ TFSTAT_TELEPORTS,				MAKEFLAG(TF_CLASS_ENGINEER),	"#TF_ClassRecord_MostTeleports" },
-		{ TFSTAT_HEADSHOTS,				MAKEFLAG(TF_CLASS_SNIPER),		"#TF_ClassRecord_MostHeadshots" },
-		{ TFSTAT_BACKSTABS,				MAKEFLAG(TF_CLASS_SPY),			"#TF_ClassRecord_MostBackstabs" },
-	};
+	const wchar_t *wzWithClassFmt = g_pVGuiLocalize->Find( "#StatSummary_ScoreAsClassFmt" );
+	const wchar_t *wzWithoutClassFmt = L"%s1";
 
-	wchar_t *wzWithClassFmt = g_pVGuiLocalize->Find( "#StatSummary_ScoreAsClassFmt" );
-	wchar_t *wzWithoutClassFmt = L"%s1";
+	ClassDetails_t *pStatDetails = ( bIsMVM ? g_PerClassMVMStatDetails : g_PerClassStatDetails );
+	int nArraySize = ( bIsMVM ? ARRAYSIZE( g_PerClassMVMStatDetails ) : ARRAYSIZE( g_PerClassStatDetails ) );
 
 	// display the record for each stat
 	int iRow = 0;
-	for ( int i = 0; i < ARRAYSIZE( classDetails ); i++ )
+	for ( int i = 0; i < nArraySize; i++ )
 	{
-		TFStatType_t statType = classDetails[i].statType;
+		TFStatType_t statType = pStatDetails[i].statType;
 
 		int iClass = TF_CLASS_UNDEFINED;
 		int iMaxVal = 0;
 
 		// if there is a selected class, and if this stat should not be shown for this class, skip this stat
-		if ( m_iSelectedClass != TF_CLASS_UNDEFINED && ( 0 == ( classDetails[i].iFlagsClass & MAKEFLAG( m_iSelectedClass ) ) ) )
+		if ( m_iSelectedClass != TF_CLASS_UNDEFINED && ( 0 == ( pStatDetails[i].iFlagsClass & MAKESTATFLAG( m_iSelectedClass ) ) ) )
 			continue;
 
 		if ( m_iSelectedClass == TF_CLASS_UNDEFINED )
@@ -472,10 +1005,11 @@ void CTFStatsSummaryPanel::UpdateClassDetails()
 			// if showing best from any class, look through all player classes to determine the max value of this stat
 			for ( int j = 0; j  < m_aClassStats.Count(); j++ )
 			{
-				if ( m_aClassStats[j].max.m_iStat[statType] > iMaxVal )
+				RoundStats_t *pRoundStats = &( bIsMVM ? m_aClassStats[j].maxMVM : m_aClassStats[j].max );
+				if ( pRoundStats->m_iStat[statType] > iMaxVal )
 				{
 					// remember max value and class that has max value
-					iMaxVal = m_aClassStats[j].max.m_iStat[statType];
+					iMaxVal = pRoundStats->m_iStat[statType];
 					iClass = m_aClassStats[j].iPlayerClass;
 				}
 			}
@@ -488,7 +1022,8 @@ void CTFStatsSummaryPanel::UpdateClassDetails()
 			{
 				if ( m_aClassStats[j].iPlayerClass == iClass )
 				{
-					iMaxVal = m_aClassStats[j].max.m_iStat[statType];
+					RoundStats_t *pRoundStats = &( bIsMVM ? m_aClassStats[j].maxMVM : m_aClassStats[j].max );
+					iMaxVal = pRoundStats->m_iStat[statType];
 					break;
 				}
 			}
@@ -511,16 +1046,16 @@ void CTFStatsSummaryPanel::UpdateClassDetails()
 		{
 			// if we are doing a cross-class view (no single selected class) and the max value is non-zero, show "# (as <class>)"
 			wchar_t *wzLocalizedClassName = g_pVGuiLocalize->Find( g_aPlayerClassNames[iClass] );
-			g_pVGuiLocalize->ConstructString( wzStatVal, sizeof( wzStatVal ), wzWithClassFmt, 2, wzStatNum, wzLocalizedClassName );
+			g_pVGuiLocalize->ConstructString_safe( wzStatVal, wzWithClassFmt, 2, wzStatNum, wzLocalizedClassName );
 		}
 		else
 		{
 			// just show the value
-			g_pVGuiLocalize->ConstructString( wzStatVal, sizeof( wzStatVal ), wzWithoutClassFmt, 1, wzStatNum );
+			g_pVGuiLocalize->ConstructString_safe( wzStatVal, wzWithoutClassFmt, 1, wzStatNum );
 		}				
 
 		// set the label
-		m_pPlayerData->SetDialogVariable( CFmtStr( "classrecord%dlabel", iRow+1 ), g_pVGuiLocalize->Find( classDetails[i].szResourceName ) );
+		m_pPlayerData->SetDialogVariable( CFmtStr( "classrecord%dlabel", iRow+1 ), g_pVGuiLocalize->Find( pStatDetails[i].szResourceName ) );
 		// set the value 
 		m_pPlayerData->SetDialogVariable( CFmtStr( "classrecord%dvalue", iRow+1 ), wzStatVal );
 
@@ -540,12 +1075,21 @@ void CTFStatsSummaryPanel::UpdateClassDetails()
 //-----------------------------------------------------------------------------
 void CTFStatsSummaryPanel::UpdateTip()
 {
-	int iClass = TF_CLASS_UNDEFINED;
-	SetDialogVariable( "tiptext", g_TFTips.GetRandomTip( iClass ) );
+	int iTipClass = TF_CLASS_UNDEFINED;
+
+	SetDialogVariable( "tiptext", g_TFTips.GetRandomTip( iTipClass ) );
 
 	if ( m_pTipImage )
 	{
-		m_pTipImage->SetImage( g_pszTipsClassImages[iClass] );
+		if ( iTipClass > TF_CLASS_UNDEFINED && iTipClass <= TF_CLASS_ENGINEER )
+		{
+			m_pTipImage->SetVisible( true );
+			m_pTipImage->SetImage( g_pszTipsClassImages[iTipClass] );
+		}
+		else
+		{
+			m_pTipImage->SetVisible( false );
+		}
 	}
 }
 
@@ -566,10 +1110,40 @@ void CTFStatsSummaryPanel::UpdateControls()
 	m_pTipText->SetVisible( bShowPlayerData );
 	m_pTipImage->SetVisible( bShowPlayerData );
 
+	if ( !IsX360() )
+	{
+		if ( !m_bInteractive )
+		{
+			char szTemp[128];
+
+			// update our non-interactive headers to match the current combo box selections
+			Label *pLabel = dynamic_cast<Label *>( m_pNonInteractiveHeaders->FindChildByName( "BarChartLabelA" ) );
+			if ( pLabel && m_pBarChartComboBoxA )
+			{
+				m_pBarChartComboBoxA->GetItemText( m_pBarChartComboBoxA->GetActiveItem(), szTemp, sizeof( szTemp ) );
+				pLabel->SetText( szTemp );
+			}
+
+			pLabel = dynamic_cast<Label *>( m_pNonInteractiveHeaders->FindChildByName( "BarChartLabelB" ) );
+			if ( pLabel && m_pBarChartComboBoxB )
+			{
+				m_pBarChartComboBoxB->GetItemText( m_pBarChartComboBoxB->GetActiveItem(), szTemp, sizeof( szTemp ) );
+				pLabel->SetText( szTemp );
+			}
+
+			pLabel = dynamic_cast<Label *>( m_pNonInteractiveHeaders->FindChildByName( "OverallRecordLabel" ) );
+			if ( pLabel && m_pClassComboBox )
+			{
+				m_pClassComboBox->GetItemText( m_pClassComboBox->GetActiveItem(), szTemp, sizeof( szTemp ) );
+				pLabel->SetText( szTemp );
+			}
+		}
+	}
+
 #ifndef _X360
 	m_pNextTipButton->SetVisible( m_bInteractive );
 	m_pResetStatsButton->SetVisible( m_bInteractive );
-	m_pCloseButton->SetVisible( m_bInteractive );
+	m_pCloseButton->SetVisible( m_bInteractive && !m_bEmbedded );
 #endif
 }
 
@@ -628,9 +1202,8 @@ void CTFStatsSummaryPanel::SetValueAsClass( const char *pDialogVariable, int iVa
 		wchar_t *wzLocalizedClassName = g_pVGuiLocalize->Find( g_aPlayerClassNames[iPlayerClass] );
 		wchar_t wzVal[16];
 		wchar_t wzMsg[128];
-
-		V_snwprintf( wzVal, sizeof( wzVal ) / sizeof( wchar_t ), L"%d", iValue );
-		g_pVGuiLocalize->ConstructString( wzMsg, sizeof( wzMsg ), wzScoreAsClassFmt, 2, wzVal, wzLocalizedClassName );
+		swprintf( wzVal, ARRAYSIZE( wzVal ), L"%d", iValue );
+		g_pVGuiLocalize->ConstructString_safe( wzMsg, wzScoreAsClassFmt, 2, wzVal, wzLocalizedClassName );
 		m_pPlayerData->SetDialogVariable( pDialogVariable, wzMsg );
 	}
 	else
@@ -655,7 +1228,7 @@ void CTFStatsSummaryPanel::DisplayBarValue( int iChart, int iBar, ClassStats_t &
 	// calculate the bar size to draw, in the range of 0.0->1.0
 	float flBarRange = SafeCalcFraction( flValue, flMaxValue );
 	// calculate the # of pixels of bar width to draw
-	int iBarWidth = max( (int) ( flBarRange * (float) m_iBarMaxWidth ), 1 );
+	int iBarWidth = MAX( (int) ( flBarRange * (float) m_iBarMaxWidth ), 1 );
 
 	// Get the text label to draw for this bar.  For values of 0, draw nothing, to minimize clutter
 	const char *szLabel = ( flValue > 0 ? RenderValue( flValue, statType, statDisplay ) : "" );
@@ -820,6 +1393,17 @@ void CTFStatsSummaryPanel::OnTextChanged( KeyValues *data )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Command target handler called from reset stats confirmation query box
+//-----------------------------------------------------------------------------
+void CTFStatsSummaryPanel::DoResetStats()
+{
+#ifndef _X360
+	// reset the stats
+	engine->ClientCmd( "resetplayerstats" );
+#endif
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Returns the stat value for specified display type
 //-----------------------------------------------------------------------------
 float CTFStatsSummaryPanel::GetDisplayValue( ClassStats_t &stats, TFStatType_t statType, StatDisplay_t statDisplay )
@@ -866,10 +1450,6 @@ const char *CTFStatsSummaryPanel::RenderValue( float flValue, TFStatType_t statT
 	return szValue;
 }
 
-extern const char *GetMapDisplayName( const char *mapName );
-extern const char *GetMapType( const char *mapName );
-extern const char *GetMapAuthor( const char *mapName );
-
 //-----------------------------------------------------------------------------
 // Purpose: Event handler
 //-----------------------------------------------------------------------------
@@ -885,41 +1465,7 @@ void CTFStatsSummaryPanel::FireGameEvent( IGameEvent *event )
 			const char *pMapName = event->GetString( "mapname" );
 			if ( pMapName )
 			{
-				// If we're loading a background map, don't display anything
-				// HACK: Client doesn't get gpGlobals->eLoadType, so just do string compare for now.
-				if ( Q_stristr( pMapName, "background" ) )
-				{
-					ClearMapLabel();
-				}
-				else
-				{
-					// set the map name in the UI
-					wchar_t wzMapName[255]= L"";
-					g_pVGuiLocalize->ConvertANSIToUnicode( GetMapDisplayName( pMapName ), wzMapName, sizeof( wzMapName ) );
-
-					SetDialogVariable( "maplabel", wzMapName );
-
-					// set the map type in the UI
-					const char *szMapType = GetMapType( pMapName );
-					SetDialogVariable( "maptype", g_pVGuiLocalize->Find( szMapType ) );
-
-					// set the map author name in the UI
-					const char *szMapAuthor = GetMapAuthor( pMapName );
-					if ( szMapAuthor != nullptr && szMapAuthor[0] != '\0' )
-					{
-						SetDialogVariable("mapauthor", szMapAuthor);
-
-						Label* pMapAuthorLabel = dynamic_cast<Label*>(FindChildByName("MapAuthorLabel"));
-						if (pMapAuthorLabel && !pMapAuthorLabel->IsVisible())
-							pMapAuthorLabel->SetVisible(true);
-					}
-
-					vgui::Label *pLabel = dynamic_cast<Label *>( FindChildByName( "OnYourWayLabel" ) );
-					if ( pLabel && !pLabel->IsVisible() )
-					{
-						pLabel->SetVisible( true );
-					}
-				}
+				OnMapLoad( pMapName );
 			}	
 		}
 	}
@@ -931,6 +1477,10 @@ void CTFStatsSummaryPanel::FireGameEvent( IGameEvent *event )
 void CTFStatsSummaryPanel::OnActivate()
 {
 	ClearMapLabel();
+
+	m_bShowingLeaderboard = false;
+	m_bLoadingCommunityMap = false;
+	ShowMapInfo( false );
 
 #ifdef _X360
 	m_bShowBackButton = false;
@@ -949,5 +1499,11 @@ void CTFStatsSummaryPanel::OnDeactivate()
 
 CON_COMMAND( showstatsdlg, "Shows the player stats dialog" )
 {
+#ifdef _DEBUG
+	GStatsSummaryPanel()->InvalidateLayout( false, true );
+#endif
 	GStatsSummaryPanel()->ShowModal();
+#ifdef _DEBUG
+	GStatsSummaryPanel()->OnMapLoad( "cp_coldfront" );
+#endif
 }

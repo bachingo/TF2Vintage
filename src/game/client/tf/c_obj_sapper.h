@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2006, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -26,9 +26,10 @@ public:
 
 	virtual void ClientThink( void );
 	virtual void OnDataChanged( DataUpdateType_t type );
-	virtual void GetStatusText( wchar_t *pStatus, int iMaxStatusLen );
 
 	virtual bool	IsHostileUpgrade( void ) { return true; }
+
+	float			GetReversesBuildingConstructionSpeed( void );
 
 private:
 	C_ObjectSapper( const C_ObjectSapper & ); // not defined, not accessible

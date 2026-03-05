@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: CTF GrenadePack.
 //
@@ -25,6 +25,7 @@ public:
 	void	Spawn( void );
 	void	Precache( void );
 	bool	MyTouch( CBasePlayer *pPlayer );
+	const char *GetDefaultPowerupModel( void ) OVERRIDE;
 };
 
 #endif // ENTITY_GRENADEPACK_H

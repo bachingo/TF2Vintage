@@ -8,6 +8,7 @@
 #define VECTOR_TYPE_TAG		(SQUserPointer)"Vector"
 #define QUATERNION_TYPE_TAG	(SQUserPointer)"Quaternion"
 #define MATRIX_TYPE_TAG		(SQUserPointer)"matrix3x4_t"
+#define QANGLE_TYPE_TAG		(SQUserPointer)"QAngle"
 
 SQRESULT RegisterMathBindings( HSQUIRRELVM pVM );
 

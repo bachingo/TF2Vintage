@@ -234,7 +234,6 @@ CPanelMetaClassMgrImp::CPanelMetaClassMgrImp() : m_PanelTypeDict( true, 0, 32 )
 
 CPanelMetaClassMgrImp::~CPanelMetaClassMgrImp()
 {
-	m_MetaClassKeyValues.Purge();
 }
 
 

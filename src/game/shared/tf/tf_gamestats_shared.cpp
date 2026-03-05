@@ -1,4 +1,4 @@
-﻿//====== Copyright © 1996-2006, Valve Corporation, All rights reserved. =======//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -6,14 +6,22 @@
 
 #include "cbase.h"
 #ifdef GAME_DLL
-#include "gamestats.h"
+	#include "gamestats.h"
+#else
+	#include "tf_hud_statpanel.h"
 #endif
 #include "tf_gamestats_shared.h"
 
-// memdbgon must be the last include file in a .cpp file!!!
-//#include "tier0/memdbgon.h"
+#ifndef NO_STEAM
+#include "steamworks_gamestats.h"
+#endif
 
-const char *s_pStatStrings[ TFSTAT_MAX ] =
+int TF_Gamestats_RoundStats_t::m_iNumRounds = 0;
+time_t TF_Gamestats_RoundStats_t::m_iRoundStartTime = 0;
+
+//-----------------------------------------------------------------------------
+
+const char *s_pStatStrings[ TFSTAT_TOTAL ] =
 {
 	"TFSTAT_UNDEFINED",
 	"TFSTAT_SHOTS_HIT",
@@ -57,25 +65,12 @@ const char *s_pStatStrings[ TFSTAT_MAX ] =
 	"TFSTAT_REVIVED",
 };
 
-const char *s_pMapStatStrings[ TFMAPSTAT_MAX ] =
+const char *s_pMapStatStrings[ TFMAPSTAT_TOTAL ] =
 {
 	"TFSTAT_UNDEFINED",
 	"TFSTAT_PLAYTIME",
 };
 
-const char *g_aRoundEndReasons[ TFRE_MAX ] =
-{
-	"round_end",
-	"client_disconnect",
-	"client_quit",
-	"server_map_change",
-	"server_shutdown",
-	"time_limit_reached",
-	"win_limit_reached",
-	"win_diff_limit_reached",
-	"round_limit_reached",
-	"next_level_cvar",
-};
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
@@ -84,7 +79,8 @@ const char *g_aRoundEndReasons[ TFRE_MAX ] =
 TF_Gamestats_LevelStats_t::TF_Gamestats_LevelStats_t()
 {
 	m_bInitialized = false;
-	m_flRoundStartTime = 0.0f;	
+	m_iRoundStartTime = 0;
+	m_flRoundStartTime = 0;
 	m_Header.m_iRoundsPlayed = 0;
 	m_Header.m_iTotalTime = 0;
 	m_Header.m_iBlueWins = 0;
@@ -95,6 +91,11 @@ TF_Gamestats_LevelStats_t::TF_Gamestats_LevelStats_t()
 	Q_memset( m_aClassStats, 0, sizeof( m_aClassStats ) );
 	Q_memset( m_aWeaponStats, 0, sizeof( m_aWeaponStats ) );
 	Q_memset( m_iPeakPlayerCount, 0, sizeof( m_iPeakPlayerCount ) );
+
+	for ( int i = 0; i <= MAX_CONTROL_POINTS; i++ )
+	{
+		m_Header.m_iLastCapChangedInRound[i] = 0;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -103,8 +104,9 @@ TF_Gamestats_LevelStats_t::TF_Gamestats_LevelStats_t()
 //-----------------------------------------------------------------------------
 TF_Gamestats_LevelStats_t::~TF_Gamestats_LevelStats_t()
 {
-	m_aPlayerDeaths.Purge();
-	m_aPlayerDamage.Purge();
+	//m_aPlayerDeaths.Purge();
+	//m_aPlayerDamage.Purge();
+	m_bIsRealServer	= false;
 }
 
 //-----------------------------------------------------------------------------
@@ -114,10 +116,13 @@ TF_Gamestats_LevelStats_t::~TF_Gamestats_LevelStats_t()
 TF_Gamestats_LevelStats_t::TF_Gamestats_LevelStats_t( const TF_Gamestats_LevelStats_t &stats )
 {
 	m_bInitialized		= stats.m_bInitialized;
+	m_iRoundStartTime	= stats.m_iRoundStartTime;
 	m_flRoundStartTime	= stats.m_flRoundStartTime;
+	m_iMapStartTime		= stats.m_iMapStartTime;
 	m_Header			= stats.m_Header;
-	m_aPlayerDeaths		= stats.m_aPlayerDeaths;
-	m_aPlayerDamage		= stats.m_aPlayerDamage;
+	m_bIsRealServer		= stats.m_bIsRealServer;
+	//m_aPlayerDeaths		= stats.m_aPlayerDeaths;
+	//m_aPlayerDamage		= stats.m_aPlayerDamage;
 }
 
 //-----------------------------------------------------------------------------
@@ -127,16 +132,24 @@ TF_Gamestats_LevelStats_t::TF_Gamestats_LevelStats_t( const TF_Gamestats_LevelSt
 //			nPort - 
 //			flStartTime - 
 //-----------------------------------------------------------------------------
-void TF_Gamestats_LevelStats_t::Init( const char *pszMapName, int nMapVersion, int nIPAddr, short nPort, float flStartTime  )
+void TF_Gamestats_LevelStats_t::Init( const char *pszMapName, int nMapRevision, int nIPAddr, short nPort, float flStartTime  )
 {
-	// Initialize.
-	Q_strncpy( m_Header.m_szMapName, pszMapName, sizeof( m_Header.m_szMapName ) );
-	m_Header.m_nMapRevision = nMapVersion;
+	Q_memset( &m_Header, 0, sizeof( m_Header ) ); // TODO: This is correct for steamworks stats, but probably breaks old stats!!!
+
+	V_FileBase( pszMapName, m_Header.m_szMapName, sizeof( m_Header.m_szMapName ) );
+
+	m_Header.m_nMapRevision = nMapRevision;
 	m_Header.m_nIPAddr = nIPAddr;
 	m_Header.m_nPort = nPort;
 	
+#ifndef NO_STEAM
 	// Start the level timer.
-	m_flRoundStartTime = flStartTime;
+	m_iMapStartTime = GetSteamWorksSGameStatsUploader().GetTimeSinceEpoch();
+	m_iRoundStartTime = GetSteamWorksSGameStatsUploader().GetTimeSinceEpoch();
+	m_flRoundStartTime = gpGlobals->curtime;
+#endif
+
+	m_bIsRealServer = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -148,11 +161,73 @@ void TF_Gamestats_LevelStats_t::Shutdown( float flEndTime )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Constructor
+// Input  :  - 
+//-----------------------------------------------------------------------------
+TF_Gamestats_RoundStats_t::TF_Gamestats_RoundStats_t()
+{
+	Reset();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Destructor
+// Input  :  - 
+//-----------------------------------------------------------------------------
+TF_Gamestats_RoundStats_t::~TF_Gamestats_RoundStats_t()
+{
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: resets the state of stat tracking
+//-----------------------------------------------------------------------------
+void TF_Gamestats_RoundStats_t::Reset()
+{
+	ResetSummary();
+	m_iRoundStartTime = 0.f;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void TF_Gamestats_RoundStats_t::ResetSummary()
+{
+	Q_memset( &m_Summary, 0, sizeof( m_Summary ) );
+
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Constructor
+// Input  :  - 
+//-----------------------------------------------------------------------------
+TF_Gamestats_KillStats_t::TF_Gamestats_KillStats_t()
+{
+	Reset();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Destructor
+// Input  :  - 
+//-----------------------------------------------------------------------------
+TF_Gamestats_KillStats_t::~TF_Gamestats_KillStats_t()
+{
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: resets the state of stat tracking
+//-----------------------------------------------------------------------------
+void TF_Gamestats_KillStats_t::Reset()
+{
+//	Q_memset( &m_Summary, 0, sizeof( m_Summary ) );
+//	m_flRoundStartTime = 0.f;
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: constructor
 //-----------------------------------------------------------------------------
 TFReportedStats_t::TFReportedStats_t()
 {
 	Clear();
+	m_bValidData = false;
 	m_pCurrentGame = NULL;
 }
 
@@ -214,8 +289,8 @@ void TFReportedStats_t::AppendCustomDataToSaveBuffer( CUtlBuffer &SaveBuffer )
 
 		// Write out the lumps.
 		CBaseGameStats::AppendLump( MAX_LUMP_COUNT, SaveBuffer, TFSTATS_LUMP_MAPHEADER, 1, sizeof( TF_Gamestats_LevelStats_t::LevelHeader_t ), static_cast<void*>( &pCurrentMap->m_Header ) );
-		CBaseGameStats::AppendLump( MAX_LUMP_COUNT, SaveBuffer, TFSTATS_LUMP_MAPDEATH, pCurrentMap->m_aPlayerDeaths.Count(), sizeof( TF_Gamestats_LevelStats_t::PlayerDeathsLump_t ), static_cast<void*>( pCurrentMap->m_aPlayerDeaths.Base() ) );
-		CBaseGameStats::AppendLump( MAX_LUMP_COUNT, SaveBuffer, TFSTATS_LUMP_MAPDAMAGE, pCurrentMap->m_aPlayerDamage.Count(), sizeof( TF_Gamestats_LevelStats_t::PlayerDamageLump_t ), static_cast<void*>( pCurrentMap->m_aPlayerDamage.Base() ) );
+		//CBaseGameStats::AppendLump( MAX_LUMP_COUNT, SaveBuffer, TFSTATS_LUMP_MAPDEATH, pCurrentMap->m_aPlayerDeaths.Count(), sizeof( TF_Gamestats_LevelStats_t::PlayerDeathsLump_t ), static_cast<void*>( pCurrentMap->m_aPlayerDeaths.Base() ) );
+		//CBaseGameStats::AppendLump( MAX_LUMP_COUNT, SaveBuffer, TFSTATS_LUMP_MAPDAMAGE, pCurrentMap->m_aPlayerDamage.Count(), sizeof( TF_Gamestats_LevelStats_t::PlayerDamageLump_t ), static_cast<void*>( pCurrentMap->m_aPlayerDamage.Base() ) );
 		CBaseGameStats::AppendLump( MAX_LUMP_COUNT, SaveBuffer, TFSTATS_LUMP_CLASS, ARRAYSIZE( pCurrentMap->m_aClassStats ), sizeof( pCurrentMap->m_aClassStats[0] ), 
 			static_cast<void*>( pCurrentMap->m_aClassStats ) );
 		CBaseGameStats::AppendLump( MAX_LUMP_COUNT, SaveBuffer, TFSTATS_LUMP_WEAPON, ARRAYSIZE( pCurrentMap->m_aWeaponStats ), sizeof( pCurrentMap->m_aWeaponStats[0] ), 
@@ -256,6 +331,8 @@ bool TFReportedStats_t::LoadCustomDataFromBuffer( CUtlBuffer &LoadBuffer )
 		return false;
 	}
 
+	TF_Gamestats_LevelStats_t *pCurrentGame = NULL;
+
 	// read all the lumps in the file
 	while( CBaseGameStats::GetLumpHeader( MAX_LUMP_COUNT, LoadBuffer, iLump, iLumpCount ) )
 	{
@@ -274,56 +351,58 @@ bool TFReportedStats_t::LoadCustomDataFromBuffer( CUtlBuffer &LoadBuffer )
 				if ( header.m_iTotalTime == 0 )
 					return false;
 
-				m_pCurrentGame = FindOrAddMapStats( header.m_szMapName );
-				if ( m_pCurrentGame )
+				pCurrentGame = FindOrAddMapStats( header.m_szMapName );
+				if ( pCurrentGame )
 				{
-					m_pCurrentGame->m_Header = header;
+					pCurrentGame->m_Header = header;
 				}
 				break; 
 			}
 		case TFSTATS_LUMP_MAPDEATH:
 			{
-				CUtlVector<TF_Gamestats_LevelStats_t::PlayerDeathsLump_t> playerDeaths;
+				//CUtlVector<TF_Gamestats_LevelStats_t::PlayerDeathsLump_t> playerDeaths;
 
-				playerDeaths.SetCount( iLumpCount );
-				CBaseGameStats::LoadLump( LoadBuffer, iLumpCount, sizeof( TF_Gamestats_LevelStats_t::PlayerDeathsLump_t ), static_cast<void*>( playerDeaths.Base() ) );
-				if ( m_pCurrentGame )
-				{
-					m_pCurrentGame->m_aPlayerDeaths = playerDeaths;
-				}
+				//playerDeaths.SetCount( iLumpCount );
+				//CBaseGameStats::LoadLump( LoadBuffer, iLumpCount, sizeof( TF_Gamestats_LevelStats_t::PlayerDeathsLump_t ), static_cast<void*>( playerDeaths.Base() ) );
+				//if ( pCurrentGame )
+				//{
+				//	pCurrentGame->m_aPlayerDeaths = playerDeaths;
+				//}
 				break;
 			}
 		case TFSTATS_LUMP_MAPDAMAGE:
 			{
-				CUtlVector<TF_Gamestats_LevelStats_t::PlayerDamageLump_t> playerDamage;
+				//CUtlVector<TF_Gamestats_LevelStats_t::PlayerDamageLump_t> playerDamage;
 
-				playerDamage.SetCount( iLumpCount );
-				CBaseGameStats::LoadLump( LoadBuffer, iLumpCount, sizeof( TF_Gamestats_LevelStats_t::PlayerDamageLump_t ), static_cast<void*>( playerDamage.Base() ) );
-				if ( m_pCurrentGame )
-				{
-					m_pCurrentGame->m_aPlayerDamage = playerDamage;
-				}
+				//playerDamage.SetCount( iLumpCount );
+				//CBaseGameStats::LoadLump( LoadBuffer, iLumpCount, sizeof( TF_Gamestats_LevelStats_t::PlayerDamageLump_t ), static_cast<void*>( playerDamage.Base() ) );
+				//if ( pCurrentGame )
+				//{
+				//	pCurrentGame->m_aPlayerDamage = playerDamage;
+				//}
 				break;
 			}		
 		case TFSTATS_LUMP_CLASS:
 			{
-				Assert( m_pCurrentGame );
-				Assert ( iLumpCount == ARRAYSIZE( m_pCurrentGame->m_aClassStats ) );
-				if ( iLumpCount == ARRAYSIZE( m_pCurrentGame->m_aClassStats ) )
+				Assert( pCurrentGame );
+				if ( !pCurrentGame )
+					return false;
+				Assert ( iLumpCount == ARRAYSIZE( pCurrentGame->m_aClassStats ) );
+				if ( iLumpCount == ARRAYSIZE( pCurrentGame->m_aClassStats ) )
 				{
-					CBaseGameStats::LoadLump( LoadBuffer, ARRAYSIZE( m_pCurrentGame->m_aClassStats ), sizeof( m_pCurrentGame->m_aClassStats[0] ), 
-						m_pCurrentGame->m_aClassStats );
+					CBaseGameStats::LoadLump( LoadBuffer, ARRAYSIZE( pCurrentGame->m_aClassStats ), sizeof( pCurrentGame->m_aClassStats[0] ), 
+						pCurrentGame->m_aClassStats );
 
 					// quick sanity check on some data -- we get some stat files that start out OK but are corrupted later in the file
-					for ( int i = 0; i < ARRAYSIZE( m_pCurrentGame->m_aClassStats ); i++ )
+					for ( int i = 0; i < ARRAYSIZE( pCurrentGame->m_aClassStats ); i++ )
 					{
-						TF_Gamestats_ClassStats_t &classStats = m_pCurrentGame->m_aClassStats[i];
+						TF_Gamestats_ClassStats_t &classStats = pCurrentGame->m_aClassStats[i];
 						if ( ( classStats.iSpawns < 0 ) || ( classStats.iSpawns > 10000 ) || ( classStats.iTotalTime < 0 ) || ( classStats.iTotalTime > 36000 * 20 ) ||
 							( classStats.iKills < 0 ) || ( classStats.iKills > 10000 ) )
 						{
 							return false;
 						}
-					}
+					}			
 				}
 				else
 				{
@@ -334,16 +413,18 @@ bool TFReportedStats_t::LoadCustomDataFromBuffer( CUtlBuffer &LoadBuffer )
 			}
 		case TFSTATS_LUMP_WEAPON:
 			{
-				Assert( m_pCurrentGame );
-				Assert ( iLumpCount == ARRAYSIZE( m_pCurrentGame->m_aWeaponStats ) );
-				if ( iLumpCount == ARRAYSIZE( m_pCurrentGame->m_aWeaponStats ) )
+				Assert( pCurrentGame );
+				if ( !pCurrentGame )
+					return false;
+				Assert ( iLumpCount == ARRAYSIZE( pCurrentGame->m_aWeaponStats ) );
+				if ( iLumpCount == ARRAYSIZE( pCurrentGame->m_aWeaponStats ) )
 				{
-					CBaseGameStats::LoadLump( LoadBuffer, ARRAYSIZE( m_pCurrentGame->m_aWeaponStats ), sizeof( m_pCurrentGame->m_aWeaponStats[0] ), 
-						m_pCurrentGame->m_aWeaponStats );
+					CBaseGameStats::LoadLump( LoadBuffer, ARRAYSIZE( pCurrentGame->m_aWeaponStats ), sizeof( pCurrentGame->m_aWeaponStats[0] ), 
+						pCurrentGame->m_aWeaponStats );
 
 					// quick sanity check on some data -- we get some stat files that start out OK but are corrupted later in the file
-					if ( ( m_pCurrentGame->m_aWeaponStats[TF_WEAPON_MEDIGUN].iShotsFired < 0 ) || ( m_pCurrentGame->m_aWeaponStats[TF_WEAPON_MEDIGUN].iShotsFired > 100000 )
-						|| ( m_pCurrentGame->m_aWeaponStats[TF_WEAPON_FLAMETHROWER_ROCKET].iShotsFired != 0 ) ) // check that unused weapon has 0 shots
+					if ( ( pCurrentGame->m_aWeaponStats[TF_WEAPON_MEDIGUN].iShotsFired < 0 ) || ( pCurrentGame->m_aWeaponStats[TF_WEAPON_MEDIGUN].iShotsFired > 100000 )
+						|| ( pCurrentGame->m_aWeaponStats[TF_WEAPON_FLAMETHROWER_ROCKET].iShotsFired != 0 ) ) // check that unused weapon has 0 shots
 					{
 						return false;
 					}
@@ -379,5 +460,178 @@ bool TFReportedStats_t::LoadCustomDataFromBuffer( CUtlBuffer &LoadBuffer )
 	}
 
 	return bGotEndTag;
+}
+#endif
+
+//-----------------------------------------------------------------------------
+// TF2 Beta Maps
+// Robot Destruction
+//-----------------------------------------------------------------------------
+RobotDestructionStats_t::RobotDestructionStats_t()
+{
+	Clear();
+}
+
+//-----------------------------------------------------------------------------
+void RobotDestructionStats_t::Clear()
+{
+	V_memset( &iRobotInteraction, 0, sizeof( iRobotInteraction ) );
+	V_memset( &iRobotCoreInteraction, 0, sizeof( iRobotCoreInteraction ) );
+	V_memset( &iFlagInteraction, 0, sizeof( iFlagInteraction ) );
+
+	V_memset( &iCoresCollectedByTeam, 0, sizeof( iCoresCollectedByTeam ) );
+	V_memset( &iCoreCollectedByClass, 0, sizeof( iCoreCollectedByClass ) );
+
+	V_memset( &iBlueRobotsKilledByType, 0, sizeof( iBlueRobotsKilledByType ) );
+	V_memset( &iRedRobotsKilledByType, 0, sizeof( iRedRobotsKilledByType ) );
+	V_memset( &iRobotsDamageFromClass, 0, sizeof( iRobotsDamageFromClass ) );
+	
+}
+
+//-----------------------------------------------------------------------------
+int	RobotDestructionStats_t::GetRobotInteractionCount()
+{
+	int iCount = 0;
+	for ( int i = 1; i < MAX_PLAYERS; ++i )
+	{
+		if ( iRobotInteraction[i] )
+		{
+			iCount++;
+		}
+	}
+	return iCount;
+}
+//-----------------------------------------------------------------------------
+int	RobotDestructionStats_t::GetRobotCoreInteractionCount()
+{
+	int iCount = 0;
+	for ( int i = 1; i < MAX_PLAYERS; ++i )
+	{
+		if ( iRobotCoreInteraction[i] )
+		{
+			iCount++;
+		}
+	}
+	return iCount;
+}
+//-----------------------------------------------------------------------------
+int	RobotDestructionStats_t::GetFlagInteractionCount()
+{
+	int iCount = 0;
+	for ( int i = 1; i < MAX_PLAYERS; ++i )
+	{
+		if ( iFlagInteraction[i] )
+		{
+			iCount++;
+		}
+	}
+	return iCount;
+}
+
+//-----------------------------------------------------------------------------
+const char* g_aRoundEndReasons[] =
+{
+	"round_end",
+	"client_disconnect",
+	"client_quit",
+	"server_map_change",
+	"server_shutdown",
+	"time_limit_reached",
+	"win_limit_reached",
+	"win_diff_limit_reached",
+	"round_limit_reached",
+	"next_level_cvar",
+};
+
+// Get a string describing the current game type.
+const char* GetGameTypeID()
+{
+	ConVarRef tf_gamemode_arena( "tf_gamemode_arena" );
+	ConVarRef tf_gamemode_cp( "tf_gamemode_cp" );
+	ConVarRef tf_gamemode_ctf( "tf_gamemode_ctf" );
+	ConVarRef tf_gamemode_sd( "tf_gamemode_sd" );
+	ConVarRef tf_gamemode_payload( "tf_gamemode_payload" );
+	ConVarRef tf_gamemode_mvm( "tf_gamemode_mvm" );
+	ConVarRef tf_powerup_mode( "tf_powerup_mode" );
+	ConVarRef tf_gamemode_passtime( "tf_gamemode_passtime" );
+
+	const char* pszGameTypeID = NULL;
+	if ( tf_gamemode_arena.GetBool() )
+	{
+		pszGameTypeID = "arena";
+	}
+	else if ( tf_gamemode_cp.GetBool() )
+	{
+		pszGameTypeID = "cp";
+	}
+	else if ( tf_gamemode_ctf.GetBool() )
+	{
+		if ( tf_powerup_mode.GetBool() )
+		{
+			pszGameTypeID = "ctf_mannpower";
+		}
+		else
+		{
+			pszGameTypeID = "ctf";
+		}
+	}
+	else if ( tf_gamemode_sd.GetBool() )
+	{
+		pszGameTypeID = "sd";
+	}
+	else if ( tf_gamemode_payload.GetBool() )
+	{
+		pszGameTypeID = "payload";
+	}
+	else if ( tf_gamemode_mvm.GetBool() )
+	{
+		pszGameTypeID = "mvm";
+	}
+	else if ( tf_gamemode_passtime.GetBool() )
+	{
+		pszGameTypeID = "pass"; // intentionally not "passtime"
+	}
+	else
+	{
+		pszGameTypeID = "custom";
+	}
+
+	return pszGameTypeID;
+}
+
+//-----------------------------------------------------------------------------
+// TF2 Beta Maps
+// Passtime
+//-----------------------------------------------------------------------------
+void PasstimeStats_t::Clear()
+{
+	memset( &summary, 0, sizeof(summary) );
+	memset( &classes, 0, sizeof(classes) );
+}
+
+//-----------------------------------------------------------------------------
+void PasstimeStats_t::AddBallFracSample( float f )
+{
+	Assert( f >= 0 && f <= 1.0f );
+	int iBin = (uint8) Floor2Int( f * 255 );
+	summary.nBallFracHistSum += iBin;
+	++summary.arrBallFracHist[ iBin ];
+	++summary.nBallFracSampleCount;
+}
+
+//-----------------------------------------------------------------------------
+void PasstimeStats_t::AddPassTravelDistSample( float f )
+{
+	if ( summary.nPassTravelDistSampleCount >= summary.k_nMaxPassTravelDistSamples )
+		return;
+	Assert( f >= 0 );
+	summary.arrPassTravelDistSamples[ summary.nPassTravelDistSampleCount ] = (uint16) Float2Int( f );
+	++summary.nPassTravelDistSampleCount;
+}
+
+#ifdef CLIENT_DLL
+MapStats_t &GetMapStats( map_identifier_t iMapID )
+{
+	return CTFStatPanel::GetMapStats( iMapID );
 }
 #endif

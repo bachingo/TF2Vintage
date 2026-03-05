@@ -126,7 +126,7 @@ static void WriteAchievementGlobalState( KeyValues *pKV, bool bPersistToSteamClo
 
         if (pRemoteStorage)
         {
-            uint64 availableBytes = 0;
+	        uint64 availableBytes = 0;
             uint64 totalBytes = 0;
             if ( pRemoteStorage->GetQuota( &totalBytes, &availableBytes ) )
             {
@@ -314,7 +314,7 @@ bool CAchievementMgr::Init()
 	usermessages->HookMessage( "AchievementEvent", MsgFunc_AchievementEvent );
 #endif // CLIENT_DLL
 
-#if defined (TF_CLIENT_DLL) || defined (TF_VINTAGE_CLIENT)
+#ifdef TF_CLIENT_DLL
 	ListenForGameEvent( "localplayer_changeclass" );
 	ListenForGameEvent( "localplayer_changeteam" );
 	ListenForGameEvent( "teamplay_round_start" );	
@@ -1107,7 +1107,7 @@ bool CAchievementMgr::CheckAchievementsEnabled()
 #ifndef NO_STEAM
 			// Cheats get turned on automatically if you run with -dev which many people do internally, so allow cheats if developer is turned on and we're not running
 			// on Steam public
-			if ( developer.GetInt() == 0 || !steamapicontext->SteamUtils() || (k_EUniversePublic == steamapicontext->SteamUtils()->GetConnectedUniverse()) )
+			if ( developer.GetInt() == 0 || ( k_EUniverseInvalid == GetUniverse() ) || ( k_EUniversePublic == GetUniverse() ) )
 			{
 				Msg( "Achievements disabled: cheats turned on in this app session.\n" );
 				return false;
@@ -1180,7 +1180,7 @@ bool CalcPlayersOnFriendsList( int iMinFriends )
 					continue;
 #ifndef NO_STEAM
 				// check and see if they're on the local player's friends list
-				CSteamID steamID( pi.friendsID, 1, steamapicontext->SteamUtils()->GetConnectedUniverse(), k_EAccountTypeIndividual );
+				CSteamID steamID( pi.friendsID, 1, GetUniverse(), k_EAccountTypeIndividual );
 				if ( !steamapicontext->SteamFriends()->HasFriend( steamID, /*k_EFriendFlagImmediate*/ 0x04 ) )
 					continue;
 #endif
@@ -1240,7 +1240,7 @@ bool CalcHasNumClanPlayers( int iClanTeammates )
 					if ( engine->GetPlayerInfo( iPlayerIndex, &pi ) && ( pi.friendsID ) )
 					{	
 						// check and see if they're on the local player's friends list
-						CSteamID steamID( pi.friendsID, 1, steamapicontext->SteamUtils()->GetConnectedUniverse(), k_EAccountTypeIndividual );
+						CSteamID steamID( pi.friendsID, 1, GetUniverse(), k_EAccountTypeIndividual );
 						if ( steamapicontext->SteamFriends()->IsUserInSource( steamID, clanID ) )
 						{
 							iClanMembersOnTeam++;

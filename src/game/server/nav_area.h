@@ -18,16 +18,9 @@
 // BOTPORT: Clean up relationship between team index and danger storage in nav areas
 enum { MAX_NAV_TEAMS = 2 };
 
-#ifdef STAGING_ONLY
-inline void DebuggerBreakOnNaN_StagingOnly( float val )
-{
-	if ( IS_NAN( val ) )
-		DebuggerBreak();
-}
-#else
 #define DebuggerBreakOnNaN_StagingOnly( _val )
-#endif
 
+FORWARD_DECLARE_HANDLE( HSCRIPT );
 class CFuncElevator;
 class CFuncNavPrerequisite;
 class CFuncNavCost;
@@ -647,6 +640,54 @@ public:
 		return true;
 	}
 
+	// ----------------------------------------------------------------------------
+	// VScript accessors
+	// ----------------------------------------------------------------------------
+	virtual ScriptClassDesc_t *GetScriptDesc( void );
+	HSCRIPT	GetScriptInstance( void );
+
+	int	ScriptGetID( void );
+
+	Vector ScriptGetCorner( int corner );
+
+	void ScriptConnectToArea( HSCRIPT hArea, int dir );
+	void ScriptDisconnectArea( HSCRIPT hArea );
+	bool ScriptIsConnectedArea( HSCRIPT hArea, int dir );
+
+	void ScriptMarkAsBlocked( int team );
+	void ScriptUnblockArea( void );
+
+	int ScriptGetAdjacentCount( int dir );
+	void ScriptGetAdjacentAreas( int dir, HSCRIPT hTable );
+	HSCRIPT ScriptGetAdjacentArea( int dir, int index );
+	HSCRIPT ScriptGetRandomAdjacentArea( int dir );
+	void ScriptGetIncomingConnections( int dir, HSCRIPT hTable );
+	void ScriptAddIncomingConnection( HSCRIPT hArea, int dir );
+
+	const char *ScriptGetPlaceName( void );
+	void ScriptSetPlaceName( const char *pszName );
+
+	int ScriptComputeDirection( Vector const &vecPoint );
+	int ScriptGetPlayerCount( int team );
+	bool ScriptIsOverlapping( HSCRIPT hArea );
+	bool ScriptIsOverlappingOrigin( Vector const &vecPos, float tolerance );
+	bool ScriptIsEdge( int dir );
+	bool ScriptContains( HSCRIPT hArea );
+	bool ScriptContainsOrigin( Vector const &vecPoint );
+
+	HSCRIPT ScriptGetParent( void );
+	int ScriptGetParentHow( void );
+
+	bool ScriptIsVisible( Vector const &vecPoint );
+	float ScriptGetZ( Vector const &vecPos );
+	bool ScriptIsCoplanar( HSCRIPT hArea );
+	void ScriptRemoveOrthogonalConnections( int dir );
+
+	HSCRIPT ScriptGetElevator( void );
+	void ScriptGetElevatorAreas( HSCRIPT hTable );
+	HSCRIPT ScriptGetDoor( void );
+	Vector ScriptComputeClosestPointInPortal( HSCRIPT hTo, int dir, const Vector &vecFrom );
+
 
 private:
 	friend class CNavMesh;
@@ -765,11 +806,25 @@ private:
 	static uint32 s_nCurrVisTestCounter;
 
 	CUtlVector< CHandle< CFuncNavCost > > m_funcNavCostVector;	// active, overlapping cost entities
+
+	HSCRIPT m_hScriptInstance;
 };
 
 typedef CUtlVector< CNavArea * > NavAreaVector;
 extern NavAreaVector TheNavAreas;
 
+
+
+inline HSCRIPT ToHScript( CNavArea *pArea )
+{
+	return ( pArea ) ? pArea->GetScriptInstance() : NULL;
+}
+
+template <> ScriptClassDesc_t *GetScriptDesc<CNavArea>( CNavArea * );
+inline CNavArea *ToNavArea( HSCRIPT hScript )
+{
+	return ( IsValid( hScript ) ) ? (CNavArea *)g_pScriptVM->GetInstanceValue( hScript, GetScriptDescForClass(CNavArea) ) : NULL;
+}
 
 //--------------------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------------------

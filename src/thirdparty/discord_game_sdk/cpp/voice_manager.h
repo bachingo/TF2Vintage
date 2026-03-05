@@ -16,8 +16,8 @@ public:
     Result SetSelfDeaf(bool deaf);
     Result IsLocalMute(Snowflake userId, bool* mute);
     Result SetLocalMute(Snowflake userId, bool mute);
-    Result GetLocalVolume(Snowflake userId, uint8_t* volume);
-    Result SetLocalVolume(Snowflake userId, uint8_t volume);
+    Result GetLocalVolume(Snowflake userId, std::uint8_t* volume);
+    Result SetLocalVolume(Snowflake userId, std::uint8_t volume);
 
     Event<> OnSettingsUpdate;
 

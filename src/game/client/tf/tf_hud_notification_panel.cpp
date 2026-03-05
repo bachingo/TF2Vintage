@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2002, Valve LLC, All rights reserved. ============
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -19,6 +19,7 @@
 #include "tf_shareddefs.h"
 #include "tf_hud_notification_panel.h"
 #include "tf_hud_freezepanel.h"
+#include <filesystem.h>
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -26,6 +27,9 @@
 using namespace vgui;
 
 ConVar tf_hud_notification_duration( "tf_hud_notification_duration", "3.0", 0, "How long to display hud notification panels before fading them" );
+ConVar tf_hud_notification_show_count_kart_controls( "tf_hud_notification_show_count_kart_controls", "0", FCVAR_ARCHIVE );
+ConVar tf_hud_notification_show_count_ghost_controls( "tf_hud_notification_show_count_ghost_controls", "0", FCVAR_ARCHIVE );
+ConVar tf_hud_notification_show_count_ghost_controls_no_respawn( "tf_hud_notification_show_count_ghost_controls_no_respawn", "0", FCVAR_ARCHIVE );
 
 DECLARE_HUDELEMENT( CHudNotificationPanel );
 
@@ -55,7 +59,14 @@ CHudNotificationPanel::CHudNotificationPanel( const char *pElementName ) : CHudE
 
 	RegisterForRenderGroup( "mid" );
 	RegisterForRenderGroup( "commentary" );
+
+	LoadManifest();
+	m_mapShowCounts.SetLessFunc( DefLessFunc( int ) ) ;
+	m_mapShowCounts.Insert( HUD_NOTIFY_HOW_TO_CONTROL_GHOST, ShowCount_t( 3, 300.f, &tf_hud_notification_show_count_ghost_controls ) );
+	m_mapShowCounts.Insert( HUD_NOTIFY_HOW_TO_CONTROL_KART, ShowCount_t( 3, 300.f, &tf_hud_notification_show_count_kart_controls ) );
+	m_mapShowCounts.Insert( HUD_NOTIFY_HOW_TO_CONTROL_GHOST_NO_RESPAWN, ShowCount_t( 3, 300.f, &tf_hud_notification_show_count_ghost_controls_no_respawn ) );
 }
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -84,17 +95,43 @@ void CHudNotificationPanel::ApplySchemeSettings( IScheme *pScheme )
 //-----------------------------------------------------------------------------
 void CHudNotificationPanel::MsgFunc_HudNotify( bf_read &msg )
 {
-	// Ignore notifications in minmode
-	ConVarRef cl_hud_minmode( "cl_hud_minmode", true );
-	if ( cl_hud_minmode.IsValid() && cl_hud_minmode.GetBool() )
-		return;
-
 	int iType = msg.ReadByte();
+	bool bForceShow = msg.ReadByte();
 
-	LoadControlSettings( GetNotificationByType( iType ) );
+	// Ignore notifications in minmode
+	if ( !bForceShow )
+	{
+		ConVarRef cl_hud_minmode( "cl_hud_minmode", true );
+		if ( cl_hud_minmode.IsValid() && cl_hud_minmode.GetBool() )
+			return;
+	}
 
+	float flDuration = tf_hud_notification_duration.GetFloat();
+
+	// Check if we're only supposed to show a limited number of times
+	auto idx = m_mapShowCounts.Find( iType );
+	if ( m_mapShowCounts.IsValidIndex( idx ) )
+	{
+		auto& showCount = m_mapShowCounts[ idx ];
+		// Stop here if we've met our max show count, or it's too soon
+		if ( showCount.m_pConVar->GetInt() >= showCount.m_nMaxShowCount 
+			|| showCount.m_flNextAllowedTime > Plat_FloatTime() )
+		{
+			return;
+		}
+
+		// Increment show count
+		showCount.m_pConVar->SetValue( showCount.m_pConVar->GetInt() + 1 );
+		// Set next time we're allowed to show
+		showCount.m_flNextAllowedTime = Plat_FloatTime() + showCount.m_flCooldown;
+	}
+	
+	
+	InvalidateLayout( true, true );
+	LoadControlSettings( GetNotificationByType( iType, flDuration ) );
+	
 	// set up the fade time
-	m_flFadeTime = gpGlobals->curtime + tf_hud_notification_duration.GetFloat();
+	m_flFadeTime = gpGlobals->curtime + flDuration;
 }
 
 //-----------------------------------------------------------------------------
@@ -125,6 +162,9 @@ void CHudNotificationPanel::MsgFunc_HudNotifyCustom( bf_read &msg )
 //-----------------------------------------------------------------------------
 void CHudNotificationPanel::SetupNotifyCustom( const char *pszText, const char *pszIcon, int iBackgroundTeam )
 {
+	// Reload the base
+	LoadControlSettings( "resource/UI/notifications/base_notification.res" );
+
 	m_pIcon->SetIcon( pszIcon );
 	m_pText->SetText( pszText );
 
@@ -135,14 +175,6 @@ void CHudNotificationPanel::SetupNotifyCustom( const char *pszText, const char *
 	else if ( iBackgroundTeam == TF_TEAM_BLUE )
 	{
 		m_pBackground->SetImage( "../hud/score_panel_blue_bg" );
-	}
-	else if ( iBackgroundTeam == TF_TEAM_GREEN )
-	{
-		m_pBackground->SetImage("../hud/score_panel_green_bg");
-	}
-	else if  (iBackgroundTeam == TF_TEAM_YELLOW )
-	{
-		m_pBackground->SetImage("../hud/score_panel_yellow_bg");
 	}
 	else
 	{
@@ -158,6 +190,54 @@ void CHudNotificationPanel::SetupNotifyCustom( const char *pszText, const char *
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+void CHudNotificationPanel::SetupNotifyCustom( const wchar_t *pszText, const char *pszIcon, int iBackgroundTeam )
+{
+	// Reload the base
+	LoadControlSettings( "resource/UI/notifications/base_notification.res" );
+
+	m_pIcon->SetIcon( pszIcon );
+	m_pText->SetText( pszText );
+
+	if ( iBackgroundTeam == TF_TEAM_RED )
+	{
+		m_pBackground->SetImage( "../hud/score_panel_red_bg" );
+	}
+	else if ( iBackgroundTeam == TF_TEAM_BLUE )
+	{
+		m_pBackground->SetImage( "../hud/score_panel_blue_bg" );
+	}
+	else
+	{
+		m_pBackground->SetImage( "../hud/notification_black" );
+	}
+
+	// set up the fade time
+	m_flFadeTime = gpGlobals->curtime + tf_hud_notification_duration.GetFloat();
+
+	InvalidateLayout();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CHudNotificationPanel::SetupNotifyCustom( const wchar_t *pszText, HudNotification_t type, float overrideDuration )
+{
+	float flDuration = tf_hud_notification_duration.GetFloat();
+
+	// Reload the base
+	LoadControlSettings( GetNotificationByType( type, flDuration ) );
+
+	m_pText->SetText( pszText );
+
+	// set up the fade time
+	m_flFadeTime = gpGlobals->curtime + ( overrideDuration > 0.f ? overrideDuration : flDuration );
+
+	InvalidateLayout();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CHudNotificationPanel::PerformLayout( void )
 {
 	BaseClass::PerformLayout();
@@ -166,15 +246,15 @@ void CHudNotificationPanel::PerformLayout( void )
 	// **** this is super yucky, i'm going to cry myself to sleep tonight ****
 
 	int iTextWide, iTextTall;
-	m_pText->GetContentSize(iTextWide, iTextTall);
+	m_pText->GetContentSize( iTextWide, iTextTall );
 
-	m_pText->SetSize(iTextWide, m_pText->GetTall() );
+	m_pText->SetSize( iTextWide, m_pText->GetTall() );
 
 	float flTextWide = m_pText->GetWide();
 	float flIconWide = m_pIcon->GetWide();
 
-	float flSpacer = XRES(5);
-	float flEndSpacer = XRES(8) + XRES(3) * ( flTextWide / 184 );	// total hackery
+	float flSpacer = XRES( 5 );
+	float flEndSpacer = XRES( 8 ) + XRES( 3 ) * ( flTextWide / 184 );	// total hackery
 
 	float flTotalWidth = flEndSpacer + flIconWide + flSpacer + flTextWide + flEndSpacer;
 
@@ -196,6 +276,13 @@ void CHudNotificationPanel::PerformLayout( void )
 	m_pText->GetPos( iTextXPos, iTextYPos );
 
 	m_pText->SetPos( flLeftSide + flEndSpacer + flIconWide + flSpacer, iTextYPos );
+
+	const unsigned short tempBufSize = 2048;
+	wchar_t tempBufIn[tempBufSize];
+	wchar_t tempBufOut[tempBufSize];
+	m_pText->GetText( tempBufIn, tempBufSize );
+	UTIL_ReplaceKeyBindings( tempBufIn, tempBufSize, tempBufOut, tempBufSize );
+	m_pText->SetText( tempBufOut );
 }
 
 //-----------------------------------------------------------------------------
@@ -239,7 +326,7 @@ void CHudNotificationPanel::OnTick( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-const char *CHudNotificationPanel::GetNotificationByType( int iType )
+const char *CHudNotificationPanel::GetNotificationByType( int iType, float& flDuration )
 {
 	bool bOnBlueTeam = false;
 
@@ -377,7 +464,7 @@ const char *CHudNotificationPanel::GetNotificationByType( int iType )
 		pszResult = "resource/UI/notifications/notify_golden_wrench.res";
 		break;
 
-	case HUD_NOTIFY_RD_ROBOT_ATTACKED:
+	case HUD_NOTIFY_RD_ROBOT_UNDER_ATTACK:
 		if ( bOnBlueTeam )
 		{
 			pszResult = "resource/UI/notifications/notify_rd_robot_attacked_blue.res";
@@ -390,74 +477,71 @@ const char *CHudNotificationPanel::GetNotificationByType( int iType )
 
 	case HUD_NOTIFY_HOW_TO_CONTROL_GHOST:
 		pszResult = "resource/UI/notifications/notify_how_to_control_ghost.res";
+		flDuration = 10.f;
 		break;
 
 	case HUD_NOTIFY_HOW_TO_CONTROL_KART:
 		pszResult = "resource/UI/notifications/notify_how_to_control_kart.res";
+		flDuration = 10.f;
 		break;
 
-	case HUD_NOTIFY_PASSTIME_HOWTO:
-		pszResult = "resource/UI/notifications/notify_passtime_howto.res";
+	case HUD_NOTIFY_HOW_TO_CONTROL_GHOST_NO_RESPAWN:
+		pszResult = "resource/UI/notifications/notify_how_to_control_ghost_no_respawn.res";
+		flDuration = 10.f;
 		break;
 
-	case HUD_NOTIFY_PASSTIME_BALL_BASKET:
-		pszResult = "resource/UI/notifications/notify_passtime_ball_basket.res";
+	// Passtime
+	case HUD_NOTIFY_PASSTIME_HOWTO: 
+		pszResult = "resource/UI/notifications/notify_passtime_howto.res"; 
+		flDuration = 10.f; 
 		break;
 
-	case HUD_NOTIFY_PASSTIME_BALL_ENDZONE:
-		pszResult = "resource/UI/notifications/notify_passtime_ball_endzone.res";
+	case HUD_NOTIFY_PASSTIME_NO_TELE: 
+		pszResult = "resource/UI/notifications/notify_passtime_no_tele.res"; 
 		break;
 
-	case HUD_NOTIFY_PASSTIME_SCORE:
-		pszResult = "resource/UI/notifications/notify_passtime_score.res";
+	case HUD_NOTIFY_PASSTIME_NO_CARRY: 
+		pszResult = "resource/UI/notifications/notify_passtime_no_carry.res"; 
 		break;
 
-	case HUD_NOTIFY_PASSTIME_FRIENDLY_SCORE:
-		pszResult = "resource/UI/notifications/notify_passtime_friendly_score.res";
+	case HUD_NOTIFY_PASSTIME_NO_INVULN: 
+		pszResult = "resource/UI/notifications/notify_passtime_no_invuln.res"; 
 		break;
 
-	case HUD_NOTIFY_PASSTIME_ENEMY_SCORE:
-		pszResult = "resource/UI/notifications/notify_passtime_enemy_score.res";
-		break;
-
-	case HUD_NOTIFY_PASSTIME_NO_TELE:
-		pszResult = "resource/UI/notifications/notify_passtime_no_tele.res";
-		break;
-
-	case HUD_NOTIFY_PASSTIME_NO_CARRY:
-		pszResult = "resource/UI/notifications/notify_passtime_no_carry.res";
-		break;
-
-	case HUD_NOTIFY_PASSTIME_NO_INVULN :
-		pszResult = "resource/UI/notifications/notify_passtime_no_invuln.res";
-		break;
-
-	case HUD_NOTIFY_PASSTIME_NO_DISGUISE:
-		pszResult = "resource/UI/notifications/notify_passtime_no_disguise.res";
+	case HUD_NOTIFY_PASSTIME_NO_DISGUISE: 
+		pszResult = "resource/UI/notifications/notify_passtime_no_disguise.res"; 
 		break;
 
 	case HUD_NOTIFY_PASSTIME_NO_CLOAK:
-		pszResult = "resource/UI/notifications/notify_passtime_no_cloak.res";
+		pszResult = "resource/UI/notifications/notify_passtime_no_cloak.res"; 
 		break;
 
 	case HUD_NOTIFY_PASSTIME_NO_OOB:
-		pszResult = "resource/UI/notifications/notify_passtime_no_oob.res";
+		pszResult = "resource/UI/notifications/notify_passtime_no_oob.res"; 
 		break;
 
-	case HUD_NOTIFY_PASSTIME_NO_HOLSTER:
-		pszResult = "resource/UI/notifications/notify_passtime_no_holster.res";
+	case HUD_NOTIFY_PASSTIME_NO_HOLSTER: 
+		pszResult = "resource/UI/notifications/notify_passtime_no_holster.res"; 
 		break;
 
-	case HUD_NOTIFY_PASSTIME_NO_TAUNT:
-		pszResult = "resource/UI/notifications/notify_passtime_no_taunt.res";
+	case HUD_NOTIFY_PASSTIME_NO_TAUNT: 
+		pszResult = "resource/UI/notifications/notify_passtime_no_taunt.res"; 
+		break;
+
+	// Competitive
+	case HUD_NOTIFY_COMPETITIVE_GC_DOWN:
+		pszResult = "resource/UI/notifications/notify_competitive_gc_down.res";
+		flDuration = 20.f;
 		break;
 
 	case HUD_NOTIFY_TRUCE_START:
 		pszResult = "resource/UI/notifications/notify_truce_start.res";
+		flDuration = 10.f;
 		break;
 
 	case HUD_NOTIFY_TRUCE_END:
 		pszResult = "resource/UI/notifications/notify_truce_end.res";
+		flDuration = 10.f;
 		break;
 
 	default:
@@ -465,4 +549,33 @@ const char *CHudNotificationPanel::GetNotificationByType( int iType )
 	}
 
 	return pszResult;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CHudNotificationPanel::LoadManifest( void )
+{
+	const char *pszManifestFile = "resource/UI/notifications/notification_manifest.txt";
+	KeyValues *manifest = new KeyValues( pszManifestFile );
+	if ( manifest->LoadFromFile( g_pFullFileSystem, pszManifestFile, "GAME" ) == false )
+	{
+		manifest->deleteThis();
+		return false;
+	}
+
+	// Load each file defined in the text
+	for ( KeyValues *sub = manifest->GetFirstSubKey(); sub != NULL; sub = sub->GetNextKey() )
+	{
+		if ( !Q_stricmp( sub->GetName(), "file" ) )
+		{
+			if ( BuildGroup::PrecacheResFile( sub->GetString() ) == false )
+			{
+				Warning("Failed to load notification res file '%s' specified in %s.\n", sub->GetString(), pszManifestFile );
+			}
+		}
+	}
+
+	manifest->deleteThis();
+	return true;
 }

@@ -3,6 +3,7 @@
 #define _SQOBJECT_H_
 
 #include "squtils.h"
+#include <basehandle.h>
 
 #ifdef _SQ64
 #define UINT_MINUS_ONE (0xFFFFFFFFFFFFFFFF)
@@ -150,6 +151,7 @@ struct SQObjectPtr;
 #define _outer(obj) ((obj)._unVal.pOuter)
 #define _refcounted(obj) ((obj)._unVal.pRefCounted)
 #define _rawval(obj) ((obj)._unVal.raw)
+#define _ehandle(obj) ((obj)._unVal.pEHandle)
 
 #define _stringval(obj) (obj)._unVal.pString->_val
 #define _userdataval(obj) ((SQUserPointer)sq_aligning((obj)._unVal.pUserData + 1))
@@ -252,6 +254,21 @@ struct SQObjectPtr : public SQObject
         SQ_OBJECT_RAWINIT()
         _type = OT_BOOL;
         _unVal.nInteger = b?1:0;
+        return *this;
+    }
+
+	SQObjectPtr(CBaseHandle const &x)
+    {
+        SQ_OBJECT_RAWINIT()
+        _type=OT_EHANDLE;
+        _unVal.pEHandle = x.ToInt();
+    }
+    inline SQObjectPtr& operator=(CBaseHandle const & x)
+    { 
+        __Release(_type,_unVal);
+        _type = OT_EHANDLE;
+        SQ_OBJECT_RAWINIT()
+        _unVal.pEHandle = x.ToInt();
         return *this;
     }
 

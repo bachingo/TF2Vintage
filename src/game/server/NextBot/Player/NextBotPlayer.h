@@ -155,7 +155,6 @@ public:
 	virtual bool IsFakeClient( void ) const { return true; }
 	virtual bool IsBot( void ) const { return true; }
 	virtual INextBot *MyNextBotPointer( void ) { return this; }
-	virtual bool IsNextBot( void ) OVERRIDE { return true; }
 
 	// this is valid because the templatized PlayerType must be derived from CBasePlayer, which is derived from CBaseCombatCharacter
 	virtual CBaseCombatCharacter *GetEntity( void ) const { return ( PlayerType * )this; }	
@@ -247,7 +246,7 @@ protected:
 	int m_prevInputButtons;
 	CountdownTimer m_fireButtonTimer;
 	CountdownTimer m_meleeButtonTimer;
-	CountdownTimer m_specialButtonTimer;
+	CountdownTimer m_specialFireButtonTimer;
 	CountdownTimer m_useButtonTimer;
 	CountdownTimer m_reloadButtonTimer;
 	CountdownTimer m_forwardButtonTimer;
@@ -360,14 +359,14 @@ template < typename PlayerType >
 inline void NextBotPlayer< PlayerType >::PressSpecialFireButton( float duration )
 {
 	m_inputButtons |= IN_ATTACK3;
-	m_specialButtonTimer.Start( duration );
+	m_specialFireButtonTimer.Start( duration );
 }
 
 template < typename PlayerType >
 inline void NextBotPlayer< PlayerType >::ReleaseSpecialFireButton( void )
 {
 	m_inputButtons &= ~IN_ATTACK3;
-	m_specialButtonTimer.Invalidate();
+	m_specialFireButtonTimer.Invalidate();
 }
 
 template < typename PlayerType >
@@ -533,6 +532,7 @@ inline void NextBotPlayer< PlayerType >::Spawn( void )
 	m_prevInputButtons = m_inputButtons = 0;
 	m_fireButtonTimer.Invalidate();
 	m_meleeButtonTimer.Invalidate();
+	m_specialFireButtonTimer.Invalidate();
 	m_useButtonTimer.Invalidate();
 	m_reloadButtonTimer.Invalidate();
 	m_forwardButtonTimer.Invalidate();
@@ -578,6 +578,12 @@ inline void NextBotPlayer< PlayerType >::PhysicsSimulate( void )
 {
 	VPROF( "NextBotPlayer::PhysicsSimulate" );
 
+	// Make sure not to simulate this guy twice per frame
+	if ( PlayerType::m_nSimulationTick == gpGlobals->tickcount )
+	{
+		return;
+	}
+
 	if ( engine->IsPaused() )
 	{
 		// We're paused - don't add new commands
@@ -607,7 +613,7 @@ inline void NextBotPlayer< PlayerType >::PhysicsSimulate( void )
 		if ( !m_meleeButtonTimer.IsElapsed() )
 			m_inputButtons |= IN_ATTACK2;
 
-		if ( !m_specialButtonTimer.IsElapsed() )
+		if ( !m_specialFireButtonTimer.IsElapsed() )
 			m_inputButtons |= IN_ATTACK3;
 
 		if ( !m_useButtonTimer.IsElapsed() )

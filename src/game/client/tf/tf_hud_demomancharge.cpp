@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2002, Valve LLC, All rights reserved. ============
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -17,7 +17,8 @@
 #include <vgui_controls/EditablePanel.h>
 #include <vgui_controls/ProgressBar.h>
 #include "tf_weaponbase.h"
-#include "tf_weapon_grenadelauncher.h"
+#include "tf_gamerules.h"
+#include "tf_logic_halloween_2014.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -54,9 +55,11 @@ CHudDemomanChargeMeter::CHudDemomanChargeMeter( const char *pElementName ) : CHu
 
 	m_pChargeMeter = new ContinuousProgressBar( this, "ChargeMeter" );
 
-	SetHiddenBits( HIDEHUD_MISCSTATUS );
+	SetHiddenBits( HIDEHUD_MISCSTATUS | HIDEHUD_PIPES_AND_CHARGE );
 
 	vgui::ivgui()->AddTickSignal( GetVPanel() );
+
+	RegisterForRenderGroup( "inspect_panel" );
 }
 
 //-----------------------------------------------------------------------------
@@ -78,36 +81,22 @@ bool CHudDemomanChargeMeter::ShouldDraw( void )
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 
 	if ( !pPlayer || !pPlayer->IsAlive() )
-	{
 		return false;
-	}
 
-	/*if ( !pPlayer->IsPlayerClass( TF_CLASS_DEMOMAN ) )
-	{
-		return false;
-	}*/
-	
 	CTFWeaponBase *pWpn = pPlayer->GetActiveTFWeapon();
-
-	if ( !pWpn )
-	{
+	ITFChargeUpWeapon *pChargeupWeapon = dynamic_cast< ITFChargeUpWeapon *>( pWpn );
+	if ( !pWpn || !pChargeupWeapon || !pChargeupWeapon->CanCharge() )
 		return false;
-	}
 
-	int iWeaponID = pWpn->GetWeaponID();
 
-	if ( iWeaponID != TF_WEAPON_PIPEBOMBLAUNCHER )
-	{
-		// Check if we're using a mortar.
-		if ( iWeaponID == TF_WEAPON_GRENADELAUNCHER || iWeaponID == TF_WEAPON_CANNON )
-		{
-			CTFGrenadeLauncher *pLauncher = dynamic_cast< CTFGrenadeLauncher *>( pWpn );
-			if (pLauncher && pLauncher->IsMortar() )
-				return CHudElement::ShouldDraw();
-		}
-			
+	if ( pPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_GHOST_MODE ) )
 		return false;
-	}
+
+	if ( CTFMinigameLogic::GetMinigameLogic() && CTFMinigameLogic::GetMinigameLogic()->GetActiveMinigame() )
+		return false;
+
+	if ( TFGameRules() && TFGameRules()->ShowMatchSummary() )
+		return false;
 
 	return CHudElement::ShouldDraw();
 }
@@ -123,9 +112,10 @@ void CHudDemomanChargeMeter::OnTick( void )
 		return;
 
 	CTFWeaponBase *pWpn = pPlayer->GetActiveTFWeapon();
-	ITFChargeUpWeapon *pChargeupWeapon = dynamic_cast< ITFChargeUpWeapon *>( pWpn );
+	
 
-	if ( !pWpn || !pChargeupWeapon )
+	ITFChargeUpWeapon *pChargeupWeapon = dynamic_cast< ITFChargeUpWeapon *>( pWpn );
+	if ( !pWpn || !pChargeupWeapon || !pChargeupWeapon->CanCharge() )
 		return;
 
 	if ( m_pChargeMeter )
@@ -138,8 +128,8 @@ void CHudDemomanChargeMeter::OnTick( void )
 
 			if ( flChargeBeginTime > 0 )
 			{
-				float flTimeCharged = max( 0, gpGlobals->curtime - flChargeBeginTime );
-				float flPercentCharged = min( 1.0, flTimeCharged / flChargeMaxTime );
+				float flTimeCharged = MAX( 0, gpGlobals->curtime - flChargeBeginTime );
+				float flPercentCharged = MIN( 1.0, flTimeCharged / flChargeMaxTime );
 
 				m_pChargeMeter->SetProgress( flPercentCharged );
 			}

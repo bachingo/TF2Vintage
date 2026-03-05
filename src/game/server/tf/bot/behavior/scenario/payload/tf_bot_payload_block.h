@@ -1,44 +1,38 @@
-//========= Copyright � Valve LLC, All rights reserved. =======================
-//
-// Purpose:		
-//
-// $NoKeywords: $
-//=============================================================================
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_payload_block.h
+// Prevent the other team from moving the cart
+// Michael Booth, April 2010
+
 #ifndef TF_BOT_PAYLOAD_BLOCK_H
 #define TF_BOT_PAYLOAD_BLOCK_H
-#ifdef _WIN32
-#pragma once
-#endif
 
+#include "Path/NextBotPathFollow.h"
 
-#include "NextBotBehavior.h"
-
-class CTFBotPayloadBlock : public Action<CTFBot>
+class CTFBotPayloadBlock : public Action< CTFBot >
 {
-	DECLARE_CLASS( CTFBotPayloadBlock, Action<CTFBot> );
 public:
-	virtual ~CTFBotPayloadBlock() {}
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
+	virtual ActionResult< CTFBot >	OnResume( CTFBot *me, Action< CTFBot > *interruptingAction );
 
-	virtual const char *GetName() const OVERRIDE;
+	virtual EventDesiredResult< CTFBot > OnStuck( CTFBot *me );
+	virtual EventDesiredResult< CTFBot > OnMoveToSuccess( CTFBot *me, const Path *path );
+	virtual EventDesiredResult< CTFBot > OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType reason );
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
-	virtual ActionResult<CTFBot> OnResume( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
+	virtual EventDesiredResult< CTFBot > OnTerritoryContested( CTFBot *me, int territoryID );
+	virtual EventDesiredResult< CTFBot > OnTerritoryCaptured( CTFBot *me, int territoryID );
+	virtual EventDesiredResult< CTFBot > OnTerritoryLost( CTFBot *me, int territoryID );
 
-	virtual EventDesiredResult<CTFBot> OnMoveToSuccess( CTFBot *me, const Path *path ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType fail ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnStuck( CTFBot *me ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnTerritoryContested( CTFBot *me, int iPointIdx ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnTerritoryCaptured( CTFBot *me, int iPointIdx ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnTerritoryLost( CTFBot *me, int iPointIdx ) OVERRIDE;
+	virtual QueryResultType	ShouldRetreat( const INextBot *me ) const;					// is it time to retreat?
+	virtual QueryResultType ShouldHurry( const INextBot *me ) const;					// are we in a hurry?
 
-	virtual QueryResultType ShouldHurry( const INextBot *me ) const OVERRIDE;
-	virtual QueryResultType ShouldRetreat( const INextBot *me ) const OVERRIDE;
+	virtual const char *GetName( void ) const	{ return "PayloadBlock"; };
 
 private:
-	PathFollower m_PathFollower;
-	CountdownTimer m_recomputePathTimer;
-	CountdownTimer m_blockDuration;
+	PathFollower m_path;
+	CountdownTimer m_repathTimer;
+
+	CountdownTimer m_giveUpTimer;
 };
 
-#endif
+#endif // TF_BOT_PAYLOAD_BLOCK_H

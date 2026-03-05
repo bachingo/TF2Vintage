@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: TF Napalm Grenade.
 //
@@ -119,7 +119,7 @@ void CTFGrenadeNapalmProjectile::Detonate()
 {
 	if ( ShouldNotDetonate() )
 	{
-		RemoveGrenade();
+		Destroy();
 		return;
 	}
 

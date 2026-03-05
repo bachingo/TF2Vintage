@@ -1,23 +1,22 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
-//
-// Purpose:		
-//
-// $NoKeywords: $
-//=============================================================================
+//========= Copyright Valve Corporation, All rights reserved. ============//
 #include "cbase.h"
-#include "tf_player.h"
+
 #include "tf_gamerules.h"
-#include "tf_gamestats.h"
 #include "tf_base_boss.h"
+#include "entity_currencypack.h"
+#include "tf_gamestats.h"
+#include "tf_player.h"
 
-ConVar tf_base_boss_speed( "tf_base_boss_speed", "75", FCVAR_CHEAT );
-ConVar tf_base_boss_max_turn_rate( "tf_base_boss_max_turn_rate", "25", FCVAR_CHEAT );
+LINK_ENTITY_TO_CLASS( base_boss, CTFBaseBoss );
 
-IMPLEMENT_SERVERCLASS_ST( CTFBaseBoss, DT_TFBaseBoss )
-	SendPropFloat( SENDINFO( m_lastHealthPercentage ), 11, SPROP_CHANGES_OFTEN|SPROP_NOSCALE, 0.0, 1.0 ),
+PRECACHE_REGISTER( base_boss );
+
+IMPLEMENT_SERVERCLASS_ST( CTFBaseBoss, DT_TFBaseBoss)
+	SendPropFloat( SENDINFO(m_lastHealthPercentage), 11, SPROP_NOSCALE, 0.0, 1.0 ),
 END_SEND_TABLE()
 
 BEGIN_DATADESC( CTFBaseBoss )
+
 	DEFINE_KEYFIELD( m_initialHealth, FIELD_INTEGER, "health" ),
 	DEFINE_KEYFIELD( m_modelString, FIELD_STRING, "model" ),
 	DEFINE_KEYFIELD( m_speed, FIELD_FLOAT, "speed" ),
@@ -26,6 +25,9 @@ BEGIN_DATADESC( CTFBaseBoss )
 	DEFINE_INPUTFUNC( FIELD_VOID, "Enable", InputEnable ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "Disable", InputDisable ),
 	DEFINE_INPUTFUNC( FIELD_FLOAT, "SetSpeed", InputSetSpeed ),
+	DEFINE_INPUTFUNC( FIELD_FLOAT, "SetStepHeight", InputSetStepHeight ),
+	DEFINE_INPUTFUNC( FIELD_FLOAT, "SetMaxJumpHeight", InputSetMaxJumpHeight ),
+
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetHealth", InputSetHealth ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetMaxHealth", InputSetMaxHealth ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddHealth", InputAddHealth ),
@@ -40,34 +42,111 @@ BEGIN_DATADESC( CTFBaseBoss )
 	DEFINE_OUTPUT( m_outputOnHealthBelow30Percent,	"OnHealthBelow30Percent" ),
 	DEFINE_OUTPUT( m_outputOnHealthBelow20Percent,	"OnHealthBelow20Percent" ),
 	DEFINE_OUTPUT( m_outputOnHealthBelow10Percent,	"OnHealthBelow10Percent" ),
+
 	DEFINE_OUTPUT( m_outputOnKilled, "OnKilled" ),
 
 	DEFINE_THINKFUNC( BossThink ),
+
 END_DATADESC()
 
-LINK_ENTITY_TO_CLASS( base_boss, CTFBaseBoss );
+BEGIN_ENT_SCRIPTDESC( CTFBaseBoss, NextBotCombatCharacter, "Team Fortress 2 Base Boss" )
+	DEFINE_SCRIPTFUNC( SetResolvePlayerCollisions, "" )
+END_SCRIPTDESC();
+
+ConVar tf_base_boss_speed( "tf_base_boss_speed", "75", FCVAR_CHEAT );
+ConVar tf_base_boss_max_turn_rate( "tf_base_boss_max_turn_rate", "25", FCVAR_CHEAT );
+
+extern void HandleRageGain( CTFPlayer *pPlayer, unsigned int iRequiredBuffFlags, float flDamage, float fInverseRageGainScale );
+
+//--------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------
+float CTFBaseBossLocomotion::GetRunSpeed( void ) const
+{
+	CTFBaseBoss *boss = (CTFBaseBoss *)GetBot()->GetEntity();
+	return boss->GetMaxSpeed();
+}
 
 
+//--------------------------------------------------------------------------------------
+void CTFBaseBossLocomotion::FaceTowards( const Vector &target )
+{
+	CTFBaseBoss *pTank = static_cast< CTFBaseBoss* >( GetBot()->GetEntity() );
+
+	const float deltaT = GetUpdateInterval();
+
+	QAngle angles = pTank->GetLocalAngles();
+
+	float desiredYaw = UTIL_VecToYaw( target - GetFeet() );
+
+	float angleDiff = UTIL_AngleDiff( desiredYaw, angles.y );
+
+	float deltaYaw = tf_base_boss_max_turn_rate.GetFloat() * deltaT;
+
+	if ( angleDiff < -deltaYaw )
+	{
+		angles.y -= deltaYaw;
+	}
+	else if ( angleDiff > deltaYaw )
+	{
+		angles.y += deltaYaw;
+	}
+	else
+	{
+		angles.y += angleDiff;
+	}
+
+	Vector forward, right;
+	pTank->GetVectors( NULL, &right, NULL );
+
+	forward = CrossProduct( GetGroundNormal(), right );
+
+	float desiredPitch = UTIL_VecToPitch( forward );
+
+	angleDiff = UTIL_AngleDiff( desiredPitch, angles.x );
+
+	float deltaPitch = tf_base_boss_max_turn_rate.GetFloat() * deltaT;
+
+	if ( angleDiff < -deltaPitch )
+	{
+		angles.x -= deltaPitch;
+	}
+	else if ( angleDiff > deltaPitch )
+	{
+		angles.x += deltaPitch;
+	}
+	else
+	{
+		angles.x += angleDiff;
+	}
+
+	pTank->SetLocalAngles( angles );
+	pTank->UpdateCollisionBounds();
+}
+
+
+//--------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------
 CTFBaseBoss::CTFBaseBoss()
 {
 	m_modelString = NULL_STRING;
 	m_lastHealthPercentage = 1.0f;
 	m_speed = tf_base_boss_speed.GetFloat();
 	m_locomotor = new CTFBaseBossLocomotion( this );
-	m_nCurrencyValue = 125;
+	m_currencyValue = TF_BASE_BOSS_CURRENCY;
 	m_initialHealth = 0;
+
 	m_bResolvePlayerCollisions = true;
 }
 
+
+//--------------------------------------------------------------------------------------
 CTFBaseBoss::~CTFBaseBoss()
 {
-	if ( m_locomotor )
-		delete m_locomotor;
+	delete m_locomotor;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
+
+//--------------------------------------------------------------------------------------
 void CTFBaseBoss::Precache( void )
 {
 	if ( m_modelString != NULL_STRING )
@@ -78,9 +157,8 @@ void CTFBaseBoss::Precache( void )
 	BaseClass::Precache();
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
+
+//--------------------------------------------------------------------------------------
 void CTFBaseBoss::Spawn( void )
 {
 	Precache();
@@ -92,48 +170,293 @@ void CTFBaseBoss::Spawn( void )
 		SetModel( STRING( m_modelString ) );
 	}
 
-	m_bEnabled = m_startDisabled == false;
-	m_nDamagePoseParameter = -1;
+	m_isEnabled = m_startDisabled ? false : true;
 
 	SetHealth( m_initialHealth );
 	SetMaxHealth( m_initialHealth );
 
 	if ( TFGameRules() )
-		TFGameRules()->RegisterBoss( this );
+	{
+		TFGameRules()->AddActiveBoss( this );
+	}
 
-	SetContextThink( &CTFBaseBoss::BossThink, gpGlobals->curtime, NULL );
+	m_lastHealthPercentage = 1.0f;
+	m_damagePoseParameter = -1;
+
+	SetThink( &CTFBaseBoss::BossThink );
+	SetNextThink( gpGlobals->curtime );
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
+int CTFBaseBoss::UpdateTransmitState()
+{
+	// ALWAYS transmit to all clients.
+	return SetTransmitState( FL_EDICT_ALWAYS );
+}
+
+
+//--------------------------------------------------------------------------------------
+void CTFBaseBoss::ResolvePlayerCollision( CTFPlayer *player )
+{
+	Vector bossGlobalMins = WorldAlignMins() + GetAbsOrigin();
+	Vector bossGlobalMaxs = WorldAlignMaxs() + GetAbsOrigin();
+
+	Vector playerGlobalMins = player->WorldAlignMins() + player->GetAbsOrigin();
+	Vector playerGlobalMaxs = player->WorldAlignMaxs() + player->GetAbsOrigin();
+
+	Vector newPlayerPos = player->GetAbsOrigin();
+
+
+	if ( playerGlobalMins.x > bossGlobalMaxs.x ||
+		 playerGlobalMaxs.x < bossGlobalMins.x ||
+		 playerGlobalMins.y > bossGlobalMaxs.y ||
+		 playerGlobalMaxs.y < bossGlobalMins.y ||
+		 playerGlobalMins.z > bossGlobalMaxs.z ||
+		 playerGlobalMaxs.z < bossGlobalMins.z )
+	{
+		// no overlap
+		return;
+	}
+
+	Vector toPlayer = player->WorldSpaceCenter() - WorldSpaceCenter();
+
+	Vector overlap;
+	float signX, signY, signZ;
+
+	if ( toPlayer.x >= 0 )
+	{
+		overlap.x = bossGlobalMaxs.x - playerGlobalMins.x;
+		signX = 1.0f;
+	}
+	else
+	{
+		overlap.x = playerGlobalMaxs.x - bossGlobalMins.x;
+		signX = -1.0f;
+	}
+
+	if ( toPlayer.y >= 0 )
+	{
+		overlap.y = bossGlobalMaxs.y - playerGlobalMins.y;
+		signY = 1.0f;
+	}
+	else
+	{
+		overlap.y = playerGlobalMaxs.y - bossGlobalMins.y;
+		signY = -1.0f;
+	}
+
+	if ( toPlayer.z >= 0 )
+	{
+		overlap.z = bossGlobalMaxs.z - playerGlobalMins.z;
+		signZ = 1.0f;
+	}
+	else
+	{
+		// don't push player underground
+ 		overlap.z = 99999.9f; // playerGlobalMaxs.z - bossGlobalMins.z;
+ 		signZ = -1.0f;
+	}
+
+	float bloat = 5.0f;
+
+	if ( overlap.x < overlap.y )
+	{
+		if ( overlap.x < overlap.z )
+		{
+			// X is least overlap
+			newPlayerPos.x += signX * ( overlap.x + bloat );
+		}
+		else
+		{
+			// Z is least overlap
+			newPlayerPos.z += signZ * ( overlap.z + bloat );
+		}
+	}
+	else if ( overlap.z < overlap.y )
+	{
+		// Z is least overlap
+		newPlayerPos.z += signZ * ( overlap.z + bloat );
+	}
+	else
+	{
+		// Y is least overlap
+		newPlayerPos.y += signY * ( overlap.y + bloat );
+	}
+
+	// check if new location is valid
+	trace_t result;
+	Ray_t ray;
+	ray.Init( newPlayerPos, newPlayerPos, player->WorldAlignMins(), player->WorldAlignMaxs() );
+	UTIL_TraceRay( ray, MASK_PLAYERSOLID, player, COLLISION_GROUP_PLAYER_MOVEMENT, &result );
+
+	if ( result.DidHit() )
+	{
+		// Trace down from above to find safe ground
+		ray.Init( newPlayerPos + Vector( 0.0f, 0.0f, 32.0f ), newPlayerPos, player->WorldAlignMins(), player->WorldAlignMaxs() );
+		UTIL_TraceRay( ray, MASK_PLAYERSOLID, player, COLLISION_GROUP_PLAYER_MOVEMENT, &result );
+
+		if ( result.startsolid )
+		{
+			// player was crushed against something
+			player->TakeDamage( CTakeDamageInfo( this, this, 99999.9f, DMG_CRUSH ) );
+			return;
+		}
+		else
+		{
+			// Use the trace end position
+			newPlayerPos = result.endpos;
+		}
+	}
+
+	player->SetAbsOrigin( newPlayerPos );
+}
+
+
+//--------------------------------------------------------------------------------------
 void CTFBaseBoss::Touch( CBaseEntity *pOther )
 {
 	BaseClass::Touch( pOther );
 
 	if ( pOther && pOther->IsBaseObject() )
 	{
-		// flatten buildings outright
+		// ran over an engineer building - destroy it
 		pOther->TakeDamage( CTakeDamageInfo( this, this, 99999.9f, DMG_CRUSH ) );
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-int CTFBaseBoss::OnTakeDamage( const CTakeDamageInfo &info )
-{
-	// There's a call to CTFGameRules::ApplyOnDamageModifyRules here
-	// but that doesn't change it unless the victim is a player, so
-	// I'm skipping it
 
-	if ( info.GetDamage() > 0 && info.GetAttacker() != this )
+//--------------------------------------------------------------------------------------
+void CTFBaseBoss::BossThink( void )
+{
+	SetNextThink( gpGlobals->curtime );
+
+	if ( m_damagePoseParameter < 0 )
+	{
+		m_damagePoseParameter = LookupPoseParameter( "damage" );
+	}
+
+	if ( m_damagePoseParameter >= 0 )
+	{
+		// Avoid dividing by zero
+		if ( GetMaxHealth() )
+		{
+			SetPoseParameter( m_damagePoseParameter, 1.0f - ( (float)GetHealth() / (float)GetMaxHealth() ) );
+		}
+		else
+		{
+			SetPoseParameter( m_damagePoseParameter, 1.0f );
+		}
+	}
+
+	if ( !m_isEnabled )
+	{
+		return;
+	}
+
+	Update();
+
+	if ( m_bResolvePlayerCollisions )
+	{
+		CUtlVector< CTFPlayer * > playerVector;
+		CollectPlayers( &playerVector, TEAM_ANY, COLLECT_ONLY_LIVING_PLAYERS );
+		for( int i=0; i<playerVector.Count(); ++i )
+		{
+			ResolvePlayerCollision( playerVector[i] );
+		}
+	}
+}
+
+//--------------------------------------------------------------------------------------
+void CTFBaseBoss::Event_Killed( const CTakeDamageInfo &info )
+{
+	m_outputOnKilled.FireOutput( this, this );
+
+	// drop some loot!
+	m_currencyValue = GetCurrencyValue();
+
+	int nRemainingMoney = m_currencyValue;
+
+	QAngle angRand = vec3_angle;
+
+	while( nRemainingMoney > 0 )
+	{
+		int nAmount = 0;
+
+		if ( nRemainingMoney >= 100 )
+		{
+			nAmount = 25;
+		}
+		else if ( nRemainingMoney >= 40 )
+		{
+			nAmount = 10;
+		}
+		else if ( nRemainingMoney >= 5 )
+		{
+			nAmount = 5;
+		}
+		else
+		{
+			nAmount = nRemainingMoney;
+		}
+
+		nRemainingMoney -= nAmount;
+
+		angRand.y = RandomFloat( -180.0f, 180.0f );
+
+		CCurrencyPackCustom *pCurrencyPack = assert_cast< CCurrencyPackCustom* >( CBaseEntity::CreateNoSpawn( "item_currencypack_custom", WorldSpaceCenter(), angRand, this ) );
+		
+		if ( pCurrencyPack )
+		{
+			pCurrencyPack->SetAmount( nAmount );
+
+			Vector vecImpulse = RandomVector( -1,1 );
+			vecImpulse.z = RandomFloat( 5.0f, 20.0f );
+			VectorNormalize( vecImpulse );
+			Vector vecVelocity = vecImpulse * 250.0 * RandomFloat( 1.0f, 4.0f );
+
+			DispatchSpawn( pCurrencyPack );
+			pCurrencyPack->DropSingleInstance( vecVelocity, this, 0, 0 );
+		}
+	}
+
+	BaseClass::Event_Killed( info );
+
+	UTIL_Remove( this );
+}
+
+void CTFBaseBoss::UpdateOnRemove()
+{
+	if ( TFGameRules() )
+	{
+		TFGameRules()->RemoveActiveBoss( this );
+	}
+
+	BaseClass::UpdateOnRemove();
+}
+
+int CTFBaseBoss::OnTakeDamage( const CTakeDamageInfo &rawInfo )
+{
+	CTakeDamageInfo info = rawInfo;
+
+	if ( TFGameRules() )
+	{
+		TFGameRules()->ApplyOnDamageModifyRules( info, this, true );
+	}
+
+	// On damage Rage
+	// Give the soldier/pyro some rage points for dealing/taking damage.
+	if ( info.GetDamage() && info.GetAttacker() != this )
 	{
 		CTFPlayer *pAttacker = ToTFPlayer( info.GetAttacker() );
 
-		pAttacker->m_Shared.SetRageMeter( pAttacker->m_Shared.GetRageProgress() + ( info.GetDamage() / 6.0f ), TF_BUFF_OFFENSE );
-		if ( ( info.GetDamageType() & ( DMG_BURN|DMG_PLASMA ) ) != 0 )
-			pAttacker->m_Shared.SetFireRageMeter( pAttacker->m_Shared.GetFireRage() + ( info.GetDamage() / 30.0f ) );
+		// Buff flag 1: we get rage when we deal damage. Here, that means the soldier that attacked
+		// gets rage when we take damage.
+		HandleRageGain( pAttacker, kRageBuffFlag_OnDamageDealt, info.GetDamage(), 6.0f );
+
+		// Buff 5: our pyro attacker get rage when we're damaged by fire
+		if ( ( info.GetDamageType() & DMG_BURN ) != 0 || ( info.GetDamageType() & DMG_PLASMA ) != 0 )
+		{
+			HandleRageGain( pAttacker, kRageBuffFlag_OnBurnDamageDealt, info.GetDamage(), 30.f );
+		}
 
 		if ( pAttacker && info.GetWeapon() )
 		{
@@ -148,36 +471,44 @@ int CTFBaseBoss::OnTakeDamage( const CTakeDamageInfo &info )
 	return BaseClass::OnTakeDamage( info );
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-int CTFBaseBoss::OnTakeDamage_Alive( const CTakeDamageInfo &info )
+//--------------------------------------------------------------------------------------
+int CTFBaseBoss::OnTakeDamage_Alive( const CTakeDamageInfo &rawInfo )
 {
-	if( info.GetAttacker() == NULL )
+	if ( !rawInfo.GetAttacker() || rawInfo.GetAttacker()->GetTeamNumber() == GetTeamNumber() )
+	{
+		// no friendly fire damage
 		return 0;
-	if ( info.GetAttacker()->GetTeamNumber() == GetTeamNumber() )
-		return 0;
+	}
 
-	CTakeDamageInfo newInfo( info );
-	ModifyDamage( &newInfo );
+	CTakeDamageInfo info = rawInfo;
 
+	// weapon-specific damage modification
+	ModifyDamage( &info );
+
+	if ( TFGameRules() )
+	{
+		CTFGameRules::DamageModifyExtras_t outParams;
+		info.SetDamage( TFGameRules()->ApplyOnDamageAliveModifyRules( info, this, outParams ) );
+	}
+
+	// fire event for client combat text, beep, etc.
 	IGameEvent *event = gameeventmanager->CreateEvent( "npc_hurt" );
 	if ( event )
 	{
 
 		event->SetInt( "entindex", entindex() );
-		event->SetInt( "health", GetHealth() );
-		event->SetInt( "damageamount", newInfo.GetDamage() );
-		event->SetBool( "crit", ( newInfo.GetDamageType() & DMG_CRITICAL ) ? true : false );
+		event->SetInt( "health", MAX( 0, GetHealth() ) );
+		event->SetInt( "damageamount", info.GetDamage() );
+		event->SetBool( "crit", ( info.GetDamageType() & DMG_CRITICAL ) ? true : false );
 
-		CTFPlayer *pAttacker = ToTFPlayer( newInfo.GetAttacker() );
-		if ( pAttacker )
+		CTFPlayer *attackerPlayer = ToTFPlayer( info.GetAttacker() );
+		if ( attackerPlayer )
 		{
-			event->SetInt( "attacker_player", pAttacker->GetUserID() );
+			event->SetInt( "attacker_player", attackerPlayer->GetUserID() );
 
-			if ( pAttacker->GetActiveTFWeapon() )
+			if ( attackerPlayer->GetActiveTFWeapon() )
 			{
-				event->SetInt( "weaponid", pAttacker->GetActiveTFWeapon()->GetWeaponID() );
+				event->SetInt( "weaponid", attackerPlayer->GetActiveTFWeapon()->GetWeaponID() );
 			}
 			else
 			{
@@ -186,6 +517,7 @@ int CTFBaseBoss::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		}
 		else
 		{
+			// hurt by world
 			event->SetInt( "attacker_player", 0 );
 			event->SetInt( "weaponid", 0 );
 		}
@@ -193,320 +525,139 @@ int CTFBaseBoss::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		gameeventmanager->FireEvent( event );
 	}
 
-	int nDamageTaken = BaseClass::OnTakeDamage_Alive( newInfo );
+	int result = BaseClass::OnTakeDamage_Alive( info );
 
-	const float flHealthPercentage = (float)GetHealth() / GetMaxHealth();
-	if ( m_lastHealthPercentage > 0.9f && flHealthPercentage < 0.9f )
+	// emit injury outputs
+	float healthPercentage = (float)GetHealth() / (float)GetMaxHealth();
+
+	if ( m_lastHealthPercentage > 0.9f && healthPercentage < 0.9f )
+	{
 		m_outputOnHealthBelow90Percent.FireOutput( this, this );
-	else if ( m_lastHealthPercentage > 0.8f && flHealthPercentage < 0.8f )
+	}
+	else if ( m_lastHealthPercentage > 0.8f && healthPercentage < 0.8f )
+	{
 		m_outputOnHealthBelow80Percent.FireOutput( this, this );
-	else if ( m_lastHealthPercentage > 0.7f && flHealthPercentage < 0.7f )
+	}
+	else if ( m_lastHealthPercentage > 0.7f && healthPercentage < 0.7f )
+	{
 		m_outputOnHealthBelow70Percent.FireOutput( this, this );
-	else if ( m_lastHealthPercentage > 0.6f && flHealthPercentage < 0.6f )
+	}
+	else if ( m_lastHealthPercentage > 0.6f && healthPercentage < 0.6f )
+	{
 		m_outputOnHealthBelow60Percent.FireOutput( this, this );
-	else if ( m_lastHealthPercentage > 0.5f && flHealthPercentage < 0.5f )
+	}
+	else if ( m_lastHealthPercentage > 0.5f && healthPercentage < 0.5f )
+	{
 		m_outputOnHealthBelow50Percent.FireOutput( this, this );
-	else if ( m_lastHealthPercentage > 0.4f && flHealthPercentage < 0.4f )
+	}
+	else if ( m_lastHealthPercentage > 0.4f && healthPercentage < 0.4f )
+	{
 		m_outputOnHealthBelow40Percent.FireOutput( this, this );
-	else if ( m_lastHealthPercentage > 0.3f && flHealthPercentage < 0.3f )
+	}
+	else if ( m_lastHealthPercentage > 0.3f && healthPercentage < 0.3f )
+	{
 		m_outputOnHealthBelow30Percent.FireOutput( this, this );
-	else if ( m_lastHealthPercentage > 0.2f && flHealthPercentage < 0.2f )
+	}
+	else if ( m_lastHealthPercentage > 0.2f && healthPercentage < 0.2f )
+	{
 		m_outputOnHealthBelow20Percent.FireOutput( this, this );
-	else if ( m_lastHealthPercentage > 0.1f && flHealthPercentage < 0.1f )
+	}
+	else if ( m_lastHealthPercentage > 0.1f && healthPercentage < 0.1f )
+	{
 		m_outputOnHealthBelow10Percent.FireOutput( this, this );
+	}
 
-	m_lastHealthPercentage = flHealthPercentage;
+	m_lastHealthPercentage = healthPercentage;
 
-	CTFPlayer *pAttacker = ToTFPlayer( newInfo.GetAttacker() );
+	// Let attacker react to the damage they dealt
+	CTFPlayer *pAttacker = ToTFPlayer( rawInfo.GetAttacker() );
 	if ( pAttacker )
 	{
 		pAttacker->OnDealtDamage( this, info );
 
-		CTF_GameStats.Event_BossDamage( pAttacker, newInfo.GetDamage() );
+		CTF_GameStats.Event_BossDamage( pAttacker, info.GetDamage() );
 	}
 
-	return nDamageTaken;
+	return result;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFBaseBoss::Event_Killed( const CTakeDamageInfo &info )
-{
-	m_outputOnKilled.FireOutput( this, this );
 
-	// TODO - dispense this
-	m_nCurrencyValue = GetCurrencyValue();
-
-	BaseClass::Event_Killed( info );
-	UTIL_Remove( this );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFBaseBoss::UpdateOnRemove()
-{
-	if ( TFGameRules() )
-		TFGameRules()->RemoveBoss( this );
-
-	BaseClass::UpdateOnRemove();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFBaseBoss::BossThink( void )
-{
-	SetNextThink( gpGlobals->curtime );
-
-	if ( m_nDamagePoseParameter < 0 )
-	{
-		m_nDamagePoseParameter = LookupPoseParameter( "damage" );
-	}
-
-	if ( m_nDamagePoseParameter >= 0 )
-	{
-		// Avoid divide by zero
-		const float flHealthFrac = (float)GetHealth() / ( GetMaxHealth() + FLT_EPSILON );
-		SetPoseParameter( m_nDamagePoseParameter, 1.0f - flHealthFrac );
-	}
-
-	if ( !m_bEnabled )
-		return;
-
-	Update();
-
-	if ( m_bResolvePlayerCollisions )
-	{
-		CUtlVector<CTFPlayer *> playerVector;
-		CollectPlayers( &playerVector, TEAM_ANY, COLLECT_ONLY_LIVING_PLAYERS );
-
-		for( int i=0; i<playerVector.Count(); ++i )
-			ResolvePlayerCollision( playerVector[i] );
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------
 void CTFBaseBoss::InputEnable( inputdata_t &inputdata )
 {
-	m_bEnabled = true;
+	m_isEnabled = true;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
+
+//--------------------------------------------------------------------------------------
 void CTFBaseBoss::InputDisable( inputdata_t &inputdata )
 {
-	m_bEnabled = false;
+	m_isEnabled = false;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
 void CTFBaseBoss::InputSetSpeed( inputdata_t &inputdata )
 {
 	m_speed = inputdata.value.Float();
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Set the health of the boss
 //-----------------------------------------------------------------------------
 void CTFBaseBoss::InputSetHealth( inputdata_t &inputdata )
 {
 	m_iHealth = inputdata.value.Int();
+	SetHealth( m_iHealth );
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Set the max health of the boss
 //-----------------------------------------------------------------------------
 void CTFBaseBoss::InputSetMaxHealth( inputdata_t &inputdata )
 {
 	m_iMaxHealth = inputdata.value.Int();
+	SetMaxHealth( m_iMaxHealth );
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Add health to the boss
 //-----------------------------------------------------------------------------
 void CTFBaseBoss::InputAddHealth( inputdata_t &inputdata )
 {
 	int iHealth = inputdata.value.Int();
-	SetHealth( Min( GetMaxHealth(), GetHealth() + iHealth ) );
+	SetHealth( MIN( GetMaxHealth(), GetHealth() + iHealth ) );
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Remove health from the boss
 //-----------------------------------------------------------------------------
 void CTFBaseBoss::InputRemoveHealth( inputdata_t &inputdata )
 {
 	int iDamage = inputdata.value.Int();
-	SetHealth( GetHealth() - iDamage );
 
+	SetHealth( GetHealth() - iDamage );
 	if ( GetHealth() <= 0 )
 	{
-		CTakeDamageInfo info( inputdata.pCaller, inputdata.pActivator, vec3_origin, GetAbsOrigin(), iDamage, DMG_GENERIC );
+		CTakeDamageInfo info( inputdata.pCaller, inputdata.pActivator, vec3_origin, GetAbsOrigin(), iDamage, DMG_GENERIC, TF_DMG_CUSTOM_NONE );
 		Event_Killed( info );
 	}
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFBaseBoss::ResolvePlayerCollision( CTFPlayer *pPlayer )
+void CTFBaseBoss::InputSetStepHeight( inputdata_t &inputdata )
 {
-	Vector vecBossMins = WorldAlignMins();
-	Vector vecBossMaxs = WorldAlignMaxs();
-	Vector vecPlayerMins = pPlayer->WorldAlignMins();
-	Vector vecPlayerMaxs = pPlayer->WorldAlignMaxs();
-
-	Vector vecBossOOBBMins = vecBossMins + GetAbsOrigin();
-	Vector vecBossOOBBMaxs = vecBossMaxs + GetAbsOrigin();
-	Vector vecPlayerOOBBMins = vecPlayerMins + pPlayer->GetAbsOrigin();
-	Vector vecPlayerOOBBMaxs = vecPlayerMaxs + pPlayer->GetAbsOrigin();
-
-	// Are we even intersecting?
-	if ( vecBossOOBBMaxs.x < vecPlayerOOBBMins.x || vecBossOOBBMins.x > vecPlayerOOBBMaxs.x )
-		return;
-	if ( vecBossOOBBMaxs.y < vecPlayerOOBBMins.y || vecBossOOBBMins.y > vecPlayerOOBBMaxs.y )
-		return;
-	if ( vecBossOOBBMaxs.z < vecPlayerOOBBMins.z || vecBossOOBBMins.z > vecPlayerOOBBMaxs.z )
-		return;
-
-	// Overlap between me and player
-	Vector vecOBBOverlap;
-	// Which direction to slide the player
-	Vector vecShiftDir;
-
-	Vector vecToPlayer = pPlayer->WorldSpaceCenter() - WorldSpaceCenter();
-	if ( vecToPlayer.x >= 0 )
+	if ( m_locomotor )
 	{
-		vecOBBOverlap.x = vecBossOOBBMaxs.x - vecPlayerOOBBMins.x;
-		vecShiftDir.x = 1.0f;
+		m_locomotor->SetStepHeight( inputdata.value.Float() );
 	}
-	else
-	{
-		vecOBBOverlap.x = vecPlayerOOBBMaxs.x - vecBossOOBBMins.x;
-		vecShiftDir.x = -1.0f;
-	}
-	if ( vecToPlayer.y >= 0 )
-	{
-		vecOBBOverlap.y = vecBossOOBBMaxs.y - vecPlayerOOBBMins.y;
-		vecShiftDir.y = 1.0f;
-	}
-	else
-	{
-		vecOBBOverlap.y = vecPlayerOOBBMaxs.y - vecBossOOBBMins.y;
-		vecShiftDir.y = -1.0f;
-	}
-	if ( vecToPlayer.z >= 0 )
-	{
-		vecOBBOverlap.z = vecBossOOBBMaxs.z - vecPlayerOOBBMins.z;
-		vecShiftDir.z = 1.0f;
-	}
-	else
-	{
-		vecOBBOverlap.z = 99999.9f;
-		vecShiftDir.z = -1.0f;
-	}
-
-	// Push the player out of the way based on the shortest distance of overlap, bloated a bit
-	Vector vecPlayerShift = pPlayer->GetAbsOrigin();
-	if ( vecOBBOverlap.x < vecOBBOverlap.y )
-	{
-		if ( vecOBBOverlap.x < vecOBBOverlap.z )
-			vecPlayerShift.x += vecShiftDir.x * ( vecOBBOverlap.x + 5.0 );
-		else
-			vecPlayerShift.z += vecShiftDir.z * ( vecOBBOverlap.z + 5.0 );
-	}
-	else if ( vecOBBOverlap.z < vecOBBOverlap.y )
-		vecPlayerShift.z += vecShiftDir.z * ( vecOBBOverlap.z + 5.0 );
-	else
-		vecPlayerShift.y += vecShiftDir.y * ( vecOBBOverlap.y + 5.0 );
-
-	trace_t trace;
-	UTIL_TraceHull( vecPlayerShift, 
-					vecPlayerShift, 
-					vecPlayerMins, 
-					vecPlayerMaxs, 
-					MASK_PLAYERSOLID, 
-					pPlayer, 
-					COLLISION_GROUP_PLAYER_MOVEMENT, 
-					&trace );
-
-	// Try to move them into walls safely
-	if ( trace.DidHit() )
-	{
-		UTIL_TraceHull( vecPlayerShift + Vector( 0, 0, 32 ), 
-						vecPlayerShift, 
-						vecPlayerMins, 
-						vecPlayerMaxs, 
-						MASK_PLAYERSOLID, 
-						pPlayer, 
-						COLLISION_GROUP_PLAYER_MOVEMENT, 
-						&trace );
-
-		// Kill them if we push them into a wall and still overlap
-		if ( trace.startsolid )
-		{
-			CTakeDamageInfo info( this, this, 99999.9f, DMG_CRUSH );
-			pPlayer->TakeDamage(info);
-
-			return;
-		}
-		else
-		{
-			vecPlayerShift = trace.endpos;
-		}
-	}
-
-	pPlayer->SetAbsOrigin( vecPlayerShift );
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-float CTFBaseBossLocomotion::GetRunSpeed( void ) const
-{
-	CTFBaseBoss *boss = (CTFBaseBoss *)GetBot()->GetEntity();
-	return boss->GetMaxSpeed();
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFBaseBossLocomotion::FaceTowards( const Vector &target )
+void CTFBaseBoss::InputSetMaxJumpHeight( inputdata_t &inputdata )
 {
-	CTFBaseBoss *pBoss = (CTFBaseBoss *)GetBot()->GetEntity();
-
-	QAngle vecAngles = pBoss->GetLocalAngles();
-
-	const float flYawDiff = UTIL_AngleDiff( UTIL_VecToYaw( target - GetFeet() ), vecAngles.y );
-	const float flDeltaYaw = tf_base_boss_max_turn_rate.GetFloat() * GetUpdateInterval();
-
-	if ( flYawDiff < -flDeltaYaw )
-		vecAngles.y -= flDeltaYaw;
-	else if ( flYawDiff > flDeltaYaw )
-		vecAngles.y += flDeltaYaw;
-	else
-		vecAngles.y += flYawDiff;
-
-	Vector vecForward, vecRight;
-	pBoss->GetVectors( &vecForward, &vecRight, NULL );
-	vecForward = CrossProduct( GetGroundNormal(), vecRight );
-
-	const float flPitchDiff = UTIL_AngleDiff( UTIL_VecToPitch( vecForward ), vecAngles.x );
-	const float flDeltaPitch = tf_base_boss_max_turn_rate.GetFloat() * GetUpdateInterval();
-
-	if ( flPitchDiff < -flDeltaPitch )
-		vecAngles.x -= flDeltaPitch;
-	else if ( flPitchDiff > flDeltaPitch )
-		vecAngles.x += flDeltaPitch;
-	else
-		vecAngles.x += flPitchDiff;
-
-	pBoss->SetLocalAngles( vecAngles );
-	pBoss->UpdateCollisionBounds();
+	if ( m_locomotor )
+	{
+		m_locomotor->SetMaxJumpHeight( inputdata.value.Float() );
+	}
 }

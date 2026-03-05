@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: TF Gas Grenade.
 //
@@ -77,7 +77,7 @@ CTFWeaponBaseGrenadeProj *CTFGrenadeSmokeBomb::EmitGrenade( Vector vecSrc, QAngl
 
 		if ( pTFPlayer->CanGoInvisible() )
 		{
-			pTFPlayer->m_Shared.AddCond( TF_COND_SMOKE_BOMB, tf_smoke_bomb_time.GetFloat() );
+			pTFPlayer->m_Shared.AddCond( TF_COND_STEALTHED_USER_BUFF, tf_smoke_bomb_time.GetFloat() );
 		}
 	}
 	return CTFGrenadeSmokeBombProjectile::Create( vecSrc, vecAngles, vecVel, angImpulse, 
@@ -156,7 +156,7 @@ void CTFGrenadeSmokeBombProjectile::Detonate()
 {
 	if ( ShouldNotDetonate() )
 	{
-		RemoveGrenade();
+		Destroy();
 		return;
 	}
 

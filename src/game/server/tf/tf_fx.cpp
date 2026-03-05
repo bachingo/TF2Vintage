@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 //  
 //
@@ -54,15 +54,15 @@ CTEFireBullets::~CTEFireBullets( void )
 }
 
 IMPLEMENT_SERVERCLASS_ST_NOBASE( CTEFireBullets, DT_TEFireBullets )
-	SendPropVector( SENDINFO( m_vecOrigin ), -1, SPROP_COORD_MP_INTEGRAL ),
-	SendPropAngle( SENDINFO_VECTORELEM( m_vecAngles, 0 ), 7, 0 ),
-	SendPropAngle( SENDINFO_VECTORELEM( m_vecAngles, 1 ), 7, 0 ),
-	SendPropInt( SENDINFO( m_iWeaponID ), Q_log2(TF_WEAPON_COUNT)+1, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO( m_iMode ), 1, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO( m_iSeed ), NUM_BULLET_SEED_BITS, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO( m_iPlayer ), 6, SPROP_UNSIGNED ), 	// max 64 players, see MAX_PLAYERS
-	SendPropFloat( SENDINFO( m_flSpread ), 8, 0, 0.0f, 1.0f ),	
-	SendPropBool( SENDINFO( m_bCritical ) ),
+SendPropVector( SENDINFO(m_vecOrigin), -1, SPROP_COORD_MP_INTEGRAL ),
+SendPropAngle( SENDINFO_VECTORELEM( m_vecAngles, 0 ), 7, 0 ),
+SendPropAngle( SENDINFO_VECTORELEM( m_vecAngles, 1 ), 7, 0 ),
+SendPropInt( SENDINFO( m_iWeaponID ), Q_log2(TF_WEAPON_COUNT)+1, SPROP_UNSIGNED ),
+SendPropInt( SENDINFO( m_iMode ), 1, SPROP_UNSIGNED ),
+SendPropInt( SENDINFO( m_iSeed ), NUM_BULLET_SEED_BITS, SPROP_UNSIGNED ),
+SendPropInt( SENDINFO( m_iPlayer ), 6, SPROP_UNSIGNED ), 	// max 64 players, see MAX_PLAYERS
+SendPropFloat( SENDINFO( m_flSpread ), 8, 0, 0.0f, 1.0f ),	
+SendPropBool( SENDINFO( m_bCritical ) ),
 END_SEND_TABLE()
 
 // Singleton
@@ -109,10 +109,10 @@ public:
 	Vector m_vecOrigin;
 	Vector m_vecNormal;
 	int m_iWeaponID;
-	int m_iItemID;
 	int m_nEntIndex;
+	int m_nDefID;
 	int m_nSound;
-	int m_nParticleIndex;
+	int m_iCustomParticleIndex;
 };
 
 // Singleton to fire explosion objects
@@ -127,10 +127,10 @@ CTETFExplosion::CTETFExplosion( const char *name ) : CBaseTempEntity( name )
 	m_vecOrigin.Init();
 	m_vecNormal.Init();
 	m_iWeaponID = TF_WEAPON_NONE;
-	m_iItemID = -1;
-	m_nEntIndex = 0;
+	m_nEntIndex = kInvalidEHandleExplosion;
+	m_nDefID = -1;
 	m_nSound = SPECIAL1;
-	m_nParticleIndex = -1;
+	m_iCustomParticleIndex = INVALID_STRING_INDEX;
 }
 
 IMPLEMENT_SERVERCLASS_ST( CTETFExplosion, DT_TETFExplosion )
@@ -138,24 +138,30 @@ IMPLEMENT_SERVERCLASS_ST( CTETFExplosion, DT_TETFExplosion )
 	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[1] ), -1, SPROP_COORD_MP_INTEGRAL ),
 	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[2] ), -1, SPROP_COORD_MP_INTEGRAL ),
 	SendPropVector( SENDINFO_NOCHECK( m_vecNormal ), 6, 0, -1.0f, 1.0f ),
-	SendPropInt( SENDINFO_NOCHECK( m_iWeaponID ), Q_log2( TF_WEAPON_COUNT ) + 1, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO_NOCHECK( m_iItemID ) ),
-	SendPropInt( SENDINFO_NOCHECK( m_nSound ) ),
-	SendPropInt( SENDINFO_NOCHECK( m_nParticleIndex ) ),
-	SendPropInt( SENDINFO_NAME( m_nEntIndex, entindex ), MAX_EDICT_BITS ),
-END_SEND_TABLE();
+	SendPropInt( SENDINFO_NOCHECK( m_iWeaponID ), Q_log2( TF_WEAPON_COUNT )+1, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO_NAME( m_nEntIndex, entindex ), MAX_EDICT_BITS, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO_NOCHECK( m_nDefID ), -1 ),
+	SendPropInt( SENDINFO_NOCHECK( m_nSound ), -1 ),
+	SendPropInt( SENDINFO_NOCHECK( m_iCustomParticleIndex ), -1 ),
+END_SEND_TABLE()
 
-void TE_TFExplosion( IRecipientFilter &filter, float flDelay, const Vector &vecOrigin, const Vector &vecNormal, int iWeaponID, int nEntIndex, int iItemID /*= -1*/, int nSound /*= SPECIAL1*/, int nParticleIndex /*= -1*/ )
+void TE_TFExplosion( IRecipientFilter &filter, float flDelay, const Vector &vecOrigin, const Vector &vecNormal, int iWeaponID, int nEntIndex, int nDefID, int nSound, int iCustomParticleIndex )
 {
 	VectorCopy( vecOrigin, g_TETFExplosion.m_vecOrigin );
 	VectorCopy( vecNormal, g_TETFExplosion.m_vecNormal );
 	g_TETFExplosion.m_iWeaponID	= iWeaponID;	
 	g_TETFExplosion.m_nEntIndex	= nEntIndex;
+	g_TETFExplosion.m_nDefID = nDefID;
 	g_TETFExplosion.m_nSound = nSound;
-	g_TETFExplosion.m_nParticleIndex = nParticleIndex;
+	g_TETFExplosion.m_iCustomParticleIndex = iCustomParticleIndex;
 
 	// Send it over the wire
 	g_TETFExplosion.Create( filter, flDelay );
+}
+
+void TE_TFExplosion( IRecipientFilter &filter, float flDelay, const Vector &vecOrigin, const Vector &vecNormal, int iWeaponID, int nEntIndex, int nDefID, int nSound )
+{
+	TE_TFExplosion( filter, flDelay, vecOrigin, vecNormal, iWeaponID, nEntIndex, nDefID, nSound, INVALID_STRING_INDEX );
 }
 
 //=============================================================================
@@ -215,12 +221,20 @@ void CTETFParticleEffect::Init( void )
 
 	m_iParticleSystemIndex = 0;
 
-	m_nEntIndex = -1;
+	m_nEntIndex = kInvalidEHandleParticleEffect;
 
 	m_iAttachType = PATTACH_ABSORIGIN;
 	m_iAttachmentPointIndex = 0;
 
 	m_bResetParticles = false;
+
+	m_bCustomColors = false;
+	m_CustomColors.m_vecColor1.Init();
+	m_CustomColors.m_vecColor2.Init();
+
+	m_bControlPoint1 = false;
+	m_ControlPoint1.m_eParticleAttachment = PATTACH_ABSORIGIN;
+	m_ControlPoint1.m_vecOffset.Init();
 }
 
 
@@ -233,19 +247,19 @@ IMPLEMENT_SERVERCLASS_ST( CTETFParticleEffect, DT_TETFParticleEffect )
 	SendPropFloat( SENDINFO_NOCHECK( m_vecStart[2] ), -1, SPROP_COORD_MP_INTEGRAL ),
 	SendPropQAngles( SENDINFO_NOCHECK( m_vecAngles ), 7 ),
 	SendPropInt( SENDINFO_NOCHECK( m_iParticleSystemIndex ), 16, SPROP_UNSIGNED ),	// probably way too high
-	SendPropInt( SENDINFO_NAME( m_nEntIndex, entindex ), MAX_EDICT_BITS ),
+	SendPropInt( SENDINFO_NAME( m_nEntIndex, entindex ), MAX_EDICT_BITS, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO_NOCHECK( m_iAttachType ), 5, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO_NOCHECK( m_iAttachmentPointIndex ), Q_log2( MAX_PATTACH_TYPES ) + 1, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO_NOCHECK( m_bResetParticles ) ),
-	SendPropInt( SENDINFO_NOCHECK( m_bCustomColors ) ),
-	SendPropVector( SENDINFO_NOCHECK( m_CustomColors.m_vecColor1 ) ),
-	SendPropVector( SENDINFO_NOCHECK( m_CustomColors.m_vecColor2 ) ),
-	SendPropInt( SENDINFO_NOCHECK( m_bControlPoint1 ) ),
-	SendPropInt( SENDINFO_NOCHECK( m_ControlPoint1.m_eParticleAttachment ) ),
-	SendPropFloat( SENDINFO_NOCHECK( m_ControlPoint1.m_vecOffset[0] ) ),
-	SendPropFloat( SENDINFO_NOCHECK( m_ControlPoint1.m_vecOffset[1] ) ),
-	SendPropFloat( SENDINFO_NOCHECK( m_ControlPoint1.m_vecOffset[2] ) ),
-END_SEND_TABLE();
+	SendPropInt( SENDINFO_NOCHECK( m_iAttachmentPointIndex ), -1 ),
+	SendPropBool( SENDINFO_NOCHECK( m_bResetParticles ) ),
+	SendPropBool( SENDINFO_NOCHECK( m_bCustomColors) ),
+	SendPropVector( SENDINFO_NOCHECK( m_CustomColors.m_vecColor1 ), 8, 0, 0, 1 ),
+	SendPropVector( SENDINFO_NOCHECK( m_CustomColors.m_vecColor2 ), 8, 0, 0, 1 ),
+	SendPropBool( SENDINFO_NOCHECK( m_bControlPoint1) ),
+	SendPropInt( SENDINFO_NOCHECK( m_ControlPoint1.m_eParticleAttachment ), 5, SPROP_UNSIGNED ),
+	SendPropFloat( SENDINFO_NOCHECK( m_ControlPoint1.m_vecOffset[0] ), -1, SPROP_COORD ),
+	SendPropFloat( SENDINFO_NOCHECK( m_ControlPoint1.m_vecOffset[1] ), -1, SPROP_COORD ),
+	SendPropFloat( SENDINFO_NOCHECK( m_ControlPoint1.m_vecOffset[2] ), -1, SPROP_COORD ),
+END_SEND_TABLE()
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -257,9 +271,8 @@ void TE_TFParticleEffect( IRecipientFilter &filter, float flDelay, const char *p
 	{
 		// Find the attachment point index
 		iAttachment = pEntity->GetBaseAnimating()->LookupAttachment( pszAttachmentName );
-		if ( iAttachment == -1 )
+		if ( iAttachment <= 0 )
 		{
-			Warning("Model '%s' doesn't have attachment '%s' to attach particle system '%s' to.\n", STRING(pEntity->GetBaseAnimating()->GetModelName()), pszAttachmentName, pszParticleName );
 			return;
 		}
 	}
@@ -304,9 +317,59 @@ void TE_TFParticleEffect( IRecipientFilter &filter, float flDelay, const char *p
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void TE_TFParticleEffect( IRecipientFilter &filter, float flDelay, const char *pszParticleName, Vector vecOrigin, QAngle vecAngles, CBaseEntity *pEntity /*= NULL*/, ParticleAttachment_t iAttachType /*= PATTACH_CUSTOMORIGIN*/ )
+void TE_TFParticleEffect( IRecipientFilter &filter, float flDelay, const char *pszParticleName, Vector vecOrigin, QAngle vecAngles, CBaseEntity *pEntity /*= NULL*/, ParticleAttachment_t eAttachType /*= PATTACH_CUSTOMORIGIN*/ )
 {
-	TE_TFParticleEffectComplex( filter, flDelay, pszParticleName, vecOrigin, vecAngles, NULL, NULL, pEntity, iAttachType );
+	TE_TFParticleEffectComplex( filter, flDelay, pszParticleName, vecOrigin, vecAngles, NULL, NULL, pEntity, eAttachType );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void TE_TFParticleEffectComplex
+(
+	IRecipientFilter &filter,
+	float flDelay,
+	const char *pszParticleName,
+	Vector vecOrigin,
+	QAngle vecAngles,
+	te_tf_particle_effects_colors_t *pOptionalColors /*= NULL*/,
+	te_tf_particle_effects_control_point_t *pOptionalControlPoint1 /*= NULL*/,
+	CBaseEntity *pEntity /*= NULL*/,
+	ParticleAttachment_t eAttachType /*= PATTACH_CUSTOMORIGIN*/,
+	Vector vecStart /* = vec3_origin */
+)
+{
+	g_TETFParticleEffect.Init();
+
+	g_TETFParticleEffect.m_iParticleSystemIndex = GetParticleSystemIndex( pszParticleName );
+
+	VectorCopy( vecOrigin, g_TETFParticleEffect.m_vecOrigin );
+	VectorCopy( vecAngles, g_TETFParticleEffect.m_vecAngles );
+	VectorCopy( vecStart,  g_TETFParticleEffect.m_vecStart );
+
+	if ( pEntity )
+	{
+		g_TETFParticleEffect.m_nEntIndex = pEntity->entindex();
+		g_TETFParticleEffect.m_iAttachType = eAttachType;
+	}
+
+	if ( pOptionalColors )
+	{
+		g_TETFParticleEffect.m_bCustomColors = true;
+		g_TETFParticleEffect.m_CustomColors.m_vecColor1 = pOptionalColors->m_vecColor1;
+		g_TETFParticleEffect.m_CustomColors.m_vecColor2 = pOptionalColors->m_vecColor2;
+	}
+
+	if ( pOptionalControlPoint1 )
+	{
+		g_TETFParticleEffect.m_bControlPoint1 = true;
+		g_TETFParticleEffect.m_ControlPoint1.m_eParticleAttachment = pOptionalControlPoint1->m_eParticleAttachment;
+		g_TETFParticleEffect.m_ControlPoint1.m_vecOffset = pOptionalControlPoint1->m_vecOffset;
+	}
+
+	// Send it over the wire
+	g_TETFParticleEffect.Create( filter, flDelay );
+
 }
 
 //-----------------------------------------------------------------------------
@@ -326,38 +389,6 @@ void TE_TFParticleEffect( IRecipientFilter &filter, float flDelay, int iEffectIn
 	{
 		g_TETFParticleEffect.m_nEntIndex = pEntity->entindex();
 		g_TETFParticleEffect.m_iAttachType = PATTACH_CUSTOMORIGIN;
-	}
-
-	// Send it over the wire
-	g_TETFParticleEffect.Create( filter, flDelay );
-}
-
-void TE_TFParticleEffectComplex( IRecipientFilter &filter, float flDelay, const char *pszParticleName, Vector vecOrigin, QAngle vecAngles, te_tf_particle_effects_colors_t *pColors, te_tf_particle_effects_control_point_t *pControlPoint, CBaseEntity *pEntity, ParticleAttachment_t iAttachType, Vector vecStart )
-{
-	g_TETFParticleEffect.Init();
-
-	g_TETFParticleEffect.m_iParticleSystemIndex = GetParticleSystemIndex( pszParticleName );
-
-	VectorCopy( vecOrigin, g_TETFParticleEffect.m_vecOrigin );
-	VectorCopy( vecStart, g_TETFParticleEffect.m_vecStart );
-	VectorCopy( vecAngles, g_TETFParticleEffect.m_vecAngles );
-
-	if ( pEntity )
-	{
-		g_TETFParticleEffect.m_nEntIndex = pEntity->entindex();
-		g_TETFParticleEffect.m_iAttachType = iAttachType;
-	}
-
-	if ( pColors )
-	{
-		g_TETFParticleEffect.m_bCustomColors = true;
-		g_TETFParticleEffect.m_CustomColors = *pColors;
-	}
-
-	if ( pControlPoint )
-	{
-		g_TETFParticleEffect.m_bControlPoint1 = true;
-		g_TETFParticleEffect.m_ControlPoint1 = *pControlPoint;
 	}
 
 	// Send it over the wire

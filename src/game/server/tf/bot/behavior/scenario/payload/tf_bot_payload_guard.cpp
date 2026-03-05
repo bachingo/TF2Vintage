@@ -1,212 +1,206 @@
-//========= Copyright � Valve LLC, All rights reserved. =======================
-//
-// Purpose:		
-//
-// $NoKeywords: $
-//=============================================================================
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_payload_guard.cpp
+// Guard the payload and keep the attackers from getting near it
+// Michael Booth, April 2010
+
 #include "cbase.h"
-#include "tf_bot.h"
+#include "nav_mesh.h"
+#include "tf_player.h"
 #include "tf_gamerules.h"
+#include "team_control_point_master.h"
 #include "team_train_watcher.h"
-#include "tf_bot_payload_guard.h"
-#include "tf_bot_payload_block.h"
-#include "behavior/demoman/tf_bot_prepare_stickybomb_trap.h"
+#include "trigger_area_capture.h"
+#include "bot/tf_bot.h"
+#include "bot/behavior/scenario/payload/tf_bot_payload_guard.h"
+#include "bot/behavior/scenario/payload/tf_bot_payload_block.h"
+#include "bot/behavior/medic/tf_bot_medic_heal.h"
+#include "bot/behavior/engineer/tf_bot_engineer_build.h"
+#include "bot/behavior/demoman/tf_bot_prepare_stickybomb_trap.h"
+
+
+extern ConVar tf_bot_path_lookahead_range;
 
 ConVar tf_bot_payload_guard_range( "tf_bot_payload_guard_range", "1000", FCVAR_CHEAT );
-ConVar tf_bot_debug_payload_guard_vantage_points( "tf_bot_debug_payload_guard_vantage_points", "0", FCVAR_CHEAT );
+ConVar tf_bot_debug_payload_guard_vantage_points( "tf_bot_debug_payload_guard_vantage_points", 0, FCVAR_CHEAT );
 
-class CCollectPayloadGuardVantagePoints : public ISearchSurroundingAreasFunctor
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotPayloadGuard::OnStart( CTFBot *me, Action< CTFBot > *priorAction )
 {
-public:
-	CCollectPayloadGuardVantagePoints( CTFBot *actor, CBaseEntity *target ) :
-		m_pActor( actor ), m_hTarget( target ) {}
+	m_path.SetMinLookAheadDistance( me->GetDesiredPathLookAheadRange() );
+	m_path.Invalidate();
 
-	virtual bool operator()( CNavArea *area, CNavArea *priorArea, float travelDistanceSoFar ) OVERRIDE;
+	m_vantagePoint = me->GetAbsOrigin();
 
-	Vector const& GetResult( void ) const;
-
-private:
-	CTFBot *m_pActor;
-	CHandle<CBaseEntity> m_hTarget;
-	CUtlVector<Vector> m_VantagePoints;
-};
-bool CCollectPayloadGuardVantagePoints::operator()( CNavArea *area, CNavArea *priorArea, float travelDistanceSoFar )
-{
-	NextBotTraceFilterIgnoreActors filter( nullptr, COLLISION_GROUP_NONE );
-
-	for ( int i = 3; i > 0; --i )
-	{
-		Vector point = area->GetRandomPoint() + Vector( 0.0f, 0.0f, HumanEyeHeight );
-
-		trace_t tr;
-		UTIL_TraceLine( point, m_hTarget->WorldSpaceCenter(), MASK_SOLID_BRUSHONLY, &filter, &tr );
-
-		if ( ( tr.fraction >= 1.0f && !tr.allsolid && !tr.startsolid ) || tr.m_pEnt == m_hTarget )
-		{
-			m_VantagePoints.AddToTail( point );
-
-			if ( tf_bot_debug_payload_guard_vantage_points.GetBool() )
-			{
-				NDebugOverlay::Cross3D( point, 5.0f, 0xFF, 0x00, 0xFF, true, 120.0f );
-			}
-		}
-	}
-
-	return true;
-}
-Vector const& CCollectPayloadGuardVantagePoints::GetResult() const
-{
-	if ( m_VantagePoints.IsEmpty() )
-		return m_hTarget->WorldSpaceCenter();
-
-	return m_VantagePoints.Random();
+	return Continue();
 }
 
 
-const char *CTFBotPayloadGuard::GetName() const
-{
-	return "PayloadGuard";
-}
-
-
-ActionResult<CTFBot> CTFBotPayloadGuard::OnStart( CTFBot *me, Action<CTFBot> *priorAction )
-{
-	m_PathFollower.SetMinLookAheadDistance( me->GetDesiredPathLookAheadRange() );
-	m_PathFollower.Invalidate();
-
-	m_vecVantagePoint = me->GetAbsOrigin();
-
-	return BaseClass::Continue();
-}
-
-ActionResult<CTFBot> CTFBotPayloadGuard::Update( CTFBot *me, float dt )
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotPayloadGuard::Update( CTFBot *me, float interval )
 {
 	const CKnownEntity *threat = me->GetVisionInterface()->GetPrimaryKnownThreat();
 	if ( threat && threat->IsVisibleRecently() )
 	{
+		// prepare to fight
 		me->EquipBestWeaponForThreat( threat );
 	}
 
-	CTeamTrainWatcher *pWatcher = TFGameRules()->GetPayloadToBlock( me->GetTeamNumber() );
-	if ( pWatcher == nullptr )
-		return BaseClass::Continue();
-
-	CBaseEntity *pTrain = pWatcher->GetTrainEntity();
-	if ( pTrain == nullptr )
-		return BaseClass::Continue();
-
-	if ( !pWatcher->IsDisabled() && pWatcher->GetCapturerCount() > 0 )
+	CTeamTrainWatcher *trainWatcher = TFGameRules()->GetPayloadToBlock( me->GetTeamNumber() );
+	if ( !trainWatcher )
 	{
-		if( !m_blockPayloadDelay.HasStarted() )
-			m_blockPayloadDelay.Start( RandomFloat( 0.5, 3.0 ) );
+		return Continue();
 	}
 
-	if ( m_blockPayloadDelay.IsElapsed() && pWatcher->GetCapturerCount() > 0 )
+	CBaseEntity *cart = trainWatcher->GetTrainEntity();
+	if ( !cart )
 	{
-		return BaseClass::SuspendFor( new CTFBotPayloadBlock, "Moving to block the cart's forward motion" );
-	}
-	else if ( pWatcher->GetCapturerCount() <= 0 )
-	{
-		m_blockPayloadDelay.Invalidate();
+		return Continue();
 	}
 
-	if ( m_vecVantagePoint.DistToSqr( me->GetAbsOrigin() ) > Square( 25.0f ) )
-		m_recomputeVantagePointTimer.Start( RandomFloat( 3.0f, 15.0f ) );
-
-	if ( !me->IsLineOfFireClear( pTrain ) )
-		m_recomputeVantagePointTimer.Invalidate();
-
-	if ( m_recomputeVantagePointTimer.IsElapsed() )
+	if ( !trainWatcher->IsDisabled() && trainWatcher->GetCapturerCount() > 0 )
 	{
-		m_vecVantagePoint = FindVantagePoint( me, pTrain );
-		m_recomputePathTimer.Invalidate();
-	}
-	
-	if ( m_vecVantagePoint.DistToSqr( me->GetAbsOrigin() ) > Square( 25.0f ) )
-	{
-		if ( m_recomputePathTimer.IsElapsed() )
+		// the cart is being pushed ahead - block it
+		if ( !m_moveToBlockTimer.HasStarted() )
 		{
-			CTFBotPathCost func( me );
-			m_PathFollower.Compute( me, m_vecVantagePoint, func );
+			m_moveToBlockTimer.Start( RandomFloat( 0.5f, 3.0f ) );
+		}
+	}
 
-			m_recomputePathTimer.Start( RandomFloat( 0.5f, 1.0f ) );
+	if ( m_moveToBlockTimer.HasStarted() && m_moveToBlockTimer.IsElapsed() )
+	{
+		m_moveToBlockTimer.Invalidate();
+
+		if ( trainWatcher->GetCapturerCount() >= 0 )
+		{
+			// the cart is not yet blocked - move to block it!
+			return SuspendFor( new CTFBotPayloadBlock, "Moving to block the cart's forward motion" );
+		}
+	}
+
+	bool isMovingToVantagePoint = ( me->GetAbsOrigin() - m_vantagePoint ).AsVector2D().IsLengthGreaterThan( 25.0f );
+
+	if ( isMovingToVantagePoint )
+	{
+		// en route, don't change the point
+		m_vantagePointTimer.Start( RandomFloat( 3.0f, 15.0f ) );
+	}
+
+	if ( !me->IsLineOfFireClear( cart ) )
+	{
+		// cart is no longer visible from this area, find another one
+		m_vantagePointTimer.Invalidate();
+	}
+
+	if ( m_vantagePointTimer.IsElapsed() )
+	{
+		// find a new vantage point
+		m_vantagePoint = FindVantagePoint( me, cart );
+		m_repathTimer.Invalidate();
+		isMovingToVantagePoint = true;
+	}
+
+	if ( isMovingToVantagePoint )
+	{
+		// update our path periodically
+		if ( m_repathTimer.IsElapsed() )
+		{
+			CTFBotPathCost cost( me, DEFAULT_ROUTE );
+			m_path.Compute( me, m_vantagePoint, cost );
+			m_repathTimer.Start( RandomFloat( 0.5f, 1.0f ) );
 		}
 
-		m_PathFollower.Update( me );
-
-		return BaseClass::Continue();
+		// move towards our vantage point
+		m_path.Update( me );
+	}
+	else
+	{
+		// at vantage point
+		if ( CTFBotPrepareStickybombTrap::IsPossible( me ) )
+		{
+			return SuspendFor( new CTFBotPrepareStickybombTrap, "Laying sticky bombs!" );
+		}
 	}
 
-	if ( CTFBotPrepareStickybombTrap::IsPossible( me ) )
-		return BaseClass::SuspendFor( new CTFBotPrepareStickybombTrap, "Laying sticky bombs!" );
-
-	return BaseClass::Continue();
+	return Continue();
 }
 
-ActionResult<CTFBot> CTFBotPayloadGuard::OnResume( CTFBot *me, Action<CTFBot> *action )
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot > CTFBotPayloadGuard::OnResume( CTFBot *me, Action< CTFBot > *interruptingAction )
 {
 	VPROF_BUDGET( "CTFBotPayloadGuard::OnResume", "NextBot" );
 
-	m_blockPayloadDelay.Invalidate();
-	m_recomputeVantagePointTimer.Invalidate();
+	m_vantagePointTimer.Invalidate();
+	m_repathTimer.Invalidate();
 
-	return BaseClass::Continue();
+	return Continue();
 }
 
 
-EventDesiredResult<CTFBot> CTFBotPayloadGuard::OnMoveToSuccess( CTFBot *me, const Path *path )
-{
-	return BaseClass::TryContinue();
-}
-
-EventDesiredResult<CTFBot> CTFBotPayloadGuard::OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType fail )
-{
-	VPROF_BUDGET( "CTFBotPayloadGuard::OnMoveToFailure", "NextBot" );
-
-	m_blockPayloadDelay.Invalidate();
-	m_recomputeVantagePointTimer.Invalidate();
-
-	return BaseClass::TryContinue();
-}
-
-EventDesiredResult<CTFBot> CTFBotPayloadGuard::OnStuck( CTFBot *me )
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotPayloadGuard::OnStuck( CTFBot *me )
 {
 	VPROF_BUDGET( "CTFBotPayloadGuard::OnStuck", "NextBot" );
 
-	m_recomputeVantagePointTimer.Invalidate();
+	m_repathTimer.Invalidate();
 	me->GetLocomotionInterface()->ClearStuckStatus();
 
-	return BaseClass::TryContinue();
-}
-
-EventDesiredResult<CTFBot> CTFBotPayloadGuard::OnTerritoryContested( CTFBot *me, int i1 )
-{
-	return BaseClass::TryContinue();
-}
-
-EventDesiredResult<CTFBot> CTFBotPayloadGuard::OnTerritoryCaptured( CTFBot *me, int i1 )
-{
-	return BaseClass::TryContinue();
-}
-
-EventDesiredResult<CTFBot> CTFBotPayloadGuard::OnTerritoryLost( CTFBot *me, int i1 )
-{
-	return BaseClass::TryContinue();
+	return TryContinue();
 }
 
 
-QueryResultType CTFBotPayloadGuard::ShouldHurry( const INextBot *nextbot ) const
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotPayloadGuard::OnMoveToSuccess( CTFBot *me, const Path *path )
 {
-	return ANSWER_UNDEFINED;
+	return TryContinue();
 }
 
-QueryResultType CTFBotPayloadGuard::ShouldRetreat( const INextBot *nextbot ) const
-{
-	CTFBot *actor = ToTFBot( nextbot->GetEntity() );
 
-	CHandle<CTeamTrainWatcher> watcher = TFGameRules()->GetPayloadToBlock( actor->GetTeamNumber() );
-	if ( watcher != nullptr && watcher->IsTrainNearCheckpoint() )
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotPayloadGuard::OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType reason )
+{
+	VPROF_BUDGET( "CTFBotPayloadGuard::OnMoveToFailure", "NextBot" );
+
+	m_vantagePointTimer.Invalidate();
+	m_repathTimer.Invalidate();
+
+	return TryContinue();
+}
+
+
+//---------------------------------------------------------------------------------------------
+// Invoked when cart is being pushed
+EventDesiredResult< CTFBot > CTFBotPayloadGuard::OnTerritoryContested( CTFBot *me, int territoryID )
+{
+	return TryContinue();
+}
+
+
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotPayloadGuard::OnTerritoryCaptured( CTFBot *me, int territoryID )
+{
+	return TryContinue();
+}
+
+
+//---------------------------------------------------------------------------------------------
+// Invoked when cart hits a checkpoint
+EventDesiredResult< CTFBot > CTFBotPayloadGuard::OnTerritoryLost( CTFBot *me, int territoryID )
+{
+	return TryContinue();
+}
+
+
+//---------------------------------------------------------------------------------------------
+QueryResultType	CTFBotPayloadGuard::ShouldRetreat( const INextBot *bot ) const
+{
+	CTFBot *me = ToTFBot( bot->GetEntity() );
+
+	CTeamTrainWatcher *trainWatcher = TFGameRules()->GetPayloadToBlock( me->GetTeamNumber() );
+	if ( trainWatcher && trainWatcher->IsTrainNearCheckpoint() )
 	{
+		// don't retreat if the cart is almost at the next checkpoint
 		return ANSWER_NO;
 	}
 
@@ -214,11 +208,76 @@ QueryResultType CTFBotPayloadGuard::ShouldRetreat( const INextBot *nextbot ) con
 }
 
 
-Vector CTFBotPayloadGuard::FindVantagePoint( CTFBot *actor, CBaseEntity *target )
+//---------------------------------------------------------------------------------------------
+QueryResultType CTFBotPayloadGuard::ShouldHurry( const INextBot *bot ) const
 {
-	CCollectPayloadGuardVantagePoints functor( actor, target );
-	SearchSurroundingAreas( TheNavMesh->GetNearestNavArea( target ), functor, tf_bot_payload_guard_range.GetFloat() );
+	return ANSWER_UNDEFINED;
+}
 
-	return functor.GetResult();
+
+//---------------------------------------------------------------------------------------------
+class CCollectPayloadGuardVantagePoints : public ISearchSurroundingAreasFunctor
+{
+public:
+	CCollectPayloadGuardVantagePoints( CTFBot *me, CBaseEntity *cart )
+	{
+		m_me = me;
+		m_cart = cart;
+	}
+
+	virtual bool operator() ( CNavArea *baseArea, CNavArea *priorArea, float travelDistanceSoFar )
+	{
+		CTFNavArea *area = (CTFNavArea *)baseArea;
+
+		// TODO: only use areas that are at/farther along than the payload
+
+		trace_t trace;
+		NextBotTraceFilterIgnoreActors filter( NULL, COLLISION_GROUP_NONE );
+
+		const int tryCount = 3;
+
+		for( int i=0; i<tryCount; ++i )
+		{
+			Vector spot = area->GetRandomPoint();
+			Vector eyeSpot = Vector( spot.x, spot.y, spot.z + HumanEyeHeight );
+
+			UTIL_TraceLine( eyeSpot, m_cart->WorldSpaceCenter(), MASK_SOLID_BRUSHONLY, &filter, &trace );
+
+			if ( !trace.DidHit() || trace.m_pEnt == m_cart )
+			{
+				m_vantagePointVector.AddToTail( spot );
+
+				if ( tf_bot_debug_payload_guard_vantage_points.GetBool() )
+				{
+					NDebugOverlay::Cross3D( spot, 5.0f, 255, 0, 255, true, 120.0f );
+				}
+			}
+		}
+
+		return true;
+	}
+
+	CTFBot *m_me;
+	CBaseEntity *m_cart;
+	CUtlVector< Vector > m_vantagePointVector;
+};
+
+
+//---------------------------------------------------------------------------------------------
+//
+// Find a tactically advantageous area where we can see the payload
+//
+Vector CTFBotPayloadGuard::FindVantagePoint( CTFBot *me, CBaseEntity *cart )
+{
+	CTFNavArea *cartArea = (CTFNavArea *)TheNavMesh->GetNearestNavArea( cart );
+
+	CCollectPayloadGuardVantagePoints collect( me, cart );
+	SearchSurroundingAreas( cartArea, collect, tf_bot_payload_guard_range.GetFloat() );
+
+	if ( collect.m_vantagePointVector.Count() == 0 )
+		return cart->WorldSpaceCenter();
+
+	int which = RandomInt( 0, collect.m_vantagePointVector.Count()-1 );
+	return collect.m_vantagePointVector[ which ];
 }
 

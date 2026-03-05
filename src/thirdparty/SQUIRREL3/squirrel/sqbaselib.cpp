@@ -9,6 +9,7 @@
 #include "sqfuncproto.h"
 #include "sqclosure.h"
 #include "sqclass.h"
+#include "basehandle.h"
 #include <stdlib.h>
 #include <stdarg.h>
 #include <ctype.h>
@@ -391,6 +392,9 @@ static SQInteger default_delegate_tointeger(HSQUIRRELVM v)
     case OT_BOOL:
         v->Push(SQObjectPtr(_integer(o)?(SQInteger)1:(SQInteger)0));
         break;
+    case OT_EHANDLE:
+        v->Push(SQObjectPtr((SQInteger)_ehandle(o)));
+        break;
     default:
         v->PushNull();
         break;
@@ -499,6 +503,32 @@ static SQInteger table_filter(HSQUIRRELVM v)
     return 1;
 }
 
+static SQInteger table_map(HSQUIRRELVM v)
+{
+	SQObject &o = stack_get(v, 1);
+	SQTable *tbl = _table(o);
+	SQInteger nitr, n = 0;
+	SQInteger nitems = tbl->CountUsed();
+	SQObjectPtr ret = SQArray::Create(_ss(v), nitems);
+	SQObjectPtr itr, key, val;
+	while ((nitr = tbl->Next(false, itr, key, val)) != -1) {
+		itr = (SQInteger)nitr;
+
+		v->Push(o);
+		v->Push(key);
+		v->Push(val);
+		if (SQ_FAILED(sq_call(v, 3, SQTrue, SQFalse))) {
+			return SQ_ERROR;
+		}
+		_array(ret)->Set(n, v->GetUp(-1));
+		v->Pop();
+		n++;
+	}
+
+	v->Push(ret);
+	return 1;
+}
+
 #define TABLE_TO_ARRAY_FUNC(_funcname_,_valname_) static SQInteger _funcname_(HSQUIRRELVM v) \
 { \
 	SQObject &o = stack_get(v, 1); \
@@ -536,6 +566,7 @@ const SQRegFunction SQSharedState::_table_default_delegate_funcz[]={
     {_SC("setdelegate"),table_setdelegate,2, _SC(".t|o")},
     {_SC("getdelegate"),table_getdelegate,1, _SC(".")},
     {_SC("filter"),table_filter,2, _SC("tc")},
+	{_SC("map"),table_map,2, _SC("tc") },
 	{_SC("keys"),table_keys,1, _SC("t") },
 	{_SC("values"),table_values,1, _SC("t") },
     {NULL,(SQFUNCTION)0,0,NULL}
@@ -982,6 +1013,11 @@ const SQRegFunction SQSharedState::_number_default_delegate_funcz[]={
     {NULL,(SQFUNCTION)0,0,NULL}
 };
 
+const SQRegFunction SQSharedState::_handle_default_delegate_funcz[]={
+    {_SC("tointeger"),default_delegate_tointeger,1, _SC("n|h")},
+    {NULL,(SQFUNCTION)0,0,NULL}
+};
+
 //CLOSURE DEFAULT DELEGATE//////////////////////////
 static SQInteger closure_pcall(HSQUIRRELVM v)
 {
@@ -1122,6 +1158,7 @@ static SQInteger thread_call(HSQUIRRELVM v)
     SQObjectPtr o = stack_get(v,1);
     if(sq_type(o) == OT_THREAD) {
         SQInteger nparams = sq_gettop(v);
+		sq_reservestack(_thread(o),nparams + 3);
         _thread(o)->Push(_thread(o)->_roottable);
         for(SQInteger i = 2; i<(nparams+1); i++)
             sq_move(_thread(o),v,i);

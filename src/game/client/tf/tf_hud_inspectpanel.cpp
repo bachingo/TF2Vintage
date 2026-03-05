@@ -1,25 +1,34 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose:		
+// Purpose: 
 //
 // $NoKeywords: $
 //=============================================================================
+
 #include "cbase.h"
+#include "hud.h"
 #include "hudelement.h"
-#include "hud_macros.h"
+#include "c_tf_player.h"
 #include "iclientmode.h"
-#include "c_playerresource.h"
+#include "ienginevgui.h"
+#include <vgui/ILocalize.h>
+#include <vgui/ISurface.h>
 #include <vgui/IVGui.h>
 #include <vgui_controls/EditablePanel.h>
-#include "c_tf_player.h"
-#include "vgui/controls/tf_advmodelpanel.h"
+#include <vgui_controls/ProgressBar.h>
+#include "tf_spectatorgui.h"
+#include "hud_macros.h"
+#include "c_playerresource.h"
 #include "view.h"
+#include "player_vs_environment/c_tf_upgrades.h"
 #include "tf_hud_inspectpanel.h"
+#include "clientmode_tf.h"
+#include "vguicenterprint.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-using namespace vgui;
+
 DECLARE_HUDELEMENT( CHudInspectPanel );
 
 static float s_flLastInspectDownTime = 0.f;
@@ -27,49 +36,61 @@ static float s_flLastInspectDownTime = 0.f;
 void InspectDown()
 {
 	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
-	if ( !pLocalPlayer )
+	if ( pLocalPlayer == NULL )
+	{
 		return;
+	}
 
 	s_flLastInspectDownTime = gpGlobals->curtime;
 
 	KeyValues *kv = new KeyValues( "+inspect_server" );
 	engine->ServerCmdKeyValues( kv );
-	pLocalPlayer->m_flInspectTime = gpGlobals->curtime;
+
+	pLocalPlayer->SetInspectTime( gpGlobals->curtime );
 }
-static ConCommand inspect_down_cmd( "+inspect", InspectDown, "", FCVAR_SERVER_CAN_EXECUTE );
+static ConCommand s_inspect_down_cmd( "+inspect", InspectDown, "", FCVAR_SERVER_CAN_EXECUTE );
 
 void InspectUp()
 {
 	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
-	if ( !pLocalPlayer )
+	if ( pLocalPlayer == NULL )
+	{
 		return;
+	}
 
+	// quick tap on the inspect button, try to inspect players
 	if ( gpGlobals->curtime - s_flLastInspectDownTime <= 0.2f )
 	{
-		CHudInspectPanel *pElement = GET_HUDELEMENT( CHudInspectPanel );
+		CHudElement *pElement = gHUD.FindElement( "CHudInspectPanel" );
 		if ( pElement )
 		{
-			pElement->UserCmd_InspectTarget();
+			((CHudInspectPanel *)pElement)->UserCmd_InspectTarget();
 		}
 	}
 
 	KeyValues *kv = new KeyValues( "-inspect_server" );
 	engine->ServerCmdKeyValues( kv );
-	pLocalPlayer->m_flInspectTime = 0;
+
+	pLocalPlayer->SetInspectTime( 0.f );
 }
-static ConCommand inspect_up_cmd( "-inspect", InspectUp, "", FCVAR_SERVER_CAN_EXECUTE );
+static ConCommand s_inspect_up_cmd( "-inspect", InspectUp, "", FCVAR_SERVER_CAN_EXECUTE );
 
-
-CHudInspectPanel::CHudInspectPanel( char const *pszElementName )
-	: CHudElement( pszElementName ), BaseClass( NULL, "HudInspectPanel" )
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CHudInspectPanel::CHudInspectPanel( const char *pElementName ) : CHudElement( pElementName ), BaseClass( NULL, "HudInspectPanel" )
 {
 	Panel *pParent = g_pClientMode->GetViewport();
 	SetParent( pParent );
 
 	SetHiddenBits( HIDEHUD_MISCSTATUS );
 
-	// TODO: CItemModelPanel...
-	m_pItemPanel = new CTFAdvModelPanel( this, "itempanel" );
+	m_pItemPanel = new CItemModelPanel( this, "itempanel" ) ;
+	m_iTargetItemIterator = 0;
+
+	RegisterForRenderGroup( "mid" );
+	RegisterForRenderGroup( "commentary" );
+	RegisterForRenderGroup( "arena_target_id" );
 }
 
 //-----------------------------------------------------------------------------
@@ -81,29 +102,6 @@ void CHudInspectPanel::ApplySchemeSettings( IScheme *pScheme )
 	LoadControlSettings( "resource/UI/HudInspectPanel.res" );
 
 	BaseClass::ApplySchemeSettings( pScheme );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CHudInspectPanel::ShouldDraw( void )
-{
-	C_TFPlayer *pLocalTFPlayer = C_TFPlayer::GetLocalTFPlayer();
-	if ( !CHudElement::ShouldDraw() || !pLocalTFPlayer || !pLocalTFPlayer->IsAlive() )
-	{
-		//m_hTarget = NULL;
-		SetPanelVisible( false );
-		return false;
-	}
-
-	//return ( m_hTarget != NULL );
-	return false;
-}
-
-int CHudInspectPanel::HudElementKeyInput( int down, ButtonCode_t keynum, const char *pszCurrentBinding )
-{
-
-	return 1;	// key not handled
 }
 
 //-----------------------------------------------------------------------------
@@ -125,6 +123,142 @@ void CHudInspectPanel::LockInspectRenderGroup( bool bLock )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+bool CHudInspectPanel::ShouldDraw( void )
+{
+	C_TFPlayer *pLocalTFPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( !CHudElement::ShouldDraw() || !pLocalTFPlayer || !pLocalTFPlayer->IsAlive() )
+	{
+		m_hTarget = NULL;
+		SetPanelVisible( false );
+		return false;
+	}
+
+	return ( m_hTarget != NULL );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CHudInspectPanel::UserCmd_InspectTarget( void )
+{
+	// If we're in observer mode, we cycle items on the current observer target
+	C_TFPlayer *pLocalTFPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( !pLocalTFPlayer )
+		return;
+
+	C_TFPlayer *pTargetPlayer = GetInspectTarget( pLocalTFPlayer );
+
+	bool bVisible = false;
+	if ( pLocalTFPlayer->IsObserver() )
+	{
+		CTFSpectatorGUI *pPanel = (CTFSpectatorGUI*)gViewPortInterface->FindPanelByName( PANEL_SPECGUI );
+		if ( pPanel )
+		{
+			pPanel->ForceItemPanelCycle();
+		}
+	}
+	// In MvM, display player upgrades
+	else if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() )
+	{
+		CHudUpgradePanel *pUpgradePanel = GET_HUDELEMENT( CHudUpgradePanel );
+		if ( pUpgradePanel )
+		{
+			// Close if open
+			if ( pUpgradePanel->IsVisible() )
+			{
+				pUpgradePanel->OnCommand( "cancel" );
+			}
+			// Inspect a player
+			else if ( pTargetPlayer && ( pTargetPlayer->GetTeamNumber() != TF_TEAM_PVE_INVADERS ) )
+			{
+				if ( !GetClientModeTFNormal()->BIsFriendOrPartyMember( pTargetPlayer ) )
+				{
+					internalCenterPrint->Print( "#TF_Invalid_Inspect_Target" );
+					return;
+				}
+				
+				pUpgradePanel->InspectUpgradesForPlayer( pTargetPlayer );
+			}
+			// Inspect self
+			else if ( !pTargetPlayer && pLocalTFPlayer  )
+			{
+				pUpgradePanel->InspectUpgradesForPlayer( pLocalTFPlayer );
+			}
+		}
+	}
+	else
+	{
+		if ( pTargetPlayer && !pTargetPlayer->IsEnemyPlayer() )
+		{
+			m_hTarget = pTargetPlayer;
+
+			CEconItemView *pItem = m_hTarget->GetInspectItem( &m_iTargetItemIterator );
+			if ( pItem && pItem->IsValid() )
+			{
+				m_pItemPanel->SetDialogVariable( "killername", g_PR->GetPlayerName( m_hTarget->entindex() ) );
+				m_pItemPanel->SetItem( pItem );
+
+				// force update description to get the correct panel size
+				m_pItemPanel->UpdateDescription();
+				bVisible = true;
+				int x,y;
+				GetPos( x, y );
+				SetPos( x, ScreenHeight() - YRES( 12 ) - m_pItemPanel->GetTall() );
+			}
+		}
+		else
+		{
+			m_iTargetItemIterator = 0;
+		}
+	}
+
+	SetPanelVisible( bVisible );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+C_TFPlayer *CHudInspectPanel::GetInspectTarget( C_TFPlayer *pLocalTFPlayer )
+{
+	if ( !pLocalTFPlayer )
+		return NULL;
+
+	C_TFPlayer *pTargetPlayer = NULL;
+
+	trace_t tr;
+	Vector vecStart, vecEnd;
+	VectorMA( MainViewOrigin(), MAX_TRACE_LENGTH, MainViewForward(), vecEnd );
+	VectorMA( MainViewOrigin(), 10,   MainViewForward(), vecStart );
+	UTIL_TraceLine( vecStart, vecEnd, MASK_SOLID, pLocalTFPlayer, COLLISION_GROUP_NONE, &tr );
+
+	if ( !tr.startsolid && tr.DidHitNonWorldEntity() )
+	{
+		C_BaseEntity *pEntity = tr.m_pEnt;
+		if ( pEntity && ( pEntity != pLocalTFPlayer ) && pEntity->IsPlayer() )
+		{
+			// Get the player under our crosshair
+			pTargetPlayer = ToTFPlayer( pEntity );
+
+			// Fix up if it's a spy disguised as my team
+			if ( pLocalTFPlayer->m_Shared.IsSpyDisguisedAsMyTeam( pTargetPlayer ) )
+			{
+				// Get the player that the spy is disguised as
+				C_TFPlayer *pDisguiseTarget = pTargetPlayer->m_Shared.GetDisguiseTarget();
+				if ( pDisguiseTarget && pDisguiseTarget->GetPlayerClass()->GetClassIndex() == pTargetPlayer->m_Shared.GetDisguiseClass() )
+				{
+					// The spy is disguised as the same class as the target, so inspect the disguise target instead
+					pTargetPlayer = pDisguiseTarget;
+				}
+			}
+		}
+	}
+
+	return pTargetPlayer;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CHudInspectPanel::SetPanelVisible( bool bVisible )
 {
 	if ( m_pItemPanel->IsVisible() != bVisible )
@@ -137,51 +271,19 @@ void CHudInspectPanel::SetPanelVisible( bool bVisible )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CHudInspectPanel::UserCmd_InspectTarget( void )
+int	CHudInspectPanel::HudElementKeyInput( int down, ButtonCode_t keynum, const char *pszCurrentBinding )
 {
-	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
-	if ( !pLocalPlayer )
-		return;
-
-	
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-C_TFPlayer *CHudInspectPanel::GetInspectTarget( C_TFPlayer *pPlayer )
-{
-	if ( !pPlayer )
-		return NULL;
-
-	trace_t tr;
-	Vector vecStart, vecEnd;
-	VectorMA( MainViewOrigin(), 10, MainViewForward(), vecStart );
-	VectorMA( MainViewOrigin(), MAX_TRACE_LENGTH, MainViewForward(), vecEnd );
-
-	UTIL_TraceLine( vecStart, vecEnd, MASK_SOLID, pPlayer, COLLISION_GROUP_NONE, &tr );
-
-	C_TFPlayer *pTarget = NULL;
-	if ( !tr.startsolid && tr.DidHitNonWorldEntity() )
+	if ( IsVisible() && pszCurrentBinding && pszCurrentBinding[0] )
 	{
-		if ( tr.m_pEnt && tr.m_pEnt->IsPlayer() )
+		if ( FStrEq( pszCurrentBinding, "+attack" ) )
 		{
-			pTarget = ToTFPlayer( tr.m_pEnt );
-
-			// Inspect the person a spy is disguised as instead of the spy, no cheating!
-			if ( pTarget->IsPlayerClass( TF_CLASS_SPY ) )
+			CBasePlayer *pLocalPlayer = CBasePlayer::GetLocalPlayer();
+			if ( pLocalPlayer && ( pLocalPlayer->GetTeamNumber() >= FIRST_GAME_TEAM ) && pLocalPlayer->IsAlive() )
 			{
-				if ( pTarget->GetTeamNumber() != pPlayer->GetTeamNumber() && pTarget->m_Shared.GetDisguiseTeam() == pPlayer->GetTeamNumber() )
-				{
-					C_TFPlayer *pDisguiseTarget = ToTFPlayer( pTarget->m_Shared.GetDisguiseTarget() );
-					if ( pDisguiseTarget && pDisguiseTarget->IsPlayerClass( pTarget->m_Shared.GetDisguiseClass() ) )
-					{
-						pTarget = pDisguiseTarget;
-					}
-				}
+				SetPanelVisible( false );
 			}
 		}
 	}
 
-	return pTarget;
+	return 1; // intentionally not handling the key
 }

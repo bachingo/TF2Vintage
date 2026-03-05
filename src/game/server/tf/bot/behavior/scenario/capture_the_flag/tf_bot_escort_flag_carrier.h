@@ -1,37 +1,31 @@
-//========= Copyright � Valve LLC, All rights reserved. =======================
-//
-// Purpose:		
-//
-// $NoKeywords: $
-//=============================================================================
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_escort_flag_carrier.h
+// Escort the flag carrier to their destination
+// Michael Booth, May 2011
+
 #ifndef TF_BOT_ESCORT_FLAG_CARRIER_H
 #define TF_BOT_ESCORT_FLAG_CARRIER_H
-#ifdef _WIN32
-#pragma once
-#endif
 
 
-#include "NextBotBehavior.h"
-#include "behavior/tf_bot_melee_attack.h"
+#include "Path/NextBotPathFollow.h"
+#include "bot/behavior/tf_bot_melee_attack.h"
 
-class CTFBotEscortFlagCarrier : public Action<CTFBot>
+
+//-----------------------------------------------------------------------------
+class CTFBotEscortFlagCarrier : public Action< CTFBot >
 {
-	DECLARE_CLASS( CTFBotEscortFlagCarrier, Action<CTFBot> );
 public:
-	virtual ~CTFBotEscortFlagCarrier() {}
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
 
-	virtual const char *GetName() const OVERRIDE;
-
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
+	virtual const char *GetName( void ) const	{ return "EscortFlagCarrier"; };
 
 private:
-	PathFollower m_PathFollower;
-	CountdownTimer m_recomputePathTimer;
-	CTFBotMeleeAttack m_MeleeAttack;
+	PathFollower m_path;
+	CountdownTimer m_repathTimer;
+
+	CTFBotMeleeAttack m_meleeAttackAction;
 };
 
 
-extern int GetBotEscortCount( int teamnum );
-
-#endif
+#endif // TF_BOT_ESCORT_FLAG_CARRIER_H

@@ -16,19 +16,19 @@ ConVar phys_pushscale( "phys_pushscale", "1", FCVAR_REPLICATED );
 
 BEGIN_SIMPLE_DATADESC( CTakeDamageInfo )
 	DEFINE_FIELD( m_vecDamageForce, FIELD_VECTOR ),
-	DEFINE_FIELD( m_vecDamagePosition, FIELD_POSITION_VECTOR ),
-	DEFINE_FIELD( m_vecReportedPosition, FIELD_POSITION_VECTOR ),
-	DEFINE_FIELD( m_hInflictor, FIELD_EHANDLE ),
-	DEFINE_FIELD( m_hAttacker, FIELD_EHANDLE ),
-	DEFINE_FIELD( m_hWeapon, FIELD_EHANDLE ),
-	DEFINE_FIELD( m_flDamage, FIELD_FLOAT ),
-	DEFINE_FIELD( m_flMaxDamage, FIELD_FLOAT ),
+	DEFINE_FIELD( m_vecDamagePosition, FIELD_POSITION_VECTOR),
+	DEFINE_FIELD( m_vecReportedPosition, FIELD_POSITION_VECTOR),
+	DEFINE_FIELD( m_hInflictor, FIELD_EHANDLE),
+	DEFINE_FIELD( m_hAttacker, FIELD_EHANDLE),
+	DEFINE_FIELD( m_hWeapon, FIELD_EHANDLE),
+	DEFINE_FIELD( m_flDamage, FIELD_FLOAT),
+	DEFINE_FIELD( m_flMaxDamage, FIELD_FLOAT),
 	DEFINE_FIELD( m_flBaseDamage, FIELD_FLOAT ),
-	DEFINE_FIELD( m_bitsDamageType, FIELD_INTEGER ),
-	DEFINE_FIELD( m_iDamageCustom, FIELD_INTEGER ),
-	DEFINE_FIELD( m_iDamageStats, FIELD_INTEGER ),
-	DEFINE_FIELD( m_iAmmoType, FIELD_INTEGER ),
-	DEFINE_FIELD( m_iDamagedOtherPlayers, FIELD_INTEGER ),
+	DEFINE_FIELD( m_bitsDamageType, FIELD_INTEGER),
+	DEFINE_FIELD( m_iDamageCustom, FIELD_INTEGER),
+	DEFINE_FIELD( m_iDamageStats, FIELD_INTEGER),
+	DEFINE_FIELD( m_iAmmoType, FIELD_INTEGER),
+	DEFINE_FIELD( m_iDamagedOtherPlayers, FIELD_INTEGER),
 END_DATADESC()
 
 BEGIN_SCRIPTDESC_ROOT( CTakeDamageInfo, "Info provided from entities that deal damage" )
@@ -78,6 +78,8 @@ BEGIN_SCRIPTDESC_ROOT( CTakeDamageInfo, "Info provided from entities that deal d
 	DEFINE_SCRIPTFUNC( AdjustPlayerDamageInflictedForSkillLevel, "" )
 	DEFINE_SCRIPTFUNC( AdjustPlayerDamageTakenForSkillLevel, "" )
 	DEFINE_SCRIPTFUNC( CopyDamageToBaseDamage, "" )
+	DEFINE_SCRIPTFUNC_WRAPPED( GetCritType, "" )
+	DEFINE_SCRIPTFUNC_WRAPPED( SetCritType, "" )
 END_SCRIPTDESC();
 
 void CTakeDamageInfo::Init( CBaseEntity *pInflictor, CBaseEntity *pAttacker, CBaseEntity *pWeapon, const Vector &damageForce, const Vector &damagePosition, const Vector &reportedPosition, float flDamage, int bitsDamageType, int iCustomDamage )
@@ -111,6 +113,7 @@ void CTakeDamageInfo::Init( CBaseEntity *pInflictor, CBaseEntity *pAttacker, CBa
 	m_flDamageBonus = 0.f;
 	m_bForceFriendlyFire = false;
 	m_flDamageForForce = 0.f;
+	m_eCritType = CRIT_NONE;
 }
 
 CTakeDamageInfo::CTakeDamageInfo()
@@ -257,6 +260,16 @@ inline void CTakeDamageInfo::ScriptSetDamageBonus( float flBonus, HSCRIPT hProvi
 	m_hDamageBonusProvider = ToEnt( hProvider );
 }
 
+void CTakeDamageInfo::ScriptSetCritType( int eType )
+{
+	SetCritType( (ECritType)eType );
+}
+
+int CTakeDamageInfo::ScriptGetCritType() const
+{
+	return m_eCritType;
+}
+
 // -------------------------------------------------------------------------------------------------- //
 // MultiDamage
 // Collects multiple small damages into a single damage
@@ -335,6 +348,7 @@ void AddMultiDamage( const CTakeDamageInfo &info, CBaseEntity *pEntity )
 	g_MultiDamage.SetReportedPosition( info.GetReportedPosition() );
 	g_MultiDamage.SetMaxDamage( MAX( g_MultiDamage.GetMaxDamage(), info.GetDamage() ) );
 	g_MultiDamage.SetAmmoType( info.GetAmmoType() );
+	g_MultiDamage.SetCritType( info.GetCritType() );
 
 	if ( g_MultiDamage.GetPlayerPenetrationCount() == 0 )
 	{
@@ -540,6 +554,19 @@ void CTakeDamageInfo::DebugGetDamageTypeString(unsigned int damageType, char *ou
 	}
 }
 
+void CTakeDamageInfo::SetCritType( ECritType eType )
+{
+	if ( eType == CRIT_NONE )
+	{
+		// always let CRIT_NONE override the current setting
+		m_eCritType = eType;
+	}
+	else
+	{
+		// don't let CRIT_MINI override CRIT_FULL
+		m_eCritType = ( eType > m_eCritType ) ? eType : m_eCritType;
+	}
+}
 
 /*
 // instant damage

@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Place where we can't build things.
 //
@@ -18,6 +18,6 @@ class Vector;
 //-----------------------------------------------------------------------------
 // Is a given point contained within any construction yard?
 //-----------------------------------------------------------------------------
-bool PointInNoBuild( const Vector &vecBuildOrigin, const CBaseObject *pObj );
+bool PointInNoBuild( const Vector &vecBuildOrigin, const CBaseObject* pObj );
 
 #endif // TF_FUNC_NO_BUILD_H

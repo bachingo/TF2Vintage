@@ -19,6 +19,4 @@ extern IScriptVM * g_pScriptVM;
 // Only allow scripts to create entities during map initialization
 bool IsEntityCreationAllowedInScripts( void );
 
-extern IScriptManager *scriptmanager;
-
 #endif // VSCRIPT_SERVER_H

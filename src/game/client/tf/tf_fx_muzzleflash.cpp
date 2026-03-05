@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -49,7 +49,6 @@ void TF_3rdPersonMuzzleFlashCallback( const CEffectData &data )
 	
 	CSmartPtr<CLocalSpaceEmitter> pSimple = CLocalSpaceEmitter::Create( "MuzzleFlash", data.m_hEntity, attachmentIndex, 0 );
 	
-	SimpleParticle *pParticle;
 	Vector			forward(1,0,0), offset, right(0,1,0);
 
 	//
@@ -64,12 +63,11 @@ void TF_3rdPersonMuzzleFlashCallback( const CEffectData &data )
 		scale *= 4;
 		float flScale = random->RandomFloat( scale-0.1f, scale+0.1f );
 
-		int i;
-		for ( i = 1; i < 9; i++ )
+		for ( int i = 1; i < 9; i++ )
 		{
 			offset = (forward * (i*2.0f*scale));
 
-			pParticle = (SimpleParticle *) pSimple->AddParticle( sizeof( SimpleParticle ), pSimple->GetPMaterial( VarArgs( "effects/muzzleflash%d", random->RandomInt(1,4) ) ), offset );
+			SimpleParticle *pParticle = (SimpleParticle *) pSimple->AddParticle( sizeof( SimpleParticle ), pSimple->GetPMaterial( VarArgs( "effects/muzzleflash%d", random->RandomInt(1,4) ) ), offset );
 				
 			if ( pParticle == NULL )
 				return;
@@ -97,12 +95,11 @@ void TF_3rdPersonMuzzleFlashCallback( const CEffectData &data )
 		scale *= 4;
 		float flScale = random->RandomFloat( scale-0.1f, scale+0.1f );
 		
-		int i;
-		for ( i = 1; i < 9; i++ )
+		for ( int i = 1; i < 9; i++ )
 		{
 			offset = (forward * (i*2.0f*scale));
 
-			pParticle = (SimpleParticle *) pSimple->AddParticle( sizeof( SimpleParticle ), pSimple->GetPMaterial( VarArgs( "effects/muzzleflash%d", random->RandomInt(1,4) ) ), offset );
+			SimpleParticle *pParticle = (SimpleParticle *) pSimple->AddParticle( sizeof( SimpleParticle ), pSimple->GetPMaterial( VarArgs( "effects/muzzleflash%d", random->RandomInt(1,4) ) ), offset );
 				
 			if ( pParticle == NULL )
 				return;
@@ -163,13 +160,12 @@ void TF_3rdPersonMuzzleFlashCallback_SentryGun( const CEffectData &data )
 	int iUpgradeLevel	= data.m_fFlags;
 
 	C_BaseEntity *pEnt = data.GetEntity();
-
 	if ( pEnt && !pEnt->IsDormant() )
 	{
 		// The created entity kills itself
 		//C_MuzzleFlashModel::CreateMuzzleFlashModel( "models/effects/sentry1_muzzle/sentry1_muzzle.mdl", pEnt, iMuzzleFlashAttachment );
 
-		char *pszMuzzleFlashParticleEffect = NULL;
+		const char *pszMuzzleFlashParticleEffect = NULL;
 		switch( iUpgradeLevel )
 		{
 		case 1:
@@ -261,7 +257,7 @@ void C_MuzzleFlashModel::ClientThink( void )
 	{
 		// Pick a new anim frame
 		float flDelta = RandomFloat(0.2,0.4) * (RandomInt(0,1) == 1 ? 1 : -1);
-		float flCycle = clamp( GetCycle() + flDelta, 0, 1 );
+		float flCycle = clamp( GetCycle() + flDelta, 0.f, 1.f );
 		SetCycle( flCycle );
 
 		SetLocalAngles( QAngle(0,0,RandomFloat(0,360)) );

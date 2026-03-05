@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2001, Valve LLC, All rights reserved. ============
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: TF2 specific input handling
 //
@@ -7,13 +7,16 @@
 #include "cbase.h"
 #include "kbutton.h"
 #include "input.h"
-#include "cam_thirdperson.h"
+
 #include "c_tf_player.h"
+#include "cam_thirdperson.h"
 
-
-extern ConVar cl_yawspeed;
-extern ConVar thirdperson_platformer;
-extern ConVar cam_idealyaw;
+extern ConVar		thirdperson_platformer;
+extern ConVar		cam_idealyaw;
+extern ConVar		cl_yawspeed;
+extern kbutton_t	in_left;
+extern kbutton_t	in_right;
+extern CThirdPersonManager g_ThirdPersonManager;
 
 //-----------------------------------------------------------------------------
 // Purpose: TF Input interface
@@ -21,8 +24,17 @@ extern ConVar cam_idealyaw;
 class CTFInput : public CInput
 {
 public:
-	virtual	float		CAM_CapYaw( float fVal ) const;
-	virtual void		AdjustYaw( float speed, QAngle& viewangles );
+	CTFInput()
+		: m_angThirdPersonOffset( 0.f, 0.f, 0.f )
+	{}
+	virtual		float		CAM_CapYaw( float fVal ) const OVERRIDE;
+	virtual		float		CAM_CapPitch( float fVal ) const OVERRIDE;
+	virtual		void		AdjustYaw( float speed, QAngle& viewangles );
+	virtual		float		JoyStickAdjustYaw( float flSpeed ) OVERRIDE;
+	virtual void ApplyMouse( QAngle& viewangles, CUserCmd *cmd, float mouse_x, float mouse_y ) OVERRIDE;
+private:
+
+	QAngle m_angThirdPersonOffset;
 };
 
 static CTFInput g_Input;
@@ -30,64 +42,129 @@ static CTFInput g_Input;
 // Expose this interface
 IInput *input = ( IInput * )&g_Input;
 
-
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 float CTFInput::CAM_CapYaw( float fVal ) const
 {
-	C_TFPlayer *pPlayer = ToTFPlayer( C_BasePlayer::GetLocalPlayer() );
-	if (pPlayer && pPlayer->m_Shared.InCond( TF_COND_SHIELD_CHARGE ))
+	CTFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( !pPlayer )
+		return fVal;
+
+	if ( pPlayer->m_Shared.InCond( TF_COND_SHIELD_CHARGE ) )
 	{
-		float flCap = 0.45f;
-		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flCap, charge_turn_control );
-		
-		return Clamp( fVal, -flCap, flCap );
+		float flChargeYawCap = pPlayer->m_Shared.CalculateChargeCap();
+
+		if ( fVal > flChargeYawCap )
+			return flChargeYawCap;
+		else if ( fVal < -flChargeYawCap )
+			return -flChargeYawCap;
 	}
 
 	return fVal;
 }
 
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CTFInput::CAM_CapPitch( float fVal ) const
+{
+	CTFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( !pPlayer )
+		return fVal;
+
+	return fVal;
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFInput::AdjustYaw( float speed, QAngle& viewangles )
 {
-	extern kbutton_t in_left;
-	extern kbutton_t in_right;
-
-	if (!( in_strafe.state & 1 ))
+	if ( !(in_strafe.state & 1) )
 	{
-		float flLeft = speed*cl_yawspeed.GetFloat() * KeyState( &in_right );
-		float flRight = speed*cl_yawspeed.GetFloat() * KeyState( &in_left );
+		float yaw_right = speed*cl_yawspeed.GetFloat() * KeyState (&in_right);
+		float yaw_left = speed*cl_yawspeed.GetFloat() * KeyState (&in_left);
 
-		C_TFPlayer *pPlayer = ToTFPlayer( C_BasePlayer::GetLocalPlayer() );
-		if (pPlayer && pPlayer->m_Shared.InCond( TF_COND_SHIELD_CHARGE ))
+		CTFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+		if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_SHIELD_CHARGE ) )
 		{
-			float flCap = 0.45f;
-			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flCap, charge_turn_control );
-			if (flRight > flCap || -flRight < -flCap)
-			{
-				flRight = -flCap;
-			}
-			if (flLeft > flCap || -flLeft < -flCap)
-			{
-				flLeft = flCap;
-			}
+			float flChargeYawCap = pPlayer->m_Shared.CalculateChargeCap();
+
+			if ( yaw_right > flChargeYawCap )
+				yaw_right = flChargeYawCap;
+			else if ( yaw_right < -flChargeYawCap )
+				yaw_right = -flChargeYawCap;
+			if ( yaw_left > flChargeYawCap )
+				yaw_left = flChargeYawCap;
+			else if ( yaw_left < -flChargeYawCap )
+				yaw_left = -flChargeYawCap;
 		}
 
-		viewangles[YAW] -= flLeft;
-		viewangles[YAW] += flRight;
+		viewangles[YAW] -= yaw_right;
+		viewangles[YAW] += yaw_left;
 	}
 
-	// thirdperson platformer mode
-	// use movement keys to aim the player relative to the thirdperson camera
-	if (CAM_IsThirdPerson() && thirdperson_platformer.GetInt())
+	if ( CAM_IsThirdPerson() )
 	{
-		float side = KeyState( &in_moveleft ) - KeyState( &in_moveright );
-		float forward = KeyState( &in_forward ) - KeyState( &in_back );
+		if ( thirdperson_platformer.GetInt() )
+		{
+			float side = KeyState(&in_moveleft) - KeyState(&in_moveright);
+			float forward = KeyState(&in_forward) - KeyState(&in_back);
 
-		if (side || forward)
-		{
-			viewangles[YAW] = RAD2DEG( atan2( side, forward ) ) + g_ThirdPersonManager.GetCameraOffsetAngles()[YAW];
+			if ( side || forward )
+			{
+				viewangles[YAW] = RAD2DEG(atan2(side, forward)) + g_ThirdPersonManager.GetCameraOffsetAngles()[ YAW ];
+			}
+			if ( side || forward || KeyState (&in_right) || KeyState (&in_left) )
+			{
+				cam_idealyaw.SetValue( g_ThirdPersonManager.GetCameraOffsetAngles()[ YAW ] - viewangles[ YAW ] );
+			}
 		}
-		if (side || forward || KeyState( &in_right ) || KeyState( &in_left ))
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CTFInput::JoyStickAdjustYaw( float flSpeed )
+{
+	// Make sure we're not strafing
+	if ( flSpeed && !(in_strafe.state & 1) )
+	{
+		CTFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+		if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_SHIELD_CHARGE ) )
 		{
-			cam_idealyaw.SetValue( g_ThirdPersonManager.GetCameraOffsetAngles()[YAW] - viewangles[YAW] );
+			float flChargeYawCap = pPlayer->m_Shared.CalculateChargeCap();
+			
+			if ( flSpeed > 0.f && flSpeed > flChargeYawCap )
+				flSpeed = flChargeYawCap;
+			else if ( flSpeed < 0.f && flSpeed < -flChargeYawCap )
+				flSpeed = -flChargeYawCap;
 		}
+	}
+
+	return flSpeed;
+}
+
+ConVar tf_halloween_kart_cam_follow( "tf_halloween_kart_cam_follow", "0.3f", FCVAR_CHEAT );
+void CTFInput::ApplyMouse( QAngle& viewangles, CUserCmd *cmd, float mouse_x, float mouse_y )
+{
+	CTFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_KART ) )
+	{
+		// Make the camera drift a little behind the car
+		float flDelta = pPlayer->GetTauntYaw() - m_angThirdPersonOffset[YAW];
+		float flSign = Sign( flDelta );
+		flDelta = Max( 2.f , (float)fabs(flDelta) ) * flSign;
+		float flSpeed = gpGlobals->frametime * flDelta * flDelta * tf_halloween_kart_cam_follow.GetFloat();
+		m_angThirdPersonOffset[YAW] = Approach( pPlayer->GetTauntYaw(), m_angThirdPersonOffset[YAW], flSpeed );
+		viewangles[YAW] = m_angThirdPersonOffset[YAW];
+	}
+	else
+	{
+		CInput::ApplyMouse( viewangles, cmd, mouse_x, mouse_y );
 	}
 }

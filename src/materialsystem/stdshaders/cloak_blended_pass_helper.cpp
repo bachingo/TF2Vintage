@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2006, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 
 /* Example how to plug this into an existing shader:
 
@@ -130,7 +130,7 @@
 ==================================================================================================== */
 
 #include "BaseVSShader.h"
-#include "mathlib/VMatrix.h"
+#include "mathlib/vmatrix.h"
 #include "cloak_blended_pass_helper.h"
 #include "convar.h"
 
@@ -143,10 +143,6 @@
 #include "cloak_blended_pass_vs30.inc"
 #include "cloak_blended_pass_ps30.inc"
 #endif
-
-// NOTE: This has to be the last file included!
-#include "tier0/memdbgon.h"
-
 
 void InitParamsCloakBlendedPass( CBaseVSShader *pShader, IMaterialVar** params, const char *pMaterialName, CloakBlendedPassVars_t &info )
 {
@@ -206,7 +202,7 @@ void DrawCloakBlendedPass( CBaseVSShader *pShader, IMaterialVar** params, IShade
 		pShaderShadow->VertexShaderVertexFormat( flags, nTexCoordCount, NULL, userDataSize );
 
 #ifndef _X360
-		if ( !g_pHardwareConfig->SupportsShaderModel_3_0() )
+		if ( !g_pHardwareConfig->HasFastVertexTextures() )
 #endif
 		{
 			// Vertex Shader
@@ -232,8 +228,7 @@ void DrawCloakBlendedPass( CBaseVSShader *pShader, IMaterialVar** params, IShade
 		else
 		{
 			// The vertex shader uses the vertex id stream
-			if ( g_pHardwareConfig->HasFastVertexTextures() )
-				SET_FLAGS2( MATERIAL_VAR2_USES_VERTEXID );
+			SET_FLAGS2( MATERIAL_VAR2_USES_VERTEXID );
 
 			// Vertex Shader
 			DECLARE_STATIC_VERTEX_SHADER( cloak_blended_pass_vs30 );
@@ -276,7 +271,7 @@ void DrawCloakBlendedPass( CBaseVSShader *pShader, IMaterialVar** params, IShade
 		}
 
 #ifndef _X360
-		if ( !g_pHardwareConfig->SupportsShaderModel_3_0() )
+		if ( !g_pHardwareConfig->HasFastVertexTextures() )
 #endif
 		{
 			// Set Vertex Shader Combos
@@ -300,14 +295,12 @@ void DrawCloakBlendedPass( CBaseVSShader *pShader, IMaterialVar** params, IShade
 #ifndef _X360
 		else
 		{
-			const bool bHasFastVertexTextures = g_pHardwareConfig->HasFastVertexTextures();
-			if ( bHasFastVertexTextures )
-				pShader->SetHWMorphVertexShaderState( VERTEX_SHADER_SHADER_SPECIFIC_CONST_6, VERTEX_SHADER_SHADER_SPECIFIC_CONST_7, SHADER_VERTEXTEXTURE_SAMPLER0 );
+			pShader->SetHWMorphVertexShaderState( VERTEX_SHADER_SHADER_SPECIFIC_CONST_6, VERTEX_SHADER_SHADER_SPECIFIC_CONST_7, SHADER_VERTEXTEXTURE_SAMPLER0 );
 
 			// Set Vertex Shader Combos
 			DECLARE_DYNAMIC_VERTEX_SHADER( cloak_blended_pass_vs30 );
 			SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING, pShaderAPI->GetCurrentNumBones() > 0 );
-			SET_DYNAMIC_VERTEX_SHADER_COMBO( MORPHING, bHasFastVertexTextures && pShaderAPI->IsHWMorphingEnabled() );
+			SET_DYNAMIC_VERTEX_SHADER_COMBO( MORPHING, pShaderAPI->IsHWMorphingEnabled() );
 			SET_DYNAMIC_VERTEX_SHADER_COMBO( COMPRESSED_VERTS, (int)vertexCompression );
 			SET_DYNAMIC_VERTEX_SHADER( cloak_blended_pass_vs30 );
 

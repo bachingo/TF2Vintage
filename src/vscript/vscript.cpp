@@ -30,10 +30,10 @@ IScriptVM *CScriptManager::CreateVM( ScriptLanguage_t language )
 			pVM = CreateSquirrelVM();
 			break;
 		case SL_LUA:
-			pVM = CreateLuaVM();
+			//pVM = CreateLuaVM();
 			break;
 		case SL_ANGELSCRIPT:
-			pVM = CreateAngelScriptVM();
+			//pVM = CreateAngelScriptVM();
 			break;
 		default:
 			return NULL;
@@ -68,10 +68,10 @@ void CScriptManager::DestroyVM( IScriptVM *pVM )
 				DestroySquirrelVM( pVM );
 				break;
 			case SL_LUA:
-				DestroyLuaVM( pVM );
+				//DestroyLuaVM( pVM );
 				break;
 			case SL_ANGELSCRIPT:
-				DestroyAngelScriptVM( pVM );
+				//DestroyAngelScriptVM( pVM );
 				break;
 		}
 	}

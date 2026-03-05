@@ -1,10 +1,12 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 //
 //=============================================================================
 #include "cbase.h"
 #include "tf_weapon_revolver.h"
 #include "tf_fx_shared.h"
+#include "datamap.h"
+#include "tf_weaponbase_gun.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
@@ -23,27 +25,41 @@ ConVar tf2v_new_revolver_reload("tf2v_new_revolver_reload", "0", FCVAR_ARCHIVE, 
 //
 // Weapon Revolver tables.
 //
-#define CREATE_SIMPLE_WEAPON_TABLE( WpnName, entityname )			\
-																	\
-	IMPLEMENT_NETWORKCLASS_ALIASED( WpnName, DT_##WpnName )	\
-															\
-	BEGIN_NETWORK_TABLE( C##WpnName, DT_##WpnName )			\
-	END_NETWORK_TABLE()										\
-															\
-	BEGIN_PREDICTION_DATA( C##WpnName )						\
-	END_PREDICTION_DATA()									\
-															\
-	LINK_ENTITY_TO_CLASS( entityname, C##WpnName );			\
-	PRECACHE_WEAPON_REGISTER( entityname );
+IMPLEMENT_NETWORKCLASS_ALIASED( TFRevolver, DT_WeaponRevolver )
 
-CREATE_SIMPLE_WEAPON_TABLE( TFRevolver, tf_weapon_revolver )
-CREATE_SIMPLE_WEAPON_TABLE( TFRevolver_Secondary, tf_weapon_revolver_secondary )
+BEGIN_NETWORK_TABLE( CTFRevolver, DT_WeaponRevolver )
+END_NETWORK_TABLE()
+
+#ifdef CLIENT_DLL
+BEGIN_PREDICTION_DATA( CTFRevolver )
+DEFINE_PRED_FIELD( m_flLastAccuracyCheck, FIELD_FLOAT, 0 ),
+END_PREDICTION_DATA()
+#endif
+
+LINK_ENTITY_TO_CLASS( tf_weapon_revolver, CTFRevolver );
+PRECACHE_WEAPON_REGISTER( tf_weapon_revolver );
+
+// Server specific.
+#ifndef CLIENT_DLL
+BEGIN_DATADESC( CTFRevolver )
+END_DATADESC()
+#endif
+
 
 //=============================================================================
 //
 // Weapon Revolver functions.
 //
 
+CTFRevolver::CTFRevolver()
+{
+	m_flLastAccuracyCheck = 0.f;
+	m_flAccuracyCheckTime = 0.f;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 bool CTFRevolver::DefaultReload( int iClipSize1, int iClipSize2, int iActivity )
 {
 	// The the owning local player.
@@ -53,146 +69,301 @@ bool CTFRevolver::DefaultReload( int iClipSize1, int iClipSize2, int iActivity )
 
 	if ( pPlayer->IsPlayerClass( TF_CLASS_SPY ) )
 	{
-		if ( pPlayer->m_Shared.InCond( TF_COND_STEALTHED ) || pPlayer->m_Shared.IsFeignDeathReady() )
+		if ( pPlayer->m_Shared.InCond( TF_COND_STEALTHED ) )
 		{
 			return false;
 		}
 	}
 
+	if ( pPlayer->m_Shared.IsFeignDeathReady() )
+		return false; // Can't reload if our feign death arm is up.
+
 	return BaseClass::DefaultReload( iClipSize1, iClipSize2, iActivity );
+
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFRevolver::HasSapperCrits()
+int	CTFRevolver::GetDamageType( void ) const
 {
-	int iSapperCrits = 0;
-	CALL_ATTRIB_HOOK_INT(iSapperCrits, sapper_kills_collect_crits);
-
-	return (iSapperCrits > 0);
-}
-
-#if defined( CLIENT_DLL )
-void CTFRevolver::GetWeaponCrosshairScale( float &flScale )
-{
-	C_TFPlayer *pOwner = ToTFPlayer( GetOwner() );
-	if ( pOwner == nullptr )
-		return;
-
-	int iMode = 0;
-	CALL_ATTRIB_HOOK_INT( iMode, set_weapon_mode );
-	if ( iMode == 1 && tf2v_revolver_scale_crosshair.GetBool() )
+	if ( CanHeadshot() && (gpGlobals->curtime - m_flLastAccuracyCheck > 1.f) )
 	{
-		/*const float flTimeBase = pOwner->GetFinalPredictedTime();
-		const float flFireInterval = ( ( gpGlobals->interpolation_amount * gpGlobals->interpolation_amount ) + flTimeBase ) - GetLastFireTime();
-		flScale = ( Clamp( ( flFireInterval + -1.0f ) * -2.0f, 0.0f, 1.0f ) * 1.75f ) + 0.75f;*/
-		float flFireInterval = Min( gpGlobals->curtime - GetLastFireTime(), 1.00f );
-		flScale = Clamp( ( flFireInterval / 1.00f ), 0.334f, 1.0f );
+		int iDamageType = BaseClass::GetDamageType() | DMG_USE_HITLOCATIONS;
+		return iDamageType;
 	}
-}
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-int CTFRevolver::TranslateViewmodelHandActivity( int iActivity )
-{
-	int iTranslation = iActivity;
-
-	if ( iActivity == ACT_SECONDARY_VM_RELOAD && !tf2v_new_revolver_reload.GetBool() )
-		iTranslation = ACT_SECONDARY_VM_RELOAD2;
-
-	return BaseClass::TranslateViewmodelHandActivity( iTranslation );
-}
-#endif
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFRevolver::PrimaryAttack(void)
-{
-	BaseClass::PrimaryAttack();
-	if (HasSapperCrits())
-	{
-		CTFPlayer *pOwner = GetTFPlayerOwner();
-		if (pOwner && pOwner->IsAlive())
-		{
-			pOwner->m_Shared.DeductSapperKillCount();
-
-			if (pOwner->m_Shared.GetSapperKillCount() < 1)
-				pOwner->m_Shared.RemoveCond(TF_COND_CRITBOOSTED_ACTIVEWEAPON);
-		}
-	}
+	return BaseClass::GetDamageType();
 }
 
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CTFRevolver::ItemPostFrame( void )
+bool CTFRevolver::CanFireCriticalShot( bool bIsHeadshot, CBaseEntity *pTarget /*= NULL*/ )
 {
-	if (HasSapperCrits())
+	if ( !BaseClass::CanFireCriticalShot( bIsHeadshot, pTarget ) )
+		return false;
+
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( pPlayer && pPlayer->m_Shared.IsCritBoosted() )
+		return true;
+
+	// Magic.
+	if ( pTarget && ( pPlayer->GetAbsOrigin() - pTarget->GetAbsOrigin() ).Length2DSqr() > Square( 1200.f ) )
+		return false;
+
+	// can only fire a crit shot if this is a headshot, unless we're critboosted
+	if ( !bIsHeadshot )
 	{
-		CritThink();
+		// Base revolver still randomly crits. Ambassador doesn't.
+		return !CanHeadshot();
 	}
-	BaseClass::ItemPostFrame();
+
+	return true;
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Used for checking if we are critboosted or not.
+// Purpose:
 //-----------------------------------------------------------------------------
-void CTFRevolver::CritThink( void )
+void CTFRevolver::PrimaryAttack( void )
 {
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if ( pOwner )
+	// Check for ammunition.
+	if ( m_iClip1 <= 0 && m_iClip1 != -1 )
+		return;
+
+	// Are we capable of firing again?
+	if ( m_flNextPrimaryAttack > gpGlobals->curtime )
+		return;
+
+	// Get the player owning the weapon.
+	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
+	if ( !pPlayer )
+		return;
+
+	if ( !CanAttack() )
+		return;
+
+	BaseClass::PrimaryAttack();
+
+	if ( HasLastShotCritical() )
 	{
-		if ( pOwner->m_Shared.GetSapperKillCount() > 0 )
+		pPlayer->m_Shared.AddCond( TF_COND_CRITBOOSTED );
+	}
+	else
+	{
+		int iAttr = 0;
+		CALL_ATTRIB_HOOK_INT( iAttr, last_shot_crits );
+		if ( iAttr )
 		{
-			if ( !pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON ) )
-				pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );
+			pPlayer->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
 		}
-		else
+	}
+
+	m_flLastAccuracyCheck = gpGlobals->curtime;
+
+	if ( SapperKillsCollectCrits() )
+	{
+		// Do this after the attack, so that we know if we are doing custom damage
+		CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+		if ( pOwner )
 		{
-			if ( pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON ) )
-				pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );
+			int iRevengeCrits = pOwner->m_Shared.GetRevengeCrits();
+			if ( iRevengeCrits > 0 )
+			{
+				pOwner->m_Shared.SetRevengeCrits( iRevengeCrits-1 );
+			}
 		}
+	}
+#ifdef GAME_DLL
+	// Lower bonus for each attack
+	int iExtraDamageOnHitPenalty = 0;
+	CALL_ATTRIB_HOOK_INT( iExtraDamageOnHitPenalty, extra_damage_on_hit_penalty );
+	if ( iExtraDamageOnHitPenalty )
+	{
+		int iDecaps = pPlayer->m_Shared.GetDecapitations();
+		pPlayer->m_Shared.SetDecapitations( Max( 0, iDecaps - iExtraDamageOnHitPenalty ) );
+	}
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CTFRevolver::GetWeaponSpread( void )
+{
+	float fSpread = BaseClass::GetWeaponSpread();
+
+	if ( CanHeadshot() )
+	{
+		// We are highly accurate for our first shot.
+		float flTimeSinceCheck = gpGlobals->curtime - m_flLastAccuracyCheck;
+		fSpread = RemapValClamped( flTimeSinceCheck, 1.0f, 0.5f, 0.f, fSpread );
+	}
+
+	//DevMsg( "Spread: base %3.5f mod: %3.5f\n", BaseClass::GetWeaponSpread(), fSpread );
+
+	return fSpread;
+}
+
+#ifdef CLIENT_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFRevolver::GetWeaponCrosshairScale( float &flScale )
+{
+	C_TFPlayer* pTFPlayer = ToTFPlayer( GetOwner() );
+	if ( !pTFPlayer )
+		return;
+
+	if ( CanHeadshot() && tf2v_revolver_scale_crosshair.GetBool() )
+	{
+		float curtime = pTFPlayer->GetFinalPredictedTime() + ( gpGlobals->interpolation_amount * TICK_INTERVAL );
+		float flTimeSinceCheck = curtime - m_flLastAccuracyCheck;
+		flScale = RemapValClamped( flTimeSinceCheck, 1.0f, 0.5f, 0.75f, 2.5f );
+	}
+	else
+	{
+		BaseClass::GetWeaponCrosshairScale( flScale );
 	}
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFRevolver::Deploy( void )
+Activity CTFRevolver::TranslateViewmodelHandActivityInternal( Activity iActivity )
 {
-	if (HasSapperCrits())
+	Activity iTranslation = iActivity;
+
+	if ( iActivity == ACT_SECONDARY_VM_RELOAD && !tf2v_new_revolver_reload.GetBool() )
+		iTranslation = ACT_SECONDARY_VM_RELOAD2;
+
+	return BaseClass::TranslateViewmodelHandActivityInternal( iTranslation );
+}
+#endif
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+int CTFRevolver::GetCount( void )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( !pOwner )
+		return 0;
+
+	if ( SapperKillsCollectCrits() )
 	{
-		CTFPlayer *pOwner = GetTFPlayerOwner();
-		if (pOwner && BaseClass::Deploy())
+		return pOwner->m_Shared.GetRevengeCrits();
+	}
+
+	int iExtraDamageOnHit = 0;
+	CALL_ATTRIB_HOOK_INT( iExtraDamageOnHit, extra_damage_on_hit );
+	if ( iExtraDamageOnHit )
+	{
+		return Min( 200, pOwner->m_Shared.GetDecapitations() );
+	}
+
+	return 0;
+}
+
+//-----------------------------------------------------------------------------
+const char* CTFRevolver::GetEffectLabelText( void )
+{
+	int iExtraDamageOnHit = 0;
+	CALL_ATTRIB_HOOK_INT( iExtraDamageOnHit, extra_damage_on_hit );
+	if ( iExtraDamageOnHit )
+	{
+		return "#TF_BONUS";
+	}
+	return "#TF_CRITS";
+}
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFRevolver::Holster( CBaseCombatWeapon *pSwitchingTo )
+{
+#ifdef GAME_DLL
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( pOwner )
+	{
+		if ( SapperKillsCollectCrits() )
+		{	
+			if ( pOwner->m_Shared.GetRevengeCrits() )
+			{
+				pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
+			}
+		}
+
+		if ( HasLastShotCritical() )
 		{
-			if (pOwner->m_Shared.GetSapperKillCount() > 0)
-				pOwner->m_Shared.AddCond(TF_COND_CRITBOOSTED_ACTIVEWEAPON);
-			return true;
+			pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
 		}
 	}
+#endif
+
+	return BaseClass::Holster( pSwitchingTo );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFRevolver::Deploy( void )
+{
+#ifdef GAME_DLL
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( pOwner )
+	{
+		if ( SapperKillsCollectCrits() )
+		{
+			if ( pOwner->m_Shared.GetRevengeCrits() )
+			{
+				pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED );
+			}
+		}
+
+		if ( HasLastShotCritical() )
+		{
+			pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED );
+		}
+	}
+#endif
 
 	return BaseClass::Deploy();
 }
 
+#ifdef GAME_DLL
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Reset revenge crits when the revolver is changed
 //-----------------------------------------------------------------------------
-bool CTFRevolver::Holster( CBaseCombatWeapon *pSwitchTo )
+void CTFRevolver::Detach( void )
 {
-	if (HasSapperCrits())
+	if ( SapperKillsCollectCrits() )
 	{
-		CTFPlayer *pOwner = GetTFPlayerOwner();
-		if (pOwner && BaseClass::Holster(pSwitchTo))
+		CTFPlayer *pPlayer = GetTFPlayerOwner();
+		if ( pPlayer )
 		{
-			if (pOwner->m_Shared.InCond(TF_COND_CRITBOOSTED_ACTIVEWEAPON))
-				pOwner->m_Shared.RemoveCond(TF_COND_CRITBOOSTED_ACTIVEWEAPON);
-			return true;
+			pPlayer->m_Shared.SetRevengeCrits( 0 );
+			pPlayer->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
 		}
 	}
 
-	return BaseClass::Holster(pSwitchTo);
+	BaseClass::Detach();
 }
 
+//-----------------------------------------------------------------------------
+float CTFRevolver::GetProjectileDamage( void )
+{
+	float flDamageMod = 1.0f;
+	int iExtraDamageOnHit = 0;
+	CALL_ATTRIB_HOOK_INT( iExtraDamageOnHit, extra_damage_on_hit );
+	if ( iExtraDamageOnHit )
+	{
+		CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+		if ( pOwner )
+		{
+			flDamageMod = 1.0f + ( Min( 200, pOwner->m_Shared.GetDecapitations() ) * 0.01f );
+		}
+	}
+
+	return BaseClass::GetProjectileDamage() * flDamageMod;
+}
+#endif

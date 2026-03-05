@@ -1,50 +1,55 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
-//
-// Purpose:		
-//
-// $NoKeywords: $
-//=============================================================================
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_escort_squad_leader.h
+// Escort the squad leader to their destination
+// Michael Booth, Octoboer 2011
+
 #ifndef TF_BOT_ESCORT_SQUAD_LEADER_H
 #define TF_BOT_ESCORT_SQUAD_LEADER_H
 
-#include "NextBotBehavior.h"
-#include "../tf_bot_melee_attack.h"
 
-class CTFBotEscortSquadLeader : public Action<CTFBot>
+#include "Path/NextBotPathFollow.h"
+#include "bot/behavior/tf_bot_melee_attack.h"
+
+
+//-----------------------------------------------------------------------------
+class CTFBotEscortSquadLeader : public Action< CTFBot >
 {
 public:
-	CTFBotEscortSquadLeader( Action<CTFBot> *done_action );
-	virtual ~CTFBotEscortSquadLeader();
+	CTFBotEscortSquadLeader( Action< CTFBot > *actionToDoAfterSquadDisbands = NULL );
+	virtual ~CTFBotEscortSquadLeader() { }
 
-	virtual const char *GetName() const OVERRIDE;
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
+	virtual void					OnEnd( CTFBot *me, Action< CTFBot > *nextAction );
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
-	virtual void OnEnd( CTFBot *me, Action<CTFBot> *newAction ) OVERRIDE;
+	virtual const char *GetName( void ) const	{ return "EscortSquadLeader"; };
 
 private:
-	Action<CTFBot> *m_DoneAction;
-	CTFBotMeleeAttack m_MeleeAttack;
-	PathFollower m_PathFollower;
-	CountdownTimer m_ctRecomputePath;
-	Vector m_vecLeaderGoalDirection;
+	Action< CTFBot > *m_actionToDoAfterSquadDisbands;
+	CTFBotMeleeAttack m_meleeAttackAction;
+
+	PathFollower m_formationPath;
+	CountdownTimer m_pathTimer;
+
+	const Vector &GetFormationForwardVector( CTFBot *me );
+	Vector m_formationForward;
 };
 
 
-// sizeof: 0x40
-class CTFBotWaitForOutOfPositionSquadMember : public Action<CTFBot>
+//-----------------------------------------------------------------------------
+class CTFBotWaitForOutOfPositionSquadMember : public Action< CTFBot >
 {
 public:
-	CTFBotWaitForOutOfPositionSquadMember();
-	virtual ~CTFBotWaitForOutOfPositionSquadMember();
+	virtual ~CTFBotWaitForOutOfPositionSquadMember() { }
 
-	virtual const char *GetName() const OVERRIDE;
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
+	virtual const char *GetName( void ) const	{ return "WaitForOutOfPositionSquadMember"; };
 
 private:
-	CountdownTimer m_ctTimeout;
+	CountdownTimer m_waitTimer;
 };
 
-#endif
+
+#endif // TF_BOT_ESCORT_SQUAD_LEADER_H

@@ -1,11 +1,16 @@
 
 $Include "$SRCDIR\vpc_scripts\version.vpc"
 
+$Macro CRYPTOPPDIR "steamrt_sniper32" [$LINUX32]
+$Macro CRYPTOPPDIR "steamrt_sniper64" [$LINUX64]
+
 $Macro LIBPUBLIC	"$SRCDIR\lib\public$PLATSUBDIR"
 $Macro LIBCOMMON	"$SRCDIR\lib\common$PLATSUBDIR"
 
 $MacroRequired				"SRCDIR"
+$Macro						"DEVTOOLS"	"$SRCDIR/devtools"
 
+$Include "$SRCDIR\vpc_scripts\source_posix_ninja.vpc" [$NINJA]
 
 $Configuration "Debug"
 {
@@ -30,7 +35,7 @@ $Configuration "Release"
 
 $Configuration
 {
-	$General
+	$General [!$IS_LIB_PROJECT]
 	{
 		$ConfigurationType				"Application (.exe)"
 	}
@@ -38,24 +43,26 @@ $Configuration
 	$Compiler
 	{
 		$AdditionalIncludeDirectories		"$SRCDIR\common;$SRCDIR\public;$SRCDIR\public\tier0;$SRCDIR\public\tier1"
-		$AdditionalLibraryDirectories		"$LIBCOMMON;$LIBPUBLIC" [$OSXALL]
 		$PreprocessorDefinitions		"$BASE;GNUC;POSIX;COMPILER_GCC;_DLL_EXT=$_DLL_EXT"
 		$PreprocessorDefinitions		"$BASE;DEDICATED" [$DEDICATED]
 		// the 10240 in the following line is the output of `sysctl -n kern.maxfilesperproc`
 		$PreprocessorDefinitions		"$BASE;_OSX;OSX;_DARWIN_UNLIMITED_SELECT;FD_SETSIZE=10240;" [$OSXALL]
 		$PreprocessorDefinitions		"$BASE;OVERRIDE_V_DEFINES"	  [$OSXALL]						
 		$PreprocessorDefinitions		"$BASE;_LINUX;LINUX;" [$LINUXALL]
-		$SymbolVisibility				"default" 					[$POSIX]
+		$PreprocessorDefinitions		"$BASE;PLATFORM_64BITS" [$LINUX64]
+		$SymbolVisibility				"hidden" 					[$POSIX]
 		$PreprocessorDefinitions		"$BASE;POSIX;_POSIX"		[$POSIX]
 
 		$PreprocessorDefinitions		"$BASE;PLATFORM_64BITS"		[$OSX64]
 		$GCC_ExtraCompilerFlags			"$BASE -arch x86_64"		[$OSX64]
 		$GCC_ExtraCompilerFlags			"$BASE -lm -Wno-overloaded-virtual -Wno-placement-new -Wno-c++20-compat -Wno-mismatched-new-delete -Wno-class-memaccess -Wno-conversion-null -Wno-invalid-offsetof -Wno-reorder"
 
+		$AdditionalIncludeDirectories	"$BASE;/usr/include/SDL2" [$POSIX]
+
 		$Create/UsePCHThroughFile	"stdafx.h"
 	}
 	
-	$Linker
+	$Linker [!$IS_LIB_PROJECT]
 	{
 		$GCC_ExtraLinkerFlags			"$BASE -arch x86_64"		[$OSX64]
 		$GCC_ExtraLinkerFlags			"$BASE -lm"

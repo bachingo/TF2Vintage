@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -17,6 +17,17 @@
 #ifdef CLIENT_DLL
 #define CTFPipebombLauncher C_TFPipebombLauncher
 #endif
+
+#define TF_PIPEBOMB_MAX_CHARGE_TIME	 4.0f
+
+#define TF_DETONATE_MODE_STANDARD	0
+#define TF_DETONATE_MODE_DOT		1
+#define TF_DETONATE_MODE_AIR		2
+
+// hard code these eventually
+#define TF_PIPEBOMB_MIN_CHARGE_VEL 900
+#define TF_PIPEBOMB_MAX_CHARGE_VEL 2400
+
 
 //=============================================================================
 //
@@ -42,18 +53,11 @@ public:
 	CTFPipebombLauncher();
 	~CTFPipebombLauncher();
 
-	enum {
-		TF_PIPEBOMB_CHECK_NONE,
-		TF_PIPEBOMB_GLOW_CHECK,
-		TF_PIPEBOMB_DETONATE_CHECK,
-	};
-
 	virtual void	Spawn( void );
-	virtual void	Precache( void );
-	virtual int		GetWeaponID( void ) const { return TF_WEAPON_PIPEBOMBLAUNCHER; }
+	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_PIPEBOMBLAUNCHER; }
 	virtual CBaseEntity *FireProjectile( CTFPlayer *pPlayer );
-	virtual void	ItemPostFrame( void );
 	virtual void	ItemBusyFrame( void );
+	virtual void	ItemPostFrame( void );
 	virtual void	SecondaryAttack();
 
 	virtual bool	Holster( CBaseCombatWeapon *pSwitchingTo );
@@ -64,90 +68,65 @@ public:
 	virtual bool	Reload( void );
 	virtual void	WeaponReset( void );
 
+public:
 	// ITFChargeUpWeapon
-	virtual float	GetChargeBeginTime( void ) { return m_flChargeBeginTime; }
-	virtual float	GetChargeMaxTime( void );
+	virtual bool CanCharge() { return true; }
+	virtual float GetChargeBeginTime( void ) { return m_flChargeBeginTime; }
+	virtual float GetChargeMaxTime( void ) { float flChargeTime = TF_PIPEBOMB_MAX_CHARGE_TIME;	CALL_ATTRIB_HOOK_FLOAT( flChargeTime, stickybomb_charge_rate )	return flChargeTime; }
+	virtual float GetChargeForceReleaseTime( void ) { return GetChargeMaxTime(); }
+	int	GetPipeBombCount( void ) { return m_iPipebombCount; }
+	const CUtlVector< CHandle< CTFGrenadePipebombProjectile > > &GetPipeBombVector( void ) const;
+	int			  GetDetonateMode( void ) const { int iMode = 0; CALL_ATTRIB_HOOK_INT( iMode, set_detonate_mode ); return iMode; };
+	bool		  CanDestroyStickies( void ) const { int iMode = 0; CALL_ATTRIB_HOOK_INT( iMode, stickies_detonate_stickies ); return (iMode == 1); };
 
-	int				GetDetonateMode( void ) const;
+	virtual void LaunchGrenade( void );
+	virtual void ForceLaunchGrenade( void ) { LaunchGrenade(); }
+	virtual bool DetonateRemotePipebombs( bool bFizzle );
+	virtual bool ModifyPipebombsInView( int iEffect );
+	virtual void AddPipeBomb( CTFGrenadePipebombProjectile *pBomb );
+	void			DeathNotice( CBaseEntity *pVictim );
+
 
 #ifdef CLIENT_DLL
-	void			BombHighlightThink( void );
+	void		BombHighlightThink( void );
 #endif
-
-	int				GetPipeBombCount( void ) { return m_iPipebombCount; }
-	virtual void	LaunchGrenade( void );
-	virtual bool	DetonateRemotePipebombs( bool bFizzle );
-	virtual void	AddPipeBomb( CTFGrenadePipebombProjectile *pBomb );
-	virtual bool	ModifyPipebombsInView( int iMode );
-
-	void			DeathNotice( CBaseEntity *pVictim );
 
 #ifdef GAME_DLL
 	void			UpdateOnRemove( void );
+	virtual void	ApplyPostHitEffects( const CTakeDamageInfo &inputInfo, CTFPlayer *pPlayer );
+
+protected:
+
+	// This is here so we can network the pipebomb count for prediction purposes
+	CNetworkVar( int,				m_iPipebombCount );	
 #endif
 
-	CNetworkVar( int, m_iPipebombCount );	
-
+#ifdef CLIENT_DLL
+	int				m_iPipebombCount;
+	float			m_flNextBombCheckTime;
+	bool			m_bBombThinking;
+#endif
 
 	// List of active pipebombs
 	typedef CHandle<CTFGrenadePipebombProjectile>	PipebombHandle;
-	CUtlVector<PipebombHandle> m_Pipebombs;
+	CUtlVector<PipebombHandle>		m_Pipebombs;
 
-	float	m_flChargeBeginTime;
+	virtual void SetInternalChargeBeginTime( float flChargeBeginTime ) { m_flChargeBeginTime = flChargeBeginTime; }
+	float	GetInternalChargeBeginTime() const { return m_flChargeBeginTime; }
 	float	m_flLastDenySoundTime;
+	bool	m_bNoAutoRelease;
+	bool	m_bWantsToShoot;
 
-	CTFPipebombLauncher( CTFPipebombLauncher const& );
+private:
+	CNetworkVar( float, m_flChargeBeginTime );
+	CTFPipebombLauncher( const CTFPipebombLauncher & ) {}
 };
 
-// Old School Pipebomb/Sticky Launcher.
 
-#if defined CLIENT_DLL
-#define CTFPipebombLauncher_Legacy C_TFPipebombLauncher_Legacy
-#endif
-
-class CTFPipebombLauncher_Legacy : public CTFPipebombLauncher
+inline const CUtlVector< CHandle< CTFGrenadePipebombProjectile > > &CTFPipebombLauncher::GetPipeBombVector( void ) const
 {
-public:
+	return m_Pipebombs;
+}
 
-	DECLARE_CLASS( CTFPipebombLauncher_Legacy, CTFPipebombLauncher )
-	DECLARE_NETWORKCLASS();
-	DECLARE_PREDICTABLE();
-
-	virtual int GetWeaponID( void ) const { return TF_WEAPON_PIPEBOMBLAUNCHER_LEGACY; }
-};
-
-// TF2 Beta Pipebomb launcher.
-
-#if defined CLIENT_DLL
-#define CTFPipebombLauncher_TF2Beta C_TFPipebombLauncher_TF2Beta
-#endif
-
-class CTFPipebombLauncher_TF2Beta : public CTFPipebombLauncher
-{
-public:
-
-	DECLARE_CLASS( CTFPipebombLauncher_TF2Beta, CTFPipebombLauncher )
-	DECLARE_NETWORKCLASS();
-	DECLARE_PREDICTABLE();
-
-	virtual int GetWeaponID( void ) const { return TF_WEAPON_PIPEBOMBLAUNCHER_TF2BETA; }
-};
-
-// TFC Esque Pipebomb launcher.
-
-#if defined CLIENT_DLL
-#define CTFPipebombLauncher_TFC C_TFPipebombLauncher_TFC
-#endif
-
-class CTFPipebombLauncher_TFC : public CTFPipebombLauncher
-{
-public:
-
-	DECLARE_CLASS( CTFPipebombLauncher_TFC, CTFPipebombLauncher )
-	DECLARE_NETWORKCLASS();
-	DECLARE_PREDICTABLE();
-
-	virtual int GetWeaponID( void ) const { return TF_WEAPON_PIPEBOMBLAUNCHER_TFC; }
-};
 
 #endif // TF_WEAPON_PIPEBOMBLAUNCHER_H

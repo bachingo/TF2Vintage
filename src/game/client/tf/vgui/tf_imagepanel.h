@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2006, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -13,25 +13,21 @@
 
 #include "tf_shareddefs.h"
 #include <vgui/IScheme.h>
-#include <vgui_controls/ImagePanel.h>
+#include <vgui_controls/ScalableImagePanel.h>
 #include "GameEventListener.h"
-#include "vgui_controls/ScalableImagePanel.h"
 
 #define MAX_BG_LENGTH		128
-#define IMAGE_BG_EMPTY		0
 
 class CTFImagePanel : public vgui::ScalableImagePanel, public CGameEventListener
 {
 public:
 	DECLARE_CLASS_SIMPLE( CTFImagePanel, vgui::ScalableImagePanel );
 
-	CTFImagePanel(vgui::Panel *parent, const char *name);
+	CTFImagePanel( vgui::Panel *parent, const char *name );
 
 	virtual void ApplySettings( KeyValues *inResourceData );
 	void UpdateBGImage( void );
-	void SetBGImage( int iTeamNum );
-
-	virtual Color GetDrawColor( void );
+	void SetBGTeam( int iTeam ) { m_iBGTeam = iTeam; }
 
 public: // IGameEventListener Interface
 	virtual void FireGameEvent( IGameEvent * event );

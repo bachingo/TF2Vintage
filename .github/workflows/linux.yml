@@ -11,7 +11,7 @@ env:
 jobs:
   build:
     runs-on:
-      ubuntu-22.04
+      ubuntu-24.04
     
     steps:
       - name: Checkout
@@ -45,13 +45,10 @@ jobs:
         run: sudo bash .github/gh-cache.sh restore
       
       - name: Configure dependencies
-        run: sudo apt update && sudo apt install -y zip build-essential gcc-multilib g++-multilib
+        run: sudo apt update && sudo apt install -y zip build-essential gcc-multilib g++-multilib podman
 
-      - name: Create project
-        run: cd src && sudo devtools/bin/vpc /tf2vintage +game /mksln TF2vintage
-
-      - name: Build project
-        run: cd src && sudo make -f TF2vintage.mak
+      - name: Build game
+        run: cd src && sudo bash createtf2vintage
 
       - name: Upload product
         uses: actions/upload-artifact@v4

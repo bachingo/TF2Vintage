@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, Valve LLC. All rights reserved.
+//========= Copyright Valve Corporation, All rights reserved. ============//
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -46,6 +46,8 @@ extern CBaseEntity *FindPickerEntity( CBasePlayer *pPlayer );
 
 extern bool			g_fGameOver;
 
+extern ConVar tf_allow_player_name_change;
+
 
 void FinishClientPutInServer( CTFPlayer *pPlayer )
 {
@@ -73,6 +75,11 @@ void FinishClientPutInServer( CTFPlayer *pPlayer )
 	if ( !pPlayer->IsFakeClient() )
 	{
 		UTIL_ClientPrintAll( HUD_PRINTNOTIFY, "#Game_connected", sName[0] != 0 ? sName : "<unconnected>" );
+
+		if ( pPlayer->BHaveChatSuspensionInCurrentMatch() || !tf_allow_player_name_change.GetBool() )
+		{
+			engine->ServerCommand( UTIL_VarArgs( "lockplayername %d\n", pPlayer->GetUserID() ) );
+		}
 	}
 }
 
@@ -148,10 +155,71 @@ void ClientGamePrecache( void )
 			{
 				CBaseEntity::PrecacheScriptSound( pszFile );
 			}
+			else if ( !Q_stricmp( pData->GetName(), "particle" ) )
+			{
+				PrecacheParticleSystem( pszFile );
+			}
 		}
 	}
 
 	pValues->deleteThis();
+
+// @FD This has been moved into pure_server_consistency.txt
+//
+//	// particles
+//// 	engine->ForceExactFile( "particles/blood_impact.pcf" );			// Don't force consistency on this because of the LV version.
+//// 	engine->ForceExactFile( "particles/blood_impact_dx80.pcf" );	// Don't force consistency on this because of the LV version.
+//// 	engine->ForceExactFile( "particles/blood_trail.pcf" );			// Don't force consistency on this because of the LV version.
+//// 	engine->ForceExactFile( "particles/blood_trail_dx80.pcf" );		// Don't force consistency on this because of the LV version.
+////	engine->ForceExactFile( "particles/buildingdamage.pcf" );
+//	engine->ForceExactFile( "particles/bullet_tracers.pcf" );
+//	engine->ForceExactFile( "particles/burningplayer.pcf" );
+//	engine->ForceExactFile( "particles/burningplayer_dx80.pcf" );
+//	engine->ForceExactFile( "particles/cig_smoke.pcf" );
+//	engine->ForceExactFile( "particles/cig_smoke_dx80.pcf" );
+////	engine->ForceExactFile( "particles/cinefx.pcf" );
+////	engine->ForceExactFile( "particles/crit.pcf" );
+////	engine->ForceExactFile( "particles/default.pcf" );
+//	engine->ForceExactFile( "particles/disguise.pcf" );
+////	engine->ForceExactFile( "particles/explosion.pcf" );
+////	engine->ForceExactFile( "particles/explosion_dx80.pcf" );
+////	engine->ForceExactFile( "particles/explosion_dx90_slow.pcf" );
+////	engine->ForceExactFile( "particles/explosion_high.pcf" );
+//	engine->ForceExactFile( "particles/flag_particles.pcf" );
+////	engine->ForceExactFile( "particles/flamethrower.pcf" );
+////	engine->ForceExactFile( "particles/flamethrowerTest.pcf" );
+////	engine->ForceExactFile( "particles/flamethrower_dx80.pcf" );
+////	engine->ForceExactFile( "particles/flamethrower_dx90_slow.pcf" );
+////	engine->ForceExactFile( "particles/flamethrower_high.pcf" );
+////	engine->ForceExactFile( "particles/impact_fx.pcf" );
+////	engine->ForceExactFile( "particles/item_fx.pcf" );
+////	engine->ForceExactFile( "particles/medicgun_attrib.pcf" );
+////	engine->ForceExactFile( "particles/medicgun_beam.pcf" );
+////	engine->ForceExactFile( "particles/medicgun_beam_dx80.pcf" );
+////	engine->ForceExactFile( "particles/muzzle_flash.pcf" );
+////	engine->ForceExactFile( "particles/muzzle_flash_dx80.pcf" );
+////	engine->ForceExactFile( "particles/nailtrails.pcf" );
+//	engine->ForceExactFile( "particles/nemesis.pcf" );
+//	engine->ForceExactFile( "particles/player_recent_teleport.pcf" );
+//	engine->ForceExactFile( "particles/player_recent_teleport_dx80.pcf" );
+////	engine->ForceExactFile( "particles/rocketbackblast.pcf" );
+////	engine->ForceExactFile( "particles/rocketjumptrail.pcf" );
+////	engine->ForceExactFile( "particles/rockettrail.pcf" );
+////	engine->ForceExactFile( "particles/rockettrail_dx80.pcf" );
+////	engine->ForceExactFile( "particles/rockettrail_dx90_slow.pcf" );
+////	engine->ForceExactFile( "particles/shellejection.pcf" );
+////	engine->ForceExactFile( "particles/shellejection_dx80.pcf" );
+////	engine->ForceExactFile( "particles/shellejection_high.pcf" );
+////	engine->ForceExactFile( "particles/smoke_blackbillow.pcf" );
+////	engine->ForceExactFile( "particles/smoke_blackbillow_dx80.pcf" );
+////	engine->ForceExactFile( "particles/sparks.pcf" );
+//	engine->ForceExactFile( "particles/speechbubbles.pcf" );
+////	engine->ForceExactFile( "particles/stickybomb.pcf" );
+////	engine->ForceExactFile( "particles/stickybomb_dx80.pcf" );
+//	engine->ForceExactFile( "particles/teleported_fx.pcf" );
+//	engine->ForceExactFile( "particles/teleport_status.pcf" );
+//	engine->ForceExactFile( "particles/water.pcf" );
+//	engine->ForceExactFile( "particles/water_dx80.pcf" );
 }
 
 

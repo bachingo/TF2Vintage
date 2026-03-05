@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -95,7 +95,7 @@ public:
 	float m_fTurnRate;		// actual turn rate
 	int m_iOrientation;		// 0 = floor, 1 = Ceiling
 	int	m_iOn;
-	int m_fBeserk;			// Sometimes this bitch will just freak out
+	int m_fBeserk;			// Sometimes it will just freak out
 	int m_iAutoStart;		// true if the turret auto deploys when a target
 							// enters its range
 
@@ -456,7 +456,7 @@ void CBaseTurret::EyeOff( )
 	{
 		if (m_eyeBrightness > 0)
 		{
-			m_eyeBrightness = max( 0, m_eyeBrightness - 30 );
+			m_eyeBrightness = MAX( 0, m_eyeBrightness - 30 );
 			m_pEyeGlow->SetBrightness( m_eyeBrightness );
 		}
 	}

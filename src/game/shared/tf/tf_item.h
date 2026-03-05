@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 //
 //=============================================================================//
@@ -28,11 +28,11 @@ class CTFPlayer;
 class CTFItem : public CDynamicProp
 {
 public:
-	DECLARE_CLASS( CTFItem, CDynamicProp  )
+	DECLARE_CLASS( CTFItem,CDynamicProp  )
 	DECLARE_NETWORKCLASS();
 
 	// Unique identifier.
-	virtual unsigned int GetItemID();
+	virtual unsigned int GetItemID() const;
 	
 	// Pick up and drop.
 	virtual void PickUp( CTFPlayer *pPlayer, bool bInvisible );
@@ -41,6 +41,7 @@ public:
 #ifdef CLIENT_DLL
 	virtual bool ShouldDraw();
 	virtual ShadowType_t ShadowCastType();
+	virtual bool ShouldHideGlowEffect( void ) { return false; }
 #endif
 };
 

@@ -45,6 +45,7 @@ void Sys_Error (char *error, ...);
 const Vector vec3_origin(0,0,0);
 const QAngle vec3_angle(0,0,0);
 const Vector vec3_invalid( FLT_MAX, FLT_MAX, FLT_MAX );
+const Quaternion quat_identity(0, 0, 0, 0);
 const int nanmask = 255<<23;
 
 //-----------------------------------------------------------------------------
@@ -2676,7 +2677,7 @@ void Cubic_Spline(
 
 	output.Init();
 
-	Vector a, b, c, d;
+	Vector b, c;
 
 	// matrix row 1
 	VectorScale( p2, tSqrSqr * 2, b );
@@ -2811,7 +2812,7 @@ void Parabolic_Spline(
 
 	output.Init();
 
-	Vector a, b, c, d;
+	Vector a, b, c;
 
 	// matrix row 1
 	// no influence from t cubed

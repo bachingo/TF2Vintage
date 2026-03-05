@@ -1,31 +1,27 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
-//
-// Purpose:		
-//
-// $NoKeywords: $
-//=============================================================================
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// Michael Booth, September 2012
+
 #ifndef TF_BOT_MVM_ENGINEER_BUILD_TELEPORTER_H
 #define TF_BOT_MVM_ENGINEER_BUILD_TELEPORTER_H
 
-#include "NextBotBehavior.h"
-#include "map_entities/tf_hint_teleexit.h"
+class CTFBotHintTeleporterExit;
 
-class CTFBotMvMEngineerBuildTeleportExit : public Action<CTFBot>
+class CTFBotMvMEngineerBuildTeleportExit : public Action< CTFBot >
 {
 public:
 	CTFBotMvMEngineerBuildTeleportExit( CTFBotHintTeleporterExit *hint );
-	virtual ~CTFBotMvMEngineerBuildTeleportExit();
 
-	virtual const char *GetName() const OVERRIDE;
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
+	virtual const char *GetName( void ) const	{ return "MvMEngineerBuildTeleportExit"; };
 
 private:
-	CHandle<CTFBotHintTeleporterExit> m_hintEntity;
-	CountdownTimer m_ctPushAway;
-	CountdownTimer m_ctRecomputePath;
-	PathFollower m_PathFollower;
+	CHandle< CTFBotHintTeleporterExit > m_teleporterBuildHint;
+
+	CountdownTimer m_delayBuildTime;
+	CountdownTimer m_repathTimer;
+	PathFollower m_path;
 };
 
-#endif
+#endif // TF_BOT_MVM_ENGINEER_BUILD_TELEPORTER_H

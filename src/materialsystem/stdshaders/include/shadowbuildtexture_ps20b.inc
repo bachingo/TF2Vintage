@@ -1,57 +1,60 @@
-// ALL SKIP STATEMENTS THAT AFFECT THIS SHADER!!!
-// defined $HDRTYPE && defined $HDRENABLED && !$HDRTYPE && $HDRENABLED
-// defined $PIXELFOGTYPE && defined $WRITEWATERFOGTODESTALPHA && ( $PIXELFOGTYPE != 1 ) && $WRITEWATERFOGTODESTALPHA
-// defined $LIGHTING_PREVIEW && defined $HDRTYPE && $LIGHTING_PREVIEW && $HDRTYPE != 0
-// defined $LIGHTING_PREVIEW && defined $FASTPATHENVMAPTINT && $LIGHTING_PREVIEW && $FASTPATHENVMAPTINT
-// defined $LIGHTING_PREVIEW && defined $FASTPATHENVMAPCONTRAST && $LIGHTING_PREVIEW && $FASTPATHENVMAPCONTRAST
-// defined $LIGHTING_PREVIEW && defined $FASTPATH && $LIGHTING_PREVIEW && $FASTPATH
-// ($FLASHLIGHT || $FLASHLIGHTSHADOWS) && $LIGHTING_PREVIEW
-
-#ifndef SHADOWBUILDTEXTURE_PS20B_H
-#define SHADOWBUILDTEXTURE_PS20B_H
-
-#include "shaderapi/ishaderapi.h"
-#include "shaderapi/ishadershadow.h"
-#include "materialsystem/imaterialvar.h"
-
+#include "shaderlib/cshader.h"
 class shadowbuildtexture_ps20b_Static_Index
 {
-	unsigned int m_nCONVERT_TO_SRGB : 2;
+private:
+	int m_nCONVERT_TO_SRGB;
+#ifdef _DEBUG
+	bool m_bCONVERT_TO_SRGB;
+#endif
 public:
 	void SetCONVERT_TO_SRGB( int i )
 	{
 		Assert( i >= 0 && i <= 1 );
 		m_nCONVERT_TO_SRGB = i;
+#ifdef _DEBUG
+		m_bCONVERT_TO_SRGB = true;
+#endif
 	}
-
-	shadowbuildtexture_ps20b_Static_Index( IShaderShadow* pShaderShadow, IMaterialVar** params )
+	void SetCONVERT_TO_SRGB( bool i )
 	{
-		m_nCONVERT_TO_SRGB = g_pHardwareConfig->NeedsShaderSRGBConversion();
+		m_nCONVERT_TO_SRGB = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bCONVERT_TO_SRGB = true;
+#endif
 	}
-
-	int GetIndex() const
+public:
+	shadowbuildtexture_ps20b_Static_Index( )
 	{
+#ifdef _DEBUG
+		m_bCONVERT_TO_SRGB = true;
+#endif // _DEBUG
+		m_nCONVERT_TO_SRGB =  g_pHardwareConfig->NeedsShaderSRGBConversion();
+	}
+	int GetIndex()
+	{
+		// Asserts to make sure that we aren't using any skipped combinations.
+		// Asserts to make sure that we are setting all of the combination vars.
+#ifdef _DEBUG
+		bool bAllStaticVarsDefined = m_bCONVERT_TO_SRGB;
+		Assert( bAllStaticVarsDefined );
+#endif // _DEBUG
 		return ( 1 * m_nCONVERT_TO_SRGB ) + 0;
 	}
 };
-
-#define shaderStaticTest_shadowbuildtexture_ps20b 1
-
-
+#define shaderStaticTest_shadowbuildtexture_ps20b 0
 class shadowbuildtexture_ps20b_Dynamic_Index
 {
 public:
-	shadowbuildtexture_ps20b_Dynamic_Index( IShaderDynamicAPI* pShaderAPI )
+	shadowbuildtexture_ps20b_Dynamic_Index()
 	{
 	}
-
-	int GetIndex() const
+	int GetIndex()
 	{
+		// Asserts to make sure that we aren't using any skipped combinations.
+		// Asserts to make sure that we are setting all of the combination vars.
+#ifdef _DEBUG
+#endif // _DEBUG
 		return 0;
 	}
 };
-
-#define shaderDynamicTest_shadowbuildtexture_ps20b 1
-
-
-#endif	// SHADOWBUILDTEXTURE_PS20B_H
+#define shaderDynamicTest_shadowbuildtexture_ps20b 0

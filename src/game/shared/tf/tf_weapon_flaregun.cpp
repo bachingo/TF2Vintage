@@ -1,6 +1,5 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
 //
 //=============================================================================
 #include "cbase.h"
@@ -14,17 +13,24 @@
 #include "soundenvelope.h"
 // Server specific.
 #else
-#include "tf_player.h"
 #include "tf_gamestats.h"
-#include "ilagcompensationmanager.h"
+#include "tf_player.h"
 #endif
 
 extern ConVar tf2v_use_extinguish_heal;
-extern ConVar tf2v_debug_airblast;
 
+//=============================================================================
+//
+// Weapon Flare Gun tables.
+//
 IMPLEMENT_NETWORKCLASS_ALIASED( TFFlareGun, DT_WeaponFlareGun )
 
 BEGIN_NETWORK_TABLE( CTFFlareGun, DT_WeaponFlareGun )
+#ifdef CLIENT_DLL
+	RecvPropFloat( RECVINFO( m_flChargeBeginTime ) ),
+#else
+	SendPropFloat( SENDINFO( m_flChargeBeginTime ) ),
+#endif
 END_NETWORK_TABLE()
 
 BEGIN_PREDICTION_DATA( CTFFlareGun )
@@ -39,14 +45,70 @@ BEGIN_DATADESC( CTFFlareGun )
 END_DATADESC()
 #endif
 
-#define TF_FLARE_MIN_VEL 1200
+
+//============================
+IMPLEMENT_NETWORKCLASS_ALIASED( TFFlareGun_Revenge, DT_WeaponFlareGun_Revenge )
+
+BEGIN_NETWORK_TABLE( CTFFlareGun_Revenge, DT_WeaponFlareGun_Revenge )
+#ifdef CLIENT_DLL
+RecvPropFloat( RECVINFO( m_fLastExtinguishTime ) ),
+#else
+SendPropFloat( SENDINFO( m_fLastExtinguishTime ) ),
+#endif
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFFlareGun_Revenge )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tf_weapon_flaregun_revenge, CTFFlareGun_Revenge );
+PRECACHE_WEAPON_REGISTER( tf_weapon_flaregun_revenge );
+
+#ifdef GAME_DLL
+const float tf_flaregun_afterburn_rate = 7.5f;
+#endif // GAME_DLL
+
+
+//=============================================================================
+//
+// Weapon Flare Gun functions.
+//
 
 //-----------------------------------------------------------------------------
-// Purpose: Constructor
+// Purpose:
 //-----------------------------------------------------------------------------
 CTFFlareGun::CTFFlareGun()
 {
+	m_bEffectsThinking = false;
 	m_flLastDenySoundTime = 0.0f;
+
+#ifdef CLIENT_DLL
+	m_bReadyToFire = false;
+#endif
+
+	StopCharge();
+}
+
+CTFFlareGun::~CTFFlareGun()
+{
+	DestroySounds();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFFlareGun::Precache()
+{
+	BaseClass::Precache();
+
+	PrecacheParticleSystem( "stickybombtrail_blue" );
+	PrecacheParticleSystem( "stickybombtrail_red" );
+	PrecacheParticleSystem( "critical_grenade_blue" );
+	PrecacheParticleSystem( "critical_grenade_red" );
+}
+
+void CTFFlareGun::DestroySounds( void )
+{
+	StopCharge();
 }
 
 //-----------------------------------------------------------------------------
@@ -57,6 +119,9 @@ void CTFFlareGun::PrimaryAttack( void )
 	// Get the player owning the weapon.
 	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
 	if ( !pOwner )
+		return;
+
+	if ( m_flChargeBeginTime > 0.0f )
 		return;
 
 	// Don't attack if we're underwater
@@ -72,244 +137,108 @@ void CTFFlareGun::PrimaryAttack( void )
 			m_flLastDenySoundTime = gpGlobals->curtime + 1.0f;
 		}
 	}
+
+#ifdef CLIENT_DLL
+	m_bReadyToFire = false;
+#endif
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Detonator - Detonate flares in midair
+// Purpose: Detonate flare
 //-----------------------------------------------------------------------------
 void CTFFlareGun::SecondaryAttack( void )
 {
-	if ( GetFlareGunMode() != TF_FLARE_MODE_DETONATE )
+	if ( GetFlareGunType() != FLAREGUN_DETONATE )
 		return;
 
 	if ( !CanAttack() )
 		return;
 
-		// Get a valid player.
 	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
 	if ( !pPlayer )
 		return;
 
 #ifdef GAME_DLL
-	for ( int i = 0; i < m_Flares.Count(); i++ )
+	if ( m_iFlareCount )
 	{
-		CTFProjectile_Flare *pFlare = m_Flares[i];
-		if ( pFlare )
+		int iCount = m_Flares.Count();
+		for ( int i = 0; i < iCount; i++ )
 		{
-			pFlare->Detonate();
+			CTFProjectile_Flare *pTemp = m_Flares[i];
+			if ( pTemp )
+			{
+				pTemp->Detonate();
+			}
 		}
 	}
-#endif
+#endif // GAME_DLL
 }
 
+#ifdef GAME_DLL
 //-----------------------------------------------------------------------------
-// Purpose: Add flares to our list as they're fired
+// Purpose:
 //-----------------------------------------------------------------------------
 void CTFFlareGun::AddFlare( CTFProjectile_Flare *pFlare )
 {
-#ifdef GAME_DLL
 	FlareHandle hHandle;
 	hHandle = pFlare;
 	m_Flares.AddToTail( hHandle );
-#endif
+
+	m_iFlareCount = m_Flares.Count();
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: If a flare is exploded, remove from list.
+// Purpose:
 //-----------------------------------------------------------------------------
 void CTFFlareGun::DeathNotice( CBaseEntity *pVictim )
 {
-#ifdef GAME_DLL
-	Assert( dynamic_cast<CTFProjectile_Flare *>( pVictim ) );
+	Assert( dynamic_cast<CTFProjectile_Flare*>( pVictim ) );
 
 	FlareHandle hHandle;
-	hHandle = (CTFProjectile_Flare *)pVictim;
+	hHandle = (CTFProjectile_Flare*)pVictim;
 	m_Flares.FindAndRemove( hHandle );
-#endif
+
+	m_iFlareCount = m_Flares.Count();
 }
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-int CTFFlareGun::GetFlareGunMode() const
+float CTFFlareGun::GetAfterburnRateOnHit() const
 {
-	int nWeaponMode = 0;
-	CALL_ATTRIB_HOOK_INT( nWeaponMode, set_weapon_mode );
-	return nWeaponMode;
+	return tf_flaregun_afterburn_rate;
 }
+#endif // GAME_DLL
 
-
-// Manmelter Start
-
-
-
-IMPLEMENT_NETWORKCLASS_ALIASED( TFFlareGun_Revenge, DT_WeaponFlareGun_Revenge )
-
-BEGIN_NETWORK_TABLE( CTFFlareGun_Revenge, DT_WeaponFlareGun_Revenge )
-#ifdef CLIENT_DLL
-	RecvPropFloat( RECVINFO( m_flChargeBeginTime ) ),
-	RecvPropFloat( RECVINFO( m_fLastExtinguishTime ) ),
-#else
-	SendPropFloat( SENDINFO( m_flChargeBeginTime ) ),
-	SendPropFloat( SENDINFO( m_fLastExtinguishTime ) ),
-#endif
-END_NETWORK_TABLE()
-
-BEGIN_PREDICTION_DATA( CTFFlareGun_Revenge )
-END_PREDICTION_DATA()
-
-LINK_ENTITY_TO_CLASS( tf_weapon_flaregun_revenge, CTFFlareGun_Revenge );
-PRECACHE_WEAPON_REGISTER( tf_weapon_flaregun_revenge );
-
-// Server specific.
-#ifndef CLIENT_DLL
-BEGIN_DATADESC( CTFFlareGun_Revenge )
-END_DATADESC()
-#endif
-
-#define TF_MANMELTER_FIRE_RATE 2.0f
-#define TF_MANMELTER_AIRBLAST_RATE 0.75f
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-CTFFlareGun_Revenge::CTFFlareGun_Revenge()
+bool CTFFlareGun::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
-	m_fLastExtinguishTime = 0.0f;
-
 #ifdef CLIENT_DLL
-	m_bReadyToFire = false;
-	m_nOldRevengeCrits = 0;
-#endif
-
+	m_bEffectsThinking = false;
 	StopCharge();
-}
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-CTFFlareGun_Revenge::~CTFFlareGun_Revenge()
-{
-	StopCharge();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFFlareGun_Revenge::Precache()
-{
-	BaseClass::Precache();
-
-	PrecacheParticleSystem( "drg_manmelter_vacuum" );
-	PrecacheParticleSystem( "drg_manmelter_vacuum_flames" );
-	PrecacheParticleSystem( "drg_manmelter_muzzleflash" );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Fire a laser beam.
-//-----------------------------------------------------------------------------
-void CTFFlareGun_Revenge::PrimaryAttack( void )
-{
-	if ( !CanAttack() )
-		return;
-
-	if ( m_flChargeBeginTime > 0.0f )
-		return;
-
-	BaseClass::PrimaryAttack();
-
-	// Lower the revenge crit count
-	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
-	if ( pOwner )
-	{
-		pOwner->m_Shared.DeductAirblastCrit();
-		// If we don't have any remaining crits left, remove our boost.
-		if (pOwner->m_Shared.InCond(TF_COND_CRITBOOSTED_ACTIVEWEAPON) && (!pOwner->m_Shared.HasAirblastCrits() || !CanGetAirblastCrits()))
-			pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Airblast players.
-//-----------------------------------------------------------------------------
-void CTFFlareGun_Revenge::SecondaryAttack( void )
-{
-	// Get the player owning the weapon.
-	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
-	if ( !pOwner )
-		return;
-
-	// Are we capable of firing again?
-	if ( m_flNextSecondaryAttack > gpGlobals->curtime )
-		return;
-
-	if ( !CanAttack() )
-		return;
-
-	if ( GetChargeBeginTime() == 0.0f )
-	{
-		StartCharge();
-	}
-
-	m_flNextSecondaryAttack = gpGlobals->curtime + TF_MANMELTER_AIRBLAST_RATE;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-int CTFFlareGun_Revenge::GetCustomDamageType( void ) const
-{
-	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
-	if ( pOwner && pOwner->m_Shared.GetAirblastCritCount() > 0 )
-		return TF_DMG_CUSTOM_SHOTGUN_REVENGE_CRIT;
-
-	return TF_DMG_CUSTOM_NONE;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFFlareGun_Revenge::Deploy( void )
-{
-#ifdef CLIENT_DLL
-	SetContextThink( &CTFFlareGun_Revenge::ClientEffectsThink, gpGlobals->curtime + 0.25f, "EFFECTS_THINK" );
 	m_bReadyToFire = false;
 #endif
 
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if ( pOwner && BaseClass::Deploy() )
-	{
-		if ( pOwner->m_Shared.HasAirblastCrits() )
-			pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );
-
-		return true;
-	}
-
-	return false;
+	return BaseClass::Holster( pSwitchingTo );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFFlareGun_Revenge::Holster( CBaseCombatWeapon *pSwitchTo )
+bool CTFFlareGun::Deploy( void )
 {
 #ifdef CLIENT_DLL
+	m_bEffectsThinking = true;
+	SetContextThink( &CTFFlareGun::ClientEffectsThink, gpGlobals->curtime + 0.25f, "EFFECTS_THINK" );
+
 	m_bReadyToFire = false;
-	StopCharge();
 #endif
 
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if ( pOwner && BaseClass::Holster( pSwitchTo ) )
-	{
-		pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );
-
-		return true;
-	}
-
-	return false;
+	return BaseClass::Deploy();
 }
 
-void CTFFlareGun_Revenge::WeaponReset( void )
+void CTFFlareGun::WeaponReset( void )
 {
 	BaseClass::WeaponReset();
 
@@ -318,10 +247,7 @@ void CTFFlareGun_Revenge::WeaponReset( void )
 #endif
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: Does the fancy weapon effects.
-//-----------------------------------------------------------------------------
-void CTFFlareGun_Revenge::ItemPostFrame( void )
+void CTFFlareGun::ItemPostFrame( void )
 {
 	BaseClass::ItemPostFrame();
 
@@ -333,138 +259,34 @@ void CTFFlareGun_Revenge::ItemPostFrame( void )
 
 		// If we're not holding down the attack button
 		if ( !(pPlayer->m_nButtons & IN_ATTACK2) )
+		{
 			StopCharge();
+		}
 		else
+		{
 			ChargePostFrame();
+		}
 	}
 
 #ifdef CLIENT_DLL
-	if ( WeaponState() == WEAPON_IS_ACTIVE )
+	if ( !m_bEffectsThinking )
 	{
-		if ( GetIndexForThinkContext( "EFFECTS_THINK" ) == NO_THINK_CONTEXT )
-			SetContextThink( &CTFFlareGun_Revenge::ClientEffectsThink, gpGlobals->curtime + 0.25f, "EFFECTS_THINK" );
+		m_bEffectsThinking = true;
+		SetContextThink( &CTFFlareGun::ClientEffectsThink, gpGlobals->curtime + 0.25f, "EFFECTS_THINK" );
 	}
 #endif
 }
 
-void CTFFlareGun_Revenge::ChargePostFrame( void )
+#ifdef CLIENT_DLL
+void CTFFlareGun::DispatchMuzzleFlash( const char* effectName, C_BaseEntity* pAttachEnt )
 {
-	if ( gpGlobals->curtime > m_fLastExtinguishTime + 0.5f )
-	{
-		CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
-		if ( pOwner )
-		{
-			Vector vecEye = pOwner->EyePosition();
-			Vector vecForward, vecRight, vecUp;
-			AngleVectors( pOwner->EyeAngles(), &vecForward, NULL, NULL );
-
-			const Vector vHull = Vector( 16.0f, 16.0f, 16.0f );
-
-			trace_t tr;
-			UTIL_TraceHull( vecEye, vecEye + vecForward * 256.0f, -vHull, vHull, MASK_SOLID, pOwner, COLLISION_GROUP_NONE, &tr );
-
-			CTFPlayer *pTarget = ToTFPlayer( tr.m_pEnt );
-			if ( pTarget )
-			{
-			#ifdef GAME_DLL
-				CTFPlayer *pBurner = pTarget->m_Shared.GetBurnAttacker();
-			#endif
-				// Extinguish friends
-				if ( ExtinguishPlayerInternal( pTarget, pOwner ) )
-				{
-					m_fLastExtinguishTime = gpGlobals->curtime;
-
-				#ifdef GAME_DLL
-					// Make sure the team isn't burning themselves to earn crits
-					if ( pBurner && !pBurner->InSameTeam( pOwner ) )
-					{
-						if ( CanGetAirblastCrits() )
-							pOwner->m_Shared.StoreAirblastCrit();
-
-						int nRestoreHealthOnExtinguish = 0;
-						CALL_ATTRIB_HOOK_INT( nRestoreHealthOnExtinguish, extinguish_restores_health );
-						if ( nRestoreHealthOnExtinguish > 0 || tf2v_use_extinguish_heal.GetBool()  )
-						{
-							const int nHPToRestore = 20;
-							int iHealthTaken = pOwner->TakeHealth( nHPToRestore, DMG_GENERIC );
-
-							IGameEvent *event = gameeventmanager->CreateEvent( "player_healonhit" );
-							if ( event )
-							{
-								event->SetInt( "amount", iHealthTaken );
-								event->SetInt( "entindex", pOwner->entindex() );
-
-								gameeventmanager->FireEvent( event );
-							}
-						}
-					}
-					if (pOwner->m_Shared.HasAirblastCrits() && !pOwner->m_Shared.InCond(TF_COND_CRITBOOSTED_ACTIVEWEAPON))
-					 pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );
-				#endif
-				}
-			}
-		}
-	}
+	DispatchParticleEffect( effectName, PATTACH_POINT_FOLLOW, pAttachEnt, "muzzle", GetParticleColor( 1 ), GetParticleColor( 2 ) );
 }
-
-#if defined(CLIENT_DLL)
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CTFFlareGun_Revenge::OnDataChanged( DataUpdateType_t type )
-{
-	BaseClass::OnDataChanged( type );
-
-	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
-	if ( pOwner )
-	{
-		if ( m_nOldRevengeCrits < pOwner->m_Shared.GetAirblastCritCount() )
-		{
-			WeaponSound( SPECIAL1 );
-			DispatchParticleEffect( "drg_manmelter_vacuum_flames", PATTACH_POINT_FOLLOW, GetAppropriateWorldOrViewModel(), "muzzle", GetEnergyWeaponColor( false ), GetEnergyWeaponColor( true ) );
-		}
-
-		m_nOldRevengeCrits = pOwner->m_Shared.GetAirblastCritCount();
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CTFFlareGun_Revenge::DispatchMuzzleFlash( const char* effectName, C_BaseEntity* pAttachEnt )
-{
-	DispatchParticleEffect( effectName, PATTACH_POINT_FOLLOW, pAttachEnt, "muzzle", GetEnergyWeaponColor( false ), GetEnergyWeaponColor( true ) );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CTFFlareGun_Revenge::StartChargeEffects()
-{
-	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
-	if ( pPlayer )
-	{
-		DispatchParticleEffect( "drg_manmelter_vacuum", PATTACH_POINT_FOLLOW, GetAppropriateWorldOrViewModel(), "muzzle", GetEnergyWeaponColor( false ), GetEnergyWeaponColor( true ) );
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CTFFlareGun_Revenge::StopChargeEffects()
-{
-	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
-	if ( pPlayer )
-	{
-		GetAppropriateWorldOrViewModel()->ParticleProp()->StopParticlesNamed( "drg_manmelter_vacuum", false );
-	}
-}
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFFlareGun_Revenge::ClientEffectsThink( void )
+void CTFFlareGun::ClientEffectsThink( void )
 {
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
 	if ( !pPlayer )
@@ -476,22 +298,26 @@ void CTFFlareGun_Revenge::ClientEffectsThink( void )
 	if ( !pPlayer->GetViewModel() )
 		return;
 
-	if ( WeaponState() != WEAPON_IS_ACTIVE )
+	if ( !m_bEffectsThinking )
 		return;
 
-	SetContextThink( &CTFFlareGun_Revenge::ClientEffectsThink, gpGlobals->curtime + 0.25f, "EFFECTS_THINK" );
+	if ( !GetOwner() || GetOwner()->GetActiveWeapon() != this )
+	{
+		m_bEffectsThinking = false;
+	}
+	else
+	{
+		SetContextThink( &CTFFlareGun::ClientEffectsThink, gpGlobals->curtime + 0.25f, "EFFECTS_THINK" );
+	}
 
-	if ( pPlayer->m_Shared.InCond( TF_COND_TAUNTING ) )
-		return;
-
-	if ( GetFlareGunMode() == TF_FLARE_MODE_REVENGE && m_flNextPrimaryAttack <= gpGlobals->curtime )
+	if ( GetFlareGunType() == FLAREGUN_GRORDBORT && m_flNextPrimaryAttack <= gpGlobals->curtime )
 	{
 		ParticleProp()->Init( this );
-		CNewParticleEffect *pEffect = ParticleProp()->Create( "drg_bison_idle", PATTACH_POINT_FOLLOW, "muzzle" );
+		CNewParticleEffect* pEffect = ParticleProp()->Create( "drg_bison_idle", PATTACH_POINT_FOLLOW, "muzzle" );
 		if ( pEffect )
 		{
-			pEffect->SetControlPoint( CUSTOM_COLOR_CP1, GetEnergyWeaponColor( false ) );
-			pEffect->SetControlPoint( CUSTOM_COLOR_CP2, GetEnergyWeaponColor( true ) );
+			pEffect->SetControlPoint( CUSTOM_COLOR_CP1, GetParticleColor( 1 ) );
+			pEffect->SetControlPoint( CUSTOM_COLOR_CP2, GetParticleColor( 2 ) );
 		}
 
 		ParticleProp()->Create( "drg_manmelter_idle", PATTACH_POINT_FOLLOW, "muzzle" );
@@ -504,50 +330,30 @@ void CTFFlareGun_Revenge::ClientEffectsThink( void )
 		}
 	}
 }
+
+void CTFFlareGun::StartChargeEffects()
+{
+	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
+	if ( pPlayer )
+	{
+		DispatchParticleEffect( GetChargeEffect(), PATTACH_POINT_FOLLOW, GetAppropriateWorldOrViewModel(), "muzzle", GetParticleColor( 1 ), GetParticleColor( 2 ) );
+	}
+}
+
+void CTFFlareGun::StopChargeEffects()
+{
+	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
+	if ( pPlayer )
+	{
+		GetAppropriateWorldOrViewModel()->ParticleProp()->StopParticlesNamed( GetChargeEffect(), false );
+	}
+}
+
 #endif
 
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-int CTFFlareGun_Revenge::GetCount( void )
+void CTFFlareGun::StartCharge( void )
 {
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-
-	if ( pOwner )
-	{
-		return pOwner->m_Shared.GetAirblastCritCount();
-	}
-
-	return -1;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Displays the Charge bar.
-//-----------------------------------------------------------------------------
-bool CTFFlareGun_Revenge::HasChargeBar( void )
-{
-	if ( CanGetAirblastCrits() )
-		return true;
-
-	return false;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-bool CTFFlareGun_Revenge::CanGetAirblastCrits( void ) const
-{
-	int nAirblastRevenge = 0;
-	CALL_ATTRIB_HOOK_INT( nAirblastRevenge, extinguish_revenge );
-	return nAirblastRevenge == 1;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CTFFlareGun_Revenge::StartCharge( void )
-{
-	m_flChargeBeginTime = gpGlobals->curtime;
+	StartChargeStartTime();
 
 #ifdef CLIENT_DLL
 	if ( !m_pChargeLoop )
@@ -562,10 +368,7 @@ void CTFFlareGun_Revenge::StartCharge( void )
 #endif
 }
 
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CTFFlareGun_Revenge::StopCharge( void )
+void CTFFlareGun::StopCharge( void )
 {
 	m_flChargeBeginTime = 0.0f;
 
@@ -581,38 +384,251 @@ void CTFFlareGun_Revenge::StopCharge( void )
 #endif
 }
 
+
+CTFFlareGun_Revenge::CTFFlareGun_Revenge()
+{
+	m_fLastExtinguishTime = 0.0f;
+
+#ifdef CLIENT_DLL
+	m_nOldRevengeCrits = 0;
+#endif
+}
+
+void CTFFlareGun_Revenge::Precache()
+{
+	BaseClass::Precache();
+
+	PrecacheParticleSystem( "drg_manmelter_vacuum" );
+	PrecacheParticleSystem( "drg_manmelter_vacuum_flames" );
+	PrecacheParticleSystem( "drg_manmelter_muzzleflash" );
+}
+
+int CTFFlareGun_Revenge::GetCustomDamageType() const
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( pOwner )
+	{
+		int iRevengeCrits = pOwner->m_Shared.GetRevengeCrits();
+		return iRevengeCrits > 0 ? TF_DMG_CUSTOM_SHOTGUN_REVENGE_CRIT : TF_DMG_CUSTOM_NONE;
+	}
+	return TF_DMG_CUSTOM_NONE;
+}
+
+bool CTFFlareGun_Revenge::Holster( CBaseCombatWeapon *pSwitchingTo )
+{
+#ifdef GAME_DLL
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( pOwner && pOwner->m_Shared.GetRevengeCrits() )
+	{
+		pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
+	}
+#endif
+
+	StopCharge();
+
+	return BaseClass::Holster( pSwitchingTo );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFFlareGun_Revenge::Deploy( void )
+{
+#ifdef GAME_DLL
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( pOwner && pOwner->m_Shared.GetRevengeCrits() )
+	{
+		pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED );
+	}
+#endif
+
+	StopCharge();
+
+	return BaseClass::Deploy();
+}
+
+#ifdef GAME_DLL
+//-----------------------------------------------------------------------------
+// Purpose: Reset revenge crits when the flaregun is changed
+//-----------------------------------------------------------------------------
+void CTFFlareGun_Revenge::Detach( void )
+{
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( pPlayer )
+	{
+		pPlayer->m_Shared.SetRevengeCrits( 0 );
+		pPlayer->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
+	}
+
+	BaseClass::Detach();
+}
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
+int CTFFlareGun_Revenge::GetCount( void )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( pOwner )
+	{
+		return pOwner->m_Shared.GetRevengeCrits();
+	}
+
+	return 0;
+}
+
+void CTFFlareGun_Revenge::PrimaryAttack()
+{
+	if ( !CanAttack() )
+		return;
+
+	BaseClass::PrimaryAttack();
+
+	// Lower the reveng crit count
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( pOwner )
+	{
+		int iNewRevengeCrits = MAX( pOwner->m_Shared.GetRevengeCrits() - 1, 0 );
+		pOwner->m_Shared.SetRevengeCrits( iNewRevengeCrits );
+	}
+}
+
+void CTFFlareGun_Revenge::SecondaryAttack( void )
+{
+	if ( m_flNextSecondaryAttack > gpGlobals->curtime )
+	{
+		return;
+	}
+
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( !pOwner )
+		return;
+
+	if ( GetChargeBeginTime() == 0.0f )
+	{
+		StartCharge();
+
+#ifdef GAME_DLL
+		//SendWeaponAnim( ACT_VM_PULLBACK );
+#endif
+	}
+
+	m_flNextSecondaryAttack = gpGlobals->curtime + 0.5f;
+}
+
+void CTFFlareGun_Revenge::ChargePostFrame( void )
+{
+	BaseClass::ChargePostFrame();
+
+	if ( gpGlobals->curtime > m_fLastExtinguishTime + 0.5f )
+	{
+		CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+		if ( pOwner )
+		{
+			// Extinguish friends
+			Vector vecEye = pOwner->EyePosition();
+			Vector vecForward, vecRight, vecUp;
+			AngleVectors( pOwner->EyeAngles(), &vecForward, NULL, NULL );
+
+			const Vector vHull = Vector( 16.0f, 16.0f, 16.0f );
+
+			trace_t tr;
+			UTIL_TraceHull( vecEye, vecEye + vecForward * 256.0f, -vHull, vHull, MASK_SOLID, pOwner, COLLISION_GROUP_NONE, &tr );
+
+			CTFPlayer *pTarget = ToTFPlayer( tr.m_pEnt );
+			if ( pTarget )
+			{
+#ifdef GAME_DLL
+				// Get the player that ignited them before we extinguish
+				CTFPlayer *pBurner = pTarget->m_Shared.GetOriginalBurnAttacker();
+#endif
+
+				if ( ExtinguishPlayerInternal( pTarget, pOwner ) )
+				{
+					m_fLastExtinguishTime = gpGlobals->curtime;
+
+#ifdef GAME_DLL
+					// Make sure the team isn't burning themselves to earn crits
+					if ( pBurner && pBurner->GetTeamNumber() != pOwner->GetTeamNumber() )
+					{
+						// Grant revenge crits
+						pOwner->m_Shared.SetRevengeCrits( pOwner->m_Shared.GetRevengeCrits() + 1 );
+
+						// Return health to the Pyro.
+						int iRestoreHealthOnExtinguish = 0;
+						CALL_ATTRIB_HOOK_INT( iRestoreHealthOnExtinguish, extinguish_restores_health );
+						if ( ( iRestoreHealthOnExtinguish > 0 || tf2v_use_extinguish_heal.GetBool() ) && pOwner->TakeHealth( 20, DMG_GENERIC ) > 0 )
+						{
+							IGameEvent *healevent = gameeventmanager->CreateEvent( "player_healonhit" );
+							if ( healevent )
+							{
+								healevent->SetInt( "amount", iRestoreHealthOnExtinguish );
+								healevent->SetInt( "entindex", pOwner->entindex() );
+								item_definition_index_t healingItemDef = INVALID_ITEM_DEF_INDEX;
+								if ( GetAttributeContainer() && GetAttributeContainer()->GetItem() )
+								{
+									healingItemDef = GetAttributeContainer()->GetItem()->GetItemDefIndex();
+								}
+								healevent->SetInt( "weapon_def_index", healingItemDef );
+
+								gameeventmanager->FireEvent( healevent );
+							}
+						}
+					}
+#endif
+				}
+			}
+		}
+	}
+}
+
+#ifdef GAME_DLL
+extern void ExtinguishPlayer( CEconEntity *pExtinguisher, CTFPlayer *pOwner, CTFPlayer *pTarget, const char *pExtinguisherName );
+#endif // GAME_DLL
+
 bool CTFFlareGun_Revenge::ExtinguishPlayerInternal( CTFPlayer *pTarget, CTFPlayer *pOwner )
 {
-	if ( pOwner->InSameTeam( pTarget ) && pTarget->m_Shared.InCond( TF_COND_BURNING ) )
+	if ( pTarget->GetTeamNumber() == pOwner->GetTeamNumber() )
 	{
-	#ifdef GAME_DLL
-		pTarget->EmitSound( "TFPlayer.FlameOut" );
-		pTarget->m_Shared.RemoveCond( TF_COND_BURNING );
-
-		CRecipientFilter filter;
-		filter.AddRecipient( pOwner );
-		filter.AddRecipient( pTarget );
-
-		UserMessageBegin( filter, "PlayerExtinguished" );
-			WRITE_BYTE( pOwner->entindex() );
-			WRITE_BYTE( pTarget->entindex() );
-		MessageEnd();
-
-		IGameEvent *event = gameeventmanager->CreateEvent( "player_extinguished" );
-		if ( event )
+		if ( pTarget->m_Shared.InCond( TF_COND_BURNING ) )
 		{
-			event->SetInt( "victim", pTarget->entindex() );
-			event->SetInt( "healer", pOwner->entindex() );
+#ifdef GAME_DLL
+			ExtinguishPlayer( this, pOwner, pTarget, GetName() );
+#endif // GAME_DLL
 
-			gameeventmanager->FireEvent( event, true );
+			return true;
 		}
-	#endif // GAME_DLL
-
-		return true;
 	}
 
 	return false;
 }
+
+#ifdef CLIENT_DLL
+void CTFFlareGun_Revenge::OnDataChanged( DataUpdateType_t type )
+{
+	BaseClass::OnDataChanged( type );
+
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( pOwner )
+	{
+		if ( m_nOldRevengeCrits < pOwner->m_Shared.GetRevengeCrits() )
+		{
+			DoAbsorbEffect();
+		}
+		
+		m_nOldRevengeCrits = pOwner->m_Shared.GetRevengeCrits();
+	}
+}
+
+void CTFFlareGun_Revenge::DoAbsorbEffect( void )
+{
+	WeaponSound( SPECIAL1 );
+
+	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
+	if ( pPlayer )
+	{
+		DispatchParticleEffect( "drg_manmelter_vacuum_flames", PATTACH_POINT_FOLLOW, GetAppropriateWorldOrViewModel(), "muzzle", GetParticleColor( 1 ), GetParticleColor( 2 ) );
+	}
+}
+#endif

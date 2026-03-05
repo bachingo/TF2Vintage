@@ -1,284 +1,336 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
-//
-// Purpose:		
-//
-// $NoKeywords: $
-//=============================================================================
-#include "cbase.h"
-#include "tf_bot.h"
-#include "tf_bot_squad.h"
-#include "tf_bot_escort_squad_leader.h"
-#include "../scenario/capture_the_flag/tf_bot_deliver_flag.h"
-#include "../scenario/capture_the_flag/tf_bot_fetch_flag.h"
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_escort_squad_leader.cpp
+// Escort the squad leader to their destination
+// Michael Booth, Octoboer 2011
 
+#include "cbase.h"
+
+#include "bot/tf_bot.h"
+#include "bot/behavior/squad/tf_bot_escort_squad_leader.h"
+#include "bot/behavior/scenario/capture_the_flag/tf_bot_deliver_flag.h"
+#include "bot/behavior/scenario/capture_the_flag/tf_bot_fetch_flag.h"
 
 ConVar tf_bot_squad_escort_range( "tf_bot_squad_escort_range", "500", FCVAR_CHEAT );
 ConVar tf_bot_formation_debug( "tf_bot_formation_debug", "0", FCVAR_CHEAT );
 
 
-CTFBotEscortSquadLeader::CTFBotEscortSquadLeader( Action<CTFBot> *done_action )
+//---------------------------------------------------------------------------------------------
+CTFBotEscortSquadLeader::CTFBotEscortSquadLeader( Action< CTFBot > *actionToDoAfterSquadDisbands ) // : m_path( ChasePath::LEAD_SUBJECT )
 {
-	this->m_DoneAction = done_action;
-	m_PathFollower.SetGoalTolerance( 0 );
-}
-
-CTFBotEscortSquadLeader::~CTFBotEscortSquadLeader()
-{
+	m_actionToDoAfterSquadDisbands = actionToDoAfterSquadDisbands;
+	m_formationPath.SetGoalTolerance( 0.0f );
 }
 
 
-const char *CTFBotEscortSquadLeader::GetName() const
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotEscortSquadLeader::OnStart( CTFBot *me, Action< CTFBot > *priorAction )
 {
-	return "EscortSquadLeader";
+	m_formationForward = vec3_origin;
+
+	return Continue();
 }
 
 
-ActionResult<CTFBot> CTFBotEscortSquadLeader::OnStart( CTFBot *me, Action<CTFBot> *priorAction )
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot > CTFBotEscortSquadLeader::Update( CTFBot *me, float interval )
 {
-	/* BUG: doesn't set PathFollower's min lookahead distance */
-
-	m_vecLeaderGoalDirection = vec3_origin;
-
-	return Action<CTFBot>::Continue();
-}
-
-ActionResult<CTFBot> CTFBotEscortSquadLeader::Update( CTFBot *me, float dt )
-{
-	if ( dt <= 0.0f )
-		return Action<CTFBot>::Continue();
+	if ( interval <= 0.0f )
+	{
+		return Continue();
+	}
 
 	const CKnownEntity *threat = me->GetVisionInterface()->GetPrimaryKnownThreat();
 	if ( threat && threat->IsVisibleRecently() )
 	{
+		// prepare to fight
 		me->EquipBestWeaponForThreat( threat );
 	}
 
 	CTFBotSquad *squad = me->GetSquad();
-	if ( squad == nullptr )
+	if ( !squad )
 	{
-		if ( m_DoneAction != nullptr )
-			return Action<CTFBot>::ChangeTo( m_DoneAction, "Not in a Squad" );
+		if ( m_actionToDoAfterSquadDisbands )
+		{
+			return ChangeTo( m_actionToDoAfterSquadDisbands, "Not in a Squad" );
+		}
 
-		return Action<CTFBot>::Done( "Not in a Squad" );
+		return Done( "Not in a Squad" );
 	}
 
+	// we need to update every tick to smoothly move in formation
 	me->FlagForUpdate();
 
 	CTFBot *leader = squad->GetLeader();
-	if ( leader == nullptr || !leader->IsAlive() )
+	if ( !leader || !leader->IsAlive() )
 	{
 		me->LeaveSquad();
 
-		if ( m_DoneAction != nullptr )
-			return Action<CTFBot>::ChangeTo( m_DoneAction, "Squad leader is dead" );
-
-		return Action<CTFBot>::Done( "Squad leader is dead" );
-	}
-
-	if ( TFGameRules() != nullptr && TFGameRules()->IsMannVsMachineMode() && me == leader )
-	{
-		if ( me->HasAttribute( CTFBot::AttributeType::AGGRESSIVE ) )
+		if ( m_actionToDoAfterSquadDisbands )
 		{
-			return Action<CTFBot>::ChangeTo( new CTFBotPushToCapturePoint( new CTFBotFetchFlag( false ) ),
-											 "I'm now the squad leader! Going for the flag!" );
-
-			return Action<CTFBot>::ChangeTo( new CTFBotFetchFlag( false ),
-											 "I'm now the squad leader! Going for the flag!" );
+			return ChangeTo( m_actionToDoAfterSquadDisbands, "Squad leader is dead" );
 		}
+
+		return Done( "Squad leader is dead" );
 	}
 
-	CTFWeaponBase *weapon = me->m_Shared.GetActiveTFWeapon();
-	if ( weapon != nullptr && weapon->IsMeleeWeapon() )
+	if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() && leader == me )
 	{
-		if ( me->IsRangeLessThan( leader, tf_bot_squad_escort_range.GetFloat() ) )
+		const char* pszNowLeader = "I'm now the squad leader! Going for the flag!";
+		if ( me->HasAttribute( CTFBot::AGGRESSIVE ) )
 		{
-			if ( me->IsLineOfSightClear( leader ) )
+			// push for the point first, then attack
+			return ChangeTo( new CTFBotPushToCapturePoint( new CTFBotFetchFlag ), pszNowLeader );
+		}
+
+		// capture the flag
+		return ChangeTo( new CTFBotFetchFlag, pszNowLeader );
+	}
+
+	// if we're using a melee weapon, close and attack with it while staying near the leader
+	CTFWeaponBase *myWeapon = me->m_Shared.GetActiveTFWeapon();
+	if ( myWeapon && myWeapon->IsMeleeWeapon() )
+	{
+		if ( me->IsRangeLessThan( leader, tf_bot_squad_escort_range.GetFloat() ) && me->IsLineOfSightClear( leader ) )
+		{
+			ActionResult< CTFBot > result = m_meleeAttackAction.Update( me, interval );
+
+			if ( result.IsContinue() )
 			{
-				ActionResult<CTFBot> result = m_MeleeAttack.Update( me, dt );
-				if ( result.m_type == ActionResultType::CONTINUE )
-					return Action<CTFBot>::Continue();
+				// we have a melee target, and we're still reasonably close to the flag leader
+				return Continue();
 			}
 		}
 	}
 
-	CUtlVector<CTFBot *> members;
-	squad->CollectMembers( &members );
+	CUtlVector< CTFBot * > rawMemberVector;
+	squad->CollectMembers( &rawMemberVector );
 
-	CUtlVector<CTFBot *> non_medics;
-	FOR_EACH_VEC( members, i )
+	// cull out the medics - they do their own thing
+	CUtlVector< CTFBot * > memberVector;
+	for( int m=0; m<rawMemberVector.Count(); ++m )
 	{
-		CTFBot *member = members[i];
-		if ( !member->IsPlayerClass( TF_CLASS_MEDIC ) )
+		if ( !rawMemberVector[m]->IsPlayerClass( TF_CLASS_MEDIC ) )
 		{
-			non_medics.AddToTail( member );
+			memberVector.AddToTail( rawMemberVector[m] );
 		}
 	}
 
-	PathFollower const *leader_path = leader->GetCurrentPath();
-	if ( leader_path == nullptr || leader_path->GetCurrentGoal() == nullptr )
+	const PathFollower *leaderPath = leader->GetCurrentPath();
+	if ( !leaderPath || !leaderPath->GetCurrentGoal() )
 	{
+		// no path, no formation
 		me->SetSquadFormationError( 0.0f );
-		me->SetIsInFormation( false );
-
-		return Action<CTFBot>::Continue();
+		me->SetBrokenFormation( false );
+		return Continue();
 	}
 
-	const Path::Segment *leader_goal = leader_path->GetCurrentGoal();
-	Vector vec_to_goal = ( leader_goal->pos - leader->GetAbsOrigin() );
-	if ( vec_to_goal.IsLengthLessThan( 25.0f ) )
+	const Path::Segment *leaderSegment = leaderPath->GetCurrentGoal();
+
+	Vector leaderForward = leaderSegment->pos - leader->GetAbsOrigin();
+
+	// if the leader is very close to the goal, use the next goal to ensure 
+	// the forward vector stays forward
+	const float atGoal = 25.0f;
+	if ( leaderForward.IsLengthLessThan( atGoal ) )
 	{
-		const Path::Segment *next_seg = leader_path->NextSegment( leader_goal );
-		if ( next_seg != nullptr )
+		const Path::Segment *nextSegment = leaderPath->NextSegment( leaderSegment );
+		if ( nextSegment )
 		{
-			vec_to_goal = ( next_seg->pos - leader->GetAbsOrigin() );
+			leaderForward = nextSegment->pos - leader->GetAbsOrigin();
 		}
 	}
 
-	vec_to_goal.NormalizeInPlace();
-	if ( !m_vecLeaderGoalDirection.IsZero() )
+	leaderForward.NormalizeInPlace();
+
+	if ( m_formationForward.IsZero() )
 	{
-		float yaw_this = UTIL_VecToYaw( vec_to_goal );
-		float yaw_prev = UTIL_VecToYaw( m_vecLeaderGoalDirection );
-
-		float yaw_diff = AngleDiff( yaw_this, yaw_prev );
-		float yaw_diff_max = dt * 30.0f;
-
-		float yaw_next = yaw_prev +
-			Clamp( yaw_diff, -yaw_diff_max, yaw_diff_max );
-
-		FastSinCos( RAD2DEG( yaw_next ),
-					&m_vecLeaderGoalDirection.y,
-					&m_vecLeaderGoalDirection.x );
-		m_vecLeaderGoalDirection.z = 0.0f;
+		m_formationForward = leaderForward;
 	}
 	else
 	{
-		m_vecLeaderGoalDirection = vec_to_goal;
+		// limit rate of change of leader forward vector to keep formation coherent
+		float maxRotation = 30.0f;	// degrees/second
+
+		float leaderForwardYaw = UTIL_VecToYaw( leaderForward );
+		float formationYaw = UTIL_VecToYaw( m_formationForward );
+
+		float angleDiff = UTIL_AngleDiff( leaderForwardYaw, formationYaw );
+
+		float deltaYaw = maxRotation * interval;
+
+		if ( angleDiff < -deltaYaw )
+		{
+			formationYaw -= deltaYaw;
+		}
+		else if ( angleDiff > deltaYaw )
+		{
+			formationYaw += deltaYaw;
+		}
+		else
+		{
+			formationYaw += angleDiff;
+		}
+
+		FastSinCos( formationYaw * M_PI / 180.0f, &m_formationForward.y, &m_formationForward.x );
+		m_formationForward.z = 0.0f;
 	}
 
-	float formation_size = Max( squad->GetFormationSize(), 0.0f );
 
-	int idx;
-	for ( idx = 0; idx < squad->GetMemberCount(); ++idx )
+	const float maxSeparationAngle = 30.0f * M_PI / 180.0f;
+	
+	float formationRadius = 125.0f;
+	if ( squad->GetFormationSize() > 0.0f )
 	{
-		if ( me->IsSelf( non_medics[idx] ) )
+		formationRadius = squad->GetFormationSize();
+	}
+
+	Vector myFormationSpot;
+	Vector formationForward = vec3_origin;
+	float s, c;
+
+	// where am I in the roster
+	int which;
+	for( which=0; which<memberVector.Count(); ++which )
+	{
+		if ( me->IsSelf( memberVector[which] ) )
 		{
 			break;
 		}
 	}
 
-	int my_idx = idx - 1;
-	float angle = ( M_PI / 6.0f ) * ( idx / 2 );
-	if ( my_idx % 2 == 0 )
+	// subtract one since the leader is always first
+	--which;
+
+	// my formation spot is assigned via my position in the roster array
+	int slot = ( which + 1 ) /2;
+
+	float formationAngle = slot * maxSeparationAngle;
+
+	if ( which & 0x1 )
 	{
-		angle = -angle;
+		formationAngle = -formationAngle;
 	}
 
-	float a_sin, a_cos;
-	FastSinCos( angle, &a_sin, &a_cos );
+	FastSinCos( formationAngle, &s, &c );
+	formationForward.x = m_formationForward.x * c - m_formationForward.y * s;
+	formationForward.y = m_formationForward.y * c + m_formationForward.x * s;
 
-	Vector goal_dir;
-	goal_dir.x = m_vecLeaderGoalDirection.x * a_cos - m_vecLeaderGoalDirection.y * a_sin;
-	goal_dir.y = m_vecLeaderGoalDirection.y * a_cos + m_vecLeaderGoalDirection.x * a_sin;
-	goal_dir.z = 0;
+	myFormationSpot = leader->GetAbsOrigin() + formationRadius * formationForward;
 
-	Vector ideal_pos = leader->GetAbsOrigin() + ( formation_size * goal_dir );
-
-	trace_t trace;
+	trace_t result;
 	CTraceFilterIgnoreTeammates filter( me, COLLISION_GROUP_NONE, me->GetTeamNumber() );
-	UTIL_TraceLine( leader->GetAbsOrigin(), ideal_pos - leader->GetAbsOrigin(),
-					MASK_PLAYERSOLID, &filter, &trace );
+	UTIL_TraceLine( leader->GetAbsOrigin() + Vector( 0, 0, HalfHumanHeight ), myFormationSpot + Vector( 0, 0, HalfHumanHeight ), MASK_PLAYERSOLID, &filter, &result );
 
-	if ( trace.DidHitWorld() )
+	if ( result.DidHitWorld() )
 	{
-		float scale = 0.6f * me->GetBodyInterface()->GetHullWidth();
-
-		ideal_pos = ( scale * trace.plane.normal ) + trace.endpos;
-		ideal_pos.z -= 35.5f;
+		myFormationSpot = result.endpos - Vector( 0, 0, HalfHumanHeight ) + 0.6f * me->GetBodyInterface()->GetHullWidth() * result.plane.normal;
 	}
+
 
 	if ( tf_bot_formation_debug.GetBool() )
 	{
-		NDebugOverlay::Circle( ideal_pos, 16.0f, 0, 255, 0, 255, true, 0.1f );
+		NDebugOverlay::Circle( myFormationSpot, 16.0f, 0, 255, 0, 255, true, 0.1f );
 
-		CFmtStr str_idx;
-		NDebugOverlay::Text( ideal_pos, str_idx.sprintf( "%d", my_idx ), false, 0.1f );
+		CFmtStr msg;
+		NDebugOverlay::Text( myFormationSpot, msg.sprintf( "%d", which ), false, 0.1f );
 	}
 
-	Vector vec_error = ideal_pos - me->GetAbsOrigin();
-	float error = vec_error.Length2D();
-	me->SetSquadFormationError( Min( error, 100.0f ) * ( 1.0f / 100.0f ) );
+	// match speed with leader if I'm at/near my formation position
+	Vector to = myFormationSpot - me->GetAbsOrigin();
+	float error = to.Length2D();
+	const float maxError = 100.0f;	// 50
 
+	float normalizedError = 1.0f;
+	if ( error < maxError )
+	{
+		normalizedError = error / maxError;
+	}
+
+	// this error term is used in CTFPlayer::TeamFortress_CalculateMaxSpeed() to 
+	// modulate our speed
+	// 0 = in position (no error)
+	// 1 = far out of position (max error)
+	me->SetSquadFormationError( normalizedError );
+	
+	// move to my formation spot
 	if ( error < 50.0f )
 	{
-		Vector vec_fix = vec_error * goal_dir;
-		if ( vec_fix.Length() == 0.0f )
+		// if we're ahead of where we want to be, just wait
+		if ( DotProduct( to, formationForward ) > 0.0f )
 		{
-			me->SetSquadFormationError( 0.0f );
+			// very close - just directly approach to avoid pathing jaggies
+			me->GetLocomotionInterface()->Approach( myFormationSpot );
 		}
 		else
 		{
-			me->GetLocomotionInterface()->Approach( ideal_pos, 1.0f );
-			return Action<CTFBot>::Continue();
+			// we're in position
+			me->SetSquadFormationError( 0.0f );
 		}
 	}
-
-	if ( m_ctRecomputePath.IsElapsed() )
+	else
 	{
-		m_ctRecomputePath.Start( RandomFloat( 0.1f, 0.2f ) );
-		me->SetIsInFormation( false );
+		if ( m_pathTimer.IsElapsed() )
+		{
+			m_pathTimer.Start( RandomFloat( 0.1f, 0.2f ) );
 
-		CTFBotPathCost cost_func( me, FASTEST_ROUTE );
-		if ( !m_PathFollower.Compute( me, ideal_pos, cost_func, 0.0f, true ) )
-			me->SetIsInFormation( true );
+			me->SetBrokenFormation( false );
 
-		if ( m_PathFollower.GetLength() > 750.0f )
-			me->SetIsInFormation( true );
+			CTFBotPathCost cost( me, FASTEST_ROUTE );
+			if ( m_formationPath.Compute( me, myFormationSpot, cost ) == false )
+			{
+				// no path back to formation
+				me->SetBrokenFormation( true );
+			}
+
+			// if we have a long path to get back in formation, we've broken ranks
+			const float tooFar = 750.0f;
+			if ( m_formationPath.GetLength() > tooFar )
+			{
+				me->SetBrokenFormation( true );
+			}
+		}
+
+		m_formationPath.Update( me );
 	}
 
-	m_PathFollower.Update( me );
-
-	return Action<CTFBot>::Continue();
+	return Continue();
 }
 
-void CTFBotEscortSquadLeader::OnEnd( CTFBot *me, Action<CTFBot> *newAction )
+
+//---------------------------------------------------------------------------------------------
+void CTFBotEscortSquadLeader::OnEnd( CTFBot *me, Action< CTFBot > *nextAction )
 {
 }
 
 
-CTFBotWaitForOutOfPositionSquadMember::CTFBotWaitForOutOfPositionSquadMember()
+//---------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot > CTFBotWaitForOutOfPositionSquadMember::OnStart( CTFBot *me, Action< CTFBot > *priorAction )
 {
-}
+	m_waitTimer.Start( 2.0f );
 
-CTFBotWaitForOutOfPositionSquadMember::~CTFBotWaitForOutOfPositionSquadMember()
-{
-}
-
-
-const char *CTFBotWaitForOutOfPositionSquadMember::GetName() const
-{
-	return "WaitForOutOfPositionSquadMember";
+	return Continue();
 }
 
 
-ActionResult<CTFBot> CTFBotWaitForOutOfPositionSquadMember::OnStart( CTFBot *me, Action<CTFBot> *priorAction )
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot > CTFBotWaitForOutOfPositionSquadMember::Update( CTFBot *me, float interval )
 {
-	m_ctTimeout.Start( 2.0f );
+	if ( m_waitTimer.IsElapsed() )
+	{
+		return Done( "Timeout" );
+	}
 
-	return Action<CTFBot>::Continue();
-}
+	if ( !me->IsInASquad() || !me->GetSquad()->IsLeader( me ) )
+	{
+		return Done( "No squad" );
+	}
 
-ActionResult<CTFBot> CTFBotWaitForOutOfPositionSquadMember::Update( CTFBot *me, float dt )
-{
-	if ( m_ctTimeout.IsElapsed() )
-		return Action<CTFBot>::Done( "Timeout" );
+	if ( me->GetSquad()->IsInFormation() )
+	{
+		// Everyone is in position
+		return Done( "Everyone is in formation. Moving on." );
+	}
 
-	CTFBotSquad *squad = me->GetSquad();
-	if ( squad == nullptr || me != squad->GetLeader() )
-		return Action<CTFBot>::Done( "No squad" );
-
-	if ( squad->IsInFormation() )
-		return Action<CTFBot>::Done( "Everyone is in formation. Moving on." );
-
-	return Action<CTFBot>::Continue();
+	return Continue();
 }

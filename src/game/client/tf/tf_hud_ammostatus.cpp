@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2006, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -29,6 +29,8 @@
 #include "c_tf_player.h"
 #include "ihudlcd.h"
 #include "tf_hud_ammostatus.h"
+#include "tf_gamerules.h"
+#include "tf_logic_halloween_2014.h"
 
 using namespace vgui;
 
@@ -36,6 +38,9 @@ using namespace vgui;
 #include "tier0/memdbgon.h"
 
 DECLARE_HUDELEMENT( CTFHudWeaponAmmo );
+
+static ConVar hud_low_ammo_warning_threshold( "hud_lowammowarning_threshold", "0.40", FCVAR_CLIENTDLL | FCVAR_DEVELOPMENTONLY, "Percentage threshold at which the low ammo warning will become visible." );
+static ConVar hud_low_ammo_warning_max_pos_adjust( "hud_lowammowarning_maxposadjust", "5", FCVAR_CLIENTDLL | FCVAR_DEVELOPMENTONLY, "Maximum pixel amount to increase the low ammo warning image." );
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
@@ -59,12 +64,12 @@ CTFHudWeaponAmmo::CTFHudWeaponAmmo( const char *pElementName ) : CHudElement( pE
 	m_pNoClip = NULL;
 	m_pNoClipShadow = NULL;
 
-	m_pWeaponBucket = NULL;
-
 	m_nAmmo	= -1;
 	m_nAmmo2 = -1;
 	m_hCurrentActiveWeapon = NULL;
 	m_flNextThink = 0.0f;
+
+	RegisterForRenderGroup( "inspect_panel" );
 }
 
 //-----------------------------------------------------------------------------
@@ -74,8 +79,6 @@ void CTFHudWeaponAmmo::Reset()
 {
 	m_flNextThink = gpGlobals->curtime + 0.05f;
 }
-
-ConVar tf2v_ammobucket( "tf2v_ammobucket", "0", FCVAR_ARCHIVE, "Shows weapon bucket in the ammo section. 1 = ON, 0 = OFF." );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -87,16 +90,21 @@ void CTFHudWeaponAmmo::ApplySchemeSettings( IScheme *pScheme )
 	// load control settings...
 	LoadControlSettings( "resource/UI/HudAmmoWeapons.res" );
 
-	m_pInClip = dynamic_cast<CExLabel *>(FindChildByName("AmmoInClip"));
-	m_pInClipShadow = dynamic_cast<CExLabel *>(FindChildByName("AmmoInClipShadow"));
+	m_pInClip = dynamic_cast<CExLabel *>( FindChildByName( "AmmoInClip" ) );
+	m_pInClipShadow = dynamic_cast<CExLabel *>( FindChildByName( "AmmoInClipShadow" ) );
 
-	m_pInReserve = dynamic_cast<CExLabel *>(FindChildByName("AmmoInReserve"));
-	m_pInReserveShadow = dynamic_cast<CExLabel *>(FindChildByName("AmmoInReserveShadow"));
+	m_pInReserve = dynamic_cast<CExLabel *>( FindChildByName( "AmmoInReserve" ) );
+	m_pInReserveShadow = dynamic_cast<CExLabel *>( FindChildByName( "AmmoInReserveShadow" ) );
 
-	m_pNoClip = dynamic_cast<CExLabel *>(FindChildByName("AmmoNoClip"));
-	m_pNoClipShadow = dynamic_cast<CExLabel *>(FindChildByName("AmmoNoClipShadow"));
+	m_pNoClip = dynamic_cast<CExLabel *>( FindChildByName( "AmmoNoClip" ) );
+	m_pNoClipShadow = dynamic_cast<CExLabel *>( FindChildByName( "AmmoNoClipShadow" ) );
 
-	m_pWeaponBucket = dynamic_cast<ImagePanel *>(FindChildByName("WeaponBucket"));
+	m_pLowAmmoImage = dynamic_cast<ImagePanel *>( FindChildByName( "HudWeaponLowAmmoImage" ) );
+
+	if ( m_pLowAmmoImage )
+	{
+		m_pLowAmmoImage->GetBounds( m_nLowAmmoImageOrigX, m_nLowAmmoImageOrigY, m_nLowAmmoImageOrigW, m_nLowAmmoImageOrigH );
+	}
 
 	m_nAmmo	= -1;
 	m_nAmmo2 = -1;
@@ -119,24 +127,37 @@ bool CTFHudWeaponAmmo::ShouldDraw( void )
 		return false;
 	}
 
-	C_TFWeaponBase *pWeapon = pPlayer->GetActiveTFWeapon();
+	CTFWeaponBase *pWeapon = pPlayer->GetActiveTFWeapon();
 
 	if ( !pWeapon )
 	{
 		return false;
 	}
 
-	if ( !pWeapon->UsesPrimaryAmmo() && !tf2v_ammobucket.GetBool() )
+	if ( pWeapon->GetWeaponID() == TF_WEAPON_MEDIGUN )
 	{
 		return false;
 	}
 
-	CHudElement *pMedicCharge = GET_NAMED_HUDELEMENT( CHudElement, CHudMedicChargeMeter );
-
-	if ( pMedicCharge && pMedicCharge->ShouldDraw() )
-	{
+	// Don't show for weapons that don't use any ammo
+	if ( !pWeapon->UsesPrimaryAmmo() )
 		return false;
-	}
+
+	// Don't show for weapons that use metal for their primary ammo
+	if ( pWeapon->GetPrimaryAmmoType() == TF_AMMO_METAL )
+		return false;
+
+	if ( pWeapon->UberChargeAmmoPerShot() > 0.0f )
+		return false;
+
+	if ( pPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_GHOST_MODE ) )
+		return false;
+
+	if ( CTFMinigameLogic::GetMinigameLogic() && CTFMinigameLogic::GetMinigameLogic()->GetActiveMinigame() )
+		return false;
+
+	if ( TFGameRules() && TFGameRules()->ShowMatchSummary() )
+		return false;
 
 	return CHudElement::ShouldDraw();
 }
@@ -175,38 +196,63 @@ void CTFHudWeaponAmmo::UpdateAmmoLabels( bool bPrimary, bool bReserve, bool bNoC
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFHudWeaponAmmo::ShowLowAmmoIndicator( void )
+{
+	if ( m_pLowAmmoImage && m_pLowAmmoImage->IsVisible() == false )
+	{
+		m_pLowAmmoImage->SetBounds( m_nLowAmmoImageOrigX, m_nLowAmmoImageOrigY, m_nLowAmmoImageOrigW, m_nLowAmmoImageOrigH );
+		m_pLowAmmoImage->SetVisible( true );
+		m_pLowAmmoImage->SetFgColor( Color( 255, 0, 0, 255 ) );
+		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( this, "HudLowAmmoPulse" );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFHudWeaponAmmo::SizeLowAmmoIndicator( float flCurrentAmount, float flMaxAmount )
+{
+	if ( m_pLowAmmoImage && m_pLowAmmoImage->IsVisible() == true )
+	{
+		float flPercent = ( flMaxAmount - flCurrentAmount ) / flMaxAmount;
+		float nLowAmmoPosAdj = hud_low_ammo_warning_max_pos_adjust.GetFloat();
+
+		int nPosAdj = RoundFloatToInt( flPercent * nLowAmmoPosAdj );
+		int nSizeAdj = 2 * nPosAdj;
+		
+		m_pLowAmmoImage->SetBounds( m_nLowAmmoImageOrigX - nPosAdj, 
+									m_nLowAmmoImageOrigY - nPosAdj, 
+									m_nLowAmmoImageOrigW + nSizeAdj,
+									m_nLowAmmoImageOrigH + nSizeAdj );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFHudWeaponAmmo::HideLowAmmoIndicator( void )
+{
+	if ( m_pLowAmmoImage && m_pLowAmmoImage->IsVisible() == true )
+	{
+		m_pLowAmmoImage->SetBounds( m_nLowAmmoImageOrigX, m_nLowAmmoImageOrigY, m_nLowAmmoImageOrigW, m_nLowAmmoImageOrigH );
+		m_pLowAmmoImage->SetVisible( false );
+		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( this, "HudLowAmmoPulseStop" );
+	}
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Get ammo info from the weapon and update the displays.
 //-----------------------------------------------------------------------------
 void CTFHudWeaponAmmo::OnThink()
 {
 	// Get the player and active weapon.
-	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
-	if ( !pPlayer )
-		return;
-
-	C_BaseCombatWeapon *pWeapon = pPlayer->GetActiveWeapon();
+	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+	C_BaseCombatWeapon *pWeapon = GetActiveWeapon();
 
 	if ( m_flNextThink < gpGlobals->curtime )
 	{
-		bool bShowIcon = false;
-
-		if ( tf2v_ammobucket.GetBool() && pWeapon && m_pWeaponBucket )
-		{
-			int iItemID = pWeapon->GetItemID();
-			CEconItemDefinition *pItemDefinition = GetItemSchema()->GetItemDefinition( iItemID );
-			if ( pItemDefinition )
-			{
-				char szImage[128];
-				Q_snprintf( szImage, sizeof( szImage ), "../%s_large", pItemDefinition->GetInventoryImage() );
-				m_pWeaponBucket->SetImage( szImage );
-				bShowIcon = true;
-			}
-		}
-		if ( m_pWeaponBucket && m_pWeaponBucket->IsVisible() != bShowIcon )
-		{
-			m_pWeaponBucket->SetVisible( bShowIcon );
-		}
-
 		hudlcd->SetGlobalStat( "(weapon_print_name)", pWeapon ? pWeapon->GetPrintName() : " " );
 		hudlcd->SetGlobalStat( "(weapon_name)", pWeapon ? pWeapon->GetName() : " " );
 
@@ -217,6 +263,9 @@ void CTFHudWeaponAmmo::OnThink()
 
 			// turn off our ammo counts
 			UpdateAmmoLabels( false, false, false );
+
+			// hide low ammo indicator since it is not applicable
+			HideLowAmmoIndicator();
 
 			m_nAmmo = -1;
 			m_nAmmo2 = -1;
@@ -258,6 +307,25 @@ void CTFHudWeaponAmmo::OnThink()
 					UpdateAmmoLabels( false, false, true );
 					SetDialogVariable( "Ammo", m_nAmmo );
 				}
+			}
+
+			// low ammo warning
+			int nTotalAmmo = nAmmo1 + nAmmo2;
+			int nMaxTotalAmmo = ((CTFPlayer*)pPlayer)->GetMaxAmmo( pWeapon->GetPrimaryAmmoType() );
+			// include ammount in the current clip as well
+			if ( pWeapon->GetMaxClip1() > 0 )
+			{
+				nMaxTotalAmmo += pWeapon->GetMaxClip1();
+			}
+			float flWarningAmmoThreshold = (float)nMaxTotalAmmo * hud_low_ammo_warning_threshold.GetFloat();
+			if ( nTotalAmmo < RoundFloatToInt( flWarningAmmoThreshold ) )
+			{
+				ShowLowAmmoIndicator();
+				SizeLowAmmoIndicator( (float)nTotalAmmo, flWarningAmmoThreshold );
+			}
+			else
+			{
+				HideLowAmmoIndicator();
 			}
 		}
 

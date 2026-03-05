@@ -1,28 +1,28 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_nav_ent_wait.h
+// Wait for awhile, as directed by nav entity
+// Michael Booth, September 2009
+
 #ifndef TF_BOT_NAV_ENT_WAIT_H
 #define TF_BOT_NAV_ENT_WAIT_H
-#ifdef _WIN32
-#pragma once
-#endif
+
+#include "NextBot/NavMeshEntities/func_nav_prerequisite.h"
 
 
-#include "NextBotBehavior.h"
-
-class CFuncNavPrerequisite;
-
-class CTFBotNavEntWait : public Action<CTFBot>
+class CTFBotNavEntWait : public Action< CTFBot >
 {
 public:
 	CTFBotNavEntWait( const CFuncNavPrerequisite *prereq );
-	virtual ~CTFBotNavEntWait();
 
-	virtual const char *GetName( void ) const OVERRIDE;
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
+	virtual const char *GetName( void ) const	{ return "NavEntWait"; };
 
 private:
-	CHandle<CFuncNavPrerequisite> m_hPrereq;
-	CountdownTimer m_waitDuration;
+	CHandle< CFuncNavPrerequisite > m_prereq;
+	CountdownTimer m_timer;
 };
 
-#endif
+
+#endif // TF_BOT_NAV_ENT_WAIT_H

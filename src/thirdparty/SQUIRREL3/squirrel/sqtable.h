@@ -90,6 +90,7 @@ struct SQTable : public SQDelegable
         return false;
     }
     bool Get(const SQObjectPtr &key,SQObjectPtr &val);
+	bool GetIncludingWeakref(const SQObjectPtr &key,SQObjectPtr &val);
     void Remove(const SQObjectPtr &key);
     bool Set(const SQObjectPtr &key, const SQObjectPtr &val);
     //returns true if a new slot has been created false if it was already present

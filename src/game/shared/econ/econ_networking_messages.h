@@ -27,12 +27,13 @@ public:
 	CNetPacket()
 	{
 		m_pMsg = NULL;
-		m_Hdr.m_eMsgType = k_EInvalidMsg;
+		m_Hdr.m_eMsgType = 0;
+		m_cRefCount = 1;
 	}
 
 	void *Data( void ) const { return (byte *)m_pMsg; }
 	byte *MutableData( void ) { return (byte *)m_pMsg + sizeof(MsgHdr_t); }
-	uint32 Size( void ) const { return m_Hdr.m_unMsgSize + sizeof(MsgHdr_t); }
+	size_t Size( void ) const { return m_Hdr.m_unMsgSize + sizeof(MsgHdr_t); }
 	MsgHdr_t const &Hdr( void ) const { return m_Hdr; }
 
 protected:
@@ -82,6 +83,10 @@ private:
 	INetChannel *m_pNetChan;
 	MsgType_t m_eMsgType;
 	CSmartPtr<CNetPacket> m_pPacket;
+
+	// Inherited via INetMessage
+	bool BIncomingMessageForProcessing( double dblNetTime, int numBytes ) override;
+	size_t GetSize() const override;
 };
 
 //-----------------------------------------------------------------------------

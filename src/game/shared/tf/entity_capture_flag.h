@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2006, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: CTF Flag.
 //
@@ -10,16 +10,19 @@
 #endif
 
 #include "tf_item.h"
-#include "SpriteTrail.h"
+#include "tf_shareddefs.h"
 
 #ifdef CLIENT_DLL
 #define CCaptureFlag C_CaptureFlag
-#endif
-
+#else
 class CTFBot;
+#endif
 
 #define TF_FLAG_THINK_TIME			0.25f
 #define	TF_FLAG_OWNER_PICKUP_TIME	3.0f
+
+#define TF_FLAG_TRAIL_ALPHA			96
+#define TF_FLAG_NUMBEROFSKINS		3
 
 #define TF_FLAG_MODEL				"models/flag/briefcase.mdl"
 #define TF_FLAG_ICON				"../hud/objectives_flagpanel_carried"
@@ -43,10 +46,7 @@ class CTFBot;
 
 #define TF_CTF_FLAGSPAWN			"CaptureFlag.FlagSpawn"
 
-#define TF_CTF_CAPTURED_TEAM_FRAGS	1
-
-#define TF_CTF_RESET_TIME			60.0f
-#define TF_ACTF_RESET_TIME			5.0f
+#define TF_CTF_CAPTURED_TEAM_SCORE	1
 
 //=============================================================================
 //
@@ -58,20 +58,17 @@ class CTFBot;
 #define TF_AD_ENEMY_CAPTURED		"AttackDefend.EnemyCaptured"
 #define TF_AD_ENEMY_RETURNED		"AttackDefend.EnemyReturned"
 
+#define TF_MVM_AD_ENEMY_STOLEN		"MVM.AttackDefend.EnemyStolen"
+#define TF_MVM_AD_ENEMY_DROPPED		"MVM.AttackDefend.EnemyDropped"
+#define TF_MVM_AD_ENEMY_CAPTURED	"MVM.AttackDefend.EnemyCaptured"
+#define TF_MVM_AD_ENEMY_RETURNED	"MVM.AttackDefend.EnemyReturned"
+   
 #define TF_AD_TEAM_STOLEN			"AttackDefend.TeamStolen"
 #define TF_AD_TEAM_DROPPED			"AttackDefend.TeamDropped"
 #define TF_AD_TEAM_CAPTURED			"AttackDefend.TeamCaptured"
 #define TF_AD_TEAM_RETURNED			"AttackDefend.TeamReturned"
 
-#define TF_MVM_AD_ENEMY_STOLEN		"MVM.AttackDefend.EnemyStolen"
-#define TF_MVM_AD_ENEMY_DROPPED		"MVM.AttackDefend.EnemyDropped"
-#define TF_MVM_AD_ENEMY_CAPTURED	"MVM.AttackDefend.EnemyCaptured"
-#define TF_MVM_AD_ENEMY_RETURNED	"MVM.AttackDefend.EnemyReturned"
-
 #define TF_AD_CAPTURED_SOUND		"AttackDefend.Captured"
-
-#define TF_AD_CAPTURED_FRAGS		30
-#define TF_AD_RESET_TIME			60.0f
 
 //=============================================================================
 //
@@ -88,10 +85,8 @@ class CTFBot;
 
 #define TF_INVADE_FLAG_RETURNED			"Invade.FlagReturned"
 
-#define TF_INVADE_CAPTURED_FRAGS		10
-#define TF_INVADE_CAPTURED_TEAM_FRAGS	1
+#define TF_INVADE_CAPTURED_TEAM_SCORE	1
 
-#define TF_INVADE_RESET_TIME			60.0f
 #define TF_INVADE_NEUTRAL_TIME			30.0f
 
 //=============================================================================
@@ -119,9 +114,6 @@ class CTFBot;
 #define TF_RESOURCE_EVENT_RED_CAPPED		"Announcer.SD_Event_CappedRed"
 #define TF_RESOURCE_EVENT_BLUE_CAPPED		"Announcer.SD_Event_CappedBlu"
 
-#define TF_RESOURCE_RESET_TIME			45.0f
-#define TF_RESOURCE_NEUTRAL_TIME		45.0f
-
 //=============================================================================
 //
 // Robot Destruction Flag defines.
@@ -145,6 +137,11 @@ class CTFBot;
 //
 
 #define TF_RUNE_INTEL_CAPTURED		"CaptureFlag.TeamCapturedExcited"
+
+//=============================================================================
+//
+//	Robot Destruction defines
+//
 
 #ifdef CLIENT_DLL
 	#define CCaptureFlagReturnIcon C_CaptureFlagReturnIcon
@@ -187,7 +184,7 @@ public:
 //
 // CTF Flag class.
 //
-DECLARE_AUTO_LIST( ICaptureFlagAutoList )
+DECLARE_AUTO_LIST( ICaptureFlagAutoList );
 class CCaptureFlag : public CTFItem, public ICaptureFlagAutoList
 {
 public:
@@ -196,34 +193,38 @@ public:
 	DECLARE_NETWORKCLASS();
 
 	CCaptureFlag();
+	~CCaptureFlag();
 
-	unsigned int	GetItemID( void );
+	unsigned int	GetItemID( void ) const OVERRIDE;
 
 	void			Precache( void );
 	void			Spawn( void );
 
-	void			UpdateOnRemove( void ) OVERRIDE;
+	virtual void	UpdateOnRemove( void );
 
 	void			FlagTouch( CBaseEntity *pOther );
 
-	bool			IsDisabled( void );
+	bool			IsDisabled( void ) const;
 	void			SetDisabled( bool bDisabled );
 	void			SetVisibleWhenDisabled( bool bVisible );
-	bool			IsVisibleWhenDisabled( void ) { return m_bVisibleWhenDisabled; }
 	bool			IsPoisonous( void ) { return m_flTimeToSetPoisonous > 0 && gpGlobals->curtime > m_flTimeToSetPoisonous; }
 	float			GetPoisonTime( void ) const { return m_flTimeToSetPoisonous; }
 
+	bool			IsVisibleWhenDisabled( void ) { return m_bVisibleWhenDisabled; }
+
 	CBaseEntity		*GetPrevOwner( void ) { return m_hPrevOwner.Get(); }
 
-	int				GetIntelSkin( int iTeamNum, bool bPickupSkin = false );
-
-	void			SetFlagStatus( int iStatus, CBasePlayer *pNewOwner = NULL );
+	//-----------------------------------------------------------------------------
+	// Purpose: Sets the flag status
+	//-----------------------------------------------------------------------------
+	void SetFlagStatus( int iStatus, CBasePlayer *pNewOwner = NULL );
 
 // Game DLL Functions
 #ifdef GAME_DLL
+	CCaptureFlag &operator=( const CCaptureFlag& rhs );
 	virtual void	Activate( void );
 
-	static CCaptureFlag*	Create( const Vector& vecOrigin, const char *pszModelName, int nFlagType );
+	static CCaptureFlag*	Create( const Vector& vecOrigin, const char *pszModelName, ETFFlagType type );
 
 	// Input handlers
 	void			InputEnable( inputdata_t &inputdata );
@@ -238,10 +239,10 @@ public:
 	void			InputForceGlowDisabled( inputdata_t &inputdata );
 
 	void			Think( void );
-	
-	int				GetFlagStatus( void ) { return m_nFlagStatus; };
-	bool			IsCaptured( void ) { return m_bCaptured; }
 
+	void			CreateReturnIcon( void );
+	void			DestroyReturnIcon( void );
+	
 	void			ResetFlagReturnTime( void ) { m_flResetTime = 0; }
 	void			SetFlagReturnIn( float flTime )
 	{
@@ -249,31 +250,40 @@ public:
 		m_flMaxResetTime = flTime;
 	}
 
+    void			SetFlagReturnIn( float flTime, float flMaxResetTime )
+    {
+        m_flResetTime = gpGlobals->curtime + flTime;
+        m_flMaxResetTime = flMaxResetTime;
+    }
+
 	void			ResetFlagNeutralTime( void ) { m_flNeutralTime = 0; }
 	void			SetFlagNeutralIn( float flTime )
 	{ 
 		m_flNeutralTime = gpGlobals->curtime + flTime;
 		m_flMaxResetTime = flTime;
 	}
+	bool			IsCaptured( void ){ return m_bCaptured; }
 
-	float			GetMaxReturnTime( void );
+	int				UpdateTransmitState();
 
-	int				UpdateTransmitState( void ) OVERRIDE;
+	void			StartFlagTrail ( void );
+	void			RemoveFlagTrail ( void );
+	EHANDLE			m_pFlagTrail;
+	float			m_flFlagTrailLife;
+	bool			m_bInstantTrailRemove;
 
-	void			ManageSpriteTrail( void );
-
-	void			CreateReturnIcon( void );
-	void			DestroyReturnIcon( void );
+	int				GetNumTags() const { return m_tags.Count(); }
+	const char*		GetTag( int i ) const { return m_tags[i]; }
+	void			AddFollower( CTFBot* pBot );
+	void			RemoveFollower( CTFBot* pBot );
+	int				GetNumFollowers() const { return m_followers.Count(); }
 
 	void			AddPointValue( int nPoints );
 
-	void			AddFollower( CTFBot *pBot );
-	void			RemoveFollower( CTFBot *pBot );
-	int				GetNumFollowers( void ) const { return m_hFollowers.Count(); }
-
 #else // CLIENT DLL Functions
-
-	virtual const char	*GetIDString(void) { return "entity_capture_flag"; };
+	virtual bool	ShouldDraw() OVERRIDE;
+	virtual bool IsVisibleToTargetID() const OVERRIDE;
+	virtual const char	*GetIDString( void ) { return "entity_capture_flag"; };
 
 	virtual void	OnPreDataChanged( DataUpdateType_t updateType );
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
@@ -281,31 +291,42 @@ public:
 	void			CreateSiren( void );
 	void			DestroySiren( void );
 
+	void			ManageTrailEffects( void );
+
+	CNewParticleEffect	*m_pGlowTrailEffect;
 	CNewParticleEffect	*m_pPaperTrailEffect;
 
-	void			ManageTrailEffects( void );
 	virtual void	Simulate( void );
 
 	float			GetMaxResetTime() { return m_flMaxResetTime; }
 	float			GetReturnProgress( void );
+	
+public:
 
 	void			UpdateGlowEffect( void );
 	virtual bool	ShouldHideGlowEffect( void );
 
 #endif
-
+	
+    // TODO: Both of these should be updated to work with floats instead of ints.
+	int				GetReturnTime( int nMaxReturnTime );
+    int             GetMaxReturnTime( void );
+	
 	void			Capture( CTFPlayer *pPlayer, int nCapturePoint );
 	virtual void	PickUp( CTFPlayer *pPlayer, bool bInvisible );
 	virtual void	Drop( CTFPlayer *pPlayer, bool bVisible, bool bThrown = false, bool bMessage = true );
 
-	int				GetGameType( void ){ return m_nType; }
+	ETFFlagType		GetType( void )	const { return (ETFFlagType)m_nType.Get(); }
 
 	bool			IsDropped( void );
 	bool			IsHome( void );
 	bool			IsStolen( void );
 
-	void			Reset( void );
-	void			ResetMessage( void );
+	void ResetFlag( void )
+	{
+		Reset();
+		ResetMessage();
+	}
 
 	const char		*GetFlagModel( void );
 	void			GetHudIcon( int nTeam, char *pchName, int nBuffSize );
@@ -313,43 +334,80 @@ public:
 	void			GetTrailEffect( int nTeam, char *pchName, int nBuffSize );
 
 	int				GetPointValue() const { return m_nPointValue.Get(); }
-
 private:
-#ifdef GAME_DLL
-	void			SetGlowEnabled( bool bGlowEnabled ) { m_bGlowEnabled = bGlowEnabled; }
 
-	void			PlaySound( IRecipientFilter& filter, char const *pszString, int iTeam = TEAM_ANY );
+	void			Reset( void );
+	void			ResetMessage( void );
+	void			InternalForceReset( bool bSilent = false );
+
+#ifdef GAME_DLL
+	void			PlaySound( IRecipientFilter& filter, const char *pszString, int iTeam = TEAM_ANY );
+
+	float			m_flNextTeamSoundTime[TF_TEAM_COUNT];
+
+	void			SetGlowEnabled( bool bGlowEnabled ){ m_bGlowEnabled = bGlowEnabled; }
 #endif
 
-	bool			IsGlowEnabled( void ) { return m_bGlowEnabled; }
+	bool			IsGlowEnabled( void ){ return m_bGlowEnabled; }
+
+private:
 
 	CNetworkVar( bool,	m_bDisabled );	// Enabled/Disabled?
 	CNetworkVar( bool,	m_bVisibleWhenDisabled );
 	CNetworkVar( int,	m_nType );	// Type of game this flag will be used for.
+
 	CNetworkVar( int,	m_nFlagStatus );
 	CNetworkVar( float,	m_flResetTime );		// Time until the flag is placed back at spawn.
 	CNetworkVar( float, m_flMaxResetTime );		// Time the flag takes to return in the current mode
 	CNetworkVar( float, m_flNeutralTime );	// Time until the flag becomes neutral (used for the invade gametype)
 	CNetworkHandle( CBaseEntity, m_hPrevOwner );
-	CNetworkVar( int,	m_nPointValue );	// Value per scoring, for Robot/Player Destruction
+	CNetworkVar( int, m_nPointValue );	// How many points this flag is worth when scored.  Used in Robot Destruction mode.
 	CNetworkVar( float, m_flAutoCapTime );
-	CNetworkVar( bool,	m_bGlowEnabled );
+	CNetworkVar( bool, m_bGlowEnabled );
+
+#ifdef GAME_DLL
+	string_t m_iszModel;
+	string_t m_iszHudIcon;
+	string_t m_iszPaperEffect;
+	string_t m_iszTrailEffect;
+
+	string_t m_iszTags;
+	CUtlStringList m_tags;
+
+	CUtlVector< CHandle< CTFBot > >	m_followers;
+#endif
+
 	CNetworkString( m_szModel, MAX_PATH );
 	CNetworkString( m_szHudIcon, MAX_PATH );
 	CNetworkString( m_szPaperEffect, MAX_PATH );
 	CNetworkString( m_szTrailEffect, MAX_PATH );
-	CNetworkVar( int,	m_nUseTrailEffect );
-	CNetworkVar( float, m_flTimeToSetPoisonous );
+	CNetworkVar( int, m_nUseTrailEffect );
+	
 
 	int				m_iOriginalTeam;
 	float			m_flOwnerPickupTime;
 
-	float           m_flLastPickupTime; // What the time was of the last pickup by any player.
-	float           m_flLastResetDuration; // How long was the last time to reset before being picked up?
+    int GetReturnTimeShotClockMode( int nStartReturnTime );
+    inline bool IsFlagShotClockModePossible() const
+    {
+        return m_nType == TF_FLAGTYPE_CTF 
+			|| m_nType == TF_FLAGTYPE_ROBOT_DESTRUCTION 
+			|| m_nType == TF_FLAGTYPE_RESOURCE_CONTROL;
+    }
+
+    float           m_flLastPickupTime; // What the time was of the last pickup by any player.
+    float           m_flLastResetDuration; // How long was the last time to reset before being picked up?
+
+	int				m_nReturnTime; // Length of time (in seconds) before dropped flag/intelligence returns to base.
+	int				m_nNeutralType; // Type of neutral flag (only used for Invade game type).
+	int				m_nScoringType; // Type of scoring for flag capture (only used for Invade game type).
 
 	bool			m_bReturnBetweenWaves; // Used in MvM mode to determine if the flag should return between waves.
-
-	EHANDLE			m_hReturnIcon;
+	bool			m_bUseShotClockMode; // Used to determine whether we should be using shot clock mode or not.
+	
+	CNetworkVar( float, m_flTimeToSetPoisonous ); // Time to set the flag as poisonous
+	
+	EHANDLE		m_hReturnIcon;
 
 #ifdef GAME_DLL
 	Vector			m_vecResetPos;		// The position the flag should respawn (reset) at.
@@ -357,46 +415,39 @@ private:
 
 	COutputEvent	m_outputOnReturn;	// Fired when the flag is returned via timer.
 	COutputEvent	m_outputOnPickUp;	// Fired when the flag is picked up.
-	COutputEvent	m_outputOnPickUpTeam1;	// Kept for compatibility
-	COutputEvent	m_outputOnPickUpTeam2;	// Kept for compatibility
-	COutputInt		m_outputOnPickUpByTeam;	// Fired when the flag is picked up by any team
+	COutputEvent	m_outputOnPickUp1;	// Fired with the player as the activator when the flag is picked up.
+	COutputEvent	m_outputOnPickUpTeam1;	// Fired when the flag is picked up by RED.
+	COutputEvent	m_outputOnPickUpTeam2;	// Fired when the flag is picked up by BLU.
 	COutputEvent	m_outputOnDrop;		// Fired when the flag is dropped.
+	COutputEvent	m_outputOnDrop1;	// Fired with the player as the activator when the flag is dropped.
 	COutputEvent	m_outputOnCapture;	// Fired when the flag is captured.
-	COutputEvent	m_outputOnCapTeam1;	// Kept for compatibility
-	COutputEvent	m_outputOnCapTeam2; // Kept for compatibility
-	COutputInt		m_outputOnCapByTeam;	// Fired when the flag is captured by any team
-	COutputEvent	m_outputOnTouchSameTeam;
-
-	string_t		m_iszHudIcon;
-	string_t		m_iszModel;
-	string_t		m_iszPaperEffect;
-	string_t		m_iszTrailEffect;
+	COutputEvent	m_outputOnCapture1;	// Fired with the player as the activator when the flag is captured.
+	COutputEvent	m_OnCapTeam1;
+	COutputEvent	m_OnCapTeam2;
+	COutputEvent	m_OnTouchSameTeam;
 
 	bool			m_bAllowOwnerPickup;
+
 	bool			m_bCaptured;
 
-	float			m_flNextTeamSoundTime[TF_TEAM_COUNT];
+	EHANDLE			m_hInitialPlayer;
+	
+	EHANDLE			m_hInitialParent;
+	Vector			m_vecOffset;
 
-	CSpriteTrail	*m_pGlowTrail;
-
-	string_t		m_iszTags;
-	CUtlStringList	m_tags;
-
-	CUtlVector< CHandle<CTFBot> > m_hFollowers;
 #else
 
 	IMaterial	*m_pReturnProgressMaterial_Empty;		// For labels above players' heads.
 	IMaterial	*m_pReturnProgressMaterial_Full;		
 
-	int			m_nOldFlagStatus;
+	int			m_nOldTeamNumber;
 	EHANDLE		m_hOldOwner;
 
 	CGlowObject			*m_pGlowEffect;
 	CGlowObject			*m_pCarrierGlowEffect;
-
 	HPARTICLEFFECT		m_hSirenEffect;
 
-	bool		m_bOldGlowEnabled;
+	bool				m_bOldGlowEnabled;
 #endif
 
 	DECLARE_DATADESC();

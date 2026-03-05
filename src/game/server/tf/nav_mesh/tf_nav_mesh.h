@@ -1,115 +1,236 @@
-#ifndef __TF_NAV_MESH_H__
-#define __TF_NAV_MESH_H__
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_nav_mesh.h
+// TF specific nav mesh
+// Michael Booth, February 2009
+
+#ifndef TF_NAV_MESH_H
+#define TF_NAV_MESH_H
 
 #include "nav_mesh.h"
-#include "nav_colors.h"
 #include "tf_nav_area.h"
+#include "tf_obj_teleporter.h"
 
-#include "func_respawnroom.h"
-#include "team_control_point_master.h"
-#include "trigger_area_capture.h"
+#define TF_PLAYER_JUMP_HEIGHT	45.0f			// non crouch-jumping
 
 class CBaseObject;
+class CObjectTeleporter;
+class CTFPlayer;
 
+//-------------------------------------------------------------------------
+// General purpose collector class for ForAllArea-style functor methods
+class CTFAreaCollector
+{
+public:
+	bool operator() ( CNavArea *area )
+	{
+		m_vector.AddToTail( (CTFNavArea *)area );
+		return true;
+	}
+
+	CUtlVector< CTFNavArea * > m_vector;
+};
+
+
+//-------------------------------------------------------------------------
 class CTFNavMesh : public CNavMesh
 {
 public:
-	CTFNavMesh();
-	virtual ~CTFNavMesh();
+	CTFNavMesh( void );
 
-	virtual void FireGameEvent( IGameEvent *event ) OVERRIDE;
-	virtual CNavArea *CreateArea( void ) const OVERRIDE;
-	virtual void Update( void ) OVERRIDE;
-	virtual bool IsAuthoritative( void ) const OVERRIDE;
-	virtual unsigned int GetSubVersionNumber( void ) const OVERRIDE;
-	virtual void SaveCustomData( CUtlBuffer& fileBuffer ) const OVERRIDE;
-	virtual void LoadCustomData( CUtlBuffer& fileBuffer, unsigned int subVersion ) OVERRIDE;
-	virtual void OnServerActivate( void ) OVERRIDE;
-	virtual void OnRoundRestart( void ) OVERRIDE;
-	virtual unsigned int GetGenerationTraceMask( void ) const OVERRIDE;
-	virtual void PostCustomAnalysis( void ) OVERRIDE;
-	virtual void BeginCustomAnalysis( bool bIncremental ) OVERRIDE;
-	virtual void EndCustomAnalysis( void ) OVERRIDE;
+	virtual CTFNavArea *CreateArea( void ) const;						// CNavArea factory
 
-	void CollectAmbushAreas( CUtlVector<CTFNavArea *> *areas, CTFNavArea *startArea, int teamNum, float fMaxDist = -1.0f, float fIncursionDiff = 0.0f ) const;
-	void CollectAreasWithinBombTravelRange( CUtlVector<CTFNavArea *> *areas, float minTravel, float maxTravel ) const;
-	void CollectBuiltObjects( CUtlVector<CBaseObject *> *objects, int teamNum );
-	void CollectSpawnRoomThresholdAreas( CUtlVector<CTFNavArea *> *areas, int teamNum ) const;
-	bool IsSentryGunHere( CTFNavArea *area ) const;
+	virtual void Update( void );										// invoked on each game frame
 
-	const CUtlVector<CTFNavArea *> &GetControlPointAreas( int iPointIndex ) const
+	virtual unsigned int GetSubVersionNumber( void ) const;									// returns sub-version number of data format used by derived classes
+	virtual void SaveCustomData( CUtlBuffer &fileBuffer ) const;							// store custom mesh data for derived classes
+	virtual void LoadCustomData( CUtlBuffer &fileBuffer, unsigned int subVersion );			// load custom mesh data for derived classes
+
+	virtual void OnServerActivate( void );								// (EXTEND) invoked when server loads a new map
+	virtual void OnRoundRestart( void );								// invoked when a game round restarts
+
+	virtual void FireGameEvent( IGameEvent *event );
+
+	/**
+	 * Return true if nav mesh can be trusted for all climbing/jumping decisions because game environment is fairly simple.
+	 * Authoritative meshes mean path followers can skip CPU intesive realtime scanning of unpredictable geometry.
+	 */
+	virtual bool IsAuthoritative( void ) const { return true; }			// TF2 has nice clean environments
+
+	virtual unsigned int GetGenerationTraceMask( void ) const;			// return the mask used by traces when generating the mesh
+
+	void OnObjectChanged();
+	bool IsSentryGunHere( CTFNavArea *area ) const;						// return true if a Sentry Gun has been built in the given area
+
+	void CollectBuiltObjects( CUtlVector< CBaseObject * > *collectionVector, int team = TEAM_ANY );	// fill given vector will all objects on the given team
+
+	struct BallisticLaunchInfo
 	{
-		Assert( iPointIndex >= 0 && iPointIndex < MAX_CONTROL_POINTS );
-		return m_CPAreas[iPointIndex];
-	}
-	CTFNavArea *GetMainControlPointArea( int iPointIndex )
-	{
-		Assert( iPointIndex >= 0 && iPointIndex < MAX_CONTROL_POINTS );
-		return m_CPArea[iPointIndex];
-	}
+		Vector m_launchSpot;						// where to stand
+		float m_aimYaw;								// how to aim
+		float m_aimPitch;							// how to aim
+		float m_chargeTime;							// how long to charge weapon
+	};
 
-	const CUtlVector<CTFNavArea *> &GetSpawnRoomAreasForTeam( int iTeamNum ) const
-	{
-		Assert( iTeamNum == TF_TEAM_RED || iTeamNum == TF_TEAM_BLUE );
-		if (iTeamNum == TF_TEAM_RED)
-			return m_spawnAreasTeam1;
+	// populate the given vector with ways to launch grenades to hit the given building
+	void CollectBallisticAttackInfo( CBaseObject *building, CUtlVector< BallisticLaunchInfo > *infoVector ) const;
 
-		return m_spawnAreasTeam2;
-	}
-	const CUtlVector<CTFNavArea *> &GetSpawnRoomExitsForTeam( int iTeamNum ) const
+	void ResetMeshAttributes( bool bScheduleRecomputation );
+
+	void CollectControlPointAreas( void );
+
+	void DecorateMesh( void );
+	void DecorateMeshTacticalHints( void );
+	void RemoveAllMeshDecoration( void );
+
+	// populate the given "ambushVector" with good areas to lurk in ambush for the invading enemy team
+	void CollectAmbushAreas( CUtlVector< CTFNavArea * > *ambushVector, CTFNavArea *startArea, int teamToAmbush, float searchRadius, float incursionTolerance = 300.0f ) const;
+
+	// populate the given vector with areas that are just outside of the given team's spawn room(s)
+	void CollectSpawnRoomThresholdAreas( CUtlVector< CTFNavArea * > *spawnExitAreaVector, int team ) const;
+
+	// populate the given vector with areas that have a bomb travel distance within the given range
+	void CollectAreaWithinBombTravelRange( CUtlVector< CTFNavArea * > *spawnExitAreaVector, float minTravel, float maxTravel ) const;
+
+	const CUtlVector< CTFNavArea * > *GetSetupGateDefenseAreas( void ) const;	// return vector of areas that are good for defending enemies coming out of the blue setup gates
+	const CUtlVector< CTFNavArea * > *GetControlPointAreas( int pointIndex ) const;		// return vector of areas overlapping the given control point
+	CTFNavArea *GetControlPointCenterArea( int pointIndex ) const;				// return area overlapping the center of the given control point
+	const CUtlVector< CTFNavArea * > *GetSpawnRoomAreas( int team ) const;		// return vector of areas within the given team spawn room(s)
+	const CUtlVector< CTFNavArea * > *GetSpawnRoomExitAreas( int team ) const;	// return vector of areas where the given team exits their spawn room(s)
+
+	enum RecomputeReasonType
 	{
-		Assert( iTeamNum == TF_TEAM_RED || iTeamNum == TF_TEAM_BLUE );
-		if (iTeamNum == TF_TEAM_RED)
-			return m_spawnExitsTeam1;
-		
-		return m_spawnExitsTeam2;
-	}
+		RESET,
+		SETUP_FINISHED,
+		POINT_CAPTURED,
+		POINT_UNLOCKED,
+		BLOCKED_STATUS_CHANGED,
+		MAP_LOGIC
+	};
+	void ScheduleRecomputationOfInternalData( RecomputeReasonType reason, int whichPoint );
+
+	virtual void OnDoorCreated( CBaseEntity *door );					// invoked when a door is created
+
+protected:
+	virtual void BeginCustomAnalysis( bool bIncremental );
+	virtual void PostCustomAnalysis( void );							// invoked when custom analysis step is complete
+	virtual void EndCustomAnalysis();
 
 private:
-	void CollectAndMarkSpawnRoomExits( CTFNavArea *area, CUtlVector<CTFNavArea *> *areas );
-	void CollectControlPointAreas( void );
-	void ComputeBlockedAreas( void );
-	void ComputeBombTargetDistance(void);
-	void ComputeIncursionDistances( void );
-	void ComputeIncursionDistances( CTFNavArea *area, int teamNum );
+	void ComputeIncursionDistances( void );					// recompute travel distance from each team's spawn room for each nav area
+	void ComputeIncursionDistances( CTFNavArea *spawnArea, int team );
 	void ComputeInvasionAreas( void );
-	void ComputeLegalBombDropAreas(void);
-	void DecorateMesh( void );
-	void OnObjectChanged( void );
-	void RecomputeInternalData( void );
-	void RemoveAllMeshDecoration( void );
-	void ResetMeshAttributes( bool bFullReset );
+	void ComputeLegalBombDropAreas( void );
+	void ComputeBombTargetDistance();
+
 	void UpdateDebugDisplay( void ) const;
+
 	void OnBlockedAreasChanged( void );
 
-	CountdownTimer m_recomputeTimer;
+	void ComputeBlockedAreas( void );
 
-	enum
-	{
-		CP_STATE_RESET = 1,
-		CP_STATE_OWNERSHIP_CHANGED = 2,
-		CP_STATE_AWAITING_CAPTURE = 3
-	};
-	int m_pointState;
-	int m_pointChangedIdx;
+	CountdownTimer m_recomputeInternalDataTimer;			// if started, when counts down recompute internal data to give various map logic time to complete
+	RecomputeReasonType m_recomputeReason;
+	int m_recomputeReasonWhichPoint;
+	void RecomputeInternalData( void );
 
-	CUtlVector<CTFNavArea *> m_sentryAreas;
+	// Array of areas with sentry danger attributes set.
+	CUtlVector< CTFNavArea * > m_sentryAreas;
 
-	CUtlVector<CTFNavArea *> m_CPAreas[MAX_CONTROL_POINTS];
-	CTFNavArea *m_CPArea[MAX_CONTROL_POINTS];
+	CUtlVector< CTFNavArea * > m_setupGateDefenseAreaVector;
 
-	CUtlVector<CTFNavArea *> m_spawnAreasTeam1;
-	CUtlVector<CTFNavArea *> m_spawnAreasTeam2;
+	CUtlVector< CTFNavArea * > m_controlPointAreaVector[ MAX_CONTROL_POINTS ];
+	CTFNavArea *m_controlPointCenterAreaVector[ MAX_CONTROL_POINTS ];
 
-	CUtlVector<CTFNavArea *> m_spawnExitsTeam1;
-	CUtlVector<CTFNavArea *> m_spawnExitsTeam2;
+	CUtlVector< CTFNavArea * > m_redSpawnRoomAreaVector;
+	CUtlVector< CTFNavArea * > m_blueSpawnRoomAreaVector;
 
-	int m_lastNPCCount;
+	CUtlVector< CTFNavArea * > m_redSpawnRoomExitAreaVector;
+	CUtlVector< CTFNavArea * > m_blueSpawnRoomExitAreaVector;
+	void CollectAndMarkSpawnRoomExits( CTFNavArea *area, CUtlVector< CTFNavArea * > *exitAreaVector );
+
+	CountdownTimer m_watchCartTimer;
+
+	int m_priorBotCount;
 };
 
-inline CTFNavMesh *TFNavMesh( void )
+
+inline void CTFNavMesh::ScheduleRecomputationOfInternalData( CTFNavMesh::RecomputeReasonType reason, int whichPoint = 0 )
 {
-	return assert_cast<CTFNavMesh *>( TheNavMesh );
+	m_recomputeInternalDataTimer.Start( 2.0f );
+	m_recomputeReason = reason;
+	m_recomputeReasonWhichPoint = whichPoint;
 }
 
-#endif
+
+inline const CUtlVector< CTFNavArea * > *CTFNavMesh::GetSpawnRoomAreas( int team ) const
+{
+	if ( team == TF_TEAM_RED )
+	{
+		return &m_redSpawnRoomAreaVector;
+	}
+
+	if ( team == TF_TEAM_BLUE )
+	{
+		return &m_blueSpawnRoomAreaVector;
+	}
+
+	return NULL;
+}
+
+inline const CUtlVector< CTFNavArea * > *CTFNavMesh::GetSpawnRoomExitAreas( int team ) const
+{
+	if ( team == TF_TEAM_RED )
+	{
+		return &m_redSpawnRoomExitAreaVector;
+	}
+
+	if ( team == TF_TEAM_BLUE )
+	{
+		return &m_blueSpawnRoomExitAreaVector;
+	}
+
+	return NULL;
+}
+
+inline const CUtlVector< CTFNavArea * > *CTFNavMesh::GetControlPointAreas( int pointIndex ) const
+{
+	if ( pointIndex < 0 || pointIndex >= MAX_CONTROL_POINTS )
+	{
+		return NULL;
+	}
+
+	return &m_controlPointAreaVector[ pointIndex ];
+}
+
+inline CTFNavArea *CTFNavMesh::GetControlPointCenterArea( int pointIndex ) const
+{
+	if ( pointIndex < 0 || pointIndex >= MAX_CONTROL_POINTS )
+	{
+		return NULL;
+	}
+
+	return m_controlPointCenterAreaVector[ pointIndex ];
+}
+
+inline const CUtlVector< CTFNavArea * > *CTFNavMesh::GetSetupGateDefenseAreas( void ) const
+{
+	return &m_setupGateDefenseAreaVector;
+}
+
+
+inline unsigned int CTFNavMesh::GetGenerationTraceMask( void ) const
+{
+	return MASK_PLAYERSOLID_BRUSHONLY;
+}
+
+
+inline CTFNavMesh *TheTFNavMesh( void )
+{
+	return reinterpret_cast< CTFNavMesh * >( TheNavMesh );
+}
+
+
+extern TFNavAttributeType NameToTFAttribute( const char *name );
+extern const char *TFAttributeToName( TFNavAttributeType attribute );
+
+#endif // TF_NAV_MESH_H

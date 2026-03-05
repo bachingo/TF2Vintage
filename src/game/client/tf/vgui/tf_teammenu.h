@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2002, Valve LLC, All rights reserved. ============
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -12,6 +12,7 @@
 #endif
 
 #include "tf_controls.h"
+#include "tf_imagepanel.h"
 #include <teammenu.h>
 
 //-----------------------------------------------------------------------------
@@ -53,7 +54,7 @@ private:
 //-----------------------------------------------------------------------------
 // Purpose: Displays the team menu
 //-----------------------------------------------------------------------------
-class CTFTeamMenu : public CTeamMenu
+class CTFTeamMenu : public CTeamMenu, public CGameEventListener
 {
 private:
 	DECLARE_CLASS_SIMPLE( CTFTeamMenu, CTeamMenu );
@@ -72,149 +73,62 @@ public:
 
 	bool IsBlueTeamDisabled(){ return m_bBlueDisabled; }
 	bool IsRedTeamDisabled(){ return m_bRedDisabled; }
-	bool IsGreenTeamDisabled(){ return m_bGreenDisabled; }
-	bool IsYellowTeamDisabled(){ return m_bYellowDisabled; }
+
+	// IGameEventListener interface:
+	virtual void FireGameEvent( IGameEvent *event );
 
 protected:
 	virtual void ApplySchemeSettings(vgui::IScheme *pScheme);
 	virtual void OnKeyCodePressed( vgui::KeyCode code );
 
-	virtual void SetHighlanderTeamsFullPanels( bool bEnabled );
-
 	// command callbacks
 	virtual void OnCommand( const char *command );
+	virtual void OnClose();
 
 	virtual void LoadMapPage( const char *mapName );
 
 	virtual void OnTick( void );
 
+	virtual void OnThink() OVERRIDE;
+
+private:
+
+	void SetHighlanderTeamsFullPanels( bool bTeamsFull, bool bForce = false );
+	void ActivateSelectIconHint( int focus_group_number );
+
 private:
 
 	CTFTeamButton	*m_pBlueTeamButton;
 	CTFTeamButton	*m_pRedTeamButton;
-	CTFTeamButton	*m_pGreenTeamButton;
-	CTFTeamButton	*m_pYellowTeamButton;
 	CTFTeamButton	*m_pAutoTeamButton;
 	CTFTeamButton	*m_pSpecTeamButton;
 	CExLabel		*m_pSpecLabel;
-
-	CExLabel		*m_pHighlanderLabel;
-	CExLabel		*m_pHighlanderLabelShadow;
-	CExLabel		*m_pTeamFullLabel;
-	CExLabel		*m_pTeamFullLabelShadow;
-	CTFImagePanel	*m_pTeamsFullArrow;
-
 
 #ifdef _X360
 	CTFFooter		*m_pFooter;
 #else
 	CExButton		*m_pCancelButton;
+
+	CExLabel		*m_pHighlanderLabel;
+	CExLabel		*m_pHighlanderLabelShadow;
+	CExLabel		*m_pTeamsFullLabel;
+	CExLabel		*m_pTeamsFullLabelShadow;
+	CTFImagePanel	*m_pTeamsFullArrow;
+
+	CSCHintIcon		*m_pCancelHintIcon;
+	CSCHintIcon		*m_pJoinBluHintIcon;
+	CSCHintIcon		*m_pJoinRedHintIcon;
+	CSCHintIcon		*m_pJoinAutoHintIcon;
+	CSCHintIcon		*m_pJoinSpectatorsHintIcon;
+
 #endif
 
 	bool m_bRedDisabled;
 	bool m_bBlueDisabled;
-	bool m_bGreenDisabled;
-	bool m_bYellowDisabled;
-
-private:
-	enum { NUM_TEAMS = 3 };
-
-	ButtonCode_t m_iTeamMenuKey;
-};
-
-//-----------------------------------------------------------------------------
-// Purpose: Displays the arena team menu
-//-----------------------------------------------------------------------------
-class CTFArenaTeamMenu : public CTeamMenu
-{
-private:
-	DECLARE_CLASS_SIMPLE(CTFArenaTeamMenu, CTeamMenu);
-
-public:
-	CTFArenaTeamMenu(IViewPort *pViewPort);
-	~CTFArenaTeamMenu();
-
-	virtual const char *GetName(void) { return PANEL_ARENATEAMSELECT; }
-	void Update();
-	void ShowPanel(bool bShow);
-
-protected:
-	virtual void ApplySchemeSettings(vgui::IScheme *pScheme);
-	virtual void OnKeyCodePressed(vgui::KeyCode code);
-
-	// command callbacks
-	virtual void OnCommand(const char *command);
-
-	virtual void LoadMapPage(const char *mapName);
-
-	virtual void OnTick(void);
-
-	virtual void Init( void );
-
-private:
-
-	CTFTeamButton	*m_pAutoTeamButton;
-	CTFTeamButton	*m_pSpecTeamButton;
-	CExLabel		*m_pSpecLabel;
-	CExButton		*m_pCancelButton;
 
 
 private:
 	enum { NUM_TEAMS = 3 };
-
-	ButtonCode_t m_iTeamMenuKey;
-};
-
-//-----------------------------------------------------------------------------
-// Purpose: Displays the 4 team menu
-//-----------------------------------------------------------------------------
-class CTFFourTeamMenu : public CTeamMenu
-{
-private:
-	DECLARE_CLASS_SIMPLE(CTFFourTeamMenu, CTeamMenu);
-
-public:
-	CTFFourTeamMenu(IViewPort *pViewPort);
-
-	virtual const char *GetName(void) { return PANEL_FOURTEAMSELECT; }
-
-	void Update();
-	void ShowPanel(bool bShow);
-
-	bool IsBlueTeamDisabled(){ return m_bBlueDisabled; }
-	bool IsRedTeamDisabled(){ return m_bRedDisabled; }
-	bool IsGreenTeamDisabled(){ return m_bGreenDisabled; }
-	bool IsYellowTeamDisabled(){ return m_bYellowDisabled; }
-
-
-protected:
-	virtual void ApplySchemeSettings(vgui::IScheme *pScheme);
-	virtual void OnKeyCodePressed(vgui::KeyCode code);
-
-	// command callbacks
-	virtual void OnCommand(const char *command);
-
-	virtual void OnTick(void);
-
-private:
-
-	CTFTeamButton	*m_pBlueTeamButton;
-	CTFTeamButton	*m_pRedTeamButton;
-	CTFTeamButton	*m_pGreenTeamButton;
-	CTFTeamButton	*m_pYellowTeamButton;
-	CTFTeamButton	*m_pAutoTeamButton;
-	CTFTeamButton	*m_pSpecTeamButton;
-	CExLabel		*m_pSpecLabel;
-	CExButton		*m_pCancelButton;
-
-	bool m_bRedDisabled;
-	bool m_bBlueDisabled;
-	bool m_bGreenDisabled;
-	bool m_bYellowDisabled;
-
-
-private:
-	enum { NUM_TEAMS = 5 };
 
 	ButtonCode_t m_iTeamMenuKey;
 };

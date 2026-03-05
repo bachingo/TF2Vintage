@@ -1,588 +1,662 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
-//
-// Purpose:		
-//
-// $NoKeywords: $
-//=============================================================================
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// Michael Booth, September 2012
+
 #include "cbase.h"
-#include "../../../tf_bot.h"
 #include "nav_mesh/tf_nav_mesh.h"
-#include "tf_bot_mvm_engineer_idle.h"
-#include "tf_bot_mvm_engineer_teleport_spawn.h"
-#include "tf_bot_mvm_engineer_build_sentry.h"
-#include "tf_bot_mvm_engineer_build_teleporter.h"
-#include "../../tf_bot_retreat_to_cover.h"
-#include "entity_capture_flag.h"
+#include "tf_player.h"
+#include "tf_gamerules.h"
 #include "tf_obj_sentrygun.h"
 #include "tf_obj_teleporter.h"
+#include "bot/tf_bot.h"
+#include "bot/map_entities/tf_bot_hint_engineer_nest.h"
+#include "bot/map_entities/tf_bot_hint_sentrygun.h"
+#include "bot/map_entities/tf_bot_hint_teleporter_exit.h"
+
+#include "bot/behavior/engineer/mvm_engineer/tf_bot_mvm_engineer_idle.h"
+#include "bot/behavior/engineer/mvm_engineer/tf_bot_mvm_engineer_build_sentry.h"
+#include "bot/behavior/engineer/mvm_engineer/tf_bot_mvm_engineer_build_teleporter.h"
+#include "bot/behavior/engineer/mvm_engineer/tf_bot_mvm_engineer_teleport_spawn.h"
+#include "bot/behavior/tf_bot_retreat_to_cover.h"
+
 
 ConVar tf_bot_engineer_mvm_sentry_hint_bomb_forward_range( "tf_bot_engineer_mvm_sentry_hint_bomb_forward_range", "0", FCVAR_CHEAT );
 ConVar tf_bot_engineer_mvm_sentry_hint_bomb_backward_range( "tf_bot_engineer_mvm_sentry_hint_bomb_backward_range", "3000", FCVAR_CHEAT );
 ConVar tf_bot_engineer_mvm_hint_min_distance_from_bomb( "tf_bot_engineer_mvm_hint_min_distance_from_bomb", "1300", FCVAR_CHEAT );
 
-CON_COMMAND_F( tf_bot_mvm_show_engineer_hint_region, "Show the nav areas MvM engineer bots will consider when selecting sentry and teleporter hints", FCVAR_CHEAT )
+struct BombInfo_t
 {
-	if ( !UTIL_IsCommandIssuedByServerAdmin() )
-		return;
+	Vector m_vPosition;
+	float m_flMinBattleFront;
+	float m_flMaxBattleFront;
+};
 
-	CBasePlayer *pPlayer = UTIL_GetCommandClient();
 
-	Vector vecForward;
-	pPlayer->EyeVectors( &vecForward );
+bool GetBombInfo( BombInfo_t* pBombInfo = NULL )
+{
+	// find the incursion distance of the current "front" (the location of the bomb)
 
-	Vector const vecStart = pPlayer->EyePosition();
-	Vector const vecEnd = vecStart + vecForward * 10000;
+	// first find farthest bomb delivery distance of invading team since maps
+	// have different spawn room sizes and geometries
+	float battlefront = 0.0f;
 
-	trace_t tr;
-	UTIL_TraceLine( vecStart, vecEnd, MASK_SOLID, pPlayer, COLLISION_GROUP_NONE, &tr );
-
-	if ( !tr.DidHit() )
-		return;
-
-	CTFNavArea *pArea = assert_cast<CTFNavArea *>( TheNavMesh->GetNearestNavArea( tr.endpos ) );
-	if ( pArea == NULL )
-		return;
-
-	float flBomDistance = pArea->GetBombTargetDistance();
-	float flForwardDistance = tf_bot_engineer_mvm_sentry_hint_bomb_forward_range.GetFloat();
-	float flBackwardDistance = tf_bot_engineer_mvm_sentry_hint_bomb_backward_range.GetFloat();
-
-	CUtlVector<CTFNavArea *> travelableBombAreas;
-	TFNavMesh()->CollectAreasWithinBombTravelRange( &travelableBombAreas, flBomDistance - flForwardDistance, flBomDistance + flBackwardDistance );
-
-	CUtlVector<CTFNavArea *> hintAreas;
-	FOR_EACH_VEC( ITFBotHintEntityAutoList::AutoList(), i )
+	for( int n=0; n<TheNavAreas.Count(); ++n )
 	{
-		CBaseTFBotHintEntity *pHintEntity = (CBaseTFBotHintEntity *)ITFBotHintEntityAutoList::AutoList()[i];
-		CTFNavArea *pArea = (CTFNavArea *)TheNavMesh->GetNearestNavArea( pHintEntity );
-		if ( pArea )
-			hintAreas.AddToTail( pArea );
-	}
+		CTFNavArea *area = (CTFNavArea *)TheNavAreas[n];
 
-	FOR_EACH_VEC( travelableBombAreas, i )
-	{
-		CTFNavArea *pArea = travelableBombAreas[i];
-		if ( pArea->HasTFAttributes( TF_NAV_BLUE_SPAWN_ROOM | TF_NAV_RED_SPAWN_ROOM ) )
-			continue;
-
-		pArea->DrawFilled( 255, 100, 0, 0, 5.0f );
-
-		FOR_EACH_VEC( hintAreas, j )
+		if ( area->HasAttributeTF( TF_NAV_SPAWN_ROOM_BLUE | TF_NAV_SPAWN_ROOM_RED ) )
 		{
-			if ( pArea == hintAreas[j] )
-			{
-				CBaseTFBotHintEntity *pHintEntity = (CBaseTFBotHintEntity *)ITFBotHintEntityAutoList::AutoList()[j];
-
-				Color c;
-				if ( pHintEntity->GetHintType() == CBaseTFBotHintEntity::HintType::SENTRY_GUN )
-				{
-					c = Color( 0, 255, 0 );
-				}
-				else if ( pHintEntity->GetHintType() == CBaseTFBotHintEntity::HintType::TELEPORTER_EXIT )
-				{
-					c = Color( 0, 0, 255 );
-				}
-				else
-				{
-					bool bCloseToBomb = ( tr.endpos - pHintEntity->GetAbsOrigin() ).Length() < tf_bot_engineer_mvm_hint_min_distance_from_bomb.GetFloat();
-					c = bCloseToBomb ? Color( 255, 0, 0 ) : Color( 255, 255, 0 );
-				}
-
-				NDebugOverlay::Sphere( pHintEntity->GetAbsOrigin(), 50, c.r(), c.g(), c.b(), true, 5.0 );
-			}
+			continue;
 		}
 
-		NDebugOverlay::Sphere( tr.endpos, tf_bot_engineer_mvm_hint_min_distance_from_bomb.GetFloat(), 255, 255, 0, false, 5.0f );
+		float areaDistanceToTarget = area->GetTravelDistanceToBombTarget();
+		if ( areaDistanceToTarget > battlefront && areaDistanceToTarget > 0.0f )
+		{
+			battlefront = areaDistanceToTarget;
+		}
 	}
+
+
+	// find the travel distance from the bomb to the delivery target and use it as the front
+	CCaptureFlag *flag = NULL;
+	Vector vBombSpot(0, 0, 0);
+	for ( int i=0; i<ICaptureFlagAutoList::AutoList().Count(); ++i )
+	{
+		CCaptureFlag *pTempFlag = static_cast< CCaptureFlag* >( ICaptureFlagAutoList::AutoList()[i] );
+		Vector vTempBombSpot;
+		CTFPlayer *carrier = ToTFPlayer( pTempFlag->GetOwnerEntity() );
+		if ( carrier )
+		{
+			vTempBombSpot = carrier->GetAbsOrigin();
+		}
+		else
+		{
+			vTempBombSpot = pTempFlag->WorldSpaceCenter();
+		}
+
+		CTFNavArea *flagArea = (CTFNavArea *)TheNavMesh->GetNearestNavArea( vTempBombSpot, false, 1000.0f );
+		if ( flagArea )
+		{
+			float flagDistanceToTarget = flagArea->GetTravelDistanceToBombTarget();
+
+			if ( flagDistanceToTarget < battlefront && flagDistanceToTarget >= 0.0f )
+			{
+				battlefront = flagDistanceToTarget;
+				flag = pTempFlag;
+				vBombSpot = vTempBombSpot;
+			}
+		}
+	}
+
+	float flMaxBattlefront = battlefront + tf_bot_engineer_mvm_sentry_hint_bomb_backward_range.GetFloat();
+	float flMinBattlefront = battlefront - tf_bot_engineer_mvm_sentry_hint_bomb_forward_range.GetFloat();
+
+	if ( pBombInfo )
+	{
+		pBombInfo->m_vPosition = vBombSpot;
+		pBombInfo->m_flMinBattleFront = flMinBattlefront;
+		pBombInfo->m_flMaxBattleFront = flMaxBattlefront;
+	}
+
+	return flag ? true : false;
 }
 
 
-CTFBotMvMEngineerIdle::CTFBotMvMEngineerIdle()
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotMvMEngineerIdle::OnStart( CTFBot *me, Action< CTFBot > *priorAction )
 {
-}
+	m_path.SetMinLookAheadDistance( me->GetDesiredPathLookAheadRange() );
 
-CTFBotMvMEngineerIdle::~CTFBotMvMEngineerIdle()
-{
-}
+	me->StopLookingAroundForEnemies();
 
-
-const char *CTFBotMvMEngineerIdle::GetName() const
-{
-	return "MvMEngineerIdle";
-}
-
-ActionResult<CTFBot> CTFBotMvMEngineerIdle::OnStart( CTFBot *me, Action<CTFBot> *action )
-{
-	m_PathFollower.SetMinLookAheadDistance( me->GetDesiredPathLookAheadRange() );
-
-	me->StopLookingForEnemies();
-
-	m_hHintSentry = nullptr;
-	m_hHintTele   = nullptr;
-	m_hHintNest   = nullptr;
-
-	m_nTeleportAttempts = 0;
-
-	m_bTeleportedToHint         = false;
+	m_sentryHint = NULL;
+	m_teleporterHint = NULL;
+	m_nestHint = NULL;
+	m_nTeleportedCount = 0;
+	m_bTeleportedToHint = false;
 	m_bTriedToDetonateStaleNest = false;
 
-	return Action<CTFBot>::Continue();
+	return Continue();
 }
 
-ActionResult<CTFBot> CTFBotMvMEngineerIdle::Update( CTFBot *me, float dt )
+
+void CTFBotMvMEngineerIdle::TakeOverStaleNest( CBaseTFBotHintEntity* pHint, CTFBot *me )
 {
-	if ( !me->IsAlive() )
+	if ( pHint != NULL && pHint->OwnerObjectHasNoOwner() )
 	{
-		return Action<CTFBot>::Done();
+		CBaseObject* pObj = static_cast< CBaseObject* >( pHint->GetOwnerEntity() );
+		pObj->SetOwnerEntity( me );
+		pObj->SetBuilder( me );
+		me->AddObject( pObj );
 	}
-
-	CBaseCombatWeapon *w_melee = me->Weapon_GetSlot( TF_LOADOUT_SLOT_MELEE );
-	if ( w_melee != nullptr )
-	{
-		me->Weapon_Switch( w_melee );
-	}
-
-	if ( m_hHintNest == nullptr || ShouldAdvanceNestSpot( me ) )
-	{
-		if ( m_ctFindNestHint.HasStarted() && !m_ctFindNestHint.IsElapsed() )
-		{
-			return Action<CTFBot>::Continue();
-		}
-		m_ctFindNestHint.Start( RandomFloat( 1.0f, 2.0f ) );
-
-		bool box_check       = false;
-		bool out_of_range_ok = true;
-		if ( me->HasAttribute( CTFBot::AttributeType::TELEPORTTOHINT ) )
-		{
-			if ( !m_bTeleportedToHint )
-			{
-				box_check = true;
-			}
-			out_of_range_ok = false;
-		}
-
-		CHandle<CTFBotHintEngineerNest> h_nest;
-		if ( !CTFBotMvMEngineerHintFinder::FindHint( box_check, out_of_range_ok, &h_nest ) )
-		{
-			return Action<CTFBot>::Continue();
-		}
-
-		if ( m_hHintNest != nullptr )
-		{
-			m_hHintNest->SetOwnerEntity( nullptr );
-		}
-
-		m_hHintNest = h_nest;
-		h_nest->SetOwnerEntity( me );
-
-		m_hHintSentry = m_hHintNest->GetSentryHint();
-		TakeOverStaleNest( m_hHintSentry, me );
-
-		if ( !me->m_TeleportWhere.IsEmpty() )
-		{
-			m_hHintTele = m_hHintNest->GetTeleporterHint();
-			TakeOverStaleNest( m_hHintTele, me );
-		}
-	}
-
-	if ( !m_bTeleportedToHint &&
-		 me->HasAttribute( CTFBot::AttributeType::TELEPORTTOHINT ) )
-	{
-		m_bTeleportedToHint = true;
-		++m_nTeleportAttempts;
-
-		return Action<CTFBot>::SuspendFor( new CTFBotMvMEngineerTeleportSpawn( m_hHintNest, ( m_nTeleportAttempts == 1 ) ),
-			"In spawn area - teleport to the teleporter hint" );
-	}
-
-	CObjectSentrygun *sentry = nullptr;
-
-	if ( m_hHintSentry != nullptr )
-	{
-		if ( m_hHintSentry->GetOwnerEntity() != nullptr &&
-			 m_hHintSentry->GetOwnerEntity()->IsBaseObject() )
-		{
-/* sentry exists; start the retreat timer so we will retreat if we
- * should lose it in the future */
-			m_ctSentryCooldown.Start( 3.0f );
-
-			sentry = static_cast<CObjectSentrygun *>( m_hHintSentry->GetOwnerEntity() );
-		}
-		else
-		{
-			if ( m_hHintSentry->GetOwnerEntity() != nullptr &&
-				 m_hHintSentry->GetOwnerEntity()->IsBaseObject() )
-			{
-/* not sure under what circumstances this code would actually be
- * reached; perhaps the static_cast in the if statement earlier
- * is actually an assert_cast and they were naively expecting it
- * to return nullptr if the owner wasn't a sentry? */
-				sentry = static_cast<CObjectSentrygun *>( m_hHintSentry->GetOwnerEntity() );
-				sentry->SetOwnerEntity( me );
-			}
-			else
-			{
-					 /* do not have a sentry; retreat for a few seconds if we had a
-					  * sentry before this; then build a new sentry */
-
-				if ( this->m_ctSentryCooldown.IsElapsed() )
-				{
-					return Action<CTFBot>::SuspendFor(
-						new CTFBotMvMEngineerBuildSentryGun( m_hHintSentry ),
-						"No sentry - building a new one" );
-				}
-				else
-				{
-					return Action<CTFBot>::SuspendFor(
-						new CTFBotRetreatToCover( 1.0f ),
-						"Lost my sentry - retreat!" );
-				}
-			}
-		}
-
-		/* NOTE: this is m_flHealth, not m_iHealth */
-		if ( sentry->GetMaxHealth() > sentry->GetHealth() && !sentry->IsBuilding() )
-		{
-			this->m_ctSentrySafe.Start( 3.0f );
-		}
-	}
-
-	CObjectTeleporter *tele = nullptr;
-
-	if ( m_hHintTele != nullptr && m_ctSentrySafe.IsElapsed() )
-	{
-		if ( m_hHintTele->GetOwnerEntity() != nullptr &&
-			 m_hHintTele->GetOwnerEntity()->IsBaseObject() )
-		{
-			m_ctTeleCooldown.Start( 3.0f );
-
-			tele = static_cast<CObjectTeleporter *>( m_hHintTele->GetOwnerEntity() );
-		}
-		else
-		{
-			if ( m_ctTeleCooldown.IsElapsed() )
-			{
-				return Action<CTFBot>::SuspendFor(
-					new CTFBotMvMEngineerBuildTeleportExit( m_hHintTele ),
-					"Sentry is safe - building a teleport exit" );
-			}
-		}
-	}
-
-	if ( tele != nullptr && m_ctSentrySafe.IsElapsed() )
-	{
-/* NOTE: this is m_flHealth, not m_iHealth */
-		if ( tele->GetMaxHealth() > tele->GetHealth() && !tele->IsBuilding() )
-		{
-			float dist = me->GetAbsOrigin().DistTo( tele->GetAbsOrigin() );
-
-			if ( dist < 90.0f )
-			{
-				me->PressCrouchButton();
-			}
-
-			if ( m_ctRecomputePath.IsElapsed() )
-			{
-				m_ctRecomputePath.Start( RandomFloat( 1.0f, 2.0f ) );
-
-				Vector dir = ( tele->GetAbsOrigin() - me->GetAbsOrigin() );
-				dir.NormalizeInPlace();
-
-				Vector goal = tele->GetAbsOrigin() - ( 50.0f * dir );
-
-				CTFBotPathCost cost_func( me, SAFEST_ROUTE );
-				m_PathFollower.Compute( me, goal, cost_func, 0.0f, true );
-			}
-
-			m_PathFollower.Update( me );
-
-			if ( dist < 75.0f )
-			{
-				me->GetBodyInterface()->AimHeadTowards( tele->WorldSpaceCenter(),
-														   IBody::LookAtPriorityType::CRITICAL, 1.0f, nullptr, "Work on my Teleporter" );
-				me->PressFireButton();
-			}
-
-			TryToDetonateStaleNest();
-			return Action<CTFBot>::Continue();
-		}
-	}
-
-	if ( sentry != nullptr )
-	{
-		float dist = me->GetAbsOrigin().DistTo( sentry->GetAbsOrigin() );
-
-		if ( dist < 90.0f )
-		{
-			me->PressCrouchButton();
-		}
-
-		if ( m_ctRecomputePath.IsElapsed() )
-		{
-			m_ctRecomputePath.Start( RandomFloat( 1.0f, 2.0f ) );
-
-			Vector dir;
-			AngleVectors( sentry->GetTurretAngles(), &dir );
-
-			Vector goal = sentry->GetAbsOrigin() - ( 50.0f * dir );
-
-			CTFBotPathCost cost_func( me, SAFEST_ROUTE );
-			m_PathFollower.Compute( me, goal, cost_func, 0.0f, true );
-		}
-
-		m_PathFollower.Update( me );
-
-		if ( dist < 75.0f )
-		{
-			me->GetBodyInterface()->AimHeadTowards( sentry->WorldSpaceCenter(),
-													   IBody::LookAtPriorityType::CRITICAL, 1.0f, nullptr, "Work on my Sentry" );
-			me->PressFireButton();
-		}
-
-		TryToDetonateStaleNest();
-		return Action<CTFBot>::Continue();
-	}
-
-	TryToDetonateStaleNest();
-	return Action<CTFBot>::Continue();
 }
 
-QueryResultType CTFBotMvMEngineerIdle::ShouldHurry( const INextBot *me ) const
-{
-	return ANSWER_YES;
-}
-
-QueryResultType CTFBotMvMEngineerIdle::ShouldRetreat( const INextBot *me ) const
-{
-	return ANSWER_NO;
-}
-
-QueryResultType CTFBotMvMEngineerIdle::ShouldAttack( const INextBot *me, const CKnownEntity *threat ) const
-{
-	return ANSWER_NO;
-}
 
 bool CTFBotMvMEngineerIdle::ShouldAdvanceNestSpot( CTFBot *me )
 {
+	if ( !m_nestHint )
+	{
+		return false;
+	}
+
+	if ( !m_reevaluateNestTimer.HasStarted() )
+	{
+		m_reevaluateNestTimer.Start( 5.f );
+		return false;
+	}
+
+	for ( int i=0; i<me->GetObjectCount(); ++i )
+	{
+		CBaseObject *pObj = me->GetObject( i );
+		if ( pObj && pObj->GetHealth() < pObj->GetMaxHealth() )
+		{
+			// if the nest is under attack, don't advance the nest
+			m_reevaluateNestTimer.Start( 5.f );
+			return false;
+		}
+	}
+
+	if ( m_reevaluateNestTimer.IsElapsed() )
+	{
+		m_reevaluateNestTimer.Invalidate();
+	}
+
+	BombInfo_t bombInfo;
+	if ( GetBombInfo( &bombInfo ) )
+	{
+		if ( m_nestHint )
+		{
+			CTFNavArea *hintArea = (CTFNavArea *)TheNavMesh->GetNearestNavArea( m_nestHint->GetAbsOrigin(), false, 1000.0f );
+			if ( hintArea )
+			{
+				float hintDistanceToTarget = hintArea->GetTravelDistanceToBombTarget();
+
+				bool bShouldAdvance = ( hintDistanceToTarget > bombInfo.m_flMaxBattleFront );
+
+				return bShouldAdvance;
+			}
+		}
+	}
+
 	return false;
 }
 
-void CTFBotMvMEngineerIdle::TakeOverStaleNest( CBaseTFBotHintEntity *hint, CTFBot *me )
-{
-	if ( hint == nullptr || hint->OwnerObjectHasNoOwner() )
-	{
-		return;
-	}
-
-	CBaseObject *obj = static_cast<CBaseObject *>( hint->GetOwnerEntity() );
-	obj->SetOwnerEntity( me );
-	obj->SetBuilder( me );
-	me->AddObject( obj );
-}
 
 void CTFBotMvMEngineerIdle::TryToDetonateStaleNest()
 {
 	if ( m_bTriedToDetonateStaleNest )
-	{
 		return;
-	}
 
-	if ( !m_hHintSentry || m_hHintSentry->OwnerObjectFinishBuilding() )
+	// wait until the engy finish building his nest
+	if ( ( m_sentryHint && !m_sentryHint->OwnerObjectFinishBuilding() ) ||
+		 ( m_teleporterHint && !m_teleporterHint->OwnerObjectFinishBuilding() ) )
+		return;
+
+	// collect all existing and active teleporter hints
+	CUtlVector< CTFBotHintEngineerNest* > activeEngineerNest;
+	for ( int i=0; i<ITFBotHintEntityAutoList::AutoList().Count(); ++i )
 	{
-		if ( !m_hHintTele || m_hHintTele->OwnerObjectFinishBuilding() )
+		CBaseTFBotHintEntity *pHint = static_cast<CBaseTFBotHintEntity*>( ITFBotHintEntityAutoList::AutoList()[i] );
+		if ( pHint->IsHintType( CBaseTFBotHintEntity::HINT_ENGINEER_NEST ) && pHint->IsEnabled() && pHint->GetOwnerEntity() == NULL )
 		{
-			CUtlVector<CTFBotHintEngineerNest *> nests;
-
-			for ( int i = 0; i < ITFBotHintEntityAutoList::AutoList().Count(); ++i )
-			{
-				CBaseTFBotHintEntity *hint = static_cast<CBaseTFBotHintEntity *>(
-					ITFBotHintEntityAutoList::AutoList()[i] );
-				if ( hint->GetHintType() != CBaseTFBotHintEntity::HintType::ENGINEER_NEST || hint->IsDisabled() || hint->GetOwnerEntity() == nullptr )
-				{
-					continue;
-				}
-
-				nests.AddToTail( static_cast<CTFBotHintEngineerNest *>( hint ) );
-			}
-
-			FOR_EACH_VEC( nests, i )
-			{
-				if ( nests[i]->IsStaleNest() )
-					nests[i]->DetonateStaleNest();
-			}
-
-			m_bTriedToDetonateStaleNest = true;
+			activeEngineerNest.AddToTail( static_cast< CTFBotHintEngineerNest* >( pHint ) );
 		}
 	}
+
+	// try to detonate stale nest that's out of range, when engineer finished building his nest
+	for ( int i=0; i<activeEngineerNest.Count(); ++i )
+	{
+		CTFBotHintEngineerNest *pNest = activeEngineerNest[i];
+		if ( pNest->IsStaleNest() )
+		{
+			pNest->DetonateStaleNest();
+		}
+	}
+
+	m_bTriedToDetonateStaleNest = true;
 }
 
 
-bool CTFBotMvMEngineerHintFinder::FindHint( bool box_check, bool out_of_range_ok, CHandle<CTFBotHintEngineerNest> *the_hint )
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotMvMEngineerIdle::Update( CTFBot *me, float interval )
 {
-	CUtlVector<CTFBotHintEngineerNest *> hints;
-
-	for ( int i = 0; i < ITFBotHintEntityAutoList::AutoList().Count(); ++i )
+	if ( !me->IsAlive() )
 	{
-		CBaseTFBotHintEntity *hint = static_cast<CBaseTFBotHintEntity *>(
-			ITFBotHintEntityAutoList::AutoList()[i] );
+		// don't do anything when I'm dead
+		return Done();
+	}
 
-		if ( hint->GetHintType() == CBaseTFBotHintEntity::HintType::ENGINEER_NEST &&
-			 !hint->IsDisabled() && hint->GetOwnerEntity() == nullptr )
+	// Always equip my wrench
+	CBaseCombatWeapon *wrench = me->Weapon_GetSlot( TF_WPN_TYPE_MELEE );
+	if ( wrench )
+	{
+		me->Weapon_Switch( wrench );
+	}
+
+	if ( m_nestHint == NULL || ShouldAdvanceNestSpot( me ) )
+	{
+		if ( m_findHintTimer.HasStarted() && !m_findHintTimer.IsElapsed() )
 		{
-			hints.AddToTail( static_cast<CTFBotHintEngineerNest *>( hint ) );
+			// too soon
+			return Continue();
+		}
+
+		m_findHintTimer.Start( RandomFloat( 1.0f, 2.0f ) );
+
+		// figure out where to teleport into the map
+		bool bShouldTeleportToHint = me->HasAttribute( CTFBot::TELEPORT_TO_HINT );
+		bool bShouldCheckForBlockingObject = !m_bTeleportedToHint && bShouldTeleportToHint;
+		CHandle< CTFBotHintEngineerNest > newNest = NULL;
+		if ( !CTFBotMvMEngineerHintFinder::FindHint( bShouldCheckForBlockingObject, !bShouldTeleportToHint, &newNest ) )
+		{
+			// try again next time
+			return Continue();
+		}
+
+		// unown the old nest
+		if ( m_nestHint )
+		{
+			m_nestHint->SetOwnerEntity( NULL );
+		}
+
+		m_nestHint = newNest;
+		m_nestHint->SetOwnerEntity( me );
+		m_sentryHint = m_nestHint->GetSentryHint();
+		TakeOverStaleNest( m_sentryHint, me );
+
+		if ( me->GetTeleportWhere().Count() > 0 )
+		{
+			m_teleporterHint = m_nestHint->GetTeleporterHint();
+			TakeOverStaleNest( m_teleporterHint, me );
 		}
 	}
 
-	BombInfo_t bomb_info;
-	GetBombInfo( &bomb_info );
+	if ( !m_bTeleportedToHint && me->HasAttribute( CTFBot::TELEPORT_TO_HINT ) )
+	{
+		m_nTeleportedCount++;
+		bool bFirstTeleportSpawn = m_nTeleportedCount == 1;
+		m_bTeleportedToHint = true;
+		return SuspendFor( new CTFBotMvMEngineerTeleportSpawn( m_nestHint, bFirstTeleportSpawn ), "In spawn area - teleport to the teleporter hint" );
+	}
 
-	CUtlVector<CTFBotHintEngineerNest *> hints1; // in fwd~back, stale
-	CUtlVector<CTFBotHintEngineerNest *> hints2; // in fwd~back, within min bomb distance
-	CUtlVector<CTFBotHintEngineerNest *> hints3; // in fwd~infinity
-	CUtlVector<CTFBotHintEngineerNest *> hints4; // others
+	const float rebuildInterval = 3.0f;
+	CObjectSentrygun *mySentry = NULL;
+	if ( m_sentryHint )
+	{
+		if ( m_sentryHint->GetOwnerEntity() && m_sentryHint->GetOwnerEntity()->IsBaseObject() )
+		{
+			mySentry = assert_cast< CObjectSentrygun* >( m_sentryHint->GetOwnerEntity() );
+		}
 
-	FOR_EACH_VEC( hints, i ) {
-		CTFBotHintEngineerNest *hint = hints[i];
+		if ( mySentry )
+		{
+			// force an interval between sentry being destroyed and me trying to rebuild it
+			m_sentryRebuildTimer.Start( rebuildInterval );
+		}
+		else
+		{
+			// check if there's a stale object on the hint
+			if ( m_sentryHint->GetOwnerEntity() && m_sentryHint->GetOwnerEntity()->IsBaseObject() )
+			{
+				mySentry = assert_cast< CObjectSentrygun* >( m_sentryHint->GetOwnerEntity() );		
+				me->AddObject( mySentry );
+				mySentry->SetOwnerEntity( me );
+			}
+			else
+			{
+				if ( m_sentryRebuildTimer.IsElapsed() )
+				{
+					return SuspendFor( new CTFBotMvMEngineerBuildSentryGun( m_sentryHint ), "No sentry - building a new one" );
+				}
+				else
+				{
+					// run away!
+					return SuspendFor( new CTFBotRetreatToCover( 1.0f ), "Lost my sentry - retreat!" );
+				}
+			}
+		}
+	}
 
-		CTFNavArea *area = assert_cast<CTFNavArea *>( TheNavMesh->GetNearestNavArea( hint->GetAbsOrigin() ) );
-		if ( area == nullptr )
+	if ( mySentry && mySentry->GetHealth() < mySentry->GetMaxHealth() && !mySentry->IsBuilding() )
+	{
+		// track when sentry was last hurt
+		m_sentryInjuredTimer.Start( 3.0f );
+	}
+
+	
+	CObjectTeleporter *myTeleporter = NULL;
+	if ( m_teleporterHint && m_sentryInjuredTimer.IsElapsed() )
+	{
+		if ( m_teleporterHint->GetOwnerEntity() && m_teleporterHint->GetOwnerEntity()->IsBaseObject() )
+		{
+			// force an interval between teleporter being destroyed and me trying to rebuild it
+			myTeleporter = assert_cast< CObjectTeleporter* >( m_teleporterHint->GetOwnerEntity() );
+			m_teleporterRebuildTimer.Start( rebuildInterval );
+		}
+		else if ( m_teleporterRebuildTimer.IsElapsed() )
+		{
+			return SuspendFor( new CTFBotMvMEngineerBuildTeleportExit( m_teleporterHint ), "Sentry is safe - building a teleport exit" );
+		}
+	}
+
+	// fix teleporter if sentry is not hurt
+	if ( myTeleporter && m_sentryInjuredTimer.IsElapsed() && myTeleporter->GetHealth() < myTeleporter->GetMaxHealth() && !myTeleporter->IsBuilding() )
+	{
+		float rangeToTeleporter = me->GetDistanceBetween( myTeleporter );
+
+		const float nearTeleporterRange = 75.0f;
+
+		if ( rangeToTeleporter < 1.2f * nearTeleporterRange )
+		{
+			// crouch as I get close
+			me->PressCrouchButton();
+		}
+
+		if ( m_repathTimer.IsElapsed() )
+		{
+			m_repathTimer.Start( RandomFloat( 1.0f, 2.0f ) );
+
+			Vector toTeleporter = myTeleporter->GetAbsOrigin() - me->GetAbsOrigin();
+			Vector hittingTeleporterSpot = myTeleporter->GetAbsOrigin() - 50.0f * toTeleporter.Normalized();
+
+			CTFBotPathCost cost( me, SAFEST_ROUTE );
+			m_path.Compute( me, hittingTeleporterSpot, cost );
+		}
+
+		m_path.Update( me );
+
+		if ( rangeToTeleporter < nearTeleporterRange )
+		{
+			// we are in position - hit sentry with wrench
+			me->GetBodyInterface()->AimHeadTowards( myTeleporter->WorldSpaceCenter(), IBody::CRITICAL, 1.0f, NULL, "Work on my Teleporter" );
+			me->PressFireButton();
+		}
+	}
+	else if ( mySentry )
+	{
+		float rangeToSentry = me->GetDistanceBetween( mySentry );
+
+		const float nearSentryRange = 75.0f;
+
+		if ( rangeToSentry < 1.2f * nearSentryRange )
+		{
+			// crouch as I get close
+			me->PressCrouchButton();
+		}
+
+		if ( m_repathTimer.IsElapsed() )
+		{
+			m_repathTimer.Start( RandomFloat( 1.0f, 2.0f ) );
+
+			Vector mySentryForward;
+			AngleVectors( mySentry->GetTurretAngles(), &mySentryForward );
+
+			Vector behindSentrySpot = mySentry->GetAbsOrigin() - 50.0f * mySentryForward;
+
+			CTFBotPathCost cost( me, SAFEST_ROUTE );
+			m_path.Compute( me, behindSentrySpot, cost );
+		}
+
+		m_path.Update( me );
+
+		if ( rangeToSentry < nearSentryRange )
+		{
+			// we are in position - hit sentry with wrench
+			me->GetBodyInterface()->AimHeadTowards( mySentry->WorldSpaceCenter(), IBody::CRITICAL, 1.0f, NULL, "Work on my Sentry" );
+			me->PressFireButton();
+		}
+	}
+
+	TryToDetonateStaleNest();
+
+	return Continue();
+}
+
+
+//---------------------------------------------------------------------------------------------
+QueryResultType CTFBotMvMEngineerIdle::ShouldAttack( const INextBot *me, const CKnownEntity *them ) const
+{
+	return ANSWER_NO;
+}
+
+
+//---------------------------------------------------------------------------------------------
+QueryResultType	CTFBotMvMEngineerIdle::ShouldRetreat( const INextBot *me ) const
+{
+	return ANSWER_NO;
+}
+
+
+//---------------------------------------------------------------------------------------------
+QueryResultType	CTFBotMvMEngineerIdle::ShouldHurry( const INextBot *me ) const
+{
+	return ANSWER_YES;
+}
+
+
+CTFBotHintEngineerNest* SelectOutOfRangeNest( const CUtlVector< CTFBotHintEngineerNest* >& nestVector )
+{
+	if ( nestVector.Count() )
+	{
+		for ( int i=0; i<nestVector.Count(); ++i )
+		{
+			if ( nestVector[i]->IsStaleNest() )
+			{
+				return nestVector[i];
+			}
+		}
+
+		int which = RandomInt( 0, nestVector.Count() - 1 );
+		return nestVector[which];
+	}
+
+	return NULL;
+}
+
+
+//---------------------------------------------------------------------------------------------
+bool CTFBotMvMEngineerHintFinder::FindHint( bool bShouldCheckForBlockingObjects, bool bAllowOutOfRangeNest, CHandle< CTFBotHintEngineerNest >* pFoundNest /*= NULL*/ )
+{
+	// collect all existing and active teleporter hints
+	CUtlVector< CTFBotHintEngineerNest* > activeEngineerNest;
+	for ( int i=0; i<ITFBotHintEntityAutoList::AutoList().Count(); ++i )
+	{
+		CBaseTFBotHintEntity *pHint = static_cast<CBaseTFBotHintEntity*>( ITFBotHintEntityAutoList::AutoList()[i] );
+		if ( pHint->IsHintType( CBaseTFBotHintEntity::HINT_ENGINEER_NEST ) && pHint->IsEnabled() && pHint->GetOwnerEntity() == NULL )
+		{
+			activeEngineerNest.AddToTail( static_cast< CTFBotHintEngineerNest* >( pHint ) );
+		}
+	}
+
+	if ( activeEngineerNest.Count() == 0 )
+	{
+		if ( pFoundNest )
+		{
+			*pFoundNest = NULL;
+		}
+
+		return false;
+	}
+
+	BombInfo_t bombInfo;
+	GetBombInfo( &bombInfo );
+
+	CUtlVector< CTFBotHintEngineerNest* > forwardOutOfRangeHintVector;
+	CUtlVector< CTFBotHintEngineerNest* > backwardOutOfRangeHintVector;
+
+	CUtlVector< CTFBotHintEngineerNest* > freeAtFrontHintVector;
+	CUtlVector< CTFBotHintEngineerNest* > staleAtFrontHintVector;
+	for( int i=0; i<activeEngineerNest.Count(); ++i )
+	{
+		CTFBotHintEngineerNest* pCurrentNest = activeEngineerNest[i];
+		const Vector& vNestPosition = pCurrentNest->GetAbsOrigin();
+		CTFNavArea *hintArea = (CTFNavArea *)TheNavMesh->GetNearestNavArea( vNestPosition, false, 1000.0f );
+		if ( !hintArea )
 		{
 			Warning( "Sentry hint has NULL nav area!\n" );
 			continue;
 		}
 
-		float dist = area->GetBombTargetDistance();
-		if ( dist > bomb_info.hatch_dist_fwd && dist < bomb_info.hatch_dist_back )
+
+		float hintDistanceToTarget = hintArea->GetTravelDistanceToBombTarget();
+		if ( hintDistanceToTarget > bombInfo.m_flMinBattleFront && hintDistanceToTarget < bombInfo.m_flMaxBattleFront )
 		{
-			CBaseEntity *pList[256];
-			if ( box_check && UTIL_EntitiesInBox( pList, 256,
-												  hint->GetAbsOrigin() + VEC_HULL_MIN,
-												  hint->GetAbsOrigin() + VEC_HULL_MAX,
-												  FL_OBJECT | FL_FAKECLIENT ) > 0 )
+			if ( bShouldCheckForBlockingObjects )
 			{
-				continue;
+				// check for blocking players and objects
+				CBaseEntity *pList[256];
+				int count = UTIL_EntitiesInBox( pList, ARRAYSIZE( pList ), vNestPosition + VEC_HULL_MIN, vNestPosition + VEC_HULL_MAX, FL_CLIENT|FL_OBJECT );
+				if ( count > 0 )
+				{
+					continue;
+				}
 			}
 
-			if ( hint->IsStaleNest() )
+			// this hint is in range of the front
+			if ( pCurrentNest->IsStaleNest() )
 			{
-				hints1.AddToTail( hint );
+				// some dead engineer was here and left his object(s) behind. I should take over
+				staleAtFrontHintVector.AddToTail( pCurrentNest );
 			}
 			else
 			{
-				if ( hint->GetAbsOrigin().DistTo( bomb_info.closest_pos ) >=
-					 tf_bot_engineer_mvm_hint_min_distance_from_bomb.GetFloat() )
+				if ( VectorLength( bombInfo.m_vPosition - vNestPosition ) < tf_bot_engineer_mvm_hint_min_distance_from_bomb.GetFloat() )
 				{
-					hints2.AddToTail( hint );
+					// the hint is too close to the bomb, don't go there
+					continue;
 				}
+				// this hint is also unowned
+				freeAtFrontHintVector.AddToTail( pCurrentNest );
 			}
 		}
-		else if ( dist > bomb_info.hatch_dist_back )
+		else if ( hintDistanceToTarget > bombInfo.m_flMaxBattleFront )
 		{
-			hints3.AddToTail( hint );
+			forwardOutOfRangeHintVector.AddToTail( pCurrentNest );
 		}
 		else
 		{
-			hints4.AddToTail( hint );
+			backwardOutOfRangeHintVector.AddToTail( pCurrentNest );
 		}
 	}
 
-	CTFBotHintEngineerNest *hint = nullptr;
-	if ( !hints1.IsEmpty() )
+	CTFBotHintEngineerNest *hint = NULL;
+	if ( freeAtFrontHintVector.Count() == 0 && staleAtFrontHintVector.Count() == 0 )
 	{
-		hint = hints1.Random();
-	}
-	else if ( !hints2.IsEmpty() )
-	{
-		hint = hints2.Random();
-	}
-	else if ( out_of_range_ok )
-	{
-		hint = SelectOutOfRangeNest( hints3 );
-		if ( hint == nullptr )
+		if ( bAllowOutOfRangeNest )
 		{
-			hint = SelectOutOfRangeNest( hints4 );
+			// try to advance forward before falling backward
+			hint = SelectOutOfRangeNest( forwardOutOfRangeHintVector );
+			if ( !hint )
+			{
+				hint = SelectOutOfRangeNest( backwardOutOfRangeHintVector );
+			}
+		}
+
+		// no hints are in range, or they are all in use
+		if ( pFoundNest )
+		{
+			*pFoundNest = hint;
+		}
+	}
+	else
+	{
+		// try to pick stale nest in range first
+		if ( staleAtFrontHintVector.Count() )
+		{
+			int whichHint = RandomInt( 0, staleAtFrontHintVector.Count()-1 );
+			hint = staleAtFrontHintVector[ whichHint ];
+		}
+		// if I didn't find any stale nest, try to find a free one
+		else if ( freeAtFrontHintVector.Count() )
+		{
+			int whichHint = RandomInt( 0, freeAtFrontHintVector.Count()-1 );
+			hint = freeAtFrontHintVector[ whichHint ];
+		}
+
+		if ( pFoundNest )
+		{
+			*pFoundNest = hint;
 		}
 	}
 
-	if ( the_hint != nullptr )
-	{
-		*the_hint = hint;
-	}
-
-	return ( hint != nullptr );
+	return hint != NULL;
 }
 
-CTFBotHintEngineerNest *SelectOutOfRangeNest( const CUtlVector<CTFBotHintEngineerNest *> &nests )
+
+//--------------------------------------------------------------------------------------------------------------
+CON_COMMAND_F( tf_bot_mvm_show_engineer_hint_region, "Show the nav areas MvM engineer bots will consider when selecting sentry and teleporter hints", FCVAR_CHEAT )
 {
-	if( nests.IsEmpty() )
-		return nullptr;
+	if ( !UTIL_IsCommandIssuedByServerAdmin() )
+		return; 
 
-	FOR_EACH_VEC( nests, i )
+	CBasePlayer *pPlayer = UTIL_GetCommandClient();
+
+	trace_t result;
+	Vector forward;
+	pPlayer->EyeVectors( &forward );
+
+	UTIL_TraceLine( pPlayer->EyePosition(),
+		pPlayer->EyePosition() + forward * 10000.0f, MASK_SOLID,
+		pPlayer, COLLISION_GROUP_NONE, &result );
+
+	float flDrawTime = 5.0f;
+
+	if ( result.DidHit() )
 	{
-		CTFBotHintEngineerNest *pHint = nests[i];
-		if ( pHint->IsStaleNest() )
-			return pHint;
-	}
+		CTFNavArea *area = (CTFNavArea *)TheTFNavMesh()->GetNearestNavArea( result.endpos );
 
-	return nests.Random();
-}
-
-bool GetBombInfo( BombInfo_t *info )
-{
-	float hatch_dist = 0.0f;
-
-	FOR_EACH_VEC( TheNavAreas, i )
-	{
-		CTFNavArea *area = static_cast<CTFNavArea *>( TheNavAreas[i] );
-
-		if ( area->HasTFAttributes( TF_NAV_BLUE_SPAWN_ROOM | TF_NAV_RED_SPAWN_ROOM ) )
-			continue;
-
-		hatch_dist = Max( Max( area->GetBombTargetDistance(), hatch_dist ), 0.0f );
-	}
-
-	CCaptureFlag *closest_flag = nullptr;
-	Vector closest_flag_pos;
-	closest_flag_pos.x = 0;
-	closest_flag_pos.y = 0;
-	closest_flag_pos.z = 0;
-
-	for ( int i = 0; i < ICaptureFlagAutoList::AutoList().Count(); ++i )
-	{
-		CCaptureFlag *flag = static_cast<CCaptureFlag *>( ICaptureFlagAutoList::AutoList()[i] );
-
-		Vector flag_pos;
-
-		CTFPlayer *owner = ToTFPlayer( flag->GetOwnerEntity() );
-		if ( owner != nullptr )
+		if ( area )
 		{
-			flag_pos = owner->GetAbsOrigin();
-		}
-		else
-		{
-			flag_pos = flag->WorldSpaceCenter();
-		}
+			float battlefront = area->GetTravelDistanceToBombTarget();
 
-		CTFNavArea *area = assert_cast<CTFNavArea *>( TheNavMesh->GetNearestNavArea( flag_pos ) );
-		if ( area != nullptr && area->GetBombTargetDistance() < hatch_dist )
-		{
-			closest_flag = flag;
-			hatch_dist = area->GetBombTargetDistance();
-			closest_flag_pos = flag_pos;
+			float maxBattlefront = battlefront + tf_bot_engineer_mvm_sentry_hint_bomb_backward_range.GetFloat();
+			float minBattlefront = battlefront - tf_bot_engineer_mvm_sentry_hint_bomb_forward_range.GetFloat();
+
+			CUtlVector< CTFNavArea * > battlefrontAreaVector;
+			TheTFNavMesh()->CollectAreaWithinBombTravelRange( &battlefrontAreaVector, minBattlefront, maxBattlefront );
+
+			CUtlVector< CTFNavArea * > hintAreaVector;
+			for ( int i=0; i<ITFBotHintEntityAutoList::AutoList().Count(); ++i )
+			{
+				CBaseTFBotHintEntity *pHint = static_cast< CBaseTFBotHintEntity* >( ITFBotHintEntityAutoList::AutoList()[i] );
+				hintAreaVector.AddToTail( (CTFNavArea*)TheNavMesh->GetNearestNavArea( pHint ) );
+			}
+
+			for( int i=0; i<battlefrontAreaVector.Count(); ++i )
+			{
+				CTFNavArea *fillArea = battlefrontAreaVector[i];
+
+				if ( fillArea->HasAttributeTF( TF_NAV_SPAWN_ROOM_BLUE ) || fillArea->HasAttributeTF( TF_NAV_SPAWN_ROOM_RED ) )
+				{
+					continue;
+				}
+
+				fillArea->DrawFilled( 255, 100, 0, 0, flDrawTime );
+
+				for ( int j=0; j<hintAreaVector.Count(); ++j )
+				{
+					if ( fillArea == hintAreaVector[j] )
+					{
+						CBaseTFBotHintEntity *pHint = static_cast< CBaseTFBotHintEntity* >( ITFBotHintEntityAutoList::AutoList()[j] );
+						Color color;
+						if ( pHint->IsHintType( CBaseTFBotHintEntity::HINT_SENTRYGUN ) )
+						{
+							color = Color( 0, 255, 0 );
+						}
+						else if ( pHint->IsHintType( CBaseTFBotHintEntity::HINT_TELEPORTER_EXIT ) )
+						{
+							color = Color( 0, 0, 255 );
+						}
+						else
+						{
+							bool bTooCloseToBomb = VectorLength( result.endpos - pHint->GetAbsOrigin() ) < tf_bot_engineer_mvm_hint_min_distance_from_bomb.GetFloat();
+							color = bTooCloseToBomb ? Color( 255, 0, 0 ) : Color( 255, 255, 0 );
+						}
+						NDebugOverlay::Sphere( pHint->GetAbsOrigin(), 50, color.r(), color.g(), color.b(), true, flDrawTime );
+					}
+				}
+			}
+
+			NDebugOverlay::Sphere( result.endpos, tf_bot_engineer_mvm_hint_min_distance_from_bomb.GetFloat(), 255, 255, 0, false, flDrawTime );
 		}
 	}
-
-	bool success = ( closest_flag != nullptr );
-
-	float range_back = tf_bot_engineer_mvm_sentry_hint_bomb_backward_range.GetFloat();
-	float range_fwd  = tf_bot_engineer_mvm_sentry_hint_bomb_forward_range.GetFloat();
-
-	if ( info != nullptr )
-	{
-		info->closest_pos = closest_flag_pos;
-		info->hatch_dist_back = hatch_dist + range_back;
-		info->hatch_dist_fwd  = hatch_dist - range_fwd;
-	}
-
-	return success;
 }

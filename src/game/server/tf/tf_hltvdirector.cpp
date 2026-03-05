@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -35,7 +35,7 @@ public:
 
 	const char** GetModEvents();
 	void SetHLTVServer( IHLTVServer *hltv );
-	void CreateShotFromEvent( CHLTVGameEvent *event);
+	void CreateShotFromEvent( CHLTVGameEvent *event );
 
 	virtual char	*GetFixedCameraEntityName( void ) { return "info_observer_point"; }
 };
@@ -55,7 +55,7 @@ void CTFHLTVDirector::SetHLTVServer( IHLTVServer *hltv )
 	}
 }
 
-void CTFHLTVDirector::CreateShotFromEvent( CHLTVGameEvent *event ) 
+void CTFHLTVDirector::CreateShotFromEvent( CHLTVGameEvent *event )
 {
 	// show event at least for 2 more seconds after it occured
 	const char *name = event->m_Event->GetName();
@@ -139,7 +139,7 @@ void CTFHLTVDirector::CreateShotFromEvent( CHLTVGameEvent *event )
 		}
 
 		// shot 2 seconds after event
-		m_nNextShotTick = min( m_nNextShotTick, (event->m_Tick+TIME_TO_TICKS(1.0)) );
+		m_nNextShotTick = MIN( m_nNextShotTick, (event->m_Tick+TIME_TO_TICKS(1.0)) );
 	}
 	else if ( !Q_strcmp( "object_destroyed", name ) )
 	{
@@ -186,6 +186,7 @@ const char** CTFHLTVDirector::GetModEvents()
 		"player_death",
 		"player_chat",
 		"player_spawn",
+		"player_hurt",
 		"round_start",
 		"round_end",
 		"server_cvar",
@@ -194,7 +195,6 @@ const char** CTFHLTVDirector::GetModEvents()
 		// additional TF events:
 		"controlpoint_starttouch",
 		"controlpoint_endtouch",
-		"teamplay_capture_broken",
 		"ctf_flag_captured",
 		"teamplay_broadcast_audio",
 		"teamplay_capture_blocked",
@@ -207,6 +207,7 @@ const char** CTFHLTVDirector::GetModEvents()
 		"teamplay_timer_time_added",
 		"teamplay_update_timer",
 		"teamplay_win_panel",
+		"training_complete",
 		"tf_game_over",
 		"object_destroyed",
 			

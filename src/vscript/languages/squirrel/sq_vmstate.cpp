@@ -145,6 +145,8 @@ static const char *SQTypeToString( SQObjectType sqType )
 			return "INSTANCE";
 		case OT_WEAKREF:
 			return "WEAKREF";
+		case OT_EHANDLE:
+			return "EHANDLE";
 	}
 
 	return "<unknown>";
@@ -288,6 +290,12 @@ void SquirrelStateWriter::WriteObject( SQObjectPtr const &obj )
 			WriteOuter( _outer( obj ) );
 			break;
 		}
+		case OT_EHANDLE:
+		{
+			m_pBuffer->PutInt( OT_EHANDLE );
+			m_pBuffer->PutInt( _ehandle( obj ) );
+			break;
+		}
 		default:
 			break;
 	}
@@ -322,6 +330,7 @@ void SquirrelStateWriter::WriteClosure( SQClosure *pClosure )
 	pClosure->_uiRef |= MARK_FLAG;
 
 	WriteObject( pClosure->_function );
+	WriteObject( pClosure->_root );
 	WriteObject( pClosure->_env );
 
 	m_pBuffer->PutUnsignedInt( pClosure->_function->_noutervalues );
@@ -729,6 +738,12 @@ bool SquirrelStateReader::ReadObject( SQObjectPtr *pObj, const char *pszName )
 		case OT_OUTER:
 		{
 			_outer( object ) = ReadOuter();
+			break;
+		}
+		case OT_EHANDLE:
+		{
+			m_pBuffer->GetInt();
+			break;
 		}
 		default:
 		{
@@ -1189,98 +1204,9 @@ HSQOBJECT SquirrelStateReader::LookupObject( char const *szName )
 }
 
 
-class CSQStateIterator
-{
-public:
-	CSQStateIterator( HSQUIRRELVM pVM )
-		: m_pVM( pVM ), m_nTab( 0 ), m_bKey( false ) {
-		// Make sure no garbage collection happens during this
-		__ObjAddRef( pVM );
-	}
-	~CSQStateIterator() {
-		__ObjRelease( m_pVM );
-	}
-
-	virtual void PsuedoKey( char const *pszPsuedoKey )
-	{
-		for ( int i = 0; i < m_nTab; i++ )
-		{
-			Msg( "  " );
-		}
-
-		Msg( "%s: ", pszPsuedoKey );
-		m_bKey = true;
-	}
-
-	virtual void Key( SQObjectPtr &key )
-	{
-		for ( int i = 0; i < m_nTab; i++ )
-		{
-			Msg( "  " );
-		}
-
-		SQObjectPtr res;
-		m_pVM->ToString( key, res );
-		Msg( "%s: ", _stringval( res ) );
-		m_bKey = true;
-	}
-
-	virtual void Value( SQObjectPtr &value )
-	{
-		if ( !m_bKey )
-		{
-			for ( int i = 0; i < m_nTab; i++ )
-			{
-				Msg( "  " );
-			}
-		}
-
-		m_bKey = false;
-
-		SQObjectPtr res;
-		m_pVM->ToString( value, res );
-		if ( ISREFCOUNTED( sq_type( value ) ) )
-			Msg( "%s [0x%X]\n", _stringval( res ), _refcounted( value )->_uiRef );
-		else
-			Msg( "%s\n", _stringval( res ) );
-	}
-
-	virtual bool BeginContained( void )
-	{
-		if ( m_bKey )
-		{
-			Msg( "\n" );
-		}
-		m_bKey = false;
-
-		for ( int i = 0; i < m_nTab; i++ )
-		{
-			Msg( "  " );
-		}
-		Msg( "{\n" );
-
-		m_nTab++;
-		return true;
-	}
-
-	virtual void EndContained( void )
-	{
-		m_nTab--;
-		for ( int i = 0; i < m_nTab; i++ )
-		{
-			Msg( "  " );
-		}
-		Msg( "}\n" );
-	}
-
-private:
-	int m_nTab;
-	HSQUIRRELVM m_pVM;
-	bool m_bKey;
-};
 
 void IterateObject( CSQStateIterator *pIterator, SQUnsignedInteger type, SQObjectPtr &value );
-void IterateObject( CSQStateIterator *pIterator, SQObjectPtr &value, char const *pszName=NULL )
+void IterateObject( CSQStateIterator *pIterator, SQObjectPtr &value, char const *pszName )
 {
 	if ( sq_isnull( value ) )
 		return;
@@ -1509,17 +1435,11 @@ void DumpSquirrelState( HSQUIRRELVM pVM )
 	IterateObject( &iter, pSS->_array_default_delegate, "_array_default_delegate" );
 	IterateObject( &iter, pSS->_string_default_delegate, "_string_default_delegate" );
 	IterateObject( &iter, pSS->_number_default_delegate, "_number_default_delegate" );
+	IterateObject( &iter, pSS->_handle_default_delegate, "_handle_default_delegate" );
 	IterateObject( &iter, pSS->_generator_default_delegate, "_generator_default_delegate" );
 	IterateObject( &iter, pSS->_thread_default_delegate, "_thread_default_delegate" );
 	IterateObject( &iter, pSS->_closure_default_delegate, "_closure_default_delegate" );
 	IterateObject( &iter, pSS->_class_default_delegate, "_class_default_delegate" );
 	IterateObject( &iter, pSS->_instance_default_delegate, "_instance_default_delegate" );
 	IterateObject( &iter, pSS->_weakref_default_delegate, "_weakref_default_delegate" );
-
-	SQCollectable *t = _ss( pVM )->_gc_chain;
-	while ( t )
-	{
-		t->UnMark();
-		t = t->_next;
-	}
 }

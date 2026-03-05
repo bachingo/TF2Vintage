@@ -3474,7 +3474,7 @@ void SystemCall::call_64conv(asSSystemFunctionInterface* func,
 	Register esi(cpu, R13, sizeof(void*) * 8), ebx(cpu, EBX, sizeof(void*) * 8);
 	Register temp(cpu, R10, sizeof(void*) * 8), ebp(cpu, EBP, sizeof(void*) * 8);
 
-	call_entry(func, sFunc);
+	call_entry(sFunc);
 
 	int argCount = (int)sFunc->parameterTypes.GetLength();
 	unsigned stackBytes = 0;
@@ -3956,7 +3956,7 @@ void SystemCall::call_64conv(asSSystemFunctionInterface* func,
 		}
 	}
 
-	call_exit(func);
+	call_exit();
 }
 #else
 void SystemCall::call_getReturn(asSSystemFunctionInterface* func, asCScriptFunction* sFunc) {

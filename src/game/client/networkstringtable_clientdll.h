@@ -24,7 +24,7 @@ extern INetworkStringTable *g_pStringTableInfoPanel;
 extern INetworkStringTable *g_pStringTableClientSideChoreoScenes;
 extern INetworkStringTable *g_pStringTableServerMapCycle;
 
-#if defined( TF_CLIENT_DLL ) || defined( TF_VINTAGE_CLIENT )
+#ifdef TF_CLIENT_DLL
 extern INetworkStringTable *g_pStringTableServerPopFiles;
 extern INetworkStringTable *g_pStringTableServerMapCycleMvM;
 #endif

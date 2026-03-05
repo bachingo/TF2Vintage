@@ -1,4 +1,4 @@
-﻿//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -10,6 +10,7 @@
 #include "tf_weapon_grenade_pipebomb.h"
 #include "in_buttons.h"
 #include "datacache/imdlcache.h"
+#include "tf_gamerules.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
@@ -17,17 +18,19 @@
 #include <vgui_controls/Panel.h>
 #include <vgui/ISurface.h>
 #include "prediction.h"
+#include "c_tf_gamestats.h"
 // Server specific.
 #else
 #include "tf_player.h"
 #include "tf_gamestats.h"
 #endif
-#include "tf_shareddefs.h"
 
-#define HIGHLIGHT_CONTEXT	"BOMB_HIGHLIGHT_THINK"
+#define TF_PIPEBOMB_HIGHLIGHT 1
+#define TF_PIPEBOMB_DETONATE  2
 
-#define TF_PIPEBOMB_MODE_REMOTE		0
-#define TF_PIPEBOMB_MODE_VICINITY	1
+#define TF_WEAPON_PIPEBOMBD_MODEL		"models/weapons/w_models/w_stickybomb_d.mdl"
+
+#define TF_WEAPON_PIPEBOMB_LAUNCHER_CHARGE_SOUND	"Weapon_StickyBombLauncher.ChargeUp"
 
 //=============================================================================
 //
@@ -38,8 +41,10 @@ IMPLEMENT_NETWORKCLASS_ALIASED( TFPipebombLauncher, DT_WeaponPipebombLauncher )
 BEGIN_NETWORK_TABLE_NOBASE( CTFPipebombLauncher, DT_PipebombLauncherLocalData )
 #ifdef CLIENT_DLL
 	RecvPropInt( RECVINFO( m_iPipebombCount ) ),
+	RecvPropFloat( RECVINFO( m_flChargeBeginTime ) ),
 #else
 	SendPropInt( SENDINFO( m_iPipebombCount ), 5, SPROP_UNSIGNED ),
+	SendPropFloat( SENDINFO( m_flChargeBeginTime ) ),
 #endif
 END_NETWORK_TABLE()
 
@@ -54,7 +59,7 @@ END_NETWORK_TABLE()
 
 #ifdef CLIENT_DLL
 BEGIN_PREDICTION_DATA( CTFPipebombLauncher )
-	DEFINE_FIELD( m_flChargeBeginTime, FIELD_FLOAT )
+	DEFINE_FIELD(  m_flChargeBeginTime, FIELD_FLOAT )
 END_PREDICTION_DATA()
 #endif
 
@@ -66,11 +71,6 @@ PRECACHE_WEAPON_REGISTER( tf_weapon_pipebomblauncher );
 BEGIN_DATADESC( CTFPipebombLauncher )
 END_DATADESC()
 #endif
-
-
-CREATE_SIMPLE_WEAPON_TABLE( TFPipebombLauncher_Legacy, tf_weapon_pipebomblauncher_legacy )
-CREATE_SIMPLE_WEAPON_TABLE( TFPipebombLauncher_TF2Beta, tf_weapon_pipebomblauncher_tf2beta )
-CREATE_SIMPLE_WEAPON_TABLE( TFPipebombLauncher_TFC, tf_weapon_pipebomblauncher_tfc )
 
 //=============================================================================
 //
@@ -85,6 +85,12 @@ CTFPipebombLauncher::CTFPipebombLauncher()
 {
 	m_bReloadsSingly = true;
 	m_flLastDenySoundTime = 0.0f;
+	m_bNoAutoRelease = false;
+	m_bWantsToShoot = false;
+#ifdef CLIENT_DLL
+	m_flNextBombCheckTime = 0;
+	m_bBombThinking = false;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -105,21 +111,17 @@ void CTFPipebombLauncher::Spawn( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CTFPipebombLauncher::Precache()
-{
-	BaseClass::Precache();
-	PrecacheScriptSound("Weapon_StickyBombLauncher.ChargeUp");
-}
-
-//-----------------------------------------------------------------------------
 // Purpose: Reset the charge when we holster
 //-----------------------------------------------------------------------------
 bool CTFPipebombLauncher::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
+#ifdef CLIENT_DLL
+	if ( m_flChargeBeginTime > 0.f )
+	{
+		StopSound( TF_WEAPON_PIPEBOMB_LAUNCHER_CHARGE_SOUND );
+	}
+#endif
 	m_flChargeBeginTime = 0;
-	StopSound( "Weapon_StickyBombLauncher.ChargeUp" );
 
 	return BaseClass::Holster( pSwitchingTo );
 }
@@ -151,6 +153,35 @@ void CTFPipebombLauncher::WeaponReset( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+void CTFPipebombLauncher::ItemPostFrame( void )
+{
+	BaseClass::ItemPostFrame();
+
+	if ( m_flChargeBeginTime > 0 )
+	{
+		CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
+		if ( !pPlayer )
+			return;
+
+		// If we're not holding down the attack button, launch our grenade
+		if ( m_iClip1 > 0  && !(pPlayer->m_nButtons & IN_ATTACK) && (pPlayer->m_afButtonReleased & IN_ATTACK) )
+		{
+			LaunchGrenade();
+		}
+		else if ( !m_bNoAutoRelease )
+		{
+			float flTotalChargeTime = gpGlobals->curtime - m_flChargeBeginTime;
+			if ( flTotalChargeTime >= GetChargeForceReleaseTime() )
+			{
+				ForceLaunchGrenade();
+			}
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFPipebombLauncher::PrimaryAttack( void )
 {
 	// Check for ammunition.
@@ -176,8 +207,10 @@ void CTFPipebombLauncher::PrimaryAttack( void )
 		m_flChargeBeginTime = gpGlobals->curtime;
 
 		SendWeaponAnim( ACT_VM_PULLBACK );
-		
-		EmitSound( "Weapon_StickyBombLauncher.ChargeUp" );
+
+#ifdef CLIENT_DLL
+		EmitSound( TF_WEAPON_PIPEBOMB_LAUNCHER_CHARGE_SOUND );
+#endif // CLIENT_DLL
 	}
 	else
 	{
@@ -190,17 +223,46 @@ void CTFPipebombLauncher::PrimaryAttack( void )
 	}
 
 #ifdef CLIENT_DLL
-	if ( GetDetonateMode() == TF_PIPEBOMB_MODE_VICINITY && GetIndexForThinkContext( HIGHLIGHT_CONTEXT ) == NO_THINK_CONTEXT )
-		SetContextThink( &CTFPipebombLauncher::BombHighlightThink, gpGlobals->curtime + 0.1, HIGHLIGHT_CONTEXT );
+	if ( GetDetonateMode() == TF_DETONATE_MODE_DOT && !m_bBombThinking )
+	{
+		m_bBombThinking = true;
+		SetContextThink( &CTFPipebombLauncher::BombHighlightThink, gpGlobals->curtime + 0.1f, "BOMB_HIGHLIGHT_THINK" );
+	}
 #endif
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+#ifdef CLIENT_DLL
+void CTFPipebombLauncher::BombHighlightThink( void )
+{
+	ModifyPipebombsInView( TF_PIPEBOMB_HIGHLIGHT );
+	if ( GetOwner() )
+	{
+		SetContextThink( &CTFPipebombLauncher::BombHighlightThink, gpGlobals->curtime + 0.1f, "BOMB_HIGHLIGHT_THINK" );
+	}
+}
+#endif
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFPipebombLauncher::WeaponIdle( void )
 {
-	if ( m_flChargeBeginTime > 0 && m_iClip1 > 0 )
+	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
+	if ( !pPlayer )
+		return;
+
+	if ( m_flChargeBeginTime > 0 && m_iClip1 > 0 && (pPlayer->m_afButtonReleased & IN_ATTACK) )
+	{
+		if ( m_iClip1 > 0 )
+		{
+			m_bWantsToShoot = true;
+		}
+	}
+
+	if ( m_bWantsToShoot )
 	{
 		LaunchGrenade();
 	}
@@ -220,7 +282,7 @@ void CTFPipebombLauncher::LaunchGrenade( void )
 	if ( !pPlayer )
 		return;
 
-	StopSound( "Weapon_StickyBombLauncher.ChargeUp" );
+	m_bWantsToShoot = false;
 
 	CalcIsAttackCritical();
 
@@ -229,28 +291,47 @@ void CTFPipebombLauncher::LaunchGrenade( void )
 	pPlayer->SetAnimation( PLAYER_ATTACK1 );
 	pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 
-	CTFGrenadePipebombProjectile *pProjectile = static_cast<CTFGrenadePipebombProjectile *>( FireProjectile( pPlayer ) );
+	CTFGrenadePipebombProjectile *pProjectile = static_cast<CTFGrenadePipebombProjectile*>( FireProjectile( pPlayer ) );
 	if ( pProjectile )
 	{
 		// Save the charge time to scale the detonation timer.
 		pProjectile->SetChargeTime( gpGlobals->curtime - m_flChargeBeginTime );
 
-		if ( GetDetonateMode() == TF_PIPEBOMB_MODE_VICINITY )
+#ifdef GAME_DLL
+		if ( GetDetonateMode() == TF_DETONATE_MODE_AIR )
+		{
+			pProjectile->m_bWallShatter = true;
+		}
+		else if ( GetDetonateMode() == TF_DETONATE_MODE_DOT )
 		{
 			pProjectile->m_bDefensiveBomb = true;
-			pProjectile->SetModel( "models/weapons/w_models/w_stickybomb_d.mdl" );
+			pProjectile->SetModel( TF_WEAPON_PIPEBOMBD_MODEL );
 		}
+
+		float flChargeDmg = 1.0f;
+		CALL_ATTRIB_HOOK_FLOAT( flChargeDmg, stickybomb_charge_damage_increase );
+		if ( flChargeDmg != 1.0f )
+		{
+			float flDamage = pProjectile->GetDamage();
+			flDamage += flDamage * ( flChargeDmg - 1.0f ) * GetCurrentCharge();
+			pProjectile->SetDamage( flDamage );
+		}
+#endif	// GAME_DLL
 	}
-#if !defined( CLIENT_DLL ) 
+
+#ifdef CLIENT_DLL
+	C_CTF_GameStats.Event_PlayerFiredWeapon( pPlayer, IsCurrentAttackACrit() );
+	StopSound( TF_WEAPON_PIPEBOMB_LAUNCHER_CHARGE_SOUND );
+#else
 	pPlayer->SpeakWeaponFire();
 	CTF_GameStats.Event_PlayerFiredWeapon( pPlayer, IsCurrentAttackACrit() );
 #endif
 
 	// Set next attack times.
-	float flDelay = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
-	CALL_ATTRIB_HOOK_FLOAT( flDelay, mult_postfiredelay );
-	m_flNextPrimaryAttack = gpGlobals->curtime + flDelay;
 
+	float flFireDelay = ApplyFireDelay( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay );
+
+	m_flNextPrimaryAttack = gpGlobals->curtime + flFireDelay;
 	m_flLastDenySoundTime = gpGlobals->curtime;
 
 	SetWeaponIdleTime( gpGlobals->curtime + SequenceDuration() );
@@ -262,98 +343,29 @@ void CTFPipebombLauncher::LaunchGrenade( void )
 	}
 
 	m_flChargeBeginTime = 0;
+
+	if ( TFGameRules()->GameModeUsesUpgrades() )
+	{
+		PlayUpgradedShootSound( "Weapon_Upgrade.DamageBonus" );
+	}
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 float CTFPipebombLauncher::GetProjectileSpeed( void )
 {
 	float flForwardSpeed = RemapValClamped( ( gpGlobals->curtime - m_flChargeBeginTime ),
-											0.0f,
-											GetChargeMaxTime(),
-											TF_PIPEBOMB_MIN_CHARGE_VEL,
-											TF_PIPEBOMB_MAX_CHARGE_VEL );
+		0.0f,
+		GetChargeMaxTime(),
+		TF_PIPEBOMB_MIN_CHARGE_VEL,
+		TF_PIPEBOMB_MAX_CHARGE_VEL );
 
-	CALL_ATTRIB_HOOK_FLOAT( flForwardSpeed, mult_projectile_range );
 	return flForwardSpeed;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 void CTFPipebombLauncher::AddPipeBomb( CTFGrenadePipebombProjectile *pBomb )
 {
 	PipebombHandle hHandle;
 	hHandle = pBomb;
 	m_Pipebombs.AddToTail( hHandle );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFPipebombLauncher::ModifyPipebombsInView( int iMode )
-{
-	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
-	if ( !pPlayer )
-		return false;
-
-#ifdef GAME_DLL
-	int nStickiesKillStickies = 0;
-	CALL_ATTRIB_HOOK_INT( nStickiesKillStickies, stickies_detonate_stickies );
-#endif
-
-	bool bFailedToDetonate = true;
-	for ( int i = 0; i < m_Pipebombs.Count(); i++ )
-	{
-		CTFGrenadePipebombProjectile *pTemp = m_Pipebombs[ i ];
-		if ( pTemp )
-		{
-			if ( pTemp->IsEffectActive( EF_NODRAW ) )
-				continue;
-
-			if ( ( gpGlobals->curtime - pTemp->m_flCreationTime ) < pTemp->GetLiveTime() )
-				continue;
-
-			Vector vecToPlayer = pTemp->WorldSpaceCenter() - pPlayer->EyePosition();
-			vecToPlayer.NormalizeInPlace();
-
-			Vector vecFwd;
-			AngleVectors( pPlayer->EyeAngles(), &vecFwd );
-			vecFwd.NormalizeInPlace();
-
-			float flDistance = ( pPlayer->GetAbsOrigin() - pTemp->GetAbsOrigin() ).Length();
-
-			if ( vecToPlayer.Dot( vecFwd ) > 0.975f || flDistance < 100.0f )
-			{
-			#ifdef GAME_DLL
-				if ( iMode == TF_PIPEBOMB_DETONATE_CHECK )
-				{
-					if ( nStickiesKillStickies == 1 )
-						pTemp->DetonateStickies();
-
-					pTemp->Detonate();
-				}
-			#endif
-
-			#ifdef CLIENT_DLL
-				if ( iMode == TF_PIPEBOMB_GLOW_CHECK && pTemp->m_bDefensiveBomb )
-					pTemp->m_bGlowing = true;
-			#endif
-
-				bFailedToDetonate = false;
-			}
-			else
-			{
-			#ifdef CLIENT_DLL
-				if ( iMode == TF_PIPEBOMB_GLOW_CHECK && pTemp->m_bDefensiveBomb )
-					pTemp->m_bGlowing = false;
-			#endif
-			}
-		}
-	}
-
-	return bFailedToDetonate;
 }
 
 //-----------------------------------------------------------------------------
@@ -364,11 +376,10 @@ CBaseEntity *CTFPipebombLauncher::FireProjectile( CTFPlayer *pPlayer )
 	CBaseEntity *pProjectile = BaseClass::FireProjectile( pPlayer );
 	if ( pProjectile )
 	{
-	#ifdef GAME_DLL
+#ifdef GAME_DLL
+		// If we've gone over the max pipebomb count, detonate the oldest
 		int nMaxPipebombs = TF_WEAPON_PIPEBOMB_COUNT;
 		CALL_ATTRIB_HOOK_INT( nMaxPipebombs, add_max_pipebombs );
-
-		// If we've gone over the max pipebomb count, detonate the oldest
 		if ( m_Pipebombs.Count() >= nMaxPipebombs )
 		{
 			CTFGrenadePipebombProjectile *pTemp = m_Pipebombs[0];
@@ -377,51 +388,20 @@ CBaseEntity *CTFPipebombLauncher::FireProjectile( CTFPlayer *pPlayer )
 				pTemp->SetTimer( gpGlobals->curtime ); // explode NOW
 			}
 
-			m_Pipebombs.Remove( 0 );
+			m_Pipebombs.Remove(0);
 		}
 
+		CTFGrenadePipebombProjectile *pPipebomb = (CTFGrenadePipebombProjectile*)pProjectile;
+
 		PipebombHandle hHandle;
-		hHandle = (CTFGrenadePipebombProjectile *)pProjectile;
+		hHandle = pPipebomb;
 		m_Pipebombs.AddToTail( hHandle );
 
 		m_iPipebombCount = m_Pipebombs.Count();
-	#endif
+#endif
 	}
 
 	return pProjectile;
-}
-
-#ifdef CLIENT_DLL
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CTFPipebombLauncher::BombHighlightThink( void )
-{
-	if ( GetOwner() == nullptr )
-		return;
-
-	ModifyPipebombsInView( TF_PIPEBOMB_GLOW_CHECK );
-
-	SetNextThink( gpGlobals->curtime + 0.1, HIGHLIGHT_CONTEXT );
-}
-#endif
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CTFPipebombLauncher::ItemPostFrame( void )
-{
-	BaseClass::ItemPostFrame();
-
-	// Allow player to fire and detonate at the same time.
-	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
-	if ( pOwner && !( pOwner->m_nButtons & IN_ATTACK ) )
-	{
-		if ( m_flChargeBeginTime > 0 && m_iClip1 > 0 )
-		{
-			LaunchGrenade();
-		}
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -458,7 +438,7 @@ void CTFPipebombLauncher::SecondaryAttack( void )
 			return;
 
 		//If one or more pipebombs failed to detonate then play a sound.
-		if ( DetonateRemotePipebombs( false ) )
+		if ( DetonateRemotePipebombs( false ) == true )
 		{
 			if ( m_flLastDenySoundTime <= gpGlobals->curtime )
 			{
@@ -472,6 +452,18 @@ void CTFPipebombLauncher::SecondaryAttack( void )
 		{
 			// Play a detonate sound.
 			WeaponSound( SPECIAL3 );
+
+#ifdef GAME_DLL
+			IGameEvent *pDetEvent = gameeventmanager->CreateEvent( "demoman_det_stickies" );
+
+			if ( pDetEvent )
+			{
+				pDetEvent->SetInt( "player", pPlayer->entindex() );
+
+				// Send the event
+				gameeventmanager->FireEvent( pDetEvent );
+			}
+#endif
 		}
 	}
 }
@@ -484,7 +476,7 @@ void CTFPipebombLauncher::SecondaryAttack( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPipebombLauncher::UpdateOnRemove( void )
+void CTFPipebombLauncher::UpdateOnRemove(void)
 {
 	// If we just died, we want to fizzle our pipebombs.
 	// If the player switched classes, our pipebombs have already been removed.
@@ -493,6 +485,19 @@ void CTFPipebombLauncher::UpdateOnRemove( void )
 	BaseClass::UpdateOnRemove();
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPipebombLauncher::ApplyPostHitEffects( const CTakeDamageInfo &inputInfo, CTFPlayer *pPlayer )
+{
+	if ( !GetTFPlayerOwner() )
+		return;
+
+	if ( pPlayer->m_Shared.GetWeaponKnockbackID() == -1 )
+	{
+		pPlayer->m_Shared.SetWeaponKnockbackID( GetTFPlayerOwner()->GetUserID() );
+	}
+}
 
 #endif
 
@@ -502,10 +507,10 @@ void CTFPipebombLauncher::UpdateOnRemove( void )
 //-----------------------------------------------------------------------------
 void CTFPipebombLauncher::DeathNotice( CBaseEntity *pVictim )
 {
-	Assert( dynamic_cast<CTFGrenadePipebombProjectile *>( pVictim ) );
+	Assert( dynamic_cast<CTFGrenadePipebombProjectile*>(pVictim) );
 
 	PipebombHandle hHandle;
-	hHandle = (CTFGrenadePipebombProjectile *)pVictim;
+	hHandle = (CTFGrenadePipebombProjectile*)pVictim;
 	m_Pipebombs.FindAndRemove( hHandle );
 
 	m_iPipebombCount = m_Pipebombs.Count();
@@ -517,64 +522,124 @@ void CTFPipebombLauncher::DeathNotice( CBaseEntity *pVictim )
 //-----------------------------------------------------------------------------
 bool CTFPipebombLauncher::DetonateRemotePipebombs( bool bFizzle )
 {
-	if ( GetDetonateMode() != TF_PIPEBOMB_MODE_VICINITY || bFizzle )
+	if ( GetDetonateMode() == TF_DETONATE_MODE_DOT && !bFizzle )
 	{
-		bool bFailedToDetonate = false;
-
-		for ( int i = 0; i < m_Pipebombs.Count(); i++ )
-		{
-			CTFGrenadePipebombProjectile *pTemp = m_Pipebombs[ i ];
-			if ( pTemp )
-			{
-				//This guy will die soon enough.
-				if ( pTemp->IsEffectActive( EF_NODRAW ) )
-					continue;
-
-			#ifdef GAME_DLL
-				if ( bFizzle )
-				{
-					pTemp->Fizzle();
-				}
-			#endif
-
-				if ( !bFizzle )
-				{
-					if ( ( gpGlobals->curtime - pTemp->m_flCreationTime ) < pTemp->GetLiveTime() )
-					{
-						bFailedToDetonate = true;
-						continue;
-					}
-				}
-
-			#ifdef GAME_DLL
-				pTemp->Detonate();
-			#endif
-			}
-		}
-
-		return bFailedToDetonate;
+		return ModifyPipebombsInView( TF_PIPEBOMB_DETONATE );
 	}
 
-	return ModifyPipebombsInView( TF_PIPEBOMB_DETONATE_CHECK );
+	bool bFailedToDetonate = false;
+
+	int count = m_Pipebombs.Count();
+
+	for ( int i = 0; i < count; i++ )
+	{
+		CTFGrenadePipebombProjectile *pTemp = m_Pipebombs[i];
+		if ( pTemp )
+		{
+			//This guy will die soon enough.
+			if ( pTemp->IsEffectActive( EF_NODRAW ) )
+				continue;
+#ifdef GAME_DLL
+			if ( bFizzle )
+			{
+				pTemp->Fizzle();
+			}
+#endif
+
+			if ( bFizzle == false )
+			{
+				if ( ( gpGlobals->curtime - pTemp->m_flCreationTime ) < pTemp->GetLiveTime() )
+				{
+					if ( pTemp->GetLiveTime() <= 0.5f )
+					{
+						pTemp->SetDetonateOnPulse( true );
+					}
+					bFailedToDetonate = true;
+					continue;
+				}
+			}
+#ifdef GAME_DLL
+			if ( CanDestroyStickies() )
+			{
+				pTemp->DetonateStickies();
+			}
+			pTemp->Detonate();
+#endif
+		}
+	}
+
+	return bFailedToDetonate;
 }
 
-
-float CTFPipebombLauncher::GetChargeMaxTime( void )
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFPipebombLauncher::ModifyPipebombsInView( int iEffect )
 {
-	float flMaxChargeTime = TF_PIPEBOMB_MAX_CHARGE_TIME;
-	CALL_ATTRIB_HOOK_INT( flMaxChargeTime, stickybomb_charge_rate );
-	return flMaxChargeTime;
+	CTFPlayer* pPlayer = ToTFPlayer( GetOwner() );
+	if ( !pPlayer )
+		return true;
+
+	// Dot product from the view angle to determine which bombs to detonate.
+	bool bFailedToDetonate = true;
+	int count = m_Pipebombs.Count();
+	for ( int i=0; i<count; ++i )
+	{
+		CTFGrenadePipebombProjectile *pTemp = m_Pipebombs[i];
+		if ( !pTemp || pTemp->IsEffectActive( EF_NODRAW ) )
+			continue;
+
+		Vector vecToTarget;
+		vecToTarget = pTemp->WorldSpaceCenter() - pPlayer->EyePosition();
+		vecToTarget.NormalizeInPlace();
+
+		Vector vecPlayerForward;
+		AngleVectors( pPlayer->EyeAngles(), &vecPlayerForward, NULL, NULL );
+		vecPlayerForward.NormalizeInPlace();
+
+		bool bArmed = ( ( gpGlobals->curtime - pTemp->m_flCreationTime ) > pTemp->GetLiveTime() );
+		float flDist = pPlayer->GetAbsOrigin().DistTo( pTemp->GetAbsOrigin() );
+		float flDot = DotProduct( vecToTarget, vecPlayerForward );
+
+		// Detonate sticky bombs directly under the crosshair or under our feet (to allow sticky jumping)
+		if ( flDot > 0.975f || flDist < pTemp->GetDamageRadius() )
+		{
+			switch ( iEffect )
+			{
+			case TF_PIPEBOMB_HIGHLIGHT:
+#ifdef CLIENT_DLL
+				pTemp->SetHighlight( true );
+#endif
+				break;
+			case TF_PIPEBOMB_DETONATE:
+				if ( bArmed )
+				{
+					bFailedToDetonate = false;
+#ifdef GAME_DLL
+					if ( CanDestroyStickies() )
+					{
+						pTemp->DetonateStickies();
+					}
+#endif
+					pTemp->Detonate();
+				}
+				break;
+			}
+		}
+		else if ( iEffect == TF_PIPEBOMB_HIGHLIGHT )
+		{
+#ifdef CLIENT_DLL
+			pTemp->SetHighlight( false );
+#endif
+		}
+	}
+
+	return bFailedToDetonate;
 }
 
-
-int CTFPipebombLauncher::GetDetonateMode( void ) const
-{
-	int nDetonateMode = 0;
-	CALL_ATTRIB_HOOK_INT( nDetonateMode, set_detonate_mode );
-	return nDetonateMode;
-}
-
-
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 bool CTFPipebombLauncher::Reload( void )
 {
 	if ( m_flChargeBeginTime > 0 )
