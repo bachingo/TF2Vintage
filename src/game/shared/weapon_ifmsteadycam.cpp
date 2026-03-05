@@ -26,7 +26,7 @@
 //-----------------------------------------------------------------------------
 IMPLEMENT_NETWORKCLASS_ALIASED( WeaponIFMSteadyCam, DT_WeaponIFMSteadyCam )
 LINK_ENTITY_TO_CLASS( weapon_ifm_steadycam, CWeaponIFMSteadyCam );
-#if !( defined( TF_CLIENT_DLL ) || defined( TF_DLL ) ) && !(defined (TF_VINTAGE) || defined (TF_VINTAGE_CLIENT))
+#if !( defined( TF_CLIENT_DLL ) || defined( TF_DLL ) )
 PRECACHE_WEAPON_REGISTER( weapon_ifm_steadycam );
 #endif
 

@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // TF Nail Projectile
 //
@@ -11,6 +11,7 @@
 
 #include "cbase.h"
 #include "tf_projectile_base.h"
+#include "tf_weaponbase_gun.h"
 
 //-----------------------------------------------------------------------------
 // Purpose: The base Nail projectile
@@ -41,17 +42,12 @@ class CTFProjectile_Syringe : public CTFBaseProjectile
 	DECLARE_CLASS( CTFProjectile_Syringe, CTFBaseProjectile );
 
 public:
-
-	CTFProjectile_Syringe();
-	~CTFProjectile_Syringe();
-
 	// Creation.
-	static CTFProjectile_Syringe *Create(const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL, bool bCritical = false, CBaseEntity *pWeapon = NULL);
+	static CTFBaseProjectile *Create( const Vector &vecOrigin, const QAngle &vecAngles, CTFWeaponBaseGun *pLauncher = NULL, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL, bool bCritical = false );	
 
-	virtual const char *GetProjectileModelName( void );
+	virtual unsigned int PhysicsSolidMaskForEntity( void ) const;
+	virtual const char *GetProjectileModelName( void )	{ return "models/weapons/w_models/w_syringe_proj.mdl"; }
 	virtual float GetGravity( void );
-
-	static float	GetInitialVelocity( void ) { return 1000.0; }
 };
 
 //-----------------------------------------------------------------------------

@@ -1,39 +1,56 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_nav_ent_wait.cpp
+// Wait for awhile, as directed by nav entity
+// Michael Booth, September 2009
+
 #include "cbase.h"
-#include "NavMeshEntities/func_nav_prerequisite.h"
-#include "../../tf_bot.h"
-#include "tf_bot_nav_ent_wait.h"
+#include "nav_mesh.h"
+#include "tf_player.h"
+#include "bot/tf_bot.h"
+#include "bot/behavior/nav_entities/tf_bot_nav_ent_wait.h"
 
+extern ConVar tf_bot_path_lookahead_range;
 
-CTFBotNavEntWait::CTFBotNavEntWait(const CFuncNavPrerequisite *prereq)
+//---------------------------------------------------------------------------------------------
+CTFBotNavEntWait::CTFBotNavEntWait( const CFuncNavPrerequisite *prereq )
 {
-	if (prereq != nullptr) {
-		m_hPrereq = prereq;
+	m_prereq = prereq;
+}
+
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot > CTFBotNavEntWait::OnStart( CTFBot *me, Action< CTFBot > *priorAction )
+{
+	if ( m_prereq == NULL )
+	{
+		return Done( "Prerequisite has been removed before we started" );
 	}
-}
 
-CTFBotNavEntWait::~CTFBotNavEntWait()
-{
-}
+	m_timer.Start( m_prereq->GetTaskValue() );
 
-
-const char *CTFBotNavEntWait::GetName() const
-{
-	return "NavEntWait";
+	return Continue();
 }
 
 
-ActionResult<CTFBot> CTFBotNavEntWait::OnStart(CTFBot *me, Action<CTFBot> *priorAction)
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot > CTFBotNavEntWait::Update( CTFBot *me, float interval )
 {
-	if (m_hPrereq == nullptr) {
-		return Action<CTFBot>::Done("Prerequisite has been removed before we started");
+	if ( m_prereq == NULL )
+	{
+		return Done( "Prerequisite has been removed" );
 	}
-	
-	// TODO
-	return Action<CTFBot>::Continue();
+
+	if ( !m_prereq->IsEnabled() )
+	{
+		return Done( "Prerequisite has been disabled" );
+	}
+
+	if ( m_timer.IsElapsed() )
+	{
+		return Done( "Wait time elapsed" );
+	}
+
+	return Continue();
 }
 
-ActionResult<CTFBot> CTFBotNavEntWait::Update(CTFBot *me, float dt)
-{
-	// TODO
-	return Action<CTFBot>::Continue();
-}
+

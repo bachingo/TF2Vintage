@@ -1,239 +1,339 @@
-#include "cbase.h"
-#include "../tf_bot.h"
-#include "tf_gamerules.h"
-#include "tf_obj.h"
-#include "nav_mesh/tf_nav_mesh.h"
-#include "tf_bot_get_ammo.h"
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_get_ammo.h
+// Pick up any nearby ammo
+// Michael Booth, May 2009
 
+#include "cbase.h"
+#include "tf_obj.h"
+#include "tf_gamerules.h"
+#include "bot/tf_bot.h"
+#include "bot/behavior/tf_bot_get_ammo.h"
+
+extern ConVar tf_bot_path_lookahead_range;
 
 ConVar tf_bot_ammo_search_range( "tf_bot_ammo_search_range", "5000", FCVAR_CHEAT, "How far bots will search to find ammo around them" );
-ConVar tf_bot_debug_ammo_scavanging( "tf_bot_debug_ammo_scavanging", "0", FCVAR_CHEAT );
+ConVar tf_bot_debug_ammo_scavenging( "tf_bot_debug_ammo_scavenging", "0", FCVAR_CHEAT );
 
 
-static CHandle<CBaseEntity> s_possibleAmmo;
-static CTFBot *s_possibleBot;
-static int s_possibleFrame;
-
-
-CTFBotGetAmmo::CTFBotGetAmmo()
+//---------------------------------------------------------------------------------------------
+CTFBotGetAmmo::CTFBotGetAmmo( void )
 {
-	m_PathFollower.Invalidate();
-	m_hAmmo = nullptr;
-	m_bUsingDispenser = false;
-}
-
-CTFBotGetAmmo::~CTFBotGetAmmo()
-{
+	m_path.Invalidate();
+	m_ammo = NULL;
+	m_isGoalDispenser = false;
 }
 
 
-const char *CTFBotGetAmmo::GetName() const
+//---------------------------------------------------------------------------------------------
+class CAmmoFilter : public INextBotFilter
 {
-	return "GetAmmo";
-}
-
-
-ActionResult<CTFBot> CTFBotGetAmmo::OnStart( CTFBot *me, Action<CTFBot> *priorAction )
-{
-	VPROF_BUDGET( __FUNCTION__, "NextBot" );
-
-	m_PathFollower.SetMinLookAheadDistance( me->GetDesiredPathLookAheadRange() );
-
-	if ( ( gpGlobals->framecount != s_possibleFrame || s_possibleBot != me ) && ( !IsPossible( me ) || !s_possibleAmmo ) )
-		return Action<CTFBot>::Done( "Can't get ammo" );
-
-	m_hAmmo = s_possibleAmmo;
-	m_bUsingDispenser = s_possibleAmmo->ClassMatches( "obj_dispenser*" );
-
-	CTFBotPathCost cost( me, FASTEST_ROUTE );
-	if ( !m_PathFollower.Compute( me, m_hAmmo->WorldSpaceCenter(), cost ) )
-		return Action<CTFBot>::Done( "No path to ammo" );
-
-	if ( me->IsPlayerClass( TF_CLASS_SPY ) && me->m_Shared.IsStealthed() )
-		me->PressAltFireButton();
-
-	return Action<CTFBot>::Continue();
-}
-
-ActionResult<CTFBot> CTFBotGetAmmo::Update( CTFBot *me, float dt )
-{
-	if ( me->IsAmmoFull() )
-		return Action<CTFBot>::Done( "My ammo is full" );
-
-	if ( !m_hAmmo )
-		return Action<CTFBot>::Done( "Ammo I was going for has been taken" );
-
-	if ( m_bUsingDispenser && 
-		( me->GetAbsOrigin() - m_hAmmo->GetAbsOrigin() ).LengthSqr() < Square( 75.0f ) &&
-		me->GetVisionInterface()->IsLineOfSightClearToEntity(m_hAmmo) )
+public:
+	CAmmoFilter( CTFBot *me )
 	{
-		if ( me->IsAmmoFull() )
-			return Action<CTFBot>::Done( "Ammo refilled by the Dispenser" );
+		m_me = me;
+		m_ammoArea = NULL;
+	}
 
-		if ( !me->IsAmmoLow() )
+	bool IsSelected( const CBaseEntity *constCandidate ) const
+	{
+		CBaseEntity *candidate = const_cast< CBaseEntity * >( constCandidate );
+
+		m_ammoArea = (CTFNavArea *)TheNavMesh->GetNearestNavArea( candidate->WorldSpaceCenter() );
+		if ( !m_ammoArea )
+			return false;
+
+		CClosestTFPlayer close( candidate );
+		ForEachPlayer( close );
+
+		// if the closest player to this candidate object is an enemy, don't use it
+		if ( close.m_closePlayer && !m_me->InSameTeam( close.m_closePlayer ) )
+			return false;
+
+		// resupply cabinets (not assigned a team)
+		if ( candidate->ClassMatches( "func_regenerate" ) )
 		{
-			if ( me->GetVisionInterface()->GetPrimaryKnownThreat() )
-				return Action<CTFBot>::Done( "No time to wait for more ammo, I must fight" );
+			if ( !m_ammoArea->HasAttributeTF( TF_NAV_SPAWN_ROOM_BLUE | TF_NAV_SPAWN_ROOM_RED ) )
+			{
+				// Assume any resupply cabinets not in a teamed spawn room are inaccessible.
+				// Ex: pl_upward has forward spawn rooms that neither team can use until 
+				// certain checkpoints are reached.
+				return false;
+			}
+
+			if ( ( m_me->GetTeamNumber() == TF_TEAM_RED && m_ammoArea->HasAttributeTF( TF_NAV_SPAWN_ROOM_RED ) ) ||
+				 ( m_me->GetTeamNumber() == TF_TEAM_BLUE && m_ammoArea->HasAttributeTF( TF_NAV_SPAWN_ROOM_BLUE ) ) )
+			{
+				// the supply cabinet is in my spawn room, or not in any spawn room
+				return true;
+			}
+			return false;
+		}
+
+		// ignore non-existent ammo to ensure we collect nearby existing ammo
+		if ( candidate->IsEffectActive( EF_NODRAW ) )
+			return false;
+
+		if ( candidate->ClassMatches( "tf_ammo_pack" ) )
+			return true;
+
+		if ( candidate->ClassMatches( "item_ammopack*" ) )
+			return true;
+
+		if ( m_me->InSameTeam( candidate ) )
+		{
+			// friendly engineer's dispenser
+			if ( candidate->ClassMatches( "obj_dispenser*" ) )
+			{
+				// for now, assume Engineers want to go fetch ammo boxes unless their dispenser is fully upgraded
+				// unless we have no sentry yet, then we need to leech off of buddy's dispenser to get started
+				if ( !m_me->IsPlayerClass( TF_CLASS_ENGINEER ) || ( (CBaseObject *)candidate )->GetUpgradeLevel() >= 3 || !m_me->GetObjectOfType( OBJ_SENTRYGUN ) )
+				{
+					CBaseObject	*dispenser = (CBaseObject *)candidate;
+					if ( !dispenser->IsBuilding() && !dispenser->IsDisabled() )
+					{
+						return true;
+					}
+				}
+			}
+		}
+
+		return false;
+	}
+
+	CTFBot *m_me;
+	mutable CTFNavArea *m_ammoArea;
+};
+
+
+//---------------------------------------------------------------------------------------------
+static CTFBot *s_possibleBot = NULL;
+static CHandle< CBaseEntity > s_possibleAmmo = NULL;
+static int s_possibleFrame = 0;
+
+
+//---------------------------------------------------------------------------------------------
+/**
+ * Return true if this Action has what it needs to perform right now
+ */
+bool CTFBotGetAmmo::IsPossible( CTFBot *me )
+{
+	VPROF_BUDGET( "CTFBotGetAmmo::IsPossible", "NextBot" );
+
+	int i;
+
+	CUtlVector< CNavArea * > nearbyAreaVector;
+	CollectSurroundingAreas( &nearbyAreaVector, me->GetLastKnownArea(), tf_bot_ammo_search_range.GetFloat(), me->GetLocomotionInterface()->GetStepHeight(), me->GetLocomotionInterface()->GetDeathDropHeight() );
+
+	CAmmoFilter ammoFilter( me );
+
+	const CUtlVector< CHandle< CBaseEntity > > &staticAmmoVector = TFGameRules()->GetAmmoEntityVector();
+	CBaseEntity *closestAmmo = NULL;
+	float closestAmmoTravelDistance = FLT_MAX;
+
+	for( i=0; i<staticAmmoVector.Count(); ++i )
+	{
+		CBaseEntity *ammo = staticAmmoVector[i];
+		if ( ammo )
+		{
+			if ( ammoFilter.IsSelected( ammo ) )
+			{
+				if ( ammoFilter.m_ammoArea && ammoFilter.m_ammoArea->IsMarked() )
+				{
+					// "cost so far" was computed during the breadth first search within CollectSurroundingAreas()
+					// and is the travel distance from to this area
+					if ( ammoFilter.m_ammoArea->GetCostSoFar() < closestAmmoTravelDistance )
+					{
+						closestAmmo = ammo;
+						closestAmmoTravelDistance = ammoFilter.m_ammoArea->GetCostSoFar();
+					}
+
+					if ( tf_bot_debug_ammo_scavenging.GetBool() )
+					{
+						NDebugOverlay::Cross3D( ammo->WorldSpaceCenter(), 5.0f, 255, 255, 0, true, 999.9 );
+					}
+				}
+			}
 		}
 	}
 
-	if ( !m_PathFollower.IsValid() )
-		return Action<CTFBot>::Done( "My path became invalid" );
+	// append nearby dropped weapons
+	CBaseEntity *ammoPack = NULL;
+	while( ( ammoPack = gEntList.FindEntityByClassname( ammoPack, "tf_ammo_pack" ) ) != NULL )
+	{
+		if ( ammoFilter.IsSelected( ammoPack ) )
+		{
+			if ( ammoFilter.m_ammoArea && ammoFilter.m_ammoArea->IsMarked() )
+			{
+				if ( ammoFilter.m_ammoArea->GetCostSoFar() < closestAmmoTravelDistance )
+				{
+					closestAmmo = ammoPack;
+					closestAmmoTravelDistance = ammoFilter.m_ammoArea->GetCostSoFar();
+				}
 
+				if ( tf_bot_debug_ammo_scavenging.GetBool() )
+				{
+					NDebugOverlay::Cross3D( ammoPack->WorldSpaceCenter(), 5.0f, 255, 100, 0, true, 999.9 );
+				}
+			}
+		}
+	}
+
+	if ( !closestAmmo )
+	{
+		if ( me->IsDebugging( NEXTBOT_BEHAVIOR ) )
+		{
+			Warning( "%3.2f: No ammo nearby\n", gpGlobals->curtime );
+		}
+		return false;
+	}
+
+	s_possibleBot = me;
+	s_possibleAmmo = closestAmmo;
+	s_possibleFrame = gpGlobals->framecount;
+
+	return true;
+}
+
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotGetAmmo::OnStart( CTFBot *me, Action< CTFBot > *priorAction )
+{
+	VPROF_BUDGET( "CTFBotGetAmmo::OnStart", "NextBot" );
+
+	m_path.SetMinLookAheadDistance( me->GetDesiredPathLookAheadRange() );
+
+	// if IsPossible() has already been called, use its cached data
+	if ( s_possibleFrame != gpGlobals->framecount || s_possibleBot != me )
+	{
+		if ( !IsPossible( me ) || s_possibleAmmo == NULL )
+		{
+			return Done( "Can't get ammo" );
+		}
+	}
+
+	m_ammo = s_possibleAmmo;
+	m_isGoalDispenser = m_ammo->ClassMatches( "obj_dispenser*" );
+
+	CTFBotPathCost cost( me, FASTEST_ROUTE );
+	if ( !m_path.Compute( me, m_ammo->WorldSpaceCenter(), cost ) )
+	{
+		return Done( "No path to ammo!" );
+	}
+
+	// if I'm a spy, cloak and disguise
+	if ( me->IsPlayerClass( TF_CLASS_SPY ) )
+	{
+		if ( !me->m_Shared.IsStealthed() )
+		{
+			me->PressAltFireButton();
+		}
+	}
+
+	return Continue();
+}
+
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotGetAmmo::Update( CTFBot *me, float interval )
+{
+	if ( me->IsAmmoFull() )
+	{
+		return Done( "My ammo is full" );
+	}
+
+	if ( m_ammo == NULL ) // || ( m_ammo->IsEffectActive( EF_NODRAW ) && !FClassnameIs( m_ammo, "func_regenerate" ) ) )
+	{
+/*
+		// engineers try to gather all the metal they can
+		if ( me->IsPlayerClass( TF_CLASS_ENGINEER ) && CTFBotGetAmmo::IsPossible( me ) )
+		{
+			// more ammo to be had
+			return ChangeTo( new CTFBotGetAmmo, "Not full yet - grabbing more ammo" );
+		}
+*/
+
+		return Done( "Ammo I was going for has been taken" );
+	}
+
+	if ( m_isGoalDispenser )
+	{
+		// we need to get near and wait, not try to run over
+		const float nearRange = 75.0f;
+		if ( ( me->GetAbsOrigin() - m_ammo->GetAbsOrigin() ).IsLengthLessThan( nearRange ) )
+		{
+			if ( me->GetVisionInterface()->IsLineOfSightClearToEntity( m_ammo ) )
+			{
+				if ( me->IsAmmoFull() )
+				{
+					return Done( "Ammo refilled by the Dispenser" );
+				}
+
+				// don't wait if I'm in combat
+				if ( !me->IsAmmoLow() && me->GetVisionInterface()->GetPrimaryKnownThreat() )
+				{
+					return Done( "No time to wait for more ammo, I must fight" );
+				}
+
+				// wait until the dispenser refills us
+				return Continue();
+			}
+		}
+	}
+
+	if ( !m_path.IsValid() )
+	{
+		return Done( "My path became invalid" );
+	}
+
+/* TODO: Rethink this. Currently creates zombie behavior loop.
+	// if the closest player to the item we're after is an enemy, give up
+	CClosestTFPlayer close( m_ammo );
+	ForEachPlayer( close );
+	if ( close.m_closePlayer && !me->InSameTeam( close.m_closePlayer ) )
+		return Done( "An enemy is closer to it" );
+*/
+
+	// may need to switch weapons due to out of ammo
 	const CKnownEntity *threat = me->GetVisionInterface()->GetPrimaryKnownThreat();
 	me->EquipBestWeaponForThreat( threat );
 
-	m_PathFollower.Update( me );
+	m_path.Update( me );
 
-	return Action<CTFBot>::Continue();
+	return Continue();
 }
 
 
-EventDesiredResult<CTFBot> CTFBotGetAmmo::OnContact( CTFBot *me, CBaseEntity *other, CGameTrace *result )
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotGetAmmo::OnContact( CTFBot *me, CBaseEntity *other, CGameTrace *result )
 {
-	return Action<CTFBot>::TryContinue();
+	return TryContinue();
 }
 
-EventDesiredResult<CTFBot> CTFBotGetAmmo::OnMoveToSuccess( CTFBot *me, const Path *path )
+
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotGetAmmo::OnStuck( CTFBot *me )
 {
-	return Action<CTFBot>::TryContinue();
+	return TryDone( RESULT_CRITICAL, "Stuck trying to reach ammo" );
 }
 
-EventDesiredResult<CTFBot> CTFBotGetAmmo::OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType fail )
+
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotGetAmmo::OnMoveToSuccess( CTFBot *me, const Path *path )
 {
-	return Action<CTFBot>::TryDone( RESULT_CRITICAL, "Failed to reach ammo" );
+	return TryContinue();
 }
 
-EventDesiredResult<CTFBot> CTFBotGetAmmo::OnStuck( CTFBot *me )
+
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotGetAmmo::OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType reason )
 {
-	return Action<CTFBot>::TryDone( RESULT_CRITICAL, "Stuck trying to reach ammo" );
+	return TryDone( RESULT_CRITICAL, "Failed to reach ammo" );
 }
 
 
+//---------------------------------------------------------------------------------------------
 QueryResultType CTFBotGetAmmo::ShouldHurry( const INextBot *me ) const
 {
+	// if we need ammo, we best hustle
 	return ANSWER_YES;
-}
-
-
-bool CTFBotGetAmmo::IsPossible( CTFBot *actor )
-{
-	VPROF_BUDGET( __FUNCTION__, "NextBot" );
-
-	CUtlVector<EHANDLE> ammos;
-	for ( CBaseEntity *pEntity = gEntList.FirstEnt(); pEntity; pEntity = gEntList.NextEnt( pEntity ) )
-	{
-		if ( pEntity->ClassMatches( "tf_ammo_pack" ) )
-		{
-			EHANDLE hndl( pEntity );
-			ammos.AddToTail( hndl );
-		}
-	}
-
-	ammos.AddVectorToTail( TFGameRules()->GetAmmoEnts() );
-
-	CAmmoFilter filter( actor );
-	actor->SelectReachableObjects( ammos, &ammos, filter, actor->GetLastKnownArea(), tf_bot_ammo_search_range.GetFloat() );
-
-	if ( ammos.IsEmpty() )
-	{
-		if ( actor->IsDebugging( NEXTBOT_BEHAVIOR ) )
-			Warning( "%3.2f: No ammo nearby.\n", gpGlobals->curtime );
-
-		return false;
-	}
-
-	CBaseEntity *pAmmo = nullptr;
-	for( int i=0; i<ammos.Count(); ++i )
-	{
-		if ( ammos[i]->GetTeamNumber() == GetEnemyTeam( actor ) )
-			continue;
-
-		pAmmo = ammos[i];
-
-		if ( tf_bot_debug_ammo_scavanging.GetBool() )
-			NDebugOverlay::Cross3D( pAmmo->WorldSpaceCenter(), 5.0f, 255, 100, 154, false, 1.0 );
-	}
-
-	if ( pAmmo )
-	{
-		CTFBotPathCost func( actor, FASTEST_ROUTE );
-		if ( !NavAreaBuildPath( actor->GetLastKnownArea(), NULL, &pAmmo->WorldSpaceCenter(), func ) )
-		{
-			if ( actor->IsDebugging( NEXTBOT_BEHAVIOR ) )
-				Warning( "%3.2f: No path to health!\n", gpGlobals->curtime );
-		}
-
-		s_possibleAmmo = pAmmo;
-		s_possibleBot = actor;
-		s_possibleFrame = gpGlobals->framecount;
-
-		return true;
-	}
-
-	if ( actor->IsDebugging( NEXTBOT_BEHAVIOR ) )
-		Warning( " %3.2f: No ammo nearby.\n", gpGlobals->curtime );
-
-	return false;
-}
-
-
-CAmmoFilter::CAmmoFilter( CTFPlayer *actor )
-	: m_pActor( actor )
-{
-	m_flMinCost = FLT_MAX;
-}
-
-
-bool CAmmoFilter::IsSelected( const CBaseEntity *ent ) const
-{
-	CClosestTFPlayer functor( ent->WorldSpaceCenter() );
-	ForEachPlayer( functor );
-
-	// Don't run into enemies while trying to scavenge
-	if ( functor.m_pPlayer && !functor.m_pPlayer->InSameTeam( m_pActor ) )
-		return false;
-
-	CTFNavArea *pArea = static_cast<CTFNavArea *>( TheNavMesh->GetNearestNavArea( ent->WorldSpaceCenter() ) );
-	if ( !pArea )
-		return false;
-
-	// Can't use enemy teams resupply cabinet
-	if ( FClassnameIs( const_cast<CBaseEntity *>( ent ), "func_regenerate" ) )
-	{
-		if ( m_pActor->GetTeamNumber() == TF_TEAM_RED && pArea->HasTFAttributes( TF_NAV_BLUE_SPAWN_ROOM ) )
-			return false;
-
-		if ( m_pActor->GetTeamNumber() == TF_TEAM_BLUE && pArea->HasTFAttributes( TF_NAV_RED_SPAWN_ROOM ) )
-			return false;
-	}
-
-	if ( FClassnameIs( const_cast<CBaseEntity *>( ent ), "obj_dispenser*" ) )
-	{
-		CBaseObject *pObject = static_cast<CBaseObject *>( const_cast<CBaseEntity *>( ent ) );
-
-		// Don't try to syphon metal from an unupgraded dispenser if we're trying to setup
-		if ( m_pActor->IsPlayerClass( TF_CLASS_ENGINEER ) &&
-			 pObject->GetUpgradeLevel() <= 2 &&
-			 m_pActor->GetObjectOfType( OBJ_SENTRYGUN ) != NULL )
-		{
-			return false;
-		}
-
-		// Ignore non-functioning buildings
-		if ( pObject->IsDisabled() || pObject->IsPlacing() || pObject->HasSapper() )
-			return false;
-	}
-
-	// Any other entity or packs that have been picked up are a no go
-	if ( ( FClassnameIs( const_cast<CBaseEntity *>( ent ), "tf_ammo_pack" ) || FClassnameIs( const_cast<CBaseEntity *>( ent ), "item_ammopack*" ) ) && ent->GetFlags() & EF_NODRAW )
-		return false;
-
-	// Find minimum cost area we are currently searching
-	if ( !pArea->IsMarked() || m_flMinCost < pArea->GetCostSoFar() )
-		return false;
-
-	m_flMinCost = pArea->GetCostSoFar();
-
-	return true;
 }

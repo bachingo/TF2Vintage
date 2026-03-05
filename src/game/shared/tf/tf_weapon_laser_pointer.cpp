@@ -1,24 +1,57 @@
-#include "cbase.h"
-#include "tf_weapon_laser_pointer.h"
+//========= Copyright Valve Corporation, All rights reserved. ============//
+//
+// Purpose: Engineer's Laser Pointer
+//
+//=============================================================================//
+#include "cbase.h" 
 #include "tf_fx_shared.h"
+#include "tf_weapon_laser_pointer.h"
 #include "in_buttons.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
-#include "c_tf_player.h"
-#include "c_baseobject.h"
-// Server specific.
+#include "view.h"
+#include "beamdraw.h"
+#include "vgui/ISurface.h"
+#include <vgui/ILocalize.h>
+#include "vgui_controls/Controls.h"
+#include "hud_crosshair.h"
+#include "functionproxy.h"
+#include "materialsystem/imaterialvar.h"
+#include "toolframework_client.h"
+#include "input.h"
+#include "sourcevr/isourcevirtualreality.h"
+
+// forward declarations
+void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
 #else
-#include "tf_player.h"
+#include "tf_gamerules.h"
+#include "tf_obj_sentrygun.h"
 #endif
 
-#ifdef GAME_DLL
-ConVar tf_wrangler_debug( "tf_wrangler_debug", "0", FCVAR_CHEAT );
-#endif
+#define TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC	50.0
+#define TF_WEAPON_SNIPERRIFLE_UNCHARGE_PER_SEC	75.0
+#define	TF_WEAPON_SNIPERRIFLE_DAMAGE_MIN		50
+#define TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX		150
+#define TF_WEAPON_SNIPERRIFLE_RELOAD_TIME		1.5f
+#define TF_WEAPON_SNIPERRIFLE_ZOOM_TIME			0.3f
 
-IMPLEMENT_NETWORKCLASS_ALIASED( TFLaserPointer, DT_WeaponLaserPointer )
+#define TF_WEAPON_SNIPERRIFLE_NO_CRIT_AFTER_ZOOM_TIME	0.2f
 
-BEGIN_NETWORK_TABLE( CTFLaserPointer, DT_WeaponLaserPointer )
+#define LASER_DOT_SPRITE_RED		"effects/sniperdot_red.vmt"
+#define LASER_DOT_SPRITE_BLUE		"effects/sniperdot_blue.vmt"
+
+//=============================================================================
+//
+// Weapon Laser Pointer tables.
+//
+
+IMPLEMENT_NETWORKCLASS_ALIASED( TFLaserPointer, DT_TFLaserPointer )
+
+BEGIN_NETWORK_TABLE_NOBASE( CTFLaserPointer, DT_LaserPointerLocalData )
+END_NETWORK_TABLE()
+
+BEGIN_NETWORK_TABLE( CTFLaserPointer, DT_TFLaserPointer )
 END_NETWORK_TABLE()
 
 BEGIN_PREDICTION_DATA( CTFLaserPointer )
@@ -27,73 +60,130 @@ END_PREDICTION_DATA()
 LINK_ENTITY_TO_CLASS( tf_weapon_laser_pointer, CTFLaserPointer );
 PRECACHE_WEAPON_REGISTER( tf_weapon_laser_pointer );
 
-// Server specific.
-#ifndef CLIENT_DLL
-BEGIN_DATADESC( CTFLaserPointer )
-END_DATADESC()
-#endif
+//=============================================================================
+//
+// Weapon Laser Pointer functions.
+//
 
+//-----------------------------------------------------------------------------
+// Purpose: Constructor.
+//-----------------------------------------------------------------------------
 CTFLaserPointer::CTFLaserPointer()
 {
 #ifdef GAME_DLL
-	m_hGun = NULL;
+	m_hLaserDot = NULL;
+#endif
+
+	m_flNextAttack = 0.f;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Destructor.
+//-----------------------------------------------------------------------------
+CTFLaserPointer::~CTFLaserPointer()
+{
+// Server specific.
+#ifdef GAME_DLL
+	DestroyLaserDot();
 #endif
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Reset the charge when we deploy
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFLaserPointer::Precache()
+{
+	BaseClass::Precache();
+
+	PrecacheModel( LASER_DOT_SPRITE_RED );
+	PrecacheModel( LASER_DOT_SPRITE_BLUE );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
 //-----------------------------------------------------------------------------
 bool CTFLaserPointer::Deploy( void )
 {
-#ifdef GAME_DLL
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-
-	if ( pOwner )
+	if ( BaseClass::Deploy() )
 	{
-		for ( int i = 0; i < pOwner->GetObjectCount(); i++ )
-		{
+	#ifdef GAME_DLL
+		SetContextThink( &CTFLaserPointer::CreateLaserDot, gpGlobals->curtime + 0.5f, "CREATE_LASER_DOT" );
+	#endif
 
-			CBaseObject *pObject = pOwner->GetObject( i );
+		m_bDeployed = true;
 
-
-			if ( pObject->GetType() == OBJ_SENTRYGUN )
-			{
-				m_hGun = dynamic_cast< CObjectSentrygun * > ( pObject );
-			}
-		}
+		return true;
 	}
-#endif
 
-	return BaseClass::Deploy();
+	return false;
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Reset the charge when we holster
+// Purpose:
 //-----------------------------------------------------------------------------
 bool CTFLaserPointer::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
-#ifdef GAME_DLL
-	if ( m_hGun )
+	if ( BaseClass::Holster( pSwitchingTo ) )
 	{
+	#ifdef GAME_DLL
+		DestroyLaserDot();
+	#endif
 
-		if ( m_hGun->GetState() == SENTRY_STATE_WRANGLED )
-		{
-			m_hGun->OnStopWrangling();
-			m_hGun->SetShouldFire( false );
-		}
+		m_bDeployed = false;
+
+		return true;
 	}
-	m_hGun = NULL;
-#endif
 
-	return BaseClass::Holster( pSwitchingTo );
+	return false;
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
-void CTFLaserPointer::WeaponReset( void )
+void CTFLaserPointer::ItemPostFrame( void )
 {
-	BaseClass::WeaponReset();
+	if ( !m_bDeployed )
+		return;
+
+	// Get the owning player.
+	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
+	if ( !pPlayer )
+		return;
+
+#ifdef GAME_DLL
+	if ( m_hLaserDot )
+	{
+		UpdateLaserDot();
+	}
+#endif
+
+	BaseClass::ItemPostFrame();
+
+	// Return to idle.
+	if ( GetIdealActivity() == ACT_ITEM1_VM_RELOAD && !( pPlayer->m_nButtons & IN_ATTACK ) )
+	{
+		SendWeaponAnim( ACT_ITEM1_RELOAD_FINISH );
+		if ( gpGlobals->curtime - m_flStartedFiring > 5.f )
+		{
+			m_bDoHandIdle = true;
+			m_flTimeWeaponIdle = gpGlobals->curtime + SequenceDuration();
+		}
+	}
+}
+
+void CTFLaserPointer::WeaponIdle( void )
+{
+#ifdef GAME_DLL
+	if ( m_bDoHandIdle && !WeaponShouldBeLowered() && HasWeaponIdleTimeElapsed() )
+	{
+		m_bDoHandIdle = false;
+		SendWeaponAnim( ACT_ITEM1_VM_IDLE_2 );
+		m_flTimeWeaponIdle = gpGlobals->curtime + SequenceDuration();
+		return;
+	}
+#endif
+
+	BaseClass::WeaponIdle();
 }
 
 //-----------------------------------------------------------------------------
@@ -101,140 +191,272 @@ void CTFLaserPointer::WeaponReset( void )
 //-----------------------------------------------------------------------------
 void CTFLaserPointer::PrimaryAttack( void )
 {
+	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
+	if ( !pPlayer )
+		return;
+
 	if ( !CanAttack() )
 		return;
-
 #ifdef GAME_DLL
-	if ( !m_hGun )
+	CObjectSentrygun *pSentry = dynamic_cast<CObjectSentrygun*>( pPlayer->GetObjectOfType( OBJ_SENTRYGUN ) );
+	if ( !pSentry )
 		return;
 
-	if ( m_flNextPrimaryAttack < gpGlobals->curtime && m_hGun->GetState() == SENTRY_STATE_WRANGLED )
-	{
-		m_hGun->SetShouldFire( true );
+	pSentry->FireNextFrame();
 
-		// input buffer
-		m_flNextPrimaryAttack = gpGlobals->curtime + 0.05f;
+	if ( GetIdealActivity() != ACT_ITEM1_VM_RELOAD )
+	{
+		m_flStartedFiring = gpGlobals->curtime;
 	}
+
+	SendWeaponAnim( ACT_ITEM1_VM_RELOAD );
 #endif
-	SendWeaponAnim( ACT_ITEM3_VM_PRIMARYATTACK );
 }
 
-// ---------------------------------------------------------------------------- -
-// Purpose: 
+//-----------------------------------------------------------------------------
+// Purpose:
 //-----------------------------------------------------------------------------
 void CTFLaserPointer::SecondaryAttack( void )
 {
+	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
+	if ( !pPlayer )
+		return;
+
 	if ( !CanAttack() )
 		return;
-
 #ifdef GAME_DLL
-	if ( !m_hGun )
+	CObjectSentrygun *pSentry = dynamic_cast<CObjectSentrygun*>( pPlayer->GetObjectOfType( OBJ_SENTRYGUN ) );
+	if ( !pSentry )
 		return;
 
-	if ( m_flNextSecondaryAttack <= gpGlobals->curtime && m_hGun->GetState() == SENTRY_STATE_WRANGLED )
+	if ( pSentry->GetUpgradeLevel() == 3 )
 	{
-		int iUpgradeLevel = m_hGun->GetUpgradeLevel();
+		pSentry->FireRocketNextFrame();
+	}
+#endif
+}
 
-		if ( iUpgradeLevel == 3 )
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFLaserPointer::CreateLaserDot( void )
+{
+#ifdef GAME_DLL
+	if ( !m_bDeployed )
+		return;
+
+	if ( m_hLaserDot )
+		return;
+
+	CBaseCombatCharacter *pPlayer = GetOwner();
+	if ( !pPlayer )
+		return;
+
+	m_hLaserDot = CLaserDot::Create( GetAbsOrigin(), pPlayer, true );
+	m_hLaserDot->ChangeTeam( pPlayer->GetTeamNumber() );
+
+	UpdateLaserDot();
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFLaserPointer::DestroyLaserDot( void )
+{
+#ifdef GAME_DLL
+	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
+	if ( pPlayer )
+	{
+		CObjectSentrygun *pSentry = dynamic_cast<CObjectSentrygun*>( pPlayer->GetObjectOfType( OBJ_SENTRYGUN ) );
+		if ( pSentry )
 		{
-			m_hGun->FireRockets();
-
-			// Rockets fire slightly faster wrangled
-			m_flNextSecondaryAttack = gpGlobals->curtime + 2.5;
+			pSentry->ClearTarget();
 		}
 	}
-#endif 
+
+	if ( m_hLaserDot )
+	{
+		UTIL_Remove( m_hLaserDot );
+		m_hLaserDot = NULL;
+	}
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFLaserPointer::UpdateLaserDot( void )
+{
+#ifdef GAME_DLL
+	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
+	if ( !pPlayer )
+		return;
+
+	Vector vecMuzzlePos = pPlayer->Weapon_ShootPosition();
+	Vector forward;
+	pPlayer->EyeVectors( &forward );
+	Vector vecEndPos = vecMuzzlePos + ( forward * MAX_TRACE_LENGTH );
+
+	trace_t	trace;
+	CTraceFilterIgnoreTeammatesAndTeamObjects filter( pPlayer, COLLISION_GROUP_NONE, pPlayer->GetTeamNumber() );
+	UTIL_TraceLine( vecMuzzlePos, vecEndPos, MASK_SOLID, &filter, &trace );
+
+	if ( m_hLaserDot )
+	{
+		CBaseEntity *pEntity = NULL;
+		if ( trace.DidHitNonWorldEntity() )
+		{
+			pEntity = trace.m_pEnt;
+			if ( !pEntity || !pEntity->m_takedamage )
+			{
+				pEntity = NULL;
+			}
+			else if ( pEntity->IsPlayer() )
+			{
+				// We lased a player target. We want to auto-aim on this guy for a short period of time.
+				CObjectSentrygun *pSentry = dynamic_cast<CObjectSentrygun*>( pPlayer->GetObjectOfType( OBJ_SENTRYGUN ) );
+				if ( pSentry )
+				{
+					pSentry->SetAutoAimTarget( ToTFPlayer( pEntity ) );
+				}
+			}
+		}
+
+		m_hLaserDot->Update( pEntity, trace.endpos, trace.plane.normal );
+	}
+#endif
+}
+
+//=============================================================================
+//
+// Laser Dot functions.
+//
+
+IMPLEMENT_NETWORKCLASS_ALIASED( LaserDot, DT_LaserDot )
+
+BEGIN_NETWORK_TABLE( CLaserDot, DT_LaserDot )
+END_NETWORK_TABLE()
+
+LINK_ENTITY_TO_CLASS( env_laserdot, CLaserDot );
+
+BEGIN_DATADESC( CLaserDot )
+END_DATADESC()
+
+//-----------------------------------------------------------------------------
+// Purpose: Constructor.
+//-----------------------------------------------------------------------------
+CLaserDot::CLaserDot( void )
+{
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Destructor.
+//-----------------------------------------------------------------------------
+CLaserDot::~CLaserDot( void )
+{
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFLaserPointer::ItemPostFrame( void )
+CLaserDot* CLaserDot::Create( const Vector &origin, CBaseEntity *pOwner, bool bVisibleDot )
 {
-#ifdef GAME_DLL
-	if ( m_hGun )
-	{
-		//TODO: Find a better way to determine if we can wrangle
-		if ( !m_hGun->IsRedeploying() && !m_hGun->IsBuilding() && !m_hGun->IsUpgrading() && !m_hGun->HasSapper() )
-		{
-			m_hGun->SetState( SENTRY_STATE_WRANGLED );
-		}
+#ifdef CLIENT_DLL
+	return NULL;
+#else
+	CLaserDot *pDot = static_cast<CLaserDot*>( CBaseEntity::Create( "env_laserdot", origin, QAngle( 0.0f, 0.0f, 0.0f ) ) );
+	if ( !pDot )
+		return NULL;
 
-		if ( m_hGun->GetState() == SENTRY_STATE_WRANGLED )
-		{
-			UpdateLaserDot();
-		}
-	}
+	pDot->SetMoveType( MOVETYPE_NONE );
+	pDot->AddSolidFlags( FSOLID_NOT_SOLID );
+	pDot->AddEffects( EF_NOSHADOW );
+	UTIL_SetSize( pDot, -Vector( 4.0f, 4.0f, 4.0f ), Vector( 4.0f, 4.0f, 4.0f ) );
+
+	pDot->SetOwnerEntity( pOwner );
+
+	pDot->AddEFlags( EFL_FORCE_CHECK_TRANSMIT );
+
+	return pDot;
 #endif
-
-	BaseClass::ItemPostFrame();
 }
 
-#ifdef GAME_DLL
-void CTFLaserPointer::UpdateLaserDot( void )
+#ifdef CLIENT_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int CLaserDot::DrawModel( int flags )
 {
-	CTFPlayer *pOwner = GetTFPlayerOwner();
+	// Get the owning player.
+	C_TFPlayer *pPlayer = ToTFPlayer( GetOwnerEntity() );
+	if ( !pPlayer )
+		return -1;
 
-	m_hGun->StudioFrameAdvance( );
+	// Get the sprite rendering position.
+	Vector vecEndPos;
 
-	if ( !pOwner || !pOwner->IsAlive() )
+	float flSize = 6.0;
+
+	if ( !pPlayer->IsDormant() )
 	{
-		m_hGun->OnStopWrangling();
-		m_hGun->SetShouldFire( false );
-		return;
-	}
+		Vector vecAttachment, vecDir;
 
-	trace_t tr;
-	Vector vecStart, vecEnd, vecForward;
-	pOwner->EyeVectors( &vecForward );
+		float flDist = MAX_TRACE_LENGTH;
 
-	vecStart = pOwner->EyePosition();
-	vecEnd = vecStart + ( vecForward * MAX_TRACE_LENGTH);
-
-	CTraceFilterIgnoreTeammatesAndTeamObjects filter( this, COLLISION_GROUP_NONE, GetTeamNumber() );
-
-	// First pass to find where we are looking
-	UTIL_TraceLine( vecStart, vecEnd, MASK_SOLID, &filter, &tr );
-
-	vecStart = m_hGun->EyePosition();
-
-	// If we're looking at a player fix our position to the centermass
-	if ( tr.DidHitNonWorldEntity() && tr.m_pEnt && tr.m_pEnt->IsPlayer() )
-	{
-		vecEnd = m_hGun->GetEnemyAimPosition( tr.m_pEnt );
-
-		// Second pass to make sure the sentry can actually see the person we're targeting 
-		UTIL_TraceLine( vecStart, vecEnd, MASK_SOLID, &filter, &tr );
-
-		if ( tr.DidHitNonWorldEntity() && tr.m_pEnt && tr.m_pEnt->IsPlayer() )
+		// Always draw the dot in front of our faces when in first-person.
+		if ( pPlayer->IsLocalPlayer() )
 		{
-			m_hGun->SetEnemy( tr.m_pEnt );
+			// Take our view position and orientation
+			vecAttachment = CurrentViewOrigin();
+			vecDir = CurrentViewForward();
+
+			if ( UseVR() )
+			{
+				// It will basically be a copy of CSniperDot::GetRenderingPositions in tf_weapon_sniperrife.cpp
+				Assert ( !"Ask Joe Ludwig to fix CLaserDot::DrawModel() for VR." );
+			}
+
+			// Clamp the forward distance for the sniper's firstperson
+			flDist = 384;
+
+			flSize = 2.0;
 		}
 		else
 		{
-			m_hGun->SetEnemy( NULL );
-			vecEnd = tr.endpos;
+			// Take the owning player eye position and direction.
+			vecAttachment = pPlayer->EyePosition();
+			QAngle angles = pPlayer->EyeAngles();
+			AngleVectors( angles, &vecDir );
 		}
+
+		trace_t	trace;
+		CTraceFilterIgnoreTeammatesAndTeamObjects filter( pPlayer, COLLISION_GROUP_NONE, pPlayer->GetTeamNumber() );
+		UTIL_TraceLine( vecAttachment, vecAttachment + ( vecDir * flDist ), MASK_SOLID, &filter, &trace );
+
+		// Backup off the hit plane, towards the source
+		vecEndPos = trace.endpos + vecDir * -4;
 	}
 	else
 	{
-		// We're not locked on to a player so make sure the laser doesn't clip through walls
-		m_hGun->SetEnemy( NULL );
-
-		// Second pass
-		UTIL_TraceLine( vecStart, tr.endpos, MASK_SOLID, &filter, &tr );
-		vecEnd = tr.endpos;
+		// Just use our position if we can't predict it otherwise.
+		vecEndPos = GetAbsOrigin();
 	}
 
-	m_hGun->SetEndVector( vecEnd );
+	// Draw our laser dot in space.
+	CMatRenderContextPtr pRenderContext( materials );
+	pRenderContext->Bind( m_hSpriteMaterial, this );
 
-	// Adjust sentry angles 
-	vecForward = vecEnd - vecStart;
-	m_hGun->UpdateSentryAngles( vecForward ); 
+	float flLifeTime = gpGlobals->curtime - m_flChargeStartTime;
+	float flStrength = RemapValClamped( flLifeTime, 0.0, TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX / TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC, 0.1, 1.0 );
 
-	if ( tf_wrangler_debug.GetBool() ) 
-	{
-		NDebugOverlay::Line( vecStart, vecEnd, 0, 255, 0, true, 0.25f );
-	}
+	color32 innercolor = { 255, 255, 255, 255 };
+	color32 outercolor = { 255, 255, 255, 128 };
+
+	DrawSprite( vecEndPos, flSize, flSize, outercolor );
+	DrawSprite( vecEndPos, flSize * flStrength, flSize * flStrength, innercolor );
+
+	// Successful.
+	return 1;
 }
 #endif

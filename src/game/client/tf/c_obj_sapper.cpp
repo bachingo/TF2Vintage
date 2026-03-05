@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -7,6 +7,7 @@
 #include "cbase.h"
 #include "hud.h"
 #include "c_obj_sapper.h"
+#include "c_tf_player.h"
 #include <igameevents.h>
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -36,49 +37,17 @@ void C_ObjectSapper::ClientThink( void )
 	if ( event )
 	{
 		event->SetInt( "building_type", OBJ_ATTACHMENT_SAPPER );
-		event->SetInt( "object_mode", OBJECT_MODE_NONE );
+		event->SetInt( "object_mode", GetObjectMode() );
 		gameeventmanager->FireEventClientSide( event );
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: Status string for hud
-//-----------------------------------------------------------------------------
-void C_ObjectSapper::GetStatusText( wchar_t *pStatus, int iMaxStatusLen )
+float C_ObjectSapper::GetReversesBuildingConstructionSpeed( void )
 {
-	float flHealthPercent = (float)GetHealth() / (float)GetMaxHealth();
-	wchar_t wszHealthPercent[32];
-	_snwprintf(wszHealthPercent, sizeof(wszHealthPercent)/sizeof(wchar_t) - 1, L"%d%%", (int)( flHealthPercent * 100 ) );
+	float flReverseSpeed = 0.0f;
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetBuilder(), flReverseSpeed, sapper_degenerates_buildings );
 
-	wchar_t *pszTemplate;
-
-	if ( IsBuilding() )
-	{
-		pszTemplate = g_pVGuiLocalize->Find( "#TF_ObjStatus_Sapper_Building" );
-	}
-	else
-	{
-		pszTemplate = g_pVGuiLocalize->Find( "#TF_ObjStatus_Sapper" );
-	}
-
-	if ( pszTemplate )
-	{
-		wchar_t wszTargetHealthPercent[32];
-		wszTargetHealthPercent[0] = '\0';
-
-		C_BaseObject *pParent = GetParentObject();
-		Assert( pParent );
-		if ( pParent )
-		{
-			float flTargetHealthPercent = (float)pParent->GetHealth() / (float)pParent->GetMaxHealth();
-			_snwprintf(wszTargetHealthPercent, sizeof(wszTargetHealthPercent)/sizeof(wchar_t) - 1, L"%d%%", (int)( flTargetHealthPercent * 100 ) );
-		}
-
-		g_pVGuiLocalize->ConstructString( pStatus, iMaxStatusLen, pszTemplate,
-			2,
-			wszHealthPercent,
-			wszTargetHealthPercent);
-	}
+	return flReverseSpeed;
 }
 
 IMPLEMENT_CLIENTCLASS_DT(C_ObjectSapper, DT_ObjectSapper, CObjectSapper)

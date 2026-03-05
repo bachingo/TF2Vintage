@@ -30,7 +30,7 @@ $Project "VScript"
 			{
 				$CustomBuildStep
 				{
-					$CommandLine	"$SRCDIR\devtools\srcsrv\perl\bin\perl.exe $SRCDIR\devtools\bin\texttoarray.pl $(InputPath) g_Script_init> $(InputDir)$(InputName)_nut.h" [$WINDOWS]
+					$CommandLine	"$SRCDIR\devtools\bin\perl.exe $SRCDIR\devtools\bin\texttoarray.pl $(InputPath) g_Script_init> $(InputDir)$(InputName)_nut.h" [$WINDOWS]
 					$CommandLine	"perl $SRCDIR\devtools\bin\texttoarray.pl $(InputPath) g_Script_init> $(InputDir)$(InputName)_nut.h" [$POSIX]
 					$Description	"$(InputFileName) produces $(InputName)_nut.h"
 					$Outputs		"$(InputDir)$(InputName)_nut.h"
@@ -47,10 +47,10 @@ $Project "VScript"
 		$File   "languages/squirrel/vsquirrel.cpp"
 		$File   "languages/squirrel/vsquirrel_math.cpp"
 		$File   "languages/squirrel/sq_vmstate.cpp"
-		$File	"languages/lua/lua_vm.cpp"
-		$File	"languages/lua/lua_vector.cpp"
-		$File	"languages/angelscript/vangelscript.cpp"
-		$File	"languages/angelscript/as_vector.cpp"
+		//$File	"languages/lua/lua_vm.cpp"
+		//$File	"languages/lua/lua_vector.cpp"
+		//$File	"languages/angelscript/vangelscript.cpp"
+		//$File	"languages/angelscript/as_vector.cpp"
 	}
 
 	$Folder	"Public Header Files"
@@ -159,7 +159,7 @@ $Project "VScript"
 		}
 	}
 
-	$Folder "AngelScript"
+	/*$Folder "AngelScript"
 	{
 		$Folder "Source Files"
 		{
@@ -237,14 +237,14 @@ $Project "VScript"
                 $File "$SRCDIR\thirdparty\angelscript_2.32.0\sdk\add_on\weakref\weakref.h"
             }
         }
-	}
+	}*/
 
 	$Folder	"Link Libraries" 
 	{
 		$Lib 	mathlib
 		$Lib 	tier1
-		$Lib	"$LIBCOMMON\lua51"			[$WINDOWS]
-		$Lib	"$LIBCOMMON\libluajit"		[$POSIX]
-		$Lib	"$LIBCOMMON\angelscript"
+		//$Lib	"$LIBCOMMON\lua51"			[$WINDOWS]
+		//$Lib	"$LIBCOMMON\libluajit"		[$POSIX]
+		//$Lib	"$LIBCOMMON\angelscript"
 	}
 }

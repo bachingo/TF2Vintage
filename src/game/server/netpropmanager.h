@@ -41,6 +41,10 @@ private:
 	#endif
 
 		Type_String_t,
+		Type_Bool,
+		Type_EHandle,
+		Type_ClassPtr,
+		Type_Std_String,
 		Type_InvalidOrMax
 	};
 
@@ -68,6 +72,18 @@ private:
 	// Searches a ServerClass's SendTable and datamap and returns pertinent prop info
 	PropInfo_t GetEntityPropInfo( CBaseEntity *pBaseEntity, const char *pstrProperty, int element );
 
+	// Gets the value of a SendProp and stores it in a table
+	inline void StoreSendPropValue( SendProp *pSendProp, CBaseEntity *pBaseEntity, int iOffset, int iElement, HSCRIPT hTable );
+
+	// Gets the value of a DataMap prop and stores it in a table
+	inline void StoreDataPropValue( typedescription_t *pTypeDesc, CBaseEntity *pBaseEntity, int iOffset, int iElement, HSCRIPT hTable );
+
+	// Iterates through the SendTable and stores prop names in a table
+	inline void CollectNestedSendProps( SendTable *pSendTable, CBaseEntity *pBaseEntity, int iOffset, HSCRIPT hTable );
+
+	// Iterates through the DataMap and stores prop names in a table
+	inline void CollectNestedDataMaps( datamap_t *pMap, CBaseEntity *pBaseEntity, int iOffset, HSCRIPT hTable );
+
 
 private:
 
@@ -76,98 +92,97 @@ private:
 	CUtlDict< PropInfoDict_t*, int > m_PropCache;
 
 public:
-#define GetPropFunc(name, varType) \
-			/* Gets an #varType netprop value for the provided entity */       \
-			varType GetProp##name( HSCRIPT hEnt, char const *pszProperty )     \
-			{                                                                  \
-				return GetProp##name##Array( hEnt, pszProperty, 0 );           \
-			}                                                                  \
-			/* Gets an #varType netprop array value for the provided entity */ \
-			varType GetProp##name##Array( HSCRIPT hEnt, char const *pszProperty, int element )
-#define SetPropFunc(name, varType) \
-			/* Sets an #varType netprop value for the provided entity */               \
-			void SetProp##name( HSCRIPT hEnt, char const *pszProperty, varType value ) \
-			{                                                                          \
-				SetProp##name##Array( hEnt, pszProperty, value, 0 );                   \
-			}                                                                          \
-			/* Sets an #varType netprop value for the provided entity */               \
-			void SetProp##name##Array( HSCRIPT hEnt, char const *pszProperty, varType value, int element )
-	
-	GetPropFunc( Int, int );
-	SetPropFunc( Int, int );
-	GetPropFunc( Float, float );
-	SetPropFunc( Float, float );
-	GetPropFunc( Vector, Vector );
-	SetPropFunc( Vector, Vector );
-	GetPropFunc( Entity, HSCRIPT );
-	SetPropFunc( Entity, HSCRIPT );
-	GetPropFunc( String, char const* );
-	SetPropFunc( String, char const* );
+
+	// Gets an integer netprop value for the provided entity
+	int GetPropInt( HSCRIPT hEnt, const char *pstrProperty );
+
+	// Gets an integer netprop array value for the provided entity
+	int GetPropIntArray( HSCRIPT hEnt, const char *pstrProperty, int element );
+
+	// Sets an integer netprop value for the provided entity
+	void SetPropInt( HSCRIPT hEnt, const char *pstrProperty, int value );
+
+	// Sets an integer netprop array value for the provided entity
+	void SetPropIntArray( HSCRIPT hEnt, const char *pstrProperty, int value, int element );
+
+	// Gets a floating point netprop value for the provided entity
+	float GetPropFloat( HSCRIPT hEnt, const char *pstrProperty );
+
+	// Gets a floating point netprop array value for the provided entity
+	float GetPropFloatArray( HSCRIPT hEnt, const char *pstrProperty, int element );
+
+	// Sets a floating point netprop value for the provided entity
+	void SetPropFloat( HSCRIPT hEnt, const char *pstrProperty, float value );
+
+	// Sets a floating point netprop array value for the provided entity
+	void SetPropFloatArray( HSCRIPT hEnt, const char *pstrProperty, float value, int element );
+
+	// Gets an entity index pointed to by the netprop value for the provided index
+	// @TODO Needs more unit tests
+	HSCRIPT GetPropEntity( HSCRIPT hEnt, const char *pstrProperty );
+
+	// Gets an entity pointed to by the netprop array value for the provided entity
+	// @TODO Needs more unit tests
+	HSCRIPT GetPropEntityArray( HSCRIPT hEnt, const char *pstrProperty, int element );
+
+	// Sets an entity pointed to by the netprop value for the provided entity
+	// @TODO Needs more unit tests
+	void SetPropEntity( HSCRIPT hEnt, const char *pstrProperty, HSCRIPT hPropEnt );
+
+	// Sets an entity pointed to by the netprop array value for the provided entity
+	// @TODO Needs more unit tests
+	void SetPropEntityArray( HSCRIPT hEnt, const char *pstrProperty, HSCRIPT hPropEnt, int element );
+
+	// Gets a Vector netprop value for the provided entity
+	const Vector& GetPropVector( HSCRIPT hEnt, const char *pstrProperty );
+
+	// Gets a Vector netprop array value for the provided entity
+	const Vector& GetPropVectorArray( HSCRIPT hEnt, const char *pstrProperty, int element );
+
+	// Sets a Vector netprop value for the provided entity
+	void SetPropVector( HSCRIPT hEnt, const char *pstrProperty, Vector value );
+
+	// Sets a Vector netprop array value for the provided entity
+	void SetPropVectorArray( HSCRIPT hEnt, const char *pstrProperty, Vector value, int element );
+
+	// Gets a string netprop value for the provided entity
+	const char *GetPropString( HSCRIPT hEnt, const char *pstrProperty );
+
+	// Gets a string netprop array value for the provided entity
+	const char *GetPropStringArray( HSCRIPT hEnt, const char *pstrProperty, int element );
+
+	// Sets a string netprop value for the provided entity
+	void SetPropString( HSCRIPT hEnt, const char *pstrProperty, const char *value );
+
+	// Sets a string netprop array value for the provided entity
+	void SetPropStringArray( HSCRIPT hEnt, const char *pstrProperty, const char *value, int element );
 
 	// Gets the size of a netprop array value for the provided entity
-	int GetPropArraySize( HSCRIPT hEnt, const char *pszProperty )
-	{
-		CBaseEntity *pBaseEntity = ToEnt( hEnt );
-		if (!pBaseEntity)
-			return -1;
-
-		PropInfo_t propInfo = GetEntityPropInfo( pBaseEntity, pszProperty, 0 );
-
-		if ( !propInfo.m_IsPropValid )
-			return -1;
-
-		return propInfo.m_nProps;
-	}
+	int GetPropArraySize( HSCRIPT hEnt, const char *pstrProperty );
 
 	// Returns true if the netprop exists for the provided entity
-	bool HasProp( HSCRIPT hEnt, const char *pszProperty )
-	{
-		CBaseEntity *pBaseEntity = ToEnt( hEnt );
-		if ( !pBaseEntity )
-			return false;
+	bool HasProp( HSCRIPT hEnt, const char *pstrProperty );
 
-		PropInfo_t propInfo = GetEntityPropInfo( pBaseEntity, pszProperty, 0 );
-
-		return propInfo.m_IsPropValid;
-	}
-	
 	// Gets a string of the type of netprop value for the provided entity
-	const char *GetPropType( HSCRIPT hEnt, const char *pszProperty )
-	{
-		CBaseEntity *pBaseEntity = ToEnt( hEnt );
-		if ( !pBaseEntity )
-			return NULL;
+	const char *GetPropType( HSCRIPT hEnt, const char *pstrProperty );
 
-		PropInfo_t propInfo = GetEntityPropInfo( pBaseEntity, pszProperty, 0 );
+	// Gets a boolean netprop value for the provided entity
+	bool GetPropBool( HSCRIPT hEnt, const char *pstrProperty );
 
-		if ( !propInfo.m_IsPropValid )
-			return NULL;
+	// Gets a boolean netprop array value for the provided entity
+	bool GetPropBoolArray( HSCRIPT hEnt, const char *pstrProperty, int element );
 
-		switch ( propInfo.m_eType )
-		{
-			case Type_Int:
-				return "integer";
-			case Type_Float:
-				return "float";
-			case Type_Vector:
-				return "vector";
-			case Type_VectorXY:
-				return "vector2d";
-			case Type_String:
-			case Type_String_t:
-				return "string";
-			case Type_Array:
-				return "array";
-			case Type_DataTable:
-				return "table";
-		#ifdef SUPPORTS_INT64
-			case Type_Int64:
-				return "integer64";
-		#endif
-		}
+	// Sets a boolean netprop value for the provided entity
+	void SetPropBool( HSCRIPT hEnt, const char *pstrProperty, bool value );
 
-		return NULL;
-	}
+	// Sets a boolean netprop array value for the provided entity
+	void SetPropBoolArray( HSCRIPT hEnt, const char *pstrProperty, bool value, int element );
+
+	// Fills in a passed table with all SendProps or DataMaps for the provided entity
+	void GetTable( HSCRIPT hEnt, int iPropType, HSCRIPT hTable );
+
+	// Fills in a passed table with property info for the provided entity
+	bool GetPropInfo( HSCRIPT hEnt, const char *pstrProperty, int element, HSCRIPT hTable );
 };
 
 

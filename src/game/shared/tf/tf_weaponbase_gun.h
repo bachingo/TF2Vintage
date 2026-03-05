@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Weapon Base Gun 
 //
@@ -12,6 +12,19 @@
 
 #include "tf_shareddefs.h"
 #include "tf_weaponbase.h"
+
+#define CREATE_SIMPLE_WEAPON_TABLE( WpnName, entityname )			\
+	\
+	IMPLEMENT_NETWORKCLASS_ALIASED( WpnName, DT_##WpnName )	\
+	\
+	BEGIN_NETWORK_TABLE( C##WpnName, DT_##WpnName )			\
+	END_NETWORK_TABLE()										\
+	\
+	BEGIN_PREDICTION_DATA( C##WpnName )						\
+	END_PREDICTION_DATA()									\
+	\
+	LINK_ENTITY_TO_CLASS( entityname, C##WpnName );			\
+	PRECACHE_WEAPON_REGISTER( entityname );
 
 #if defined( CLIENT_DLL )
 #define CTFWeaponBaseGun C_TFWeaponBaseGun
@@ -45,58 +58,54 @@ public:
 	//bool TFBaseGunFire( void );
 
 	virtual void DoFireEffects();
+	virtual bool ShouldDoMuzzleFlash( void ) { return true; }
 
 	void ToggleZoom( void );
 
 	virtual int GetWeaponProjectileType( void ) const { return m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_iProjectile; }
 	virtual CBaseEntity *FireProjectile( CTFPlayer *pPlayer );
-	virtual void		GetProjectileFireSetup( CTFPlayer *pPlayer, Vector vecOffset, Vector *vecSrc, QAngle *angForward, bool bHitTeammates = true, bool bUseHitboxes = false );
-	virtual QAngle		GetSpreadAngles( void );
-	void				GetProjectileReflectSetup( CTFPlayer *pPlayer, const Vector &vecPos, Vector *vecDeflect, bool bHitTeammates = true, bool bUseHitboxes = false );
+	virtual void RemoveProjectileAmmo( CTFPlayer *pPlayer );
+	virtual void ModifyProjectile( CBaseEntity* pProj ) {};
 
 	virtual void FireBullet( CTFPlayer *pPlayer );
-	CBaseEntity *FireRocket( CTFPlayer *pPlayer );
-	CBaseEntity *FireEnergyBall( CTFPlayer *pPlayer, bool bCharged = false );
-	CBaseEntity *FireEnergyRing( CTFPlayer *pPlayer );
-	CBaseEntity *FireFireBall( CTFPlayer *pPlayer );
-	CBaseEntity *FireEnergyOrb(CTFPlayer *pPlayer);
+	CBaseEntity *FireRocket( CTFPlayer *pPlayer, int iRocketType=0 );
 	CBaseEntity *FireNail( CTFPlayer *pPlayer, int iSpecificNail );
-	CBaseEntity *FirePipeBomb( CTFPlayer *pPlayer, int iRemoteDetonate );
+	virtual CBaseEntity *FirePipeBomb( CTFPlayer *pPlayer, int iPipeBombType );
 	CBaseEntity *FireFlare( CTFPlayer *pPlayer );
-	CBaseEntity *FireArrow( CTFPlayer *pPlayer, int iType );
-	CBaseEntity *FireJar( CTFPlayer *pPlayer, int iType );
-	CBaseEntity *FireGrenade( CTFPlayer *pPlayer );
+	virtual CBaseEntity *FireArrow( CTFPlayer *pPlayer, ProjectileType_t projectileType );
+	virtual CBaseEntity *FireJar( CTFPlayer *pPlayer );
+	virtual CBaseEntity *FireFlameRocket( CTFPlayer *pPlayer );
+	virtual CBaseEntity *FireEnergyBall( CTFPlayer *pPlayer, bool bRing=false );
+
+	virtual bool HasLastShotCritical( void );
 
 	virtual float GetWeaponSpread( void );
+	virtual void  GetCustomProjectileModel( CAttribute_String *attrCustomProjModel );
 	virtual float GetProjectileSpeed( void ) { return 0.0f; }
-	virtual float GetProjectileGravity( void ) { return 0.001f; }
+	virtual float GetProjectileGravity( void ) { return 0.f; }
 	virtual float GetProjectileSpread( void ) { return 0.0f; }
-	virtual bool  IsFlameArrow( void );
+
+	virtual int GetAmmoPerShot( void );
 
 	void UpdatePunchAngles( CTFPlayer *pPlayer );
 	virtual float GetProjectileDamage( void );
 
+	virtual bool ShouldPlayFireAnim( void ) { return true; }
 
 	virtual void ZoomIn( void );
 	virtual void ZoomOut( void );
 	void ZoomOutIn( void );
 
 	virtual void PlayWeaponShootSound( void );
+	virtual bool HasPrimaryAmmo( void );
+	virtual bool CanDeploy( void );
+	virtual bool CanBeSelected( void );
 
-	virtual int GetAmmoPerShot( void ) const;
-
-	virtual void RemoveAmmo( CTFPlayer *pPlayer );
-	
-	virtual void AddDoubleDonk(CBaseEntity* pVictim );
-	virtual bool IsDoubleDonk(CBaseEntity* pVictim );
-	
-	CUtlVector<CBaseEntity*> hDonkedPlayers;
-	CUtlVector<float> hDonkedTimeLimit;
+	virtual bool ShouldRemoveDisguiseOnPrimaryAttack() const;
 
 private:
 
 	CTFWeaponBaseGun( const CTFWeaponBaseGun & );
-
 };
 
 #endif // TF_WEAPONBASE_GUN_H

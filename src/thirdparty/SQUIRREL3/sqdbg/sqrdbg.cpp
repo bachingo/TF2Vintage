@@ -4,6 +4,7 @@
 #include <squirrel.h>
 #if !defined( POSIX )
 #include <winsock.h>
+typedef int socklen_t;
 #endif
 #include "sqrdbg.h"
 #include "sqdbgserver.h"
@@ -55,7 +56,7 @@ SQRESULT sq_rdbg_waitforconnections(HSQREMOTEDBG rdbg)
 	sq_pop(rdbg->_v,1);
 
 	sockaddr_in cliaddr;
-	int addrlen=sizeof(cliaddr);
+	socklen_t addrlen=sizeof(cliaddr);
 	if(listen(rdbg->_accept,0)==SOCKET_ERROR)
 		return sq_throwerror(rdbg->_v,_SC("error on listen(socket)"));
 	rdbg->_endpoint = accept(rdbg->_accept,(sockaddr*)&cliaddr,&addrlen);
@@ -140,7 +141,7 @@ SQRESULT sq_rdbg_update(HSQREMOTEDBG rdbg)
 SQInteger debug_hook(HSQUIRRELVM v)
 {
 	SQUserPointer up;
-	int event_type,line;
+	SQInteger event_type,line;
 	const SQChar *src,*func;
 	sq_getinteger(v,2,&event_type);
 	sq_getstring(v,3,&src);

@@ -1,129 +1,155 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
-//
-// Purpose:		
-//
-// $NoKeywords: $
-//=============================================================================
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_payload_push.cpp
+// Push the cartTrigger to the goal
+// Michael Booth, April 2010
+
 #include "cbase.h"
-#include "tf_bot.h"
+#include "nav_mesh.h"
+#include "tf_player.h"
 #include "tf_gamerules.h"
+#include "team_control_point_master.h"
 #include "team_train_watcher.h"
-#include "tf_bot_payload_push.h"
+#include "trigger_area_capture.h"
+#include "bot/tf_bot.h"
+#include "bot/behavior/scenario/payload/tf_bot_payload_push.h"
+#include "bot/behavior/medic/tf_bot_medic_heal.h"
+#include "bot/behavior/engineer/tf_bot_engineer_build.h"
 
 
+extern ConVar tf_bot_path_lookahead_range;
 ConVar tf_bot_cart_push_radius( "tf_bot_cart_push_radius", "60", FCVAR_CHEAT );
 
 
-const char *CTFBotPayloadPush::GetName() const
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotPayloadPush::OnStart( CTFBot *me, Action< CTFBot > *priorAction )
 {
-	return "PayloadPush";
+	m_path.SetMinLookAheadDistance( me->GetDesiredPathLookAheadRange() );
+	m_path.Invalidate();
+
+	m_hideAngle = 180.0f;
+
+	return Continue();
 }
 
 
-ActionResult<CTFBot> CTFBotPayloadPush::OnStart( CTFBot *me, Action<CTFBot> *priorAction )
-{
-	m_PathFollower.SetMinLookAheadDistance( me->GetDesiredPathLookAheadRange() );
-	m_PathFollower.Invalidate();
-
-	// float @ 0x4814 = 180.0f
-
-	return BaseClass::Continue();
-}
-
-ActionResult<CTFBot> CTFBotPayloadPush::Update( CTFBot *me, float dt )
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotPayloadPush::Update( CTFBot *me, float interval )
 {
 	const CKnownEntity *threat = me->GetVisionInterface()->GetPrimaryKnownThreat();
 	if ( threat && threat->IsVisibleRecently() )
 	{
+		// prepare to fight
 		me->EquipBestWeaponForThreat( threat );
 	}
 
 	if ( TFGameRules()->InSetup() )
 	{
-		m_PathFollower.Invalidate();
-		m_recomputePathTimer.Start( RandomFloat( 1.0f, 2.0f ) );
+		// wait until the gates open, then path
+		m_path.Invalidate();
+		m_repathTimer.Start( RandomFloat( 1.0f, 2.0f ) );
 
-		return BaseClass::Continue();
+		return Continue();
 	}
 
-	CTeamTrainWatcher *pWatcher = TFGameRules()->GetPayloadToPush( me->GetTeamNumber() );
-	if ( pWatcher == nullptr )
-		return BaseClass::Continue();
+	CTeamTrainWatcher *trainWatcher = TFGameRules()->GetPayloadToPush( me->GetTeamNumber() );
+	if ( !trainWatcher )
+	{
+		return Continue();
+	}
 
-	CBaseEntity *pTrain = pWatcher->GetTrainEntity();
-	if ( pTrain == nullptr )
-		return BaseClass::Continue();
+	CBaseEntity *cart = trainWatcher->GetTrainEntity();
+	if ( !cart )
+	{
+		return Continue();
+	}
 
-	if ( m_recomputePathTimer.IsElapsed() )
+
+	// move toward the point, periodically repathing to account for changing situation
+	if ( m_repathTimer.IsElapsed() )
 	{
 		VPROF_BUDGET( "CTFBotPayloadPush::Update( repath )", "NextBot" );
 
-		Vector vecFwd;
-		pTrain->GetVectors( &vecFwd, nullptr, nullptr );
+		Vector cartForward;
+		cart->GetVectors( &cartForward, NULL, NULL );
 
-		Vector vecGoal = pTrain->WorldSpaceCenter() - vecFwd * tf_bot_cart_push_radius.GetFloat();
+		// default push position is behind cart
+		Vector pushPos = cart->WorldSpaceCenter() - cartForward * tf_bot_cart_push_radius.GetFloat();
 
-		threat = me->GetVisionInterface()->GetPrimaryKnownThreat();
+		// try to hide from enemies on other side of cart
+		const CKnownEntity *threat = me->GetVisionInterface()->GetPrimaryKnownThreat();
 		if ( threat )
 		{
-			Vector vecDir = pTrain->WorldSpaceCenter() - threat->GetLastKnownPosition();
-			vecDir.NormalizeInPlace();
+			Vector enemyToCart = cart->WorldSpaceCenter() - threat->GetLastKnownPosition();
+			enemyToCart.z = 0.0f;
+			enemyToCart.NormalizeInPlace();
 
-			vecGoal = pTrain->WorldSpaceCenter() - vecDir * tf_bot_cart_push_radius.GetFloat();
+			pushPos = cart->WorldSpaceCenter() + tf_bot_cart_push_radius.GetFloat() * enemyToCart;		
 		}
 
-		CTFBotPathCost func( me );
-		m_PathFollower.Compute( me, vecGoal, func );
+		CTFBotPathCost cost( me, DEFAULT_ROUTE );
+		m_path.Compute( me, pushPos, cost );
 
-		m_recomputePathTimer.Start( RandomFloat( 0.2f, 0.4f ) );
+		m_repathTimer.Start( RandomFloat( 0.2f, 0.4f ) );
 	}
 
-	m_PathFollower.Update( me );
+	// push the cartTrigger
+	m_path.Update( me );
 
-	return BaseClass::Continue();
+	return Continue();
 }
 
-ActionResult<CTFBot> CTFBotPayloadPush::OnResume( CTFBot *me, Action<CTFBot> *priorAction )
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot > CTFBotPayloadPush::OnResume( CTFBot *me, Action< CTFBot > *interruptingAction )
 {
 	VPROF_BUDGET( "CTFBotPayloadPush::OnResume", "NextBot" );
 
-	m_recomputePathTimer.Invalidate();
+	m_repathTimer.Invalidate();
 
-	return BaseClass::Continue();
+	return Continue();
 }
 
 
-EventDesiredResult<CTFBot> CTFBotPayloadPush::OnMoveToSuccess( CTFBot *me, const Path *path )
-{
-	return BaseClass::TryContinue();
-}
-
-EventDesiredResult<CTFBot> CTFBotPayloadPush::OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType fail )
-{
-	VPROF_BUDGET( "CTFBotPayloadPush::OnMoveToFailure", "NextBot" );
-
-	m_recomputePathTimer.Invalidate();
-
-	return BaseClass::TryContinue();
-}
-
-EventDesiredResult<CTFBot> CTFBotPayloadPush::OnStuck( CTFBot *me )
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotPayloadPush::OnStuck( CTFBot *me )
 {
 	VPROF_BUDGET( "CTFBotPayloadPush::OnStuck", "NextBot" );
 
-	m_recomputePathTimer.Invalidate();
+	m_repathTimer.Invalidate();
 	me->GetLocomotionInterface()->ClearStuckStatus();
 
-	return BaseClass::TryContinue();
+	return TryContinue();
 }
 
 
-QueryResultType CTFBotPayloadPush::ShouldHurry( const INextBot *me ) const
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotPayloadPush::OnMoveToSuccess( CTFBot *me, const Path *path )
+{
+	return TryContinue();
+}
+
+
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotPayloadPush::OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType reason )
+{
+	VPROF_BUDGET( "CTFBotPayloadPush::OnMoveToFailure", "NextBot" );
+
+	m_repathTimer.Invalidate();
+
+	return TryContinue();
+}
+
+
+//---------------------------------------------------------------------------------------------
+QueryResultType	CTFBotPayloadPush::ShouldRetreat( const INextBot *bot ) const
 {
 	return ANSWER_UNDEFINED;
 }
 
-QueryResultType CTFBotPayloadPush::ShouldRetreat( const INextBot *me ) const
+
+//---------------------------------------------------------------------------------------------
+QueryResultType CTFBotPayloadPush::ShouldHurry( const INextBot *bot ) const
 {
 	return ANSWER_UNDEFINED;
 }
+

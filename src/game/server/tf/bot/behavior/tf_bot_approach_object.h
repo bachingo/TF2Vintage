@@ -1,28 +1,29 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_approach_object.h
+// Move near/onto an object
+// Michael Booth, February 2009
+
 #ifndef TF_BOT_APPROACH_OBJECT_H
 #define TF_BOT_APPROACH_OBJECT_H
-#ifdef _WIN32
-#pragma once
-#endif
 
+#include "Path/NextBotPathFollow.h"
 
-#include "NextBotBehavior.h"
-
-class CTFBotApproachObject : public Action<CTFBot>
+class CTFBotApproachObject : public Action< CTFBot >
 {
 public:
-	CTFBotApproachObject( CBaseEntity *object, float dist );
-	virtual ~CTFBotApproachObject();
+	CTFBotApproachObject( CBaseEntity *loot, float range = 10.0f );
 
-	virtual const char *GetName() const OVERRIDE;
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *actor, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *actor, float dt ) OVERRIDE;
+	virtual const char *GetName( void ) const	{ return "ApproachObject"; };
 
 private:
-	CHandle<CBaseEntity> m_hObject;
-	float m_flDist;
-	PathFollower m_PathFollower;
-	CountdownTimer m_recomputePathTimer;
+	CHandle< CBaseEntity > m_loot;		// what we are collecting
+	float m_range;						// how close should we get
+	PathFollower m_path;				// how we get to the loot
+	CountdownTimer m_repathTimer;
 };
 
-#endif
+
+#endif // TF_BOT_APPROACH_OBJECT_H

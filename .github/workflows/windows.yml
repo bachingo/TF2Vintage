@@ -6,7 +6,7 @@ on:
 jobs:
   build:
     runs-on:
-      windows-2019
+      windows-2022
 
     steps:
       - name: Checkout
@@ -14,28 +14,13 @@ jobs:
         with:
           submodules: true
 
-      - name: Install components
-        run: |
-                Set-Location "C:\Program Files (x86)\Microsoft Visual Studio\Installer\"
-                $InstallPath = "C:\Program Files\Microsoft Visual Studio\2019\Enterprise"
-                $Arguments = ('/c', "vs_installer.exe", 'modify', '--installPath', "`"$InstallPath`"", '--add', "Microsoft.VisualStudio.Component.VC.140", '--add', 'Microsoft.VisualStudio.Component.Windows81SDK','--quiet', '--norestart', '--nocache')
-                # should be run twice
-                $process = Start-Process -FilePath cmd.exe -ArgumentList $Arguments -Wait -PassThru -WindowStyle Hidden
-                $process = Start-Process -FilePath cmd.exe -ArgumentList $Arguments -Wait -PassThru -WindowStyle Hidden
-
-      - name: Configure registry
-        shell: powershell
-        run: |
-          REG ADD "HKLM\Software\Microsoft\VisualStudio\14.0\Projects\{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}" /v "DefaultProjectExtension" /t REG_SZ  /d "vcxproj" /f /reg:32
-          REG ADD "HKLM\Software\Microsoft\VisualStudio\14.0\Projects\{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}" /v "PossibleProjectExtensions" /t REG_SZ /d "vcxproj;vcxitems;vcproj;mak" /f /reg:32
-
       - name: Configure dependencies
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Create project
         run: |
           cd src
-          devtools/bin/vpc.exe /tf2vintage +game /mksln TF2vintage.sln
+          devtools/bin/vpc.exe /tf2vintage /define:SOURCESDK /define:TF +game /mksln TF2vintage.sln
 
       - name: Build project
         run: cd src;devenv TF2vintage.sln /Build Release

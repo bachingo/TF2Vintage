@@ -101,7 +101,7 @@ public:
 	inline float SequenceDuration( void ) { return SequenceDuration( m_nSequence ); }
 	float	SequenceDuration( CStudioHdr *pStudioHdr, int iSequence );
 	inline float SequenceDuration( int iSequence ) { return SequenceDuration(GetModelPtr(), iSequence); }
-	inline float ScriptSequenceDuration( int iSequence ) { return SequenceDuration(GetModelPtr(), iSequence); }
+	float ScriptGetSequenceDuration( int iSequence );
 	float	GetSequenceCycleRate( CStudioHdr *pStudioHdr, int iSequence );
 	inline float	GetSequenceCycleRate( int iSequence ) { return GetSequenceCycleRate(GetModelPtr(),iSequence); }
 	float	GetLastVisibleCycle( CStudioHdr *pStudioHdr, int iSequence );
@@ -115,6 +115,7 @@ public:
 	int		SelectHeaviestSequence ( Activity activity );
 	int		LookupActivity( const char *label );
 	int		LookupSequence ( const char *label );
+	inline int ScriptLookupSequence( const char *label ) { return LookupSequence( label ); }
 	KeyValues *GetSequenceKeyValues( int iSequence );
 
 	float GetSequenceMoveYaw( int iSequence );
@@ -144,17 +145,26 @@ public:
 
 	bool HasAnimEvent( int nSequence, int nEvent );
 	virtual	void DispatchAnimEvents ( CBaseAnimating *eventHandler ); // Handle events that have happend since last time called up until X seconds into the future
+	inline void ScriptDispatchAnimEvents( HSCRIPT hScript )
+	{
+		CBaseEntity *pEntity = ToEnt( hScript );
+		CBaseAnimating *pAnimating = NULL;
+		if ( pEntity )
+			pAnimating = pEntity->GetBaseAnimating();
+		return this->DispatchAnimEvents( pAnimating );
+	}
 	virtual void HandleAnimEvent( animevent_t *pEvent );
 	bool ScriptHookHandleAnimEvent( animevent_t *pEvent );
 
 	int		LookupPoseParameter( CStudioHdr *pStudioHdr, const char *szName );
 	inline int	LookupPoseParameter( const char *szName ) { return LookupPoseParameter(GetModelPtr(), szName); }
+	inline int	ScriptLookupPoseParameter( const char *szName ) { return LookupPoseParameter( szName ); }
 
 	float	SetPoseParameter( CStudioHdr *pStudioHdr, const char *szName, float flValue );
 	inline float SetPoseParameter( const char *szName, float flValue ) { return SetPoseParameter( GetModelPtr(), szName, flValue ); }
 	float	SetPoseParameter( CStudioHdr *pStudioHdr, int iParameter, float flValue );
 	inline float SetPoseParameter( int iParameter, float flValue ) { return SetPoseParameter( GetModelPtr(), iParameter, flValue ); }
-	inline float ScriptSetPoseParameter( const char *szName, float flValue ) { return SetPoseParameter( GetModelPtr(), szName, flValue ); }
+	inline float ScriptSetPoseParameter( int iParameter, float flValue ) { return SetPoseParameter( iParameter, flValue ); }
 
 	float	GetPoseParameter( const char *szName );
 	float	GetPoseParameter( int iParameter );
@@ -175,8 +185,6 @@ public:
 	int  LookupBone( const char *szName );
 	void GetBonePosition( const char *szName, Vector &origin, QAngle &angles );
 	void GetBonePosition( int iBone, Vector &origin, QAngle &angles );
-	const Vector &ScriptGetBoneOrigin( int iBone );
-	const Vector &ScriptGetBoneAngles( int iBone );
 	int	GetPhysicsBone( int boneIndex );
 
 	int GetNumBones ( void );
@@ -195,13 +203,9 @@ public:
 	bool GetAttachment( int iAttachment, Vector &absOrigin, QAngle &absAngles );
 	int GetAttachmentBone( int iAttachment );
 	virtual bool GetAttachment( int iAttachment, matrix3x4_t &attachmentToWorld );
-	const Vector &ScriptGetAttachmentOrigin( int iAttachment );
-	const QAngle &ScriptGetAttachmentAngles( int iAttachment );
 
 	const matrix3x4_t &ScriptGetAttachmentMatrix( int iAttachment );
 	float	ScriptGetPoseParameter( const char *szName );
-
-	const matrix3x4_t &ScriptGetBoneTransform( int iBone );
 
 	int		ScriptGetSequenceActivity( int iSequence ) { return GetSequenceActivity( iSequence ); }
 	float	ScriptGetSequenceMoveDist( int iSequence ) { return GetSequenceMoveDist( GetModelPtr(), iSequence ); }
@@ -209,10 +213,6 @@ public:
 	int		ScriptSelectWeightedSequence( int activity, int curSequence ) { return SelectWeightedSequence( (Activity)activity, curSequence ); }
 
 	HSCRIPT ScriptGetSequenceKeyValues( int iSequence );
-
-	// For VScript
-	int		GetSkin() { return m_nSkin; }
-	void	SetSkin( int iSkin ) { m_nSkin = iSkin; }
 private:
 	HSCRIPT m_hOnServerRagdoll;
 	HSCRIPT m_hHandleAnimEvent;
@@ -228,10 +228,19 @@ public:
 	bool GetAttachment(  const char *szName, Vector &absOrigin, Vector *forward = NULL, Vector *right = NULL, Vector *up = NULL );
 	bool GetAttachment( int iAttachment, Vector &absOrigin, Vector *forward = NULL, Vector *right = NULL, Vector *up = NULL );
 
+	Vector ScriptGetAttachmentOrigin( int iAttachment );
+	QAngle ScriptGetAttachmentAngles( int iAttachment );
+	Vector ScriptGetBoneOrigin( int iBone );
+	QAngle ScriptGetBoneAngles( int iBone );
+	const matrix3x4_t &ScriptGetBoneTransform( int iBone );
+
 	void SetBodygroup( int iGroup, int iValue );
 	int GetBodygroup( int iGroup );
+	int GetSkin() const { return m_nSkin; }
+	void SetSkin(int nSkin) { m_nSkin = nSkin; }
 
 	const char *GetBodygroupName( int iGroup );
+	const char *GetBodygroupPartName( int iGroup, int iPart );
 	int FindBodygroupByName( const char *name );
 	int GetBodygroupCount( int iGroup );
 	int GetNumBodyGroups( void );
@@ -297,6 +306,7 @@ public:
 	void				DrawRawSkeleton( matrix3x4_t boneToWorld[], int boneMask, bool noDepthTest = true, float duration = 0.0f, bool monocolor = false );
 
 	void				SetModelScale( float scale, float change_duration = 0.0f );
+	inline void			ScriptSetModelScale( float scale, float change_duration = 0.0f )  { SetModelScale( scale, change_duration ); }
 	float				GetModelScale() const { return m_flModelScale; }
 
 	void				UpdateModelScale();
@@ -371,10 +381,15 @@ private:
 	void InputSetLightingOriginRelative( inputdata_t &inputdata );
 	void InputSetLightingOrigin( inputdata_t &inputdata );
 	void InputSetModelScale( inputdata_t &inputdata );
+	void InputSetModel( inputdata_t &inputdata );
+	void InputSetCycle( inputdata_t &inputdata );
+	void InputSetPlaybackRate( inputdata_t &inputdata );
 
 	bool CanSkipAnimation( void );
 
 public:
+	void ScriptSetModel( const char *pszModel );
+
 	CNetworkVar( int, m_nForceBone );
 	CNetworkVector( m_vecForce );
 
@@ -557,7 +572,7 @@ EXTERN_SEND_TABLE(DT_BaseAnimating);
 #define ANIMATION_SKIN_BITS				10	// 1024 body skin selections FIXME: this seems way high
 #define ANIMATION_BODY_BITS				32	// body combinations
 #define ANIMATION_HITBOXSET_BITS		2	// hit box sets 
-#if defined( TF_DLL ) || defined( TF_VINTAGE )
+#if defined( TF_DLL )
 #define ANIMATION_POSEPARAMETER_BITS	8	// pose parameter resolution
 #else
 #define ANIMATION_POSEPARAMETER_BITS	11	// pose parameter resolution

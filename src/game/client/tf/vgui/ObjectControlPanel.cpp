@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -129,12 +129,15 @@ void CObjectControlPanel::OnTick()
 	if (!pObj)
 		return;
 
-	// Update the current subpanel
-	m_pCurrentPanel->SetVisible( false );
+	if ( IsVisible() )
+	{
+		// Update the current subpanel
+		m_pCurrentPanel->SetVisible( false );
 	
-	m_pCurrentPanel = TickCurrentPanel();
+		m_pCurrentPanel = TickCurrentPanel();
 
-	m_pCurrentPanel->SetVisible( true );
+		m_pCurrentPanel->SetVisible( true );
+	}
 }
 
 //-----------------------------------------------------------------------------

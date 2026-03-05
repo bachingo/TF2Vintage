@@ -61,17 +61,20 @@ END_DATADESC()
 #define ORDER_BITS			4
 #define WEIGHT_BITS			8
 
-BEGIN_SEND_TABLE_NOBASE( CAnimationLayer, DT_Animationlayer )
+BEGIN_SEND_TABLE_NOBASE(CAnimationLayer, DT_Animationlayer)
 	SendPropInt		(SENDINFO(m_nSequence),		ANIMATION_SEQUENCE_BITS,SPROP_UNSIGNED),
 	SendPropFloat	(SENDINFO(m_flCycle),		ANIMATION_CYCLE_BITS,	SPROP_ROUNDDOWN,	0.0f,   1.0f),
 	SendPropFloat	(SENDINFO(m_flPrevCycle),	ANIMATION_CYCLE_BITS,	SPROP_ROUNDDOWN,	0.0f,   1.0f),
-	SendPropFloat	(SENDINFO(m_flWeight),		WEIGHT_BITS,			0,					0.0f,	1.0f),
+	SendPropFloat	(SENDINFO(m_flWeight),		WEIGHT_BITS,			0,	0.0f,	1.0f),
 	SendPropInt		(SENDINFO(m_nOrder),		ORDER_BITS,				SPROP_UNSIGNED),
 END_SEND_TABLE()
 
 
 BEGIN_SEND_TABLE_NOBASE( CBaseAnimatingOverlay, DT_OverlayVars )
-	SendPropUtlVectorDataTable( m_AnimOverlay, CBaseAnimatingOverlay::MAX_OVERLAYS, DT_Animationlayer  )
+	SendPropUtlVector( 
+		SENDINFO_UTLVECTOR( m_AnimOverlay ),
+		CBaseAnimatingOverlay::MAX_OVERLAYS, // max elements
+		SendPropDataTable( NULL, 0, &REFERENCE_SEND_TABLE( DT_Animationlayer ) )  )
 END_SEND_TABLE()
 
 
@@ -93,9 +96,9 @@ void CAnimationLayer::Init( CBaseAnimatingOverlay *pOverlay )
 {
 	m_pOwnerEntity = pOverlay;
 	m_fFlags = 0;
-	m_flWeight = 0;
-	m_flCycle = 0;
-	m_flPrevCycle = 0;
+	m_flWeight.SetDirect( 0.0f );
+	m_flCycle.SetDirect( 0.0f );
+	m_flPrevCycle.SetDirect( 0.0f );
 	m_bSequenceFinished = false;
 	m_nActivity = ACT_INVALID;
 	m_nSequence = 0;
@@ -107,7 +110,9 @@ void CAnimationLayer::Init( CBaseAnimatingOverlay *pOverlay )
 
 	m_flKillRate = 100.0;
 	m_flKillDelay = 0.0;
-	m_flPlaybackRate = 1.0;
+	m_flPlaybackRate = 1.0f;
+	// misyl: If we ever network this... We probably should :S
+	//m_flPlaybackRate.SetDirect( 1.0f );
 	m_flLastEventCheck = 0.0;
 	m_flLastAccess = gpGlobals->curtime;
 	m_flLayerAnimtime = 0;

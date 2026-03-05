@@ -2,13 +2,8 @@
 // $USE_STATIC_CONTROL_FLOW && ( $NUM_LIGHTS > 0 )
 // defined $LIGHTING_PREVIEW && defined $FASTPATH && $LIGHTING_PREVIEW && $FASTPATH
 
-#ifndef TEETH_BUMP_VS20_H
-#define TEETH_BUMP_VS20_H
-
-#include "shaderapi/ishaderapi.h"
-#include "shaderapi/ishadershadow.h"
-#include "materialsystem/imaterialvar.h"
-
+#pragma once
+#include "shaderlib/cshader.h"
 class teeth_bump_vs20_Static_Index
 {
 	unsigned int m_nINTRO : 2;
@@ -36,7 +31,7 @@ public:
 #endif	// _DEBUG
 	}
 
-	teeth_bump_vs20_Static_Index( IShaderShadow* pShaderShadow, IMaterialVar** params )
+	teeth_bump_vs20_Static_Index(  )
 	{
 		m_nINTRO = 0;
 		m_nUSE_STATIC_CONTROL_FLOW = 0;
@@ -116,7 +111,7 @@ public:
 #endif	// _DEBUG
 	}
 
-	teeth_bump_vs20_Dynamic_Index( IShaderDynamicAPI* pShaderAPI )
+	teeth_bump_vs20_Dynamic_Index(  )
 	{
 		m_nCOMPRESSED_VERTS = 0;
 		m_nDOWATERFOG = 0;
@@ -141,5 +136,3 @@ public:
 
 #define shaderDynamicTest_teeth_bump_vs20 vsh_forgot_to_set_dynamic_COMPRESSED_VERTS + vsh_forgot_to_set_dynamic_DOWATERFOG + vsh_forgot_to_set_dynamic_SKINNING + vsh_forgot_to_set_dynamic_STATIC_LIGHT + vsh_forgot_to_set_dynamic_NUM_LIGHTS
 
-
-#endif	// TEETH_BUMP_VS20_H

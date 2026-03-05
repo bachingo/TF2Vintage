@@ -10,7 +10,7 @@
 #include "team_control_point_master.h"
 #include "teamplayroundbased_gamerules.h"
 
-#if defined ( TF_DLL ) || defined ( TF_VINTAGE )
+#if defined ( TF_DLL )
 #include "tf_gamerules.h"
 #endif
 
@@ -676,7 +676,7 @@ void CTeamControlPointMaster::CheckWinConditions( void )
 		{
 			bool bWinner = true;
 
-#if defined( TF_DLL ) || defined ( TF_VINTAGE )
+#if defined( TF_DLL)
 			if ( TFGameRules() && TFGameRules()->IsInKothMode() )
 			{
 				CTeamRoundTimer *pTimer = NULL;
@@ -956,6 +956,20 @@ void CTeamControlPointMaster::FireRoundEndOutput( void )
 		pRound->FireOnEndOutput();
 		m_iCurrentRoundIndex = -1;
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+const CTeamControlPointRound* CTeamControlPointMaster::GetRoundByIndex( int nIndex ) const
+{
+	if ( nIndex < 0 || nIndex >= m_ControlPointRounds.Count() )
+	{
+		Assert( false );
+		return 0;
+	}
+
+	return m_ControlPointRounds[ nIndex ];
 }
 
 //-----------------------------------------------------------------------------
@@ -1253,7 +1267,7 @@ int CTeamControlPointMaster::CalcNumRoundsRemaining( int iTeam )
 //-----------------------------------------------------------------------------
 float CTeamControlPointMaster::GetPartialCapturePointRate( void )
 {
-	if (TFGameRules()->IsInEscortMode())
+	if ( TFGameRules()->IsInEscortMode() )
 		m_flPartialCapturePointsRate = 10.0;
 	else
 		m_flPartialCapturePointsRate = 0.0;
@@ -1261,9 +1275,6 @@ float CTeamControlPointMaster::GetPartialCapturePointRate( void )
 	return m_flPartialCapturePointsRate;
 }
 
-#ifdef STAGING_ONLY
-//-----------------------------------------------------------------------------
-// Purpose: 
 //-----------------------------------------------------------------------------
 void CTeamControlPointMaster::ListRounds( void )
 {
@@ -1289,10 +1300,11 @@ void CTeamControlPointMaster::ListRounds( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------	
 void cc_ListRounds( void )
 {
+	if ( !UTIL_IsCommandIssuedByServerAdmin() )
+		{ return; }
+
 	CTeamControlPointMaster *pMaster = g_hControlPointMasters.Count() ? g_hControlPointMasters[0] : NULL;
 	if ( pMaster )
 	{
@@ -1300,13 +1312,14 @@ void cc_ListRounds( void )
 	}
 }
 
-static ConCommand listrounds( "listrounds", cc_ListRounds, "List the rounds for the current map", FCVAR_CHEAT );
+static ConCommand tf_listrounds( "tf_listrounds", cc_ListRounds, "List the rounds for the current map", FCVAR_CHEAT );
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------	
 void cc_PlayRound( const CCommand& args )
 {
+	if ( !UTIL_IsCommandIssuedByServerAdmin() )
+		{ return; }
+
 	if ( args.ArgC() > 1 )
 	{
 		CTeamplayRoundBasedRules *pRules = dynamic_cast<CTeamplayRoundBasedRules*>( GameRules() );
@@ -1333,9 +1346,8 @@ void cc_PlayRound( const CCommand& args )
 	}
 	else
 	{
-		ConMsg( "Usage:  playround < round name >\n" );
+		ConMsg( "Usage:  tf_playround < round name >\n" );
 	}
 }
 
-static ConCommand playround( "playround", cc_PlayRound, "Play the selected round\n\tArgument: {round name given by \"listrounds\" command}", FCVAR_CHEAT );
-#endif
+static ConCommand tf_playround( "tf_playround", cc_PlayRound, "Play the selected round\n\tArgument: {round name given by \"tf_listrounds\" command}", FCVAR_CHEAT );

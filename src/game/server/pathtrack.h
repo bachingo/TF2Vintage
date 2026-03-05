@@ -13,7 +13,6 @@
 
 #include "entityoutput.h"
 #include "shareddefs.h"
-#include "tf_gamerules.h"
 
 
 //-----------------------------------------------------------------------------
@@ -40,6 +39,10 @@ enum TrackOrientationType_t
 //-----------------------------------------------------------------------------
 // Paths!
 //-----------------------------------------------------------------------------
+// Josh: It would be nice if this was CServerOnlyPointEntity as they
+// use up a huge number of edicts and are not needed by the client at all,
+// but alas, some maps are using track entities as lighting origins instead of
+// the proper entities for this sort of things.
 class CPathTrack : public CPointEntity
 {
 	DECLARE_CLASS( CPathTrack, CPointEntity );

@@ -1,4 +1,4 @@
-//====== Copyright � 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: TF implementation of the IPresence interface
 //
@@ -22,9 +22,8 @@
 //-----------------------------------------------------------------------------
 // Purpose: TF implementation for setting user contexts and properties.
 //-----------------------------------------------------------------------------
-class CTFPresence : public CBasePresence, public CGameEventListener
+class CTF_Presence : public CBasePresence, public CGameEventListener
 {
-	DECLARE_CLASS_GAMEROOT( CTFPresence, CBasePresence );
 public:
 	// IGameEventListener Interface
 	virtual void	FireGameEvent( IGameEvent * event );
@@ -36,7 +35,7 @@ public:
 	// IPresence interface
 	virtual void		SetupGameProperties( CUtlVector< XUSER_CONTEXT > &contexts, CUtlVector< XUSER_PROPERTY > &properties );
 	virtual uint		GetPresenceID( const char *pIDName );
-	virtual const char *GetPropertyIdString( const uint id );
+	virtual const char 	*GetPropertyIdString( const unsigned int id );
 	virtual void		GetPropertyDisplayString( uint id, uint value, char *pOutput, int nBytes );
 	virtual void		UploadStats();
 

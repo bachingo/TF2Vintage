@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: A shader that builds the shadow using render-to-texture
 //
@@ -7,7 +7,7 @@
 //=============================================================================//
 
 #include "BaseVSShader.h"
-#include "mathlib/VMatrix.h"
+#include "mathlib/vmatrix.h"
 
 #include "unlitgeneric_vs20.inc"
 #include "shadowbuildtexture_ps20.inc"
@@ -43,9 +43,9 @@ BEGIN_VS_SHADER_FLAGS( ShadowBuild_DX9, "Help for ShadowBuild", SHADER_NOT_EDITA
 
 	SHADER_INIT
 	{
-		if (params[BASETEXTURE]->IsDefined())
+		if ( params[BASETEXTURE]->IsDefined() )
 		{
-			LoadTexture(BASETEXTURE);
+			LoadTexture( BASETEXTURE, TEXTUREFLAGS_SRGB );
 		}
 	}
 
@@ -73,7 +73,7 @@ BEGIN_VS_SHADER_FLAGS( ShadowBuild_DX9, "Help for ShadowBuild", SHADER_NOT_EDITA
 			pShaderShadow->VertexShaderVertexFormat( flags, nTexCoordCount, NULL, userDataSize );
 
 			DECLARE_STATIC_VERTEX_SHADER( unlitgeneric_vs20 );
-			SET_STATIC_VERTEX_SHADER_COMBO( VERTEXCOLOR, 0 );
+			SET_STATIC_VERTEX_SHADER_COMBO( VERTEXCOLOR, 0  );
 			SET_STATIC_VERTEX_SHADER( unlitgeneric_vs20 );
 
 			if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
@@ -123,8 +123,8 @@ BEGIN_VS_SHADER_FLAGS( ShadowBuild_DX9, "Help for ShadowBuild", SHADER_NOT_EDITA
 				pShaderAPI->BindStandardTexture( SHADER_SAMPLER0, TEXTURE_LIGHTMAP_FULLBRIGHT );
 			}
 
-			BOOL bShaderConstants[1] = { false };
-			pShaderAPI->SetBooleanVertexShaderConstant( VERTEX_SHADER_SHADER_SPECIFIC_BOOL_CONST_0, bShaderConstants, 1 );
+			float vVertexColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+			pShaderAPI->SetVertexShaderConstant( VERTEX_SHADER_SHADER_SPECIFIC_CONST_6, vVertexColor, 1 );
 
 			// Compute the vertex shader index.
 			DECLARE_DYNAMIC_VERTEX_SHADER( unlitgeneric_vs20 );

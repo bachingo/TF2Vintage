@@ -14,7 +14,6 @@
 #undef max
 #undef min
 #include <regex>
-#undef MINMAX_H
 #include "minmax.h"
 
 ConVar mapbase_wildcards_enabled("mapbase_wildcards_enabled", "1", FCVAR_NONE, "Toggles Mapbase's '?' wildcard and true '*' features. Useful for maps that have '?' in their targetnames.");

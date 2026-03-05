@@ -48,14 +48,12 @@ ConVar hl2_episodic( "hl2_episodic", "0", FCVAR_REPLICATED );
 	#include "prop_portal_shared.h"
 #endif
 
-#if defined TF_DLL || TF_VINTAGE
+#ifdef TF_DLL
 #include "tf_gamerules.h"
 #include "tf_weaponbase.h"
 #endif // TF_DLL
 
 #include "rumble_shared.h"
-
-#include "vscript_funcs_shared.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -657,15 +655,15 @@ void CBaseEntity::SetPredictionRandomSeed( const CUserCmd *cmd )
 //------------------------------------------------------------------------------
 void CBaseEntity::DecalTrace( trace_t *pTrace, char const *decalName )
 {
-	int index = decalsystem->GetDecalIndexForName( decalName );
-	if ( index < 0 )
+	int indexD = decalsystem->GetDecalIndexForName( decalName );
+	if ( indexD < 0 )
 		return;
 
 	Assert( pTrace->m_pEnt );
 
 	CBroadcastRecipientFilter filter;
 	te->Decal( filter, 0.0, &pTrace->endpos, &pTrace->startpos,
-		pTrace->GetEntityIndex(), pTrace->hitbox, index );
+		pTrace->GetEntityIndex(), pTrace->hitbox, indexD );
 }
 
 //-----------------------------------------------------------------------------
@@ -761,14 +759,8 @@ int CBaseEntity::RegisterThinkContext( const char *szContext )
 //-----------------------------------------------------------------------------
 BASEPTR	CBaseEntity::ThinkSet( BASEPTR func, float thinkTime, const char *szContext )
 {
-#if !defined( CLIENT_DLL )
-#ifdef _DEBUG
-#ifdef GNUC
-	COMPILE_TIME_ASSERT( sizeof(func) == 8 );
-#else
-	COMPILE_TIME_ASSERT( sizeof(func) == 4 );
-#endif
-#endif
+#if !defined( CLIENT_DLL ) && defined( _DEBUG )
+	COMPILE_TIME_ASSERT( sizeof(func) == ENTITYFUNCPTR_SIZE );
 #endif
 
 	// Old system?
@@ -1401,9 +1393,9 @@ bool CBaseEntity::IsBSPModel() const
 	if ( GetSolid() == SOLID_BSP )
 		return true;
 	
-	const model_t *model = modelinfo->GetModel( GetModelIndex() );
+	const model_t *pModel = modelinfo->GetModel( GetModelIndex() );
 
-	if ( GetSolid() == SOLID_VPHYSICS && modelinfo->GetModelType( model ) == mod_brush )
+	if ( GetSolid() == SOLID_VPHYSICS && modelinfo->GetModelType( pModel ) == mod_brush )
 		return true;
 
 	return false;
@@ -1619,7 +1611,7 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 			ScriptVariant_t functionReturn;
 			if ( m_ScriptScope.Call( m_hFireBullets, &functionReturn, hInfo ) == SCRIPT_DONE )
 			{
-				if ( !functionReturn.m_bool )
+				if ( !functionReturn.Get<bool>() )
 					return;
 			}
 
@@ -1783,9 +1775,9 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 			{
 				pShootThroughPortal = NULL;
 			}
-#elif TF_DLL || TF_VINTAGE
+#elif TF_DLL
 			CTraceFilterIgnoreFriendlyCombatItems traceFilterCombatItem( this, COLLISION_GROUP_NONE, GetTeamNumber() );
-			if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() )
+			if ( TFGameRules() && TFGameRules()->GameModeUsesUpgrades() )
 			{
 				CTraceFilterChain traceFilterChain( &traceFilter, &traceFilterCombatItem );
 				AI_TraceLine(info.m_vecSrc, vecEnd, MASK_SHOT, &traceFilterChain, &tr);
@@ -2001,6 +1993,7 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 					Tracer.endpos = info.m_vecSrc + ( vecEnd - info.m_vecSrc ) * fPortalFraction;
 				}
 #endif //#ifdef PORTAL
+
 				MakeTracer( vecTracerSrc, Tracer, pAmmoDef->TracerType(info.m_iAmmoType) );
 
 #ifdef PORTAL

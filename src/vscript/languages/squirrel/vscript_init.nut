@@ -8,6 +8,37 @@
 // General
 //-----------------------------------------------------------------------------
 
+realPrint <- print;
+print_indent <- 0;
+
+getconsttable().Constants.Server <- {
+	ConstantNamingConvention = "Constants are named as follows: F -> flags, E -> enums, (nothing) -> random values/constants",
+	DIST_EPSILON = 0.03125,
+	MAX_PLAYERS = 33,
+	MAX_EDICTS = 2048
+};
+
+getconsttable().Constants.Math <- {
+	Zero = 0,
+	Epsilon = 1.19209e-07,
+	GoldenRatio = 1.61803,
+	One = 1,
+	Sqrt2 = 1.41421,
+	Sqrt3 = 1.73205,
+	E = 2.71828,
+	Pi = 3.14159,
+	Tau = 6.28319
+};
+
+function print( text )
+{
+	for( local i = print_indent; i > 0; --i )
+	{
+		realPrint( "  " );
+	}
+	realPrint( text );
+}
+
 function printl( text )
 {
 	return print( text + "\n" );
@@ -110,6 +141,337 @@ function SimpleSpline( f )
 {
 	local ff = f * f;
 	return 3.0 * ff - 2.0 * ff * f;
+}
+
+//-----------------------------------------------------------------------------
+
+function FindCircularReference( target )
+{
+	local visits = {}
+	local result = false;
+
+	local function RecursiveSearch( current )
+	{
+		if( current in visits )
+		{
+			return;
+		}
+		visits[current] <- true;
+
+		foreach( key, val in current )
+		{
+			if( val == target && !IsWeakRef( target, key ) )
+			{
+				printl( "    Circular reference to " + target.tostring() + " in key " + key.tostring() + " slot " + val.tostring() + " of object " + current.tostring() );
+				result = true;
+			}
+			else if ( typeof(val) == "table" || typeof(val) == "array" || typeof(val) == "instance" )
+			{
+				if( !IsWeakRef( target, key ) )
+				{
+					RecursiveSearch( val );
+				}
+			}
+		}
+	}
+
+	if( typeof( target ) == "table" || typeof( target ) == "array" || typeof(target) == "instance" )
+	{
+		RecursiveSearch( target );
+	}
+
+	return result;
+}
+
+function FindCircularReferences( resurrecteds )
+{
+	printl( "Circular references:" );
+
+	if( resurrecteds == null )
+	{
+		printl( "    None" );
+		return;
+	}
+
+	if( typeof(resurrecteds) != "array" )
+	{
+		throw "Bad input to FindCircularReference";
+	}
+
+	foreach( val in resurrecteds )
+	{
+		FindCircularReference( val );
+	}
+
+	print( "Resurrected objects: " );
+	DumpObject( resurrecteds );
+}
+
+//-----------------------------------------------------------------------------
+
+function DebugDrawCircle( position, angles, radius, r, g, b, a, bNoDepthTest, flDuration )
+{
+	local xform = AngleMatrix( angles );
+	local xAxis = MatrixGetColumn( xform, 2 );
+	local yAxis = MatrixGetColumn( xform, 1 );
+
+	const nSegments = 16;
+	local flRadStep = getconsttable().Constants.Math.Tau / nSegments.tofloat();
+
+	local vecStart = position + xAxis * radius;
+	local vecPosition = vecStart;
+	local vecLastPosition = vecPosition;
+
+	for ( local i = 1; i <= nSegments; i++ )
+	{
+		// Store off our last position
+		vecLastPosition = vecPosition;
+
+		// Calculate the new one
+		local flCos = cos( flRadStep * i );
+		local flSin = sin( flRadStep * i );
+		vecPosition = position + (xAxis * flCos * radius) + (yAxis * flSin * radius);
+
+		// Draw the line
+		DebugDrawLine( vecLastPosition, vecPosition, r, g, b, bNoDepthTest, flDuration );
+
+		// If we have an alpha value, then draw the fan
+		if ( a > 0 && i > 1 )
+		{		
+			DebugDrawTriangle( vecStart, vecLastPosition, vecPosition, r, g, b, a, bNoDepthTest, flDuration );
+		}
+	}
+}
+
+function DebugDrawSphere( position, angles, radius, r, g, b, a, bNoDepthTest, flDuration )
+{
+	local xform = AngleMatrix( angles );
+	local xAxis = MatrixGetColumn( xform, 0, xAxis );
+	local yAxis = MatrixGetColumn( xform, 1, yAxis );
+	local zAxis = MatrixGetColumn( xform, 2, zAxis );
+
+	DebugDrawCircle( position, xAxis, yAxis, radius, r, g, b, a, bNoDepthTest, flDuration );	// xy plane
+	DebugDrawCircle( position, yAxis, zAxis, radius, r, g, b, a, bNoDepthTest, flDuration );	// yz plane
+	DebugDrawCircle( position, xAxis, zAxis, radius, r, g, b, a, bNoDepthTest, flDuration );	// xz plane
+}
+
+function DebugDrawBox( origin, mins, maxs, r, g, b, a, duration )
+{
+	DebugDrawBoxAngles( origin, mins, maxs, QAngle(0, 0, 0), r, g, b, a, duration );
+}
+
+function DebugDrawBoxDirection( origin, mins, maxs, orientation, r, g, b, a, duration )
+{
+	local angles = VectorAngles( orientation );
+	angles.x = angles.z = 0.0;
+
+	DebugDrawBoxAngles( origin, mins, maxs, angles, r, g, b, a, duration );
+}
+
+function DebugDrawCross3D( position, size, r, g, b, noDepthTest, flDuration )
+{
+	DebugDrawLine( position + Vector(size,0,0), position - Vector(size,0,0), r, g, b, noDepthTest, flDuration );
+	DebugDrawLine( position + Vector(0,size,0), position - Vector(0,size,0), r, g, b, noDepthTest, flDuration );
+	DebugDrawLine( position + Vector(0,0,size), position - Vector(0,0,size), r, g, b, noDepthTest, flDuration );
+}
+
+function DebugDrawCross3DOriented( position, angles, size, r, g, b, noDepthTest, flDuration )
+{
+	local forward = angles.Forward() * size;
+	local right = angles.Left() * size;
+	local up = angles.Up() * size;
+
+	DebugDrawLine( position + right, position - right, r, g, b, noDepthTest, flDuration );
+	DebugDrawLine( position + forward, position - forward, r, g, b, noDepthTest, flDuration );
+	DebugDrawLine( position + up, position - up, r, g, b, noDepthTest, flDuration );
+}
+
+function DebugDrawAxis(position, angles, size, noDepthTest, flDuration)
+{
+	local xvec = AngleVectors( angles );
+	local yvec = xvec.Right();
+	local zvec = xvec.Up();
+	
+	xvec = position + (xvec * size);
+	yvec = position - (yvec * size); // Left is positive
+	zvec = position + (zvec * size);
+
+	DebugDrawLine( position, xvec, 255, 0, 0, noDepthTest, flDuration );
+	DebugDrawLine( position, yvec, 0, 255, 0, noDepthTest, flDuration );
+	DebugDrawLine( position, zvec, 0, 0, 255, noDepthTest, flDuration );
+}
+
+function DebugDrawHorzArrow( startPos, endPos, width, r, g, b, a, noDepthTest, flDuration )
+{
+	local lineDir = (endPos - startPos);
+	lineDir.Norm();
+	local radius = width / 2.0;
+
+	local sideDir = lineDir.Cross( Vector( 0, 0, 1 ) );
+
+	local p1 =	startPos - sideDir * radius;
+	local p2 = endPos - lineDir * width - sideDir * radius;
+	local p3 = endPos - lineDir * width - sideDir * width;
+	local p4 = endPos;
+	local p5 = endPos - lineDir * width + sideDir * width;
+	local p6 = endPos - lineDir * width + sideDir * radius;
+	local p7 =	startPos + sideDir * radius;
+
+	// Outline the arrow
+	DebugDrawLine( p1, p2, r, g, b, noDepthTest, flDuration );
+	DebugDrawLine( p2, p3, r, g, b, noDepthTest, flDuration );
+	DebugDrawLine( p3, p4, r, g, b, noDepthTest, flDuration );
+	DebugDrawLine( p4, p5, r, g, b, noDepthTest, flDuration );
+	DebugDrawLine( p5, p6, r, g, b, noDepthTest, flDuration );
+	DebugDrawLine( p6, p7, r, g, b, noDepthTest, flDuration );
+
+	if ( a > 0 )
+	{
+		// Fill us in with triangles
+		DebugDrawTriangle( p5, p4, p3, r, g, b, a, noDepthTest, flDuration ); // Tip
+		DebugDrawTriangle( p1, p7, p6, r, g, b, a, noDepthTest, flDuration ); // Shaft
+		DebugDrawTriangle( p6, p2, p1, r, g, b, a, noDepthTest, flDuration );
+
+		// And backfaces
+		DebugDrawTriangle( p3, p4, p5, r, g, b, a, noDepthTest, flDuration ); // Tip
+		DebugDrawTriangle( p6, p7, p1, r, g, b, a, noDepthTest, flDuration ); // Shaft
+		DebugDrawTriangle( p1, p2, p6, r, g, b, a, noDepthTest, flDuration );
+	}
+}
+
+function DebugDrawVertArrow( startPos, endPos, width, r, g, b, a, noDepthTest, flDuration )
+{
+	local lineDir = (endPos - startPos);
+	lineDir.Norm();
+	local radius = width / 2.0;
+
+	local upVec = lineDir.Up();
+
+	local p1 =	startPos - upVec * radius;
+	local p2 = endPos - lineDir * width - upVec * radius;
+	local p3 = endPos - lineDir * width - upVec * width;
+	local p4 = endPos;
+	local p5 = endPos - lineDir * width + upVec * width;
+	local p6 = endPos - lineDir * width + upVec * radius;
+	local p7 =	startPos + upVec * radius;
+
+	// Outline the arrow
+	DebugDrawLine(p1, p2, r,g,b,noDepthTest,flDuration);
+	DebugDrawLine(p2, p3, r,g,b,noDepthTest,flDuration);
+	DebugDrawLine(p3, p4, r,g,b,noDepthTest,flDuration);
+	DebugDrawLine(p4, p5, r,g,b,noDepthTest,flDuration);
+	DebugDrawLine(p5, p6, r,g,b,noDepthTest,flDuration);
+	DebugDrawLine(p6, p7, r,g,b,noDepthTest,flDuration);
+
+	if ( a > 0 )
+	{
+		// Fill us in with triangles
+		DebugDrawTriangle( p5, p4, p3, r, g, b, a, noDepthTest, flDuration ); // Tip
+		DebugDrawTriangle( p1, p7, p6, r, g, b, a, noDepthTest, flDuration ); // Shaft
+		DebugDrawTriangle( p6, p2, p1, r, g, b, a, noDepthTest, flDuration );
+
+		// And backfaces
+		DebugDrawTriangle( p3, p4, p5, r, g, b, a, noDepthTest, flDuration ); // Tip
+		DebugDrawTriangle( p6, p7, p1, r, g, b, a, noDepthTest, flDuration ); // Shaft
+		DebugDrawTriangle( p1, p2, p6, r, g, b, a, noDepthTest, flDuration );
+	}
+}
+
+function ScriptDebugDumpKeys( name, table = null )
+{
+	if( table == null )
+	{
+		table = getroottable();
+	}
+
+	if( name == "" )
+	{
+		printl( table.tostring() + "\n{" )
+	}
+	else
+	{
+		printl( "Find \"" + name +"\"\n{" );
+	}
+
+	local function PrintKey( keyPath, key, value )
+	{
+		printl( "    " + keyPath + " = " + value );
+	}
+	ScriptDebugIterateKeys( name, PrintKey, table );
+
+	printl( "}" );
+}
+
+function ScriptDebugIterateKeys( name, callback, table = null )
+{
+	local visits = {};
+	local pattern;
+
+	local function MatchRegexp( keyPath )
+	{
+		return pattern.match( keyPath );
+	}
+	local function MatchSubstring( keyPath )
+	{
+		return keyPath.find( name ) != null;
+	}
+	local function MatchAll( keyPath )
+	{
+		return true;
+	}
+
+	local matchFunc;
+
+	if( table == null )
+	{
+		table = getroottable();
+	}
+
+	if( name == "" )
+	{
+		matchFunc = MatchAll;
+	}
+	else if ( name[0] == "#" ) // exact
+	{
+		pattern = regexp( "^" + name + "$" )
+		matchFunc = MatchRegexp;
+	}
+	else if ( name[0] == "@" ) // regexp
+	{
+		pattern = regexp( name.slice( 1 ) );
+		matchFunc = MatchRegexp;
+	}
+	else //general
+	{
+		matchFunc = MatchSubstring;
+	}
+
+	ScriptDebugIterateKeysRecursive( matchFunc, null, table, visits, callback );
+}
+
+function ScriptDebugIterateKeysRecursive( matchFunc, path, current, visits, callback )
+{
+	if( !(current in visits) )
+	{
+		visits[current] <- true;
+
+		foreach( key, val in current )
+		{
+			if( typeof(key) == "string" )
+			{
+				local keyPath = path ? path + "." + key : key;
+				if( matchFunc(keyPath) )
+				{
+					callback( keyPath, key, value );
+				}
+			}
+
+			if( typeof(value) == "table" )
+			{
+				ScriptDebugIterateKeysRecursive( matchFunc, keyPath, value, visits, callback );
+			}
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------

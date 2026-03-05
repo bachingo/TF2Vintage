@@ -81,6 +81,11 @@ void CScriptGameEventListener::SetVScriptEventValues( IGameEvent *event, HSCRIPT
 						DevMsg( "\t\t\"%s\"\t\"%i\"\n", keyName, event->GetInt( keyName ) );
 					g_pScriptVM->SetValue( table, keyName, event->GetInt( keyName ) );
 					break;
+				case KeyValues::TYPE_UINT64:
+					if ( sv_debug_script_events.GetBool() )
+						DevMsg( "\t\t\"%s\"\t\"%ull\"\n", keyName, event->GetUint64( keyName ) );
+					g_pScriptVM->SetValue( table, keyName, event->GetUint64( keyName ) );
+					break;
 				case KeyValues::TYPE_FLOAT:
 					if ( sv_debug_script_events.GetBool() )
 						DevMsg( "\t\t\"%s\"\t\"%.4f\"\n", keyName, event->GetFloat( keyName ) );
@@ -94,6 +99,74 @@ void CScriptGameEventListener::SetVScriptEventValues( IGameEvent *event, HSCRIPT
 			}
 		}
 	}
+}
+
+void CScriptGameEventListener::CollectGameEventCallbacksInScope( HSCRIPT scope )
+{
+	if ( m_hCollectGameEventCallbacks == INVALID_HSCRIPT )
+		m_hCollectGameEventCallbacks = g_pScriptVM->LookupFunction( "__CollectGameEventCallbacks" );
+
+	if ( m_hCollectGameEventCallbacks )
+	{
+		g_pScriptVM->Call( m_hCollectGameEventCallbacks, NULL, true, NULL, scope );
+	}
+}
+
+void CScriptGameEventListener::RunGameEventCallbacks( char const *pszEvent, HSCRIPT params )
+{
+	if ( !pszEvent || !pszEvent[0] )
+		return;
+
+	if ( m_hRunGameEventCallbacks == INVALID_HSCRIPT )
+		m_hRunGameEventCallbacks = g_pScriptVM->LookupFunction( "__RunGameEventCallbacks" );
+
+	if ( m_hRunGameEventCallbacks )
+	{
+		g_pScriptVM->Call( m_hRunGameEventCallbacks, NULL, true, NULL, pszEvent, params );
+	}
+}
+
+void CScriptGameEventListener::ListenForScriptHook( char const *pszHook )
+{
+	m_symScriptHooks.AddString( pszHook );
+}
+
+bool CScriptGameEventListener::HasScriptHook( char const *pszHook )
+{
+	return m_symScriptHooks.Find( pszHook ).IsValid();
+}
+
+bool CScriptGameEventListener::FireScriptHook( char const *pszHook, HSCRIPT params )
+{
+	if ( !pszHook || !pszHook[0] )
+		return false;
+
+	if ( !m_symScriptHooks.Find( pszHook ).IsValid() )
+		return false;
+
+	return RunScriptHookCallbacks( pszHook, params );
+}
+
+bool CScriptGameEventListener::RunScriptHookCallbacks( char const *pszHook, HSCRIPT params )
+{
+	if ( !pszHook || !pszHook[0] )
+		return false;
+
+	if ( m_hRunScriptHookCallbacks == INVALID_HSCRIPT )
+		m_hRunScriptHookCallbacks = g_pScriptVM->LookupFunction( "__RunScriptHookCallbacks" );
+
+	if ( m_hRunScriptHookCallbacks )
+	{
+		ScriptStatus_t status = g_pScriptVM->Call( m_hRunScriptHookCallbacks, NULL, true, NULL, pszHook, params );
+		return status == SCRIPT_DONE;
+	}
+
+	return false;
+}
+
+void CScriptGameEventListener::ClearAllScriptHooks()
+{
+	m_symScriptHooks.RemoveAll();
 }
 
 //-----------------------------------------------------------------------------
@@ -236,10 +309,14 @@ bool CScriptGameEventListener::Init()
 			ListenForGameEvent( eventName );
 	}
 
+	m_hCollectGameEventCallbacks = INVALID_HSCRIPT;
+	m_hRunGameEventCallbacks = INVALID_HSCRIPT;
+	m_hRunScriptHookCallbacks = INVALID_HSCRIPT;
+
 	return true;
 }
 
-static CScriptGameEventListener s_ScriptGameEventListener;
-CScriptGameEventListener *ScriptGameEventListener() {
-	return &s_ScriptGameEventListener;
+CScriptGameEventListener &ScriptGameEventListener() {
+	static CScriptGameEventListener s_ScriptGameEventListener;
+	return s_ScriptGameEventListener;
 }

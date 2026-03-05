@@ -12,6 +12,7 @@
 #include "sqcompiler.h"
 #include "sqfuncstate.h"
 #include "sqclass.h"
+#include "basehandle.h"
 
 static bool sq_aux_gettypedarg(HSQUIRRELVM v,SQInteger idx,SQObjectType type,SQObjectPtr **o)
 {
@@ -261,6 +262,11 @@ void sq_pushuserpointer(HSQUIRRELVM v,SQUserPointer p)
 void sq_pushthread(HSQUIRRELVM v, HSQUIRRELVM thread)
 {
     v->Push(thread);
+}
+
+void sq_pushehandle(HSQUIRRELVM v,CBaseHandle const &p)
+{
+    v->Push(p);
 }
 
 SQUserPointer sq_newuserdata(HSQUIRRELVM v,SQUnsignedInteger size)
@@ -751,6 +757,15 @@ SQRESULT sq_getuserdata(HSQUIRRELVM v,SQInteger idx,SQUserPointer *p,SQUserPoint
     return SQ_OK;
 }
 
+SQRESULT sq_getehandle(HSQUIRRELVM v,SQInteger idx, CBaseHandle *p)
+{
+    SQObjectPtr &o = stack_get(v, idx);
+    if (sq_type(o) != OT_EHANDLE)
+        return SQ_ERROR;
+    (*p) = CBaseHandle::UnsafeFromIndex(_ehandle(o));
+    return SQ_OK;
+}
+
 SQRESULT sq_settypetag(HSQUIRRELVM v,SQInteger idx,SQUserPointer typetag)
 {
     SQObjectPtr &o = stack_get(v,idx);
@@ -807,10 +822,10 @@ SQRESULT sq_setclassudsize(HSQUIRRELVM v, SQInteger idx, SQInteger udsize)
 }
 
 
-SQRESULT sq_getinstanceup(HSQUIRRELVM v, SQInteger idx, SQUserPointer *p,SQUserPointer typetag)
+SQRESULT sq_getinstanceup(HSQUIRRELVM v, SQInteger idx, SQUserPointer *p,SQUserPointer typetag,SQBool throwerror)
 {
     SQObjectPtr &o = stack_get(v,idx);
-    if(sq_type(o) != OT_INSTANCE) return sq_throwerror(v,_SC("the object is not a class instance"));
+    if(sq_type(o) != OT_INSTANCE) return throwerror ? sq_throwerror(v,_SC("the object is not a class instance")) : SQ_ERROR;
     (*p) = _instance(o)->_userpointer;
     if(typetag != 0) {
         SQClass *cl = _instance(o)->_class;
@@ -819,7 +834,7 @@ SQRESULT sq_getinstanceup(HSQUIRRELVM v, SQInteger idx, SQUserPointer *p,SQUserP
                 return SQ_OK;
             cl = cl->_base;
         }while(cl != NULL);
-        return sq_throwerror(v,_SC("invalid type tag"));
+        return throwerror ? sq_throwerror(v,_SC("invalid type tag")) : SQ_ERROR;
     }
     return SQ_OK;
 }
@@ -1550,6 +1565,7 @@ SQRESULT sq_getdefaultdelegate(HSQUIRRELVM v,SQObjectType t)
     case OT_CLASS: v->Push(ss->_class_default_delegate); break;
     case OT_INSTANCE: v->Push(ss->_instance_default_delegate); break;
     case OT_WEAKREF: v->Push(ss->_weakref_default_delegate); break;
+    case OT_EHANDLE: v->Push(ss->_handle_default_delegate); break;
     default: return sq_throwerror(v,_SC("the type doesn't have a default delegate"));
     }
     return SQ_OK;

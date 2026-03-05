@@ -1,4 +1,4 @@
-//====== Copyright � 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 //
 //=============================================================================
@@ -16,10 +16,6 @@
 #define CTFRevolver_Secondary C_TFRevolver_Secondary
 #endif
 
-#ifdef GAME_DLL
-#include "GameEventListener.h"
-#endif
-
 //=============================================================================
 //
 // TF Weapon Revolver.
@@ -32,36 +28,54 @@ public:
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
 
-	CTFRevolver() {}
+// Server specific.
+#ifdef GAME_DLL
+	DECLARE_DATADESC();
+#endif
+
+	CTFRevolver();
 	~CTFRevolver() {}
 
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_REVOLVER; }
+	virtual int		GetDamageType( void ) const;
 
-	virtual bool DefaultReload( int iClipSize1, int iClipSize2, int iActivity );
+	virtual bool	CanFireCriticalShot( bool bIsHeadshot, CBaseEntity *pTarget = NULL ) OVERRIDE;
 
-#if defined( CLIENT_DLL )
-	virtual void	GetWeaponCrosshairScale( float &flScale ) OVERRIDE;
+	virtual void	PrimaryAttack( void );
+	virtual	float	GetWeaponSpread( void );
 
-	int 			TranslateViewmodelHandActivity( int iActivity ) OVERRIDE;
+	virtual bool	DefaultReload( int iClipSize1, int iClipSize2, int iActivity );
+
+	bool			CanHeadshot( void ) const { int iMode = 0; CALL_ATTRIB_HOOK_INT( iMode, set_weapon_mode ); return (iMode == 1); };
+
+	bool			SapperKillsCollectCrits( void ) const { int iMode = 0; CALL_ATTRIB_HOOK_INT( iMode, sapper_kills_collect_crits ); return (iMode == 1); };
+
+	virtual bool		Holster( CBaseCombatWeapon *pSwitchingTo = NULL );
+	virtual bool		Deploy( void );
+	
+	int					GetCount( void );
+	const char*			GetEffectLabelText( void );
+	float				GetProgress( void ) { return 0.f; }
+
+#ifdef CLIENT_DLL
+	virtual void	GetWeaponCrosshairScale( float &flScale );
+	virtual Activity TranslateViewmodelHandActivityInternal( Activity iActivity ) OVERRIDE;
+#else
+	virtual void	Detach();
+	virtual float	GetProjectileDamage( void );
 #endif
-
-	virtual bool	HasSapperCrits(void);
-
-	virtual void	PrimaryAttack(void);
-	virtual void	ItemPostFrame(void);
-	virtual void	CritThink(void);
-
-	virtual bool	Deploy(void);
-	virtual bool	Holster(CBaseCombatWeapon *pSwitchTo);
-
-	virtual const char* GetEffectLabelText(void) { return "#TF_CRITS"; }
-
 
 private:
 
 	CTFRevolver( const CTFRevolver & ) {}
+
+	float			m_flLastAccuracyCheck;
+	float			m_flAccuracyCheckTime;
 };
 
+
+//=============================================================================
+// Secondary Revolver (Engy)
 class CTFRevolver_Secondary : public CTFRevolver
 {
 public:

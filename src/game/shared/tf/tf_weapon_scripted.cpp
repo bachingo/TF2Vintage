@@ -40,10 +40,10 @@ END_SCRIPTDESC()
 
 bool DamageInfoToVariant( ScriptVariant_t &variant, CTakeDamageInfo const &info )
 {
-	Assert( variant.m_hScript == NULL );
+	Assert( variant.Get<HSCRIPT>() == NULL );
 
 	g_pScriptVM->CreateTable( variant );
-	if ( variant.m_hScript == NULL )
+	if ( variant.Get<HSCRIPT>() == NULL )
 		return false;
 
 	g_pScriptVM->SetValue( variant, "attacker", ToHScript( info.GetAttacker() ) );
@@ -81,32 +81,32 @@ CTFScriptedWeapon::~CTFScriptedWeapon()
 #define SIMPLE_VOID_OVERRIDE( name ) \
 	ScriptVariant_t retVal; \
 	ScriptStatus_t result = m_ScriptScope.CallFunc( #name, &retVal ); \
-	if (result != SCRIPT_ERROR && retVal.m_bool == false) \
+	if (result != SCRIPT_ERROR && (bool)retVal == false) \
 		return;
 
 #define SIMPLE_BOOL_OVERRIDE( name ) \
 	ScriptVariant_t retVal; \
 	ScriptStatus_t result = m_ScriptScope.CallFunc( #name, &retVal ); \
 	if (result != SCRIPT_ERROR && retVal.m_type == FIELD_BOOLEAN) \
-		return retVal.m_bool;
+		return retVal;
 
 #define SIMPLE_FLOAT_OVERRIDE( name ) \
 	ScriptVariant_t retVal; \
 	ScriptStatus_t result = m_ScriptScope.CallFunc( #name, &retVal ); \
 	if (result != SCRIPT_ERROR && retVal.m_type == FIELD_FLOAT) \
-		return retVal.m_float;
+		return retVal;
 
 #define SIMPLE_INT_OVERRIDE( name ) \
 	ScriptVariant_t retVal; \
 	ScriptStatus_t result = m_ScriptScope.CallFunc( #name, &retVal ); \
 	if (result != SCRIPT_ERROR && retVal.m_type == FIELD_INTEGER) \
-		return retVal.m_int;
+		return retVal;
 
 #define SIMPLE_VECTOR_OVERRIDE( name ) \
 	ScriptVariant_t retVal; \
 	ScriptStatus_t result = m_ScriptScope.CallFunc( #name, &retVal ); \
 	if (result != SCRIPT_ERROR && retVal.m_type == FIELD_VECTOR) \
-		return *retVal.m_pVector;
+		return retVal;
 
 #define SIMPLE_VECTOR_REF_OVERRIDE( name ) \
 	ScriptVariant_t retVal; \
@@ -123,9 +123,7 @@ CTFScriptedWeapon::~CTFScriptedWeapon()
 //-----------------------------------------------------------------------------
 void CTFScriptedWeapon::ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *pAttacker, const CTakeDamageInfo &info )
 {
-	ScriptVariant_t dmgInfo{};
-	DamageInfoToVariant( dmgInfo, info );
-
+	ScriptVariant_t dmgInfo = g_pScriptVM->RegisterInstance( const_cast<CTakeDamageInfo *>( &info ) );
 	m_ScriptScope.PushArg( ToHScript( pVictim ), ToHScript( pAttacker ), dmgInfo );
 	SIMPLE_VOID_OVERRIDE( ApplyOnHitAttributes );
 
@@ -135,14 +133,12 @@ void CTFScriptedWeapon::ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *p
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFScriptedWeapon::ApplyPostOnHitAttributes( CTakeDamageInfo const &info, CTFPlayer *pVictim )
+void CTFScriptedWeapon::ApplyPostHitEffects( CTakeDamageInfo const &info, CTFPlayer *pVictim )
 {
-	ScriptVariant_t dmgInfo{};
-	DamageInfoToVariant( dmgInfo, info );
-
+	ScriptVariant_t dmgInfo = g_pScriptVM->RegisterInstance( const_cast<CTakeDamageInfo *>( &info ) );
 	m_ScriptScope.PushArg( dmgInfo, ToHScript( pVictim ) );
-	SIMPLE_VOID_OVERRIDE( ApplyPostOnHitAttributes );
+	SIMPLE_VOID_OVERRIDE( ApplyPostHitEffects );
 
-	BaseClass::ApplyPostOnHitAttributes( info, pVictim );
+	BaseClass::ApplyPostHitEffects( info, pVictim );
 }
 #endif // GAME_DLL

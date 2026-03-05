@@ -1,110 +1,142 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
-//
-// Purpose:		
-//
-// $NoKeywords: $
-//=============================================================================
-#include "cbase.h"
-#include "tf_bot.h"
-#include "entity_capture_flag.h"
-#include "tf_bot_escort_flag_carrier.h"
-#include "tf_bot_attack_flag_defenders.h"
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_escort_flag_carrier.cpp
+// Escort the flag carrier to their destination
+// Michael Booth, May 2011
 
+#include "cbase.h"
+
+#include "bot/tf_bot.h"
+#include "bot/behavior/scenario/capture_the_flag/tf_bot_escort_flag_carrier.h"
+#include "bot/behavior/scenario/capture_the_flag/tf_bot_attack_flag_defenders.h"
+#include "bot/behavior/scenario/capture_the_flag/tf_bot_deliver_flag.h"
+
+extern ConVar tf_bot_flag_escort_range;
 
 ConVar tf_bot_flag_escort_give_up_range( "tf_bot_flag_escort_give_up_range", "1000", FCVAR_CHEAT );
 ConVar tf_bot_flag_escort_max_count( "tf_bot_flag_escort_max_count", "4", FCVAR_CHEAT );
-ConVar tf_bot_flag_escort_range( "tf_bot_flag_escort_range", "500", FCVAR_CHEAT );
 
 
-
-const char *CTFBotEscortFlagCarrier::GetName() const
+//---------------------------------------------------------------------------------------------
+// 
+// Count the number of TFBots currently engaged in the "EscortFlagCarrier" behavior
+//
+int GetBotEscortCount( int team )
 {
-	return "EscortFlagCarrier";
+	int count = 0;
+
+	CUtlVector< CTFPlayer * > livePlayerVector;
+	CollectPlayers( &livePlayerVector, team, COLLECT_ONLY_LIVING_PLAYERS );
+
+	int i;
+	for( i=0; i<livePlayerVector.Count(); ++i )
+	{
+		CTFBot *bot = dynamic_cast< CTFBot * >( livePlayerVector[i] );
+		if ( bot )
+		{
+			Behavior< CTFBot > *behavior = (Behavior< CTFBot > *)bot->GetIntentionInterface()->FirstContainedResponder();
+			if ( behavior )
+			{
+				Action< CTFBot > *action = (Action< CTFBot > *)behavior->FirstContainedResponder();
+
+				while( action && action->GetActiveChildAction() )
+				{
+					action = action->GetActiveChildAction();
+				}
+
+				if ( action && action->IsNamed( "EscortFlagCarrier" ) )
+				{
+					++count;
+				}
+			}
+		}
+	}
+
+	return count;
 }
 
 
-ActionResult<CTFBot> CTFBotEscortFlagCarrier::OnStart( CTFBot *me, Action<CTFBot> *priorAction )
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotEscortFlagCarrier::OnStart( CTFBot *me, Action< CTFBot > *priorAction )
 {
-	m_PathFollower.SetMinLookAheadDistance( me->GetDesiredPathLookAheadRange() );
+	m_path.SetMinLookAheadDistance( me->GetDesiredPathLookAheadRange() );
 
-	return BaseClass::Continue();
+	return Continue();
 }
 
-ActionResult<CTFBot> CTFBotEscortFlagCarrier::Update( CTFBot *me, float dt )
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot > CTFBotEscortFlagCarrier::Update( CTFBot *me, float interval )
 {
-	CCaptureFlag *pFlag = me->GetFlagToFetch();
-	if ( pFlag == nullptr )
-		return BaseClass::Done( "No flag" );
+	CCaptureFlag *flag = me->GetFlagToFetch();
 
-	CTFPlayer *pCarrier = ToTFPlayer( pFlag->GetOwnerEntity() );
-	if ( pCarrier == nullptr )
-		return BaseClass::Done( "Flag was dropped" );
+	if ( !flag )
+	{
+		return Done( "No flag" );
+	}
 
-	if ( me->IsSelf( pCarrier ) )
-		return BaseClass::Done( "I picked up the flag!" );
+	CTFPlayer *carrier = ToTFPlayer( flag->GetOwnerEntity() );
+	if ( !carrier )
+	{
+		return Done( "Flag was dropped" );
+	}
+	else if ( me->IsSelf( carrier ) )
+	{
+		return Done( "I picked up the flag!" );
+	}
 
-	if ( me->IsRangeGreaterThan( pCarrier, tf_bot_flag_escort_give_up_range.GetFloat() ) && me->SelectRandomReachableEnemy() )
-		return BaseClass::ChangeTo( new CTFBotAttackFlagDefenders, "Too far from flag carrier - attack defenders!" );
+	// stay near the carrier
+	if ( me->IsRangeGreaterThan( carrier, tf_bot_flag_escort_give_up_range.GetFloat() ) )
+	{
+		if ( me->SelectRandomReachableEnemy() )
+		{
+			// too far away - give up
+			return ChangeTo( new CTFBotAttackFlagDefenders, "Too far from flag carrier - attack defenders!" );
+		}
+	}
 
 	const CKnownEntity *threat = me->GetVisionInterface()->GetPrimaryKnownThreat();
 	if ( threat && threat->IsVisibleRecently() )
 	{
+		// prepare to fight
 		me->EquipBestWeaponForThreat( threat );
 	}
 
-	CTFWeaponBase *pWeapon = me->GetActiveTFWeapon();
-	if ( pWeapon && pWeapon->IsMeleeWeapon() &&
-		 me->IsRangeLessThan( pCarrier, tf_bot_flag_escort_range.GetFloat() ) &&
-		 me->IsLineOfSightClear( pCarrier ) )
+	CTFWeaponBase *myWeapon = me->m_Shared.GetActiveTFWeapon();
+	if ( myWeapon && myWeapon->IsMeleeWeapon() )
 	{
-		auto result = m_MeleeAttack.Update( me, dt );
+		if ( me->IsRangeLessThan( carrier, tf_bot_flag_escort_range.GetFloat() ) && me->IsLineOfSightClear( carrier ) )
+		{
+			ActionResult< CTFBot > result = m_meleeAttackAction.Update( me, interval );
 
-		if ( result.m_type == ActionResultType::CONTINUE || !me->IsRangeGreaterThan( pCarrier, 0.5f * tf_bot_flag_escort_range.GetFloat() ) )
-			return BaseClass::Continue();
+			if ( result.IsContinue() )
+			{
+				// we have a melee target, and we're still reasonably close to the flag carrier
+				return Continue();
+			}
+		}
 	}
 
-	if ( m_recomputePathTimer.IsElapsed() )
+	if ( me->IsRangeGreaterThan( carrier, 0.5f * tf_bot_flag_escort_range.GetFloat() ) )
 	{
-		if ( GetBotEscortCount( me->GetTeamNumber() ) > tf_bot_flag_escort_max_count.GetInt() && me->SelectRandomReachableEnemy() )
-			return BaseClass::Done( "Too many flag escorts - giving up" );
+		// move near carrier
+		if ( m_repathTimer.IsElapsed() )
+		{
+			if ( GetBotEscortCount( me->GetTeamNumber() ) > tf_bot_flag_escort_max_count.GetInt() )
+			{
+				if ( me->SelectRandomReachableEnemy() )
+				{
+					return Done( "Too many flag escorts - giving up" );
+				}
+			}
 
-		CTFBotPathCost func( me, FASTEST_ROUTE );
-		m_PathFollower.Compute( me, pCarrier, func );
+			CTFBotPathCost cost( me, FASTEST_ROUTE );
+			m_path.Compute( me, carrier, cost );
 
-		m_recomputePathTimer.Start( RandomFloat( 1.0f, 2.0f ) );
+			m_repathTimer.Start( RandomFloat( 1.0f, 2.0f ) );
+		}
+
+		m_path.Update( me );
 	}
 
-	m_PathFollower.Update( me );
-
-	return BaseClass::Continue();
-}
-
-
-int GetBotEscortCount( int iTeamNum )
-{
-	CUtlVector<CTFPlayer *> teammates;
-	CollectPlayers( &teammates, iTeamNum, COLLECT_ONLY_LIVING_PLAYERS );
-
-	int nCount = 0;
-	FOR_EACH_VEC( teammates, i ) {
-		CTFBot *pBot = ToTFBot( teammates[ i ] );
-		if ( pBot == nullptr )
-			continue;
-
-		auto pBehavior = pBot->GetIntentionInterface()->FirstContainedResponder();
-		if ( pBehavior == nullptr )
-			continue;
-
-		auto pAction = assert_cast<Action<CTFBot> *>( pBehavior->FirstContainedResponder() );
-		if ( pAction == nullptr )
-			continue;
-
-		while ( pAction->GetActiveChildAction() )
-			pAction = pAction->GetActiveChildAction();
-
-		if ( pAction && pAction->IsNamed( "EscortFlagCarrier" ) )
-			++nCount;
-	}
-
-	return nCount;
+	return Continue();
 }

@@ -1,8 +1,9 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Mechanical Arm. (Short Circuit)
+// Purpose: 
 //
 //=============================================================================
+
 #ifndef TF_WEAPON_MECHANICAL_ARM_H
 #define TF_WEAPON_MECHANICAL_ARM_H
 #ifdef _WIN32
@@ -10,124 +11,101 @@
 #endif
 
 #include "tf_weaponbase_gun.h"
-#include "tf_weaponbase_rocket.h"
-
+#include "tf_shareddefs.h"
+#include "tf_viewmodel.h"
 #ifdef GAME_DLL
-#include "iscorer.h"
+#include "tf_projectile_rocket.h"
+#else
+#include "c_tf_projectile_rocket.h"
 #endif
 
-// Client specific.
 #ifdef CLIENT_DLL
 #define CTFMechanicalArm C_TFMechanicalArm
-#define CTFProjectile_MechanicalArmOrb C_TFProjectile_MechanicalArmOrb
+#define CTFProjectile_MechanicalArmOrb	C_TFProjectile_MechanicalArmOrb
 #endif
 
-// Short Circuit.
 
+//=============================================================================
+//
+// Mechanical Arm class.
+//
 class CTFMechanicalArm : public CTFWeaponBaseGun
 {
 public:
 	DECLARE_CLASS( CTFMechanicalArm, CTFWeaponBaseGun );
-	DECLARE_DATADESC();
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
 
 	CTFMechanicalArm();
 	~CTFMechanicalArm();
 
-	virtual void	Spawn( void );
-	virtual void	Precache( void );
-
-	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_MECHANICAL_ARM; }
+	virtual void	Precache();
 
 	virtual void	PrimaryAttack();
-	virtual void	SecondaryAttack();
-	
-	virtual void	LaunchElectricalShock();
-	virtual void	LaunchElectricalBall();
+	virtual void	SecondaryAttack( void );
+	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_MECHANICAL_ARM; }
+	virtual int		GetCustomDamageType( ) const		{ return TF_DMG_CUSTOM_PLASMA; }
 
-	virtual void	PlayWeaponShootSound( void );
+	virtual int		GetAmmoPerShot( void );
+
+	virtual bool	UpdateBodygroups( CBaseCombatCharacter* pOwner, int iState );
 
 #ifdef CLIENT_DLL
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
-	virtual void	StopParticleBeam( void );
-#endif
-
-	//void		UpdateBodygroups( CBaseCombatCharacter *pOwner, int );
-
-	//virtual int GetAmmoPerShot( void ) const;
-	virtual int GetCustomDamageType() const { return TF_DMG_CUSTOM_PLASMA; }
+#endif // CLIENT_DLL
 
 private:
-#ifdef CLIENT_DLL
-	CNewParticleEffect			*m_pZap;
-#endif
+
+	bool ShockAttack( void );
+#ifdef GAME_DLL
+	bool IsValidVictim( CTFPlayer *pOwner, CBaseEntity *pTarget );
+	void ShockVictim( CTFPlayer *pOwner, CBaseEntity *pTarget );
+#else
+	void StopParticleBeam( void );
+	void UpdateParticleBeam( void );
+	HPARTICLEFFECT m_pParticleBeamEffect;
+	HPARTICLEFFECT m_pParticleBeamSpark;
+	C_BaseEntity  *m_pEffectOwner;
+#endif // CLIENT_DLL
 };
 
-// Energy Ball Projectile.
 
-#ifdef GAME_DLL
-class CTFProjectile_MechanicalArmOrb : public CTFBaseRocket, public IScorer
-#else
-class CTFProjectile_MechanicalArmOrb : public CTFBaseRocket	
-#endif
+//=============================================================================
+//
+// Mechanical Arm alt-fire.
+//
+class CTFProjectile_MechanicalArmOrb : public CTFProjectile_Rocket
 {
 public:
-	DECLARE_CLASS( CTFProjectile_MechanicalArmOrb, CTFBaseRocket );
-	DECLARE_DATADESC();
+	DECLARE_CLASS( CTFProjectile_MechanicalArmOrb, CTFProjectile_Rocket );
 	DECLARE_NETWORKCLASS();
 
 	CTFProjectile_MechanicalArmOrb();
 	~CTFProjectile_MechanicalArmOrb();
 
-	virtual void	Spawn();
-	virtual void	Precache();
-
+	virtual void Precache() OVERRIDE;
+	virtual void Spawn() OVERRIDE;
 #ifdef GAME_DLL
-
-	static CTFProjectile_MechanicalArmOrb *Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL );
+	virtual void RocketTouch( CBaseEntity *pOther ) OVERRIDE;
+	bool ShouldProjectileIgnore( CBaseEntity *pOther );
+	void ExplodeAndRemove( void );
+	void ZapPlayer( const CTakeDamageInfo &info, trace_t *pTrace, CTFPlayer *pTFPlayer );
+	void CheckForPlayers( int nNumToZap );
+	void CheckForProjectiles( void );
 	void OrbThink( void );
-
-	virtual void	ZapPlayer( /*CTakeDamageInfo const&, trace_t *pTrace,*/ CBaseEntity *pOther );
-	
-	// IScorer interface
-	virtual CBasePlayer			*GetScorer(void);
-	virtual CBasePlayer			*GetAssistant(void) 	{ return NULL; }
-	void			SetScorer(CBaseEntity *pScorer);
-
-	void			CheckForPlayers( void );
-	void			CheckForProjectiles( void );
-
-	// Overrides.
-	virtual void	RocketTouch( CBaseEntity *pOther );
-
-	virtual bool	IsDeflectable() { return true; }
-	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
-
-#endif
-
-	virtual void	ExplodeAndRemove(void);
-
-
-#ifdef CLIENT_DLL
-
-	virtual void	OnDataChanged( DataUpdateType_t updateType );
-	virtual void	CreateTrails( void );
-	virtual void	CreateLightEffects( void );
-
-	virtual const char *GetTrailParticleName( void );
+#else
+	virtual void OnDataChanged( DataUpdateType_t updateType ) OVERRIDE;
+	virtual void CreateTrails( void ) OVERRIDE;
+	virtual const char *GetTrailParticleName( void ) OVERRIDE { return NULL; }
 #endif
 
 private:
+	float m_flOrbNextAttackTime;
 #ifdef CLIENT_DLL
-	CUtlVector< CHandle<C_BaseEntity> > m_hZapTargets;
-	CNewParticleEffect			*m_pOrb;
-	CNewParticleEffect			*m_pOrbLightning;
-#else
-	CBaseHandle m_Scorer;
-	CUtlVector< EHANDLE >		m_hZapTargets;
-	float						m_flDetonateTime;
-#endif
+	CNewParticleEffect *m_pTrailParticle;
+	int m_iTeamNumPrev;
+#endif // CLIENT_DLL
+
 };
 
 #endif // TF_WEAPON_MECHANICAL_ARM_H

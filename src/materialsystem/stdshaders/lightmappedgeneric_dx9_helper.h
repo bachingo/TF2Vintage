@@ -87,13 +87,6 @@ struct LightmappedGeneric_DX9_Vars_t
 	int m_nOutlineEnd0;
 	int m_nOutlineEnd1;
 
-	int m_nEnvmapParallax;
-	int m_nEnvmapOrigin;
-
-	int m_nPhong;
-	int m_nPhongBoost;
-	int m_nPhongFresnelRanges;
-	int m_nPhongExponent;
 };
 
 void InitParamsLightmappedGeneric_DX9( CBaseVSShader *pShader, IMaterialVar** params, const char *pMaterialName, LightmappedGeneric_DX9_Vars_t &info );

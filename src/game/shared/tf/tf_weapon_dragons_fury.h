@@ -1,6 +1,5 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// TF Rocket Launcher
 //
 //=============================================================================
 #ifndef TF_WEAPON_DRAGONS_FURY_H
@@ -11,62 +10,77 @@
 
 #include "tf_weaponbase_gun.h"
 #include "tf_weaponbase_rocket.h"
-#include "tf_weapon_rocketlauncher.h"
+#include "tf_weapon_flamethrower.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
-#define CTFWeaponFlameBall C_TFWeaponFlameBall
+
+	#define CTFWeaponFlameBall C_TFWeaponFlameBall
+#else
+	#include "tf_projectile_rocket.h"
+	#include "baseentity.h"
+	#include "iscorer.h"
 #endif
 
-//=============================================================================
-//
-// TF Weapon Flame Ball.
-//
 
-class CTFWeaponFlameBall : public CTFRocketLauncher
+
+class CTFWeaponFlameBall : public CTFFlameThrower
 {
 public:
-	DECLARE_CLASS( CTFWeaponFlameBall, CTFRocketLauncher );
-	DECLARE_DATADESC();
+	DECLARE_CLASS( CTFWeaponFlameBall, CTFFlameThrower );
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
 
+	// Server specific.
+#ifdef GAME_DLL
+	DECLARE_DATADESC();
+#endif
+
 	CTFWeaponFlameBall();
-	~CTFWeaponFlameBall();
 
-	virtual void	Spawn( void );
-	virtual void	Precache( void );
+#ifndef CLIENT_DLL
+	virtual void	Precache();
+#endif
 
-	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_ROCKETLAUNCHER_FIREBALL; }
-
-	virtual void	PrimaryAttack();
-	virtual void	SecondaryAttack();
+	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_FLAME_BALL; }
 
 	virtual CBaseEntity *FireProjectile( CTFPlayer *pPlayer );
-	virtual void	ItemPostFrame( void );
-	virtual bool	DefaultReload( int iClipSize1, int iClipSize2, int iActivity );
 
-	virtual void	GetProjectileFireSetup( CTFPlayer *pPlayer, Vector vecOffset, Vector *vecSrc, QAngle *angForward, bool bHitTeammates = true, bool bUseHitboxes = false );
+	virtual void	PrimaryAttack( void ) OVERRIDE;
+	virtual void	SecondaryAttack( void ) OVERRIDE;
+	virtual void	ItemPostFrame( void ) OVERRIDE;
 
-	virtual float		GetEffectBarProgress( void );
+	bool HasFullCharge() const;
+
+	virtual void	OnResourceMeterFilled() OVERRIDE;
+	virtual float	GetMeterMultiplier() const OVERRIDE;
+
 #ifdef GAME_DLL
-	void			StartPressureSound( void );
-	virtual void		OnResourceMeterFilled( void );
-
-	virtual void	DeflectEntity(CBaseEntity *pEntity, CTFPlayer *pAttacker, Vector &vecDir);
-	virtual void	DeflectPlayer(CTFPlayer *pVictim, CTFPlayer *pAttacker, Vector &vecDir);
-
-	bool			CanAirBlast(void);
-	bool			CanAirBlastDeflectProjectile(void);
-	bool			CanAirBlastPushPlayers(void);
-	bool			CanAirBlastPutOutTeammate(void);
+	virtual float GetInitialAfterburnDuration() const OVERRIDE { return 0.f; }
+	void RefundAmmo( int nAmmo );
 #else
-	virtual void		OnDataChanged( DataUpdateType_t updateType );
-	virtual bool		Deploy( void );
-	void				UpdatePoseParam( void );
+	virtual void	OnDataChanged( DataUpdateType_t updateType ) OVERRIDE;
+	virtual bool	ShouldDrawMeter() const OVERRIDE;
+	virtual void	GetPoseParameters( CStudioHdr *pStudioHdr, float poseParameter[MAXSTUDIOPOSEPARAM] );
+	void			UpdatePoseParams();
+#endif
+
+private:
+
+#ifdef GAME_DLL
+	void StartPressureSound();
+	void StopPressureSound();
 #endif
 
 	CNetworkVar( float, m_flRechargeScale );
+
+	int m_nNeedlePoseParam = -1;
+	int m_nBarrelPoseParam = -1;
+
+#ifdef GAME_DLL
+	CSoundPatch*	m_pSndPressure;
+#endif
 };
 
-#endif // TF_WEAPON_DRAGONS_FURY_H
+
+#endif // TF_WEAPON_FLAMETHROWER_H

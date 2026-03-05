@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -11,17 +11,18 @@
 #endif
 
 #include "tf_weaponbase_melee.h"
+#include "tf_item_wearable.h"
 
 #ifdef CLIENT_DLL
 #define CTFWrench C_TFWrench
 #define CTFRobotArm C_TFRobotArm
+#define CTFWearableRobotArm C_TFWearableRobotArm
 #endif
 
 //=============================================================================
 //
 // Wrench class.
 //
-
 class CTFWrench : public CTFWeaponBaseMelee
 {
 public:
@@ -31,52 +32,80 @@ public:
 	DECLARE_PREDICTABLE();
 
 	CTFWrench();
+
+	virtual void		Spawn();
 	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_WRENCH; }
 	virtual void		Smack( void );
-	
-	virtual bool		IsEurekaEffect( void );
-	virtual void 		ItemPostFrame( void );
 
+	virtual bool		Holster( CBaseCombatWeapon *pSwitchingTo );
+
+	bool				IsPDQ( void ) { int iMode = 0; CALL_ATTRIB_HOOK_INT( iMode, wrench_builds_minisentry ); return iMode==1; };
+	float				GetConstructionValue( void );
+	float				GetRepairAmount( void );
 #ifdef GAME_DLL
-	virtual void		EurekaTeleport(bool bToTeleporter = false);
+	virtual void		Equip( CBaseCombatCharacter *pOwner );
+	virtual void		Detach();
 
 	void				ApplyBuildingHealthUpgrade( void );
 
-	virtual void		OnFriendlyBuildingHit( CBaseObject *pObject, CTFPlayer *pPlayer, Vector vecHitPos );
+	void				OnFriendlyBuildingHit( CBaseObject *pObject, CTFPlayer *pPlayer, Vector hitLoc );
+#else
+	virtual void		ItemPostFrame();
 #endif
 
-private:
 
+private:
+	bool				m_bReloadDown;
 	CTFWrench( const CTFWrench & ) {}
 };
 
+//=============================================================================
+//
+// Robot Arm class.
+//
 class CTFRobotArm : public CTFWrench
 {
 public:
 	DECLARE_CLASS( CTFRobotArm, CTFWrench );
-	DECLARE_NETWORKCLASS(); 
+	DECLARE_NETWORKCLASS();
 	DECLARE_PREDICTABLE();
 
-	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_ROBOT_ARM; }
-	virtual void	Smack( void );
+	CTFRobotArm();
 
-	virtual void	PrimaryAttack( void );
-	virtual void	WeaponIdle( void );
-	virtual int		GetCustomDamageType() const;
+	virtual void		Precache();
 
 #ifdef GAME_DLL
-	virtual float	GetForceScale( void );
+	virtual void		Equip( CBaseCombatCharacter *pOwner );
+	virtual void		Drop( const Vector &vecVelocity );
+	virtual void		UpdateOnRemove( void );
+	void				RemoveRobotArm();
+	virtual void		OnActiveStateChanged( int iOldState );
+	virtual int			GetDamageCustom();
+	virtual float		GetForceScale( void );
+	virtual bool 		HideAttachmentsAndShowBodygroupsWhenPerformingWeaponIndependentTaunt() const OVERRIDE { return false; }
 #endif
 
-	virtual bool	CalcIsAttackCriticalHelper( void );
+	virtual void		PrimaryAttack();
 
-	virtual void	DoViewModelAnimation( void );
+	virtual void		Smack( void );
+	virtual void		WeaponIdle( void );
+
+	virtual void		DoViewModelAnimation( void );
 
 private:
+	CNetworkHandle( CTFWearable, m_hRobotArm );
 
-	int				m_iConsecutivePunches;
-	bool			m_bComboKill;
-	float			m_flComboDecayTime;
+	int					m_iComboCount;
+	float				m_flLastComboHit;
+	bool				m_bBigIdle;
+	bool				m_bBigHit;
+};
+
+class CTFWearableRobotArm : public CTFWearable
+{
+public:
+	DECLARE_CLASS( CTFWearableRobotArm, CTFWearable );
+	DECLARE_NETWORKCLASS();
 };
 
 #endif // TF_WEAPON_WRENCH_H

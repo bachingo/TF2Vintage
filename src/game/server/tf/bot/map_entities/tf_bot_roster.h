@@ -1,15 +1,10 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
-//
-// Purpose:		
-//
-// $NoKeywords: $
-//=============================================================================
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_roster.h
+// entity that dictates what classes a bot can choose when spawning
+// Tom Bui, April 2010
+
 #ifndef TF_BOT_ROSTER_H
 #define TF_BOT_ROSTER_H
-
-#ifdef _WIN32
-#pragma once
-#endif
 
 class CTFBotRoster : public CPointEntity
 {
@@ -20,6 +15,7 @@ public:
 	CTFBotRoster( void );
 	virtual ~CTFBotRoster() {}
 
+	// input
 	void InputSetAllowScout( inputdata_t &inputdata );
 	void InputSetAllowSniper( inputdata_t &inputdata );
 	void InputSetAllowSoldier( inputdata_t &inputdata );
@@ -30,13 +26,14 @@ public:
 	void InputSetAllowSpy( inputdata_t &inputdata );
 	void InputSetAllowEngineer( inputdata_t &inputdata );
 
+	// misc.
 	bool IsClassAllowed( int iBotClass ) const;
-	bool IsClassChangeAllowed( void ) const;
-	char const *GetTeamName( void ) const;
+	bool IsClassChangeAllowed() const;
 
-private:
+public:
 	string_t m_teamName;
 	bool m_bAllowClassChanges;
-	bool m_bAllowedClasses[ TF_LAST_NORMAL_CLASS + 1 ];
+	bool m_bAllowedClasses[TF_LAST_NORMAL_CLASS];
 };
-#endif
+
+#endif // TF_BOT_ROSTER_H

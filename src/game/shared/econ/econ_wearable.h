@@ -2,7 +2,7 @@
 //
 // Purpose: 
 //
-//========================================================================//
+//=============================================================================
 
 #ifndef ECON_WEARABLE_H
 #define ECON_WEARABLE_H
@@ -10,88 +10,129 @@
 #pragma once
 #endif
 
-#ifdef CLIENT_DLL
-#include "particles_new.h"
-#endif
+#include "econ_entity.h"
 
-#define MAX_WEARABLES_SENT_FROM_SERVER	7
-#define PARTICLE_MODIFY_STRING_SIZE		128
+enum
+{
+	MAX_WEARABLES_SENT_FROM_SERVER =
+#ifdef LOADOUT_MAX_WEARABLES_COUNT // we actually do want to just check for macro definition here -- undefined means "fall back to whatever default"
+									 LOADOUT_MAX_WEARABLES_COUNT
+#else
+									 8 // hard-coded constant to match old behavior
+#endif
+};
 
 #if defined( CLIENT_DLL )
-#define CEconWearable C_EconWearable
-#define CEconWearableGib C_EconWearableGib
+#define CEconWearable	C_EconWearable
+#define CTFWearableItem	C_TFWearableItem
 #endif
 
+enum
+{
+	ITEM_DROP_TYPE_NULL,
+	ITEM_DROP_TYPE_NONE,
+	ITEM_DROP_TYPE_DROP,
+	ITEM_DROP_TYPE_BREAK,
+};
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 class CEconWearable : public CEconEntity
 {
 	DECLARE_CLASS( CEconWearable, CEconEntity );
-	DECLARE_NETWORKCLASS();
-
 public:
+	DECLARE_NETWORKCLASS();
+	DECLARE_DATADESC();
 
+	CEconWearable();
+
+	virtual bool IsWearable( void ) const					{ return true; }
+
+	// Shared
 	virtual void			Spawn( void );
-	virtual bool			IsWearable( void ) { return true; }
-	virtual int				GetSkin(void);
-	virtual void			SetParticle(const char* name);
-	virtual void			UpdateWearableBodyGroups( CBasePlayer *pPlayer );
-	virtual void			GiveTo( CBaseEntity *pEntity );
-	virtual void			RemoveFrom( CBaseEntity *pEntity );
+	virtual void			GiveTo( CBaseEntity *pOther );
+	virtual void			RemoveFrom( CBaseEntity *pOther );
+	virtual bool			CanEquip( CBaseEntity *pOther ) { return true; }
+	virtual void			Equip( CBasePlayer *pOwner );
+	virtual void			UnEquip( CBasePlayer* pOwner );
+	virtual void			OnWearerDeath( void );
+	virtual int				GetDropType( void );
+//	virtual bool			UpdateBodygroups( CBasePlayer* pOwner, int iState );
 
-	virtual bool			IsViewModelWearable( void ) const { return false; }
-	
-	virtual	int 			GetDropType( void );
-	virtual	int 			GetLoadoutSlot(void);
+	void					SetAlwaysAllow( bool bVal ) { m_bAlwaysAllow = bVal; }
+	bool					AlwaysAllow( void ) { return m_bAlwaysAllow; }
 
-#ifdef GAME_DLL
-	virtual void			Equip( CBasePlayer *pPlayer );
-	virtual void			UnEquip( CBasePlayer *pPlayer );
-#else
-	virtual void			OnDataChanged(DataUpdateType_t type);
-	virtual	ShadowType_t	ShadowCastType( void );
-	virtual bool			ShouldDraw( void );
+	virtual bool			IsViewModelWearable( void ) { return false; }
+
+	// Server
+#if defined( GAME_DLL )
 #endif
-	
+
+	// Client
+#if defined( CLIENT_DLL )
+	virtual ShadowType_t	ShadowCastType() OVERRIDE;
+	virtual bool			ShouldDraw();
+	virtual bool			ShouldDrawWhenPlayerIsDead() { return true; }
+	virtual void			OnDataChanged( DataUpdateType_t updateType );
+	virtual void			ClientThink( void );
+	virtual bool			ShouldDrawParticleSystems( void );
+	virtual RenderGroup_t	GetRenderGroup();
+#endif
+
+	virtual int				GetSkin( void );
+
+	// Static
+	static void				UpdateWearableBodyGroups( CBasePlayer *pPlayer );
+
+protected:
+	virtual void			InternalSetPlayerDisplayModel( void );
 
 private:
-#ifdef GAME_DLL
-	CNetworkString(m_ParticleName, PARTICLE_MODIFY_STRING_SIZE);
-#else
-	char m_ParticleName[PARTICLE_MODIFY_STRING_SIZE];
-	CNewParticleEffect *m_pUnusualParticle;
-#endif
-
+	bool					m_bAlwaysAllow;		// Wearable will not be removed by ManageRegularWeapons. Only use this for wearables managed by other items!
 };
 
-#if defined( CLIENT_DLL )
-class CEconWearableGib : public CEconEntity
+//-----------------------------------------------------------------------------
+// Purpose: For backwards compatibility with older demos
+//-----------------------------------------------------------------------------
+class CTFWearableItem : public CEconWearable
 {
-	DECLARE_CLASS( CEconWearableGib, CEconEntity );
+	DECLARE_CLASS( CTFWearableItem, CEconWearable );
 public:
-	CEconWearableGib();
-	virtual ~CEconWearableGib();
+	DECLARE_NETWORKCLASS();
+	DECLARE_DATADESC();
 
-	virtual CollideType_t GetCollideType( void );
-	virtual void ImpactTrace( trace_t *pTrace, int dmgCustom, char const *szWeaponName );
+	CTFWearableItem();
+};
 
-	virtual void Spawn( void );
-	virtual void SpawnClientEntity( void );
+#ifdef CLIENT_DLL
+// Clientside wearable physics props. Used to have wearables fall off dying players.
+class C_EconWearableGib	: public CEconEntity
+{
+	DECLARE_CLASS( C_EconWearableGib, CEconEntity );
+public:
+	C_EconWearableGib();
+	~C_EconWearableGib();
+
+	bool			Initialize( bool bWillBeParented );
+	bool			FinishModelInitialization( void );
+
 	virtual CStudioHdr *OnNewModel( void );
 
-	virtual void ClientThink( void );
-	
-	void StartFadeOut( float flTime );
-	void FinishModelInitialization( void );
-	bool Initialize( bool bAttached );
+	virtual bool	ValidateEntityAttachedToPlayer( bool &bShouldRetry );
+
+	virtual void	SpawnClientEntity();
+	virtual void	Spawn();
+	virtual void	ClientThink( void );
+	void			StartFadeOut( float fDelay );
+	virtual void	ImpactTrace( trace_t *pTrace, int iDamageType, const char *pCustomImpactName );
+	virtual CollideType_t	GetCollideType( void ) { return ENTITY_SHOULD_RESPOND; }
+
+	bool			UpdateThinkState( void );
 
 private:
-	bool m_bAttachedModel;
-	bool m_bDynamicLoad;
-	float m_flFadeTime;
+	bool	m_bParented;
+	bool	m_bDelayedInit;
+	float 	m_fDeathTime;		// Point at which this object self destructs.  
+								// The default of -1 indicates the object shouldn't destruct.
 };
 #endif
 
-#endif
+#endif // ECON_WEARABLE_H

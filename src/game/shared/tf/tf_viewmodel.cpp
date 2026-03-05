@@ -1,4 +1,4 @@
-//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -7,12 +7,13 @@
 #include "tf_viewmodel.h"
 #include "tf_shareddefs.h"
 #include "tf_weapon_minigun.h"
+#include "tf_weapon_invis.h"
 
 #ifdef CLIENT_DLL
 #include "c_tf_player.h"
 
 // for spy material proxy
-#include "proxyentity.h"
+#include "tf_proxyentity.h"
 #include "materialsystem/imaterial.h"
 #include "materialsystem/imaterialvar.h"
 #include "prediction.h"
@@ -35,7 +36,9 @@ END_NETWORK_TABLE()
 // Purpose: 
 //-----------------------------------------------------------------------------
 #ifdef CLIENT_DLL
-CTFViewModel::CTFViewModel() : m_LagAnglesHistory("CPredictedViewModel::m_LagAnglesHistory")
+CTFViewModel::CTFViewModel() 
+	: m_LagAnglesHistory("CPredictedViewModel::m_LagAnglesHistory")
+	, m_bBodygroupsDirty( true )
 {
 	m_vLagAngles.Init();
 	m_LagAnglesHistory.Setup( &m_vLagAngles, 0 );
@@ -44,33 +47,23 @@ CTFViewModel::CTFViewModel() : m_LagAnglesHistory("CPredictedViewModel::m_LagAng
 #else
 CTFViewModel::CTFViewModel()
 {
-	m_iViewModelType = VMTYPE_NONE;
 }
 #endif
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 CTFViewModel::~CTFViewModel()
 {
-	SetViewModelType( VMTYPE_NONE );
-#ifdef CLIENT_DLL
-	for ( int i = 0; i < MAX_VIEWMODELS; i++ )
-	{
-		RemoveViewmodelAddon( i );
-	}
-#endif
-
 }
 
 #ifdef CLIENT_DLL
+void DrawEconEntityAttachedModels( CBaseAnimating *pEnt, CEconEntity *pAttachedModelSource, const ClientModelRenderInfo_t *pInfo, int iMatchDisplayFlags );
+
 // TODO:  Turning this off by setting interp 0.0 instead of 0.1 for now since we have a timing bug to resolve
-ConVar cl_wpn_sway_interp( "cl_wpn_sway_interp", "0.0", FCVAR_CLIENTDLL );
-ConVar cl_wpn_sway_scale( "cl_wpn_sway_scale", "5.0", FCVAR_CLIENTDLL );
-ConVar v_viewmodel_offset_x( "viewmodel_offset_x", "0", FCVAR_ARCHIVE );
-ConVar v_viewmodel_offset_y( "viewmodel_offset_y", "0", FCVAR_ARCHIVE );
-ConVar v_viewmodel_offset_z( "viewmodel_offset_z", "0", FCVAR_ARCHIVE );
-ConVar tf_use_min_viewmodels ( "tf_use_min_viewmodels", "0", FCVAR_ARCHIVE, "Use minimized viewmodels." );
+ConVar cl_wpn_sway_interp( "cl_wpn_sway_interp", "0.0", FCVAR_CLIENTDLL | FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
+ConVar cl_wpn_sway_scale( "cl_wpn_sway_scale", "5.0", FCVAR_CLIENTDLL | FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 #endif
 
 //-----------------------------------------------------------------------------
@@ -86,168 +79,8 @@ void CTFViewModel::AddViewModelBob( CBasePlayer *owner, Vector& eyePosition, QAn
 		CalcViewModelBobHelper( owner, &m_BobState );
 		AddViewModelBobHelper( eyePosition, eyeAngles, &m_BobState );
 	}
-
 #endif
 }
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFViewModel::SetWeaponModel( const char *modelname, CBaseCombatWeapon *weapon )
-{
-	BaseClass::SetWeaponModel( modelname, weapon );
-
-#ifdef CLIENT_DLL
-	if ( !modelname )
-	{
-		for ( int i = 0; i < MAX_VIEWMODELS; i++ )
-		{
-			RemoveViewmodelAddon( i );
-		}
-	}
-#endif
-}
-
-#ifdef CLIENT_DLL
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFViewModel::UpdateViewmodelAddon( const char *pszModelname, int index /*= 0*/ )
-{
-	C_ViewmodelAttachmentModel *pAddon = m_hViewmodelAddon[index].Get();
-	C_EconEntity *pWeapon = GetOwningWeapon();
-
-	if ( pAddon )
-	{
-		if ( pAddon->GetModelIndex() == modelinfo->GetModelIndex( pszModelname ) )
-		{
-			pAddon->m_nSkin = GetSkin();
-
-			if ( C_BasePlayer::GetLocalPlayer() != GetOwner() ) // Spectator fix
-			{
-				pAddon->FollowEntity( this );
-				pAddon->m_nRenderFX = m_nRenderFX;
-				pAddon->UpdateVisibility();
-				pAddon->m_ViewModel = this;
-				pAddon->m_hOwner = pWeapon;
-			}
-			return; // we already have the correct add-on
-		}
-		else
-		{
-			RemoveViewmodelAddon( index );
-		}
-	}
-
-	pAddon = new class C_ViewmodelAttachmentModel;
-	if ( !pAddon )
-		return;
-
-	if ( !pAddon->InitializeAsClientEntity( pszModelname, RENDER_GROUP_VIEW_MODEL_OPAQUE ) )
-	{
-		pAddon->Release();
-		return;
-	}
-
-	pAddon->m_nSkin = GetSkin();
-	pAddon->FollowEntity( this );
-	pAddon->UpdatePartitionListEntry();
-	pAddon->CollisionProp()->UpdatePartition();
-	pAddon->UpdateVisibility();
-	pAddon->m_ViewModel = this;
-	pAddon->m_hOwner = pWeapon;
-
-	m_hViewmodelAddon[index] = pAddon;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFViewModel::RemoveViewmodelAddon( int index /*= 0*/  )
-{
-	if ( m_hViewmodelAddon[index].Get() )
-	{
-		m_hViewmodelAddon[index]->SetModel( "" );
-		m_hViewmodelAddon[index]->Remove();
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-int	CTFViewModel::LookupAttachment( const char *pAttachmentName )
-{
-	if ( GetViewModelType() == VMTYPE_TF2 )
-	{
-		C_ViewmodelAttachmentModel *pEnt = m_hViewmodelAddon[0].Get();
-		if ( pEnt )
-			return pEnt->LookupAttachment( pAttachmentName );
-	}
-
-	return BaseClass::LookupAttachment( pAttachmentName );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFViewModel::GetAttachment( int number, matrix3x4_t &matrix )
-{
-	if ( GetViewModelType() == VMTYPE_TF2 )
-	{
-		C_ViewmodelAttachmentModel *pEnt = m_hViewmodelAddon[0].Get();
-		if ( pEnt )
-			return pEnt->GetAttachment( number, matrix );
-	}
-
-	return BaseClass::GetAttachment( number, matrix );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFViewModel::GetAttachment( int number, Vector &origin )
-{
-	if ( GetViewModelType() == VMTYPE_TF2 )
-	{
-		C_ViewmodelAttachmentModel *pEnt = m_hViewmodelAddon[0].Get();
-		if ( pEnt )
-			return pEnt->GetAttachment( number, origin );
-	}
-
-	return BaseClass::GetAttachment( number, origin );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFViewModel::GetAttachment( int number, Vector &origin, QAngle &angles )
-{
-	if ( GetViewModelType() == VMTYPE_TF2 )
-	{
-		C_ViewmodelAttachmentModel *pEnt = m_hViewmodelAddon[0].Get();
-		if ( pEnt )
-			return pEnt->GetAttachment( number, origin, angles );
-	}
-
-	return BaseClass::GetAttachment( number, origin, angles );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFViewModel::GetAttachmentVelocity( int number, Vector &originVel, Quaternion &angleVel )
-{
-	if ( GetViewModelType() == VMTYPE_TF2 )
-	{
-		C_ViewmodelAttachmentModel *pEnt = m_hViewmodelAddon[0].Get();
-		if ( pEnt )
-			return pEnt->GetAttachmentVelocity( number, originVel, angleVel );
-	}
-
-	return BaseClass::GetAttachmentVelocity( number, originVel, angleVel );
-}
-
-#endif
 
 void CTFViewModel::CalcViewModelLag( Vector& origin, QAngle& angles, QAngle& original_angles )
 {
@@ -282,13 +115,16 @@ void CTFViewModel::CalcViewModelLag( Vector& origin, QAngle& angles, QAngle& ori
 	// Now offset the origin using that.
 	vForwardDiff *= cl_wpn_sway_scale.GetFloat();
 	origin += forward*vForwardDiff.x + right*-vForwardDiff.y + up*vForwardDiff.z;
-
 #endif
 }
 
 #ifdef CLIENT_DLL
-ConVar cl_gunlowerangle( "cl_gunlowerangle", "90", FCVAR_CLIENTDLL );
-ConVar cl_gunlowerspeed( "cl_gunlowerspeed", "2", FCVAR_CLIENTDLL );
+ConVar cl_gunlowerangle( "cl_gunlowerangle", "90", FCVAR_CLIENTDLL | FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
+ConVar cl_gunlowerspeed( "cl_gunlowerspeed", "2", FCVAR_CLIENTDLL | FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
+
+ConVar tf_use_min_viewmodels( "tf_use_min_viewmodels", "0", FCVAR_ARCHIVE, "Use minimized viewmodels." );
+
+ConVar tf_viewmodels_offset_override( "tf_viewmodels_offset_override", "", FCVAR_CHEAT, "If set, this will override the position of all viewmodels. Usage 'x y z'" );
 #endif
 
 void CTFViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePosition, const QAngle& eyeAngles )
@@ -312,24 +148,82 @@ void CTFViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePosit
 
 	vecNewAngles += vecLoweredAngles;
 
-
-	// Viewmodel offset
-	Vector	forward, right, up;
-	AngleVectors(eyeAngles, &forward, &right, &up);
-
-	// Don't use offsets if minimal viewmodels are active
-	if ( tf_use_min_viewmodels.GetBool() )
+	CTFWeaponBase *pWeapon = assert_cast< CTFWeaponBase* >( GetWeapon() );
+	if ( pWeapon )
 	{
-		vecNewOrigin += forward*m_vOffset.x + right*m_vOffset.y + up*m_vOffset.z;
-	}
-	else
-	{
-		vecNewOrigin += forward*v_viewmodel_offset_x.GetFloat() + right*v_viewmodel_offset_y.GetFloat() + up*v_viewmodel_offset_z.GetFloat();
+		bool bInspecting = pWeapon && pWeapon->GetInspectStage() != CTFWeaponBase::INSPECT_INVALID;
+
+		static float s_inspectInterp = 0.f;
+		if ( bInspecting )
+		{
+			if ( pWeapon->GetInspectStage() == CTFWeaponBase::INSPECT_END )
+			{
+				// use the last second of the anim
+				const float flOutroDuration = 0.3f;
+				s_inspectInterp = Clamp( ( pWeapon->GetInspectAnimEndTime() - gpGlobals->curtime ) - flOutroDuration, 0.f, 1.f );
+			}
+			else
+			{
+				s_inspectInterp = Clamp( s_inspectInterp + gpGlobals->frametime, 0.f, 1.f );
+			}
+		}
+		else
+		{
+			s_inspectInterp = Clamp( s_inspectInterp - gpGlobals->frametime, 0.f, 1.f );
+		}
+
+		// inspect custom offset
+		if ( bInspecting )
+		{
+			CAttribute_String attrInspectOffsetVMOverride;
+			CALL_ATTRIB_HOOK_STRING_ON_OTHER( pWeapon, attrInspectOffsetVMOverride, inspect_viewmodel_offset );
+			const char *pszValue = attrInspectOffsetVMOverride.value().c_str();
+			if ( pszValue && *pszValue )
+			{
+				Vector vmOffset;
+				UTIL_StringToVector( vmOffset.Base(), pszValue );
+
+				Vector forward, right, up;
+				AngleVectors( eyeAngles, &forward, &right, &up );
+
+				Vector vOffset = vmOffset.x * forward + vmOffset.y * right + vmOffset.z * up;
+				vOffset *= Gain( s_inspectInterp, 0.5f );
+				vecNewOrigin += vOffset;
+			}
+		}
+
+		// we want to always enable this internally
+		bool bMinMode = tf_use_min_viewmodels.GetBool();
+
+		// are we overriding vm offset?
+		const char *pszVMOffsetOverride = tf_viewmodels_offset_override.GetString();
+		bool bForceOverride = ( pszVMOffsetOverride && *pszVMOffsetOverride );
+		bMinMode |= bForceOverride;
+
+		// min mode custom offset
+		if ( bMinMode )
+		{
+			Vector forward, right, up;
+			AngleVectors( eyeAngles, &forward, &right, &up );
+
+			Vector viewmodelOffset;
+			if ( bForceOverride )
+			{
+				UTIL_StringToVector( viewmodelOffset.Base(), pszVMOffsetOverride );
+			}
+			else
+			{
+				viewmodelOffset = pWeapon->GetViewmodelOffset();
+			}
+			Vector vOffset = viewmodelOffset.x * forward + viewmodelOffset.y * right + viewmodelOffset.z * up;
+			vOffset *= Gain( 1.f - s_inspectInterp, 0.5f );
+			vecNewOrigin += vOffset;
+		}
 	}
 
 	BaseClass::CalcViewModelView( owner, vecNewOrigin, vecNewAngles );
 
-#endif
+#endif // CLIENT_DLL
 }
 
 #ifdef CLIENT_DLL
@@ -344,6 +238,13 @@ int CTFViewModel::DrawModel( int flags )
 
 	Assert( pPlayer );
 
+	if ( m_bBodygroupsDirty )
+	{
+		m_nBody = 0;
+		pPlayer->RecalcBodygroupsIfDirty();
+		m_bBodygroupsDirty = false;
+	}
+
 	bool bLowered = pPlayer->IsWeaponLowered();
 
 	if ( bLowered && fabs( m_vLoweredWeaponOffset.x - cl_gunlowerangle.GetFloat() ) < 0.1 )
@@ -357,9 +258,11 @@ int CTFViewModel::DrawModel( int flags )
 		pLocalPlayer->GetObserverTarget() && pLocalPlayer->GetObserverTarget()->IsPlayer() )
 	{
 		pPlayer = ToTFPlayer( pLocalPlayer->GetObserverTarget() );
+	}
 
-		if ( pPlayer != GetOwner() )
-			return 0;
+	if ( pPlayer != GetOwner() && pPlayer->GetViewModel() != GetMoveParent() )
+	{
+		return 0;
 	}
 
 	if ( pPlayer->IsAlive() == false )
@@ -368,6 +271,40 @@ int CTFViewModel::DrawModel( int flags )
 	}
 
 	return BaseClass::DrawModel( flags );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFViewModel::OnInternalDrawModel( ClientModelRenderInfo_t *pInfo )
+{
+	// Correct the ambient lighting position to match our owner entity
+	if ( GetOwner() && pInfo )
+	{
+		pInfo->pLightingOrigin = &( GetOwner()->WorldSpaceCenter() );
+	}
+
+	return BaseClass::OnInternalDrawModel( pInfo );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFViewModel::OnPostInternalDrawModel( ClientModelRenderInfo_t *pInfo )
+{
+	if ( !BaseClass::OnPostInternalDrawModel( pInfo ) )
+		return false;
+
+	CTFWeaponBase *pWeapon = ( CTFWeaponBase * )GetOwningWeapon();
+
+	if ( pWeapon && !pWeapon->WantsToOverrideViewmodelAttachments() )
+	{
+		// only need to draw the attached models if the weapon doesn't want to override the viewmodel attachments
+		// (used for Natascha's attachments, the Backburner, and the Kritzkrieg)
+		DrawEconEntityAttachedModels( this, pWeapon, pInfo, kAttachedModelDisplayFlag_ViewModel );
+	}
+
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -388,14 +325,19 @@ void CTFViewModel::StandardBlendingRules( CStudioHdr *hdr, Vector pos[], Quatern
 
 		int iBarrelBone = Studio_BoneIndexByName( hdr, "v_minigun_barrel" );
 
-		if ( iBarrelBone != -1 && ( hdr->boneFlags( iBarrelBone ) & boneMask ) )
+//		Assert( iBarrelBone != -1 );
+
+		if ( iBarrelBone != -1 )
 		{
-			RadianEuler a;
-			QuaternionAngles( q[iBarrelBone], a );
+			if ( hdr->boneFlags( iBarrelBone ) & boneMask )
+			{
+				RadianEuler a;
+				QuaternionAngles( q[iBarrelBone], a );
 
-			a.x = pMinigun->GetBarrelRotation();
+				a.x = pMinigun->GetBarrelRotation();
 
-			AngleQuaternion( a, q[iBarrelBone] );
+				AngleQuaternion( a, q[iBarrelBone] );
+			}
 		}
 	}	
 }
@@ -413,8 +355,9 @@ void CTFViewModel::ProcessMuzzleFlashEvent()
 	pWeapon->ProcessMuzzleFlashEvent();
 }
 
+
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Used for spy invisiblity material
 //-----------------------------------------------------------------------------
 int CTFViewModel::GetSkin()
 {
@@ -426,18 +369,23 @@ int CTFViewModel::GetSkin()
 		return nSkin;
 
 	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
-	if ( pPlayer && pPlayer->IsAlive() )
+	if ( pPlayer )
 	{
-		// Check for skin data from items_game
-		if ( pWeapon->GetItem() )
+		// See if the item wants to override the skin
+		int iItemSkin = -1;
+		CEconItemView *pItem = pWeapon->GetAttributeContainer()->GetItem();
+		if ( pItem->IsValid() )
 		{
-			nSkin = pWeapon->GetItem()->GetSkin( pPlayer->GetTeamNumber(), true );
+			iItemSkin = pItem->GetSkin( pPlayer->GetTeamNumber(), true );
 		}
 
-		// No skin data found. Default to team skins
-		if ( pWeapon->GetTFWpnData().m_bHasTeamSkins_Viewmodel && nSkin == -1 )
+		if ( iItemSkin != -1 )
 		{
-			switch( pPlayer->GetTeamNumber() )	
+			nSkin = iItemSkin;
+		}
+		else if ( pWeapon->GetTFWpnData().m_bHasTeamSkins_Viewmodel )
+		{
+			switch( pPlayer->GetTeamNumber() )
 			{
 			case TF_TEAM_RED:
 				nSkin = 0;
@@ -445,145 +393,37 @@ int CTFViewModel::GetSkin()
 			case TF_TEAM_BLUE:
 				nSkin = 1;
 				break;
-			case TF_TEAM_GREEN:
-				nSkin = 2;
-				break;
-			case TF_TEAM_YELLOW:
-				nSkin = 3;
-				break;
 			}
-		}
+		}	
 	}
 
 	return nSkin;
 }
 
 //-----------------------------------------------------------------------------
-// Purpose
+// Purpose:
 //-----------------------------------------------------------------------------
-void CTFViewModel::FireEvent( const Vector& origin, const QAngle& angles, int event, const char *options )
+const char* CTFViewModel::ModifyEventParticles( const char* token )
 {
-	// Don't process animevents if it's not drawn.
-	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
-
-	if ( pOwner->ShouldDrawThisPlayer() )
-		return;
-
-	BaseClass::FireEvent( origin, angles, event, options );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Update minimal viewmodel positions
-//-----------------------------------------------------------------------------
-void CTFViewModel::CalcMinViewmodelOffset( C_TFPlayer *owner )
-{
-	// Always update this even if we're not using min viewmodels
-	// in case the player decides to activate them
-
-	if ( !owner )
-		return;
-
-	C_TFWeaponBase *pWeapon = owner->GetActiveTFWeapon();
+	CTFWeaponBase *pWeapon = (CTFWeaponBase*) GetOwningWeapon();
 	if ( pWeapon )
 	{
-		vec_t vecOffset[3] = { 0.0f, 0.0f, 0.0f };
-		string_t strOffset = pWeapon->GetViewModelOffset();
-		if ( strOffset != NULL_STRING )
-		{
-			UTIL_StringToVector( vecOffset, strOffset );
-		}
-
-		m_vOffset.Init( vecOffset[0], vecOffset[1], vecOffset[2] );
-
-		if ( m_vOffset.x == 0.0f && m_vOffset.y == 0.0f && m_vOffset.z == 0.0f )
-		{
-			Warning( "No offset specified for minimal viewmodel. Defaulting to 0\n" );
-		}
-
+		return pWeapon->ModifyEventParticles( token );
 	}
-}
-
-//-----------------------------------------------------------------------------
-// 
-//-----------------------------------------------------------------------------
-bool CTFViewModel::OnPostInternalDrawModel( ClientModelRenderInfo_t *pInfo )
-{
-	if ( BaseClass::OnPostInternalDrawModel( pInfo ) )
-	{
-		C_EconEntity *pEntity = GetOwningWeapon();
-		if ( pEntity )
-		{
-			DrawEconEntityAttachedModels( this, pEntity, pInfo, AM_VIEWMODEL );
-		}
-		return true;
-	}
-	return false;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Particle override for weapon viewmodels
-//-----------------------------------------------------------------------------
-const char* C_TFViewModel::ModifyEventParticles( const char* token )
-{
-	C_EconEntity *pEntity = GetOwningWeapon();
-	if ( pEntity )
-	{
-		return pEntity->ModifyEventParticles( token );
-	}
-
-	return token;
+	return BaseClass::ModifyEventParticles( token );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: Used for spy invisiblity material
 //-----------------------------------------------------------------------------
-class CViewModelInvisProxy : public CEntityMaterialProxy
+class CViewModelInvisProxy : public CBaseInvisMaterialProxy
 {
 public:
-
-	CViewModelInvisProxy( void );
-	virtual ~CViewModelInvisProxy( void );
-	virtual bool Init( IMaterial *pMaterial, KeyValues* pKeyValues );
 	virtual void OnBind( C_BaseEntity *pC_BaseEntity );
-	virtual IMaterial * GetMaterial();
-
-private:
-	IMaterialVar *m_pPercentInvisible;
 };
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-CViewModelInvisProxy::CViewModelInvisProxy( void )
-{
-	m_pPercentInvisible = NULL;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-CViewModelInvisProxy::~CViewModelInvisProxy( void )
-{
-
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Get pointer to the color value
-// Input : *pMaterial - 
-//-----------------------------------------------------------------------------
-bool CViewModelInvisProxy::Init( IMaterial *pMaterial, KeyValues* pKeyValues )
-{
-	Assert( pMaterial );
-
-	// Need to get the material var
-	bool bFound;
-	m_pPercentInvisible = pMaterial->FindVar( "$cloakfactor", &bFound );
-
-	return bFound;
-}
-
-ConVar tf_vm_min_invis( "tf_vm_min_invis", "0.22", FCVAR_DEVELOPMENTONLY, "minimum invisibility value for view model", true, 0.0, true, 1.0 );
-ConVar tf_vm_max_invis( "tf_vm_max_invis", "0.5", FCVAR_DEVELOPMENTONLY, "maximum invisibility value for view model", true, 0.0, true, 1.0 );
+#define TF_VM_MIN_INVIS		0.22
+#define TF_VM_MAX_INVIS		0.5
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -594,62 +434,180 @@ void CViewModelInvisProxy::OnBind( C_BaseEntity *pEnt )
 	if ( !m_pPercentInvisible )
 		return;
 
-	if ( !pEnt )
-		return;
+	bool bIsViewModel = false;
 
-	C_TFViewModel *pVM;
-	C_ViewmodelAttachmentModel *pVMAddon = dynamic_cast< C_ViewmodelAttachmentModel * >( pEnt );
-	if ( pVMAddon )
+	CTFPlayer *pPlayer = NULL;
+	C_BaseEntity *pMoveParent = pEnt->GetMoveParent();
+
+	//Check if we have a move parent and if its a player
+	if ( pMoveParent )
 	{
-		pVM = dynamic_cast< C_TFViewModel * >( pVMAddon->m_ViewModel.Get() );
+		if ( pMoveParent->IsPlayer() )
+		{
+			pPlayer = ToTFPlayer( pMoveParent );
+		}
 	}
-	else
+	
+	//If its not a player then check for viewmodel.
+	if ( pPlayer == NULL )
 	{
-		pVM = dynamic_cast< C_TFViewModel * >( pEnt );
+		CBaseEntity *pEntParent = pMoveParent;
+
+		if ( pEntParent == NULL )
+		{
+			pEntParent = pEnt;
+		}
+
+		CTFViewModel *pVM = dynamic_cast<CTFViewModel *>( pEntParent );
+
+		if ( pVM )
+		{
+			pPlayer = ToTFPlayer( pVM->GetOwner() );
+			bIsViewModel = true;
+		}
 	}
 
-	if ( !pVM )
-	{
-		m_pPercentInvisible->SetFloatValue( 0.0f );
-		return;
-	}
-
-	CTFPlayer *pPlayer = ToTFPlayer( pVM->GetOwner() );
-
+	// do we have a player from viewmodel?
 	if ( !pPlayer )
 	{
 		m_pPercentInvisible->SetFloatValue( 0.0f );
 		return;
 	}
-
+	
 	float flPercentInvisible = pPlayer->GetPercentInvisible();
+	float flWeaponInvis = flPercentInvisible;
 
-	// remap from 0.22 to 0.5
-	// but drop to 0.0 if we're not invis at all
-	float flWeaponInvis = ( flPercentInvisible < 0.01 ) ?
-	0.0 :
-	RemapVal( flPercentInvisible, 0.0, 1.0, tf_vm_min_invis.GetFloat(), tf_vm_max_invis.GetFloat() );
-
-	if ( pPlayer->m_Shared.InCond( TF_COND_STEALTHED_BLINK ) )
+	if ( bIsViewModel == true )
 	{
-		// Hacky fix to make viewmodel blink more obvious
-		m_pPercentInvisible->SetFloatValue( flWeaponInvis - 0.1 );
-	}
-	else
-	{
-		m_pPercentInvisible->SetFloatValue( flWeaponInvis );
-	}
-}
+		// remap from 0.22 to 0.5
+		// but drop to 0.0 if we're not invis at all
+		flWeaponInvis = ( flPercentInvisible < 0.01 ) ?
+			0.0 :
+			RemapVal( flPercentInvisible, 0.0, 1.0, TF_VM_MIN_INVIS, TF_VM_MAX_INVIS );
 
-IMaterial *CViewModelInvisProxy::GetMaterial()
-{
-	if ( !m_pPercentInvisible )
-		return NULL;
+		// Exaggerated blink effect on bump.
+		if ( pPlayer->m_Shared.InCond( TF_COND_STEALTHED_BLINK ) )
+		{
+			flWeaponInvis = 0.3f;
+		}
 
-	return m_pPercentInvisible->GetOwningMaterial();
+		// Also exaggerate the effect if we're using motion cloak and our well has run dry.
+		CTFWeaponInvis *pWpn = (CTFWeaponInvis *) pPlayer->Weapon_OwnsThisID( TF_WEAPON_INVIS );
+		if ( pWpn && pWpn->HasMotionCloak() && (pPlayer->m_Shared.GetSpyCloakMeter() <= 0.f ) )
+		{
+			flWeaponInvis = 0.3f;
+		}
+	}
+
+	m_pPercentInvisible->SetFloatValue( flWeaponInvis );
 }
 
 EXPOSE_INTERFACE( CViewModelInvisProxy, IMaterialProxy, "vm_invis" IMATERIAL_PROXY_INTERFACE_VERSION );
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Generic invis proxy that can handle invis for both weapons & viewmodels.
+//			Makes the vm_invis & weapon_invis proxies obsolete, do not use them.
+//-----------------------------------------------------------------------------
+class CInvisProxy : public CBaseInvisMaterialProxy
+{
+public:
+	virtual void OnBind( C_BaseEntity *pC_BaseEntity ) OVERRIDE;
+};
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CInvisProxy::OnBind( C_BaseEntity *pC_BaseEntity )
+{
+	if( !m_pPercentInvisible )
+		return;
+
+	C_BaseEntity *pEnt = pC_BaseEntity;
+
+	CTFPlayer *pPlayer = NULL;
+
+	// Check if we have a move parent and if it's a player
+	C_BaseEntity *pMoveParent = pEnt->GetMoveParent();
+	if ( pMoveParent && pMoveParent->IsPlayer() )
+	{
+		pPlayer = ToTFPlayer( pMoveParent );
+	}
+
+	// If it's not a player then check for viewmodel.
+	if ( !pPlayer )
+	{
+		CBaseEntity *pEntParent = pMoveParent ? pMoveParent : pEnt;
+
+		CTFViewModel *pVM = dynamic_cast<CTFViewModel *>( pEntParent );
+		if ( pVM )
+		{
+			pPlayer = ToTFPlayer( pVM->GetOwner() );
+		}
+	}
+	
+	if ( !pPlayer )
+	{
+		if ( pEnt->IsPlayer() )
+		{
+			pPlayer = dynamic_cast<C_TFPlayer*>( pEnt );
+		}
+		else
+		{
+			IHasOwner *pOwnerInterface = dynamic_cast<IHasOwner*>( pEnt );
+			if ( pOwnerInterface )
+			{
+				pPlayer = ToTFPlayer( pOwnerInterface->GetOwnerViaInterface() );
+			}
+		}
+	}
+	
+	if ( !pPlayer )
+	{
+		C_TFRagdoll *pRagdoll = dynamic_cast<C_TFRagdoll*>( pEnt );
+		if ( !pRagdoll || !pRagdoll->IsCloaked() )
+		{
+			m_pPercentInvisible->SetFloatValue( 0.0f );
+		}
+		return;
+	}
+
+	// If we're the local player, use the old "vm_invis" code. Otherwise, use the "weapon_invis".
+	if ( pPlayer->IsLocalPlayer() )
+	{
+		float flPercentInvisible = pPlayer->GetPercentInvisible();
+		float flWeaponInvis = flPercentInvisible;
+
+		// remap from 0.22 to 0.5
+		// but drop to 0.0 if we're not invis at all
+		flWeaponInvis = ( flPercentInvisible < 0.01 ) ?
+			0.0 :
+		RemapVal( flPercentInvisible, 0.0, 1.0, TF_VM_MIN_INVIS, TF_VM_MAX_INVIS );
+
+		// Exaggerated blink effect on bump.
+		if ( pPlayer->m_Shared.InCond( TF_COND_STEALTHED_BLINK ) )
+		{
+			flWeaponInvis = 0.3f;
+		}
+
+		// Also exaggerate the effect if we're using motion cloak and our well has run dry.
+		CTFWeaponInvis *pWpn = (CTFWeaponInvis *) pPlayer->Weapon_OwnsThisID( TF_WEAPON_INVIS );
+		if ( pWpn && pWpn->HasMotionCloak() && (pPlayer->m_Shared.GetSpyCloakMeter() <= 0.f ) )
+		{
+			flWeaponInvis = 0.3f;
+		}
+
+		m_pPercentInvisible->SetFloatValue( flWeaponInvis );
+	}
+	else
+	{
+		m_pPercentInvisible->SetFloatValue( pPlayer->GetEffectiveInvisibilityLevel() );
+	}
+}
+
+//	Generic invis proxy that can handle invis for both weapons & viewmodels.
+//	Makes the vm_invis & weapon_invis proxies obsolete, do not use them.
+EXPOSE_INTERFACE( CInvisProxy, IMaterialProxy, "invis" IMATERIAL_PROXY_INTERFACE_VERSION );
 
 
 #endif // CLIENT_DLL

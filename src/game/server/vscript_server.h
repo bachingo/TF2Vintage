@@ -10,6 +10,8 @@
 #include "vscript/ivscript.h"
 #include "tier1/KeyValues.h"
 #include "vscript_shared.h"
+#include "tier1/utlsymbol.h"
+#include "GameEventListener.h"
 
 #if defined( _WIN32 )
 #pragma once
@@ -31,5 +33,10 @@ extern CBaseEntityScriptInstanceHelper g_BaseEntityScriptInstanceHelper;
 
 // Only allow scripts to create entities during map initialization
 bool IsEntityCreationAllowedInScripts( void );
+
+
+bool ScriptHooksEnabled( void );
+bool ScriptHookEnabled( const char *pszName );
+bool RunScriptHook( const char *pszHookName, HSCRIPT params );
 
 #endif // VSCRIPT_SERVER_H

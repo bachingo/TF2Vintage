@@ -1,359 +1,400 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
-//
-// Purpose:		
-//
-// $NoKeywords: $
-//=============================================================================
-#include "cbase.h"
-#include "tf_bot.h"
-#include "tf_bot_mission_suicide_bomber.h"
-#include "tf_obj_sentrygun.h"
-#include "particle_parse.h"
-#include "tf_team.h"
-#include "player_vs_environment/tf_populators.h"
-#include "player_vs_environment/tf_population_manager.h"
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_mission_suicide_bomber.cpp
+// Move to target and explode
+// Michael Booth, October 2011
 
+#include "cbase.h"
+#include "tf_team.h"
+#include "nav_mesh.h"
+#include "tf_player.h"
+#include "bot/tf_bot.h"
+#include "bot/behavior/missions/tf_bot_mission_suicide_bomber.h"
+#include "particle_parse.h"
+#include "tf_obj_sentrygun.h"
+#include "player_vs_environment/tf_populators.h"
+
+extern ConVar tf_bot_path_lookahead_range;
 
 ConVar tf_bot_suicide_bomb_range( "tf_bot_suicide_bomb_range", "300", FCVAR_CHEAT );
 ConVar tf_bot_suicide_bomb_friendly_fire( "tf_bot_suicide_bomb_friendly_fire", "1", FCVAR_CHEAT );
 
-
-CTFBotMissionSuicideBomber::CTFBotMissionSuicideBomber()
+//---------------------------------------------------------------------------------------------
+CTFBotMissionSuicideBomber::CTFBotMissionSuicideBomber( void )
 {
 }
 
-CTFBotMissionSuicideBomber::~CTFBotMissionSuicideBomber()
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotMissionSuicideBomber::OnStart( CTFBot *me, Action< CTFBot > *priorAction )
 {
-}
+	m_path.SetMinLookAheadDistance( me->GetDesiredPathLookAheadRange() );
+	m_detonateTimer.Invalidate();
+	m_bHasDetonated = false;
+	m_consecutivePathFailures = 0;
+	m_bWasSuccessful = false;
+	m_bWasKilled = false;
 
-const char *CTFBotMissionSuicideBomber::GetName() const
-{
-	return "MissionSuicideBomber";
-}
+	m_victim = me->GetMissionTarget();
 
-
-ActionResult<CTFBot> CTFBotMissionSuicideBomber::OnStart( CTFBot *me, Action<CTFBot> *priorAction )
-{
-	m_bDetonating       = false;
-	m_bDetReachedGoal   = false;
-	m_bDetLostAllHealth = false;
-
-	m_PathFollower.SetMinLookAheadDistance( me->GetDesiredPathLookAheadRange() );
-
-	m_ctDetonation.Invalidate();
-	m_nConsecutivePathFailures = 0;
-
-	m_hTarget = me->GetMissionTarget();
-	if ( m_hTarget != nullptr )
-		m_vecTargetPos = m_hTarget->GetAbsOrigin();
-
-	return Action<CTFBot>::Continue();
-}
-
-ActionResult<CTFBot> CTFBotMissionSuicideBomber::Update( CTFBot *me, float dt )
-{
-	if ( m_ctDetonation.HasStarted() )
+	if ( m_victim != NULL )
 	{
-		if ( !m_ctDetonation.IsElapsed() )
-			return Action<CTFBot>::Continue();
+		m_lastKnownVictimPosition = m_victim->GetAbsOrigin();
+	}
 
-		m_vecDetonatePos = me->GetAbsOrigin();
-		Detonate( me );
+	return Continue();
+}
 
-		if ( m_bDetReachedGoal && m_hTarget != nullptr &&  m_hTarget->IsBaseObject() )
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotMissionSuicideBomber::Update( CTFBot *me, float interval )
+{
+	// one we start detonating, there's no turning back
+	if ( m_detonateTimer.HasStarted() )
+	{
+		if ( m_detonateTimer.IsElapsed() )
 		{
-			CObjectSentrygun *sentry = dynamic_cast<CObjectSentrygun *>( m_hTarget.Get() );
-			if ( sentry != nullptr && sentry->GetOwner() != nullptr )
+			m_vecDetLocation = me->GetAbsOrigin();
+			Detonate( me );
+
+			// Send out an event
+			if ( m_bWasSuccessful && m_victim && m_victim->IsBaseObject() )
 			{
-				CTFPlayer *owner = ToTFPlayer( sentry->GetOwner() );
-				if ( owner != nullptr )
+				CObjectSentrygun *sentry = dynamic_cast< CObjectSentrygun * >( m_victim.Get() );
+				if ( sentry && sentry->GetOwner() )
 				{
-					IGameEvent *event = gameeventmanager->CreateEvent( "mvm_sentrybuster_detonate" );
-					if ( event != nullptr )
+					CTFPlayer *pOwner = ToTFPlayer( sentry->GetOwner() );
+					if ( pOwner )
 					{
-						event->SetInt( "player", ENTINDEX( owner ) );
-						event->SetFloat( "det_x", this->m_vecDetonatePos.x );
-						event->SetFloat( "det_y", this->m_vecDetonatePos.y );
-						event->SetFloat( "det_z", this->m_vecDetonatePos.z );
-						gameeventmanager->FireEvent( event );
+						IGameEvent *event = gameeventmanager->CreateEvent( "mvm_sentrybuster_detonate" );
+						if ( event )
+						{
+							event->SetInt( "player", pOwner->entindex() );
+							event->SetFloat( "det_x", m_vecDetLocation.x );
+							event->SetFloat( "det_y", m_vecDetLocation.y );
+							event->SetFloat( "det_z", m_vecDetLocation.z );
+							gameeventmanager->FireEvent( event );
+						}
+					}
+				}
+			}
+
+			return Done( "KABOOM!" );
+		}
+
+		return Continue();
+	}
+
+
+	if ( me->GetHealth() == 1 )
+	{
+		// low on health - detonate where we are!
+		StartDetonate( me, false, true );
+
+		return Continue();
+	}
+
+	if ( m_victim != NULL )
+	{
+		// update chase destination
+		if ( m_victim->IsAlive() && !m_victim->IsEffectActive( EF_NODRAW ) )
+		{
+			m_lastKnownVictimPosition = m_victim->GetAbsOrigin();
+		}
+
+		// if the engineer is carrying his sentry, he becomes the victim
+		if ( m_victim->IsBaseObject() )
+		{
+			CObjectSentrygun *sentry = dynamic_cast< CObjectSentrygun * >( m_victim.Get() );
+			if ( sentry && sentry->IsCarried() && sentry->GetOwner() )
+			{
+				// path to the engineer carrying the sentry
+				m_lastKnownVictimPosition = sentry->GetOwner()->GetAbsOrigin();
+			}
+		}
+	}
+
+	// Get to a third of the damage range before detonating
+	const float detonateRange = tf_bot_suicide_bomb_range.GetFloat() / 3.0f;
+	if ( me->IsDistanceBetweenLessThan( m_lastKnownVictimPosition, detonateRange ) )
+	{
+		if ( me->IsLineOfFireClear( m_lastKnownVictimPosition + Vector( 0, 0, StepHeight ) ) )
+		{
+			StartDetonate( me, true );
+		}
+	}
+
+	if ( m_talkTimer.IsElapsed() )
+	{
+		m_talkTimer.Start( 4.0f );
+		me->EmitSound( "MVM.SentryBusterIntro" );
+	}
+
+	if ( m_repathTimer.IsElapsed() )
+	{
+		m_repathTimer.Start( RandomFloat( 0.5f, 1.0f ) );
+
+		CTFBotPathCost cost( me, FASTEST_ROUTE );
+
+		if ( m_path.Compute( me, m_lastKnownVictimPosition, cost ) == false )
+		{
+			++m_consecutivePathFailures;
+
+			if ( m_consecutivePathFailures >= 3 )
+			{
+				// really can't reach my victim - detonate!
+				StartDetonate( me );
+			}
+		}
+		else
+		{
+			m_consecutivePathFailures = 0;
+		}
+	}
+
+	// move to the victim
+	m_path.Update( me );
+
+	return Continue();
+}
+
+
+//---------------------------------------------------------------------------------------------
+void CTFBotMissionSuicideBomber::OnEnd( CTFBot *me, Action< CTFBot > *nextAction )
+{
+}
+
+
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotMissionSuicideBomber::OnKilled( CTFBot *me, const CTakeDamageInfo &info )
+{
+	if ( !m_bHasDetonated )
+	{
+		if ( !m_detonateTimer.HasStarted() )
+		{
+			StartDetonate( me );
+		}
+		else if ( m_detonateTimer.IsElapsed() )
+		{
+			Detonate( me );
+		}
+		else
+		{
+			// We're in detonate mode, and something's trying to kill us.  Prevent it.
+			if ( me->GetTeamNumber() != TEAM_SPECTATOR )
+			{
+				me->m_lifeState = LIFE_ALIVE;
+				me->SetHealth( 1 );
+			}
+		}
+	}
+
+	return TryContinue();
+}
+
+
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotMissionSuicideBomber::OnStuck( CTFBot *me )
+{
+	// we're stuck, decide to detonate now!
+	if ( !m_bHasDetonated && !m_detonateTimer.HasStarted() )
+	{
+		StartDetonate( me );
+	}
+
+	return TryContinue();
+}
+
+
+//---------------------------------------------------------------------------------------------
+void CTFBotMissionSuicideBomber::StartDetonate( CTFBot *me, bool bWasSuccessful /* = false */, bool bWasKilled /*= false*/ )
+{
+	if ( m_detonateTimer.HasStarted() )
+		return;
+
+	if ( !me->IsAlive() || me->GetHealth() < 1 )
+	{
+		if ( me->GetTeamNumber() != TEAM_SPECTATOR)
+		{
+			me->m_lifeState = LIFE_ALIVE;
+			me->SetHealth( 1 );
+		}
+	}
+
+	m_bWasSuccessful = bWasSuccessful;
+	m_bWasKilled = bWasKilled;
+
+	me->m_takedamage = DAMAGE_NO;
+
+	me->Taunt( TAUNT_BASE_WEAPON );
+	m_detonateTimer.Start( 2.0f );
+	me->EmitSound( "MvM.SentryBusterSpin" );
+}
+
+
+//---------------------------------------------------------------------------------------------
+void CTFBotMissionSuicideBomber::Detonate( CTFBot *me )
+{
+	// BLAST!
+	m_bHasDetonated = true;
+ 
+	DispatchParticleEffect( "explosionTrail_seeds_mvm", me->GetAbsOrigin(), me->GetAbsAngles() );
+	DispatchParticleEffect( "fluidSmokeExpl_ring_mvm", me->GetAbsOrigin(), me->GetAbsAngles() );
+
+	me->EmitSound( "MVM.SentryBusterExplode" );
+
+	UTIL_ScreenShake( me->GetAbsOrigin(), 25.0f, 5.0f, 5.0f, 1000.0f, SHAKE_START );
+
+	if ( !m_bWasSuccessful )
+	{
+		if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() )
+		{
+			TFGameRules()->HaveAllPlayersSpeakConceptIfAllowed( MP_CONCEPT_MVM_SENTRY_BUSTER_DOWN, TF_TEAM_PVE_DEFENDERS );
+
+			// ACHIEVEMENT_TF_MVM_KILL_SENTRY_BUSTER
+			for ( int iDamager = 0 ; iDamager < MAX_ACHIEVEMENT_HISTORY_SLOTS ; iDamager ++ )
+			{	
+				EntityHistory_t *damagerHistory = me->m_AchievementData.GetDamagerHistory( iDamager );
+				if ( damagerHistory )
+				{
+					if ( damagerHistory->hEntity && ( gpGlobals->curtime - damagerHistory->flTimeDamage <= 5.0f ) )
+					{
+						CTFPlayer *pRecentDamager = ToTFPlayer( damagerHistory->hEntity );
+						if ( pRecentDamager )
+						{
+							pRecentDamager->AwardAchievement( ACHIEVEMENT_TF_MVM_KILL_SENTRY_BUSTER );
+						}
 					}
 				}
 			}
 		}
-
-		return Action<CTFBot>::Done( "KABOOM!" );
 	}
 
-	if ( me->GetHealth() == 1 )
+	CUtlVector< CTFPlayer * > playerVector;
+	CollectPlayers( &playerVector, TF_TEAM_RED, COLLECT_ONLY_LIVING_PLAYERS );
+	CollectPlayers( &playerVector, TF_TEAM_BLUE, COLLECT_ONLY_LIVING_PLAYERS, APPEND_PLAYERS );
+
+	CUtlVector< CBaseCombatCharacter * > victimVector;
+
+	int i;
+
+	// players
+	for ( i=0; i<playerVector.Count(); ++i )
 	{
-		StartDetonate( me, false, true );
-		return Action<CTFBot>::Continue();
+		victimVector.AddToTail( playerVector[i] );
 	}
 
-	if ( m_hTarget != nullptr )
+	// objects
+	CTFTeam *team = GetGlobalTFTeam( TF_TEAM_BLUE );
+	if ( team )
 	{
-		if ( m_hTarget->IsAlive() && !m_hTarget->IsEffectActive( EF_NODRAW ) )
+		for ( i=0; i<team->GetNumObjects(); ++i )
 		{
-			m_vecTargetPos = m_hTarget->GetAbsOrigin();
-		}
-
-		if ( m_hTarget->IsBaseObject() )
-		{
-			CObjectSentrygun *sentry = dynamic_cast<CObjectSentrygun *>( m_hTarget.Get() );
-			if ( sentry != nullptr && sentry->IsBeingCarried() && sentry->GetOwner() != nullptr )
+			CBaseObject *object = team->GetObject( i );
+			if ( object )
 			{
-				m_vecTargetPos = sentry->GetOwner()->GetAbsOrigin();
+				victimVector.AddToTail( object );
 			}
 		}
 	}
 
-	float goal_range = ( 1.0f / 3.0f ) * tf_bot_suicide_bomb_range.GetFloat();
-	if ( me->IsDistanceBetweenLessThan( m_vecTargetPos, goal_range ) && 
-		 me->IsLineOfFireClear( m_vecTargetPos + Vector( 0, 0, StepHeight ) ) )
+	team = GetGlobalTFTeam( TF_TEAM_RED );
+	if ( team )
 	{
-		StartDetonate( me, true, false );
-	}
-
-	if ( m_ctPlaySound.IsElapsed() )
-	{
-		m_ctPlaySound.Start( 4.0f );
-		me->EmitSound( "MVM.SentryBusterIntro" );
-	}
-
-	if ( m_ctRecomputePath.IsElapsed() )
-	{
-		m_ctRecomputePath.Start( RandomFloat( 0.5f, 1.0f ) );
-
-		CTFBotPathCost cost_func( me, FASTEST_ROUTE );
-		if ( m_PathFollower.Compute( me, m_vecTargetPos, cost_func, 0.0f, true ) )
+		for ( i=0; i<team->GetNumObjects(); ++i )
 		{
-			m_nConsecutivePathFailures = 0;
-		}
-		else
-		{
-			if ( ++m_nConsecutivePathFailures > 2 )
-				StartDetonate( me, false, false );
-		}
-	}
-
-	m_PathFollower.Update( me );
-
-	return Action<CTFBot>::Continue();
-}
-
-void CTFBotMissionSuicideBomber::OnEnd( CTFBot *me, Action<CTFBot> *newAction )
-{
-}
-
-
-EventDesiredResult<CTFBot> CTFBotMissionSuicideBomber::OnStuck( CTFBot *me )
-{
-	if ( !m_bDetonating && !m_ctDetonation.HasStarted() )
-		StartDetonate( me, false, false );
-
-	return Action<CTFBot>::TryContinue();
-}
-
-EventDesiredResult<CTFBot> CTFBotMissionSuicideBomber::OnKilled( CTFBot *me, const CTakeDamageInfo &info )
-{
-	/* how we get here:
-	 * CBaseCombatCharacter::Event_Killed
-	 * NextBotManager::OnKilled
-	 * Action<CTFBot>::OnKilled
-	 * CTFBotMissionSuicideBomber::OnKilled
-	 */
-
-	if ( !m_bDetonating )
-	{
-		if ( !m_ctDetonation.HasStarted() )
-		{
-			StartDetonate( me, false, false );
-		}
-		else
-		{
-			 /* BUG: probably bad to call Detonate when m_bDetonating is false
-			  * and we haven't called StartDetonate... */
-			if ( m_ctDetonation.IsElapsed() )
+			CBaseObject *object = team->GetObject( i );
+			if ( object )
 			{
-				Detonate( me );
-			}
-			else
-			{
-				if ( me->GetTeamNumber() != TEAM_SPECTATOR )
-				{
-					me->m_lifeState = LIFE_ALIVE;
-					me->SetHealth( 1 );
-				}
+				victimVector.AddToTail( object );
 			}
 		}
 	}
 
-	return Action<CTFBot>::TryContinue();
-}
-
-
-QueryResultType CTFBotMissionSuicideBomber::ShouldAttack( const INextBot *me, const CKnownEntity *threat ) const
-{
-	return ANSWER_NO;
-}
-
-
-void CTFBotMissionSuicideBomber::StartDetonate( CTFBot *me, bool reached_goal, bool lost_all_health )
-{
-	if ( this->m_ctDetonation.HasStarted() )
+	// non-player bots
+	CUtlVector< INextBot * > botVector;
+	TheNextBots().CollectAllBots( &botVector );
+	for( i=0; i<botVector.Count(); ++i )
 	{
-		return;
-	}
+		CBaseCombatCharacter *bot = botVector[i]->GetEntity();
 
-	if ( ( !me->IsAlive() || me->GetHealth() <= 0 ) &&  me->GetTeamNumber() != TEAM_SPECTATOR )
-	{
-		me->m_lifeState = LIFE_ALIVE;
-		me->SetHealth( 1 );
-	}
-
-	m_bDetReachedGoal   = reached_goal;
-	m_bDetLostAllHealth = lost_all_health;
-
-	me->m_takedamage = DAMAGE_NO;
-
-	// TODO: enum/default values for CTFPlayer::Taunt(taunts_t, int)
-	me->Taunt( TAUNT_NORMAL, MP_CONCEPT_FIREWEAPON );
-
-	m_ctDetonation.Start( 2.0f );
-
-	me->EmitSound( "MvM.SentryBusterSpin" );
-}
-
-void CTFBotMissionSuicideBomber::Detonate( CTFBot *me )
-{
-	m_bDetonating = true;
-
-	DispatchParticleEffect( "explosionTrail_seeds_mvm", me->GetAbsOrigin(), me->GetAbsAngles() );
-	DispatchParticleEffect( "fluidSmokeExpl_ring_mvm", me->GetAbsOrigin(), me->GetAbsAngles() );
-
-	me->EmitSound( "MvM.SentryBusterExplode" );
-
-	UTIL_ScreenShake( me->GetAbsOrigin(), 25.0f, 5.0f, 5.0f, 1000.0f, SHAKE_START );
-
-	if ( !m_bDetReachedGoal && TFGameRules() != nullptr && TFGameRules()->IsMannVsMachineMode() )
-	{
-		TFGameRules()->HaveAllPlayersSpeakConceptIfAllowed( MP_CONCEPT_MVM_SENTRY_BUSTER_DOWN, TF_TEAM_MVM_PLAYERS );
-
-		// Achievement stuff here
-	}
-
-	CUtlVector<CTFPlayer *> players_bothteams;
-	CollectPlayers<CTFPlayer>( &players_bothteams, TF_TEAM_RED, COLLECT_ONLY_LIVING_PLAYERS );
-	CollectPlayers<CTFPlayer>( &players_bothteams, TF_TEAM_BLUE, COLLECT_ONLY_LIVING_PLAYERS, APPEND_PLAYERS );
-
-	CUtlVector<CBaseCombatCharacter *> potential_victims;
-	FOR_EACH_VEC( players_bothteams, i )
-	{
-		CTFPlayer *player = players_bothteams[i];
-		potential_victims.AddToTail( static_cast<CBaseCombatCharacter *>( player ) );
-	}
-
-	CTFTeam *team_blu = GetGlobalTFTeam( TF_TEAM_BLUE );
-	if ( team_blu != nullptr )
-	{
-		for ( int i = 0; i < team_blu->GetNumObjects(); ++i )
+		if ( !bot->IsPlayer() && bot->IsAlive() )
 		{
-			CBaseObject *obj = team_blu->GetObject( i );
-			if ( obj != nullptr )
-			{
-				potential_victims.AddToTail( static_cast<CBaseCombatCharacter *>( obj ) );
-			}
+			victimVector.AddToTail( bot );
 		}
 	}
 
-	CTFTeam *team_red = GetGlobalTFTeam( TF_TEAM_RED );
-	if ( team_red != nullptr )
-	{
-		for ( int i = 0; i < team_red->GetNumObjects(); ++i )
-		{
-			CBaseObject *obj = team_red->GetObject( i );
-			if ( obj != nullptr )
-			{
-				potential_victims.AddToTail( static_cast<CBaseCombatCharacter *>( obj ) );
-			}
-		}
-	}
-
-	CUtlVector<INextBot *> nextbots;
-	TheNextBots().CollectAllBots( &nextbots );
-	FOR_EACH_VEC( nextbots, i )
-	{
-		INextBot *nextbot = nextbots[i];
-		CBaseCombatCharacter *ent = nextbot->GetEntity();
-
-		if ( !ent->IsPlayer() && ent->IsAlive() )
-		{
-			potential_victims.AddToTail( ent );
-		}
-	}
-
-	if ( m_bDetLostAllHealth )
+	// Send out an event whenever players damaged us to the point where we had to detonate
+	if ( m_bWasKilled )
 	{
 		IGameEvent *event = gameeventmanager->CreateEvent( "mvm_sentrybuster_killed" );
-		if ( event != nullptr )
+		if ( event )
 		{
 			event->SetInt( "sentry_buster", me->entindex() );
 			gameeventmanager->FireEvent( event );
 		}
 	}
 
-	me->SetMission( CTFBot::MissionType::NONE, false );
-
+	// Clear my mission before we have everyone take damage so I will die with the rest
+	me->SetMission( CTFBot::NO_MISSION, MISSION_DOESNT_RESET_BEHAVIOR_SYSTEM );
 	me->m_takedamage = DAMAGE_YES;
 
-	FOR_EACH_VEC( potential_victims, i )
+	// kill victims (including me)
+	for( int i=0; i<victimVector.Count(); ++i )
 	{
-		CBaseCombatCharacter *victim = potential_victims[i];
+		CBaseCombatCharacter *victim = victimVector[i];
 
-		Vector delta_wsc = victim->WorldSpaceCenter() - me->WorldSpaceCenter();
-		if ( delta_wsc.IsLengthGreaterThan( tf_bot_suicide_bomb_range.GetFloat() ) )
+		Vector toVictim = victim->WorldSpaceCenter() - me->WorldSpaceCenter();
+
+		if ( toVictim.IsLengthGreaterThan( tf_bot_suicide_bomb_range.GetFloat() ) )
 			continue;
 
 		if ( victim->IsPlayer() )
 		{
-			UTIL_ScreenFade( victim, {255, 255, 255, 255}, 1.0f, 0.1f, FFADE_IN );
+			color32 colorHit = { 255, 255, 255, 255 };
+			UTIL_ScreenFade( victim, colorHit, 1.0f, 0.1f, FFADE_IN );
 		}
 
 		if ( me->IsLineOfFireClear( victim ) )
 		{
-			int damage = Max( victim->GetMaxHealth(), victim->GetHealth() );
+			toVictim.NormalizeInPlace();
 
-			/* NOTE: CTFPlayer::OnTakeDamage reduces the damage to 600 if:
-			 * victim is a bot
-			 * m_bForceFriendlyFire is true
-			 * victim in same team as attacker
-			 * victim->IsMiniBoss
-			 */
+			int damage = MAX( victim->GetMaxHealth(), victim->GetHealth() );
 
-			CTakeDamageInfo dmginfo( me, me, 4 * damage, DMG_BLAST );
+			CTakeDamageInfo info( me, me, 4 * damage, DMG_BLAST, TF_DMG_CUSTOM_NONE );
 			if ( tf_bot_suicide_bomb_friendly_fire.GetBool() )
 			{
-				dmginfo.SetForceFriendlyFire( true );
+				info.SetForceFriendlyFire( true );
 			}
 
-			CalculateMeleeDamageForce( &dmginfo, delta_wsc.Normalized(), me->WorldSpaceCenter() );
-			victim->TakeDamage( dmginfo );
+			CalculateMeleeDamageForce( &info, toVictim, me->WorldSpaceCenter(), 1.0f );
+			victim->TakeDamage( info );
 		}
 	}
 
+	// make sure we're removed (in case we detonated in our spawn area where we are invulnerable)
 	me->CommitSuicide( false, true );
-
 	if ( me->IsAlive() )
 	{
 		me->ForceChangeTeam( TEAM_SPECTATOR );
 	}
 
-	if ( m_bDetLostAllHealth )
+	if ( m_bWasKilled )
 	{
-		CWave *wave = g_pPopulationManager ? g_pPopulationManager->GetCurrentWave() : NULL;
-		if ( wave != nullptr )
+		// increment num sentry killed this wave
+		CWave *pWave = g_pPopulationManager ? g_pPopulationManager->GetCurrentWave() : NULL;
+		if ( pWave )
 		{
-			wave->m_nNumSentryBustersKilled++;
+			pWave->IncrementSentryBustersKilled();
 		}
 	}
 }
+
+
+// Should we attack "them"?
+QueryResultType CTFBotMissionSuicideBomber::ShouldAttack( const INextBot *me, const CKnownEntity *them ) const
+{
+	// buster never "attacks", just approaches and self-detonates
+	return ANSWER_NO;
+}
+
+

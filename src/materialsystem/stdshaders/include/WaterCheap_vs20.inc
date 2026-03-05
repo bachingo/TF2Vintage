@@ -1,14 +1,9 @@
 // ALL SKIP STATEMENTS THAT AFFECT THIS SHADER!!!
 // defined $LIGHTING_PREVIEW && defined $FASTPATH && $LIGHTING_PREVIEW && $FASTPATH
 
-#ifndef WATERCHEAP_VS20_H
-#define WATERCHEAP_VS20_H
-
-#include "shaderapi/ishaderapi.h"
-#include "shaderapi/ishadershadow.h"
-#include "materialsystem/imaterialvar.h"
-
-class WaterCheap_vs20_Static_Index
+#pragma once
+#include "shaderlib/cshader.h"
+class watercheap_vs20_Static_Index
 {
 	unsigned int m_nBLEND : 2;
 #ifdef _DEBUG
@@ -24,7 +19,7 @@ public:
 #endif	// _DEBUG
 	}
 
-	WaterCheap_vs20_Static_Index( IShaderShadow* pShaderShadow, IMaterialVar** params )
+	watercheap_vs20_Static_Index(  )
 	{
 		m_nBLEND = 0;
 #ifdef _DEBUG
@@ -39,13 +34,13 @@ public:
 	}
 };
 
-#define shaderStaticTest_WaterCheap_vs20 vsh_forgot_to_set_static_BLEND
+#define shaderStaticTest_watercheap_vs20 vsh_forgot_to_set_static_BLEND
 
 
-class WaterCheap_vs20_Dynamic_Index
+class watercheap_vs20_Dynamic_Index
 {
 public:
-	WaterCheap_vs20_Dynamic_Index( IShaderDynamicAPI* pShaderAPI )
+	watercheap_vs20_Dynamic_Index(  )
 	{
 	}
 
@@ -55,7 +50,5 @@ public:
 	}
 };
 
-#define shaderDynamicTest_WaterCheap_vs20 1
+#define shaderDynamicTest_watercheap_vs20 1
 
-
-#endif	// WATERCHEAP_VS20_H

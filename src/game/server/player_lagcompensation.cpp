@@ -41,7 +41,6 @@ ConVar sv_unlag_fixstuck( "sv_unlag_fixstuck", "0", FCVAR_DEVELOPMENTONLY, "Disa
 // Purpose: 
 //-----------------------------------------------------------------------------
 #define MAX_LAYER_RECORDS (CBaseAnimatingOverlay::MAX_OVERLAYS)
-#define MAX_POSE_PARAMETERS (CBaseAnimating::NUM_POSEPAREMETERS)
 
 struct LayerRecord
 {
@@ -80,6 +79,11 @@ public:
 		m_flSimulationTime = -1;
 		m_masterSequence = 0;
 		m_masterCycle = 0;
+
+		for( int i=0; i<MAXSTUDIOPOSEPARAM; i++ )
+		{
+			m_flPoseParameters[i] = 0;
+		}
 	}
 
 	LagRecord( const LagRecord& src )
@@ -94,13 +98,13 @@ public:
 		{
 			m_layerRecords[layerIndex] = src.m_layerRecords[layerIndex];
 		}
-
-		for (int layerIndex = 0; layerIndex < MAX_POSE_PARAMETERS; ++layerIndex)
-		{
-			m_poseParameters[layerIndex] = src.m_poseParameters[layerIndex];
-		}
 		m_masterSequence = src.m_masterSequence;
 		m_masterCycle = src.m_masterCycle;
+
+		for( int i=0; i<MAXSTUDIOPOSEPARAM; i++ )
+		{
+			m_flPoseParameters[i] = src.m_flPoseParameters[i];
+		}
 	}
 
 	// Did player die this frame
@@ -118,7 +122,8 @@ public:
 	LayerRecord				m_layerRecords[MAX_LAYER_RECORDS];
 	int						m_masterSequence;
 	float					m_masterCycle;
-	float					m_poseParameters[MAX_POSE_PARAMETERS];
+
+	float					m_flPoseParameters[MAXSTUDIOPOSEPARAM];
 };
 
 
@@ -272,7 +277,7 @@ void CLagCompensationManager::FrameUpdatePostEntityThink()
 		Assert( track->Count() < 1000 ); // insanity check
 
 		// remove tail records that are too old
-		int tailIndex = track->Tail();
+		intp tailIndex = track->Tail();
 		while ( track->IsValidIndex( tailIndex ) )
 		{
 			LagRecord &tail = track->Element( tailIndex );
@@ -326,13 +331,9 @@ void CLagCompensationManager::FrameUpdatePostEntityThink()
 		record.m_masterSequence = pPlayer->GetSequence();
 		record.m_masterCycle = pPlayer->GetCycle();
 
-		CStudioHdr *hdr = pPlayer->GetModelPtr();
-		if ( hdr )
+		for( int i=0; i<MAXSTUDIOPOSEPARAM; i++ )
 		{
-			for ( int paramIndex = 0; paramIndex < hdr->GetNumPoseParameters(); paramIndex++ )
-			{
-				record.m_poseParameters[paramIndex] = pPlayer->GetPoseParameter( paramIndex );
-			}
+			record.m_flPoseParameters[i] = pPlayer->GetPoseParameter(i);
 		}
 	}
 
@@ -453,7 +454,7 @@ void CLagCompensationManager::BacktrackPlayer( CBasePlayer *pPlayer, float flTar
 	if ( track->Count() <= 0 )
 		return;
 
-	int curr = track->Head();
+	intp curr = track->Head();
 
 	LagRecord *prevRecord = NULL;
 	LagRecord *record = NULL;
@@ -671,11 +672,23 @@ void CLagCompensationManager::BacktrackPlayer( CBasePlayer *pPlayer, float flTar
 		{
 			pPlayer->SetCycle( Lerp( frac, record->m_masterCycle, prevRecord->m_masterCycle ) );
 		}
+
+		for( int i=0; i<MAXSTUDIOPOSEPARAM; i++ )
+		{
+			//don't lerp pose params, just pick the closest
+			pPlayer->SetPoseParameter( i, record->m_flPoseParameters[i] );
+			//pAnimating->SetPoseParameter( i, Lerp( frac, record->m_flPoseParameters[i], prevRecord->m_flPoseParameters[i] ) );
+		}
 	}
 	if( !interpolatedMasters )
 	{
 		pPlayer->SetSequence(record->m_masterSequence);
 		pPlayer->SetCycle(record->m_masterCycle);
+
+		for( int i=0; i<MAXSTUDIOPOSEPARAM; i++ )
+		{
+			pPlayer->SetPoseParameter( i, record->m_flPoseParameters[i] );
+		}
 	}
 
 	////////////////////////
@@ -725,27 +738,6 @@ void CLagCompensationManager::BacktrackPlayer( CBasePlayer *pPlayer, float flTar
 				currentLayer->m_nOrder = record->m_layerRecords[layerIndex].m_order;
 				currentLayer->m_nSequence = record->m_layerRecords[layerIndex].m_sequence;
 				currentLayer->m_flWeight = record->m_layerRecords[layerIndex].m_weight;
-			}
-		}
-	}
-
-	// Now do pose parameters
-	CStudioHdr *hdr = pPlayer->GetModelPtr();
-	if ( hdr )
-	{
-		for ( int paramIndex = 0; paramIndex<hdr->GetNumPoseParameters(); paramIndex++ )
-		{
-			float poseParameter = record->m_poseParameters[ paramIndex ];
-			if ( frac > 0.0f && interpolationAllowed )
-			{
-				// These could wrap like cycles, but there's no way to know. In the most common case
-				// (move_x/move_y) it's correct to just lerp. Interpolation almost never happens anyways.
-				float prevPoseParameter = prevRecord->m_poseParameters[ paramIndex ];
-				pPlayer->SetPoseParameter( paramIndex, Lerp( frac, poseParameter, prevPoseParameter ) );
-			}
-			else
-			{
-				pPlayer->SetPoseParameter( paramIndex, poseParameter );
 			}
 		}
 	}
@@ -819,12 +811,6 @@ void CLagCompensationManager::FinishLagCompensation( CBasePlayer *player )
 				// Restore it
 				pPlayer->SetSize( restore->m_vecMinsPreScaled, restore->m_vecMaxsPreScaled );
 			}
-#ifdef STAGING_ONLY
-			else
-			{
-				Warning( "Should we really not restore the size?\n" );
-			}
-#endif
 		}
 
 		if ( restore->m_fFlags & LC_ANGLES_CHANGED )
@@ -869,6 +855,11 @@ void CLagCompensationManager::FinishLagCompensation( CBasePlayer *player )
 					currentLayer->m_nSequence = restore->m_layerRecords[layerIndex].m_sequence;
 					currentLayer->m_flWeight = restore->m_layerRecords[layerIndex].m_weight;
 				}
+			}
+
+			for( int i=0; i<MAXSTUDIOPOSEPARAM; i++ )
+			{
+				pPlayer->SetPoseParameter( i, restore->m_flPoseParameters[i] );
 			}
 		}
 

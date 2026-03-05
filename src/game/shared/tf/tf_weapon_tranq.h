@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 //
 //=============================================================================
@@ -34,8 +34,6 @@ public:
 
 	CTFTranq() {}
 	~CTFTranq() {}
-
-	virtual void	Precache();
 
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_TRANQ; }
 

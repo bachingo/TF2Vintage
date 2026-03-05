@@ -1,85 +1,116 @@
-//=============================================================================
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: A remake of Huntsman from live TF2.
+// Purpose: 
 //
 //=============================================================================
 #ifndef TF_WEAPON_COMPOUND_BOW_H
 #define TF_WEAPON_COMPOUND_BOW_H
-
 #ifdef _WIN32
 #pragma once
 #endif
 
 #include "tf_weaponbase_gun.h"
+#include "tf_weapon_pipebomblauncher.h"
 
+// Client specific.
 #ifdef CLIENT_DLL
 #define CTFCompoundBow C_TFCompoundBow
+#else
+class CTFProjectile_Arrow;
 #endif
 
-class CTFCompoundBow : public CTFWeaponBaseGun, public ITFChargeUpWeapon
+//=============================================================================
+//
+// TF Weapon Bow
+//
+class CTFCompoundBow : public CTFPipebombLauncher
 {
 public:
-	DECLARE_CLASS( CTFCompoundBow, CTFWeaponBaseGun );
-	DECLARE_NETWORKCLASS();
+
+	DECLARE_CLASS( CTFCompoundBow, CTFPipebombLauncher );
+	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
 
-	// Server specific.
+// Server specific.
 #ifdef GAME_DLL
 	DECLARE_DATADESC();
 #endif
 
 	CTFCompoundBow();
+	~CTFCompoundBow() {}
 
-	virtual int			GetWeaponID( void ) const { return TF_WEAPON_COMPOUND_BOW; }
+	virtual void	Precache( void );
 
-	virtual void		Precache( void );
+	virtual void	WeaponReset( void );
 
-	virtual bool		Holster( CBaseCombatWeapon *pSwitchingTo );
-	virtual bool		Deploy( void );
-	virtual void		WeaponReset( void );
-	virtual void		PrimaryAttack( void );
-	virtual void		SecondaryAttack( void );
-	virtual void		LowerBow( void );
-	virtual void		WeaponIdle( void );
-	virtual void		ItemPostFrame( void );
+	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_COMPOUND_BOW; }
 
-	virtual float		GetProjectileDamage( void );
-	virtual float		GetProjectileSpeed( void );
-	virtual float		GetProjectileGravity( void );
-	virtual void		GetProjectileFireSetup( CTFPlayer *pPlayer, Vector vecOffset, Vector *vecSrc, QAngle *angForward, bool bHitTeammates = true, bool bUseHitboxes = false );
-	virtual bool		CalcIsAttackCriticalHelper( void );
-	virtual bool    	IsFlameArrow( void ) 		{ return m_bFlame; }
+	virtual void	PrimaryAttack();
+	virtual void	LaunchGrenade( void );
 
-	void				LightArrow( void );
-	void				Extinguish( void );
-	void				FireArrow( void );	
+	virtual bool	CalcIsAttackCriticalHelper();
 
-	virtual bool		CanReload( void ) 			{ return false; }
+	virtual float	GetChargeMaxTime( void );
+	virtual float	GetCurrentCharge( void );
+	virtual float	GetProjectileDamage( void );
+	virtual float	GetProjectileSpeed( void );
+	virtual float	GetProjectileGravity( void );
 
-	float				GetCurrentCharge( void ) const;
+	virtual void	AddPipeBomb( CTFGrenadePipebombProjectile *pBomb );
+	virtual bool	DetonateRemotePipebombs( bool bFizzle );
+	virtual void	SecondaryAttack( void );
+	virtual void	LowerBow( void );
 
+	virtual bool	Reload( void );
+
+	virtual bool	Holster( CBaseCombatWeapon *pSwitchingTo );
+
+	virtual bool	SendWeaponAnim( int iActivity );
+	virtual void	ItemPostFrame( void );
+
+	virtual float	GetChargeForceReleaseTime( void ) { return 5.0f; }
+	virtual void	ForceLaunchGrenade( void );
+	virtual bool	ShouldDoMuzzleFlash( void ) { return false; }
+
+	virtual void	GetProjectileFireSetup( CTFPlayer *pPlayer, Vector vecOffset, Vector *vecSrc, QAngle *angForward, bool bHitTeammates = true, float flEndDist = 2000.f );
+	void			ApplyRefireSpeedModifications( float &flBaseRef );
+
+	// The bow doesn't actually reload, it instead uses the AE_WPN_INCREMENTAMMO anim event in the fire to reload the clip.
+	virtual bool	CanReload( void ){ return false; }
+
+	virtual bool	CanPickupOtherWeapon() const { return GetInternalChargeBeginTime() == 0.f; }
+	
 #ifdef CLIENT_DLL
-	void				CreateMove( float flInputSampleTime, CUserCmd *pCmd, const QAngle &vecOldViewAngles );
-	virtual void   	 	OnDataChanged( DataUpdateType_t updateType );
-	virtual void		ClientThink( void );
+	virtual void	OnDataChanged( DataUpdateType_t type );
+	virtual void	UpdateOnRemove( void );
+#else
+	virtual float	GetInitialAfterburnDuration() const OVERRIDE;
 #endif
 
-public:
-	// ITFChargeUpWeapon
-	virtual float		GetChargeBeginTime( void ) 	{ return m_flChargeBeginTime; }
-	virtual float		GetChargeMaxTime( void );
-	virtual const char 	*GetChargeSound( void ) 	{ return NULL; }
+	void			SetArrowAlight( bool bAlight );
+
+protected:
+	virtual void	SetInternalChargeBeginTime( float flChargeBeginTime ) OVERRIDE;
 
 private:
-	CNetworkVar( float, m_flChargeBeginTime );
-	CNetworkVar( bool , m_bFlame );
+#ifdef CLIENT_DLL
+	virtual void	StartBurningEffect( void );
+	virtual void	StopBurningEffect( void );
+#else
+
+
+#endif
+
+	float		m_flLastDenySoundTime;
+	CNetworkVar( bool, m_bNoFire );
+	CNetworkVar( bool, m_bArrowAlight );
 
 #ifdef CLIENT_DLL
-	bool 	bEmitting;
-	bool 	bFirstPerson;
+	EHANDLE		   m_hParticleEffectOwner;
+	HPARTICLEFFECT m_pBurningArrowEffect;
+#endif 
 
-	EHANDLE	m_hFlameEffectHost;
-#endif
+	CTFCompoundBow( const CTFCompoundBow & ) {}
 };
 
 #endif // TF_WEAPON_COMPOUND_BOW_H

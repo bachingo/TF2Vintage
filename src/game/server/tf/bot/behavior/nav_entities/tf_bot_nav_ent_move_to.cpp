@@ -1,91 +1,110 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_nav_ent_move_to.cpp
+// Move onto target and wait, as directed by nav entity
+// Michael Booth, September 2009
+
 #include "cbase.h"
-#include "NavMeshEntities/func_nav_prerequisite.h"
-#include "../../tf_bot.h"
-#include "tf_bot_nav_ent_move_to.h"
+#include "nav_mesh.h"
+#include "tf_player.h"
+#include "bot/tf_bot.h"
+#include "bot/behavior/nav_entities/tf_bot_nav_ent_move_to.h"
 
+extern ConVar tf_bot_path_lookahead_range;
 
+//---------------------------------------------------------------------------------------------
 CTFBotNavEntMoveTo::CTFBotNavEntMoveTo( const CFuncNavPrerequisite *prereq )
 {
-	m_hPrereq = prereq;
-	m_GoalArea = nullptr;
-}
-
-CTFBotNavEntMoveTo::~CTFBotNavEntMoveTo()
-{
+	m_prereq = prereq;
+	m_pGoalArea = NULL;
 }
 
 
-const char *CTFBotNavEntMoveTo::GetName() const
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotNavEntMoveTo::OnStart( CTFBot *me, Action< CTFBot > *priorAction )
 {
-	return "NavEntMoveTo";
-}
-
-
-ActionResult<CTFBot> CTFBotNavEntMoveTo::OnStart( CTFBot *me, Action<CTFBot> *priorAction )
-{
-	if (m_hPrereq == nullptr)
-		return Action<CTFBot>::Done( "Prerequisite has been removed before we started" );
-
-	m_PathFollower.SetMinLookAheadDistance( me->GetDesiredPathLookAheadRange() );
-
-	m_waitDuration.Invalidate();
-
-	CBaseEntity *target = m_hPrereq->GetTaskEntity();
-	if (target == nullptr)
-		return Action<CTFBot>::Done( "Prerequisite target entity is NULL" );
-
-	Extent ext;
-	ext.Init( target );
-
-	m_vecGoalPos.x = ext.lo.x + RandomFloat( 0.0f, ext.SizeX() );
-	m_vecGoalPos.y = ext.lo.y + RandomFloat( 0.0f, ext.SizeY() );
-	m_vecGoalPos.z = ext.SizeZ() - ext.lo.z;
-
-	TheNavMesh->GetSimpleGroundHeight( m_vecGoalPos, &m_vecGoalPos.z );
-	m_GoalArea = TheNavMesh->GetNavArea( m_vecGoalPos );
-
-	if (m_GoalArea == nullptr)
-		return Action<CTFBot>::Done( "There's no nav area for the goal position" );
-
-	return Action<CTFBot>::Continue();
-}
-
-ActionResult<CTFBot> CTFBotNavEntMoveTo::Update( CTFBot *me, float dt )
-{
-	if (m_hPrereq == nullptr)
-		return Action<CTFBot>::Done( "Prerequisite has been removed" );
-
-	if (!m_hPrereq->IsEnabled())
-		return Action<CTFBot>::Done( "Prerequisite has been disabled" );
-
-	const CKnownEntity *threat = me->GetVisionInterface()->GetPrimaryKnownThreat( false );
-	if (threat != nullptr && threat->IsVisibleRecently())
-		me->EquipBestWeaponForThreat( threat );
-
-	if (!m_waitDuration.HasStarted())
+	if ( m_prereq == NULL )
 	{
-		if (me->GetLastKnownArea() == m_GoalArea)
+		return Done( "Prerequisite has been removed before we started" );
+	}
+
+	m_path.SetMinLookAheadDistance( me->GetDesiredPathLookAheadRange() );
+	m_waitTimer.Invalidate();
+
+	CBaseEntity *target = m_prereq->GetTaskEntity();
+	if ( target == NULL )
+	{
+		return Done( "Prerequisite target entity is NULL" );
+	}
+
+	Extent targetExtent;
+	targetExtent.Init( target );
+
+	// pick random ground position within target entity as move-to goal
+	m_goalPosition = targetExtent.lo + Vector( RandomFloat( 0.0f, targetExtent.SizeX() ), RandomFloat( 0.0f, targetExtent.SizeY() ), targetExtent.SizeZ() );
+
+	TheNavMesh->GetSimpleGroundHeight( m_goalPosition, &m_goalPosition.z );
+
+	m_pGoalArea = (CTFNavArea*)TheNavMesh->GetNavArea( m_goalPosition );
+	if ( !m_pGoalArea )
+	{
+		return Done( "There's no nav area for the goal position" );
+	}
+
+	return Continue();
+}
+
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotNavEntMoveTo::Update( CTFBot *me, float interval )
+{
+	if ( m_prereq == NULL )
+	{
+		return Done( "Prerequisite has been removed" );
+	}
+
+	if ( !m_prereq->IsEnabled() )
+	{
+		return Done( "Prerequisite has been disabled" );
+	}
+
+	const CKnownEntity *threat = me->GetVisionInterface()->GetPrimaryKnownThreat();
+	if ( threat && threat->IsVisibleRecently() )
+	{
+		// prepare to fight
+		me->EquipBestWeaponForThreat( threat );
+	}
+
+	if ( m_waitTimer.HasStarted() )
+	{
+		if ( m_waitTimer.IsElapsed() )
 		{
-			m_waitDuration.Start( m_hPrereq->GetTaskValue() );
+			return Done( "Wait duration elapsed" );
+		}
+	}
+	else
+	{
+		// move to the goal area
+		if ( m_pGoalArea == me->GetLastKnownArea() )
+		{
+			// in area
+			m_waitTimer.Start( m_prereq->GetTaskValue() );
 		}
 		else
 		{
-			if (m_recomputePath.IsElapsed())
+			if ( m_repathTimer.IsElapsed() )
 			{
-				m_recomputePath.Start( RandomFloat( 1.0f, 2.0f ) );
+				m_repathTimer.Start( RandomFloat( 1.0f, 2.0f ) );
 
-				CTFBotPathCost func( me, FASTEST_ROUTE );
-				m_PathFollower.Compute( me, m_vecGoalPos, func, 0.0f, true );
+				CTFBotPathCost cost( me, FASTEST_ROUTE );
+				m_path.Compute( me, m_goalPosition, cost );
 			}
 
-			m_PathFollower.Update( me );
+			// move into position
+			m_path.Update( me );
 		}
-
-		return Action<CTFBot>::Continue();
 	}
 
-	if (m_waitDuration.IsElapsed())
-		return Action<CTFBot>::Done( "Wait duration elapsed" );
-
-	return Action<CTFBot>::Continue();
+	return Continue();
 }
+
+

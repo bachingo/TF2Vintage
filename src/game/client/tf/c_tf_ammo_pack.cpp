@@ -1,61 +1,34 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 //=============================================================================//
 #include "cbase.h"
-#include "c_baseanimating.h"
-#include "engine/ivdebugoverlay.h"
-#include "c_tf_player.h"
-#include "engine/IEngineSound.h"
-#include "soundenvelope.h"
+#include "c_tf_ammo_pack.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-class C_TFAmmoPack : public C_BaseAnimating, public ITargetIDProvidesHint
-{
-	DECLARE_CLASS( C_TFAmmoPack, C_BaseAnimating );
-
-public:
-
-	DECLARE_CLIENTCLASS();
-
-	~C_TFAmmoPack();
-
-	virtual int		DrawModel( int flags );
-	virtual void	OnDataChanged( DataUpdateType_t updateType );
-	virtual bool	Interpolate( float currentTime );
-
-	virtual CStudioHdr *OnNewModel( void );
-
-	// ITargetIDProvidesHint
-public:
-	virtual void	DisplayHintTo( C_BasePlayer *pPlayer );
-
-private:
-
-	Vector		m_vecInitialVelocity;
-
-	// Looping sound emitted by dropped flamethrowers
-	CSoundPatch *m_pPilotLightSound;
-
-};
-
+#ifdef _DEBUG
 static ConVar tf_debug_weapontrail( "tf_debug_weapontrail", "0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
+#endif // _DEBUG
 
 // Network table.
 IMPLEMENT_CLIENTCLASS_DT( C_TFAmmoPack, DT_AmmoPack, CTFAmmoPack )
 	RecvPropVector( RECVINFO( m_vecInitialVelocity ) ),
+	RecvPropFloat( RECVINFO_NAME( m_angNetworkAngles[0], m_angRotation[0] ) ),
+	RecvPropFloat( RECVINFO_NAME( m_angNetworkAngles[1], m_angRotation[1] ) ),
+	RecvPropFloat( RECVINFO_NAME( m_angNetworkAngles[2], m_angRotation[2] ) ),
 END_RECV_TABLE()
 
-C_TFAmmoPack::~C_TFAmmoPack()
+
+C_TFAmmoPack::C_TFAmmoPack( void )
 {
-	if ( m_pPilotLightSound )
-	{
-		CSoundEnvelopeController::GetController().SoundDestroy( m_pPilotLightSound );
-		m_pPilotLightSound = NULL;
-	}
+	m_nWorldModelIndex = 0;
+}
+
+C_TFAmmoPack::~C_TFAmmoPack( void )
+{
 }
 
 //-----------------------------------------------------------------------------
@@ -65,12 +38,17 @@ C_TFAmmoPack::~C_TFAmmoPack()
 //-----------------------------------------------------------------------------
 int C_TFAmmoPack::DrawModel( int flags )
 {
+#ifdef _DEBUG
 	// Debug!
 	if ( tf_debug_weapontrail.GetBool() )
 	{
 		Msg( "Ammo Pack:: Position: (%f %f %f), Velocity (%f %f %f)\n", GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z, GetAbsVelocity().x, GetAbsVelocity().y, GetAbsVelocity().z );
-		debugoverlay->AddBoxOverlay( GetAbsOrigin(), Vector( -2, -2, -2 ), Vector( 2, 2, 2 ), QAngle( 0, 0, 0 ), 255, 255, 0, 32, 5.0 );
+		if ( debugoverlay )
+		{
+			debugoverlay->AddBoxOverlay( GetAbsOrigin(), Vector( -2, -2, -2 ), Vector( 2, 2, 2 ), QAngle( 0, 0, 0 ), 255, 255, 0, 32, 5.0 );
+		}
 	}
+#endif // _DEBUG
 
 	return BaseClass::DrawModel( flags );
 }
@@ -83,19 +61,23 @@ void C_TFAmmoPack::OnDataChanged( DataUpdateType_t updateType )
 {
 	BaseClass::OnDataChanged( updateType );
 
+#ifdef _DEBUG
 	// Debug!
 	if ( tf_debug_weapontrail.GetBool() )
 	{
 		Msg( "AbsOrigin (%f %f %f), LocalOrigin(%f %f %f)\n", GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z, GetLocalOrigin().x, GetLocalOrigin().y, GetLocalOrigin().z );
 	}
+#endif // _DEBUG
 
 	if ( updateType == DATA_UPDATE_CREATED )
 	{ 
+#ifdef _DEBUG
 		// Debug!
 		if ( tf_debug_weapontrail.GetBool() )
 		{
 			Msg( "Origin (%f %f %f)\n", GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z );
 		}
+#endif // _DEBUG
 
 		float flChangeTime = GetLastChangeTime( LATCH_SIMULATION_VAR );
 		Vector vecCurOrigin = GetLocalOrigin();
@@ -104,7 +86,35 @@ void C_TFAmmoPack::OnDataChanged( DataUpdateType_t updateType )
 		CInterpolatedVar< Vector > &interpolator = GetOriginInterpolator();
 		interpolator.ClearHistory();
 		interpolator.AddToHead( flChangeTime - 0.15f, &vecCurOrigin, false );
+
+		m_nWorldModelIndex = m_nModelIndex;
 	}
+}
+
+int C_TFAmmoPack::GetWorldModelIndex( void )
+{
+	if ( m_nWorldModelIndex == 0 )
+		return m_nModelIndex;
+
+	if ( GameRules() )
+	{
+		const char *pBaseName = modelinfo->GetModelName( modelinfo->GetModel( m_nWorldModelIndex ) );
+		const char *pTranslatedName = GameRules()->TranslateEffectForVisionFilter( "weapons", pBaseName );
+
+		if ( pTranslatedName != pBaseName )
+		{
+			return modelinfo->GetModelIndex( pTranslatedName );
+		}
+	}
+
+	return m_nWorldModelIndex;
+}
+
+void C_TFAmmoPack::ValidateModelIndex( void )
+{
+	m_nModelIndex = GetWorldModelIndex();
+
+	BaseClass::ValidateModelIndex();
 }
 
 //-----------------------------------------------------------------------------
@@ -132,28 +142,4 @@ void C_TFAmmoPack::DisplayHintTo( C_BasePlayer *pPlayer )
 	{
 		pTFPlayer->HintMessage( HINT_PICKUP_AMMO );
 	}
-}
-
-CStudioHdr * C_TFAmmoPack::OnNewModel( void )
-{
-	CStudioHdr *hdr = BaseClass::OnNewModel();
-
-	if ( !strcmp( hdr->GetRenderHdr()->name, "weapons\\w_models\\w_flamethrower.mdl" ) )
-	{
-		// Create the looping pilot light sound
-		const char *pilotlightsound = "Weapon_FlameThrower.PilotLoop";
-		CLocalPlayerFilter filter;
-
-		CSoundEnvelopeController &controller = CSoundEnvelopeController::GetController();
-		m_pPilotLightSound = controller.SoundCreate( filter, entindex(), pilotlightsound );
-
-		controller.Play( m_pPilotLightSound, 1.0, 100 );
-	}
-	else
-	{
-		CSoundEnvelopeController::GetController().SoundDestroy( m_pPilotLightSound );
-		m_pPilotLightSound = NULL;
-	}
-
-	return hdr;
 }

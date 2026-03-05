@@ -25,14 +25,14 @@
 void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
 #endif
 
-#define TF_WEAPON_HUNTERRIFLE_CHARGE_PER_SEC	600.0
-#define TF_WEAPON_HUNTERRIFLE_UNCHARGE_PER_SEC	20.0
-#define	TF_WEAPON_HUNTERRIFLE_DAMAGE			60
+#define TF_WEAPON_HUNTERRIFLE_CHARGE_PER_SEC	600.0f
+#define TF_WEAPON_HUNTERRIFLE_UNCHARGE_PER_SEC	20.0f
+#define	TF_WEAPON_HUNTERRIFLE_DAMAGE			60.0f
 #define TF_WEAPON_HUNTERRIFLE_RELOAD_TIME		1.0f
 #define TF_WEAPON_HUNTERRIFLE_ZOOM_TIME			0.3f
 #define TF_WEAPON_HUNTERRIFLE_SHOOT_TIME		0.15f
-#define TF_WEAPON_HUNTERRIFLE_SPREAD_MIN		0
-#define TF_WEAPON_HUNTERRIFLE_SPREAD_MAX		300
+#define TF_WEAPON_HUNTERRIFLE_SPREAD_MIN		0.0f
+#define TF_WEAPON_HUNTERRIFLE_SPREAD_MAX		300.0f
 #define TF_WEAPON_HUNTERRIFLE_NO_CRIT_AFTER_ZOOM_TIME	0.2f
 
 
@@ -351,7 +351,7 @@ void CTFHunterRifle::Zoom( void )
 	ToggleZoom();
 
 	// at least 0.1 seconds from now, but don't stomp a previous value
-	m_flNextPrimaryAttack = max( m_flNextPrimaryAttack, gpGlobals->curtime + 0.1 );
+	m_flNextPrimaryAttack = max( m_flNextPrimaryAttack.Get(), gpGlobals->curtime + 0.1f );
 	m_flNextSecondaryAttack = gpGlobals->curtime + TF_WEAPON_HUNTERRIFLE_ZOOM_TIME;
 }
 

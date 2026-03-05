@@ -1,16 +1,11 @@
-#ifndef DEPTHWRITE_PS20B_H
-#define DEPTHWRITE_PS20B_H
-
-#include "shaderapi/ishaderapi.h"
-#include "shaderapi/ishadershadow.h"
-#include "materialsystem/imaterialvar.h"
-
+#include "shaderlib/cshader.h"
 class depthwrite_ps20b_Static_Index
 {
-	unsigned int m_nCOLOR_DEPTH : 2;
+private:
+	int m_nCOLOR_DEPTH;
 #ifdef _DEBUG
-	bool m_bCOLOR_DEPTH : 1;
-#endif	// _DEBUG
+	bool m_bCOLOR_DEPTH;
+#endif
 public:
 	void SetCOLOR_DEPTH( int i )
 	{
@@ -18,33 +13,42 @@ public:
 		m_nCOLOR_DEPTH = i;
 #ifdef _DEBUG
 		m_bCOLOR_DEPTH = true;
-#endif	// _DEBUG
+#endif
 	}
-
-	depthwrite_ps20b_Static_Index( IShaderShadow* pShaderShadow, IMaterialVar** params )
+	void SetCOLOR_DEPTH( bool i )
 	{
-		m_nCOLOR_DEPTH = 0;
+		m_nCOLOR_DEPTH = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bCOLOR_DEPTH = true;
+#endif
+	}
+public:
+	depthwrite_ps20b_Static_Index( )
+	{
 #ifdef _DEBUG
 		m_bCOLOR_DEPTH = false;
-#endif	// _DEBUG
+#endif // _DEBUG
+		m_nCOLOR_DEPTH = 0;
 	}
-
-	int GetIndex() const
+	int GetIndex()
 	{
-		Assert( m_bCOLOR_DEPTH );
+		// Asserts to make sure that we aren't using any skipped combinations.
+		// Asserts to make sure that we are setting all of the combination vars.
+#ifdef _DEBUG
+		bool bAllStaticVarsDefined = m_bCOLOR_DEPTH;
+		Assert( bAllStaticVarsDefined );
+#endif // _DEBUG
 		return ( 2 * m_nCOLOR_DEPTH ) + 0;
 	}
 };
-
-#define shaderStaticTest_depthwrite_ps20b psh_forgot_to_set_static_COLOR_DEPTH
-
-
+#define shaderStaticTest_depthwrite_ps20b psh_forgot_to_set_static_COLOR_DEPTH + 0
 class depthwrite_ps20b_Dynamic_Index
 {
-	unsigned int m_nALPHACLIP : 2;
+private:
+	int m_nALPHACLIP;
 #ifdef _DEBUG
-	bool m_bALPHACLIP : 1;
-#endif	// _DEBUG
+	bool m_bALPHACLIP;
+#endif
 public:
 	void SetALPHACLIP( int i )
 	{
@@ -52,25 +56,32 @@ public:
 		m_nALPHACLIP = i;
 #ifdef _DEBUG
 		m_bALPHACLIP = true;
-#endif	// _DEBUG
+#endif
 	}
-
-	depthwrite_ps20b_Dynamic_Index( IShaderDynamicAPI* pShaderAPI )
+	void SetALPHACLIP( bool i )
 	{
-		m_nALPHACLIP = 0;
+		m_nALPHACLIP = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bALPHACLIP = true;
+#endif
+	}
+public:
+	depthwrite_ps20b_Dynamic_Index()
+	{
 #ifdef _DEBUG
 		m_bALPHACLIP = false;
-#endif	// _DEBUG
+#endif // _DEBUG
+		m_nALPHACLIP = 0;
 	}
-
-	int GetIndex() const
+	int GetIndex()
 	{
-		Assert( m_bALPHACLIP );
+		// Asserts to make sure that we aren't using any skipped combinations.
+		// Asserts to make sure that we are setting all of the combination vars.
+#ifdef _DEBUG
+		bool bAllDynamicVarsDefined = m_bALPHACLIP;
+		Assert( bAllDynamicVarsDefined );
+#endif // _DEBUG
 		return ( 1 * m_nALPHACLIP ) + 0;
 	}
 };
-
-#define shaderDynamicTest_depthwrite_ps20b psh_forgot_to_set_dynamic_ALPHACLIP
-
-
-#endif	// DEPTHWRITE_PS20B_H
+#define shaderDynamicTest_depthwrite_ps20b psh_forgot_to_set_dynamic_ALPHACLIP + 0

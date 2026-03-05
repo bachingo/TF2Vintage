@@ -1,515 +1,408 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// TF Rocket Launcher
+// TF Flame Thrower
 //
 //=============================================================================
 #include "cbase.h"
 #include "tf_weapon_dragons_fury.h"
 #include "tf_fx_shared.h"
-#include "tf_weaponbase_rocket.h"
-#include "tf_projectile_dragons_fury.h"
-// Client specific.
-#ifdef CLIENT_DLL
-#include "c_tf_player.h"
-#include "tf_viewmodel.h"
-#include "c_tf_viewmodeladdon.h"
-// Server specific.
-#else
-#include "tf_player.h"
-#include "soundent.h"
+#include "in_buttons.h"
+#include "ammodef.h"
 #include "tf_gamerules.h"
-#include "tf_gamestats.h"
-#include "ilagcompensationmanager.h"
-#include "props.h"
-#endif
-
-
-#ifdef GAME_DLL
-ConVar  tf_fireball_airblast_recharge_penalty("tf_fireball_airblast_recharge_penalty", "0", FCVAR_CHEAT | FCVAR_REPLICATED, "" );
-ConVar  tf_fireball_hit_recharge_boost("tf_fireball_hit_recharge_boost", "1", FCVAR_CHEAT | FCVAR_REPLICATED, "" );
-#endif
-
-#define TF_FLAMEBALL_AMMO_PER_SECONDARY_ATTACK 4
-
-//CREATE_SIMPLE_WEAPON_TABLE( TFWeaponFlameBall, tf_weapon_rocketlauncher_fireball ) // DRAGON'S FURY
-IMPLEMENT_NETWORKCLASS_ALIASED( TFWeaponFlameBall, DT_WeaponFlameBall )
-
-BEGIN_NETWORK_TABLE( CTFWeaponFlameBall, DT_WeaponFlameBall )
-#if !defined( CLIENT_DLL )
-	SendPropTime( SENDINFO( m_flRechargeScale ) ),
-#else
-	RecvPropTime( RECVINFO( m_flRechargeScale ) ),
-#endif
-END_NETWORK_TABLE()
+#include "tf_weapon_rocketpack.h"
+#include "soundenvelope.h"
 
 #if defined( CLIENT_DLL )
-BEGIN_PREDICTION_DATA( CTFWeaponFlameBall )
-	DEFINE_PRED_FIELD_TOL( m_flRechargeScale, FIELD_FLOAT, FTYPEDESC_INSENDTABLE, TD_MSECTOLERANCE ),	
-END_PREDICTION_DATA()
+	#include "c_tf_gamestats.h"
+	#include "prediction.h"
+#else
+	#include "tf_gamestats.h"
+	#include "ilagcompensationmanager.h"
 #endif
 
-LINK_ENTITY_TO_CLASS( tf_weapon_rocketlauncher_fireball, CTFWeaponFlameBall );
-PRECACHE_WEAPON_REGISTER( tf_weapon_rocketlauncher_fireball );
-
-BEGIN_DATADESC(CTFWeaponFlameBall)
-DEFINE_FIELD(m_flRechargeScale, FIELD_TIME),
-END_DATADESC()
+extern ConVar tf_flamethrower_burstammo;
 
 extern ConVar tf2v_airblast;
-extern ConVar tf2v_debug_airblast;
-extern ConVar tf2v_use_extinguish_heal;
-extern ConVar tf2v_airblast_players;
 
 
 //=============================================================================
 //
-// Weapon Dragon's Fury i guess?
-//
+// FLAMEBALL BEGIN
+IMPLEMENT_NETWORKCLASS_ALIASED( TFWeaponFlameBall, DT_WeaponFlameBall )
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Input  :  - 
-//-----------------------------------------------------------------------------
+BEGIN_NETWORK_TABLE( CTFWeaponFlameBall, DT_WeaponFlameBall )
+#ifdef CLIENT_DLL
+	RecvPropFloat( RECVINFO( m_flRechargeScale ) ),
+#else
+	SendPropFloat( SENDINFO( m_flRechargeScale ) ),
+#endif
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFWeaponFlameBall )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tf_weapon_rocketlauncher_fireball, CTFWeaponFlameBall );
+PRECACHE_WEAPON_REGISTER( tf_weapon_rocketlauncher_fireball );
+
+// Server specific.
+#ifndef CLIENT_DLL
+BEGIN_DATADESC( CTFWeaponFlameBall )
+END_DATADESC()
+#endif
+// FLAMEBALL END
+
+#include "tf_flame.h"
+
+#define DRAGONS_FURY_NEEDLE_POSEPARAM "charge_level"
+#define DRAGONS_FURY_BARREL_RECOIL "reload"
+
+ConVar tf_fireball_airblast_recharge_penalty( "tf_fireball_airblast_recharge_penalty", "0.5", FCVAR_REPLICATED | FCVAR_CHEAT );
+ConVar tf_fireball_hit_recharge_boost( "tf_fireball_hit_recharge_boost", "1.5", FCVAR_REPLICATED | FCVAR_CHEAT );
+
 CTFWeaponFlameBall::CTFWeaponFlameBall()
 {
+	m_flRechargeScale = 1.f;
+	
+#ifdef GAME_DLL
+	m_pSndPressure = NULL;
+#endif
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Input  :  - 
-//-----------------------------------------------------------------------------
-CTFWeaponFlameBall::~CTFWeaponFlameBall()
-{
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFWeaponFlameBall::Precache( void )
+#ifndef CLIENT_DLL
+void CTFWeaponFlameBall::Precache()
 {
 	BaseClass::Precache();
-	PrecacheParticleSystem( "pyro_blast" );
-	PrecacheScriptSound( "Weapon_FlameThrower.AirBurstAttack" );
-	PrecacheScriptSound( "TFPlayer.AirBlastImpact" );
-	PrecacheScriptSound( "TFPlayer.FlameOut" );
-	PrecacheScriptSound( "Weapon_FlameThrower.AirBurstAttackDeflect" );
 	PrecacheScriptSound( "Weapon_DragonsFury.Single" );
 	PrecacheScriptSound( "Weapon_DragonsFury.SingleCrit" );
+	PrecacheScriptSound( "Weapon_DragonsFury.BonusDamage" );
+	PrecacheScriptSound( "Weapon_DragonsFury.BonusDamagePain" );
+	PrecacheScriptSound( "Weapon_DragonsFury.BonusDamageHit" );
 	PrecacheScriptSound( "Weapon_DragonsFury.PressureBuild" );
 	PrecacheScriptSound( "Weapon_DragonsFury.PressureBuildStop" );
-	PrecacheParticleSystem( "deflect_fx" );
 }
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFWeaponFlameBall::Spawn( void )
-{
-	BaseClass::Spawn();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-CBaseEntity *CTFWeaponFlameBall::FireProjectile( CTFPlayer *pPlayer )
-{
-	if ( IsCurrentAttackACrit() )
-	{
-		EmitSound( "Weapon_DragonsFury.SingleCrit" );
-	}
-	else
-	{
-		EmitSound( "Weapon_DragonsFury.Single" );
-	}
-
-	// Server only - create the fireball.
-#ifdef GAME_DLL
-	Vector vecSrc;
-	QAngle angForward;
-	Vector vecOffset( -23.5f, 10.0f, -23.5f );
-	if ( pPlayer->GetFlags() & FL_DUCKING )
-	{
-		vecOffset.z = 12.5f;
-	}
-
-	GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false, false );
-		
-	CTFProjectile_BallOfFire *pProjectile = CTFProjectile_BallOfFire::Create( this, vecSrc, angForward, pPlayer, pPlayer );
-	if ( pProjectile )
-	{
-		pProjectile->SetCritical( IsCurrentAttackACrit() );
-		pProjectile->SetDamage( GetProjectileDamage() );
-	}
-
 #endif
 
-	pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
-	
-	RemoveAmmo( pPlayer );
-
-	DoFireEffects();
-
-	UpdatePunchAngles( pPlayer );
-
-#ifdef GAME_DLL
-	return pProjectile;
-#endif
-	return NULL;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFWeaponFlameBall::ItemPostFrame( void )
+void CTFWeaponFlameBall::PrimaryAttack( void )
 {
-	CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
-	if ( !pOwner )
+	// Get the player owning the weapon.
+	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
+	if ( !pPlayer )
 		return;
 
-	BaseClass::ItemPostFrame();
-}
+	// Must have full-pressure (primary meter) to fire.
+	if ( !HasFullCharge() )
+		return;
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFWeaponFlameBall::DefaultReload( int iClipSize1, int iClipSize2, int iActivity )
-{
-	return BaseClass::DefaultReload( iClipSize1, iClipSize2, iActivity );
-}
+	int iAmmo = pPlayer->GetAmmoCount( m_iPrimaryAmmoType );
+	if ( iAmmo == 0 )
+		return;
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFWeaponFlameBall::PrimaryAttack()
-{
-	m_bReloadedThroughAnimEvent = false;
+	if ( !CanAttack() )
+		return;
 
-	BaseClass::PrimaryAttack();
+#ifndef CLIENT_DLL
+	if ( pPlayer->m_Shared.IsStealthed() && ShouldRemoveInvisibilityOnPrimaryAttack() )
+	{
+		pPlayer->RemoveInvisibility();
+	}
+	CTF_GameStats.Event_PlayerFiredWeapon( pPlayer, IsCurrentAttackACrit() );
+
+	lagcompensation->StartLagCompensation( pPlayer, pPlayer->GetCurrentCommand() );
+#else
+	C_CTF_GameStats.Event_PlayerFiredWeapon( pPlayer, IsCurrentAttackACrit() );
+#endif
+
+	SendWeaponAnim( ACT_VM_PRIMARYATTACK );
+
+	pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
+
+	CBaseEntity* pProj = FireProjectile( pPlayer );
+	ModifyProjectile( pProj );
+
+	if ( ShouldRemoveDisguiseOnPrimaryAttack() )
+	{
+		pPlayer->RemoveDisguise();
+	}
+
+	pPlayer->m_Shared.OnAttack();
+	pPlayer->m_Shared.SetItemChargeMeter( LOADOUT_POSITION_PRIMARY, 0.f );
 
 #ifdef GAME_DLL
 	StartPressureSound();
+	lagcompensation->FinishLagCompensation( pPlayer );
 #endif
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFWeaponFlameBall::SecondaryAttack()
+CBaseEntity* CTFWeaponFlameBall::FireProjectile( CTFPlayer *pPlayer )
 {
-	if (tf2v_airblast.GetInt() != 1 && tf2v_airblast.GetInt() != 2)
+
+	// Update the player's punch angle.
+	QAngle angle = pPlayer->GetPunchAngle();
+	float flPunchAngle = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flPunchAngle;
+	angle.x -= flPunchAngle;
+	pPlayer->SetPunchAngle( angle );
+	m_flLastFireTime = gpGlobals->curtime;
+
+	RemoveProjectileAmmo( pPlayer );
+
+#ifdef GAME_DLL
+	Vector vecForward, vecRight, vecUp;
+	AngleVectors( pPlayer->EyeAngles(), &vecForward, &vecRight, &vecUp );
+
+	float fRight = 8.f;
+	if ( IsViewModelFlipped() )
+	{
+		fRight *= -1;
+	}
+	Vector vecSrc = pPlayer->Weapon_ShootPosition();
+	// Shoot from the right location
+	vecSrc = vecSrc + (vecUp * -9.0f) + (vecRight * 7.0f) + (vecForward * 3.0f);
+
+	QAngle angForward = pPlayer->EyeAngles();
+
+	trace_t trace;	
+	Vector vecEye = pPlayer->EyePosition();
+	CTraceFilterSimple traceFilter( this, COLLISION_GROUP_NONE );
+	UTIL_TraceHull( vecEye, vecSrc, -Vector(8,8,8), Vector(8,8,8), MASK_SOLID_BRUSHONLY, &traceFilter, &trace );
+
+	CTFProjectile_Rocket *pRocket = static_cast<CTFProjectile_Rocket*>( CBaseEntity::CreateNoSpawn( "tf_projectile_balloffire", vecSrc, angForward, pPlayer ) );
+	if ( pRocket )
+	{
+		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
+
+		DoFireEffects();
+
+		pRocket->SetOwnerEntity( pPlayer );
+		pRocket->SetLauncher( this ); 
+
+		Vector vForward;
+		AngleVectors( angForward, &vForward, NULL, NULL );
+
+		pRocket->SetAbsVelocity( vForward * 600 );
+
+		pRocket->SetDamage( 20 );
+		pRocket->ChangeTeam( pPlayer->GetTeamNumber() );
+		pRocket->SetCritical( pPlayer->m_Shared.IsCritBoosted() );
+
+		DispatchSpawn( pRocket );
+
+		EmitSound( pRocket->IsCritical() ? "Weapon_DragonsFury.SingleCrit" : "Weapon_DragonsFury.Single" );
+
+		return pRocket;
+	}
+
+#else
+	DoFireEffects();
+#endif
+
+	return NULL;
+}
+
+void CTFWeaponFlameBall::SecondaryAttack( void )
+{
+	// Dragon's Fury requires full-pressure (primary meter) to be able to fire
+	if ( !HasFullCharge() )
 		return;
 
-	int iNoAirblast = 0;
-	CALL_ATTRIB_HOOK_FLOAT( iNoAirblast, set_flamethrower_push_disabled );
-	if ( iNoAirblast )
-		return;
-
-	if (tf2v_airblast.GetInt() != 1 && tf2v_airblast.GetInt() != 2)
+	if ( !tf2v_airblast.GetBool() )
 		return;
 
 	// Get the player owning the weapon.
-	CTFPlayer *pOwner = ToTFPlayer(GetPlayerOwner());
-	if (!pOwner)
+	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
+	if ( !pPlayer )
 		return;
 
-	if (!CanAttack() )
-	{
-		return;
-	}
+	int iAmmo = pPlayer->GetAmmoCount( m_iPrimaryAmmoType );
 
-	SendWeaponAnim(ACT_VM_SECONDARYATTACK);
-	WeaponSound(WPN_DOUBLE);
-
-#ifdef GAME_DLL
-	// Let the player remember the usercmd he fired a weapon on. Assists in making decisions about lag compensation.
-	pOwner->NoteWeaponFired();
-
-	pOwner->SpeakWeaponFire();
-	CTF_GameStats.Event_PlayerFiredWeapon(pOwner, false);
-
-	// Move other players back to history positions based on local player's lag
-	lagcompensation->StartLagCompensation(pOwner, pOwner->GetCurrentCommand());
-
-	Vector vecDir;
-	QAngle angDir = pOwner->EyeAngles();
-	AngleVectors(angDir, &vecDir);
-
-	const Vector vecBlastSize = Vector(128, 128, 64);
-
-	// Picking max out of length, width, height for airblast distance.
-	float flBlastDist = Max(Max(vecBlastSize.x, vecBlastSize.y), vecBlastSize.z);
-
-	Vector vecOrigin = pOwner->Weapon_ShootPosition() + vecDir * flBlastDist;
-
-	CBaseEntity *pList[64];
-
-	int count = UTIL_EntitiesInBox(pList, 64, vecOrigin - vecBlastSize, vecOrigin + vecBlastSize, 0);
-
-	if (tf2v_debug_airblast.GetBool())
-	{
-		NDebugOverlay::Box(vecOrigin, -vecBlastSize, vecBlastSize, 0, 0, 255, 100, 2.0);
-	}
-
-	for (int i = 0; i < count; i++)
-	{
-		CBaseEntity *pEntity = pList[i];
-
-		if (!pEntity)
-			continue;
-
-		if (pEntity == pOwner)
-			continue;
-
-		if (!pEntity->IsDeflectable())
-			continue;
-
-		// Make sure we can actually see this entity so we don't hit anything through walls.
-		trace_t tr;
-		UTIL_TraceLine(pOwner->Weapon_ShootPosition(), pEntity->WorldSpaceCenter(), MASK_SOLID, this, COLLISION_GROUP_DEBRIS, &tr);
-		if (tr.fraction != 1.0f)
-			continue;
+	// charged airblast
+	int iChargedAirblast = 0;
+	CALL_ATTRIB_HOOK_INT( iChargedAirblast, set_charged_airblast );
+	float flMultAmmoPerShot = 1.0f;
+	CALL_ATTRIB_HOOK_FLOAT( flMultAmmoPerShot, mult_airblast_cost );
+	int iAmmoPerShot = tf_flamethrower_burstammo.GetInt() * flMultAmmoPerShot;
 
 
-		if (pEntity->IsPlayer() && pEntity->IsAlive())
-		{
-			CTFPlayer *pTFPlayer = ToTFPlayer(pEntity);
-
-			Vector vecPushDir;
-			QAngle angPushDir = angDir;
-
-			// assume that shooter is looking at least 45 degrees up.
-			if (tf2v_airblast.GetInt() > 0)
-				angPushDir[PITCH] = Min(-45.f, angPushDir[PITCH]);
-
-			AngleVectors(angPushDir, &vecPushDir);
-
-			DeflectPlayer(pTFPlayer, pOwner, vecPushDir);
-		}
-		else
-		{
-			// Deflect projectile to the point that we're aiming at, similar to rockets.
-			Vector vecPos = pEntity->GetAbsOrigin();
-			Vector vecDeflect;
-			GetProjectileReflectSetup(GetTFPlayerOwner(), vecPos, &vecDeflect, false);
-
-			DeflectEntity(pEntity, pOwner, vecDeflect);
-		}
-	}
-
-	lagcompensation->FinishLagCompensation(pOwner);
-#endif
-
-	float flAmmoPerSecondaryAttack = TF_FLAMEBALL_AMMO_PER_SECONDARY_ATTACK;
-	CALL_ATTRIB_HOOK_FLOAT(flAmmoPerSecondaryAttack, mult_airblast_cost);
-
-	if ( !BaseClass::IsEnergyWeapon() )
-		pOwner->RemoveAmmo( flAmmoPerSecondaryAttack, m_iPrimaryAmmoType );
-
-	// Don't allow firing immediately after airblasting.
-	m_flRechargeScale = m_flNextPrimaryAttack = m_flNextSecondaryAttack = gpGlobals->curtime + 0.75f;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-float CTFWeaponFlameBall::GetEffectBarProgress( void )
-{
-	return m_flRechargeScale / 0.8f;
-}
-
-#ifdef GAME_DLL
-void CTFWeaponFlameBall::StartPressureSound( void )
-{
-	EmitSound( "Weapon_DragonsFury.PressureBuild" );
-}
-
-void CTFWeaponFlameBall::OnResourceMeterFilled( void )
-{
-	EmitSound( "Weapon_DragonsFury.PressureBuildStop" );
-}
-
-void CTFWeaponFlameBall::DeflectEntity(CBaseEntity *pEntity, CTFPlayer *pAttacker, Vector &vecDir)
-{
-	if (!TFGameRules() || !CanAirBlastDeflectProjectile())
+	if ( iAmmo < iAmmoPerShot )
 		return;
 
-	if ((pEntity->GetTeamNumber() == pAttacker->GetTeamNumber()))
-		return;
-
-	pEntity->Deflected(pAttacker, vecDir);
-	pEntity->EmitSound("Weapon_FlameThrower.AirBurstAttackDeflect");
-}
-
-void CTFWeaponFlameBall::DeflectPlayer(CTFPlayer *pVictim, CTFPlayer *pAttacker, Vector &vecDir)
-{
-	if (!pVictim)
-		return;
-
-	if (!pVictim->InSameTeam(pAttacker) && CanAirBlastPushPlayers() && !pVictim->m_Shared.InCond(TF_COND_MEGAHEAL))
-	{
-		// Don't push players if they're too far off to the side. Ignore Z.
-		Vector vecVictimDir = pVictim->WorldSpaceCenter() - pAttacker->WorldSpaceCenter();
-
-		Vector vecVictimDir2D(vecVictimDir.x, vecVictimDir.y, 0.0f);
-		VectorNormalize(vecVictimDir2D);
-
-		Vector vecDir2D(vecDir.x, vecDir.y, 0.0f);
-		VectorNormalize(vecDir2D);
-
-		float flDot = DotProduct(vecDir2D, vecVictimDir2D);
-		if (flDot >= 0.8)
-		{
-			// Push enemy players.
-			pVictim->SetGroundEntity(NULL);
-
-			// Pushes players based on the airblast type chosen.
-			pVictim->EmitSound("TFPlayer.AirBlastImpact");
-			if (tf2v_airblast.GetInt() == 1)
-			{
-				pVictim->SetAbsVelocity(vecDir * 500);
-				pVictim->m_Shared.AddCond(TF_COND_NO_MOVE, 0.5f);
-			}
-			else if (tf2v_airblast.GetInt() == 2)
-			{
-				pVictim->ApplyAbsVelocityImpulse(vecDir * 750);
-				pVictim->m_Shared.AddCond(TF_COND_REDUCED_MOVE, 0.5f);
-			}
-			// Add pusher as recent damager we he can get a kill credit for pushing a player to his death.
-			pVictim->AddDamagerToHistory(pAttacker);
-		}
-	}
-	else if (pVictim->InSameTeam(pAttacker) && CanAirBlastPutOutTeammate())
-	{
-		if (pVictim->m_Shared.InCond(TF_COND_BURNING))
-		{
-			// Extinguish teammates.
-			pVictim->m_Shared.RemoveCond(TF_COND_BURNING);
-			if (pVictim->m_Shared.InCond(TF_COND_BURNING_PYRO))
-					pVictim->m_Shared.RemoveCond(TF_COND_BURNING_PYRO);
-			pVictim->EmitSound("TFPlayer.FlameOut");
-
-			// Bonus points.
-			IGameEvent *event_bonus = gameeventmanager->CreateEvent("player_bonuspoints");
-			if (event_bonus)
-			{
-				event_bonus->SetInt("player_entindex", pVictim->entindex());
-				event_bonus->SetInt("source_entindex", pAttacker->entindex());
-				event_bonus->SetInt("points", 1);
-
-				gameeventmanager->FireEvent(event_bonus);
-			}
-
-			CTF_GameStats.Event_PlayerAwardBonusPoints(pAttacker, pVictim, 1);
-
-			// If we got the convar turned on, heal us .
-			if (tf2v_use_extinguish_heal.GetBool())
-			{
-				int iHPtoHeal = 20;
-				int iHealthRestored = TakeHealth(iHPtoHeal, DMG_GENERIC);
-				if (iHealthRestored)
-				{
-					IGameEvent *event_healonhit = gameeventmanager->CreateEvent("player_healonhit");
-
-					if (event_healonhit)
-					{
-						event_healonhit->SetInt("amount", iHealthRestored);
-						event_healonhit->SetInt("entindex", pAttacker->entindex());
-
-						gameeventmanager->FireEvent(event_healonhit);
-					}
-				}
-
-			}
-
-
-		}
-	}
-}
-
-bool CTFWeaponFlameBall::CanAirBlast(void)
-{
-	if (!GetTFPlayerOwner())
-		return false;
-
-	if (tf2v_airblast.GetInt() == 0)
-		return false;
-
-	int iAirblastDisabled = 0;
-	CALL_ATTRIB_HOOK_INT(iAirblastDisabled, airblast_disabled);
-	return iAirblastDisabled == 0;
-}
-
-bool CTFWeaponFlameBall::CanAirBlastDeflectProjectile(void)
-{
-	if (!CanAirBlast())
-		return false;
-
-	int iDeflectProjDisabled = 0;
-	CALL_ATTRIB_HOOK_INT(iDeflectProjDisabled, airblast_deflect_projectiles_disabled);
-	return iDeflectProjDisabled == 0;
-}
-
-bool CTFWeaponFlameBall::CanAirBlastPushPlayers(void)
-{
-	if (!CanAirBlast())
-		return false;
-
-	if (!tf2v_airblast_players.GetBool())
-		return false;
-
-	int iPushForceDisabled = 0;
-	CALL_ATTRIB_HOOK_INT(iPushForceDisabled, airblast_pushback_disabled);
-	return iPushForceDisabled == 0;
-}
-
-bool CTFWeaponFlameBall::CanAirBlastPutOutTeammate(void)
-{
-	if (!CanAirBlast())
-		return false;
-
-	int iExtinguishDisabled = 0;
-	CALL_ATTRIB_HOOK_INT(iExtinguishDisabled, airblast_put_out_teammate_disabled);
-	return iExtinguishDisabled == 0;
-}
-
-#endif
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFWeaponFlameBall::GetProjectileFireSetup( CTFPlayer *pPlayer, Vector vecOffset, Vector *vecSrc, QAngle *angForward, bool bHitTeammates, bool bUseHitboxes )
-{
-	BaseClass::GetProjectileFireSetup( pPlayer, vecOffset, vecSrc, angForward, bHitTeammates, bUseHitboxes );
-}
+	BaseClass::SecondaryAttack();
 
 #ifdef CLIENT_DLL
+	if ( prediction->InPrediction() && prediction->IsFirstTimePredicted() )
+#endif
+	{
+		Assert( m_flRechargeScale == 1.f );
+	}
+	m_flRechargeScale = tf_fireball_airblast_recharge_penalty.GetFloat();
+	pPlayer->m_Shared.SetItemChargeMeter( LOADOUT_POSITION_PRIMARY, 0.f );
+#ifdef GAME_DLL
+	StartPressureSound();
+	CSoundEnvelopeController::GetController().SoundChangePitch( m_pSndPressure, 80, 0.3f );
+#endif
+}
+
+bool CTFWeaponFlameBall::HasFullCharge() const
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( !pOwner )
+		return false;
+
+	return pOwner->m_Shared.GetItemChargeMeter( LOADOUT_POSITION_PRIMARY) >= 100.f;
+}
+
+void CTFWeaponFlameBall::ItemPostFrame( void )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( !pOwner )
+		return;
+
+	bool bFired = false;
+
+	// Secondary attack has priority
+	if ( (pOwner->m_nButtons & IN_ATTACK2) && CanAttack() )
+	{
+		SecondaryAttack();
+		bFired = true;
+	}
+
+	if ( !bFired && (pOwner->m_nButtons & IN_ATTACK) && (m_flNextPrimaryAttack <= gpGlobals->curtime) )
+	{
+		if ( pOwner->GetWaterLevel() == 3 )
+		{
+			// This weapon doesn't fire underwater
+			WeaponSound(EMPTY);
+			m_flNextPrimaryAttack = gpGlobals->curtime + 0.2;
+			return;
+		}
+
+		PrimaryAttack();
+		bFired = true;
+	}
+
+	if ( !bFired && !ReloadOrSwitchWeapons() )
+	{
+		WeaponIdle();
+	}
+}
+
+void CTFWeaponFlameBall::OnResourceMeterFilled()
+{
+	m_flRechargeScale = 1.f;
+#ifdef GAME_DLL
+	StopPressureSound();
+	EmitSound( "Weapon_DragonsFury.PressureBuildStop" );
+#endif // GAME_DLL
+}
+
+float CTFWeaponFlameBall::GetMeterMultiplier() const
+{
+	return m_flRechargeScale;
+}
+
+#ifdef GAME_DLL
+
+void CTFWeaponFlameBall::RefundAmmo( int nAmmo )
+{
+	if ( HasFullCharge() )
+		return;
+
+	Assert( m_flRechargeScale == 1.f );
+	m_flRechargeScale = tf_fireball_hit_recharge_boost.GetFloat();
+
+	// When we get a successful refund, we want to pitch-up the repressurization sound
+	// so the user gets the idea that it's going faster (because it is)
+	if ( m_pSndPressure )
+	{
+		CSoundEnvelopeController::GetController().SoundChangePitch( m_pSndPressure, 120.f, 0.2f );
+	}
+}
+
+void CTFWeaponFlameBall::StartPressureSound()
+{
+	if ( m_pSndPressure )
+		StopPressureSound();
+
+	if ( !m_pSndPressure )
+	{
+		CPASAttenuationFilter filter( GetAbsOrigin() );
+		// Create the repressurization sound
+		CSoundEnvelopeController &controller = CSoundEnvelopeController::GetController();
+		m_pSndPressure = controller.SoundCreate( filter, entindex(), "Weapon_DragonsFury.PressureBuild" );
+
+		controller.Play( m_pSndPressure, 1.0, 100 );
+	}
+}
+
+void CTFWeaponFlameBall::StopPressureSound()
+{
+	if ( m_pSndPressure )
+	{
+		CSoundEnvelopeController::GetController().SoundDestroy( m_pSndPressure );
+		m_pSndPressure = NULL;
+	}
+}
+
+#else
+
 void CTFWeaponFlameBall::OnDataChanged( DataUpdateType_t updateType )
 {
 	BaseClass::OnDataChanged( updateType );
-	UpdatePoseParam();
+
+	UpdatePoseParams();
 }
 
-bool CTFWeaponFlameBall::Deploy( void )
+bool CTFWeaponFlameBall::ShouldDrawMeter() const
 {
-	if ( BaseClass::Deploy() )
+	// There's a meter on the gun, so don't draw the meter
+	return false;	
+}
+
+void CTFWeaponFlameBall::UpdatePoseParams()
+{
+	// Use the attachment if its there (1st person view)
+	CBaseAnimating* pModelEnt = m_hViewmodelAttachment ? m_hViewmodelAttachment : this;
+
+	if ( !pModelEnt || !pModelEnt->GetModelPtr() )
+		return;
+
+	// Get the param indices if we dont have them yet
+	if ( m_nNeedlePoseParam == -1 )
 	{
-		UpdatePoseParam();
-		return true;
+		m_nNeedlePoseParam = pModelEnt->LookupPoseParameter( pModelEnt->GetModelPtr(), DRAGONS_FURY_NEEDLE_POSEPARAM );
 	}
 
-	return false;
+	if ( m_nBarrelPoseParam == -1 )
+	{
+		m_nBarrelPoseParam = pModelEnt->LookupPoseParameter( pModelEnt->GetModelPtr(), DRAGONS_FURY_BARREL_RECOIL );
+	}
+
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( !pOwner )
+		return;
+
+	// Update the params based on the primary meter, which is what controls the refire rate
+	if ( m_nNeedlePoseParam != -1 )
+	{
+		pModelEnt->SetPoseParameter( m_nNeedlePoseParam, pOwner->m_Shared.GetItemChargeMeter( LOADOUT_POSITION_PRIMARY ) / 100.f );
+	}
+
+	if ( m_nBarrelPoseParam != -1 )
+	{
+		pModelEnt->SetPoseParameter( m_nBarrelPoseParam, 1.f - ( pOwner->m_Shared.GetItemChargeMeter( LOADOUT_POSITION_PRIMARY ) / 100.f ) );
+	}
+
 }
 
-void CTFWeaponFlameBall::UpdatePoseParam( void )
+void CTFWeaponFlameBall::GetPoseParameters( CStudioHdr *pStudioHdr, float poseParameter[MAXSTUDIOPOSEPARAM] )
 {
-	SetPoseParameter( "reload", m_flRechargeScale = m_flNextSecondaryAttack );
-	SetPoseParameter( "charge_level", m_flRechargeScale = m_flNextSecondaryAttack );
+	if ( !pStudioHdr )
+		return;
 
-	C_ViewmodelAttachmentModel *pAttachment = GetViewmodelAddon();
-	if ( pAttachment )
- 	{
-		pAttachment->SetPoseParameter( "reload", m_flRechargeScale = m_flNextSecondaryAttack );
-		pAttachment->SetPoseParameter( "charge_level", m_flRechargeScale = m_flNextSecondaryAttack );
-	}
+	UpdatePoseParams();
+
+	BaseClass::GetPoseParameters( pStudioHdr, poseParameter );
 }
+
 #endif
+
+

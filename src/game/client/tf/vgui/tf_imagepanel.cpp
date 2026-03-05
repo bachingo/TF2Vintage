@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2006, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -10,17 +10,14 @@
 #include <vgui/IScheme.h>
 #include <vgui/ISurface.h>
 #include <vgui/ISystem.h>
-#include <vgui/IScheme.h>
 #include <vgui_controls/AnimationController.h>
 #include <vgui_controls/EditablePanel.h>
-#include <vgui_controls/ImagePanel.h>
 #include <vgui/ISurface.h>
 #include <vgui/IImage.h>
 #include <vgui_controls/Label.h>
 
 #include "tf_imagepanel.h"
 #include "c_tf_player.h"
-#include "tf_gamerules.h"
 
 using namespace vgui;
 
@@ -29,7 +26,7 @@ DECLARE_BUILD_FACTORY( CTFImagePanel );
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CTFImagePanel::CTFImagePanel(Panel *parent, const char *name) : ScalableImagePanel(parent, name)
+CTFImagePanel::CTFImagePanel( Panel *parent, const char *name ) : ScalableImagePanel( parent, name )
 {
 	for ( int i = 0; i < TF_TEAM_COUNT; i++ )
 	{
@@ -45,12 +42,18 @@ CTFImagePanel::CTFImagePanel(Panel *parent, const char *name) : ScalableImagePan
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFImagePanel::ApplySettings(KeyValues *inResourceData)
+void CTFImagePanel::ApplySettings( KeyValues *inResourceData )
 {
 	for ( int i = 0; i < TF_TEAM_COUNT; i++ )
 	{
 		Q_strncpy( m_szTeamBG[i], inResourceData->GetString( VarArgs("teambg_%d", i), "" ), sizeof( m_szTeamBG[i] ) );
+
+		if ( m_szTeamBG[i] && m_szTeamBG[i][0] )
+		{
+			PrecacheMaterial( VarArgs( "vgui/%s", m_szTeamBG[i] ) );
+		}
 	}
+
 	BaseClass::ApplySettings( inResourceData );
 
 	UpdateBGImage();
@@ -59,7 +62,7 @@ void CTFImagePanel::ApplySettings(KeyValues *inResourceData)
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFImagePanel::UpdateBGImage(void)
+void CTFImagePanel::UpdateBGImage( void )
 {
 	if ( m_iBGTeam >= 0 && m_iBGTeam < TF_TEAM_COUNT )
 	{
@@ -73,21 +76,7 @@ void CTFImagePanel::UpdateBGImage(void)
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFImagePanel::SetBGImage( int iTeamNum )
-{
-	if (iTeamNum >= 0 && iTeamNum < TF_TEAM_COUNT)
-	{
-		if (m_szTeamBG[iTeamNum] && m_szTeamBG[iTeamNum][0])
-		{
-			SetImage(m_szTeamBG[iTeamNum]);
-		}
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFImagePanel::FireGameEvent(IGameEvent * event)
+void CTFImagePanel::FireGameEvent( IGameEvent * event )
 {
 	if ( FStrEq( "localplayer_changeteam", event->GetName() ) )
 	{
@@ -95,15 +84,4 @@ void CTFImagePanel::FireGameEvent(IGameEvent * event)
 		m_iBGTeam = pPlayer ? pPlayer->GetTeamNumber() : TEAM_UNASSIGNED;
 		UpdateBGImage();
 	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-Color CTFImagePanel::GetDrawColor(void)
-{
-	Color tempColor = GetFgColor();
-	tempColor[3] = GetAlpha();
-
-	return tempColor;
 }

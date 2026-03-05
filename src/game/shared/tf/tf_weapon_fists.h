@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -16,6 +16,13 @@
 #define CTFFists C_TFFists
 #endif
 
+enum fisttypes_t
+{
+	FISTTYPE_BASE = 0,
+	FISTTYPE_RADIAL_BUFF,
+	FISTTYPE_GRU,
+};
+
 //=============================================================================
 //
 // Fists weapon class.
@@ -31,17 +38,29 @@ public:
 	CTFFists() {}
 	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_FISTS; }
 
+	virtual void ItemPreFrame();
 	virtual void PrimaryAttack();
 	virtual void SecondaryAttack();
+	virtual bool Holster( CBaseCombatWeapon *pSwitchingTo );
 
 	virtual void SendPlayerAnimEvent( CTFPlayer *pPlayer );
 
 	virtual void DoViewModelAnimation( void );
 
-	virtual void SetWeaponVisible(bool visible);
-	virtual bool HideWhenStunned( void ) const				{ return false; }
+	virtual bool HideWhileStunned( void ) { return false; }
 
 	void Punch( void );
+
+#ifdef GAME_DLL
+	virtual void OnEntityHit( CBaseEntity *pEntity, CTakeDamageInfo *info );
+#endif
+
+	virtual bool AllowTaunts( void );
+
+	int			 GetFistType( void ) { int iMode = 0; CALL_ATTRIB_HOOK_INT( iMode, set_weapon_mode ); return iMode; };
+
+	virtual void SetWeaponVisible( bool visible ) OVERRIDE;
+	virtual bool Deploy( void );
 
 private:
 

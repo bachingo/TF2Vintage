@@ -84,11 +84,11 @@ public:
 // Purpose: Stores a node graph through which an AI may pathfind
 //-----------------------------------------------------------------------------
 
-class CAI_Network : public IPartitionEnumerator
+class CAI_Network final : public IPartitionEnumerator
 {
 public:
 	CAI_Network();
-	virtual ~CAI_Network();
+	~CAI_Network();
 
 	CAI_Node *		AddNode( const Vector &origin, float yaw );						// Returns a new node in the network
 	CAI_Link *		CreateLink( int srcID, int destID, CAI_DynamicLink *pDynamicLink = NULL );

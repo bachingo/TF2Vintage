@@ -1,4 +1,4 @@
-//======= Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: CTF Regenerate Zone.
 //
@@ -28,6 +28,7 @@ public:
 	void	Precache( void );
 	void	Activate( void );
 	void	Touch( CBaseEntity *pOther );
+	virtual void	EndTouch( CBaseEntity *pOther );
 
 	bool	IsDisabled( void );
 	void	SetDisabled( bool bDisabled );

@@ -702,11 +702,11 @@ float CFlexAnimationTrack::GetIntensityInternal( float time, int type )
 	// find samples that span the time
 	if ( !m_pEvent || !m_pEvent->HasEndTime() || time < m_pEvent->GetStartTime() )
 	{
-		retval = GetZeroValue( type, true );
+		retval = GetZeroValue( type, true );;
 	}
 	else if ( time > m_pEvent->GetEndTime() )
 	{
-		retval = GetZeroValue( type, false );
+		retval = GetZeroValue( type, false );;
 	}
 	else
 	{
@@ -1902,7 +1902,7 @@ float CCurveData::GetIntensityArea( ICurveDataAccessor *data, float time )
 
 void CCurveData::UpdateIntensityArea( ICurveDataAccessor *data )
 {
-	int rampCount = GetCount();
+	int rampCount = GetCount();;
 	if ( rampCount < 1 )
 	{
 		return;
@@ -4341,7 +4341,7 @@ bool CChoreoEvent::RestoreFromBuffer( CUtlBuffer& buf, CChoreoScene *pScene, ICh
 		char cctoken[ 256 ];
 		pStringPool->GetString( buf.GetShort(), cctoken, sizeof( cctoken ) );
 		SetCloseCaptionToken( cctoken );
-		int flags = buf.GetChar();
+		flags = buf.GetChar();
 		if ( flags & ( 1<<0 ) )
 		{
 			SetUsingCombinedFile( true );
@@ -4483,7 +4483,7 @@ bool CChoreoEvent::RestoreFlexAnimationsFromBuffer( CUtlBuffer& buf, IChoreoStri
 
 		if ( track->IsComboType() )
 		{
-			int s = buf.GetUnsignedShort();
+			s = buf.GetUnsignedShort();
 			for ( int j = 0; j < s; ++j )
 			{
 				float t, v;

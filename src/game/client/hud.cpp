@@ -241,7 +241,7 @@ CHudElement::CHudElement( const char *pElementName )
 	m_bIsParentedToClientDLLRootPanel = false;
 
 	// Make this for all hud elements, but when its a bit safer
-#if defined( TF_CLIENT_DLL ) || defined( DOD_DLL ) || defined( TF_VINTAGE_CLIENT )
+#if defined( TF_CLIENT_DLL ) || defined( DOD_DLL )
 	RegisterForRenderGroup( "global" );
 #endif
 }
@@ -429,6 +429,7 @@ void CHud::Init( void )
 				vgui::Panel *pPanel = dynamic_cast<vgui::Panel*>(element);
 				if ( !pPanel )
 				{
+					Assert( false );
 					Msg( "Non-vgui hud element %s\n", m_HudList[i]->GetName() );
 					continue;
 				}
@@ -436,6 +437,7 @@ void CHud::Init( void )
 				KeyValues *key = kv->FindKey( pPanel->GetName(), false );
 				if ( !key )
 				{
+					Assert( false );
 					Msg( "Hud element '%s' doesn't have an entry '%s' in scripts/HudLayout.res\n", m_HudList[i]->GetName(), pPanel->GetName() );
 				}
 
@@ -443,6 +445,7 @@ void CHud::Init( void )
 				if ( !element->IsParentedToClientDLLRootPanel() && 
 					 !pPanel->GetParent() )
 				{
+					Assert( false );
 					DevMsg( "Hud element '%s'/'%s' doesn't have a parent\n", m_HudList[i]->GetName(), pPanel->GetName() );
 				}
 			}
@@ -976,7 +979,7 @@ bool CHud::IsHidden( int iHudFlags )
 		return true;
 
 	// Hide all HUD elements during screenshot if the user's set hud_freezecamhide ( TF2 )
-#if defined( TF_CLIENT_DLL )  || defined( TF_VINTAGE_CLIENT )
+#if defined( TF_CLIENT_DLL )
 	extern bool IsTakingAFreezecamScreenshot();
 	extern ConVar hud_freezecamhide;
 
@@ -1016,11 +1019,11 @@ bool CHud::LockRenderGroup( int iGroupIndex, CHudElement *pLocker /* = NULL */ )
 	if ( !DoesRenderGroupExist(iGroupIndex) )
 		return false;
 
-	int i = m_RenderGroups.Find( iGroupIndex );
+	int iRenderGroup = m_RenderGroups.Find( iGroupIndex );
 
-	Assert( m_RenderGroups.IsValidIndex(i) );
+	Assert( m_RenderGroups.IsValidIndex( iRenderGroup ) );
 
-	CHudRenderGroup *group = m_RenderGroups.Element(i);
+	CHudRenderGroup *group = m_RenderGroups.Element( iRenderGroup );
 
 	Assert( group );
 
@@ -1065,11 +1068,11 @@ bool CHud::UnlockRenderGroup( int iGroupIndex, CHudElement *pLocker /* = NULL */
 	if ( !DoesRenderGroupExist(iGroupIndex) )
 		return false;
 
-	int i = m_RenderGroups.Find( iGroupIndex );
+	int iRenderGroup = m_RenderGroups.Find( iGroupIndex );
 
-	Assert( m_RenderGroups.IsValidIndex(i) );
+	Assert( m_RenderGroups.IsValidIndex( iRenderGroup ) );
 
-	CHudRenderGroup *group = m_RenderGroups.Element(i);
+	CHudRenderGroup *group = m_RenderGroups.Element( iRenderGroup );
 
 	if ( group )
 	{

@@ -13,12 +13,15 @@
 #include "tier1/utlhash.h"
 #include "tier1/utlbuffer.h"
 #include "tier1/fmtstr.h"
+#include "tier1/utlsymbol.h"
+#include "basehandle.h"
 
 #include "squirrel.h"
 #include "sqstdaux.h"
 #include "sqstdstring.h"
 #include "sqstdmath.h"
 #include "sqstdtime.h"
+#include "sqstdblob.h"
 #include "sqrdbg.h"
 #include "sqobject.h"
 #include "sqstate.h"
@@ -29,6 +32,7 @@
 #include "sqclass.h"
 #include "sqstring.h"
 #include "squtils.h"
+#include "sqarray.h"
 #ifdef _WIN32
 #include "sqdbgserver.h"
 #endif
@@ -41,6 +45,10 @@
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
+
+#ifdef RegisterClass
+#undef RegisterClass
+#endif
 
 // we don't want bad actors being malicious
 extern "C" 
@@ -56,25 +64,6 @@ extern "C"
 	}
 }
 
-const char *ScriptDataTypeToName( ScriptDataType_t datatype )
-{
-	switch ( datatype )
-	{
-		case FIELD_VOID:		return "void";
-		case FIELD_FLOAT:		return "float";
-		case FIELD_CSTRING:		return "string";
-		case FIELD_VECTOR:		return "Vector";
-		case FIELD_INTEGER:		return "int";
-		case FIELD_BOOLEAN:		return "bool";
-		case FIELD_CHARACTER:	return "char";
-		case FIELD_HSCRIPT:		return "handle";
-		case FIELD_VARIANT:		return "variant";
-		case FIELD_MATRIX3X4:	return "matrix3x4_t";
-		case FIELD_QUATERNION:	return "Quaternion";
-		default:				return "<unknown>";
-	}
-}
-
 static SQObjectPtr const _null_;
 
 typedef struct
@@ -83,6 +72,17 @@ typedef struct
 	void *m_pInstance;
 	SQObjectPtr m_instanceUniqueId;
 } ScriptInstance_t;
+
+class StackProtector
+{
+public:
+	StackProtector(HSQUIRRELVM v) : _v(v) { _top = sq_gettop( _v ); }
+	~StackProtector() { if ( _top != sq_gettop( _v ) ) { Assert( false ); sq_settop( _v, _top ); } }
+
+private:
+	SQInteger _top;
+	HSQUIRRELVM _v;
+};
 
 
 static SQObject const INVALID_HSQOBJECT = { (SQObjectType)-1, {(SQTable *)-1} };
@@ -121,7 +121,7 @@ public:
 	HSCRIPT				ReferenceScope( HSCRIPT hScope );
 	void				ReleaseScope( HSCRIPT hScript );
 
-	HSCRIPT				LookupFunction( const char *pszFunction, HSCRIPT hScope = NULL );
+	HSCRIPT				LookupFunction( const char *pszFunction, HSCRIPT hScope = NULL, bool bNoDelegation = false );
 	void				ReleaseFunction( HSCRIPT hScript );
 	ScriptStatus_t		ExecuteFunction( HSCRIPT hFunction, ScriptVariant_t *pArgs, int nArgs, ScriptVariant_t *pReturn, HSCRIPT hScope, bool bWait );
 
@@ -142,6 +142,7 @@ public:
 	bool				SetValue( HSCRIPT hScope, const char *pszKey, const ScriptVariant_t &value );
 	void				CreateTable( ScriptVariant_t &Table );
 	int					GetKeyValue( HSCRIPT hScope, int nIterator, ScriptVariant_t *pKey, ScriptVariant_t *pValue );
+	int					GetKeyValue2( HSCRIPT hScope, int nIterator, ScriptVariant_t *pKey, ScriptVariant_t *pValue );
 	bool				GetValue( HSCRIPT hScope, const char *pszKey, ScriptVariant_t *pValue );
 	void				ReleaseValue( ScriptVariant_t &value );
 	bool				ClearValue( HSCRIPT hScope, const char *pszKey );
@@ -162,6 +163,10 @@ public:
 	bool				RaiseException( const char *pszExceptionText );
 
 private:
+
+	CSquirrelMetamethodDelegateImpl *MakeSquirrelMetamethod_Get( HSCRIPT &hParentObject, const char *pszSlotName, ISquirrelMetamethodDelegate *pDelegate, bool bDeleteDelegateWhenIAmDeleted );
+	void DestroySquirrelMetamethod_Get( CSquirrelMetamethodDelegateImpl *pMetaMethodImpl );
+
 	HSQUIRRELVM GetVM( void )   { return m_hVM; }
 
 	static void					ConvertToVariant( HSQUIRRELVM pVM, SQObject const &pValue, ScriptVariant_t *pVariant );
@@ -198,6 +203,8 @@ private:
 	static SQInteger			TranslateCall( HSQUIRRELVM pVM );
 	static SQInteger			GetDeveloper( HSQUIRRELVM pVM );
 	static SQInteger			GetFunctionSignature( HSQUIRRELVM pVM );
+	static SQInteger			IsWeakRef( HSQUIRRELVM pVM );
+	static SQInteger			DumpObject( HSQUIRRELVM pVM );
 	static void					PrintFunc( HSQUIRRELVM, const SQChar *, ... );
 	static void					ErrorFunc( HSQUIRRELVM, const SQChar *, ... );
 	static int					QueryContinue( HSQUIRRELVM );
@@ -211,6 +218,7 @@ private:
 
 	// A reference to our Vector type to compare to
 	HSQOBJECT m_VectorClass;
+	HSQOBJECT m_QAngleClass;
 	HSQOBJECT m_QuaternionClass;
 	HSQOBJECT m_MatrixClass;
 
@@ -228,6 +236,8 @@ private:
 	ScriptErrorFunc_t m_ErrorFunc;
 
 	static SQRegFunction s_ScriptClassDelegates[];
+
+	friend class CSquirrelMetamethodDelegateImpl;
 };
 
 inline CSquirrelVM *GetVScript( HSQUIRRELVM pVM )
@@ -259,6 +269,7 @@ CSquirrelVM::CSquirrelVM( void )
 bool CSquirrelVM::Init( void )
 {
 	m_hVM = sq_open( 1024 );
+	StackProtector sa( GetVM() );
 	
 	sq_setsharedforeignptr( GetVM(), this );
 	m_hVM->SetQuerySuspendFn( &CSquirrelVM::QueryContinue );
@@ -267,6 +278,14 @@ bool CSquirrelVM::Init( void )
 
 	if ( IsDebug() || developer.GetInt() )
 		sq_enabledebuginfo( GetVM(), SQTrue );
+
+	// Add Constants index for enum and constant registration
+	sq_pushconsttable( GetVM() );
+	sq_pushstring( GetVM(), "Constants", 9 );
+	sq_newtable( GetVM() );
+	sq_newslot( GetVM(), -3, SQFalse );
+	sq_pop( GetVM(), 1 );
+
 	{
 		// register libraries
 		sq_pushroottable( GetVM() );
@@ -274,6 +293,7 @@ bool CSquirrelVM::Init( void )
 		sqstd_register_stringlib( GetVM() );
 		sqstd_register_mathlib( GetVM() );
 		sqstd_register_timelib( GetVM() );
+		sqstd_register_bloblib( GetVM() );
 
 		sqstd_seterrorhandlers( GetVM() );
 
@@ -286,15 +306,25 @@ bool CSquirrelVM::Init( void )
 		sq_newclosure( GetVM(), &CSquirrelVM::GetFunctionSignature, 0 );
 		sq_setnativeclosurename( GetVM(), -1, "GetFunctionSignature" );
 		sq_createslot( GetVM(), -3 );
+		sq_pushstring( GetVM(), "IsWeakRef", -1 );
+		sq_newclosure( GetVM(), &CSquirrelVM::IsWeakRef, 0 );
+		sq_setnativeclosurename( GetVM(), -1, "IsWeakRef" );
+		sq_createslot( GetVM(), -3 );
+		sq_pushstring( GetVM(), "DumpObject", -1 );
+		sq_newclosure( GetVM(), &CSquirrelVM::DumpObject, 0 );
+		sq_setnativeclosurename( GetVM(), -1, "DumpObject" );
+		sq_createslot( GetVM(), -3 );
 
 		// pop off root table
 		sq_pop( GetVM(), 1 );
 	}
 
+	MathLib_Init( 2.2f, 2.2f, 0.0f, 2, false );
 	RegisterMathBindings( GetVM() );
 
 	// store a reference to our classes for instancing
 	m_VectorClass = LookupObject( "Vector" );
+	m_QAngleClass = LookupObject( "QAngle" );
 	m_QuaternionClass = LookupObject( "Quaternion" );
 	m_MatrixClass = LookupObject( "matrix3x4_t" );
 
@@ -393,7 +423,7 @@ HSCRIPT CSquirrelVM::CompileScript( const char *pszScript, const char *pszId )
 
 void CSquirrelVM::ReleaseScript( HSCRIPT hScript )
 {
-	if ( hScript )
+	if ( hScript && hScript != INVALID_HSCRIPT )
 	{
 		sq_release( GetVM(), (HSQOBJECT *)hScript );
 		delete (HSQOBJECT *)hScript;
@@ -462,7 +492,7 @@ HSCRIPT CSquirrelVM::ReferenceScope( HSCRIPT hScope )
 
 void CSquirrelVM::ReleaseScope( HSCRIPT hScript )
 {
-	if ( hScript )
+	if ( hScript && hScript != INVALID_HSCRIPT )
 	{
 		HSQOBJECT *pObject = (HSQOBJECT *)hScript;
 
@@ -484,7 +514,7 @@ void CSquirrelVM::ReleaseScope( HSCRIPT hScript )
 	}
 }
 
-HSCRIPT CSquirrelVM::LookupFunction( const char *pszFunction, HSCRIPT hScope )
+HSCRIPT CSquirrelVM::LookupFunction( const char *pszFunction, HSCRIPT hScope, bool bNoDelegation )
 {
 	HSQOBJECT pFunc = LookupObject( pszFunction, hScope );
 	// did we find it?
@@ -506,7 +536,7 @@ HSCRIPT CSquirrelVM::LookupFunction( const char *pszFunction, HSCRIPT hScope )
 
 void CSquirrelVM::ReleaseFunction( HSCRIPT hScript )
 {
-	if ( hScript )
+	if ( hScript && hScript != INVALID_HSCRIPT )
 	{
 		sq_release( GetVM(), (HSQOBJECT *)hScript );
 		delete (HSQOBJECT *)hScript;
@@ -545,12 +575,6 @@ ScriptStatus_t CSquirrelVM::ExecuteFunction( HSCRIPT hFunction, ScriptVariant_t 
 	// push the parent table to call from
 	if ( hScope )
 	{
-		if ( hScope == INVALID_HSCRIPT )
-		{
-			sq_pop( GetVM(), 1 );
-			return SCRIPT_ERROR;
-		}
-
 		HSQOBJECT &pTable = *(HSQOBJECT *)hScope;
 		if ( pTable == INVALID_HSQOBJECT || !sq_istable( pTable ) )
 		{
@@ -619,6 +643,8 @@ ScriptStatus_t CSquirrelVM::ExecuteFunction( HSCRIPT hFunction, ScriptVariant_t 
 
 void CSquirrelVM::RegisterFunction( ScriptFunctionBinding_t *pScriptFunction )
 {
+	StackProtector sa( GetVM() );
+
 	sq_pushroottable( GetVM() );
 
 	RegisterFunctionGuts( pScriptFunction );
@@ -628,6 +654,8 @@ void CSquirrelVM::RegisterFunction( ScriptFunctionBinding_t *pScriptFunction )
 
 bool CSquirrelVM::RegisterClass( ScriptClassDesc_t *pClassDesc )
 {
+	StackProtector sa( GetVM() );
+
 	UtlHashFastHandle_t hndl = m_ScriptClasses.Find( (intp)pClassDesc );
 	if ( hndl != m_ScriptClasses.InvalidHandle() )
 		return true;
@@ -692,42 +720,49 @@ void CSquirrelVM::RegisterEnum( ScriptEnumDesc_t *pEnumDesc )
 {
 	// register to the const table
 	sq_pushconsttable( GetVM() );
+	sq_pushstring( GetVM(), "Constants", 9 );
+
+	if ( SQ_FAILED( sq_get( GetVM(), -2 ) ) )
+	{
+		sq_pushstring( GetVM(), "Constants", 9 );
+		sq_newtable( GetVM() );
+		sq_newslot( GetVM(), -3, SQTrue );
+
+		sq_pushstring( GetVM(), "Constants", 9 );
+		Verify( SQ_SUCCEEDED( sq_get( GetVM(), -2 ) ) );
+	}
+
 	sq_pushstring( GetVM(), pEnumDesc->m_pszScriptName, -1 );
-
 	// Check if name is already taken
-	if ( SQ_SUCCEEDED( sq_get( GetVM(), -2 ) ) )
+	if ( SQ_FAILED( sq_get( GetVM(), -2 ) ) )
 	{
-		HSQOBJECT hObject = _null_;
-		sq_getstackobj( GetVM(), -1, &hObject );
-		if ( !sq_isnull( hObject ) )
+		// create a new table to hold the values
+		sq_pushstring( GetVM(), pEnumDesc->m_pszScriptName, -1 );
+		sq_newtableex( GetVM(), pEnumDesc->m_ConstantBindings.Count() );
+
+		FOR_EACH_VEC( pEnumDesc->m_ConstantBindings, i )
 		{
-			sq_pop( GetVM(), 2 );
-			return;
+			ScriptConstantBinding_t &constant = pEnumDesc->m_ConstantBindings[i];
+
+			sq_pushstring( GetVM(), constant.m_pszScriptName, -1 );
+			PushVariant( GetVM(), constant.m_data );
+			// add to table
+			sq_newslot( GetVM(), -3, SQFalse );
 		}
+
+		// add to consts
+		sq_newslot( GetVM(), -3, SQTrue );
 	}
 
-	// create a new table to hold the values
-	sq_newtable( GetVM() );
-	FOR_EACH_VEC( pEnumDesc->m_ConstantBindings, i )
-	{
-		ScriptConstantBinding_t &constant = pEnumDesc->m_ConstantBindings[i];
-
-		sq_pushstring( GetVM(), constant.m_pszScriptName, -1 );
-		PushVariant( GetVM(), constant.m_data );
-		// add to table
-		sq_newslot( GetVM(), -3, SQFalse );
-	}
-
-	// add to consts
-	sq_newslot( GetVM(), -3, SQTrue );
-	// pop off const table
-	sq_pop( GetVM(), 1 );
+	// pop off const tables
+	sq_pop( GetVM(), 2 );
 
 	RegisterDocumentation( pEnumDesc );
 }
 
 HSCRIPT CSquirrelVM::RegisterInstance( ScriptClassDesc_t *pDesc, void *pInstance )
 {
+	StackProtector sa( GetVM() );
 	if ( !RegisterClass( pDesc ) )
 		return NULL;
 
@@ -831,6 +866,7 @@ bool CSquirrelVM::ValueExists( HSCRIPT hScope, const char *pszKey )
 
 bool CSquirrelVM::SetValue( HSCRIPT hScope, const char *pszKey, const char *pszValue )
 {
+	StackProtector sa( GetVM() );
 	if ( hScope )
 	{
 		if ( hScope == INVALID_HSCRIPT )
@@ -858,6 +894,7 @@ bool CSquirrelVM::SetValue( HSCRIPT hScope, const char *pszKey, const char *pszV
 
 bool CSquirrelVM::SetValue( HSCRIPT hScope, const char *pszKey, const ScriptVariant_t &value )
 {
+	StackProtector sa( GetVM() );
 	if ( hScope )
 	{
 		if ( hScope == INVALID_HSCRIPT )
@@ -913,6 +950,8 @@ void CSquirrelVM::CreateTable( ScriptVariant_t &Table )
 
 int CSquirrelVM::GetKeyValue( HSCRIPT hScope, int nIterator, ScriptVariant_t *pKey, ScriptVariant_t *pValue )
 {
+	StackProtector sa( GetVM() );
+
 	HSQOBJECT pKeyObj, pValueObj;
 	if ( hScope )
 	{
@@ -949,7 +988,56 @@ int CSquirrelVM::GetKeyValue( HSCRIPT hScope, int nIterator, ScriptVariant_t *pK
 	ConvertToVariant( GetVM(), pValueObj, pValue );
 
 	// The next index is set by reference in sq_next, so retrieve it here
-	int nNexti = 0;
+	SQInteger nNexti = -1;
+	sq_getinteger( GetVM(), -1, &nNexti );
+
+	// Pop index and table
+	sq_pop( GetVM(), 2 );
+
+	return nNexti;
+}
+
+int CSquirrelVM::GetKeyValue2( HSCRIPT hScope, int nIterator, ScriptVariant_t *pKey, ScriptVariant_t *pValue )
+{
+	StackProtector sa( GetVM() );
+
+	HSQOBJECT pKeyObj, pValueObj;
+	if ( hScope )
+	{
+		if ( hScope == INVALID_HSCRIPT )
+			return -1;
+
+		HSQOBJECT &pTable = *(HSQOBJECT *)hScope;
+		if ( pTable == INVALID_HSQOBJECT || !sq_istable( pTable ) )
+			return -1;
+
+		sq_pushobject( GetVM(), pTable );
+	}
+	else
+	{
+		sq_pushroottable( GetVM() );
+	}
+
+	sq_pushinteger( GetVM(), nIterator );
+	if ( SQ_FAILED( sq_next( GetVM(), -2 ) ) )
+	{
+		sq_pop( GetVM(), 2 );
+		return -1;
+	}
+
+	sq_getstackobj( GetVM(), -2, &pKeyObj );
+	sq_getstackobj( GetVM(), -1, &pValueObj );
+	sq_addref( GetVM(), &pKeyObj );
+	sq_addref( GetVM(), &pValueObj );
+
+	// sq_next pushes 2 objects onto the stack, so pop them off too
+	sq_pop( GetVM(), 2 );
+
+	ConvertToVariant( GetVM(), pKeyObj, pKey );
+	ConvertToVariant( GetVM(), pValueObj, pValue );
+
+	// The next index is set by reference in sq_next, so retrieve it here
+	SQInteger nNexti = -1;
 	sq_getinteger( GetVM(), -1, &nNexti );
 
 	// Pop index and table
@@ -1100,13 +1188,115 @@ bool CSquirrelVM::RaiseException( const char *pszExceptionText )
 	return true;
 }
 
+class CSquirrelMetamethodDelegateImpl
+{
+public:
+	CSquirrelMetamethodDelegateImpl(CSquirrelVM *pVM, HSQOBJECT hParentObject, CUtlSymbol const &symSlotName, IScriptVM::ISquirrelMetamethodDelegate *pDelegate, bool bDeleteDelegateWhenIAmDeleted) : m_pVM(pVM), m_hParentObject(hParentObject), m_symSlotName(symSlotName), m_pDelegate(pDelegate), m_bDeleteDelegateWhenIAmDeleted(bDeleteDelegateWhenIAmDeleted)
+	{
+		sq_addref( m_pVM->GetVM(), &hParentObject);
+	}
+
+	~CSquirrelMetamethodDelegateImpl()
+	{
+		sq_pushobject( m_pVM->GetVM(), m_hParentObject );
+		sq_pushstring( m_pVM->GetVM(), m_symSlotName.String(), -1 );
+		if ( SQ_SUCCEEDED( sq_get( m_pVM->GetVM(), -2 ) ) )
+		{
+			sq_pushnull( m_pVM->GetVM() );
+			sq_setdelegate( m_pVM->GetVM(), -2 );
+		}
+		sq_poptop( m_pVM->GetVM() );
+		sq_pushstring( m_pVM->GetVM(), m_symSlotName.String(), -1 );
+		sq_pushnull( m_pVM->GetVM() );
+		sq_set( m_pVM->GetVM(), -3 );
+		sq_pop( m_pVM->GetVM(), 1 );
+
+		if ( m_bDeleteDelegateWhenIAmDeleted )
+		{
+			if ( m_pDelegate )
+				delete m_pDelegate;
+		}
+
+		sq_release( m_pVM->GetVM(), &m_hParentObject );
+	}
+
+	static SQInteger SqGetMetamethodThunk( HSQUIRRELVM pVM )
+	{
+		SQUserPointer p = NULL;
+		if ( SQ_FAILED( sq_getuserpointer( pVM, 3, &p ) ) )
+			return sq_throwerror( pVM, "Bad user pointer passed to a ISquirrelMetamethodDelegate _get()" );
+
+		const SQChar *s = NULL;
+		if ( SQ_FAILED( sq_getstring( pVM, 2, &s ) ) )
+			return sq_throwerror( pVM, "Bad key string passed to a ISquirrelMetamethodDelegate _get()" );
+
+		CSquirrelMetamethodDelegateImpl *pDelegate = (CSquirrelMetamethodDelegateImpl *)p;
+		if ( pVM != pDelegate->m_pVM->GetVM() )
+			return sq_throwerror( pVM, "key not found in _get()" );
+
+		ScriptVariant_t variant;
+		if ( !pDelegate->m_pVM->GetValue( (HSCRIPT)&pDelegate->m_hParentObject, s, &variant ) )
+			return sq_throwerror( pVM, "key not found in _get()" );
+
+		CSquirrelVM::PushVariant( pVM, variant );
+		return SQ_OK;
+	}
+
+private:
+	CSquirrelVM *m_pVM;
+	HSQOBJECT m_hParentObject;
+	CUtlSymbol m_symSlotName;
+	IScriptVM::ISquirrelMetamethodDelegate *m_pDelegate;
+	bool m_bDeleteDelegateWhenIAmDeleted;
+};
+
+CSquirrelMetamethodDelegateImpl *CSquirrelVM::MakeSquirrelMetamethod_Get( HSCRIPT &hParentObject, const char *pszSlotName, ISquirrelMetamethodDelegate *pDelegate, bool bDeleteDelegateWhenIAmDeleted )
+{
+	StackProtector sa( GetVM() );
+
+	sq_pushobject( GetVM(), *(HSQOBJECT *)hParentObject );
+	sq_pushstring( GetVM(), pszSlotName, -1 );
+	if ( SQ_FAILED( sq_get( GetVM(), -2 ) ) )
+		return nullptr;
+
+	CSquirrelMetamethodDelegateImpl *pMetamethodDelegate = new CSquirrelMetamethodDelegateImpl( this, *(HSQOBJECT *)hParentObject, pszSlotName, pDelegate, bDeleteDelegateWhenIAmDeleted );
+
+	sq_newtable( GetVM() );
+	sq_pushstring( GetVM(), "_get", -1 );
+	sq_pushuserpointer( GetVM(), pMetamethodDelegate );
+	sq_newclosure( GetVM(), &CSquirrelMetamethodDelegateImpl::SqGetMetamethodThunk, 1 );
+	if ( SQ_FAILED( sq_newslot( GetVM(), -3, SQFalse ) ) )
+	{
+		delete pMetamethodDelegate;
+		return nullptr;
+	}
+
+	sq_pushstring( GetVM(), "cppdelegate", -1 );
+	sq_pushuserpointer( GetVM(), pMetamethodDelegate );
+	if ( SQ_FAILED( sq_newslot( GetVM(), -3, SQFalse ) ) )
+	{
+		delete pMetamethodDelegate;
+		return nullptr;
+	}
+	sq_setdelegate( GetVM(), -2 );
+	sq_pop( GetVM(), 2 );
+
+	return pMetamethodDelegate;
+}
+
+void CSquirrelVM::DestroySquirrelMetamethod_Get( CSquirrelMetamethodDelegateImpl *pMetaMethodImpl )
+{
+	if ( pMetaMethodImpl )
+		delete pMetaMethodImpl;
+}
+
 void CSquirrelVM::ConvertToVariant( HSQUIRRELVM pVM, HSQOBJECT const &pValue, ScriptVariant_t *pVariant )
 {
 	switch ( sq_type( pValue ) )
 	{
 		case OT_INTEGER:
 		{
-			*pVariant = _integer( pValue );
+			*pVariant = (uint64)_integer( pValue );
 			break;
 		}
 		case OT_FLOAT:
@@ -1130,6 +1320,11 @@ void CSquirrelVM::ConvertToVariant( HSQUIRRELVM pVM, HSQOBJECT const &pValue, Sc
 
 			break;
 		}
+		case OT_EHANDLE:
+		{
+			*pVariant = _ehandle( pValue );
+			break;
+		}
 		case OT_NULL:
 		{
 			pVariant->m_type = FIELD_VOID;
@@ -1141,33 +1336,44 @@ void CSquirrelVM::ConvertToVariant( HSQUIRRELVM pVM, HSQOBJECT const &pValue, Sc
 
 			SQUserPointer pInstance = NULL;
 
-			SQRESULT nResult = sq_getinstanceup( pVM, -1, &pInstance, VECTOR_TYPE_TAG );
+			SQRESULT nResult = sq_getinstanceup( pVM, -1, &pInstance, VECTOR_TYPE_TAG, SQFalse );
 			if ( nResult == SQ_OK )
 			{
 				*pVariant = new Vector();
-				V_memcpy( (void *)pVariant->m_pVector, pInstance, sizeof( Vector ) );
+				V_memcpy( pVariant->m_pData, pInstance, sizeof( Vector ) );
 				pVariant->m_flags |= SV_FREE;
 
 				sq_pop( pVM, 1 );
 				break;
 			}
 
-			nResult = sq_getinstanceup( pVM, -1, &pInstance, QUATERNION_TYPE_TAG );
+			nResult = sq_getinstanceup( pVM, -1, &pInstance, QANGLE_TYPE_TAG, SQFalse );
+			if ( nResult == SQ_OK )
+			{
+				*pVariant = new QAngle();
+				V_memcpy( pVariant->m_pData, pInstance, sizeof( QAngle ) );
+				pVariant->m_flags |= SV_FREE;
+
+				sq_pop( pVM, 1 );
+				break;
+			}
+
+			nResult = sq_getinstanceup( pVM, -1, &pInstance, QUATERNION_TYPE_TAG, SQFalse );
 			if ( nResult == SQ_OK )
 			{
 				*pVariant = new Quaternion();
-				V_memcpy( (void *)pVariant->m_pQuat, pInstance, sizeof( Quaternion ) );
+				V_memcpy( pVariant->m_pData, pInstance, sizeof( Quaternion ) );
 				pVariant->m_flags |= SV_FREE;
 
 				sq_pop( pVM, 1 );
 				break;
 			}
 
-			nResult = sq_getinstanceup( pVM, -1, &pInstance, QUATERNION_TYPE_TAG );
+			nResult = sq_getinstanceup( pVM, -1, &pInstance, QUATERNION_TYPE_TAG, SQFalse );
 			if ( nResult == SQ_OK )
 			{
 				*pVariant = new matrix3x4_t();
-				V_memcpy( (void *)pVariant->m_pMatrix, pInstance, sizeof( matrix3x4_t ) );
+				V_memcpy( pVariant->m_pData, pInstance, sizeof( matrix3x4_t ) );
 				pVariant->m_flags |= SV_FREE;
 
 				sq_pop( pVM, 1 );
@@ -1211,14 +1417,19 @@ void CSquirrelVM::PushVariant( HSQUIRRELVM pVM, ScriptVariant_t const &Variant )
 		}
 		case FIELD_CHARACTER:
 		{
-			sq_pushstring( pVM, &Variant.m_char, 1 );
+			sq_pushinteger( pVM, Variant.m_char );
 			break;
 		}
 		case FIELD_CSTRING:
 		{
-			char const *szString = Variant.m_pszString ? Variant : "";
+			char const *szString = Variant.m_pszString ? Variant.m_pszString : "";
 			sq_pushstring( pVM, szString, V_strlen( szString ) );
 
+			break;
+		}
+		case FIELD_EHANDLE:
+		{
+			sq_pushehandle( pVM, CBaseHandle::UnsafeFromIndex(Variant.m_hEntity) );
 			break;
 		}
 		case FIELD_HSCRIPT:
@@ -1236,8 +1447,22 @@ void CSquirrelVM::PushVariant( HSQUIRRELVM pVM, ScriptVariant_t const &Variant )
 			sq_createinstance( pVM, -1 );
 
 			Vector *pVector = NULL;
-			sq_getinstanceup( pVM, -1, (SQUserPointer *)&pVector, NULL );
+			sq_getinstanceup( pVM, -1, (SQUserPointer *)&pVector, NULL, SQFalse );
 			V_memcpy( pVector, Variant.m_pVector, sizeof(Vector) );
+
+			// Remove the class object from stack so we are aligned
+			sq_remove( pVM, -2 );
+
+			break;
+		}
+		case FIELD_QANGLE:
+		{
+			sq_pushobject( pVM, GetVScript( pVM )->m_QAngleClass );
+			sq_createinstance( pVM, -1 );
+
+			QAngle *pAngle = NULL;
+			sq_getinstanceup( pVM, -1, (SQUserPointer *)&pAngle, NULL, SQFalse );
+			V_memcpy( pAngle, Variant.m_pData, sizeof(QAngle) );
 
 			// Remove the class object from stack so we are aligned
 			sq_remove( pVM, -2 );
@@ -1250,8 +1475,8 @@ void CSquirrelVM::PushVariant( HSQUIRRELVM pVM, ScriptVariant_t const &Variant )
 			sq_createinstance( pVM, -1 );
 
 			Quaternion *pQuat = NULL;
-			sq_getinstanceup( pVM, -1, (SQUserPointer *)&pQuat, NULL );
-			V_memcpy( pQuat, Variant.m_pQuat, sizeof(Quaternion) );
+			sq_getinstanceup( pVM, -1, (SQUserPointer *)&pQuat, NULL, SQFalse );
+			V_memcpy( pQuat, Variant.m_pData, sizeof(Quaternion) );
 
 			// Remove the class object from stack so we are aligned
 			sq_remove( pVM, -2 );
@@ -1264,8 +1489,8 @@ void CSquirrelVM::PushVariant( HSQUIRRELVM pVM, ScriptVariant_t const &Variant )
 			sq_createinstance( pVM, -1 );
 
 			matrix3x4_t *pMatrix = NULL;
-			sq_getinstanceup( pVM, -1, (SQUserPointer *)&pMatrix, NULL );
-			V_memcpy( pMatrix, Variant.m_pMatrix, sizeof(matrix3x4_t) );
+			sq_getinstanceup( pVM, -1, (SQUserPointer *)&pMatrix, NULL, SQFalse );
+			V_memcpy( pMatrix, Variant.m_pData, sizeof(matrix3x4_t) );
 
 			// Remove the class object from stack so we are aligned
 			sq_remove( pVM, -2 );
@@ -1296,11 +1521,23 @@ void CSquirrelVM::VariantToString( ScriptVariant_t const &Variant, char( &szValu
 		case FIELD_VECTOR:
 			V_snprintf( szValue, sizeof( szValue ), "Vector( %f, %f, %f )", Variant.m_pVector->x, Variant.m_pVector->y, Variant.m_pVector->z );
 			break;
+		case FIELD_QANGLE:
+			QAngle m_pAngle;
+			Variant.AssignTo( &m_pAngle );
+			V_snprintf( szValue, sizeof( szValue ), "QAngle( %f, %f, %f )", m_pAngle.x, m_pAngle.y, m_pAngle.z );
+			break;
 		case FIELD_QUATERNION:
-			V_snprintf( szValue, sizeof( szValue ), "Quaternion( %f, %f, %f, %f )", Variant.m_pQuat->x, Variant.m_pQuat->y, Variant.m_pQuat->z, Variant.m_pQuat->w );
+			Quaternion m_pQuat;
+			Variant.AssignTo( &m_pQuat );
+			V_snprintf( szValue, sizeof( szValue ), "Quaternion( %f, %f, %f, %f )", m_pQuat.x, m_pQuat.y, m_pQuat.z, m_pQuat.w );
 			break;
 		case FIELD_MATRIX3X4:
-			V_snprintf( szValue, sizeof( szValue ), "matrix3x4_t( %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f )", Variant.m_pMatrix->m_flMatVal[0][0], Variant.m_pMatrix->m_flMatVal[0][1], Variant.m_pMatrix->m_flMatVal[0][2], Variant.m_pMatrix->m_flMatVal[0][3], Variant.m_pMatrix->m_flMatVal[1][0], Variant.m_pMatrix->m_flMatVal[1][1], Variant.m_pMatrix->m_flMatVal[1][2], Variant.m_pMatrix->m_flMatVal[1][3], Variant.m_pMatrix->m_flMatVal[2][0], Variant.m_pMatrix->m_flMatVal[2][1], Variant.m_pMatrix->m_flMatVal[2][2], Variant.m_pMatrix->m_flMatVal[2][3] );
+			matrix3x4_t m_pMatrix;
+			Variant.AssignTo( &m_pMatrix );
+			V_snprintf( szValue, sizeof( szValue ), "matrix3x4_t( %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f )", 
+						m_pMatrix[0][0], m_pMatrix[0][1], m_pMatrix[0][2], m_pMatrix[0][3], 
+						m_pMatrix[1][0], m_pMatrix[1][1], m_pMatrix[1][2], m_pMatrix[1][3], 
+						m_pMatrix[2][0], m_pMatrix[2][1], m_pMatrix[2][2], m_pMatrix[2][3] );
 			break;
 		case FIELD_INTEGER:
 			V_snprintf( szValue, sizeof( szValue ), "%i", Variant.m_int );
@@ -1310,7 +1547,7 @@ void CSquirrelVM::VariantToString( ScriptVariant_t const &Variant, char( &szValu
 			break;
 		case FIELD_CHARACTER:
 			//char buf[2] = { value.m_char, 0 };
-			V_snprintf( szValue, sizeof( szValue ), "\"%c\"", Variant.m_char );
+			V_snprintf( szValue, sizeof( szValue ), "%c", Variant.m_char );
 			break;
 	}
 }
@@ -1382,6 +1619,7 @@ bool CSquirrelVM::CreateInstance( ScriptClassDesc_t *pClassDesc, ScriptInstance_
 
 void CSquirrelVM::RegisterFunctionGuts( ScriptFunctionBinding_t *pFunction, ScriptClassDesc_t *pClassDesc )
 {
+	StackProtector sa( GetVM() );
 	if ( pFunction->m_desc.m_Parameters.Count() > MAX_FUNCTION_PARAMS )
 	{
 		AssertMsg( 0, "Too many agruments provided for script function %s\n", pFunction->m_desc.m_pszFunction );
@@ -1397,10 +1635,6 @@ void CSquirrelVM::RegisterFunctionGuts( ScriptFunctionBinding_t *pFunction, Scri
 		switch ( pFunction->m_desc.m_Parameters[i] )
 		{
 			case FIELD_INTEGER:
-			{
-				*pCurrent++ = 'n';
-				break;
-			}
 			case FIELD_FLOAT:
 			{
 				*pCurrent++ = 'n';
@@ -1412,6 +1646,7 @@ void CSquirrelVM::RegisterFunctionGuts( ScriptFunctionBinding_t *pFunction, Scri
 				break;
 			}
 			case FIELD_VECTOR:
+			case FIELD_QANGLE:
 			case FIELD_QUATERNION:
 			case FIELD_MATRIX3X4:
 			{
@@ -1426,6 +1661,16 @@ void CSquirrelVM::RegisterFunctionGuts( ScriptFunctionBinding_t *pFunction, Scri
 			case FIELD_HSCRIPT:
 			{
 				*pCurrent++ = '.';
+				break;
+			}
+			case FIELD_VARIANT:
+			{
+				*pCurrent++ = 'V';
+				break;
+			}
+			case FIELD_EHANDLE:
+			{
+				*pCurrent++ = 'h';
 				break;
 			}
 			default:
@@ -1452,6 +1697,7 @@ void CSquirrelVM::RegisterFunctionGuts( ScriptFunctionBinding_t *pFunction, Scri
 
 void CSquirrelVM::RegisterDocumentation( ScriptFunctionBinding_t *pFunction, ScriptClassDesc_t *pClassDesc )
 {
+	StackProtector sa( GetVM() );
 	if ( pFunction->m_desc.m_pszDescription && *pFunction->m_desc.m_pszDescription == *SCRIPT_HIDE )
 		return;
 
@@ -1464,7 +1710,7 @@ void CSquirrelVM::RegisterDocumentation( ScriptFunctionBinding_t *pFunction, Scr
 	V_strcat_safe( szName, pFunction->m_desc.m_pszScriptName );
 
 	char szSignature[512]{};
-	V_strcat_safe( szSignature, ScriptDataTypeToName( pFunction->m_desc.m_ReturnType ) );
+	V_strcat_safe( szSignature, ScriptFieldTypeName( pFunction->m_desc.m_ReturnType ) );
 	V_strcat_safe( szSignature, " " );
 	V_strcat_safe( szSignature, szName );
 	V_strcat_safe( szSignature, "(" );
@@ -1473,7 +1719,7 @@ void CSquirrelVM::RegisterDocumentation( ScriptFunctionBinding_t *pFunction, Scr
 		if ( i != 0 )
 			V_strcat_safe( szSignature, ", " );
 
-		V_strcat_safe( szSignature, ScriptDataTypeToName( pFunction->m_desc.m_Parameters[i] ) );
+		V_strcat_safe( szSignature, ScriptFieldTypeName( pFunction->m_desc.m_Parameters[i] ) );
 	}
 	V_strcat_safe( szSignature, ")" );
 
@@ -1486,10 +1732,13 @@ void CSquirrelVM::RegisterDocumentation( ScriptFunctionBinding_t *pFunction, Scr
 	sq_pushstring( GetVM(), pFunction->m_desc.m_pszDescription, -1 );
 	// call the function and pop the parameters
 	sq_call( GetVM(), 4, SQFalse, SQ_CALL_RAISE_ERROR );
+	// pop off closure
+	sq_pop( GetVM(), 1 );
 }
 
 void CSquirrelVM::RegisterDocumentation( ScriptClassDesc_t *pClassDesc )
 {
+	StackProtector sa( GetVM() );
 	char szBaseClass[512] = "";
 	if ( pClassDesc->m_pBaseDesc )
 		V_strcpy_safe( szBaseClass, pClassDesc->m_pBaseDesc->m_pszScriptName );
@@ -1506,7 +1755,7 @@ void CSquirrelVM::RegisterDocumentation( ScriptClassDesc_t *pClassDesc )
 
 		char szMemberSignature[512];
 		V_sprintf_safe( szMemberSignature, "%s %s%s;", 
-						ScriptDataTypeToName( pClassDesc->m_MemberBindings[i].m_nMemberType ),
+						ScriptFieldTypeName( pClassDesc->m_MemberBindings[i].m_nMemberType ),
 						pClassDesc->m_MemberBindings[i].m_nMemberType == FIELD_HSCRIPT ? "@" : "",
 						pClassDesc->m_MemberBindings[i].m_pszScriptName );
 		sq_pushstring( GetVM(), szMemberSignature, -1 );
@@ -1536,10 +1785,13 @@ void CSquirrelVM::RegisterDocumentation( ScriptClassDesc_t *pClassDesc )
 	sq_pushobject( GetVM(), hTable );
 	sq_pushstring( GetVM(), pClassDesc->m_pszDescription, -1 );
 	sq_call( GetVM(), 5, SQFalse, SQ_CALL_RAISE_ERROR );
+
+	sq_pop( GetVM(), 1 );
 }
 
 void CSquirrelVM::RegisterDocumentation( ScriptHook_t *pHook, ScriptClassDesc_t *pClassDesc )
 {
+	StackProtector sa( GetVM() );
 	if ( pHook->m_func.m_desc.m_pszDescription && *pHook->m_func.m_desc.m_pszDescription == *SCRIPT_HIDE )
 		return;
 
@@ -1552,7 +1804,7 @@ void CSquirrelVM::RegisterDocumentation( ScriptHook_t *pHook, ScriptClassDesc_t 
 	V_strcat_safe( szName, pHook->m_func.m_desc.m_pszScriptName );
 
 	char szSignature[512] = "";
-	V_strcat_safe( szSignature, ScriptDataTypeToName( pHook->m_func.m_desc.m_ReturnType ) );
+	V_strcat_safe( szSignature, ScriptFieldTypeName( pHook->m_func.m_desc.m_ReturnType ) );
 	V_strcat_safe( szSignature, " " );
 	V_strcat_safe( szSignature, szName );
 	V_strcat_safe( szSignature, "(" );
@@ -1561,7 +1813,7 @@ void CSquirrelVM::RegisterDocumentation( ScriptHook_t *pHook, ScriptClassDesc_t 
 		if ( i != 0 )
 			V_strcat_safe( szSignature, ", " );
 
-		V_strcat_safe( szSignature, ScriptDataTypeToName( pHook->m_func.m_desc.m_Parameters[i] ) );
+		V_strcat_safe( szSignature, ScriptFieldTypeName( pHook->m_func.m_desc.m_Parameters[i] ) );
 	}
 	V_strcat_safe( szSignature, ")" );
 
@@ -1571,10 +1823,13 @@ void CSquirrelVM::RegisterDocumentation( ScriptHook_t *pHook, ScriptClassDesc_t 
 	sq_pushstring( GetVM(), szSignature, -1 );
 	sq_pushstring( GetVM(), pHook->m_func.m_desc.m_pszDescription, -1 );
 	sq_call( GetVM(), 4, SQFalse, SQ_CALL_RAISE_ERROR );
+	
+	sq_pop( GetVM(), 1 );
 }
 
 void CSquirrelVM::RegisterDocumentation( ScriptEnumDesc_t *pEnumDesc )
 {
+	StackProtector sa( GetVM() );
 	if ( pEnumDesc->m_pszDescription && *pEnumDesc->m_pszDescription == *SCRIPT_HIDE )
 		return;
 
@@ -1609,10 +1864,13 @@ void CSquirrelVM::RegisterDocumentation( ScriptEnumDesc_t *pEnumDesc )
 	sq_pushobject( GetVM(), hTable );
 	sq_pushstring( GetVM(), pEnumDesc->m_pszDescription, -1 );
 	sq_call( GetVM(), 4, SQFalse, SQ_CALL_RAISE_ERROR );
+	
+	sq_pop( GetVM(), 1 );
 }
 
 void CSquirrelVM::RegisterDocumentation( ScriptConstantBinding_t *pConstDesc )
 {
+	StackProtector sa( GetVM() );
 	if ( pConstDesc->m_pszDescription && pConstDesc->m_pszDescription[0] == SCRIPT_HIDE[0] )
 		return;
 
@@ -1622,14 +1880,18 @@ void CSquirrelVM::RegisterDocumentation( ScriptConstantBinding_t *pConstDesc )
 	sq_pushobject( GetVM(), LookupObject( "RegisterConstDocumentation", NULL, false ) );
 	sq_pushroottable( GetVM() );
 	sq_pushstring( GetVM(), pConstDesc->m_pszScriptName, -1 );
-	sq_pushstring( GetVM(), ScriptDataTypeToName( pConstDesc->m_data.m_type ), -1 );
+	sq_pushstring( GetVM(), ScriptFieldTypeName( pConstDesc->m_data.m_type ), -1 );
 	sq_pushstring( GetVM(), szValue, -1 );
 	sq_pushstring( GetVM(), pConstDesc->m_pszDescription, -1 );
 	sq_call( GetVM(), 5, SQFalse, SQ_CALL_RAISE_ERROR );
+	
+	sq_pop( GetVM(), 1 );
 }
 
 HSQOBJECT CSquirrelVM::LookupObject( char const *szName, HSCRIPT hScope, bool bRefCount )
 {
+	StackProtector sa( GetVM() );
+
 	HSQOBJECT pObject = _null_;
 	if ( hScope )
 	{
@@ -1719,6 +1981,54 @@ SQInteger CSquirrelVM::GetFunctionSignature( HSQUIRRELVM pVM )
 	return 1;
 }
 
+SQInteger CSquirrelVM::IsWeakRef( HSQUIRRELVM pVM )
+{
+	int nTop = sq_gettop( pVM );
+	if ( nTop != 3 )
+		return 0;
+
+	HSQOBJECT pObject;
+	sq_resetobject( &pObject );
+	sq_getstackobj( pVM, 2, &pObject );
+
+	HSQOBJECT pKey;
+	sq_resetobject( &pKey );
+	sq_getstackobj( pVM, 3, &pKey );
+
+	SQObjectPtr ref;
+	if ( sq_type( pObject ) == OT_TABLE )
+	{
+		_table( pObject )->GetIncludingWeakref( pKey, ref );
+	}
+	else if ( sq_type( pObject ) == OT_ARRAY && sq_type( pKey ) == OT_INTEGER )
+	{
+		_array( pObject )->Get( _integer( pKey ), ref );
+	}
+
+	sq_pushbool( pVM, sq_type( ref ) == OT_WEAKREF );
+	return 1;
+}
+
+SQInteger CSquirrelVM::DumpObject( HSQUIRRELVM pVM )
+{
+	int nTop = sq_gettop( pVM );
+	if ( nTop != 2 )
+		return 0;
+
+	SQObjectPtr pObject;
+	sq_resetobject( &pObject );
+	sq_getstackobj( pVM, 2, &pObject );
+
+	CSQStateIterator iter( pVM );
+	iter.Value( pObject );
+
+	iter.BeginContained();
+	IterateObject( &iter, sq_type( pObject ), pObject );
+	iter.EndContained();
+
+	return 1;
+}
+
 SQInteger CSquirrelVM::TranslateCall( HSQUIRRELVM pVM )
 {
 	CUtlVectorFixed<ScriptVariant_t, MAX_FUNCTION_PARAMS> parameters;
@@ -1729,7 +2039,7 @@ SQInteger CSquirrelVM::TranslateCall( HSQUIRRELVM pVM )
 
 	parameters.SetCount( fnParams.Count() );
 
-	const int nArguments = Min( fnParams.Count(), sq_gettop( pVM ) );
+	const int nArguments = min<int>( fnParams.Count(), sq_gettop( pVM ) );
 	for ( int i=0; i < nArguments; ++i )
 	{
 		switch ( fnParams.Element( i ) )
@@ -1740,7 +2050,7 @@ SQInteger CSquirrelVM::TranslateCall( HSQUIRRELVM pVM )
 				if ( SQ_FAILED( sq_getinteger( pVM, i+2, &n ) ) )
 					return sqstd_throwerrorf( pVM, "Integer argument expected at argument %d", i );
 
-				parameters[i] = n;
+				parameters[i] = (int)n;
 				break;
 			}
 			case FIELD_FLOAT:
@@ -1763,13 +2073,11 @@ SQInteger CSquirrelVM::TranslateCall( HSQUIRRELVM pVM )
 			}
 			case FIELD_CHARACTER:
 			{
-				char const *pChar = NULL;
-				if ( SQ_FAILED( sq_getstring( pVM, i+2, &pChar ) ) )
-					return sqstd_throwerrorf( pVM, "String argument expected at argument %d", i );
-				if ( pChar == NULL )
-					pChar = "\0";
+				SQInteger n = 0;
+				if ( SQ_FAILED( sq_getinteger( pVM, i+2, &n ) ) )
+					return sqstd_throwerrorf( pVM, "Integer argument expected at argument %d", i );
 
-				parameters[i] = *pChar;
+				parameters[i] = (char)n;
 				break;
 			}
 			case FIELD_CSTRING:
@@ -1784,17 +2092,27 @@ SQInteger CSquirrelVM::TranslateCall( HSQUIRRELVM pVM )
 			case FIELD_VECTOR:
 			{
 				SQUserPointer pInstance = NULL;
-				sq_getinstanceup( pVM, i+2, &pInstance, VECTOR_TYPE_TAG );
+				sq_getinstanceup( pVM, i+2, &pInstance, VECTOR_TYPE_TAG, SQFalse );
 				if ( pInstance == NULL )
 					return sqstd_throwerrorf( pVM, "Vector argument expected at argument %d", i );
 
 				parameters[i] = (Vector *)pInstance;
 				break;
 			}
+			case FIELD_QANGLE:
+			{
+				SQUserPointer pInstance = NULL;
+				sq_getinstanceup( pVM, i+2, &pInstance, QANGLE_TYPE_TAG, SQFalse );
+				if ( pInstance == NULL )
+					return sqstd_throwerrorf( pVM, "QAngle argument expected at argument %d", i );
+
+				parameters[i] = (QAngle *)pInstance;
+				break;
+			}
 			case FIELD_QUATERNION:
 			{
 				SQUserPointer pInstance = NULL;
-				sq_getinstanceup( pVM, i+2, &pInstance, QUATERNION_TYPE_TAG );
+				sq_getinstanceup( pVM, i+2, &pInstance, QUATERNION_TYPE_TAG, SQFalse );
 				if ( pInstance == NULL )
 					return sqstd_throwerrorf( pVM, "Quaternion argument expected at argument %d", i );
 
@@ -1804,11 +2122,20 @@ SQInteger CSquirrelVM::TranslateCall( HSQUIRRELVM pVM )
 			case FIELD_MATRIX3X4:
 			{
 				SQUserPointer pInstance = NULL;
-				sq_getinstanceup( pVM, i+2, &pInstance, MATRIX_TYPE_TAG );
+				sq_getinstanceup( pVM, i+2, &pInstance, MATRIX_TYPE_TAG, SQFalse );
 				if ( pInstance == NULL )
 					return sqstd_throwerrorf( pVM, "Matrix argument expected at argument %d", i );
 
 				parameters[i] = (matrix3x4_t *)pInstance;
+				break;
+			}
+			case FIELD_EHANDLE:
+			{
+				CBaseHandle h;
+				if ( SQ_FAILED( sq_getehandle( pVM, i + 2, &h ) ) )
+					return sqstd_throwerrorf( pVM, "EHandle argument expected at argument %d", i );
+
+				parameters[i] = h;
 				break;
 			}
 			case FIELD_HSCRIPT:
@@ -1833,6 +2160,14 @@ SQInteger CSquirrelVM::TranslateCall( HSQUIRRELVM pVM )
 
 				break;
 			}
+			case FIELD_VARIANT:
+			{
+				HSQOBJECT pObject = _null_;
+				sq_getstackobj( pVM, i+2, &pObject );
+
+				ConvertToVariant( pVM, pObject, &parameters[i] );
+				break;
+			}
 			default:
 			{
 				AssertMsg( 0, "Unsupported type" );
@@ -1845,14 +2180,14 @@ SQInteger CSquirrelVM::TranslateCall( HSQUIRRELVM pVM )
 	if ( pFuncBinding->m_flags & SF_MEMBER_FUNC )
 	{
 		ScriptInstance_t *pInstance = NULL;
-		sq_getinstanceup( pVM, 1, (SQUserPointer *)&pInstance, NULL );
+		sq_getinstanceup( pVM, 1, (SQUserPointer *)&pInstance, NULL, SQFalse );
 		if ( pInstance == NULL || pInstance->m_pInstance == NULL )
 			return sq_throwerror( pVM, "Accessed null instance" );
 
 		IScriptInstanceHelper *pHelper = pInstance->m_pClassDesc->pHelper;
 		if ( pHelper )
 		{
-			pContext = pHelper->GetProxied( pInstance->m_pInstance );
+			pContext = pHelper->GetProxied( pInstance->m_pInstance, pFuncBinding );
 			if ( pContext == NULL )
 				return sq_throwerror( pVM, "Accessed null instance" );
 		}
@@ -1884,7 +2219,10 @@ SQInteger CSquirrelVM::TranslateCall( HSQUIRRELVM pVM )
 		return sq_throwobject( pVM );
 	}
 
-	PushVariant( pVM, returnValue );
+	if ( bHasReturn )
+	{
+		PushVariant( pVM, returnValue );
+	}
 
 	return (SQBool)bHasReturn;
 }
@@ -1939,7 +2277,7 @@ SQInteger CSquirrelVM::ExternalReleaseHook( SQUserPointer data, SQInteger size )
 SQInteger CSquirrelVM::InstanceToString( HSQUIRRELVM pVM )
 {
 	ScriptInstance_t *pInstance = NULL;
-	sq_getinstanceup( pVM, 1, (SQUserPointer *)&pInstance, NULL );
+	sq_getinstanceup( pVM, 1, (SQUserPointer *)&pInstance, NULL, SQFalse );
 	if ( pInstance && pInstance->m_pInstance )
 	{
 		IScriptInstanceHelper *pHelper = pInstance->m_pClassDesc->pHelper;
@@ -1966,7 +2304,7 @@ SQInteger CSquirrelVM::InstanceToString( HSQUIRRELVM pVM )
 SQInteger CSquirrelVM::InstanceIsValid( HSQUIRRELVM pVM )
 {
 	ScriptInstance_t *pInstance = NULL;
-	sq_getinstanceup( pVM, 1, (SQUserPointer *)&pInstance, NULL );
+	sq_getinstanceup( pVM, 1, (SQUserPointer *)&pInstance, NULL, SQFalse );
 	sq_pushbool( pVM, pInstance && pInstance->m_pInstance );
 	return 1;
 }
@@ -1974,7 +2312,7 @@ SQInteger CSquirrelVM::InstanceIsValid( HSQUIRRELVM pVM )
 SQInteger CSquirrelVM::InstanceGetStub( HSQUIRRELVM pVM )
 {
 	ScriptInstance_t *pInstance = NULL;
-	sq_getinstanceup( pVM, 1, (SQUserPointer *)&pInstance, NULL );
+	sq_getinstanceup( pVM, 1, (SQUserPointer *)&pInstance, NULL, SQFalse );
 
 	const SQChar *pString = NULL;
 	if ( SQ_FAILED( sq_getstring( pVM, 2, &pString ) ) )
@@ -1990,7 +2328,7 @@ SQInteger CSquirrelVM::InstanceGetStub( HSQUIRRELVM pVM )
 		if ( V_strcmp( members[i].m_pszScriptName, pString ) == 0 )
 		{
 			ptrdiff_t const nOffset = members[i].m_unMemberOffs;
-			size_t const nSize = members[i].m_unMemberSize;
+			uint32 const nSize = members[i].m_unMemberSize;
 			switch ( members[i].m_nMemberType )
 			{
 				case FIELD_INTEGER:
@@ -2021,8 +2359,21 @@ SQInteger CSquirrelVM::InstanceGetStub( HSQUIRRELVM pVM )
 					sq_createinstance( pVM, -1 );
 
 					Vector *pVector = NULL;
-					sq_getinstanceup( pVM, -1, (SQUserPointer *)&pVector, NULL );
+					sq_getinstanceup( pVM, -1, (SQUserPointer *)&pVector, NULL, SQFalse );
 					V_memcpy( pVector, (void *)( (uintp)pvInstance + nOffset ), nSize );
+
+					// Remove the class object from stack so we are aligned
+					sq_remove( pVM, -2 );
+					return 1;
+				}
+				case FIELD_QANGLE:
+				{
+					sq_pushobject( pVM, GetVScript( pVM )->m_QAngleClass );
+					sq_createinstance( pVM, -1 );
+
+					QAngle *pAngle = NULL;
+					sq_getinstanceup( pVM, -1, (SQUserPointer *)&pAngle, NULL, SQFalse );
+					V_memcpy( pAngle, (void *)( (uintp)pvInstance + nOffset ), nSize );
 
 					// Remove the class object from stack so we are aligned
 					sq_remove( pVM, -2 );
@@ -2034,7 +2385,7 @@ SQInteger CSquirrelVM::InstanceGetStub( HSQUIRRELVM pVM )
 					sq_createinstance( pVM, -1 );
 
 					Quaternion *pQuat = NULL;
-					sq_getinstanceup( pVM, -1, (SQUserPointer *)&pQuat, NULL );
+					sq_getinstanceup( pVM, -1, (SQUserPointer *)&pQuat, NULL, SQFalse );
 					V_memcpy( pQuat, (void *)( (uintp)pvInstance + nOffset ), nSize );
 
 					// Remove the class object from stack so we are aligned
@@ -2047,7 +2398,7 @@ SQInteger CSquirrelVM::InstanceGetStub( HSQUIRRELVM pVM )
 					sq_createinstance( pVM, -1 );
 
 					matrix3x4_t *pMatrix = NULL;
-					sq_getinstanceup( pVM, -1, (SQUserPointer *)&pMatrix, NULL );
+					sq_getinstanceup( pVM, -1, (SQUserPointer *)&pMatrix, NULL, SQFalse );
 					V_memcpy( pMatrix, (void *)( (uintp)pvInstance + nOffset ), nSize );
 
 					// Remove the class object from stack so we are aligned
@@ -2066,7 +2417,7 @@ SQInteger CSquirrelVM::InstanceGetStub( HSQUIRRELVM pVM )
 SQInteger CSquirrelVM::InstanceSetStub( HSQUIRRELVM pVM )
 {
 	ScriptInstance_t *pInstance = NULL;
-	sq_getinstanceup( pVM, 1, (SQUserPointer *)&pInstance, NULL );
+	sq_getinstanceup( pVM, 1, (SQUserPointer *)&pInstance, NULL, SQFalse );
 
 	const SQChar *pString = NULL;
 	if ( SQ_FAILED( sq_getstring( pVM, 2, &pString ) ) )
@@ -2114,13 +2465,11 @@ SQInteger CSquirrelVM::InstanceSetStub( HSQUIRRELVM pVM )
 				}
 				case FIELD_CHARACTER:
 				{
-					char const *pChar = NULL;
-					if ( SQ_FAILED( sq_getstring( pVM, 3, &pChar ) ) )
-						return sq_throwerror( pVM, "Expected _set( string, string )" );
-					if ( pChar == NULL )
-						pChar = "\0";
+					SQInteger n = 0;
+					if ( SQ_FAILED( sq_getinteger( pVM, 3, &n ) ) )
+						return sq_throwerror( pVM, "Expected _set( string, integer )" );
 
-					V_memcpy( (void *)( (uintp)pvInstance + nOffset ), pChar, nSize );
+					V_memcpy( (void *)( (uintp)pvInstance + nOffset ), &n, nSize );
 					break;
 				}
 				case FIELD_CSTRING:
@@ -2135,9 +2484,19 @@ SQInteger CSquirrelVM::InstanceSetStub( HSQUIRRELVM pVM )
 				case FIELD_VECTOR:
 				{
 					SQUserPointer p = NULL;
-					sq_getinstanceup( pVM, 3, &p, VECTOR_TYPE_TAG );
+					sq_getinstanceup( pVM, 3, &p, VECTOR_TYPE_TAG, SQFalse );
 					if ( p == NULL )
 						return sq_throwerror( pVM, "Expected _set( string, Vector )" );
+
+					V_memcpy( (void *)( (uintp)pvInstance + nOffset ), p, nSize );
+					break;
+				}
+				case FIELD_QANGLE:
+				{
+					SQUserPointer p = NULL;
+					sq_getinstanceup( pVM, 3, &p, QANGLE_TYPE_TAG, SQFalse );
+					if ( p == NULL )
+						return sq_throwerror( pVM, "Expected _set( string, QAngle )" );
 
 					V_memcpy( (void *)( (uintp)pvInstance + nOffset ), p, nSize );
 					break;
@@ -2145,7 +2504,7 @@ SQInteger CSquirrelVM::InstanceSetStub( HSQUIRRELVM pVM )
 				case FIELD_QUATERNION:
 				{
 					SQUserPointer p = NULL;
-					sq_getinstanceup( pVM, 3, &p, QUATERNION_TYPE_TAG );
+					sq_getinstanceup( pVM, 3, &p, QUATERNION_TYPE_TAG, SQFalse );
 					if ( p == NULL )
 						return sq_throwerror( pVM, "Expected _set( string, Quaternion )" );
 
@@ -2155,7 +2514,7 @@ SQInteger CSquirrelVM::InstanceSetStub( HSQUIRRELVM pVM )
 				case FIELD_MATRIX3X4:
 				{
 					SQUserPointer p = NULL;
-					sq_getinstanceup( pVM, 3, &p, MATRIX_TYPE_TAG );
+					sq_getinstanceup( pVM, 3, &p, MATRIX_TYPE_TAG, SQFalse );
 					if ( p == NULL )
 						return sq_throwerror( pVM, "Expected _set( string, matrix3x4_t )" );
 

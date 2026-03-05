@@ -1,20 +1,19 @@
 
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // TF Rocket
 //
 //=============================================================================
 #include "cbase.h"
+#include "tf_weaponbase.h"
 #include "tf_projectile_rocket.h"
 #include "tf_player.h"
-#include "tf_gamerules.h"
 
 //=============================================================================
 //
 // TF Rocket functions (Server specific).
 //
 #define ROCKET_MODEL "models/weapons/w_models/w_rocket.mdl"
-#define MINIROCKET_MODEL "models/weapons/w_models/w_rocket_airstrike/w_rocket_airstrike.mdl"
 
 LINK_ENTITY_TO_CLASS( tf_projectile_rocket, CTFProjectile_Rocket );
 PRECACHE_REGISTER( tf_projectile_rocket );
@@ -25,18 +24,22 @@ BEGIN_NETWORK_TABLE( CTFProjectile_Rocket, DT_TFProjectile_Rocket )
 	SendPropBool( SENDINFO( m_bCritical ) ),
 END_NETWORK_TABLE()
 
-extern ConVar tf2v_minicrits_on_deflect;
-
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-CTFProjectile_Rocket *CTFProjectile_Rocket::Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, CBaseEntity *pScorer )
+CTFProjectile_Rocket *CTFProjectile_Rocket::Create( CBaseEntity *pLauncher, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, CBaseEntity *pScorer )
 {
-	CTFProjectile_Rocket *pRocket = static_cast<CTFProjectile_Rocket*>( CTFBaseRocket::Create( pWeapon, "tf_projectile_rocket", vecOrigin, vecAngles, pOwner ) );
+	CTFProjectile_Rocket *pRocket = static_cast<CTFProjectile_Rocket*>( CTFBaseRocket::Create( pLauncher, "tf_projectile_rocket", vecOrigin, vecAngles, pOwner ) );
 
 	if ( pRocket )
 	{
 		pRocket->SetScorer( pScorer );
+		pRocket->SetEyeBallRocket( false );
+		pRocket->SetSpell( false );
+
+		CTFWeaponBase *pWeapon = dynamic_cast< CTFWeaponBase * >( pLauncher );
+		bool bDirectHit = pWeapon ? ( pWeapon->GetWeaponID() == TF_WEAPON_ROCKETLAUNCHER_DIRECTHIT ) : false;
+		pRocket->SetDirectHit( bDirectHit );
 	}
 
 	return pRocket;
@@ -47,7 +50,6 @@ CTFProjectile_Rocket *CTFProjectile_Rocket::Create( CBaseEntity *pWeapon, const 
 //-----------------------------------------------------------------------------
 void CTFProjectile_Rocket::Spawn()
 {
-	UseClientSideAnimation();
 	SetModel( ROCKET_MODEL );
 	BaseClass::Spawn();
 }
@@ -57,13 +59,13 @@ void CTFProjectile_Rocket::Spawn()
 //-----------------------------------------------------------------------------
 void CTFProjectile_Rocket::Precache()
 {
-	PrecacheModel( ROCKET_MODEL );
-	PrecacheModel( MINIROCKET_MODEL );
-	PrecacheModel( "models/weapons/w_models/w_rocketbeta.mdl" );
-	
-	PrecacheTeamParticles( "critical_rocket_%s", true );
+	int iModel = PrecacheModel( ROCKET_MODEL );
+	PrecacheGibsForModel( iModel );
+	PrecacheParticleSystem( "critical_rocket_blue" );
+	PrecacheParticleSystem( "critical_rocket_red" );
+	PrecacheParticleSystem( "eyeboss_projectile" );
 	PrecacheParticleSystem( "rockettrail" );
-
+	PrecacheParticleSystem( "rockettrail_RocketJumper" );
 	BaseClass::Precache();
 }
 
@@ -89,62 +91,83 @@ CBasePlayer *CTFProjectile_Rocket::GetScorer( void )
 int	CTFProjectile_Rocket::GetDamageType() 
 { 
 	int iDmgType = BaseClass::GetDamageType();
-
-	// Buff banner mini-crit calculations
-	CTFWeaponBase *pWeapon = ( CTFWeaponBase * )m_hLauncher.Get();
-	if ( pWeapon )
-	{
-		pWeapon->CalcIsAttackMiniCritical();
-		if ( pWeapon->IsCurrentAttackAMiniCrit() )
-		{
-			iDmgType |= DMG_MINICRITICAL;
-		}
-	}
-
 	if ( m_bCritical )
 	{
 		iDmgType |= DMG_CRITICAL;
-	}
-	if ( ( m_iDeflected > 0 ) && ( tf2v_minicrits_on_deflect.GetBool() ) )
-	{
-		iDmgType |= DMG_MINICRITICAL;
 	}
 
 	return iDmgType;
 }
 
-bool CTFProjectile_Rocket::IsDeflectable(void)
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int	CTFProjectile_Rocket::GetDamageCustom()
 {
-	// Don't deflect projectiles with non-deflect attributes.
-	if (m_hLauncher.Get())
+	if ( m_bDirectHit )
 	{
-		// Check to see if this is a non-deflectable projectile, like an energy projectile.
-		int nCannotDeflect = 0;
-		CALL_ATTRIB_HOOK_INT_ON_OTHER(m_hLauncher.Get(), nCannotDeflect, energy_weapon_no_deflect);
-		if (nCannotDeflect != 0)
-			return false;
+		return TF_DMG_CUSTOM_ROCKET_DIRECTHIT;
 	}
-	return true;
+	else if ( m_bEyeBallRocket )
+	{
+		return TF_DMG_CUSTOM_EYEBALL_ROCKET;
+	}
+	else if ( m_bSpell )
+	{
+		return TF_DMG_CUSTOM_SPELL_MONOCULUS;
+	}
+	else
+		return BaseClass::GetDamageCustom();
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+void CTFProjectile_Rocket::RocketTouch( CBaseEntity *pOther )
+{
+	BaseClass::RocketTouch( pOther );
+		
+	if (m_bCritical && pOther && pOther->IsPlayer())
+	{		
+		CTFPlayer *pHitPlayer = ToTFPlayer( pOther );
+		int iHitPlayerTeamNumber = pHitPlayer->GetTeamNumber();
+		int iRocketTeamNumber = BaseClass::GetTeamNumber();
+
+		if (pHitPlayer->IsPlayerClass(TF_CLASS_HEAVYWEAPONS) && !pHitPlayer->m_Shared.InCond( TF_COND_INVULNERABLE)
+			&& pHitPlayer->IsAlive() && iHitPlayerTeamNumber != iRocketTeamNumber)
+		{
+			pHitPlayer->AwardAchievement( ACHIEVEMENT_TF_HEAVY_SURVIVE_CROCKET );
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Rocket was deflected.
+//-----------------------------------------------------------------------------
 void CTFProjectile_Rocket::Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir )
 {
-	// Get rocket's speed.
-	float flVel = GetAbsVelocity().Length();
+	CTFPlayer *pTFDeflector = ToTFPlayer( pDeflectedBy );
+	if ( !pTFDeflector )
+		return;
 
-	QAngle angForward;
-	VectorAngles( vecDir, angForward );
+	ChangeTeam( pTFDeflector->GetTeamNumber() );
+	SetLauncher( pTFDeflector->GetActiveWeapon() );
 
-	// Now change rocket's direction.
-	SetAbsAngles( angForward );
-	SetAbsVelocity( vecDir * flVel );
+	CTFPlayer* pOldOwner = ToTFPlayer( GetOwnerEntity() );
+	SetOwnerEntity( pTFDeflector );
 
-	// And change owner.
-	IncremenentDeflected();
-	SetOwnerEntity( pDeflectedBy );
-	ChangeTeam( pDeflectedBy->GetTeamNumber() );
-	SetScorer( pDeflectedBy );
+	if ( pOldOwner )
+	{
+		pOldOwner->SpeakConceptIfAllowed( MP_CONCEPT_DEFLECTED, "projectile:1,victim:1" );
+	}
+
+	if ( pTFDeflector->m_Shared.IsCritBoosted() )
+	{
+		SetCritical( true );
+	}
+
+	CTFWeaponBase::SendObjectDeflectedEvent( pTFDeflector, pOldOwner, GetWeaponID(), this );
+
+	IncrementDeflected();
+	m_nSkin = ( GetTeamNumber() == TF_TEAM_BLUE ) ? 1 : 0;
 }

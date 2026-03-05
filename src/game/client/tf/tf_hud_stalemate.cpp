@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2002, Valve LLC, All rights reserved. ============
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -150,34 +150,35 @@ const char *pszStalemateReasons[NUM_STALEMATE_REASONS] =
 //-----------------------------------------------------------------------------
 void CHudStalemate::SetupStalematePanel( int iReason )
 {
-	if ( m_pStalemateLabel )
+	if ( TFGameRules() && TFGameRules()->IsInArenaMode() == true )
 	{
-		if (TFGameRules()->IsInArenaMode())
+		if ( m_pStalemateLabel )
 		{
-			m_pStalemateLabel->SetText(g_pVGuiLocalize->Find("#TF_Arena_SuddenDeathPanel"));
+			m_pStalemateLabel->SetText( g_pVGuiLocalize->Find( "#TF_Arena_SuddenDeathPanel" ) );
 		}
-		else
+
+		if ( m_pReasonLabel && iReason == STALEMATE_JOIN_MID )
 		{
-			if (iReason == STALEMATE_JOIN_MID)
+			m_pReasonLabel->SetText( g_pVGuiLocalize->Find( "#TF_Arena_SuddenDeathPanelReason" ) );
+		}
+	}
+	else
+	{
+		if ( m_pStalemateLabel )
+		{
+			if ( iReason == STALEMATE_JOIN_MID )
 			{
-				m_pStalemateLabel->SetText(g_pVGuiLocalize->Find("#TF_suddendeath_mode"));
+				m_pStalemateLabel->SetText( g_pVGuiLocalize->Find( "#TF_suddendeath_mode" ) );
 			}
 			else
 			{
-				m_pStalemateLabel->SetText(g_pVGuiLocalize->Find("#TF_suddendeath"));
+				m_pStalemateLabel->SetText( g_pVGuiLocalize->Find( "#TF_suddendeath" ) );
 			}
 		}
-	}
 
-	if ( m_pReasonLabel && iReason >= 0 && iReason < NUM_STALEMATE_REASONS )
-	{
-		if (TFGameRules()->IsInArenaMode())
+		if ( m_pReasonLabel && iReason >= 0 && iReason < NUM_STALEMATE_REASONS )
 		{
-			m_pReasonLabel->SetText(g_pVGuiLocalize->Find("#TF_Arena_SuddenDeathPanelReason"));
-		}
-		else
-		{
-			m_pReasonLabel->SetText(g_pVGuiLocalize->Find(pszStalemateReasons[iReason]));
+			m_pReasonLabel->SetText( g_pVGuiLocalize->Find( pszStalemateReasons[iReason] ) );
 		}
 	}
 }

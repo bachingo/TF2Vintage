@@ -1,52 +1,58 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_dead.cpp
+// Push up daisies
+// Michael Booth, May 2009
+
 #include "cbase.h"
-#include "../tf_bot.h"
-#include "tf_bot_dead.h"
-#include "tf_bot_behavior.h"
+#include "tf_player.h"
+#include "tf_gamerules.h"
+#include "bot/tf_bot.h"
+#include "bot/behavior/tf_bot_dead.h"
+#include "bot/behavior/tf_bot_behavior.h"
 
-CTFBotDead::CTFBotDead()
+#include "nav_mesh.h"
+
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotDead::OnStart( CTFBot *me, Action< CTFBot > *priorAction )
 {
-	m_flDeathTimestamp = 0.0f;
+	m_deadTimer.Start();
+
+	return Continue();
 }
 
-CTFBotDead::~CTFBotDead()
-{
-}
 
-const char *CTFBotDead::GetName() const
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotDead::Update( CTFBot *me, float interval )
 {
-	return "Dead";
-}
-
-ActionResult<CTFBot> CTFBotDead::OnStart( CTFBot *me, Action<CTFBot> *priorAction )
-{
-	m_flDeathTimestamp = gpGlobals->curtime;
-	return Action<CTFBot>::Continue();
-}
-
-ActionResult<CTFBot> CTFBotDead::Update( CTFBot *me, float interval )
-{
-	if ( ( m_flDeathTimestamp + 3.0f ) > gpGlobals->curtime )
-	{
-		// I need some time to adjust after what just happened
-		return Action<CTFBot>::Continue();
-	}
-
 	if ( me->IsAlive() )
 	{
-		return Action<CTFBot>::ChangeTo( new CTFBotMainAction, "This should not happen!" );
+		// how did this happen?
+		return ChangeTo( new CTFBotMainAction, "This should not happen!" );
 	}
 
-	if ( me->HasAttribute( CTFBot::AttributeType::REMOVEONDEATH ) )
+	if ( m_deadTimer.IsGreaterThen( 5.0f ) )
 	{
-		engine->ServerCommand( UTIL_VarArgs( "kickid %d\n", me->GetUserID() ) );
-		return Action<CTFBot>::Continue();
+		if ( me->HasAttribute( CTFBot::REMOVE_ON_DEATH ) )
+		{
+			// remove dead bots
+			engine->ServerCommand( UTIL_VarArgs( "kickid %d\n", me->GetUserID() ) );
+		}
+		else if ( me->HasAttribute( CTFBot::BECOME_SPECTATOR_ON_DEATH ) )
+		{
+			me->ChangeTeam( TEAM_SPECTATOR, false, true );
+			return Done();
+		}
 	}
 
-	if ( me->HasAttribute( CTFBot::AttributeType::BECOMESPECTATORONDEATH ) )
+#ifdef TF_RAID_MODE
+	if ( TFGameRules()->IsRaidMode() && me->GetTeamNumber() == TF_TEAM_RED )
 	{
+		// dead defenders go to spectator for recycling
 		me->ChangeTeam( TEAM_SPECTATOR, false, true );
-		return Action<CTFBot>::Done();
 	}
+#endif // TF_RAID_MODE
 
-	return Action<CTFBot>::Continue();
+	return Continue();
 }
+

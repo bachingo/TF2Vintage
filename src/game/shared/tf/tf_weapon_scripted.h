@@ -5,7 +5,6 @@
 #pragma once
 #endif
 
-#include "tf_weaponbase.h"
 #include "basescriptedweapon.h"
 
 #if defined(CLIENT_DLL)
@@ -26,8 +25,8 @@ public:
 	virtual bool IsPredicted( void ) const { return true; }
 
 #if defined(GAME_DLL)
-	void ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *pAttacker, const CTakeDamageInfo &info ) OVERRIDE;
-	void ApplyPostOnHitAttributes( CTakeDamageInfo const &info, CTFPlayer *pVictim ) OVERRIDE;
+	virtual void	ApplyOnHitAttributes( CBaseEntity *pVictimBaseEntity, CTFPlayer *pAttacker, const CTakeDamageInfo &info ) OVERRIDE;
+	virtual void	ApplyPostHitEffects( const CTakeDamageInfo &inputInfo, CTFPlayer *pPlayer ) OVERRIDE;
 #endif
 };
 

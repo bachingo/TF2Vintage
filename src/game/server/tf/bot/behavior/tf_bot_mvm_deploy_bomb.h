@@ -1,33 +1,27 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
-//
-// Purpose:		
-//
-// $NoKeywords: $
-//=============================================================================
-#ifndef TF_BOT_MISSION_DESTROY_SENTRIES_H
-#define TF_BOT_MISSION_DESTROY_SENTRIES_H
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_mvm_deploy_bomb.h
+// Set us up the bomb!
 
-#include "NextBotBehavior.h"
+#ifndef TF_BOT_MVM_DEPLOY_BOMB_H
+#define TF_BOT_MVM_DEPLOY_BOMB_H
 
-class CTFBotMvMDeployBomb : public Action<CTFBot>
+//-----------------------------------------------------------------------------
+class CTFBotMvMDeployBomb : public Action< CTFBot >
 {
 public:
-	CTFBotMvMDeployBomb();
-	virtual ~CTFBotMvMDeployBomb();
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
+	virtual void					OnEnd( CTFBot *me, Action< CTFBot > *nextAction );
 
-	virtual const char *GetName() const OVERRIDE;
+	EventDesiredResult< CTFBot >	OnContact( CTFBot *me, CBaseEntity *other, CGameTrace *result );
+	QueryResultType					ShouldAttack( const INextBot *me, const CKnownEntity *them ) const;
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *action ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
-	virtual void OnEnd( CTFBot *me, Action<CTFBot> *action ) OVERRIDE;
-
-	virtual EventDesiredResult<CTFBot> OnContact( CTFBot *me, CBaseEntity *who, CGameTrace *trace ) OVERRIDE;
-
-	virtual QueryResultType ShouldAttack( const INextBot *me, const CKnownEntity *threat ) const OVERRIDE;
+	virtual const char *GetName( void ) const	{ return "MvMDeployBomb"; };
 
 private:
-	CountdownTimer m_ctDelay;
-	Vector m_vecStand;
+	CountdownTimer m_timer;
+	Vector m_anchorPos;
 };
 
-#endif
+
+#endif // TF_BOT_MVM_DEPLOY_BOMB_H

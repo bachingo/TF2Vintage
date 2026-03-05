@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2002, Valve LLC, All rights reserved. ============
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -13,7 +13,7 @@
 
 
 // If iTeam or iClass is -1, then a team or class is randomly chosen.
-CBasePlayer *BotPutInServer( bool bFrozen, int iTeam, int iClass );
+CBasePlayer *BotPutInServer( bool bTargetDummy, bool bFrozen, int iTeam, int iClass, const char *pszCustomName );
 
 void Bot_RunAll();
 

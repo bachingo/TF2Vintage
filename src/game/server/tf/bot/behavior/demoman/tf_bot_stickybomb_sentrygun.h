@@ -1,48 +1,51 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_stickybomb_sentrygun.h
+// Destroy the given sentrygun with stickybombs
+// Michael Booth, August 2010
+
 #ifndef TF_BOT_STICKYBOMB_SENTRY_H
 #define TF_BOT_STICKYBOMB_SENTRY_H
-#ifdef _WIN32
-#pragma once
-#endif
+
+class CObjectSentrygun;
 
 
-#include "NextBotBehavior.h"
-
-class CTFBotStickybombSentrygun : public Action<CTFBot>
+class CTFBotStickybombSentrygun : public Action< CTFBot >
 {
-	DECLARE_CLASS( CTFBotStickybombSentrygun, Action<CTFBot> );
 public:
-	CTFBotStickybombSentrygun( CObjectSentrygun *pSentry );
-	CTFBotStickybombSentrygun( CObjectSentrygun *pSentry, float flPitch, float flYaw, float flChargePerc );
-	virtual ~CTFBotStickybombSentrygun() {};
+	CTFBotStickybombSentrygun( CObjectSentrygun *sentrygun );
+	CTFBotStickybombSentrygun( CObjectSentrygun *sentrygun, float aimYaw, float aimPitch, float aimCharge );
 
-	virtual const char *GetName() const OVERRIDE;
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
+	virtual void					OnEnd( CTFBot *me, Action< CTFBot > *nextAction );
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
-	virtual void OnEnd( CTFBot *me, Action<CTFBot> *newAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> OnSuspend( CTFBot *me, Action<CTFBot> *newAction ) OVERRIDE;
+	virtual ActionResult< CTFBot >	OnSuspend( CTFBot *me, Action< CTFBot > *interruptingAction );
 
-	virtual EventDesiredResult<CTFBot> OnInjured( CTFBot *me, const CTakeDamageInfo& info ) OVERRIDE;
+	virtual EventDesiredResult< CTFBot > OnInjured( CTFBot *me, const CTakeDamageInfo &info );
 
-	virtual QueryResultType ShouldHurry( const INextBot *me ) const OVERRIDE;
-	virtual QueryResultType ShouldRetreat( const INextBot *me ) const OVERRIDE;
-	virtual QueryResultType ShouldAttack( const INextBot *me, const CKnownEntity *threat ) const OVERRIDE;
+	virtual QueryResultType ShouldHurry( const INextBot *me ) const;
+	virtual QueryResultType	ShouldAttack( const INextBot *me, const CKnownEntity *them ) const;	// should we attack "them"?
+	virtual QueryResultType ShouldRetreat( const INextBot *me ) const;					// is it time to retreat?
+
+	virtual const char *GetName( void ) const	{ return "StickybombSentrygun"; };
 
 private:
-	bool IsAimOnTarget( CTFBot *actor, float pitch, float yaw, float charge );
+	float m_givenYaw, m_givenPitch, m_givenCharge;
+	bool m_hasGivenAim;
 
-	float m_flDesiredPitch;
-	float m_flDesiredYaw;
-	float m_flDesiredCharge;
-	bool m_bOpportunistic;
-	bool m_bReload;
-	CHandle<CObjectSentrygun> m_hSentry;
-	bool m_bChargeShot;
-	CountdownTimer m_aimDuration;
-	bool m_bAimOnTarget;
-	Vector m_vecAimTarget;
-	Vector m_vecHome;
-	float m_flChargeLevel;
+	bool m_isFullReloadNeeded;
+
+	CHandle< CObjectSentrygun > m_sentrygun;
+
+	bool m_isChargingShot;
+
+	CountdownTimer m_searchTimer;
+	bool m_hasTarget;
+	Vector m_eyeAimTarget;
+	Vector m_launchSpot;
+	float m_chargeToLaunch;
+	float m_searchPitch;
+	bool IsAimOnTarget( CTFBot *me, float pitch, float yaw, float charge );
 };
 
-#endif
+#endif // TF_BOT_STICKYBOMB_SENTRY_H

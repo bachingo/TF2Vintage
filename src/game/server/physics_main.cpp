@@ -7,7 +7,11 @@
 
 
 #include "cbase.h"
-#ifdef _WIN32
+#if defined( WIN32 ) && _MSC_VER <= 1920
+#include "typeinfo.h"
+// BUGBUG: typeinfo stomps some of the warning settings (in yvals.h)
+#pragma warning(disable:4244)
+#elif defined( WIN32 )
 #include <typeinfo>
 // BUGBUG: typeinfo stomps some of the warning settings (in yvals.h)
 #pragma warning(disable:4244)
@@ -96,7 +100,7 @@ static void PhysicsCheckSweep( CBaseEntity *pEntity, const Vector& vecAbsStart, 
 }
 
 CPhysicsPushedEntities s_PushedEntities;
-#if !( ( defined TF_DLL ) || ( defined TF_VINTAGE ) )
+#ifndef TF_DLL
 CPhysicsPushedEntities *g_pPushedEntities = &s_PushedEntities;
 #endif
 
@@ -126,7 +130,7 @@ void CPhysicsPushedEntities::UnlinkPusherList( int *pPusherHandles )
 {
 	for ( int i = m_rgPusher.Count(); --i >= 0; )
 	{
-		pPusherHandles[i] = partition->HideElement( m_rgPusher[i].m_pEntity->CollisionProp()->GetPartitionHandle() );
+		pPusherHandles[i] = ::partition->HideElement( m_rgPusher[i].m_pEntity->CollisionProp()->GetPartitionHandle() );
 	}
 }
 
@@ -134,7 +138,7 @@ void CPhysicsPushedEntities::RelinkPusherList( int *pPusherHandles )
 {
 	for ( int i = m_rgPusher.Count(); --i >= 0; )
 	{
-		partition->UnhideElement( m_rgPusher[i].m_pEntity->CollisionProp()->GetPartitionHandle(), pPusherHandles[i] );
+		::partition->UnhideElement( m_rgPusher[i].m_pEntity->CollisionProp()->GetPartitionHandle(), pPusherHandles[i] );
 	}
 }
 
@@ -230,7 +234,7 @@ bool CPhysicsPushedEntities::SpeculativelyCheckPush( PhysicsPushedInfo_t &info, 
 	UTIL_TraceEntity( pBlocker, pBlocker->GetAbsOrigin(), pushDestPosition, 
 		pBlocker->PhysicsSolidMaskForEntity(), &pushFilter, &info.m_Trace );
 
-	RelinkPusherList( pPusherHandles );
+	RelinkPusherList(pPusherHandles);
 	info.m_bPusherIsGround = false;
 	if ( pBlocker->GetGroundEntity() && pBlocker->GetGroundEntity()->GetRootMoveParent() == m_rgPusher[0].m_pEntity )
 	{
@@ -260,7 +264,7 @@ bool CPhysicsPushedEntities::SpeculativelyCheckPush( PhysicsPushedInfo_t &info, 
 		if ( (!bRotationalPush) && (info.m_Trace.fraction == 1.0) )
 		{
 			//Assert( pBlocker->PhysicsTestEntityPosition() == false );
-			if ( !IsPushedPositionValid( pBlocker ) )
+			if ( !IsPushedPositionValid(pBlocker) )
 			{
 				Warning("Interpenetrating entities! (%s and %s)\n",
 					pBlocker->GetClassname(), m_rgPusher[0].m_pEntity->GetClassname() );
@@ -272,7 +276,7 @@ bool CPhysicsPushedEntities::SpeculativelyCheckPush( PhysicsPushedInfo_t &info, 
 
 	// Check to see if we're still blocked by the pushers
 	// FIXME: If the trace fraction == 0 can we early out also?
-	info.m_bBlocked = !IsPushedPositionValid( pBlocker );
+	info.m_bBlocked = !IsPushedPositionValid(pBlocker);
 
 	if ( !info.m_bBlocked )
 		return true;
@@ -289,13 +293,13 @@ bool CPhysicsPushedEntities::SpeculativelyCheckPush( PhysicsPushedInfo_t &info, 
 			// alternate movements 1/2" in each direction
 			float factor = ( checkCount & 1 ) ? -0.5f : 0.5f;
 			pBlocker->SetAbsOrigin( org + move * factor );
-			info.m_bBlocked = !IsPushedPositionValid( pBlocker );
+			info.m_bBlocked = !IsPushedPositionValid(pBlocker);
 			if ( !info.m_bBlocked )
 				return true;
 		}
 		pBlocker->SetAbsOrigin( pushDestPosition );
 
-#if !( defined( TF_DLL ) || defined( TF_VINTAGE ) )
+#ifndef TF_DLL
 		DevMsg(1, "Ignoring player blocking train!\n");
 #endif
 		return true;
@@ -320,6 +324,7 @@ bool CPhysicsPushedEntities::SpeculativelyCheckRotPush( const RotatingPushMove_t
 			return false;
 		}
 	}
+
 	return true;
 }
 
@@ -332,7 +337,7 @@ bool CPhysicsPushedEntities::SpeculativelyCheckLinearPush( const Vector &vecAbsP
 	m_nBlocker = -1;
 	for (int i = m_rgMoved.Count(); --i >= 0; )
 	{
-		if (!SpeculativelyCheckPush( m_rgMoved[i], vecAbsPush, false ) )
+		if (!SpeculativelyCheckPush( m_rgMoved[i], vecAbsPush, false ))
 		{
 			m_nBlocker = i;
 			return false;
@@ -695,7 +700,7 @@ void CPhysicsPushedEntities::GenerateBlockingEntityList()
 
 		Vector vecAbsMins, vecAbsMaxs;
 		pPusher->CollisionProp()->WorldSpaceAABB( &vecAbsMins, &vecAbsMaxs );
-		partition->EnumerateElementsInBox( PARTITION_ENGINE_NON_STATIC_EDICTS, vecAbsMins, vecAbsMaxs, false, &blockerEnum );
+		::partition->EnumerateElementsInBox( PARTITION_ENGINE_NON_STATIC_EDICTS, vecAbsMins, vecAbsMaxs, false, &blockerEnum );
 
 		//Go back throught the generated list.
 	}
@@ -735,7 +740,7 @@ void CPhysicsPushedEntities::GenerateBlockingEntityListAddBox( const Vector &vec
 			}
 		}
 
-		partition->EnumerateElementsInBox( PARTITION_ENGINE_NON_STATIC_EDICTS, vecAbsMins, vecAbsMaxs, false, &blockerEnum );
+		::partition->EnumerateElementsInBox( PARTITION_ENGINE_NON_STATIC_EDICTS, vecAbsMins, vecAbsMaxs, false, &blockerEnum );
 
 		//Go back throught the generated list.
 	}
@@ -749,7 +754,8 @@ void CPhysicsPushedEntities::GenerateBlockingEntityListAddBox( const Vector &vec
 //-----------------------------------------------------------------------------
 void CPhysicsPushedEntities::SetupAllInHierarchy( CBaseEntity *pParent )
 {
-	if (!pParent)
+	// Server-only entities do not have a valid partition
+	if ( !pParent || pParent->IsEFlagSet( EFL_SERVER_ONLY ) )
 		return;
 
 	VPROF("CPhysicsPushedEntities::SetupAllInHierarchy");
@@ -883,7 +889,7 @@ CBaseEntity *CPhysicsPushedEntities::PerformLinearPush( CBaseEntity *pRoot, floa
 	// Now we have a unique list of things that could potentially block our push
 	// and need to be pushed out of the way. Lets try to push them all out of the way.
 	// If we fail, undo it all
-	if ( !SpeculativelyCheckLinearPush( vecAbsPush ) )
+	if (!SpeculativelyCheckLinearPush( vecAbsPush ))
 	{
 		CBaseEntity *pBlocker = RegisterBlockage();
 		pRoot->SetLocalOrigin( vecPrevOrigin );

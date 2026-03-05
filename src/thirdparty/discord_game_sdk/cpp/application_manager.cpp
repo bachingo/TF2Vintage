@@ -9,9 +9,6 @@
 #include <cstring>
 #include <memory>
 
-// memdbgon must be the last include file in a .cpp file!!!
-#include <tier0/memdbgon.h>
-
 namespace discord {
 
 void ApplicationManager::ValidateOrExit(std::function<void(Result)> callback)

@@ -11,7 +11,7 @@
 #include "inetchannelinfo.h"
 
 #include <tier0/valve_minmax_off.h>
-#include "econ_messages.pb.h"
+//#include "econ_messages.pb.h"
 #include <tier0/valve_minmax_on.h>
 
 

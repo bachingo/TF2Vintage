@@ -61,7 +61,6 @@ BEGIN_DATADESC(CTriggerAreaCapture)
 	DEFINE_OUTPUT( m_OnCapTeam1,	"OnCapTeam1" ),
 	DEFINE_OUTPUT( m_OnCapTeam2,	"OnCapTeam2" ),
 
-
 	DEFINE_OUTPUT( m_StartOutput,	"OnStartCap" ),
 	DEFINE_OUTPUT( m_BreakOutput,	"OnBreakCap" ),
 	DEFINE_OUTPUT( m_CapOutput,		"OnEndCap" ),
@@ -1139,6 +1138,20 @@ bool CTriggerAreaCapture::CheckIfDeathCausesBlock( CBaseMultiplayerPlayer *pVict
 		bBreakCap = ( m_TeamData[m_nCapturingTeam].iBlockedTouching - 1 < m_TeamData[m_nCapturingTeam].iNumRequiredToCap );
 	}
 
+	// For TF2's contracts, fire a special event when killing anyone on the cap, regardless
+	// if it's causes the "block"
+	IGameEvent *event = gameeventmanager->CreateEvent( "capper_killed" );
+	if ( event )
+	{
+		event->SetInt( "blocker", pKiller->entindex() );
+		if ( pVictim )
+		{
+			event->SetInt( "victim", pVictim->entindex() );
+		}
+
+		gameeventmanager->FireEvent( event );
+	}
+
 	if ( bBreakCap )
 	{
 		m_hPoint->CaptureBlocked( pKiller, pVictim );
@@ -1227,6 +1240,7 @@ void CTriggerAreaCapture::SetNumCappers( int nNumCappers, bool bBlocked /* = fal
 	}
 
 	m_OnNumCappersChanged2.Set( nNumCappers, this, this );
+
 	if ( m_hTrainWatcher.Get() )
 	{
 		m_hTrainWatcher->SetNumTrainCappers( nNumCappers, this );

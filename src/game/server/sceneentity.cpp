@@ -469,6 +469,15 @@ public:
 
 	void					InputScriptPlayerDeath( inputdata_t &inputdata );
 
+	void					InputSetTarget1( inputdata_t &inputdata );
+	void					InputSetTarget2( inputdata_t &inputdata );
+	void					InputSetTarget3( inputdata_t &inputdata );
+	void					InputSetTarget4( inputdata_t &inputdata );
+	void					InputSetTarget5( inputdata_t &inputdata );
+	void					InputSetTarget6( inputdata_t &inputdata );
+	void					InputSetTarget7( inputdata_t &inputdata );
+	void					InputSetTarget8( inputdata_t &inputdata );
+
 	void					AddBroadcastTeamTarget( int nTeamIndex );
 	void					RemoveBroadcastTeamTarget( int nTeamIndex );
 
@@ -533,9 +542,9 @@ public:
 	virtual CBaseEntity		*FindNamedEntity( const char *name, CBaseEntity *pActor = NULL, bool bBaseFlexOnly = false, bool bUseClear = false );
 	CBaseEntity				*FindNamedTarget( string_t iszTarget, bool bBaseFlexOnly = false );
 	virtual CBaseEntity		*FindNamedEntityClosest( const char *name, CBaseEntity *pActor = NULL, bool bBaseFlexOnly = false, bool bUseClear = false, const char *pszSecondary = NULL );
-	HSCRIPT					ScriptFindNamedEntity( const char *name );
-	bool					ScriptLoadSceneFromString( const char *pszFilename, const char *pszData );
 
+	HSCRIPT					ScriptFindNamedEntity( const char *name );
+	bool					ScriptLoadSceneFromString( const char * pszFilename, const char *pszData );
 private:
 
 	CUtlVector< CHandle< CBaseFlex > >		m_hActorList;
@@ -723,6 +732,15 @@ BEGIN_DATADESC( CSceneEntity )
 	DEFINE_KEYFIELD( m_iPlayerDeathBehavior, FIELD_INTEGER, "onplayerdeath" ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "ScriptPlayerDeath", InputScriptPlayerDeath ),
 
+	DEFINE_INPUTFUNC( FIELD_STRING, "SetTarget1", InputSetTarget1 ),
+	DEFINE_INPUTFUNC( FIELD_STRING, "SetTarget2", InputSetTarget2 ),
+	DEFINE_INPUTFUNC( FIELD_STRING, "SetTarget3", InputSetTarget3 ),
+	DEFINE_INPUTFUNC( FIELD_STRING, "SetTarget4", InputSetTarget4 ),
+	DEFINE_INPUTFUNC( FIELD_STRING, "SetTarget5", InputSetTarget5 ),
+	DEFINE_INPUTFUNC( FIELD_STRING, "SetTarget6", InputSetTarget6 ),
+	DEFINE_INPUTFUNC( FIELD_STRING, "SetTarget7", InputSetTarget7 ),
+	DEFINE_INPUTFUNC( FIELD_STRING, "SetTarget8", InputSetTarget8 ),
+
 	// Outputs
 	DEFINE_OUTPUT( m_OnStart, "OnStart"),
 	DEFINE_OUTPUT( m_OnCompletion, "OnCompletion"),
@@ -745,8 +763,6 @@ BEGIN_DATADESC( CSceneEntity )
 	DEFINE_OUTPUT( m_OnTrigger16, "OnTrigger16"),
 END_DATADESC()
 
-const ConVar	*CSceneEntity::m_pcvSndMixahead = NULL;
-
 BEGIN_ENT_SCRIPTDESC( CSceneEntity, CBaseEntity, "Choreographed scene which controls animation and/or dialog on one or more actors." )
 	DEFINE_SCRIPTFUNC( EstimateLength, "Returns length of this scene in seconds." )
 	DEFINE_SCRIPTFUNC( IsPlayingBack, "If this scene is currently playing." )
@@ -756,6 +772,9 @@ BEGIN_ENT_SCRIPTDESC( CSceneEntity, CBaseEntity, "Choreographed scene which cont
 	DEFINE_SCRIPTFUNC_NAMED( ScriptFindNamedEntity, "FindNamedEntity", "given an entity reference, such as !target, get actual entity from scene object" )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptLoadSceneFromString, "LoadSceneFromString", "given a dummy scene name and a vcd string, load the scene" )
 END_SCRIPTDESC();
+
+const ConVar	*CSceneEntity::m_pcvSndMixahead = NULL;
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1637,6 +1656,10 @@ bool CSceneEntity::GetSoundNameForPlayer( CChoreoEvent *event, CBasePlayer *play
 	// Copy the sound name
 	CopySoundNameWithModifierToken( buf, event->GetParameters(), buflen, pchToken );
 
+	// If there was a modifier token, don't change the sound based on CC
+	if ( pchToken[0] != 0 )
+		return true;
+
 	bool usingEnglish = true;
 	if ( !IsXbox() )
 	{
@@ -2105,6 +2128,70 @@ void CSceneEntity::InputScriptPlayerDeath( inputdata_t &inputdata )
 		LocalScene_Printf( "%s : cancelled via player death\n", STRING( m_iszSceneFile ) );
 		CancelPlayback();
 	}
+}
+
+void CSceneEntity::InputSetTarget1( inputdata_t &inputdata )
+{
+	m_iszTarget1 = MAKE_STRING( inputdata.value.String() );
+	m_hActorList.Purge();
+	NetworkProp()->NetworkStateForceUpdate();
+	m_hTarget1 = FindNamedTarget( m_iszTarget1, false );
+}
+
+void CSceneEntity::InputSetTarget2( inputdata_t &inputdata )
+{
+	m_iszTarget2 = MAKE_STRING( inputdata.value.String() );
+	m_hActorList.Purge();
+	NetworkProp()->NetworkStateForceUpdate();
+	m_hTarget2 = FindNamedTarget( m_iszTarget2, false );
+}
+
+void CSceneEntity::InputSetTarget3( inputdata_t &inputdata )
+{
+	m_iszTarget3 = MAKE_STRING( inputdata.value.String() );
+	m_hActorList.Purge();
+	NetworkProp()->NetworkStateForceUpdate();
+	m_hTarget3 = FindNamedTarget( m_iszTarget3, false );
+}
+
+void CSceneEntity::InputSetTarget4( inputdata_t &inputdata )
+{
+	m_iszTarget4 = MAKE_STRING( inputdata.value.String() );
+	m_hActorList.Purge();
+	NetworkProp()->NetworkStateForceUpdate();
+	m_hTarget4 = FindNamedTarget( m_iszTarget4, false );
+}
+
+void CSceneEntity::InputSetTarget5( inputdata_t &inputdata )
+{
+	m_iszTarget5 = MAKE_STRING( inputdata.value.String() );
+	m_hActorList.Purge();
+	NetworkProp()->NetworkStateForceUpdate();
+	m_hTarget5 = FindNamedTarget( m_iszTarget5, false );
+}
+
+void CSceneEntity::InputSetTarget6( inputdata_t &inputdata )
+{
+	m_iszTarget6 = MAKE_STRING( inputdata.value.String() );
+	m_hActorList.Purge();
+	NetworkProp()->NetworkStateForceUpdate();
+	m_hTarget6 = FindNamedTarget( m_iszTarget6, false );
+}
+
+void CSceneEntity::InputSetTarget7( inputdata_t &inputdata )
+{
+	m_iszTarget7 = MAKE_STRING( inputdata.value.String() );
+	m_hActorList.Purge();
+	NetworkProp()->NetworkStateForceUpdate();
+	m_hTarget7 = FindNamedTarget( m_iszTarget7, false );
+}
+
+void CSceneEntity::InputSetTarget8( inputdata_t &inputdata )
+{
+	m_iszTarget8 = MAKE_STRING( inputdata.value.String() );
+	m_hActorList.Purge();
+	NetworkProp()->NetworkStateForceUpdate();
+	m_hTarget8 = FindNamedTarget( m_iszTarget8, false );
 }
 
 
@@ -3329,39 +3416,31 @@ bool CSceneEntity::ShouldNetwork() const
 
 CChoreoScene *CSceneEntity::LoadScene( const char *filename, IChoreoEventCallback *pCallback )
 {
+	DevMsg( 2, "Blocking load of scene from '%s'\n", filename );
+
 	char loadfile[MAX_PATH];
 	Q_strncpy( loadfile, filename, sizeof( loadfile ) );
 	Q_SetExtension( loadfile, ".vcd", sizeof( loadfile ) );
 	Q_FixSlashes( loadfile );
-	
-	void *pBuffer = 0;
-	CChoreoScene *pScene;
 
-	int fileSize = filesystem->ReadFileEx( loadfile, "MOD", &pBuffer, true );
-	if (fileSize)
+	// binary compiled vcd
+	void *pBuffer;
+	int fileSize;
+	if ( !CopySceneFileIntoMemory( loadfile, &pBuffer, &fileSize ) )
 	{
-		g_TokenProcessor.SetBuffer((char*)pBuffer);
-		pScene = ChoreoLoadScene( loadfile, NULL, &g_TokenProcessor, LocalScene_Printf );
+		MissingSceneWarning( loadfile );
+		return NULL;
+	}
+
+	CChoreoScene *pScene = new CChoreoScene( NULL );
+	CUtlBuffer buf( pBuffer, fileSize, CUtlBuffer::READ_ONLY );
+	if ( !pScene->RestoreFromBinaryBuffer( buf, loadfile, &g_ChoreoStringPool ) )
+	{
+		Warning( "CSceneEntity::LoadScene: Unable to load binary scene '%s'\n", loadfile );
+		delete pScene;
+		pScene = NULL;
 	}
 	else
-	{
-		// binary compiled vcd
-		pScene = new CChoreoScene( NULL );
-		if ( !CopySceneFileIntoMemory( loadfile, &pBuffer, &fileSize ) )
-		{
-			MissingSceneWarning( loadfile );
-			return NULL;
-		}
-		CUtlBuffer buf( pBuffer, fileSize, CUtlBuffer::READ_ONLY );
-		if ( !pScene->RestoreFromBinaryBuffer( buf, loadfile, &g_ChoreoStringPool ) )
-		{
-			Warning( "CSceneEntity::LoadScene: Unable to load scene '%s'\n", loadfile );
-			delete pScene;
-			pScene = NULL;
-		}
-	}
-	
-	if(pScene)
 	{
 		pScene->SetPrintFunc( LocalScene_Printf );
 		pScene->SetEventCallbackInterface( pCallback );
@@ -3374,48 +3453,6 @@ CChoreoScene *CSceneEntity::LoadScene( const char *filename, IChoreoEventCallbac
 CChoreoScene *BlockingLoadScene( const char *filename )
 {
 	return CSceneEntity::LoadScene( filename, NULL );
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose: vscript - create a scene directly from a buffer containing
-// a vcd description, and load it into the scene entity.
-//-----------------------------------------------------------------------------
-
-bool CSceneEntity::ScriptLoadSceneFromString( const char *pszFilename, const char *pszData )
-{
-	CChoreoScene *pScene = new CChoreoScene( NULL );
-
-	// CSceneTokenProcessor SceneTokenProcessor;
-	// SceneTokenProcessor.SetBuffer( pszData );
-	g_TokenProcessor.SetBuffer( (char *)pszData );
-
-	if ( !pScene->ParseFromBuffer( pszFilename, &g_TokenProcessor ) ) //&SceneTokenProcessor ) )
-	{
-		Warning( "CSceneEntity::LoadSceneFromString: Unable to parse scene data '%s'\n", pszFilename );
-		delete pScene;
-		pScene = NULL;
-	}
-	else
-	{
-		pScene->SetPrintFunc( LocalScene_Printf );
-		pScene->SetEventCallbackInterface( this );
-
-		// precache all sounds for the newly constructed scene
-		PrecacheScene( pScene );
-	}
-
-	if ( pScene != NULL )
-	{
-		// release prior scene if present
-		UnloadScene();
-		m_pScene = pScene;
-		return true;
-	}
-	else
-	{
-		return false;
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -3679,6 +3716,51 @@ private:
 	EHANDLE		m_hEntityFound;
 };
 
+HSCRIPT CSceneEntity::ScriptFindNamedEntity( const char *name )
+{
+	return ToHScript(FindNamedEntity( name, NULL, false, false ));
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: vscript - create a scene directly from a buffer containing
+// a vcd description, and load it into the scene entity.
+//-----------------------------------------------------------------------------
+
+bool CSceneEntity::ScriptLoadSceneFromString( const char * pszFilename, const char *pszData )
+{
+	CChoreoScene *pScene = new CChoreoScene( NULL ); 
+	
+	// CSceneTokenProcessor SceneTokenProcessor;
+	// SceneTokenProcessor.SetBuffer( pszData );
+	g_TokenProcessor.SetBuffer( (char *)pszData );
+
+	if ( !pScene->ParseFromBuffer( pszFilename, &g_TokenProcessor ) ) //&SceneTokenProcessor ) )
+		{
+			Warning( "CSceneEntity::LoadSceneFromString: Unable to parse scene data '%s'\n", pszFilename );
+			delete pScene;
+			pScene = NULL;
+		}
+		else
+		{
+			pScene->SetPrintFunc( LocalScene_Printf );
+			pScene->SetEventCallbackInterface( this );
+
+			// precache all sounds for the newly constructed scene
+			PrecacheScene( pScene );
+		}
+
+	if ( pScene != NULL )
+	{
+		// release prior scene if present
+		UnloadScene();
+		m_pScene = pScene;
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Finds the entity nearest to both entities, and is clear
@@ -3770,12 +3852,6 @@ private:
 	float		m_flNearestToActor;
 	CBaseEntity *m_pNearestToActor;
 };
-
-
-HSCRIPT CSceneEntity::ScriptFindNamedEntity( const char *name )
-{
-	return ToHScript( FindNamedEntity( name, NULL, false, false ) );
-}
 
 //-----------------------------------------------------------------------------
 // Purpose: Search for an actor by name, make sure it can do face poses
@@ -4688,27 +4764,6 @@ void StopScriptedScene( CBaseFlex *pActor, EHANDLE hSceneEnt )
 	}
 }
 
-
-HSCRIPT ScriptCreateSceneEntity( const char *pszScene )
-{
-	if ( IsEntityCreationAllowedInScripts() == false )
-	{
-		Warning( "VScript error: A script attempted to create a scene entity mid-game. Entity creation from scripts is only allowed during map init.\n" );
-		return NULL;
-	}
-
-	g_pScriptVM->RegisterClass( GetScriptDescForClass( CSceneEntity ) );
-	CSceneEntity *pScene = (CSceneEntity *)CBaseEntity::CreateNoSpawn( "logic_choreographed_scene", vec3_origin, vec3_angle );
-
-	if ( pScene )
-	{
-		pScene->m_iszSceneFile = AllocPooledString( pszScene );
-		DispatchSpawn( pScene );
-	}
-
-	return ToHScript( pScene );
-}
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : *pszScene - 
@@ -4749,74 +4804,59 @@ int GetSceneSpeechCount( char const *pszScene )
 void PrecacheInstancedScene( char const *pszScene )
 {
 	static int nMakingReslists = -1;
-
-	if (nMakingReslists == -1)
+	
+	if ( nMakingReslists == -1 )
 	{
-		nMakingReslists = CommandLine()->FindParm("-makereslists") > 0 ? 1 : 0;
+		nMakingReslists = CommandLine()->FindParm( "-makereslists" ) > 0 ? 1 : 0;
 	}
 
-	if (nMakingReslists == 1)
+	if ( nMakingReslists == 1 )
 	{
 		// Just stat the file to add to reslist
-		g_pFullFileSystem->Size(pszScene);
+		g_pFullFileSystem->Size( pszScene );
 	}
 
+	// verify existence, cache is pre-populated, should be there
 	SceneCachedData_t sceneData;
-
-	char loadfile[MAX_PATH];
-	Q_strncpy(loadfile, pszScene, sizeof(loadfile));
-	Q_SetExtension(loadfile, ".vcd", sizeof(loadfile));
-	Q_FixSlashes(loadfile);
-
-	// Attempt to precache manually
-	void *pBuffer = NULL;
-	if (filesystem->ReadFileEx(loadfile, "MOD", &pBuffer, false, true))
+	if ( !scenefilecache->GetSceneCachedData( pszScene, &sceneData ) )
 	{
-		g_TokenProcessor.SetBuffer((char*)pBuffer);
-		CChoreoScene *pScene = ChoreoLoadScene(loadfile, NULL, &g_TokenProcessor, LocalScene_Printf);
-		if (pScene)
+		// Scenes are sloppy and don't always exist.
+		// A scene that is not in the pre-built cache image, but on disk, is a true error.
+		if ( developer.GetInt() && ( IsX360() && ( g_pFullFileSystem->GetDVDMode() != DVDMODE_STRICT ) && g_pFullFileSystem->FileExists( pszScene, "GAME" ) ) )
 		{
-			for (int i = 0; i < pScene->GetNumEvents(); i++)
-			{
-				CChoreoEvent *pEvent = pScene->GetEvent(i);
-				if (pEvent && pEvent->GetType() == CChoreoEvent::SPEAK)
-				{
-					CBaseEntity::PrecacheScriptSound(pEvent->GetParameters());
-
-					// Precache CC token
-					if (pEvent->GetCloseCaptionType() == CChoreoEvent::CC_MASTER &&
-						pEvent->GetNumSlaves() > 0)
-					{
-						char tok[CChoreoEvent::MAX_CCTOKEN_STRING];
-						if (pEvent->GetPlaybackCloseCaptionToken(tok, sizeof(tok)))
-						{
-							CBaseEntity::PrecacheScriptSound(tok);
-						}
-					}
-				}
-			}
+			Warning( "PrecacheInstancedScene: Missing scene '%s' from scene image cache.\nRebuild scene image cache!\n", pszScene );
 		}
-	}
-	else if (!scenefilecache->GetSceneCachedData(pszScene, &sceneData))
-	{
-		// This warning was meant for when scenes.image was supposed to be the sole method of loading scenes.
-		// It's been deactivated as part of the raw file support, as even if this was somehow on the Xbox 360,
-		// it would never trip anyway because if the file existed, it would've been read earlier.
-		//if ( developer.GetInt() && ( IsX360() && ( g_pFullFileSystem->GetDVDMode() != DVDMODE_STRICT ) && g_pFullFileSystem->FileExists( pszScene, "GAME" ) ) )
-		//{
-		//	Warning( "PrecacheInstancedScene: Missing scene '%s' from scene image cache.\nRebuild scene image cache!\n", pszScene );
-		//}
 	}
 	else
 	{
-		for (int i = 0; i < sceneData.numSounds; ++i)
+		for ( int i = 0; i < sceneData.numSounds; ++i )
 		{
-			short stringId = scenefilecache->GetSceneCachedSound(sceneData.sceneId, i);
-			CBaseEntity::PrecacheScriptSound(scenefilecache->GetSceneString(stringId));
+			short stringId = scenefilecache->GetSceneCachedSound( sceneData.sceneId, i );
+			CBaseEntity::PrecacheScriptSound( scenefilecache->GetSceneString( stringId ) );
 		}
 	}
 
-	g_pStringTableClientSideChoreoScenes->AddString(CBaseEntity::IsServer(), pszScene);
+	g_pStringTableClientSideChoreoScenes->AddString( CBaseEntity::IsServer(), pszScene );
+}
+
+HSCRIPT ScriptCreateSceneEntity( const char* pszScene )
+{
+	if ( IsEntityCreationAllowedInScripts() == false )
+	{
+		Warning( "VScript error: A script attempted to create a scene entity mid-game. Entity creation from scripts is only allowed during map init.\n" );
+		return NULL;
+	}
+
+	g_pScriptVM->RegisterClass( GetScriptDescForClass( CSceneEntity ) );
+	CSceneEntity *pScene = (CSceneEntity *)CBaseEntity::CreateNoSpawn( "logic_choreographed_scene", vec3_origin, vec3_angle );
+
+	if ( pScene )
+	{
+		pScene->m_iszSceneFile = AllocPooledString( pszScene );
+		DispatchSpawn( pScene );
+	}
+
+	return ToHScript( pScene );
 }
 
 //-----------------------------------------------------------------------------

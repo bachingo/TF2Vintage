@@ -42,6 +42,10 @@
 #include "proto_version.h"
 #include "vscript_client.h"
 
+#ifdef TF_CLIENT_DLL
+#include "c_tf_player.h"
+#endif
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -50,6 +54,8 @@
 	int g_nInterpolatedVarsChanged = 0;
 	bool g_bRestoreInterpolatedVarValues = false;
 #endif
+
+extern IScriptManager *scriptmanager;
 
 
 static bool g_bWasSkipping = (bool)-1;
@@ -75,9 +81,9 @@ void cc_cl_interp_all_changed( IConVar *pConVar, const char *pOldString, float f
 
 
 static ConVar  cl_extrapolate( "cl_extrapolate", "1", FCVAR_CHEAT, "Enable/disable extrapolation if interpolation history runs out." );
-static ConVar  cl_interp_npcs( "cl_interp_npcs", "0.1", FCVAR_USERINFO, "Interpolate NPC positions starting this many seconds in past (or cl_interp, if greater)" );  
+static ConVar  cl_interp_npcs( "cl_interp_npcs", "0.0", FCVAR_USERINFO, "Interpolate NPC positions starting this many seconds in past (or cl_interp, if greater)" );  
 static ConVar  cl_interp_all( "cl_interp_all", "0", 0, "Disable interpolation list optimizations.", 0, 0, 0, 0, cc_cl_interp_all_changed );
-ConVar  r_drawmodeldecals( "r_drawmodeldecals", "1" );
+ConVar  r_drawmodeldecals( "r_drawmodeldecals", "1", FCVAR_ALLOWED_IN_COMPETITIVE );
 extern ConVar	cl_showerror;
 int C_BaseEntity::m_nPredictionRandomSeed = -1;
 C_BasePlayer *C_BaseEntity::m_pPredictionPlayer = NULL;
@@ -579,8 +585,6 @@ BEGIN_RECV_TABLE_NOBASE(C_BaseEntity, DT_BaseEntity)
 	RecvPropInt( RECVINFO_NAME(m_hNetworkMoveParent, moveparent), 0, RecvProxy_IntToMoveParent ),
 	RecvPropInt( RECVINFO( m_iParentAttachment ) ),
 
-	RecvPropString( RECVINFO( m_iName ) ),
-
 	RecvPropInt( "movetype", 0, SIZEOF_IGNORE, 0, RecvProxy_MoveType ),
 	RecvPropInt( "movecollide", 0, SIZEOF_IGNORE, 0, RecvProxy_MoveCollide ),
 	RecvPropDataTable( RECVINFO_DT( m_Collision ), 0, &REFERENCE_RECV_TABLE(DT_CollisionProperty) ),
@@ -594,7 +598,7 @@ BEGIN_RECV_TABLE_NOBASE(C_BaseEntity, DT_BaseEntity)
 	RecvPropInt		( RECVINFO( m_bAnimatedEveryTick ), 0, RecvProxy_InterpolationAmountChanged ),
 	RecvPropBool	( RECVINFO( m_bAlternateSorting ) ),
 
-#if defined( TF_CLIENT_DLL ) || defined( TF_VINTAGE_CLIENT )
+#ifdef TF_CLIENT_DLL
 	RecvPropArray3( RECVINFO_ARRAY(m_nModelIndexOverrides),	RecvPropInt( RECVINFO(m_nModelIndexOverrides[0]) ) ),
 #endif
 
@@ -1206,6 +1210,28 @@ bool C_BaseEntity::Init( int entnum, int iSerialNum )
 	Assert( entnum >= 0 && entnum < NUM_ENT_ENTRIES );
 
 	index = entnum;
+
+	if ( this->IsPlayer() )
+	{
+		// Josh: If we ever have a player that could ever cause us
+		// an out of bounds access to any player sized arrays.
+		// Just get out now!
+		//
+		// All these issues should be bounds checked now anyway,
+		// but I'd much rather be safe than sorry here.
+		//
+		// Additionally, make sure we aren't 0 or negative,
+		// the player CANNOT be worldspawn.
+		// Someone is going to try that to get an extra player and frog something up!
+		// 
+		// Player index is entindex - 1.
+		// MAX_PLAYERS_ARRAY_SAFE is MAX_PLAYERS + 1.
+		if ( index <= 0 || index >= MAX_PLAYERS_ARRAY_SAFE )
+		{
+			Warning("Player with out of bounds entindex! Got: %d Expected to be in inclusive range: %d - %d\n", index, 1, MAX_PLAYERS );
+			return false;
+		}
+	}
 
 	cl_entitylist->AddNetworkableEntity( GetIClientUnknown(), entnum, iSerialNum );
 
@@ -1879,9 +1905,9 @@ void C_BaseEntity::SetNetworkAngles( const QAngle& ang )
 // Purpose: 
 // Input  : index - 
 //-----------------------------------------------------------------------------
-void C_BaseEntity::SetModelIndex( int index )
+void C_BaseEntity::SetModelIndex( int index_ )
 {
-	m_nModelIndex = index;
+	m_nModelIndex = index_;
 	const model_t *pModel = modelinfo->GetModel( m_nModelIndex );
 	SetModelPointer( pModel );
 }
@@ -2173,7 +2199,7 @@ void C_BaseEntity::UpdatePartitionListEntry()
 		list |= PARTITION_CLIENT_RESPONSIVE_EDICTS;
 
 	// add the entity to the KD tree so we will collide against it
-	partition->RemoveAndInsert( PARTITION_CLIENT_SOLID_EDICTS | PARTITION_CLIENT_RESPONSIVE_EDICTS | PARTITION_CLIENT_NON_STATIC_EDICTS, list, CollisionProp()->GetPartitionHandle() );
+	::partition->RemoveAndInsert( PARTITION_CLIENT_SOLID_EDICTS | PARTITION_CLIENT_RESPONSIVE_EDICTS | PARTITION_CLIENT_NON_STATIC_EDICTS, list, CollisionProp()->GetPartitionHandle() );
 }
 
 
@@ -2229,7 +2255,7 @@ void C_BaseEntity::NotifyShouldTransmit( ShouldTransmitState_t state )
 			SetDormant( true );
 			
 			// remove the entity from the KD tree so we won't collide against it
-			partition->Remove( PARTITION_CLIENT_SOLID_EDICTS | PARTITION_CLIENT_RESPONSIVE_EDICTS | PARTITION_CLIENT_NON_STATIC_EDICTS, CollisionProp()->GetPartitionHandle() );
+			::partition->Remove( PARTITION_CLIENT_SOLID_EDICTS | PARTITION_CLIENT_RESPONSIVE_EDICTS | PARTITION_CLIENT_NON_STATIC_EDICTS, CollisionProp()->GetPartitionHandle() );
 		
 		}
 		break;
@@ -2303,6 +2329,7 @@ void C_BaseEntity::PreDataUpdate( DataUpdateType_t updateType )
 	}
 
 	m_ubOldInterpolationFrame = m_ubInterpolationFrame;
+	m_bOldShouldDraw = ShouldDraw();
 }
 
 const Vector& C_BaseEntity::GetOldOrigin()
@@ -2599,7 +2626,7 @@ void C_BaseEntity::UnlinkFromHierarchy()
 //-----------------------------------------------------------------------------
 void C_BaseEntity::ValidateModelIndex( void )
 {
-#if defined(TF_CLIENT_DLL) || defined(TF_VINTAGE_CLIENT)
+#ifdef TF_CLIENT_DLL
 	if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_HALLOWEEN ) )
 	{
 		if ( m_nModelIndexOverrides[VISION_MODE_HALLOWEEN] > 0 )
@@ -2751,6 +2778,12 @@ void C_BaseEntity::PostDataUpdate( DataUpdateType_t updateType )
 
 	// if we changed parents, recalculate visibility
 	if ( m_hOldMoveParent != m_hNetworkMoveParent )
+	{
+		UpdateVisibility();
+	}
+
+	// if ShouldDraw state changes, recalculate visibility
+	if ( m_bOldShouldDraw != ShouldDraw() )
 	{
 		UpdateVisibility();
 	}
@@ -3446,7 +3479,6 @@ void C_BaseEntity::ComputeFxBlend( void )
 	if ( m_nFXComputeFrame == gpGlobals->framecount )
 		return;
 
-	MDLCACHE_CRITICAL_SECTION();
 	int blend=0;
 	float offset;
 
@@ -3983,7 +4015,7 @@ void C_BaseEntity::operator delete( void *pMem )
 //========================================================================================
 // TEAM HANDLING
 //========================================================================================
-C_Team *C_BaseEntity::GetTeam( void )
+C_Team *C_BaseEntity::GetTeam( void ) const
 {
 	return GetGlobalTeam( m_iTeamNum );
 }
@@ -4008,7 +4040,7 @@ int	C_BaseEntity::GetRenderTeamNumber( void )
 //-----------------------------------------------------------------------------
 // Purpose: Returns true if these entities are both in at least one team together
 //-----------------------------------------------------------------------------
-bool C_BaseEntity::InSameTeam( C_BaseEntity *pEntity )
+bool C_BaseEntity::InSameTeam( const C_BaseEntity *pEntity ) const
 {
 	if ( !pEntity )
 		return false;
@@ -4883,9 +4915,9 @@ C_BaseEntity *C_BaseEntity::Instance( int iEnt )
 	return ClientEntityList().GetBaseEntity( iEnt );
 }
 
-#ifdef WIN32
+#if defined( WIN32 ) && _MSC_VER <= 1920
 #pragma warning( push )
-#include <typeinfo>
+#include <typeinfo.h>
 #pragma warning( pop )
 #endif
 
@@ -5328,10 +5360,6 @@ void C_BaseEntity::DestroyIntermediateData( void )
 void C_BaseEntity::ShiftIntermediateDataForward( int slots_to_remove, int number_of_commands_run )
 {
 #if !defined( NO_ENTITY_PREDICTION )
-	Assert( m_pIntermediateData );
-	if ( !m_pIntermediateData )
-		return;
-
 	Assert( number_of_commands_run >= slots_to_remove );
 
 	// Just moving pointers, yeah
@@ -5722,16 +5750,22 @@ void C_BaseEntity::DrawBBoxVisualizations( void )
 {
 	if ( m_fBBoxVisFlags & VISUALIZE_COLLISION_BOUNDS )
 	{
-		debugoverlay->AddBoxOverlay( CollisionProp()->GetCollisionOrigin(), CollisionProp()->OBBMins(),
-			CollisionProp()->OBBMaxs(), CollisionProp()->GetCollisionAngles(), 190, 190, 0, 0, 0.01 );
+		if ( debugoverlay )
+		{
+			debugoverlay->AddBoxOverlay( CollisionProp()->GetCollisionOrigin(), CollisionProp()->OBBMins(),
+				CollisionProp()->OBBMaxs(), CollisionProp()->GetCollisionAngles(), 190, 190, 0, 0, 0.01 );
+		}
 	}
 
 	if ( m_fBBoxVisFlags & VISUALIZE_SURROUNDING_BOUNDS )
 	{
 		Vector vecSurroundMins, vecSurroundMaxs;
 		CollisionProp()->WorldSpaceSurroundingBounds( &vecSurroundMins, &vecSurroundMaxs );
-		debugoverlay->AddBoxOverlay( vec3_origin, vecSurroundMins,
-			vecSurroundMaxs, vec3_angle, 0, 255, 255, 0, 0.01 );
+		if ( debugoverlay )
+		{
+			debugoverlay->AddBoxOverlay( vec3_origin, vecSurroundMins,
+				vecSurroundMaxs, vec3_angle, 0, 255, 255, 0, 0.01 );
+		}
 	}
 
 	if ( m_fBBoxVisFlags & VISUALIZE_RENDER_BOUNDS || r_drawrenderboxes.GetInt() )
@@ -5763,13 +5797,6 @@ RenderGroup_t C_BaseEntity::GetRenderGroup()
 	if ( m_nRenderMode == kRenderNone )
 		return RENDER_GROUP_OPAQUE_ENTITY;
 
-	// When an entity has a material proxy, we have to recompute
-	// translucency here because the proxy may have changed it.
-	if (modelinfo->ModelHasMaterialProxy( GetModel() ))
-	{
-		modelinfo->RecomputeTranslucency( const_cast<model_t*>(GetModel()), GetSkin(), GetBody(), GetClientRenderable() );
-	}
-	
 	// NOTE: Bypassing the GetFXBlend protection logic because we want this to
 	// be able to be called from AddToLeafSystem.
 	int nTempComputeFrame = m_nFXComputeFrame;
@@ -6428,10 +6455,14 @@ bool C_BaseEntity::ValidateEntityAttachedToPlayer( bool &bShouldRetry )
 		return true;
 
 	// Some wearables parent to the view model
-	C_BasePlayer *pPlayer = ToBasePlayer( pParent );
-	if ( pPlayer && pPlayer->GetViewModel() == this )
+	C_TFPlayer *pPlayer = ToTFPlayer( pParent );
+	if ( pPlayer )
 	{
-		return true;
+		if ( pPlayer->GetViewModel() == this )
+			return true;
+
+		if ( pPlayer->HasItem() && ( pPlayer->GetItem()->GetItemID() == TF_ITEM_CAPTURE_FLAG ) && ( pPlayer->GetItem() == this ) )
+			return true;
 	}
 
 	// always allow the briefcase model
@@ -6440,10 +6471,7 @@ bool C_BaseEntity::ValidateEntityAttachedToPlayer( bool &bShouldRetry )
 	{
 		if ( FStrEq( pszModel, "models/flag/briefcase.mdl" ) )
 			return true;
-
-		if ( FStrEq( pszModel, "models/passtime/ball/passtime_ball.mdl" ) )
-			return true;
-
+				
 		if ( FStrEq( pszModel, "models/props_doomsday/australium_container.mdl" ) )
 			return true;
 

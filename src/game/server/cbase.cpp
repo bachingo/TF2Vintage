@@ -84,6 +84,7 @@ OUTPUTS:
 #include "tier1/strtools.h"
 #include "datacache/imdlcache.h"
 #include "env_debughistory.h"
+#include "fgdlib/entitydefs.h"
 
 #include "tier0/vprof.h"
 
@@ -129,10 +130,16 @@ CEventAction::CEventAction( const char *ActionData )
 
 	char szToken[256];
 
+	char chDelim = VMF_IOPARAM_STRING_DELIMITER;
+	if (!strchr(ActionData, VMF_IOPARAM_STRING_DELIMITER))
+	{
+		chDelim = ',';
+	}
+
 	//
 	// Parse the target name.
 	//
-	const char *psz = nexttoken(szToken, ActionData, ',');
+	const char *psz = nexttoken(szToken, ActionData, chDelim);
 	if (szToken[0] != '\0')
 	{
 		m_iTarget = AllocPooledString(szToken);
@@ -141,7 +148,7 @@ CEventAction::CEventAction( const char *ActionData )
 	//
 	// Parse the input name.
 	//
-	psz = nexttoken(szToken, psz, ',');
+	psz = nexttoken(szToken, psz, chDelim);
 	if (szToken[0] != '\0')
 	{
 		m_iTargetInput = AllocPooledString(szToken);
@@ -154,7 +161,7 @@ CEventAction::CEventAction( const char *ActionData )
 	//
 	// Parse the parameter override.
 	//
-	psz = nexttoken(szToken, psz, ',');
+	psz = nexttoken(szToken, psz, chDelim);
 	if (szToken[0] != '\0')
 	{
 		m_iParameter = AllocPooledString(szToken);
@@ -163,7 +170,7 @@ CEventAction::CEventAction( const char *ActionData )
 	//
 	// Parse the delay.
 	//
-	psz = nexttoken(szToken, psz, ',');
+	psz = nexttoken(szToken, psz, chDelim);
 	if (szToken[0] != '\0')
 	{
 		m_flDelay = atof(szToken);
@@ -172,7 +179,7 @@ CEventAction::CEventAction( const char *ActionData )
 	//
 	// Parse the number of times to fire.
 	//
-	nexttoken(szToken, psz, ',');
+	nexttoken(szToken, psz, chDelim);
 	if (szToken[0] != '\0')
 	{
 		m_nTimesToFire = atoi(szToken);
@@ -186,7 +193,7 @@ CEventAction::CEventAction( const char *ActionData )
 
 // this memory pool stores blocks around the size of CEventAction/inputitem_t structs
 // can be used for other blocks; will error if to big a block is tried to be allocated
-CUtlMemoryPool g_EntityListPool( MAX(sizeof(CEventAction),sizeof(CMultiInputVar::inputitem_t)), 512, CUtlMemoryPool::GROW_FAST, "g_EntityListPool" );
+CUtlMemoryPool g_EntityListPool( MAX(sizeof(CEventAction),sizeof(CMultiInputVar::inputitem_t)), 512, CUtlMemoryPool::GROW_FAST, "g_EntityListPool", Max<int>( alignof( CEventAction ), alignof( CMultiInputVar::inputitem_t ) ) );
 
 #include "tier0/memdbgoff.h"
 
@@ -242,6 +249,54 @@ CBaseEntityOutput::~CBaseEntityOutput()
 	}
 }
 
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CBaseEntityOutput::ScriptRemoveEventAction( CEventAction *pEventAction, const char *szTarget, const char *szTargetInput, const char *szParameter )
+{
+	CEventAction *ev = m_ActionList;
+	CEventAction *prev = NULL;
+	bool bTargetOnly = false;
+	if ( V_strcmp( szTargetInput, "" ) == 0 )
+		bTargetOnly = true;
+	
+	while (ev != NULL)
+	{
+		bool bRemove = false;
+
+		if ( bTargetOnly )
+		{
+			if ( ev->m_iTarget == AllocPooledString( szTarget ) )
+				bRemove = true;
+		}
+		else
+		{
+			if ( ev->m_iTarget == AllocPooledString( szTarget ) && ev->m_iTargetInput == AllocPooledString( szTargetInput ) && ev->m_iParameter == AllocPooledString( szParameter ) )
+				bRemove = true;
+		}
+
+		if (!bRemove)
+		{
+			prev = ev;
+			ev = ev->m_pNext;
+		}
+		else
+		{
+			if (prev != NULL)
+			{
+				prev->m_pNext = ev->m_pNext;
+			}
+			else
+			{
+				m_ActionList = ev->m_pNext;
+			}
+
+			CEventAction *next = ev->m_pNext;
+			delete ev;
+			ev = next;
+		}
+	}
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: Fires the event, causing a sequence of action to occur in other ents.
@@ -281,7 +336,7 @@ void CBaseEntityOutput::FireOutput(variant_t Value, CBaseEntity *pActivator, CBa
 			Q_snprintf( szBuffer,
 						sizeof(szBuffer),
 						"(%0.2f) output: (%s,%s) -> (%s,%s,%.1f)(%s)\n",
-#if defined( TF_DLL ) || defined(TF_VINTAGE)
+#ifdef TF_DLL
 						engine->GetServerTime(),
 #else
 						gpGlobals->curtime,
@@ -302,7 +357,7 @@ void CBaseEntityOutput::FireOutput(variant_t Value, CBaseEntity *pActivator, CBa
 			Q_snprintf( szBuffer,
 						sizeof(szBuffer),
 						"(%0.2f) output: (%s,%s) -> (%s,%s)(%s)\n",
-#if defined( TF_DLL ) || defined(TF_VINTAGE)
+#ifdef TF_DLL
 						engine->GetServerTime(),
 #else
 						gpGlobals->curtime,
@@ -409,7 +464,6 @@ void CBaseEntityOutput::RemoveEventAction( CEventAction *pEventAction )
 	}
 }
 
-
 // save data description for the event queue
 BEGIN_SIMPLE_DATADESC( CBaseEntityOutput )
 
@@ -466,6 +520,17 @@ int CBaseEntityOutput::Restore( IRestore &restore, int elementCount )
 	}
 
 	return 1;
+}
+
+const CEventAction *CBaseEntityOutput::GetActionForTarget( string_t iSearchTarget ) const
+{
+	for ( CEventAction *ev = m_ActionList; ev != NULL; ev = ev->m_pNext )
+	{
+		if ( ev->m_iTarget == iSearchTarget )
+			return ev;
+	}
+
+	return NULL;
 }
 
 int CBaseEntityOutput::NumberOfElements( void )
@@ -798,7 +863,7 @@ void CEventQueue::Dump( void )
 	EventQueuePrioritizedEvent_t *pe = m_Events.m_pNext;
 
 	Msg("Dumping event queue. Current time is: %.2f\n",
-#if defined( TF_DLL ) || defined(TF_VINTAGE)
+#ifdef TF_DLL
 		engine->GetServerTime()
 #else
 		gpGlobals->curtime
@@ -831,7 +896,7 @@ void CEventQueue::AddEvent( const char *target, const char *targetInput, variant
 {
 	// build the new event
 	EventQueuePrioritizedEvent_t *newEvent = new EventQueuePrioritizedEvent_t;
-#if defined( TF_DLL ) || defined(TF_VINTAGE)
+#ifdef TF_DLL
 	newEvent->m_flFireTime = engine->GetServerTime() + fireDelay;	// priority key in the priority queue
 #else
 	newEvent->m_flFireTime = gpGlobals->curtime + fireDelay;	// priority key in the priority queue
@@ -854,7 +919,7 @@ void CEventQueue::AddEvent( CBaseEntity *target, const char *targetInput, varian
 {
 	// build the new event
 	EventQueuePrioritizedEvent_t *newEvent = new EventQueuePrioritizedEvent_t;
-#if defined( TF_DLL ) || defined(TF_VINTAGE)
+#ifdef TF_DLL
 	newEvent->m_flFireTime = engine->GetServerTime() + fireDelay;	// primary priority key in the priority queue
 #else
 	newEvent->m_flFireTime = gpGlobals->curtime + fireDelay;	// primary priority key in the priority queue
@@ -929,7 +994,7 @@ void CEventQueue::ServiceEvents( void )
 
 	EventQueuePrioritizedEvent_t *pe = m_Events.m_pNext;
 
-#if defined( TF_DLL ) || defined(TF_VINTAGE)
+#ifdef TF_DLL
 	while ( pe != NULL && pe->m_flFireTime <= engine->GetServerTime() )
 #else
 	while ( pe != NULL && pe->m_flFireTime <= gpGlobals->curtime )
@@ -1288,7 +1353,7 @@ int CEventQueue::Restore( IRestore &restore )
 			AddEvent( tmpEvent.m_pEntTarget,
 					  STRING(tmpEvent.m_iTargetInput),
 					  tmpEvent.m_VariantValue,
-#if defined( TF_DLL ) || defined(TF_VINTAGE)
+#ifdef TF_DLL
 					  tmpEvent.m_flFireTime - engine->GetServerTime(),
 #else
 					  tmpEvent.m_flFireTime - gpGlobals->curtime,
@@ -1302,7 +1367,7 @@ int CEventQueue::Restore( IRestore &restore )
 			AddEvent( STRING(tmpEvent.m_iTarget),
 					  STRING(tmpEvent.m_iTargetInput),
 					  tmpEvent.m_VariantValue,
-#if defined( TF_DLL ) || defined(TF_VINTAGE)
+#ifdef TF_DLL
 					  tmpEvent.m_flFireTime - engine->GetServerTime(),
 #else
 					  tmpEvent.m_flFireTime - gpGlobals->curtime,
@@ -1577,8 +1642,6 @@ bool variant_t::Convert( fieldtype_t newType )
 //-----------------------------------------------------------------------------
 const char *variant_t::ToString( void ) const
 {
-	COMPILE_TIME_ASSERT( sizeof(string_t) == sizeof(int) );
-
 	static char szBuf[512];
 
 	switch (fieldType)

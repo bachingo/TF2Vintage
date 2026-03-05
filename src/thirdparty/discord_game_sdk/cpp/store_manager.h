@@ -9,13 +9,13 @@ public:
     ~StoreManager() = default;
 
     void FetchSkus(std::function<void(Result)> callback);
-    void CountSkus(int32_t* count);
+    void CountSkus(std::int32_t* count);
     Result GetSku(Snowflake skuId, Sku* sku);
-    Result GetSkuAt(int32_t index, Sku* sku);
+    Result GetSkuAt(std::int32_t index, Sku* sku);
     void FetchEntitlements(std::function<void(Result)> callback);
-    void CountEntitlements(int32_t* count);
+    void CountEntitlements(std::int32_t* count);
     Result GetEntitlement(Snowflake entitlementId, Entitlement* entitlement);
-    Result GetEntitlementAt(int32_t index, Entitlement* entitlement);
+    Result GetEntitlementAt(std::int32_t index, Entitlement* entitlement);
     Result HasSkuEntitlement(Snowflake skuId, bool* hasEntitlement);
     void StartPurchase(Snowflake skuId, std::function<void(Result)> callback);
 

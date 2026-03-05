@@ -49,7 +49,6 @@ short		g_sModelIndexBubbles;		// holds the index for the bubbles model
 short		g_sModelIndexBloodDrop;		// holds the sprite index for the initial blood
 short		g_sModelIndexBloodSpray;	// holds the sprite index for splattered blood
 
-
 ConVar weapon_showproficiency( "weapon_showproficiency", "0" );
 extern ConVar ai_debug_shoot_positions;
 
@@ -69,7 +68,7 @@ void W_Precache(void)
 	g_sModelIndexLaserDot = CBaseEntity::PrecacheModel("sprites/laserdot.vmt");
 #endif // HL1_DLL
 
-#if !defined( TF_DLL ) && !defined( TF_VINTAGE ) 
+#ifndef TF_DLL
 	g_sModelIndexFireball = CBaseEntity::PrecacheModel ("sprites/zerogxplode.vmt");// fireball
 
 	g_sModelIndexSmoke = CBaseEntity::PrecacheModel ("sprites/steam1.vmt");// smoke
@@ -732,3 +731,26 @@ void CBaseCombatWeapon::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_
 	}
 }
 
+void CBaseCombatWeapon::SetCustomViewModel( const char *pszCustomViewModel )
+{
+	if ( !pszCustomViewModel || !*pszCustomViewModel )
+	{
+		m_nCustomViewmodelModelIndex = 0;
+		return;
+	}
+
+	const bool bPrecacheAllowed = CBaseEntity::IsPrecacheAllowed();
+	CBaseEntity::SetAllowPrecache( true );
+
+	SetCustomViewModelModelIndex( PrecacheModel( pszCustomViewModel, false ) );
+
+	CBaseEntity::SetAllowPrecache( bPrecacheAllowed );
+}
+
+void CBaseCombatWeapon::SetCustomViewModelModelIndex( int nCustomViewModelModelIndex )
+{
+	if ( nCustomViewModelModelIndex < 0 )
+		nCustomViewModelModelIndex = 0;
+
+	m_nCustomViewmodelModelIndex = nCustomViewModelModelIndex;
+}

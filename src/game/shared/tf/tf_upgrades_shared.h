@@ -1,32 +1,32 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose:		
+// Purpose:		Load item upgrade data from KeyValues
 //
 // $NoKeywords: $
 //=============================================================================
 
 #ifndef TF_UPGRADES_SHARED_H
 #define TF_UPGRADES_SHARED_H
-#ifdef _WIN32
-#pragma once
-#endif
 
 #ifdef CLIENT_DLL
 #define CTFPlayer C_TFPlayer
 #endif
+
 class CTFPlayer;
 
-struct CMannVsMachineUpgrades
+class CMannVsMachineUpgrades
 {
-	char szAttribute[128];
-	char szIcon[MAX_PATH];
+public:
+	char szAttrib[ MAX_ATTRIBUTE_DESCRIPTION_LENGTH ];
+	char szIcon[ MAX_PATH ];
 	float flIncrement;
 	float flCap;
 	int nCost;
 	int nUIGroup;
 	int nQuality;
-	int nTier;
+	int nTier;		// If set, upgrades in the same tier - for the same player/item - will be mutually exclusive
 };
+
 
 class CMannVsMachineUpgradeManager : public CAutoGameSystem
 {
@@ -36,21 +36,22 @@ public:
 	virtual void LevelInitPostEntity();
 	virtual void LevelShutdownPostEntity();
 
+	void ParseUpgradeBlockForUIGroup( KeyValues *pKV, int iDefaultUIGroup );
+
+	int GetAttributeIndexByName( const char* pszAttributeName );
+
 	void LoadUpgradesFile( void );
-	void LoadUpgradesFileFromPath( char const *pszPath );
-	void ParseUpgradeBlockForUIGroup( KeyValues *pKVData, int iDefUIGroup );
+	void LoadUpgradesFileFromPath( const char *pszPath );
 
-	int GetAttributeIndexByName( char const *pszAttributeName );
-
-	int GetUpgradeCount( void ) const { return m_Upgrades.Count(); }
-	CUtlVector<CMannVsMachineUpgrades> &GetUpgradeVector( void ) { return m_Upgrades; }
+public:
+	CUtlVector< CMannVsMachineUpgrades > m_Upgrades;
 
 private:
-	CUtlVector< CMannVsMachineUpgrades > m_Upgrades;
-	CUtlMap< char const*, int > m_UpgradeMap;
+	CUtlMap< const char*, int > m_AttribMap;
+
 };
 
 extern CMannVsMachineUpgradeManager g_MannVsMachineUpgrades;
-int GetUpgradeStepData( CTFPlayer *pPlayer, int nWeaponSlot, int nUpgradeIndex, int *nCurrentStep, bool *bOverCap );
+int GetUpgradeStepData( CTFPlayer *pPlayer, int nWeaponSlot, int nUpgradeIndex, int &nCurrentStep, bool &bOverCap );
 
-#endif
+#endif // TF_UPGRADES_H

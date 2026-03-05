@@ -452,7 +452,7 @@ void CGibShooter::Spawn( void )
 CGib *CGibShooter::CreateGib ( void )
 {
 	ConVarRef violence_hgibs( "violence_hgibs" );
-	if ( violence_hgibs.IsValid() && ( violence_hgibs.GetInt() == 0 ) )
+	if ( violence_hgibs.IsValid() && !violence_hgibs.GetInt() )
 		return NULL;
 
 	CGib *pGib = CREATE_ENTITY( CGib, "gib" );
@@ -1491,7 +1491,7 @@ BEGIN_DATADESC( CPrecipitation )
 	DEFINE_KEYFIELD( m_nPrecipType, FIELD_INTEGER, "preciptype" ),
 END_DATADESC()
 
-// Just send the normal entity crap
+// Just send the normal entity stuff
 IMPLEMENT_SERVERCLASS_ST( CPrecipitation, DT_Precipitation)
 	SendPropInt( SENDINFO( m_nPrecipType ), Q_log2( NUM_PRECIPITATION_TYPES ) + 1, SPROP_UNSIGNED )
 END_SEND_TABLE()
@@ -2311,6 +2311,13 @@ void EffectsPrecache( void *pUser )
 		CBaseEntity::PrecacheScriptSound( "HudChat.Message" );
 #endif
 	}
+
+#ifdef TF_DLL
+	// For tempfx.
+	CBaseEntity::PrecacheModel( "models/weapons/shells/shell_cigarrette.mdl" );
+	CBaseEntity::PrecacheModel( "models/player/gibs/soldiergib007.mdl" );
+	CBaseEntity::PrecacheModel( "models/player/gibs/soldiergib008.mdl" );
+#endif
 }
 
 PRECACHE_REGISTER_FN( EffectsPrecache );

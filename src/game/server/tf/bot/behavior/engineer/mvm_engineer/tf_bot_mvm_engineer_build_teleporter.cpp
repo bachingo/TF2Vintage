@@ -1,111 +1,105 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
-//
-// Purpose:		
-//
-// $NoKeywords: $
-//=============================================================================
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// Michael Booth, September 2012
+
 #include "cbase.h"
-#include "tf_bot.h"
-#include "tf_bot_mvm_engineer_build_teleporter.h"
-#include "tf_obj_teleporter.h"
+#include "string_t.h"
+#include "nav_mesh.h"
+#include "tf_player.h"
+#include "tf_obj.h"
+#include "tf_obj_sentrygun.h"
+#include "tf_obj_dispenser.h"
+#include "tf_gamerules.h"
+#include "tf_weapon_builder.h"
+#include "bot/tf_bot.h"
+#include "bot/behavior/engineer/mvm_engineer/tf_bot_mvm_engineer_build_teleporter.h"
+#include "bot/map_entities/tf_bot_hint_teleporter_exit.h"
 
+ConVar tf_bot_engineer_mvm_building_health_multiplier( "tf_bot_engineer_building_health_multiplier", "2", FCVAR_CHEAT );
 
-ConVar tf_bot_engineer_building_health_multiplier( "tf_bot_engineer_building_health_multiplier", "2", FCVAR_CHEAT );
+extern ConVar tf_bot_path_lookahead_range;
 
-
+				   
+//---------------------------------------------------------------------------------------------
 CTFBotMvMEngineerBuildTeleportExit::CTFBotMvMEngineerBuildTeleportExit( CTFBotHintTeleporterExit *hint )
 {
-	m_hintEntity = hint;
-}
-
-CTFBotMvMEngineerBuildTeleportExit::~CTFBotMvMEngineerBuildTeleportExit()
-{
+	m_teleporterBuildHint = hint;
 }
 
 
-const char *CTFBotMvMEngineerBuildTeleportExit::GetName() const
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotMvMEngineerBuildTeleportExit::OnStart( CTFBot *me, Action< CTFBot > *priorAction )
 {
-	return "MvMEngineerBuildTeleportExit";
+	return Continue();
 }
 
 
-ActionResult<CTFBot> CTFBotMvMEngineerBuildTeleportExit::OnStart( CTFBot *me, Action<CTFBot> *priorAction )
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotMvMEngineerBuildTeleportExit::Update( CTFBot *me, float interval )
 {
-	return Action<CTFBot>::Continue();
-}
+	if ( m_teleporterBuildHint == NULL )
+		return Done( "No hint entity" );
 
-ActionResult<CTFBot> CTFBotMvMEngineerBuildTeleportExit::Update( CTFBot *me, float dt )
-{
-	if ( m_hintEntity == nullptr )
-		return Action<CTFBot>::Done( "No hint entity" );
-
-	if ( me->IsRangeGreaterThan( m_hintEntity->GetAbsOrigin(), 25.0f ) )
+	// various interruptions could mean we're away from our build location - move to it
+	if ( me->IsRangeGreaterThan( m_teleporterBuildHint->GetAbsOrigin(), 25.0f ) )
 	{
-		if ( m_ctRecomputePath.IsElapsed() )
+		if ( m_repathTimer.IsElapsed() )
 		{
-			m_ctRecomputePath.Start( RandomFloat( 1.0f, 2.0f ) );
+			m_repathTimer.Start( RandomFloat( 1.0f, 2.0f ) );
 
-			CTFBotPathCost cost_func( me, FASTEST_ROUTE );
-			m_PathFollower.Compute<CTFBotPathCost>( me, m_hintEntity->GetAbsOrigin(), cost_func, 0.0f, true );
+			CTFBotPathCost cost( me, FASTEST_ROUTE );
+			m_path.Compute( me, m_teleporterBuildHint->GetAbsOrigin(), cost );
 		}
 
-		m_PathFollower.Update( me );
-		if ( !m_PathFollower.IsValid() )
+		m_path.Update( me );
+
+		if ( !m_path.IsValid() )
 		{
-/* BUG: one path failure ends the entire behavior...
- * could this be why engiebots sometimes zone out? */
-			return Action<CTFBot>::Done( "Path failed" );
+			return Done( "Path failed" );
 		}
 
-		return Action<CTFBot>::Continue();
+		return Continue();
 	}
 
-	if ( !m_ctPushAway.HasStarted() )
+	if ( !m_delayBuildTime.HasStarted() )
 	{
-		m_ctPushAway.Start( 0.1f );
+		m_delayBuildTime.Start( 0.1f );
+		TFGameRules()->PushAllPlayersAway( m_teleporterBuildHint->GetAbsOrigin(), 400, 500, TF_TEAM_RED );
+	}
+	else if ( m_delayBuildTime.IsElapsed() )
+	{
+		// destroy previous object
+		me->DetonateObjectOfType( OBJ_TELEPORTER, MODE_TELEPORTER_EXIT, true );
 
-		if ( m_hintEntity != nullptr )
+		// directly create at the precise position and orientation desired
+		CObjectTeleporter* myTeleporter = (CObjectTeleporter *)CreateEntityByName( "obj_teleporter" );
+		if ( myTeleporter )
 		{
-			TFGameRules()->PushAllPlayersAway( m_hintEntity->GetAbsOrigin(),
-											   400.0f, 500.0f, TF_TEAM_RED, nullptr );
+			myTeleporter->SetAbsOrigin( m_teleporterBuildHint->GetAbsOrigin() );
+			myTeleporter->SetAbsAngles( QAngle( 0, m_teleporterBuildHint->GetAbsAngles().y, 0 ) );
+			myTeleporter->SetObjectMode( MODE_TELEPORTER_EXIT );
+			myTeleporter->Spawn();
+
+			myTeleporter->SetTeleportWhere( me->GetTeleportWhere() );
+
+			if ( me->ShouldQuickBuild() )
+			{
+				myTeleporter->ForceQuickBuild();
+			}
+
+			myTeleporter->StartPlacement( me );
+			myTeleporter->StartBuilding( me );
+
+			int iHealth = myTeleporter->GetMaxHealthForCurrentLevel() * tf_bot_engineer_mvm_building_health_multiplier.GetFloat();
+			myTeleporter->SetMaxHealth( iHealth );
+			myTeleporter->SetHealth( iHealth );
+
+			m_teleporterBuildHint->SetOwnerEntity( myTeleporter );
+
+			me->EmitSound( "Engineer.MVM_AutoBuildingTeleporter02" );
+
+			return Done( "Teleport exit built" );
 		}
-
-		return Action<CTFBot>::Continue();
 	}
 
-	if ( !m_ctPushAway.IsElapsed() )
-	{
-		return Action<CTFBot>::Continue();
-	}
-
-	me->DetonateOwnedObjectsOfType( OBJ_TELEPORTER, TELEPORTER_TYPE_EXIT, true );
-
-	CBaseEntity *ent = CreateEntityByName( "obj_teleporter" );
-	if ( ent == nullptr )
-		return Action<CTFBot>::Continue();
-
-	CObjectTeleporter *tele = static_cast<CObjectTeleporter *>( ent );
-	tele->SetAbsOrigin( this->m_hintEntity->GetAbsOrigin() );
-	tele->SetAbsAngles( this->m_hintEntity->GetAbsAngles() );
-	tele->SetObjectMode( 1 );
-	tele->Spawn();
-
-	FOR_EACH_VEC( me->m_TeleportWhere, i ) {
-		tele->m_TeleportWhere.CopyAndAddToTail( me->m_TeleportWhere[i] );
-	}
-
-	tele->StartPlacement( me );
-	tele->StartBuilding( me );
-
-	int max_health = (int)( (float)tele->GetMaxHealthForCurrentLevel() *
-							tf_bot_engineer_building_health_multiplier.GetFloat() );
-
-	tele->SetMaxHealth( max_health );
-	tele->SetHealth( max_health );
-
-	m_hintEntity->SetOwnerEntity( tele );
-
-	me->EmitSound( "Engineer.MVM_AutoBuildingTeleporter02" );
-
-	return Action<CTFBot>::Done( "Teleport exit built" );
+	return Continue();
 }

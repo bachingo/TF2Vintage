@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -11,11 +11,11 @@
 #pragma once
 #endif
 
-//#include "c_tf_basecombatweapon.h"
-//#include "weapon_combat_usedwithshieldbase.h"
-
 #include "tf_weaponbase.h"
 #include "c_baseobject.h"
+
+#define CTFWeaponBuilder C_TFWeaponBuilder
+#define CTFWeaponSapper C_TFWeaponSapper
 
 //=============================================================================
 // Purpose: Client version of CWeaponBuiler
@@ -42,9 +42,11 @@ public:
 	virtual const char *GetWorldModel( void ) const;
 
 	virtual bool Deploy( void );
-	virtual bool CanHolster( void ) const;
+	virtual void	PostDataUpdate( DataUpdateType_t type );
 
 	C_BaseObject	*GetPlacementModel( void ) { return m_hObjectBeingBuilt.Get(); }
+
+	virtual void UpdateAttachmentModels( void );
 
 	virtual int GetSlot( void ) const;
 	virtual int GetPosition( void ) const;
@@ -61,17 +63,22 @@ public:
 	virtual bool CanBeSelected( void );
 	virtual bool VisibleInWeaponSelection( void );
 
-	bool			IsRoboSapper( void ) const			{ return m_bRoboSapper; }
-
 	virtual bool HasAmmo( void );
 
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_BUILDER; }
 
-	int GetObjectType( void ) { return m_iObjectType; }
+	int GetType( void ) { return m_iObjectType; }
+	bool CanBuildObjectType( int iObjectType );
 
 	virtual Activity GetDrawActivity( void );
 
 	virtual CStudioHdr *OnNewModel( void );
+
+	virtual float		InternalGetEffectBarRechargeTime( void ) { return 15.0; }
+	virtual int			GetEffectBarAmmo( void ) { return TF_AMMO_GRENADES2; }
+	float				GetProgress( void ) { return GetEffectBarProgress(); }
+	const char*			GetEffectLabelText( void ) { return "#TF_Sapper"; }
+	virtual bool		EffectMeterShouldFlash( void );
 
 public:
 	// Builder Data
@@ -87,32 +94,39 @@ public:
 	// Our placement model
 	CHandle<C_BaseObject>	m_hObjectBeingBuilt;
 
-	bool		m_bRoboSapper;
-
 	int m_iValidBuildPoseParam;
+
+	// Wheatly Data
+	float m_flWheatleyTalkingUntil;
 
 private:
 	C_TFWeaponBuilder( const C_TFWeaponBuilder & );
+	bool m_aBuildableObjectTypes[OBJ_LAST];
 };
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-class C_TFWeaponSapper : public C_TFWeaponBuilder
+class C_TFWeaponSapper : public C_TFWeaponBuilder, public ITFChargeUpWeapon
 {
 	DECLARE_CLASS( C_TFWeaponSapper, C_TFWeaponBuilder );
 public:
-	DECLARE_CLIENTCLASS();
+	DECLARE_NETWORKCLASS();
+	//DECLARE_PREDICTABLE();
 
-	C_TFWeaponSapper();
+	// ITFChargeUpWeapon
+	virtual bool CanCharge( void )				{ return GetChargeMaxTime() > 0; }
+	virtual float GetChargeBeginTime( void )	{ return m_flChargeBeginTime; }
+	virtual float GetChargeMaxTime( void )		{ float flChargeTime = 0; CALL_ATTRIB_HOOK_FLOAT( flChargeTime, sapper_deploy_time ); return flChargeTime; };
 
 	virtual const char *GetViewModel( int iViewModel ) const;
 	virtual const char *GetWorldModel( void ) const;
 
 	bool IsWheatleyTalking( void ) { return gpGlobals->curtime <= m_flWheatleyTalkingUntil; }
 
-private:
-	CNetworkVar( float, m_flWheatleyTalkingUntil );
+	CNetworkVar( float, m_flChargeBeginTime );
 };
+
 
 #endif // C_TF_WEAPON_BUILDER_H

@@ -1,5 +1,5 @@
 
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -23,26 +23,72 @@ struct StatMap_t
 };
 
 // subset of stats which we store in Steam
-StatMap_t g_SteamStats[] = { 
-		{ "iNumberOfKills", TFSTAT_KILLS, PROPERTY_KILLS },
-		{ "iDamageDealt", TFSTAT_DAMAGE, PROPERTY_DAMAGE_DEALT },
-		{ "iPlayTime", TFSTAT_PLAYTIME, PROPERTY_PLAY_TIME },
-		{ "iPointCaptures", TFSTAT_CAPTURES, PROPERTY_POINT_CAPTURES },
-		{ "iPointDefenses", TFSTAT_DEFENSES, PROPERTY_POINT_DEFENSES },
-		{ "iDominations", TFSTAT_DOMINATIONS, PROPERTY_DOMINATIONS },
-		{ "iRevenge", TFSTAT_REVENGE, PROPERTY_REVENGE },
-		{ "iPointsScored", TFSTAT_POINTSSCORED, PROPERTY_POINTS_SCORED },
-		{ "iBuildingsDestroyed", TFSTAT_BUILDINGSDESTROYED, PROPERTY_BUILDINGS_DESTROYED },
-		{ "iHeadshots", TFSTAT_HEADSHOTS, PROPERTY_HEADSHOTS },
-		{ "iHealthPointsHealed", TFSTAT_HEALING, PROPERTY_HEALTH_POINTS_HEALED },
-		{ "iNumInvulnerable", TFSTAT_INVULNS, PROPERTY_INVULNS },
-		{ "iKillAssists", TFSTAT_KILLASSISTS, PROPERTY_KILL_ASSISTS },
-		{ "iBackstabs", TFSTAT_BACKSTABS, PROPERTY_BACKSTABS },
-		{ "iHealthPointsLeached", TFSTAT_HEALTHLEACHED, PROPERTY_HEALTH_POINTS_LEACHED },
-		{ "iBuildingsBuilt", TFSTAT_BUILDINGSBUILT, PROPERTY_BUILDINGS_BUILT },
-		{ "iSentryKills", TFSTAT_MAXSENTRYKILLS, PROPERTY_SENTRY_KILLS },
-		{ "iNumTeleports", TFSTAT_TELEPORTS, PROPERTY_TELEPORTS } };
+StatMap_t g_SteamStats[] = {
+	{ "iNumberOfKills",			TFSTAT_KILLS,				PROPERTY_KILLS,					},
+	{ "iDamageDealt",			TFSTAT_DAMAGE,				PROPERTY_DAMAGE_DEALT,			},
+	{ "iPlayTime",				TFSTAT_PLAYTIME,			PROPERTY_PLAY_TIME,				},
+	{ "iPointCaptures",			TFSTAT_CAPTURES,			PROPERTY_POINT_CAPTURES,		},
+	{ "iPointDefenses",			TFSTAT_DEFENSES,			PROPERTY_POINT_DEFENSES,		},
+	{ "iDominations",			TFSTAT_DOMINATIONS,			PROPERTY_DOMINATIONS,			},
+	{ "iRevenge",				TFSTAT_REVENGE,				PROPERTY_REVENGE,				},
+	{ "iPointsScored",			TFSTAT_POINTSSCORED,		PROPERTY_POINTS_SCORED,			},
+	{ "iBuildingsDestroyed",	TFSTAT_BUILDINGSDESTROYED,	PROPERTY_BUILDINGS_DESTROYED,	},
+	{ "iNumInvulnerable",		TFSTAT_INVULNS,				PROPERTY_INVULNS,				},
+	{ "iKillAssists",			TFSTAT_KILLASSISTS,			PROPERTY_KILL_ASSISTS,			},
+};		
 
+// class specific stats
+StatMap_t g_SteamStats_Pyro[] = {
+	{ "iFireDamage",			TFSTAT_FIREDAMAGE,			-1,								}, // Added post-XBox, isn't saved in Live
+	{ NULL,						0,							0,								},
+};
+
+StatMap_t g_SteamStats_Demoman[] = {
+	{ "iBlastDamage",			TFSTAT_BLASTDAMAGE,			-1,								}, // Added post-XBox, isn't saved in Live
+	{ NULL,						0,							0,								},
+};
+
+StatMap_t g_SteamStats_Engineer[] = {
+	{ "iBuildingsBuilt",		TFSTAT_BUILDINGSBUILT,		PROPERTY_BUILDINGS_BUILT,		},
+	{ "iSentryKills",			TFSTAT_MAXSENTRYKILLS,		PROPERTY_SENTRY_KILLS,			},
+	{ "iNumTeleports",			TFSTAT_TELEPORTS,			PROPERTY_TELEPORTS,				},
+	{ NULL,						0,							0,								},
+};
+
+StatMap_t g_SteamStats_Medic[] = {
+	{ "iHealthPointsHealed",	TFSTAT_HEALING,				PROPERTY_HEALTH_POINTS_HEALED,	},
+	{ NULL,						0,							0,								},
+};
+
+StatMap_t g_SteamStats_Sniper[] = {
+	{ "iHeadshots",				TFSTAT_HEADSHOTS,			PROPERTY_HEADSHOTS,				},
+	{ NULL,						0,							0,								},
+};
+
+StatMap_t g_SteamStats_Spy[] = {
+	{ "iHeadshots",				TFSTAT_HEADSHOTS,			PROPERTY_HEADSHOTS,				},
+	{ "iBackstabs",				TFSTAT_BACKSTABS,			PROPERTY_BACKSTABS,				},
+	{ "iHealthPointsLeached",	TFSTAT_HEALTHLEACHED,		PROPERTY_HEALTH_POINTS_LEACHED,	},
+	{ NULL,						0,							0,								},
+};
+
+StatMap_t* g_SteamStats_Class[] = {
+	NULL,					// Undefined
+	NULL,					// Scout
+	g_SteamStats_Sniper,	// Sniper
+	NULL,					// Soldier
+	g_SteamStats_Demoman,	// Demoman
+	g_SteamStats_Medic,		// Medic
+	NULL,					// Heavy
+	g_SteamStats_Pyro,		// Pyro
+	g_SteamStats_Spy,		// Spy
+	g_SteamStats_Engineer,	// Engineer
+};
+
+// subset of map stats which we store in Steam
+StatMap_t g_SteamMapStats[] = {
+	{ "iPlayTime",				TFMAPSTAT_PLAYTIME,			PROPERTY_PLAY_TIME,				},
+};
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
@@ -90,17 +136,15 @@ void CTFSteamStats::FireGameEvent( IGameEvent *event )
 	}
 	else if ( 0 == Q_strcmp( pEventName, "user_data_downloaded" ) )
 	{
-		/*
-		Assert( SteamUserStats() );
-		if ( !SteamUserStats() )
+		Assert( steamapicontext->SteamUserStats() );
+		if ( !steamapicontext->SteamUserStats() )
 			return; 
 		CTFStatPanel *pStatPanel = GET_HUDELEMENT( CTFStatPanel );
 		Assert( pStatPanel );
 
-		CGameID gameID( engine->GetAppID() );
-
-		for ( int iClass = TF_FIRST_NORMAL_CLASS; iClass <= TF_LAST_NORMAL_CLASS; iClass++ )
+		for ( int iClass = TF_FIRST_NORMAL_CLASS; iClass < TF_LAST_NORMAL_CLASS; iClass++ )
 		{
+			// Grab generic stats:
 			ClassStats_t &classStats = CTFStatPanel::GetClassStats( iClass );
 			for ( int iStat = 0; iStat < ARRAYSIZE( g_SteamStats ); iStat++ )
 			{
@@ -108,45 +152,95 @@ void CTFSteamStats::FireGameEvent( IGameEvent *event )
 				int iData;
 
 				Q_snprintf( szStatName, ARRAYSIZE( szStatName ), "%s.accum.%s", g_aPlayerClassNames_NonLocalized[iClass], g_SteamStats[iStat].pszName );
-				if ( SteamUserStats()->GetStat( gameID, szStatName, &iData ) )
-				{
-					if ( pStatPanel->IsLocalFileTrusted() )
-					{
-						// if local stats file is trusted, then use the higher of the current value (from local file) or Steam.  Handles case where we previously failed to write latest data to Steam.
-						classStats.accumulated.m_iStat[g_SteamStats[iStat].iStat] = max( iData, classStats.accumulated.m_iStat[g_SteamStats[iStat].iStat] );
-					}
-					else
-					{
-						// local file is not trusted, just use Steam's value
-						classStats.accumulated.m_iStat[g_SteamStats[iStat].iStat] = iData;
-					}					
+				if ( steamapicontext->SteamUserStats()->GetStat( szStatName, &iData ) )
+				{					
+					classStats.accumulated.m_iStat[g_SteamStats[iStat].iStat] = iData;					
 				}
 				Q_snprintf( szStatName, ARRAYSIZE( szStatName ), "%s.max.%s", g_aPlayerClassNames_NonLocalized[iClass], g_SteamStats[iStat].pszName );
-				if ( SteamUserStats()->GetStat( gameID, szStatName, &iData ) )
+				if ( steamapicontext->SteamUserStats()->GetStat( szStatName, &iData ) )
+				{		
+					classStats.max.m_iStat[g_SteamStats[iStat].iStat] = iData;
+				}
+
+				// MVM Stats
+				Q_snprintf( szStatName, ARRAYSIZE( szStatName ), "%s.mvm.accum.%s", g_aPlayerClassNames_NonLocalized[iClass], g_SteamStats[iStat].pszName );
+				if ( steamapicontext->SteamUserStats()->GetStat( szStatName, &iData ) )
+				{					
+					classStats.accumulatedMVM.m_iStat[g_SteamStats[iStat].iStat] = iData;					
+				}
+				Q_snprintf( szStatName, ARRAYSIZE( szStatName ), "%s.mvm.max.%s", g_aPlayerClassNames_NonLocalized[iClass], g_SteamStats[iStat].pszName );
+				if ( steamapicontext->SteamUserStats()->GetStat( szStatName, &iData ) )
+				{		
+					classStats.maxMVM.m_iStat[g_SteamStats[iStat].iStat] = iData;
+				}	
+			}
+
+			// Grab class specific stats:
+			StatMap_t* pClassStatMap = g_SteamStats_Class[iClass];
+			if ( pClassStatMap )
+			{
+				int iStat = 0;
+				do
 				{
-					if ( pStatPanel->IsLocalFileTrusted() )
-					{
-						// if local stats file is trusted, then use the higher of the current value (from local file) or Steam.  Handles case where we previously failed to write latest data to Steam.
-						classStats.max.m_iStat[g_SteamStats[iStat].iStat] = max( iData, classStats.max.m_iStat[g_SteamStats[iStat].iStat] );
+					char szStatName[256];
+					int iData;
+
+					Q_snprintf( szStatName, ARRAYSIZE( szStatName ), "%s.accum.%s", g_aPlayerClassNames_NonLocalized[iClass], pClassStatMap[iStat].pszName );
+					if ( steamapicontext->SteamUserStats()->GetStat( szStatName, &iData ) )
+					{					
+						classStats.accumulated.m_iStat[pClassStatMap[iStat].iStat] = iData;					
 					}
-					else
-					{
-						// local file is not trusted, just use Steam's value
-						classStats.max.m_iStat[g_SteamStats[iStat].iStat] = iData;
+					Q_snprintf( szStatName, ARRAYSIZE( szStatName ), "%s.max.%s", g_aPlayerClassNames_NonLocalized[iClass], pClassStatMap[iStat].pszName );
+					if ( steamapicontext->SteamUserStats()->GetStat( szStatName, &iData ) )
+					{		
+						classStats.max.m_iStat[pClassStatMap[iStat].iStat] = iData;
 					}
-				}			
+
+					// MVM Stats
+					Q_snprintf( szStatName, ARRAYSIZE( szStatName ), "%s.mvm.accum.%s", g_aPlayerClassNames_NonLocalized[iClass], pClassStatMap[iStat].pszName );
+					if ( steamapicontext->SteamUserStats()->GetStat( szStatName, &iData ) )
+					{					
+						classStats.accumulatedMVM.m_iStat[pClassStatMap[iStat].iStat] = iData;					
+					}
+					Q_snprintf( szStatName, ARRAYSIZE( szStatName ), "%s.mvm.max.%s", g_aPlayerClassNames_NonLocalized[iClass], pClassStatMap[iStat].pszName );
+					if ( steamapicontext->SteamUserStats()->GetStat( szStatName, &iData ) )
+					{		
+						classStats.maxMVM.m_iStat[pClassStatMap[iStat].iStat] = iData;
+					}
+					iStat++;
+				}
+				while ( pClassStatMap[iStat].pszName );
 			}
 		}
-*/
-		IGameEvent * event = gameeventmanager->CreateEvent( "player_stats_updated" );
-		if ( event )
+
+		for ( int i = 0; i < GetItemSchema()->GetMapCount(); i++ )
 		{
-			event->SetBool( "forceupload", false );
-			gameeventmanager->FireEventClientSide( event );
+			const MapDef_t* pMap = GetItemSchema()->GetMasterMapDefByIndex( i );
+
+			// Grab generic stats:
+			MapStats_t &mapStats = CTFStatPanel::GetMapStats( pMap->GetStatsIdentifier() );
+			for ( int iStat = 0; iStat < ARRAYSIZE( g_SteamMapStats ); iStat++ )
+			{
+				char szStatName[256];
+				int iData;
+
+				Q_snprintf( szStatName, ARRAYSIZE( szStatName ), "%s.accum.%s",  pMap->pszMapName, g_SteamMapStats[iStat].pszName );
+				if ( steamapicontext->SteamUserStats()->GetStat( szStatName, &iData ) )
+				{					
+					mapStats.accumulated.m_iStat[g_SteamMapStats[iStat].iStat] = iData;					
+				}
+			}
 		}
 
-//		pStatPanel->SetStatsChanged( true );
-//		pStatPanel->UpdateStatSummaryPanel();
+		IGameEvent * pEvent = gameeventmanager->CreateEvent( "player_stats_updated" );
+		if ( pEvent )
+		{
+			pEvent->SetBool( "forceupload", false );
+			gameeventmanager->FireEventClientSide( pEvent );
+		}
+
+		pStatPanel->SetStatsChanged( true );
+		pStatPanel->UpdateStatSummaryPanel();
 	}
 }
 
@@ -156,42 +250,92 @@ void CTFSteamStats::FireGameEvent( IGameEvent *event )
 //-----------------------------------------------------------------------------
 void CTFSteamStats::UploadStats()
 {
-	/*
 	if ( IsX360() )
 	{
 		ReportLiveStats();
 		return;
 	}
 
-	// only upload if Steam is running
-	if ( !SteamUserStats() )
+	// Only upload if Steam is running & the achievement manager exists.
+	if ( !steamapicontext->SteamUserStats() )
 		return; 
 
-	CGameID gameID( engine->GetAppID() );
-	
-	for ( int iClass = TF_FIRST_NORMAL_CLASS; iClass <= TF_LAST_NORMAL_CLASS; iClass++ )
+	CAchievementMgr *pAchievementMgr = dynamic_cast<CAchievementMgr *>( engine->GetAchievementMgr() );
+	if ( !pAchievementMgr )
+		return;
+
+	// Stomp local steam context stats with those in the stat panel.
+	for ( int iClass = TF_FIRST_NORMAL_CLASS; iClass < TF_LAST_NORMAL_CLASS; iClass++ )
 	{
+		// Set generic stats:
 		ClassStats_t &classStats = CTFStatPanel::GetClassStats( iClass );
 		for ( int iStat = 0; iStat < ARRAYSIZE( g_SteamStats ); iStat++ )
 		{
 			char szStatName[256];
 
-			// set the stats locally in Steam client
 			Q_snprintf( szStatName, ARRAYSIZE( szStatName ), "%s.accum.%s", g_aPlayerClassNames_NonLocalized[iClass], g_SteamStats[iStat].pszName );
-			SteamUserStats()->SetStat( gameID, szStatName, classStats.accumulated.m_iStat[g_SteamStats[iStat].iStat] );
+			steamapicontext->SteamUserStats()->SetStat( szStatName, classStats.accumulated.m_iStat[g_SteamStats[iStat].iStat] );
 
 			Q_snprintf( szStatName, ARRAYSIZE( szStatName ), "%s.max.%s", g_aPlayerClassNames_NonLocalized[iClass], g_SteamStats[iStat].pszName );
-			SteamUserStats()->SetStat( gameID, szStatName, classStats.max.m_iStat[g_SteamStats[iStat].iStat] );
+			steamapicontext->SteamUserStats()->SetStat( szStatName, classStats.max.m_iStat[g_SteamStats[iStat].iStat] );
+
+			// MVM Stats
+			Q_snprintf( szStatName, ARRAYSIZE( szStatName ), "%s.mvm.accum.%s", g_aPlayerClassNames_NonLocalized[iClass], g_SteamStats[iStat].pszName );
+			steamapicontext->SteamUserStats()->SetStat( szStatName, classStats.accumulatedMVM.m_iStat[g_SteamStats[iStat].iStat] );
+
+			Q_snprintf( szStatName, ARRAYSIZE( szStatName ), "%s.mvm.max.%s", g_aPlayerClassNames_NonLocalized[iClass], g_SteamStats[iStat].pszName );
+			steamapicontext->SteamUserStats()->SetStat( szStatName, classStats.maxMVM.m_iStat[g_SteamStats[iStat].iStat] );
+		}
+
+		// Set class specific stats:
+		StatMap_t* pClassStatMap = g_SteamStats_Class[iClass];
+		if ( pClassStatMap )
+		{
+			int iStat = 0;
+			do
+			{
+				char szStatName[256];
+
+				Q_snprintf( szStatName, ARRAYSIZE( szStatName ), "%s.accum.%s", g_aPlayerClassNames_NonLocalized[iClass], pClassStatMap[iStat].pszName );
+				steamapicontext->SteamUserStats()->SetStat( szStatName, classStats.accumulated.m_iStat[pClassStatMap[iStat].iStat] );
+
+				Q_snprintf( szStatName, ARRAYSIZE( szStatName ), "%s.max.%s", g_aPlayerClassNames_NonLocalized[iClass], pClassStatMap[iStat].pszName );
+				steamapicontext->SteamUserStats()->SetStat( szStatName, classStats.max.m_iStat[pClassStatMap[iStat].iStat] );
+
+				// MVM Stats
+				Q_snprintf( szStatName, ARRAYSIZE( szStatName ), "%s.mvm.accum.%s", g_aPlayerClassNames_NonLocalized[iClass], pClassStatMap[iStat].pszName );
+				steamapicontext->SteamUserStats()->SetStat( szStatName, classStats.accumulatedMVM.m_iStat[pClassStatMap[iStat].iStat] );
+
+				Q_snprintf( szStatName, ARRAYSIZE( szStatName ), "%s.mvm.max.%s", g_aPlayerClassNames_NonLocalized[iClass], pClassStatMap[iStat].pszName );
+				steamapicontext->SteamUserStats()->SetStat( szStatName, classStats.maxMVM.m_iStat[pClassStatMap[iStat].iStat] );
+
+				iStat++;
+			}
+			while ( pClassStatMap[iStat].pszName );
 		}
 	}
 
-	CAchievementMgr *pAchievementMgr = dynamic_cast<CAchievementMgr *>( engine->GetAchievementMgr() );
-	if ( pAchievementMgr )
-	{		
-		pAchievementMgr->UploadUserData();
+	// Stomp local steam context stats with those in the stat panel.
+	for ( int i = 0; i < GetItemSchema()->GetMapCount(); i++ )
+	{
+		const MapDef_t* pMap = GetItemSchema()->GetMasterMapDefByIndex( i );
+
+		// Set generic stats:
+		MapStats_t &mapStats = CTFStatPanel::GetMapStats( pMap->GetStatsIdentifier() );
+		for ( int iStat = 0; iStat < ARRAYSIZE( g_SteamMapStats ); iStat++ )
+		{
+			char szStatName[256];
+
+			Q_snprintf( szStatName, ARRAYSIZE( szStatName ), "%s.accum.%s", pMap->pszMapName, g_SteamMapStats[iStat].pszName );
+			steamapicontext->SteamUserStats()->SetStat( szStatName, mapStats.accumulated.m_iStat[g_SteamMapStats[iStat].iStat] );
+		}
 	}
 
-	SetNextForceUploadTime();*/
+	// Send our local steam context stats to the server.
+	pAchievementMgr->UploadUserData();
+	SetNextForceUploadTime();
+
+	// Now everything should be sync'd up (stat panel, local steam context, remote steam depot).
 }
 
 //-----------------------------------------------------------------------------
@@ -207,7 +351,7 @@ void CTFSteamStats::ReportLiveStats()
 		ClassStats_t &classStats = CTFStatPanel::GetClassStats( iClass );
 		for ( int iStat = 0; iStat < ARRAYSIZE( g_SteamStats ); iStat++ )
 		{
-			statsTotals[iStat] = max( statsTotals[iStat], classStats.max.m_iStat[g_SteamStats[iStat].iStat] );
+			statsTotals[iStat] = MAX( statsTotals[iStat], classStats.max.m_iStat[g_SteamStats[iStat].iStat] );
 		}
 	}
 
@@ -218,9 +362,15 @@ void CTFSteamStats::ReportLiveStats()
 		if ( g_SteamStats[i].iLiveStat == PROPERTY_POINTS_SCORED )
 			continue;
 
-		presence->SetStat( g_SteamStats[i].iLiveStat, statsTotals[i], XUSER_DATA_TYPE_INT32 );
+		// If we hit this assert, we've added a new stat that Live won't know how to store
+		Assert( g_SteamStats[i].iLiveStat != -1 );
+
+		if ( g_SteamStats[i].iLiveStat != -1 )
+		{
+			presence->SetStat( g_SteamStats[i].iLiveStat, statsTotals[i], XUSER_DATA_TYPE_INT32 );
+		}
 	}
-		
+
 	presence->UploadStats();
 }
 

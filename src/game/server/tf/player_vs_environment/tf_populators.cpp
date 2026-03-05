@@ -1,48 +1,32 @@
-//========= Copyright � Valve LLC, All rights reserved. =======================
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose:		
-//
-// $NoKeywords: $
-//=============================================================================
+// Purpose: tf_populator_spawners
+// Implementations of NPC Spawning Code for PvE related game modes (MvM)
+//=============================================================================//
+
 #include "cbase.h"
-#include "nav_mesh/tf_nav_mesh.h"
-#include "tf_team.h"
-#include "tf_obj_teleporter.h"
-#include "tf_obj_sentrygun.h"
+
 #include "tf_populators.h"
-#include "tf_population_manager.h"
-#include "eventqueue.h"
-#include "tier1/UtlSortVector.h"
+#include "tf_populator_spawners.h"
+#include "tf_team.h"
+#include "tf_obj_sentrygun.h"
 #include "tf_objective_resource.h"
+#include "eventqueue.h"
 #include "tf_tank_boss.h"
-#include "tf_mann_vs_machine_stats.h"
+#include "tf_gc_server.h"
+#include "tf_gamerules.h"
+#include "etwprof.h"
+#include "team_control_point_master.h"
 
 extern ConVar tf_populator_debug;
 extern ConVar tf_populator_active_buffer_range;
 
-ConVar tf_mvm_engineer_teleporter_uber_duration( "tf_mvm_engineer_teleporter_uber_duration", "5.0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
-ConVar tf_mvm_currency_bonus_ratio_min( "tf_mvm_currency_bonus_ratio_min", "0.95f", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "The minimum percentage of wave money players must collect in order to qualify for min bonus - 0.1 to 1.0.  Half the bonus amount will be awarded when reaching min ratio, and half when reaching max.", true, 0.1, true, 1.0 );
-ConVar tf_mvm_currency_bonus_ratio_max( "tf_mvm_currency_bonus_ratio_max", "1.f", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "The highest percentage of wave money players must collect in order to qualify for max bonus - 0.1 to 1.0.  Half the bonus amount will be awarded when reaching min ratio, and half when reaching max.", true, 0.1, true, 1.0 );
+ConVar tf_mvm_engineer_teleporter_uber_duration( "tf_mvm_engineer_teleporter_uber_duration", "5.f", FCVAR_CHEAT );
+ConVar tf_mvm_currency_bonus_ratio_min( "tf_mvm_currency_bonus_ratio_min", "0.95f", FCVAR_HIDDEN, "The minimum percentage of wave money players must collect in order to qualify for min bonus - 0.1 to 1.0.  Half the bonus amount will be awarded when reaching min ratio, and half when reaching max.", true, 0.1, true, 1.0 );
+ConVar tf_mvm_currency_bonus_ratio_max( "tf_mvm_currency_bonus_ratio_max", "1.f", FCVAR_HIDDEN, "The highest percentage of wave money players must collect in order to qualify for max bonus - 0.1 to 1.0.  Half the bonus amount will be awarded when reaching min ratio, and half when reaching max.", true, 0.1, true, 1.0 );
 
-static CHandle<CBaseEntity> s_lastTeleporter = NULL;
-static float s_flLastTeleportTime = -1;
-
-LINK_ENTITY_TO_CLASS( populator_internal_spawn_point, CPopulatorInternalSpawnPoint );
-CHandle<CPopulatorInternalSpawnPoint> g_internalSpawnPoint = NULL;
-
-class CTFNavAreaIncursionLess
-{
-public:
-	bool Less( const CTFNavArea *a, const CTFNavArea *b, void *pCtx )
-	{
-		return a->GetIncursionDistance( TF_TEAM_BLUE ) < b->GetIncursionDistance( TF_TEAM_BLUE );
-	}
-};
-
-//-----------------------------------------------------------------------------
-// Purpose: Fire off output events
-//-----------------------------------------------------------------------------
-void FireEvent( EventInfo *eventInfo, const char *eventName )
+//-----------------------------------------------------------------------
+static void FireEvent( EventInfo *eventInfo, const char *eventName )
 {
 	if ( eventInfo )
 	{
@@ -53,32 +37,44 @@ void FireEvent( EventInfo *eventInfo, const char *eventName )
 		}
 		else
 		{
-			g_EventQueue.AddEvent( targetEntity, eventInfo->m_action, 0.0f, NULL, NULL );
+			g_EventQueue.AddEvent( targetEntity, eventInfo->m_action, eventInfo->m_param, eventInfo->m_delay, NULL, NULL );
 		}
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: Create output event pairings
-//-----------------------------------------------------------------------------
-EventInfo *ParseEvent( KeyValues *data )
+//-----------------------------------------------------------------------
+static EventInfo *ParseEvent( KeyValues *values )
 {
-	EventInfo *eventInfo = new EventInfo();
+	EventInfo *eventInfo = new EventInfo;
 
-	FOR_EACH_SUBKEY( data, pSubKey )
+	for ( KeyValues *data = values->GetFirstSubKey(); data != NULL; data = data->GetNextKey() )
 	{
-		const char *pszKey = pSubKey->GetName();
-		if ( !Q_stricmp( pszKey, "Target" ) )
+		const char *name = data->GetName();
+
+		if ( Q_strlen( name ) <= 0 )
 		{
-			eventInfo->m_target.sprintf( "%s", pSubKey->GetString() );
+			continue;
 		}
-		else if ( !Q_stricmp( pszKey, "Action" ) )
+
+		if ( !Q_stricmp( name, "Target" ) )
 		{
-			eventInfo->m_action.sprintf( "%s", pSubKey->GetString() );
+			eventInfo->m_target.sprintf( "%s", data->GetString() );
 		}
+		else if ( !Q_stricmp( name, "Action" ) )
+		{
+			eventInfo->m_action.sprintf( "%s", data->GetString() );
+		}
+		else if ( !Q_stricmp( name, "Param" ) )
+        {
+            eventInfo->m_param.SetString( AllocPooledString( data->GetString() ) );
+        }
+        else if ( !Q_stricmp( name, "Delay" ) )
+        {
+            eventInfo->m_delay = data->GetFloat();
+        }
 		else
 		{
-			Warning( "Unknown field '%s' in WaveSpawn event definition.\n", pSubKey->GetString() );
+			Warning( "Unknown field '%s' in WaveSpawn event definition.\n", data->GetString() );
 			delete eventInfo;
 			return NULL;
 		}
@@ -87,139 +83,168 @@ EventInfo *ParseEvent( KeyValues *data )
 	return eventInfo;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-SpawnLocationResult DoTeleporterOverride( CBaseEntity *spawnEnt, Vector *vSpawnPosition, bool bClosestPointOnNav )
+static CHandle<CBaseEntity> s_lastTeleporter = NULL;
+static float s_flLastTeleportTime = -1;
+
+//-----------------------------------------------------------------------
+// Given a named entity, select a random invader teleporter with the same name and
+// return it's WorldSpaceCenter.
+SpawnLocationResult DoTeleporterOverride( CBaseEntity *spawnEnt, Vector& vSpawnPosition, bool bClosestPointOnNav )
 {
-	CUtlVector<CBaseEntity *> activeTeleporters;
-	FOR_EACH_VEC( IBaseObjectAutoList::AutoList(), i )
+	CUtlVector< CBaseEntity * > teleporterVector;
+
+	for ( int i=0; i<IBaseObjectAutoList::AutoList().Count(); ++i )
 	{
-		CBaseObject *pObj = static_cast<CBaseObject *>( IBaseObjectAutoList::AutoList()[i] );
-		if ( pObj->GetType() != OBJ_TELEPORTER || pObj->GetTeamNumber() != TF_TEAM_MVM_BOTS )
+		CBaseObject *pObj = static_cast< CBaseObject* >( IBaseObjectAutoList::AutoList()[i] );
+		if ( pObj->GetType() != OBJ_TELEPORTER )
 			continue;
 
-		if ( pObj->IsBuilding() || pObj->HasSapper() || pObj->IsDisabled() )
+		if ( pObj->GetTeamNumber() != TF_TEAM_PVE_INVADERS )
 			continue;
 
-		CObjectTeleporter *teleporter = assert_cast<CObjectTeleporter *>( pObj );
-		const CUtlStringList &teleportWhereNames = teleporter->m_TeleportWhere;
+		if ( pObj->IsBuilding() )
+			continue;
 
-		const char *pszSpawnPointName = STRING( spawnEnt->GetEntityName() );
-		for ( int iTelePoints =0; iTelePoints < teleportWhereNames.Count(); ++iTelePoints )
+		if ( pObj->HasSapper() )
+			continue;
+
+		if ( pObj->IsPlasmaDisabled() )
+			continue;
+
+		CObjectTeleporter *teleporter = assert_cast< CObjectTeleporter* >( pObj );
+		const CUtlStringList& teleportWhereNames = teleporter->GetTeleportWhere();
+
+		const char* pszSpawnPointName = STRING( spawnEnt->GetEntityName() );
+		for ( int iTelePoints =0; iTelePoints<teleportWhereNames.Count(); ++iTelePoints )
 		{
-			if ( !V_stricmp( teleportWhereNames[ iTelePoints ], pszSpawnPointName ) )
+			// check if this teleporter can replace the original spawn point
+			if ( FStrEq( teleportWhereNames[iTelePoints], pszSpawnPointName ) )
 			{
-				activeTeleporters.AddToTail( teleporter );
+				teleporterVector.AddToTail( teleporter );
 				break;
 			}
 		}
 	}
 
-	if ( activeTeleporters.Count() > 0 )
+	if ( teleporterVector.Count() > 0 )
 	{
-		int which = RandomInt( 0, activeTeleporters.Count() - 1 );
-		*vSpawnPosition = activeTeleporters[ which ]->WorldSpaceCenter();
-		s_lastTeleporter = activeTeleporters[ which ];
+		int which = RandomInt( 0, teleporterVector.Count()-1 );
+		vSpawnPosition = teleporterVector[ which ]->WorldSpaceCenter();
+		s_lastTeleporter = teleporterVector[ which ];
 		return SPAWN_LOCATION_TELEPORTER;
 	}
 
-	CTFNavArea *pArea = (CTFNavArea *)TheNavMesh->GetNearestNavArea( spawnEnt->WorldSpaceCenter() );
-	if ( pArea )
-	{
-		if ( bClosestPointOnNav )
-		{
-			pArea->GetClosestPointOnArea( spawnEnt->WorldSpaceCenter(), vSpawnPosition );
-		}
-		else
-		{
-			*vSpawnPosition = pArea->GetCenter();
-		}
+	CTFNavArea *pNav = (CTFNavArea *)TheNavMesh->GetNearestNavArea( spawnEnt->WorldSpaceCenter() );
+	if ( !pNav )
+		return SPAWN_LOCATION_NOT_FOUND;
 
-		return SPAWN_LOCATION_NORMAL;
+	if ( bClosestPointOnNav )
+	{
+		pNav->GetClosestPointOnArea( spawnEnt->WorldSpaceCenter(), &vSpawnPosition );
+	}
+	else
+	{
+		vSpawnPosition = pNav->GetCenter();
 	}
 
-	return SPAWN_LOCATION_NOT_FOUND;
+	return SPAWN_LOCATION_NAV;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void OnBotTeleported( CTFBot *pBot )
+//-----------------------------------------------------------------------
+void OnBotTeleported( CTFBot* bot )
 {
-	if ( gpGlobals->curtime - s_flLastTeleportTime > 0.1f )
+	const Vector& origin = s_lastTeleporter->GetAbsOrigin();
+
+	// don't too many sound and effect when lots of bots teleporting in short time.
+	if ( gpGlobals->curtime - s_flLastTeleportTime > 0.1f  )
 	{
+		CPVSFilter filter( origin );
+#if 0
+		// These are pretty, but they're chewing into our particle budget (1000 particles each!)
+		// They're also basically invisible because bots spawn in ubered.
+
+		TE_TFParticleEffect( filter, 0.0, "teleported_blue", origin, vec3_angle );
+		TE_TFParticleEffect( filter, 0.0, "player_sparkles_blue", origin, vec3_angle );
+#endif
 		s_lastTeleporter->EmitSound( "MVM.Robot_Teleporter_Deliver" );
+
 		s_flLastTeleportTime = gpGlobals->curtime;
 	}
 
 	// force bot to face in the direction specified by the teleporter
 	Vector vForward;
 	AngleVectors( s_lastTeleporter->GetAbsAngles(), &vForward, NULL, NULL );
-	pBot->GetLocomotionInterface()->FaceTowards( pBot->GetAbsOrigin() + 50 * vForward );
+	bot->GetLocomotionInterface()->FaceTowards( bot->GetAbsOrigin() + 50 * vForward );
 
 	// spy shouldn't get any effect from the teleporter
-	if ( !pBot->IsPlayerClass( TF_CLASS_SPY ) )
+	if ( !bot->IsPlayerClass( TF_CLASS_SPY ) )
 	{
-		pBot->TeleportEffect();
+		bot->TeleportEffect();
 
 		// invading bots get uber while they leave their spawn so they don't drop their cash where players can't pick it up
 		float flUberTime = tf_mvm_engineer_teleporter_uber_duration.GetFloat();
-		pBot->m_Shared.AddCond( TF_COND_INVULNERABLE, flUberTime );
-		pBot->m_Shared.AddCond( TF_COND_INVULNERABLE_WEARINGOFF, flUberTime );
+		bot->m_Shared.AddCond( TF_COND_INVULNERABLE, flUberTime );
+		bot->m_Shared.AddCond( TF_COND_INVULNERABLE_WEARINGOFF, flUberTime );
 	}
 }
 
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------
+// CSpawnLocation
+//-----------------------------------------------------------------------
 CSpawnLocation::CSpawnLocation()
 {
+	m_relative = UNDEFINED;
+	m_teamSpawnVector.RemoveAll();
+	m_nSpawnCount = 0;
 	m_nRandomSeed = RandomInt( 0, 9999 );
+	m_bClosestPointOnNav = false;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------
+// Return true if we successfully parse a "Where" clause
 bool CSpawnLocation::Parse( KeyValues *data )
 {
-	const char *pszKey = data->GetName();
-	const char *pszValue = data->GetString();
+	const char *name = data->GetName();
+	const char *value = data->GetString();
 
-	if ( !V_stricmp( pszKey, "Where" ) || !V_stricmp( pszKey, "ClosestPoint" ) )
+	if ( Q_strlen( name ) <= 0 )
 	{
-		if ( !V_stricmp( pszValue, "Ahead" ) )
+		return false;
+	}
+
+	if ( FStrEq( name, "Where" ) || FStrEq( name, "ClosestPoint" ) )
+	{
+		if ( FStrEq( value, "Ahead" ) )
 		{
-			m_eRelative = AHEAD;
+			m_relative = AHEAD;
 		}
-		else if ( !V_stricmp( pszValue, "Behind" ) )
+		else if ( FStrEq( value, "Behind" ) )
 		{
-			m_eRelative = BEHIND;
+			m_relative = BEHIND;
 		}
-		else if ( !V_stricmp( pszValue, "Anywhere" ) )
+		else if ( FStrEq( value, "Anywhere" ) )
 		{
-			m_eRelative = ANYWHERE;
+			m_relative = ANYWHERE;
 		}
 		else
 		{
-			m_bClosestPointOnNav = V_stricmp( pszKey, "ClosestPoint" ) == 0;
+			m_bClosestPointOnNav = FStrEq( name, "ClosestPoint" );
 
 			// collect entities with given name
 			bool bFound = false;
-			for ( int i=0; i < ITFTeamSpawnAutoList::AutoList().Count(); ++i )
+			for ( int i=0; i<ITFTeamSpawnAutoList::AutoList().Count(); ++i )
 			{
-				CTFTeamSpawn *pTeamSpawn = static_cast<CTFTeamSpawn *>( ITFTeamSpawnAutoList::AutoList()[i] );
-				if ( !V_stricmp( STRING( pTeamSpawn->GetEntityName() ), pszValue ) )
+				CTFTeamSpawn* pTeamSpawn = static_cast< CTFTeamSpawn* >( ITFTeamSpawnAutoList::AutoList()[i] );
+				if ( FStrEq( STRING( pTeamSpawn->GetEntityName() ), value ) )
 				{
-					m_TeamSpawns.AddToTail( pTeamSpawn );
+					m_teamSpawnVector.AddToTail( pTeamSpawn );
 					bFound = true;
 				}
 			}
 
 			if ( !bFound )
 			{
-				Warning( "Invalid Where argument '%s'\n", pszValue );
+				Warning( "Invalid Where argument '%s'\n", value );
 				return false;
 			}
 		}
@@ -230,32 +255,32 @@ bool CSpawnLocation::Parse( KeyValues *data )
 	return false;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-SpawnLocationResult CSpawnLocation::FindSpawnLocation( Vector *vSpawnPosition )
+//-----------------------------------------------------------------------
+SpawnLocationResult CSpawnLocation::FindSpawnLocation( Vector& vSpawnPosition )
 {
-	CUtlVector< CHandle<CTFTeamSpawn> > activeSpawns;
-	FOR_EACH_VEC( m_TeamSpawns, i )
+	TFTeamSpawnVector_t activeSpawn;
+	for ( int i=0; i<m_teamSpawnVector.Count(); ++i )
 	{
-		if ( m_TeamSpawns[i]->IsDisabled() )
+		if ( m_teamSpawnVector[i]->IsDisabled() )
 			continue;
 
-		activeSpawns.AddToTail( m_TeamSpawns[i] );
+		activeSpawn.AddToTail( m_teamSpawnVector[i] );
 	}
 
-	if ( m_nSpawnCount >= activeSpawns.Count() )
+	// treat spawn points as deck of cards. shuffle it when we run out
+	if ( m_nSpawnCount >= activeSpawn.Count() )
 	{
 		m_nRandomSeed = RandomInt( 0, 9999 );
 		m_nSpawnCount = 0;
 	}
 	CUniformRandomStream randomSpawn;
 	randomSpawn.SetSeed( m_nRandomSeed );
-	activeSpawns.Shuffle( &randomSpawn );
+	activeSpawn.Shuffle( &randomSpawn );
 
-	if ( activeSpawns.Count() > 0 )
+	if ( activeSpawn.Count() > 0 )
 	{
-		SpawnLocationResult result = DoTeleporterOverride( activeSpawns[ m_nSpawnCount ], vSpawnPosition, m_bClosestPointOnNav );
+		// if any invading teleporters exist with this name, use them instead
+		SpawnLocationResult result = DoTeleporterOverride( activeSpawn[ m_nSpawnCount ], vSpawnPosition, m_bClosestPointOnNav );
 		if ( result != SPAWN_LOCATION_NOT_FOUND )
 		{
 			m_nSpawnCount++;
@@ -266,151 +291,185 @@ SpawnLocationResult CSpawnLocation::FindSpawnLocation( Vector *vSpawnPosition )
 	CTFNavArea *spawnArea = SelectSpawnArea();
 	if ( spawnArea )
 	{
-		*vSpawnPosition = spawnArea->GetCenter();
-		return SPAWN_LOCATION_NORMAL;
+		vSpawnPosition = spawnArea->GetCenter();
+		return SPAWN_LOCATION_NAV;
 	}
 
 	return SPAWN_LOCATION_NOT_FOUND;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------
 CTFNavArea *CSpawnLocation::SelectSpawnArea( void ) const
 {
-	VPROF_BUDGET( __FUNCTION__, "NextBot" );
+	VPROF_BUDGET( "CSpawnLocation::SelectSpawnArea", "NextBot" );
 
-	if ( m_eRelative == UNDEFINED )
-		return nullptr;
+	if ( m_relative == UNDEFINED )
+	{
+		return NULL;
+	}
 
-	CUtlSortVector<CTFNavArea *, CTFNavAreaIncursionLess> theaterAreas;
+#ifdef TF_RAID_MODE
+	CTFPlayer *farRaider = g_pRaidLogic->GetFarthestAlongRaider();
 
-	CUtlVector<INextBot *> bots;
-	TheNextBots().CollectAllBots( &bots );
+	if ( !farRaider )
+	{
+		return NULL;
+	}
+#endif // TF_RAID_MODE
+
+	//
+	// Collect all areas surrounding the invading team and
+	// build a vector sorted by increasing incursion distance
+	//
+	CUtlSortVector< CTFNavArea *, CTFNavAreaIncursionLess > theaterAreaVector;
 
 	CTFNavArea::MakeNewTFMarker();
-	FOR_EACH_VEC( bots, i )
+
+	CTeam *team = GetGlobalTeam( TF_TEAM_BLUE );
+	for( int t=0; t<team->GetNumPlayers(); ++t )
 	{
-		CTFBot *pBot = ToTFBot( bots[i]->GetEntity() );
-		if ( pBot == nullptr )
+		CTFPlayer *teamMember = (CTFPlayer *)team->GetPlayer(t);
+
+		if ( !teamMember->IsAlive() )
 			continue;
 
-		if ( !pBot->IsAlive() )
+		CTFBot *bot = ToTFBot( teamMember );
+		if ( bot && bot->HasAttribute( CTFBot::IS_NPC ) )
 			continue;
 
-		if ( !pBot->GetLastKnownArea() )
+		if ( teamMember->GetLastKnownArea() == NULL )
 			continue;
 
-		CUtlVector<CTFNavArea *> nearbyAreas;
-		CollectSurroundingAreas( &nearbyAreas, pBot->GetLastKnownArea(), tf_populator_active_buffer_range.GetFloat() );
+		// collect areas surrounding this invader
+		CUtlVector< CNavArea * > nearbyAreaVector;
+		CollectSurroundingAreas( &nearbyAreaVector, teamMember->GetLastKnownArea(), tf_populator_active_buffer_range.GetFloat() );
 
-		FOR_EACH_VEC( nearbyAreas, j )
+		for( int i=0; i<nearbyAreaVector.Count(); ++i )
 		{
-			CTFNavArea *pArea = nearbyAreas[i];
-			if ( !pArea->IsTFMarked() )
-			{
-				pArea->TFMark();
+			CTFNavArea *area = (CTFNavArea *)nearbyAreaVector[i];
 
-				if ( pArea->IsPotentiallyVisibleToTeam( TF_TEAM_BLUE ) )
+			if ( !area->IsTFMarked() )
+			{		
+				area->TFMark();
+
+				if ( area->IsPotentiallyVisibleToTeam( TF_TEAM_BLUE ) )
 					continue;
 
-				if ( !pArea->IsValidForWanderingPopulation() )
+				if ( !area->IsValidForWanderingPopulation() )
 					continue;
 
-				theaterAreas.Insert( pArea );
+				theaterAreaVector.Insert( area );
 
 				if ( tf_populator_debug.GetBool() )
-					TheNavMesh->AddToSelectedSet( pArea );
+				{
+					TheTFNavMesh()->AddToSelectedSet( area );
+				}
 			}
 		}
 	}
 
-	if ( theaterAreas.Count() == 0 )
+	if ( theaterAreaVector.Count() == 0 )
 	{
-		if ( tf_populator_debug.GetBool() )
+		if ( tf_populator_debug.GetBool() ) 
+		{
 			DevMsg( "%3.2f: SelectSpawnArea: Empty theater!\n", gpGlobals->curtime );
-
-		return nullptr;
+		}
+		return NULL;
 	}
 
-	for ( int i=0; i < 5; ++i )
+	const int maxRetries = 5;
+	CTFNavArea *spawnArea = NULL;
+
+	for( int r=0; r<maxRetries; ++r )
 	{
 		int which = 0;
-		switch ( m_eRelative )
+
+		switch( m_relative )
 		{
-			case AHEAD:
-				which = Max( RandomFloat( 0.0f, 1.0f ), RandomFloat( 0.0f, 1.0f ) ) * theaterAreas.Count();
-				break;
+		case AHEAD:
+			// areas are sorted from behind to ahead - weight the selection to choose ahead
+			which = SkewedRandomValue() * theaterAreaVector.Count();
+			break;
 
-			case BEHIND:
-				which = ( 1.0f - Max( RandomFloat( 0.0f, 1.0f ), RandomFloat( 0.0f, 1.0f ) ) ) * theaterAreas.Count();
-				break;
+		case BEHIND:
+			// areas are sorted from behind to ahead - weight the selection to choose behind
+			which = ( 1.0f - SkewedRandomValue() ) * theaterAreaVector.Count();
+			break;
 
-			case ANYWHERE:
-				which = RandomFloat( 0.0f, 1.0f ) * theaterAreas.Count();
-				break;
+		case ANYWHERE:
+			// choose any valid area at random
+			which = RandomFloat( 0.0f, 1.0f ) * theaterAreaVector.Count();
+			break;
 		}
 
-		if ( which >= theaterAreas.Count() )
-			which = theaterAreas.Count() - 1;
+		if ( which >= theaterAreaVector.Count() )
+			which = theaterAreaVector.Count()-1;
 
-		return theaterAreas[which];
+		spawnArea = theaterAreaVector[ which ];
+
+		// well behaved spawn area
+		return spawnArea;
+		
 	}
 
-	return nullptr;
+	return NULL;
+}
+
+//-----------------------------------------------------------------------
+// CMissionPopulator
+//-----------------------------------------------------------------------
+CMissionPopulator::CMissionPopulator( CPopulationManager *manager ) : IPopulator( manager )
+{
+	m_mission = CTFBot::NO_MISSION;
+	m_initialCooldown = 0.0f;
+	m_cooldownDuration = 0.0f;
+	m_desiredCount = 0;
+	m_beginAtWaveIndex = 0;
+	m_stopAtWaveIndex = 99999;
+	m_state = NOT_STARTED;
 }
 
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-CMissionPopulator::CMissionPopulator( CPopulationManager *pManager )
-	: m_pManager( pManager ), m_pSpawner( NULL )
+//-----------------------------------------------------------------------
+bool CMissionPopulator::Parse( KeyValues *values )
 {
-}
+	int waveDuration = 99999;
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-CMissionPopulator::~CMissionPopulator()
-{
-	if ( m_pSpawner )
+	for ( KeyValues *data = values->GetFirstSubKey(); data != NULL; data = data->GetNextKey() )
 	{
-		delete m_pSpawner;
-		m_pSpawner = NULL;
-	}
-}
+		const char *name = data->GetName();
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CMissionPopulator::Parse( KeyValues *data )
-{
-	int nWaveDuration = 99999;
-	FOR_EACH_SUBKEY( data, pSubKey )
-	{
-		const char *pszKey = pSubKey->GetName();
-		if ( !V_stricmp( pszKey, "Objective" ) )
+		if ( Q_strlen( name ) <= 0 )
 		{
-			if ( !V_stricmp( pSubKey->GetString(), "DestroySentries" ) )
+			continue;
+		}
+
+		if ( m_where.Parse( data ) )
+		{
+			continue;
+		}
+
+		if ( !Q_stricmp( name, "Objective" ) )
+		{
+			if ( !Q_stricmp( data->GetString(), "DestroySentries" ) )
 			{
-				m_eMission = CTFBot::MissionType::DESTROY_SENTRIES;
+				m_mission = CTFBot::MISSION_DESTROY_SENTRIES;
 			}
-			else if ( !V_stricmp( pSubKey->GetString(), "Sniper" ) )
+			else if ( !Q_stricmp( data->GetString(), "Sniper" ) )
 			{
-				m_eMission = CTFBot::MissionType::SNIPER;
+				m_mission = CTFBot::MISSION_SNIPER;
 			}
-			else if ( !V_stricmp( pSubKey->GetString(), "Spy" ) )
+			else if ( !Q_stricmp( data->GetString(), "Spy" ) )
 			{
-				m_eMission = CTFBot::MissionType::SPY;
+				m_mission = CTFBot::MISSION_SPY;
 			}
-			else if ( !V_stricmp( pSubKey->GetString(), "Engineer" ) )
+			else if ( !Q_stricmp( data->GetString(), "Engineer" ) )
 			{
-				m_eMission = CTFBot::MissionType::ENGINEER;
+				m_mission = CTFBot::MISSION_ENGINEER;
 			}
-			else if ( !V_stricmp( pSubKey->GetString(), "SeekAndDestroy" ) )
+			else if ( !Q_stricmp( data->GetString(), "SeekAndDestroy" ) )
 			{
-				m_eMission = CTFBot::MissionType::DESTROY_SENTRIES;
+				m_mission = CTFBot::MISSION_DESTROY_SENTRIES;
 			}
 			else
 			{
@@ -418,336 +477,186 @@ bool CMissionPopulator::Parse( KeyValues *data )
 				return false;
 			}
 		}
-		else if ( !V_stricmp( pszKey, "InitialCooldown" ) )
+		else if ( !Q_stricmp( name, "InitialCooldown" ) )
 		{
-			m_flInitialCooldown = data->GetFloat();
+			m_initialCooldown = data->GetFloat();
 		}
-		else if ( !V_stricmp( pszKey, "CooldownTime" ) )
+		else if ( !Q_stricmp( name, "CooldownTime" ) )
 		{
-			m_flCooldownDuration = data->GetFloat();
+			m_cooldownDuration = data->GetFloat();
 		}
-		else if ( !V_stricmp( pszKey, "BeginAtWave" ) )
+		else if ( !Q_stricmp( name, "BeginAtWave" ) )
 		{
-			m_nStartWave = data->GetInt() - 1;
+			m_beginAtWaveIndex = data->GetInt() - 1;		// internally counts from 0
 		}
-		else if ( !V_stricmp( pszKey, "RunForThisManyWaves" ) )
+		else if ( !Q_stricmp( name, "RunForThisManyWaves" ) )
 		{
-			nWaveDuration = data->GetInt();
+			waveDuration = data->GetInt();
 		}
-		else if ( !V_stricmp( pszKey, "DesiredCount" ) )
+		else if ( !Q_stricmp( name, "DesiredCount" ) )
 		{
-			m_nDesiredCount = data->GetInt();
+			m_desiredCount = data->GetInt();
 		}
 		else
 		{
-			m_pSpawner = IPopulationSpawner::ParseSpawner( this, pSubKey );
-			if ( m_pSpawner == NULL )
+			m_spawner = IPopulationSpawner::ParseSpawner( this, data );
+
+			if ( m_spawner == NULL )
 			{
-				Warning( "Unknown attribute '%s' in Mission definition.\n", pszKey );
+				Warning( "Unknown attribute '%s' in Mission definition.\n", name );
 			}
 		}
 	}
 
-	m_nEndWave = m_nStartWave + nWaveDuration;
+	m_stopAtWaveIndex = m_beginAtWaveIndex + waveDuration;
+
 	return true;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CMissionPopulator::Update( void )
+
+//--------------------------------------------------------------------------------------------------------
+// Dispatch sentry killer squads
+bool CMissionPopulator::UpdateMissionDestroySentries( void )
 {
-	VPROF_BUDGET( __FUNCTION__, "NextBot" );
-
-	if ( TFGameRules()->InSetup() || TFObjectiveResource()->GetMannVsMachineIsBetweenWaves() )
-	{
-		m_eState = NOT_STARTED;
-		return;
-	}
-
-	if ( m_pManager->m_nCurrentWaveIndex < m_nStartWave || m_pManager->m_nCurrentWaveIndex >= m_nEndWave )
-	{
-		m_eState = NOT_STARTED;
-		return;
-	}
-
-	if ( m_eState == NOT_STARTED )
-	{
-		if ( m_flInitialCooldown > 0.0f )
-		{
-			m_eState = INITIAL_COOLDOWN;
-			m_cooldownTimer.Start( m_flInitialCooldown );
-			return;
-		}
-
-		m_eState = RUNNING;
-		m_cooldownTimer.Invalidate();
-	}
-	else if ( m_eState == INITIAL_COOLDOWN )
-	{
-		if ( !m_cooldownTimer.IsElapsed() )
-		{
-			return;
-		}
-
-		m_eState = RUNNING;
-		m_cooldownTimer.Invalidate();
-	}
-
-	if ( m_eMission == CTFBot::MissionType::DESTROY_SENTRIES )
-	{
-		UpdateMissionDestroySentries();
-	}
-	else if ( m_eMission >= CTFBot::MissionType::SNIPER && m_eMission <= CTFBot::MissionType::ENGINEER )
-	{
-		UpdateMission( m_eMission );
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CMissionPopulator::UnpauseSpawning( void )
-{
-	m_cooldownTimer.Start( m_flCooldownDuration );
-	m_checkSentriesTimer.Start( RandomFloat( 5.0f, 10.0f ) );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CMissionPopulator::UpdateMission( CTFBot::MissionType mission )
-{
-	VPROF_BUDGET( __FUNCTION__, "NextBot" );
-
-	// TODO: Move away from depending on players
-	CUtlVector<CTFPlayer *> bots;
-	CollectPlayers( &bots, TF_TEAM_MVM_BOTS, true );
-
-	int nActiveMissions = 0;
-	FOR_EACH_VEC( bots, i )
-	{
-		CTFBot *pBot = ToTFBot( bots[i] );
-		if ( pBot )
-		{
-			if ( pBot->HasMission( mission ) )
-				nActiveMissions++;
-		}
-	}
-
-	if ( g_pPopulationManager->IsSpawningPaused() )
-		return false;
-
-	if ( nActiveMissions > 0 )
-	{
-		m_cooldownTimer.Start( m_flCooldownDuration );
-
-		return false;
-	}
+	VPROF_BUDGET( "CMissionPopulator::UpdateMissionDestroySentries", "NextBot" );
 
 	if ( !m_cooldownTimer.IsElapsed() )
-		return false;
-
-	int nCurrentBotCount = GetGlobalTeam( TF_TEAM_MVM_BOTS )->GetNumPlayers();
-	if ( nCurrentBotCount + m_nDesiredCount > k_nMvMBotTeamSize )
 	{
-		if ( tf_populator_debug.GetBool() )
-		{
-			DevMsg( "MANN VS MACHINE: %3.2f: Waiting for slots to spawn mission.\n", gpGlobals->curtime );
-		}
-
 		return false;
 	}
 
-	if ( tf_populator_debug.GetBool() )
+	if ( !m_checkForDangerousSentriesTimer.IsElapsed() )
 	{
-		DevMsg( "MANN VS MACHINE: %3.2f: <<<< Spawning Mission >>>>\n", gpGlobals->curtime );
+		return false;
 	}
 
-	int nSniperCount = 0;
-	FOR_EACH_VEC( bots, i )
+	if( g_pPopulationManager->IsSpawningPaused() )
 	{
-		CTFBot *pBot = ToTFBot( bots[i] );
-		if ( pBot && pBot->IsPlayerClass( TF_CLASS_SNIPER ) )
-			nSniperCount++;
+		return false;
 	}
 
-	for ( int i=0; i < m_nDesiredCount; ++i )
+	m_checkForDangerousSentriesTimer.Start( RandomFloat( 5.0f, 10.0f ) );
+
+	// collect all of the dangerous sentries
+	CUtlVector< CObjectSentrygun * > dangerousSentryVector;
+
+	int nDmgLimit = 0;	
+	int nKillLimit = 0;
+	GetManager()->GetSentryBusterDamageAndKillThreshold( nDmgLimit, nKillLimit );
+
+	for ( int i=0; i<IBaseObjectAutoList::AutoList().Count(); ++i )
 	{
-		Vector vecSpawnPos;
-		SpawnLocationResult spawnLocationResult = m_where.FindSpawnLocation( &vecSpawnPos );
-		if ( spawnLocationResult != SPAWN_LOCATION_NOT_FOUND )
+		CBaseObject* pObj = static_cast< CBaseObject* >( IBaseObjectAutoList::AutoList()[i] );
+		if ( pObj->ObjectType() == OBJ_SENTRYGUN )
 		{
-			CUtlVector<EHANDLE> spawnedBots;
-			if ( m_pSpawner && m_pSpawner->Spawn( vecSpawnPos, &spawnedBots ) )
+			// Disposable sentries are not valid targets
+			if ( pObj->IsDisposableBuilding() )
+				continue;
+
+			if ( pObj->GetTeamNumber() == TF_TEAM_PVE_DEFENDERS )
 			{
-				FOR_EACH_VEC( spawnedBots, j )
+				CTFPlayer *sentryOwner = pObj->GetOwner();
+				if ( sentryOwner )
 				{
-					CTFBot *pBot = ToTFBot( spawnedBots[j] );
-					if ( pBot == NULL )
-						continue;
+					int nDmgDone = sentryOwner->GetAccumulatedSentryGunDamageDealt();
+					int nKillsMade = sentryOwner->GetAccumulatedSentryGunKillCount();
 
-					pBot->SetFlagTarget( NULL );
-					pBot->SetMission( mission );
-
-					if ( TFObjectiveResource() )
+					if ( nDmgDone >= nDmgLimit || nKillsMade >= nKillLimit )
 					{
-						unsigned int iFlags = MVM_CLASS_FLAG_MISSION;
-						if ( pBot->IsMiniBoss() )
-						{
-							iFlags |= MVM_CLASS_FLAG_MINIBOSS;
-						}
-						if ( pBot->HasAttribute( CTFBot::AttributeType::ALWAYSCRIT ) )
-						{
-							iFlags |= MVM_CLASS_FLAG_ALWAYSCRIT;
-						}
-						TFObjectiveResource()->IncrementMannVsMachineWaveClassCount( m_pSpawner->GetClassIcon( j ), iFlags );
+						dangerousSentryVector.AddToTail( static_cast< CObjectSentrygun* >( pObj ) );
 					}
-
-					if ( TFGameRules()->IsMannVsMachineMode() )
-					{
-						if ( pBot->HasMission( CTFBot::MissionType::SNIPER ) )
-						{
-							nSniperCount++;
-
-							if ( nSniperCount == 1 )
-								TFGameRules()->HaveAllPlayersSpeakConceptIfAllowed( MP_CONCEPT_MVM_SNIPER_CALLOUT, TF_TEAM_MVM_BOTS );
-						}
-					}
-
-					if ( spawnLocationResult == SPAWN_LOCATION_TELEPORTER )
-						OnBotTeleported( pBot );
 				}
 			}
 		}
-		else if ( tf_populator_debug.GetBool() )
-		{
-			Warning( "MissionPopulator: %3.2f: Skipped a member - can't find a place to spawn\n", gpGlobals->curtime );
-		}
 	}
 
-	m_cooldownTimer.Start( m_flCooldownDuration );
+	CUtlVector< CTFPlayer * > livePlayerVector;
+	CollectPlayers( &livePlayerVector, TF_TEAM_PVE_INVADERS, COLLECT_ONLY_LIVING_PLAYERS );
 
-	return true;
-}
+	// dispatch a sentry busting squad for each dangerous sentry
+	bool didSpawn = false;
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CMissionPopulator::UpdateMissionDestroySentries( void )
-{
-	VPROF_BUDGET( __FUNCTION__, "NextBot" );
-
-	if ( !m_cooldownTimer.IsElapsed() || !m_checkSentriesTimer.IsElapsed() )
-		return false;
-
-	if ( g_pPopulationManager->IsSpawningPaused() )
-		return false;
-
-	m_checkSentriesTimer.Start( RandomFloat( 5.0f, 10.0f ) );
-
-	int nDmgLimit = 0;
-	int nKillLimit = 0;
-	m_pManager->GetSentryBusterDamageAndKillThreshold( nDmgLimit, nKillLimit );
-
-	CUtlVector<CObjectSentrygun *> dangerousSentries;
-	FOR_EACH_VEC( IBaseObjectAutoList::AutoList(), i )
+	for( int i=0; i<dangerousSentryVector.Count(); ++i )
 	{
-		CBaseObject *pObj = static_cast<CBaseObject *>( IBaseObjectAutoList::AutoList()[i] );
-		if ( pObj->ObjectType() != OBJ_SENTRYGUN )
-			continue;
-		
-		if ( pObj->IsDisposableBuilding() )
-			continue;
+		CObjectSentrygun *targetSentry = dangerousSentryVector[i];
 
-		if ( pObj->GetTeamNumber() != TF_TEAM_MVM_BOTS )
-			continue;
-
-		CTFPlayer *pOwner = pObj->GetOwner();
-		if ( pOwner )
+		// if there is already a squad out there destroying this sentry, don't spawn another one
+		int j;
+		for( j=0; j<livePlayerVector.Count(); ++j )
 		{
-			int nDmgDone = pOwner->GetAccumulatedSentryGunDamageDealt();
-			int nKillsMade = pOwner->GetAccumulatedSentryGunKillCount();
-
-			if ( nDmgDone >= nDmgLimit || nKillsMade >= nKillLimit )
+			CTFBot *bot = dynamic_cast<CTFBot *>( livePlayerVector[j] );
+			if ( bot && bot->HasMission( CTFBot::MISSION_DESTROY_SENTRIES ) && bot->GetMissionTarget() == targetSentry )
 			{
-				dangerousSentries.AddToTail( static_cast<CObjectSentrygun *>( pObj ) );
+				// there is already a sentry busting squad active for this sentry
+				break;
 			}
 		}
-	}
 
-	// TODO: Move away from depending on players
-	CUtlVector<CTFPlayer *> bots;
-	CollectPlayers( &bots, TF_TEAM_MVM_BOTS, true );
-
-	bool bSpawned = false;
-	FOR_EACH_VEC( dangerousSentries, i )
-	{
-		CObjectSentrygun *pSentry = dangerousSentries[i];
-
-		int nValidCount = 0;
-		FOR_EACH_VEC( bots, j )
+		if ( j < livePlayerVector.Count() )
 		{
-			CTFBot *pBot = ToTFBot( bots[j] );
-			if ( pBot )
-			{
-				if ( pBot->HasMission( CTFBot::MissionType::DESTROY_SENTRIES ) && pBot->GetMissionTarget() == pSentry )
-					break;
-			}
-
-			nValidCount++;
+			continue;
 		}
 
-		if ( nValidCount < bots.Count() )
-			continue;
-
-		Vector vecSpawnPos;
-		SpawnLocationResult spawnLocationResult = m_where.FindSpawnLocation( &vecSpawnPos );
+		// spawn a sentry buster squad to destroy this sentry
+		Vector vSpawnPosition;
+		SpawnLocationResult spawnLocationResult = m_where.FindSpawnLocation( vSpawnPosition );
 		if ( spawnLocationResult != SPAWN_LOCATION_NOT_FOUND )
 		{
-			CUtlVector<EHANDLE> spawnedBots;
-			if ( m_pSpawner && m_pSpawner->Spawn( vecSpawnPos, &spawnedBots ) )
+			EntityHandleVector_t spawnVector;
+
+			if ( m_spawner && m_spawner->Spawn( vSpawnPosition, &spawnVector ) )
 			{
+				// success
 				if ( tf_populator_debug.GetBool() )
 				{
 					DevMsg( "MANN VS MACHINE: %3.2f: <<<< Spawning Sentry Busting Mission >>>>\n", gpGlobals->curtime );
 				}
 
-				FOR_EACH_VEC( spawnedBots, k )
+				for( int k=0; k<spawnVector.Count(); ++k )
 				{
-					CTFBot *pBot = ToTFBot( spawnedBots[k] );
-					if ( pBot == NULL )
-						continue;
-
-					bSpawned = true;
-
-					pBot->SetMission( CTFBot::MissionType::DESTROY_SENTRIES );
-					pBot->SetMissionTarget( pSentry );
-					pBot->SetFlagTarget( NULL );
-					pBot->SetBloodColor( DONT_BLEED );
-
-					pBot->Update();
-
-					pBot->GetPlayerClass()->SetCustomModel( "models/bots/demo/bot_sentry_buster.mdl", true );
-					pBot->UpdateModel();
-
-					if ( TFObjectiveResource() )
+					CTFBot *bot = ToTFBot( spawnVector[k] );
+					if ( bot )
 					{
-						unsigned int iFlags = MVM_CLASS_FLAG_MISSION;
-						if ( pBot->IsMiniBoss() )
-							iFlags |= MVM_CLASS_FLAG_MINIBOSS;
+						bot->SetFlagTarget( NULL );
+						bot->SetMission( CTFBot::MISSION_DESTROY_SENTRIES );
+						bot->SetMissionTarget( targetSentry );
 
-						if ( pBot->HasAttribute( CTFBot::AttributeType::ALWAYSCRIT ) )
-							iFlags |= MVM_CLASS_FLAG_ALWAYSCRIT;
+						// force an update to start the behavior so we can set the sentry
+						bot->Update();
 
-						TFObjectiveResource()->IncrementMannVsMachineWaveClassCount( m_pSpawner->GetClassIcon( k ), iFlags );
+						bot->MarkAsMissionEnemy();
+
+						didSpawn = true;
+
+						bot->GetPlayerClass()->SetCustomModel( g_szBotBossSentryBusterModel, USE_CLASS_ANIMATIONS );
+						bot->UpdateModel();
+						bot->SetBloodColor( DONT_BLEED );
+
+						if ( TFObjectiveResource() )
+						{
+							unsigned int iFlags = MVM_CLASS_FLAG_MISSION;
+							if ( bot->IsMiniBoss() )
+							{
+								iFlags |= MVM_CLASS_FLAG_MINIBOSS;
+							}
+							if ( bot->HasAttribute( CTFBot::ALWAYS_CRIT ) )
+							{
+								iFlags |= MVM_CLASS_FLAG_ALWAYSCRIT;
+							}
+							TFObjectiveResource()->IncrementMannVsMachineWaveClassCount( m_spawner->GetClassIcon( k ), iFlags );
+						}
+
+						if ( TFGameRules() )
+						{
+							TFGameRules()->HaveAllPlayersSpeakConceptIfAllowed( MP_CONCEPT_MVM_SENTRY_BUSTER, TF_TEAM_PVE_DEFENDERS );
+						}
+
+						// what bot should do after spawning at teleporter exit
+						if ( spawnLocationResult == SPAWN_LOCATION_TELEPORTER )
+						{
+							OnBotTeleported( bot );
+						}
 					}
-
-					if ( TFGameRules() )
-						TFGameRules()->HaveAllPlayersSpeakConceptIfAllowed( MP_CONCEPT_MVM_SENTRY_BUSTER, TF_TEAM_MVM_BOTS );
-
-					if ( spawnLocationResult == SPAWN_LOCATION_TELEPORTER )
-						OnBotTeleported( pBot );
 				}
 			}
 		}
@@ -757,18 +666,18 @@ bool CMissionPopulator::UpdateMissionDestroySentries( void )
 		}
 	}
 
-	if ( bSpawned )
+	if ( didSpawn )
 	{
-		float flCoolDown = m_flCooldownDuration;
+		float flCoolDown = m_cooldownDuration;
 
-		CWave *pWave = m_pManager->GetCurrentWave();
+		CWave *pWave = GetManager()->GetCurrentWave();
 		if ( pWave )
 		{
-			pWave->m_nNumSentryBustersKilled++;
-
+			pWave->IncrementSentryBustersSpawned();
+			
 			if ( TFGameRules() )
 			{
-				if ( pWave->m_nNumSentryBustersKilled > 1 )
+				if ( pWave->NumSentryBustersSpawned() > 1 )
 				{
 					TFGameRules()->BroadcastSound( 255, "Announcer.MVM_Sentry_Buster_Alert_Another" );
 				}
@@ -778,232 +687,821 @@ bool CMissionPopulator::UpdateMissionDestroySentries( void )
 				}
 			}
 
-			flCoolDown = m_flCooldownDuration + pWave->m_nNumSentryBustersKilled * m_flCooldownDuration;
+			flCoolDown = m_cooldownDuration + pWave->NumSentryBustersKilled() * m_cooldownDuration;
 
-			pWave->m_nNumSentryBustersKilled = 0;;
+			pWave->ResetSentryBustersKilled();
 		}
 
 		m_cooldownTimer.Start( flCoolDown );
 	}
 
-	return bSpawned;
+	return didSpawn;
 }
 
 
-int CWaveSpawnPopulator::sm_reservedPlayerSlotCount = 0;
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-CWaveSpawnPopulator::CWaveSpawnPopulator( CPopulationManager *pManager )
-	: m_pManager( pManager ), m_pSpawner( NULL )
+//-----------------------------------------------------------------------
+bool CMissionPopulator::UpdateMission( CTFBot::MissionType mission )
 {
-	m_iMaxActive = 999;
-	m_nSpawnCount = 1;
-	m_iTotalCurrency = -1;
+	VPROF_BUDGET( "CMissionPopulator::UpdateMission", "NextBot" );
 
-	m_startWaveEvent = NULL;
-	m_firstSpawnEvent = NULL;
-	m_lastSpawnEvent = NULL;
-	m_doneEvent = NULL;
-	m_parentWave = NULL;
-}
+	int activeMissionMembers = 0;
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-CWaveSpawnPopulator::~CWaveSpawnPopulator()
-{
-	if ( m_pSpawner )
+	CUtlVector< CTFPlayer * > livePlayerVector;
+	CollectPlayers( &livePlayerVector, TF_TEAM_PVE_INVADERS, COLLECT_ONLY_LIVING_PLAYERS );
+
+	for( int i=0; i<livePlayerVector.Count(); ++i )
 	{
-		delete m_pSpawner;
-		m_pSpawner = NULL;
+		CTFBot *pBot = dynamic_cast<CTFBot *>( livePlayerVector[i] );
+		if ( pBot && pBot ->HasMission( mission ) )
+		{
+			++activeMissionMembers;
+		}
 	}
 
-	delete m_startWaveEvent;
-	delete m_firstSpawnEvent;
-	delete m_lastSpawnEvent;
-	delete m_doneEvent;
+	if( g_pPopulationManager->IsSpawningPaused() )
+	{
+		return false;
+	}
+
+	if ( activeMissionMembers > 0 )
+	{
+		// wait until prior mission is dead
+
+		// cooldown is time after death of last mission member
+		m_cooldownTimer.Start( m_cooldownDuration );
+
+		return false;
+	}
+
+	if ( !m_cooldownTimer.IsElapsed() )
+	{
+		return false;
+	}
+
+	// are there enough free slots?
+	int currentEnemyCount = GetGlobalTeam( TF_TEAM_PVE_INVADERS )->GetNumPlayers();
+
+	if ( currentEnemyCount + m_desiredCount > CPopulationManager::MVM_INVADERS_TEAM_SIZE )
+	{
+		// not enough slots yet
+		if ( tf_populator_debug.GetBool() ) 
+		{
+			DevMsg( "MANN VS MACHINE: %3.2f: Waiting for slots to spawn mission.\n", gpGlobals->curtime );
+		}
+
+		return false;
+	}
+
+	if ( tf_populator_debug.GetBool() ) 
+	{
+		DevMsg( "MANN VS MACHINE: %3.2f: <<<< Spawning Mission >>>>\n", gpGlobals->curtime );
+	}
+
+	int nSniperCount = 0;
+	FOR_EACH_VEC( livePlayerVector, iLiveBot )
+	{
+		CTFBot *pBot = dynamic_cast<CTFBot *>( livePlayerVector[iLiveBot] );
+		if ( pBot && pBot->IsPlayerClass( TF_CLASS_SNIPER ) )
+		{
+			nSniperCount++;
+		}
+	}
+
+	// dispatch mission members
+	for( int iDesiredCount=0; iDesiredCount<m_desiredCount; ++iDesiredCount )
+	{
+		Vector vSpawnPosition;
+		SpawnLocationResult spawnLocationResult = m_where.FindSpawnLocation( vSpawnPosition );
+		if ( spawnLocationResult != SPAWN_LOCATION_NOT_FOUND )
+		{
+			EntityHandleVector_t spawnedVector;
+			if ( m_spawner && m_spawner->Spawn( vSpawnPosition, &spawnedVector ) )
+			{
+				// success
+				for( int iSpawn=0; iSpawn<spawnedVector.Count(); ++iSpawn )
+				{
+					CTFBot *bot = ToTFBot( spawnedVector[iSpawn] );
+					if ( bot )
+					{
+						bot->SetFlagTarget( NULL );
+						bot->SetMission( mission );
+						//bot->SetMissionString( "" );
+						bot->MarkAsMissionEnemy();
+
+						if ( TFObjectiveResource() )
+						{
+							unsigned int iFlags = MVM_CLASS_FLAG_MISSION;
+							if ( bot->IsMiniBoss() )
+							{
+								iFlags |= MVM_CLASS_FLAG_MINIBOSS;
+							}
+							if ( bot->HasAttribute( CTFBot::ALWAYS_CRIT ) )
+							{
+								iFlags |= MVM_CLASS_FLAG_ALWAYSCRIT;
+							}
+							TFObjectiveResource()->IncrementMannVsMachineWaveClassCount( bot->GetPlayerClass()->GetClassIconName(), iFlags );
+						}
+
+						// Response rules stuff for MvM
+						if ( TFGameRules()->IsMannVsMachineMode() )
+						{
+							// Only have defenders announce the arrival of the first enemy Sniper
+							if ( bot->HasMission( CTFBot::MISSION_SNIPER ) )
+							{
+								nSniperCount++;
+
+								if ( nSniperCount == 1 )
+								{
+									TFGameRules()->HaveAllPlayersSpeakConceptIfAllowed( MP_CONCEPT_MVM_SNIPER_CALLOUT, TF_TEAM_PVE_DEFENDERS );
+								}
+							}
+						}
+
+						// what bot should do after spawning at teleporter exit
+						if ( spawnLocationResult == SPAWN_LOCATION_TELEPORTER )
+						{
+							OnBotTeleported( bot );
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			if ( tf_populator_debug.GetBool() ) 
+			{
+				Warning( "MissionPopulator: %3.2f: Skipped a member - can't find a place to spawn\n", gpGlobals->curtime );
+			}
+		}
+	}
+
+	m_cooldownTimer.Start( m_cooldownDuration );
+
+	return true;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CWaveSpawnPopulator::Parse( KeyValues *data )
+
+//-----------------------------------------------------------------------
+void CMissionPopulator::Update( void )
 {
-	KeyValues *pTemplate = data->FindKey( "Template" );
+	VPROF_BUDGET( "CMissionPopulator::Update", "NextBot" );
+
+	if ( TFGameRules()->InSetup() ||
+		 GetManager()->GetWaveNumber() < m_beginAtWaveIndex ||
+		 GetManager()->GetWaveNumber() >= m_stopAtWaveIndex ||
+		 TFObjectiveResource()->GetMannVsMachineIsBetweenWaves() )
+	{
+		m_state = NOT_STARTED;
+		return;
+	}
+
+	if ( m_state == NOT_STARTED )
+	{
+		if ( m_initialCooldown > 0.0f )
+		{
+			m_state = INITIAL_COOLDOWN;
+			m_cooldownTimer.Start( m_initialCooldown );
+			return;
+		}
+
+		m_state = RUNNING;
+		m_cooldownTimer.Invalidate();
+	}
+	else if ( m_state == INITIAL_COOLDOWN )
+	{
+		if ( !m_cooldownTimer.IsElapsed() )
+		{
+			return;
+		}
+
+		m_state = RUNNING;
+		m_cooldownTimer.Invalidate();
+	}
+
+	switch( m_mission )
+	{
+	case CTFBot::MISSION_SEEK_AND_DESTROY:
+		break;
+
+	case CTFBot::MISSION_DESTROY_SENTRIES:
+		UpdateMissionDestroySentries();
+		break;
+
+	case CTFBot::MISSION_SNIPER:
+	case CTFBot::MISSION_SPY:
+	case CTFBot::MISSION_ENGINEER:
+		UpdateMission( m_mission );
+		break;
+	}
+}
+
+
+void CMissionPopulator::UnpauseSpawning( void )
+{
+	m_cooldownTimer.Start( m_cooldownDuration );
+	m_checkForDangerousSentriesTimer.Start( RandomFloat( 5.0f, 10.0f ) );
+}
+
+
+//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
+CRandomPlacementPopulator::CRandomPlacementPopulator( CPopulationManager *manager ) : IPopulator( manager )
+{
+	m_count = 0;
+	m_minSeparation = 0.0f;
+	m_navAreaFilter = 0xFFFFFFFF;
+}
+
+
+//-----------------------------------------------------------------------
+bool CRandomPlacementPopulator::Parse( KeyValues *values )
+{
+	for ( KeyValues *data = values->GetFirstSubKey(); data != NULL; data = data->GetNextKey() )
+	{
+		const char *name = data->GetName();
+
+		if ( Q_strlen( name ) <= 0 )
+		{
+			continue;
+		}
+
+		if ( !Q_stricmp( name, "Count" ) )
+		{
+			m_count = data->GetInt();
+		}
+		else if ( !Q_stricmp( name, "MinimumSeparation" ) )
+		{
+			m_minSeparation = data->GetFloat();
+		}
+		else if ( !Q_stricmp( name, "NavAreaFilter" ) )
+		{
+			if ( !Q_stricmp( data->GetString(), "SENTRY_SPOT" ) )
+			{
+				m_navAreaFilter = TF_NAV_SENTRY_SPOT;
+			}
+			else if ( !Q_stricmp( data->GetString(), "SNIPER_SPOT" ) )
+			{
+				m_navAreaFilter = TF_NAV_SNIPER_SPOT;
+			}
+			else
+			{
+				Warning( "Unknown NavAreaFilter value '%s'\n", data->GetString() );
+			}
+		}
+		else
+		{
+			m_spawner = IPopulationSpawner::ParseSpawner( this, data );
+
+			if ( m_spawner == NULL )
+			{
+				Warning( "Unknown attribute '%s' in RandomPlacement definition.\n", name );
+			}
+		}
+	}
+
+	return true;
+}
+
+
+//-----------------------------------------------------------------------
+// Create initial population at start of scenario
+void CRandomPlacementPopulator::PostInitialize( void )
+{
+	int i;
+	CUtlVector< CTFNavArea * > candidateAreaVector;
+
+	for( i=0; i<TheNavAreas.Count(); ++i )
+	{
+		CTFNavArea *area = (CTFNavArea *)TheNavAreas[i];
+
+		if ( area->HasAttributeTF( m_navAreaFilter ) )
+		{
+			candidateAreaVector.AddToTail( area );
+		}
+	}
+
+	CUtlVector< CTFNavArea * > selectedAreaVector;
+	SelectSeparatedShuffleSet< CTFNavArea >( m_count, m_minSeparation, candidateAreaVector, &selectedAreaVector );
+
+	if ( m_spawner )
+	{
+		for( i=0; i<selectedAreaVector.Count(); ++i )
+		{
+			m_spawner->Spawn( selectedAreaVector[i]->GetCenter() );
+		}
+	}
+}
+
+
+//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
+CPeriodicSpawnPopulator::CPeriodicSpawnPopulator( CPopulationManager *manager ) : IPopulator( manager )
+{
+	m_minInterval = 30.0f;
+	m_maxInterval = 30.0f;
+}
+
+
+//-----------------------------------------------------------------------
+bool CPeriodicSpawnPopulator::Parse( KeyValues *values )
+{
+	for ( KeyValues *data = values->GetFirstSubKey(); data != NULL; data = data->GetNextKey() )
+	{
+		const char *name = data->GetName();
+
+		if ( Q_strlen( name ) <= 0 )
+		{
+			continue;
+		}
+
+		if ( m_where.Parse( data ) )
+		{
+			continue;
+		}
+
+		if ( !Q_stricmp( name, "When" ) )
+		{
+			if ( data->GetFirstSubKey() )
+			{
+				for ( KeyValues *whenData = data->GetFirstSubKey(); whenData != NULL; whenData = whenData->GetNextKey() )
+				{
+					if ( !Q_stricmp( whenData->GetName(), "MinInterval" ) )
+					{
+						m_minInterval = whenData->GetFloat();
+					}
+					else if ( !Q_stricmp( whenData->GetName(), "MaxInterval" ) )
+					{
+						m_maxInterval = whenData->GetFloat();
+					}
+					else
+					{
+						Warning( "Invalid field '%s' encountered in When\n", whenData->GetName() );
+						return false;
+					}
+				}
+			}
+			else
+			{
+				// single constant value
+				m_minInterval = data->GetFloat();
+				m_maxInterval = m_minInterval;
+			}
+		}
+		else
+		{
+			m_spawner = IPopulationSpawner::ParseSpawner( this, data );
+
+			if ( m_spawner == NULL )
+			{
+				Warning( "Unknown attribute '%s' in PeriodicSpawn definition.\n", name );
+			}
+		}
+	}
+
+	return true;
+}
+
+
+//-----------------------------------------------------------------------
+// Create initial population at start of scenario
+void CPeriodicSpawnPopulator::PostInitialize( void )
+{
+	m_timer.Start( RandomFloat( m_minInterval, m_maxInterval ) );
+}
+
+
+
+//-----------------------------------------------------------------------
+// Continuously invoked to modify population over time
+void CPeriodicSpawnPopulator::Update( void )
+{
+	if ( m_timer.IsElapsed() && !g_pPopulationManager->IsSpawningPaused() )
+	{
+		m_timer.Start( RandomFloat( m_minInterval, m_maxInterval ) );
+
+		Vector vSpawnPosition;
+		SpawnLocationResult spawnLocationResult = m_where.FindSpawnLocation( vSpawnPosition );
+		if ( spawnLocationResult != SPAWN_LOCATION_NOT_FOUND )
+		{
+			EntityHandleVector_t spawnedVector;
+			if ( m_spawner && m_spawner->Spawn( vSpawnPosition, &spawnedVector ) )
+			{
+				// success
+				for( int i=0; i<spawnedVector.Count(); ++i )
+				{
+					CTFBot *bot = ToTFBot( spawnedVector[i] );
+					if ( bot )
+					{
+						// what bot should do after spawning at teleporter exit
+						if ( spawnLocationResult == SPAWN_LOCATION_TELEPORTER )
+						{
+							OnBotTeleported( bot );
+						}
+					}
+				}
+
+				return;
+			}
+		}
+
+		// retry soon, in the hopes constraints have changed
+		m_timer.Start( 2.0f );
+	}
+}
+
+void CPeriodicSpawnPopulator::UnpauseSpawning( void )
+{
+	m_timer.Start( RandomFloat( m_minInterval, m_maxInterval ) );
+}
+
+
+//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
+
+int CWaveSpawnPopulator::m_reservedPlayerSlotCount = 0;
+
+CWaveSpawnPopulator::CWaveSpawnPopulator( CPopulationManager *manager ) : IPopulator( manager )
+{
+	m_totalCount = 0;
+	m_maxActive = 999;
+	m_spawnCount = 1;
+	m_waitBeforeStarting = 0.0f;
+	m_waitBetweenSpawns = 0.0f;
+	m_bWaitBetweenSpawnAfterDeath = false;
+	m_totalCurrency = -1;
+	SetState( PENDING );
+
+	m_startWaveOutput = NULL;
+	m_firstSpawnOutput = NULL;
+	m_lastSpawnOutput = NULL;
+	m_doneOutput = NULL;
+
+	m_bSupportWave = false;
+	m_bLimitedSupport = false;
+	m_pParent = NULL;
+
+	m_bRandomSpawn = false;
+	m_spawnLocationResult = SPAWN_LOCATION_NOT_FOUND;
+}
+
+//-----------------------------------------------------------------------
+CWaveSpawnPopulator::~CWaveSpawnPopulator()
+{
+	delete m_startWaveOutput;
+	delete m_firstSpawnOutput;
+	delete m_lastSpawnOutput;
+	delete m_doneOutput;
+}
+
+//-----------------------------------------------------------------------
+void CWaveSpawnPopulator::ForceFinish()
+{
+	if ( m_state < WAIT_FOR_ALL_DEAD )
+	{
+		SetState( WAIT_FOR_ALL_DEAD );
+	}
+	else if ( m_state != WAIT_FOR_ALL_DEAD )
+	{
+		SetState( DONE );
+	}
+
+	FOR_EACH_VEC( m_activeVector, i )
+	{
+		// Move bots over to spectator
+		CTFBot *pBot = ToTFBot( m_activeVector[i] );
+		if ( pBot )
+		{
+			pBot->ChangeTeam( TEAM_SPECTATOR, false, true );
+		}
+		else // Other things just get removed.  (ie. Tanks)
+		{
+			m_activeVector[i]->Remove();
+		}
+	}
+
+	m_activeVector.Purge();
+}
+
+
+//-----------------------------------------------------------------------
+bool CWaveSpawnPopulator::Parse( KeyValues *values )
+{
+	// First, see if we have any Template keys
+	KeyValues *pTemplate = values->FindKey( "Template" );
 	if ( pTemplate )
 	{
-		KeyValues *pTemplateKV = m_pManager->GetTemplate( pTemplate->GetString() );
+		KeyValues *pTemplateKV = GetManager()->GetTemplate( pTemplate->GetString() );
 		if ( pTemplateKV )
 		{
-			if ( !Parse( pTemplateKV ) )
+			// Pump all the keys into ourself now
+			if ( Parse( pTemplateKV ) == false )
+			{
 				return false;
+			}
 		}
 		else
 		{
 			Warning( "Unknown Template '%s' in WaveSpawn definition\n", pTemplate->GetString() );
 		}
 	}
-	
-	FOR_EACH_SUBKEY( data, pSubKey )
+
+	for ( KeyValues *data = values->GetFirstSubKey(); data != NULL; data = data->GetNextKey() )
 	{
-		if ( m_where.Parse( pSubKey ) )
+		const char *name = data->GetName();
+
+		if ( Q_strlen( name ) <= 0 )
+		{
+			continue;
+		}
+
+		if ( m_where.Parse( data ) )
+		{
+			continue;
+		}
+
+		// Skip templates when looping through the rest of the keys
+		if ( !Q_stricmp( name, "Template" ) )
 			continue;
 
-		const char *pszKey = pSubKey->GetName();
-		if ( !V_stricmp( pszKey, "TotalCount" ) )
+		if ( !Q_stricmp( name, "TotalCount" ) )
 		{
-			m_iTotalCount = data->GetInt();
+			m_totalCount = data->GetInt();
 		}
-		else if ( !V_stricmp( pszKey, "MaxActive" ) )
+		else if ( !Q_stricmp( name, "MaxActive" ) )
 		{
-			m_iMaxActive = data->GetInt();
+			m_maxActive = data->GetInt();
 		}
-		else if ( !V_stricmp( pszKey, "SpawnCount" ) )
+		else if ( !Q_stricmp( name, "SpawnCount" ) )
 		{
-			m_nSpawnCount = data->GetInt();
+			m_spawnCount = data->GetInt();
 		}
-		else if ( !V_stricmp( pszKey, "WaitBeforeStarting" ) )
+		else if ( !Q_stricmp( name, "WaitBeforeStarting" ) )
 		{
-			m_flWaitBeforeStarting = data->GetFloat();
+			m_waitBeforeStarting = data->GetFloat();
 		}
-		else if ( !V_stricmp( pszKey, "WaitBetweenSpawns" ) )
+		else if ( !Q_stricmp( name, "WaitBetweenSpawns" ) )
 		{
-			if ( m_flWaitBetweenSpawns != 0 && m_bWaitBetweenSpawnsAfterDeath )
+			if ( m_waitBetweenSpawns != 0.f && m_bWaitBetweenSpawnAfterDeath )
 			{
 				Warning( "Already specified WaitBetweenSpawnsAfterDeath time, WaitBetweenSpawns won't be used\n" );
 				continue;
 			}
 
-			m_flWaitBetweenSpawns = data->GetFloat();
+			m_waitBetweenSpawns = data->GetFloat();
 		}
-		else if ( !V_stricmp( pszKey, "WaitBetweenSpawnsAfterDeath" ) )
+		else if ( !Q_stricmp( name, "WaitBetweenSpawnsAfterDeath" ) )
 		{
-			if ( m_flWaitBetweenSpawns != 0 )
+			if ( m_waitBetweenSpawns != 0.f )
 			{
 				Warning( "Already specified WaitBetweenSpawns time, WaitBetweenSpawnsAfterDeath won't be used\n" );
 				continue;
 			}
 
-			m_bWaitBetweenSpawnsAfterDeath = true;
-			m_flWaitBetweenSpawns = data->GetFloat();
+			m_bWaitBetweenSpawnAfterDeath = true;
+			m_waitBetweenSpawns = data->GetFloat();
 		}
-		else if ( !V_stricmp( pszKey, "StartWaveWarningSound" ) )
+		else if ( !Q_stricmp( name, "StartWaveWarningSound" ) )
 		{
 			m_startWaveWarningSound.sprintf( "%s", data->GetString() );
 		}
-		else if ( !V_stricmp( pszKey, "StartWaveOutput" ) )
+		else if ( !Q_stricmp( name, "StartWaveOutput" ) )
 		{
-			m_startWaveEvent = ParseEvent( data );
+			m_startWaveOutput = ParseEvent( data );
 		}
-		else if ( !V_stricmp( pszKey, "FirstSpawnWarningSound" ) )
+		else if ( !Q_stricmp( name, "FirstSpawnWarningSound" ) )
 		{
 			m_firstSpawnWarningSound.sprintf( "%s", data->GetString() );
 		}
-		else if ( !V_stricmp( pszKey, "FirstSpawnOutput" ) )
+		else if ( !Q_stricmp( name, "FirstSpawnOutput" ) )
 		{
-			m_firstSpawnEvent = ParseEvent( data );
+			m_firstSpawnOutput = ParseEvent( data );
 		}
-		else if ( !V_stricmp( pszKey, "LastSpawnWarningSound" ) )
+		else if ( !Q_stricmp( name, "LastSpawnWarningSound" ) )
 		{
 			m_lastSpawnWarningSound.sprintf( "%s", data->GetString() );
 		}
-		else if ( !V_stricmp( pszKey, "LastSpawnOutput" ) )
+		else if ( !Q_stricmp( name, "LastSpawnOutput" ) )
 		{
-			m_lastSpawnEvent = ParseEvent( data );
+			m_lastSpawnOutput = ParseEvent( data );
 		}
-		else if ( !V_stricmp( pszKey, "DoneWarningSound" ) )
+		else if ( !Q_stricmp( name, "DoneWarningSound" ) )
 		{
 			m_doneWarningSound.sprintf( "%s", data->GetString() );
 		}
-		else if ( !V_stricmp( pszKey, "DoneOutput" ) )
+		else if ( !Q_stricmp( name, "DoneOutput" ) )
 		{
-			m_doneEvent = ParseEvent( data );
+			m_doneOutput = ParseEvent( data );
 		}
-		else if ( !V_stricmp( pszKey, "TotalCurrency" ) )
+		else if ( !Q_stricmp( name, "TotalCurrency" ) )
 		{
-			m_iTotalCurrency = data->GetInt();
+			m_totalCurrency = data->GetInt();
 		}
-		else if ( !V_stricmp( pszKey, "Name" ) )
+		else if ( !Q_stricmp( name, "Name" ) )
 		{
 			m_name = data->GetString();
 		}
-		else if ( !V_stricmp( pszKey, "WaitForAllSpawned" ) )
+		else if ( !Q_stricmp( name, "WaitForAllSpawned" ) )
 		{
-			m_szWaitForAllSpawned = data->GetString();
+			m_waitForAllSpawned = data->GetString();
 		}
-		else if ( !V_stricmp( pszKey, "WaitForAllDead" ) )
+		else if ( !Q_stricmp( name, "WaitForAllDead" ) )
 		{
-			m_szWaitForAllDead = data->GetString();
+			m_waitForAllDead = data->GetString();
 		}
-		else if ( !V_stricmp( pszKey, "Support" ) )
+		else if ( !Q_stricmp( name, "Support" ) )
 		{
-			m_bLimitedSupport = !V_stricmp( data->GetString(), "Limited" );
+			m_bLimitedSupport = !Q_stricmp( data->GetString(), "Limited" );
 			m_bSupportWave = true;
 		}
-		else if ( !V_stricmp( pszKey, "RandomSpawn" ) )
+		else if ( !Q_stricmp( name, "RandomSpawn" ) )
 		{
 			m_bRandomSpawn = data->GetBool();
 		}
 		else
 		{
-			m_pSpawner = IPopulationSpawner::ParseSpawner( this, data );
+			m_spawner = IPopulationSpawner::ParseSpawner( this, data );
 
-			if ( m_pSpawner == NULL )
+			if ( m_spawner == NULL )
 			{
-				Warning( "Unknown attribute '%s' in WaveSpawn definition.\n", pszKey );
+				Warning( "Unknown attribute '%s' in WaveSpawn definition.\n", name );
 			}
 		}
 
-		m_iRemainingCurrency = m_iTotalCurrency;
-		m_iRemainingCount = m_iTotalCount;
+		// These allow us to avoid rounding errors later when divvying money to bots
+		m_unallocatedCurrency = m_totalCurrency;
+		m_remainingCount = m_totalCount;
 	}
 
 	return true;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CWaveSpawnPopulator::Update( void )
+
+//-----------------------------------------------------------------------
+void CWaveSpawnPopulator::OnPlayerKilled( CTFPlayer *corpse )
 {
-	VPROF_BUDGET( __FUNCTION__, "NextBot" );
+	m_activeVector.FindAndFastRemove( corpse );
+}
 
-	switch ( m_eState )
+
+//-----------------------------------------------------------------------
+bool CWaveSpawnPopulator::IsFinishedSpawning( void )
+{
+	if ( m_bSupportWave && !m_bLimitedSupport )
 	{
-		case PENDING:
+		// support waves are never done spawning until
+		// we get OnNonSupportWavesDone called
+		return false;
+	}
+
+	return ( m_countSpawnedSoFar >= m_totalCount );
+}
+
+
+//-----------------------------------------------------------------------
+void CWaveSpawnPopulator::SetState( InternalStateType eState )
+{
+	m_state = eState;
+
+	switch( m_state )
+	{
+	case PENDING:
+	case PRE_SPAWN_DELAY:
+	case SPAWNING:
+		break;
+	case WAIT_FOR_ALL_DEAD:
+		// last spawn has occurred
+		if ( m_lastSpawnWarningSound.Length() > 0 )
 		{
-			m_timer.Start( m_flWaitBeforeStarting );
+			TFGameRules()->BroadcastSound( 255, m_lastSpawnWarningSound );
+		}
 
-			SetState( PRE_SPAWN_DELAY );
+		FireEvent( m_lastSpawnOutput, "LastSpawnOutput" );
 
-			sm_reservedPlayerSlotCount = 0;
-
-			if ( m_startWaveWarningSound.Length() > 0 )
-				TFGameRules()->BroadcastSound( 255, m_startWaveWarningSound );
-
-			FireEvent( m_startWaveEvent, "StartWaveOutput" );
-
-			if ( tf_populator_debug.GetBool() )
-			{
-				DevMsg( "%3.2f: WaveSpawn(%s) started PRE_SPAWN_DELAY\n", gpGlobals->curtime, m_name.IsEmpty() ? "" : m_name.Get() );
-			}
+		if ( tf_populator_debug.GetBool() )
+		{
+			DevMsg( "%3.2f: WaveSpawn(%s) started WAIT_FOR_ALL_DEAD\n", gpGlobals->curtime, m_name.IsEmpty() ? "" : m_name.Get() );
 		}
 		break;
-		case PRE_SPAWN_DELAY:
+	case DONE:
+		if ( m_doneWarningSound.Length() > 0 )
 		{
-			if ( !m_timer.IsElapsed() )
-				return;
+			TFGameRules()->BroadcastSound( 255, m_doneWarningSound );
+		}
 
-			m_nNumSpawnedSoFar = 0;
-			m_nReservedPlayerSlots = 0;
+		FireEvent( m_doneOutput, "DoneOutput" );
 
+		if ( tf_populator_debug.GetBool() )
+		{
+			DevMsg( "%3.2f: WaveSpawn(%s) DONE\n", gpGlobals->curtime, m_name.IsEmpty() ? "" : m_name.Get() );
+		}
+		break;
+	}
+}
+
+
+//-----------------------------------------------------------------------
+void CWaveSpawnPopulator::OnNonSupportWavesDone( void )
+{
+	if ( m_bSupportWave )
+	{
+		switch( m_state )
+		{
+		case PENDING:
+		case PRE_SPAWN_DELAY:
+			SetState( DONE );
+			break;
+		case SPAWNING:
+		case WAIT_FOR_ALL_DEAD:
+			if ( TFGameRules() && ( m_unallocatedCurrency > 0 ) )
+			{
+				TFGameRules()->DistributeCurrencyAmount( m_unallocatedCurrency, NULL, true, true );
+				m_unallocatedCurrency = 0;
+			}
+			SetState( WAIT_FOR_ALL_DEAD );
+ 		case DONE:
+			break;
+		}
+	}
+}
+
+
+//-----------------------------------------------------------------------
+int CWaveSpawnPopulator::GetCurrencyAmountPerDeath( void )
+{
+	int nCurrency = 0;
+	
+	if ( m_bSupportWave )
+	{
+		if ( m_state == WAIT_FOR_ALL_DEAD )
+		{
+			// we're still in the m_ActiveVector at this point so the number of players
+			// in the vector is the division of the money since we're done spawning
+			m_remainingCount = m_activeVector.Count();
+		}
+	}
+
+	if ( m_unallocatedCurrency > 0 )
+	{
+		// We shouldn't be back in here if our remaining count is 0
+		Assert ( m_remainingCount > 0 );
+
+		// Band-aid for playtest
+		m_remainingCount = m_remainingCount <= 0 ? 1 : m_remainingCount;
+
+		nCurrency = m_unallocatedCurrency / m_remainingCount;
+		m_unallocatedCurrency -= nCurrency;
+		m_remainingCount--;
+	}
+
+	return nCurrency;
+}
+
+	
+//-----------------------------------------------------------------------
+// Continuously invoked to modify population over time
+void CWaveSpawnPopulator::Update( void )
+{
+	VPROF_BUDGET( "CWaveSpawnPopulator::Update", "NextBot" );
+
+	switch( m_state )
+	{
+	case DONE:
+		return;
+
+	case PENDING:
+		m_timer.Start( m_waitBeforeStarting );
+		SetState( PRE_SPAWN_DELAY );
+
+		// zero this here to ensure it is cleared between Waves
+		// since all WaveSpawns start at the same time at the beginning of a Wave
+		m_reservedPlayerSlotCount = 0;
+
+		if ( m_startWaveWarningSound.Length() > 0 )
+		{
+			TFGameRules()->BroadcastSound( 255, m_startWaveWarningSound );
+		}
+
+		FireEvent( m_startWaveOutput, "StartWaveOutput" );
+
+		if ( tf_populator_debug.GetBool() )
+		{
+			DevMsg( "%3.2f: WaveSpawn(%s) started PRE_SPAWN_DELAY\n", gpGlobals->curtime, m_name.IsEmpty() ? "" : m_name.Get() );
+		}
+		break;
+
+	case PRE_SPAWN_DELAY:
+		if ( m_timer.IsElapsed() )
+		{
+			m_countSpawnedSoFar = 0;
+			m_myReservedSlotCount = 0;
 			SetState( SPAWNING );
 
 			if ( m_firstSpawnWarningSound.Length() > 0 )
+			{
 				TFGameRules()->BroadcastSound( 255, m_firstSpawnWarningSound );
+			}
 
-			FireEvent( m_firstSpawnEvent, "FirstSpawnOutput" );
+			FireEvent( m_firstSpawnOutput, "FirstSpawnOutput" );
 
 			if ( tf_populator_debug.GetBool() )
 			{
@@ -1011,131 +1509,182 @@ void CWaveSpawnPopulator::Update( void )
 			}
 		}
 		break;
-		case SPAWNING:
-		{
-			if ( !m_timer.IsElapsed() || g_pPopulationManager->IsSpawningPaused() )
-				return;
 
-			if ( !m_pSpawner )
+	case SPAWNING:
+		if ( m_timer.IsElapsed() )
+		{
+			if( g_pPopulationManager->IsSpawningPaused() )
+			{
+				return;
+			}
+
+			if ( !m_spawner )
 			{
 				Warning( "Invalid spawner\n" );
 				SetState( DONE );
-
 				return;
 			}
 
-			int nNumActive = 0;
-			FOR_EACH_VEC( m_activeSpawns, i )
+			// count up how many entities we've spawned are still active
+			int currentActive = 0;
+			for( int i=0; i<m_activeVector.Count(); ++i )
 			{
-				if ( m_activeSpawns[i] && m_activeSpawns[i]->IsAlive() )
-					nNumActive++;
+				if ( m_activeVector[i] != NULL && m_activeVector[i]->IsAlive() )
+				{
+					++currentActive;
+				}
 			}
 
-			if ( m_bWaitBetweenSpawnsAfterDeath )
+			if ( m_bWaitBetweenSpawnAfterDeath )
 			{
-				if ( nNumActive != 0 )
+				if ( currentActive == 0 )
 				{
-					return;
+					if ( m_spawnLocationResult != SPAWN_LOCATION_NOT_FOUND )
+					{
+						// free up the current spawn area so we select a new one for the next group
+						m_spawnLocationResult = SPAWN_LOCATION_NOT_FOUND;
+
+						if ( m_waitBetweenSpawns > 0.0f )
+						{
+							// start delay
+							m_timer.Start( m_waitBetweenSpawns );
+						}
+
+						// wait for the timer
+						return;
+					}
 				}
 				else
 				{
-					if ( m_spawnLocationResult )
+					// wait until all current actives are dead
+					return;
+				}
+			}
+
+			if ( currentActive >= m_maxActive )
+			{
+				// we've reached our allowed cap
+				return;
+			}
+
+			if ( m_myReservedSlotCount <= 0 )
+			{
+				// are there enough free slots?
+				if ( ( m_maxActive - currentActive ) < m_spawnCount )
+				{
+					// not enough room to spawn a group so wait
+					return;
+				}
+
+				int currentEnemyCount = GetGlobalTeam( TF_TEAM_PVE_INVADERS )->GetNumPlayers();
+
+				if ( currentEnemyCount + m_spawnCount + m_reservedPlayerSlotCount > CPopulationManager::MVM_INVADERS_TEAM_SIZE )
+				{
+					// no space right now
+					return;
+				}
+
+				// there is room - reserve our slots to ensure another concurrent WaveSpawn doesn't consume them
+				m_reservedPlayerSlotCount += m_spawnCount;
+				m_myReservedSlotCount = m_spawnCount;
+			}
+
+			bool bTeleported = ( m_spawnLocationResult == SPAWN_LOCATION_TELEPORTER );
+
+			Vector vSpawnPosition = vec3_origin;
+			if ( m_spawner && m_spawner->IsWhereRequired() )
+			{
+				// try to look for a spawn point or a new teleport location
+				if ( m_spawnLocationResult == SPAWN_LOCATION_NOT_FOUND || m_spawnLocationResult == SPAWN_LOCATION_TELEPORTER )
+				{
+					m_spawnLocationResult = m_where.FindSpawnLocation( m_vSpawnPosition );
+					if ( m_spawnLocationResult == SPAWN_LOCATION_NOT_FOUND )
 					{
-						m_spawnLocationResult = SPAWN_LOCATION_NOT_FOUND;
-
-						if ( m_flWaitBetweenSpawns > 0 )
-							m_timer.Start( m_flWaitBetweenSpawns );
-
+						// try again
 						return;
 					}
 				}
-			}
 
-			if ( nNumActive >= m_iMaxActive )
-				return;
+				vSpawnPosition = m_vSpawnPosition;
+				bTeleported = ( m_spawnLocationResult == SPAWN_LOCATION_TELEPORTER );
 
-			if ( m_nReservedPlayerSlots <= 0 )
-			{
-				if ( nNumActive - m_iMaxActive < m_nSpawnCount )
-					return;
-
-				int nTotalBotCount = GetGlobalTeam( TF_TEAM_MVM_BOTS )->GetNumPlayers();
-				if ( nTotalBotCount + m_nSpawnCount + sm_reservedPlayerSlotCount > k_nMvMBotTeamSize )
-					return;
-
-				sm_reservedPlayerSlotCount += m_nSpawnCount;
-				m_nReservedPlayerSlots = m_nSpawnCount;
-			}
-
-			Vector vecSpawnPos = vec3_origin;
-			if ( m_pSpawner && m_pSpawner->IsWhereRequired() )
-			{
-				if ( m_spawnLocationResult == SPAWN_LOCATION_NOT_FOUND || m_spawnLocationResult == SPAWN_LOCATION_TELEPORTER )
-				{
-					m_spawnLocationResult = m_where.FindSpawnLocation( &m_vecSpawnPosition );
-					if ( m_spawnLocationResult == SPAWN_LOCATION_NOT_FOUND )
-						return;
-				}
-
-				vecSpawnPos = m_vecSpawnPosition;
-
+				// reset m_pCurrentSpawnArea if we want to pick a new spawn area for the next bot to spawn
 				if ( m_bRandomSpawn )
+				{
 					m_spawnLocationResult = SPAWN_LOCATION_NOT_FOUND;
+				}
 			}
 
-			CUtlVector<EHANDLE> spawnedBots;
-			if ( m_pSpawner && m_pSpawner->Spawn( vecSpawnPos, &spawnedBots ) )
+			EntityHandleVector_t m_justSpawnedVector;
+			if ( m_spawner && m_spawner->Spawn( vSpawnPosition, &m_justSpawnedVector ) )
 			{
-				FOR_EACH_VEC( spawnedBots, i )
+				// successfully spawned
+
+				FOR_EACH_VEC( m_justSpawnedVector, i )
 				{
-					CTFBot *pBot = ToTFBot( spawnedBots[i] );
-					if ( pBot )
+					if ( m_justSpawnedVector[i].Get() == NULL )
+						continue;
+
+					CTFBot *bot = ToTFBot( m_justSpawnedVector[i] );
+					if ( bot )
 					{
-						pBot->SetCurrency( 0 );
-						pBot->m_pWaveSpawnPopulator = this;
+						bot->SetCustomCurrencyWorth( 0 );
+						bot->SetWaveSpawnPopulator( this );
 
-						TFObjectiveResource()->SetMannVsMachineWaveClassActive( pBot->GetPlayerClass()->GetClassIconName() );
+						// Allows client UI to know if a specific spawner is active
+						TFObjectiveResource()->SetMannVsMachineWaveClassActive( bot->GetPlayerClass()->GetClassIconName() );
 
-						if ( m_bLimitedSupport )
-							pBot->m_bLimitedSupport = true;
+						if ( IsLimitedSupportWave() )
+						{
+							bot->MarkAsLimitedSupportEnemy();
+						}
 
-						if ( m_spawnLocationResult == SPAWN_LOCATION_TELEPORTER )
-							OnBotTeleported( pBot );
+						// what bot should do after spawning at teleporter exit
+						if ( bTeleported )
+						{
+							OnBotTeleported( bot );
+						}
 					}
 					else
 					{
-						CTFTankBoss *pTank = dynamic_cast<CTFTankBoss *>( spawnedBots[i].Get() );
-						if ( pTank )
+						CTFTankBoss *tank = dynamic_cast< CTFTankBoss * >( m_justSpawnedVector[i].Get() );
+						if ( tank )
 						{
-							pTank->SetCurrencyValue( 0 );
-							pTank->SetWaveSpawnPopulator( this );
+							tank->SetCurrencyValue( 0 );
+							tank->SetWaveSpawnPopulator( this );
 
-							m_parentWave->m_nNumTanksSpawned++;
+							m_pParent->IncrementTanksSpawned();
 						}
 					}
 				}
 
-				int nNumSpawned = spawnedBots.Count();
-				m_nNumSpawnedSoFar += nNumSpawned;
+				int justSpawnedCount = m_justSpawnedVector.Count();
 
-				int nNumSlotsToFree = ( nNumSpawned <= m_nReservedPlayerSlots ) ? nNumSpawned : m_nReservedPlayerSlots;
-				m_nReservedPlayerSlots -= nNumSlotsToFree;
-				sm_reservedPlayerSlotCount -= nNumSlotsToFree;
+				m_countSpawnedSoFar += justSpawnedCount;
 
-				FOR_EACH_VEC( spawnedBots, i )
+				// release our reserved slots
+				int slotsToReleaseCount = ( justSpawnedCount <= m_myReservedSlotCount ) ? justSpawnedCount : m_myReservedSlotCount;
+				m_myReservedSlotCount -= slotsToReleaseCount;
+				m_reservedPlayerSlotCount -= slotsToReleaseCount;
+
+				// somehow, duplicate entries can end up in m_activeVector if we just AddVectorToTail() - look into this
+				for( int i = 0 ; i < m_justSpawnedVector.Count() ; ++i )
 				{
-					CBaseEntity *pEntity = spawnedBots[i];
+					CBaseEntity *newEntity = m_justSpawnedVector[i];
 
-					FOR_EACH_VEC( m_activeSpawns, j )
+					for( int j = 0 ; j < m_activeVector.Count() ; ++j )
 					{
-						if ( m_activeSpawns[j] && m_activeSpawns[j]->entindex() == pEntity->entindex() )
+						if ( m_activeVector[j] == NULL )
+							continue;
+
+						if ( m_activeVector[j]->entindex() == newEntity->entindex() )
 						{
 							Warning( "WaveSpawn duplicate entry in active vector\n" );
 							continue;
 						}
 					}
 
-					m_activeSpawns.AddToTail( pEntity );
+					m_activeVector.AddToTail( newEntity );
 				}
 
 				if ( IsFinishedSpawning() )
@@ -1144,515 +1693,200 @@ void CWaveSpawnPopulator::Update( void )
 					return;
 				}
 
-				if ( m_nReservedPlayerSlots <= 0 && !m_bWaitBetweenSpawnsAfterDeath )
+				// successfully spawned a group of SpawnCount entities
+				if ( m_myReservedSlotCount <= 0 && !m_bWaitBetweenSpawnAfterDeath )
 				{
+					// free up the current spawn area so we select a new one for the next group
 					m_spawnLocationResult = SPAWN_LOCATION_NOT_FOUND;
-
-					if ( m_flWaitBetweenSpawns > 0 )
-						m_timer.Start( m_flWaitBetweenSpawns );
+					
+					if ( m_waitBetweenSpawns > 0.0f )
+					{
+						// start delay
+						m_timer.Start( m_waitBetweenSpawns );
+					}
 				}
 
+				// not done yet
 				return;
 			}
 
+			// couldn't spawn - retry soon
 			m_timer.Start( 1.0f );
 		}
 		break;
-		case WAIT_FOR_ALL_DEAD:
+
+	case WAIT_FOR_ALL_DEAD:
+		FOR_EACH_VEC( m_activeVector, i )
 		{
-			FOR_EACH_VEC( m_activeSpawns, i )
+			if ( m_activeVector[i] != NULL && m_activeVector[i]->IsAlive() )
 			{
-				if ( m_activeSpawns[i] && m_activeSpawns[i]->IsAlive() )
-					return;
+				// not done yet
+				return;
 			}
-
-			SetState( DONE );
 		}
-		break;
-	}
-}
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CWaveSpawnPopulator::OnPlayerKilled( CTFPlayer *pPlayer )
-{
-	m_activeSpawns.FindAndFastRemove( pPlayer );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CWaveSpawnPopulator::ForceFinish( void )
-{
-	if ( m_eState < WAIT_FOR_ALL_DEAD )
-	{
-		SetState( WAIT_FOR_ALL_DEAD );
-	}
-	else if ( m_eState != WAIT_FOR_ALL_DEAD )
-	{
+		// everyone we spawned is dead
 		SetState( DONE );
-	}
+		break;
 
-	FOR_EACH_VEC( m_activeSpawns, i )
-	{
-		CTFBot *pBot = ToTFBot( m_activeSpawns[i] );
-		if ( pBot )
-		{
-			pBot->ChangeTeam( TEAM_SPECTATOR, false, true );
-		}
-		else
-		{
-			m_activeSpawns[i]->Remove();
-		}
-	}
+	} // switch
 
-	m_activeSpawns.Purge();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-int CWaveSpawnPopulator::GetCurrencyAmountPerDeath( void )
-{
-	int nCurrency = 0;
-
-	if ( m_bSupportWave )
-	{
-		if ( m_eState == WAIT_FOR_ALL_DEAD )
-			m_iRemainingCount = m_activeSpawns.Count();
-	}
-
-	if ( m_iRemainingCurrency > 0 )
-	{
-		m_iRemainingCount = m_iRemainingCount <= 0 ? 1 : m_iRemainingCount;
-
-		nCurrency = m_iRemainingCurrency / m_iRemainingCount--;
-		m_iRemainingCurrency -= nCurrency;
-	}
-
-	return nCurrency;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CWaveSpawnPopulator::IsFinishedSpawning( void )
-{
-	if ( m_bSupportWave && !m_bLimitedSupport )
-		return false;
-
-	return ( m_nNumSpawnedSoFar >= m_iTotalCount );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CWaveSpawnPopulator::OnNonSupportWavesDone( void )
-{
-	if ( m_bSupportWave )
-	{
-		switch ( m_eState )
-		{
-			case PENDING:
-			case PRE_SPAWN_DELAY:
-				SetState( DONE );
-				break;
-			case SPAWNING:
-			case WAIT_FOR_ALL_DEAD:
-				if ( TFGameRules() && ( m_iRemainingCurrency > 0 ) )
-				{
-					TFGameRules()->DistributeCurrencyAmount( m_iRemainingCurrency, NULL, true, true );
-					m_iRemainingCurrency = 0;
-				}
-				SetState( WAIT_FOR_ALL_DEAD );
-				break;
-		}
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CWaveSpawnPopulator::SetState( InternalStateType eState )
-{
-	m_eState = eState;
-
-	if ( eState == WAIT_FOR_ALL_DEAD )
-	{
-		if ( m_lastSpawnWarningSound.Length() > 0 )
-		{
-			TFGameRules()->BroadcastSound( 255, m_lastSpawnWarningSound );
-		}
-
-		FireEvent( m_lastSpawnEvent, "LastSpawnOutput" );
-
-		if ( tf_populator_debug.GetBool() )
-		{
-			DevMsg( "%3.2f: WaveSpawn(%s) started WAIT_FOR_ALL_DEAD\n", gpGlobals->curtime, m_name.IsEmpty() ? "" : m_name.Get() );
-		}
-	}
-	else if ( eState == DONE )
-	{
-		if ( m_doneWarningSound.Length() > 0 )
-		{
-			TFGameRules()->BroadcastSound( 255, m_doneWarningSound );
-		}
-
-		FireEvent( m_doneEvent, "DoneOutput" );
-
-		if ( tf_populator_debug.GetBool() )
-		{
-			DevMsg( "%3.2f: WaveSpawn(%s) DONE\n", gpGlobals->curtime, m_name.IsEmpty() ? "" : m_name.Get() );
-		}
-	}
+	// not done yet
 }
 
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-CPeriodicSpawnPopulator::CPeriodicSpawnPopulator( CPopulationManager *pManager )
-	: m_pManager( pManager ), m_pSpawner( NULL )
+//-------------------------------------------------------------------------
+// End CWaveSpawnPopulator
+//-------------------------------------------------------------------------
+
+//-------------------------------------------------------------------------
+// CWave
+//-------------------------------------------------------------------------
+CWave::CWave( CPopulationManager *manager ) : IPopulator( manager )
 {
-	m_flMinInterval = 30.0f;
-	m_flMaxInterval = 30.0f;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-CPeriodicSpawnPopulator::~CPeriodicSpawnPopulator()
-{
-	if ( m_pSpawner )
-	{
-		delete m_pSpawner;
-		m_pSpawner = NULL;
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CPeriodicSpawnPopulator::Parse( KeyValues *data )
-{
-	FOR_EACH_SUBKEY( data, pSubKey )
-	{
-		if ( m_where.Parse( pSubKey ) )
-			continue;
-
-		const char *pszKey = pSubKey->GetName();
-		if ( !V_stricmp( pszKey, "When" ) )
-		{
-			if ( pSubKey->GetFirstSubKey() )
-			{
-				FOR_EACH_SUBKEY( pSubKey, pWhenSubKey )
-				{
-					if ( !V_stricmp( pWhenSubKey->GetName(), "MinInterval" ) )
-					{
-						m_flMinInterval = pWhenSubKey->GetFloat();
-					}
-					else if ( !V_stricmp( pWhenSubKey->GetName(), "MaxInterval" ) )
-					{
-						m_flMaxInterval = pWhenSubKey->GetFloat();
-					}
-					else
-					{
-						Warning( "Invalid field '%s' encountered in When\n", pWhenSubKey->GetName() );
-						return false;
-					}
-				}
-			}
-			else
-			{
-				m_flMinInterval = pSubKey->GetFloat();
-				m_flMaxInterval = m_flMinInterval;
-			}
-		}
-		else
-		{
-			m_pSpawner = IPopulationSpawner::ParseSpawner( this, pSubKey );
-
-			if ( m_pSpawner == NULL )
-			{
-				Warning( "Unknown attribute '%s' in PeriodicSpawn definition.\n", pszKey );
-			}
-		}
-	}
-
-	return true;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CPeriodicSpawnPopulator::PostInitialize( void )
-{
-	m_timer.Start( RandomFloat( m_flMinInterval, m_flMaxInterval ) );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CPeriodicSpawnPopulator::Update( void )
-{
-	if ( !m_timer.IsElapsed() || g_pPopulationManager->IsSpawningPaused() )
-		return;
-
-	Vector vecSpawnPos;
-	SpawnLocationResult spawnLocationResult = m_where.FindSpawnLocation( &vecSpawnPos );
-	if ( spawnLocationResult != SPAWN_LOCATION_NOT_FOUND )
-	{
-		CUtlVector<EHANDLE> spawnedBots;
-		if ( m_pSpawner && m_pSpawner->Spawn( vecSpawnPos, &spawnedBots ) )
-		{
-			m_timer.Start( RandomFloat( m_flMinInterval, m_flMaxInterval ) );
-
-			FOR_EACH_VEC( spawnedBots, k )
-			{
-				CTFBot *pBot = ToTFBot( spawnedBots[k] );
-				if ( pBot && spawnLocationResult == SPAWN_LOCATION_TELEPORTER )
-					OnBotTeleported( pBot );
-			}
-
-			return;
-		}
-	}
-
-	m_timer.Start( 2.0f );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CPeriodicSpawnPopulator::UnpauseSpawning( void )
-{
-	m_timer.Start( RandomFloat( m_flMinInterval, m_flMaxInterval ) );
-}
-
-
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-CRandomPlacementPopulator::CRandomPlacementPopulator( CPopulationManager *pManager )
-	: m_pManager( pManager ), m_pSpawner( NULL )
-{
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-CRandomPlacementPopulator::~CRandomPlacementPopulator()
-{
-	if ( m_pSpawner )
-	{
-		delete m_pSpawner;
-		m_pSpawner = NULL;
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CRandomPlacementPopulator::Parse( KeyValues *data )
-{
-	FOR_EACH_SUBKEY( data, pSubKey )
-	{
-		const char *pszKey = pSubKey->GetName();
-		if ( !V_stricmp( pszKey, "Count" ) )
-		{
-			m_iCount = pSubKey->GetInt();
-		}
-		else if ( !V_stricmp( pszKey, "MinimumSeparation" ) )
-		{
-			m_flMinSeparation = pSubKey->GetFloat();
-		}
-		else if ( !V_stricmp( pszKey, "NavAreaFilter" ) )
-		{
-			if ( !V_stricmp( pSubKey->GetString(), "SENTRY_SPOT" ) )
-			{
-				m_nNavAreaFilter = TF_NAV_SENTRY_SPOT;
-			}
-			else if ( !V_stricmp( pSubKey->GetString(), "SNIPER_SPOT" ) )
-			{
-				m_nNavAreaFilter = TF_NAV_SNIPER_SPOT;
-			}
-			else
-			{
-				Warning( "Unknown NavAreaFilter value '%s'\n", pSubKey->GetString() );
-			}
-		}
-		else
-		{
-			m_pSpawner = IPopulationSpawner::ParseSpawner( this, pSubKey );
-
-			if ( m_pSpawner == NULL )
-			{
-				Warning( "Unknown attribute '%s' in RandomPlacement definition.\n", pszKey );
-			}
-		}
-	}
-
-	return true;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CRandomPlacementPopulator::PostInitialize( void )
-{
-	CUtlVector<CTFNavArea *> markedAreas;;
-	FOR_EACH_VEC( TheNavAreas, i )
-	{
-		CTFNavArea *pArea = (CTFNavArea *)TheNavAreas[i];
-		if ( pArea->HasTFAttributes( m_nNavAreaFilter ) )
-			markedAreas.AddToTail( pArea );
-	}
-
-	CUtlVector<CTFNavArea *> selectedAreas;
-	SelectSeparatedShuffleSet< CTFNavArea >( m_iCount, m_flMinSeparation, markedAreas, &selectedAreas );
-
-	if ( m_pSpawner )
-	{
-		FOR_EACH_VEC( selectedAreas, i )
-		{
-			m_pSpawner->Spawn( selectedAreas[i]->GetCenter() );
-		}
-	}
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-CWave::CWave( CPopulationManager *pManager )
-	: m_pManager( pManager ), m_pSpawner( NULL )
-{
-	m_startWaveEvent = NULL;
-	m_doneEvent = NULL;
-	m_initWaveEvent = NULL;
-
+	m_iEnemyCount = 0;
+	m_nTanksSpawned = 0;
+	m_nSentryBustersSpawned = 0;
+	m_nNumEngineersTeleportSpawned = 0;
+	m_nNumSentryBustersKilled = 0;
+	m_totalCurrency = 0;
+	m_waitWhenDone = 0.0f;
+	m_isStarted = false;
+	m_bFiredInitWaveOutput = false;
+	m_startOutput = NULL;
+	m_doneOutput = NULL;
+	m_initOutput = NULL;
 	m_bCheckBonusCreditsMin = true;
 	m_bCheckBonusCreditsMax = true;
+	m_bPlayedUpgradeAlert = false;
+	m_flBonusCreditsTime = 0;
+	m_isEveryContainedWaveSpawnDone = false;
+	m_flStartTime = 0;
 
 	m_doneTimer.Invalidate();
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 CWave::~CWave()
 {
-	if ( m_pSpawner )
-	{
-		delete m_pSpawner;
-		m_pSpawner = NULL;
-	}
+	delete m_startOutput;
+	delete m_doneOutput;
+	delete m_initOutput;
+	m_waveSpawnVector.PurgeAndDeleteElements();
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 bool CWave::Parse( KeyValues *data )
 {
-	FOR_EACH_SUBKEY( data, pSubKey )
+	m_iEnemyCount = 0;
+	m_nWaveClassCounts.RemoveAll();
+	m_totalCurrency = 0;
+
+	FOR_EACH_SUBKEY( data, kvWave )
 	{
-		const char *pszKey = pSubKey->GetName();
-		if ( !V_stricmp( pszKey, "WaveSpawn" ) )
+		if ( !Q_stricmp( kvWave->GetName(), "WaveSpawn" ) )
 		{
-			CWaveSpawnPopulator *pWavePopulator = new CWaveSpawnPopulator( m_pManager );
-			if ( !pWavePopulator->Parse( pSubKey ) )
+			CWaveSpawnPopulator *wavePopulator = new CWaveSpawnPopulator( GetManager() );
+
+			if ( wavePopulator->Parse( kvWave ) == false )
 			{
 				Warning( "Error reading WaveSpawn definition\n" );
 				return false;
 			}
 
-			if ( !pWavePopulator->m_bSupportWave )
-				m_nTotalEnemyCount += pWavePopulator->m_iTotalCount;
-			m_iTotalCurrency += pWavePopulator->m_iTotalCurrency;
-			pWavePopulator->m_parentWave = this;
+			m_waveSpawnVector.AddToTail( wavePopulator );
 
-			m_WaveSpawns.AddToTail( pWavePopulator );
-
-			if ( pWavePopulator->GetSpawner() )
+			if ( !wavePopulator->IsSupportWave() )
 			{
-				if ( pWavePopulator->GetSpawner()->IsVarious() )
+				// this is a total of all enemies we have to fight that are NOT support enemies
+				m_iEnemyCount += wavePopulator->m_totalCount;
+			}
+			m_totalCurrency += wavePopulator->m_totalCurrency;
+
+			wavePopulator->SetParent( this );
+
+			if ( wavePopulator->m_spawner )
+			{
+				if ( wavePopulator->m_spawner->IsVarious() )
 				{
-					for ( int i = 0; i < pWavePopulator->m_iTotalCount; ++i )
+					for ( int i = 0; i < wavePopulator->m_totalCount; ++i )
 					{
-						unsigned int iFlags = pWavePopulator->m_bSupportWave ? MVM_CLASS_FLAG_SUPPORT : MVM_CLASS_FLAG_NORMAL;
-						if ( pWavePopulator->GetSpawner()->IsMiniBoss( i ) )
+						unsigned int iFlags = wavePopulator->IsSupportWave() ? MVM_CLASS_FLAG_SUPPORT : MVM_CLASS_FLAG_NORMAL;
+						if ( wavePopulator->m_spawner->IsMiniBoss( i ) )
+						{
 							iFlags |= MVM_CLASS_FLAG_MINIBOSS;
-
-						if ( pWavePopulator->GetSpawner()->HasAttribute( CTFBot::AttributeType::ALWAYSCRIT, i ) )
+						}
+						if ( wavePopulator->m_spawner->HasAttribute( CTFBot::ALWAYS_CRIT, i ) )
+						{
 							iFlags |= MVM_CLASS_FLAG_ALWAYSCRIT;
-
-						if ( pWavePopulator->m_bLimitedSupport )
+						}
+						if ( wavePopulator->IsLimitedSupportWave() )
+						{
 							iFlags |= MVM_CLASS_FLAG_SUPPORT_LIMITED;
-
-						AddClassType( pWavePopulator->GetSpawner()->GetClassIcon( i ), 1, iFlags );
+						}
+						AddClassType( wavePopulator->m_spawner->GetClassIcon( i ), 1, iFlags );
 					}
 				}
 				else
 				{
-					unsigned int iFlags = pWavePopulator->m_bSupportWave ? MVM_CLASS_FLAG_SUPPORT : MVM_CLASS_FLAG_NORMAL;
-					if ( pWavePopulator->GetSpawner()->IsMiniBoss() )
+					unsigned int iFlags = wavePopulator->IsSupportWave() ? MVM_CLASS_FLAG_SUPPORT : MVM_CLASS_FLAG_NORMAL;
+					if ( wavePopulator->m_spawner->IsMiniBoss() )
+					{
 						iFlags |= MVM_CLASS_FLAG_MINIBOSS;
-
-					if ( pWavePopulator->GetSpawner()->HasAttribute( CTFBot::AttributeType::ALWAYSCRIT ) )
+					}
+					if ( wavePopulator->m_spawner->HasAttribute( CTFBot::ALWAYS_CRIT ) )
+					{
 						iFlags |= MVM_CLASS_FLAG_ALWAYSCRIT;
-
-					if ( pWavePopulator->m_bLimitedSupport )
+					}
+					if ( wavePopulator->IsLimitedSupportWave() )
+					{
 						iFlags |= MVM_CLASS_FLAG_SUPPORT_LIMITED;
-
-					AddClassType( pWavePopulator->GetSpawner()->GetClassIcon(), pWavePopulator->m_iTotalCount, iFlags );
+					}
+					AddClassType( wavePopulator->m_spawner->GetClassIcon(), wavePopulator->m_totalCount, iFlags );
 				}
 			}
-		}
-		else if ( !V_stricmp( pszKey, "Sound" ) )
+		}				
+		else if ( !Q_stricmp( kvWave->GetName(), "Sound" ) )
 		{
-			m_soundName.sprintf( "%s", pSubKey->GetString() );
+			m_soundName.sprintf( "%s", kvWave->GetString() );
 		}
-		else if ( !V_stricmp( pszKey, "Description" ) )
+		else if ( !Q_stricmp( kvWave->GetName(), "Description" ) )
 		{
-			m_description.sprintf( "%s", pSubKey->GetString() );
+			m_description.sprintf( "%s", kvWave->GetString() );
 		}
-		else if ( !V_stricmp( pszKey, "WaitWhenDone" ) )
+		else if ( !Q_stricmp( kvWave->GetName(), "WaitWhenDone" ) )
 		{
-			m_flWaitWhenDone = pSubKey->GetFloat();
+			m_waitWhenDone = kvWave->GetFloat();
 		}
-		else if ( !V_stricmp( pszKey, "Checkpoint" ) )
+		else if ( !Q_stricmp( kvWave->GetName(), "Checkpoint" ) )
 		{
-
+			//m_isCheckpoint = true;
 		}
-		else if ( !V_stricmp( pszKey, "StartWaveOutput" ) )
+		else if ( !Q_stricmp( kvWave->GetName(), "StartWaveOutput" ) )
 		{
-			m_startWaveEvent = ParseEvent( pSubKey );
+			m_startOutput = ParseEvent( kvWave );
 		}
-		else if ( !V_stricmp( pszKey, "DoneOutput" ) )
+		else if ( !Q_stricmp( kvWave->GetName(), "DoneOutput" ) )
 		{
-			m_doneEvent = ParseEvent( pSubKey );
+			m_doneOutput = ParseEvent( kvWave );
 		}
-		else if ( !V_stricmp( pszKey, "InitWaveOutput" ) )
+		else if ( !Q_stricmp( kvWave->GetName(), "InitWaveOutput" ) )
 		{
-			m_initWaveEvent = ParseEvent( pSubKey );
+			m_initOutput = ParseEvent( kvWave );
 		}
 		else
 		{
-			Warning( "Unknown attribute '%s' in Wave definition.\n", pszKey );
+			Warning( "Unknown attribute '%s' in Wave definition.\n", kvWave->GetName() );
 		}
 	}
 
 	return true;
 }
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
+//-------------------------------------------------------------------------
+// If we are the currently active wave, update all contained WaveSpawns. 
 void CWave::Update( void )
 {
-	VPROF_BUDGET( __FUNCTION__, "NextBot" );
+	VPROF_BUDGET( "CWave::Update", "NextBot" );
 
 	if ( TFGameRules()->State_Get() == GR_STATE_RND_RUNNING )
 	{
@@ -1663,230 +1897,246 @@ void CWave::Update( void )
 		WaveIntermissionUpdate();
 	}
 
-	if ( m_bEveryWaveSpawnDone && TFGameRules()->State_Get() == GR_STATE_RND_RUNNING )
+	// is the wave done?
+	if ( m_isEveryContainedWaveSpawnDone && TFGameRules()->State_Get() == GR_STATE_RND_RUNNING )
 	{
-		if ( m_pManager->byte58A )
+		if ( GetManager()->IsBonusRound() && GetManager()->GetBonusBoss() && GetManager()->GetBonusBoss()->IsAlive() )
 		{
-			if ( m_pManager->ehandle58C && m_pManager->ehandle58C->IsAlive() )
-				return;
+			return;
 		}
 		WaveCompleteUpdate();
-	}
+	}	
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CWave::OnPlayerKilled( CTFPlayer *pPlayer )
+
+//-------------------------------------------------------------------------
+void CWave::OnPlayerKilled( CTFPlayer *corpse )
 {
-	FOR_EACH_VEC( m_WaveSpawns, i )
+	for( int i=0; i<m_waveSpawnVector.Count(); ++i )
 	{
-		m_WaveSpawns[i]->OnPlayerKilled( pPlayer );
+		m_waveSpawnVector[i]->OnPlayerKilled( corpse );
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CWave::HasEventChangeAttributes( const char *pszEventName ) const
+
+//-------------------------------------------------------------------------
+bool CWave::HasEventChangeAttributes( const char* pszEventName ) const
 {
-	bool bHasEventChangeAttributes = false;
-	FOR_EACH_VEC( m_WaveSpawns, i )
+	for ( int i=0; i<m_waveSpawnVector.Count(); ++i )
 	{
-		bHasEventChangeAttributes |= m_WaveSpawns[i]->HasEventChangeAttributes( pszEventName );
+		if ( m_waveSpawnVector[i]->HasEventChangeAttributes( pszEventName ) )
+		{
+			return true;
+		}
 	}
 
-	return bHasEventChangeAttributes;
+	return false;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
+
+//-------------------------------------------------------------------------
+void CWave::ForceFinish()
+{
+	FOR_EACH_VEC( m_waveSpawnVector, i )
+	{
+		m_waveSpawnVector[i]->ForceFinish();
+	}
+}
+
+
+//-------------------------------------------------------------------------
+void CWave::ForceReset()
+{
+	m_isStarted = false;
+	m_bFiredInitWaveOutput = false;
+	m_flBonusCreditsTime = 0;
+	m_isEveryContainedWaveSpawnDone = false;
+	m_flStartTime = 0;
+
+	m_doneTimer.Invalidate();
+
+	FOR_EACH_VEC( m_waveSpawnVector, i )
+	{
+		m_waveSpawnVector[i]->ForceReset();
+	}
+}
+
+//-------------------------------------------------------------------------
+CWaveSpawnPopulator *CWave::FindWaveSpawnPopulator( const char *name )
+{
+	FOR_EACH_VEC( m_waveSpawnVector, i )
+	{
+		CWaveSpawnPopulator *waveSpawnPopulator = m_waveSpawnVector[i];
+		if ( !Q_stricmp( waveSpawnPopulator->m_name.Get(), name ) )
+		{
+			return waveSpawnPopulator;
+		}
+	}
+
+	return NULL;
+}
+
+//-------------------------------------------------------------------------
 void CWave::AddClassType( string_t iszClassIconName, int nCount, unsigned int iFlags )
 {
 	int nIndex = -1;
-	FOR_EACH_VEC( m_WaveClassCounts, i )
+	for ( int nClass = 0; nClass < m_nWaveClassCounts.Count(); ++nClass )
 	{
-		WaveClassCount_t const &count = m_WaveClassCounts[i];
-		if ( ( count.iszClassIconName == iszClassIconName ) && ( count.iFlags & iFlags ) )
+		if ( ( m_nWaveClassCounts[ nClass ].iszClassIconName == iszClassIconName ) && ( m_nWaveClassCounts[ nClass ].iFlags & iFlags ) )
 		{
-			nIndex = i;
+			nIndex = nClass;
 			break;
 		}
 	}
 
 	if ( nIndex == -1 )
 	{
-		nIndex = m_WaveClassCounts.AddToTail( {0, iszClassIconName, MVM_CLASS_FLAG_NONE} );
+		nIndex = m_nWaveClassCounts.AddToTail();
+		m_nWaveClassCounts[ nIndex ].iszClassIconName = iszClassIconName;
+		m_nWaveClassCounts[ nIndex ].nClassCount = 0;
+		m_nWaveClassCounts[ nIndex ].iFlags = MVM_CLASS_FLAG_NONE;
 	}
 
-	m_WaveClassCounts[ nIndex ].nClassCount += nCount;
-	m_WaveClassCounts[ nIndex ].iFlags |= iFlags;
+	m_nWaveClassCounts[ nIndex ].nClassCount += nCount;
+	m_nWaveClassCounts[ nIndex ].iFlags |= iFlags;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-CWaveSpawnPopulator *CWave::FindWaveSpawnPopulator( const char *name )
-{
-	FOR_EACH_VEC( m_WaveSpawns, i )
-	{
-		CWaveSpawnPopulator *pPopulator = m_WaveSpawns[i];
-		if ( !V_stricmp( pPopulator->m_name, name ) )
-			return pPopulator;
-	}
-
-	return nullptr;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CWave::ForceFinish()
-{
-	FOR_EACH_VEC( m_WaveSpawns, i )
-	{
-		m_WaveSpawns[i]->ForceFinish();
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CWave::ForceReset()
-{
-	m_bStarted = false;
-	m_bFiredInitWaveOutput = false;
-	m_bEveryWaveSpawnDone = false;
-	m_flStartTime = 0;
-
-	m_doneTimer.Invalidate();
-
-	FOR_EACH_VEC( m_WaveSpawns, i )
-	{
-		m_WaveSpawns[i]->m_iRemainingCurrency = m_WaveSpawns[i]->m_iTotalCurrency;
-		m_WaveSpawns[i]->m_iRemainingCount = m_WaveSpawns[i]->m_iTotalCount;
-		m_WaveSpawns[i]->m_eState = CWaveSpawnPopulator::PENDING;
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
+//-------------------------------------------------------------------------
+// Private
+//-------------------------------------------------------------------------
 bool CWave::IsDoneWithNonSupportWaves( void )
 {
-	FOR_EACH_VEC( m_WaveSpawns, i )
+	FOR_EACH_VEC( m_waveSpawnVector, i )
 	{
-		CWaveSpawnPopulator *pPopulator = m_WaveSpawns[i];
-		if ( pPopulator->m_bSupportWave && pPopulator->m_eState != CWaveSpawnPopulator::DONE )
-			return false;
+		CWaveSpawnPopulator *waveSpawnPopulator = m_waveSpawnVector[i];
+		if ( waveSpawnPopulator )
+		{
+			if ( !waveSpawnPopulator->IsSupportWave() && !waveSpawnPopulator->IsDone() )
+				return false;
+		}
 	}
 
 	return true;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 void CWave::ActiveWaveUpdate( void )
 {
-	VPROF_BUDGET( __FUNCTION__, "NextBot" );
+	VPROF_BUDGET( "CWave::ActiveWaveUpdate", "NextBot" );
 
-	if ( !m_bStarted )
+	if ( !m_isStarted )
 	{
-		if ( m_pManager->IsInEndlessWaves() && m_flStartTime > gpGlobals->curtime )
+		// Delay the start of the next wave
+		if ( GetManager()->IsInEndlessWaves() && m_flStartTime > gpGlobals->curtime )
 			return;
 
-		m_bStarted = true;
-		FireEvent( m_startWaveEvent, "StartWaveOutput" );
+		// wave just started
+		m_isStarted = true;
+
+		FireEvent( m_startOutput, "StartWaveOutput" );
 
 		if ( m_soundName.Length() > 0 )
+		{
 			TFGameRules()->BroadcastSound( 255, m_soundName );
+		}
 
-		m_pManager->AdjustMinPlayerSpawnTime();
+		GetManager()->AdjustMinPlayerSpawnTime();
 	}
 
-	m_bEveryWaveSpawnDone = true;
-	FOR_EACH_VEC( m_WaveSpawns, i )
+	m_isEveryContainedWaveSpawnDone = true;
+
+	if ( GetManager()->IsBonusRound() )
 	{
-		CWaveSpawnPopulator *pPopulator = m_WaveSpawns[i];
+		return;
+	}
 
+	// update each contained WaveSpawn
+	FOR_EACH_VEC( m_waveSpawnVector, i )
+	{
+		CWaveSpawnPopulator *waveSpawnPopulator = m_waveSpawnVector[i];
 		bool bWaiting = false;
-		if ( !pPopulator->m_szWaitForAllSpawned.IsEmpty() )
+
+		// check if this WaveSpawn is waiting for another WaveSpawn to be done spawning players
+		if ( !waveSpawnPopulator->m_waitForAllSpawned.IsEmpty() )
 		{
-			FOR_EACH_VEC( m_WaveSpawns, j )
+			char *name = waveSpawnPopulator->m_waitForAllSpawned.GetForModify();
+			FOR_EACH_VEC( m_waveSpawnVector, j )
 			{
-				CWaveSpawnPopulator *pWaitingPopulator = m_WaveSpawns[j];
-				if ( pWaitingPopulator == NULL )
-					continue;
-
-				if ( V_stricmp( pWaitingPopulator->m_name, pPopulator->m_szWaitForAllSpawned ) )
-					continue;
-
-				if ( pWaitingPopulator->m_eState <= CWaveSpawnPopulator::SPAWNING )
+				CWaveSpawnPopulator *predecessor = m_waveSpawnVector[j];
+				if ( predecessor && !Q_stricmp( predecessor->m_name.Get(), name ) )
 				{
-					bWaiting = true;
-					break;
+					if ( !predecessor->IsDoneSpawningBots() )
+					{
+						bWaiting = true;
+						break;
+					}
 				}
 			}
 		}
 
-		if ( !bWaiting && !pPopulator->m_szWaitForAllDead.IsEmpty() )
+		if ( !bWaiting )
 		{
-			FOR_EACH_VEC( m_WaveSpawns, j )
+			// check if this WaveSpawn is waiting for another WaveSpawn's players to all be dead
+			if ( !waveSpawnPopulator->m_waitForAllDead.IsEmpty() )
 			{
-				CWaveSpawnPopulator *pWaitingPopulator = m_WaveSpawns[j];
-				if ( pWaitingPopulator == NULL )
-					continue;
-
-				if ( V_stricmp( pWaitingPopulator->m_name, pPopulator->m_szWaitForAllSpawned ) )
-					continue;
-
-				if ( pWaitingPopulator->m_eState != CWaveSpawnPopulator::DONE )
+				const char *name = waveSpawnPopulator->m_waitForAllDead.Get();
+				FOR_EACH_VEC( m_waveSpawnVector, j )
 				{
-					bWaiting = true;
-					break;
+					CWaveSpawnPopulator *predecessor = m_waveSpawnVector[j];
+					if ( predecessor && !Q_stricmp( predecessor->m_name.Get(), name ) )
+					{
+						if ( !predecessor->IsDone() )
+						{
+							bWaiting = true;
+							break;
+						}
+					}
 				}
 			}
 		}
 
 		if ( bWaiting )
+		{
 			continue;
+		}
 
-		pPopulator->Update();
+		waveSpawnPopulator->Update();
 
-		m_bEveryWaveSpawnDone &= ( pPopulator->m_eState == CWaveSpawnPopulator::DONE );
+		m_isEveryContainedWaveSpawnDone &= waveSpawnPopulator->IsDone();
 	}
 
 	if ( IsDoneWithNonSupportWaves() )
 	{
-		FOR_EACH_VEC( m_WaveSpawns, i )
+		// Loop through and tell all the WaveSpawns
+		FOR_EACH_VEC( m_waveSpawnVector, i )
 		{
-			m_WaveSpawns[i]->OnNonSupportWavesDone();
+			CWaveSpawnPopulator *waveSpawnPopulator = m_waveSpawnVector[i];
+			waveSpawnPopulator->OnNonSupportWavesDone();
 		}
 
-		for ( int i = 0; i <= gpGlobals->maxClients; ++i )
+		for ( int i = 1 ; i <= gpGlobals->maxClients ; i++ )
 		{
+			// Now let's kill everyone left on the attacking team
 			CTFPlayer *pPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
-			if ( !pPlayer || !pPlayer->IsAlive() )
-				continue;
-
-			if ( pPlayer->GetTeamNumber() != TF_TEAM_MVM_BOTS )
-				continue;
-
-			pPlayer->CommitSuicide( true );
+			if ( pPlayer && pPlayer->IsAlive() && 
+				 ( ( pPlayer->GetTeamNumber() == TF_TEAM_PVE_INVADERS ) || pPlayer->m_Shared.InCond( TF_COND_REPROGRAMMED ) ) )
+			{
+				pPlayer->CommitSuicide( true, false );
+			}
 		}
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 void CWave::WaveCompleteUpdate( void )
 {
-	FireEvent( m_doneEvent, "DoneOutput" );
+	bool bHasTank = NumTanksSpawned() >= 1;
 
-	bool bAdvancedPopfile = ( g_pPopulationManager ? g_pPopulationManager->IsAdvanced() : false );
+	FireEvent( m_doneOutput, "DoneOutput" );
+
+	bool bLastWave = ( GetManager()->GetWaveNumber() + 1 ) >= GetManager()->GetTotalWaveCount();
+	bool bMidWave = ( GetManager()->GetWaveNumber() + 1 ) >= ( GetManager()->GetTotalWaveCount() / 2 );
+	bool bAdvancedPopfile = ( g_pPopulationManager ? g_pPopulationManager->IsAdvancedPopFile() : false );
 
 	IGameEvent *event = gameeventmanager->CreateEvent( "mvm_wave_complete" );
 	if ( event )
@@ -1895,33 +2145,40 @@ void CWave::WaveCompleteUpdate( void )
 		gameeventmanager->FireEvent( event );
 	}
 
-	if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() && bAdvancedPopfile )
+	if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() )
 	{
-		CTeamControlPointMaster *pMaster = g_hControlPointMasters.Count() ? g_hControlPointMasters[0] : NULL;
-		if ( pMaster && ( pMaster->GetNumPoints() > 0 ) )
+		if ( bAdvancedPopfile )
 		{
-			if ( pMaster->GetNumPointsOwnedByTeam( TF_TEAM_MVM_BOTS ) == pMaster->GetNumPoints() )
+			CTeamControlPointMaster *pMaster = g_hControlPointMasters.Count() ? g_hControlPointMasters[0] : NULL;
+			if ( pMaster && ( pMaster->GetNumPoints() > 0 ) )
 			{
-				IGameEvent *event = gameeventmanager->CreateEvent( "mvm_adv_wave_complete_no_gates" );
-				if ( event )
+				if ( pMaster->GetNumPointsOwnedByTeam( TF_TEAM_PVE_DEFENDERS ) == pMaster->GetNumPoints() )
 				{
-					event->SetInt( "index", m_pManager->m_nCurrentWaveIndex );
-					gameeventmanager->FireEvent( event );
+					IGameEvent *event = gameeventmanager->CreateEvent( "mvm_adv_wave_complete_no_gates" );
+					if ( event )
+					{
+						event->SetInt( "index", GetManager()->GetWaveNumber() );
+						gameeventmanager->FireEvent( event );
+					}
 				}
 			}
 		}
 	}
 
-	if ( ( m_pManager->m_nCurrentWaveIndex + 1 ) >= m_pManager->m_Waves.Count() && !m_pManager->IsInEndlessWaves() )
+	if ( bLastWave && !GetManager()->IsInEndlessWaves() )
 	{
-		m_pManager->MvMVictory();
+		GetManager()->MvMVictory();
 
 		if ( TFGameRules() )
 		{
-			/*if ( GTFGCClientSystem()->dword3B8 && GTFGCClientSystem()->dword3B8->dword10 == 1 )
+			if ( GTFGCClientSystem()->GetMatch() && GTFGCClientSystem()->GetMatch()->m_eMatchGroup == k_eTFMatchGroup_MvM_MannUp )
+			{
 				TFGameRules()->BroadcastSound( 255, "Announcer.MVM_Manned_Up_Wave_End" );
-			else*/
+			}
+			else
+			{
 				TFGameRules()->BroadcastSound( 255, "Announcer.MVM_Final_Wave_End" );
+			}
 
 			TFGameRules()->BroadcastSound( 255, "music.mvm_end_last_wave" );
 		}
@@ -1929,7 +2186,7 @@ void CWave::WaveCompleteUpdate( void )
 		event = gameeventmanager->CreateEvent( "mvm_mission_complete" );
 		if ( event )
 		{
-			event->SetString( "mission", m_pManager->GetPopulationFilename() );
+			event->SetString( "mission", GetManager()->GetPopulationFilename() );
 			gameeventmanager->FireEvent( event );
 		}
 	}
@@ -1937,59 +2194,78 @@ void CWave::WaveCompleteUpdate( void )
 	{
 		if ( TFGameRules() )
 		{
-			TFGameRules()->BroadcastSound( 255, "Announcer.MVM_Wave_End" );
+			TFGameRules()->BroadcastSound( 255,"Announcer.MVM_Wave_End" );
 
-			if ( m_nNumTanksSpawned >= 1 )
+			if( bHasTank )
+			{
 				TFGameRules()->BroadcastSound( 255, "music.mvm_end_tank_wave" );
-			else if ( ( m_pManager->m_nCurrentWaveIndex + 1 ) >= ( m_pManager->m_Waves.Count() / 2 ) )
+			}
+			else if( bMidWave )
+			{
 				TFGameRules()->BroadcastSound( 255, "music.mvm_end_mid_wave" );
-			else 
+			}
+			else
+			{
 				TFGameRules()->BroadcastSound( 255, "music.mvm_end_wave" );
+			}
 		}
 	}
 
-	CReliableBroadcastRecipientFilter filter;
+	CBroadcastRecipientFilter filter;
+	filter.MakeReliable();
 	UserMessageBegin( filter, "MVMAnnouncement" );
-		WRITE_CHAR( MVM_ANNOUNCEMENT_WAVE_COMPLETE );
-		WRITE_CHAR( m_pManager->m_nCurrentWaveIndex );
+		WRITE_CHAR( TF_MVM_ANNOUNCEMENT_WAVE_COMPLETE );
+		WRITE_CHAR( GetManager()->GetWaveNumber() );
 	MessageEnd();
 
-	// Why does this care about the resource?
 	if ( TFObjectiveResource() )
 	{
-		CUtlVector<CTFPlayer *> players;
-		CollectPlayers( &players, TF_TEAM_MVM_PLAYERS );
-
-		FOR_EACH_VEC( players, i )
+		// if we're using a timer between waves...
+		if ( !g_pPopulationManager->GetWavesUseReadyBetween() )
 		{
-			if ( !players[i]->IsAlive() )
-				players[i]->ForceRespawn();
+			if ( !m_doneTimer.HasStarted() )
+			{
+				m_doneTimer.Start( m_waitWhenDone );
+			}
 
-			players[i]->m_nAccumulatedSentryGunDamageDealt = 0;
-			players[i]->m_nAccumulatedSentryGunKillCount = 0;
+			TFObjectiveResource()->SetMannVsMachineNextWaveTime( gpGlobals->curtime + m_waitWhenDone );
 		}
+
+		// Force respawn dead defenders
+		CUtlVector< CTFPlayer * > playerVector;
+		CollectPlayers( &playerVector, TF_TEAM_PVE_DEFENDERS );
+		FOR_EACH_VEC( playerVector, i )
+		{
+			if ( !playerVector[i]->IsAlive() )
+			{
+				playerVector[i]->ForceRespawn();
+			}
+
+			// clear player's accumulated sentry damage
+			playerVector[i]->ResetAccumulatedSentryGunDamageDealt();
+			playerVector[i]->ResetAccumulatedSentryGunKillCount();
+		}		
 	}
 
-	m_pManager->WaveEnd( true );
+	GetManager()->WaveEnd( true );
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CWave::WaveIntermissionUpdate( void )
+//-------------------------------------------------------------------------
+void CWave::WaveIntermissionUpdate ( void )
 {
 	if ( !m_bFiredInitWaveOutput )
 	{
-		FireEvent( m_initWaveEvent, "InitWaveOutput" );
+		FireEvent( m_initOutput, "InitWaveOutput" );
 
 		m_bFiredInitWaveOutput = true;
 	}
 
-	if ( m_upgradeAlertTimer.HasStarted() && m_upgradeAlertTimer.IsElapsed() )
+	if ( m_GetUpgradesAlertTimer.HasStarted() && m_GetUpgradesAlertTimer.IsElapsed() )
 	{
+		// Monitor for full wave currency collection bonus
 		if ( ( m_bCheckBonusCreditsMin || m_bCheckBonusCreditsMax ) && gpGlobals->curtime > m_flBonusCreditsTime )
 		{
-			int nWaveNum = m_pManager->m_nCurrentWaveIndex - 1;
+			int nWaveNum = GetManager()->GetWaveNumber() - 1;
 			int nDropped = MannVsMachineStats_GetDroppedCredits( nWaveNum );
 			int nAcquired = MannVsMachineStats_GetAcquiredCredits( nWaveNum, false );
 			float flRatioCollected = clamp( ( (float)nAcquired / (float)nDropped ), 0.1f, 1.f );
@@ -1997,10 +2273,15 @@ void CWave::WaveIntermissionUpdate( void )
 			float flMinBonus = tf_mvm_currency_bonus_ratio_min.GetFloat();
 			float flMaxBonus = tf_mvm_currency_bonus_ratio_max.GetFloat();
 
+			Assert( flMinBonus <= flMaxBonus );
+			if ( flMinBonus > flMaxBonus )
+				flMinBonus = flMaxBonus;
+
+			// Max bonus
 			if ( m_bCheckBonusCreditsMax && nDropped > 0 && flRatioCollected >= flMaxBonus )
 			{
-				int nAmount = TFGameRules()->CalculateCurrencyAmount_ByType( CURRENCY_WAVE_COLLECTION_BONUS );
-				TFGameRules()->DistributeCurrencyAmount( (float)nAmount * 0.5f, NULL, true, false, true );
+				int nAmount = (float)TFGameRules()->CalculateCurrencyAmount_ByType( TF_CURRENCY_WAVE_COLLECTION_BONUS ) * 0.5f;
+				TFGameRules()->DistributeCurrencyAmount( nAmount, NULL, true, false, true );
 
 				TFGameRules()->BroadcastSound( 255, "Announcer.MVM_Bonus" );
 				IGameEvent *event = gameeventmanager->CreateEvent( "mvm_creditbonus_wave" );
@@ -2010,13 +2291,13 @@ void CWave::WaveIntermissionUpdate( void )
 				}
 
 				m_bCheckBonusCreditsMax = false;
-				m_upgradeAlertTimer.Reset();
+				m_GetUpgradesAlertTimer.Reset();
 			}
-
-			if ( m_bCheckBonusCreditsMin && nDropped > 0 && flRatioCollected >= fminf( flMinBonus, flMaxBonus ) )
+			// Min bonus
+			if ( m_bCheckBonusCreditsMin && nDropped > 0 && flRatioCollected >= flMinBonus )
 			{
-				int nAmount = TFGameRules()->CalculateCurrencyAmount_ByType( CURRENCY_WAVE_COLLECTION_BONUS );
-				TFGameRules()->DistributeCurrencyAmount( (float)nAmount * 0.5f, NULL, true, false, true );
+				int nAmount = (float)TFGameRules()->CalculateCurrencyAmount_ByType( TF_CURRENCY_WAVE_COLLECTION_BONUS ) * 0.5f;
+				TFGameRules()->DistributeCurrencyAmount( nAmount, NULL, true, false, true );
 
 				TFGameRules()->BroadcastSound( 255, "Announcer.MVM_Bonus" );
 				IGameEvent *event = gameeventmanager->CreateEvent( "mvm_creditbonus_wave" );
@@ -2027,15 +2308,25 @@ void CWave::WaveIntermissionUpdate( void )
 
 				m_bCheckBonusCreditsMin = false;
 			}
+			else if ( !m_bPlayedUpgradeAlert )
+			{
+				TFGameRules()->BroadcastSound( 255, "Announcer.MVM_Get_To_Upgrade" );
+
+				m_bPlayedUpgradeAlert = true;
+				m_GetUpgradesAlertTimer.Reset();
+			}
 
 			m_flBonusCreditsTime = gpGlobals->curtime + 0.25f;
 		}
 	}
 
+	// When we use a timer between waves, start it here
 	if ( m_doneTimer.HasStarted() && m_doneTimer.IsElapsed() )
 	{
 		m_doneTimer.Invalidate();
-
-		m_pManager->StartCurrentWave();
+		GetManager()->StartCurrentWave();
 	}
 }
+//-------------------------------------------------------------------------
+// End CWave
+//-------------------------------------------------------------------------

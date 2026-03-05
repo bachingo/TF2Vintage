@@ -18,7 +18,7 @@ class CSurfaceScriptAccessor
 {
 public:
 	CSurfaceScriptAccessor( csurface_t &surf ) { m_surf = &surf; m_surfaceData = g_pScriptVM->RegisterInstance( physprops->GetSurfaceData( m_surf->surfaceProps ) ); }
-	~CSurfaceScriptAccessor() { delete m_surfaceData; }
+	~CSurfaceScriptAccessor() { if( m_surfaceData ) g_pScriptVM->RemoveInstance( m_surfaceData ); }
 
 	// cplane_t stuff
 	const char* Name() const { return m_surf->name; }
@@ -42,14 +42,14 @@ public:
 		if (m_surfaceAccessor)
 		{
 			CSurfaceScriptAccessor *pScriptSurface = HScriptToClass<CSurfaceScriptAccessor>( m_surfaceAccessor );
-			//g_pScriptVM->RemoveInstance( m_surfaceAccessor );
+			g_pScriptVM->RemoveInstance( m_surfaceAccessor );
 			delete pScriptSurface;
 		}
 
-		//if (m_planeAccessor)
-		//{
-		//	g_pScriptVM->RemoveInstance( m_planeAccessor );
-		//}
+		if (m_planeAccessor)
+		{
+			g_pScriptVM->RemoveInstance( m_planeAccessor );
+		}
 	}
 
 	// CGrameTrace stuff

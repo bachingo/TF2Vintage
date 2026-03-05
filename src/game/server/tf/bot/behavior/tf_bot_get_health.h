@@ -1,51 +1,34 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_get_health.h
+// Pick up any nearby health kit
+// Michael Booth, May 2009
+
 #ifndef TF_BOT_GET_HEALTH_H
 #define TF_BOT_GET_HEALTH_H
-#ifdef _WIN32
-#pragma once
-#endif
 
+#include "tf_powerup.h"
 
-#include "NextBotBehavior.h"
-
-class CTFBotGetHealth : public Action<CTFBot>
+class CTFBotGetHealth : public Action< CTFBot >
 {
 public:
-	CTFBotGetHealth();
-	virtual ~CTFBotGetHealth();
+	static bool IsPossible( CTFBot *me );	// Return true if this Action has what it needs to perform right now
 
-	virtual const char *GetName() const OVERRIDE;
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
+	virtual EventDesiredResult< CTFBot > OnStuck( CTFBot *me );
+	virtual EventDesiredResult< CTFBot > OnMoveToSuccess( CTFBot *me, const Path *path );
+	virtual EventDesiredResult< CTFBot > OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType reason );
 
-	virtual EventDesiredResult<CTFBot> OnMoveToSuccess( CTFBot *me, const Path *path ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType reason ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnStuck( CTFBot *me ) OVERRIDE;
+	virtual QueryResultType ShouldHurry( const INextBot *me ) const;					// are we in a hurry?
 
-	virtual QueryResultType ShouldHurry( const INextBot *me ) const OVERRIDE;
-
-	static bool IsPossible( CTFBot *actor );
+	virtual const char *GetName( void ) const	{ return "GetHealth"; };
 
 private:
-	PathFollower m_PathFollower;
-	CHandle<CBaseEntity> m_hHealth;
-	// 4808 CHandle<T>
-	bool m_bUsingDispenser;
+	PathFollower m_path;
+	CHandle< CBaseEntity > m_healthKit;
+	bool m_isGoalDispenser;
 };
 
-extern ConVar tf_bot_health_critical_ratio;
-extern ConVar tf_bot_health_ok_ratio;
 
-class CHealthFilter : public INextBotFilter
-{
-public:
-	CHealthFilter( CTFPlayer *actor );
-
-	virtual bool IsSelected( const CBaseEntity *candidate ) const OVERRIDE;
-
-private:
-	CTFPlayer *m_pActor;
-	mutable float m_flMinCost;
-};
-
-#endif
+#endif // TF_BOT_GET_HEALTH_H

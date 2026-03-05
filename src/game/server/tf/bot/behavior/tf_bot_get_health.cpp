@@ -1,230 +1,324 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_get_health.h
+// Pick up any nearby health kit
+// Michael Booth, May 2009
+
 #include "cbase.h"
-#include "../tf_bot.h"
 #include "tf_gamerules.h"
 #include "tf_obj.h"
-#include "nav_mesh/tf_nav_area.h"
-#include "tf_bot_get_health.h"
+#include "bot/tf_bot.h"
+#include "bot/behavior/tf_bot_get_health.h"
 
-ConVar tf_bot_health_search_near_range( "tf_bot_health_search_near_range", "1000", FCVAR_CHEAT );
-ConVar tf_bot_health_search_far_range( "tf_bot_health_search_far_range", "2000", FCVAR_CHEAT );
+extern ConVar tf_bot_path_lookahead_range;
+
 ConVar tf_bot_health_critical_ratio( "tf_bot_health_critical_ratio", "0.3", FCVAR_CHEAT );
 ConVar tf_bot_health_ok_ratio( "tf_bot_health_ok_ratio", "0.8", FCVAR_CHEAT );
+ConVar tf_bot_health_search_near_range( "tf_bot_health_search_near_range", "1000", FCVAR_CHEAT );
+ConVar tf_bot_health_search_far_range( "tf_bot_health_search_far_range", "2000", FCVAR_CHEAT );
 
 
-static CHandle<CBaseEntity> s_possibleHealth;
-static CTFBot *s_possibleBot;
-static int s_possibleFrame;
-
-
-CTFBotGetHealth::CTFBotGetHealth()
+//---------------------------------------------------------------------------------------------
+class CHealthFilter : public INextBotFilter
 {
-}
-
-CTFBotGetHealth::~CTFBotGetHealth()
-{
-}
-
-
-const char *CTFBotGetHealth::GetName() const
-{
-	return "GetHealth";
-}
-
-
-ActionResult<CTFBot> CTFBotGetHealth::OnStart( CTFBot *me, Action<CTFBot> *priorAction )
-{
-	VPROF_BUDGET( __FUNCTION__, "NextBot" );
-
-	m_PathFollower.SetMinLookAheadDistance( me->GetDesiredPathLookAheadRange() );
-
-	if ( ( gpGlobals->framecount != s_possibleFrame || s_possibleBot != me ) && ( !IsPossible( me ) || !s_possibleHealth ) )
-		return Action<CTFBot>::Done( "Can't get health" );
-
-	m_hHealth = s_possibleHealth;
-	m_bUsingDispenser = m_hHealth->ClassMatches( "obj_dispenser*" );
-
-	CTFBotPathCost cost( me, SAFEST_ROUTE );
-	if ( !m_PathFollower.Compute( me, m_hHealth->WorldSpaceCenter(), cost ) )
-		return Action<CTFBot>::Done( "No path to health" );
-
-	if ( me->IsPlayerClass( TF_CLASS_SPY ) && me->m_Shared.IsStealthed() )
-		me->PressAltFireButton();
-
-	return Action<CTFBot>::Continue();
-}
-
-ActionResult<CTFBot> CTFBotGetHealth::Update( CTFBot *me, float dt )
-{
-	if ( !m_hHealth || ( m_hHealth->GetFlags() & EF_NODRAW && !m_hHealth->ClassMatches( "func_regenerate" ) ) )
-		return Action<CTFBot>::Done( "Health kit I was going for has been taken" );
-
-	if ( me->GetMaxHealth() <= me->GetHealth() )
-		return Action<CTFBot>::Done( "I've been healed" );
-
-	CClosestTFPlayer functor( m_hHealth->WorldSpaceCenter() );
-	ForEachPlayer( functor );
-	if ( functor.m_pPlayer && !functor.m_pPlayer->InSameTeam( me ) )
-		return Action<CTFBot>::Done( "An enemy is closer to it" );
-
-	const CKnownEntity *threat = me->GetVisionInterface()->GetPrimaryKnownThreat();
-	for ( int i=0; i<me->m_Shared.GetNumHealers(); ++i )
+public:
+	CHealthFilter( CTFBot *me )
 	{
-		if ( !me->m_Shared.HealerIsDispenser( i ) )
-			return Action<CTFBot>::Done( "A Medic is healing me" );
-
-		if ( threat && threat->IsVisibleInFOVNow() )
-			return Action<CTFBot>::Done( "No time to wait for health, I must fight" );
+		m_me = me;
 	}
 
-	if ( !m_PathFollower.IsValid() )
-		return Action<CTFBot>::Done( "My path became invalid" );
+	bool IsSelected( const CBaseEntity *constCandidate ) const
+	{
+		if ( !constCandidate )
+			return false;
 
+		CBaseEntity *candidate = const_cast< CBaseEntity * >( constCandidate );
+
+		CTFNavArea *area = (CTFNavArea *)TheNavMesh->GetNearestNavArea( candidate->WorldSpaceCenter() );
+		if ( !area )
+			return false;
+
+		CClosestTFPlayer close( candidate );
+		ForEachPlayer( close );
+
+		// if the closest player to this candidate object is an enemy, don't use it
+		if ( close.m_closePlayer && !m_me->InSameTeam( close.m_closePlayer ) )
+			return false;
+
+		// resupply cabinets (not assigned a team)
+		if ( candidate->ClassMatches( "func_regenerate" ) )
+		{
+			if ( !area->HasAttributeTF( TF_NAV_SPAWN_ROOM_BLUE | TF_NAV_SPAWN_ROOM_RED ) )
+			{
+				// Assume any resupply cabinets not in a teamed spawn room are inaccessible.
+				// Ex: pl_upward has forward spawn rooms that neither team can use until 
+				// certain checkpoints are reached.
+				return false;
+			}
+
+			if ( ( m_me->GetTeamNumber() == TF_TEAM_RED && area->HasAttributeTF( TF_NAV_SPAWN_ROOM_RED ) ) ||
+				 ( m_me->GetTeamNumber() == TF_TEAM_BLUE && area->HasAttributeTF( TF_NAV_SPAWN_ROOM_BLUE ) ) )
+			{
+				// the supply cabinet is in my spawn room
+				return true;
+			}
+
+			return false;
+		}
+
+		// ignore non-existent ammo to ensure we collect nearby existing ammo
+		if ( candidate->IsEffectActive( EF_NODRAW ) )
+			return false;
+
+		if ( candidate->ClassMatches( "item_healthkit*" ) )
+			return true;
+
+		if ( m_me->InSameTeam( candidate ) )
+		{
+			// friendly engineer's dispenser
+			if ( candidate->ClassMatches( "obj_dispenser*" ) )
+			{
+				CBaseObject	*dispenser = (CBaseObject *)candidate;
+				if ( !dispenser->IsBuilding() && !dispenser->IsPlacing() && !dispenser->IsDisabled() )
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	CTFBot *m_me;
+};
+
+
+//---------------------------------------------------------------------------------------------
+static CTFBot *s_possibleBot = NULL;
+static CHandle< CBaseEntity > s_possibleHealth = NULL;
+static int s_possibleFrame = 0;
+
+
+//---------------------------------------------------------------------------------------------
+/** 
+ * Return true if this Action has what it needs to perform right now
+ */
+bool CTFBotGetHealth::IsPossible( CTFBot *me )
+{
+	VPROF_BUDGET( "CTFBotGetHealth::IsPossible", "NextBot" );
+
+	// don't move to fetch health if we have a healer
+	if ( me->m_Shared.GetNumHealers() > 0 )
+		return false;
+
+#ifdef TF_RAID_MODE
+	// mobs don't heal
+	if ( TFGameRules()->IsRaidMode() && me->HasAttribute( CTFBot::AGGRESSIVE ) )
+	{
+		return false;
+	}
+#endif // TF_RAID_MODE
+
+	if ( TFGameRules()->IsMannVsMachineMode() )
+	{
+		return false;
+	}
+
+	float healthRatio = (float)me->GetHealth() / (float)me->GetMaxHealth();
+
+	float t = ( healthRatio - tf_bot_health_critical_ratio.GetFloat() ) / ( tf_bot_health_ok_ratio.GetFloat() - tf_bot_health_critical_ratio.GetFloat() );
+	t = clamp( t, 0.0f, 1.0f );
+
+	if ( me->m_Shared.InCond( TF_COND_BURNING ) )
+	{
+		// on fire - get health now
+		t = 0.0f;
+	}
+
+	// the more we are hurt, the farther we'll travel to get health
+	float searchRange = tf_bot_health_search_far_range.GetFloat() + t * ( tf_bot_health_search_near_range.GetFloat() - tf_bot_health_search_far_range.GetFloat() );
+
+	CUtlVector< CHandle< CBaseEntity > > healthVector;
+	CHealthFilter healthFilter( me );
+
+	me->SelectReachableObjects( TFGameRules()->GetHealthEntityVector(), &healthVector, healthFilter, me->GetLastKnownArea(), searchRange );
+
+	if ( healthVector.Count() == 0 )
+	{
+		if ( me->IsDebugging( NEXTBOT_BEHAVIOR ) )
+		{
+			Warning( "%3.2f: No health nearby\n", gpGlobals->curtime );
+		}
+		return false;
+	}
+
+	// use the first item in the list, since it will be the closest to us (or nearly so)
+	CBaseEntity *health = healthVector[0];
+	for( int i=0; i<healthVector.Count(); ++i )
+	{
+		if ( healthVector[i]->GetTeamNumber() != GetEnemyTeam( me->GetTeamNumber() ) )
+		{
+			health = healthVector[i];
+			break;
+		}
+	}
+
+	if ( health == NULL )
+	{
+		if ( me->IsDebugging( NEXTBOT_BEHAVIOR ) )
+		{
+			Warning( "%3.2f: No health available to my team nearby\n", gpGlobals->curtime );
+		}
+		return false;
+	}
+
+	CTFBotPathCost cost( me, FASTEST_ROUTE );
+	PathFollower path;
+	if ( !path.Compute( me, health->WorldSpaceCenter(), cost ) )
+	{
+		if ( me->IsDebugging( NEXTBOT_BEHAVIOR ) )
+		{
+			Warning( "%3.2f: No path to health!\n", gpGlobals->curtime );
+		}
+		return false;
+	}
+
+	s_possibleBot = me;
+	s_possibleHealth = health;
+	s_possibleFrame = gpGlobals->framecount;
+
+	return true;
+}
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotGetHealth::OnStart( CTFBot *me, Action< CTFBot > *priorAction )
+{
+	VPROF_BUDGET( "CTFBotGetHealth::OnStart", "NextBot" );
+
+	m_path.SetMinLookAheadDistance( me->GetDesiredPathLookAheadRange() );
+
+	// if IsPossible() has already been called, use its cached data
+	if ( s_possibleFrame != gpGlobals->framecount || s_possibleBot != me )
+	{
+		if ( !IsPossible( me ) || s_possibleHealth == NULL )
+		{
+			return Done( "Can't get health" );
+		}
+	}
+
+	m_healthKit = s_possibleHealth;
+	m_isGoalDispenser = m_healthKit->ClassMatches( "obj_dispenser*" );
+
+	CTFBotPathCost cost( me, SAFEST_ROUTE );
+	if ( !m_path.Compute( me, m_healthKit->WorldSpaceCenter(), cost ) )
+	{
+		return Done( "No path to health!" );
+	}
+
+	// if I'm a spy, cloak and disguise
+	if ( me->IsPlayerClass( TF_CLASS_SPY ) )
+	{
+		if ( !me->m_Shared.IsStealthed() )
+		{
+			me->PressAltFireButton();
+		}
+	}
+
+	return Continue();
+}
+
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotGetHealth::Update( CTFBot *me, float interval )
+{
+	if ( m_healthKit == NULL || ( m_healthKit->IsEffectActive( EF_NODRAW ) && !FClassnameIs( m_healthKit, "func_regenerate" ) ) )
+	{
+		return Done( "Health kit I was going for has been taken" );
+	}
+
+	// if a medic is healing us, give up on getting a kit
+	int i;
+	for( i=0; i<me->m_Shared.GetNumHealers(); ++i )
+	{
+		if ( !me->m_Shared.HealerIsDispenser( i ) )
+			break;
+	}
+
+	if ( i < me->m_Shared.GetNumHealers() )
+	{
+		return Done( "A Medic is healing me" );
+	}
+
+	if ( me->m_Shared.GetNumHealers() )
+	{
+		// a dispenser is healing me, don't wait if I'm in combat
+		const CKnownEntity *known = me->GetVisionInterface()->GetPrimaryKnownThreat();
+		if ( known && known->IsVisibleInFOVNow() )
+		{
+			return Done( "No time to wait for health, I must fight" );
+		}
+	}
+
+	if ( me->GetHealth() >= me->GetMaxHealth() )
+	{
+		return Done( "I've been healed" );
+	}
+
+	// if the closest player to the item we're after is an enemy, give up
+	CClosestTFPlayer close( m_healthKit );
+	ForEachPlayer( close );
+	if ( close.m_closePlayer && !me->InSameTeam( close.m_closePlayer ) )
+		return Done( "An enemy is closer to it" );
+
+	// un-zoom
+	CTFWeaponBase *myWeapon = me->m_Shared.GetActiveTFWeapon();
+	if ( myWeapon && myWeapon->IsWeapon( TF_WEAPON_SNIPERRIFLE ) && me->m_Shared.InCond( TF_COND_ZOOMED ) )
+		me->PressAltFireButton();
+
+	if ( !m_path.IsValid() )
+	{
+		// this can occur if we overshoot the health kit's location
+		// because it is momentarily gone
+		CTFBotPathCost cost( me, SAFEST_ROUTE );
+		if ( !m_path.Compute( me, m_healthKit->WorldSpaceCenter(), cost ) )
+		{
+			return Done( "No path to health!" );
+		}
+	}
+
+	m_path.Update( me );
+
+	// may need to switch weapons (ie: engineer holding toolbox now needs to heal and defend himself)
+	const CKnownEntity *threat = me->GetVisionInterface()->GetPrimaryKnownThreat();
 	me->EquipBestWeaponForThreat( threat );
 
-	m_PathFollower.Update( me );
-
-	return Action<CTFBot>::Continue();
+	return Continue();
 }
 
 
-EventDesiredResult<CTFBot> CTFBotGetHealth::OnMoveToSuccess( CTFBot *me, const Path *path )
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotGetHealth::OnStuck( CTFBot *me )
 {
-	return Action<CTFBot>::TryContinue();
+	return TryDone( RESULT_CRITICAL, "Stuck trying to reach health kit" );
 }
 
-EventDesiredResult<CTFBot> CTFBotGetHealth::OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType reason )
+
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotGetHealth::OnMoveToSuccess( CTFBot *me, const Path *path )
 {
-	return Action<CTFBot>::TryDone( RESULT_CRITICAL, "Failed to reach health kit" );
+	return TryContinue();
 }
 
-EventDesiredResult<CTFBot> CTFBotGetHealth::OnStuck( CTFBot *me )
+
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotGetHealth::OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType reason )
 {
-	return Action<CTFBot>::TryDone( RESULT_CRITICAL, "Stuck trying to reach health kit" );
+	return TryDone( RESULT_CRITICAL, "Failed to reach health kit" );
 }
 
 
+//---------------------------------------------------------------------------------------------
+// We are always hurrying if we need to collect health
 QueryResultType CTFBotGetHealth::ShouldHurry( const INextBot *me ) const
 {
 	return ANSWER_YES;
-}
-
-
-bool CTFBotGetHealth::IsPossible( CTFBot *actor )
-{
-	VPROF_BUDGET( __FUNCTION__, "NextBot" );
-
-	if ( actor->m_Shared.GetNumHealers() > 0 || TFGameRules()->IsMannVsMachineMode() )
-		return false;
-
-	float flRatio = Clamp( ( ( (float)actor->GetHealth() / (float)actor->GetMaxHealth() ) - tf_bot_health_critical_ratio.GetFloat() ) /
-						 ( tf_bot_health_ok_ratio.GetFloat() - tf_bot_health_critical_ratio.GetFloat() ), 0.0f, 1.0f );
-
-	float flMinDist, flMaxDist;
-	if ( actor->m_Shared.InCond( TF_COND_BURNING ) || actor->m_Shared.InCond( TF_COND_BLEEDING ) )
-	{
-		flMinDist = 0.0f;
-		flMaxDist = tf_bot_health_search_far_range.GetFloat();
-	}
-	else
-	{
-		flMaxDist = tf_bot_health_search_far_range.GetFloat();
-		flMinDist = flRatio * tf_bot_health_search_near_range.GetFloat() - flMaxDist;
-	}
-
-	CUtlVector<EHANDLE> healths;
-	CHealthFilter filter( actor );
-	actor->SelectReachableObjects( TFGameRules()->GetHealthEnts(), &healths, filter, actor->GetLastKnownArea(), flMinDist + flMaxDist );
-	
-	if ( healths.IsEmpty() )
-	{
-		if ( actor->IsDebugging( NEXTBOT_BEHAVIOR ) )
-			Warning( "%3.2f: No health nearby\n", gpGlobals->curtime );
-
-		return false;
-	}
-
-	CBaseEntity *pHealth = nullptr;
-	FOR_EACH_VEC( healths, i )
-	{
-		if ( healths[i]->GetTeamNumber() == GetEnemyTeam( actor ) )
-			continue;
-
-		pHealth = healths[i];
-	}
-
-	if ( pHealth )
-	{
-		CTFBotPathCost func( actor, FASTEST_ROUTE );
-		if ( !NavAreaBuildPath( actor->GetLastKnownArea(), NULL, &pHealth->WorldSpaceCenter(), func ) )
-		{
-			if ( actor->IsDebugging( NEXTBOT_BEHAVIOR ) )
-				Warning( "%3.2f: No path to health!\n", gpGlobals->curtime );
-		}
-
-		s_possibleBot = actor;
-		s_possibleHealth = pHealth;
-		s_possibleFrame = gpGlobals->framecount;
-
-		return true;
-	}
-
-	if ( actor->IsDebugging( NEXTBOT_BEHAVIOR ) )
-		Warning( "%3.2f: No health available to my team nearby\n", gpGlobals->curtime );
-
-	return false;
-}
-
-
-CHealthFilter::CHealthFilter( CTFPlayer *actor )
-	: m_pActor( actor )
-{
-}
-
-
-bool CHealthFilter::IsSelected( const CBaseEntity *ent ) const
-{
-	CClosestTFPlayer functor( ent->WorldSpaceCenter() );
-	ForEachPlayer( functor );
-
-	// Don't run into enemies while trying to scavenge
-	if ( functor.m_pPlayer && !functor.m_pPlayer->InSameTeam( m_pActor ) )
-		return false;
-
-	CTFNavArea *pArea = static_cast<CTFNavArea *>( TheNavMesh->GetNearestNavArea( ent->WorldSpaceCenter() ) );
-	if ( !pArea )
-		return false;
-
-	// Can't use enemy teams resupply cabinet
-	if ( FClassnameIs( const_cast<CBaseEntity *>( ent ), "func_regenerate" ) )
-	{
-		if ( !pArea->HasTFAttributes( TF_NAV_BLUE_SPAWN_ROOM | TF_NAV_RED_SPAWN_ROOM ) )
-			return false;
-
-		if ( ( m_pActor->GetTeamNumber() == TF_TEAM_RED && pArea->HasTFAttributes( TF_NAV_BLUE_SPAWN_ROOM ) ) ||
-			 ( m_pActor->GetTeamNumber() == TF_TEAM_BLUE && pArea->HasTFAttributes( TF_NAV_RED_SPAWN_ROOM ) ) )
-		{
-			return false;
-		}
-	}
-
-	if ( FClassnameIs( const_cast<CBaseEntity *>( ent ), "obj_dispenser*" ) )
-	{
-		CBaseObject *pObject = static_cast<CBaseObject *>( const_cast<CBaseEntity *>( ent ) );
-
-		// Ignore non-functioning buildings
-		if ( pObject->IsDisabled() || pObject->IsBuilding() || pObject->IsPlacing() || pObject->HasSapper() )
-			return false;
-	}
-
-	// Any other entity or packs that have been picked up are a no go
-	if ( FClassnameIs( const_cast<CBaseEntity *>( ent ), "item_healthkit*" ) && ent->GetFlags() & EF_NODRAW )
-		return false;
-
-	// Find minimum cost area we are currently searching
-	if ( !pArea->IsMarked() || m_flMinCost < pArea->GetCostSoFar() )
-		return false;
-
-	m_flMinCost = pArea->GetCostSoFar();
-	
-	return true;
 }

@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -84,9 +84,7 @@ void CHudSmokeBomb::Paint()
 	if ( !pPlayer )
 		return;
     
-	//float flExpireTime = pPlayer->m_Shared.GetSmokeBombExpireTime();
-
-	float flExpireTime = 50.0f;
+	float flExpireTime = pPlayer->m_Shared.GetSmokeBombExpireTime();
 
 	float flPercent = ( flExpireTime - gpGlobals->curtime ) / tf_smoke_bomb_time.GetFloat();
 

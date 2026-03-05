@@ -104,6 +104,7 @@ void PathFollower::OnPathChanged( INextBot *bot, Path::ResultType result )
 {
 	// start from the beginning
 	m_goal = FirstSegment();
+	m_result = result;
 }
 
 

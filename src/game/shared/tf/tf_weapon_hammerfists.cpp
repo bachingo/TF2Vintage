@@ -121,7 +121,7 @@ void CTFHammerfists::DoViewModelAnimation( void )
 {
 	Activity act;
 
-	if ( IsCurrentAttackACritical() )
+	if ( IsCurrentAttackACrit() )
 	{
 		act = ACT_VM_SWINGHARD;
 	}

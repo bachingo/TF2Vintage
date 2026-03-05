@@ -40,10 +40,10 @@ int GetSceneSpeechCount( char const *pszScene );
 bool IsInInterruptableScenes( CBaseFlex *pActor );
 
 void PrecacheInstancedScene( char const *pszScene );
+HSCRIPT ScriptCreateSceneEntity( char const *pszScene );
 
 char const *GetSceneFilename( CBaseEntity *ent );
 void ReloadSceneFromDisk( CBaseEntity *ent );
 
-HSCRIPT ScriptCreateSceneEntity( const char *pszScene );
 
 #endif // SCENEENTITY_H

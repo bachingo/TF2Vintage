@@ -1,27 +1,23 @@
-#ifndef TF_BOT_ENGINEER_BUILD_TELEPORT_ENTRENCE_H
-#define TF_BOT_ENGINEER_BUILD_TELEPORT_ENTRENCE_H
-#ifdef _WIN32
-#pragma once
-#endif
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_engineer_build_teleport_entrance.h
+// Engineer building a teleport entrance right outside of the spawn room
+// Michael Booth, May 2009
 
+#ifndef TF_BOT_ENGINEER_BUILD_TELEPORT_ENTRANCE_H
+#define TF_BOT_ENGINEER_BUILD_TELEPORT_ENTRANCE_H
 
-#include "NextBotBehavior.h"
-
-class CTFBotEngineerBuildTeleportEntrance : public Action<CTFBot>
+class CTFBotEngineerBuildTeleportEntrance : public Action< CTFBot >
 {
 public:
-	CTFBotEngineerBuildTeleportEntrance();
-	virtual ~CTFBotEngineerBuildTeleportEntrance();
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
 
-	virtual const char *GetName() const OVERRIDE;
+	virtual EventDesiredResult< CTFBot > OnStuck( CTFBot *me );
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
-
-	virtual EventDesiredResult<CTFBot> OnStuck( CTFBot *me ) OVERRIDE;
+	virtual const char *GetName( void ) const	{ return "EngineerBuildTeleportEntrance"; };
 
 private:
-	PathFollower m_PathFollower;
+	PathFollower m_path;
 };
 
-#endif
+#endif // TF_BOT_ENGINEER_BUILD_TELEPORT_ENTRANCE_H

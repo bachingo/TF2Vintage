@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -15,7 +15,8 @@
 #include "materialsystem/imaterial.h"
 #include "materialsystem/imesh.h"
 #include "materialsystem/imaterialvar.h"
-
+#include "client_virtualreality.h"
+#include "sourcevr/isourcevirtualreality.h"
 #include <vgui/IScheme.h>
 #include <vgui/ISurface.h>
 #include <KeyValues.h>
@@ -31,6 +32,41 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+
+//-----------------------------------------------------------------------------
+// Purpose: Figure out where the sniper scope should be drawn.
+//-----------------------------------------------------------------------------
+void WhereToDrawSniperScope ( int *pX, int *pY, int screenWide, int screenTall )
+{
+	C_BasePlayer* pPlayer = C_BasePlayer::GetLocalPlayer();
+	if ( pPlayer != NULL )
+	{
+		// These are the correct values to use, but they lag the high-speed view data...
+		Vector vecStart = pPlayer->Weapon_ShootPosition();
+		Vector vecAimDirection = pPlayer->GetAutoaimVector( 1.0f );
+		// ...so in some aim modes, they get zapped by something completely up-to-date.
+		g_ClientVirtualReality.OverrideWeaponHudAimVectors ( &vecStart, &vecAimDirection );
+
+		Vector vAimPoint;
+		// Here we just put the aim point a set distance from the viewer - same depth as the HUD.
+		float fVrHudDistance = g_ClientVirtualReality.GetHUDDistance();
+		vAimPoint = vecStart + vecAimDirection * fVrHudDistance;
+
+		Vector screen;
+		screen.Init();
+		ScreenTransform(vAimPoint, screen);
+
+		// screen[0][1] are in range (-1, 1)
+		float x = 0.5 * ( 1.0f + screen[0] ) * screenWide + 0.5;
+		float y = 0.5 * ( 1.0f - screen[1] ) * screenTall + 0.5;
+
+		*pX = (int)( x + 0.5f );
+		*pY = (int)( y + 0.5f );
+	}
+}
+
+
+
 //-----------------------------------------------------------------------------
 // Purpose: Draws the sniper chargeup meter
 //-----------------------------------------------------------------------------
@@ -40,6 +76,7 @@ class CHudScopeCharge : public vgui::Panel, public CHudElement
 
 public:
 	CHudScopeCharge( const char *pElementName );
+	virtual ~CHudScopeCharge( void );
 
 	void	Init( void );
 
@@ -54,6 +91,8 @@ private:
 	CPanelAnimationVarAliasType( float, m_iChargeup_ypos, "chargeup_ypos", "0", "proportional_float" );
 	CPanelAnimationVarAliasType( float, m_iChargeup_wide, "chargeup_wide", "0", "proportional_float" );
 	CPanelAnimationVarAliasType( float, m_iChargeup_tall, "chargeup_tall", "0", "proportional_float" );
+
+	bool m_bJarateMode;
 };
 
 DECLARE_HUDELEMENT_DEPTH( CHudScopeCharge, 100 );
@@ -69,6 +108,19 @@ CHudScopeCharge::CHudScopeCharge( const char *pElementName ) : CHudElement(pElem
 	SetParent( pParent );
 
 	SetHiddenBits( HIDEHUD_PLAYERDEAD );
+
+	m_bJarateMode = false;
+
+	m_iChargeupTexture = -1;
+}
+
+CHudScopeCharge::~CHudScopeCharge( void )
+{
+	if ( vgui::surface() && m_iChargeupTexture != -1 )
+	{
+		vgui::surface()->DestroyTextureID( m_iChargeupTexture );
+		m_iChargeupTexture = -1;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -76,9 +128,11 @@ CHudScopeCharge::CHudScopeCharge( const char *pElementName ) : CHudElement(pElem
 //-----------------------------------------------------------------------------
 void CHudScopeCharge::Init( void )
 {
-	m_iChargeupTexture = vgui::surface()->CreateNewTextureID();
-
-	vgui::surface()->DrawSetTextureFile(m_iChargeupTexture, "HUD/sniperscope_numbers", true, false);
+	if ( m_iChargeupTexture == -1 )
+	{
+		m_iChargeupTexture = vgui::surface()->CreateNewTextureID();
+		vgui::surface()->DrawSetTextureFile(m_iChargeupTexture, "HUD/sniperscope_numbers", true, false);
+	}
 
 	// Get the texture size
 	int ignored;
@@ -94,6 +148,12 @@ void CHudScopeCharge::ApplySchemeSettings( vgui::IScheme *scheme )
 
 	SetPaintBackgroundEnabled(false);
 	SetPaintBorderEnabled(false);
+
+	if ( UseVR() )
+	{
+		// Force it to go direct to the framebuffer.
+		SetForceStereoRenderToFrameBuffer( true );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -119,14 +179,50 @@ void CHudScopeCharge::Paint( void )
 	if ( !pWeapon )
 		return;
 
+	if ( pWeapon->IsJarateRifle() && !m_bJarateMode )
+	{
+		vgui::surface()->DrawSetTextureFile(m_iChargeupTexture, "HUD/sniperscope_numbers_jar", true, false);
+		m_bJarateMode = true;
+	}
+	else if ( !pWeapon->IsJarateRifle() && m_bJarateMode )
+	{
+		vgui::surface()->DrawSetTextureFile(m_iChargeupTexture, "HUD/sniperscope_numbers", true, false);
+		m_bJarateMode = false;
+	}
+
 	// Actual charge value is set through a material proxy in the sniper rifle class
 
 	int wide, tall;
 	GetSize( wide, tall );
 
+	int x = 0;
+	int y = 0;
+	bool bDisableClipping = false;
+	if ( UseVR() )
+	{
+		int vx, vy, vw, vh;
+		vgui::surface()->GetFullscreenViewport( vx, vy, vw, vh );
+
+		int screenWide = vw;
+		int screenTall = vh;
+		bDisableClipping = true;
+		WhereToDrawSniperScope ( &x, &y, screenWide, screenTall );
+
+		// The origin is wherever the property file put it, so (0,0) means "the right place, if the scope is in the middle of the screen"
+		// So offset from there. But additional fun - the rendering coordinates are in the UI space, not the actual screen space.
+		int UiScreenWide, UiScreenTall;
+		GetHudSize(UiScreenWide, UiScreenTall);
+		x -= ( UiScreenWide / 2 );
+		y -= ( UiScreenTall / 2 );
+	}
+
+	if( bDisableClipping )
+		g_pMatSystemSurface->DisableClipping( true );
 	vgui::surface()->DrawSetColor(255,255,255,255);
 	vgui::surface()->DrawSetTexture(m_iChargeupTexture);
-	vgui::surface()->DrawTexturedRect( 0, 0, wide, tall );
+	vgui::surface()->DrawTexturedRect( x, y, x+wide, y+tall );
+	if( bDisableClipping )
+		g_pMatSystemSurface->DisableClipping( false );
 }
 
 //-----------------------------------------------------------------------------
@@ -137,7 +233,8 @@ class CHudScope : public vgui::Panel, public CHudElement
 	DECLARE_CLASS_SIMPLE( CHudScope, vgui::Panel );
 
 public:
-			CHudScope( const char *pElementName );
+	CHudScope( const char *pElementName );
+	virtual ~CHudScope( void );
 	
 	void	Init( void );
 
@@ -148,6 +245,8 @@ protected:
 
 private:
 	int m_iScopeTexture[4];
+	int m_iScopeTextureAlt[4];
+	bool m_bAltScopeMode;
 };
 
 DECLARE_HUDELEMENT_DEPTH( CHudScope, 100 );
@@ -163,6 +262,42 @@ CHudScope::CHudScope( const char *pElementName ) : CHudElement(pElementName), Ba
 	SetParent( pParent );
 	
 	SetHiddenBits( HIDEHUD_PLAYERDEAD );
+
+	for ( int i = 0; i < ARRAYSIZE( m_iScopeTexture ); i++ )
+	{
+		m_iScopeTexture[ i ] = -1;
+	}
+
+	for ( int i = 0; i < ARRAYSIZE( m_iScopeTextureAlt ); i++ )
+	{
+		m_iScopeTextureAlt[i] = -1;
+	}
+
+	m_bAltScopeMode = false;
+}
+
+CHudScope::~CHudScope( void )
+{
+	if ( vgui::surface() )
+	{
+		for ( int i = 0; i < ARRAYSIZE( m_iScopeTexture ); i++ )
+		{
+			if ( m_iScopeTexture[ i ] != -1 )
+			{
+				vgui::surface()->DestroyTextureID( m_iScopeTexture[ i ] );
+				m_iScopeTexture[ i ] = -1;
+			}
+		}
+
+		for ( int i = 0; i < ARRAYSIZE( m_iScopeTextureAlt ); i++ )
+		{
+			if ( m_iScopeTextureAlt[i] != -1 )
+			{
+				vgui::surface()->DestroyTextureID( m_iScopeTextureAlt[i] );
+				m_iScopeTextureAlt[i] = -1;
+			}
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -170,16 +305,31 @@ CHudScope::CHudScope( const char *pElementName ) : CHudElement(pElementName), Ba
 //-----------------------------------------------------------------------------
 void CHudScope::Init( void )
 {
-	int i;
-	for( i=0;i<4;i++ )
+	for ( int i = 0; i < ARRAYSIZE( m_iScopeTexture ); i++ )
 	{
-		m_iScopeTexture[i] = vgui::surface()->CreateNewTextureID();
+		if ( m_iScopeTexture[ i ] == -1 )
+		{
+			m_iScopeTexture[ i ] = vgui::surface()->CreateNewTextureID();
+		}
 	}
 
-	vgui::surface()->DrawSetTextureFile(m_iScopeTexture[0], "HUD/scope_sniper_ul", true, false);
-	vgui::surface()->DrawSetTextureFile(m_iScopeTexture[1], "HUD/scope_sniper_ur", true, false);
-	vgui::surface()->DrawSetTextureFile(m_iScopeTexture[2], "HUD/scope_sniper_lr", true, false);
-	vgui::surface()->DrawSetTextureFile(m_iScopeTexture[3], "HUD/scope_sniper_ll", true, false);
+	vgui::surface()->DrawSetTextureFile( m_iScopeTexture[0], "HUD/scope_sniper_ul", true, false );
+	vgui::surface()->DrawSetTextureFile( m_iScopeTexture[1], "HUD/scope_sniper_ur", true, false );
+	vgui::surface()->DrawSetTextureFile( m_iScopeTexture[2], "HUD/scope_sniper_lr", true, false );
+	vgui::surface()->DrawSetTextureFile( m_iScopeTexture[3], "HUD/scope_sniper_ll", true, false );
+
+	for ( int i = 0; i < ARRAYSIZE( m_iScopeTextureAlt ); i++ )
+	{
+		if ( m_iScopeTextureAlt[i] == -1 )
+		{
+			m_iScopeTextureAlt[i] = vgui::surface()->CreateNewTextureID();
+		}
+	}
+
+	vgui::surface()->DrawSetTextureFile( m_iScopeTextureAlt[0], "HUD/scope_sniper_alt_ul", true, false );
+	vgui::surface()->DrawSetTextureFile( m_iScopeTextureAlt[1], "HUD/scope_sniper_alt_ur", true, false );
+	vgui::surface()->DrawSetTextureFile( m_iScopeTextureAlt[2], "HUD/scope_sniper_alt_lr", true, false );
+	vgui::surface()->DrawSetTextureFile( m_iScopeTextureAlt[3], "HUD/scope_sniper_alt_ll", true, false );
 
 	// remove ourselves from the global group so the scoreboard doesn't hide us
 	UnregisterForRenderGroup( "global" );
@@ -195,9 +345,25 @@ void CHudScope::ApplySchemeSettings( vgui::IScheme *scheme )
 	SetPaintBackgroundEnabled(false);
 	SetPaintBorderEnabled(false);
 
-	int screenWide, screenTall;
-	GetHudSize(screenWide, screenTall);
-	SetBounds(0, 0, screenWide, screenTall);
+	if ( UseVR() )
+	{
+		// Make it fill the screen.
+		int iViewportWidth, iViewportHeight;
+		g_pSourceVR->GetViewportBounds( ISourceVirtualReality::VREye_Left, NULL, NULL, &iViewportWidth, &iViewportHeight );
+	    SetSize ( iViewportWidth, iViewportHeight );
+		SetBounds ( 0, 0, iViewportWidth, iViewportHeight );
+		// Force it to go direct to the framebuffer.
+		SetForceStereoRenderToFrameBuffer( true );
+	}
+	else
+	{
+		int screenWide, screenTall;
+		GetHudSize(screenWide, screenTall);
+		SetBounds(0, 0, screenWide, screenTall);
+	}
+
+	// Move behind the spectator GUI, so we can be visible at the same time.
+	SetZPos( -1 );
 }
 
 //-----------------------------------------------------------------------------
@@ -205,17 +371,19 @@ void CHudScope::ApplySchemeSettings( vgui::IScheme *scheme )
 //-----------------------------------------------------------------------------
 bool CHudScope::ShouldDraw( void )
 {
-	// Because our spectator gui is drawn before this in the viewport hierarchy 
-	// don't draw the scope ring and refraction when in spectator
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( GetSpectatorTarget() != 0 && GetSpectatorMode() == OBS_MODE_IN_EYE )
 	{
-		return false;
+		pPlayer = (C_TFPlayer *)UTIL_PlayerByIndex( GetSpectatorTarget() );
 	}
-
-	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 
 	if ( !pPlayer || !pPlayer->m_Shared.InCond( TF_COND_ZOOMED ) )
 		return false;
+
+	if ( pPlayer->GetActiveTFWeapon() )
+	{
+		m_bAltScopeMode = ( pPlayer->GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_SNIPERRIFLE_CLASSIC );
+	}
 
 	return CHudElement::ShouldDraw();
 }
@@ -228,7 +396,9 @@ void CHudScope::Paint( void )
 	// We need to update the refraction texture so the scope can refract it
 	UpdateRefractTexture();
 
-	int screenWide, screenTall;
+	int screenWide;
+	int screenTall;
+
 	GetHudSize(screenWide, screenTall);
 
 	// calculate the bounds in which we should draw the scope
@@ -236,12 +406,41 @@ void CHudScope::Paint( void )
 	int yMid = screenTall / 2;
 
 	// width of the drawn scope. in widescreen, we draw the sides with primitives
-	int wide = ( screenTall / 3 ) * 4;
+	int wide, tall;
+	if( screenWide > screenTall )
+	{
+		wide = ( screenTall * 4 ) / 3;
+		tall = screenTall;
+	}
+	else
+	{
+		wide = screenWide;
+		tall = ( screenWide * 3 ) / 4;
+	}
+
+	bool bDisableClipping = false;
+	if ( UseVR() )
+	{
+		int vx, vy, vw, vh;
+		vgui::surface()->GetFullscreenViewport( vx, vy, vw, vh );
+
+		screenWide = vw;
+		screenTall = vh;
+		// This is actually awful - the scope is drawn in HUD-space, which is this completely
+		// artifical 640*480 space that we invent for VR and which doesn't even have square pixels. Ugh.
+		// Hacked good enough to ship. TODO: don't hack it.
+		float fMagnification = 1.0f / g_ClientVirtualReality.GetZoomedModeMagnification();
+		wide = (int)( fMagnification * (float)screenWide );
+		tall = ( wide * 3 ) / 4;
+
+		bDisableClipping = true;
+		WhereToDrawSniperScope ( &xMid, &yMid, screenWide, screenTall );
+	}
 
 	int xLeft = xMid - wide/2;
 	int xRight = xMid + wide/2;
-	int yTop = 0;
-	int yBottom = screenTall;
+	int yTop = yMid - tall/2;
+	int yBottom = yMid + tall/2;
 
 	float uv1 = 0.5f / 256.0f, uv2 = 1.0f - uv1;
 
@@ -254,24 +453,39 @@ void CHudScope::Paint( void )
 
 	vgui::surface()->DrawSetColor(0,0,0,255);
 
+	if( bDisableClipping )
+		g_pMatSystemSurface->DisableClipping( true );
+
 	//upper left
-	vgui::surface()->DrawSetTexture(m_iScopeTexture[0]);
+	vgui::surface()->DrawSetTexture( m_bAltScopeMode ? m_iScopeTextureAlt[0] : m_iScopeTexture[0] );
 	vert[0].Init( Vector2D( xLeft, yTop ), uv11 );
 	vert[1].Init( Vector2D( xMid,  yTop ), uv21 );
 	vert[2].Init( Vector2D( xMid,  yMid ), uv22 );
 	vert[3].Init( Vector2D( xLeft, yMid ), uv12 );
-	vgui::surface()->DrawTexturedPolygon(4, vert);
+	vgui::surface()->DrawTexturedPolygon( 4, vert );
 
 	// top right
-	vgui::surface()->DrawSetTexture(m_iScopeTexture[1]);
-	vert[0].Init( Vector2D( xMid - 1, yTop ), uv11 );
-	vert[1].Init( Vector2D( xRight,   yTop ), uv21 );
-	vert[2].Init( Vector2D( xRight,   yMid + 1 ), uv22 );
-	vert[3].Init( Vector2D( xMid - 1, yMid + 1 ), uv12 );
-	vgui::surface()->DrawTexturedPolygon(4, vert);
+	if ( m_bAltScopeMode )
+	{
+		vgui::surface()->DrawSetTexture( m_iScopeTextureAlt[1] );
+		vert[0].Init( Vector2D( xMid, yTop ), uv11 );
+		vert[1].Init( Vector2D( xRight, yTop ), uv21 );
+		vert[2].Init( Vector2D( xRight, yMid ), uv22 );
+		vert[3].Init( Vector2D( xMid, yMid ), uv12 );
+		vgui::surface()->DrawTexturedPolygon( 4, vert );
+	}
+	else
+	{
+		vgui::surface()->DrawSetTexture( m_iScopeTexture[1] );
+		vert[0].Init( Vector2D( xMid - 1, yTop ), uv11 );
+		vert[1].Init( Vector2D( xRight,   yTop ), uv21 );
+		vert[2].Init( Vector2D( xRight,   yMid + 1 ), uv22 );
+		vert[3].Init( Vector2D( xMid - 1, yMid + 1 ), uv12 );
+		vgui::surface()->DrawTexturedPolygon( 4, vert );
+	}
 
 	// bottom right
-	vgui::surface()->DrawSetTexture(m_iScopeTexture[2]);
+	vgui::surface()->DrawSetTexture( m_bAltScopeMode ? m_iScopeTextureAlt[2] : m_iScopeTexture[2] );
 	vert[0].Init( Vector2D( xMid,   yMid ), uv11 );
 	vert[1].Init( Vector2D( xRight, yMid ), uv21 );
 	vert[2].Init( Vector2D( xRight, yBottom ), uv22 );
@@ -279,19 +493,35 @@ void CHudScope::Paint( void )
 	vgui::surface()->DrawTexturedPolygon( 4, vert );
 
 	// bottom left
-	vgui::surface()->DrawSetTexture(m_iScopeTexture[3]);
+	vgui::surface()->DrawSetTexture( m_bAltScopeMode ? m_iScopeTextureAlt[3] : m_iScopeTexture[3] );
 	vert[0].Init( Vector2D( xLeft, yMid ), uv11 );
 	vert[1].Init( Vector2D( xMid,  yMid ), uv21 );
 	vert[2].Init( Vector2D( xMid,  yBottom ), uv22 );
 	vert[3].Init( Vector2D( xLeft, yBottom), uv12 );
-	vgui::surface()->DrawTexturedPolygon(4, vert);
+	vgui::surface()->DrawTexturedPolygon( 4, vert );
 
-	if ( wide < screenWide )
+	if ( xLeft > 0 )
 	{
 		// Left block
 		vgui::surface()->DrawFilledRect( 0, 0, xLeft, screenTall );
-		
+	}
+	if ( screenWide > xRight )
+	{
 		// Right block
 		vgui::surface()->DrawFilledRect( xRight, 0, screenWide, screenTall );
 	}
+	if ( yTop > 0 )
+	{
+		// top block
+		vgui::surface()->DrawFilledRect( 0, 0, screenWide, yTop );
+	}
+	if ( screenTall > yBottom )
+	{
+		// bottom block
+		vgui::surface()->DrawFilledRect( 0, yBottom, screenWide, screenTall );
+	}
+
+	if( bDisableClipping )
+		g_pMatSystemSurface->DisableClipping( false );
+
 }

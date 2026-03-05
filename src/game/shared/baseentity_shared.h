@@ -11,7 +11,6 @@
 #pragma once
 #endif
 
-
 extern ConVar hl2_episodic;
 
 // Simple shared header file for common base entities
@@ -67,9 +66,6 @@ enum InvalidatePhysicsBits_t
 #endif // HL2_EPISODIC
 
 #endif
-
-#include "vscript/ivscript.h"
-#include "vscript_shared.h"
 
 #if !defined( NO_ENTITY_PREDICTION )
 // CBaseEntity inlines
@@ -263,7 +259,17 @@ template <> ScriptClassDesc_t *GetScriptDesc<CBaseEntity>( CBaseEntity * );
 inline CBaseEntity *ToEnt( HSCRIPT hScript )
 {
 
-	return ( hScript ) ? (CBaseEntity *)g_pScriptVM->GetInstanceValue( hScript, GetScriptDescForClass( CBaseEntity ) ) : NULL;
+	return ( hScript ) ? (CBaseEntity *)g_pScriptVM->GetInstanceValue( hScript, GetScriptDescForClass(CBaseEntity) ) : NULL;
+}
+
+template <typename T>
+inline T* ScriptToEntClass( HSCRIPT hScript )
+{
+	CBaseEntity *pEntity = ToEnt( hScript );
+	if ( !pEntity )
+		return NULL;
+
+	return dynamic_cast< T* >( pEntity );
 }
 
 // convenience functions for fishing out the vectors of this object

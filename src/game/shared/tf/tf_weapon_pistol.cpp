@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 //
 //=============================================================================
@@ -6,15 +6,20 @@
 #include "tf_weapon_pistol.h"
 #include "tf_fx_shared.h"
 #include "in_buttons.h"
+#include "tf_gamerules.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
 #include "c_tf_player.h"
+#include "c_tf_gamestats.h"
 // Server specific.
 #else
 #include "tf_player.h"
+#include "tf_gamestats.h"
 #include "ilagcompensationmanager.h"
 #endif
+
+ConVar tf2v_use_shortstop_shove( "tf2v_use_shortstop_shove", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows Shortstop to Alt-Fire and shove enemies away." );
 
 //=============================================================================
 //
@@ -22,15 +27,7 @@
 //
 IMPLEMENT_NETWORKCLASS_ALIASED( TFPistol, DT_WeaponPistol )
 
-BEGIN_NETWORK_TABLE_NOBASE( CTFPistol, DT_PistolLocalData )
-END_NETWORK_TABLE()
-
 BEGIN_NETWORK_TABLE( CTFPistol, DT_WeaponPistol )
-#if !defined( CLIENT_DLL )
-	SendPropDataTable( "PistolLocalData", 0, &REFERENCE_SEND_TABLE( DT_PistolLocalData ), SendProxy_SendLocalWeaponDataTable ),
-#else
-	RecvPropDataTable( "PistolLocalData", 0, 0, &REFERENCE_RECV_TABLE( DT_PistolLocalData ) ),
-#endif
 END_NETWORK_TABLE()
 
 BEGIN_PREDICTION_DATA( CTFPistol )
@@ -60,65 +57,43 @@ PRECACHE_WEAPON_REGISTER( tf_weapon_pistol_scout );
 
 //============================
 
-IMPLEMENT_NETWORKCLASS_ALIASED( TFHandgun_Scout_Primary, DT_WeaponHandgun_Scout_Primary )
+IMPLEMENT_NETWORKCLASS_ALIASED( TFPistol_ScoutPrimary, DT_WeaponPistol_ScoutPrimary )
 
-BEGIN_NETWORK_TABLE( CTFHandgun_Scout_Primary, DT_WeaponHandgun_Scout_Primary )
+BEGIN_NETWORK_TABLE( CTFPistol_ScoutPrimary, DT_WeaponPistol_ScoutPrimary )
 END_NETWORK_TABLE()
 
-BEGIN_PREDICTION_DATA( CTFHandgun_Scout_Primary )
+BEGIN_PREDICTION_DATA( CTFPistol_ScoutPrimary )
 END_PREDICTION_DATA()
 
-LINK_ENTITY_TO_CLASS( tf_weapon_handgun_scout_primary, CTFHandgun_Scout_Primary );
+LINK_ENTITY_TO_CLASS( tf_weapon_handgun_scout_primary, CTFPistol_ScoutPrimary );
 PRECACHE_WEAPON_REGISTER( tf_weapon_handgun_scout_primary );
 
-	ConVar tf2v_use_shortstop_shove( "tf2v_use_shortstop_shove", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows Shortstop to Alt-Fire and shove enemies away." );
-
-
-//=============================================================================
-//
-// Weapon Pistol functions.
-//
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPistol::PrimaryAttack( void )
+CTFPistol_ScoutPrimary::CTFPistol_ScoutPrimary()
 {
-#if 0
-	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
+	m_flPushTime = -1.f;
+}
 
-	if( pOwner )
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPistol_ScoutPrimary::PlayWeaponShootSound( void )
+{
+	BaseClass::PlayWeaponShootSound();
+
+	if ( TFGameRules()->GameModeUsesUpgrades() )
 	{
-		// Each time the player fires the pistol, reset the view punch. This prevents
-		// the aim from 'drifting off' when the player fires very quickly. This may
-		// not be the ideal way to achieve this, but it's cheap and it works, which is
-		// great for a feature we're evaluating. (sjb)
-		//pOwner->ViewPunchReset();
+		PlayUpgradedShootSound( "Weapon_Upgrade.DamageBonus" );
 	}
-#endif
-
-	if ( !CanAttack() )
-		return;
-
-	BaseClass::PrimaryAttack();
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFHandgun_Scout_Primary::Precache( void )
-{
-	PrecacheScriptSound( "Weapon_Hands.Push" );
-	PrecacheScriptSound( "Weapon_Hands.PushImpact" );
-	
-	BaseClass::Precache();
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFHandgun_Scout_Primary::SecondaryAttack( void )
+void CTFPistol_ScoutPrimary::SecondaryAttack( void )
 {
 	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
 	if ( !pOwner )
@@ -130,112 +105,99 @@ void CTFHandgun_Scout_Primary::SecondaryAttack( void )
 	if ( m_flNextSecondaryAttack > gpGlobals->curtime )
 		return;
 	
-	// Don't allow us to shove if shoves are disabled.
-	if (!tf2v_use_shortstop_shove.GetBool())
+	if ( !tf2v_use_shortstop_shove.GetBool() )
 		return;
 
-	// Do our animations and sounds.
 	pOwner->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_SECONDARY );
 	SendWeaponAnim( ACT_SECONDARY_VM_ALTATTACK );
+
+	m_flNextPrimaryAttack = gpGlobals->curtime + 0.6f;
+	m_flNextSecondaryAttack = gpGlobals->curtime + 1.5f;
+	m_flPushTime = gpGlobals->curtime + 0.2f;	// Anim delay
+
 	EmitSound( "Weapon_Hands.Push" );
-
-	m_flNextPrimaryAttack = gpGlobals->curtime + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
-	m_flNextSecondaryAttack = gpGlobals->curtime + 1.5f;	// Shoves have a longer waiting time between attacks.
-	
-	// Set up the wait for the shove swing calculation.
-	m_flPushDelay = gpGlobals->curtime + 0.2f;	// Melee delay before performing swing calculations
-
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFHandgun_Scout_Primary::Shove( void )
+void CTFPistol_ScoutPrimary::Push( void )
 {
-#if !defined( CLIENT_DLL )
 	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
 	if ( !pOwner )
 		return;
 
-
-	// Move other players back to history positions based on local player's lag
+#ifdef GAME_DLL
 	lagcompensation->StartLagCompensation( pOwner, pOwner->GetCurrentCommand() );
 
+	CUtlVector< CTFPlayer* > enemyVector;
+	CollectPlayers( &enemyVector, GetEnemyTeam( pOwner->GetTeamNumber() ), COLLECT_ONLY_LIVING_PLAYERS );
 
-	// see if we can hit an object with a higher range
-
-	// Setup a volume for the melee weapon to be swung - approx size, so all melee behave the same.
-	static Vector vecSwingMins( -18, -18, -18 );
-	static Vector vecSwingMaxs( 18, 18, 18 );
-
-	// Setup the swing range.
-	Vector vecForward; 
-	AngleVectors( pOwner->EyeAngles(), &vecForward );
-	Vector vecSwingStart = pOwner->Weapon_ShootPosition();
-	Vector vecSwingEnd = vecSwingStart + vecForward * 70;
-
-
-	// only trace against objects
-
-	// See if we hit anything.
-	trace_t trace;	
-
-	CTraceFilterIgnoreTeammates filterFriendlies( this, COLLISION_GROUP_NONE, GetTeamNumber() );
-	UTIL_TraceLine(vecSwingStart, vecSwingEnd, MASK_SOLID, &filterFriendlies, &trace);
-	if ( trace.fraction >= 1.0 )
+	for ( int i = 0; i < enemyVector.Count(); ++i )
 	{
-		UTIL_TraceHull(vecSwingStart, vecSwingEnd, vecSwingMins, vecSwingMaxs, MASK_SOLID, &filterFriendlies, &trace);
-	}
+		CTFPlayer *pVictim = enemyVector[i];
 
-	// We hit, setup the smack.
-	if ( trace.fraction < 1.0f &&
-		 trace.m_pEnt &&
-		 trace.m_pEnt->IsPlayer() &&
-		 trace.m_pEnt->IsAlive() &&
-		 trace.m_pEnt->GetTeamNumber() != pOwner->GetTeamNumber() )
-	{
-		CTFPlayer *pTFPlayer = ToTFPlayer( trace.m_pEnt );
-		if (pTFPlayer)
+		if ( !pVictim->IsAlive() )
+			continue;
+
+		if ( pVictim == pOwner )
+			continue;
+
+		if ( pVictim->InSameTeam( pOwner ) )
+			continue;
+
+		if ( TFGameRules() && TFGameRules()->IsTruceActive() && pOwner->IsTruceValidForEnt() )
+			continue;
+
+		if ( ( pOwner->GetAbsOrigin()- pVictim->GetAbsOrigin() ).LengthSqr() > ( 128.f * 128.f ) )
+			continue;
+
+		if ( !pOwner->FVisible( pVictim, MASK_SOLID ) )
+			continue;
+
+		Vector vecEyes = pOwner->EyePosition();
+		Vector vecForward;
+		AngleVectors( pOwner->EyeAngles(), &vecForward );
+		CTraceFilterSimple traceFilter( this, COLLISION_GROUP_NONE );
+		const Vector vHull = Vector( 16.f, 16.f, 16.f );
+		trace_t trace;
+
+		float flDist = 50.f;
+		UTIL_TraceHull( vecEyes, vecEyes + vecForward * flDist,  -vHull, vHull, MASK_SOLID, &traceFilter, &trace );
+		
+		bool bDebug = false;
+		if ( bDebug )
 		{
-			// Play the push sound.
+			NDebugOverlay::SweptBox( vecEyes, vecEyes + vecForward * flDist, -vHull, vHull, pOwner->EyeAngles(), 255, 0, 0, 40, 5 );
+		}
+
+		if ( trace.m_pEnt && trace.m_pEnt == pVictim && trace.fraction < 1.f )
+		{
+			Vector vecToVictim = pVictim->GetAbsOrigin() - pOwner->GetAbsOrigin();
+			VectorNormalize( vecToVictim );
+			pVictim->ApplyGenericPushbackImpulse( vecToVictim * 400.f, pOwner );
+			float flDamage = 1.f;
+			CTakeDamageInfo info( pVictim, pOwner, this, flDamage, DMG_MELEE | DMG_NEVERGIB | DMG_CLUB, TF_DMG_CUSTOM_NONE );
+			CalculateMeleeDamageForce( &info, vecForward, GetAbsOrigin() + vecForward * flDist, 1.f / flDamage * 80.f );
+			pVictim->DispatchTraceAttack( info, vecForward, &trace );
+			ApplyMultiDamage();
+
+			CPVSFilter filter( vecToVictim );
 			EmitSound( "Weapon_Hands.PushImpact" );
-				
-			// We do a pathetic amount of damage.
-			CTakeDamageInfo info( pOwner, pOwner, this, 1, DMG_PREVENT_PHYSICS_FORCE );
-			pTFPlayer->TakeDamage( info );
 
-			// Set up the blast back.
-						
-			Vector vecPushDir;
-			QAngle angPushDir = pOwner->EyeAngles();
+			// Make sure we get credit for the push if the target falls to its death
+			pVictim->m_AchievementData.AddDamagerToHistory( pOwner );
 
-			// assume that shooter is looking at least 45 degrees up.
-			angPushDir[PITCH] = Min( -45.f, angPushDir[PITCH] );
-			AngleVectors( angPushDir, &vecPushDir );
-						
-			// Don't push players if they're too far off to the side. Ignore Z.
-			Vector vecVictimDir = pTFPlayer->WorldSpaceCenter() - pOwner->WorldSpaceCenter();
-
-			Vector vecVictimDir2D( vecVictimDir.x, vecVictimDir.y, 0.0f );
-			VectorNormalize( vecVictimDir2D );
-
-			Vector vecDir2D( vecPushDir.x, vecPushDir.y, 0.0f );
-			VectorNormalize( vecDir2D );
-
-			float flDot = DotProduct( vecDir2D, vecVictimDir2D );
-			if ( flDot >= 0.8 )
-			{
-				// Push enemy players.
-				pTFPlayer->SetGroundEntity(NULL);
-											
-				pTFPlayer->SetAbsVelocity(vecPushDir * 500);
-				pTFPlayer->m_Shared.AddCond(TF_COND_NO_MOVE, 0.5f);
-			}
+			break;			
 		}
 	}
 
+	pOwner->SpeakWeaponFire();
+	CTF_GameStats.Event_PlayerFiredWeapon( pOwner, IsCurrentAttackACrit() );
 
 	lagcompensation->FinishLagCompensation( pOwner );
+#else
+	C_CTF_GameStats.Event_PlayerFiredWeapon( pOwner, IsCurrentAttackACrit() );
 #endif
 }
 
@@ -243,16 +205,13 @@ void CTFHandgun_Scout_Primary::Shove( void )
 // Purpose: 
 // Input  :  - 
 //-----------------------------------------------------------------------------
-void CTFHandgun_Scout_Primary::ItemPostFrame()
+void CTFPistol_ScoutPrimary::ItemPostFrame()
 {
 	// Check for smack.
-	if (tf2v_use_shortstop_shove.GetBool())
+	if ( m_flPushTime > -1.f && gpGlobals->curtime > m_flPushTime )
 	{
-		if ( m_flPushDelay > 0 && gpGlobals->curtime > m_flPushDelay )
-		{
-			Shove();
-			m_flPushDelay = 0;
-		}
+		Push();
+		m_flPushTime = -1.f;
 	}
 
 	BaseClass::ItemPostFrame();
@@ -261,11 +220,45 @@ void CTFHandgun_Scout_Primary::ItemPostFrame()
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-bool CTFHandgun_Scout_Primary::Holster( CBaseCombatWeapon *pSwitchingTo )
+bool CTFPistol_ScoutPrimary::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
-	// Don't holster if we're waiting to shove.
-	if ( m_flPushDelay > 0 && gpGlobals->curtime <= m_flPushDelay )
-		return false;
+	m_flPushTime = -1.f;
 
 	return BaseClass::Holster( pSwitchingTo );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPistol_ScoutPrimary::Precache( void )
+{
+	PrecacheScriptSound( "Weapon_Hands.Push" );
+	PrecacheScriptSound( "Weapon_Hands.PushImpact" );
+	
+	BaseClass::Precache();
+}
+
+//============================
+
+IMPLEMENT_NETWORKCLASS_ALIASED( TFPistol_ScoutSecondary, DT_WeaponPistol_ScoutSecondary )
+
+BEGIN_NETWORK_TABLE( CTFPistol_ScoutSecondary, DT_WeaponPistol_ScoutSecondary )
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFPistol_ScoutSecondary )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tf_weapon_handgun_scout_secondary, CTFPistol_ScoutSecondary );
+PRECACHE_WEAPON_REGISTER( tf_weapon_handgun_scout_secondary );
+
+//-----------------------------------------------------------------------------
+int	CTFPistol_ScoutSecondary::GetDamageType( void ) const
+{
+	int iBackheadshot = 0;
+	CALL_ATTRIB_HOOK_INT( iBackheadshot, back_headshot );
+	if ( iBackheadshot )
+	{
+		return BaseClass::GetDamageType() | DMG_USE_HITLOCATIONS;	
+	}
+	return BaseClass::GetDamageType();
 }

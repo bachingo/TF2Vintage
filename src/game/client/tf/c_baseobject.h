@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Clients CBaseObject
 //
@@ -27,10 +27,11 @@ class C_TFPlayer;
 
 extern mstudioevent_t *GetEventIndexForSequence( mstudioseqdesc_t &seqdesc );
 
+DECLARE_AUTO_LIST( IBaseObjectAutoList );
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-DECLARE_AUTO_LIST(IBaseObjectAutoList)
 class C_BaseObject : public C_BaseCombatCharacter, public IHasBuildPoints, public ITargetIDProvidesHint, public IBaseObjectAutoList
 {
 	DECLARE_CLASS( C_BaseObject, C_BaseCombatCharacter );
@@ -53,6 +54,7 @@ public:
 	void			SetActivity( Activity act );
 	Activity		GetActivity( ) const;
 	void			SetObjectSequence( int sequence );
+	virtual void	ResetClientsideFrame( void );
 
 	virtual void	PreDataUpdate( DataUpdateType_t updateType );
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
@@ -70,10 +72,9 @@ public:
 	virtual const char	*GetIDString( void );
 	virtual bool	IsValidIDTarget( void );
 
-	virtual void	GetTargetIDString( wchar_t *sIDString, int iMaxLenInBytes );
-	virtual void	GetTargetIDDataString( wchar_t *sDataString, int iMaxLenInBytes );
+	virtual void	GetTargetIDString( OUT_Z_BYTECAP(iMaxLenInBytes) wchar_t *sIDString, int iMaxLenInBytes, bool bSpectator );
+	virtual void	GetTargetIDDataString( OUT_Z_BYTECAP(iMaxLenInBytes) wchar_t *sDataString, int iMaxLenInBytes );
 
-	void			AttemptToGoActive( void );
 	virtual bool	ShouldBeActive( void );
 	virtual void	OnGoActive( void );
 	virtual void	OnGoInactive( void );
@@ -96,7 +97,6 @@ public:
 	virtual void	RecalculateIDString( void );
 
 	int GetType() const { return m_iObjectType; }
-	int GetObjectMode() { return m_iObjectMode; }
 	bool IsOwnedByLocalPlayer() const;
 	C_TFPlayer *GetOwner();
 
@@ -107,19 +107,22 @@ public:
 	float			GetPercentageConstructed( void ) { return m_flPercentageConstructed; }
 
 	bool			IsPlacing( void ) const { return m_bPlacing; }
-	bool			IsBeingCarried(void) const { return m_bCarried; }
 	bool			IsBuilding( void ) const { return m_bBuilding; }
 	virtual bool	IsUpgrading( void ) const { return false; }
+	bool			IsCarried( void ) const { return m_bCarried; }
+
+	float			GetReversesBuildingConstructionSpeed( void );
 
 	virtual void	FinishedBuilding( void ) { return; }
 
 	virtual const char* GetStatusName() const;
-	virtual void	GetStatusText( wchar_t *pStatus, int iMaxStatusLen );
 
 	// Object Previews
 	void			HighlightBuildPoints( int flags );
 
 	bool			HasSapper( void );
+
+	bool			IsPlasmaDisabled( void );
 
 	virtual void	OnStartDisabled( void );
 	virtual void	OnEndDisabled( void );
@@ -138,11 +141,22 @@ public:
 
 	virtual BuildingHudAlert_t GetBuildingAlertLevel( void );
 
-	// Upgrades
-	int GetUpgradeLevel( void ) { return m_iUpgradeLevel; }
-	int GetUpgradeMetal( void ) { return m_iUpgradeMetal; }
+	// Upgrading
+	virtual int		GetUpgradeLevel( void ) { return m_iUpgradeLevel; }
+	int				GetUpgradeMetal( void ) { return m_iUpgradeMetal; }
+	virtual int		GetUpgradeMetalRequired( void ) { return m_iUpgradeMetalRequired; }
+	virtual void	UpgradeLevelChanged() { return; }
+	int				GetHighestUpgradeLevel( void ) { return m_iHighestUpgradeLevel; }
 
-	int GetUpgradeMetalRequired( void ) { return SENTRYGUN_UPGRADE_METAL; }
+	int				GetObjectMode( void ) const { return m_iObjectMode; }
+
+	// Shadows
+	virtual ShadowType_t ShadowCastType( void ) OVERRIDE;
+
+	// Stealth
+	virtual float	GetInvisibilityLevel( void );
+	virtual void	SetInvisibilityLevel( float flValue );
+	bool			IsEnteringOrExitingFullyInvisible( float flValue ) { return ( ( m_flInvisibilityPercent != 1.f && flValue == 1.f ) || ( m_flInvisibilityPercent == 1.f && flValue != 1.f ) ); }
 
 private:
 	void StopAnimGeneratedSounds( void );
@@ -157,16 +171,16 @@ public:
 	bool				IsBuiltOnAttachment( void ) { return m_hBuiltOnEntity.IsValid(); }
 	void				AttachObjectToObject( CBaseEntity *pEntity, int iPoint, Vector &vecOrigin );
 	CBaseObject			*GetParentObject( void );
+	CBaseEntity			*GetParentEntity( void );
 	void				SetBuildPointPassenger( int iPoint, int iPassenger );
 
 	// Build points
 	CUtlVector<BuildPoint_t>	m_BuildPoints;
 
-	bool				IsDisabled( void ) { return m_bDisabled; }
+	bool				IsDisabled( void ) { return m_bDisabled || m_bCarried; }
 
 	// Shared placement
 	bool 				VerifyCorner( const Vector &vBottomCenter, float xOffset, float yOffset );
-	bool				CalculatePlacementPos( void );
 	virtual bool		IsPlacementPosValid( void );
 	virtual float		GetNearbyObjectCheckRadius( void ) { return 30.0; }
 
@@ -192,17 +206,23 @@ public:
 
 	virtual bool TestHitboxes( const Ray_t &ray, unsigned int fContentsMask, trace_t& tr );
 
+	bool				IsMiniBuilding() { return m_bMiniBuilding; }
+	bool				IsDisposableBuilding( void ) const { return m_bDisposableBuilding; }
+
 // ITargetIDProvidesHint
 public:
 	virtual void		DisplayHintTo( C_BasePlayer *pPlayer );
 
-	// moving this to public for hud_building_status
-	bool IsMiniBuilding( void ) { return m_bMiniBuilding; }
+	virtual void		GetGlowEffectColor( float *r, float *g, float *b );
+
+	bool				IsMapPlaced( void ){ return m_bWasMapPlaced; }
 
 protected:
 	virtual void		UpdateDamageEffects( BuildingDamageLevel_t damageLevel ) {}	// default is no effects
 
 	void				UpdateDesiredBuildRotation( float flFrameTime );
+
+	bool				CalculatePlacementPos( void );
 
 protected:
 
@@ -213,6 +233,16 @@ protected:
 	BuildingDamageLevel_t m_damageLevel;
 
 	Vector m_vecBuildOrigin;
+	Vector m_vecBuildCenterOfMass;
+
+	// Upgrading
+	int				m_iUpgradeLevel;
+	int				m_iOldUpgradeLevel;
+	int				m_iUpgradeMetal;
+	int				m_iHighestUpgradeLevel;
+	int				m_iUpgradeMetalRequired;
+
+	HPARTICLEFFECT	m_hDamageEffects;
 
 private:
 	enum
@@ -240,15 +270,17 @@ private:
 	bool			m_bBuilding;
 	bool			m_bWasPlacing;
 	bool			m_bPlacing;
-	bool			m_bCarried;
-	bool			m_bWasCarried;
-	bool			m_bCarryDeploy;
-	bool			m_bMiniBuilding;
 	bool			m_bDisabled;
-	float			m_flEMPTime;
 	bool			m_bOldDisabled;
+	bool			m_bCarried;
+	bool			m_bCarryDeploy;
+	bool			m_bOldCarryDeploy;
+	bool			m_bMiniBuilding;
+	bool			m_bDisposableBuilding;
 	float			m_flPercentageConstructed;
 	EHANDLE			m_hBuiltOnEntity;
+	int				m_iObjectMode;
+	bool			m_bPlasmaDisable;
 
 	CNetworkVector( m_vecBuildMaxs );
 	CNetworkVector( m_vecBuildMins );
@@ -262,16 +294,15 @@ private:
 
 	int m_nObjectOldSequence;
 
-protected:
+	// used when calculating the placement position
+	Vector	m_vecBuildForward;
+	float	m_flBuildDistance;
 
-	int m_iUpgradeLevel;
-	int	m_iOldUpgradeLevel;
-	int m_iUpgradeMetal;
-	int m_iUpgradeMetalRequired;
-	int m_iHighestUpgradeLevel;
-	int m_iObjectMode;
-	bool m_bDisposableBuilding;
-	bool m_bWasMapPlaced;
+	// Stealth
+	float			m_flInvisibilityPercent;
+	float			m_flPrevInvisibilityPercent;
+
+	CNetworkVar( bool, m_bWasMapPlaced );
 
 private:
 	C_BaseObject( const C_BaseObject & ); // not defined, not accessible

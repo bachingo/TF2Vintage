@@ -1,15 +1,14 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 //=============================================================================
 
 #include "cbase.h"
-#include "props_shared.h"
-#include "in_buttons.h"
 #include "tf_weapon_shotgun.h"
 #include "decals.h"
 #include "tf_fx_shared.h"
+#include "takedamageinfo.h"
 #include "tf_gamerules.h"
 
 // Client specific.
@@ -18,22 +17,10 @@
 // Server specific.
 #else
 #include "tf_player.h"
-#include "tf_obj_sentrygun.h"
+#include "ilagcompensationmanager.h"
+#include "collisionutils.h"
+#include "in_buttons.h"
 #endif
-
-#if defined( CLIENT_DLL )
-extern ConVar cl_autoreload;
-#endif
-
-float AirBurstDamageForce( Vector const &vecSize, float damage, float scale )
-{
-	const float flSizeMag = vecSize.x * vecSize.y * vecSize.z;
-	const float flHullMag = 48 * 48 * 82.0;
-
-	const float flDamageForce = damage * ( flHullMag / flSizeMag ) * scale;
-
-	return Min( flDamageForce, 1000.0f );
-}
 
 extern ConVar tf2v_use_manual_sodapopper;
 
@@ -46,16 +33,35 @@ CREATE_SIMPLE_WEAPON_TABLE( TFShotgun, tf_weapon_shotgun_primary )
 CREATE_SIMPLE_WEAPON_TABLE( TFShotgun_Soldier, tf_weapon_shotgun_soldier )
 CREATE_SIMPLE_WEAPON_TABLE( TFShotgun_HWG, tf_weapon_shotgun_hwg )
 CREATE_SIMPLE_WEAPON_TABLE( TFShotgun_Pyro, tf_weapon_shotgun_pyro )
-CREATE_SIMPLE_WEAPON_TABLE( TFShotgun_Revenge, tf_weapon_sentry_revenge )
 CREATE_SIMPLE_WEAPON_TABLE( TFScatterGun, tf_weapon_scattergun )
-CREATE_SIMPLE_WEAPON_TABLE( TFPepBrawlBlaster, tf_weapon_pep_brawler_blaster)
-CREATE_SIMPLE_WEAPON_TABLE( TFSodaPopper, tf_weapon_soda_popper)
+CREATE_SIMPLE_WEAPON_TABLE( TFShotgun_Revenge, tf_weapon_sentry_revenge )
+CREATE_SIMPLE_WEAPON_TABLE( TFSodaPopper, tf_weapon_soda_popper )
+CREATE_SIMPLE_WEAPON_TABLE( TFPEPBrawlerBlaster, tf_weapon_pep_brawler_blaster )
+CREATE_SIMPLE_WEAPON_TABLE( TFShotgunBuildingRescue, tf_weapon_shotgun_building_rescue )
 
+#define SCATTERGUN_KNOCKBACK_MIN_DMG		30.0f
+#define SCATTERGUN_KNOCKBACK_MIN_RANGE_SQ	160000.0f //400x400
 //=============================================================================
 //
 // Weapon Shotgun functions.
 //
+bool CanScatterGunKnockBack( CTFWeaponBase *pWeapon, float flDamage, float flDistanceSq )
+{
+	int nBulletKnockBack = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nBulletKnockBack, set_scattergun_has_knockback );
+	if ( nBulletKnockBack != 0 )
+	{
+		if (flDamage > SCATTERGUN_KNOCKBACK_MIN_DMG && flDistanceSq < SCATTERGUN_KNOCKBACK_MIN_RANGE_SQ )
+			return true;
 
+		float flKnockbackMult = 1.0f;
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flKnockbackMult, scattergun_knockback_mult );
+		if ( flKnockbackMult > 1.0f )
+			return true;
+	}
+
+	return false;
+}
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -90,406 +96,34 @@ void CTFShotgun::UpdatePunchAngles( CTFPlayer *pPlayer )
 	pPlayer->SetPunchAngle( angle );
 }
 
-//=============================================================================
-//
-// Weapon Scatter Gun functions.
-//
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFShotgun::PlayWeaponShootSound( void )
+{
+	BaseClass::PlayWeaponShootSound();
 
+	if ( TFGameRules()->GameModeUsesUpgrades() )
+	{
+		PlayUpgradedShootSound( "Weapon_Upgrade.DamageBonus" );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// CTFShotgun_Revenge
+//-----------------------------------------------------------------------------
+CTFShotgun_Revenge::CTFShotgun_Revenge()
+{
+}
 
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-CTFScatterGun::CTFScatterGun()
+void CTFShotgun_Revenge::Precache()
 {
-	m_bReloadsSingly = true;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFScatterGun::FireBullet( CTFPlayer *pPlayer )
-{
-	if ( !HasKnockback() || ( TFGameRules() && TFGameRules()->State_Get() == GR_STATE_PREROUND ) )
-	{
-		BaseClass::FireBullet( pPlayer );
-		return;
-	}
-
-	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
-	if ( !pOwner )
-		return;
-
-	if ( !( ( pOwner->GetFlags() & FL_ONGROUND ) || pOwner->m_Shared.HasRecoiled() ) )
-	{
-		pOwner->m_Shared.SetHasRecoiled( true );
-
-		pOwner->m_Shared.StunPlayer( 0.3f, 1.0f, 1.0f, TF_STUNFLAG_LIMITMOVEMENT | TF_STUNFLAG_SLOWDOWN | TF_STUNFLAG_NOSOUNDOREFFECT, NULL );
-
-	#if defined( GAME_DLL )
-		EntityMatrix matrix;
-		matrix.InitFromEntity( pOwner );
-
-		Vector vecLocalTranslation = pOwner->GetAbsOrigin() + pOwner->GetAbsVelocity();
-
-		Vector vecLocal = matrix.WorldToLocal( vecLocalTranslation );
-		vecLocal.x = -300.0f;
-
-		Vector vecVelocity = matrix.LocalToWorld( vecLocal );
-		vecVelocity -= pOwner->GetAbsOrigin();
-
-		pOwner->SetAbsVelocity( vecVelocity );
-
-		pOwner->ApplyAbsVelocityImpulse( Vector( 0, 0, 50 ) );
-		pOwner->RemoveFlag( FL_ONGROUND );
-	#endif
-	}
-
-	BaseClass::FireBullet( pPlayer );
-}
-
-#if defined( GAME_DLL )
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFScatterGun::ApplyPostOnHitAttributes( CTakeDamageInfo const &info, CTFPlayer *pVictim )
-{
-	BaseClass::ApplyPostOnHitAttributes( info, pVictim );
-
-	CTFPlayer *pAttacker = ToTFPlayer( info.GetAttacker() );
-	if ( pAttacker == NULL || pVictim == NULL )
-		return;
-
-	if ( !HasKnockback() || pVictim->m_Shared.InCond( TF_COND_MEGAHEAL ) )
-		return;
-
-	if ( pVictim->m_Shared.GetKnockbackWeaponID() >= 0 )
-		return;
-
-	Vector vecToVictim = pAttacker->WorldSpaceCenter() - pVictim->WorldSpaceCenter();
-
-	float flKnockbackMult = 1.0f;
-	CALL_ATTRIB_HOOK_FLOAT( flKnockbackMult, scattergun_knockback_mult );
-
-	// This check is a bit open ended and broad
-	if ( ( info.GetDamage() <= 30.0f || vecToVictim.LengthSqr() > Square( 400.0f ) ) && flKnockbackMult < 1.0f )
-		return;
-
-	vecToVictim.NormalizeInPlace();
-
-	float flDmgForce = AirBurstDamageForce( pVictim->WorldAlignSize(), info.GetDamage(), flKnockbackMult );
-	Vector vecVelocityImpulse = vecToVictim * abs( flDmgForce );
-
-	pVictim->ApplyAirBlastImpulse( vecVelocityImpulse );
-	pVictim->m_Shared.StunPlayer( 0.3f, 1.0f, 1.0f, TF_STUNFLAG_SLOWDOWN | TF_STUNFLAG_LIMITMOVEMENT, pAttacker );
-
-	pVictim->m_Shared.SetKnockbackWeaponID( pAttacker->GetUserID() );
-}
-#endif
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFScatterGun::Equip( CBaseCombatCharacter *pEquipTo )
-{
-	if ( pEquipTo )
-	{
-		CTFPlayer *pOwner = ToTFPlayer( pEquipTo );
-		if ( pOwner )
-		{
-		#if defined( CLIENT_DLL )
-			m_bAutoReload = cl_autoreload.GetBool();
-		#else
-			m_bAutoReload = pOwner->ShouldAutoReload();
-		#endif
-		}
-	}
-
-	if ( IsDoubleBarrel() )
-	{
-		m_bReloadsSingly = false;
-		m_bAutoReload = false;
-	}
-
-	BaseClass::Equip( pEquipTo );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFScatterGun::FinishReload()
-{
-	// Finish with the regular code if we're not the Double Barrel.
-	if ( !UsesClipsForAmmo1() || !IsDoubleBarrel() )
-	{
-		BaseClass::FinishReload();
-		return;
-	}
-	
-	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
-	if ( !pOwner )
-		return;
-
-	// Double Barrels replenish all their clip at once.
-	m_iClip1 += Min( GetMaxClip1() - m_iClip1, pOwner->GetAmmoCount( m_iPrimaryAmmoType ) );
-
-	// Downside to the double barrel is that they will discard any bullets, even unfired ones.
-	if ( !BaseClass::IsEnergyWeapon() )
-		pOwner->RemoveAmmo( GetMaxClip1(), m_iPrimaryAmmoType );
-
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFScatterGun::SendWeaponAnim( int iActivity )
-{
-	if ( GetTFPlayerOwner() && IsDoubleBarrel() )
-	{
-		switch ( iActivity )
-		{
-			case ACT_VM_DRAW:
-				iActivity = ACT_ITEM2_VM_DRAW;
-				break;
-			case ACT_VM_HOLSTER:
-				iActivity = ACT_ITEM2_VM_HOLSTER;
-				break;
-			case ACT_VM_IDLE:
-				iActivity = ACT_ITEM2_VM_IDLE;
-				break;
-			case ACT_VM_PULLBACK:
-				iActivity = ACT_ITEM2_VM_PULLBACK;
-				break;
-			case ACT_VM_PRIMARYATTACK:
-				iActivity = ACT_ITEM2_VM_PRIMARYATTACK;
-				break;
-			case ACT_VM_SECONDARYATTACK:
-				iActivity = ACT_ITEM2_VM_SECONDARYATTACK;
-				break;
-			case ACT_VM_RELOAD:
-				iActivity = ACT_ITEM2_VM_RELOAD;
-				break;
-			case ACT_VM_DRYFIRE:
-				iActivity = ACT_ITEM2_VM_DRYFIRE;
-				break;
-			case ACT_VM_IDLE_TO_LOWERED:
-				iActivity = ACT_ITEM2_VM_IDLE_TO_LOWERED;
-				break;
-			case ACT_VM_IDLE_LOWERED:
-				iActivity = ACT_ITEM2_VM_IDLE_LOWERED;
-				break;
-			case ACT_VM_LOWERED_TO_IDLE:
-				iActivity = ACT_ITEM2_VM_LOWERED_TO_IDLE;
-				break;
-			default:
-				return BaseClass::SendWeaponAnim( iActivity );
-		}
-	}
-
-	return BaseClass::SendWeaponAnim( iActivity );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFScatterGun::HasKnockback() const
-{
-	int nScatterGunHasKnockback = 0;
-	CALL_ATTRIB_HOOK_INT( nScatterGunHasKnockback, set_scattergun_has_knockback );
-	return nScatterGunHasKnockback == 1;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFScatterGun::IsDoubleBarrel() const
-{
-	int nScatterGunNoReloadSingle = 0;
-	CALL_ATTRIB_HOOK_INT(nScatterGunNoReloadSingle, set_scattergun_no_reload_single );
-	return nScatterGunNoReloadSingle == 1;
-}
-
-
-//=============================================================================
-//
-// Weapon Shotgun Revenge functions.
-//
-
-CTFShotgun_Revenge::CTFShotgun_Revenge()
-{
-	m_bReloadsSingly = true;
-}
-
-#if defined( CLIENT_DLL )
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-int CTFShotgun_Revenge::GetWorldModelIndex( void )
-{
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if ( pOwner && pOwner->IsAlive() )
-	{
-		if ( pOwner->IsPlayerClass( TF_CLASS_ENGINEER ) && pOwner->m_Shared.InCond( TF_COND_TAUNTING ) )
-			return modelinfo->GetModelIndex( "models/player/items/engineer/guitar.mdl" );
-	}
-
-	return BaseClass::GetWorldModelIndex();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFShotgun_Revenge::SetWeaponVisible( bool visible )
-{
-	if ( !visible )
-	{
-		CTFPlayer *pOwner = GetTFPlayerOwner();
-		if ( pOwner && pOwner->IsAlive() )
-		{
-			if ( pOwner->IsPlayerClass( TF_CLASS_ENGINEER ) && pOwner->m_Shared.InCond( TF_COND_TAUNTING ) )
-			{
-				const int iModelIndex = modelinfo->GetModelIndex( "models/player/items/engineer/guitar.mdl" );
-
-				CUtlVector<breakmodel_t> list;
-
-				BuildGibList( list, iModelIndex, 1.0f, COLLISION_GROUP_NONE );
-				if ( !list.IsEmpty() )
-				{
-					QAngle vecAngles = CollisionProp()->GetCollisionAngles();
-
-					Vector vecFwd, vecRight, vecUp;
-					AngleVectors( vecAngles, &vecFwd, &vecRight, &vecUp );
-
-					Vector vecOrigin = CollisionProp()->GetCollisionOrigin();
-					vecOrigin = vecOrigin + vecFwd * 70.0f + vecUp * 10.0f;
-
-					AngularImpulse angularImpulse( RandomFloat( 0.0f, 120.0f ), RandomFloat( 0.0f, 120.0f ), 0.0 );
-
-					breakablepropparams_t params( vecOrigin, vecAngles, Vector( 0.0f, 0.0f, 200.0f ), angularImpulse );
-
-					CreateGibsFromList( list, iModelIndex, NULL, params, NULL, -1, false, true );
-				}
-			}
-
-		}
-	}
-	BaseClass::SetWeaponVisible( visible );
-}
-#endif
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFShotgun_Revenge::PrimaryAttack( void )
-{
-	if ( !CanAttack() )
-		return;
-
-	BaseClass::PrimaryAttack();
-
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-	
-	if ( pOwner && pOwner->IsAlive() )
-	{
-		pOwner->m_Shared.DeductRevengeCrit();
-
-		if ( !pOwner->m_Shared.HasRevengeCrits() )
-			pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-int CTFShotgun_Revenge::GetCustomDamageType( void ) const
-{
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if ( pOwner && pOwner->m_Shared.HasRevengeCrits() )
-		return TF_DMG_CUSTOM_SHOTGUN_REVENGE_CRIT;
-
-	return TF_DMG_CUSTOM_NONE;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFShotgun_Revenge::Deploy( void )
-{
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if ( pOwner && BaseClass::Deploy() )
-	{
-		if ( pOwner->m_Shared.HasRevengeCrits() )
-			pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );
-
-		return true;
-	}
-
-	return false;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFShotgun_Revenge::Holster( CBaseCombatWeapon *pSwitchTo )
-{
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if ( pOwner && BaseClass::Holster( pSwitchTo ) )
-	{
-		pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );
-
-		return true;
-	}
-
-	return false;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFShotgun_Revenge::Detach( void )
-{
-	BaseClass::Detach();
-}
-
-#if defined( GAME_DLL )
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFShotgun_Revenge::OnSentryKilled( CObjectSentrygun *pSentry )
-{
-	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
-	if ( pOwner == nullptr )
-		return;
-	
-	if ( CanGetRevengeCrits() )
-	{
-		int nRevengeCrits = Min( pOwner->m_Shared.GetRevengeCritCount() + pSentry->GetAssists() + ( pSentry->GetKills() * 2 ), TF_WEAPON_MAX_REVENGE );
-
-		pOwner->m_Shared.SetRevengeCritCount(nRevengeCrits);
-	
-		if ( pOwner && pOwner->GetActiveWeapon() == this )
-		{
-			if ( pOwner->m_Shared.HasRevengeCrits() )
-			{
-				if ( !pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON ) )
-					pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );
-			}
-			else
-			{
-				if ( pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON ) )
-					pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );
-			}
-		}
-	}
-}
-#endif
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFShotgun_Revenge::Precache( void )
-{
-	int iMdlIndex = PrecacheModel( "models/player/items/engineer/guitar.mdl" );
-	PrecacheGibsForModel( iMdlIndex );
+	int iModelIndex = PrecacheModel( TF_WEAPON_TAUNT_FRONTIER_JUSTICE_GUITAR_MODEL );
+	PrecacheGibsForModel( iModelIndex );
+	PrecacheParticleSystem( "blood_impact_backscatter" );
 
 	BaseClass::Precache();
 }
@@ -497,50 +131,35 @@ void CTFShotgun_Revenge::Precache( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFShotgun_Revenge::CanGetRevengeCrits( void ) const
+void CTFShotgun_Revenge::PrimaryAttack()
 {
-	int nSentryRevenge = 0;
-	CALL_ATTRIB_HOOK_INT( nSentryRevenge, sentry_killed_revenge );
-	return nSentryRevenge == 1;
-}
+	if ( !CanAttack() )
+		return;
 
-//=============================================================================
-//
-// Weapon Soda Popper functions.
-//
+	BaseClass::PrimaryAttack();
+
+	// Do this after the attack, so that we know if we are doing custom damage
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( pOwner )
+	{
+		int iRevengeCrits = pOwner->m_Shared.GetRevengeCrits();
+		pOwner->m_Shared.SetRevengeCrits( iRevengeCrits-1 );
+	}
+}
 
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-float CTFSodaPopper::GetEffectBarProgress(void)
+void CTFShotgun_Revenge::SentryKilled( int iCrits )
 {
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-
-	if ( pOwner)
+	int val = 0;
+	CALL_ATTRIB_HOOK_INT( val, sentry_killed_revenge );
+	if ( val == 1 )
 	{
-		return pOwner->m_Shared.GetHypeMeter() / 100.0f;
-	}
-
-	return 0.0f;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Activate special ability
-//-----------------------------------------------------------------------------
-void CTFSodaPopper::SecondaryAttack(void)
-{
-	CTFPlayer *pOwner = ToTFPlayer(GetOwner());
-	if ( !pOwner )
-		return;
-
-	if ( tf2v_use_manual_sodapopper.GetBool() )
-	{
-		int nBuildsHype = 0;
-		CALL_ATTRIB_HOOK_INT( nBuildsHype, set_weapon_mode );
-		if ( nBuildsHype == 1 )
+		CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+		if ( pOwner )
 		{
-			if ( pOwner->m_Shared.GetHypeMeter() >= 100.0f )
-				pOwner->m_Shared.AddCond( TF_COND_SODAPOPPER_HYPE );
+			pOwner->m_Shared.SetRevengeCrits( pOwner->m_Shared.GetRevengeCrits() + iCrits );
 		}
 	}
 }
@@ -548,59 +167,418 @@ void CTFSodaPopper::SecondaryAttack(void)
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CTFSodaPopper::ItemBusyFrame( void )
+bool CTFShotgun_Revenge::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
+#ifdef GAME_DLL
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( pOwner && pOwner->m_Shared.GetRevengeCrits() )
+	{
+		pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
+	}
+#endif
+
+	return BaseClass::Holster( pSwitchingTo );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFShotgun_Revenge::Deploy( void )
+{
+#ifdef GAME_DLL
 	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( pOwner && pOwner->m_Shared.GetRevengeCrits() )
+	{
+		pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED );
+	}
+#endif
+
+	return BaseClass::Deploy();
+}												
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+int CTFShotgun_Revenge::GetCustomDamageType() const
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( pOwner )
+	{
+		int iRevengeCrits = pOwner->m_Shared.GetRevengeCrits();
+		return iRevengeCrits > 0 ? TF_DMG_CUSTOM_SHOTGUN_REVENGE_CRIT : TF_DMG_CUSTOM_NONE;
+	}
+	return TF_DMG_CUSTOM_NONE;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+int CTFShotgun_Revenge::GetCount( void )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( pOwner )
+	{
+		return pOwner->m_Shared.GetRevengeCrits();
+	}
+
+	return 0;
+}
+
+#ifdef CLIENT_DLL
+
+//-----------------------------------------------------------------------------
+// Purpose:
+// ----------------------------------------------------------------------------
+void CTFShotgun_Revenge::SetWeaponVisible( bool visible )
+{
+	if ( !visible )
+	{
+		CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
+		if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_TAUNTING ) && pPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_ENGINEER && pPlayer->m_Shared.GetTauntIndex() == TAUNT_BASE_WEAPON )
+		{
+			int nModelIndex = modelinfo->GetModelIndex( TF_WEAPON_TAUNT_FRONTIER_JUSTICE_GUITAR_MODEL );
+			CUtlVector<breakmodel_t> guitarGibs;
+			BuildGibList( guitarGibs, nModelIndex, 1.0f, COLLISION_GROUP_NONE );
+			if ( guitarGibs.Count() > 0 )
+			{
+				Vector vForward, vRight, vUp;
+				AngleVectors( GetAbsAngles(), &vForward, &vRight, &vUp );
+
+				Vector vecBreakVelocity = Vector(0,0,200);
+				AngularImpulse angularImpulse( RandomFloat( 0.0f, 120.0f ), RandomFloat( 0.0f, 120.0f ), 0.0 );
+				Vector vecOrigin = GetAbsOrigin() + vForward*70 + vUp*10;
+				QAngle vecAngle = GetAbsAngles();
+				breakablepropparams_t breakParams( vecOrigin, vecAngle, vecBreakVelocity, angularImpulse );
+				breakParams.impactEnergyScale = 1.0f;
+
+				CreateGibsFromList( guitarGibs, nModelIndex, NULL, breakParams, NULL, -1 , false, true );
+			}
+		}
+	}
+
+	BaseClass::SetWeaponVisible( visible );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+// ----------------------------------------------------------------------------
+int CTFShotgun_Revenge::GetWorldModelIndex( void )
+{
+	// Engineer guitar support.
+	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
+	if ( pPlayer && pPlayer->GetPlayerClass() && ( pPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_ENGINEER ) && 
+			( pPlayer->m_Shared.InCond( TF_COND_TAUNTING ) ) && ( pPlayer->m_Shared.GetTauntIndex() == TAUNT_BASE_WEAPON ) )
+	{
+		// While we are taunting, replace our normal world model with the guitar.
+		m_iWorldModelIndex = modelinfo->GetModelIndex( TF_WEAPON_TAUNT_FRONTIER_JUSTICE_GUITAR_MODEL );
+		return m_iWorldModelIndex;
+	}
+
+	return BaseClass::GetWorldModelIndex();
+}
+#endif
+
+#ifdef GAME_DLL
+//-----------------------------------------------------------------------------
+// Purpose: Reset revenge crits when the shotgun is changed
+//-----------------------------------------------------------------------------
+void CTFShotgun_Revenge::Detach( void )
+{
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( pPlayer )
+	{
+		pPlayer->m_Shared.SetRevengeCrits( 0 );
+		pPlayer->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
+	}
+
+	BaseClass::Detach();
+}
+#endif
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFScatterGun::Reload( void )
+{
+	int iWeaponMod = 0;
+	CALL_ATTRIB_HOOK_INT( iWeaponMod, set_scattergun_no_reload_single );
+	if ( iWeaponMod == 1 )
+	{
+		m_bReloadsSingly = false;
+	}
+
+	return BaseClass::Reload();
+}
+
+#define JUMP_SPEED	268.3281572999747f
+extern float AirBurstDamageForce( const Vector &size, float damage, float scale );
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFScatterGun::FireBullet( CTFPlayer *pPlayer )
+{
+#ifndef CLIENT_DLL
+	if ( HasKnockback() )
+	{
+		// Perform some knock back.
+		CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+		if ( !pOwner )
+			return;
+
+		// No knockback during pre-round freeze.
+		if ( TFGameRules() && (TFGameRules()->State_Get() == GR_STATE_PREROUND) )
+			return;
+
+		// Knock the firer back!
+		if ( !(pOwner->GetFlags() & FL_ONGROUND) && !pPlayer->m_bScattergunJump )
+		{
+			pPlayer->m_bScattergunJump = true;
+
+			pOwner->m_Shared.StunPlayer( 0.3f, 1.f, TF_STUN_MOVEMENT | TF_STUN_MOVEMENT_FORWARD_ONLY );
+
+			float flForce = AirBurstDamageForce( pOwner->WorldAlignSize(), 60, 6.f );
+
+			Vector vecForward;
+			AngleVectors( pOwner->EyeAngles(), &vecForward );
+			Vector vecForce = vecForward * -flForce;
+
+			EntityMatrix mtxPlayer;
+			mtxPlayer.InitFromEntity( pOwner );
+			Vector vecAbsVelocity = pOwner->GetAbsVelocity();
+			Vector vecAbsVelocityAsPoint = vecAbsVelocity + pOwner->GetAbsOrigin();
+			Vector vecLocalVelocity = mtxPlayer.WorldToLocal( vecAbsVelocityAsPoint );
+
+			vecLocalVelocity.x = -300;
+
+			vecAbsVelocityAsPoint = mtxPlayer.LocalToWorld( vecLocalVelocity );
+			vecAbsVelocity = vecAbsVelocityAsPoint - pOwner->GetAbsOrigin();
+			pOwner->SetAbsVelocity( vecAbsVelocity );
+
+			// Impulse an additional bit of Z push.
+			pOwner->ApplyAbsVelocityImpulse( Vector(0,0,50.f) );
+
+			// Slow player movement for a brief period of time.
+			pOwner->RemoveFlag( FL_ONGROUND );
+		}
+	}
+#endif
+
+	BaseClass::FireBullet( pPlayer );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFScatterGun::ApplyPostHitEffects( const CTakeDamageInfo &inputInfo, CTFPlayer *pPlayer )
+{
+#ifndef CLIENT_DLL
+	if ( !HasKnockback() )
+		return;
+
+	CTFPlayer *pAttacker = ToTFPlayer( inputInfo.GetAttacker() );
+	if ( !pAttacker )
+		return;
+
+	CTFPlayer *pTarget = pPlayer;
+	if ( !pTarget )
+		return;
+
+	if ( pTarget->m_Shared.GetWeaponKnockbackID() > -1 )
+		return;
+
+	if ( pTarget->m_Shared.IsImmuneToPushback() )
+		return;
+
+	float flDam = inputInfo.GetDamage();
+	Vector vecDir = pAttacker->WorldSpaceCenter() - pTarget->WorldSpaceCenter();
+	if ( !CanScatterGunKnockBack( this, flDam, vecDir.LengthSqr() ) )
+		return;
+	
+	VectorNormalize( vecDir );
+
+	float flKnockbackMult = 3.0f;
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( this, flKnockbackMult, scattergun_knockback_mult );	
+
+	float flForce = AirBurstDamageForce( pTarget->WorldAlignSize(), flDam, flKnockbackMult );
+	Vector vecForce = vecDir * -flForce;
+	vecForce.z += JUMP_SPEED;
+
+	pTarget->ApplyGenericPushbackImpulse( vecForce, pAttacker );
+
+	pTarget->m_Shared.StunPlayer( 0.3f, 1.f, TF_STUN_MOVEMENT | TF_STUN_MOVEMENT_FORWARD_ONLY, pAttacker );
+	pTarget->m_Shared.SetWeaponKnockbackID( pAttacker->GetUserID() );
+
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFScatterGun::FinishReload( void )
+{
+	CTFPlayer* pOwner = ToTFPlayer( GetOwner() );
 	if ( !pOwner )
 		return;
 
-	if ( ( pOwner->m_nButtons & IN_ATTACK2 ) )
+	if ( UsesClipsForAmmo1() && !m_bReloadsSingly )
+	{
+		int primary	= MIN( GetMaxClip1() - m_iClip1, pOwner->GetAmmoCount(m_iPrimaryAmmoType));	
+		m_iClip1 += primary;
+
+		// Takes a whole clip worth of ammo to reload, causing us to lose whatever was chambered.
+		pOwner->RemoveAmmo( GetMaxClip1(), m_iPrimaryAmmoType);
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFScatterGun::HasKnockback( void )
+{
+	int iWeaponMod = 0;
+	CALL_ATTRIB_HOOK_INT( iWeaponMod, set_scattergun_has_knockback );
+	if ( iWeaponMod == 1 )
+		return true;
+	else
+		return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Play animation appropriate to ball status.
+//-----------------------------------------------------------------------------
+bool CTFScatterGun::SendWeaponAnim( int iActivity )
+{
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( !pPlayer )
+		return BaseClass::SendWeaponAnim( iActivity );
+
+	if ( HasKnockback() )
+	{
+		// Knockback version uses a different model and animation set.
+		switch ( iActivity )
+		{
+		case ACT_VM_DRAW:
+			iActivity = ACT_ITEM2_VM_DRAW;
+			break;
+		case ACT_VM_HOLSTER:
+			iActivity = ACT_ITEM2_VM_HOLSTER;
+			break;
+		case ACT_VM_IDLE:
+			iActivity = ACT_ITEM2_VM_IDLE;
+			break;
+		case ACT_VM_PULLBACK:
+			iActivity = ACT_ITEM2_VM_PULLBACK;
+			break;
+		case ACT_VM_PRIMARYATTACK:
+			iActivity = ACT_ITEM2_VM_PRIMARYATTACK;
+			break;
+		case ACT_VM_SECONDARYATTACK:
+			iActivity = ACT_ITEM2_VM_SECONDARYATTACK;
+			break;
+		case ACT_VM_RELOAD:
+			iActivity = ACT_ITEM2_VM_RELOAD;
+			break;
+		case ACT_VM_DRYFIRE:
+			iActivity = ACT_ITEM2_VM_DRYFIRE;
+			break;
+		case ACT_VM_IDLE_TO_LOWERED:
+			iActivity = ACT_ITEM2_VM_IDLE_TO_LOWERED;
+			break;
+		case ACT_VM_IDLE_LOWERED:
+			iActivity = ACT_ITEM2_VM_IDLE_LOWERED;
+			break;
+		case ACT_VM_LOWERED_TO_IDLE:
+			iActivity = ACT_ITEM2_VM_LOWERED_TO_IDLE;
+			break;
+		default:
+			break;
+		}
+	}
+
+	return BaseClass::SendWeaponAnim( iActivity );
+}
+
+#ifdef GAME_DLL
+//-----------------------------------------------------------------------------
+void CTFScatterGun::Equip( CBaseCombatCharacter *pOwner )
+{
+	CTFPlayer *pPlayer = dynamic_cast<CTFPlayer*>( pOwner );
+	if ( pPlayer )
+	{
+		pPlayer->m_Shared.SetScoutHypeMeter( 0.0f );
+	}
+
+	BaseClass::Equip( pOwner );
+}
+#endif // GAME_DLL
+//-----------------------------------------------------------------------------
+// CTFSodaPopper
+//-----------------------------------------------------------------------------
+float CTFSodaPopper::GetProgress( void )
+{
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( !pPlayer )
+		return 0.f;
+
+	return pPlayer->m_Shared.GetScoutHypeMeter() * 0.01f;
+}
+
+//-----------------------------------------------------------------------------
+void CTFSodaPopper::ItemBusyFrame( void )
+{
+#ifdef GAME_DLL
+	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
+	if ( pOwner && pOwner->m_nButtons & IN_ATTACK2 )
+	{
+		// Check here so we can always activate buff when we want (similar to stickies)
 		SecondaryAttack();
+	}
+#endif
 
 	BaseClass::ItemBusyFrame();
 }
 
-//=============================================================================
-//
-// Weapon Pep Brawl Blaster functions.
-//
-
 //-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-float CTFPepBrawlBlaster::GetEffectBarProgress(void)
+void CTFSodaPopper::SecondaryAttack()
 {
-	CTFPlayer *pOwner = GetTFPlayerOwner();
+	CTFPlayer *pPlayer = GetTFPlayerOwner( );
+	if ( !pPlayer || pPlayer->m_Shared.IsHypeBuffed() )
+		return;
 
-	if ( pOwner)
+	if ( tf2v_use_manual_sodapopper.GetBool() )
 	{
-		return pOwner->m_Shared.GetHypeMeter() / 100.0f;
+		if ( pPlayer->m_Shared.GetScoutHypeMeter() >= 100.f )
+		{
+			pPlayer->m_Shared.AddCond( TF_COND_SODAPOPPER_HYPE );
+		}
 	}
-
-	return 0.0f;
 }
 
 //-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-float CTFPepBrawlBlaster::GetSpeedMod(void) const
+float CTFPEPBrawlerBlaster::GetProgress( void )
 {
-	if ( m_bLowered )
-		return 1.0f;
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( !pPlayer )
+		return 0.f;
 
-	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
-	if ( !pOwner )
-		return 1.0f;
+	return pPlayer->m_Shared.GetScoutHypeMeter() * 0.01f;
+}
 
-	// Check if we get boost on damage.
-	int nBoostOnDamage = 0;
-	CALL_ATTRIB_HOOK_INT( nBoostOnDamage, boost_on_damage );
-	if ( nBoostOnDamage == 0 )
-		return 1.0f;	// No boost bails.
+//-----------------------------------------------------------------------------
+float CTFShotgunBuildingRescue::GetProjectileSpeed( void )
+{
+	return RemapValClamped( 0.75f, 0.0f, 1.f, 1800, 2600 ); // Temp, if we want to ramp.
+}
 
-	// Use a linear relationship between boost level and added speed.
-	// Original speed calculation ranged from 260HU/s at 0%, to 520HU/s at 100%.
-	// This is Output = (260/100)x + 260, and then divided by input 260 to get a ratio.
-	// The max ratio is 2, so we can simplify even further to get the result below.
-	return ( ( pOwner->m_Shared.GetHypeMeter() / 100 ) + 1 );
+//-----------------------------------------------------------------------------
+float CTFShotgunBuildingRescue::GetProjectileGravity( void )
+{
+	return RemapValClamped( 0.75f, 0.0f, 1.f, 0.5f, 0.1f ); // Temp, if we want to ramp.
+}
+
+//-----------------------------------------------------------------------------
+bool CTFShotgunBuildingRescue::IsViewModelFlipped( void )
+{
+	return !BaseClass::IsViewModelFlipped(); // Invert because arrows are backwards by default.
 }

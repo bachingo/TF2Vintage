@@ -1,37 +1,34 @@
-//========= Copyright � Valve LLC, All rights reserved. =======================
-//
-// Purpose:		
-//
-// $NoKeywords: $
-//=============================================================================
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_attack_flag_defenders.h
+// Attack enemies that are preventing the flag from reaching its destination
+// Michael Booth, May 2011
+
 #ifndef TF_BOT_ATTACK_FLAG_DEFENDERS_H
 #define TF_BOT_ATTACK_FLAG_DEFENDERS_H
-#ifdef _WIN32
-#pragma once
-#endif
+
+#include "Path/NextBotPathFollow.h"
+#include "bot/behavior/tf_bot_attack.h"
 
 
-#include "NextBotBehavior.h"
-#include "behavior/tf_bot_attack.h"
-
+//-----------------------------------------------------------------------------
 class CTFBotAttackFlagDefenders : public CTFBotAttack
 {
-	DECLARE_CLASS( CTFBotAttackFlagDefenders, CTFBotAttack );
 public:
-	CTFBotAttackFlagDefenders( float duration = -1.0f );
-	virtual ~CTFBotAttackFlagDefenders() {}
+	CTFBotAttackFlagDefenders( float minDuration = -1.0f );
+	virtual ~CTFBotAttackFlagDefenders() { }
 
-	virtual const char *GetName() const OVERRIDE;
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
+	virtual const char *GetName( void ) const	{ return "AttackFlagDefenders"; }
 
 private:
-	CountdownTimer m_actionDuration;
-	CountdownTimer m_checkFlagTimer;
-	CHandle<CTFPlayer> m_hTarget;
-	PathFollower m_PathFollower;
-	CountdownTimer m_recomputePathTimer;
+	CountdownTimer m_minDurationTimer;
+	CountdownTimer m_watchFlagTimer;
+	CHandle< CTFPlayer > m_chasePlayer;
+	PathFollower m_path;
+	CountdownTimer m_repathTimer;
 };
 
-#endif
+
+#endif // TF_BOT_ATTACK_FLAG_DEFENDERS_H

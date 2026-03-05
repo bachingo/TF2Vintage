@@ -40,6 +40,7 @@ VS_OUTPUT main( const VS_INPUT v )
 	worldPos = mul( v.vPos, cModel[0] );
 	float4 projPos = mul( float4( worldPos, 1 ), cViewProj );
 	o.projPos = projPos;
+	projPos.z = dot( float4( worldPos, 1 ), cViewProjZ );
 	
 	// NOTE: CalcFog returns 1 for non-water fog, so it's ok to use fog
 	// It returns the real fog for range fog, since we do vertex fog

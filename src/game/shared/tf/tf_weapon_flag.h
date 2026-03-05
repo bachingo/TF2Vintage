@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2006, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -29,7 +29,7 @@ public:
 	DECLARE_PREDICTABLE();
 
 	CTFFlag();
-	virtual int			GetWeaponID(void) const			{ return TF_WEAPON_FLAG; }
+	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_FLAG; }
 	virtual void		SecondaryAttack();
 	bool				Deploy( void );
 

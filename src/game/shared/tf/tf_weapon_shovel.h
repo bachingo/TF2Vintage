@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -16,6 +16,13 @@
 #define CTFShovel C_TFShovel
 #endif
 
+enum shovel_weapontypes_t
+{
+	SHOVEL_STANDARD = 0,
+	SHOVEL_DAMAGE_BOOST,
+	SHOVEL_SPEED_BOOST,
+};
+
 //=============================================================================
 //
 // Shovel class.
@@ -29,32 +36,32 @@ public:
 	DECLARE_PREDICTABLE();
 
 	CTFShovel();
-	virtual int			GetWeaponID( void ) const { return TF_WEAPON_SHOVEL; }
-	virtual int			GetCustomDamageType() const;
-	virtual float		GetSpeedMod( void ) const;
-	virtual float		GetMeleeDamage( CBaseEntity *pTarget, int &iDamageType, int &iCustomDamage );
+	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_SHOVEL; }
+	virtual void	PrimaryAttack();
+
+	int				GetShovelType( void ) { int iMode = 0; CALL_ATTRIB_HOOK_INT( iMode, set_weapon_mode ); return iMode; };
+	virtual bool	HasDamageBoost( void ) { return (GetShovelType() == SHOVEL_DAMAGE_BOOST); }
+	virtual bool	HasSpeedBoost( void ) { return (GetShovelType() == SHOVEL_SPEED_BOOST); }
+	virtual void	ItemPreFrame( void ) OVERRIDE;
+	virtual float	GetMeleeDamage( CBaseEntity *pTarget, int* piDamageType, int* piCustomDamage );
+	virtual float	GetSpeedMod( void );
+
+	void			MoveSpeedThink( void );
+
+	virtual bool	Deploy( void );
+	virtual bool	Holster( CBaseCombatWeapon *pSwitchingTo );
+
+#ifndef CLIENT_DLL
+	virtual float	GetForceScale( void );
+	virtual int		GetDamageCustom();
+#endif
 
 private:
 
 	CTFShovel( const CTFShovel & ) {}
+
+	bool			m_bHolstering;
+	float			m_flLastHealthRatio;
 };
-
-// Shovel Fist, for use with SAXTON HALE.
-
-#if defined CLIENT_DLL
-#define CTFShovelFist C_TFShovelFist
-#endif
-
-class CTFShovelFist : public CTFShovel
-{
-public:
-
-	DECLARE_CLASS( CTFShovelFist, CTFShovel )
-	DECLARE_NETWORKCLASS();
-	DECLARE_PREDICTABLE();
-
-	virtual int GetWeaponID( void ) const { return TF_WEAPON_SHOVELFIST; }
-};
-
 
 #endif // TF_WEAPON_SHOVEL_H

@@ -45,8 +45,6 @@ public:
 	float GetScaleAmount( void );
 
 	void SetTileImage( bool bTile )	{ m_bTileImage = bTile; }
-	void SetHorizontalTile(bool bHorizontal){ m_bTileHorizontally = bHorizontal; }
-	void SetVerticalTile(bool bVertical){ m_bTileVertically = bVertical; }
 
 	// set the color to fill with, if no image is specified
 	void SetFillColor( Color col );
@@ -80,6 +78,7 @@ private:
 	bool m_bPositionImage;
 	bool m_bCenterImage;
 	bool m_bScaleImage;
+	int m_nScaleProportional = 0;
 	bool m_bTileImage;
 	bool m_bTileHorizontally;
 	bool m_bTileVertically;

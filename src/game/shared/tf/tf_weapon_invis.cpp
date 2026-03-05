@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -35,9 +35,9 @@ LINK_ENTITY_TO_CLASS( tf_weapon_invis, CTFWeaponInvis );
 PRECACHE_WEAPON_REGISTER( tf_weapon_invis );
 
 // Server specific.
-#ifndef CLIENT_DLL
-BEGIN_DATADESC( CTFWeaponInvis )
-END_DATADESC()
+#if !defined( CLIENT_DLL ) 
+	BEGIN_DATADESC( CTFWeaponInvis )
+	END_DATADESC()
 #endif
 
 //-----------------------------------------------------------------------------
@@ -51,114 +51,17 @@ void CTFWeaponInvis::Spawn( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Toggle state
+// Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFWeaponInvis::ActivateInvisibility( void )
+void CTFWeaponInvis::OnActiveStateChanged( int iOldState )
 {
-	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
-	if ( !pOwner )
-		return false;
+	BaseClass::OnActiveStateChanged( iOldState );
 
-	if ( pOwner->m_Shared.InCond( TF_COND_STEALTHED ) )
+	// If we are being removed, we need to remove all stealth effects from our owner
+	if ( m_iState == WEAPON_NOT_CARRIED && iOldState != WEAPON_NOT_CARRIED )
 	{
-		pOwner->m_Shared.FadeInvis( tf_spy_invis_unstealth_time.GetFloat() );
-		return true;
+		CleanupInvisibilityWatch();
 	}
-
-	float flConsumeRate = tf_spy_cloak_consume_rate.GetFloat();
-	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pOwner, flConsumeRate, mult_cloak_meter_consume_rate );
-
-	float flRegenRate = tf_spy_cloak_regen_rate.GetFloat();
-	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pOwner, flRegenRate, mult_cloak_meter_regen_rate );
-
-	pOwner->m_Shared.SetHasMotionCloak( HasMotionCloak() );
-	pOwner->m_Shared.SetCloakDrainRate( flConsumeRate );
-	pOwner->m_Shared.SetCloakRegenRate( flRegenRate );
-
-	if ( HasFeignDeath() )
-	{
-		if ( pOwner->m_Shared.IsFeignDeathReady() )
-		{
-			if ( !pOwner->m_Shared.InCond( TF_COND_STEALTHED ) )
-			{
-				pOwner->HolsterOffHandWeapon();
-
-				CBaseCombatWeapon *pWeapon = pOwner->GetActiveWeapon();
-				if ( pWeapon )
-					pWeapon->m_flNextSecondaryAttack = gpGlobals->curtime + 0.1f;
-
-				pOwner->m_Shared.SetFeignReady( false );
-				return true;
-			}
-		}
-		else if ( pOwner->m_Shared.GetSpyCloakMeter() == 100.0f )
-		{
-			pOwner->m_Shared.SetFeignReady( true );
-			pOwner->SetOffHandWeapon( this );
-			return true;
-		}
-
-		return false;
-	}
-
-	if ( pOwner->CanGoInvisible() && ( pOwner->m_Shared.GetSpyCloakMeter() > 8.0f ) )
-	{
-		pOwner->m_Shared.AddCond( TF_COND_STEALTHED );
-		return true;
-	}
-
-	return false;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFWeaponInvis::CleanUpInvisibility( void )
-{
-	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
-	if ( !pOwner )
-		return;
-
-	pOwner->m_Shared.SetFeignReady( false );
-
-	if ( pOwner->m_Shared.IsStealthed() )
-		pOwner->m_Shared.FadeInvis( tf_spy_invis_unstealth_time.GetFloat() );
-
-	pOwner->HolsterOffHandWeapon();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFWeaponInvis::HasFeignDeath( void ) const
-{
-	int nWeaponMode = 0;
-	CALL_ATTRIB_HOOK_INT( nWeaponMode, set_weapon_mode );
-	return nWeaponMode == 1;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFWeaponInvis::HasMotionCloak( void ) const
-{
-	int nWeaponMode = 0;
-	CALL_ATTRIB_HOOK_INT( nWeaponMode, set_weapon_mode );
-	return nWeaponMode == 2;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-const char* CTFWeaponInvis::GetEffectLabelText(void)
-{
-	if (HasFeignDeath())
-		return "#TF_Feign";
-	else if (HasMotionCloak())
-		return "#TF_CloakDagger";
-	
-	return "#TF_Cloak";
-	
 }
 
 //-----------------------------------------------------------------------------
@@ -167,6 +70,30 @@ const char* CTFWeaponInvis::GetEffectLabelText(void)
 void CTFWeaponInvis::HideThink( void )
 { 
 	SetWeaponVisible( false );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+const char *CTFWeaponInvis::GetViewModel( int viewmodelindex  ) const
+{
+	// Watch uses the player model as its viewmodel, because it's never seen being carried by the player
+	const CEconItemView *pItem = GetAttributeContainer()->GetItem();
+	if ( pItem->IsValid() )
+	{
+		int iClass = 0;
+		int iTeam = 0;
+		CTFPlayer *pTFPlayer = ToTFPlayer( GetOwnerEntity() );
+		if ( pTFPlayer )
+		{
+			iClass = pTFPlayer->GetPlayerClass()->GetClassIndex();
+			iTeam = pTFPlayer->GetTeamNumber();
+		}
+
+		return pItem->GetPlayerDisplayModel( iClass, iTeam );
+	}
+
+	return BaseClass::GetViewModel( viewmodelindex );
 }
 
 //-----------------------------------------------------------------------------
@@ -202,8 +129,6 @@ void CTFWeaponInvis::SetWeaponVisible( bool visible )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 bool CTFWeaponInvis::Deploy( void )
 {
 	bool b = BaseClass::Deploy();
@@ -213,8 +138,6 @@ bool CTFWeaponInvis::Deploy( void )
 	return b;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
 //-----------------------------------------------------------------------------
 bool CTFWeaponInvis::Holster( CBaseCombatWeapon *pSwitchingTo )
 { 
@@ -227,7 +150,11 @@ bool CTFWeaponInvis::Holster( CBaseCombatWeapon *pSwitchingTo )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+void CTFWeaponInvis::PrimaryAttack( void )
+{
+	// do nothing
+}
+
 //-----------------------------------------------------------------------------
 void CTFWeaponInvis::SecondaryAttack( void )
 {
@@ -235,65 +162,179 @@ void CTFWeaponInvis::SecondaryAttack( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 void CTFWeaponInvis::ItemBusyFrame( void )
 {
 	// do nothing
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: the player alt-fired or otherwise activated the functionality of
+//			the invisibility watch
 //-----------------------------------------------------------------------------
-float CTFWeaponInvis::GetEffectBarProgress( void )
+bool CTFWeaponInvis::ActivateInvisibilityWatch( void )
 {
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if ( pOwner )
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( !pOwner )
+		return false;
+
+	SetCloakRates();
+
+	bool bDoSkill = false;
+	// If we're in TF_COND_STEALTHED - which means we gave it ourselves - always remove it
+	// If we're in TF_COND_STEALTHED_USER_BUFF and we have Dead Ringer, allow it to be toggled
+	// since we're allowed to fire from stealth
+	if ( pOwner->m_Shared.InCond( TF_COND_STEALTHED ) )
 	{
-		return ( pOwner->m_Shared.GetSpyCloakMeter() / 100.0f );
+		// De-cloak.
+		float flDecloakRate = 0.0f;
+		CALL_ATTRIB_HOOK_FLOAT( flDecloakRate, mult_decloak_rate );
+		if ( flDecloakRate <= 0.0f )
+			flDecloakRate = 1.0f;
+
+		pOwner->m_Shared.FadeInvis( 1.0f );
+	}
+	else
+	{
+		if ( HasFeignDeath() )
+		{
+			if ( pOwner->m_Shared.IsFeignDeathReady() )
+			{
+				// Turn it off...
+				SetFeignDeathState( false );
+			}
+			else if ( pOwner->m_Shared.GetSpyCloakMeter() == 100.f )
+			{
+				// Turn it on...
+				SetFeignDeathState( true );
+			}
+		}
+		else if ( pOwner->CanGoInvisible() && ( pOwner->m_Shared.GetSpyCloakMeter() > 8.0f ) )	// must have over 10% cloak to start
+		{
+			// Do standard cloak.
+			pOwner->m_Shared.AddCond( TF_COND_STEALTHED, -1.f, pOwner );
+
+
+			bDoSkill = true;
+		}
 	}
 
-	return 1.0f;
+	if ( bDoSkill )
+	{
+		pOwner->m_Shared.SetNextStealthTime( gpGlobals->curtime + 0.5 );
+	}
+	else
+	{
+		pOwner->m_Shared.SetNextStealthTime( gpGlobals->curtime + 0.1 );
+	}
+
+	return bDoSkill;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: the player has changed loadouts or done something else that causes
+//			us to clean up any side effects of our watch
+//-----------------------------------------------------------------------------
+void CTFWeaponInvis::CleanupInvisibilityWatch( void )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( !pOwner )
+		return;
+
+	pOwner->m_Shared.SetFeignDeathReady( false );
+
+	if ( pOwner->m_Shared.IsStealthed() )
+	{
+		// De-cloak.
+		pOwner->m_Shared.FadeInvis( 1.0f );
+	}
+
+	pOwner->HolsterOffHandWeapon();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFWeaponInvis::SetFeignDeathState( bool bEnabled )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( !pOwner )
+		return;
+
+	if ( pOwner->m_Shared.InCond( TF_COND_GRAPPLINGHOOK ) )
+		return;
+
+	if ( bEnabled )
+	{
+		pOwner->m_Shared.SetFeignDeathReady( true );
+		pOwner->SetOffHandWeapon( this );
+		pOwner->m_Shared.SetNextStealthTime( gpGlobals->curtime + 0.5 );
+	}
+	else
+	{
+		pOwner->m_Shared.SetFeignDeathReady( false );
+		if ( !pOwner->m_Shared.InCond( TF_COND_STEALTHED ) )
+		{
+			pOwner->HolsterOffHandWeapon();
+			if ( pOwner->GetActiveWeapon() )
+			{
+				pOwner->GetActiveWeapon()->m_flNextPrimaryAttack = gpGlobals->curtime + 0.1f;
+			}
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Set the correct cloak consume & regen rates for this item.
+//-----------------------------------------------------------------------------
+void CTFWeaponInvis::SetCloakRates( void )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+
+	float fCloakConsumeRate = tf_spy_cloak_consume_rate.GetFloat();
+	float fCloakConsumeFactor = 1.0f;
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pOwner, fCloakConsumeFactor, mult_cloak_meter_consume_rate );	// Ask the owner since this attr may come from another weapon
+	
+	// This value is a inverse scale and does not match expectations on description
+	// so we subtract and invert to make it align
+	// ie 25% (0.75% in schema) makes 10seconds go to 13.3 when we want 12.5
+	// 2 - 0.75 = 1.25... 1 / 1.25 = 0.8.. Consume rate "8". 10s / 0.8 = 12.5s
+	if ( fCloakConsumeFactor < 1.0f )
+	{
+		fCloakConsumeFactor = 1.0f / (2.0f - fCloakConsumeFactor);
+	}
+	
+	pOwner->m_Shared.SetCloakConsumeRate( fCloakConsumeRate * fCloakConsumeFactor );
+
+	float fCloakRegenRate = tf_spy_cloak_regen_rate.GetFloat();
+	float fCloakRegenFactor = 1.0f;
+	CALL_ATTRIB_HOOK_FLOAT( fCloakRegenFactor, mult_cloak_meter_regen_rate );
+	pOwner->m_Shared.SetCloakRegenRate( fCloakRegenRate * fCloakRegenFactor );
 }
 
 #ifndef CLIENT_DLL
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Return the right pda panel for the watch model we're using
 //-----------------------------------------------------------------------------
 void CTFWeaponInvis::GetControlPanelInfo( int nPanelIndex, const char *&pPanelName )
 {
-	// Get the name of the viewmodel.
-	char* cViewModel = nullptr;
-	cViewModel = (char*)GetViewModel(0);
-
-	// Assume it's the default and return.
-	if (!cViewModel)
-	{
-		pPanelName = "pda_panel_spy_invis";
-		return;
-	}
-	
-	// Search the viewmodels for the following strings.
-	if (Q_stristr(cViewModel, "v_watch_pocket_spy")) // Dead Ringer
+	const char *pszViewModel = GetViewModel(0);
+	if ( Q_stristr( pszViewModel, "pocket" ) )
 	{
 		pPanelName = "pda_panel_spy_invis_pocket";
-		return;
 	}
-	else if (Q_stristr(cViewModel, "v_ttg_watch_spy")) // TTG Watch [Enthusiast's Timepiece]
+	else if ( Q_stristr( pszViewModel, "ttg_watch_spy" ) )
 	{
 		pPanelName = "pda_panel_spy_invis_pocket_ttg";
-		return;
 	}
-	else if (Q_stristr(cViewModel, "v_hm_watch"))	// Quackenbirdt
+	else if ( Q_stristr( pszViewModel, "hm_watch" ) )
 	{
 		pPanelName = "pda_panel_spy_invis_pocket_hm";
-		return;
 	}
-	else // v_watch_spy [Invis Watch], v_watch_leather_spy [Cloak and Dagger]
+	else
+	{
 		pPanelName = "pda_panel_spy_invis";
-		
-	return;
+	}
 }
 
 #endif

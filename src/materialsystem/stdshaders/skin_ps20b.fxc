@@ -1,4 +1,4 @@
-//======= Copyright © 1996-2007, Valve Corporation, All rights reserved. ======
+//======= Copyright ï¿½ 1996-2007, Valve Corporation, All rights reserved. ======
 // STATIC: "CONVERT_TO_SRGB"			"0..0"
 // STATIC: "CUBEMAP"					"0..1"
 // STATIC: "SELFILLUM"					"0..1"
@@ -17,7 +17,7 @@
 // STATIC: "BLENDTINTBYBASEALPHA"       "0..1"
 
 // DYNAMIC: "WRITEWATERFOGTODESTALPHA"  "0..1"
-// DYNAMIC: "PIXELFOGTYPE"				"0..1"
+// DYNAMIC: "PIXELFOGTYPE"				"0..2"
 // DYNAMIC: "NUM_LIGHTS"				"0..4"
 // DYNAMIC: "WRITE_DEPTH_TO_DESTALPHA"	"0..1"	[ps20b] [PC]
 // DYNAMIC: "WRITE_DEPTH_TO_DESTALPHA"	"0..0"	[ps20b] [XBOX]
@@ -26,12 +26,7 @@
 // DYNAMIC: "FLASHLIGHTSHADOWS"			"0..1"	[ps30]
 // DYNAMIC: "PHONG_USE_EXPONENT_FACTOR"	"0..0"	[ps20]
 // DYNAMIC: "PHONG_USE_EXPONENT_FACTOR"	"0..1"	[ps20b] [ps30]  [PC]
-// DYNAMIC: "CASCADED_SHADOW"			"0..1"	[ps30]
-// DYNAMIC: "UBERLIGHT"					"0..1"	[ps30]
 
-// SKIP: $CASCADED_SHADOW && $FLASHLIGHT
-
-// SKIP: $UBERLIGHT && !$FLASHLIGHT
 
 // SKIP: ($PIXELFOGTYPE == 0) && ($WRITEWATERFOGTODESTALPHA != 0)
 
@@ -90,15 +85,6 @@ const float4 g_FresnelSpecParams					: register( PSREG_FRESNEL_SPEC_PARAMS );			
 const float4 g_SpecularRimParams					: register( PSREG_SPEC_RIM_PARAMS );				// xyz are specular tint color, w is rim power
 PixelShaderLightInfo cLightInfo[3]					: register( PSREG_LIGHT_INFO_ARRAY );				// 2 registers each - 6 registers total (4th light spread across w's)
 
-#if UBERLIGHT && defined( SHADER_MODEL_PS_3_0 )
-const float3 g_vSmoothEdge0							: register( PSREG_UBERLIGHT_SMOOTH_EDGE_0 );		// ps_3_0 and up (over 32 registers)
-const float3 g_vSmoothEdge1							: register( PSREG_UBERLIGHT_SMOOTH_EDGE_1 );
-const float3 g_vSmoothOneOverWidth					: register( PSREG_UBERLIGHT_SMOOTH_EDGE_OOW );
-const float4 g_vShearRound							: register( PSREG_UBERLIGHT_SHEAR_ROUND );
-const float4 g_aAbB									: register( PSREG_UBERLIGHT_AABB );
-const float4x4 g_FlashlightWorldToLight				: register( PSREG_UBERLIGHT_WORLD_TO_LIGHT );
-#endif
-
 // TODO: give this a better name.  For now, I don't want to touch shader_constant_register_map.h since I don't want to trigger a recompile of everything...
 const float4 g_ShaderControls						: register( PSREG_CONSTANT_27 );					// x is basemap alpgha phong mask, y is 1 - blendtintbybasealpha, z is tint overlay amount, w controls "INVERTPHONGMASK"
 #define g_FlashlightPos					g_FlashlightPos_RimBoost.xyz
@@ -113,10 +99,6 @@ const float4 g_ShaderControls						: register( PSREG_CONSTANT_27 );					// x is 
 #define g_fBaseMapAlphaPhongMask		g_ShaderControls.x
 #define g_fTintReplacementControl		g_ShaderControls.z
 #define g_fInvertPhongMask				g_ShaderControls.w
-
-const float4 g_DirectionalLightMask			: register( PSREG_FLASHLIGHT_COLOR );
-const float3 g_CascadedStepData				: register( PSREG_FLASHLIGHT_TO_WORLD_TEXTURE );
-#define g_CascadedForward					g_FlashlightPos_RimBoost.xyz
 
 
 sampler BaseTextureSampler		: register( s0 );	// Base map, selfillum in alpha
@@ -146,18 +128,10 @@ struct PS_INPUT
 {
 	float4 baseTexCoordDetailTexCoord							: TEXCOORD0; // xy=base zw=detail
 	float3 lightAtten											: TEXCOORD1; // Scalar light attenuation factors for FOUR lights
-	
-#if CASCADED_SHADOW
-	float4 worldVertToEyeVector_ShadowPosX			: TEXCOORD2;
-	float4 tangentSpaceTranspose_Row0ShadowPosY		: TEXCOORD3;
-	float4 tangentSpaceTranspose_Row1ShadowPosZ		: TEXCOORD4;
-	float4 tangentSpaceTranspose_Row2ShadowPosW		: TEXCOORD5;
-#else
-	float3 worldVertToEyeVector									: TEXCOORD2;
+	float3 worldVertToEyeVectorXYZ_tangentSpaceVertToEyeVectorZ	: TEXCOORD2;
 	float3x3 tangentSpaceTranspose								: TEXCOORD3;
 	//	     second row											: TEXCOORD4;
 	//	     third row											: TEXCOORD5;
-#endif
 	float4 worldPos_atten3										: TEXCOORD6;
 	float4 projPos_fWrinkleWeight								: TEXCOORD7;
 };
@@ -208,12 +182,7 @@ float4 main( PS_INPUT i ) : COLOR
 
 	float fogFactor = CalcPixelFogFactor( PIXELFOGTYPE, g_FogParams, g_EyePos_SpecExponent.xyz, vWorldPos.xyz, vProjPos.z );
 
-#if CASCADED_SHADOW
-	float3 vEyeDir = normalize(i.worldVertToEyeVector_ShadowPosX.xyz);
-#else
-	float3 vEyeDir = normalize(i.worldVertToEyeVector);
-#endif
-
+	float3 vEyeDir = normalize(i.worldVertToEyeVectorXYZ_tangentSpaceVertToEyeVectorZ.xyz);
 	float3 vRimAmbientCubeColor = PixelShaderAmbientLight(vEyeDir, cAmbientCube);
 
 	float3 worldSpaceNormal, tangentSpaceNormal;
@@ -234,16 +203,8 @@ float4 main( PS_INPUT i ) : COLOR
 	fSpecMask = baseColor.a;
 #endif
 
-#if CASCADED_SHADOW
-	float3x3 tangentSpaceTranspose = float3x3(i.tangentSpaceTranspose_Row0ShadowPosY.xyz,
-		i.tangentSpaceTranspose_Row1ShadowPosZ.xyz,
-		i.tangentSpaceTranspose_Row2ShadowPosW.xyz);
-#else
-	float3x3 tangentSpaceTranspose = i.tangentSpaceTranspose;
-#endif
-
 	// We need a normal if we're doing any lighting
-	worldSpaceNormal = normalize( mul( tangentSpaceTranspose, tangentSpaceNormal ) );
+	worldSpaceNormal = normalize( mul( i.tangentSpaceTranspose, tangentSpaceNormal ) );
 
 	float fFresnelRanges = Fresnel( worldSpaceNormal, vEyeDir, g_FresnelRanges );
 	float fRimFresnel = Fresnel4( worldSpaceNormal, vEyeDir );
@@ -255,21 +216,6 @@ float4 main( PS_INPUT i ) : COLOR
 	float3 envMapColor = float3( 0.0f, 0.0f, 0.0f );
 	if( !bFlashlight )
 	{
-#if CASCADED_SHADOW
-		float3 worldVertexNormal = normalize( mul( tangentSpaceTranspose, float3( 0, 0, 1 ) ) );
-		float3 closePosition;
-		closePosition.x = i.worldVertToEyeVector_ShadowPosX.w;
-		closePosition.y = i.tangentSpaceTranspose_Row0ShadowPosY.w;
-		closePosition.z = i.tangentSpaceTranspose_Row1ShadowPosZ.w;
-		closePosition /= i.tangentSpaceTranspose_Row2ShadowPosW.w;
-		
-		float flShadow = DoCascadedShadow( ShadowDepthSampler, NormalizeRandRotSampler, worldVertexNormal,
-			g_CascadedForward, closePosition, vWorldPos, FLASHLIGHTDEPTHFILTERMODE, g_CascadedStepData,
-			vProjPos.xy / vProjPos.z, float4( 0.0005, 0.0, 0.0, 0.0 ) );
-		
-		vLightAtten *= lerp( float4( 1, 1, 1, 1 ), float4( flShadow, flShadow, flShadow, flShadow ), g_DirectionalLightMask );
-#endif
-
 		// Summation of diffuse illumination from all local lights
 		diffuseLighting = PixelShaderDoLighting( vWorldPos, worldSpaceNormal,
 			float3( 0.0f, 0.0f, 0.0f ), false, true, vLightAtten,
@@ -358,16 +304,6 @@ float4 main( PS_INPUT i ) : COLOR
 
 				// These two values are output
 				diffuseLighting, specularLighting );
-				
-				#if UBERLIGHT
-				{
-					float4 uberLightPosition = mul( float4( vWorldPos, 1.0f ), g_FlashlightWorldToLight ).yzxw;
-					float fUber = uberlight( uberLightPosition, g_vSmoothEdge0, g_vSmoothEdge1,
-									   g_vSmoothOneOverWidth, g_vShearRound.xy, g_aAbB, g_vShearRound.zw );
-					diffuseLighting *= fUber;
-					specularLighting *= fUber;
-				}			
-				#endif
 		#endif
 	}
 
@@ -395,7 +331,7 @@ float4 main( PS_INPUT i ) : COLOR
 	{
 #if ( SELFILLUMFRESNEL == 1 ) // To free up the constant register...see top of file
 		// This will apply a Fresnel term based on the vertex normal (not the per-pixel normal!) to help fake and internal glow look
-		float3 vVertexNormal = normalize( float3( tangentSpaceTranspose[0].z, tangentSpaceTranspose[1].z, tangentSpaceTranspose[2].z ) );
+		float3 vVertexNormal = normalize( float3( i.tangentSpaceTranspose[0].z, i.tangentSpaceTranspose[1].z, i.tangentSpaceTranspose[2].z ) );
 		float flSelfIllumFresnel = ( pow( saturate( dot( vVertexNormal.xyz, vEyeDir.xyz ) ), g_SelfIllumScaleBiasExpBrightness.z ) * g_SelfIllumScaleBiasExpBrightness.x ) + g_SelfIllumScaleBiasExpBrightness.y;
 		diffuseComponent = lerp( diffuseComponent, g_SelfIllumTint_and_DetailBlendFactor.rgb * albedo * g_SelfIllumScaleBiasExpBrightness.w, baseColor.a * saturate( flSelfIllumFresnel ) );
 #else

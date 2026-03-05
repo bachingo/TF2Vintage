@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2006, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 
 /* Example how to plug this into an existing shader:
 
@@ -85,7 +85,7 @@
 ==================================================================================================== */
 
 #include "BaseVSShader.h"
-#include "mathlib/VMatrix.h"
+#include "mathlib/vmatrix.h"
 #include "emissive_scroll_blended_pass_helper.h"
 #include "convar.h"
 
@@ -98,10 +98,6 @@
 #include "emissive_scroll_blended_pass_vs30.inc"
 #include "emissive_scroll_blended_pass_ps30.inc"
 #endif
-
-// NOTE: This has to be the last file included!
-#include "tier0/memdbgon.h"
-
 
 void InitParamsEmissiveScrollBlendedPass( CBaseVSShader *pShader, IMaterialVar** params, const char *pMaterialName, EmissiveScrollBlendedPassVars_t &info )
 {
@@ -128,9 +124,9 @@ void InitParamsEmissiveScrollBlendedPass( CBaseVSShader *pShader, IMaterialVar**
 void InitEmissiveScrollBlendedPass( CBaseVSShader *pShader, IMaterialVar** params, EmissiveScrollBlendedPassVars_t &info )
 {
 	// Load textures
-	pShader->LoadTexture( info.m_nBaseTexture );
+	pShader->LoadTexture( info.m_nBaseTexture, TEXTUREFLAGS_SRGB );
 	pShader->LoadTexture( info.m_nFlowTexture );
-	pShader->LoadTexture( info.m_nEmissiveTexture );
+	pShader->LoadTexture( info.m_nEmissiveTexture, TEXTUREFLAGS_SRGB );
 }
 
 void DrawEmissiveScrollBlendedPass( CBaseVSShader *pShader, IMaterialVar** params, IShaderDynamicAPI *pShaderAPI,
@@ -148,7 +144,7 @@ void DrawEmissiveScrollBlendedPass( CBaseVSShader *pShader, IMaterialVar** param
 		pShaderShadow->VertexShaderVertexFormat( flags, nTexCoordCount, NULL, userDataSize );
 
 #ifndef _X360
-		if ( !g_pHardwareConfig->SupportsShaderModel_3_0() )
+		if ( !g_pHardwareConfig->HasFastVertexTextures() )
 #endif
 		{
 			// Vertex Shader
@@ -171,8 +167,7 @@ void DrawEmissiveScrollBlendedPass( CBaseVSShader *pShader, IMaterialVar** param
 		else
 		{
 			// The vertex shader uses the vertex id stream
-			if ( g_pHardwareConfig->HasFastVertexTextures() )
-				SET_FLAGS2( MATERIAL_VAR2_USES_VERTEXID );
+			SET_FLAGS2( MATERIAL_VAR2_USES_VERTEXID );
 
 			DECLARE_STATIC_VERTEX_SHADER( emissive_scroll_blended_pass_vs30 );
 			SET_STATIC_VERTEX_SHADER( emissive_scroll_blended_pass_vs30 );
@@ -201,7 +196,7 @@ void DrawEmissiveScrollBlendedPass( CBaseVSShader *pShader, IMaterialVar** param
 		pShaderAPI->SetDefaultState();
 
 #ifndef _X360
-		if ( !g_pHardwareConfig->SupportsShaderModel_3_0() )
+		if ( !g_pHardwareConfig->HasFastVertexTextures() )
 #endif
 		{
 			// Set Vertex Shader Combos
@@ -228,14 +223,12 @@ void DrawEmissiveScrollBlendedPass( CBaseVSShader *pShader, IMaterialVar** param
 #ifndef _X360
 		else
 		{
-			const bool bHasFastVertexTextures = g_pHardwareConfig->HasFastVertexTextures();
-			if ( bHasFastVertexTextures )
-				pShader->SetHWMorphVertexShaderState( VERTEX_SHADER_SHADER_SPECIFIC_CONST_6, VERTEX_SHADER_SHADER_SPECIFIC_CONST_7, SHADER_VERTEXTEXTURE_SAMPLER0 );
+			pShader->SetHWMorphVertexShaderState( VERTEX_SHADER_SHADER_SPECIFIC_CONST_6, VERTEX_SHADER_SHADER_SPECIFIC_CONST_7, SHADER_VERTEXTEXTURE_SAMPLER0 );
 
 			// Set Vertex Shader Combos
 			DECLARE_DYNAMIC_VERTEX_SHADER( emissive_scroll_blended_pass_vs30 );
 			SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING, pShaderAPI->GetCurrentNumBones() > 0 );
-			SET_DYNAMIC_VERTEX_SHADER_COMBO( MORPHING, bHasFastVertexTextures && pShaderAPI->IsHWMorphingEnabled() );
+			SET_DYNAMIC_VERTEX_SHADER_COMBO( MORPHING, pShaderAPI->IsHWMorphingEnabled() );
 			SET_DYNAMIC_VERTEX_SHADER_COMBO( COMPRESSED_VERTS, (int)vertexCompression );
 			SET_DYNAMIC_VERTEX_SHADER( emissive_scroll_blended_pass_vs30 );
 

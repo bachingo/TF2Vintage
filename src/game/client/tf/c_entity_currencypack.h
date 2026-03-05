@@ -1,9 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
-//
-// Purpose:		
-//
-// $NoKeywords: $
-//=============================================================================
+//========= Copyright Valve Corporation, All rights reserved. ============//
 #ifndef C_ENTITY_CURRENCYPACK_H
 #define C_ENTITY_CURRENCYPACK_H
 
@@ -14,7 +9,7 @@ public:
 	DECLARE_CLIENTCLASS();
 
 	C_CurrencyPack();
-	virtual ~C_CurrencyPack();
+	~C_CurrencyPack();
 
 	virtual void OnDataChanged( DataUpdateType_t updateType ) OVERRIDE;
 	virtual void ClientThink();
@@ -24,9 +19,9 @@ private:
 	void UpdateGlowEffect( void );
 	void DestroyGlowEffect( void );
 	CGlowObject *m_pGlowEffect;
-	bool m_bShouldGlow;
+	bool m_bShouldGlowForLocalPlayer;
 
 	bool m_bDistributed;
 };
 
-#endif
+#endif // C_ENTITY_CURRENCYPACK_H

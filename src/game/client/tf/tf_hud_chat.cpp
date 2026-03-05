@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -13,11 +13,13 @@
 #include "engine/IEngineSound.h"
 #include "c_tf_team.h"
 #include "c_playerresource.h"
-#include "c_tf_playerresource.h"
 #include "c_tf_player.h"
 #include "tf_gamerules.h"
 #include "ihudlcd.h"
 #include "tf_hud_freezepanel.h"
+#if defined( REPLAY_ENABLED )
+#include "replay/ienginereplay.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -28,6 +30,108 @@ DECLARE_HUD_MESSAGE( CHudChat, SayText2 );
 DECLARE_HUD_MESSAGE( CHudChat, TextMsg );
 DECLARE_HUD_MESSAGE( CHudChat, VoiceSubtitle );
 
+extern ConVar hud_saytext_time;
+
+void RenderPartyChatMessage( const ChatMessage_t& message,
+							 RichText* pRichText,
+							 const Color& colorSystemMessage,
+							 const Color& colorPlayerName, 
+							 const Color& colorText )
+{
+	CSteamID localSteamID;
+	if ( SteamUser() )
+	{
+		localSteamID = SteamUser()->GetSteamID();
+	}
+
+	switch ( message.m_eType )
+	{
+	default:
+		Assert( !"Unknown chat message type" );
+		break;
+
+		// System messages
+	case k_eTFPartyChatType_Synthetic_MemberJoin:
+	case k_eTFPartyChatType_Synthetic_MemberLeave:
+	case k_eTFPartyChatType_Synthetic_MemberOffline:
+	case k_eTFPartyChatType_Synthetic_MemberOnline:
+	{
+		// Don't show system messages about ourselves
+		if ( localSteamID == message.m_steamID )
+			return;
+
+		const char *pSystemMessageType = nullptr;
+		switch ( message.m_eType )
+		{
+			case k_eTFPartyChatType_Synthetic_MemberJoin:
+				pSystemMessageType = "#TF_Matchmaking_PlayerJoinedPartyChat";
+				break;
+			case k_eTFPartyChatType_Synthetic_MemberLeave:
+				pSystemMessageType = "#TF_Matchmaking_PlayerLeftPartyChat";
+				break;
+			case k_eTFPartyChatType_Synthetic_MemberOffline:
+				pSystemMessageType = "#TF_Matchmaking_PlayerOfflinePartyChat";
+				break;
+			case k_eTFPartyChatType_Synthetic_MemberOnline:
+				pSystemMessageType = "#TF_Matchmaking_PlayerOnlinePartyChat";
+				break;
+		}
+
+		wchar_t wCharPlayerName[ 128 ] = { 0 };
+		GetPlayerNameForSteamID( wCharPlayerName, sizeof(wCharPlayerName), message.m_steamID );
+
+		const char *pTokenUTF8 = g_pVGuiLocalize->FindAsUTF8( pSystemMessageType );
+		const char szParam1[] = "%s1";
+		const char *pSplit = V_strstr( pTokenUTF8, szParam1 );
+		if ( !pSplit )
+		{
+			AssertMsg( false, "Missing token in localization string" );
+			return;
+		}
+
+		// Before name
+		if ( pSplit != pTokenUTF8 )
+		{
+			char szBefore[128] = { 0 };
+			V_strncpy( szBefore, pTokenUTF8, ( pSplit - pTokenUTF8 ) + 1 );
+			pRichText->InsertColorChange( colorSystemMessage );
+			pRichText->InsertString( szBefore );
+		}
+
+		// Name token
+		pRichText->InsertColorChange( colorPlayerName );
+		pRichText->InsertString( wCharPlayerName );
+
+		// After name
+		const char *pAfterSplit = ( pSplit + sizeof( szParam1 ) - 1 );
+		if ( *pAfterSplit != '\0' )
+		{
+			pRichText->InsertColorChange( colorSystemMessage );
+			pRichText->InsertString( pAfterSplit );
+		}
+	}
+	break;
+
+	case k_eTFPartyChatType_Synthetic_SendFailed:
+	{
+		const wchar_t *pToken = g_pVGuiLocalize->Find( "#TF_Matchmaking_SendFailedPartyChat" );
+		pRichText->InsertColorChange( colorSystemMessage );
+		pRichText->InsertString( pToken );
+	}
+	break;
+	case k_eTFPartyChatType_MemberChat:
+	{
+		wchar_t wCharPlayerName[ 128 ];
+		GetPlayerNameForSteamID( wCharPlayerName, sizeof(wCharPlayerName), message.m_steamID );
+		pRichText->InsertColorChange( colorPlayerName );
+		pRichText->InsertString( wCharPlayerName );
+		pRichText->InsertString( ": " );
+		pRichText->InsertColorChange( colorText );
+		pRichText->InsertString( message.m_pwszText );
+	}
+	break;
+	}
+}
 
 //=====================
 //CHudChatLine
@@ -60,12 +164,7 @@ void CHudChatInputLine::ApplySchemeSettings(vgui::IScheme *pScheme)
 	BaseClass::ApplySchemeSettings(pScheme);
 }
 
-static CHudChat *g_pTFChatHud = NULL;
-CHudChat *GetTFChatHud( void )
-{
-	Assert( g_pTFChatHud != 0 );
-	return g_pTFChatHud;
-}
+
 
 //=====================
 //CHudChat
@@ -73,10 +172,18 @@ CHudChat *GetTFChatHud( void )
 
 CHudChat::CHudChat( const char *pElementName ) : BaseClass( pElementName )
 {
+	ListenForGameEvent( "party_chat" );
 #if defined ( _X360 )
 	RegisterForRenderGroup( "mid" );
 #endif
-	g_pTFChatHud = this;
+}
+
+void CHudChat::ApplySchemeSettings( vgui::IScheme *pScheme )
+{
+	BaseClass::ApplySchemeSettings( pScheme );
+
+	m_colorPartyEvent = pScheme->GetColor( "Green", Color( 255, 255, 255, 255 ) );
+	m_colorPartyMessage = pScheme->GetColor( "Green", Color( 255, 255, 255, 255 ) );
 }
 
 void CHudChat::CreateChatInputLine( void )
@@ -102,8 +209,45 @@ void CHudChat::Init( void )
 	HOOK_HUD_MESSAGE( CHudChat, SayText2 );
 	HOOK_HUD_MESSAGE( CHudChat, TextMsg );
 	HOOK_HUD_MESSAGE( CHudChat, VoiceSubtitle );
+}
 
-	Assert( g_pTFChatHud == this );
+void CHudChat::FireGameEvent( IGameEvent *event )
+{
+	if ( FStrEq( event->GetName(), "party_chat" ) )
+	{
+		// When we get a party_chat event, someone in our party said something.  We don't want
+		// to do a chat popup if we're playing, so instead we'll pipe their message into the
+		// chat history and prepend the message with (PARTY) and give the message a distinct
+		// color.
+		CSteamID steamID = SteamIDFromDecimalString( event->GetString( "steamid", "0" ) );
+
+		auto eType = (ETFPartyChatType)event->GetInt( "type", k_eTFPartyChatType_Invalid );
+		const char *pszText = event->GetString( "text", "" );
+		wchar_t *wText = NULL;
+		int l = V_strlen( pszText );
+		int nBufSize = ( l *sizeof(wchar_t) ) + 4;
+		wText = (wchar_t *)stackalloc( nBufSize );
+		V_UTF8ToUnicode( pszText, wText, nBufSize );
+
+		// Manually insert a linebreak
+		GetChatHistory()->InsertChar( L'\n' );
+
+		// If someone said something, prepend "(PARTY)" like how we put "(TEAM)" for team messages
+		if ( eType == k_eTFPartyChatType_MemberChat )
+		{
+			GetChatHistory()->InsertColorChange( GetTextColorForClient( COLOR_NORMAL, 0 ) );
+			GetChatHistory()->InsertString( g_pVGuiLocalize->Find( "#TF_Chat_Party" ) );
+			GetChatHistory()->InsertFade( hud_saytext_time.GetFloat(), CHAT_HISTORY_IDLE_FADE_TIME );
+		}
+
+		// Put the message and fade
+		RenderPartyChatMessage( { eType, wText, steamID }, GetChatHistory(), m_colorPartyEvent, m_colorPartyMessage, m_colorPartyMessage );
+		GetChatHistory()->InsertFade( hud_saytext_time.GetFloat(), CHAT_HISTORY_IDLE_FADE_TIME );
+
+		return;
+	}
+
+	BaseClass::FireGameEvent( event );
 }
 
 //-----------------------------------------------------------------------------
@@ -112,6 +256,12 @@ void CHudChat::Init( void )
 //-----------------------------------------------------------------------------
 bool CHudChat::ShouldDraw( void )
 {
+#if defined( REPLAY_ENABLED )
+	extern IEngineClientReplay *g_pEngineClientReplay;
+	if ( g_pEngineClientReplay->IsPlayingReplayDemo() )
+		return false;
+#endif
+
 	return CHudElement::ShouldDraw();
 }
 
@@ -184,10 +334,8 @@ Color CHudChat::GetClientColor( int clientIndex )
 
 		switch ( iTeam )
 		{
-		case TF_TEAM_RED	: return pScheme->GetColor( "TFColors.ChatTextTeamRed", g_ColorRed );
-		case TF_TEAM_BLUE	: return pScheme->GetColor( "TFColors.ChatTextTeamBlue", g_ColorBlue );
-		case TF_TEAM_GREEN	: return pScheme->GetColor( "TFColors.ChatTextTeamGreen", g_ColorGreen );
-		case TF_TEAM_YELLOW	: return pScheme->GetColor( "TFColors.ChatTextTeamYellow", g_ColorYellow );
+		case TF_TEAM_RED	: return pScheme->GetColor( "TFColors.ChatTextRed", g_ColorRed );
+		case TF_TEAM_BLUE	: return pScheme->GetColor( "TFColors.ChatTextBlue", g_ColorBlue );
 		default	: return g_ColorGrey;
 		}
 	}
@@ -218,7 +366,7 @@ const char *CHudChat::GetDisplayedSubtitlePlayerName( int clientIndex )
 		pPlayer->m_Shared.GetDisguiseTeam() != pPlayer->GetTeamNumber() && 
 		!pLocalPlayer->InSameTeam( pPlayer ) )
 	{
-		C_TFPlayer *pDisguiseTarget = ToTFPlayer( pPlayer->m_Shared.GetDisguiseTarget() );
+		C_TFPlayer *pDisguiseTarget = pPlayer->m_Shared.GetDisguiseTarget();
 
 		Assert( pDisguiseTarget );
 
@@ -246,6 +394,10 @@ Color CHudChat::GetTextColorForClient( TextColor colorNum, int clientIndex )
 	Color c;
 	switch ( colorNum )
 	{
+	case COLOR_CUSTOM:
+		c = m_ColorCustom;
+		break;
+
 	case COLOR_PLAYERNAME:
 		c = GetClientColor( clientIndex );
 		break;
@@ -268,13 +420,32 @@ Color CHudChat::GetTextColorForClient( TextColor colorNum, int clientIndex )
 		}
 		break;
 
-	case COLOR_CUSTOM:
-		c = m_ColorCustom;
-		break;
-
 	default:
 		c = pScheme->GetColor( "TFColors.ChatTextYellow", GetBgColor() );
 	}
 
 	return Color( c[0], c[1], c[2], 255 );
+}
+
+int CHudChat::GetFilterFlags( void )
+{
+//=============================================================================
+// HPE_BEGIN:
+// [msmith]	We don't want to be displaying these chat messages when we're in training.
+//			This is because we don't want the player seeing when bots join etc.
+//=============================================================================
+	if ( TFGameRules() && TFGameRules()->IsInTraining() )
+		return CHAT_FILTER_PUBLICCHAT;
+//=============================================================================
+// HPE_END
+//=============================================================================
+
+	int iFlags = BaseClass::GetFilterFlags();
+
+	if ( TFGameRules() && TFGameRules()->IsInArenaMode() == true )
+	{
+		return iFlags &= ~CHAT_FILTER_TEAMCHANGE;
+	}
+	
+	return iFlags;
 }

@@ -39,11 +39,6 @@ public:
 		}
 	};
 
-	void SetSDKVersionChecker(C_SDKVersionChecker *pChecker)
-	{
-		pSDKVersionChecker = pChecker;
-	}
-
 	const char* GetKey()
 	{
 		char *szResult = (char*)malloc(sizeof(sKey));
@@ -53,7 +48,6 @@ public:
 
 private:
 	char sKey[64];
-	C_SDKVersionChecker *pSDKVersionChecker;
 };
 C_SDKVersionParser g_SDKVersionParser;
 
@@ -86,7 +80,6 @@ bool C_SDKVersionChecker::Init()
 {
 	if (!m_bInited)
 	{
-		g_SDKVersionParser.SetSDKVersionChecker(this);
 		g_SDKVersionParser.InitParser("../../appmanifest_243750.acf", true, false, true);
 		m_bInited = true;
 	}

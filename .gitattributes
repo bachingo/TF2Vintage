@@ -1,9 +1,6 @@
-creategameprojects text
-createallprojects text
+createtf2vintage text
 xcode_ccache_wrapper text
-vpc text
-vpc_linux binary
-vpc_osx binary
+vpc binary
 
 *.sh text
 *.bat text

@@ -9,9 +9,9 @@ public:
     ~RelationshipManager() = default;
 
     void Filter(std::function<bool(Relationship const&)> filter);
-    Result Count(int32_t* count);
+    Result Count(std::int32_t* count);
     Result Get(UserId userId, Relationship* relationship);
-    Result GetAt(uint32_t index, Relationship* relationship);
+    Result GetAt(std::uint32_t index, Relationship* relationship);
 
     Event<> OnRefresh;
     Event<Relationship const&> OnRelationshipUpdate;

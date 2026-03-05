@@ -1,34 +1,26 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
-//
-// Purpose:		
-//
-// $NoKeywords: $
-//=============================================================================
-#ifndef	TF_BOT_SPY_LEAVE_SPAWN_ROOM_H
-#define TF_BOT_SPY_LEAVE_SPAWN_ROOM_H
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_spy_leave_spawn_room.h
+// Assume the enemy is watching our spawn - escape it
+// Michael Booth, September 2011
 
-#include "NextBotBehavior.h"
+#ifndef TF_BOT_LEAVE_SPAWN_ROOM_H
+#define TF_BOT_LEAVE_SPAWN_ROOM_H
 
-// sizeof: 0x44
-class CTFBotSpyLeaveSpawnRoom : public Action<CTFBot>
+#include "Path/NextBotPathFollow.h"
+
+class CTFBotSpyLeaveSpawnRoom : public Action< CTFBot >
 {
 public:
-	CTFBotSpyLeaveSpawnRoom();
-	virtual ~CTFBotSpyLeaveSpawnRoom();
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
 
-	virtual const char *GetName() const OVERRIDE;
+	virtual QueryResultType ShouldAttack( const INextBot *me, const CKnownEntity *them ) const;	// should we attack "them"?
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
-
-	virtual QueryResultType ShouldAttack( const INextBot *me, const CKnownEntity *threat ) const OVERRIDE;
+	virtual const char *GetName( void ) const	{ return "SpyLeaveSpawnRoom"; };
 
 private:
-	CountdownTimer m_ctTeleport; // +0x34
-	int m_nDistance;             // +0x40
+	CountdownTimer m_waitTimer;
+	int m_attempt;
 };
 
-
-bool TeleportNearVictim( CTFBot *spy, CTFPlayer *victim, int i1 );
-
-#endif
+#endif // TF_BOT_LEAVE_SPAWN_ROOM_H

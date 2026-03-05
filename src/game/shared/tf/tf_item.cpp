@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 //
 //=============================================================================//
@@ -8,6 +8,9 @@
 
 #ifdef CLIENT_DLL
 #include "c_tf_player.h"
+
+// NVNT haptics system interface
+#include "haptics/ihaptics.h"
 #else
 #include "tf_player.h"
 #endif
@@ -20,7 +23,7 @@ END_NETWORK_TABLE()
 //-----------------------------------------------------------------------------
 // Purpose: Identifier.
 //-----------------------------------------------------------------------------
-unsigned int CTFItem::GetItemID( void )
+unsigned int CTFItem::GetItemID( void ) const
 { 
 	return TF_ITEM_UNDEFINED; 
 }
@@ -44,6 +47,12 @@ void CTFItem::PickUp( CTFPlayer *pPlayer, bool bInvisible )
 
 	// Add the item to the player's item inventory.
 	pPlayer->SetItem( this );
+	// NVNT if this is the client dll and the owner is the local
+	//  player notify the haptics system.
+#ifdef CLIENT_DLL
+	if(pPlayer->IsLocalPlayer())
+		haptics->ProcessHapticEvent(2,"Game","ctf_item_start");
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -59,6 +68,12 @@ void CTFItem::Drop( CTFPlayer *pPlayer, bool bVisible, bool bThrown /*= false*/,
 	{
 		RemoveEffects( EF_NODRAW );
 	}
+	// NVNT if this is the client dll and the owner is the local
+	//  player notify the haptics system we are dropping this item.
+#ifdef CLIENT_DLL
+	if(pPlayer->IsLocalPlayer())
+		haptics->ProcessHapticEvent(2,"Game","ctf_item_stop");
+#endif
 
 	// Clear the parent.
 	SetParent( NULL );
@@ -71,8 +86,8 @@ void CTFItem::Drop( CTFPlayer *pPlayer, bool bVisible, bool bThrown /*= false*/,
 //-----------------------------------------------------------------------------
 bool CTFItem::ShouldDraw()
 {
-	// If I'm carrying the flag, don't draw it
-	if ( GetMoveParent() == C_BasePlayer::GetLocalPlayer() && !C_BasePlayer::ShouldDrawLocalPlayer() )
+	// If I'm carrying the flag in 1st person, don't draw it
+	if ( ToTFPlayer(GetMoveParent())->InFirstPersonView() )
 		return false;
 
 	return BaseClass::ShouldDraw();
@@ -83,8 +98,11 @@ bool CTFItem::ShouldDraw()
 //-----------------------------------------------------------------------------
 ShadowType_t CTFItem::ShadowCastType()
 {
-	if ( GetMoveParent() == C_BasePlayer::GetLocalPlayer() )
+	if ( ToTFPlayer(GetMoveParent())->ShouldDrawThisPlayer() )
+	{
+		// Using the viewmodel.
 		return SHADOWS_NONE;
+	}
 
 	return BaseClass::ShadowCastType();
 }

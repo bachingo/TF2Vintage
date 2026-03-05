@@ -1,40 +1,44 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_engineer_build_sentrygun.h
+// Engineer building his Sentry gun
+// Michael Booth, May 2010
+
 #ifndef TF_BOT_ENGINEER_BUILD_SENTRYGUN_H
 #define TF_BOT_ENGINEER_BUILD_SENTRYGUN_H
-#ifdef _WIN32
-#pragma once
-#endif
 
-#include "NextBotBehavior.h"
-#include "map_entities/tf_hint_sentrygun.h"
+class CTFBotHintSentrygun;
 
 
-class CTFBotEngineerBuildSentryGun : public Action<CTFBot>
+class CTFBotEngineerBuildSentryGun : public Action< CTFBot >
 {
 public:
-	CTFBotEngineerBuildSentryGun( CTFBotHintSentrygun *hint=nullptr );
-	virtual ~CTFBotEngineerBuildSentryGun();
+	CTFBotEngineerBuildSentryGun( void );
+	CTFBotEngineerBuildSentryGun( CTFBotHintSentrygun *sentryBuildHint );
 
-	virtual const char *GetName() const OVERRIDE;
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
-	virtual ActionResult<CTFBot> OnResume( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
+	virtual ActionResult< CTFBot >	OnResume( CTFBot *me, Action< CTFBot > *interruptingAction );
+
+	virtual const char *GetName( void ) const	{ return "EngineerBuildSentryGun"; };
 
 private:
-	CountdownTimer m_shimmyTimer;
-	CountdownTimer m_fetchAmmoTimer;
-	// 004c CountdownTimer
-	CountdownTimer m_recomputePathTimer; // +0x0058
-	// 0064 CountdownTimer
-	int m_iTries;
-	PathFollower m_PathFollower;      // +0x0074
-	CHandle<CTFBotHintSentrygun> m_pHint;     // +0x4848
-	Vector m_vecTarget;               // +0x484c
-	int m_iShimmyDirection;
-	// 485c bool
-	// 4860 
-	// 4864 
-	// 4868 
+	CountdownTimer m_searchTimer;
+	CountdownTimer m_giveUpTimer;
+	CountdownTimer m_getAmmoTimer;
+	CountdownTimer m_repathTimer;
+	CountdownTimer m_buildTeleporterExitTimer;
+
+	int m_sentryTriesLeft;
+	PathFollower m_path;
+
+	CTFBotHintSentrygun *m_sentryBuildHint;
+	Vector m_sentryBuildLocation;
+
+	int m_wanderWay;
+	bool m_needToAimSentry;
+	Vector m_sentryBuildAimTarget;
 };
 
-#endif
+
+#endif // TF_BOT_ENGINEER_BUILD_SENTRYGUN_H

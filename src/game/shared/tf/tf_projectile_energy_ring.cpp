@@ -1,106 +1,85 @@
-//====== Copyright © 1996-2013, Valve Corporation, All rights reserved. ========//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: Flare used by the flaregun.
+// TF Energy Ring
 //
-//=============================================================================//
+//=============================================================================
 #include "cbase.h"
 #include "tf_projectile_energy_ring.h"
-// Client specific.
+#include "tf_weapon_raygun.h"
+
 #ifdef CLIENT_DLL
-#include "c_tf_player.h"
-#include "particles_new.h"
-#include "iefx.h"
-#include "dlight.h"
-#include "tempent.h"
+#include "c_basetempentity.h"
 #include "c_te_legacytempents.h"
-#else
-#include "tf_player.h"
-#include "tf_fx.h"
-#include "effect_dispatch_data.h"
-#include "collisionutils.h"
-#include "tf_team.h"
-#include "props.h"
-#include "tf_weapon_compound_bow.h"
+#include "c_te_effect_dispatch.h"
+#include "input.h"
+#include "c_tf_player.h"
+#include "cliententitylist.h"
 #endif
 
-#ifdef CLIENT_DLL
-extern ConVar tf2v_muzzlelight;
-#endif
-
-#define TF_WEAPON_ENERGYRING_MODEL	"models/weapons/w_models/w_drg_ball.mdl"
-#define TF_WEAPON_ENERGYRING_INTERVAL	0.15f
-
-
-ConVar tf2v_use_new_bison_damage( "tf2v_use_new_bison_damage", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes Bison's damage mechanics.", true, 0, true, 2 );
 #ifdef GAME_DLL
-ConVar tf2v_use_new_bison_speed( "tf2v_use_new_bison_speed", "0", FCVAR_NOTIFY, "Decreases Bison speed by 30%." );
+#include "tf_player.h"
+#include "tf_player_shared.h"
+#include "particle_parse.h"
+#include "tf_pumpkin_bomb.h"
+#include "halloween/merasmus/merasmus_trick_or_treat_prop.h"
+#include "tf_robot_destruction_robot.h"
+#include "tf_generic_bomb.h"
 #endif
 
+#define ENERGY_RING_DISPATCH_EFFECT			"ClientProjectile_EnergyRing"
+#define ENERGY_RING_DISPATCH_EFFECT_POMSON	"ClientProjectile_EnergyRingPomson"
+
+const char* g_pszEnergyRingModel				( "models/weapons/w_models/w_drg_ball.mdl" );
+
+const char* g_pszPomsonImpactFleshSound			( "Weapon_Pomson.ProjectileImpactWorld" );
+const char* g_pszPomsonImpactWorldSound			( "Weapon_Pomson.ProjectileImpactFlesh" );
+const char* g_pszPomsonTrailParticle			( "drg_pomson_projectile" );
+const char* g_pszPomsonTrailParticleCrit		( "drg_pomson_projectile_crit" );
+
+const char* g_pszBisonImpactFleshSound			( "Weapon_Bison.ProjectileImpactWorld" );
+const char* g_pszBisonImpactWorldSound			( "Weapon_Bison.ProjectileImpactFlesh" );
+const char* g_pszBisonTrailParticle				( "drg_bison_projectile" );
+const char* g_pszBisonTrailParticleCrit			( "drg_bison_projectile_crit" );
+												  
+const char* g_pszEnergyProjectileImpactParticle	( "drg_pomson_impact" );
 //=============================================================================
 //
-// Dragon's Fury Projectile
+// TF Energy Ring Projectile functions
 //
 
-BEGIN_DATADESC( CTFProjectile_EnergyRing )
-END_DATADESC()
-
-LINK_ENTITY_TO_CLASS( tf_projectile_energy_ring, CTFProjectile_EnergyRing );
-PRECACHE_REGISTER( tf_projectile_energy_ring );
-
 IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_EnergyRing, DT_TFProjectile_EnergyRing )
+
 BEGIN_NETWORK_TABLE( CTFProjectile_EnergyRing, DT_TFProjectile_EnergyRing )
-#ifdef GAME_DLL
-
-#else
-
-#endif
 END_NETWORK_TABLE()
 
 //-----------------------------------------------------------------------------
-// Purpose: Constructor
+LINK_ENTITY_TO_CLASS( tf_projectile_energy_ring, CTFProjectile_EnergyRing );
+PRECACHE_WEAPON_REGISTER( tf_projectile_energy_ring );
+
+short g_sModelIndexRing;
+void PrecacheRing(void *pUser)
+{
+	g_sModelIndexRing = modelinfo->GetModelIndex( g_pszEnergyRingModel );
+}
+PRECACHE_REGISTER_FN(PrecacheRing);
+
+ConVar tf2v_use_new_bison_damage( "tf2v_use_new_bison_damage", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes Bison's damage mechanics.", true, 0, true, 2 );
+#ifdef GAME_DLL
+ConVar tf_bison_tick_time( "tf_bison_tick_time", "0.025", FCVAR_CHEAT );
+ConVar tf2v_use_new_bison_speed( "tf2v_use_new_bison_speed", "0", FCVAR_NOTIFY, "Decreases Bison speed by 30%." );
+#endif
+
+
+//-----------------------------------------------------------------------------
+// Purpose:
 //-----------------------------------------------------------------------------
 CTFProjectile_EnergyRing::CTFProjectile_EnergyRing()
 {
-#ifdef CLIENT_DLL
-	m_pRing = NULL;
+	m_vecPrevPos = vec3_origin;
+
+#ifdef GAME_DLL
+	m_flLastHitTime = 0.f;
 #endif
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Destructor
-//-----------------------------------------------------------------------------
-CTFProjectile_EnergyRing::~CTFProjectile_EnergyRing()
-{
-#ifdef CLIENT_DLL
-	ParticleProp()->StopEmissionAndDestroyImmediately( m_pRing );
-	m_pRing = NULL;
-#endif
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Is used for differentiating between Bison (true) and Pomson (false) shots.
-//-----------------------------------------------------------------------------
-bool CTFProjectile_EnergyRing::UsePenetratingBeam() const
-{
-	int nPenetrate = 0;
-	CALL_ATTRIB_HOOK_INT_ON_OTHER( m_hLauncher, nPenetrate, energy_weapon_penetration );
-
-	return nPenetrate != 0;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-const char*	CTFProjectile_EnergyRing::GetTrailParticleName() const
-{
-	if ( UsePenetratingBeam() )	// Righteous Bison
-	{
-		return IsCritical() ? "drg_bison_projectile_crit" : "drg_bison_projectile_crit";
-	}
-	else // Pomson
-	{
-		return IsCritical() ? "drg_pomson_projectile_crit" : "drg_pomson_projectile";
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -108,52 +87,102 @@ const char*	CTFProjectile_EnergyRing::GetTrailParticleName() const
 //-----------------------------------------------------------------------------
 const char *CTFProjectile_EnergyRing::GetProjectileModelName( void )
 {
-	return TF_WEAPON_ENERGYRING_MODEL;
+	return g_pszEnergyRingModel;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-float CTFProjectile_EnergyRing::GetDamage( void )
+float CTFProjectile_EnergyRing::GetGravity( void )
 {
-	if ( !UsePenetratingBeam() )
-		return 60.0f;
+	return 0.f;
+}
 
-	if ( tf2v_use_new_bison_damage.GetInt() != 1 )
-		return 20.0f;
+float CTFProjectile_EnergyRing::GetInitialVelocity( void )
+{
+	return 1200.f; 
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+CTFProjectile_EnergyRing *CTFProjectile_EnergyRing::Create( CTFWeaponBaseGun *pLauncher, const Vector &vecOrigin, const QAngle& vecAngles, float fSpeed, float fGravity, 
+														    CBaseEntity *pOwner, CBaseEntity *pScorer, Vector vColor1, Vector vColor2, bool bCritical )
+{
+	CTFProjectile_EnergyRing *pRing = NULL;
 	
-	return 45.0f;
+#ifdef GAME_DLL
+	Vector vecForward, vecRight, vecUp;
+	AngleVectors( vecAngles, &vecForward, &vecRight, &vecUp );
+
+	pRing = static_cast<CTFProjectile_EnergyRing*>( CBaseEntity::Create( "tf_projectile_energy_ring", vecOrigin, vecAngles, pOwner ) );
+	if ( !pRing )
+		return NULL;
+
+	// Initialize the owner.
+	pRing->SetOwnerEntity( pOwner );
+	pRing->SetLauncher( pLauncher );
+
+	pRing->SetScorer( pScorer );
+
+	// Spawn.
+	pRing->Spawn();
+
+	Vector vecVelocity = vecForward * pRing->GetInitialVelocity();
+	pRing->SetAbsVelocity( vecVelocity );	
+
+	// Setup the initial angles.
+	QAngle angles;
+	VectorAngles( vecVelocity, angles );
+	pRing->SetAbsAngles( angles );
+
+	// Set team.
+	pRing->ChangeTeam( pOwner->GetTeamNumber() );
+
+	if ( pScorer )
+	{
+		pRing->SetTruceValidForEnt( pScorer->IsTruceValidForEnt() );
+	}
+#endif
+
+#ifdef CLIENT_DLL
+	// This is silly code to support demos when the client created its own effects
+	// for the Pomson and Righteous Bison
+	CTFRaygun* pRaygun = assert_cast< CTFRaygun* >( pLauncher );
+
+	if ( pRaygun && !pRaygun->UseNewProjectileCode() )
+	{
+		if ( pRaygun->GetWeaponID() == TF_WEAPON_DRG_POMSON )
+		{
+			pRing = static_cast<CTFProjectile_EnergyRing*>( CTFBaseProjectile::Create( "tf_projectile_energy_ring", vecOrigin, vecAngles, pOwner, 
+																					   1200.f, g_sModelIndexRing, 
+																					   ENERGY_RING_DISPATCH_EFFECT_POMSON, pScorer, bCritical, vColor1, vColor2 ) );
+		}
+		else
+		{
+			pRing = static_cast<CTFProjectile_EnergyRing*>( CTFBaseProjectile::Create( "tf_projectile_energy_ring", vecOrigin, vecAngles, pOwner, 
+																					   1200.f, g_sModelIndexRing, 
+																					   ENERGY_RING_DISPATCH_EFFECT, pScorer, bCritical, vColor1, vColor2 ) );
+		}
+
+		if ( pRing )
+		{
+			pRing->SetRenderMode( kRenderNone );
+			pRing->SetSolidFlags( FSOLID_TRIGGER | FSOLID_NOT_SOLID );
+			pRing->SetCollisionGroup( TFCOLLISION_GROUP_ROCKETS );
+		}
+	}
+#endif
+
+	return pRing;
 }
+
 
 //-----------------------------------------------------------------------------
 // Purpose:
-//-----------------------------------------------------------------------------
-void CTFProjectile_EnergyRing::Precache()
-{
-	PrecacheParticleSystem( "drg_bison_projectile" );
-	PrecacheParticleSystem( "drg_bison_projectile_crit" );
-	PrecacheParticleSystem( "drg_bison_impact" );
-
-	PrecacheScriptSound( "Weapon_Bison.ProjectileImpactWorld" );
-	PrecacheScriptSound( "Weapon_Bison.ProjectileImpactFlesh" );
-
-	PrecacheParticleSystem( "drg_pomson_projectile" );
-	PrecacheParticleSystem( "drg_pomson_projectile_crit" );
-	PrecacheParticleSystem( "drg_pomson_impact" );
-	PrecacheParticleSystem( "drg_pomson_impact_drain" );
-
-	PrecacheScriptSound( "Weapon_Pomson.DrainedVictim" );
-	PrecacheScriptSound( "Weapon_Pomson.ProjectileImpactWorld" );
-	PrecacheScriptSound( "Weapon_Pomson.ProjectileImpactFlesh" );
-
-	BaseClass::Precache();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Spawn function
 //-----------------------------------------------------------------------------
 void CTFProjectile_EnergyRing::Spawn()
-{
+{	
 	BaseClass::Spawn();
 
 	SetSolid( SOLID_BBOX );
@@ -163,289 +192,254 @@ void CTFProjectile_EnergyRing::Spawn()
 	SetCollisionGroup( TFCOLLISION_GROUP_ROCKETS );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFProjectile_EnergyRing::Precache()
+{
+	PrecacheParticleSystem( g_pszEnergyProjectileImpactParticle );
+
+	PrecacheParticleSystem( g_pszBisonTrailParticle );
+	PrecacheParticleSystem( g_pszBisonTrailParticleCrit );
+	PrecacheScriptSound( g_pszBisonImpactWorldSound );
+	PrecacheScriptSound( g_pszBisonImpactFleshSound );
+
+	PrecacheParticleSystem( g_pszPomsonTrailParticle );
+	PrecacheParticleSystem( g_pszPomsonTrailParticleCrit );
+	PrecacheScriptSound( g_pszPomsonImpactWorldSound );
+	PrecacheScriptSound( g_pszPomsonImpactFleshSound );
+
+	BaseClass::Precache();
+}
+
 #ifdef GAME_DLL
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTFProjectile_EnergyRing::ProjectileTouch( CBaseEntity *pOther )
 {
-	if ( !pOther->IsSolid() || pOther->IsSolidFlagSet( FSOLID_VOLUME_CONTENTS ) || pOther->IsSolidFlagSet( FSOLID_NOT_SOLID ) || pOther->GetCollisionGroup() == TFCOLLISION_GROUP_RESPAWNROOMS )
+	// Verify a correct "other."
+	Assert( pOther );
+	if ( !pOther || 
+		 !pOther->IsSolid() ||
+		 pOther->IsSolidFlagSet( FSOLID_VOLUME_CONTENTS ) ||
+		 ( pOther->GetCollisionGroup() == TFCOLLISION_GROUP_RESPAWNROOMS ) ||
+		 pOther->IsFuncLOD() )
+	{
 		return;
+	}
 
-	CBaseEntity *pOwner = GetOwnerEntity();
+	CBaseEntity* pOwner = GetOwnerEntity();
 	// Don't shoot ourselves
 	if ( pOwner == pOther )
 		return;
 
 	// Handle hitting skybox (disappear).
 	const trace_t *pTrace = &CBaseEntity::GetTouchTrace();
-	if( pTrace->surface.flags & SURF_SKY )
+	if ( pTrace->surface.flags & SURF_SKY )
 	{
 		UTIL_Remove( this );
 		return;
 	}
 
-	// Pass through ladders
-	if( pTrace->surface.flags & CONTENTS_LADDER )
+	// pass through ladders
+	if ( pTrace->surface.flags & CONTENTS_LADDER )
 		return;
 
-	if ( pOther->m_takedamage != DAMAGE_NO )
+	if ( !ShouldTouchNonWorldSolid( pOther, pTrace ) )
+		return;
+
+	// The stuff we collide with
+	bool bCombatEntity = pOther->IsPlayer() || 
+						 pOther->IsBaseObject() || 
+						 pOther->IsCombatCharacter() || 
+						 pOther->IsCombatItem() ||
+						 pOther->IsProjectileCollisionTarget();
+
+	if ( bCombatEntity )
 	{
-		// if the entity is on our team check if it's a player carrying a bow
-		if ( pOther->GetTeamNumber() == GetTeamNumber() )
-		{
-			CTFPlayer *pPlayer = ToTFPlayer( pOther );
-			if( pPlayer )
-			{
-				CTFCompoundBow *pBow = dynamic_cast<CTFCompoundBow *>( pPlayer->GetActiveTFWeapon() );
-				if ( pBow )
-				{
-					// Light the bow on fire.
-					pBow->LightArrow();
-				}
-			}
+		// Bison projectiles shouldn't collide with friendly things
+		if ( ShouldPenetrate() && ( pOther->InSameTeam( this ) || ( gpGlobals->curtime - m_flLastHitTime ) < tf_bison_tick_time.GetFloat() ) )
+			return;
 
-			if ( UsePenetratingBeam() )
-				return;
+		m_flLastHitTime = gpGlobals->curtime;
+
+		const int nDamage = GetDamage();
+
+		CTakeDamageInfo info( this, pOwner, GetLauncher(), nDamage, GetDamageType(), TF_DMG_CUSTOM_PLASMA );
+		info.SetReportedPosition( pOwner->GetAbsOrigin() );
+		info.SetDamagePosition( pTrace->endpos );
+
+		if ( info.GetDamageType() & DMG_CRITICAL )
+		{
+			info.SetCritType( CTakeDamageInfo::CRIT_FULL );
 		}
 
-		bool bShouldDamage = true;
-		if ( UsePenetratingBeam() )
-		{
-			// Check the players hit.
-			FOR_EACH_VEC( m_aHitEnemies, i )
-			{
-				// Is our victim, don't damage them.
-				if ( m_aHitEnemies[i].hEntity == pOther && 
-					 ( tf2v_use_new_bison_damage.GetInt() == 1 || (m_aHitEnemies[i].flLastHitTime + TF_WEAPON_ENERGYRING_INTERVAL) > gpGlobals->curtime ) )
-				{
-					bShouldDamage = false;
-					break;
-				}
-			}
-		}
+		trace_t traceAttack;
+		UTIL_TraceLine( WorldSpaceCenter(), pOther->WorldSpaceCenter(), MASK_SOLID|CONTENTS_HITBOX, this, COLLISION_GROUP_NONE, &traceAttack );
 
-		if ( bShouldDamage )
-		{
-			// Damage.
-			float flDamage = GetDamage();
-			if ( UsePenetratingBeam() )
-			{
-				// Damage done with Bison beams depends on era.
-				if ( tf2v_use_new_bison_damage.GetInt() == 1 )
-					flDamage *= pow( 0.75, m_aHitEnemies.Count() );
-			}
+		pOther->DispatchTraceAttack( info, GetAbsVelocity(), &traceAttack );
 
-			int iDamageType = GetDamageType();
+		ApplyMultiDamage();
 
-			CTakeDamageInfo info( this, pOwner, m_hLauncher, flDamage, iDamageType | DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_PLASMA );
-			info.SetReportedPosition( pOwner->GetAbsOrigin() );
+		// Get a position on whatever we hit
+		Vector vecDelta = pOther->GetAbsOrigin() - GetAbsOrigin();
+		Vector vecNormalVel = GetAbsVelocity().Normalized();
+		Vector vecNewPos = ( DotProduct( vecDelta, vecNormalVel ) * vecNormalVel ) + GetAbsOrigin();
 
-			// We collided with pOther, so try to find a place on their surface to show blood
-			trace_t trace;
-			UTIL_TraceLine( WorldSpaceCenter(), pOther->WorldSpaceCenter(), /*MASK_SOLID*/ MASK_SHOT | CONTENTS_HITBOX, this, COLLISION_GROUP_NONE, &trace );
+		PlayImpactEffects( vecNewPos, pOther->IsPlayer() );
 
-			pOther->DispatchTraceAttack( info, GetAbsVelocity(), &trace );
-
-			ApplyMultiDamage();
-
-			if ( UsePenetratingBeam() )
-			{
-				bool bExists = false;
-				FOR_EACH_VEC( m_aHitEnemies, i )
-				{
-					if ( m_aHitEnemies[i].hEntity == pOther )
-					{
-						m_aHitEnemies[i].flLastHitTime = gpGlobals->curtime;
-						bExists = true;
-					}
-				}
-
-				// Save this entity so we don't double dip damage on it.
-				if ( !bExists )
-					m_aHitEnemies.AddToTail( {pOther, gpGlobals->curtime} );
-			}
-
-			Vector vecDelta = pOther->GetAbsOrigin() - GetAbsOrigin();
-			Vector vecNormalVel = GetAbsVelocity().Normalized();
-			Vector vecNewPos = ( DotProduct( vecDelta, vecNormalVel ) * vecNormalVel ) + GetAbsOrigin();
-
-			PlayImpactEffects( vecNewPos, pOther->IsPlayer() );
-		}
-
-		// Non Penetrating: Delete the beam on the first thing we hit.
-		if ( !UsePenetratingBeam() )
-			UTIL_Remove( this );
-
-		// Penetrating: Delete the beam after hitting the 4th target, when on mid era.
-		if ( m_aHitEnemies.Count() >= 4 && tf2v_use_new_bison_damage.GetInt() == 1 )
-			UTIL_Remove( this );
-	}
-	else
-	{
-		if ( pOther->IsWorld() )
-		{
-			SetAbsVelocity( vec3_origin	);
-			AddSolidFlags( FSOLID_NOT_SOLID );
-		}
-
-		PlayImpactEffects( pTrace->endpos, false );
-
+		if ( ShouldPenetrate() )
+			return;
+		
 		UTIL_Remove( this );
+		return;
 	}
+
+	if ( pOther->IsWorld() )
+	{
+		SetAbsVelocity( vec3_origin	);
+		AddSolidFlags( FSOLID_NOT_SOLID );
+	}
+
+	PlayImpactEffects( pTrace->endpos, false );
+	
+	// Remove by default.  Fixes this entity living forever on things like doors.
+	UTIL_Remove( this );
+}
+
+void CTFProjectile_EnergyRing::ResolveFlyCollisionCustom( trace_t &trace, Vector &vecVelocity )
+{
+	PlayImpactEffects( trace.endpos, false );
+	
+	// Remove by default.  Fixes this entity living forever on things like doors.
+	UTIL_Remove( this );
 }
 
 void CTFProjectile_EnergyRing::PlayImpactEffects( const Vector& vecPos, bool bHitFlesh )
 {
-	CTFWeaponBaseGun *pWeapon = (CTFWeaponBaseGun *)m_hLauncher.Get();
-	if ( pWeapon )
+	CTFWeaponBaseGun* pTFGun = dynamic_cast< CTFWeaponBaseGun* >( GetLauncher() );
+	if ( pTFGun )
 	{
-		DispatchParticleEffect( "drg_pomson_impact", vecPos, GetAbsAngles(), pWeapon->GetEnergyWeaponColor( false ), 
-								pWeapon->GetEnergyWeaponColor( true ), true, NULL, PATTACH_ABSORIGIN );
-
-		const char *pszSound = NULL;
-		if ( UsePenetratingBeam() )
+		DispatchParticleEffect( g_pszEnergyProjectileImpactParticle, vecPos, GetAbsAngles(), pTFGun->GetParticleColor( 1 ), pTFGun->GetParticleColor( 2 ), true, NULL, 0 );
+		const char* pszSoundString = NULL;
+		if ( ShouldPenetrate() )
 		{
-			pszSound = bHitFlesh ? "Weapon_Bison.ProjectileImpactFlesh" : "Weapon_Bison.ProjectileImpactWorld";
+			pszSoundString = bHitFlesh ? g_pszBisonImpactFleshSound : g_pszBisonImpactWorldSound;
 		}
 		else
 		{
-			pszSound = bHitFlesh ? "Weapon_Pomson.ProjectileImpactFlesh" : "Weapon_Pomson.ProjectileImpactWorld";
+			pszSoundString = bHitFlesh ? g_pszPomsonImpactFleshSound : g_pszPomsonImpactWorldSound;
 		}
-		EmitSound( pszSound );
+		EmitSound( pszSoundString );
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-CTFProjectile_EnergyRing *CTFProjectile_EnergyRing::Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, CBaseEntity *pScorer )
-{
-	CTFProjectile_EnergyRing *pRing = static_cast<CTFProjectile_EnergyRing *>( CBaseEntity::CreateNoSpawn( "tf_projectile_energy_ring", vecOrigin, vecAngles, pOwner ) );
-	if ( pRing )
-	{
-		// Set team.
-		pRing->ChangeTeam( pOwner->GetTeamNumber() );
-
-		// Set scorer.
-		pRing->SetScorer( pScorer );
-
-		// Set firing weapon.
-		pRing->SetLauncher( pWeapon );
-
-		// Spawn.
-		DispatchSpawn( pRing );
-
-		// Setup the initial velocity.
-		Vector vecForward, vecRight, vecUp;
-		AngleVectors( vecAngles, &vecForward, &vecRight, &vecUp );
-
-
-		float flVelocity = 1200.0f;
-		if ( pRing->UsePenetratingBeam() && tf2v_use_new_bison_speed.GetBool() ) // New Bison speed is much slower.
-			flVelocity *= 0.7;
-		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flVelocity, mult_projectile_speed );
-
-		Vector vecVelocity = vecForward * flVelocity;
-		pRing->SetAbsVelocity( vecVelocity );
-		pRing->SetupInitialTransmittedGrenadeVelocity( vecVelocity );
-
-		// Setup the initial angles.
-		QAngle angles;
-		VectorAngles( vecVelocity, angles );
-		pRing->SetAbsAngles( angles );
-
-		float flGravity = 0.0f;
-		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flGravity, mod_rocket_gravity );
-		if ( flGravity )
-		{
-			pRing->SetMoveType( MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_CUSTOM );
-			pRing->SetGravity( flGravity );
-		}
-
-		return pRing;
-	}
-
-	return pRing;
-}
 #else
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void C_TFProjectile_EnergyRing::OnDataChanged( DataUpdateType_t updateType )
+void CTFProjectile_EnergyRing::OnDataChanged( DataUpdateType_t updateType )
 {
 	BaseClass::OnDataChanged( updateType );
 
 	if ( updateType == DATA_UPDATE_CREATED )
 	{
-		CreateTrails();
-		CreateLightEffects();
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFProjectile_EnergyRing::CreateTrails( void )
-{
-	if ( IsDormant() )
-		return;
-
-	m_pRing = ParticleProp()->Create( GetTrailParticleName(), PATTACH_ABSORIGIN_FOLLOW );
-
-	CTFWeaponBaseGun *pWeapon = (CTFWeaponBaseGun *)m_hLauncher.Get();
-	if ( pWeapon )
-	{
-		m_pRing->SetControlPoint( CUSTOM_COLOR_CP1, pWeapon->GetEnergyWeaponColor( false ) );
-		m_pRing->SetControlPoint( CUSTOM_COLOR_CP2, pWeapon->GetEnergyWeaponColor( true ) );
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFProjectile_EnergyRing::CreateLightEffects( void )
-{
-	// Handle the dynamic light
-	if ( tf2v_muzzlelight.GetBool() )
-	{
-		AddEffects( EF_DIMLIGHT );
-
-		dlight_t *dl;
-		if ( IsEffectActive( EF_DIMLIGHT ) )
+		CNewParticleEffect* pEffect = ParticleProp()->Create( GetTrailParticleName(), PATTACH_ABSORIGIN_FOLLOW );
+		CTFWeaponBaseGun* pTFGun = dynamic_cast< CTFWeaponBaseGun* >( GetLauncher() );
+		if ( pEffect && pTFGun )
 		{
-			dl = effects->CL_AllocDlight( LIGHT_INDEX_TE_DYNAMIC + index );
-			dl->origin = GetAbsOrigin();
-			switch ( GetTeamNumber() )
-			{
-				case TF_TEAM_RED:
-					if ( !IsCritical() )
-					{
-						dl->color.r = 255; dl->color.g = 30; dl->color.b = 10;
-					}
-					else
-					{
-						dl->color.r = 255; dl->color.g = 10; dl->color.b = 10;
-					}
-					break;
-
-				case TF_TEAM_BLUE:
-					if ( !IsCritical() )
-					{
-						dl->color.r = 10; dl->color.g = 30; dl->color.b = 255;
-					}
-					else
-					{
-						dl->color.r = 10; dl->color.g = 10; dl->color.b = 255;
-					}
-					break;
-			}
-			dl->radius = 256.0f;
-			dl->die = gpGlobals->curtime + 0.1;
-
-			tempents->RocketFlare( GetAbsOrigin() );
+			pEffect->SetControlPoint( CUSTOM_COLOR_CP1, pTFGun->GetParticleColor( 0 ) );
+			pEffect->SetControlPoint( CUSTOM_COLOR_CP2, pTFGun->GetParticleColor( 1 ) );
 		}
 	}
 }
+
+#endif
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CTFProjectile_EnergyRing::GetDamage()
+{
+	return ShouldPenetrate() ? 20.f : 60.f;
+}
+
+bool CTFProjectile_EnergyRing::ShouldPenetrate() const
+{
+	int iPenetrate = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( GetOwnerEntity(), iPenetrate, energy_weapon_penetration );
+
+	return iPenetrate != 0;
+}
+
+const char*	CTFProjectile_EnergyRing::GetTrailParticleName() const
+{
+	if ( ShouldPenetrate() )	// Righteous Bison
+	{
+		return IsCritical() ? g_pszBisonTrailParticleCrit : g_pszBisonTrailParticle;
+	}
+	else // Pomson
+	{
+		return IsCritical() ? g_pszPomsonTrailParticleCrit : g_pszPomsonTrailParticle;
+	}
+}
+
+
+
+//-----------------------------------------------------------------------------
+// The following is legacy code to support old demos
+//-----------------------------------------------------------------------------
+
+#ifdef CLIENT_DLL
+void CreateClientSideEnergyRing( const char* pszStandardParticle, const char* pszCritParticle, const CEffectData &data, int nFlags )
+{
+	C_BaseEntity *entity = ClientEntityList().GetBaseEntityFromHandle( data.m_hEntity );
+	if ( !entity )
+	{
+		return;
+	}
+
+	C_TFPlayer *pPlayer = dynamic_cast< C_TFPlayer * >( entity->GetOwnerEntity() );
+	if ( pPlayer )
+	{
+		C_LocalTempEntity *pRing = ClientsideProjectileCallback( data, 0.f );
+		if ( pRing )
+		{
+			bool bCritical = ( ( data.m_nDamageType & DMG_CRITICAL ) != 0 );
+			CNewParticleEffect* pEffect = pRing->AddParticleEffect( bCritical ? pszCritParticle : pszStandardParticle );
+			if ( pEffect )
+			{
+				pEffect->SetControlPoint( CUSTOM_COLOR_CP1, data.m_CustomColors.m_vecColor1 );
+				pEffect->SetControlPoint( CUSTOM_COLOR_CP2, data.m_CustomColors.m_vecColor2 );
+			}
+
+			pRing->AddEffects( EF_NOSHADOW );
+			pRing->flags = nFlags;
+			pRing->SetRenderMode( kRenderNone );
+			pRing->SetSolidFlags( FSOLID_TRIGGER | FSOLID_NOT_SOLID );
+			pRing->SetCollisionGroup( TFCOLLISION_GROUP_ROCKETS );
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Bison effect callback
+//-----------------------------------------------------------------------------
+void ClientsideProjectileRingCallback( const CEffectData &data )
+{
+	CreateClientSideEnergyRing( g_pszBisonTrailParticle, g_pszBisonTrailParticleCrit, data, FTENT_COLLIDEKILL | FTENT_COLLIDEPROPS | FTENT_ATTACHTOTARGET | FTENT_ALIGNTOMOTION | FTENT_CLIENTSIDEPARTICLES );
+}
+
+DECLARE_CLIENT_EFFECT( ENERGY_RING_DISPATCH_EFFECT, ClientsideProjectileRingCallback );
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Pomson effect callback
+//-----------------------------------------------------------------------------
+void ClientsideProjectileRingPomsonCallback( const CEffectData &data )
+{
+	CreateClientSideEnergyRing( g_pszPomsonTrailParticle, g_pszPomsonTrailParticleCrit, data, FTENT_COLLIDEALL | FTENT_USEFASTCOLLISIONS | FTENT_ATTACHTOTARGET | FTENT_ALIGNTOMOTION | FTENT_CLIENTSIDEPARTICLES );
+}
+
+DECLARE_CLIENT_EFFECT( ENERGY_RING_DISPATCH_EFFECT_POMSON, ClientsideProjectileRingPomsonCallback );
+
 #endif

@@ -1,35 +1,29 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
-//
-// Purpose:		
-//
-// $NoKeywords: $
-//=============================================================================
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// Michael Booth, September 2012
+
 #ifndef TF_BOT_MVM_ENGINEER_BUILD_SENTRYGUN_H
 #define TF_BOT_MVM_ENGINEER_BUILD_SENTRYGUN_H
 
-#include "NextBotBehavior.h"
-#include "map_entities/tf_hint_sentrygun.h"
+class CTFBotHintSentrygun;
 
-class CObjectSentrygun;
-
-class CTFBotMvMEngineerBuildSentryGun : public Action<CTFBot>
+class CTFBotMvMEngineerBuildSentryGun : public Action< CTFBot >
 {
 public:
-	CTFBotMvMEngineerBuildSentryGun( CTFBotHintSentrygun *hint );
-	virtual ~CTFBotMvMEngineerBuildSentryGun();
+	CTFBotMvMEngineerBuildSentryGun( CTFBotHintSentrygun* pSentryHint );
 
-	virtual const char *GetName() const OVERRIDE;
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
+	virtual void					OnEnd( CTFBot *me, Action< CTFBot > *nextAction );
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
-	virtual void OnEnd( CTFBot *me, Action<CTFBot> *newAction ) OVERRIDE;
+	virtual const char *GetName( void ) const	{ return "MvMEngineerBuildSentryGun"; };
 
 private:
-	CHandle<CTFBotHintSentrygun> m_hintEntity;
-	CHandle<CObjectSentrygun> m_hSentry;
-	CountdownTimer m_ctPushAway;
-	CountdownTimer m_ctRecomputePath;
-	PathFollower m_PathFollower;
+	CHandle< CTFBotHintSentrygun > m_sentryBuildHint;
+	CHandle< CObjectSentrygun > m_sentry;
+
+	CountdownTimer m_delayBuildTime;
+	CountdownTimer m_repathTimer;
+	PathFollower m_path;
 };
 
-#endif
+#endif // TF_BOT_MVM_ENGINEER_BUILD_SENTRYGUN_H

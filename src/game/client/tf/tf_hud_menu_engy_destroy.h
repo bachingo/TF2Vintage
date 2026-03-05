@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2006, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -13,10 +13,19 @@
 
 #include <vgui_controls/EditablePanel.h>
 #include <vgui_controls/Label.h>
+#include "tf_hud_menu_engy_build.h"
+#include "tf_hud_base_build_menu.h"
 
 using namespace vgui;
 
 #define ALL_BUILDINGS	-1
+#define NUM_ENGY_BUILDINGS 4
+
+enum destroymenulayouts_t
+{
+	DESTROYMENU_DEFAULT = 0,
+	DESTROYMENU_PIPBOY,
+};
 
 class CEngyDestroyMenuItem : public EditablePanel
 {
@@ -31,7 +40,7 @@ public:
 private:
 };
 
-class CHudMenuEngyDestroy : public CHudElement, public EditablePanel
+class CHudMenuEngyDestroy : public CHudBaseBuildMenu
 {
 	DECLARE_CLASS_SIMPLE( CHudMenuEngyDestroy, EditablePanel );
 
@@ -40,26 +49,30 @@ public:
 
 	virtual void	LevelInit( void );
 	virtual void	ApplySchemeSettings( IScheme *scheme );
-	virtual bool	ShouldDraw( void );
 
 	virtual void	SetVisible( bool state );
 
 	int	HudElementKeyInput( int down, ButtonCode_t keynum, const char *pszCurrentBinding );
 
-	//void RecalculateBuildingItemState( int iBuildingType = ALL_BUILDINGS );
 	virtual void	OnTick( void );
 
 	void ErrorSound( void );
 
 	virtual int GetRenderGroupPriority() { return 50; }
 
-private:
-
-	void GetBuildingIDAndModeFromSlot( int iSlot, int &iBuildingID, int &iObjectMode );
+	int			CalcCustomDestroyMenuLayout( void );
 
 private:
-	CEngyDestroyMenuItem *m_pActiveItems[4];
-	CEngyDestroyMenuItem *m_pInactiveItems[4];
+
+	void InitBuildings();
+
+	CEngyDestroyMenuItem *m_pActiveItems[NUM_ENGY_BUILDINGS];
+	CEngyDestroyMenuItem *m_pInactiveItems[NUM_ENGY_BUILDINGS];
+	CEngyDestroyMenuItem *m_pUnavailableItems[NUM_ENGY_BUILDINGS];
+
+	destroymenulayouts_t		m_iCurrentDestroyMenuLayout;
+
+	EngyConstructBuilding_t m_Buildings[NUM_ENGY_BUILDINGS];
 };
 
 #endif	// TF_HUD_MENU_ENGY_DESTROY_H

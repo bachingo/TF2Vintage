@@ -1,0 +1,19 @@
+//-----------------------------------------------------------------------------
+//	gcsdk_include.vpc
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$MacroRequired "PLATFORM"
+$MacroRequired GENERATED_PROTO_DIR
+
+$include "$SRCDIR\vpc_scripts\protobuf_builder.vpc"
+$include "$SRCDIR\gcsdk\steammessages_include.vpc"
+
+$Project
+{
+	$Folder "Link Libraries"
+	{
+		$Lib	gcsdk_sdk
+	}
+}

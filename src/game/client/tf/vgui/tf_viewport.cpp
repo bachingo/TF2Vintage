@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Client DLL VGUI2 Viewport
 //
@@ -17,7 +17,6 @@
 
 // VGUI panel includes
 #include <vgui_controls/Panel.h>
-#include <vgui_controls/AnimationController.h>
 #include <vgui/ISurface.h>
 #include <KeyValues.h>
 #include <vgui/Cursor.h>
@@ -38,7 +37,6 @@
 
 #include "vguicenterprint.h"
 #include "text_message.h"
-#include "hud_chat.h"
 #include "tf_classmenu.h"
 
 #include "tf_textwindow.h"
@@ -51,10 +49,25 @@
 #include "tf_mapinfomenu.h"
 #include "tf_roundinfo.h"
 
+#include "item_pickup_panel.h"
+#include "character_info_panel.h"
+#include "tf_hud_arena_winpanel.h"
+#include "tf_arenateammenu.h"
 #include "tf_hud_pve_winpanel.h"
+#include "hud_chat.h"
+#include "tf_giveawayitempanel.h"
+#if defined( REPLAY_ENABLED )
+#include "replay/vgui/replaybrowsermainpanel.h"
+#endif
+#include "clientmode_tf.h"
+#include "ienginevgui.h"
+#include "tf_hud_mainmenuoverride.h"
+#include "c_tf_objective_resource.h"
 
-#include "tf_overview.h"
-#include "tf_fourteamscoreboard.h"
+#include "quest_log_panel.h"
+#include "tf_matchmaking_dashboard.h"
+
+//#include "tf_overview.h"
 
 /*
 CON_COMMAND( spec_help, "Show spectator help screen")
@@ -82,6 +95,7 @@ CON_COMMAND( spec_menu, "Activates spectator menu")
 }
 */
 
+
 CON_COMMAND( showmapinfo, "Show map info panel" )
 {
 	if ( !gViewPortInterface )
@@ -97,16 +111,15 @@ CON_COMMAND( showmapinfo, "Show map info panel" )
 		{
 			// close all the other panels that could be open
 			gViewPortInterface->ShowPanel( PANEL_TEAM, false );
+			gViewPortInterface->ShowPanel( PANEL_ARENA_TEAM, false );
+			gViewPortInterface->ShowPanel( PANEL_ARENA_WIN, false );
+			gViewPortInterface->ShowPanel( PANEL_PVE_WIN, false );
 			gViewPortInterface->ShowPanel( PANEL_CLASS_RED, false );
 			gViewPortInterface->ShowPanel( PANEL_CLASS_BLUE, false );
-			gViewPortInterface->ShowPanel( PANEL_CLASS_GREEN, false );
-			gViewPortInterface->ShowPanel( PANEL_CLASS_YELLOW, false );
 			gViewPortInterface->ShowPanel( PANEL_INTRO, false );
 			gViewPortInterface->ShowPanel( PANEL_ROUNDINFO, false );
-			gViewPortInterface->ShowPanel( PANEL_ARENATEAMSELECT, false );
-			gViewPortInterface->ShowPanel( PANEL_PVE_WIN, false );
-
 			gViewPortInterface->ShowPanel( PANEL_MAPINFO, true );
+			gViewPortInterface->ShowPanel( PANEL_GIVEAWAY_ITEM, false );
 		}
 	}
 }
@@ -119,11 +132,11 @@ CON_COMMAND( changeteam, "Choose a new team" )
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 
 	// don't let the player open the team menu themselves until they're on a team
-	if ( pPlayer && ( pPlayer->GetTeamNumber() != TEAM_UNASSIGNED ) )
+	if ( pPlayer && pPlayer->CanShowTeamMenu() )
 	{
-		if ( TFGameRules()->IsInArenaMode() && tf_arena_use_queue.GetBool() )
+		if ( TFGameRules()->IsInArenaMode() == true && tf_arena_use_queue.GetBool() == true )
 		{
-			gViewPortInterface->ShowPanel( PANEL_ARENATEAMSELECT, true );
+			gViewPortInterface->ShowPanel( PANEL_ARENA_TEAM, true );
 		}
 		else
 		{
@@ -141,33 +154,39 @@ CON_COMMAND( changeclass, "Choose a new class" )
 
 	if ( pPlayer && pPlayer->CanShowClassMenu() )
 	{
-		if ( TFGameRules() )
+		if ( TFGameRules() && TFGameRules()->IsInArenaMode() && pPlayer->IsAlive() == true )
 		{
-			if ( TFGameRules()->IsInArenaMode() && pPlayer->IsAlive() )
+			if ( pPlayer->GetTeamNumber() > LAST_SHARED_TEAM && ( tf_arena_force_class.GetBool() == true || TFGameRules()->InStalemate() == true ) )
 			{
-				if ( pPlayer->GetTeamNumber() > TEAM_SPECTATOR && ( tf_arena_force_class.GetBool() || TFGameRules()->InStalemate() ) )
-				{
-					CHudChat *pChat = GET_HUDELEMENT( CHudChat );
-					if ( pChat )
-					{
-						char msg[100];
-						g_pVGuiLocalize->ConvertUnicodeToANSI( g_pVGuiLocalize->Find( "#TF_Arena_NoClassChange" ), msg, sizeof( msg ) );
+				CBaseHudChat *pHUDChat = (CBaseHudChat *)GET_HUDELEMENT( CHudChat );
 
-						pChat->ChatPrintf( pPlayer->entindex(), CHAT_FILTER_NONE, "%s ", msg );
-					}
+				if ( pHUDChat )
+				{
+					char szLocalized[100];
+					g_pVGuiLocalize->ConvertUnicodeToANSI( g_pVGuiLocalize->Find( "#TF_Arena_NoClassChange" ), szLocalized, sizeof(szLocalized) );
+
+					pHUDChat->ChatPrintf( pPlayer->entindex(), CHAT_FILTER_NONE, "%s ", szLocalized );
 				}
+
+				return;
 			}
+		}
 
-			if ( TFGameRules()->IsMannVsMachineMode() && !TFGameRules()->InSetup() )
+		if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() )
+		{
+			if ( !TFGameRules()->InSetup() )
 			{
-				CHudChat *pChat = GET_HUDELEMENT( CHudChat );
-				if ( pChat )
-				{
-					char msg[100];
-					g_pVGuiLocalize->ConvertUnicodeToANSI( g_pVGuiLocalize->Find( "#TF_MVM_NoClassChangeAfterSetup" ), msg, sizeof( msg ) );
+				CBaseHudChat *pHUDChat = (CBaseHudChat *)GET_HUDELEMENT( CHudChat );
 
-					pChat->ChatPrintf( pPlayer->entindex(), CHAT_FILTER_NONE, "%s ", msg );
+				if ( pHUDChat )
+				{
+					char szLocalized[100];
+					g_pVGuiLocalize->ConvertUnicodeToANSI( g_pVGuiLocalize->Find( "#TF_MVM_NoClassChangeAfterSetup" ), szLocalized, sizeof(szLocalized) );
+
+					pHUDChat->ChatPrintf( pPlayer->entindex(), CHAT_FILTER_NONE, "%s ", szLocalized );
 				}
+
+				return;
 			}
 		}
 
@@ -179,11 +198,13 @@ CON_COMMAND( changeclass, "Choose a new class" )
 		case TF_TEAM_BLUE:
 			gViewPortInterface->ShowPanel( PANEL_CLASS_BLUE, true );
 			break;
-		case TF_TEAM_GREEN:
-			gViewPortInterface->ShowPanel( PANEL_CLASS_GREEN, true );
-			break;
-		case TF_TEAM_YELLOW:
-			gViewPortInterface->ShowPanel( PANEL_CLASS_YELLOW, true );
+		case TEAM_SPECTATOR:
+			{
+				if( TFGameRules() && TFGameRules()->IsInArenaMode() == true && tf_arena_use_queue.GetBool() == true )
+				{
+					gViewPortInterface->ShowPanel( PANEL_CLASS_BLUE, true );
+				}
+			}
 			break;
 		default:
 			break;
@@ -218,6 +239,13 @@ TFViewport::TFViewport()
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+TFViewport::~TFViewport()
+{
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: called when the VGUI subsystem starts up
 //			Creates the sub panels and initialises them
 //-----------------------------------------------------------------------------
@@ -237,13 +265,14 @@ void TFViewport::ApplySchemeSettings( vgui::IScheme *pScheme )
 	// Precache some font characters for the 360
  	if ( IsX360() || CommandLine()->CheckParm( "-precachefontchars" ) || CommandLine()->CheckParm( "-precachefontintlchars" ) )
  	{
- 		wchar_t const *pAllChars = L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789,.!:";
- 		wchar_t const *pNumbers = L"0123456789";
+ 		const wchar_t *pAllChars = L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789,.!:";
+ 		const wchar_t *pNumbers = L"0123456789";
+		// Try some tricky characters and some international characters with accents, etc.
+		static const wchar_t IntlChars[] = { 'a', 'b', 'c', 'i', 'o', 'y', 'A', 'B', 'C', 0xbf, 0xc1, 0xd1, 0xd3, 0x00 };
 
-		static wchar_t const IntlChars[] ={'a', 'b', 'c', 'i', 'o', 'y', 'A', 'B', 'C', 0xbf, 0xc1, 0xd1, 0xd3, 0x00};
 		if ( CommandLine()->CheckParm( "-precachefontintlchars" ) )
 			pAllChars = IntlChars;
- 
+
  		vgui::surface()->PrecacheFontCharacters( pScheme->GetFont( "ScoreboardTeamName" ), pAllChars );
  		vgui::surface()->PrecacheFontCharacters( pScheme->GetFont( "ScoreboardMedium" ), pAllChars );
  		vgui::surface()->PrecacheFontCharacters( pScheme->GetFont( "ScoreboardSmall" ), pAllChars );
@@ -309,25 +338,29 @@ IViewPortPanel* TFViewport::CreatePanelByName(const char *szPanelName)
 	{
 		newpanel = new CTFClassMenu_Blue( this );	
 	}
-	else if ( Q_strcmp( PANEL_CLASS_GREEN, szPanelName ) == 0)
-	{
-		newpanel = new CTFClassMenu_Green(this);
-	}
-	else if ( Q_strcmp( PANEL_CLASS_YELLOW, szPanelName ) == 0)
-	{
-		newpanel = new CTFClassMenu_Yellow(this);
-	}
 	else if ( Q_strcmp( PANEL_INTRO, szPanelName ) == 0 )
 	{
 		newpanel = new CTFIntroMenu( this );
 	}
-	else if ( Q_strcmp( PANEL_ARENATEAMSELECT, szPanelName ) == 0 )
+	else if ( Q_strcmp( PANEL_ARENA_TEAM, szPanelName ) == 0 )
 	{
 		newpanel = new CTFArenaTeamMenu( this );
+	}
+	else if ( Q_strcmp( PANEL_ARENA_WIN, szPanelName ) == 0 )
+	{
+		newpanel = new CTFArenaWinPanel( this );
 	}
 	else if ( Q_strcmp( PANEL_PVE_WIN, szPanelName ) == 0 )
 	{
 		newpanel = new CTFPVEWinPanel( this );
+	}
+	else if ( Q_strcmp( PANEL_GIVEAWAY_ITEM, szPanelName ) == 0 )
+	{
+		newpanel = new CTFGiveawayItemPanel( this );
+	}
+	else if ( Q_strcmp( PANEL_MAINMENUOVERRIDE, szPanelName ) == 0 )
+	{
+		newpanel = new CHudMainMenuOverride( this );
 	}
 	else
 	{
@@ -344,12 +377,19 @@ void TFViewport::CreateDefaultPanels( void )
 	AddNewPanel( CreatePanelByName( PANEL_TEAM ), "PANEL_TEAM" );
 	AddNewPanel( CreatePanelByName( PANEL_CLASS_RED ), "PANEL_CLASS_RED" );
 	AddNewPanel( CreatePanelByName( PANEL_CLASS_BLUE ), "PANEL_CLASS_BLUE" );
-	AddNewPanel( CreatePanelByName( PANEL_CLASS_GREEN ), "PANEL_CLASS_GREEN" );
-	AddNewPanel( CreatePanelByName( PANEL_CLASS_YELLOW ), "PANEL_CLASS_YELLOW" );
 	AddNewPanel( CreatePanelByName( PANEL_INTRO ), "PANEL_INTRO" );
 	AddNewPanel( CreatePanelByName( PANEL_ROUNDINFO ), "PANEL_ROUNDINFO" );
-	AddNewPanel( CreatePanelByName( PANEL_ARENATEAMSELECT ), "PANEL_ARENATEAMSELECT" );
-	AddNewPanel( CreatePanelByName( PANEL_PVE_WIN ), "PANEL_PVEWIN" );
+	AddNewPanel( CreatePanelByName( PANEL_ARENA_WIN ), "PANEL_ARENA_WIN" );
+	AddNewPanel( CreatePanelByName( PANEL_ARENA_TEAM ), "PANEL_ARENA_TEAM" );
+	AddNewPanel( CreatePanelByName( PANEL_PVE_WIN ), "PANEL_PVE_WIN" );
+	AddNewPanel( CreatePanelByName( PANEL_GIVEAWAY_ITEM ), "PANEL_GIVEAWAY_ITEM" );
+
+	CHudMainMenuOverride *pMMOverride = (CHudMainMenuOverride*)CreatePanelByName( PANEL_MAINMENUOVERRIDE );
+	if ( pMMOverride )
+	{
+		AddNewPanel( pMMOverride, "PANEL_MAINMENUOVERRIDE" );
+		pMMOverride->AttachToGameUI();	
+	}
 
 	BaseClass::CreateDefaultPanels();
 }
@@ -393,23 +433,25 @@ void TFViewport::OnScreenSizeChanged( int iOldWide, int iOldTall )
 		}
 		else if ( ( pPlayer->GetTeamNumber() != TEAM_SPECTATOR ) && ( pPlayer->m_Shared.GetDesiredPlayerClassIndex() == TF_CLASS_UNDEFINED ) )
 		{
-			switch( pPlayer->GetTeamNumber() )
+			if ( tf_arena_force_class.GetBool() == false )
 			{
-			case TF_TEAM_RED:
-				gViewPortInterface->ShowPanel( PANEL_CLASS_RED, true );
-				break;
-			case TF_TEAM_BLUE:
-				gViewPortInterface->ShowPanel( PANEL_CLASS_BLUE, true );
-				break;
-			case TF_TEAM_GREEN:
-				gViewPortInterface->ShowPanel( PANEL_CLASS_GREEN, true );
-				break;
-			case TF_TEAM_YELLOW:
-				gViewPortInterface->ShowPanel( PANEL_CLASS_YELLOW, true );
-				break;
+				switch( pPlayer->GetTeamNumber() )
+				{
+				case TF_TEAM_RED:
+					gViewPortInterface->ShowPanel( PANEL_CLASS_RED, true );
+					break;
+				case TF_TEAM_BLUE:
+					gViewPortInterface->ShowPanel( PANEL_CLASS_BLUE, true );
+					break;
+				}
 			}
 		}
 	}
+
+	// The dashboard can't listen for this directly because it's parenting is all
+	// over the place.  Reset the dashboard so it get sized correctly.
+	GetDashboardPanel().RecreateAll();
+	GetMMDashboard()->Reload();
 }
 
 //-----------------------------------------------------------------------------

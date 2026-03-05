@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -50,7 +50,7 @@ void CBaseObject::CreateBuildPoints( void )
 			// Find the attachment first
 			const char *sAttachment = pkvBuildPoint->GetName();
 			int iAttachmentNumber = LookupAttachment( sAttachment );
-			if ( iAttachmentNumber )
+			if ( iAttachmentNumber > 0 )
 			{
 				AddAndParseBuildPoint( iAttachmentNumber, pkvBuildPoint );
 			}
@@ -281,15 +281,16 @@ CBaseObject *CBaseObject::GetObjectOfTypeOnMe( int iObjectType )
 //-----------------------------------------------------------------------------
 void CBaseObject::RemoveAllObjects( void )
 {
+#ifndef CLIENT_DLL
 	for ( int i = 0; i < GetNumBuildPoints(); i++ )
 	{
 		if ( m_BuildPoints[i].m_hObject )
 		{
-#ifndef CLIENT_DLL
+
 			UTIL_Remove( m_BuildPoints[i].m_hObject );
-#endif
 		}
 	}
+#endif // !CLIENT_DLL
 }
 
 //-----------------------------------------------------------------------------
@@ -299,6 +300,17 @@ CBaseObject	*CBaseObject::GetParentObject( void )
 {
 	if ( GetMoveParent() )
 		return dynamic_cast<CBaseObject*>(GetMoveParent());
+
+	return NULL;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CBaseEntity	*CBaseObject::GetParentEntity( void )
+{
+	if ( GetMoveParent() )
+		return GetMoveParent();
 
 	return NULL;
 }
@@ -331,8 +343,11 @@ bool CBaseObject::TestHitboxes( const Ray_t &ray, unsigned int fContentsMask, tr
 //-----------------------------------------------------------------------------
 bool CBaseObject::ShouldBeActive( void )
 {
+	if ( IsDisabled() )
+		return false;
+
 	// Placing and/or constructing objects shouldn't be active
-	if ( IsPlacing() || IsBuilding() )
+	if ( IsPlacing() || IsBuilding() || IsCarried() )
 		return false;
 
 	return true;
@@ -364,7 +379,7 @@ void CBaseObject::SetActivity( Activity act )
 	}
 	else
 	{
-		m_Activity = (Activity)ACTIVITY_NOT_AVAILABLE;
+		m_Activity = ACT_INVALID;
 	}
 }
 
@@ -384,7 +399,8 @@ Activity CBaseObject::GetActivity( ) const
 void CBaseObject::SetObjectSequence( int sequence )
 {
 	ResetSequence( sequence );
-	SetCycle( 0 );
+
+	SetCycle( GetReversesBuildingConstructionSpeed() != 0.0f ? 1.0f : 0.0f );
 
 #if !defined( CLIENT_DLL )
 	if ( IsUsingClientSideAnimation() )
@@ -397,21 +413,14 @@ void CBaseObject::SetObjectSequence( int sequence )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CBaseObject::AttemptToGoActive( void )
-{
-	// Go active if we can
-	if ( ShouldBeActive() )
-	{
-		OnGoActive();
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 void CBaseObject::OnGoActive( void )
 {
 #ifndef CLIENT_DLL
+	while ( m_nDefaultUpgradeLevel + 1 > m_iUpgradeLevel )
+	{
+		StartUpgrading();
+	}
+
 	// Play startup animation
 	PlayStartupAnimation();
 
@@ -425,38 +434,7 @@ void CBaseObject::OnGoActive( void )
 		}
 	}
 
-	// TODO: Move this to InitializeMapPlacedObject
-
-	// Rapidly go through upgrade levels if the keyvalue is set.
-	if ( m_iDefaultUpgrade > 0 )
-	{
-		for ( int i = 0; i < min( m_iDefaultUpgrade, GetMaxUpgradeLevel() - 1 ); i++ )
-		{
-			StartUpgrading();
-		}
-
-		// Don't snap to default level again if we get picked up and re-deployed.
-		m_iDefaultUpgrade = 0;
-	}
-#else
-	// mini-sentry siren
-	const char *pszEffect = "";
-	switch( GetTeamNumber() )
-	{
-	case TF_TEAM_RED:
-		pszEffect = "cart_flashinglight_red";
-		break;
-	case TF_TEAM_BLUE:
-		pszEffect = "cart_flashinglight";
-		break;
-	default:
-		pszEffect = "cart_flashinglight_red";
-		break;
-	}
-	if ( IsMiniBuilding() && GetType() == OBJ_SENTRYGUN )
-	{
-		ParticleProp()->Create( pszEffect, PATTACH_POINT_FOLLOW, "siren" );
-	}
+	UpdateDisabledState();
 #endif
 }
 
@@ -503,16 +481,6 @@ bool CBaseObject::ShouldCollide( int collisionGroup, int contentsMask ) const
 			if ( !( contentsMask & CONTENTS_BLUETEAM ) )
 				return false;
 			break;
-		
-		case TF_TEAM_GREEN:
-			if (!(contentsMask & CONTENTS_GREENTEAM ) )
-				return false;
-			break;
-
-		case TF_TEAM_YELLOW:
-			if (!(contentsMask & CONTENTS_YELLOWTEAM ) )
-				return false;
-			break;
 		}
 	}
 
@@ -546,7 +514,6 @@ bool CBaseObject::CalculatePlacementPos( void )
 		return false;
 
 	// Calculate build angles
-	Vector forward;
 	QAngle vecAngles = vec3_angle;
 	vecAngles.y = pPlayer->EyeAngles().y;
 
@@ -559,21 +526,21 @@ bool CBaseObject::CalculatePlacementPos( void )
 	objAngles.y = objAngles.y + m_flCurrentBuildRotation;
 
 	SetLocalAngles( objAngles );
-	AngleVectors(vecAngles, &forward );
+	AngleVectors( vecAngles, &m_vecBuildForward );
 
 	// Adjust build distance based upon object size
 	Vector2D vecObjectRadius;
-	vecObjectRadius.x = max( fabs( m_vecBuildMins.m_Value.x ), fabs( m_vecBuildMaxs.m_Value.x ) );
-	vecObjectRadius.y = max( fabs( m_vecBuildMins.m_Value.y ), fabs( m_vecBuildMaxs.m_Value.y ) );
+	vecObjectRadius.x = MAX( fabs( m_vecBuildMins.m_Value.x ), fabs( m_vecBuildMaxs.m_Value.x ) );
+	vecObjectRadius.y = MAX( fabs( m_vecBuildMins.m_Value.y ), fabs( m_vecBuildMaxs.m_Value.y ) );
 
 	Vector2D vecPlayerRadius;
 	Vector vecPlayerMins = pPlayer->WorldAlignMins();
 	Vector vecPlayerMaxs = pPlayer->WorldAlignMaxs();
-	vecPlayerRadius.x = max( fabs( vecPlayerMins.x ), fabs( vecPlayerMaxs.x ) );
-	vecPlayerRadius.y = max( fabs( vecPlayerMins.y ), fabs( vecPlayerMaxs.y ) );
+	vecPlayerRadius.x = MAX( fabs( vecPlayerMins.x ), fabs( vecPlayerMaxs.x ) );
+	vecPlayerRadius.y = MAX( fabs( vecPlayerMins.y ), fabs( vecPlayerMaxs.y ) );
 
-	float flDistance = vecObjectRadius.Length() + vecPlayerRadius.Length() + 4; // small safety buffer
-	Vector vecBuildOrigin = pPlayer->WorldSpaceCenter() + forward * flDistance;
+	m_flBuildDistance = vecObjectRadius.Length() + vecPlayerRadius.Length() + 4; // small safety buffer
+	Vector vecBuildOrigin = pPlayer->WorldSpaceCenter() + m_vecBuildForward * m_flBuildDistance;
 
 	m_vecBuildOrigin = vecBuildOrigin;
 	Vector vErrorOrigin = vecBuildOrigin - (m_vecBuildMaxs - m_vecBuildMins) * 0.5f - m_vecBuildMins;
@@ -638,6 +605,13 @@ bool CBaseObject::CalculatePlacementPos( void )
 		return false;
 	}
 
+	// Don't allow buildables on the train just yet.
+	if ( tr.m_pEnt && tr.m_pEnt->IsBSPModel() )
+	{
+		if ( FClassnameIs( tr.m_pEnt, "func_tracktrain" ) )
+			return false;
+	}
+
 	// Verify that it's not on too much of a slope by seeing how far the corners are from the ground.
 	Vector vBottomCenter( m_vecBuildOrigin.x, m_vecBuildOrigin.y, bottomZ );
 	if ( !VerifyCorner( vBottomCenter, -vHalfBuildDims.x, -vHalfBuildDims.y ) ||
@@ -654,6 +628,8 @@ bool CBaseObject::CalculatePlacementPos( void )
 	vBottomLeft.z = bottomZ;
 	m_vecBuildOrigin = vBottomLeft - m_vecBuildMins;
 
+	m_vecBuildCenterOfMass = m_vecBuildOrigin + Vector( 0, 0, vHalfBuildDims.z );
+
 	return true;
 }
 
@@ -662,8 +638,12 @@ bool CBaseObject::CalculatePlacementPos( void )
 //-----------------------------------------------------------------------------
 bool CBaseObject::VerifyCorner( const Vector &vBottomCenter, float xOffset, float yOffset )
 {
+	// NOTE: I am changing the 0.1 on the bottom start to 2.0 to deal with the epsilon differnece
+	//       between the trace hull and trace line version of collision against a rotated bsp object.
+	//       I will probably want to change the code if we find more bugs around this, but for now as 
+	//       a test changing it hear should be fine.
 	// Start slightly above the surface
-	Vector vStart( vBottomCenter.x + xOffset, vBottomCenter.y + yOffset, vBottomCenter.z + 0.1 );
+	Vector vStart( vBottomCenter.x + xOffset, vBottomCenter.y + yOffset, vBottomCenter.z + 2.0 );
 
 	trace_t tr;
 	UTIL_TraceLine( 
@@ -720,11 +700,38 @@ bool CBaseObject::IsPlacementPosValid( void )
 	if ( tr.fraction < 1.0f )
 		return false;
 
-	// Make sure we can see the final position
-	UTIL_TraceLine( pPlayer->EyePosition(), m_vecBuildOrigin + Vector(0,0,m_vecBuildMaxs[2] * 0.5), MASK_PLAYERSOLID_BRUSHONLY, pPlayer, COLLISION_GROUP_NONE, &tr );
+	// Make sure we can see the final position (using a small hull to catch being able to build through seams in the map)
+	UTIL_TraceHull( pPlayer->EyePosition(), m_vecBuildOrigin + Vector( 0, 0, m_vecBuildMaxs[2] * 0.5 ), Vector( -2, -2, -2 ), Vector( 2, 2, 2 ), MASK_PLAYERSOLID_BRUSHONLY, pPlayer, COLLISION_GROUP_NONE, &tr );
 	if ( tr.fraction < 1.0 )
 	{
 		return false;
+	}
+
+	// Make sure we're not building on top of another building (only an issue on stairs, inclines)
+	// Note: Didn't use a hulltrace as it always returned the world, and not whatever objects were there (but maybe I was doing something wrong).
+	const int nMaxEnts = 64;
+	const float flBoxSize = 24.f;	// TODO(driller): Ask each object for Mins/Maxs, but this will do for now
+	const float flBoxDepth = 32.f;
+	CBaseEntity *pList[nMaxEnts];
+	int nCount = UTIL_EntitiesInBox( pList, nMaxEnts, m_vecBuildOrigin + Vector( -flBoxSize, -flBoxSize, -flBoxDepth ), m_vecBuildOrigin + Vector( flBoxSize, flBoxSize, flBoxSize ), FL_OBJECT );
+	// 	NDebugOverlay::Box( vecTestPos, Vector( -flBoxSize, -flBoxSize, -flBoxDepth ), TELEPORTER_MAXS, 255, 0, 0, 25, 0.5f );
+	// 	NDebugOverlay::Cross3D( vecTestPos, 64, 0, 255, 25, false, 0.5f );
+	for ( int i = 0; i < nCount; ++i )
+	{
+		if ( !pList[i] )
+			continue;
+
+		if ( pList[i] == this )
+			continue;
+
+		if ( pList[i]->IsBaseObject() )
+		{
+			CBaseObject *pObject = static_cast< CBaseObject* >( pList[i] );
+			if ( pObject->IsPlacing() )
+				continue;
+
+			return false;
+		}
 	}
 
 	return true;

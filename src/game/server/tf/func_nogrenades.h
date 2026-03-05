@@ -1,4 +1,4 @@
-//======= Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: CTF NoGrenades Zone.
 //
@@ -29,7 +29,7 @@ public:
 	void	Precache( void );
 	
 	// Return true if the specified entity is touching this zone
-	bool	IsTouching( CBaseEntity *pEntity );
+	bool	IsTouching( const CBaseEntity *pEntity ) const OVERRIDE;
 
 	bool	IsDisabled( void );
 	void	SetDisabled( bool bDisabled );

@@ -1,11 +1,16 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose:		
+// Purpose: 
 //
-// $NoKeywords: $
 //=============================================================================
+
 #ifndef C_FUNC_CAPTURE_ZONE_H
 #define C_FUNC_CAPTURE_ZONE_H
+#ifdef _WIN32
+#pragma once
+#endif
+
+class C_CaptureZone;
 
 DECLARE_AUTO_LIST( ICaptureZoneAutoList );
 

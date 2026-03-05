@@ -1,4 +1,4 @@
-//====== Copyright � 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -14,17 +14,44 @@
 
 #if defined( CLIENT_DLL )
 #define CWeaponMedigun C_WeaponMedigun
+#define CTFMedigunShield C_TFMedigunShield
 #endif
+
+class CTFMedigunShield;
+class CTFReviveMarker;
+
+enum medigun_weapontypes_t
+{
+	MEDIGUN_STANDARD = 0,
+	MEDIGUN_UBER,
+	MEDIGUN_QUICKFIX,
+	MEDIGUN_RESIST,
+};
+
+enum medigun_resist_types_t
+{
+	MEDIGUN_BULLET_RESIST = 0,
+	MEDIGUN_BLAST_RESIST,
+	MEDIGUN_FIRE_RESIST,
+	MEDIGUN_NUM_RESISTS
+};
+
+struct MedigunEffects_t
+{
+	ETFCond eCondition;
+	ETFCond eWearingOffCondition;
+	const char *pszChargeOnSound;
+	const char *pszChargeOffSound;
+};
+
+extern MedigunEffects_t g_MedigunEffects[MEDIGUN_NUM_CHARGE_TYPES];
 
 #define MAX_HEALING_TARGETS			1	//6
 
 #define CLEAR_ALL_TARGETS			-1
 
-#ifdef CLIENT_DLL
-void RecvProxy_HealingTarget( const CRecvProxyData *pData, void *pStruct, void *pOut );
-#endif
 
-static const char *s_pszMedigunHealTargetThink = "MedigunHealTargetThink";
+
 
 //=========================================================
 // Beam healing gun
@@ -50,72 +77,102 @@ public:
 	virtual void	PrimaryAttack( void );
 	virtual void	SecondaryAttack( void );
 	virtual void	WeaponIdle( void );
-	virtual bool	ShouldUpdateSpeed(CTFPlayer *pTarget);
 	void			DrainCharge( void );
-	void			AddCharge( float flAmount );
-	void			RemoveCharge( float flAmount, bool bDrainSound = false );
 	virtual void	WeaponReset( void );
 
 	virtual float	GetTargetRange( void );
 	virtual float	GetStickRange( void );
 	virtual float	GetHealRate( void );
 	virtual bool	AppliesModifier( void ) { return true; }
-	int				GetMedigunType( void );
 
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_MEDIGUN; }
-
-	bool			IsReleasingCharge( void ) { return (m_bChargeRelease && !m_bHolstered); }
-	medigun_charge_types GetChargeType( void );
-	
-	int 			GetCurrentResistanceType(void)		{return m_iResistanceType;}
-	bool			HasMultipleHealingModes(void);
-	void 			SwapResistanceType(void);
-	int				m_iResistanceType;
+	int				GetMedigunType( void ) const;
 
 
-	CBaseEntity		*GetHealTarget( void ) { return m_hHealingTarget.Get(); }
+	bool			IsReleasingCharge( void ) const;
+	medigun_charge_types GetChargeType( void ) const;
 
-	const char		*GetHealSound( void );
+	void			CycleResistType();
+	medigun_resist_types_t GetResistType() const;
+
+	CBaseEntity		*GetHealTarget( void ) { return IsAttachedToBuilding() ? NULL : m_hHealingTarget.Get(); }
+
+	bool			IsAllowedToTargetBuildings( void );
+	bool			IsAttachedToBuilding( void );
+
+#ifdef GAME_DLL
+	// We may or may not be healing this person still. Resets on WeaponReset
+	CBaseEntity		*GetMostRecentHealTarget( void ) { return m_hLastHealingTarget.Get(); }
+	void			RecalcEffectOnTarget( CTFPlayer *pPlayer, bool bInstantRemove = false );
+#endif
+
+	float			GetReleaseStartedAt( void ) { return m_flReleaseStartedAt; }
 
 #if defined( CLIENT_DLL )
 	// Stop all sounds being output.
-	void			StopHealSound( bool bStopHealingSound = true, bool bStopNoTargetSound = true );
+	void			StopHealSound( bool bStopHealingSound = true, bool bStopNoTargetSound = true, bool bStopDetachSound = true );
 
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
 	virtual void	ClientThink();
 	void			UpdateEffects( void );
 	void			ForceHealingTargetUpdate( void ) { m_bUpdateHealingTargets = true; }
 
+	void			StopChargeEffect( bool bImmediately );
 	void			ManageChargeEffect( void );
+
+	void			UpdateMedicAutoCallers( void );
 #else
 
 	void			HealTargetThink( void );
-
-	bool			IsAttachedToBuilding( void ) const;
-
+	void			AddCharge( float flPercentage );
+	void			SubtractCharge( float flPercentage );
 #endif
 
+	void			SetChargeLevel( float flChargeLevel ) { m_flChargeLevel = flChargeLevel; }
+	void			SetChargeLevelToPreserve( float flAmount );
 	float			GetChargeLevel( void ) const { return m_flChargeLevel; }
+	float			GetMinChargeAmount( void ) const;
+
+	virtual void	OnControlStunned( void );
+
+	virtual bool	IsHolstered(){ return m_bHolstered; }
+
+	float			GetProgress( void );
+	const char*		GetEffectLabelText( void ) { return "#TF_Rescue"; }
+	bool			EffectMeterShouldFlash( void );
+	float			GetOverHealBonus( CTFPlayer *pTFTarget );
+	float			GetOverHealDecayMult( CTFPlayer *pTFTarget );
+	virtual void	HookAttributes( void ) OVERRIDE;
 
 private:
+	void					SubtractChargeAndUpdateDeployState( float flSubtractAmount, bool bForceDrain );
 	bool					FindAndHealTargets( void );
-	virtual bool			HealingTarget( CBaseEntity *pTarget );
-	bool					CouldHealTarget( CBaseEntity *pTarget );
+	void					MaintainTargetInSlot();
+	void					FindNewTargetForSlot();
+	void					RemoveHealingTarget( bool bStopHealingSelf = false );
+	bool					HealingTarget( CBaseEntity *pTarget );
 	bool					AllowedToHealTarget( CBaseEntity *pTarget );
+	void					CheckAchievementsOnHealTarget( void );
+	void					StartHealingTarget( CBaseEntity *pTarget );
+	void					StopHealingOwner( void );
 
-protected:
-	virtual void			RemoveHealingTarget( bool bStopHealingSelf = false );
-	virtual void			MaintainTargetInSlot();
-	virtual void			FindNewTargetForSlot();
+#ifdef CLIENT_DLL
+	const char				*GetHealSound() const;
+	const char				*GetDetachSound() const;
+#else
+	void					UberchargeChunkDeployed();
+#endif
 
+	void					CreateMedigunShield( void );
+	void					RemoveMedigunShield( void );
 
 public:
 
-#ifdef GAME_DLL
+
 	CNetworkHandle( CBaseEntity, m_hHealingTarget );
-#else
-	CNetworkHandle( C_BaseEntity, m_hHealingTarget );
-#endif
+	CNetworkHandle( CBaseEntity, m_hLastHealingTarget );
+
+	bool					m_bWasHealingBeforeDeath;
 
 protected:
 	// Networked data.
@@ -129,74 +186,109 @@ protected:
 	CNetworkVar( bool,		m_bHolstered );
 	CNetworkVar( bool,		m_bChargeRelease );
 	CNetworkVar( float,		m_flChargeLevel );
-	CNetworkVar( float,		m_flFinalUberLevel );
+	CNetworkVar( int,		m_nChargeResistType );
 
 	float					m_flNextTargetCheckTime;
 	bool					m_bCanChangeTarget; // used to track the PrimaryAttack key being released for AutoHeal mode
+	bool					m_bAttack2Down;
+	bool					m_bAttack3Down;
+	bool					m_bReloadDown;
+	float					m_flEndResistCharge;
 	
-	struct extrainvurns_t
+	struct targetdetachtimes_t
 	{
-		EHANDLE	hPlayer;
 		float	flTime;
+		EHANDLE	hTarget;
 	};
-	CUtlVector<extrainvurns_t>		m_ExtraInvurns;
-	
+	CUtlVector<targetdetachtimes_t>		m_DetachedTargets; // Tracks times we last applied charge to a target. Used to drain faster for more targets.
+
 #ifdef GAME_DLL
 	CDamageModifier			m_DamageModifier;		// This attaches to whoever we're healing.
 	bool					m_bHealingSelf;
+	int						m_nHealTargetClass;
+	int						m_nChargesReleased;
 #endif
+	float					m_flChargeLevelToPreserve;
+	float					m_flOverHealExpert;		// Upgrade
+
+	CHandle< CTFMedigunShield > m_hMedigunShield;
+	CHandle< CTFReviveMarker > m_hReviveMarker;
 
 #ifdef CLIENT_DLL
 	bool					m_bPlayingSound;
 	bool					m_bUpdateHealingTargets;
 	struct healingtargeteffects_t
 	{
-		EHANDLE				hOwner;
+		C_BaseEntity		*pOwner;
 		C_BaseEntity		*pTarget;
 		CNewParticleEffect	*pEffect;
-		CNewParticleEffect  *pCustomEffect; // custom_particlesystem
+		CNewParticleEffect	*pCustomEffect;
 	};
 	healingtargeteffects_t m_hHealingTargetEffect;
 
-	float					m_flFlashCharge;
+	float					m_flDenySecondary;
 	bool					m_bOldChargeRelease;
+	int						m_nOldChargeResistType;
 
+	C_BaseEntity		*m_pChargeEffectOwner;
 	CNewParticleEffect	*m_pChargeEffect;
-	EHANDLE				m_hChargeEffectHost;
 	CSoundPatch			*m_pChargedSound;
-#else
-	int					m_nVaccinatorUberChunks;
+	CSoundPatch			*m_pDisruptSound;
+	CSoundPatch			*m_pHealSound;
+	CSoundPatch			*m_pDetachSound;
+
+	CUtlVector< int >	m_iAutoCallers;
+	float				m_flAutoCallerCheckTime;
 #endif
 
 private:														
 	CWeaponMedigun( const CWeaponMedigun & );
 };
 
-// Now make sure there isn't something other than team players in the way.
-class CMedigunFilter : public CTraceFilterSimple
+class CTFMedigunShield : public CBaseAnimating
 {
+	DECLARE_CLASS( CTFMedigunShield, CBaseAnimating );
+
 public:
-	CMedigunFilter(CBaseEntity *pShooter) : CTraceFilterSimple(pShooter, COLLISION_GROUP_WEAPON)
-	{
-		m_pShooter = pShooter;
-	}
+	DECLARE_NETWORKCLASS();
+	DECLARE_PREDICTABLE();
+	DECLARE_DATADESC();
 
-	virtual bool ShouldHitEntity(IHandleEntity *pHandleEntity, int contentsMask)
-	{
-		// If it hit an edict the isn't the target and is on our team, then the ray is blocked.
-		CBaseEntity *pEnt = static_cast<CBaseEntity*>(pHandleEntity);
+	CTFMedigunShield();
+	~CTFMedigunShield();
 
-		// Ignore collisions with the shooter
-		if (pEnt == m_pShooter)
-			return false;
+	virtual void Spawn();
+	virtual void Precache();
+	virtual bool IsCombatItem( void ) const { return true; }
 
-		if (pEnt->GetTeam() == m_pShooter->GetTeam())
-			return false;
+	void UpdateShieldPosition( void );
 
-		return CTraceFilterSimple::ShouldHitEntity(pHandleEntity, contentsMask);
-	}
+#ifdef GAME_DLL
+	virtual void TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator );
+	virtual int OnTakeDamage( const CTakeDamageInfo &info );
 
-	CBaseEntity	*m_pShooter;
+	static CTFMedigunShield *Create( CTFPlayer *pOwner );
+	// virtual bool TestCollision( const Ray_t &ray, unsigned int mask, trace_t& trace );
+	virtual bool ShouldCollide( int collisionGroup, int contentsMask ) const;
+	virtual void StartTouch( CBaseEntity *pOther ) OVERRIDE;
+	void ShieldTouch( CBaseEntity *pOther );
+	virtual void EndTouch( CBaseEntity *pOther ) OVERRIDE;
+	void ShieldThink( void );
+	void RemoveShield( void );
+
+
+#else
+	virtual void ClientThink();
+#endif
+
+private:
+	int m_nBlinkCount;
+#ifdef GAME_DLL
+	float m_flShieldEnergyLevel;
+	CSoundPatch	*m_pTouchLoop;
+
+
+#endif // GAME_DLL
 };
 
 #endif // TF_WEAPON_MEDIGUN_H

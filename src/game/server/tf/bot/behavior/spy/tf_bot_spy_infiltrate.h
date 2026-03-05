@@ -1,40 +1,42 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_spy_infiltrate.h
+// Move into position behind enemy lines and wait for victims
+// Michael Booth, June 2010
+
 #ifndef TF_BOT_SPY_INFILTRATE_H
 #define TF_BOT_SPY_INFILTRATE_H
-#ifdef _WIN32
-#pragma once
-#endif
 
+#include "Path/NextBotPathFollow.h"
 
-#include "NextBotBehavior.h"
-
-class CTFBotSpyInfiltrate : public Action<CTFBot>
+class CTFBotSpyInfiltrate : public Action< CTFBot >
 {
 public:
-	CTFBotSpyInfiltrate();
-	virtual ~CTFBotSpyInfiltrate();
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
+	virtual void					OnEnd( CTFBot *me, Action< CTFBot > *nextAction );
+	virtual ActionResult< CTFBot >	OnSuspend( CTFBot *me, Action< CTFBot > *interruptingAction );
+	virtual ActionResult< CTFBot >	OnResume( CTFBot *me, Action< CTFBot > *interruptingAction );
 
-	virtual const char *GetName( void ) const OVERRIDE;
+	virtual EventDesiredResult< CTFBot > OnStuck( CTFBot *me );
+	virtual EventDesiredResult< CTFBot > OnTerritoryCaptured( CTFBot *me, int territoryID );
+	virtual EventDesiredResult< CTFBot > OnTerritoryLost( CTFBot *me, int territoryID );
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
-	virtual ActionResult<CTFBot> OnSuspend( CTFBot *me, Action<CTFBot> *newAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> OnResume( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
+	virtual QueryResultType ShouldAttack( const INextBot *me, const CKnownEntity *them ) const;	// should we attack "them"?
 
-	virtual EventDesiredResult<CTFBot> OnStuck( CTFBot *me ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnTerritoryCaptured( CTFBot *me, int territoryID ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnTerritoryLost( CTFBot *me, int territoryID ) OVERRIDE;
-
-	virtual QueryResultType ShouldAttack( const INextBot *me, const CKnownEntity *threat ) const OVERRIDE;
+	virtual const char *GetName( void ) const	{ return "SpyInfiltrate"; };
 
 private:
-	bool FindHidingSpot( CTFBot *actor );
+	CountdownTimer m_repathTimer;
+	PathFollower m_path;
 
-	CountdownTimer m_recomputePath;
-	PathFollower m_PathFollower;
-	CTFNavArea *m_HidingArea;
-	CountdownTimer m_findHidingAreaDelay;
-	CountdownTimer m_waitDuration;
-	bool m_bCloaked;
+	CTFNavArea *m_hideArea;
+	bool FindHidingSpot( CTFBot *me );
+	CountdownTimer m_findHidingSpotTimer;
+
+	CountdownTimer m_waitTimer;
+
+	bool m_hasEnteredCombatZone;
 };
 
-#endif
+
+#endif // TF_BOT_SPY_INFILTRATE_H

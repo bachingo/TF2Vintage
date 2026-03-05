@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2006, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Game-specific explosion effects
 //
@@ -10,6 +10,7 @@
 #include "tf_shareddefs.h"
 #include "c_basetempentity.h"
 #include "tier0/vprof.h"
+#include "c_tf_fx.h"
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -56,12 +57,20 @@ C_TETFParticleEffect::C_TETFParticleEffect( void )
 
 	m_iParticleSystemIndex = -1;
 
-	m_hEntity = INVALID_EHANDLE_INDEX;
+	m_hEntity = INVALID_EHANDLE;
 
 	m_iAttachType = PATTACH_ABSORIGIN;
 	m_iAttachmentPointIndex = 0;
 
 	m_bResetParticles = false;
+
+	m_bCustomColors = false;
+	m_CustomColors.m_vecColor1.Init();
+	m_CustomColors.m_vecColor2.Init();
+
+	m_bControlPoint1 = false;
+	m_ControlPoint1.m_eParticleAttachment = PATTACH_ABSORIGIN;
+	m_ControlPoint1.m_vecOffset.Init();
 }
 
 //-----------------------------------------------------------------------------
@@ -79,7 +88,7 @@ void C_TETFParticleEffect::PostDataUpdate( DataUpdateType_t updateType )
 	data.m_vStart = m_vecStart;
 	data.m_vAngles = m_vecAngles;
 
-	if ( m_hEntity != INVALID_EHANDLE_INDEX )
+	if ( m_hEntity != INVALID_EHANDLE )
 	{
 		data.m_hEntity = m_hEntity;
 		data.m_fFlags |= PARTICLE_DISPATCH_FROM_ENTITY;
@@ -109,7 +118,10 @@ void C_TETFParticleEffect::PostDataUpdate( DataUpdateType_t updateType )
 static void RecvProxy_ParticleSystemEntIndex( const CRecvProxyData *pData, void *pStruct, void *pOut )
 {
 	int nEntIndex = pData->m_Value.m_Int;
-	((C_TETFParticleEffect*)pStruct)->m_hEntity = (nEntIndex < 0) ? INVALID_EHANDLE_INDEX : ClientEntityList().EntIndexToHandle( nEntIndex );
+	// The 'new' encoding for INVALID_EHANDLE_INDEX is 2047, but the old encoding
+	// was -1. Old demos and replays will use the old encoding so we have to check
+	// for it. The field is now unsigned so -1 will not be created in new replays.
+	((C_TETFParticleEffect*)pStruct)->m_hEntity = (nEntIndex == kInvalidEHandleParticleEffect || nEntIndex == -1) ? INVALID_EHANDLE : ClientEntityList().EntIndexToHandle( nEntIndex );
 }
 
 IMPLEMENT_CLIENTCLASS_EVENT_DT( C_TETFParticleEffect, DT_TETFParticleEffect, CTETFParticleEffect )
@@ -125,10 +137,10 @@ IMPLEMENT_CLIENTCLASS_EVENT_DT( C_TETFParticleEffect, DT_TETFParticleEffect, CTE
 	RecvPropInt( RECVINFO( m_iAttachType ) ),
 	RecvPropInt( RECVINFO( m_iAttachmentPointIndex ) ),
 	RecvPropInt( RECVINFO( m_bResetParticles ) ),
-	RecvPropInt( RECVINFO( m_bCustomColors ) ),
+	RecvPropBool( RECVINFO( m_bCustomColors ) ),
 	RecvPropVector( RECVINFO( m_CustomColors.m_vecColor1 ) ),
 	RecvPropVector( RECVINFO( m_CustomColors.m_vecColor2 ) ),
-	RecvPropInt( RECVINFO( m_bControlPoint1 ) ),
+	RecvPropBool( RECVINFO( m_bControlPoint1 ) ),
 	RecvPropInt( RECVINFO( m_ControlPoint1.m_eParticleAttachment ) ),
 	RecvPropFloat( RECVINFO( m_ControlPoint1.m_vecOffset[0] ) ),
 	RecvPropFloat( RECVINFO( m_ControlPoint1.m_vecOffset[1] ) ),

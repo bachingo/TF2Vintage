@@ -1,73 +1,42 @@
-//======= Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: CTF Respawnflag.
+// Purpose: 
 //
-//=============================================================================//
+//=============================================================================
 
 #include "cbase.h"
-#include "tf_player.h"
-#include "tf_item.h"
-#include "entity_capture_flag.h"
 #include "func_respawnflag.h"
+#include "entity_capture_flag.h"
+#include "tf_player.h"
+
+// memdbgon must be the last include file in a .cpp file!!!
+#include "tier0/memdbgon.h"
 
 LINK_ENTITY_TO_CLASS( func_respawnflag, CFuncRespawnFlagZone );
 
-//=============================================================================
-//
-// CTF Respawnflag tables.
-//
-
-BEGIN_DATADESC(CFuncRespawnFlagZone)
-	DEFINE_FUNCTION(Touch),
+BEGIN_DATADESC( CFuncRespawnFlagZone )
+	// Functions.
+	DEFINE_FUNCTION( Touch ),
 END_DATADESC();
-
-//=============================================================================
-//
-// CTF Respawnflag functions.
-//
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-bool PointInRespawnFlagZone( const Vector &vecFlagOrigin )
-{
-	CBaseEntity *pEntity = NULL;
-	while ( (pEntity = gEntList.FindEntityByClassname(pEntity, "func_respawnflag")) != NULL )
-	{
-		CFuncRespawnFlagZone *v3 = (CFuncRespawnFlagZone *)pEntity;
-
-		if ( !v3->IsDisabled() && v3->PointIsWithin(vecFlagOrigin) )
-		{
-			return true;	
-		}
-	}
-	return false; 
-}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 CFuncRespawnFlagZone::CFuncRespawnFlagZone()
 {
-	m_bDisabled = false;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Spawn function for the entity
-//-----------------------------------------------------------------------------
-void CFuncRespawnFlagZone::Spawn(void)
-{
-	Precache();
-	InitTrigger();
-	SetTouch( &CFuncRespawnFlagZone::Touch );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CFuncRespawnFlagZone::Activate(void)
+void CFuncRespawnFlagZone::Spawn( void )
 {
-	BaseClass::Activate();
+	AddSpawnFlags( SF_TRIGGER_ALLOW_ALL );
+
+	BaseClass::Spawn();
+	InitTrigger();
+
+	SetTouch( &CFuncRespawnFlagZone::Touch );
 }
 
 //-----------------------------------------------------------------------------
@@ -75,73 +44,42 @@ void CFuncRespawnFlagZone::Activate(void)
 //-----------------------------------------------------------------------------
 void CFuncRespawnFlagZone::Touch( CBaseEntity *pOther )
 {
-	if (!IsDisabled())
+	if ( !m_bDisabled )
 	{
-		CTFPlayer *pPlayer = ToTFPlayer(pOther);
-		if ( pPlayer && pPlayer->HasTheFlag() )
+		if ( pOther->IsPlayer() )
 		{
-			CTFItem *pItem = pPlayer->GetItem();
-			if (pItem)
+			CTFPlayer *pPlayer = ToTFPlayer( pOther );
+			if ( pPlayer && pPlayer->HasTheFlag() )
 			{
-				CCaptureFlag *pFlag = dynamic_cast<CCaptureFlag*>(pItem);
+				CCaptureFlag *pFlag = dynamic_cast<CCaptureFlag*>( pPlayer->GetItem() );
+				
 				pPlayer->DropFlag();
-				if (pFlag)
+
+				if ( pFlag )
 				{
-					pFlag->Reset();
-					pFlag->ResetMessage();
+					pFlag->ResetFlag();
 				}
-			}
-			else
-			{
-				pPlayer->DropFlag();
 			}
 		}
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CFuncRespawnFlagZone::InputEnable(inputdata_t &inputdata)
-{
-	SetDisabled(false);
-}
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Return true if the specified entity is in a RespawnFlag zone
 //-----------------------------------------------------------------------------
-void CFuncRespawnFlagZone::InputDisable(inputdata_t &inputdata)
+bool PointInRespawnFlagZone( const Vector &vecPoint )
 {
-	SetDisabled(true);
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-bool CFuncRespawnFlagZone::IsDisabled(void)
-{
-	return m_bDisabled;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CFuncRespawnFlagZone::InputToggle(inputdata_t &inputdata)
-{
-	if (m_bDisabled)
+	CBaseEntity *pTempEnt = NULL;
+	while ( ( pTempEnt = gEntList.FindEntityByClassname( pTempEnt, "func_respawnflag" ) ) != NULL )
 	{
-		SetDisabled(false);
-	}
-	else
-	{
-		SetDisabled(true);
-	}
-}
+		CFuncRespawnFlagZone *pZone = dynamic_cast<CFuncRespawnFlagZone *>(pTempEnt);
 
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CFuncRespawnFlagZone::SetDisabled(bool bDisabled)
-{
-	m_bDisabled = bDisabled;
+		if ( pZone && !pZone->m_bDisabled && pZone->PointIsWithin( vecPoint ) )
+		{
+			return true;
+		}
+	}
+
+	return false;
 }

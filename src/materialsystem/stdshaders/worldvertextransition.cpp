@@ -9,10 +9,11 @@
 #include "BaseVSShader.h"
 #include "convar.h"
 
+#include "worldvertextransition_dx8_helper.h"
 #include "lightmappedgeneric_dx9_helper.h"
 
 static LightmappedGeneric_DX9_Vars_t s_info;
-static LightmappedGeneric_DX9_Vars_t s_info_editor;
+
 
 DEFINE_FALLBACK_SHADER( WorldVertexTransition, WorldVertexTransition_DX9 )
 
@@ -60,16 +61,18 @@ BEGIN_VS_SHADER( WorldVertexTransition_DX9, "Help for WorldVertexTransition" )
 		SHADER_PARAM( MASKEDBLENDING, SHADER_PARAM_TYPE_INTEGER, "0", "blend using texture with no vertex alpha. For using texture blending on non-displacements" )
 		SHADER_PARAM( SSBUMP, SHADER_PARAM_TYPE_INTEGER, "0", "whether or not to use alternate bumpmap format with height" )
 		SHADER_PARAM( SEAMLESS_SCALE, SHADER_PARAM_TYPE_FLOAT, "0", "Scale factor for 'seamless' texture mapping. 0 means to use ordinary mapping" )
-
-		SHADER_PARAM( ENVMAPPARALLAX, SHADER_PARAM_TYPE_MATRIX, "[1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1]", "" )
-		SHADER_PARAM( ENVMAPORIGIN, SHADER_PARAM_TYPE_VEC3, "[0 0 0]", "The world space position of the env_cubemap being corrected" )
-
-		SHADER_PARAM( PHONG, SHADER_PARAM_TYPE_BOOL, "0", "enables phong lighting" )
-		SHADER_PARAM( PHONGBOOST, SHADER_PARAM_TYPE_FLOAT, "1.0", "Phong overbrightening factor (specular mask channel should be authored to account for this)" )
-		SHADER_PARAM( PHONGFRESNELRANGES, SHADER_PARAM_TYPE_VEC3, "[0  0.5  1]", "Parameters for remapping fresnel output" )
-		SHADER_PARAM( PHONGEXPONENT, SHADER_PARAM_TYPE_FLOAT, "5.0", "Phong exponent for local specular lights" )
 	END_SHADER_PARAMS
-	
+
+	void SetupVars( WorldVertexTransitionEditor_DX8_Vars_t& info )
+	{
+		info.m_nBaseTextureVar = BASETEXTURE;
+		info.m_nBaseTextureFrameVar = FRAME;
+		info.m_nBaseTextureTransformVar = BASETEXTURETRANSFORM;
+		info.m_nBaseTexture2Var = BASETEXTURE2;
+		info.m_nBaseTexture2FrameVar = FRAME2;
+		info.m_nBaseTexture2TransformVar = BASETEXTURETRANSFORM; // FIXME!!!!
+	}
+
 	void SetupVars( LightmappedGeneric_DX9_Vars_t& info )
 	{
 		info.m_nBaseTexture = BASETEXTURE;
@@ -116,14 +119,6 @@ BEGIN_VS_SHADER( WorldVertexTransition_DX9, "Help for WorldVertexTransition" )
 		info.m_nSelfShadowedBumpFlag = SSBUMP;
 		info.m_nSeamlessMappingScale = SEAMLESS_SCALE;
 		info.m_nAlphaTestReference = -1;
-
-		info.m_nEnvmapParallax = ENVMAPPARALLAX;
-		info.m_nEnvmapOrigin = ENVMAPORIGIN;
-
-		info.m_nPhong = PHONG;
-		info.m_nPhongBoost = PHONGBOOST;
-		info.m_nPhongFresnelRanges = PHONGFRESNELRANGES;
-		info.m_nPhongExponent = PHONGEXPONENT;
 	}
 
 	SHADER_FALLBACK
@@ -138,8 +133,6 @@ BEGIN_VS_SHADER( WorldVertexTransition_DX9, "Help for WorldVertexTransition" )
 	{
 		SetupVars( s_info );
 		InitParamsLightmappedGeneric_DX9( this, params, pMaterialName, s_info );
-		SetupVars( s_info_editor );
-		SwapLayers( s_info_editor );
 	}
 
 	SHADER_INIT
@@ -151,24 +144,14 @@ BEGIN_VS_SHADER( WorldVertexTransition_DX9, "Help for WorldVertexTransition" )
 	SHADER_DRAW
 	{
 		if ( UsingEditor( params ) )
-			DrawLightmappedGeneric_DX9( this, params, pShaderAPI, pShaderShadow, s_info_editor, pContextDataPtr );
-		else
-			DrawLightmappedGeneric_DX9( this, params, pShaderAPI, pShaderShadow, s_info, pContextDataPtr );
-	}
+		{
+			WorldVertexTransitionEditor_DX8_Vars_t info;
+			SetupVars( info );
+			DrawWorldVertexTransitionEditor_DX8( this, params, pShaderAPI, pShaderShadow, info );
+			return;
+		}
 
-
-private:
-	// Hack to make hammer display WVT in non-inverted way.
-	// It worked ok in standard WVT because of special editor-only shader.
-	// Why Valve just didn't inverted vertex alpha directly in hammer code? oO
-	static FORCEINLINE void SwapLayers( LightmappedGeneric_DX9_Vars_t &info )
-	{
-		V_swap( info.m_nBaseTexture, info.m_nBaseTexture2 );
-		V_swap( info.m_nBaseTextureFrame, info.m_nBaseTexture2Frame );
-		V_swap( info.m_nBaseTextureNoEnvmap, info.m_nBaseTexture2NoEnvmap );
-		V_swap( info.m_nBumpmap, info.m_nBumpmap2 );
-		V_swap( info.m_nBumpFrame, info.m_nBumpFrame2 );
-		V_swap( info.m_nBumpTransform, info.m_nBumpTransform2 );
+		DrawLightmappedGeneric_DX9( this, params, pShaderAPI, pShaderShadow, s_info, pContextDataPtr );
 	}
 END_SHADER
 
