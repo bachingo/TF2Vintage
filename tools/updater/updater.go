@@ -1,9 +1,7 @@
 package main
 
 import (
-	"archive/tar"
 	"archive/zip"
-	"compress/gzip"
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
@@ -112,11 +110,15 @@ func updateBin(modDir string, latest *ghRelease) error {
 	defer os.Remove(tmp)
 
 	fmt.Println("Extracting binaries...")
-	// Windows bins are .zip, Linux bins are .tar.gz
-	if runtime.GOOS == "windows" {
-		return extractZip(tmp, filepath.Join(modDir, "bin"))
+	binDir := filepath.Join(modDir, "bin")
+	if err := extractZip(tmp, binDir); err != nil {
+		return err
 	}
-	return extractTarGz(tmp, filepath.Join(modDir, "bin"))
+	// On Linux, .zip does not preserve execute permissions — fix .so files
+	if runtime.GOOS != "windows" {
+		chmodSo(binDir)
+	}
+	return nil
 }
 
 // ── Base update ───────────────────────────────────────────────────────────────
@@ -453,67 +455,24 @@ func extractZip(src, destDir string) error {
 	return nil
 }
 
-// extractTarGz extracts a .tar.gz archive into destDir, stripping the first
-// path component. Used for Linux bin packages only.
-func extractTarGz(src, destDir string) error {
-	f, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	gz, err := gzip.NewReader(f)
-	if err != nil {
-		return err
-	}
-	defer gz.Close()
-
-	tr := tar.NewReader(gz)
-	for {
-		hdr, err := tr.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return err
-		}
-
-		parts := strings.SplitN(hdr.Name, "/", 2)
-		relPath := hdr.Name
-		if len(parts) == 2 {
-			relPath = parts[1]
-		}
-		if relPath == "" {
-			continue
-		}
-
-		target := filepath.Join(destDir, filepath.FromSlash(relPath))
-		switch hdr.Typeflag {
-		case tar.TypeDir:
-			os.MkdirAll(target, 0755)
-		case tar.TypeReg:
-			os.MkdirAll(filepath.Dir(target), 0755)
-			out, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.FileMode(hdr.Mode))
-			if err != nil {
-				return err
-			}
-			_, cerr := io.Copy(out, tr)
-			out.Close()
-			if cerr != nil {
-				return cerr
-			}
-		}
-	}
-	return nil
-}
-
 // ── Misc helpers ──────────────────────────────────────────────────────────────
 
+// chmodSo restores execute permissions on .so files after zip extraction.
+// zip does not preserve Unix file permissions, so this is required on Linux.
+func chmodSo(dir string) {
+	filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
+		}
+		if strings.HasSuffix(path, ".so") {
+			os.Chmod(path, 0755)
+		}
+		return nil
+	})
+}
+
 func platformBinAsset() string {
-	if runtime.GOOS == "windows" {
-		return "tf2vintage-windows-bin.zip"
-	}
-	return "tf2vintage-linux-bin.tar.gz"
+	return "tf2vintage-bin.zip"
 }
 
 func readField(path, key string) string {

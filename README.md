@@ -22,8 +22,7 @@ TF2 Vintage is distributed as two packages. You need both for a working install.
 | File | Platform |
 |---|---|
 | `tf2vintage-base.zip` | Both (download once) |
-| `tf2vintage-windows-bin.zip` | Windows |
-| `tf2vintage-linux-bin.tar.gz` | Linux |
+| `tf2vintage-bin.zip` | Both (Windows .dll + Linux .so included) |
 
 > **Release schedule:** Full releases publish every 90 days. Weekly updates publish every Thursday at 08:00 UTC if there are new commits — if nothing has changed, no release is published. Dev builds are available as CI artifacts on every commit (90 day expiry) for testing purposes.
 
@@ -44,7 +43,7 @@ TF2 Vintage is distributed as two packages. You need both for a working install.
    ```
    If you're unsure which applies, open Steam → **Steam menu** → **Settings** → **Storage** to find your library location. After extraction you should have a `tf2vintage` folder inside `sourcemods\`.
 
-2. Download `tf2vintage-windows-bin.zip` and extract the contents into your `tf2vintage\bin\` folder.
+2. Download `tf2vintage-bin.zip` and extract the contents into your `tf2vintage\bin\` folder.
 
 3. Restart Steam. **Team Fortress 2 Vintage** will appear in your library.
 
@@ -55,9 +54,9 @@ TF2 Vintage is distributed as two packages. You need both for a working install.
    unzip tf2vintage-base.zip -d ~/.steam/steam/steamapps/sourcemods/
    ```
 
-2. Download `tf2vintage-linux-bin.tar.gz` and extract it into the same `tf2vintage` folder:
+2. Download `tf2vintage-bin.zip` and extract it into the same `tf2vintage` folder:
    ```bash
-   tar -xzf tf2vintage-linux-bin.tar.gz -C ~/.steam/steam/steamapps/sourcemods/tf2vintage/
+   unzip tf2vintage-bin.zip -d ~/.steam/steam/steamapps/sourcemods/tf2vintage/
    ```
 
 3. Restart Steam. **Team Fortress 2 Vintage** will appear in your library.

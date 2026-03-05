@@ -272,7 +272,7 @@ jobs:
             base-patch.zip
 
 
-  # ── Windows bin: updater + binaries packed into zip ────────────────────────
+  # ── Windows bin: stage .dll and updater.exe for combined package ────────────
   package-windows:
     needs: [classify, build-windows]
     runs-on: ubuntu-22.04
@@ -301,33 +301,16 @@ jobs:
           name: tf2vintage-windows
           path: game/tf2vintage/bin/
 
-      - name: Write version files
+      - name: Stage Windows bin files
         run: |
-          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-9)
-          BUILD_DATE=$(date +'%m.%d.%Y')
-          BUILD_TYPE="${{ needs.classify.outputs.build_type }}"
-          echo "Version=Windows | ${BUILD_TYPE} | ${BUILD_DATE} | ${SHORT_SHA} | ${{ github.ref_name }}" > game/tf2vintage/version.txt
-          {
-            echo "commit=${{ github.sha }}"
-            echo "short=${SHORT_SHA}"
-            echo "date=${BUILD_DATE}"
-            echo "platform=windows"
-          } > game/tf2vintage/bin/version-bin.txt
+          mkdir -p staging/bin
+          find game/tf2vintage/bin/ -name "*.dll" -o -name "*.exe" | xargs -I{} cp {} staging/bin/
 
-      - name: Generate checksums
-        run: |
-          find game/tf2vintage/bin/ -name "*.dll" -o -name "*.exe" | sort | xargs md5sum > game/tf2vintage/bin/checksums.md5
-
-      - name: Pack bin [zip]
-        run: |
-          cd game/tf2vintage
-          zip -r ../../tf2vintage-windows-bin.zip bin/
-
-      - name: Upload Windows bin artifact
+      - name: Upload Windows staging artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tf2vintage-windows-bin
-          path: tf2vintage-windows-bin.zip
+          name: tf2vintage-windows-staging
+          path: staging/
 
       - name: Clean up Windows binary
         uses: geekyeggo/delete-artifact@v5
@@ -335,7 +318,7 @@ jobs:
           name: tf2vintage-windows
 
 
-  # ── Linux bin: updater + binaries packed into tar.gz ────────────────────────
+  # ── Linux bin: stage .so and updater for combined package ───────────────────
   package-linux:
     needs: [classify, build-linux]
     runs-on: ubuntu-22.04
@@ -364,31 +347,16 @@ jobs:
           name: tf2vintage-linux
           path: game/tf2vintage/bin/
 
-      - name: Write version files
+      - name: Stage Linux bin files
         run: |
-          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-9)
-          BUILD_DATE=$(date +'%m.%d.%Y')
-          BUILD_TYPE="${{ needs.classify.outputs.build_type }}"
-          echo "Version=Linux | ${BUILD_TYPE} | ${BUILD_DATE} | ${SHORT_SHA} | ${{ github.ref_name }}" > game/tf2vintage/version.txt
-          {
-            echo "commit=${{ github.sha }}"
-            echo "short=${SHORT_SHA}"
-            echo "date=${BUILD_DATE}"
-            echo "platform=linux"
-          } > game/tf2vintage/bin/version-bin.txt
+          mkdir -p staging/bin
+          find game/tf2vintage/bin/ -name "*.so" -o -name "tf2vintage-updater" | xargs -I{} cp {} staging/bin/
 
-      - name: Generate checksums
-        run: |
-          find game/tf2vintage/bin/ -name "*.so" | sort | xargs md5sum > game/tf2vintage/bin/checksums.md5
-
-      - name: Pack bin [tar.gz]
-        run: tar -czf tf2vintage-linux-bin.tar.gz -C game/tf2vintage bin
-
-      - name: Upload Linux bin artifact
+      - name: Upload Linux staging artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tf2vintage-linux-bin
-          path: tf2vintage-linux-bin.tar.gz
+          name: tf2vintage-linux-staging
+          path: staging/
 
       - name: Clean up Linux binary
         uses: geekyeggo/delete-artifact@v5
@@ -396,9 +364,62 @@ jobs:
           name: tf2vintage-linux
 
 
+
+  # ── Combined bin: merge Windows + Linux into one zip ────────────────────────
+  package-bin:
+    needs: [classify, package-windows, package-linux]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Download Windows staging
+        uses: actions/download-artifact@v4
+        with:
+          name: tf2vintage-windows-staging
+          path: staging/
+
+      - name: Download Linux staging
+        uses: actions/download-artifact@v4
+        with:
+          name: tf2vintage-linux-staging
+          path: staging/
+
+      - name: Write version files
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-9)
+          BUILD_DATE=$(date +'%m.%d.%Y')
+          BUILD_TYPE="${{ needs.classify.outputs.build_type }}"
+          # Single version.txt covering both platforms
+          echo "Version=${BUILD_TYPE} | ${BUILD_DATE} | ${SHORT_SHA} | ${{ github.ref_name }}" > staging/bin/version.txt
+          {
+            echo "commit=${{ github.sha }}"
+            echo "short=${SHORT_SHA}"
+            echo "date=${BUILD_DATE}"
+          } > staging/bin/version-bin.txt
+
+      - name: Generate combined checksums
+        run: |
+          find staging/bin/ -name "*.dll" -o -name "*.so" -o -name "*.exe" | sort | xargs md5sum > staging/bin/checksums.md5
+
+      - name: Pack combined bin [zip]
+        run: |
+          cd staging
+          zip -r ../tf2vintage-bin.zip bin/
+
+      - name: Upload combined bin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tf2vintage-bin
+          path: tf2vintage-bin.zip
+
+      - name: Clean up staging artifacts
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: |
+            tf2vintage-windows-staging
+            tf2vintage-linux-staging
+
   # ── GitHub Release: only on schedule or manual dispatch ─────────────────────
   publish-release:
-    needs: [classify, package-windows, package-linux, package-base]
+    needs: [classify, package-bin, package-base]
     runs-on: ubuntu-22.04
     if: needs.classify.outputs.should_publish == 'true'
     permissions:
@@ -429,8 +450,7 @@ jobs:
           name: ${{ steps.meta.outputs.release_name }}
           body: ${{ steps.meta.outputs.release_notes }}
           files: |
-            dist/tf2vintage-windows-bin/tf2vintage-windows-bin.zip
-            dist/tf2vintage-linux-bin/tf2vintage-linux-bin.tar.gz
+            dist/tf2vintage-bin/tf2vintage-bin.zip
             dist/tf2vintage-base/tf2vintage-base.zip
             dist/tf2vintage-base/base-manifest.json
             dist/tf2vintage-base/base-patch.zip
