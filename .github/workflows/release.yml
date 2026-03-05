@@ -32,6 +32,9 @@ jobs:
     steps:
       - name: Checkout game assets
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
       - name: Download Windows Binary
         uses: actions/download-artifact@v4
         with:
@@ -42,6 +45,8 @@ jobs:
         with:
           name: tf2vintage-linux
           path: game/tf2vintage/bin/
+      - name: Write version.txt
+        run: echo "version=${{ github.sha }}" > game/tf2vintage/version.txt
       - name: Pack [7z]
         uses: edgarrc/action-7z@v1
         with:
