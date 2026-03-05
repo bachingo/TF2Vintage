@@ -46,7 +46,13 @@ jobs:
           name: tf2vintage-linux
           path: game/tf2vintage/bin/
       - name: Write version.txt
-        run: echo "version=${{ github.sha }}" > game/tf2vintage/version.txt
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          BUILD_DATE=$(date +'%Y%m%d')
+          echo "version=${BUILD_DATE}-${SHORT_SHA}-release.yml" > game/tf2vintage/version.txt
+      - name: Generate checksums
+        run: |
+          find game/tf2vintage/bin/ -name "*.dll" -o -name "*.so" | sort | xargs md5sum > game/tf2vintage/checksums.md5
       - name: Pack [7z]
         uses: edgarrc/action-7z@v1
         with:
