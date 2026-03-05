@@ -459,6 +459,13 @@ jobs:
         with:
           path: dist/
 
+      - name: Generate SHA-256 checksums for release assets
+        run: |
+          cd dist
+          # Hash every file that players or the updater will download
+          sha256sum             tf2vintage-updater-windows/tf2vintage-updater.exe             tf2vintage-updater-linux/tf2vintage-updater             tf2vintage-bin/tf2vintage-bin.zip             tf2vintage-base/tf2vintage-base.zip             tf2vintage-base/base-manifest.json             tf2vintage-base/base-patch.zip             2>/dev/null | sed 's|.*/||' > checksums.sha256
+          cat checksums.sha256
+
       - name: Set release metadata
         id: meta
         run: |
@@ -501,6 +508,7 @@ NOTES
             dist/tf2vintage-bin/tf2vintage-bin.zip
             dist/tf2vintage-base/tf2vintage-base.zip
             dist/tf2vintage-base/base-manifest.json
+            dist/checksums.sha256
 
       - name: Publish GitHub Release (weekly — no standalone installers)
         if: needs.classify.outputs.full_base != 'true'
@@ -513,3 +521,4 @@ NOTES
             dist/tf2vintage-bin/tf2vintage-bin.zip
             dist/tf2vintage-base/base-manifest.json
             dist/tf2vintage-base/base-patch.zip
+            dist/checksums.sha256
