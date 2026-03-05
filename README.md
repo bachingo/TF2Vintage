@@ -12,17 +12,12 @@ Development may be slow at times — consider becoming a contributor!
 
 TF2 Vintage is distributed as two packages. You need both for a working install.
 
-| Package | Description |
-|---|---|
-| **Base** | Game assets — maps, models, sounds, configs. Download once; only re-downloads changed files on update. |
-| **Binaries** | Compiled game code for your platform. Updates frequently with every code change. |
+| Package | File | Description |
+|---|---|--|
+| **Base** | `tf2vintage-base.zip` | Game assets — maps, models, sounds, configs. Download once; only re-downloads changed files on update. |
+| **Binaries** | `tf2vintage-bin.zip` | Compiled game code for your platform. Updates frequently with every code change. |
 
 **[→ Latest Release](https://github.com/TF2V/TF2Vintage/releases/latest)**
-
-| File | Platform |
-|---|---|
-| `tf2vintage-base.zip` | Both (download once) |
-| `tf2vintage-bin.zip` | Both (Windows .dll + Linux .so included) |
 
 > **Release schedule:** Full releases publish every 90 days. Weekly updates publish every Thursday at 08:00 UTC if there are new commits — if nothing has changed, no release is published. Dev builds are available as CI artifacts on every commit (90 day expiry) for testing purposes.
 
