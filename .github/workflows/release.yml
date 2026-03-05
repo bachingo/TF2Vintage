@@ -519,34 +519,6 @@ jobs:
           if [ "${{ needs.classify.outputs.full_base }}" == "true" ]; then
             echo "release_name=Full Release ${BUILD_DATE} (${SHORT_SHA})" >> $GITHUB_OUTPUT
             cat >> $GITHUB_OUTPUT << 'NOTES'
-release_notes=## New Install
-Download **tf2vintage-updater.exe** (Windows) or **tf2vintage-updater** (Linux) — it will install TF2 Vintage automatically.
-
-## Existing Install
-Your copy will update automatically next time you launch the game.
-
-## Manual Download
-- `tf2vintage-base.zip` — full game assets
-- `tf2vintage-bin.zip` — game binaries (Windows + Linux)
-
-## For Contributors
-- `tf2vintage-symbols.zip` — debug symbols for crash report analysis (not needed by players)
-  - Windows: PDB files, load in WinDbg or Visual Studio alongside a `.dmp`
-  - Linux: `.debug` files, use with `addr2line` alongside a `.map`
-NOTES
-          else
-            echo "release_name=Update ${BUILD_DATE} (${SHORT_SHA})" >> $GITHUB_OUTPUT
-            cat >> $GITHUB_OUTPUT << 'NOTES'
-release_notes=Weekly update — your copy will update automatically next time you launch the game.
-
-## Manual Download
-- `tf2vintage-bin.zip` — updated game binaries
-- `base-patch.zip` — base asset changes since last release (if any)
-
-## For Contributors
-- `tf2vintage-symbols.zip` — debug symbols for crash report analysis (not needed by players)
-NOTES
-          fi
 
       - name: Publish GitHub Release (full — includes standalone installers)
         if: needs.classify.outputs.full_base == 'true'
