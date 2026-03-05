@@ -8,7 +8,7 @@ Latest full compile, including game assets: [Click](https://nightly.link/TF2V/TF
 
 -------------------------------------------------------------------------------------------
 Team Fortress 2 Vintage
-Copyright (C) 2017-2025 Team Fortress 2 Vintage Team
+Copyright (C) 2017-2026 Team Fortress 2 Vintage Team
 https://github.com/TF2V/TF2Vintage
 
 This program is free software: you can redistribute it and/or modify
