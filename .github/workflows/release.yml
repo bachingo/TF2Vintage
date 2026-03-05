@@ -45,6 +45,7 @@ jobs:
     outputs:
       should_publish: ${{ steps.classify.outputs.should_publish }}
       full_base: ${{ steps.classify.outputs.full_base }}
+      build_type: ${{ steps.classify.outputs.build_type }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -64,6 +65,7 @@ jobs:
           if [[ "$DISPATCH_TYPE" == "full" ]]; then
             echo "should_publish=true" >> $GITHUB_OUTPUT
             echo "full_base=true"      >> $GITHUB_OUTPUT
+            echo "build_type=Full Release" >> $GITHUB_OUTPUT
             echo "reason=Manual full release requested" >> $GITHUB_OUTPUT
             exit 0
           fi
@@ -72,6 +74,7 @@ jobs:
           if [[ "$DISPATCH_TYPE" == "diff" ]]; then
             echo "should_publish=true" >> $GITHUB_OUTPUT
             echo "full_base=false"     >> $GITHUB_OUTPUT
+            echo "build_type=Weekly" >> $GITHUB_OUTPUT
             echo "reason=Manual diff release requested" >> $GITHUB_OUTPUT
             exit 0
           fi
@@ -80,6 +83,7 @@ jobs:
           if [[ "$CRON" == "0 0 1 1,4,7,10 *" ]]; then
             echo "should_publish=true" >> $GITHUB_OUTPUT
             echo "full_base=true"      >> $GITHUB_OUTPUT
+            echo "build_type=Full Release" >> $GITHUB_OUTPUT
             echo "reason=Quarterly full release" >> $GITHUB_OUTPUT
             exit 0
           fi
@@ -93,6 +97,7 @@ jobs:
               # No previous release at all — publish a full base as the first one
               echo "should_publish=true" >> $GITHUB_OUTPUT
               echo "full_base=true"      >> $GITHUB_OUTPUT
+              echo "build_type=Full Release" >> $GITHUB_OUTPUT
               echo "reason=No previous release found — publishing first full release" >> $GITHUB_OUTPUT
               exit 0
             fi
@@ -107,10 +112,12 @@ jobs:
             if [ "$CHANGES" -eq 0 ]; then
               echo "should_publish=false" >> $GITHUB_OUTPUT
               echo "full_base=false"      >> $GITHUB_OUTPUT
+              echo "build_type=Nightly" >> $GITHUB_OUTPUT
               echo "reason=No commits since last release (${LAST_TAG}) — skipping" >> $GITHUB_OUTPUT
             else
               echo "should_publish=true" >> $GITHUB_OUTPUT
               echo "full_base=false"     >> $GITHUB_OUTPUT
+              echo "build_type=Weekly" >> $GITHUB_OUTPUT
               echo "reason=${CHANGES} commit(s) since ${LAST_TAG}" >> $GITHUB_OUTPUT
             fi
             exit 0
@@ -119,6 +126,7 @@ jobs:
           # ── Push or PR — build only, no release ─────────────────────────────
           echo "should_publish=false" >> $GITHUB_OUTPUT
           echo "full_base=false"      >> $GITHUB_OUTPUT
+          echo "build_type=Nightly" >> $GITHUB_OUTPUT
           echo "reason=Push/PR build — artifacts only" >> $GITHUB_OUTPUT
 
       - name: Log decision
@@ -231,7 +239,7 @@ jobs:
           steps.base_changes.outputs.has_changes == 'true'
         run: |
           python3 - << 'PYEOF'
-          import os, json, tarfile
+          import os, json, zipfile
 
           prev  = json.load(open("prev-manifest.json"))
           curr  = json.load(open("base-manifest.json"))
@@ -239,35 +247,34 @@ jobs:
           changed = [f for f, md5 in curr["files"].items() if prev["files"].get(f) != md5]
 
           print(f"Patch contains {len(changed)} changed/added file(s):")
-          with tarfile.open("base-patch.tar.gz", "w:gz") as tar:
+          with zipfile.ZipFile("base-patch.zip", "w", zipfile.ZIP_DEFLATED) as zf:
               for rel in sorted(changed):
                   full = os.path.join(base, rel.replace("/", os.sep))
-                  tar.add(full, arcname=os.path.join("tf2vintage", rel))
+                  zf.write(full, arcname=os.path.join("tf2vintage", rel))
                   print(f"  + {rel}")
           PYEOF
 
-      - name: Pack full base [tar.gz] (full release or first-ever release)
+      - name: Pack full base [zip] (full release or first-ever release)
         if: |
           needs.classify.outputs.full_base == 'true' ||
           steps.prev_manifest.outputs.has_prev != 'true'
         run: |
-          tar -czf tf2vintage-base.tar.gz \
-            --exclude='game/tf2vintage/bin' \
-            -C game tf2vintage
+          cd game
+          zip -r ../tf2vintage-base.zip tf2vintage --exclude 'tf2vintage/bin/*'
 
       - name: Upload base artifacts
         uses: actions/upload-artifact@v4
         with:
           name: tf2vintage-base
           path: |
-            tf2vintage-base.tar.gz
+            tf2vintage-base.zip
             base-manifest.json
-            base-patch.tar.gz
+            base-patch.zip
 
 
-  # ── Windows bin: updater + binaries packed into SFX installer ───────────────
+  # ── Windows bin: updater + binaries packed into zip ────────────────────────
   package-windows:
-    needs: build-windows
+    needs: [classify, build-windows]
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
@@ -298,7 +305,8 @@ jobs:
         run: |
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-9)
           BUILD_DATE=$(date +'%m.%d.%Y')
-          echo "Version=Windows | ${BUILD_DATE} | ${SHORT_SHA} | ${{ github.ref_name }}" > game/tf2vintage/version.txt
+          BUILD_TYPE="${{ needs.classify.outputs.build_type }}"
+          echo "Version=Windows | ${BUILD_TYPE} | ${BUILD_DATE} | ${SHORT_SHA} | ${{ github.ref_name }}" > game/tf2vintage/version.txt
           {
             echo "commit=${{ github.sha }}"
             echo "short=${SHORT_SHA}"
@@ -310,38 +318,16 @@ jobs:
         run: |
           find game/tf2vintage/bin/ -name "*.dll" -o -name "*.exe" | sort | xargs md5sum > game/tf2vintage/bin/checksums.md5
 
-      - name: Download 7-Zip SFX module
+      - name: Pack bin [zip]
         run: |
-          curl -fsSL "https://7-zip.org/a/7z2407-extra.7z" -o 7z-extra.7z
-          mkdir -p sfx
-          7z e 7z-extra.7z 7zSD.sfx -osfx/
-
-      - name: Write SFX installer config
-        run: |
-          cat > sfx_config.txt << 'EOF'
-          ;!@Install@!UTF-8!
-          Title="TF2 Vintage"
-          BeginPrompt="Install TF2 Vintage?\n\nThis will extract to your Steam Sourcemods folder."
-          InstallPath="%%REGKEY=HKCU\\Software\\Valve\\Steam\\SourceModInstallPath%%"
-          ExtractPathTitle="Select Sourcemods Folder"
-          ExtractPathText="Choose where to install TF2 Vintage (defaults to your Steam Sourcemods folder):"
-          Progress="yes"
-          ;!@InstallEnd@!
-          EOF
-
-      - name: Pack bin content for SFX
-        uses: edgarrc/action-7z@v1
-        with:
-          args: 7z a -t7z -mx=9 tf2vintage-windows-bin.7z ./game/tf2vintage/bin/
-
-      - name: Assemble SFX installer .exe
-        run: cat sfx/7zSD.sfx sfx_config.txt tf2vintage-windows-bin.7z > tf2vintage-windows-bin.exe
+          cd game/tf2vintage
+          zip -r ../../tf2vintage-windows-bin.zip bin/
 
       - name: Upload Windows bin artifact
         uses: actions/upload-artifact@v4
         with:
           name: tf2vintage-windows-bin
-          path: tf2vintage-windows-bin.exe
+          path: tf2vintage-windows-bin.zip
 
       - name: Clean up Windows binary
         uses: geekyeggo/delete-artifact@v5
@@ -351,7 +337,7 @@ jobs:
 
   # ── Linux bin: updater + binaries packed into tar.gz ────────────────────────
   package-linux:
-    needs: build-linux
+    needs: [classify, build-linux]
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
@@ -382,7 +368,8 @@ jobs:
         run: |
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-9)
           BUILD_DATE=$(date +'%m.%d.%Y')
-          echo "Version=Linux | ${BUILD_DATE} | ${SHORT_SHA} | ${{ github.ref_name }}" > game/tf2vintage/version.txt
+          BUILD_TYPE="${{ needs.classify.outputs.build_type }}"
+          echo "Version=Linux | ${BUILD_TYPE} | ${BUILD_DATE} | ${SHORT_SHA} | ${{ github.ref_name }}" > game/tf2vintage/version.txt
           {
             echo "commit=${{ github.sha }}"
             echo "short=${SHORT_SHA}"
@@ -442,8 +429,8 @@ jobs:
           name: ${{ steps.meta.outputs.release_name }}
           body: ${{ steps.meta.outputs.release_notes }}
           files: |
-            dist/tf2vintage-windows-bin/tf2vintage-windows-bin.exe
+            dist/tf2vintage-windows-bin/tf2vintage-windows-bin.zip
             dist/tf2vintage-linux-bin/tf2vintage-linux-bin.tar.gz
-            dist/tf2vintage-base/tf2vintage-base.tar.gz
+            dist/tf2vintage-base/tf2vintage-base.zip
             dist/tf2vintage-base/base-manifest.json
-            dist/tf2vintage-base/base-patch.tar.gz
+            dist/tf2vintage-base/base-patch.zip

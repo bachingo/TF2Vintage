@@ -2,6 +2,7 @@ package main
 
 import (
 	"archive/tar"
+	"archive/zip"
 	"compress/gzip"
 	"crypto/md5"
 	"encoding/hex"
@@ -35,9 +36,6 @@ type ghAsset struct {
 
 // ── Manifest types ────────────────────────────────────────────────────────────
 
-// BaseManifest describes every file in the base asset tree.
-// PrevTag is the release tag this build was diffed against — used to
-// walk the patch chain when the player is multiple versions behind.
 type BaseManifest struct {
 	Tag     string            `json:"tag"`
 	PrevTag string            `json:"prev_tag"`
@@ -114,16 +112,18 @@ func updateBin(modDir string, latest *ghRelease) error {
 	defer os.Remove(tmp)
 
 	fmt.Println("Extracting binaries...")
+	// Windows bins are .zip, Linux bins are .tar.gz
+	if runtime.GOOS == "windows" {
+		return extractZip(tmp, filepath.Join(modDir, "bin"))
+	}
 	return extractTarGz(tmp, filepath.Join(modDir, "bin"))
 }
 
 // ── Base update ───────────────────────────────────────────────────────────────
 
 func updateBase(modDir string, latest *ghRelease) error {
-	// Fetch the latest manifest
 	manifestURL := assetURL(latest, "base-manifest.json")
 	if manifestURL == "" {
-		// No base asset in this release — nothing to do
 		return nil
 	}
 
@@ -138,7 +138,7 @@ func updateBase(modDir string, latest *ghRelease) error {
 	if localManifest == nil {
 		// ── Fresh install: download full base ─────────────────────────────────
 		fmt.Println("No base install found — downloading full base (this may take a while)...")
-		url := assetURL(latest, "tf2vintage-base.tar.gz")
+		url := assetURL(latest, "tf2vintage-base.zip")
 		if url == "" {
 			return fmt.Errorf("full base asset not found in release")
 		}
@@ -149,7 +149,7 @@ func updateBase(modDir string, latest *ghRelease) error {
 		defer os.Remove(tmp)
 
 		fmt.Println("Extracting base...")
-		if err := extractTarGz(tmp, modDir); err != nil {
+		if err := extractZip(tmp, modDir); err != nil {
 			return err
 		}
 		saveManifest(localManifestPath, remoteManifest)
@@ -167,7 +167,6 @@ func updateBase(modDir string, latest *ghRelease) error {
 
 	chain, err := buildPatchChain(localManifest.Tag, latest)
 	if err != nil {
-		// Chain is broken or too long — fall back to full base
 		fmt.Println("Patch chain unavailable — falling back to full base download...")
 		return fullBaseDownload(modDir, latest, remoteManifest, localManifestPath)
 	}
@@ -176,7 +175,6 @@ func updateBase(modDir string, latest *ghRelease) error {
 	for i, release := range chain {
 		fmt.Printf("[%d/%d] Applying patch %s\n", i+1, len(chain), release.TagName)
 		if err := applyPatch(modDir, release); err != nil {
-			// If any patch in the chain fails, fall back to full base
 			fmt.Printf("Patch %s failed (%v) — falling back to full base download...\n", release.TagName, err)
 			return fullBaseDownload(modDir, latest, remoteManifest, localManifestPath)
 		}
@@ -187,9 +185,6 @@ func updateBase(modDir string, latest *ghRelease) error {
 	return nil
 }
 
-// buildPatchChain walks GitHub releases backwards from latest until it finds
-// a release whose PrevTag matches the player's current local tag.
-// Returns releases in oldest-first order (correct application order).
 func buildPatchChain(localTag string, latest *ghRelease) ([]*ghRelease, error) {
 	const maxChain = 20
 
@@ -202,18 +197,15 @@ func buildPatchChain(localTag string, latest *ghRelease) ([]*ghRelease, error) {
 			return nil, fmt.Errorf("could not fetch manifest for %s: %v", current.TagName, err)
 		}
 
-		chain = append([]*ghRelease{current}, chain...) // prepend — build oldest-first
+		chain = append([]*ghRelease{current}, chain...)
 
 		if manifest.PrevTag == localTag {
-			// Found the link back to the player's current version
 			return chain, nil
 		}
 		if manifest.PrevTag == "" {
-			// Reached the beginning of release history — chain is broken
 			return nil, fmt.Errorf("patch chain does not reach local tag %s", localTag)
 		}
 
-		// Fetch the previous release and continue walking back
 		prev, err := fetchRelease(manifest.PrevTag)
 		if err != nil {
 			return nil, fmt.Errorf("could not fetch release %s: %v", manifest.PrevTag, err)
@@ -225,9 +217,8 @@ func buildPatchChain(localTag string, latest *ghRelease) ([]*ghRelease, error) {
 }
 
 func applyPatch(modDir string, release *ghRelease) error {
-	url := assetURL(release, "base-patch.tar.gz")
+	url := assetURL(release, "base-patch.zip")
 	if url == "" {
-		// This release had no base changes — skip silently
 		return nil
 	}
 
@@ -237,11 +228,11 @@ func applyPatch(modDir string, release *ghRelease) error {
 	}
 	defer os.Remove(tmp)
 
-	return extractTarGz(tmp, modDir)
+	return extractZip(tmp, modDir)
 }
 
 func fullBaseDownload(modDir string, latest *ghRelease, manifest *BaseManifest, localManifestPath string) error {
-	url := assetURL(latest, "tf2vintage-base.tar.gz")
+	url := assetURL(latest, "tf2vintage-base.zip")
 	if url == "" {
 		return fmt.Errorf("full base asset not found in release")
 	}
@@ -252,7 +243,7 @@ func fullBaseDownload(modDir string, latest *ghRelease, manifest *BaseManifest, 
 	defer os.Remove(tmp)
 
 	fmt.Println("Extracting base...")
-	if err := extractTarGz(tmp, modDir); err != nil {
+	if err := extractZip(tmp, modDir); err != nil {
 		return err
 	}
 	saveManifest(localManifestPath, manifest)
@@ -303,7 +294,6 @@ func saveManifest(path string, m *BaseManifest) {
 	os.WriteFile(path, b, 0644)
 }
 
-// md5File returns the hex MD5 of a file (used if we ever need local diffing)
 func md5File(path string) (string, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -416,6 +406,55 @@ func printProgress(downloaded, total int64) {
 
 // ── Extraction ────────────────────────────────────────────────────────────────
 
+// extractZip extracts a .zip archive into destDir, stripping the first
+// path component (e.g. "tf2vintage/cfg/foo.cfg" → destDir/cfg/foo.cfg)
+func extractZip(src, destDir string) error {
+	r, err := zip.OpenReader(src)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+
+	for _, f := range r.File {
+		// Strip leading path component
+		parts := strings.SplitN(f.Name, "/", 2)
+		relPath := f.Name
+		if len(parts) == 2 {
+			relPath = parts[1]
+		}
+		if relPath == "" {
+			continue
+		}
+
+		target := filepath.Join(destDir, filepath.FromSlash(relPath))
+
+		if f.FileInfo().IsDir() {
+			os.MkdirAll(target, 0755)
+			continue
+		}
+
+		os.MkdirAll(filepath.Dir(target), 0755)
+		out, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, f.Mode())
+		if err != nil {
+			return err
+		}
+		rc, err := f.Open()
+		if err != nil {
+			out.Close()
+			return err
+		}
+		_, cerr := io.Copy(out, rc)
+		rc.Close()
+		out.Close()
+		if cerr != nil {
+			return cerr
+		}
+	}
+	return nil
+}
+
+// extractTarGz extracts a .tar.gz archive into destDir, stripping the first
+// path component. Used for Linux bin packages only.
 func extractTarGz(src, destDir string) error {
 	f, err := os.Open(src)
 	if err != nil {
@@ -472,7 +511,7 @@ func extractTarGz(src, destDir string) error {
 
 func platformBinAsset() string {
 	if runtime.GOOS == "windows" {
-		return "tf2vintage-windows-bin.exe"
+		return "tf2vintage-windows-bin.zip"
 	}
 	return "tf2vintage-linux-bin.tar.gz"
 }
