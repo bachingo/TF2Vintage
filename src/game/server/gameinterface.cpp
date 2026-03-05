@@ -575,6 +575,13 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 	ConnectTier2Libraries( &appSystemFactory, 1 );
 	ConnectTier3Libraries( &appSystemFactory, 1 );
 
+	// Append -insecure unconditionally so the engine
+	// never attempts VAC negotiation, regardless of server launch options.
+	if ( !CommandLine()->FindParm( "-insecure" ) )
+	{
+		CommandLine()->AppendParm( "-insecure", nullptr );
+	}
+
 	// Connected in ConnectTier1Libraries
 	if ( cvar == NULL )
 		return false;

@@ -914,6 +914,13 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	ConnectTier2Libraries( &appSystemFactory, 1 );
 	ConnectTier3Libraries( &appSystemFactory, 1 );
 
+	// Append -insecure unconditionally so the engine
+	// never attempts a VAC-secured session, regardless of launch options.
+	if ( !CommandLine()->FindParm( "-insecure" ) )
+	{
+		CommandLine()->AppendParm( "-insecure", nullptr );
+	}
+
 	// Client needs to protect from writing files into random locations to avoid becoming a remote-code
 	// execution platform.
 	if ( g_pFullFileSystem )
