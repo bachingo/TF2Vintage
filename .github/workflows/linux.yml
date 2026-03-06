@@ -29,7 +29,7 @@ jobs:
 
       - name: Setup ccache
         run: |
-          mkdir -p game/tf2vintage/bin
+          mkdir -p game/tf2vintage/bin/linux64
           ccache --set-config=cache_dir=${{ env.CCACHE_DIR }}
           ccache --set-config=max_size=2.0G
 
@@ -38,10 +38,17 @@ jobs:
           cd src
           bash createtf2vintage
 
+      - name: Move binaries to bin/linux64
+        run: |
+          # The build outputs .so files into bin/ — move them to the
+          # platform-specific subdirectory the updater and release expect.
+          find game/tf2vintage/bin/ -maxdepth 1 -name "*.so" \
+            -exec mv {} game/tf2vintage/bin/linux64/ \;
+
       - name: Split debug symbols from binaries
         run: |
           mkdir -p debug-symbols
-          find game/tf2vintage/bin/ -name "*.so" | while read lib; do
+          find game/tf2vintage/bin/linux64/ -name "*.so" | while read lib; do
             base=$(basename "$lib")
             dbg="debug-symbols/${base}.debug"
 
@@ -60,7 +67,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: tf2vintage-linux
-          path: game/tf2vintage/bin/
+          path: game/tf2vintage/bin/linux64/
 
       - name: Upload debug symbols
         uses: actions/upload-artifact@v4

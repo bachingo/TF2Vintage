@@ -380,7 +380,7 @@ jobs:
         with:
           fetch-depth: 0
           sparse-checkout: |
-            game/tf2vintage/bin/x64/
+            game/tf2vintage/bin/linux64/
             tools/updater/
 
       - name: Set up Go
@@ -393,21 +393,21 @@ jobs:
         run: |
           cd tools/updater
           go mod tidy
-          GOOS=linux GOARCH=amd64 go build -o ../../game/tf2vintage/bin/x64/tf2vintage-updater .
+          GOOS=linux GOARCH=amd64 go build -o ../../game/tf2vintage/bin/linux64/tf2vintage-updater .
 
       - name: Download Linux binary
         uses: actions/download-artifact@v4
         with:
           name: tf2vintage-linux
-          path: game/tf2vintage/bin/x64/
+          path: game/tf2vintage/bin/linux64/
 
       - name: Stage Linux bin files
         run: |
-          mkdir -p staging/bin/x64
-          find game/tf2vintage/bin/x64/ -name "*.so" -o -name "tf2vintage-updater" | xargs -I{} cp {} staging/bin/x64/
+          mkdir -p staging/bin/linux64
+          find game/tf2vintage/bin/linux64/ -name "*.so" -o -name "tf2vintage-updater" | xargs -I{} cp {} staging/bin/linux64/
           # Also stage standalone updater for direct player download
           mkdir -p standalone-updater-linux
-          cp game/tf2vintage/bin/x64/tf2vintage-updater standalone-updater-linux/tf2vintage-updater
+          cp game/tf2vintage/bin/linux64/tf2vintage-updater standalone-updater-linux/tf2vintage-updater
 
       - name: Download Linux debug symbols
         uses: actions/download-artifact@v4
@@ -468,22 +468,25 @@ jobs:
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-9)
           BUILD_DATE=$(date +'%m.%d.%Y')
           BUILD_TYPE="${{ needs.classify.outputs.build_type }}"
-          # Single version.txt covering both platforms
-          echo "Version=${BUILD_TYPE} | ${BUILD_DATE} | ${SHORT_SHA} | ${{ github.ref_name }}" > staging/bin/x64/version.txt
-          {
-            echo "commit=${{ github.sha }}"
-            echo "short=${SHORT_SHA}"
-            echo "date=${BUILD_DATE}"
-          } > staging/bin/x64/version-bin.txt
+          # Write version files into both platform subdirs
+          for dir in staging/bin/x64 staging/bin/linux64; do
+            if [ -d "$dir" ]; then
+              echo "Version=${BUILD_TYPE} | ${BUILD_DATE} | ${SHORT_SHA} | ${{ github.ref_name }}" > "$dir/version.txt"
+              printf "commit=${{ github.sha }}\nshort=${SHORT_SHA}\ndate=${BUILD_DATE}\n" > "$dir/version-bin.txt"
+            fi
+          done
 
       - name: Generate combined checksums
         run: |
-          find staging/bin/x64/ -name "*.dll" -o -name "*.so" -o -name "*.exe" | sort | xargs md5sum > staging/bin/x64/checksums.md5
+          # Checksums for Windows binaries
+          find staging/bin/x64/ -name "*.dll" -o -name "*.exe" 2>/dev/null | sort | xargs md5sum > staging/bin/x64/checksums.md5 || true
+          # Checksums for Linux binaries
+          find staging/bin/linux64/ -name "*.so" 2>/dev/null | sort | xargs md5sum > staging/bin/linux64/checksums.md5 || true
 
       - name: Pack combined bin [zip]
         run: |
           cd staging
-          zip -r ../tf2vintage-bin.zip bin/x64/
+          zip -r ../tf2vintage-bin.zip bin/x64/ bin/linux64/
 
       - name: Upload combined bin artifact
         uses: actions/upload-artifact@v4
