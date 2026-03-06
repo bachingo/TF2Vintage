@@ -65,7 +65,14 @@ func createJunctionWindows(linkPath, targetPath string) error {
 	*(*uint16)(unsafe.Pointer(&buf[12])) = uint16(targetLen + 2)
 	*(*uint16)(unsafe.Pointer(&buf[14])) = uint16(printLen)
 
-	copy(buf[16:], windows.StringToUTF16(ntTarget))
+	targetUTF16 := windows.StringToUTF16(ntTarget)
+	targetBytes := (*[1 << 20]byte)(unsafe.Pointer(&targetUTF16[0]))[:len(targetUTF16)*2]
+	copy(buf[16:], targetBytes)
+
+	pathUTF16 := windows.StringToUTF16(targetPath)
+	pathBytes := (*[1 << 20]byte)(unsafe.Pointer(&pathUTF16[0]))[:len(pathUTF16)*2]
+	copy(buf[16 + targetLen + 2:], pathBytes)
+	
 	copy(buf[16+targetLen+2:], windows.StringToUTF16(targetPath))
 
 	var bytesReturned uint32
