@@ -48,9 +48,9 @@ jobs:
       build_type: ${{ steps.classify.outputs.build_type }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Classify run
         id: classify
@@ -148,9 +148,9 @@ jobs:
     if: needs.classify.outputs.should_publish == 'true'
     steps:
       - name: Checkout game assets
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Write base version.txt
         run: |
@@ -290,14 +290,12 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
         with:
-          fetch-depth: 1
+          fetch-depth: 0
           sparse-checkout: |
             game/tf2vintage/bin/x64/
             tools/updater/
-          sparse-checkout-cone-mode: false
-
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -305,10 +303,8 @@ jobs:
           go-version: '1.22'
           cache: false
 
-      - name: Install MinGW
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-mingw-w64-x86-64
+      - name: Install windres
+        run: sudo apt-get install -y binutils-mingw-w64-x86-64
 
       - name: Compile Windows resource file (icon + version info)
         run: |
@@ -330,8 +326,10 @@ jobs:
       - name: Stage Windows bin files
         run: |
           mkdir -p staging/bin/x64
-          mkdir -p standalone-updater-windows
           find game/tf2vintage/bin/x64/ -name "*.dll" -o -name "*.exe" | xargs -I{} cp {} staging/bin/x64/
+          # Also stage standalone updater for direct player download
+          cp game/tf2vintage/bin/x64/tf2vintage-updater.exe standalone-updater-windows/tf2vintage-updater.exe || true
+          mkdir -p standalone-updater-windows
           cp game/tf2vintage/bin/x64/tf2vintage-updater.exe standalone-updater-windows/tf2vintage-updater.exe
 
       - name: Upload Windows staging artifact
@@ -346,6 +344,24 @@ jobs:
           name: tf2vintage-updater-windows
           path: standalone-updater-windows/tf2vintage-updater.exe
 
+      - name: Download Windows debug symbols
+        uses: actions/download-artifact@v4
+        with:
+          name: tf2vintage-windows-debugsymbols
+          path: symbols/windows/
+
+      - name: Annotate Windows symbols
+        run: |
+          echo "commit=${{ github.sha }}" >> symbols/windows/symbols-build.txt
+          echo "date=$(date +'%m.%d.%Y')" >> symbols/windows/symbols-build.txt
+          echo "platform=windows" >> symbols/windows/symbols-build.txt
+
+      - name: Upload Windows symbols artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tf2vintage-symbols-windows
+          path: symbols/windows/
+
       - name: Clean up Windows binary
         uses: geekyeggo/delete-artifact@v5
         with:
@@ -358,9 +374,9 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
         with:
-          fetch-depth: 1
+          fetch-depth: 0
           sparse-checkout: |
             game/tf2vintage/bin/x64/
             tools/updater/
@@ -391,16 +407,15 @@ jobs:
           mkdir -p standalone-updater-linux
           cp game/tf2vintage/bin/x64/tf2vintage-updater standalone-updater-linux/tf2vintage-updater
 
-      - name: Collect Linux debug symbols
+      - name: Download Linux debug symbols
+        uses: actions/download-artifact@v4
+        with:
+          name: tf2vintage-linux-debugsymbols
+          path: symbols/linux/
+
+      - name: Annotate Linux symbols
         run: |
-          mkdir -p symbols/linux
-          # Extract DWARF debug info into separate .debug files
-          # Includes tf2vintage_crash.so automatically
-          find game/tf2vintage/bin/x64/ -name "*.so" | while read lib; do
-            base=$(basename "$lib")
-            objcopy --only-keep-debug "$lib" "symbols/linux/${base}.debug" 2>/dev/null || true
-          done
-          echo "commit=${{ github.sha }}" > symbols/linux/symbols-build.txt
+          echo "commit=${{ github.sha }}" >> symbols/linux/symbols-build.txt
           echo "date=$(date +'%m.%d.%Y')" >> symbols/linux/symbols-build.txt
           echo "platform=linux" >> symbols/linux/symbols-build.txt
 
@@ -504,6 +519,8 @@ jobs:
           name: |
             tf2vintage-windows-staging
             tf2vintage-linux-staging
+            tf2vintage-windows-debugsymbols
+            tf2vintage-linux-debugsymbols
             tf2vintage-symbols-windows
             tf2vintage-symbols-linux
 
@@ -524,15 +541,7 @@ jobs:
         run: |
           cd dist
           # Hash every file that players or the updater will download
-          sha256sum \
-            tf2vintage-updater-windows/tf2vintage-updater.exe \
-            tf2vintage-updater-linux/tf2vintage-updater \
-            tf2vintage-bin/tf2vintage-bin.zip \
-            tf2vintage-base/tf2vintage-base.zip \
-            tf2vintage-base/base-manifest.json \
-            tf2vintage-base/base-patch.zip \
-            tf2vintage-symbols/tf2vintage-symbols.zip \
-            2>/dev/null | sed 's|.*/||' > checksums.sha256
+          sha256sum             tf2vintage-updater-windows/tf2vintage-updater.exe             tf2vintage-updater-linux/tf2vintage-updater             tf2vintage-bin/tf2vintage-bin.zip             tf2vintage-base/tf2vintage-base.zip             tf2vintage-base/base-manifest.json             tf2vintage-base/base-patch.zip             tf2vintage-symbols/tf2vintage-symbols.zip             2>/dev/null | sed 's|.*/||' > checksums.sha256
           cat checksums.sha256
 
       - name: Set release metadata
@@ -542,37 +551,7 @@ jobs:
           BUILD_DATE=$(date +'%m.%d.%Y')
           if [ "${{ needs.classify.outputs.full_base }}" == "true" ]; then
             echo "release_name=Full Release ${BUILD_DATE} (${SHORT_SHA})" >> $GITHUB_OUTPUT
-            {
-              echo "release_notes<<EOF"
-              echo "## New Install"
-              echo "Download **tf2vintage-updater.exe** (Windows) or **tf2vintage-updater** (Linux) — it will install TF2 Vintage automatically."
-              echo ""
-              echo "## Existing Install"
-              echo "Your copy will update automatically next time you launch the game."
-              echo ""
-              echo "## Manual Download"
-              echo "- \`tf2vintage-base.zip\` — full game assets"
-              echo "- \`tf2vintage-bin.zip\` — game binaries (Windows + Linux)"
-              echo ""
-              echo "## For Contributors"
-              echo "- \`tf2vintage-symbols.zip\` — debug symbols for crash report analysis (not needed by players)"
-              echo "EOF"
-            } >> $GITHUB_OUTPUT
-          else
-            echo "release_name=Weekly Update ${BUILD_DATE} (${SHORT_SHA})" >> $GITHUB_OUTPUT
-            {
-              echo "release_notes<<EOF"
-              echo "Weekly update — your copy will update automatically next time you launch the game."
-              echo ""
-              echo "## Manual Download"
-              echo "- \`tf2vintage-bin.zip\` — updated game binaries"
-              echo "- \`base-patch.zip\` — base asset changes since last release (if any)"
-              echo ""
-              echo "## For Contributors"
-              echo "- \`tf2vintage-symbols.zip\` — debug symbols for crash report analysis (not needed by players)"
-              echo "EOF"
-            } >> $GITHUB_OUTPUT
-          fi
+            cat >> $GITHUB_OUTPUT << 'NOTES'
 
       - name: Publish GitHub Release (full — includes standalone installers)
         if: needs.classify.outputs.full_base == 'true'

@@ -25,8 +25,16 @@ jobs:
           cd src
           devenv TF2vintage.sln /Build Release
 
-      - name: Upload product
+      - name: Upload binaries
         uses: actions/upload-artifact@v4
         with:
           name: tf2vintage-windows
-          path: game/tf2vintage/bin/
+          path: |
+            game/tf2vintage/bin/**/*.dll
+            game/tf2vintage/bin/**/*.exe
+
+      - name: Upload debug symbols
+        uses: actions/upload-artifact@v4
+        with:
+          name: tf2vintage-windows-debugsymbols
+          path: game/tf2vintage/bin/**/*.pdb

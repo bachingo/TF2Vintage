@@ -6,44 +6,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
 )
-
-// ── Steam path detection ──────────────────────────────────────────────────────
-
-func findSteamPath() (string, error) {
-	if runtime.GOOS == "windows" {
-		return findSteamPathWindows()
-	}
-	return findSteamPathLinux()
-}
-
-func findSteamPathLinux() (string, error) {
-	candidates := []string{
-		filepath.Join(os.Getenv("HOME"), ".steam", "steam"),
-		filepath.Join(os.Getenv("HOME"), ".local", "share", "Steam"),
-	}
-	for _, p := range candidates {
-		if _, err := os.Stat(p); err == nil {
-			return p, nil
-		}
-	}
-	return "", fmt.Errorf("Steam installation not found")
-}
-
-// findSourcemodsPath returns the sourcemods directory for the current platform.
-func findSourcemodsPath() (string, error) {
-	if runtime.GOOS == "windows" {
-		return findSourcemodsPathWindows()
-	}
-	steam, err := findSteamPathLinux()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(steam, "steamapps", "sourcemods"), nil
-}
 
 // ── SDK Base 2013 MP detection ────────────────────────────────────────────────
 
@@ -61,42 +26,12 @@ func promptInstallSDK() {
 
 func openURL(url string) {
 	var cmd *exec.Cmd
-	if runtime.GOOS == "windows" {
+	if isWindows() {
 		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
 	} else {
 		cmd = exec.Command("xdg-open", url)
 	}
 	cmd.Start()
-}
-
-// ── Steam process management ──────────────────────────────────────────────────
-
-func closeSteam() error {
-	if runtime.GOOS == "windows" {
-		return closeSteamWindows()
-	}
-	return closeSteamLinux()
-}
-
-func closeSteamLinux() error {
-	cmd := exec.Command("pkill", "-x", "steam")
-	cmd.Run() // ignore error — steam may not be running
-	time.Sleep(2 * time.Second)
-	return nil
-}
-
-func relaunchSteam(steamPath string) error {
-	if runtime.GOOS == "windows" {
-		return relaunchSteamWindows(steamPath)
-	}
-	return relaunchSteamLinux(steamPath)
-}
-
-func relaunchSteamLinux(steamPath string) error {
-	steamBin := filepath.Join(steamPath, "steam.sh")
-	cmd := exec.Command(steamBin)
-	cmd.Start()
-	return nil
 }
 
 // ── VDF read/write for launch options ────────────────────────────────────────
@@ -163,8 +98,6 @@ func findLocalConfig(steamPath string) (string, error) {
 	return newest, nil
 }
 
-
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 func waitForSDKInstall(steamPath string) bool {
@@ -194,14 +127,6 @@ func waitForSDKInstall(steamPath string) bool {
 		}
 	}
 	return false
-}
-
-func isSteamRunning() bool {
-	if runtime.GOOS == "windows" {
-		return isSteamRunningWindows()
-	}
-	out, err := exec.Command("pgrep", "-x", "steam").Output()
-	return err == nil && len(out) > 0
 }
 
 func readLine() string {

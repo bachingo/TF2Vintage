@@ -21,7 +21,6 @@ type BaseManifest struct {
 	Files   map[string]string `json:"files"`
 }
 
-
 // ── Manifest helpers ──────────────────────────────────────────────────────────
 
 func fetchReleaseManifest(r *ghRelease) (*BaseManifest, error) {
@@ -182,6 +181,42 @@ func chmodSo(dir string) {
 	})
 }
 
+// ── Atomic swap ───────────────────────────────────────────────────────────────
+
+// atomicSwapDir replaces liveDir with stagingDir using a backup-swap-cleanup
+// sequence. If the rename of stagingDir→liveDir fails, the original is restored
+// from backup. The backup is removed on success.
+//
+// Both liveDir and stagingDir must be on the same filesystem for os.Rename to
+// be atomic. stagingDir is consumed (moved) by this call.
+func atomicSwapDir(liveDir, stagingDir string) error {
+	backupDir := liveDir + ".old"
+	os.RemoveAll(backupDir) // clear any leftover from a previous failed update
+
+	// Step 1: move live → backup (fast, same-fs rename)
+	if err := os.Rename(liveDir, backupDir); err != nil {
+		// Live dir may not exist yet (first install) — that's fine
+		if !os.IsNotExist(err) {
+			return fmt.Errorf("could not back up %s: %v", liveDir, err)
+		}
+	}
+
+	// Step 2: move staging → live
+	if err := os.Rename(stagingDir, liveDir); err != nil {
+		// Rollback: restore backup
+		if rerr := os.Rename(backupDir, liveDir); rerr != nil {
+			return fmt.Errorf(
+				"swap failed (%v) AND rollback failed (%v) — manual recovery needed: restore %s to %s",
+				err, rerr, backupDir, liveDir)
+		}
+		return fmt.Errorf("atomic swap failed (original restored): %v", err)
+	}
+
+	// Step 3: remove backup
+	os.RemoveAll(backupDir)
+	return nil
+}
+
 // ── Misc helpers ──────────────────────────────────────────────────────────────
 
 func platformBinAsset() string {
@@ -256,21 +291,4 @@ func termFatal(format string, args ...any) {
 	fmt.Fprintf(os.Stderr, "[ERROR] "+format+"\n", args...)
 	termPause()
 	os.Exit(1)
-}
-
-func AtomicUpdate(binDir string, stagingDir string) error {
-    backupDir := binDir + ".old"
-    
-    // 1. Move old to .old
-    os.Rename(binDir, backupDir)
-    
-    // 2. Move staging to bin
-    if err := os.Rename(stagingDir, binDir); err != nil {
-        // Rollback: try to put the old one back if renaming fails
-        os.Rename(backupDir, binDir)
-        return err
-    }
-    
-    // 3. Success: remove the backup
-    return os.RemoveAll(backupDir)
 }

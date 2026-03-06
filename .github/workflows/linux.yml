@@ -19,14 +19,13 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.CCACHE_DIR }}
-          # Use hashFiles so the cache updates when code changes, not just every day
           key: ${{ runner.os }}-ccache-${{ hashFiles('src/**/*.cpp', 'src/**/*.h') }}
           restore-keys: ${{ runner.os }}-ccache-
 
       - name: Configure Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y zip build-essential gcc-multilib g++-multilib podman ccache
+          sudo apt-get install -y zip build-essential gcc-multilib g++-multilib podman ccache binutils
 
       - name: Setup ccache
         run: |
@@ -39,8 +38,32 @@ jobs:
           cd src
           bash createtf2vintage
 
+      - name: Split debug symbols from binaries
+        run: |
+          mkdir -p debug-symbols
+          find game/tf2vintage/bin/ -name "*.so" | while read lib; do
+            base=$(basename "$lib")
+            dbg="debug-symbols/${base}.debug"
+
+            # 1. Extract DWARF into a sidecar .debug file
+            objcopy --only-keep-debug "$lib" "$dbg"
+
+            # 2. Strip all debug sections from the shipped binary
+            objcopy --strip-debug "$lib"
+
+            # 3. Embed a GNU debug link so debuggers can locate the sidecar
+            #    automatically (addr2line, gdb, crash handler map lookup)
+            objcopy --add-gnu-debuglink="$dbg" "$lib"
+          done
+
       - name: Upload product
         uses: actions/upload-artifact@v4
         with:
           name: tf2vintage-linux
           path: game/tf2vintage/bin/
+
+      - name: Upload debug symbols
+        uses: actions/upload-artifact@v4
+        with:
+          name: tf2vintage-linux-debugsymbols
+          path: debug-symbols/

@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 )
 
 // resolveInstallDir determines where tf2vintage files actually get written.
 // If the user chose an alternate path, it:
-//   1. Creates the target directory at altPath/tf2vintage
-//   2. Creates a junction (Windows) or symlink (Linux) from
-//      sourcemods/tf2vintage → altPath/tf2vintage
+//  1. Creates the target directory at altPath/tf2vintage
+//  2. Creates a junction (Windows) or symlink (Linux) from
+//     sourcemods/tf2vintage → altPath/tf2vintage
 //
 // Returns the real install directory and an error if setup failed.
 func resolveInstallDir(sourcemods, altPath string) (installDir string, err error) {
@@ -42,7 +41,7 @@ func resolveInstallDir(sourcemods, altPath string) (installDir string, err error
 		}
 	}
 
-	// Create junction (Windows) or symlink (Linux)
+	// Create junction (Windows) or symlink (Linux) — implemented per-platform
 	if err := createLink(junctionPath, installDir); err != nil {
 		return "", fmt.Errorf("could not create junction from %s → %s: %v",
 			junctionPath, installDir, err)
@@ -56,12 +55,4 @@ func resolveInstallDir(sourcemods, altPath string) (installDir string, err error
 // Windows directory junction (both appear as ModeSymlink on Go's os package).
 func isJunctionOrSymlink(info os.FileInfo) bool {
 	return info.Mode()&os.ModeSymlink != 0
-}
-
-// createLink creates a directory junction on Windows or a symlink on Linux.
-func createLink(linkPath, targetPath string) error {
-	if runtime.GOOS == "windows" {
-		return createJunctionWindows(linkPath, targetPath)
-	}
-	return os.Symlink(targetPath, linkPath)
 }

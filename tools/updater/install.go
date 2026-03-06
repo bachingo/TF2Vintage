@@ -99,19 +99,52 @@ func doInstall(report func(InstallState), askAltPath func() string, askSymbols f
 			existingCfg.DownloadSymbols = askSymbols()
 			saveConfig(binDir, existingCfg)
 		}
-		if err := updateBin(installDir, binDir, latest); err != nil {
-			report(InstallState{Err: fmt.Errorf("Update failed: %v", err)})
+		// For an already-installed copy, use a staging dir beside the install
+		// so updates can be swapped in atomically.
+		stagingRoot := installDir + ".staging"
+		stagingBinDir := filepath.Join(stagingRoot, "bin", "x64")
+		stagingModDir := filepath.Join(stagingRoot, "mod")
+		os.RemoveAll(stagingRoot)
+		os.MkdirAll(stagingBinDir, 0755)
+		os.MkdirAll(stagingModDir, 0755)
+
+		binUpdated := false
+		baseUpdated := false
+
+		if err := updateBin(binDir, stagingBinDir, latest); err != nil {
+			report(InstallState{Err: fmt.Errorf("Bin update failed: %v", err)})
+			os.RemoveAll(stagingRoot)
 			return
+		} else {
+			binUpdated = true
 		}
-		if err := updateBase(installDir, latest); err != nil {
-			report(InstallState{Err: fmt.Errorf("Update failed: %v", err)})
+		if err := updateBase(installDir, stagingModDir, latest); err != nil {
+			report(InstallState{Err: fmt.Errorf("Base update failed: %v", err)})
+			os.RemoveAll(stagingRoot)
 			return
+		} else {
+			baseUpdated = true
 		}
 		if existingCfg.DownloadSymbols {
-			if err := updateSymbols(binDir, latest); err != nil {
+			if err := updateSymbols(binDir, stagingBinDir, latest); err != nil {
 				termWarn("Symbol update failed: %v", err)
 			}
 		}
+		if binUpdated {
+			if err := atomicSwapDir(binDir, stagingBinDir); err != nil {
+				report(InstallState{Err: fmt.Errorf("Bin swap failed: %v", err)})
+				os.RemoveAll(stagingRoot)
+				return
+			}
+		}
+		if baseUpdated {
+			if err := atomicSwapDir(installDir, stagingModDir); err != nil {
+				report(InstallState{Err: fmt.Errorf("Base swap failed: %v", err)})
+				os.RemoveAll(stagingRoot)
+				return
+			}
+		}
+		os.RemoveAll(stagingRoot)
 		finalize(report, steamPath, filepath.Join(binDir, updaterName()))
 		return
 	}
@@ -268,7 +301,8 @@ func doInstall(report func(InstallState), askAltPath func() string, askSymbols f
 	if cfg.DownloadSymbols {
 		report(InstallState{Status: "Downloading debug symbols...", Progress: 0.89})
 		if latest != nil {
-			if err := updateSymbols(binDir, latest); err != nil {
+			// Fresh install: binDir is already the live location, no staging distinction
+			if err := updateSymbols(binDir, binDir, latest); err != nil {
 				termWarn("Symbol download failed: %v — you can retry with --enable-symbols", err)
 			}
 		}

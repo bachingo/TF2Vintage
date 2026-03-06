@@ -11,15 +11,32 @@ import (
 func runUpdateMode(exe string) {
 	// bin/x64 → bin → tf2vintage
 	modDir := filepath.Dir(filepath.Dir(filepath.Dir(exe)))
-	binDir := filepath.Join(modDir, "bin", "x64")
+	liveBinDir := filepath.Join(modDir, "bin", "x64")
 
-	// Handle config flags before anything else — these exit immediately
+	// Staging root: sits next to the mod dir so it's on the same filesystem,
+	// which is required for os.Rename to work atomically.
+	stagingRoot := modDir + ".staging"
+	stagingBinDir := filepath.Join(stagingRoot, "bin", "x64")
+	stagingModDir := filepath.Join(stagingRoot, "mod")
+
+	// Clean up any leftover staging dir from a previous interrupted update
+	os.RemoveAll(stagingRoot)
+	if err := os.MkdirAll(stagingBinDir, 0755); err != nil {
+		termFatal("Could not create staging directory: %v", err)
+	}
+	if err := os.MkdirAll(stagingModDir, 0755); err != nil {
+		termFatal("Could not create staging directory: %v", err)
+	}
+
+	// ── Handle config flags ───────────────────────────────────────────────────
+	// These read/write config from the live bin dir and exit immediately —
+	// they don't participate in the update flow at all.
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "--enable-symbols":
-			cfg := loadConfig(binDir)
+			cfg := loadConfig(liveBinDir)
 			cfg.DownloadSymbols = true
-			if err := saveConfig(binDir, cfg); err != nil {
+			if err := saveConfig(liveBinDir, cfg); err != nil {
 				termFatal("Could not save config: %v", err)
 			}
 			fmt.Println("Symbol downloads enabled.")
@@ -28,9 +45,9 @@ func runUpdateMode(exe string) {
 			termPause()
 			os.Exit(0)
 		case "--disable-symbols":
-			cfg := loadConfig(binDir)
+			cfg := loadConfig(liveBinDir)
 			cfg.DownloadSymbols = false
-			if err := saveConfig(binDir, cfg); err != nil {
+			if err := saveConfig(liveBinDir, cfg); err != nil {
 				termFatal("Could not save config: %v", err)
 			}
 			fmt.Println("Symbol downloads disabled.")
@@ -44,21 +61,27 @@ func runUpdateMode(exe string) {
 
 	termPrintBanner()
 
-	// ── Acquire lockfile ──────────────────────────────────────────────────────
-	release, err := acquireLock(binDir)
+	// ── Acquire lockfile (against live bin dir) ───────────────────────────────
+	release, err := acquireLock(liveBinDir)
 	if err != nil {
 		termFatal("%v", err)
 	}
 	defer release()
 
-	// ── Load user config ─────────────────────────────────────────────────────
-	cfg := loadConfig(binDir)
+	// ── Load user config from live location ──────────────────────────────────
+	cfg := loadConfig(liveBinDir)
 
-	// ── Fetch latest release (cached) ─────────────────────────────────────────
+	// ── Check disk space (staging is beside modDir, same drive) ──────────────
+	if err := checkDiskSpace(modDir, minFreeBytesForBins+minFreeBytesForBase); err != nil {
+		termWarn("Disk space check failed: %v — proceeding anyway", err)
+	}
+
+	// ── Fetch latest release (cached) ────────────────────────────────────────
 	termPrint("Checking for updates...")
 	latest, err := fetchLatestRelease()
 	if err != nil {
 		termWarn("Could not check for updates (%v) — launching with current version.", err)
+		os.RemoveAll(stagingRoot)
 		launchIfNotStandalone(standaloneMode, steamArgs)
 		return
 	}
@@ -68,40 +91,71 @@ func runUpdateMode(exe string) {
 		termFatal("Integrity check failed: %v", err)
 	}
 
-	// ── Bin update ────────────────────────────────────────────────────────────
-	if err := updateBin(modDir, binDir, latest); err != nil {
+	// ── Download all updates into staging ────────────────────────────────────
+	binUpdated := false
+	baseUpdated := false
+
+	if err := updateBin(liveBinDir, stagingBinDir, latest); err != nil {
 		termWarn("Bin update failed: %v", err)
+	} else {
+		binUpdated = true
 	}
 
-	// ── Base update ───────────────────────────────────────────────────────────
-	if err := updateBase(modDir, latest); err != nil {
+	if err := updateBase(modDir, stagingModDir, latest); err != nil {
 		termWarn("Base update failed: %v", err)
+	} else {
+		baseUpdated = true
 	}
 
-	// ── Symbol update (opt-in) ────────────────────────────────────────────────
 	if cfg.DownloadSymbols {
-		if err := updateSymbols(binDir, latest); err != nil {
+		// liveBinDir for version check (persists across runs), stagingBinDir for extraction
+		if err := updateSymbols(liveBinDir, stagingBinDir, latest); err != nil {
 			termWarn("Symbol update failed: %v", err)
 		}
 	}
+
+	// ── Atomic swap: move staging into place ──────────────────────────────────
+	// Only swap the subtrees that were actually updated, so a bin failure
+	// doesn't roll back a successful base update.
+	if binUpdated {
+		fmt.Println("Applying bin update...")
+		if err := atomicSwapDir(liveBinDir, stagingBinDir); err != nil {
+			termFatal("Bin atomic swap failed: %v", err)
+		}
+		fmt.Println("Binaries updated.")
+	}
+
+	if baseUpdated {
+		fmt.Println("Applying base update...")
+		if err := atomicSwapDir(modDir, stagingModDir); err != nil {
+			termFatal("Base atomic swap failed: %v", err)
+		}
+		fmt.Println("Base updated.")
+	}
+
+	// Clean up staging root (now empty)
+	os.RemoveAll(stagingRoot)
 
 	fmt.Println()
 	if standaloneMode {
 		termPause()
 		return
 	}
-	fmt.Println("Launching TF2 Vintage in 3 seconds...")
-	time.Sleep(3 * time.Second)
+	fmt.Println("Launching TF2 Vintage in 5 seconds...")
+	time.Sleep(5 * time.Second)
 	launchGame(steamArgs)
 }
 
 // ── Bin update ────────────────────────────────────────────────────────────────
 
-func updateBin(modDir, binDir string, latest *ghRelease) error {
+// updateBin downloads the bin package into stagingBinDir.
+// liveBinDir is read-only here — used only to check the current version.
+// Returns nil only if a new version was downloaded and is ready to swap in.
+// Returns nil immediately (no staging writes) if already up to date.
+func updateBin(liveBinDir, stagingBinDir string, latest *ghRelease) error {
 	remoteTag := latest.TagName
-	localCommit := readField(filepath.Join(binDir, "version-bin.txt"), "commit")
+	localCommit := readField(filepath.Join(liveBinDir, "version-bin.txt"), "commit")
 
-	// Validate local commit looks like a real SHA before trusting it
 	if localCommit != "" && !validateCommitSHA(localCommit) {
 		termWarn("version-bin.txt has invalid commit SHA — forcing bin update")
 		localCommit = ""
@@ -119,25 +173,13 @@ func updateBin(modDir, binDir string, latest *ghRelease) error {
 		return fmt.Errorf("bin asset not found in release")
 	}
 
-	// Check disk space before downloading
-	if err := checkDiskSpace(modDir, minFreeBytesForBins); err != nil {
-		return err
-	}
-
 	fmt.Printf("Downloading %s...\n", platformBinAsset())
 	tmp, err := downloadWithProgress(url)
 	if err != nil {
 		return err
 	}
-	// Don't defer-remove the temp file — it's a stable resume path.
-	// Only remove on success so interrupted downloads can resume.
 
-	// Back up current bin before overwriting
-	if err := backupBinDir(binDir); err != nil {
-		termWarn("Could not create bin backup: %v — proceeding without backup", err)
-	}
-
-	// Verify bin download integrity before extracting
+	// Verify integrity before extracting into staging
 	if expectedHash := fetchAssetChecksum(latest, platformBinAsset()); expectedHash != "" {
 		if err := verifyDownloadChecksum(tmp, expectedHash); err != nil {
 			os.Remove(tmp)
@@ -145,41 +187,32 @@ func updateBin(modDir, binDir string, latest *ghRelease) error {
 		}
 	}
 
-	fmt.Println("Extracting binaries...")
-	if err := extractZip(tmp, binDir); err != nil {
-		// Extraction failed — attempt restore
-		termWarn("Extraction failed: %v", err)
-		if rerr := restoreBinDir(binDir); rerr != nil {
-			return fmt.Errorf("extraction failed AND restore failed: %v (restore: %v)", err, rerr)
-		}
-		fmt.Println("Previous binaries restored.")
-		return fmt.Errorf("bin update failed (previous version restored): %v", err)
+	fmt.Println("Extracting binaries to staging...")
+	if err := extractZip(tmp, stagingBinDir); err != nil {
+		os.Remove(tmp)
+		return fmt.Errorf("bin extraction failed: %v", err)
 	}
+	os.Remove(tmp)
 
 	if runtime.GOOS != "windows" {
-		chmodSo(binDir)
+		chmodSo(stagingBinDir)
 	}
 
-	// Validate the extracted bin before declaring success
-	if err := validateBinDir(binDir); err != nil {
-		termWarn("Bin validation failed after extraction: %v", err)
-		if rerr := restoreBinDir(binDir); rerr != nil {
-			return fmt.Errorf("validation failed AND restore failed: %v (restore: %v)", err, rerr)
-		}
-		fmt.Println("Previous binaries restored.")
-		return fmt.Errorf("bin update failed validation (previous version restored): %v", err)
+	// Validate staging before we commit to swapping it in
+	if err := validateBinDir(stagingBinDir); err != nil {
+		return fmt.Errorf("bin staging failed validation: %v", err)
 	}
 
-	// Success — clean up temp file and stale backup
-	os.Remove(tmp)
-	os.RemoveAll(binDir + ".bak")
-	fmt.Println("Binaries updated.")
 	return nil
 }
 
 // ── Base update ───────────────────────────────────────────────────────────────
 
-func updateBase(modDir string, latest *ghRelease) error {
+// updateBase downloads/patches base assets into stagingModDir.
+// liveModDir is read-only — used only to check current manifest.
+// Returns nil only if new content is ready in stagingModDir.
+// Returns nil immediately (no staging writes) if already up to date.
+func updateBase(liveModDir, stagingModDir string, latest *ghRelease) error {
 	manifestURL := assetURL(latest, "base-manifest.json")
 	if manifestURL == "" {
 		return nil
@@ -190,12 +223,13 @@ func updateBase(modDir string, latest *ghRelease) error {
 		return fmt.Errorf("could not fetch remote manifest: %v", err)
 	}
 
-	localManifestPath := filepath.Join(modDir, "base-manifest.json")
+	localManifestPath := filepath.Join(liveModDir, "base-manifest.json")
 	localManifest := loadLocalManifest(localManifestPath)
 
 	if localManifest == nil {
 		fmt.Println("No base install found — downloading full base (this may take a while)...")
-		return fullBaseDownload(modDir, latest, remoteManifest, localManifestPath)
+		return fullBaseDownload(stagingModDir, latest, remoteManifest,
+			filepath.Join(stagingModDir, "base-manifest.json"))
 	}
 
 	if localManifest.Tag == remoteManifest.Tag {
@@ -208,20 +242,35 @@ func updateBase(modDir string, latest *ghRelease) error {
 	chain, err := buildPatchChain(localManifest.Tag, latest)
 	if err != nil {
 		fmt.Printf("Patch chain unavailable (%v) — falling back to full base download...\n", err)
-		return fullBaseDownload(modDir, latest, remoteManifest, localManifestPath)
+		return fullBaseDownload(stagingModDir, latest, remoteManifest,
+			filepath.Join(stagingModDir, "base-manifest.json"))
+	}
+
+	// For patch application we need the current files as a base.
+	// Copy live mod dir into staging first, then apply patches on top.
+	fmt.Println("Seeding staging from current install...")
+	if err := copyDir(liveModDir, stagingModDir); err != nil {
+		fmt.Printf("Could not seed staging (%v) — falling back to full base download...\n", err)
+		os.RemoveAll(stagingModDir)
+		os.MkdirAll(stagingModDir, 0755)
+		return fullBaseDownload(stagingModDir, latest, remoteManifest,
+			filepath.Join(stagingModDir, "base-manifest.json"))
 	}
 
 	fmt.Printf("Applying %d patch(es)...\n", len(chain))
 	for i, release := range chain {
 		fmt.Printf("[%d/%d] Applying patch %s\n", i+1, len(chain), release.TagName)
-		if err := applyPatch(modDir, release); err != nil {
+		if err := applyPatch(stagingModDir, release); err != nil {
 			fmt.Printf("Patch %s failed (%v) — falling back to full base download...\n", release.TagName, err)
-			return fullBaseDownload(modDir, latest, remoteManifest, localManifestPath)
+			os.RemoveAll(stagingModDir)
+			os.MkdirAll(stagingModDir, 0755)
+			return fullBaseDownload(stagingModDir, latest, remoteManifest,
+				filepath.Join(stagingModDir, "base-manifest.json"))
 		}
 	}
 
-	saveManifest(localManifestPath, remoteManifest)
-	fmt.Println("Base updated via patch chain.")
+	saveManifest(filepath.Join(stagingModDir, "base-manifest.json"), remoteManifest)
+	fmt.Println("Base patched in staging.")
 	return nil
 }
 
@@ -233,7 +282,6 @@ func buildPatchChain(localTag string, latest *ghRelease) ([]*ghRelease, error) {
 	current := latest
 
 	for i := 0; i < maxChain; i++ {
-		// fetchRelease is cache-aware — won't hit the API if already cached
 		manifest, err := fetchReleaseManifest(current)
 		if err != nil {
 			return nil, fmt.Errorf("could not fetch manifest for %s: %v", current.TagName, err)
@@ -258,7 +306,7 @@ func buildPatchChain(localTag string, latest *ghRelease) ([]*ghRelease, error) {
 	return nil, fmt.Errorf("patch chain exceeded %d steps", maxChain)
 }
 
-func applyPatch(modDir string, release *ghRelease) error {
+func applyPatch(destDir string, release *ghRelease) error {
 	url := assetURL(release, "base-patch.zip")
 	if url == "" {
 		return nil
@@ -268,11 +316,11 @@ func applyPatch(modDir string, release *ghRelease) error {
 		return err
 	}
 	defer os.Remove(tmp)
-	return extractZip(tmp, modDir)
+	return extractZip(tmp, destDir)
 }
 
-func fullBaseDownload(modDir string, latest *ghRelease, manifest *BaseManifest, localManifestPath string) error {
-	if err := checkDiskSpace(modDir, minFreeBytesForBase); err != nil {
+func fullBaseDownload(destDir string, latest *ghRelease, manifest *BaseManifest, localManifestPath string) error {
+	if err := checkDiskSpace(destDir, minFreeBytesForBase); err != nil {
 		return err
 	}
 
@@ -285,7 +333,6 @@ func fullBaseDownload(modDir string, latest *ghRelease, manifest *BaseManifest, 
 		return err
 	}
 
-	// Verify base download integrity before extracting
 	if expectedHash := fetchAssetChecksum(latest, "tf2vintage-base.zip"); expectedHash != "" {
 		if err := verifyDownloadChecksum(tmp, expectedHash); err != nil {
 			os.Remove(tmp)
@@ -293,12 +340,13 @@ func fullBaseDownload(modDir string, latest *ghRelease, manifest *BaseManifest, 
 		}
 	}
 
-	fmt.Println("Extracting base...")
-	if err := extractZip(tmp, modDir); err != nil {
+	fmt.Println("Extracting base to staging...")
+	if err := extractZip(tmp, destDir); err != nil {
+		os.Remove(tmp)
 		return err
 	}
 	os.Remove(tmp)
 	saveManifest(localManifestPath, manifest)
-	fmt.Println("Base installed.")
+	fmt.Println("Base staged.")
 	return nil
 }
