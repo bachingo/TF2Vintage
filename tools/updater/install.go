@@ -39,8 +39,8 @@ func doInstall(report func(InstallState), askAltPath func() string, askSymbols f
 		openURL("https://store.steampowered.com/about/")
 		report(InstallState{Err: fmt.Errorf(
 			"Steam could not be found on this computer.\n\n" +
-				"If Steam is installed in a non-standard location, place tf2vintage-updater.exe " +
-				"into your existing tf2vintage\\bin\\x64\\ folder and run it from there instead.\n\n" +
+				"If Steam is installed in a non-standard location, place the tf2vintage-updater " +
+				"into your existing tf2vintage/bin/" + binDirName() + "/ folder and run it from there instead.\n\n" +
 				"Otherwise, install Steam from:\nhttps://store.steampowered.com/about/")})
 		return
 	}

@@ -42,7 +42,7 @@ func validateBinDir(binDir string) error {
 			}
 		}
 	}
-	return fmt.Errorf("no valid game binaries found in bin/x64")
+	return fmt.Errorf("no valid game binaries found in bin/%s", binDirName())
 }
 
 // backupBinDir copies binDir to binDir+".bak", overwriting any existing backup.

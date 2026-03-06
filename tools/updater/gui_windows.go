@@ -126,11 +126,11 @@ func startInstallUI(install func(func(InstallState), func() string, func() bool)
 	}
 
 	askSymbols := func() bool {
-			ch := make(chan bool, 1)
-			mw.Synchronize(func() {
-				result := walk.MsgBox(mw,
-					"Debug Symbols",
-					`Would you like to download debug symbols?
+		ch := make(chan bool, 1)
+		mw.Synchronize(func() {
+			result := walk.MsgBox(mw,
+				"Debug Symbols",
+				`Would you like to download debug symbols?
 
 	Symbols let contributors read crash reports with full function names
 	and source file locations instead of just memory addresses.
@@ -140,11 +140,11 @@ func startInstallUI(install func(func(InstallState), func() string, func() bool)
 	You can change this later by running:
 	  tf2vintage-updater.exe --enable-symbols
 	  tf2vintage-updater.exe --disable-symbols`,
-					walk.MsgBoxIconQuestion|walk.MsgBoxYesNo)
-				ch <- result == walk.DlgCmdYes
-			})
-			return <-ch
-		}
+				walk.MsgBoxIconQuestion|walk.MsgBoxYesNo)
+			ch <- result == walk.DlgCmdYes
+		})
+		return <-ch
+	}
 
 	go install(report, askAltPath, askSymbols)
 	mw.Run()

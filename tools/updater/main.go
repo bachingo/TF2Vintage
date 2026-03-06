@@ -21,9 +21,20 @@ func main() {
 	}
 }
 
-// isInstalledPath returns true if the executable is running from inside a
+// binDirName returns the platform bin subdirectory name under bin/.
+//
+//	Windows → "x64"
+//	Linux   → "linux64"
+func binDirName() string {
+	if runtime.GOOS == "windows" {
+		return "x64"
+	}
+	return "linux64"
+}
+
+// isInstalledPath returns true when the exe is running from inside a
 // tf2vintage/bin/x64 (Windows) or tf2vintage/bin/linux64 (Linux) directory,
-// which indicates update mode rather than fresh-install mode.
+// which means we are in update mode rather than fresh-install mode.
 func isInstalledPath(dir string) bool {
 	lower := strings.ToLower(filepath.ToSlash(dir))
 	suffix := "tf2vintage/bin/" + strings.ToLower(binDirName())
@@ -31,23 +42,14 @@ func isInstalledPath(dir string) bool {
 		strings.Contains(lower, suffix+"/")
 }
 
-// platformBinDir returns the path to the platform-specific bin subdirectory
-// relative to the mod root. Used by update and install logic.
+// platformBinDir returns the full path to the platform-specific bin subdir.
 func platformBinDir(modDir string) string {
 	return filepath.Join(modDir, "bin", binDirName())
 }
 
-// modDirFromExe walks up from the exe path to the mod root.
-// exe lives at:  modDir/bin/<binDirName>/tf2vintage-updater[.exe]
-// so modDir is three levels up.
+// modDirFromExe walks three levels up from the exe to the mod root:
+//
+//	modDir/bin/<binDirName>/tf2vintage-updater[.exe]
 func modDirFromExe(exe string) string {
 	return filepath.Dir(filepath.Dir(filepath.Dir(exe)))
-}
-
-// currentPlatform returns a short string for display ("windows" / "linux").
-func currentPlatform() string {
-	if runtime.GOOS == "windows" {
-		return "windows"
-	}
-	return "linux"
 }

@@ -30,9 +30,14 @@ func findSteamPathWindows() (string, error) {
 		}
 	}
 	defer k.Close()
+	// Valve has used both "SteamPath" and "InstallPath" across Steam versions.
 	path, _, err := k.GetStringValue("SteamPath")
 	if err != nil {
-		return "", fmt.Errorf("SteamPath not found in registry: %v", err)
+		// Fallback for older or alternate Steam installs
+		path, _, err = k.GetStringValue("InstallPath")
+		if err != nil {
+			return "", fmt.Errorf("Steam path not found in registry (tried SteamPath and InstallPath): %v", err)
+		}
 	}
 	return filepath.FromSlash(path), nil
 }

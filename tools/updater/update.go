@@ -19,16 +19,9 @@ func runUpdateMode(exe string) {
 	stagingBinDir := filepath.Join(stagingRoot, "bin", binDirName())
 	stagingModDir := filepath.Join(stagingRoot, "mod")
 
-	// Clean up any leftover staging dir from a previous interrupted update
-	os.RemoveAll(stagingRoot)
-	if err := os.MkdirAll(stagingBinDir, 0755); err != nil {
-		termFatal("Could not create staging directory: %v", err)
-	}
-	if err := os.MkdirAll(stagingModDir, 0755); err != nil {
-		termFatal("Could not create staging directory: %v", err)
-	}
-
 	// ── Handle config flags ───────────────────────────────────────────────────
+	// These read/write config from the live bin dir and exit immediately —
+	// they don't participate in the update flow at all and don't need a lock.
 	// These read/write config from the live bin dir and exit immediately —
 	// they don't participate in the update flow at all.
 	if len(os.Args) > 1 {
@@ -67,6 +60,15 @@ func runUpdateMode(exe string) {
 		termFatal("%v", err)
 	}
 	defer release()
+
+	// ── Set up staging directory (after lock, so only one instance uses it) ──
+	os.RemoveAll(stagingRoot)
+	if err := os.MkdirAll(stagingBinDir, 0755); err != nil {
+		termFatal("Could not create staging directory: %v", err)
+	}
+	if err := os.MkdirAll(stagingModDir, 0755); err != nil {
+		termFatal("Could not create staging directory: %v", err)
+	}
 
 	// ── Load user config from live location ──────────────────────────────────
 	cfg := loadConfig(liveBinDir)
