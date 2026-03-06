@@ -1,60 +1,48 @@
 name: Linux
-
 on: 
   workflow_call:
 
 env:
-  CCACHE_VERSION: 3.7.7
-  CCACHE_DIR: ${{ github.workspace }}/src/ccache
-  LDFLAGS: -lm
+  CCACHE_VERSION: 4.0
+  CCACHE_DIR: ${{ github.workspace }}/.ccache
 
 jobs:
   build:
-    runs-on:
-      ubuntu-24.04
-    
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: recursive
 
-      - id: get-date
-        run: |
-          echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
-      
-      - uses: actions/cache@v3
-        id: cache
+      - name: Cache ccache
+        uses: actions/cache@v4
         with:
-          path: |
-            ${{ env.CCACHE_DIR }}
-          key: ${{ runner.os }}-${{ steps.get-date.outputs.date }}
-          restore-keys: ${{ runner.os }}-
-      
+          path: ${{ env.CCACHE_DIR }}
+          # Use hashFiles so the cache updates when code changes, not just every day
+          key: ${{ runner.os }}-ccache-${{ hashFiles('src/**/*.cpp', 'src/**/*.h') }}
+          restore-keys: ${{ runner.os }}-ccache-
+
+      - name: Configure Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip build-essential gcc-multilib g++-multilib podman ccache
+
       - name: Setup ccache
         run: |
-          sudo mkdir -p game/tf2vintage/bin
-          cd src
-          sudo mkdir -p ./ccache/tmp
-          cd devtools/bin/linux
-          sudo ./ccache --set-config cache_dir=$CCACHE_DIR
-          sudo ./ccache --set-config compression_level=6
-      
-      - name: Restore cache
-        if: steps.cache.outputs.cache-hit == 'true'
-        run: sudo bash .github/gh-cache.sh restore
-      
-      - name: Configure dependencies
-        run: sudo apt update && sudo apt install -y zip build-essential gcc-multilib g++-multilib podman
+          mkdir -p game/tf2vintage/bin
+          ccache --set-config=cache_dir=${{ env.CCACHE_DIR }}
+          ccache --set-config=max_size=2.0G
 
-      - name: Build game
-        run: cd src && sudo bash createtf2vintage
+      - name: Build
+        run: |
+          cd src
+          # Assuming your build script doesn't strictly require root
+          bash createallprojects
+          # Add your build commands here...
 
       - name: Upload product
         uses: actions/upload-artifact@v4
         with:
           name: tf2vintage-linux
           path: game/tf2vintage/bin/
-      
-      - name: Move to cache
-        run: sudo bash .github/gh-cache.sh

@@ -296,12 +296,14 @@ jobs:
           sparse-checkout: |
             game/tf2vintage/bin/x64/
             tools/updater/
+          sparse-checkout-cone-mode: false
+
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
-          cache: false
+          cache: true
 
       - name: Install MinGW
         run: |
@@ -313,14 +315,10 @@ jobs:
           cp tools/updater/tf2vintage.ico .
           x86_64-w64-mingw32-windres tools/updater/resource.rc -O coff -o tools/updater/tf2vintage_resource.syso
 
-      - name: Tidy Go modules
-        run: |
-          cd tools/updater
-          go mod tidy
-
       - name: Build updater (Windows)
         run: |
           cd tools/updater
+          go mod tidy
           GOOS=windows GOARCH=amd64 go build -o ../../game/tf2vintage/bin/x64/tf2vintage-updater.exe .
 
       - name: Download Windows binary
@@ -371,16 +369,12 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
-          cache: false
-
-      - name: Tidy Go modules
-        run: |
-          cd tools/updater
-          go mod tidy
+          cache: true
 
       - name: Build updater (Linux)
         run: |
           cd tools/updater
+          go mod tidy
           GOOS=linux GOARCH=amd64 go build -o ../../game/tf2vintage/bin/x64/tf2vintage-updater .
 
       - name: Download Linux binary
