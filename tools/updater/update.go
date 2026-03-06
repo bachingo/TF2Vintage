@@ -65,9 +65,7 @@ func runUpdateMode(exe string) {
 
 	// ── Verify own integrity against published checksum ───────────────────────
 	if err := verifyUpdaterChecksum(latest); err != nil {
-		termFatal("Integrity check failed:
-
-%v", err)
+		termFatal("Integrity check failed: %v", err)
 	}
 
 	// ── Bin update ────────────────────────────────────────────────────────────
