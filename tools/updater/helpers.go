@@ -23,48 +23,6 @@ type BaseManifest struct {
 	Files   map[string]string `json:"files"`
 }
 
-// ── GitHub API ────────────────────────────────────────────────────────────────
-
-const (
-	repoOwner = "TF2V"
-	repoName  = "TF2Vintage"
-)
-
-func fetchLatestRelease() (*ghRelease, error) {
-	return fetchReleaseByURL(fmt.Sprintf(
-		"https://api.github.com/repos/%s/%s/releases/latest",
-		repoOwner, repoName,
-	))
-}
-
-func fetchRelease(tag string) (*ghRelease, error) {
-	return fetchReleaseByURL(fmt.Sprintf(
-		"https://api.github.com/repos/%s/%s/releases/tags/%s",
-		repoOwner, repoName, tag,
-	))
-}
-
-func fetchReleaseByURL(url string) (*ghRelease, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	var r ghRelease
-	if err := json.NewDecoder(resp.Body).Decode(&r); err != nil {
-		return nil, err
-	}
-	return &r, nil
-}
-
-func assetURL(r *ghRelease, name string) string {
-	for _, a := range r.Assets {
-		if a.Name == name {
-			return a.BrowserDownloadURL
-		}
-	}
-	return ""
-}
 
 // ── Manifest helpers ──────────────────────────────────────────────────────────
 
@@ -120,71 +78,6 @@ func md5File(path string) (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(h.Sum(nil)), nil
-}
-
-// ── Download ──────────────────────────────────────────────────────────────────
-
-// downloadWithProgress downloads to a temp file, printing progress to stdout.
-func downloadWithProgress(url string) (string, error) {
-	return downloadWithProgressCallback(url, func(downloaded, total int64) {
-		printProgress(downloaded, total)
-	})
-}
-
-// downloadWithProgressCallback downloads to a temp file, calling cb with progress.
-func downloadWithProgressCallback(url string, cb func(downloaded, total int64)) (string, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	f, err := os.CreateTemp("", "tf2v-update-*")
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-
-	total := resp.ContentLength
-	var downloaded int64
-	buf := make([]byte, 32*1024)
-	lastCall := time.Now()
-
-	for {
-		n, err := resp.Body.Read(buf)
-		if n > 0 {
-			if _, werr := f.Write(buf[:n]); werr != nil {
-				os.Remove(f.Name())
-				return "", werr
-			}
-			downloaded += int64(n)
-			if time.Since(lastCall) > 250*time.Millisecond {
-				cb(downloaded, total)
-				lastCall = time.Now()
-			}
-		}
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			os.Remove(f.Name())
-			return "", err
-		}
-	}
-	cb(downloaded, total)
-	return f.Name(), nil
-}
-
-func printProgress(downloaded, total int64) {
-	if total > 0 {
-		fmt.Printf("\r  %.1f MB / %.1f MB (%.0f%%)   ",
-			float64(downloaded)/1024/1024,
-			float64(total)/1024/1024,
-			float64(downloaded)/float64(total)*100,
-		)
-	} else {
-		fmt.Printf("\r  %.1f MB downloaded   ", float64(downloaded)/1024/1024)
-	}
 }
 
 // ── Extraction ────────────────────────────────────────────────────────────────
