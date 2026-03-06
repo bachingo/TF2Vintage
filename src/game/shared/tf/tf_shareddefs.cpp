@@ -718,7 +718,6 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_CHAINSAW",
 	"TF_WEAPON_DEFIB",
 	"TF_WEAPON_MINIGUN_REAL",
-	"TF_WEAPON_DECOY",
 
 };
 COMPILE_TIME_ASSERT( ARRAYSIZE( g_aWeaponNames ) == TF_WEAPON_COUNT );
@@ -841,7 +840,6 @@ int g_aWeaponDamageTypes[] =
 	DMG_SLASH,
 	DMG_GENERIC,
 	DMG_BULLET | DMG_USEDISTANCEMOD,
-	DMG_CLUB,
 };
 
 const char *g_szSpecialDamageNames[] =

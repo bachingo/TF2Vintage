@@ -36,7 +36,7 @@ public:
 	CTFDecoy();
 	~CTFDecoy() {}
 
-	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_DECOY; }	// TODO: Need real weapon ID
+	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_LIFELINE; }	
 
 	virtual void	PrimaryAttack( void );
 
