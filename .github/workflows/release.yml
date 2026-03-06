@@ -551,9 +551,22 @@ jobs:
         run: |
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-9)
           BUILD_DATE=$(date +'%m.%d.%Y')
-          if [ "${{ needs.classify.outputs.full_base }}" == "true" ]; then
-            echo "release_name=Full Release ${BUILD_DATE} (${SHORT_SHA})" >> $GITHUB_OUTPUT
-            cat >> $GITHUB_OUTPUT << 'NOTES'
+          
+          # Set common release name
+          echo "release_name=Release ${BUILD_DATE} (${SHORT_SHA})" >> $GITHUB_OUTPUT
+          
+          # Use a block to set multi-line release notes securely
+          {
+            echo "release_notes<<NOTES"
+            if [ "${{ needs.classify.outputs.full_base }}" == "true" ]; then
+              echo "## Full Release ${BUILD_DATE}"
+              echo "Contains full game assets and standalone installers."
+            else
+              echo "## Weekly Release ${BUILD_DATE}"
+              echo "Contains delta patch for incremental updates."
+            fi
+            echo "NOTES"
+          } >> $GITHUB_OUTPUT
 
       - name: Publish GitHub Release (full — includes standalone installers)
         if: needs.classify.outputs.full_base == 'true'
