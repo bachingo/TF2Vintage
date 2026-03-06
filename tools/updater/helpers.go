@@ -21,7 +21,6 @@ type BaseManifest struct {
 	Files   map[string]string `json:"files"`
 }
 
-
 // ── Manifest helpers ──────────────────────────────────────────────────────────
 
 func fetchReleaseManifest(r *ghRelease) (*BaseManifest, error) {
@@ -80,6 +79,9 @@ func md5File(path string) (string, error) {
 
 // ── Extraction ────────────────────────────────────────────────────────────────
 
+// extractZip extracts a zip, stripping the single top-level wrapper directory
+// that zip tools add when you zip a folder (e.g. "tf2vintage/maps/foo" → "maps/foo").
+// Use extractZipRaw when the zip entries should be extracted verbatim (no stripping).
 func extractZip(src, destDir string) error {
 	r, err := zip.OpenReader(src)
 	if err != nil {
@@ -103,6 +105,46 @@ func extractZip(src, destDir string) error {
 			continue
 		}
 
+		os.MkdirAll(filepath.Dir(target), 0755)
+		out, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, f.Mode())
+		if err != nil {
+			return err
+		}
+		rc, err := f.Open()
+		if err != nil {
+			out.Close()
+			return err
+		}
+		_, cerr := copyIO(rc, out)
+		rc.Close()
+		out.Close()
+		if cerr != nil {
+			return cerr
+		}
+	}
+	return nil
+}
+
+// extractZipRaw extracts a zip verbatim — no leading path component is stripped.
+// Use this when the zip already encodes the full relative path you want on disk,
+// e.g. tf2vintage-bin.zip which contains "bin/x64/server.dll".
+func extractZipRaw(src, destDir string) error {
+	r, err := zip.OpenReader(src)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+
+	for _, f := range r.File {
+		relPath := filepath.FromSlash(f.Name)
+		if relPath == "" || f.FileInfo().IsDir() {
+			if !f.FileInfo().IsDir() {
+				continue
+			}
+			os.MkdirAll(filepath.Join(destDir, relPath), 0755)
+			continue
+		}
+		target := filepath.Join(destDir, relPath)
 		os.MkdirAll(filepath.Dir(target), 0755)
 		out, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, f.Mode())
 		if err != nil {

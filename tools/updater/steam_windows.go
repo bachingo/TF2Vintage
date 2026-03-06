@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -88,20 +89,7 @@ func isSteamRunningWindows() bool {
 	if err != nil {
 		return false
 	}
-	return len(out) > 0 && !contains(string(out), "No tasks")
-}
-
-func contains(s, sub string) bool {
-	return len(s) >= len(sub) && (s == sub || len(s) > 0 && indexStr(s, sub) >= 0)
-}
-
-func indexStr(s, sub string) int {
-	for i := 0; i <= len(s)-len(sub); i++ {
-		if s[i:i+len(sub)] == sub {
-			return i
-		}
-	}
-	return -1
+	return len(out) > 0 && !strings.Contains(string(out), "No tasks")
 }
 
 // ── VDF launch option: Windows needs Steam path from registry ─────────────────

@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// UpdaterConfig holds persistent user preferences stored in bin/x64/updater.cfg
+// UpdaterConfig holds persistent user preferences stored in bin/<platform>/updater.cfg
 type UpdaterConfig struct {
 	DownloadSymbols bool
 }

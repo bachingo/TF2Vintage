@@ -1,12 +1,18 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
 	"time"
 )
+
+// errUpToDate is returned by updateBin/updateBase/updateSymbols when the
+// installed version already matches the latest release. Nothing is written
+// to the staging directory in this case, so the caller must not atomicSwapDir.
+var errUpToDate = errors.New("already up to date")
 
 func runUpdateMode(exe string) {
 	// bin/<platform> → bin → tf2vintage
@@ -22,8 +28,6 @@ func runUpdateMode(exe string) {
 	// ── Handle config flags ───────────────────────────────────────────────────
 	// These read/write config from the live bin dir and exit immediately —
 	// they don't participate in the update flow at all and don't need a lock.
-	// These read/write config from the live bin dir and exit immediately —
-	// they don't participate in the update flow at all.
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "--enable-symbols":
@@ -97,21 +101,32 @@ func runUpdateMode(exe string) {
 	binUpdated := false
 	baseUpdated := false
 
-	if err := updateBin(liveBinDir, stagingBinDir, latest); err != nil {
-		termWarn("Bin update failed: %v", err)
-	} else {
+	switch err := updateBin(liveBinDir, stagingBinDir, latest); {
+	case err == nil:
 		binUpdated = true
+	case errors.Is(err, errUpToDate):
+		// nothing staged — do not swap
+	default:
+		termWarn("Bin update failed: %v", err)
 	}
 
-	if err := updateBase(modDir, stagingModDir, latest); err != nil {
-		termWarn("Base update failed: %v", err)
-	} else {
+	switch err := updateBase(modDir, stagingModDir, latest); {
+	case err == nil:
 		baseUpdated = true
+	case errors.Is(err, errUpToDate):
+		// nothing staged — do not swap
+	default:
+		termWarn("Base update failed: %v", err)
 	}
 
 	if cfg.DownloadSymbols {
 		// liveBinDir for version check (persists across runs), stagingBinDir for extraction
-		if err := updateSymbols(liveBinDir, stagingBinDir, latest); err != nil {
+		switch err := updateSymbols(liveBinDir, stagingBinDir, latest); {
+		case err == nil:
+			binUpdated = true // symbols were staged alongside bin — swap both together
+		case errors.Is(err, errUpToDate):
+			// nothing staged — do not swap
+		default:
 			termWarn("Symbol update failed: %v", err)
 		}
 	}
@@ -153,7 +168,7 @@ func runUpdateMode(exe string) {
 // updateBin downloads the bin package into stagingBinDir.
 // liveBinDir is read-only here — used only to check the current version.
 // Returns nil only if a new version was downloaded and is ready to swap in.
-// Returns nil immediately (no staging writes) if already up to date.
+// Returns errUpToDate (no staging writes) if already up to date.
 func updateBin(liveBinDir, stagingBinDir string, latest *ghRelease) error {
 	remoteTag := latest.TagName
 	localCommit := readField(filepath.Join(liveBinDir, "version-bin.txt"), "commit")
@@ -165,7 +180,7 @@ func updateBin(liveBinDir, stagingBinDir string, latest *ghRelease) error {
 
 	if localCommit != "" && remoteTag == "build-"+localCommit {
 		fmt.Println("Binaries are up to date.")
-		return nil
+		return errUpToDate
 	}
 
 	fmt.Printf("Bin update: %s → %s\n", shortOrNone(localCommit), remoteTag)
@@ -190,7 +205,11 @@ func updateBin(liveBinDir, stagingBinDir string, latest *ghRelease) error {
 	}
 
 	fmt.Println("Extracting binaries to staging...")
-	if err := extractZip(tmp, stagingBinDir); err != nil {
+	// tf2vintage-bin.zip contains "bin/x64/..." or "bin/linux64/..." paths verbatim,
+	// so extract into the staging root (two levels above stagingBinDir) to let the
+	// zip reconstruct the full bin/<platform>/ subtree there.
+	stagingRoot := filepath.Dir(filepath.Dir(stagingBinDir))
+	if err := extractZipRaw(tmp, stagingRoot); err != nil {
 		os.Remove(tmp)
 		return fmt.Errorf("bin extraction failed: %v", err)
 	}
@@ -213,11 +232,11 @@ func updateBin(liveBinDir, stagingBinDir string, latest *ghRelease) error {
 // updateBase downloads/patches base assets into stagingModDir.
 // liveModDir is read-only — used only to check current manifest.
 // Returns nil only if new content is ready in stagingModDir.
-// Returns nil immediately (no staging writes) if already up to date.
+// Returns errUpToDate (no staging writes) if already up to date.
 func updateBase(liveModDir, stagingModDir string, latest *ghRelease) error {
 	manifestURL := assetURL(latest, "base-manifest.json")
 	if manifestURL == "" {
-		return nil
+		return errUpToDate
 	}
 
 	remoteManifest, err := fetchManifest(manifestURL)
@@ -236,7 +255,7 @@ func updateBase(liveModDir, stagingModDir string, latest *ghRelease) error {
 
 	if localManifest.Tag == remoteManifest.Tag {
 		fmt.Println("Base is up to date.")
-		return nil
+		return errUpToDate
 	}
 
 	fmt.Printf("Base update: %s → %s\n", localManifest.Tag, remoteManifest.Tag)

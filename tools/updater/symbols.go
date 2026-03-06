@@ -20,7 +20,7 @@ func updateSymbols(liveBinDir, stagingBinDir string, latest *ghRelease) error {
 	localTag := readField(filepath.Join(liveSymbolsDir, "symbols-version.txt"), "tag")
 	if localTag == latest.TagName {
 		fmt.Println("Symbols are up to date.")
-		return nil
+		return errUpToDate
 	}
 
 	fmt.Printf("Symbol update: %s → %s\n", shortOrNone(localTag), latest.TagName)
@@ -28,7 +28,7 @@ func updateSymbols(liveBinDir, stagingBinDir string, latest *ghRelease) error {
 	url := assetURL(latest, "tf2vintage-symbols.zip")
 	if url == "" {
 		termWarn("Symbol package not found in release — skipping symbol update.")
-		return nil
+		return errUpToDate
 	}
 
 	// Disk space check against live dir (same filesystem as staging)

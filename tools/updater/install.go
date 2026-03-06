@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -111,22 +112,33 @@ func doInstall(report func(InstallState), askAltPath func() string, askSymbols f
 		binUpdated := false
 		baseUpdated := false
 
-		if err := updateBin(binDir, stagingBinDir, latest); err != nil {
+		switch err := updateBin(binDir, stagingBinDir, latest); {
+		case err == nil:
+			binUpdated = true
+		case errors.Is(err, errUpToDate):
+			// nothing staged — do not swap
+		default:
 			report(InstallState{Err: fmt.Errorf("Bin update failed: %v", err)})
 			os.RemoveAll(stagingRoot)
 			return
-		} else {
-			binUpdated = true
 		}
-		if err := updateBase(installDir, stagingModDir, latest); err != nil {
+		switch err := updateBase(installDir, stagingModDir, latest); {
+		case err == nil:
+			baseUpdated = true
+		case errors.Is(err, errUpToDate):
+			// nothing staged — do not swap
+		default:
 			report(InstallState{Err: fmt.Errorf("Base update failed: %v", err)})
 			os.RemoveAll(stagingRoot)
 			return
-		} else {
-			baseUpdated = true
 		}
 		if existingCfg.DownloadSymbols {
-			if err := updateSymbols(binDir, stagingBinDir, latest); err != nil {
+			switch err := updateSymbols(binDir, stagingBinDir, latest); {
+			case err == nil:
+				binUpdated = true // symbols staged alongside bin — swap together
+			case errors.Is(err, errUpToDate):
+				// nothing staged — do not swap
+			default:
 				termWarn("Symbol update failed: %v", err)
 			}
 		}
@@ -258,7 +270,9 @@ func doInstall(report func(InstallState), askAltPath func() string, askSymbols f
 		}
 
 		report(InstallState{Status: "Extracting game binaries...", Progress: 0.85})
-		if err := extractZip(binTmp, binDir); err != nil {
+		// tf2vintage-bin.zip has "bin/x64/..." paths verbatim — extract into installDir
+		// so the zip reconstructs installDir/bin/x64/ (or bin/linux64/) correctly.
+		if err := extractZipRaw(binTmp, installDir); err != nil {
 			report(InstallState{Err: fmt.Errorf("Failed to extract game binaries: %v", err)})
 			return
 		}
@@ -301,8 +315,11 @@ func doInstall(report func(InstallState), askAltPath func() string, askSymbols f
 	if cfg.DownloadSymbols {
 		report(InstallState{Status: "Downloading debug symbols...", Progress: 0.89})
 		if latest != nil {
-			// Fresh install: binDir is already the live location, no staging distinction
-			if err := updateSymbols(binDir, binDir, latest); err != nil {
+			// Fresh install: binDir is live and staging simultaneously — no distinction needed.
+			switch err := updateSymbols(binDir, binDir, latest); {
+			case err == nil, errors.Is(err, errUpToDate):
+				// ok
+			default:
 				termWarn("Symbol download failed: %v — you can retry with --enable-symbols", err)
 			}
 		}
