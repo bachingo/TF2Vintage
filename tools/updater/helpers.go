@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 )
 
@@ -21,6 +20,7 @@ type BaseManifest struct {
 	PrevTag string            `json:"prev_tag"`
 	Files   map[string]string `json:"files"`
 }
+
 
 // ── Manifest helpers ──────────────────────────────────────────────────────────
 
@@ -182,42 +182,6 @@ func chmodSo(dir string) {
 	})
 }
 
-// ── Atomic swap ───────────────────────────────────────────────────────────────
-
-// atomicSwapDir replaces liveDir with stagingDir using a backup-swap-cleanup
-// sequence. If the rename of stagingDir→liveDir fails, the original is restored
-// from backup. The backup is removed on success.
-//
-// Both liveDir and stagingDir must be on the same filesystem for os.Rename to
-// be atomic. stagingDir is consumed (moved) by this call.
-func atomicSwapDir(liveDir, stagingDir string) error {
-	backupDir := liveDir + ".old"
-	os.RemoveAll(backupDir) // clear any leftover from a previous failed update
-
-	// Step 1: move live → backup (fast, same-fs rename)
-	if err := os.Rename(liveDir, backupDir); err != nil {
-		// Live dir may not exist yet (first install) — that's fine
-		if !os.IsNotExist(err) {
-			return fmt.Errorf("could not back up %s: %v", liveDir, err)
-		}
-	}
-
-	// Step 2: move staging → live
-	if err := os.Rename(stagingDir, liveDir); err != nil {
-		// Rollback: restore backup
-		if rerr := os.Rename(backupDir, liveDir); rerr != nil {
-			return fmt.Errorf(
-				"swap failed (%v) AND rollback failed (%v) — manual recovery needed: restore %s to %s",
-				err, rerr, backupDir, liveDir)
-		}
-		return fmt.Errorf("atomic swap failed (original restored): %v", err)
-	}
-
-	// Step 3: remove backup
-	os.RemoveAll(backupDir)
-	return nil
-}
-
 // ── Misc helpers ──────────────────────────────────────────────────────────────
 
 func platformBinAsset() string {
@@ -294,13 +258,36 @@ func termFatal(format string, args ...any) {
 	os.Exit(1)
 }
 
-// binDirName returns the platform-specific subdirectory name under bin/
-// where game binaries and the updater live.
-//   Windows → bin/x64
-//   Linux   → bin/linux64
-func binDirName() string {
-	if runtime.GOOS == "windows" {
-		return "x64"
+// atomicSwapDir replaces liveDir with stagingDir using a backup-swap-cleanup
+// sequence. If the rename of stagingDir→liveDir fails, the original is restored
+// from backup. The backup is removed on success.
+//
+// Both liveDir and stagingDir must be on the same filesystem for os.Rename to
+// be atomic. stagingDir is consumed (moved) by this call.
+func atomicSwapDir(liveDir, stagingDir string) error {
+	backupDir := liveDir + ".old"
+	os.RemoveAll(backupDir) // clear any leftover from a previous failed update
+
+	// Step 1: move live → backup (fast, same-fs rename)
+	if err := os.Rename(liveDir, backupDir); err != nil {
+		// Live dir may not exist yet (first install) — that's fine
+		if !os.IsNotExist(err) {
+			return fmt.Errorf("could not back up %s: %v", liveDir, err)
+		}
 	}
-	return "linux64"
+
+	// Step 2: move staging → live
+	if err := os.Rename(stagingDir, liveDir); err != nil {
+		// Rollback: restore backup
+		if rerr := os.Rename(backupDir, liveDir); rerr != nil {
+			return fmt.Errorf(
+				"swap failed (%v) AND rollback failed (%v) — manual recovery needed: restore %s to %s",
+				err, rerr, backupDir, liveDir)
+		}
+		return fmt.Errorf("atomic swap failed (original restored): %v", err)
+	}
+
+	// Step 3: remove backup
+	os.RemoveAll(backupDir)
+	return nil
 }
