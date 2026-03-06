@@ -549,26 +549,60 @@ jobs:
           sha256sum             tf2vintage-updater-windows/tf2vintage-updater.exe             tf2vintage-updater-linux/tf2vintage-updater             tf2vintage-bin/tf2vintage-bin.zip             tf2vintage-base/tf2vintage-base.zip             tf2vintage-base/base-manifest.json             tf2vintage-base/base-patch.zip             tf2vintage-symbols/tf2vintage-symbols.zip             2>/dev/null | sed 's|.*/||' > checksums.sha256
           cat checksums.sha256
 
+      - name: Checkout (for git log)
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
       - name: Set release metadata
         id: meta
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-9)
           BUILD_DATE=$(date +'%m.%d.%Y')
-          
-          # Set common release name
-          echo "release_name=Release ${BUILD_DATE} (${SHORT_SHA})" >> $GITHUB_OUTPUT
-          
-          # Use a block to set multi-line release notes securely
+
+          # \u2500\u2500 Release name \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+          # Format: "TF2 Vintage <type> — <date> (<short sha>)"
+          # build_type is "Full Release" or "Weekly" — no extra "Release" word added.
+          BUILD_TYPE="${{ needs.classify.outputs.build_type }}"
+          echo "release_name=TF2 Vintage ${BUILD_TYPE} — ${BUILD_DATE} (${SHORT_SHA})" >> $GITHUB_OUTPUT
+
+          # \u2500\u2500 Commit log since last release \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+          LAST_TAG=$(gh release view --json tagName -q '.tagName' 2>/dev/null || echo "")
+
           {
-            echo "release_notes<<NOTES"
+            echo "release_notes<<ENDOFNOTES"
+
             if [ "${{ needs.classify.outputs.full_base }}" == "true" ]; then
-              echo "## Full Release ${BUILD_DATE}"
-              echo "Contains full game assets and standalone installers."
+              echo "**Full release** — includes complete game assets and standalone installers."
             else
-              echo "## Weekly Release ${BUILD_DATE}"
-              echo "Contains delta patch for incremental updates."
+              echo "**Weekly update** — incremental patch over the previous release."
             fi
-            echo "NOTES"
+            echo ""
+
+            if [ -n "$LAST_TAG" ]; then
+              # Collect commits to tracked paths since the previous release tag.
+              # --no-merges keeps the list clean; format is '- subject (shorthash)'
+              COMMITS=$(git log "${LAST_TAG}..HEAD" \
+                --no-merges --pretty=format:"- %s (%h)" -- \
+                src/ \
+                'game/tf2vintage/' \
+                'tools/updater/' \
+                2>/dev/null)
+
+              if [ -n "$COMMITS" ]; then
+                echo "### Changes since ${LAST_TAG}"
+                echo ""
+                echo "$COMMITS"
+              else
+                echo "_No tracked-path commits since ${LAST_TAG}._"
+              fi
+            else
+              echo "_First release — no previous tag to diff against._"
+            fi
+
+            echo "ENDOFNOTES"
           } >> $GITHUB_OUTPUT
 
       - name: Publish GitHub Release (full — includes standalone installers)
