@@ -48,9 +48,9 @@ jobs:
       build_type: ${{ steps.classify.outputs.build_type }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Classify run
         id: classify
@@ -148,9 +148,9 @@ jobs:
     if: needs.classify.outputs.should_publish == 'true'
     steps:
       - name: Checkout game assets
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Write base version.txt
         run: |
@@ -290,9 +290,9 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
           sparse-checkout: |
             game/tf2vintage/bin/x64/
             tools/updater/
@@ -303,9 +303,10 @@ jobs:
           go-version: '1.22'
           cache: false
 
-      - name: Install windres
-        run: sudo apt-get update
-             sudo apt-get install -y gcc-mingw-w64-x86-64
+      - name: Install MinGW
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-mingw-w64-x86-64
 
       - name: Compile Windows resource file (icon + version info)
         run: |
@@ -359,9 +360,9 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
           sparse-checkout: |
             game/tf2vintage/bin/x64/
             tools/updater/
