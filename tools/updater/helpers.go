@@ -17,16 +17,6 @@ import (
 
 // ── GitHub API types ──────────────────────────────────────────────────────────
 
-type ghRelease struct {
-	TagName string    `json:"tag_name"`
-	Assets  []ghAsset `json:"assets"`
-}
-
-type ghAsset struct {
-	Name               string `json:"name"`
-	BrowserDownloadURL string `json:"browser_download_url"`
-}
-
 type BaseManifest struct {
 	Tag     string            `json:"tag"`
 	PrevTag string            `json:"prev_tag"`
@@ -375,4 +365,21 @@ func termFatal(format string, args ...any) {
 	fmt.Fprintf(os.Stderr, "[ERROR] "+format+"\n", args...)
 	termPause()
 	os.Exit(1)
+}
+
+func AtomicUpdate(binDir string, stagingDir string) error {
+    backupDir := binDir + ".old"
+    
+    // 1. Move old to .old
+    os.Rename(binDir, backupDir)
+    
+    // 2. Move staging to bin
+    if err := os.Rename(stagingDir, binDir); err != nil {
+        // Rollback: try to put the old one back if renaming fails
+        os.Rename(backupDir, binDir)
+        return err
+    }
+    
+    // 3. Success: remove the backup
+    return os.RemoveAll(backupDir)
 }
