@@ -9,14 +9,14 @@ import (
 )
 
 func runUpdateMode(exe string) {
-	// bin/x64 → bin → tf2vintage
-	modDir := filepath.Dir(filepath.Dir(filepath.Dir(exe)))
-	liveBinDir := filepath.Join(modDir, "bin", "x64")
+	// bin/<platform> → bin → tf2vintage
+	modDir := modDirFromExe(exe)
+	liveBinDir := platformBinDir(modDir)
 
 	// Staging root: sits next to the mod dir so it's on the same filesystem,
 	// which is required for os.Rename to work atomically.
 	stagingRoot := modDir + ".staging"
-	stagingBinDir := filepath.Join(stagingRoot, "bin", "x64")
+	stagingBinDir := filepath.Join(stagingRoot, "bin", binDirName())
 	stagingModDir := filepath.Join(stagingRoot, "mod")
 
 	// Clean up any leftover staging dir from a previous interrupted update

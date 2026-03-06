@@ -32,7 +32,7 @@ func updateSymbols(liveBinDir, stagingBinDir string, latest *ghRelease) error {
 	}
 
 	// Disk space check against live dir (same filesystem as staging)
-	if err := checkDiskSpace(liveBinDir, 256*1024*1024); err != nil {
+	if err := checkDiskSpace(liveBinDir, minFreeBytesForSymbols); err != nil {
 		return fmt.Errorf("not enough disk space for symbols: %v", err)
 	}
 

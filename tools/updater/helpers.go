@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -291,4 +292,15 @@ func termFatal(format string, args ...any) {
 	fmt.Fprintf(os.Stderr, "[ERROR] "+format+"\n", args...)
 	termPause()
 	os.Exit(1)
+}
+
+// binDirName returns the platform-specific subdirectory name under bin/
+// where game binaries and the updater live.
+//   Windows → bin/x64
+//   Linux   → bin/linux64
+func binDirName() string {
+	if runtime.GOOS == "windows" {
+		return "x64"
+	}
+	return "linux64"
 }

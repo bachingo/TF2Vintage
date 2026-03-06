@@ -11,12 +11,14 @@ import (
 )
 
 // Minimum free disk space required before downloading.
-// Base: ~963MB unpacked + ~317MB compressed
-// Bins: ~1090MB unpacked + (~292MB + ~81MB) compressed
+// Base: ~942MB unpacked + ~317MB compressed
+// Bins: ~149MB unpacked + ~51MB compressed
+// Symbols: ~926MB unpacked + ~321MB compressed
 // Buffers: *2
 const (
-	minFreeBytesForBase = (963 + 315 ) * 2 * 1024 * 1024
-	minFreeBytesForBins = (1090 + 81 + 292 ) * 2 * 1024 * 1024
+	minFreeBytesForBase = (942 + 317 ) * 2 * 1024 * 1024
+	minFreeBytesForBins = (149 + 51 ) * 2 * 1024 * 1024
+	minFreeBytesForSymbols = (926 + 321 ) * 2 * 1024 * 1024
 )
 
 // downloadResumable downloads url to destPath, resuming an interrupted

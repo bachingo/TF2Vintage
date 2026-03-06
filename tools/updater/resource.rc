@@ -1,5 +1,11 @@
 #include <windows.h>
+
+// Application icon
 1 ICON "tf2vintage.ico"
+
+// Application manifest — required by lxn/walk for Common Controls v6.
+// Without this, TTM_ADDTOOL fails and the GUI crashes on startup.
+1 RT_MANIFEST "tf2vintage.manifest"
 
 VS_VERSION_INFO VERSIONINFO
 FILEVERSION     1,0,0,0

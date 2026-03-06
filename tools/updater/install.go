@@ -92,7 +92,7 @@ func doInstall(report func(InstallState), askAltPath func() string, askSymbols f
 			report(InstallState{Err: fmt.Errorf("Could not reach GitHub: %v", err)})
 			return
 		}
-		binDir := filepath.Join(installDir, "bin", "x64")
+		binDir := platformBinDir(installDir)
 		existingCfg := loadConfig(binDir)
 		// Re-ask symbol preference only if config doesn't exist yet
 		if _, statErr := os.Stat(configPath(binDir)); os.IsNotExist(statErr) {
@@ -102,7 +102,7 @@ func doInstall(report func(InstallState), askAltPath func() string, askSymbols f
 		// For an already-installed copy, use a staging dir beside the install
 		// so updates can be swapped in atomically.
 		stagingRoot := installDir + ".staging"
-		stagingBinDir := filepath.Join(stagingRoot, "bin", "x64")
+		stagingBinDir := filepath.Join(stagingRoot, "bin", binDirName())
 		stagingModDir := filepath.Join(stagingRoot, "mod")
 		os.RemoveAll(stagingRoot)
 		os.MkdirAll(stagingBinDir, 0755)
@@ -242,7 +242,7 @@ func doInstall(report func(InstallState), askAltPath func() string, askSymbols f
 		}
 		defer os.Remove(binTmp)
 
-		binDir := filepath.Join(installDir, "bin", "x64")
+		binDir := platformBinDir(installDir)
 		if err := os.MkdirAll(binDir, 0755); err != nil {
 			report(InstallState{Err: fmt.Errorf("Could not create bin directory: %v", err)})
 			return
@@ -279,7 +279,7 @@ func doInstall(report func(InstallState), askAltPath func() string, askSymbols f
 	// ── Copy updater into install location ────────────────────────────────────
 	report(InstallState{Status: "Installing updater...", Progress: 0.88})
 	exe, _ := os.Executable()
-	binDir := filepath.Join(installDir, "bin", "x64")
+	binDir := platformBinDir(installDir)
 	updaterDest := filepath.Join(binDir, updaterName())
 
 	if err := copyFile(exe, updaterDest); err != nil {
@@ -340,7 +340,7 @@ func diagnose(sourcemods, installDir string) installNeeds {
 		}
 	}
 
-	if err := validateBinDir(filepath.Join(installDir, "bin", "x64")); err != nil {
+	if err := validateBinDir(platformBinDir(installDir)); err != nil {
 		needs.repairBin = true
 	}
 
