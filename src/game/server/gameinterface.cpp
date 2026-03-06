@@ -767,7 +767,7 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 #endif
 
 	// init the gamestatsupload connection
-	gamestatsuploader->InitConnection();
+	ShutdownConnection();
 #endif
 
 	return true;
@@ -817,7 +817,7 @@ void CServerGameDLL::DLLShutdown( void )
 	}
 #endif
 	// reset (shutdown) the gamestatsupload connection
-	gamestatsuploader->InitConnection();
+	ShutdownConnection();
 #endif
 
 #ifndef _X360

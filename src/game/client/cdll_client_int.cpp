@@ -362,15 +362,16 @@ bool g_bTextMode = false;
 static ConVar *g_pcv_ThreadMode = NULL;
 
 #ifdef TF_VINTAGE_CLIENT
-//#pragma message(FILE_LINE_STRING " !!FIXME!! replace all this with Sys_LoadGameModule")
 static class DllOverride {
-	public:
-		DllOverride() {
-			Sys_LoadInterface( "filesystem_stdio.dll", FILESYSTEM_INTERFACE_VERSION, nullptr, (void **)&g_pFullFileSystem );
-			const char *pGameDir = CommandLine()->ParmValue( "-game", "hl2" );
-			pGameDir = VarArgs( "%s/bin", pGameDir );
-			g_pFullFileSystem->AddSearchPath( pGameDir, "EXECUTABLE_PATH", PATH_ADD_TO_HEAD );
-		}
+    public:
+        DllOverride() {
+            Sys_LoadInterface( "filesystem_stdio.dll", FILESYSTEM_INTERFACE_VERSION, nullptr, (void **)&g_pFullFileSystem );
+            if ( !g_pFullFileSystem )
+                return; // ← add this
+            const char *pGameDir = CommandLine()->ParmValue( "-game", "hl2" );
+            pGameDir = VarArgs( "%s/bin", pGameDir );
+            g_pFullFileSystem->AddSearchPath( pGameDir, "EXECUTABLE_PATH", PATH_ADD_TO_HEAD );
+        }
 } g_DllOverride;
 #endif
 

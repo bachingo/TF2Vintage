@@ -430,6 +430,8 @@ void CTFStatsSummaryDialog::SetValueAsClass(const char *pDialogVariable, int iVa
 		wchar_t wzMsg[128];
 #ifdef _WIN32 // TODO: Find a posix equivelant to _itow_s
 		_itow_s(iValue, wzVal, ARRAYSIZE(wzVal), 10);
+#else  // Linux
+		swprintf(wzVal, 16, L"%d", iValue);		
 #endif
 		g_pVGuiLocalize->ConstructString(wzMsg, sizeof(wzMsg), wzScoreAsClassFmt, 2, wzVal, wzLocalizedClassName);
 		m_pPlayerData->SetDialogVariable(pDialogVariable, wzMsg);

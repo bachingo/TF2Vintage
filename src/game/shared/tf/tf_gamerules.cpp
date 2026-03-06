@@ -447,7 +447,7 @@ static FeaturedWorkshopMap_t s_FeaturedWorkshopMaps[] = {
 	{ "koth_probed",           454139808 },
 	{ "pd_watergate",          456016898 },
 	{ "arena_byre",            454142123 },
-	{ "ctf_2fort_invasion",    FIXME     }, // No public workshop entry yet
+	{ "ctf_2fort_invasion",    353779471 },
 
 	// Halloween 2015
 	{ "cp_sunshine_event",     532473747 },
