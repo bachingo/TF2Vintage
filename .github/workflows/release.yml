@@ -254,6 +254,18 @@ jobs:
                   print(f"  + {rel}")
           PYEOF
 
+      - name: Generate bannedwords.txt from upstream sources
+        run: |
+          echo "Fetching profanity lists from upstream sources..."
+          python3 tools/build_bannedwords.py game/tf2vintage/bannedwords.txt
+
+          count=$(grep -vc '^#' game/tf2vintage/bannedwords.txt || true)
+          echo "Fetched $count entries."
+          if [ "$count" -lt 100 ]; then
+            echo "WARNING: Word list suspiciously small ($count entries) — using baseline fallback"
+            cp tools/bannedwords_baseline.txt game/tf2vintage/bannedwords.txt
+          fi
+
       - name: Pack full base [zip] (full release or first-ever release)
         if: |
           needs.classify.outputs.full_base == 'true' ||
@@ -292,12 +304,17 @@ jobs:
           cache: false
 
       - name: Install windres
-        run: apt-get install -y binutils-mingw-w64-x86-64
+        run: sudo apt-get install -y binutils-mingw-w64-x86-64
 
       - name: Compile Windows resource file (icon + version info)
         run: |
           cp tools/updater/tf2vintage.ico .
           x86_64-w64-mingw32-windres tools/updater/resource.rc -O coff -o tools/updater/tf2vintage_resource.syso
+
+      - name: Tidy Go modules
+        run: |
+          cd tools/updater
+          go mod tidy
 
       - name: Build updater (Windows)
         run: |
@@ -313,10 +330,8 @@ jobs:
       - name: Stage Windows bin files
         run: |
           mkdir -p staging/bin/x64
-          find game/tf2vintage/bin/x64/ -name "*.dll" -o -name "*.exe" | xargs -I{} cp {} staging/bin/x64/
-          # Also stage standalone updater for direct player download
-          cp game/tf2vintage/bin/x64/tf2vintage-updater.exe standalone-updater-windows/tf2vintage-updater.exe || true
           mkdir -p standalone-updater-windows
+          find game/tf2vintage/bin/x64/ -name "*.dll" -o -name "*.exe" | xargs -I{} cp {} staging/bin/x64/
           cp game/tf2vintage/bin/x64/tf2vintage-updater.exe standalone-updater-windows/tf2vintage-updater.exe
 
       - name: Upload Windows staging artifact
@@ -355,6 +370,11 @@ jobs:
         with:
           go-version: '1.22'
           cache: false
+
+      - name: Tidy Go modules
+        run: |
+          cd tools/updater
+          go mod tidy
 
       - name: Build updater (Linux)
         run: |
@@ -508,7 +528,15 @@ jobs:
         run: |
           cd dist
           # Hash every file that players or the updater will download
-          sha256sum             tf2vintage-updater-windows/tf2vintage-updater.exe             tf2vintage-updater-linux/tf2vintage-updater             tf2vintage-bin/tf2vintage-bin.zip             tf2vintage-base/tf2vintage-base.zip             tf2vintage-base/base-manifest.json             tf2vintage-base/base-patch.zip             tf2vintage-symbols/tf2vintage-symbols.zip             2>/dev/null | sed 's|.*/||' > checksums.sha256
+          sha256sum \
+            tf2vintage-updater-windows/tf2vintage-updater.exe \
+            tf2vintage-updater-linux/tf2vintage-updater \
+            tf2vintage-bin/tf2vintage-bin.zip \
+            tf2vintage-base/tf2vintage-base.zip \
+            tf2vintage-base/base-manifest.json \
+            tf2vintage-base/base-patch.zip \
+            tf2vintage-symbols/tf2vintage-symbols.zip \
+            2>/dev/null | sed 's|.*/||' > checksums.sha256
           cat checksums.sha256
 
       - name: Set release metadata
@@ -518,7 +546,37 @@ jobs:
           BUILD_DATE=$(date +'%m.%d.%Y')
           if [ "${{ needs.classify.outputs.full_base }}" == "true" ]; then
             echo "release_name=Full Release ${BUILD_DATE} (${SHORT_SHA})" >> $GITHUB_OUTPUT
-            cat >> $GITHUB_OUTPUT << 'NOTES'
+            {
+              echo "release_notes<<EOF"
+              echo "## New Install"
+              echo "Download **tf2vintage-updater.exe** (Windows) or **tf2vintage-updater** (Linux) — it will install TF2 Vintage automatically."
+              echo ""
+              echo "## Existing Install"
+              echo "Your copy will update automatically next time you launch the game."
+              echo ""
+              echo "## Manual Download"
+              echo "- \`tf2vintage-base.zip\` — full game assets"
+              echo "- \`tf2vintage-bin.zip\` — game binaries (Windows + Linux)"
+              echo ""
+              echo "## For Contributors"
+              echo "- \`tf2vintage-symbols.zip\` — debug symbols for crash report analysis (not needed by players)"
+              echo "EOF"
+            } >> $GITHUB_OUTPUT
+          else
+            echo "release_name=Weekly Update ${BUILD_DATE} (${SHORT_SHA})" >> $GITHUB_OUTPUT
+            {
+              echo "release_notes<<EOF"
+              echo "Weekly update — your copy will update automatically next time you launch the game."
+              echo ""
+              echo "## Manual Download"
+              echo "- \`tf2vintage-bin.zip\` — updated game binaries"
+              echo "- \`base-patch.zip\` — base asset changes since last release (if any)"
+              echo ""
+              echo "## For Contributors"
+              echo "- \`tf2vintage-symbols.zip\` — debug symbols for crash report analysis (not needed by players)"
+              echo "EOF"
+            } >> $GITHUB_OUTPUT
+          fi
 
       - name: Publish GitHub Release (full — includes standalone installers)
         if: needs.classify.outputs.full_base == 'true'
