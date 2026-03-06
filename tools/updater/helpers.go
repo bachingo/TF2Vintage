@@ -10,9 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
-	"time"
 )
 
 // ── GitHub API types ──────────────────────────────────────────────────────────
