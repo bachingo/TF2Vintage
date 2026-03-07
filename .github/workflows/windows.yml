@@ -1,6 +1,11 @@
 name: Windows
-on: 
+on:
   workflow_call:
+    inputs:
+      build_config:
+        description: 'MSBuild configuration — Release or Debug'
+        type: string
+        default: 'Release'
 
 jobs:
   build:
@@ -23,7 +28,7 @@ jobs:
       - name: Build project
         run: |
           cd src
-          devenv TF2vintage.sln /Build Release
+          devenv TF2vintage.sln /Build "${{ inputs.build_config }}"
 
       - name: Upload binaries
         uses: actions/upload-artifact@v4

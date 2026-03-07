@@ -1,6 +1,11 @@
 name: Linux
-on: 
+on:
   workflow_call:
+    inputs:
+      build_config:
+        description: 'Build configuration — Release or Debug'
+        type: string
+        default: 'Release'
 
 env:
   CCACHE_VERSION: 4.0
@@ -34,6 +39,8 @@ jobs:
           ccache --set-config=max_size=2.0G
 
       - name: Build
+        env:
+          BUILD_TYPE: ${{ inputs.build_config }}
         run: |
           cd src
           bash createtf2vintage

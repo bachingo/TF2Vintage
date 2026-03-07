@@ -2,10 +2,14 @@ name: Release
 
 on:
   schedule:
-    # Weekly nightly pre-release — every Tuesday at 08:00 UTC
-    - cron: '0 8 * * 2'
-    # Check Full release — every Tuesday at 08:00 UTC
-    - cron: '0 8 * * 2'
+    # Every Tuesday at 6 PM EST (UTC-5) = 23:00 UTC — active Nov–Mar
+    - cron: '0 23 * * 2'
+    # Every Tuesday at 6 PM EDT (UTC-4) = 22:00 UTC — active Mar–Nov
+    - cron: '0 22 * * 2'
+    # Both crons fire every Tuesday year-round (one per timezone window).
+    # classify checks the 84-day threshold to decide: release or nightly.
+    # 84 days = exactly 12 weeks, fitting within a 90-day release window.
+    # If a build fails on day 84 the next Tuesday (day 91) is the failsafe.
   workflow_dispatch:
     inputs:
       release_type:
@@ -15,7 +19,6 @@ on:
         type: choice
         options:
           - full
-          - diff
           - nightly
 
 env:
@@ -25,15 +28,18 @@ env:
 
 jobs:
   # ── Determine what kind of run this is ───────────────────────────────────────
-  # full:    quarterly (first-ever) or manual full → versioned release
-  # diff:    quarterly (prev exists) or manual diff → versioned release, bin+patch only
-  # nightly: Monday schedule or manual nightly → rolling pre-release tag "nightly"
+  # Every scheduled run fires on a Tuesday at 6 PM EST or 6 PM EDT (see crons above).
+  # classify checks how many days have passed since the last full release:
+  #   ≥ 84 days (12 weeks) → Release build (Release config), publishes full + diff zips
+  #   < 84 days            → Nightly build (Debug config), publishes nightly zip only
+  # Manual dispatch bypasses the day check entirely.
   classify:
     runs-on: ubuntu-22.04
     outputs:
       should_publish: ${{ steps.classify.outputs.should_publish }}
       build_type:     ${{ steps.classify.outputs.build_type }}
       is_nightly:     ${{ steps.classify.outputs.is_nightly }}
+      build_config:   ${{ steps.classify.outputs.build_config }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -50,87 +56,83 @@ jobs:
 
           # ── Manual nightly dispatch ──────────────────────────────────────────
           if [[ "$DISPATCH_TYPE" == "nightly" ]]; then
-            echo "should_publish=true" >> $GITHUB_OUTPUT
-            echo "build_type=Nightly"  >> $GITHUB_OUTPUT
-            echo "is_nightly=true"     >> $GITHUB_OUTPUT
+            echo "should_publish=true"  >> $GITHUB_OUTPUT
+            echo "build_type=Nightly"   >> $GITHUB_OUTPUT
+            echo "is_nightly=true"      >> $GITHUB_OUTPUT
+            echo "build_config=Debug"   >> $GITHUB_OUTPUT
             echo "reason=Manual nightly dispatch" >> $GITHUB_OUTPUT
             exit 0
           fi
 
           # ── Manual full dispatch ─────────────────────────────────────────────
           if [[ "$DISPATCH_TYPE" == "full" ]]; then
-            echo "should_publish=true"     >> $GITHUB_OUTPUT
-            echo "build_type=Full Release" >> $GITHUB_OUTPUT
-            echo "is_nightly=false"        >> $GITHUB_OUTPUT
+            echo "should_publish=true"   >> $GITHUB_OUTPUT
+            echo "build_type=Release"    >> $GITHUB_OUTPUT
+            echo "is_nightly=false"      >> $GITHUB_OUTPUT
+            echo "build_config=Release"  >> $GITHUB_OUTPUT
             echo "reason=Manual full release" >> $GITHUB_OUTPUT
             exit 0
           fi
 
-          # ── Manual diff dispatch ─────────────────────────────────────────────
-          if [[ "$DISPATCH_TYPE" == "diff" ]]; then
-            echo "should_publish=true" >> $GITHUB_OUTPUT
-            echo "build_type=Update"   >> $GITHUB_OUTPUT
-            echo "is_nightly=false"    >> $GITHUB_OUTPUT
-            echo "reason=Manual diff dispatch" >> $GITHUB_OUTPUT
-            exit 0
-          fi
+          # ── Scheduled Tuesday run (6 PM EST or 6 PM EDT) ─────────────────────
+          # Both crons resolve here. Check days since last full release to decide
+          # whether this Tuesday is a release week (≥84 days) or a nightly week.
+          if [[ "$CRON" == "0 23 * * 2" || "$CRON" == "0 22 * * 2" ]]; then
+            LAST_DATE=$(gh release list --exclude-pre-releases --limit 1 \
+              --json createdAt --template '{{range .}}{{.createdAt}}{{end}}' 2>/dev/null || echo "")
 
-          # ── Weekly Tuesday nightly schedule ───────────────────────────────────
-          if [[ "$CRON" == "0 8 * * 2" ]]; then
-            echo "should_publish=true" >> $GITHUB_OUTPUT
-            echo "build_type=Nightly"  >> $GITHUB_OUTPUT
-            echo "is_nightly=true"     >> $GITHUB_OUTPUT
-            echo "reason=Weekly nightly schedule" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          # ── 12-Week (84 day) Tuesday schedule ────────────────────────────────
-          if [[ "$CRON" == "0 0 * * 2" ]]; then
-            # Get the date of the last non-prerelease
-            LAST_DATE=$(gh release list --exclude-pre-releases --limit 1 --json createdAt --template '{{range .}}{{.createdAt}}{{end}}')
-            
             if [[ -z "$LAST_DATE" ]]; then
-              echo "No previous release found. Triggering first release."
               DAYS_SINCE=999
             else
               LAST_TS=$(date -d "$LAST_DATE" +%s)
-              CURRENT_TS=$(date +%s)
-              DAYS_SINCE=$(( (CURRENT_TS - LAST_TS) / 86400 ))
+              NOW_TS=$(date +%s)
+              DAYS_SINCE=$(( (NOW_TS - LAST_TS) / 86400 ))
             fi
 
-            # If it has been 84 days or more, trigger a full release
             if [ "$DAYS_SINCE" -ge 84 ]; then
               echo "should_publish=true"   >> $GITHUB_OUTPUT
               echo "build_type=Release"    >> $GITHUB_OUTPUT
               echo "is_nightly=false"      >> $GITHUB_OUTPUT
-              echo "reason=84-day failsafe triggered ($DAYS_SINCE days since last)" >> $GITHUB_OUTPUT
+              echo "build_config=Release"  >> $GITHUB_OUTPUT
+              echo "reason=84-day release cycle (${DAYS_SINCE} days since last)" >> $GITHUB_OUTPUT
             else
-              echo "should_publish=false"  >> $GITHUB_OUTPUT
-              echo "reason=Skipping: Only $DAYS_SINCE days since last release" >> $GITHUB_OUTPUT
+              echo "should_publish=true"  >> $GITHUB_OUTPUT
+              echo "build_type=Nightly"   >> $GITHUB_OUTPUT
+              echo "is_nightly=true"      >> $GITHUB_OUTPUT
+              echo "build_config=Debug"   >> $GITHUB_OUTPUT
+              echo "reason=Weekly nightly (${DAYS_SINCE} days since last release, need 84)" >> $GITHUB_OUTPUT
             fi
             exit 0
           fi
 
-          # ── Fallback (should not be reached) ────────────────────────────────
-          echo "should_publish=false" >> $GITHUB_OUTPUT
-          echo "build_type=Unknown"   >> $GITHUB_OUTPUT
-          echo "is_nightly=false"     >> $GITHUB_OUTPUT
+          # ── Fallback ─────────────────────────────────────────────────────────
+          echo "should_publish=false"  >> $GITHUB_OUTPUT
+          echo "build_type=Unknown"    >> $GITHUB_OUTPUT
+          echo "is_nightly=false"      >> $GITHUB_OUTPUT
+          echo "build_config=Release"  >> $GITHUB_OUTPUT
           echo "reason=Unrecognised trigger — no-op" >> $GITHUB_OUTPUT
 
       - name: Log decision
         run: |
-          echo "Decision — publish=${{ steps.classify.outputs.should_publish }}, nightly=${{ steps.classify.outputs.is_nightly }}, reason=${{ steps.classify.outputs.reason }}"
+          echo "Decision — publish=${{ steps.classify.outputs.should_publish }}, nightly=${{ steps.classify.outputs.is_nightly }}, config=${{ steps.classify.outputs.build_config }}, reason=${{ steps.classify.outputs.reason }}"
 
 
+  # ── Platform builds: forward build_config so nightly compiles as Debug ───────
   build-windows:
+    needs: classify
     uses: ./.github/workflows/windows.yml
+    with:
+      build_config: ${{ needs.classify.outputs.build_config }}
 
   build-linux:
+    needs: classify
     uses: ./.github/workflows/linux.yml
+    with:
+      build_config: ${{ needs.classify.outputs.build_config }}
 
 
-  # ── Base assets: manifest + patch or full pack ───────────────────────────────
-  # Skipped for nightly — nightly only ships fresh binaries, not game assets.
+  # ── Base assets: manifest + patch tree + full tree ────────────────────────────
+  # Skipped for nightly — nightly ships only fresh binaries, not game assets.
   package-base:
     needs: classify
     runs-on: ubuntu-22.04
@@ -152,9 +154,11 @@ jobs:
             echo "type=base"
           } > game/tf2vintage/version-base.txt
 
-      - name: Fetch previous release manifest
+      - name: Fetch previous full-release manifest
         id: prev_manifest
         run: |
+          # /releases/latest never returns pre-releases, so the nightly tag is
+          # automatically excluded here — diff is always against the last full release.
           PREV_TAG=$(curl -fsSL \
             -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/repos/${{ github.repository }}/releases/latest" \
@@ -180,6 +184,7 @@ jobs:
         run: |
           python3 - << 'PYEOF'
           import os, hashlib, json
+          from datetime import date
 
           base = "game/tf2vintage"
           files = {}
@@ -188,23 +193,24 @@ jobs:
               for fname in filenames:
                   path = os.path.join(root, fname)
                   rel  = os.path.relpath(path, base)
-                  md5  = hashlib.md5(open(path,"rb").read()).hexdigest()
+                  md5  = hashlib.md5(open(path, "rb").read()).hexdigest()
                   files[rel.replace(os.sep, "/")] = md5
 
           manifest = {
-              "tag":      os.environ["TAG"],
-              "prev_tag": os.environ.get("PREV_TAG", ""),
-              "files":    files,
+              "tag":         os.environ["TAG"],
+              "prev_tag":    os.environ.get("PREV_TAG", ""),
+              "released_at": date.today().isoformat(),   # YYYY-MM-DD; used for 180-day staleness check
+              "files":       files,
           }
           with open("base-manifest.json", "w") as f:
               json.dump(manifest, f, indent=2, sort_keys=True)
-          print(f"Manifest: {len(files)} files")
+          print(f"Manifest: {len(files)} files, released_at={manifest['released_at']}")
           PYEOF
         env:
           TAG: build-${{ github.sha }}
           PREV_TAG: ${{ steps.prev_manifest.outputs.prev_tag }}
 
-      - name: Check if base has any changes
+      - name: Check if base has any changes vs previous release
         id: base_changes
         run: |
           if [ "${{ steps.prev_manifest.outputs.has_prev }}" != "true" ]; then
@@ -223,7 +229,9 @@ jobs:
           print(f"{'Changes detected' if has_changes else 'No base changes'}: {len(changed)} modified, {len(removed)} removed")
           PYEOF
 
-      - name: Generate base patch (changed files since previous release)
+      - name: Generate base-patch.zip (changed files only — diff payload)
+        # Only built when there is a previous manifest to diff against.
+        # On first-ever release there is no prev, so only the full zip is published.
         if: |
           steps.prev_manifest.outputs.has_prev == 'true' &&
           steps.base_changes.outputs.has_changes == 'true'
@@ -234,12 +242,14 @@ jobs:
           prev  = json.load(open("prev-manifest.json"))
           curr  = json.load(open("base-manifest.json"))
           base  = "game/tf2vintage"
+          # Changed OR newly added files; deletions are handled by manifest on install
           changed = [f for f, md5 in curr["files"].items() if prev["files"].get(f) != md5]
 
-          print(f"Patch contains {len(changed)} changed/added file(s):")
+          print(f"Diff payload: {len(changed)} changed/added file(s):")
           with zipfile.ZipFile("base-patch.zip", "w", zipfile.ZIP_DEFLATED) as zf:
               for rel in sorted(changed):
                   full = os.path.join(base, rel.replace("/", os.sep))
+                  # Preserve the tf2vintage/ prefix so extractZipRouted can route correctly
                   zf.write(full, arcname=os.path.join("tf2vintage", rel))
                   print(f"  + {rel}")
           PYEOF
@@ -256,19 +266,18 @@ jobs:
             cp tools/bannedwords_baseline.txt game/tf2vintage/bannedwords.txt
           fi
 
-      - name: Pack full base [zip]
-        if: always()
+      - name: Pack base-full.zip (full game-asset tree, no bin)
         run: |
           cd game
-          zip -r ../tf2vintage-base.zip tf2vintage --exclude 'tf2vintage/bin/*'
+          zip -r ../base-full.zip tf2vintage --exclude 'tf2vintage/bin/*'
 
       - name: Upload base artifacts
         uses: actions/upload-artifact@v4
         with:
           name: tf2vintage-base
-          if-no-files-found: warn
+          if-no-files-found: error
           path: |
-            tf2vintage-base.zip
+            base-full.zip
             base-manifest.json
             base-patch.zip
 
@@ -431,7 +440,7 @@ jobs:
           name: tf2vintage-linux
 
 
-  # ── Combined bin: merge Windows + Linux into one zip ────────────────────────
+  # ── Bin assembly: merge Windows + Linux staging + write version files ─────────
   package-bin:
     needs: [classify, package-windows, package-linux]
     runs-on: ubuntu-22.04
@@ -461,30 +470,24 @@ jobs:
           done
 
       - name: Write nightly-version.txt
-        # Small plaintext asset attached to every nightly release so the updater
-        # can compare the installed commit against the latest nightly cheaply,
-        # without downloading the full tf2vintage-bin.zip.
+        # Tiny plaintext file attached to every nightly so the updater can check
+        # the installed SHA against the latest nightly without downloading the full zip.
         if: needs.classify.outputs.is_nightly == 'true'
         run: |
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-9)
           printf "commit=${{ github.sha }}\nshort=${SHORT_SHA}\ndate=$(date +'%m.%d.%Y')\n" \
             > nightly-version.txt
 
-      - name: Generate combined checksums
+      - name: Generate per-platform checksums
         run: |
           find staging/bin/x64/     -name "*.dll" -o -name "*.exe" 2>/dev/null | sort | xargs md5sum > staging/bin/x64/checksums.md5     || true
           find staging/bin/linux64/ -name "*.so"                   2>/dev/null | sort | xargs md5sum > staging/bin/linux64/checksums.md5 || true
 
-      - name: Pack combined bin [zip]
-        run: |
-          cd staging
-          zip -r ../tf2vintage-bin.zip bin/x64/ bin/linux64/
-
-      - name: Upload combined bin artifact
+      - name: Upload bin staging artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tf2vintage-bin
-          path: tf2vintage-bin.zip
+          name: tf2vintage-bin-staging
+          path: staging/
 
       - name: Upload nightly-version artifact
         if: needs.classify.outputs.is_nightly == 'true'
@@ -529,15 +532,131 @@ jobs:
             tf2vintage-symbols-linux
 
 
-  # ── GitHub Release ────────────────────────────────────────────────────────────
-  # Nightly:  tag="nightly" (rolling overwrite), prerelease=true, make_latest=false
-  #           Files: tf2vintage-bin.zip, nightly-version.txt, symbols, checksums
-  # Full:     tag="build-<sha>", prerelease=false, make_latest=true
-  #           Files: updaters, base zip, bin zip, manifest, symbols, checksums
-  # Diff:     tag="build-<sha>", prerelease=false, make_latest=true
-  #           Files: bin zip, manifest, patch zip, symbols, checksums
-  publish-release:
+  # ── Combined zip assembly ──────────────────────────────────────────────────────
+  #
+  # For bi-monthly releases, produces TWO player-facing zips every time:
+  #
+  #   tf2vintage-full.zip
+  #     tf2vintage/**          ← complete game-asset tree
+  #     bin/x64/**             ← Windows binaries
+  #     bin/linux64/**         ← Linux binaries
+  #     base-manifest.json     ← version record at zip root
+  #
+  #   tf2vintage-diff.zip      (absent on the very first release)
+  #     tf2vintage/**          ← ONLY files changed since the previous full release
+  #     bin/x64/**             ← Windows binaries (always fully replaced)
+  #     bin/linux64/**         ← Linux binaries
+  #     base-manifest.json     ← version record at zip root
+  #
+  # Applying tf2vintage-diff.zip on top of ANY previous tf2vintage-full install
+  # yields a result identical to installing tf2vintage-full.zip fresh.
+  # The diff never touches nightly binaries — it diffs against the last full only.
+  #
+  # For nightly, produces:
+  #   tf2vintage-nightly.zip
+  #     bin/x64/**             ← Windows Debug binaries
+  #     bin/linux64/**         ← Linux Debug binaries
+  #     nightly-version.txt    ← lightweight version stamp for the updater
+  package-combined:
     needs: [classify, package-bin, package-base]
+    runs-on: ubuntu-22.04
+    if: needs.classify.outputs.should_publish == 'true'
+    steps:
+      - name: Download bin staging
+        uses: actions/download-artifact@v4
+        with:
+          name: tf2vintage-bin-staging
+          path: bin-staging/
+
+      - name: Download base artifacts
+        if: needs.classify.outputs.is_nightly != 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: tf2vintage-base
+          path: base-artifacts/
+        continue-on-error: false
+
+      - name: Download nightly-version file
+        if: needs.classify.outputs.is_nightly == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: tf2vintage-nightly-version
+          path: nightly-extra/
+
+      # ── tf2vintage-full.zip ────────────────────────────────────────────────
+      # Layout: tf2vintage/** + bin/** + base-manifest.json at root (no wrapper dir)
+      - name: Assemble tf2vintage-full.zip
+        if: needs.classify.outputs.is_nightly != 'true'
+        run: |
+          mkdir -p combined/full
+          # Expand base game tree (entries are tf2vintage/*)
+          unzip -q base-artifacts/base-full.zip -d combined/full/
+          # Graft both platform bin trees verbatim
+          cp -r bin-staging/bin combined/full/
+          # Manifest at zip root so the updater can fetch it as a standalone asset
+          # AND find it at a predictable path inside the zip
+          cp base-artifacts/base-manifest.json combined/full/
+          cd combined/full
+          zip -r ../../tf2vintage-full.zip .
+          echo "=== tf2vintage-full.zip (first 30 entries) ==="
+          unzip -l ../../tf2vintage-full.zip | head -35
+
+      # ── tf2vintage-diff.zip ────────────────────────────────────────────────
+      # Same layout but tf2vintage/ contains only the changed files.
+      # Absent on first-ever release (no base-patch.zip exists yet).
+      - name: Assemble tf2vintage-diff.zip
+        if: needs.classify.outputs.is_nightly != 'true'
+        run: |
+          if [ ! -f base-artifacts/base-patch.zip ]; then
+            echo "No base-patch.zip present — skipping diff zip (first release or no asset changes)."
+            exit 0
+          fi
+          mkdir -p combined/diff
+          unzip -q base-artifacts/base-patch.zip -d combined/diff/
+          cp -r bin-staging/bin combined/diff/
+          cp base-artifacts/base-manifest.json combined/diff/
+          cd combined/diff
+          zip -r ../../tf2vintage-diff.zip .
+          echo "=== tf2vintage-diff.zip (first 30 entries) ==="
+          unzip -l ../../tf2vintage-diff.zip | head -35
+
+      # ── tf2vintage-nightly.zip ────────────────────────────────────────────
+      - name: Assemble tf2vintage-nightly.zip
+        if: needs.classify.outputs.is_nightly == 'true'
+        run: |
+          mkdir -p combined/nightly
+          cp -r bin-staging/bin combined/nightly/
+          cp nightly-extra/nightly-version.txt combined/nightly/
+          cd combined/nightly
+          zip -r ../../tf2vintage-nightly.zip .
+
+      - name: Upload tf2vintage-full artifact
+        if: needs.classify.outputs.is_nightly != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tf2vintage-full
+          if-no-files-found: error
+          path: tf2vintage-full.zip
+
+      - name: Upload tf2vintage-diff artifact
+        if: needs.classify.outputs.is_nightly != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tf2vintage-diff
+          if-no-files-found: warn   # absent on first release — that is expected
+          path: tf2vintage-diff.zip
+
+      - name: Upload tf2vintage-nightly artifact
+        if: needs.classify.outputs.is_nightly == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tf2vintage-nightly-zip
+          path: tf2vintage-nightly.zip
+
+
+  # ── GitHub Release ─────────────────────────────────────────────────────────────
+  publish-release:
+    needs: [classify, package-combined]
     runs-on: ubuntu-22.04
     if: needs.classify.outputs.should_publish == 'true'
     permissions:
@@ -548,24 +667,26 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download bin artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: tf2vintage-bin
-          path: dist/
-
-      - name: Download nightly-version artifact
-        if: needs.classify.outputs.is_nightly == 'true'
-        uses: actions/download-artifact@v4
-        with:
-          name: tf2vintage-nightly-version
-          path: dist/
-
-      - name: Download base artifacts
+      - name: Download full zip
         if: needs.classify.outputs.is_nightly != 'true'
         uses: actions/download-artifact@v4
         with:
-          name: tf2vintage-base
+          name: tf2vintage-full
+          path: dist/
+
+      - name: Download diff zip
+        if: needs.classify.outputs.is_nightly != 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: tf2vintage-diff
+          path: dist/
+        continue-on-error: true   # absent on first-ever release — that is expected
+
+      - name: Download nightly zip
+        if: needs.classify.outputs.is_nightly == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: tf2vintage-nightly-zip
           path: dist/
 
       - name: Download standalone updaters
@@ -582,16 +703,26 @@ jobs:
           name: tf2vintage-symbols
           path: dist/
 
+      - name: Download base manifest (standalone asset for updater version check)
+        if: needs.classify.outputs.is_nightly != 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: tf2vintage-base
+          path: dist-base/
+
+      - name: Copy base-manifest.json to dist
+        if: needs.classify.outputs.is_nightly != 'true'
+        run: cp dist-base/base-manifest.json dist/base-manifest.json
+
       - name: Generate SHA-256 checksums
         run: |
           cd dist
           for f in tf2vintage-updater.exe \
                    tf2vintage-updater \
-                   tf2vintage-bin.zip \
-                   tf2vintage-base.zip \
+                   tf2vintage-full.zip \
+                   tf2vintage-diff.zip \
+                   tf2vintage-nightly.zip \
                    base-manifest.json \
-                   base-patch.zip \
-                   nightly-version.txt \
                    tf2vintage-symbols.zip; do
             [ -f "$f" ] && sha256sum "$f"
           done > checksums.sha256
@@ -609,15 +740,13 @@ jobs:
 
           echo "release_name=TF2 Vintage ${BUILD_TYPE} — ${BUILD_DATE} (${SHORT_SHA})" >> $GITHUB_OUTPUT
 
-          # Nightly always overwrites the rolling "nightly" tag.
-          # Real releases get a permanent versioned tag.
           if [[ "$IS_NIGHTLY" == "true" ]]; then
             echo "tag_name=nightly" >> $GITHUB_OUTPUT
           else
             echo "tag_name=build-${{ github.sha }}" >> $GITHUB_OUTPUT
           fi
 
-          # Commit log — only for real releases, not nightly
+          # Commit log (full releases only; nightly changes too frequently)
           LAST_TAG=$(gh release list --exclude-pre-releases --limit 1 \
             --json tagName -q '.[0].tagName' 2>/dev/null || echo "")
 
@@ -625,34 +754,40 @@ jobs:
             echo "release_notes<<ENDOFNOTES"
 
             if [[ "$IS_NIGHTLY" == "true" ]]; then
-              echo "**Nightly build** — latest binaries, game assets unchanged."
+              echo "**Nightly build** — debug binaries only; game assets unchanged."
               echo ""
               echo "Opt in via \`tf2vintage-updater --enable-nightly\`."
               echo "Opt out via \`tf2vintage-updater --disable-nightly\`."
             else
-              echo "**TF2 Vintage release** — includes full base zip (fresh install / repair) and a patch zip (incremental update from the previous release)."
-              echo "The updater selects the right download automatically."
+              echo "**TF2 Vintage Release**"
+              echo ""
+              echo "| File | When to use |"
+              echo "|------|-------------|"
+              echo "| \`tf2vintage-full.zip\` | Fresh install or repair — complete game + binaries |"
+              echo "| \`tf2vintage-diff.zip\` | Update from any previous full release — changed files + binaries |"
+              echo ""
+              echo "The updater selects the correct file automatically."
             fi
 
-            if [[ "$IS_NIGHTLY" != "true" ]]; then
-              echo ""
-              if [ -n "$LAST_TAG" ]; then
-                COMMITS=$(git log "${LAST_TAG}..HEAD" \
-                  --no-merges --pretty=format:"- %s (%h)" -- \
-                  src/ \
-                  'game/tf2vintage/' \
-                  'tools/updater/' \
-                  2>/dev/null)
-                if [ -n "$COMMITS" ]; then
-                  echo "### Changes since ${LAST_TAG}"
-                  echo ""
-                  echo "$COMMITS"
-                else
-                  echo "_No tracked-path commits since ${LAST_TAG}._"
-                fi
+            if [[ "$IS_NIGHTLY" != "true" && -n "$LAST_TAG" ]]; then
+              COMMITS=$(git log "${LAST_TAG}..HEAD" \
+                --no-merges --pretty=format:"- %s (%h)" -- \
+                src/ \
+                'game/tf2vintage/' \
+                'tools/updater/' \
+                2>/dev/null)
+              if [ -n "$COMMITS" ]; then
+                echo ""
+                echo "### Changes since ${LAST_TAG}"
+                echo ""
+                echo "$COMMITS"
               else
-                echo "_First release — no previous tag to diff against._"
+                echo ""
+                echo "_No tracked-path commits since ${LAST_TAG}._"
               fi
+            elif [[ "$IS_NIGHTLY" != "true" ]]; then
+              echo ""
+              echo "_First release — no previous tag to diff against._"
             fi
 
             echo "ENDOFNOTES"
@@ -668,12 +803,11 @@ jobs:
           prerelease: true
           make_latest: false
           files: |
-            dist/tf2vintage-bin.zip
-            dist/nightly-version.txt
+            dist/tf2vintage-nightly.zip
             dist/tf2vintage-symbols.zip
             dist/checksums.sha256
 
-      - name: Publish GitHub Release
+      - name: Publish release
         if: needs.classify.outputs.is_nightly != 'true'
         uses: softprops/action-gh-release@v2
         with:
@@ -685,9 +819,8 @@ jobs:
           files: |
             dist/tf2vintage-updater.exe
             dist/tf2vintage-updater
-            dist/tf2vintage-bin.zip
-            dist/tf2vintage-base.zip
+            dist/tf2vintage-full.zip
+            dist/tf2vintage-diff.zip
             dist/base-manifest.json
-            dist/base-patch.zip
             dist/tf2vintage-symbols.zip
             dist/checksums.sha256
