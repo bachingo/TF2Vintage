@@ -15,10 +15,14 @@ import (
 
 // ── GitHub API types ──────────────────────────────────────────────────────────
 
+// BaseManifest records the state of the game-asset tree for a given release.
+// It is published as a standalone base-manifest.json asset so the updater can
+// check the installed version cheaply before deciding which zip to download.
 type BaseManifest struct {
-	Tag     string            `json:"tag"`
-	PrevTag string            `json:"prev_tag"`
-	Files   map[string]string `json:"files"`
+	Tag        string            `json:"tag"`
+	PrevTag    string            `json:"prev_tag"`
+	ReleasedAt string            `json:"released_at"` // YYYY-MM-DD; used for 180-day staleness check
+	Files      map[string]string `json:"files"`
 }
 
 // ── Manifest helpers ──────────────────────────────────────────────────────────
@@ -32,7 +36,7 @@ func fetchReleaseManifest(r *ghRelease) (*BaseManifest, error) {
 }
 
 func fetchManifest(url string) (*BaseManifest, error) {
-	resp, err := http.Get(url)
+	resp, err := http.Get(url) //nolint:noctx
 	if err != nil {
 		return nil, err
 	}
@@ -80,8 +84,8 @@ func md5File(path string) (string, error) {
 // ── Extraction ────────────────────────────────────────────────────────────────
 
 // extractZip extracts a zip, stripping the single top-level wrapper directory
-// that zip tools add when you zip a folder (e.g. "tf2vintage/maps/foo" → "maps/foo").
-// Use extractZipRaw when the zip entries should be extracted verbatim (no stripping).
+// that zip tools add when zipping a folder (e.g. "tf2vintage/maps/foo" → "maps/foo").
+// Use extractZipRaw when entries should be extracted verbatim (no stripping).
 func extractZip(src, destDir string) error {
 	r, err := zip.OpenReader(src)
 	if err != nil {
@@ -127,7 +131,7 @@ func extractZip(src, destDir string) error {
 
 // extractZipRaw extracts a zip verbatim — no leading path component is stripped.
 // Use this when the zip already encodes the full relative path you want on disk,
-// e.g. tf2vintage-bin.zip which contains "bin/x64/server.dll".
+// e.g. tf2vintage-nightly.zip which contains "bin/x64/server.dll".
 func extractZipRaw(src, destDir string) error {
 	r, err := zip.OpenReader(src)
 	if err != nil {
@@ -138,13 +142,75 @@ func extractZipRaw(src, destDir string) error {
 	for _, f := range r.File {
 		relPath := filepath.FromSlash(f.Name)
 		if relPath == "" || f.FileInfo().IsDir() {
-			if !f.FileInfo().IsDir() {
-				continue
+			if f.FileInfo().IsDir() {
+				os.MkdirAll(filepath.Join(destDir, relPath), 0755)
 			}
-			os.MkdirAll(filepath.Join(destDir, relPath), 0755)
 			continue
 		}
 		target := filepath.Join(destDir, relPath)
+		os.MkdirAll(filepath.Dir(target), 0755)
+		out, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, f.Mode())
+		if err != nil {
+			return err
+		}
+		rc, err := f.Open()
+		if err != nil {
+			out.Close()
+			return err
+		}
+		_, cerr := copyIO(rc, out)
+		rc.Close()
+		out.Close()
+		if cerr != nil {
+			return cerr
+		}
+	}
+	return nil
+}
+
+// extractZipRouted extracts tf2vintage-full.zip or tf2vintage-diff.zip, routing
+// entries to the correct destination directory based on their path prefix:
+//
+//   - "tf2vintage/..."     → destModDir  (game-asset tree; "tf2vintage/" prefix stripped)
+//   - "bin/..."            → stagingRoot  (verbatim; reconstructs bin/x64/ or bin/linux64/)
+//   - "base-manifest.json" → destModDir/base-manifest.json
+//
+// destModDir is always a staging directory, never the live install — the caller
+// is responsible for passing the correct staging path so that atomicSwapDir can
+// commit the manifest alongside the rest of the game-asset tree atomically.
+//
+// This mirrors how package-combined assembles those zips in CI.
+func extractZipRouted(src, destModDir, stagingRoot string) error {
+	r, err := zip.OpenReader(src)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+
+	for _, f := range r.File {
+		name := filepath.ToSlash(f.Name)
+
+		var target string
+		switch {
+		case name == "base-manifest.json":
+			target = filepath.Join(destModDir, "base-manifest.json")
+		case strings.HasPrefix(name, "tf2vintage/"):
+			rel := strings.TrimPrefix(name, "tf2vintage/")
+			if rel == "" {
+				continue
+			}
+			target = filepath.Join(destModDir, filepath.FromSlash(rel))
+		case strings.HasPrefix(name, "bin/"):
+			target = filepath.Join(stagingRoot, filepath.FromSlash(name))
+		default:
+			continue // unknown prefix — skip
+		}
+
+		if f.FileInfo().IsDir() {
+			os.MkdirAll(target, 0755)
+			continue
+		}
+
 		os.MkdirAll(filepath.Dir(target), 0755)
 		out, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, f.Mode())
 		if err != nil {
@@ -224,11 +290,23 @@ func chmodSo(dir string) {
 	})
 }
 
-// ── Misc helpers ──────────────────────────────────────────────────────────────
+// ── Asset name constants ──────────────────────────────────────────────────────
 
-func platformBinAsset() string {
-	return "tf2vintage-bin.zip"
-}
+// fullInstallAsset is the single zip that contains the complete game-asset tree
+// plus both platform bin trees. Used for fresh installs and staleness-triggered
+// full re-downloads.
+func fullInstallAsset() string { return "tf2vintage-full.zip" }
+
+// diffInstallAsset is the zip that contains only the base files changed since
+// the previous full release, plus both platform bin trees. Used for incremental
+// updates when the local install is recent and a diff is available.
+func diffInstallAsset() string { return "tf2vintage-diff.zip" }
+
+// nightlyBinAsset is the zip published with every nightly pre-release.
+// It contains only the debug bin trees (no game assets).
+func nightlyBinAsset() string { return "tf2vintage-nightly.zip" }
+
+// ── Misc helpers ──────────────────────────────────────────────────────────────
 
 func readField(path, key string) string {
 	b, err := os.ReadFile(path)
@@ -334,11 +412,11 @@ func atomicSwapDir(liveDir, stagingDir string) error {
 	return nil
 }
 
-// ── Remote version helpers ─────────────────────────────────────────────────────
+// ── Remote version helpers ────────────────────────────────────────────────────
 
 // fetchRemoteField downloads a small key=value text file from url and returns
 // the value for the given key. Used to read nightly-version.txt cheaply
-// (a few hundred bytes) without downloading the full bin zip.
+// (a few hundred bytes) without downloading the full zip.
 func fetchRemoteField(url, key string) (string, error) {
 	resp, err := http.Get(url) //nolint:noctx
 	if err != nil {

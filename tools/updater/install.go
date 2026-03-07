@@ -109,26 +109,18 @@ func doInstall(report func(InstallState), askAltPath func() string, askSymbols f
 		os.MkdirAll(stagingBinDir, 0755)
 		os.MkdirAll(stagingModDir, 0755)
 
-		binUpdated := false
+		binUpdated  := false
 		baseUpdated := false
 
-		switch err := updateBin(binDir, stagingBinDir, latest); {
+		// updateInstall downloads ONE zip covering both base and bin.
+		switch err := updateInstall(installDir, stagingRoot, stagingBinDir, stagingModDir, latest); {
 		case err == nil:
-			binUpdated = true
-		case errors.Is(err, errUpToDate):
-			// nothing staged — do not swap
-		default:
-			report(InstallState{Err: fmt.Errorf("Bin update failed: %v", err)})
-			os.RemoveAll(stagingRoot)
-			return
-		}
-		switch err := updateBase(installDir, stagingModDir, latest); {
-		case err == nil:
+			binUpdated  = true
 			baseUpdated = true
 		case errors.Is(err, errUpToDate):
 			// nothing staged — do not swap
 		default:
-			report(InstallState{Err: fmt.Errorf("Base update failed: %v", err)})
+			report(InstallState{Err: fmt.Errorf("Update failed: %v", err)})
 			os.RemoveAll(stagingRoot)
 			return
 		}
@@ -175,26 +167,28 @@ func doInstall(report func(InstallState), askAltPath func() string, askSymbols f
 		return
 	}
 
-	// ── Download + extract base ───────────────────────────────────────────────
-	if needs.repairBase {
-		if err := checkDiskSpace(installDir, minFreeBytesForBase); err != nil {
+	// ── Download + extract combined package (base + bin in one zip) ──────────
+	// repairBase or repairBin (or both) set — tf2vintage-full.zip contains the
+	// complete game-asset tree AND both platform bin trees in a single download.
+	if needs.repairBase || needs.repairBin {
+		if err := checkDiskSpace(installDir, minFreeBytesForBase+minFreeBytesForBins); err != nil {
 			report(InstallState{Err: err})
 			return
 		}
 
-		baseURL := assetURL(latest, "tf2vintage-base.zip")
-		if baseURL == "" {
-			report(InstallState{Err: fmt.Errorf("Base package not found in latest release — please try again later.")})
+		fullURL := assetURL(latest, fullInstallAsset())
+		if fullURL == "" {
+			report(InstallState{Err: fmt.Errorf("Full package not found in latest release — please try again later.")})
 			return
 		}
 
-		report(InstallState{Status: "Downloading base assets — 350 MB compressed, may take a while...", Progress: 0.20})
-		baseTmp, err := downloadWithProgressCallback(baseURL, func(downloaded, total int64) {
+		report(InstallState{Status: "Downloading TF2 Vintage — ~500 MB compressed, may take a while...", Progress: 0.20})
+		fullTmp, err := downloadWithProgressCallback(fullURL, func(downloaded, total int64) {
 			if total > 0 {
 				pct := float64(downloaded) / float64(total)
 				report(InstallState{
-					Status:   fmt.Sprintf("Downloading base assets... %.0f%%", pct*100),
-					Progress: 0.20 + pct*0.45,
+					Status:   fmt.Sprintf("Downloading TF2 Vintage... %.0f%%", pct*100),
+					Progress: 0.20 + pct*0.60,
 				})
 			}
 		})
@@ -203,77 +197,30 @@ func doInstall(report func(InstallState), askAltPath func() string, askSymbols f
 				"Download interrupted: %v\n\nRun the installer again to resume.", err)})
 			return
 		}
-		defer os.Remove(baseTmp)
+		defer os.Remove(fullTmp)
 
-		// Verify base integrity before extracting
-		if expectedHash := fetchAssetChecksum(latest, "tf2vintage-base.zip"); expectedHash != "" {
-			if err := verifyDownloadChecksum(baseTmp, expectedHash); err != nil {
-				os.Remove(baseTmp)
-				report(InstallState{Err: fmt.Errorf("Base download integrity check failed: %v", err)})
+		if expectedHash := fetchAssetChecksum(latest, fullInstallAsset()); expectedHash != "" {
+			if err := verifyDownloadChecksum(fullTmp, expectedHash); err != nil {
+				os.Remove(fullTmp)
+				report(InstallState{Err: fmt.Errorf("Download integrity check failed: %v", err)})
 				return
 			}
 		}
 
-		report(InstallState{Status: "Extracting base assets...", Progress: 0.65})
-		if err := extractZip(baseTmp, installDir); err != nil {
-			report(InstallState{Err: fmt.Errorf("Failed to extract base assets: %v", err)})
-			return
-		}
-		if manifest, err := fetchReleaseManifest(latest); err == nil {
-			saveManifest(filepath.Join(installDir, "base-manifest.json"), manifest)
-		}
-	}
-
-	// ── Download + extract bin ────────────────────────────────────────────────
-	if needs.repairBin {
-		if err := checkDiskSpace(installDir, minFreeBytesForBins); err != nil {
-			report(InstallState{Err: err})
-			return
-		}
-
-		binURL := assetURL(latest, platformBinAsset())
-		if binURL == "" {
-			report(InstallState{Err: fmt.Errorf("Bin package not found in latest release — please try again later.")})
-			return
-		}
-
-		report(InstallState{Status: "Downloading game binaries...", Progress: 0.70})
-		binTmp, err := downloadWithProgressCallback(binURL, func(downloaded, total int64) {
-			if total > 0 {
-				pct := float64(downloaded) / float64(total)
-				report(InstallState{
-					Status:   fmt.Sprintf("Downloading game binaries... %.0f%%", pct*100),
-					Progress: 0.70 + pct*0.15,
-				})
-			}
-		})
-		if err != nil {
-			report(InstallState{Err: fmt.Errorf(
-				"Download interrupted: %v\n\nRun the installer again to resume.", err)})
-			return
-		}
-		defer os.Remove(binTmp)
-
+		report(InstallState{Status: "Extracting...", Progress: 0.80})
 		binDir := platformBinDir(installDir)
 		if err := os.MkdirAll(binDir, 0755); err != nil {
 			report(InstallState{Err: fmt.Errorf("Could not create bin directory: %v", err)})
 			return
 		}
-
-		// Verify bin integrity before extracting
-		if expectedHash := fetchAssetChecksum(latest, platformBinAsset()); expectedHash != "" {
-			if err := verifyDownloadChecksum(binTmp, expectedHash); err != nil {
-				os.Remove(binTmp)
-				report(InstallState{Err: fmt.Errorf("Bin download integrity check failed: %v", err)})
-				return
-			}
-		}
-
-		report(InstallState{Status: "Extracting game binaries...", Progress: 0.85})
-		// tf2vintage-bin.zip has "bin/x64/..." paths verbatim — extract into installDir
-		// so the zip reconstructs installDir/bin/x64/ (or bin/linux64/) correctly.
-		if err := extractZipRaw(binTmp, installDir); err != nil {
-			report(InstallState{Err: fmt.Errorf("Failed to extract game binaries: %v", err)})
+		// extractZipRouted routes:
+		//   tf2vintage/** → installDir  (game-asset tree)
+		//   bin/**        → installDir  (reconstructs bin/x64/ or bin/linux64/)
+		//   base-manifest.json → installDir/base-manifest.json
+		// On fresh install, installDir is both the live dir and the destination —
+		// no staging needed here because nothing is live yet.
+		if err := extractZipRouted(fullTmp, installDir, installDir); err != nil {
+			report(InstallState{Err: fmt.Errorf("Failed to extract package: %v", err)})
 			return
 		}
 		if runtime.GOOS != "windows" {

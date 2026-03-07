@@ -9,9 +9,9 @@ import (
 	"time"
 )
 
-// errUpToDate is returned by updateBin/updateBase/updateSymbols when the
-// installed version already matches the latest release. Nothing is written
-// to the staging directory in this case, so the caller must not atomicSwapDir.
+// errUpToDate is returned by updateInstall/updateNightly/updateSymbols when the
+// installed version already matches the latest release. Nothing is written to
+// the staging directory in this case, so the caller must not atomicSwapDir.
 var errUpToDate = errors.New("already up to date")
 
 func runUpdateMode(exe string) {
@@ -119,65 +119,52 @@ func runUpdateMode(exe string) {
 		termFatal("Integrity check failed: %v", err)
 	}
 
-	// ── Optionally fetch the nightly pre-release ──────────────────────────────
-	// When enabled, treat the nightly as the bin source if it is newer than
-	// both the latest stable release and the currently installed build.
-	// Base assets (maps, materials, etc.) are never updated from a nightly —
-	// those only change in stable releases.
+	// ── Optionally fetch the nightly pre-release (silent check) ──────────────
+	// When enabled, the nightly bin is applied silently if it is newer than the
+	// currently installed build. Base assets are never touched by a nightly.
 	var nightlyRelease *ghRelease
 	if cfg.CheckNightly {
 		if n, err := fetchNightlyRelease(); err != nil {
+			// Nightly fetch failure is not fatal — fall through to stable.
 			termWarn("Could not check for nightly (%v) — using stable release.", err)
 		} else {
 			nightlyRelease = n
 		}
 	}
 
-	// ── Download all updates into staging ────────────────────────────────────
-	binUpdated := false
+	// ── Download updates into staging ────────────────────────────────────────
+	binUpdated  := false
 	baseUpdated := false
 
-	// Prefer the nightly for bin if it is newer than what's installed.
-	// Fall back to the stable release if the nightly is absent or already current.
-	binSource := latest
+	// Nightly bin check is intentionally silent — opt-in for advanced users.
 	if nightlyRelease != nil {
 		switch err := updateNightly(liveBinDir, stagingBinDir, nightlyRelease); {
 		case err == nil:
 			binUpdated = true
-			binSource = nil // bin already staged from nightly; skip stable bin update
 		case errors.Is(err, errUpToDate):
-			// nightly is current; still check stable below in case a new stable
-			// has arrived since the nightly was built
+			// already current — fall through to stable install check below
 		default:
-			termWarn("Nightly bin update failed: %v — falling back to stable.", err)
+			termWarn("Nightly update failed: %v — falling back to stable.", err)
 		}
 	}
 
-	if binSource != nil {
-		switch err := updateBin(liveBinDir, stagingBinDir, binSource); {
-		case err == nil:
-			binUpdated = true
-		case errors.Is(err, errUpToDate):
-			// nothing staged — do not swap
-		default:
-			termWarn("Bin update failed: %v", err)
-		}
-	}
-
-	switch err := updateBase(modDir, stagingModDir, latest); {
+	// Full install update (base + bin in one zip).
+	// updateInstall populates BOTH stagingBinDir and stagingModDir.
+	switch err := updateInstall(modDir, stagingRoot, stagingBinDir, stagingModDir, latest); {
 	case err == nil:
+		binUpdated  = true
 		baseUpdated = true
 	case errors.Is(err, errUpToDate):
 		// nothing staged — do not swap
 	default:
-		termWarn("Base update failed: %v", err)
+		termWarn("Update failed: %v", err)
 	}
 
 	if cfg.DownloadSymbols {
 		// liveBinDir for version check (persists across runs), stagingBinDir for extraction
 		switch err := updateSymbols(liveBinDir, stagingBinDir, latest); {
 		case err == nil:
-			binUpdated = true // symbols were staged alongside bin — swap both together
+			binUpdated = true
 		case errors.Is(err, errUpToDate):
 			// nothing staged — do not swap
 		default:
@@ -186,25 +173,25 @@ func runUpdateMode(exe string) {
 	}
 
 	// ── Atomic swap: move staging into place ──────────────────────────────────
-	// Only swap the subtrees that were actually updated, so a bin failure
-	// doesn't roll back a successful base update.
+	// Swap each subtree only if it was actually populated. A nightly-only run
+	// sets binUpdated but NOT baseUpdated — swapping an empty stagingModDir
+	// would wipe the entire game asset tree.
 	if binUpdated {
-		fmt.Println("Applying bin update...")
+		fmt.Println("Applying update...")
 		if err := atomicSwapDir(liveBinDir, stagingBinDir); err != nil {
-			termFatal("Bin atomic swap failed: %v", err)
+			termFatal("Bin swap failed: %v", err)
 		}
-		fmt.Println("Binaries updated.")
 	}
-
 	if baseUpdated {
-		fmt.Println("Applying base update...")
 		if err := atomicSwapDir(modDir, stagingModDir); err != nil {
-			termFatal("Base atomic swap failed: %v", err)
+			termFatal("Base swap failed: %v", err)
 		}
-		fmt.Println("Base updated.")
+	}
+	if binUpdated || baseUpdated {
+		fmt.Println("Update applied.")
 	}
 
-	// Clean up staging root (now empty)
+	// Clean up staging root (now empty after swaps)
 	os.RemoveAll(stagingRoot)
 
 	fmt.Println()
@@ -219,23 +206,19 @@ func runUpdateMode(exe string) {
 
 // ── Nightly bin update ────────────────────────────────────────────────────────
 
-// updateNightly checks the nightly-version.txt asset in the nightly pre-release
-// against the locally installed version-bin.txt. It downloads and stages
-// tf2vintage-bin.zip only when the nightly build is newer.
+// updateNightly checks the nightly-version.txt asset against the locally
+// installed version-bin.txt and, if newer, downloads and stages
+// tf2vintage-nightly.zip (debug bins only — no game assets).
 //
-// Version comparison uses the "short" field (9-char commit SHA prefix):
-//
-//	local  version-bin.txt  → short=<sha>
-//	remote nightly-version.txt → short=<sha>
+// All output is intentionally suppressed. Nightly is opt-in for advanced users
+// who do not need the updater narrating background checks. Only actual failures
+// are surfaced via termWarn at the call site.
 //
 // Returns nil if the nightly was staged, errUpToDate if already current.
 func updateNightly(liveBinDir, stagingBinDir string, nightly *ghRelease) error {
-	// Fetch the tiny nightly-version.txt from the pre-release to compare
-	// without downloading the full bin zip.
 	versionURL := assetURL(nightly, "nightly-version.txt")
 	if versionURL == "" {
-		// Nightly exists but has no version file — malformed release, skip it.
-		return fmt.Errorf("nightly release has no nightly-version.txt asset")
+		return fmt.Errorf("nightly release is missing nightly-version.txt")
 	}
 
 	remoteShort, err := fetchRemoteField(versionURL, "short")
@@ -247,37 +230,32 @@ func updateNightly(liveBinDir, stagingBinDir string, nightly *ghRelease) error {
 	}
 
 	localShort := readField(filepath.Join(liveBinDir, "version-bin.txt"), "short")
-
 	if localShort != "" && localShort == remoteShort {
-		fmt.Println("Nightly binaries are up to date.")
-		return errUpToDate
+		return errUpToDate // already current — say nothing
 	}
 
-	fmt.Printf("Nightly bin update: %s → %s\n", shortOrNone(localShort), remoteShort)
-
-	url := assetURL(nightly, platformBinAsset())
+	url := assetURL(nightly, nightlyBinAsset())
 	if url == "" {
-		return fmt.Errorf("nightly bin asset not found in pre-release")
+		return fmt.Errorf("nightly zip asset not found in pre-release")
 	}
 
-	fmt.Printf("Downloading nightly %s...\n", platformBinAsset())
 	tmp, err := downloadWithProgress(url)
 	if err != nil {
 		return err
 	}
 
-	if expectedHash := fetchAssetChecksum(nightly, platformBinAsset()); expectedHash != "" {
+	if expectedHash := fetchAssetChecksum(nightly, nightlyBinAsset()); expectedHash != "" {
 		if err := verifyDownloadChecksum(tmp, expectedHash); err != nil {
 			os.Remove(tmp)
-			return fmt.Errorf("nightly bin integrity check failed: %v", err)
+			return fmt.Errorf("nightly integrity check failed: %v", err)
 		}
 	}
 
-	fmt.Println("Extracting nightly binaries to staging...")
+	// tf2vintage-nightly.zip contains bin/x64/** and bin/linux64/** verbatim.
 	stagingRoot := filepath.Dir(filepath.Dir(stagingBinDir))
 	if err := extractZipRaw(tmp, stagingRoot); err != nil {
 		os.Remove(tmp)
-		return fmt.Errorf("nightly bin extraction failed: %v", err)
+		return fmt.Errorf("nightly extraction failed: %v", err)
 	}
 	os.Remove(tmp)
 
@@ -286,85 +264,32 @@ func updateNightly(liveBinDir, stagingBinDir string, nightly *ghRelease) error {
 	}
 
 	if err := validateBinDir(stagingBinDir); err != nil {
-		return fmt.Errorf("nightly bin staging failed validation: %v", err)
+		return fmt.Errorf("nightly staging failed validation: %v", err)
 	}
 
 	return nil
 }
 
-// ── Stable bin update ─────────────────────────────────────────────────────────
+// ── Unified install update ────────────────────────────────────────────────────
 
-// updateBin downloads the bin package into stagingBinDir.
-// liveBinDir is read-only here — used only to check the current version.
-// Returns nil only if a new version was downloaded and is ready to swap in.
-// Returns errUpToDate (no staging writes) if already up to date.
-func updateBin(liveBinDir, stagingBinDir string, latest *ghRelease) error {
-	remoteTag := latest.TagName
-	localCommit := readField(filepath.Join(liveBinDir, "version-bin.txt"), "commit")
-
-	if localCommit != "" && !validateCommitSHA(localCommit) {
-		termWarn("version-bin.txt has invalid commit SHA — forcing bin update")
-		localCommit = ""
-	}
-
-	if localCommit != "" && remoteTag == "build-"+localCommit {
-		fmt.Println("Binaries are up to date.")
-		return errUpToDate
-	}
-
-	fmt.Printf("Bin update: %s → %s\n", shortOrNone(localCommit), remoteTag)
-
-	url := assetURL(latest, platformBinAsset())
-	if url == "" {
-		return fmt.Errorf("bin asset not found in release")
-	}
-
-	fmt.Printf("Downloading %s...\n", platformBinAsset())
-	tmp, err := downloadWithProgress(url)
-	if err != nil {
-		return err
-	}
-
-	// Verify integrity before extracting into staging
-	if expectedHash := fetchAssetChecksum(latest, platformBinAsset()); expectedHash != "" {
-		if err := verifyDownloadChecksum(tmp, expectedHash); err != nil {
-			os.Remove(tmp)
-			return fmt.Errorf("bin download integrity check failed: %v", err)
-		}
-	}
-
-	fmt.Println("Extracting binaries to staging...")
-	// tf2vintage-bin.zip contains "bin/x64/..." or "bin/linux64/..." paths verbatim,
-	// so extract into the staging root (two levels above stagingBinDir) to let the
-	// zip reconstruct the full bin/<platform>/ subtree there.
-	stagingRoot := filepath.Dir(filepath.Dir(stagingBinDir))
-	if err := extractZipRaw(tmp, stagingRoot); err != nil {
-		os.Remove(tmp)
-		return fmt.Errorf("bin extraction failed: %v", err)
-	}
-	os.Remove(tmp)
-
-	if runtime.GOOS != "windows" {
-		chmodSo(stagingBinDir)
-	}
-
-	// Validate staging before we commit to swapping it in
-	if err := validateBinDir(stagingBinDir); err != nil {
-		return fmt.Errorf("bin staging failed validation: %v", err)
-	}
-
-	return nil
-}
-
-// ── Base update ───────────────────────────────────────────────────────────────
-
-// updateBase downloads/patches base assets into stagingModDir.
-// liveModDir is read-only — used only to check current manifest.
-// Returns nil only if new content is ready in stagingModDir.
-// Returns errUpToDate (no staging writes) if already up to date.
-func updateBase(liveModDir, stagingModDir string, latest *ghRelease) error {
+// updateInstall checks the remote base-manifest.json against the locally
+// installed one and downloads exactly ONE zip to bring the install up to date:
+//
+//   - No local manifest OR install > 180 days old → tf2vintage-full.zip
+//   - Local manifest present, recent, and diff available → tf2vintage-diff.zip
+//   - Local manifest present, recent, but no diff (first release) → tf2vintage-full.zip
+//   - Already up to date → errUpToDate (nothing staged)
+//
+// Both full and diff zips contain the complete bin trees for both platforms, so
+// a single download always updates both game assets and binaries together.
+//
+// modDir is read-only. Content is written into stagingModDir (base assets) and
+// stagingBinDir (binaries) inside stagingRoot.
+func updateInstall(modDir, stagingRoot, stagingBinDir, stagingModDir string, latest *ghRelease) error {
+	// Fetch the remote manifest (small JSON) to check the release tag cheaply.
 	manifestURL := assetURL(latest, "base-manifest.json")
 	if manifestURL == "" {
+		// Release has no base assets (nightly-only scenario) — nothing to do.
 		return errUpToDate
 	}
 
@@ -373,130 +298,135 @@ func updateBase(liveModDir, stagingModDir string, latest *ghRelease) error {
 		return fmt.Errorf("could not fetch remote manifest: %v", err)
 	}
 
-	localManifestPath := filepath.Join(liveModDir, "base-manifest.json")
+	localManifestPath := filepath.Join(modDir, "base-manifest.json")
 	localManifest := loadLocalManifest(localManifestPath)
 
+	// ── Case 1: fresh install ─────────────────────────────────────────────────
 	if localManifest == nil {
-		fmt.Println("No base install found — downloading full base (this may take a while)...")
-		return fullBaseDownload(stagingModDir, latest, remoteManifest,
-			filepath.Join(stagingModDir, "base-manifest.json"))
+		fmt.Println("No base install found — downloading full package (this may take a while)...")
+		return downloadAndExtractFull(stagingRoot, stagingBinDir, stagingModDir, latest, remoteManifest)
 	}
 
+	// ── Case 2: already up to date ───────────────────────────────────────────
 	if localManifest.Tag == remoteManifest.Tag {
-		fmt.Println("Base is up to date.")
+		fmt.Println("Game is up to date.")
 		return errUpToDate
 	}
 
-	fmt.Printf("Base update: %s → %s\n", localManifest.Tag, remoteManifest.Tag)
-
-	chain, err := buildPatchChain(localManifest.Tag, latest)
-	if err != nil {
-		fmt.Printf("Patch chain unavailable (%v) — falling back to full base download...\n", err)
-		return fullBaseDownload(stagingModDir, latest, remoteManifest,
-			filepath.Join(stagingModDir, "base-manifest.json"))
-	}
-
-	// For patch application we need the current files as a base.
-	// Copy live mod dir into staging first, then apply patches on top.
-	fmt.Println("Seeding staging from current install...")
-	if err := copyDir(liveModDir, stagingModDir); err != nil {
-		fmt.Printf("Could not seed staging (%v) — falling back to full base download...\n", err)
-		os.RemoveAll(stagingModDir)
-		os.MkdirAll(stagingModDir, 0755)
-		return fullBaseDownload(stagingModDir, latest, remoteManifest,
-			filepath.Join(stagingModDir, "base-manifest.json"))
-	}
-
-	fmt.Printf("Applying %d patch(es)...\n", len(chain))
-	for i, release := range chain {
-		fmt.Printf("[%d/%d] Applying patch %s\n", i+1, len(chain), release.TagName)
-		if err := applyPatch(stagingModDir, release); err != nil {
-			fmt.Printf("Patch %s failed (%v) — falling back to full base download...\n", release.TagName, err)
-			os.RemoveAll(stagingModDir)
-			os.MkdirAll(stagingModDir, 0755)
-			return fullBaseDownload(stagingModDir, latest, remoteManifest,
-				filepath.Join(stagingModDir, "base-manifest.json"))
+	// ── Case 3: staleness check — force full if install is too old ────────────
+	// Caps the maximum diff gap and guards against deeply corrupted installs.
+	const maxInstallAgeDays = 180
+	if localManifest.ReleasedAt != "" {
+		if relDate, parseErr := time.Parse("2006-01-02", localManifest.ReleasedAt); parseErr == nil {
+			ageDays := int(time.Since(relDate).Hours() / 24)
+			if ageDays > maxInstallAgeDays {
+				fmt.Printf("Install is %d days old (limit %d) — downloading full package...\n",
+					ageDays, maxInstallAgeDays)
+				return downloadAndExtractFull(stagingRoot, stagingBinDir, stagingModDir, latest, remoteManifest)
+			}
 		}
 	}
 
-	saveManifest(filepath.Join(stagingModDir, "base-manifest.json"), remoteManifest)
-	fmt.Println("Base patched in staging.")
+	// ── Case 4: incremental diff update ──────────────────────────────────────
+	fmt.Printf("Update available: %s → %s\n", localManifest.Tag, remoteManifest.Tag)
+
+	diffURL := assetURL(latest, diffInstallAsset())
+	if diffURL == "" {
+		// No diff available (first release, or diff not published) — fall back to full.
+		fmt.Println("No diff available — downloading full package...")
+		return downloadAndExtractFull(stagingRoot, stagingBinDir, stagingModDir, latest, remoteManifest)
+	}
+
+	fmt.Printf("Downloading %s...\n", diffInstallAsset())
+	tmp, err := downloadWithProgress(diffURL)
+	if err != nil {
+		fmt.Printf("Diff download failed (%v) — falling back to full package...\n", err)
+		return downloadAndExtractFull(stagingRoot, stagingBinDir, stagingModDir, latest, remoteManifest)
+	}
+
+	if expectedHash := fetchAssetChecksum(latest, diffInstallAsset()); expectedHash != "" {
+		if err := verifyDownloadChecksum(tmp, expectedHash); err != nil {
+			os.Remove(tmp)
+			fmt.Printf("Diff integrity check failed (%v) — falling back to full package...\n", err)
+			return downloadAndExtractFull(stagingRoot, stagingBinDir, stagingModDir, latest, remoteManifest)
+		}
+	}
+
+	fmt.Println("Extracting diff update to staging...")
+	// The diff zip contains "tf2vintage/**" (changed game files), "bin/**" (full bins),
+	// and "base-manifest.json" at root. extractZipRouted routes each to the correct dir.
+	//
+	// For the game-asset tree we need the CURRENT files as a base first, because
+	// the diff only carries changed/added files — unchanged files stay from live.
+	if err := copyDir(modDir, stagingModDir); err != nil {
+		os.Remove(tmp)
+		fmt.Printf("Could not seed staging from current install (%v) — falling back to full...\n", err)
+		os.RemoveAll(stagingModDir)
+		os.MkdirAll(stagingModDir, 0755)
+		return downloadAndExtractFull(stagingRoot, stagingBinDir, stagingModDir, latest, remoteManifest)
+	}
+
+	if err := extractZipRouted(tmp, stagingModDir, stagingRoot); err != nil {
+		os.Remove(tmp)
+		os.RemoveAll(stagingModDir)
+		os.MkdirAll(stagingModDir, 0755)
+		fmt.Printf("Diff extraction failed (%v) — falling back to full package...\n", err)
+		return downloadAndExtractFull(stagingRoot, stagingBinDir, stagingModDir, latest, remoteManifest)
+	}
+	os.Remove(tmp)
+
+	if runtime.GOOS != "windows" {
+		chmodSo(stagingBinDir)
+	}
+	if err := validateBinDir(stagingBinDir); err != nil {
+		return fmt.Errorf("diff staging failed bin validation: %v", err)
+	}
+
+	fmt.Println("Diff applied in staging.")
 	return nil
 }
 
-// buildPatchChain walks backwards through releases using cached manifests,
-// building the ordered list of patches to apply from localTag to latest.
-func buildPatchChain(localTag string, latest *ghRelease) ([]*ghRelease, error) {
-	const maxChain = 20
-	var chain []*ghRelease
-	current := latest
-
-	for i := 0; i < maxChain; i++ {
-		manifest, err := fetchReleaseManifest(current)
-		if err != nil {
-			return nil, fmt.Errorf("could not fetch manifest for %s: %v", current.TagName, err)
-		}
-
-		chain = append([]*ghRelease{current}, chain...)
-
-		if manifest.PrevTag == localTag {
-			return chain, nil
-		}
-		if manifest.PrevTag == "" {
-			return nil, fmt.Errorf("patch chain does not reach local tag %s", localTag)
-		}
-
-		prev, err := fetchRelease(manifest.PrevTag)
-		if err != nil {
-			return nil, fmt.Errorf("could not fetch release %s: %v", manifest.PrevTag, err)
-		}
-		current = prev
-	}
-
-	return nil, fmt.Errorf("patch chain exceeded %d steps", maxChain)
-}
-
-func applyPatch(destDir string, release *ghRelease) error {
-	url := assetURL(release, "base-patch.zip")
-	if url == "" {
-		return nil
-	}
-	tmp, err := downloadWithProgress(url)
-	if err != nil {
-		return err
-	}
-	defer os.Remove(tmp)
-	return extractZip(tmp, destDir)
-}
-
-func fullBaseDownload(destDir string, latest *ghRelease, manifest *BaseManifest, localManifestPath string) error {
-	if err := checkDiskSpace(destDir, minFreeBytesForBase); err != nil {
+// downloadAndExtractFull downloads tf2vintage-full.zip and extracts it into staging.
+// The full zip contains the complete game-asset tree + both platform bin trees.
+func downloadAndExtractFull(stagingRoot, stagingBinDir, stagingModDir string, latest *ghRelease, manifest *BaseManifest) error {
+	// Full zip contains the complete game-asset tree AND both platform bin trees,
+	// so reserve space for both components before downloading.
+	if err := checkDiskSpace(stagingModDir, minFreeBytesForBase+minFreeBytesForBins); err != nil {
 		return err
 	}
 
-	url := assetURL(latest, "tf2vintage-base.zip")
+	url := assetURL(latest, fullInstallAsset())
 	if url == "" {
-		return fmt.Errorf("full base asset not found in release")
+		return fmt.Errorf("full package asset not found in release")
 	}
+
+	fmt.Printf("Downloading %s...\n", fullInstallAsset())
 	tmp, err := downloadWithProgress(url)
 	if err != nil {
 		return err
 	}
 
-	if expectedHash := fetchAssetChecksum(latest, "tf2vintage-base.zip"); expectedHash != "" {
+	if expectedHash := fetchAssetChecksum(latest, fullInstallAsset()); expectedHash != "" {
 		if err := verifyDownloadChecksum(tmp, expectedHash); err != nil {
 			os.Remove(tmp)
-			return fmt.Errorf("base download integrity check failed: %v", err)
+			return fmt.Errorf("full package integrity check failed: %v", err)
 		}
 	}
 
-	fmt.Println("Extracting base to staging...")
-	if err := extractZip(tmp, destDir); err != nil {
+	fmt.Println("Extracting full package to staging...")
+	if err := extractZipRouted(tmp, stagingModDir, stagingRoot); err != nil {
 		os.Remove(tmp)
-		return err
+		return fmt.Errorf("full package extraction failed: %v", err)
 	}
 	os.Remove(tmp)
-	saveManifest(localManifestPath, manifest)
-	fmt.Println("Base staged.")
+
+	if runtime.GOOS != "windows" {
+		chmodSo(stagingBinDir)
+	}
+	if err := validateBinDir(stagingBinDir); err != nil {
+		return fmt.Errorf("full package staging failed bin validation: %v", err)
+	}
+
+	fmt.Println("Full package staged.")
 	return nil
 }

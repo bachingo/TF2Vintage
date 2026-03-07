@@ -63,7 +63,7 @@ func saveConfig(binDir string, cfg UpdaterConfig) error {
 			"symbols=%v\n"+
 			"\n"+
 			"# Check for nightly pre-releases in addition to stable releases.\n"+
-			"# Nightlies are built every Monday and contain the latest binaries.\n"+
+			"# Nightlies are built every Tuesday and contain the latest binaries.\n"+
 			"# Game assets (maps, materials, etc.) are only updated in stable releases.\n"+
 			"# Toggle: tf2vintage-updater --enable-nightly / --disable-nightly\n"+
 			"nightly=%v\n",
