@@ -50,6 +50,28 @@ func runUpdateMode(exe string) {
 			fmt.Println("Symbol downloads disabled.")
 			termPause()
 			os.Exit(0)
+		case "--enable-nightly":
+			cfg := loadConfig(liveBinDir)
+			cfg.CheckNightly = true
+			if err := saveConfig(liveBinDir, cfg); err != nil {
+				termFatal("Could not save config: %v", err)
+			}
+			fmt.Println("Nightly updates enabled.")
+			fmt.Println("The updater will check for nightly pre-releases on each launch.")
+			fmt.Println("Note: nightlies contain only binary updates, not game asset changes.")
+			fmt.Println("To disable: run tf2vintage-updater --disable-nightly")
+			termPause()
+			os.Exit(0)
+		case "--disable-nightly":
+			cfg := loadConfig(liveBinDir)
+			cfg.CheckNightly = false
+			if err := saveConfig(liveBinDir, cfg); err != nil {
+				termFatal("Could not save config: %v", err)
+			}
+			fmt.Println("Nightly updates disabled.")
+			fmt.Println("The updater will only install stable releases.")
+			termPause()
+			os.Exit(0)
 		}
 	}
 
@@ -82,7 +104,7 @@ func runUpdateMode(exe string) {
 		termWarn("Disk space check failed: %v — proceeding anyway", err)
 	}
 
-	// ── Fetch latest release (cached) ────────────────────────────────────────
+	// ── Fetch latest stable release (cached) ─────────────────────────────────
 	termPrint("Checking for updates...")
 	latest, err := fetchLatestRelease()
 	if err != nil {
@@ -97,17 +119,49 @@ func runUpdateMode(exe string) {
 		termFatal("Integrity check failed: %v", err)
 	}
 
+	// ── Optionally fetch the nightly pre-release ──────────────────────────────
+	// When enabled, treat the nightly as the bin source if it is newer than
+	// both the latest stable release and the currently installed build.
+	// Base assets (maps, materials, etc.) are never updated from a nightly —
+	// those only change in stable releases.
+	var nightlyRelease *ghRelease
+	if cfg.CheckNightly {
+		if n, err := fetchNightlyRelease(); err != nil {
+			termWarn("Could not check for nightly (%v) — using stable release.", err)
+		} else {
+			nightlyRelease = n
+		}
+	}
+
 	// ── Download all updates into staging ────────────────────────────────────
 	binUpdated := false
 	baseUpdated := false
 
-	switch err := updateBin(liveBinDir, stagingBinDir, latest); {
-	case err == nil:
-		binUpdated = true
-	case errors.Is(err, errUpToDate):
-		// nothing staged — do not swap
-	default:
-		termWarn("Bin update failed: %v", err)
+	// Prefer the nightly for bin if it is newer than what's installed.
+	// Fall back to the stable release if the nightly is absent or already current.
+	binSource := latest
+	if nightlyRelease != nil {
+		switch err := updateNightly(liveBinDir, stagingBinDir, nightlyRelease); {
+		case err == nil:
+			binUpdated = true
+			binSource = nil // bin already staged from nightly; skip stable bin update
+		case errors.Is(err, errUpToDate):
+			// nightly is current; still check stable below in case a new stable
+			// has arrived since the nightly was built
+		default:
+			termWarn("Nightly bin update failed: %v — falling back to stable.", err)
+		}
+	}
+
+	if binSource != nil {
+		switch err := updateBin(liveBinDir, stagingBinDir, binSource); {
+		case err == nil:
+			binUpdated = true
+		case errors.Is(err, errUpToDate):
+			// nothing staged — do not swap
+		default:
+			termWarn("Bin update failed: %v", err)
+		}
 	}
 
 	switch err := updateBase(modDir, stagingModDir, latest); {
@@ -163,7 +217,82 @@ func runUpdateMode(exe string) {
 	launchGame(steamArgs)
 }
 
-// ── Bin update ────────────────────────────────────────────────────────────────
+// ── Nightly bin update ────────────────────────────────────────────────────────
+
+// updateNightly checks the nightly-version.txt asset in the nightly pre-release
+// against the locally installed version-bin.txt. It downloads and stages
+// tf2vintage-bin.zip only when the nightly build is newer.
+//
+// Version comparison uses the "short" field (9-char commit SHA prefix):
+//
+//	local  version-bin.txt  → short=<sha>
+//	remote nightly-version.txt → short=<sha>
+//
+// Returns nil if the nightly was staged, errUpToDate if already current.
+func updateNightly(liveBinDir, stagingBinDir string, nightly *ghRelease) error {
+	// Fetch the tiny nightly-version.txt from the pre-release to compare
+	// without downloading the full bin zip.
+	versionURL := assetURL(nightly, "nightly-version.txt")
+	if versionURL == "" {
+		// Nightly exists but has no version file — malformed release, skip it.
+		return fmt.Errorf("nightly release has no nightly-version.txt asset")
+	}
+
+	remoteShort, err := fetchRemoteField(versionURL, "short")
+	if err != nil {
+		return fmt.Errorf("could not read nightly version: %v", err)
+	}
+	if remoteShort == "" {
+		return fmt.Errorf("nightly-version.txt missing 'short' field")
+	}
+
+	localShort := readField(filepath.Join(liveBinDir, "version-bin.txt"), "short")
+
+	if localShort != "" && localShort == remoteShort {
+		fmt.Println("Nightly binaries are up to date.")
+		return errUpToDate
+	}
+
+	fmt.Printf("Nightly bin update: %s → %s\n", shortOrNone(localShort), remoteShort)
+
+	url := assetURL(nightly, platformBinAsset())
+	if url == "" {
+		return fmt.Errorf("nightly bin asset not found in pre-release")
+	}
+
+	fmt.Printf("Downloading nightly %s...\n", platformBinAsset())
+	tmp, err := downloadWithProgress(url)
+	if err != nil {
+		return err
+	}
+
+	if expectedHash := fetchAssetChecksum(nightly, platformBinAsset()); expectedHash != "" {
+		if err := verifyDownloadChecksum(tmp, expectedHash); err != nil {
+			os.Remove(tmp)
+			return fmt.Errorf("nightly bin integrity check failed: %v", err)
+		}
+	}
+
+	fmt.Println("Extracting nightly binaries to staging...")
+	stagingRoot := filepath.Dir(filepath.Dir(stagingBinDir))
+	if err := extractZipRaw(tmp, stagingRoot); err != nil {
+		os.Remove(tmp)
+		return fmt.Errorf("nightly bin extraction failed: %v", err)
+	}
+	os.Remove(tmp)
+
+	if runtime.GOOS != "windows" {
+		chmodSo(stagingBinDir)
+	}
+
+	if err := validateBinDir(stagingBinDir); err != nil {
+		return fmt.Errorf("nightly bin staging failed validation: %v", err)
+	}
+
+	return nil
+}
+
+// ── Stable bin update ─────────────────────────────────────────────────────────
 
 // updateBin downloads the bin package into stagingBinDir.
 // liveBinDir is read-only here — used only to check the current version.

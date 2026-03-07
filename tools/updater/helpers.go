@@ -333,3 +333,35 @@ func atomicSwapDir(liveDir, stagingDir string) error {
 	os.RemoveAll(backupDir)
 	return nil
 }
+
+// ── Remote version helpers ─────────────────────────────────────────────────────
+
+// fetchRemoteField downloads a small key=value text file from url and returns
+// the value for the given key. Used to read nightly-version.txt cheaply
+// (a few hundred bytes) without downloading the full bin zip.
+func fetchRemoteField(url, key string) (string, error) {
+	resp, err := http.Get(url) //nolint:noctx
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("HTTP %s fetching %s", resp.Status, url)
+	}
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	return parseField(string(b), key), nil
+}
+
+// parseField extracts a value from a key=value text block (one entry per line).
+func parseField(text, key string) string {
+	for _, line := range strings.Split(text, "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, key+"=") {
+			return strings.TrimSpace(line[len(key)+1:])
+		}
+	}
+	return ""
+}

@@ -10,10 +10,13 @@ import (
 )
 
 const (
-	repoOwner    = "TF2V"
-	repoName     = "TF2Vintage"
-	apiBase      = "https://api.github.com"
+	repoOwner       = "TF2V"
+	repoName        = "TF2Vintage"
+	apiBase         = "https://api.github.com"
 	releaseCacheTTL = 60 * time.Minute
+	// Nightly is published weekly, so a longer cache is appropriate.
+	// 24 h means at most one API call per day even if the updater runs often.
+	nightlyCacheTTL = 24 * time.Hour
 )
 
 // ── GitHub API types ──────────────────────────────────────────────────────────
@@ -37,13 +40,36 @@ type releaseCache struct {
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
+// fetchLatestRelease returns the latest non-pre-release.
+// The /releases/latest endpoint never returns pre-releases, so the nightly
+// rolling tag is automatically excluded.
 func fetchLatestRelease() (*ghRelease, error) {
 	cacheDir := releaseCacheDir()
 	cachePath := filepath.Join(cacheDir, "latest-release.json")
 	return fetchReleaseWithCache(
 		fmt.Sprintf("%s/repos/%s/%s/releases/latest", apiBase, repoOwner, repoName),
 		cachePath,
+		releaseCacheTTL,
 	)
+}
+
+// fetchNightlyRelease returns the pre-release pinned to the "nightly" tag, or
+// nil if no nightly has been published yet. The caller must check for nil before
+// use; a missing nightly is not an error.
+func fetchNightlyRelease() (*ghRelease, error) {
+	cacheDir := releaseCacheDir()
+	cachePath := filepath.Join(cacheDir, "nightly-release.json")
+	r, err := fetchReleaseWithCache(
+		fmt.Sprintf("%s/repos/%s/%s/releases/tags/nightly", apiBase, repoOwner, repoName),
+		cachePath,
+		nightlyCacheTTL,
+	)
+	if err != nil {
+		// A 404 means no nightly has been published yet — not an error for the
+		// caller, just nothing to do.
+		return nil, nil //nolint:nilerr
+	}
+	return r, nil
 }
 
 func fetchRelease(tag string) (*ghRelease, error) {
@@ -52,6 +78,7 @@ func fetchRelease(tag string) (*ghRelease, error) {
 	return fetchReleaseWithCache(
 		fmt.Sprintf("%s/repos/%s/%s/releases/tags/%s", apiBase, repoOwner, repoName, tag),
 		cachePath,
+		releaseCacheTTL,
 	)
 }
 
@@ -66,13 +93,13 @@ func assetURL(r *ghRelease, name string) string {
 
 // ── Cache-aware fetch ─────────────────────────────────────────────────────────
 
-func fetchReleaseWithCache(url, cachePath string) (*ghRelease, error) {
+func fetchReleaseWithCache(url, cachePath string, ttl time.Duration) (*ghRelease, error) {
 	os.MkdirAll(filepath.Dir(cachePath), 0755)
 
 	cached := loadReleaseCache(cachePath)
 
 	// If cache is fresh, return it without hitting the API
-	if cached != nil && time.Since(cached.FetchedAt) < releaseCacheTTL {
+	if cached != nil && time.Since(cached.FetchedAt) < ttl {
 		return cached.Release, nil
 	}
 
@@ -116,6 +143,10 @@ func fetchReleaseWithCache(url, cachePath string) (*ghRelease, error) {
 			return cached.Release, nil
 		}
 		return nil, fmt.Errorf("GitHub API rate limit exceeded — please try again later (retry after: %s)", retryAfter)
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, fmt.Errorf("release not found: %s", url)
 	}
 
 	if resp.StatusCode != http.StatusOK {
