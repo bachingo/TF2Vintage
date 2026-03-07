@@ -22,6 +22,7 @@ type BaseManifest struct {
 	Tag        string            `json:"tag"`
 	PrevTag    string            `json:"prev_tag"`
 	ReleasedAt string            `json:"released_at"` // YYYY-MM-DD; used for 180-day staleness check
+	BuildType  string            `json:"build_type"`  // "release"; informational only (nightly has no base manifest)
 	Files      map[string]string `json:"files"`
 }
 
@@ -171,16 +172,12 @@ func extractZipRaw(src, destDir string) error {
 // extractZipRouted extracts tf2vintage-full.zip or tf2vintage-diff.zip, routing
 // entries to the correct destination directory based on their path prefix:
 //
-//   - "tf2vintage/..."     → destModDir  (game-asset tree; "tf2vintage/" prefix stripped)
+//   - "tf2vintage/..."     → modDir  (game-asset tree; "tf2vintage/" prefix stripped)
 //   - "bin/..."            → stagingRoot  (verbatim; reconstructs bin/x64/ or bin/linux64/)
-//   - "base-manifest.json" → destModDir/base-manifest.json
-//
-// destModDir is always a staging directory, never the live install — the caller
-// is responsible for passing the correct staging path so that atomicSwapDir can
-// commit the manifest alongside the rest of the game-asset tree atomically.
+//   - "base-manifest.json" → modDir/base-manifest.json
 //
 // This mirrors how package-combined assembles those zips in CI.
-func extractZipRouted(src, destModDir, stagingRoot string) error {
+func extractZipRouted(src, modDir, stagingRoot string) error {
 	r, err := zip.OpenReader(src)
 	if err != nil {
 		return err
@@ -193,13 +190,13 @@ func extractZipRouted(src, destModDir, stagingRoot string) error {
 		var target string
 		switch {
 		case name == "base-manifest.json":
-			target = filepath.Join(destModDir, "base-manifest.json")
+			target = filepath.Join(modDir, "base-manifest.json")
 		case strings.HasPrefix(name, "tf2vintage/"):
 			rel := strings.TrimPrefix(name, "tf2vintage/")
 			if rel == "" {
 				continue
 			}
-			target = filepath.Join(destModDir, filepath.FromSlash(rel))
+			target = filepath.Join(modDir, filepath.FromSlash(rel))
 		case strings.HasPrefix(name, "bin/"):
 			target = filepath.Join(stagingRoot, filepath.FromSlash(name))
 		default:

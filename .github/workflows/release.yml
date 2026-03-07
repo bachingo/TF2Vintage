@@ -33,6 +33,7 @@ jobs:
   #   ≥ 84 days (12 weeks) → Release build (Release config), publishes full + diff zips
   #   < 84 days            → Nightly build (Debug config), publishes nightly zip only
   # Manual dispatch bypasses the day check entirely.
+  
   classify:
     runs-on: ubuntu-22.04
     outputs:
@@ -89,6 +90,10 @@ jobs:
               DAYS_SINCE=$(( (NOW_TS - LAST_TS) / 86400 ))
             fi
 
+          # ── 84 Day (12 week) scheduled release ─────────────────────────────────────
+          # Always publishes both tf2vintage-full.zip and tf2vintage-diff.zip.
+          # The diff contains all files changed since the previous full release;
+          # applying it to a previous full is equivalent to a new full install.
             if [ "$DAYS_SINCE" -ge 84 ]; then
               echo "should_publish=true"   >> $GITHUB_OUTPUT
               echo "build_type=Release"    >> $GITHUB_OUTPUT
@@ -149,10 +154,9 @@ jobs:
         run: |
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-9)
           BUILD_DATE=$(date +'%m.%d.%Y')
-          {
-            echo "version=${BUILD_DATE}-${SHORT_SHA}"
-            echo "type=base"
-          } > game/tf2vintage/version-base.txt
+          # Single line only — the game reads this file directly and cannot handle
+          # multi-line content. Build type is recorded in base-manifest.json instead.
+          echo "version=${BUILD_DATE}-${SHORT_SHA}" > game/tf2vintage/version.txt
 
       - name: Fetch previous full-release manifest
         id: prev_manifest
@@ -200,6 +204,7 @@ jobs:
               "tag":         os.environ["TAG"],
               "prev_tag":    os.environ.get("PREV_TAG", ""),
               "released_at": date.today().isoformat(),   # YYYY-MM-DD; used for 180-day staleness check
+              "build_type":  "release",                  # always "release" for base assets (nightly has no base)
               "files":       files,
           }
           with open("base-manifest.json", "w") as f:
@@ -703,17 +708,6 @@ jobs:
           name: tf2vintage-symbols
           path: dist/
 
-      - name: Download base manifest (standalone asset for updater version check)
-        if: needs.classify.outputs.is_nightly != 'true'
-        uses: actions/download-artifact@v4
-        with:
-          name: tf2vintage-base
-          path: dist-base/
-
-      - name: Copy base-manifest.json to dist
-        if: needs.classify.outputs.is_nightly != 'true'
-        run: cp dist-base/base-manifest.json dist/base-manifest.json
-
       - name: Generate SHA-256 checksums
         run: |
           cd dist
@@ -722,7 +716,6 @@ jobs:
                    tf2vintage-full.zip \
                    tf2vintage-diff.zip \
                    tf2vintage-nightly.zip \
-                   base-manifest.json \
                    tf2vintage-symbols.zip; do
             [ -f "$f" ] && sha256sum "$f"
           done > checksums.sha256
@@ -821,6 +814,5 @@ jobs:
             dist/tf2vintage-updater
             dist/tf2vintage-full.zip
             dist/tf2vintage-diff.zip
-            dist/base-manifest.json
             dist/tf2vintage-symbols.zip
             dist/checksums.sha256
