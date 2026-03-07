@@ -278,6 +278,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: tf2vintage-base
+          if-no-files-found: warn
           path: |
             tf2vintage-base.zip
             base-manifest.json
@@ -330,7 +331,6 @@ jobs:
           mkdir -p staging/bin/x64
           find game/tf2vintage/bin/x64/ -name "*.dll" -o -name "*.exe" | xargs -I{} cp {} staging/bin/x64/
           # Also stage standalone updater for direct player download
-          cp game/tf2vintage/bin/x64/tf2vintage-updater.exe standalone-updater-windows/tf2vintage-updater.exe || true
           mkdir -p standalone-updater-windows
           cp game/tf2vintage/bin/x64/tf2vintage-updater.exe standalone-updater-windows/tf2vintage-updater.exe
 
@@ -537,6 +537,11 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Checkout (for git log)
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
@@ -546,19 +551,18 @@ jobs:
       - name: Generate SHA-256 checksums
         run: |
           cd dist
-          sha256sum tf2vintage-updater.exe \
-                    tf2vintage-updater \
-                    tf2vintage-bin.zip \
-                    tf2vintage-base.zip \
-                    base-manifest.json \
-                    base-patch.zip \
-                    tf2vintage-symbols.zip 2>/dev/null > checksums.sha256
+          # Only hash files that actually exist — base-patch.zip and
+          # tf2vintage-base.zip are conditional on release type and changes.
+          for f in tf2vintage-updater.exe \
+                   tf2vintage-updater \
+                   tf2vintage-bin.zip \
+                   tf2vintage-base.zip \
+                   base-manifest.json \
+                   base-patch.zip \
+                   tf2vintage-symbols.zip; do
+            [ -f "$f" ] && sha256sum "$f"
+          done > checksums.sha256
           cat checksums.sha256
-
-      - name: Checkout (for git log)
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
       - name: Set release metadata
         id: meta
