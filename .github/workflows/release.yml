@@ -541,12 +541,18 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: dist/
+          merge-multiple: true
 
-      - name: Generate SHA-256 checksums for release assets
+      - name: Generate SHA-256 checksums
         run: |
           cd dist
-          # Hash every file that players or the updater will download
-          sha256sum             tf2vintage-updater-windows/tf2vintage-updater.exe             tf2vintage-updater-linux/tf2vintage-updater             tf2vintage-bin/tf2vintage-bin.zip             tf2vintage-base/tf2vintage-base.zip             tf2vintage-base/base-manifest.json             tf2vintage-base/base-patch.zip             tf2vintage-symbols/tf2vintage-symbols.zip             2>/dev/null | sed 's|.*/||' > checksums.sha256
+          sha256sum tf2vintage-updater.exe \
+                    tf2vintage-updater \
+                    tf2vintage-bin.zip \
+                    tf2vintage-base.zip \
+                    base-manifest.json \
+                    base-patch.zip \
+                    tf2vintage-symbols.zip 2>/dev/null > checksums.sha256
           cat checksums.sha256
 
       - name: Checkout (for git log)
@@ -605,7 +611,7 @@ jobs:
             echo "ENDOFNOTES"
           } >> $GITHUB_OUTPUT
 
-      - name: Publish GitHub Release (full — includes standalone installers)
+      - name: Publish GitHub Release (full)
         if: needs.classify.outputs.full_base == 'true'
         uses: softprops/action-gh-release@v2
         with:
@@ -613,15 +619,15 @@ jobs:
           name: ${{ steps.meta.outputs.release_name }}
           body: ${{ steps.meta.outputs.release_notes }}
           files: |
-            dist/tf2vintage-updater-windows/tf2vintage-updater.exe
-            dist/tf2vintage-updater-linux/tf2vintage-updater
-            dist/tf2vintage-bin/tf2vintage-bin.zip
-            dist/tf2vintage-base/tf2vintage-base.zip
-            dist/tf2vintage-base/base-manifest.json
-            dist/tf2vintage-symbols/tf2vintage-symbols.zip
+            dist/tf2vintage-updater.exe
+            dist/tf2vintage-updater
+            dist/tf2vintage-bin.zip
+            dist/tf2vintage-base.zip
+            dist/base-manifest.json
+            dist/tf2vintage-symbols.zip
             dist/checksums.sha256
 
-      - name: Publish GitHub Release (weekly — no standalone installers)
+      - name: Publish GitHub Release (weekly)
         if: needs.classify.outputs.full_base != 'true'
         uses: softprops/action-gh-release@v2
         with:
@@ -629,8 +635,8 @@ jobs:
           name: ${{ steps.meta.outputs.release_name }}
           body: ${{ steps.meta.outputs.release_notes }}
           files: |
-            dist/tf2vintage-bin/tf2vintage-bin.zip
-            dist/tf2vintage-base/base-manifest.json
-            dist/tf2vintage-base/base-patch.zip
-            dist/tf2vintage-symbols/tf2vintage-symbols.zip
+            dist/tf2vintage-bin.zip
+            dist/tf2vintage-base.zip
+            dist/base-manifest.json
+            dist/tf2vintage-symbols.zip
             dist/checksums.sha256
