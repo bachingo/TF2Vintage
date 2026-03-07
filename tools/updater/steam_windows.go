@@ -92,24 +92,36 @@ func isSteamRunningWindows() bool {
 	return len(out) > 0 && !strings.Contains(string(out), "No tasks")
 }
 
-// ── VDF launch option: Windows needs Steam path from registry ─────────────────
-
-func findSteamUserDataPath() (string, error) {
-	steam, err := findSteamPathWindows()
-	if err != nil {
-		return "", err
+// createDesktopShortcutPlatform writes a Windows internet shortcut (.url) to
+// the user's Desktop. Double-clicking it runs the updater, which checks for
+// updates and then launches TF2 Vintage via the Steam rungameid URI.
+//
+// .url format is a standard INI file recognised by Windows Explorer.
+// The IconFile line points the shortcut at the updater's own icon.
+func createDesktopShortcutPlatform(updaterPath string) error {
+	// SHGetFolderPath would be ideal but requires cgo; USERPROFILE + Desktop
+	// works on every Windows version since XP and covers non-English installs.
+	desktop := filepath.Join(os.Getenv("USERPROFILE"), "Desktop")
+	if _, err := os.Stat(desktop); os.IsNotExist(err) {
+		// Fallback: OneDrive-backed Desktop on some Windows 11 setups
+		desktop = filepath.Join(os.Getenv("USERPROFILE"), "OneDrive", "Desktop")
 	}
-	return filepath.Join(steam, "userdata"), nil
-}
-
-// writeLaunchOption writes %command% launch options into localconfig.vdf.
-// Kept here so it can use Windows-specific registry path if needed.
-func writeLaunchOptionPlatform(updaterPath string) error {
-	steam, err := findSteamPathWindows()
-	if err != nil {
-		return err
+	if err := os.MkdirAll(desktop, 0755); err != nil {
+		return fmt.Errorf("could not access desktop directory: %v", err)
 	}
-	return setLaunchOption(steam, updaterPath)
+
+	shortcutPath := filepath.Join(desktop, "TF2 Vintage.url")
+	// The URL field runs the updater directly. Windows will execute it as a
+	// program because the scheme is not http/https.
+	content := "[InternetShortcut]\r\n" +
+		"URL=file:///" + filepath.ToSlash(updaterPath) + "\r\n" +
+		"IconFile=" + updaterPath + "\r\n" +
+		"IconIndex=0\r\n"
+
+	if err := os.WriteFile(shortcutPath, []byte(content), 0644); err != nil {
+		return fmt.Errorf("could not write desktop shortcut: %v", err)
+	}
+	return nil
 }
 
 // ── Self-delete helpers ───────────────────────────────────────────────────────

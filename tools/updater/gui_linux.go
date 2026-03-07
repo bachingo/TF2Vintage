@@ -24,14 +24,6 @@ func startInstallUI(install func(func(InstallState), func() string, func() bool)
 		if state.Progress > 0 && state.Progress < 1.0 {
 			fmt.Printf("  [%.0f%%]\n", state.Progress*100)
 		}
-		if state.ManualLaunch != "" {
-			fmt.Println()
-			fmt.Println("⚠  Steam launch option could not be set automatically.")
-			fmt.Println("   Set it manually in Steam → Source SDK Base 2013 Multiplayer → Properties → Launch Options:")
-			fmt.Println()
-			fmt.Println("   " + state.ManualLaunch)
-			fmt.Println()
-		}
 		if state.Err != nil {
 			installErr = state.Err
 			close(done)
@@ -96,5 +88,6 @@ func startInstallUI(install func(func(InstallState), func() string, func() bool)
 	}
 
 	fmt.Println("\nInstallation complete!")
-	fmt.Println("Steam is restarting — TF2 Vintage will appear in your library shortly.")
+	fmt.Println("A desktop shortcut (tf2vintage.desktop) has been created on your Desktop.")
+	fmt.Println("Double-click it to launch TF2 Vintage.")
 }

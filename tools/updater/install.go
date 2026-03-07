@@ -10,11 +10,10 @@ import (
 
 // InstallState tracks progress for the GUI to display.
 type InstallState struct {
-	Status       string
-	Progress     float64 // 0.0–1.0
-	Done         bool
-	Err          error
-	ManualLaunch string // non-empty: VDF failed, show this string for manual setup
+	Status   string
+	Progress float64 // 0.0–1.0
+	Done     bool
+	Err      error
 }
 
 type installNeeds struct {
@@ -176,7 +175,7 @@ func doInstall(report func(InstallState), askAltPath func() string, askSymbols f
 			}
 		}
 		os.RemoveAll(stagingRoot)
-		finalize(report, steamPath, filepath.Join(binDir, updaterName()))
+		finalize(report, filepath.Join(binDir, updaterName()))
 		return
 	}
 
@@ -344,7 +343,7 @@ func doInstall(report func(InstallState), askAltPath func() string, askSymbols f
 		}
 	}
 
-	finalize(report, steamPath, updaterDest)
+	finalize(report, updaterDest)
 
 	// Remove the downloaded installer from wherever the user ran it from
 	if exe != updaterDest {
@@ -395,27 +394,19 @@ func diagnose(sourcemods, installDir string) installNeeds {
 
 // ── Post-install ──────────────────────────────────────────────────────────────
 
-func finalize(report func(InstallState), steamPath, updaterPath string) {
-	report(InstallState{Status: "Configuring Steam launch option...", Progress: 0.92})
-	if err := closeSteam(); err != nil {
-		termWarn("Could not close Steam: %v", err)
-	}
-
-	launchOption := fmt.Sprintf(`"%s" %%command%%`, updaterPath)
-	if err := setLaunchOption(steamPath, updaterPath); err != nil {
-		termWarn("Could not set launch option automatically: %v", err)
+func finalize(report func(InstallState), updaterPath string) {
+	report(InstallState{Status: "Creating desktop shortcut...", Progress: 0.94})
+	if err := createDesktopShortcut(updaterPath); err != nil {
+		// Non-fatal: the user can still launch manually via Steam.
+		termWarn("Could not create desktop shortcut: %v", err)
 		report(InstallState{
-			Status:       "Steam launch option could not be set automatically — see below.",
-			Progress:     0.95,
-			ManualLaunch: launchOption,
+			Status:   "Desktop shortcut could not be created — launch TF2 Vintage from Steam instead.",
+			Progress: 0.95,
 		})
 	}
 
-	report(InstallState{Status: "Relaunching Steam...", Progress: 0.97})
-	relaunchSteam(steamPath)
-
 	report(InstallState{
-		Status:   "Installation complete!\nTF2 Vintage will appear in your Steam library shortly.",
+		Status:   "Installation complete!\nA desktop shortcut has been created for TF2 Vintage.",
 		Progress: 1.0,
 		Done:     true,
 	})

@@ -15,18 +15,6 @@ import (
 const (
 	sdkAppID = "243750"
 	tf2AppID = "440"
-
-	// tf2vintageAppIDUnsigned is the Steam app ID for the tf2vintage sourcemod,
-	// computed as CRC32("tf2vintage") | 0x80000000 = 3369364862.
-	// Steam derives sourcemod app IDs deterministically from the folder name.
-	//
-	// The 64-bit ID shown in the Steam UI (e.g. 14471311890598574118) includes the
-	// user's SteamID3 in the upper 32 bits — that part varies per account.
-	// The localconfig.vdf key is only the lower 32 bits, but Steam versions differ
-	// on whether they store it as the unsigned decimal (3369364862) or the signed
-	// decimal (-925602434). We write both to cover all cases.
-	tf2vintageAppIDUnsigned = "3369364862"
-	tf2vintageAppIDSigned   = "-925602434"
 )
 
 // ── Steam library folder discovery ───────────────────────────────────────────
@@ -172,77 +160,22 @@ func openURL(url string) {
 
 // ── VDF read/write for launch options ────────────────────────────────────────
 
-// setLaunchOption writes the updater launch option for TF2 Vintage into Steam's
-// localconfig.vdf. Steam must be closed before calling this.
+// ── Desktop shortcut ──────────────────────────────────────────────────────────
+
+// tf2vintageGameID is the Steam rungameid URL for TF2 Vintage. This ID is
+// derived from the sourcemod folder name and is the same for every user.
+const tf2vintageGameID = "steam://rungameid/14471311890598574118"
+
+// createDesktopShortcut writes a platform-appropriate shortcut to the user's
+// desktop that launches TF2 Vintage via the updater.
 //
-// The launch option must target TF2 Vintage's own sourcemod app ID, not
-// sdkAppID (243750). Steam assigns sourcemods their own deterministic app IDs
-// (see tf2vintageAppIDUnsigned above), and that is the entry the user sees in
-// their library and launches from.
+// The shortcut runs the updater directly. The updater then checks for updates
+// and launches the game, so no Steam launch option needs to be configured.
 //
-// Steam versions differ on whether localconfig.vdf stores the 32-bit app ID as
-// unsigned or signed decimal, so we write both representations.
-func setLaunchOption(steamPath, updaterPath string) error {
-	vdfPath, err := findLocalConfig(steamPath)
-	if err != nil {
-		return err
-	}
-
-	data, err := os.ReadFile(vdfPath)
-	if err != nil {
-		return fmt.Errorf("could not read localconfig.vdf: %v", err)
-	}
-
-	nodes, err := vdfParse(string(data))
-	if err != nil {
-		return fmt.Errorf("could not parse localconfig.vdf: %v", err)
-	}
-
-	launchOption := fmt.Sprintf(`"%s" %%command%%`, updaterPath)
-
-	// Write under both the unsigned and signed decimal representations of the
-	// sourcemod app ID. vdfSet is idempotent — whichever key already exists in
-	// the file will be updated; the other will be created if absent.
-	vdfSet(&nodes, launchOption,
-		"UserLocalConfigStore", "Software", "Valve", "Steam", "Apps", tf2vintageAppIDUnsigned, "LaunchOptions",
-	)
-	vdfSet(&nodes, launchOption,
-		"UserLocalConfigStore", "Software", "Valve", "Steam", "Apps", tf2vintageAppIDSigned, "LaunchOptions",
-	)
-
-	output := vdfSerialize(nodes, 0)
-	return os.WriteFile(vdfPath, []byte(output), 0644)
-}
-
-func findLocalConfig(steamPath string) (string, error) {
-	usersPath := filepath.Join(steamPath, "userdata")
-	entries, err := os.ReadDir(usersPath)
-	if err != nil {
-		return "", fmt.Errorf("could not read userdata directory: %v", err)
-	}
-
-	// Use the most recently modified user directory
-	var newest string
-	var newestTime int64
-	for _, e := range entries {
-		if !e.IsDir() {
-			continue
-		}
-		candidate := filepath.Join(usersPath, e.Name(), "config", "localconfig.vdf")
-		info, err := os.Stat(candidate)
-		if err != nil {
-			continue
-		}
-		if info.ModTime().Unix() > newestTime {
-			newestTime = info.ModTime().Unix()
-			newest = candidate
-		}
-	}
-
-	if newest == "" {
-		return "", fmt.Errorf("no localconfig.vdf found — is Steam signed in?")
-	}
-	return newest, nil
+//   - Windows: <Desktop>\TF2 Vintage.url  (INI-format internet shortcut)
+//   - Linux:   ~/Desktop/tf2vintage.desktop  (XDG desktop entry)
+func createDesktopShortcut(updaterPath string) error {
+	return createDesktopShortcutPlatform(updaterPath)
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

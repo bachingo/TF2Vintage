@@ -55,3 +55,30 @@ func isSteamRunning() bool {
 	out, err := exec.Command("pgrep", "-x", "steam").Output()
 	return err == nil && len(out) > 0
 }
+
+// createDesktopShortcutPlatform writes a .desktop file to ~/Desktop (or
+// $XDG_DESKTOP_DIR if set) that runs the updater then launches TF2 Vintage.
+func createDesktopShortcutPlatform(updaterPath string) error {
+	desktopDir := os.Getenv("XDG_DESKTOP_DIR")
+	if desktopDir == "" {
+		desktopDir = filepath.Join(os.Getenv("HOME"), "Desktop")
+	}
+	if err := os.MkdirAll(desktopDir, 0755); err != nil {
+		return fmt.Errorf("could not access desktop directory: %v", err)
+	}
+
+	shortcutPath := filepath.Join(desktopDir, "tf2vintage.desktop")
+	content := "[Desktop Entry]\n" +
+		"Version=1.0\n" +
+		"Type=Application\n" +
+		"Name=TF2 Vintage\n" +
+		"Comment=Launch TF2 Vintage (checks for updates first)\n" +
+		"Exec=" + updaterPath + " %U\n" +
+		"Terminal=false\n" +
+		"Categories=Game;\n"
+
+	if err := os.WriteFile(shortcutPath, []byte(content), 0755); err != nil {
+		return fmt.Errorf("could not write desktop shortcut: %v", err)
+	}
+	return nil
+}
