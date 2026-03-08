@@ -4720,13 +4720,22 @@ bool CEconItemSchema::BInitSchema( KeyValues *pKVRawDefinition, CUtlVector<CUtlS
 	// Parse the loot lists block (on the GC)
 	// Must be BEFORE Item defs
 	KeyValues *pKVItemCriteriaTemplates = pKVRawDefinition->FindKey( "item_criteria_templates" );
-	SCHEMA_INIT_SUBSTEP( BInitItemCriteriaTemplates( pKVItemCriteriaTemplates, pVecErrors ) );
+	if (NULL != pKVItemCriteriaTemplates)
+	{
+		SCHEMA_INIT_SUBSTEP(BInitItemCriteriaTemplates(pKVItemCriteriaTemplates, pVecErrors));
+	}
 
 	KeyValues *pKVRandomAttributeTemplates = pKVRawDefinition->FindKey( "random_attribute_templates" );
-	SCHEMA_INIT_SUBSTEP( BInitRandomAttributeTemplates( pKVRandomAttributeTemplates, pVecErrors ) );
+	if (NULL != pKVRandomAttributeTemplates)
+	{
+		SCHEMA_INIT_SUBSTEP(BInitRandomAttributeTemplates(pKVRandomAttributeTemplates, pVecErrors));
+	}
 
 	KeyValues *pKVLootlistJobTemplates = pKVRawDefinition->FindKey( "lootlist_job_template_definitions" );
-	SCHEMA_INIT_SUBSTEP( BInitLootlistJobTemplates( pKVLootlistJobTemplates, pVecErrors ) );
+	if (NULL != pKVLootlistJobTemplates)
+	{
+		SCHEMA_INIT_SUBSTEP(BInitLootlistJobTemplates(pKVLootlistJobTemplates, pVecErrors));
+	}
 
 	// Initialize the items block
 	KeyValues *pKVItems = pKVRawDefinition->FindKey( "items" );
