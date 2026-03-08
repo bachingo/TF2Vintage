@@ -19,81 +19,33 @@ $Macro CRASHSRC		"$SRCDIR\game\crash_handler"
 
 $Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
 
-$Configuration "Release"
-{
-	$General
-	{
-		$OutputDirectory		"$OUTBINDIR"
-		$IntermediateDirectory	".\Release_x64\tf2vintage_crash"
-	}
-
-	$Compiler
-	{
-		$AdditionalIncludeDirectories	""
-		$PreprocessorDefinitions		"$BASE;NDEBUG;TF_VINTAGE" [$WINDOWS]
-		$PreprocessorDefinitions		"$BASE;NDEBUG;TF_VINTAGE;POSIX;LINUX" [$LINUX]
-		$Optimization					"Maximize Speed (/O2)" [$WINDOWS]
-		$Optimization					"3" [$LINUX]
-		$BufferSecurityCheck			"No (/GS-)" [$WINDOWS]
-	}
-
-	$Linker [$WINDOWS]
-	{
-		$AdditionalDependencies			"$BASE;dbghelp.lib;psapi.lib"
-		$SubSystem						"Windows (/SUBSYSTEM:WINDOWS)"
-		$GenerateDebugInformation		"Yes (/DEBUG)"
-		$ProgramDatabaseFile			"$OUTBINDIR\tf2vintage_crash.pdb"
-		$AdditionalLibraryDirectories	""
-	}
-
-	$Linker [$LINUX]
-	{
-		// -ldl for dlopen/dladdr, -lunwind optional (loaded at runtime via dlopen)
-		// -lpthread for worker thread, -rdynamic to keep symbol table for dladdr
-		$AdditionalDependencies			"$BASE;-ldl;-lpthread;-rdynamic"
-		$GenerateDebugInformation		"Yes"
-	}
-}
-
-$Configuration "Debug"
-{
-	$General
-	{
-		$OutputDirectory		"$OUTBINDIR"
-		$IntermediateDirectory	".\Debug_x64\tf2vintage_crash"
-	}
-
-	$Compiler
-	{
-		$AdditionalIncludeDirectories	""
-		$PreprocessorDefinitions		"$BASE;_DEBUG;TF_VINTAGE" [$WINDOWS]
-		$PreprocessorDefinitions		"$BASE;_DEBUG;TF_VINTAGE;POSIX;LINUX" [$LINUX]
-		$Optimization					"Disabled (/Od)" [$WINDOWS]
-		$Optimization					"0" [$LINUX]
-		$BufferSecurityCheck			"No (/GS-)" [$WINDOWS]
-	}
-
-	$Linker [$WINDOWS]
-	{
-		$AdditionalDependencies			"$BASE;dbghelp.lib;psapi.lib"
-		$SubSystem						"Windows (/SUBSYSTEM:WINDOWS)"
-		$GenerateDebugInformation		"Yes (/DEBUG)"
-		$ProgramDatabaseFile			"$OUTBINDIR\tf2vintage_crash_d.pdb"
-		$AdditionalLibraryDirectories	""
-	}
-
-	$Linker [$LINUX]
-	{
-		$AdditionalDependencies			"$BASE;-ldl;-lpthread;-rdynamic"
-		$GenerateDebugInformation		"Yes"
-	}
-}
-
 $Project "tf2vintage_crash"
 {
-	$Folder "Source Files"
+	$Folder	"Source Files"
 	{
-		$File "$CRASHSRC\crash_handler.cpp"		[$WINDOWS]
-		$File "$CRASHSRC\crash_handler_linux.cpp"	[$LINUX]
+		$File	"crash_handler.cpp" [$WINDOWS]
+		$File	"crash_handler_linux.cpp" [$LINUX]
+	}
+
+	$Configuration
+	{
+		$Compiler
+		{
+			$AdditionalIncludeDirectories	"$BASE"
+			// Combine these or ensure they don't overwrite each other
+			$PreprocessorDefinitions		"$BASE;TF_VINTAGE"
+			$PreprocessorDefinitions		"$BASE;POSIX;LINUX" [$LINUX]
+		}
+
+		$Linker [$WINDOWS]
+		{
+			$AdditionalDependencies			"$BASE;dbghelp.lib;psapi.lib"
+			$SubSystem						"Windows (/SUBSYSTEM:WINDOWS)"
+		}
+
+		$Linker [$LINUX]
+		{
+			$AdditionalDependencies			"$BASE;-ldl;-lpthread;-rdynamic"
+		}
 	}
 }
