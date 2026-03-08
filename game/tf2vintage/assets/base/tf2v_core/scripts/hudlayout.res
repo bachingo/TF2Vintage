@@ -11,6 +11,17 @@
 		"tall"	"480"
 	}
 
+	HudHealth
+	{
+		"fieldName"	"HudHealth"
+		"visible"	"0"
+		"enabled"	"0"
+		"xpos"		"0"
+		"ypos"		"0"
+		"wide"		"0"
+		"tall"		"0"
+	}
+
 	HudWeaponAmmo
 	{
 		"fieldName" "HudWeaponAmmo"
@@ -362,6 +373,22 @@
 		"zpos"		"1"
 		"wide"		"f0"
 		"tall"		"480"
+		
+		"PaintBackgroundType"	"2"
+	}
+	
+	"CurrencyStatusPanel"
+	{
+		"ControlName"		"CCurrencyStatusPanel"
+		"fieldName"			"CurrencyStatusPanel"
+		"xpos"				"0"
+		"ypos"				"r100"
+		"wide"				"100"
+		"tall"				"100"
+		"xpos_minmode"		"65"
+		"ypos_minmode"		"r88"
+		"visible" 			"0"
+		"enabled" 			"1"
 		
 		"PaintBackgroundType"	"2"
 	}
