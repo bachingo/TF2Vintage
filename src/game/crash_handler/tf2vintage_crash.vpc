@@ -21,26 +21,11 @@ $Macro CRASHSRC		"$SRCDIR\game\crash_handler"
 
 $Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
 
-// Named config blocks: only $General is allowed here.
-// $OutputDirectory is intentionally omitted - the base scripts set it to a
-// local staging folder (e.g. .\Release_x64) and the post-build event then
-// copies the DLL to $OUTBINDIR. Overriding $OutputDirectory to $OUTBINDIR
-// directly causes the copy to fail with 'cannot copy file onto itself'.
-$Configuration "Release"
-{
-	$General
-	{
-		$IntermediateDirectory	".\Release_crash_handler"
-	}
-}
-
-$Configuration "Debug"
-{
-	$General
-	{
-		$IntermediateDirectory	".\Debug_crash_handler"
-	}
-}
+// No named $Configuration blocks — the base scripts (source_dll_win32_release.vpc,
+// source_dll_win32_debug.vpc, source_posix_base.vpc) already set OutputDirectory,
+// IntermediateDirectory, optimization, NDEBUG/_DEBUG, and PCH correctly.
+// Overriding OutputDirectory or IntermediateDirectory independently breaks the
+// post-build copy step which expects both to match.
 
 $Configuration
 {
