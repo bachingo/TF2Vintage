@@ -922,6 +922,24 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 		CommandLine()->AppendParm( "-insecure", nullptr );
 	}
 
+	// Always append logging.
+	if ( !CommandLine()->FindParm( "-console" ) )
+	{
+		CommandLine()->AppendParm( "-console", nullptr );
+	}
+	if ( !CommandLine()->FindParm( "-dev" ) )
+	{
+		CommandLine()->AppendParm( "-dev", nullptr );
+	}
+	if ( !CommandLine()->FindParm( "-condebug" ) )
+	{
+		CommandLine()->AppendParm( "-condebug", nullptr );
+	}
+	if ( !CommandLine()->FindParm( "-log_verbose_enable" ) )
+	{
+		CommandLine()->AppendParm( "-log_verbose_enable", nullptr );
+	}
+	
 	// Client needs to protect from writing files into random locations to avoid becoming a remote-code
 	// execution platform.
 	if ( g_pFullFileSystem )

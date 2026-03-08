@@ -581,6 +581,24 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 	{
 		CommandLine()->AppendParm( "-insecure", nullptr );
 	}
+	
+	// Always append logging.
+	if ( !CommandLine()->FindParm( "-console" ) )
+	{
+		CommandLine()->AppendParm( "-console", nullptr );
+	}
+	if ( !CommandLine()->FindParm( "-dev" ) )
+	{
+		CommandLine()->AppendParm( "-dev", nullptr );
+	}
+	if ( !CommandLine()->FindParm( "-condebug" ) )
+	{
+		CommandLine()->AppendParm( "-condebug", nullptr );
+	}
+	if ( !CommandLine()->FindParm( "-log_verbose_enable" ) )
+	{
+		CommandLine()->AppendParm( "-log_verbose_enable", nullptr );
+	}
 
 	// Connected in ConnectTier1Libraries
 	if ( cvar == NULL )
