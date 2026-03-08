@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 )
 
 // updateSymbols downloads and extracts tf2vintage-symbols.zip if the symbols
@@ -14,6 +13,12 @@ import (
 // atomicSwapDir will move them into place alongside the rest of the bin dir.
 // Pass the same path for both during a fresh install where there is no
 // live/staging distinction yet.
+//
+// tf2vintage-symbols.zip contains a flat symbols/ directory with .pdb (Windows)
+// and .debug (Linux) files together in the same folder, plus a symbols-build.txt
+// version stamp. The updater extracts the whole tree regardless of platform —
+// debuggers on either OS simply point at bin/<platform>/symbols/ and find what
+// they need.
 func updateSymbols(liveBinDir, stagingBinDir string, latest *ghRelease) error {
 	// Version check reads from the live install — staging is always empty
 	liveSymbolsDir := filepath.Join(liveBinDir, "symbols")
@@ -50,7 +55,8 @@ func updateSymbols(liveBinDir, stagingBinDir string, latest *ghRelease) error {
 		}
 	}
 
-	// Extract platform-specific subtree into staging — no need for both platforms
+	// Extract the entire symbols/ subtree into staging — both platforms' files
+	// (.pdb and .debug) live flat in one folder so any debugger can point at it.
 	fmt.Println("Extracting symbols...")
 	stagingSymbolsDir := filepath.Join(stagingBinDir, "symbols")
 	if err := os.MkdirAll(stagingSymbolsDir, 0755); err != nil {
@@ -58,8 +64,7 @@ func updateSymbols(liveBinDir, stagingBinDir string, latest *ghRelease) error {
 		return fmt.Errorf("could not create symbols directory: %v", err)
 	}
 
-	platformSubdir := symbolsPlatformSubdir()
-	if err := extractZipSubdir(tmp, stagingSymbolsDir, platformSubdir); err != nil {
+	if err := extractZipSubdir(tmp, stagingSymbolsDir, "symbols"); err != nil {
 		os.Remove(tmp)
 		return fmt.Errorf("symbol extraction failed: %v", err)
 	}
@@ -74,13 +79,6 @@ func updateSymbols(liveBinDir, stagingBinDir string, latest *ghRelease) error {
 
 	fmt.Printf("Symbols staged to %s\n", stagingSymbolsDir)
 	return nil
-}
-
-func symbolsPlatformSubdir() string {
-	if runtime.GOOS == "windows" {
-		return "symbols/windows"
-	}
-	return "symbols/linux"
 }
 
 // extractZipSubdir extracts only entries under subdir prefix into destDir,
@@ -104,3 +102,4 @@ func extractZipSubdir(zipPath, destDir, subdir string) error {
 		return "", false
 	})
 }
+

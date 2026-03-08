@@ -339,19 +339,18 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: tf2vintage-windows-debugsymbols
-          path: symbols/windows/
+          path: symbols/
 
       - name: Annotate Windows symbols
         run: |
-          echo "commit=${{ github.sha }}" >> symbols/windows/symbols-build.txt
-          echo "date=$(date +'%m.%d.%Y')"  >> symbols/windows/symbols-build.txt
-          echo "platform=windows"          >> symbols/windows/symbols-build.txt
+          echo "commit=${{ github.sha }}" >> symbols/symbols-build.txt
+          echo "date=$(date +'%m.%d.%Y')"  >> symbols/symbols-build.txt
 
       - name: Upload Windows symbols artifact
         uses: actions/upload-artifact@v4
         with:
           name: tf2vintage-symbols-windows
-          path: symbols/windows/
+          path: symbols/
 
       - name: Clean up Windows binary
         uses: geekyeggo/delete-artifact@v5
@@ -401,19 +400,18 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: tf2vintage-linux-debugsymbols
-          path: symbols/linux/
+          path: symbols/
 
       - name: Annotate Linux symbols
         run: |
-          echo "commit=${{ github.sha }}" >> symbols/linux/symbols-build.txt
-          echo "date=$(date +'%m.%d.%Y')"  >> symbols/linux/symbols-build.txt
-          echo "platform=linux"            >> symbols/linux/symbols-build.txt
+          echo "commit=${{ github.sha }}" >> symbols/symbols-build.txt
+          echo "date=$(date +'%m.%d.%Y')"  >> symbols/symbols-build.txt
 
       - name: Upload Linux symbols artifact
         uses: actions/upload-artifact@v4
         with:
           name: tf2vintage-symbols-linux
-          path: symbols/linux/
+          path: symbols/
 
       - name: Upload Linux staging artifact
         uses: actions/upload-artifact@v4
@@ -493,16 +491,18 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: tf2vintage-symbols-windows
-          path: symbols/windows/
+          path: symbols/
 
       - name: Download Linux symbols
         uses: actions/download-artifact@v4
         with:
           name: tf2vintage-symbols-linux
-          path: symbols/linux/
+          path: symbols/
 
       - name: Pack combined symbols zip
         run: |
+          # Both platforms' .pdb/.debug files and the shared symbols-build.txt
+          # all sit flat in symbols/ — no platform subdirectories.
           zip -r tf2vintage-symbols.zip symbols/
           echo "Symbols:"
           unzip -l tf2vintage-symbols.zip | tail -20
