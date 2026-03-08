@@ -6735,6 +6735,11 @@ CEconItemDefinition *CEconItemSchema::GetItemDefinitionByName( const char *pszDe
 
 const CEconItemDefinition *CEconItemSchema::GetItemDefinitionByName( const char *pszDefName ) const
 {
+	if (!pszDefName)
+	{
+		Warning("Missing item definition: %s\n", name);
+		return nullptr;
+	}
 	return const_cast<CEconItemSchema *>(this)->GetItemDefinitionByName( pszDefName );
 }
 
