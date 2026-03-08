@@ -169,18 +169,6 @@
 			"color_name"	"QualityColorrarity4"
 		}
 	}
-	"rarities"
-	{
-	}
-	"item_series_types"
-	{
-	}
-	"item_collections"
-	{
-	} 
-	"operations"
-	{
-	}
 	"equip_regions_list"
 	{
 		"whole_head"		"1"

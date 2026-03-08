@@ -4658,18 +4658,16 @@ bool CEconItemSchema::BInitSchema( KeyValues *pKVRawDefinition, CUtlVector<CUtlS
 	// still makes sense to initialize it at this point.
 	SCHEMA_INIT_SUBSTEP( BInitAttributeTypes( pVecErrors ) );
 
-	// Initialize the item series block
+	// Initialize the item series block -- this is an optional block
 	KeyValues *pKVItemSeries = pKVRawDefinition->FindKey( "item_series_types" );
-	SCHEMA_INIT_CHECK( NULL != pKVItemSeries, "Required key \"item_series_types\" missing.\n" );
 	if ( NULL != pKVItemSeries )
 	{
 		SCHEMA_INIT_SUBSTEP( BInitItemSeries( pKVItemSeries, pVecErrors ) );
 	}
 
-	// Initialize the rarity block
+	// Initialize the rarity block -- this is an optional block
 	KeyValues *pKVRarities = pKVRawDefinition->FindKey( "rarities" );
 	KeyValues *pKVRarityWeights = pKVRawDefinition->FindKey( "rarities_lootlist_weights" );
-	SCHEMA_INIT_CHECK( NULL != pKVRarities, "Required key \"rarities\" missing.\n" );
 	if ( NULL != pKVRarities )
 	{
 		SCHEMA_INIT_SUBSTEP( BInitRarities( pKVRarities, pKVRarityWeights, pVecErrors ) );
