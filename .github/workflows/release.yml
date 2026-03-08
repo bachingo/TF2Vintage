@@ -542,16 +542,19 @@ jobs:
   # For bi-monthly releases, produces TWO player-facing zips every time:
   #
   #   tf2vintage-full.zip
-  #     tf2vintage/**          ← complete game-asset tree
-  #     bin/x64/**             ← Windows binaries
-  #     bin/linux64/**         ← Linux binaries
-  #     base-manifest.json     ← version record at zip root
+  #     tf2vintage/**                  ← complete game-asset tree
+  #     tf2vintage/bin/x64/**          ← Windows binaries
+  #     tf2vintage/bin/linux64/**      ← Linux binaries
+  #     tf2vintage/base-manifest.json  ← version record
   #
   #   tf2vintage-diff.zip      (absent on the very first release)
-  #     tf2vintage/**          ← ONLY files changed since the previous full release
-  #     bin/x64/**             ← Windows binaries (always fully replaced)
-  #     bin/linux64/**         ← Linux binaries
-  #     base-manifest.json     ← version record at zip root
+  #     tf2vintage/**                  ← ONLY files changed since the previous full release
+  #     tf2vintage/bin/x64/**          ← Windows binaries (always fully replaced)
+  #     tf2vintage/bin/linux64/**      ← Linux binaries
+  #     tf2vintage/base-manifest.json  ← version record
+  #
+  # Everything lives under the tf2vintage/ wrapper so that extractZipRouted can
+  # strip it uniformly: bin/ subtree → stagingRoot, everything else → modDir.
   #
   # Applying tf2vintage-diff.zip on top of ANY previous tf2vintage-full install
   # yields a result identical to installing tf2vintage-full.zip fresh.
@@ -589,25 +592,30 @@ jobs:
           path: nightly-extra/
 
       # ── tf2vintage-full.zip ────────────────────────────────────────────────
-      # Layout: tf2vintage/** + bin/** + base-manifest.json at root (no wrapper dir)
+      # Layout: everything under tf2vintage/ wrapper
+      #   tf2vintage/**              ← complete game-asset tree
+      #   tf2vintage/bin/x64/**      ← Windows binaries
+      #   tf2vintage/bin/linux64/**  ← Linux binaries
+      #   tf2vintage/base-manifest.json
       - name: Assemble tf2vintage-full.zip
         if: needs.classify.outputs.is_nightly != 'true'
         run: |
-          mkdir -p combined/full
-          # Expand base game tree (entries are tf2vintage/*)
+          mkdir -p combined/full/tf2vintage
+          # Expand base game tree — base-full.zip contains tf2vintage/** entries,
+          # so strip the tf2vintage/ prefix and land everything in combined/full/tf2vintage/
           unzip -q base-artifacts/base-full.zip -d combined/full/
-          # Graft both platform bin trees verbatim
-          cp -r bin-staging/bin combined/full/
-          # Manifest at zip root so the updater can fetch it as a standalone asset
-          # AND find it at a predictable path inside the zip
-          cp base-artifacts/base-manifest.json combined/full/
+          # Graft both platform bin trees under tf2vintage/bin/
+          cp -r bin-staging/bin combined/full/tf2vintage/
+          # Manifest inside tf2vintage/ — updater reads it as modDir/base-manifest.json
+          cp base-artifacts/base-manifest.json combined/full/tf2vintage/
           cd combined/full
           zip -r ../../tf2vintage-full.zip .
           echo "=== tf2vintage-full.zip (first 30 entries) ==="
           unzip -l ../../tf2vintage-full.zip | head -35
 
       # ── tf2vintage-diff.zip ────────────────────────────────────────────────
-      # Same layout but tf2vintage/ contains only the changed files.
+      # Same layout: everything under tf2vintage/ — only the game-asset tree is
+      # partial (changed files only); bin and manifest are always fully replaced.
       # Absent on first-ever release (no base-patch.zip exists yet).
       - name: Assemble tf2vintage-diff.zip
         if: needs.classify.outputs.is_nightly != 'true'
@@ -616,10 +624,13 @@ jobs:
             echo "No base-patch.zip present — skipping diff zip (first release or no asset changes)."
             exit 0
           fi
-          mkdir -p combined/diff
+          mkdir -p combined/diff/tf2vintage
+          # base-patch.zip entries are already tf2vintage/** (written that way by
+          # Generate base-patch.zip), so unzip straight into combined/diff/
           unzip -q base-artifacts/base-patch.zip -d combined/diff/
-          cp -r bin-staging/bin combined/diff/
-          cp base-artifacts/base-manifest.json combined/diff/
+          # Bin and manifest go inside tf2vintage/ just like the full zip
+          cp -r bin-staging/bin combined/diff/tf2vintage/
+          cp base-artifacts/base-manifest.json combined/diff/tf2vintage/
           cd combined/diff
           zip -r ../../tf2vintage-diff.zip .
           echo "=== tf2vintage-diff.zip (first 30 entries) ==="

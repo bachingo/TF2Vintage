@@ -170,11 +170,14 @@ func extractZipRaw(src, destDir string) error {
 }
 
 // extractZipRouted extracts tf2vintage-full.zip or tf2vintage-diff.zip, routing
-// entries to the correct destination directory based on their path prefix:
+// entries to the correct destination directory based on their path prefix.
 //
-//   - "tf2vintage/..."     → modDir  (game-asset tree; "tf2vintage/" prefix stripped)
-//   - "bin/..."            → stagingRoot  (verbatim; reconstructs bin/x64/ or bin/linux64/)
-//   - "base-manifest.json" → modDir/base-manifest.json
+// All entries live under a top-level "tf2vintage/" wrapper in the zip:
+//
+//	tf2vintage/bin/x64/**         → stagingRoot/bin/x64/  (strip "tf2vintage/")
+//	tf2vintage/bin/linux64/**     → stagingRoot/bin/linux64/
+//	tf2vintage/base-manifest.json → modDir/base-manifest.json
+//	tf2vintage/<everything else>  → modDir/<rel>  (strip "tf2vintage/")
 //
 // This mirrors how package-combined assembles those zips in CI.
 func extractZipRouted(src, modDir, stagingRoot string) error {
@@ -187,20 +190,24 @@ func extractZipRouted(src, modDir, stagingRoot string) error {
 	for _, f := range r.File {
 		name := filepath.ToSlash(f.Name)
 
+		// Every entry must be under tf2vintage/
+		if !strings.HasPrefix(name, "tf2vintage/") {
+			continue
+		}
+		rel := strings.TrimPrefix(name, "tf2vintage/")
+		if rel == "" {
+			continue // top-level directory entry itself
+		}
+
 		var target string
 		switch {
-		case name == "base-manifest.json":
-			target = filepath.Join(modDir, "base-manifest.json")
-		case strings.HasPrefix(name, "tf2vintage/"):
-			rel := strings.TrimPrefix(name, "tf2vintage/")
-			if rel == "" {
-				continue
-			}
-			target = filepath.Join(modDir, filepath.FromSlash(rel))
-		case strings.HasPrefix(name, "bin/"):
-			target = filepath.Join(stagingRoot, filepath.FromSlash(name))
+		case strings.HasPrefix(rel, "bin/"):
+			// Bin subtree → stagingRoot so atomicSwapDir can move it into place
+			// without touching the live modDir during the update.
+			target = filepath.Join(stagingRoot, filepath.FromSlash(rel))
 		default:
-			continue // unknown prefix — skip
+			// Game assets and base-manifest.json → modDir
+			target = filepath.Join(modDir, filepath.FromSlash(rel))
 		}
 
 		if f.FileInfo().IsDir() {

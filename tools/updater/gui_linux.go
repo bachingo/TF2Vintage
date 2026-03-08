@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func startInstallUI(install func(func(InstallState), func() string, func() bool)) {
+func startInstallUI(install func(func(InstallState), func() string)) {
 	termPrintBanner()
 	fmt.Println("Install mode — TF2 Vintage not found in current directory.")
 	fmt.Println()
@@ -55,30 +55,7 @@ func startInstallUI(install func(func(InstallState), func() string, func() bool)
 		return path
 	}
 
-	askSymbols := func() bool {
-		fmt.Println("Debug symbols:")
-		fmt.Println("  Symbols let contributors read crash reports with full function names")
-		fmt.Println("  and source file locations. Not needed for normal play.")
-		fmt.Println("  Adds ~50-200 MB per update.")
-		fmt.Println()
-		fmt.Print("  Download debug symbols? [y/N]: ")
-
-		scanner := bufio.NewScanner(os.Stdin)
-		scanner.Scan()
-		answer := strings.TrimSpace(strings.ToLower(scanner.Text()))
-		yes := answer == "y" || answer == "yes"
-		if yes {
-			fmt.Println("  Symbols will be downloaded with each update.")
-			fmt.Println("  To disable later: tf2vintage-updater --disable-symbols")
-		} else {
-			fmt.Println("  Skipping symbols.")
-			fmt.Println("  To enable later: tf2vintage-updater --enable-symbols")
-		}
-		fmt.Println()
-		return yes
-	}
-
-	go install(report, askAltPath, askSymbols)
+	go install(report, askAltPath)
 	<-done
 
 	if installErr != nil {

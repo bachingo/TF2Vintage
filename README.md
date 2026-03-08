@@ -10,21 +10,18 @@ Development may be slow at times — consider becoming a contributor!
 
 ## Downloads
 
-TF2 Vintage is distributed as two packages. You need both for a working install.
-
-| Package | Description |
-|---|---|
-| `tf2vintage-base.zip` | Game assets — maps, models, sounds, configs. Download once; only re-downloads changed files on update. |
-| `tf2vintage-bin.zip` | Compiled game code for your platform. Updates frequently with every code change. |
+TF2 Vintage is distributed as a single installer. Download the updater for your platform and run it — it handles everything else automatically.
 
 **[→ Latest Release](https://github.com/TF2V/TF2Vintage/releases/latest)**
 
 | File | Platform |
 |---|---|
-| `tf2vintage-base.zip` | Both (download once) |
-| `tf2vintage-bin.zip` | Both (Windows .dll + Linux .so included) |
+| `tf2vintage-updater.exe` | Windows |
+| `tf2vintage-updater` | Linux |
 
-> **Release schedule:** Full releases publish every 90 days. Weekly updates publish every Thursday at 08:00 UTC if there are new commits — if nothing has changed, no release is published. Dev builds are available as CI artifacts on every commit (90 day expiry) for testing purposes.
+The updater downloads `tf2vintage-full.zip` (complete game + binaries) on first run and creates a desktop shortcut. On subsequent launches it checks for updates and applies only what has changed.
+
+> **Release schedule:** Full releases publish every 84 days (12 weeks). Nightly builds publish every Tuesday if there are new commits — nightlies contain only updated binaries, not game asset changes.
 
 ---
 
@@ -32,70 +29,40 @@ TF2 Vintage is distributed as two packages. You need both for a working install.
 
 ### Prerequisites
 
-- Steam with **Source SDK Base 2013 Multiplayer** installed (free, found in your Steam library Tools section)
+- Steam with **Source SDK Base 2013 Multiplayer** and **Team Fortress 2** installed (both free)
 
 ### Windows
 
-1. Download `tf2vintage-base.zip` and extract it to your Sourcemods folder. The typical paths are:
-   ```
-   C:\Program Files (x86)\Steam\steamapps\sourcemods\
-   C:\Program Files\Steam\steamapps\sourcemods\
-   ```
-   If you're unsure which applies, open Steam → **Steam menu** → **Settings** → **Storage** to find your library location. After extraction you should have a `tf2vintage` folder inside `sourcemods\`.
-
-2. Download `tf2vintage-bin.zip` and extract the contents into your `tf2vintage\bin\` folder.
-
-3. Restart Steam. **Team Fortress 2 Vintage** will appear in your library.
+1. Download `tf2vintage-updater.exe` from the [latest release](https://github.com/TF2V/TF2Vintage/releases/latest).
+2. Run it. The installer will locate Steam, download the game files (~350 MB compressed), and create a **TF2 Vintage** shortcut on your Desktop.
+3. Double-click the desktop shortcut to play. It checks for updates automatically on each launch.
 
 ### Linux
 
-1. Download `tf2vintage-base.zip` and extract it to your Sourcemods folder:
+1. Download `tf2vintage-updater` from the [latest release](https://github.com/TF2V/TF2Vintage/releases/latest).
+2. Make it executable and run it:
    ```bash
-   unzip tf2vintage-base.zip -d ~/.steam/steam/steamapps/sourcemods/
+   chmod +x tf2vintage-updater
+   ./tf2vintage-updater
    ```
-
-2. Download `tf2vintage-bin.zip` and extract it into the same `tf2vintage` folder:
-   ```bash
-   unzip tf2vintage-bin.zip -d ~/.steam/steam/steamapps/sourcemods/tf2vintage/
-   ```
-
-3. Restart Steam. **Team Fortress 2 Vintage** will appear in your library.
+3. The installer downloads the game files and creates a `tf2vintage.desktop` shortcut on your Desktop. Double-click it to play.
 
 ---
 
 ## Auto-Updater
 
-TF2 Vintage includes an auto-updater (`tf2vintage-updater`) bundled inside the binaries package. It checks for updates on launch and applies only what has changed — base file patches are typically a few KB for config/asset changes, and bin updates replace only the compiled code.
-
-### Setting Up the Steam Launch Option
-
-The updater runs transparently before the game if you set it as a Steam launch option. You only need to do this once.
-
-1. In Steam, right-click **Source SDK Base 2013 Multiplayer** → **Properties**
-2. Under **Launch Options**, enter:
-
-**Windows:**
-```
-"C:\Program Files (x86)\Steam\steamapps\sourcemods\tf2vintage\bin\x64\tf2vintage-updater.exe" %command%
-```
-
-**Linux:**
-```
-~/.steam/steam/steamapps/sourcemods/tf2vintage/bin/x64/tf2vintage-updater %command%
-```
-
-> **Note:** If your Steam library is in a non-default location, adjust the path accordingly. The path must point to `tf2vintage-updater` inside your `tf2vintage/bin/x64/` folder. On Windows, wrap the full path in quotes if it contains spaces.
+TF2 Vintage ships with `tf2vintage-updater` as its launcher. The installer places it in `tf2vintage/bin/<platform>/` and creates a desktop shortcut pointing to it. Every time you launch TF2 Vintage through that shortcut, the updater runs first — it checks for updates, applies anything new, then starts the game automatically.
 
 ### What the Updater Does
 
-When launched via Steam:
+When launched via the desktop shortcut (with Steam args):
 - Checks the latest release on GitHub
-- If binaries are out of date, downloads and applies the new bin package for your platform
-- If base assets have changed, downloads only a small patch containing the changed files (not the full 963 MB base)
-- For installs multiple versions behind, applies patches in sequence to reach the latest version without a full redownload
-- Launches the game automatically after updating (3-second delay so you can see what changed)
+- Downloads `tf2vintage-full.zip` for fresh installs or when the install is more than 180 days old
+- Downloads `tf2vintage-diff.zip` for incremental updates — only changed files, not the full package
+- Applies updates atomically (backs up the live install, swaps in the new files, removes the backup)
+- Launches the game automatically after updating (5-second delay so you can read what changed)
 
-When run standalone (double-click without Steam):
+When run standalone (double-click without Steam args):
 - Runs the same update check and applies any updates
 - Pauses at the end so you can read the output before the window closes
 - Does not launch the game
@@ -300,7 +267,7 @@ The crash handler registers before the game engine loads, so it catches startup 
 
 > **Players:** You do not need to download anything extra. Crash files are saved automatically. If you encounter a crash, open an issue and paste the `.txt` file.
 
-> **Debug symbols are opt-in.** During installation you are asked whether to download them. Most players should say no. If you change your mind later, run `tf2vintage-updater.exe --enable-symbols` (Windows) or `./tf2vintage-updater --enable-symbols` (Linux) from `bin/x64/`. Symbols are stored in `bin/x64/symbols/` and updated automatically alongside the game on each release.
+> **Debug symbols are opt-in.** Symbol downloads are disabled by default. To enable them, run `tf2vintage-updater.exe --enable-symbols` (Windows) or `./tf2vintage-updater --enable-symbols` (Linux) from `bin/x64/`. Symbols are stored in `bin/x64/symbols/` and updated automatically alongside the game on each release.
 
 ### For players — reporting a crash
 
@@ -365,6 +332,28 @@ Pull requests are welcome. For larger changes, open an issue first to discuss wh
 - Keep code style consistent with the surrounding code
 - Test on both Windows and Linux where possible
 - CI will build and validate your changes automatically on push
+
+### Debug Symbols
+
+Symbol downloads are off by default. Contributors working on crash reports can enable them:
+
+```
+tf2vintage-updater.exe --enable-symbols   # Windows
+./tf2vintage-updater --enable-symbols     # Linux
+```
+
+Symbols are downloaded alongside the next update and stored in `bin/<platform>/symbols/`. Disable with `--disable-symbols`.
+
+### Nightly Builds
+
+Nightly builds contain the latest debug binaries without waiting for a full release cycle. To opt in:
+
+```
+tf2vintage-updater.exe --enable-nightly   # Windows
+./tf2vintage-updater --enable-nightly     # Linux
+```
+
+The updater checks for a nightly build silently on each launch and applies it if newer than the installed build. Game assets are never changed by a nightly — only the compiled binaries. Disable with `--disable-nightly`.
 
 ---
 

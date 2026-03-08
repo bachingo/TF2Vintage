@@ -162,10 +162,6 @@ func openURL(url string) {
 
 // ── Desktop shortcut ──────────────────────────────────────────────────────────
 
-// tf2vintageGameID is the Steam rungameid URL for TF2 Vintage. This ID is
-// derived from the sourcemod folder name and is the same for every user.
-const tf2vintageGameID = "steam://rungameid/14471311890598574118"
-
 // createDesktopShortcut writes a platform-appropriate shortcut to the user's
 // desktop that launches TF2 Vintage via the updater.
 //

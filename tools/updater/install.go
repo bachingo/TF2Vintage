@@ -31,7 +31,7 @@ func runInstallMode() {
 
 // doInstall is called by the GUI on a background goroutine.
 // askAltPath blocks until the GUI responds with a path (empty = use default).
-func doInstall(report func(InstallState), askAltPath func() string, askSymbols func() bool) {
+func doInstall(report func(InstallState), askAltPath func() string) {
 	report(InstallState{Status: "Locating Steam..."})
 
 	steamPath, err := findSteamPath()
@@ -113,11 +113,6 @@ func doInstall(report func(InstallState), askAltPath func() string, askSymbols f
 		}
 		binDir := platformBinDir(installDir)
 		existingCfg := loadConfig(binDir)
-		// Re-ask symbol preference only if config doesn't exist yet
-		if _, statErr := os.Stat(configPath(binDir)); os.IsNotExist(statErr) {
-			existingCfg.DownloadSymbols = askSymbols()
-			saveConfig(binDir, existingCfg)
-		}
 		// For an already-installed copy, use a staging dir beside the install
 		// so updates can be swapped in atomically.
 		stagingRoot := installDir + ".staging"
@@ -130,23 +125,14 @@ func doInstall(report func(InstallState), askAltPath func() string, askSymbols f
 		binUpdated := false
 		baseUpdated := false
 
-		switch err := updateBin(binDir, stagingBinDir, latest); {
+		switch err := updateInstall(installDir, stagingRoot, stagingBinDir, stagingModDir, latest); {
 		case err == nil:
 			binUpdated = true
-		case errors.Is(err, errUpToDate):
-			// nothing staged — do not swap
-		default:
-			report(InstallState{Err: fmt.Errorf("Bin update failed: %v", err)})
-			os.RemoveAll(stagingRoot)
-			return
-		}
-		switch err := updateBase(installDir, stagingModDir, latest); {
-		case err == nil:
 			baseUpdated = true
 		case errors.Is(err, errUpToDate):
 			// nothing staged — do not swap
 		default:
-			report(InstallState{Err: fmt.Errorf("Base update failed: %v", err)})
+			report(InstallState{Err: fmt.Errorf("Update failed: %v", err)})
 			os.RemoveAll(stagingRoot)
 			return
 		}
@@ -175,7 +161,7 @@ func doInstall(report func(InstallState), askAltPath func() string, askSymbols f
 			}
 		}
 		os.RemoveAll(stagingRoot)
-		finalize(report, filepath.Join(binDir, updaterName()))
+		finalize(report, steamPath, filepath.Join(binDir, updaterName()), false)
 		return
 	}
 
@@ -193,120 +179,54 @@ func doInstall(report func(InstallState), askAltPath func() string, askSymbols f
 		return
 	}
 
-	// ── Download + extract base ───────────────────────────────────────────────
-	if needs.repairBase {
-		if err := checkDiskSpace(installDir, minFreeBytesForBase); err != nil {
-			report(InstallState{Err: err})
-			return
-		}
+	// ── Download + extract full package (base + bin) ─────────────────────────
+	// Both repairBase and repairBin draw from the combined tf2vintage-full.zip,
+	// which packages the complete game-asset tree and both platform bin trees
+	// together. Using the unified updateInstall path keeps repair consistent with
+	// the normal update path and avoids the stale single-platform bin asset.
+	report(InstallState{Status: "Downloading full package — this may take a while...", Progress: 0.20})
+	repairStagingRoot := installDir + ".staging"
+	repairStagingBinDir := filepath.Join(repairStagingRoot, "bin", binDirName())
+	repairStagingModDir := filepath.Join(repairStagingRoot, "mod")
+	os.RemoveAll(repairStagingRoot)
+	os.MkdirAll(repairStagingBinDir, 0755)
+	os.MkdirAll(repairStagingModDir, 0755)
 
-		baseURL := assetURL(latest, "tf2vintage-base.zip")
-		if baseURL == "" {
-			report(InstallState{Err: fmt.Errorf("Base package not found in latest release — please try again later.")})
-			return
-		}
+	// Force a full download by temporarily clearing the local manifest so
+	// updateInstall treats this as a fresh install (case 1).
+	localManifestPath := filepath.Join(installDir, "base-manifest.json")
+	savedManifest, _ := os.ReadFile(localManifestPath)
+	os.Remove(localManifestPath)
 
-		report(InstallState{Status: "Downloading base assets — 350 MB compressed, may take a while...", Progress: 0.20})
-		baseTmp, err := downloadWithProgressCallback(baseURL, func(downloaded, total int64) {
-			if total > 0 {
-				pct := float64(downloaded) / float64(total)
-				report(InstallState{
-					Status:   fmt.Sprintf("Downloading base assets... %.0f%%", pct*100),
-					Progress: 0.20 + pct*0.45,
-				})
-			}
-		})
-		if err != nil {
-			report(InstallState{Err: fmt.Errorf(
-				"Download interrupted: %v\n\nRun the installer again to resume.", err)})
-			return
+	switch err := updateInstall(installDir, repairStagingRoot, repairStagingBinDir, repairStagingModDir, latest); {
+	case err == nil:
+		// staged — swap into place below
+	case errors.Is(err, errUpToDate):
+		// nothing to do (shouldn't happen after removing the manifest, but be safe)
+	default:
+		if len(savedManifest) > 0 {
+			os.WriteFile(localManifestPath, savedManifest, 0644)
 		}
-		defer os.Remove(baseTmp)
-
-		// Verify base integrity before extracting
-		if expectedHash := fetchAssetChecksum(latest, "tf2vintage-base.zip"); expectedHash != "" {
-			if err := verifyDownloadChecksum(baseTmp, expectedHash); err != nil {
-				os.Remove(baseTmp)
-				report(InstallState{Err: fmt.Errorf("Base download integrity check failed: %v", err)})
-				return
-			}
-		}
-
-		report(InstallState{Status: "Extracting base assets...", Progress: 0.65})
-		if err := extractZip(baseTmp, installDir); err != nil {
-			report(InstallState{Err: fmt.Errorf("Failed to extract base assets: %v", err)})
-			return
-		}
-		if manifest, err := fetchReleaseManifest(latest); err == nil {
-			saveManifest(filepath.Join(installDir, "base-manifest.json"), manifest)
-		}
+		os.RemoveAll(repairStagingRoot)
+		report(InstallState{Err: fmt.Errorf("Download failed: %v\n\nRun the installer again to retry.", err)})
+		return
 	}
 
-	// ── Download + extract bin ────────────────────────────────────────────────
-	if needs.repairBin {
-		if err := checkDiskSpace(installDir, minFreeBytesForBins); err != nil {
-			report(InstallState{Err: err})
-			return
-		}
-
-		binURL := assetURL(latest, platformBinAsset())
-		if binURL == "" {
-			report(InstallState{Err: fmt.Errorf("Bin package not found in latest release — please try again later.")})
-			return
-		}
-
-		report(InstallState{Status: "Downloading game binaries...", Progress: 0.70})
-		binTmp, err := downloadWithProgressCallback(binURL, func(downloaded, total int64) {
-			if total > 0 {
-				pct := float64(downloaded) / float64(total)
-				report(InstallState{
-					Status:   fmt.Sprintf("Downloading game binaries... %.0f%%", pct*100),
-					Progress: 0.70 + pct*0.15,
-				})
-			}
-		})
-		if err != nil {
-			report(InstallState{Err: fmt.Errorf(
-				"Download interrupted: %v\n\nRun the installer again to resume.", err)})
-			return
-		}
-		defer os.Remove(binTmp)
-
-		binDir := platformBinDir(installDir)
-		if err := os.MkdirAll(binDir, 0755); err != nil {
-			report(InstallState{Err: fmt.Errorf("Could not create bin directory: %v", err)})
-			return
-		}
-
-		// Verify bin integrity before extracting
-		if expectedHash := fetchAssetChecksum(latest, platformBinAsset()); expectedHash != "" {
-			if err := verifyDownloadChecksum(binTmp, expectedHash); err != nil {
-				os.Remove(binTmp)
-				report(InstallState{Err: fmt.Errorf("Bin download integrity check failed: %v", err)})
-				return
-			}
-		}
-
-		report(InstallState{Status: "Extracting game binaries...", Progress: 0.85})
-		// tf2vintage-bin.zip has "bin/x64/..." paths verbatim — extract into installDir
-		// so the zip reconstructs installDir/bin/x64/ (or bin/linux64/) correctly.
-		if err := extractZipRaw(binTmp, installDir); err != nil {
-			report(InstallState{Err: fmt.Errorf("Failed to extract game binaries: %v", err)})
-			return
-		}
-		if runtime.GOOS != "windows" {
-			chmodSo(binDir)
-		}
-		if err := validateBinDir(binDir); err != nil {
-			report(InstallState{Err: fmt.Errorf(
-				"Binaries failed validation: %v\n\nRun the installer again to retry.", err)})
-			return
-		}
+	report(InstallState{Status: "Applying repair...", Progress: 0.85})
+	repairBinDir := platformBinDir(installDir)
+	if err := atomicSwapDir(repairBinDir, repairStagingBinDir); err != nil {
+		os.RemoveAll(repairStagingRoot)
+		report(InstallState{Err: fmt.Errorf("Bin repair swap failed: %v", err)})
+		return
 	}
+	if err := atomicSwapDir(installDir, repairStagingModDir); err != nil {
+		os.RemoveAll(repairStagingRoot)
+		report(InstallState{Err: fmt.Errorf("Base repair swap failed: %v", err)})
+		return
+	}
+	os.RemoveAll(repairStagingRoot)
 
-	// ── Ask about symbol downloads ───────────────────────────────────────────
-	wantsSymbols := askSymbols()
-	cfg := UpdaterConfig{DownloadSymbols: wantsSymbols}
+	cfg := UpdaterConfig{DownloadSymbols: false}
 
 	// ── Copy updater into install location ────────────────────────────────────
 	report(InstallState{Status: "Installing updater...", Progress: 0.88})
@@ -343,7 +263,7 @@ func doInstall(report func(InstallState), askAltPath func() string, askSymbols f
 		}
 	}
 
-	finalize(report, updaterDest)
+	finalize(report, steamPath, updaterDest, true)
 
 	// Remove the downloaded installer from wherever the user ran it from
 	if exe != updaterDest {
@@ -394,10 +314,13 @@ func diagnose(sourcemods, installDir string) installNeeds {
 
 // ── Post-install ──────────────────────────────────────────────────────────────
 
-func finalize(report func(InstallState), updaterPath string) {
+// finalize creates the desktop shortcut and, on a fresh first install only,
+// restarts Steam so it registers the new sourcemod and generates its AppID.
+// Repairs and updates pass restartSteam=false — Steam is already aware of the
+// installation and does not need to rescan.
+func finalize(report func(InstallState), steamPath, updaterPath string, restartSteam bool) {
 	report(InstallState{Status: "Creating desktop shortcut...", Progress: 0.94})
 	if err := createDesktopShortcut(updaterPath); err != nil {
-		// Non-fatal: the user can still launch manually via Steam.
 		termWarn("Could not create desktop shortcut: %v", err)
 		report(InstallState{
 			Status:   "Desktop shortcut could not be created — launch TF2 Vintage from Steam instead.",
@@ -405,8 +328,22 @@ func finalize(report func(InstallState), updaterPath string) {
 		})
 	}
 
+	if restartSteam {
+		report(InstallState{Status: "Restarting Steam to register TF2 Vintage...", Progress: 0.97})
+		if err := closeSteam(); err != nil {
+			termWarn("Could not close Steam: %v", err)
+		}
+		relaunchSteam(steamPath)
+		report(InstallState{
+			Status:   "Installation complete!\nSteam is restarting — TF2 Vintage will appear in your library shortly.",
+			Progress: 1.0,
+			Done:     true,
+		})
+		return
+	}
+
 	report(InstallState{
-		Status:   "Installation complete!\nA desktop shortcut has been created for TF2 Vintage.",
+		Status:   "Done!\nA desktop shortcut has been created for TF2 Vintage.",
 		Progress: 1.0,
 		Done:     true,
 	})

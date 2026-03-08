@@ -111,10 +111,10 @@ func createDesktopShortcutPlatform(updaterPath string) error {
 	}
 
 	shortcutPath := filepath.Join(desktop, "TF2 Vintage.url")
-	// The URL field runs the updater directly. Windows will execute it as a
-	// program because the scheme is not http/https.
+	// The URL field runs the updater directly using its absolute filesystem path.
+	// Windows Explorer executes .url files whose URL is a local path as a program.
 	content := "[InternetShortcut]\r\n" +
-		"URL=file:///" + filepath.ToSlash(updaterPath) + "\r\n" +
+		"URL=" + updaterPath + "\r\n" +
 		"IconFile=" + updaterPath + "\r\n" +
 		"IconIndex=0\r\n"
 
