@@ -10,5 +10,11 @@ func newCmd(name string, args ...string) *exec.Cmd {
 	return exec.Command(name, args...)
 }
 
-// termPauseIfStandalone blocks on stdin for standalone mode.
-// On Linux, termPause() in helpers.go already handles this.
+// swapBinDir replaces liveBinDir with stagingBinDir.
+// On Linux/macOS the running exe is unlocked at the filesystem level — the
+// directory can be renamed freely even while the process is running — so a
+// plain atomic swap is sufficient.
+func swapBinDir(liveBinDir, stagingBinDir string) error {
+	return atomicSwapDir(liveBinDir, stagingBinDir)
+}
+

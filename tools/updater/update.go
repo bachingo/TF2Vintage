@@ -178,7 +178,7 @@ func runUpdateMode(exe string) {
 	// would wipe the entire game asset tree.
 	if binUpdated {
 		fmt.Println("Applying update...")
-		if err := atomicSwapDir(liveBinDir, stagingBinDir); err != nil {
+		if err := swapBinDir(liveBinDir, stagingBinDir); err != nil {
 			termFatal("Bin swap failed: %v", err)
 		}
 	}
