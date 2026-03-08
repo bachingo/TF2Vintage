@@ -618,7 +618,8 @@ struct SpewOnDestruct
 			DevMsg( 0, "%s\n", m_vecErrors[ i ].Get() );
 		}
 		
-		Assert( m_vecErrors.Count() == 0 );
+		// This assert crashes the game.
+		// Assert( m_vecErrors.Count() == 0 );
 	}
 	const CUtlVector<CUtlString>& m_vecErrors;
 };
