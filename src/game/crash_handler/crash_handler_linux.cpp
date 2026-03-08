@@ -183,8 +183,8 @@ static std::string GetSelfExePath()
 }
 
 // Walk up from the crash DLL to find the tf2vintage mod root.
-// Layout: <modroot>/bin/x64/tf2vintage_crash.so
-//          → bin/x64  → bin  → <modroot>
+// Layout: <modroot>/bin/linux64/tf2vintage_crash.so
+//          → bin/linux64  → bin  → <modroot>
 static std::string GetModRoot()
 {
     // Use /proc/self/maps to find our own .so path
@@ -212,7 +212,7 @@ static std::string GetModRoot()
 
     if (soPath.empty()) return "";
 
-    // Strip two path components: x64 → bin → <modroot>
+    // Strip two path components: linux64 → bin → <modroot>
     std::string dir = soPath;
     for (int i = 0; i < 3; i++) { // strip filename + 2 dirs
         size_t slash = dir.rfind('/');
@@ -460,7 +460,7 @@ static std::string GetOSVersion()
 
 static std::string GetTF2VVersion(const std::string& modRoot)
 {
-    std::string path = modRoot + "/bin/x64/version-bin.txt";
+    std::string path = modRoot + "/bin/linux64/version-bin.txt";
     FILE* f = fopen(path.c_str(), "r");
     if (!f) return "  (version file not found)\n";
 
