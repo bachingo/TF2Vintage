@@ -9,17 +9,17 @@
 //	Linux:   POSIX signal handlers via sigaction + self-pipe + worker thread
 //
 //	Deliberately has NO dependencies on tier0, tier1, mathlib, or any other
-//	Source library — if those fail to load we still need to catch the crash.
+//	Source library - if those fail to load we still need to catch the crash.
 //-----------------------------------------------------------------------------
 
-$Macro SRCDIR		"..\\.."
+$Macro SRCDIR		"..\.."
 $Macro GAMENAME		"tf2vintage"
 // source_dll_win32_base.vpc and source_dll_posix_base.vpc both append
 // $PLATSUBDIR (\x64 on WIN64, \linux64 on LINUX64) automatically.
-$Macro OUTBINDIR	"$SRCDIR\\..\\game\\$GAMENAME\\bin"
-$Macro CRASHSRC		"$SRCDIR\\game\\crash_handler"
+$Macro OUTBINDIR	"$SRCDIR\..\game\$GAMENAME\bin"
+$Macro CRASHSRC		"$SRCDIR\game\crash_handler"
 
-$Include "$SRCDIR\\vpc_scripts\\source_dll_base.vpc"
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
 
 $Configuration "Release"
 {
@@ -39,34 +39,23 @@ $Configuration "Debug"
 	}
 }
 
-// Nameless block applies to all configurations and platforms.
-// NDEBUG/_DEBUG and optimization are already set per-config by the base scripts.
-// $RELEASE and $DEBUG are not valid VPC conditionals — use named config blocks instead.
 $Configuration
 {
 	$Compiler
 	{
-		// Only project-specific define needed — everything else comes from base scripts.
 		$PreprocessorDefinitions	"$BASE;TF_VINTAGE"
 
-		// Disable buffer security check — this IS the crash handler.
+		// Disable buffer security check - this IS the crash handler.
 		// /GS inserts a __security_check_cookie call that can fault before
 		// our handler is operational.
-		$BufferSecurityCheck		"No (/GS-)"		[$WINDOWS]
+		$BufferSecurityCheck		"No"	[$WINDOWS]
 	}
 
-	$Linker [$WINDOWS]
+	$Linker
 	{
-		$AdditionalDependencies		"$BASE;dbghelp.lib;psapi.lib"
-		$GenerateDebugInformation	"Yes (/DEBUG)"
-	}
-
-	$Linker [$POSIX]
-	{
-		// -ldl for dlopen/dladdr, -lpthread for worker thread,
-		// -rdynamic keeps the symbol table visible to dladdr()
-		$AdditionalDependencies		"$BASE;-ldl;-lpthread;-rdynamic"
-		$GenerateDebugInformation	"Yes"
+		$AdditionalDependencies		"$BASE dbghelp.lib psapi.lib"	[$WINDOWS]
+		$SystemLibraries			"dl;pthread"					[$POSIX]
+		$GCC_ExtraLinkerFlags		"$BASE -rdynamic"				[$POSIX]
 	}
 }
 
