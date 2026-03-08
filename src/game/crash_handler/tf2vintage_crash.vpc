@@ -14,6 +14,9 @@
 
 $Macro SRCDIR		"..\\.."
 $Macro GAMENAME		"tf2vintage"
+// source_dll_win32_base.vpc and source_dll_posix_base.vpc both append
+// $PLATSUBDIR (\x64 / \linux64) to OUTBINDIR automatically, so we only
+// need to specify the base folder here.
 $Macro OUTBINDIR	"$SRCDIR\\..\\game\\$GAMENAME\\bin"
 $Macro CRASHSRC		"$SRCDIR\\game\\crash_handler"
 
@@ -45,6 +48,8 @@ $Configuration "Debug"
 
 // Nameless block — applies to all configurations.
 // Per-config differences use [$RELEASE] / [$DEBUG] conditionals.
+// Note: PCH is already "Not Using Precompiled Headers" by default from
+// source_dll_win32_debug/release.vpc — no override needed here.
 $Configuration
 {
 	$Compiler
@@ -95,28 +100,7 @@ $Project "tf2vintage_crash"
 {
 	$Folder "Source Files"
 	{
-		// PCH must be disabled per-file — source_dll_base.vpc sets cbase.h as the PCH
-		// at project level, but these files start with WIN32_LEAN_AND_MEAN + <windows.h>
-		// and must not include cbase.h.
-		$File "$CRASHSRC\crash_handler.cpp" [$WINDOWS]
-		{
-			$Configuration
-			{
-				$Compiler
-				{
-					$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
-				}
-			}
-		}
-		$File "$CRASHSRC\crash_handler_linux.cpp" [$LINUX]
-		{
-			$Configuration
-			{
-				$Compiler
-				{
-					$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
-				}
-			}
-		}
+		$File "$CRASHSRC\crash_handler.cpp"			[$WINDOWS]
+		$File "$CRASHSRC\crash_handler_linux.cpp"	[$LINUX]
 	}
 }
