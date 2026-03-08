@@ -58,16 +58,17 @@
 			// VPK and we can avoid making thousands of file system calls to attempt to open files
 			// in folders where they don't exist.  (Searching a VPK is much faster than making an 
 			// operating system call.)
-			game				|appid_243750|hl2/hl2_textures.vpk
-			game				|appid_243750|hl2/hl2_sound_vo_english.vpk
-			game				|appid_243750|hl2/hl2_sound_misc.vpk
-			game+vgui			|appid_243750|hl2/hl2_misc.vpk
-			platform+vgui		|appid_243750|platform/platform_misc.vpk
+
+			game				|appid_440|hl2/hl2_textures.vpk
+			game				|appid_440|hl2/hl2_sound_vo_english.vpk
+			game				|appid_440|hl2/hl2_sound_misc.vpk
+			game+vgui			|appid_440|hl2/hl2_misc.vpk
+			platform+vgui		|appid_440|platform/platform_misc.vpk
 
 			// Mount in shared HL2 and TF loose files		
 			game				|appid_440|tf			
-			game				|appid_243750|hl2		
-			platform			|appid_243750|platform		
+			game				|appid_440|hl2		
+			platform			|appid_440|platform		
 			
 			// Random files downloaded from gameservers go into a seperate directory, so
 			// that it's easy to keep those files segregated from the official game files
