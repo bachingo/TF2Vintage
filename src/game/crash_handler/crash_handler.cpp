@@ -19,6 +19,7 @@
 #include <time.h>
 #include <stdint.h>
 #include <string>
+#include <vector>
 
 #pragma comment(lib, "dbghelp.lib")
 #pragma comment(lib, "psapi.lib")
@@ -81,8 +82,8 @@ static std::string GetExceptionName(DWORD code)
     case EXCEPTION_INT_OVERFLOW:             return "INT_OVERFLOW";
     case EXCEPTION_PRIV_INSTRUCTION:         return "PRIV_INSTRUCTION";
     case EXCEPTION_STACK_OVERFLOW:           return "STACK_OVERFLOW";
-    case 0xC0000005:                         return "ACCESS_VIOLATION";
-    case 0xC000001D:                         return "ILLEGAL_INSTRUCTION";
+    // 0xC0000005 == EXCEPTION_ACCESS_VIOLATION (already above)
+    // 0xC000001D == EXCEPTION_ILLEGAL_INSTRUCTION (already above)
     case 0xC0000374:                         return "HEAP_CORRUPTION";
     case 0xC0000409:                         return "STACK_BUFFER_OVERRUN";
     default: {
