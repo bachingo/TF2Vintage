@@ -14,10 +14,7 @@
 
 $Macro SRCDIR		"..\\.."
 $Macro GAMENAME		"tf2vintage"
-// source_dll_win32_base.vpc and source_dll_posix_base.vpc both append
-// $PLATSUBDIR (\x64 / \linux64) to OUTBINDIR automatically, so we only
-// need to specify the base folder here.
-$Macro OUTBINDIR	"$SRCDIR\\..\\game\\$GAMENAME\\bin"
+$Macro OUTBINDIR	"$SRCDIR\\..\\game\\$GAMENAME\\bin\\x64"
 $Macro CRASHSRC		"$SRCDIR\\game\\crash_handler"
 
 $Include "$SRCDIR\\vpc_scripts\\source_dll_base.vpc"
@@ -48,8 +45,6 @@ $Configuration "Debug"
 
 // Nameless block — applies to all configurations.
 // Per-config differences use [$RELEASE] / [$DEBUG] conditionals.
-// Note: PCH is already "Not Using Precompiled Headers" by default from
-// source_dll_win32_debug/release.vpc — no override needed here.
 $Configuration
 {
 	$Compiler
@@ -62,14 +57,14 @@ $Configuration
 		$PreprocessorDefinitions		"$BASE;_DEBUG"						[$WINDOWS&&$DEBUG]
 
 		// Linux defines
-		$PreprocessorDefinitions		"$BASE;TF_VINTAGE;POSIX;LINUX"		[$LINUX]
-		$PreprocessorDefinitions		"$BASE;NDEBUG"						[$LINUX&&$RELEASE]
-		$PreprocessorDefinitions		"$BASE;_DEBUG"						[$LINUX&&$DEBUG]
+		$PreprocessorDefinitions		"$BASE;TF_VINTAGE;POSIX;LINUX"		[$POSIX]
+		$PreprocessorDefinitions		"$BASE;NDEBUG"						[$POSIX&&$RELEASE]
+		$PreprocessorDefinitions		"$BASE;_DEBUG"						[$POSIX&&$DEBUG]
 
 		$Optimization					"Maximize Speed (/O2)"				[$WINDOWS&&$RELEASE]
 		$Optimization					"Disabled (/Od)"					[$WINDOWS&&$DEBUG]
-		$Optimization					"3"									[$LINUX&&$RELEASE]
-		$Optimization					"0"									[$LINUX&&$DEBUG]
+		$Optimization					"3"									[$POSIX&&$RELEASE]
+		$Optimization					"0"									[$POSIX&&$DEBUG]
 
 		// Disable buffer security check — this IS the crash handler.
 		// /GS adds a call to __security_check_cookie which can itself fault;
@@ -87,7 +82,7 @@ $Configuration
 		$AdditionalLibraryDirectories	""
 	}
 
-	$Linker [$LINUX]
+	$Linker [$POSIX]
 	{
 		// -ldl for dlopen/dladdr, -lpthread for worker thread,
 		// -rdynamic keeps the symbol table visible to dladdr()
@@ -101,6 +96,6 @@ $Project "tf2vintage_crash"
 	$Folder "Source Files"
 	{
 		$File "$CRASHSRC\crash_handler.cpp"			[$WINDOWS]
-		$File "$CRASHSRC\crash_handler_linux.cpp"	[$LINUX]
+		$File "$CRASHSRC\crash_handler_linux.cpp"	[$POSIX]
 	}
 }
