@@ -24,6 +24,7 @@ $Group "game"
 	"vgui_controls"
 	"angelscript"
 	"vscript"
+	"crash_handler"
 }
 
 $Group "shaders"
@@ -59,6 +60,7 @@ $Group "everything"
 	"vtfdiff"
 	"vvis_dll"
 	"vvis_launcher"
+	"crash_handler"
 }
 
 $Group "dedicated"
