@@ -10,12 +10,14 @@
 
 $Group "gamedlls"
 {
+	"crash_handler"
 	"client"
 	"server"
 }
 
 $Group "game"
 {
+	"crash_handler"
 	"client"
 	"mathlib"
 	"raytrace"

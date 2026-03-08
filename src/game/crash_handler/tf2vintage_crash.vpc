@@ -14,7 +14,7 @@
 
 $Macro SRCDIR		"..\\.."
 $Macro GAMENAME		"tf2vintage"
-$Macro OUTBINDIR	"$SRCDIR\\..\\game\\$GAMENAME\\bin\\x64"
+$Macro OUTBINDIR	"$SRCDIR\\..\\game\\$GAMENAME\\bin"
 $Macro CRASHSRC		"$SRCDIR\\game\\crash_handler"
 
 $Include "$SRCDIR\\vpc_scripts\\source_dll_base.vpc"
@@ -50,6 +50,10 @@ $Configuration
 	$Compiler
 	{
 		$AdditionalIncludeDirectories	""
+
+		// This DLL intentionally has no Source library dependencies and starts
+		// with WIN32_LEAN_AND_MEAN + <windows.h> — incompatible with cbase.h PCH.
+		$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
 
 		// Windows defines
 		$PreprocessorDefinitions		"$BASE;TF_VINTAGE"					[$WINDOWS]
