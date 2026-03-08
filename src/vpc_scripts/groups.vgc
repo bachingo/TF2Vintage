@@ -24,7 +24,6 @@ $Group "game"
 	"vgui_controls"
 	"angelscript"
 	"vscript"
-	"crash_handler"
 }
 
 $Group "shaders"
