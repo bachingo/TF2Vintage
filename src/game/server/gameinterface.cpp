@@ -571,6 +571,50 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 		CreateInterfaceFn physicsFactory, CreateInterfaceFn fileSystemFactory, 
 		CGlobalVars *pGlobals)
 {
+	// Load the crash handler DLL as early as possible — before tier libraries,
+	// before global systems — so it catches failures during this very init sequence.
+	// We resolve the path relative to client.dll itself so it works regardless of
+	// working directory.  DllMain / __attribute__((constructor)) installs the handler.
+	// If the DLL is absent we continue silently; crash handling is best-effort.
+#if defined( _WIN32 )
+	{
+		char szSelf[MAX_PATH] = {};
+		HMODULE hSelf = NULL;
+		if ( GetModuleHandleExA(
+				GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+				GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+				(LPCSTR)&CHLClient::Init, &hSelf ) )
+		{
+			GetModuleFileNameA( hSelf, szSelf, MAX_PATH );
+			// client.dll lives in bin/x64/ — crash handler is in the same folder
+			char* pSlash = strrchr( szSelf, '\\' );
+			if ( !pSlash ) pSlash = strrchr( szSelf, '/' );
+			if ( pSlash )
+			{
+				*(pSlash + 1) = '\0';
+				strncat_s( szSelf, "tf2vintage_crash.dll", _TRUNCATE );
+				LoadLibraryA( szSelf );   // DllMain installs the VEH handler
+			}
+		}
+	}
+#elif defined( POSIX )
+	{
+		// On Linux, __attribute__((constructor)) fires on dlopen.
+		// Resolve path via /proc/self/maps or relative to the client .so.
+		Dl_info info = {};
+		if ( dladdr( (void*)&CHLClient::Init, &info ) && info.dli_fname )
+		{
+			std::string path( info.dli_fname );
+			size_t slash = path.rfind( '/' );
+			if ( slash != std::string::npos )
+			{
+				path = path.substr( 0, slash + 1 ) + "tf2vintage_crash.so";
+				dlopen( path.c_str(), RTLD_NOW | RTLD_LOCAL );
+			}
+		}
+	}
+#endif
+
 	ConnectTier1Libraries( &appSystemFactory, 1 );
 	ConnectTier2Libraries( &appSystemFactory, 1 );
 	ConnectTier3Libraries( &appSystemFactory, 1 );

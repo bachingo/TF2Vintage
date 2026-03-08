@@ -12,12 +12,18 @@
 //	Source library — if those fail to load we still need to catch the crash.
 //-----------------------------------------------------------------------------
 
-$Macro SRCDIR		"..\.."
+$Macro SRCDIR		"..\\.."
 $Macro GAMENAME		"tf2vintage"
-$Macro OUTBINDIR	"$SRCDIR\..\game\$GAMENAME\bin\x64"
-$Macro CRASHSRC		"$SRCDIR\game\crash_handler"
+$Macro OUTBINDIR	"$SRCDIR\\..\\game\\$GAMENAME\\bin\\x64"
+$Macro CRASHSRC		"$SRCDIR\\game\\crash_handler"
 
-$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+$Include "$SRCDIR\\vpc_scripts\\source_dll_base.vpc"
+
+//
+// Named $Configuration blocks may ONLY contain $General (output/intermediate dirs).
+// $Compiler and $Linker settings belong in the nameless $Configuration {} block below.
+// Use [$RELEASE] / [$DEBUG] conditionals there for per-config differences.
+//
 
 $Configuration "Release"
 {
@@ -25,34 +31,6 @@ $Configuration "Release"
 	{
 		$OutputDirectory		"$OUTBINDIR"
 		$IntermediateDirectory	".\Release_x64\tf2vintage_crash"
-	}
-
-	$Compiler
-	{
-		$AdditionalIncludeDirectories	""
-		$PreprocessorDefinitions		"$BASE;NDEBUG;TF_VINTAGE" [$WINDOWS]
-		$PreprocessorDefinitions		"$BASE;NDEBUG;TF_VINTAGE;POSIX;LINUX" [$LINUX]
-		$Optimization					"Maximize Speed (/O2)" [$WINDOWS]
-		$Optimization					"3" [$LINUX]
-		// Disable buffer security check — this IS the crash handler
-		$BufferSecurityCheck			"No (/GS-)" [$WINDOWS]
-	}
-
-	$Linker [$WINDOWS]
-	{
-		$AdditionalDependencies			"$BASE;dbghelp.lib;psapi.lib"
-		$SubSystem						"Windows (/SUBSYSTEM:WINDOWS)"
-		$GenerateDebugInformation		"Yes (/DEBUG)"
-		$ProgramDatabaseFile			"$OUTBINDIR\tf2vintage_crash.pdb"
-		$AdditionalLibraryDirectories	""
-	}
-
-	$Linker [$LINUX]
-	{
-		// -ldl for dlopen/dladdr, -lunwind optional (loaded at runtime via dlopen)
-		// -lpthread for worker thread, -rdynamic to keep symbol table for dladdr
-		$AdditionalDependencies			"$BASE;-ldl;-lpthread;-rdynamic"
-		$GenerateDebugInformation		"Yes"
 	}
 }
 
@@ -63,15 +41,35 @@ $Configuration "Debug"
 		$OutputDirectory		"$OUTBINDIR"
 		$IntermediateDirectory	".\Debug_x64\tf2vintage_crash"
 	}
+}
 
+// Nameless block — applies to all configurations.
+// Per-config differences use [$RELEASE] / [$DEBUG] conditionals.
+$Configuration
+{
 	$Compiler
 	{
 		$AdditionalIncludeDirectories	""
-		$PreprocessorDefinitions		"$BASE;_DEBUG;TF_VINTAGE" [$WINDOWS]
-		$PreprocessorDefinitions		"$BASE;_DEBUG;TF_VINTAGE;POSIX;LINUX" [$LINUX]
-		$Optimization					"Disabled (/Od)" [$WINDOWS]
-		$Optimization					"0" [$LINUX]
-		$BufferSecurityCheck			"No (/GS-)" [$WINDOWS]
+
+		// Windows defines
+		$PreprocessorDefinitions		"$BASE;TF_VINTAGE"					[$WINDOWS]
+		$PreprocessorDefinitions		"$BASE;NDEBUG"						[$WINDOWS&&$RELEASE]
+		$PreprocessorDefinitions		"$BASE;_DEBUG"						[$WINDOWS&&$DEBUG]
+
+		// Linux defines
+		$PreprocessorDefinitions		"$BASE;TF_VINTAGE;POSIX;LINUX"		[$LINUX]
+		$PreprocessorDefinitions		"$BASE;NDEBUG"						[$LINUX&&$RELEASE]
+		$PreprocessorDefinitions		"$BASE;_DEBUG"						[$LINUX&&$DEBUG]
+
+		$Optimization					"Maximize Speed (/O2)"				[$WINDOWS&&$RELEASE]
+		$Optimization					"Disabled (/Od)"					[$WINDOWS&&$DEBUG]
+		$Optimization					"3"									[$LINUX&&$RELEASE]
+		$Optimization					"0"									[$LINUX&&$DEBUG]
+
+		// Disable buffer security check — this IS the crash handler.
+		// /GS adds a call to __security_check_cookie which can itself fault;
+		// we don't want the CRT touching anything before our handler fires.
+		$BufferSecurityCheck			"No (/GS-)"							[$WINDOWS]
 	}
 
 	$Linker [$WINDOWS]
@@ -79,12 +77,15 @@ $Configuration "Debug"
 		$AdditionalDependencies			"$BASE;dbghelp.lib;psapi.lib"
 		$SubSystem						"Windows (/SUBSYSTEM:WINDOWS)"
 		$GenerateDebugInformation		"Yes (/DEBUG)"
-		$ProgramDatabaseFile			"$OUTBINDIR\tf2vintage_crash_d.pdb"
+		$ProgramDatabaseFile			"$OUTBINDIR\tf2vintage_crash.pdb"	[$RELEASE]
+		$ProgramDatabaseFile			"$OUTBINDIR\tf2vintage_crash_d.pdb"	[$DEBUG]
 		$AdditionalLibraryDirectories	""
 	}
 
 	$Linker [$LINUX]
 	{
+		// -ldl for dlopen/dladdr, -lpthread for worker thread,
+		// -rdynamic keeps the symbol table visible to dladdr()
 		$AdditionalDependencies			"$BASE;-ldl;-lpthread;-rdynamic"
 		$GenerateDebugInformation		"Yes"
 	}
@@ -94,7 +95,7 @@ $Project "tf2vintage_crash"
 {
 	$Folder "Source Files"
 	{
-		$File "$CRASHSRC\crash_handler.cpp"		[$WINDOWS]
+		$File "$CRASHSRC\crash_handler.cpp"			[$WINDOWS]
 		$File "$CRASHSRC\crash_handler_linux.cpp"	[$LINUX]
 	}
 }
