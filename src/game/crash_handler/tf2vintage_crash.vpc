@@ -30,11 +30,10 @@ $Configuration "Release"
 	$Compiler
 	{
 		$AdditionalIncludeDirectories	""
-		$PreprocessorDefinitions        $BASE;NDEBUG;TF_VINTAGE [$WINDOWS]
-		$PreprocessorDefinitions        $BASE;NDEBUG;TF_VINTAGE;POSIX;LINUX [$LINUX]
+		$PreprocessorDefinitions		"$BASE;NDEBUG;TF_VINTAGE" [$WINDOWS]
+		$PreprocessorDefinitions		"$BASE;NDEBUG;TF_VINTAGE;POSIX;LINUX" [$LINUX]
 		$Optimization					"Maximize Speed (/O2)" [$WINDOWS]
 		$Optimization					"3" [$LINUX]
-		// Disable buffer security check — this IS the crash handler
 		$BufferSecurityCheck			"No (/GS-)" [$WINDOWS]
 	}
 
