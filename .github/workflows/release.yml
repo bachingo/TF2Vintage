@@ -259,18 +259,6 @@ jobs:
                   print(f"  + {rel}")
           PYEOF
 
-      - name: Generate bannedwords.txt from upstream sources
-        run: |
-          echo "Fetching profanity lists from upstream sources..."
-          python3 tools/build_bannedwords.py game/tf2vintage/bannedwords.txt
-
-          count=$(grep -vc '^#' game/tf2vintage/bannedwords.txt || true)
-          echo "Fetched $count entries."
-          if [ "$count" -lt 100 ]; then
-            echo "WARNING: Word list suspiciously small ($count entries) — using baseline fallback"
-            cp tools/bannedwords_baseline.txt game/tf2vintage/bannedwords.txt
-          fi
-
       - name: Pack base-full.zip (full game-asset tree, no bin)
         run: |
           cd game

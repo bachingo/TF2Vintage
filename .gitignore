@@ -151,7 +151,6 @@ game/*/materials/vgui/logos/ui/spray_dog.vmt
 game/*/materials/vgui/logos/ui/spray_elited.vmt
 game/*/materials/vgui/logos/ui/spray_flashbanged.vmt
 game/*/materials/vgui/logos/ui/spray_kamikazi.vmt
-game/*/bannedwords.txt
 *.db
 
 # content source
