@@ -4507,15 +4507,16 @@ bool CEconItemSchema::MaybeInitFromBuffer( IDelayedSchemaData *pDelayedSchemaDat
 //-----------------------------------------------------------------------------
 bool CEconItemSchema::BInitFromDelayedBuffer()
 {
-	if ( !m_pDelayedSchemaData )
-		return true;
 
 	bool bSuccess = m_pDelayedSchemaData->InitializeSchema( this );
 	delete m_pDelayedSchemaData;
 	m_pDelayedSchemaData = NULL;
 	 
 	// We just got a new schema.  We need another PostInit()
-	ItemSystem()->PostInit();
+	if (bSuccess)
+	{
+		ItemSystem()->PostInit();
+	}
 
 	return bSuccess;
 }

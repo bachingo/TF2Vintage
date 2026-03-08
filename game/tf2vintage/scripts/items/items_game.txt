@@ -169,6 +169,18 @@
 			"color_name"	"QualityColorrarity4"
 		}
 	}
+	"rarities"
+	{
+	}
+	"item_series_types"
+	{
+	}
+	"item_collections"
+	{
+	} 
+	"operations"
+	{
+	}
 	"equip_regions_list"
 	{
 		"whole_head"		"1"
@@ -3913,9 +3925,6 @@
 			"item_name"	"#TF_Spectator_Default"
 			"item_slot"	"melee"
 		}
-	}
-	"stockitems"
-	{
 		"0"
 		{
 			"name"	"TF_WEAPON_BAT"
@@ -4305,9 +4314,6 @@
 			}
 			"baseitem"	"1"
 		}
-	}
-	"unlockitems"
-	{
 		"35"
 		{
 			"name"	"The Kritzkrieg"
@@ -8509,9 +8515,6 @@
 				}
 			}
 		}
-	}
-	"cosmeticitems"
-	{
 		"99"
 		{
 			"name"	"Legionaire's Lid"
@@ -8533,9 +8536,6 @@
 				}
 			}
 		}
-	}
-	"reskinitems"
-	{	
 		"10160"
 		{
 			"name"	"TTG Max Pistol"
@@ -9641,9 +9641,6 @@
 			"image_inventory"		"backpack/workshop/weapons/c_models/c_invasion_wrangler/c_invasion_wrangler"
 			"model_player"		"models/workshop/weapons/c_models/c_invasion_wrangler/c_invasion_wrangler.mdl"
 		}
-	}
-	"specialitems"
-	{
 		"30670"
 		{
 			"name"	"Golden Wrench"
@@ -9707,10 +9704,7 @@
 					"value"				"2"
 				}
 			}
-		}
-	}
-	"medals"
-	{	
+		}	
 		"121"
 		{
 			"name"	"The Devanon Special"
@@ -9781,9 +9775,6 @@
 				"use_per_class_bodygroups" "1"
 			}
 		}
-	}
-	"holiday"
-	{
 		"5617"
 		{
 			"name"		"Zombie Scout"

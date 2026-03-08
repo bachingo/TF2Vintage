@@ -78,12 +78,16 @@ C_SDKVersionChecker::~C_SDKVersionChecker()
 //-----------------------------------------------------------------------------
 bool C_SDKVersionChecker::Init()
 {
+	/*
 	if (!m_bInited)
 	{
 		g_SDKVersionParser.InitParser("../../appmanifest_243750.acf", true, false, true);
 		m_bInited = true;
 	}
+	*/
 
+	// HACK
+	m_bInited = true;
 	return true;
 }
 
