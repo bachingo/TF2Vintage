@@ -5,23 +5,22 @@
 // Automatically spawns Fake-CSM entities from the map's light_environment
 // without requiring any Hammer work.
 //
-// MODES (csm_mode convar):
+// MODES (csm_enable convar):
 //
-//   csm_mode 0  - Disabled entirely
-//   csm_mode 1  - CSM active alongside normal RTT shadows
-//   csm_mode 2  - CSM active, normal RTT/blob shadows suppressed, and the
-//                 two quality convars forced to their recommended values.
-//                 THIS IS THE DEFAULT.
+//   csm_enable 0  - Disabled entirely; normal engine shadows used as-is.
+//   csm_enable 1  - Pure CSM mode (default): normal RTT/blob shadows suppressed,
+//                   r_flashlightdepthres forced to 4096, and
+//                   mat_slopescaledepthbias_shadowmap forced to 4.
 //
 // DISABLING AT LAUNCH:
-//   Pass -csm_disable on the command line to force csm_mode 0 for the entire
-//   session and prevent it being changed at runtime. Also un-forces the two
-//   quality convars so they revert to the engine/user-set values.
+//   Pass -csm_disable on the command line to force csm_enable 0 for the entire
+//   session and prevent runtime changes. The two forced quality convars are also
+//   left at their default engine values.
 //
 // COLOR AUTO-SYNC:
-//   Reads the sun color from CEnvLight::GetLightColor() (parsed from the BSP
-//   "_light" key and stored in the protected m_vecLightColor member) and
-//   pushes it into the csm_color_* convars automatically.
+//   Reads the sun color from CEnvLight::GetLightColor() (stored in the
+//   protected m_vecLightRGB / m_flLightBrightness members added to lights.h)
+//   and pushes it into the csm_color_* convars automatically.
 //
 //=============================================================================//
 
@@ -35,50 +34,46 @@
 #include "tier0/memdbgon.h"
 
 //-----------------------------------------------------------------------------
-// Forward declaration of the global system instance so CON_COMMAND can reach it
+// Quality values forced in CSM mode
 //-----------------------------------------------------------------------------
-class CAutoCSMSystem;
-static CAutoCSMSystem s_AutoCSMSystem;
+static const int   k_iForcedDepthRes   = 4096;
+static const float k_flForcedSlopeBias = 4.0f;
 
 //-----------------------------------------------------------------------------
 // ConVars
 //-----------------------------------------------------------------------------
-static ConVar csm_mode(
-    "csm_mode", "2", FCVAR_ARCHIVE,
-    "Fake-CSM auto-spawn mode.\n"
-    "  0 = Off (normal shadows only)\n"
-    "  1 = CSM alongside normal shadows\n"
-    "  2 = Pure CSM: normal shadows suppressed, r_flashlightdepthres and\n"
-    "      mat_slopescaledepthbias_shadowmap forced to recommended values (default)\n"
+static ConVar csm_enable(
+    "csm_enable", "1", FCVAR_ARCHIVE,
+    "Fake-CSM auto-spawn toggle.\n"
+    "  0 = Off: normal engine shadows, no CSM.\n"
+    "  1 = On (default): pure CSM mode. Normal RTT/blob shadows suppressed,\n"
+    "      r_flashlightdepthres forced to 4096, and\n"
+    "      mat_slopescaledepthbias_shadowmap forced to 4.\n"
     "Pass -csm_disable at launch to lock this to 0 for the whole session.",
-    true, 0, true, 2 );
+    true, 0, true, 1 );
 
 static ConVar csm_autospawn_quiet(
     "csm_autospawn_quiet", "1", FCVAR_NONE,
     "Suppress non-developer log output from the auto-CSM system." );
 
 //-----------------------------------------------------------------------------
-// Quality values forced in mode 2
-//-----------------------------------------------------------------------------
-static const int   k_iForcedDepthRes   = 4096;
-static const float k_flForcedSlopeBias = 4.0f;
-
-//-----------------------------------------------------------------------------
 // CAutoCSMSystem
+// NOTE: class must be fully defined before the global instance declaration.
 //-----------------------------------------------------------------------------
 class CAutoCSMSystem : public CAutoGameSystem
 {
 public:
-    CAutoCSMSystem() : CAutoGameSystem( "CAutoCSMSystem" ),
-        m_hCascadeLight( NULL ),
-        m_bAutoSpawned( false ),
-        m_bShadowsSuppressed( false ),
-        m_bQualityForced( false ),
-        m_bLaunchDisabled( false ),
-        m_iOldDepthRes( 2048 ),
-        m_flOldSlopeBias( 1.0f ),
-        m_iOldRTT( 1 ),
-        m_iOldGameControl( -1 )
+    CAutoCSMSystem()
+        : CAutoGameSystem( "CAutoCSMSystem" )
+        , m_hCascadeLight( NULL )
+        , m_bAutoSpawned( false )
+        , m_bShadowsSuppressed( false )
+        , m_bQualityForced( false )
+        , m_bLaunchDisabled( false )
+        , m_iOldDepthRes( 2048 )
+        , m_flOldSlopeBias( 1.0f )
+        , m_iOldRTT( 1 )
+        , m_iOldGameControl( -1 )
     {}
 
     // -------------------------------------------------------------------------
@@ -89,7 +84,7 @@ public:
         if ( CommandLine()->FindParm( "-csm_disable" ) )
         {
             m_bLaunchDisabled = true;
-            csm_mode.SetValue( 0 );
+            csm_enable.SetValue( 0 );
             Msg( "[AutoCSM] Disabled for this session via -csm_disable.\n" );
         }
         return true;
@@ -105,15 +100,15 @@ public:
         m_bShadowsSuppressed = false;
         m_bQualityForced     = false;
 
-        if ( m_bLaunchDisabled || csm_mode.GetInt() == 0 )
+        if ( m_bLaunchDisabled || csm_enable.GetInt() == 0 )
             return;
 
-        // If a mapper-placed env_cascade_light exists, leave it alone but
-        // still apply the mode-2 quality/shadow settings.
+        // If a mapper-placed env_cascade_light already exists, leave it alone
+        // but still apply the shadow suppression and quality forcing.
         if ( gEntList.FindEntityByClassname( NULL, "env_cascade_light" ) )
         {
             DevMsg( "[AutoCSM] Mapper-placed env_cascade_light found – skipping auto-spawn.\n" );
-            ApplyMode( csm_mode.GetInt() );
+            ApplyCSMState( true );
             return;
         }
 
@@ -121,7 +116,7 @@ public:
         CBaseEntity *pBase = gEntList.FindEntityByClassname( NULL, "light_environment" );
         if ( !pBase )
         {
-            DevMsg( "[AutoCSM] No light_environment – CSM not spawned.\n" );
+            DevMsg( "[AutoCSM] No light_environment found – CSM not spawned.\n" );
             return;
         }
 
@@ -133,7 +128,7 @@ public:
         }
 
         SpawnCSMFromLightEnv( pEnvLight );
-        ApplyMode( csm_mode.GetInt() );
+        ApplyCSMState( true );
     }
 
     // -------------------------------------------------------------------------
@@ -141,27 +136,22 @@ public:
     // -------------------------------------------------------------------------
     virtual void LevelShutdownPostEntity() OVERRIDE
     {
-        RestoreMode();
+        ApplyCSMState( false );
         m_hCascadeLight = NULL;
         m_bAutoSpawned  = false;
     }
 
     // -------------------------------------------------------------------------
-    // FrameUpdatePostEntityThink: react to csm_mode changes at runtime.
+    // FrameUpdatePostEntityThink: react to csm_enable changes at runtime.
     // -------------------------------------------------------------------------
     virtual void FrameUpdatePostEntityThink() OVERRIDE
     {
         if ( m_bLaunchDisabled )
             return;
 
-        int  wantMode      = csm_mode.GetInt();
-        bool wantSuppressed = ( wantMode == 2 );
-        bool wantQuality    = ( wantMode == 2 );
-
-        if ( wantSuppressed != m_bShadowsSuppressed )
-            SetShadowSuppression( wantSuppressed );
-        if ( wantQuality != m_bQualityForced )
-            SetQualityForced( wantQuality );
+        bool bWantActive = ( csm_enable.GetInt() != 0 );
+        if ( bWantActive != m_bShadowsSuppressed )
+            ApplyCSMState( bWantActive );
     }
 
     // -------------------------------------------------------------------------
@@ -195,24 +185,19 @@ private:
     // -------------------------------------------------------------------------
     void SpawnCSMFromLightEnv( CEnvLight *pEnvLight )
     {
-        // --- Sun direction ---
-        // m_iPitch: degrees below the horizon (public in Fake-CSM lights.h).
-        // Yaw: from the entity's abs angles (set by Hammer "angles" key).
+        // Sun direction: pitch from m_iPitch (public), yaw from abs angles.
         QAngle angSun;
         angSun.x = (float)( -pEnvLight->m_iPitch );
         angSun.y = pEnvLight->GetAbsAngles().y;
         angSun.z = 0.0f;
 
-        // --- Sun color ---
-        // GetLightColor() returns raw 0-255 RGBA parsed from the BSP "_light"
-        // key, stored in the new protected m_vecLightColor member.
+        // Sun color: read from the protected members via the public accessor.
         Vector4D col = pEnvLight->GetLightColor();
         ConVarRef( "csm_color_r" ).SetValue( (int)col.x );
         ConVarRef( "csm_color_g" ).SetValue( (int)col.y );
         ConVarRef( "csm_color_b" ).SetValue( (int)col.z );
-        ConVarRef( "csm_color_a" ).SetValue( (int)col.w ); // Hammer brightness scalar
+        ConVarRef( "csm_color_a" ).SetValue( (int)col.w );
 
-        // --- Create entity ---
         CBaseEntity *pCSMEnt = CreateEntityByName( "env_cascade_light" );
         if ( !pCSMEnt )
         {
@@ -220,9 +205,6 @@ private:
             return;
         }
 
-        // uselightenvangles=1 tells CLightOrigin::Spawn() to find
-        // light_environment and re-derive pitch+yaw from it directly,
-        // which is more accurate than anything we can pass through angles.
         pCSMEnt->KeyValue( "uselightenvangles", "1" );
         pCSMEnt->KeyValue( "enablethird",       "1" );
         pCSMEnt->KeyValue( "enableshadows",     "1" );
@@ -255,18 +237,12 @@ private:
     }
 
     // -------------------------------------------------------------------------
-    // Apply/restore all state for a given mode.
+    // Enable or disable all CSM-related overrides atomically.
     // -------------------------------------------------------------------------
-    void ApplyMode( int iMode )
+    void ApplyCSMState( bool bEnable )
     {
-        SetShadowSuppression( iMode == 2 );
-        SetQualityForced    ( iMode == 2 );
-    }
-
-    void RestoreMode()
-    {
-        if ( m_bShadowsSuppressed ) SetShadowSuppression( false );
-        if ( m_bQualityForced     ) SetQualityForced    ( false );
+        SetShadowSuppression( bEnable );
+        SetQualityForced( bEnable );
     }
 
     // -------------------------------------------------------------------------
@@ -277,7 +253,7 @@ private:
         ConVarRef rtt ( "r_shadowrendertotexture" );
         ConVarRef ctrl( "r_shadows_gamecontrol"  );
 
-        if ( bSuppress )
+        if ( bSuppress && !m_bShadowsSuppressed )
         {
             m_iOldRTT         = rtt.IsValid()  ? rtt.GetInt()  : 1;
             m_iOldGameControl = ctrl.IsValid() ? ctrl.GetInt() : -1;
@@ -286,9 +262,9 @@ private:
             if ( ctrl.IsValid() ) ctrl.SetValue( 0 );
 
             m_bShadowsSuppressed = true;
-            DevMsg( "[AutoCSM] Normal shadows suppressed (mode 2).\n" );
+            DevMsg( "[AutoCSM] Normal shadows suppressed.\n" );
         }
-        else
+        else if ( !bSuppress && m_bShadowsSuppressed )
         {
             if ( rtt.IsValid()  ) rtt.SetValue( m_iOldRTT );
             if ( ctrl.IsValid() ) ctrl.SetValue( m_iOldGameControl );
@@ -306,7 +282,7 @@ private:
         ConVarRef depthRes ( "r_flashlightdepthres"             );
         ConVarRef slopeBias( "mat_slopescaledepthbias_shadowmap" );
 
-        if ( bForce )
+        if ( bForce && !m_bQualityForced )
         {
             m_iOldDepthRes   = depthRes.IsValid()  ? depthRes.GetInt()   : 2048;
             m_flOldSlopeBias = slopeBias.IsValid() ? slopeBias.GetFloat(): 1.0f;
@@ -319,7 +295,7 @@ private:
                     "mat_slopescaledepthbias_shadowmap=%.1f\n",
                     k_iForcedDepthRes, k_flForcedSlopeBias );
         }
-        else
+        else if ( !bForce && m_bQualityForced )
         {
             if ( depthRes.IsValid()  ) depthRes.SetValue( m_iOldDepthRes );
             if ( slopeBias.IsValid() ) slopeBias.SetValue( m_flOldSlopeBias );
@@ -329,7 +305,6 @@ private:
         }
     }
 
-    // ---- state ----
     EHANDLE m_hCascadeLight;
     bool    m_bAutoSpawned;
     bool    m_bShadowsSuppressed;
@@ -341,6 +316,11 @@ private:
     int     m_iOldRTT;
     int     m_iOldGameControl;
 };
+
+//-----------------------------------------------------------------------------
+// Global instance — declared AFTER the class is fully defined so MSVC is happy.
+//-----------------------------------------------------------------------------
+static CAutoCSMSystem s_AutoCSMSystem;
 
 //-----------------------------------------------------------------------------
 // Console command

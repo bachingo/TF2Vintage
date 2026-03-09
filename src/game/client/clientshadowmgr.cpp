@@ -996,6 +996,12 @@ private:
 #ifdef ASW_PROJECTED_TEXTURES
 	// Get current frustum extents
 	void GetFrustumExtents( ClientShadowHandle_t handle, Vector &vecMin, Vector &vecMax );
+	ShadowHandle_t GetShadowHandle( ClientShadowHandle_t clienthandle );
+	int GetNumShadowDepthtextures();
+	CTextureReference GetShadowDepthTex( int num );
+	ShadowHandle_t GetShadowDepthHandle( int num );
+	ShadowHandle_t GetActiveDepthTextureHandle();
+	void UpdateUberlightState( FlashlightState_t& flashlightState, const UberlightState_t& uberlightState );
 #endif
 
 	// Set flashlight light world flag
@@ -2619,7 +2625,7 @@ inline ShadowType_t CClientShadowMgr::GetActualShadowCastType( IClientRenderable
 class CShadowLeafEnum : public ISpatialLeafEnumerator
 {
 public:
-	bool EnumerateLeaf( int leaf, int context )
+	bool EnumerateLeaf( int leaf, intp context )
 	{
 		m_LeafList.AddToTail( leaf );
 		return true;
@@ -4423,6 +4429,48 @@ void CClientShadowMgr::GetFrustumExtents( ClientShadowHandle_t handle, Vector &v
 	AddPointToExtentsHelper( flashlightToWorld, Vector( 1.0f, 1.0f, 0.0f ), vecMin, vecMax );
 	AddPointToExtentsHelper( flashlightToWorld, Vector( 1.0f, 1.0f, 1.0f ), vecMin, vecMax );
 }
+//-----------------------------------------------------------------------------
+// Pure virtual overrides required by IClientShadowMgr (added for this SDK).
+// These features are not implemented in the Fake-CSM shadow manager; the stubs
+// satisfy the vtable so the class can be instantiated.
+//-----------------------------------------------------------------------------
+ShadowHandle_t CClientShadowMgr::GetShadowHandle( ClientShadowHandle_t clienthandle )
+{
+	if ( !m_Shadows.IsValidIndex( clienthandle ) )
+		return SHADOW_HANDLE_INVALID;
+	return m_Shadows[ clienthandle ].m_ShadowHandle;
+}
+
+int CClientShadowMgr::GetNumShadowDepthtextures()
+{
+	return m_DepthTextureCache.Count();
+}
+
+CTextureReference CClientShadowMgr::GetShadowDepthTex( int num )
+{
+	if ( num >= 0 && num < m_DepthTextureCache.Count() )
+		return m_DepthTextureCache[ num ];
+	CTextureReference dummy;
+	return dummy;
+}
+
+ShadowHandle_t CClientShadowMgr::GetShadowDepthHandle( int num )
+{
+	// The Fake-CSM manager has no per-depth-texture shadow handle tracking;
+	// return the invalid sentinel so callers can handle it gracefully.
+	return SHADOW_HANDLE_INVALID;
+}
+
+ShadowHandle_t CClientShadowMgr::GetActiveDepthTextureHandle()
+{
+	return SHADOW_HANDLE_INVALID;
+}
+
+void CClientShadowMgr::UpdateUberlightState( FlashlightState_t& flashlightState, const UberlightState_t& uberlightState )
+{
+	// Uberlight is not supported in the Fake-CSM shadow manager.
+}
+
 #endif
 
 //-----------------------------------------------------------------------------
@@ -4828,7 +4876,7 @@ bool CShadowProxy::Init( IMaterial *pMaterial, KeyValues *pKeyValues )
 
 void CShadowProxy::OnBind( void *pProxyData )
 {
-	unsigned short clientShadowHandle = ( unsigned short )(int)pProxyData&0xffff;
+	unsigned short clientShadowHandle = ( unsigned short )((intp)pProxyData&0xffff);
 	ITexture* pTex = s_ClientShadowMgr.GetShadowTexture( clientShadowHandle );
 	m_BaseTextureVar->SetTextureValue( pTex );
 	if ( ToolsEnabled() )
@@ -4912,7 +4960,7 @@ bool CShadowModelProxy::Init( IMaterial *pMaterial, KeyValues *pKeyValues )
 
 void CShadowModelProxy::OnBind( void *pProxyData )
 {
-	unsigned short clientShadowHandle = ( unsigned short )((int)pProxyData&0xffff);
+	unsigned short clientShadowHandle = ( unsigned short )((intp)pProxyData&0xffff);
 	ITexture* pTex = s_ClientShadowMgr.GetShadowTexture( clientShadowHandle );
 	m_BaseTextureVar->SetTextureValue( pTex );
 
