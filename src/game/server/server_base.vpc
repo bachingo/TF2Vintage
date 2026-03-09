@@ -450,6 +450,8 @@ $Project
 		$File	"lightglow.cpp"
 		$File	"lights.cpp"
 		$File	"lights.h"
+		$File	"env_cascade_light.cpp"
+		$File	"csm_autospawn.cpp"
 		$File	"locksounds.h"
 		$File	"logic_measure_movement.cpp"
 		$File	"logic_navigation.cpp"

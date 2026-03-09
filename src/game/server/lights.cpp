@@ -233,124 +233,73 @@ LINK_ENTITY_TO_CLASS( light_spot, CLight );
 LINK_ENTITY_TO_CLASS( light_glspot, CLight );
 
 
-class CEnvLight : public CBaseEntity
-{
-public:
-	DECLARE_CLASS( CEnvLight, CBaseEntity );
-	DECLARE_NETWORKCLASS();
-	DECLARE_DATADESC();
-
-	CEnvLight();
-
-	virtual bool KeyValue( const char *szKeyName, const char *szValue );
-	virtual void Spawn();
-
-	virtual int ObjectCaps()
-	{
-		return BaseClass::ObjectCaps() & ~FCAP_ACROSS_TRANSITION;
-	}
-
-	virtual int UpdateTransmitState()
-	{
-		return SetTransmitState( FL_EDICT_ALWAYS );
-	}
-
-private:
-	CNetworkQAngle( m_angSunAngles );
-	CNetworkVector( m_vecLight );
-	CNetworkVector( m_vecAmbient );
-	CNetworkVar( bool, m_bCascadedShadowMappingEnabled );
-	bool m_bHasHDRLightSet;
-	bool m_bHasHDRAmbientSet;
-};
 
 LINK_ENTITY_TO_CLASS( light_environment, CEnvLight );
 
-BEGIN_DATADESC( CEnvLight )
-	DEFINE_FIELD( m_angSunAngles, FIELD_VECTOR ),
-	DEFINE_FIELD( m_vecLight, FIELD_VECTOR ),
-	DEFINE_FIELD( m_vecAmbient, FIELD_VECTOR ),
-	DEFINE_FIELD( m_bCascadedShadowMappingEnabled, FIELD_BOOLEAN ),
+BEGIN_DATADESC(CEnvLight)
+
+DEFINE_FIELD( m_vecLightRGB, FIELD_VECTOR ),
+DEFINE_FIELD( m_flLightBrightness, FIELD_FLOAT ),
+
+// Fuctions
+DEFINE_FUNCTION(FadeThink),
+
+// Inputs
+DEFINE_INPUTFUNC(FIELD_VOID, "Toggle", InputToggle),
+DEFINE_INPUTFUNC(FIELD_VOID, "TurnOn", InputTurnOn),
+DEFINE_INPUTFUNC(FIELD_VOID, "TurnOff", InputTurnOff),
+
 END_DATADESC()
 
-IMPLEMENT_SERVERCLASS_ST_NOBASE( CEnvLight, DT_CEnvLight )
-	SendPropQAngles( SENDINFO( m_angSunAngles ) ),
-	SendPropVector( SENDINFO( m_vecLight ) ),
-	SendPropVector( SENDINFO( m_vecAmbient ) ),
-	SendPropBool( SENDINFO( m_bCascadedShadowMappingEnabled ) ),
-END_SEND_TABLE()
-
-CEnvLight::CEnvLight() : m_bHasHDRLightSet( false ), m_bHasHDRAmbientSet( false )
-{}
-
-static Vector ConvertLightmapGammaToLinear( int *iColor4 )
+//------------------------------------------------------------------------------
+// Purpose : Fade light to new starting pattern value then stop thinking
+//------------------------------------------------------------------------------
+void CEnvLight::FadeThink(void)
 {
-	Vector vecColor;
-	for ( int i = 0; i < 3; ++i )
+	if (m_iCurrentFade < m_iTargetFade)
 	{
-		vecColor[i] = powf( iColor4[i] / 255.0f, 2.2f );
+		m_iCurrentFade++;
 	}
-	vecColor *= iColor4[3] / 255.0f;
-	return vecColor;
+	else if (m_iCurrentFade > m_iTargetFade)
+	{
+		m_iCurrentFade--;
+	}
+
+	// If we're done fading instantiate our light pattern and stop thinking
+	if (m_iCurrentFade == m_iTargetFade)
+	{
+		engine->LightStyle(m_iStyle, (char*)STRING(m_iszPattern));
+		SetNextThink(TICK_NEVER_THINK);
+	}
+	// Otherwise instantiate our current fade value and keep thinking
+	else
+	{
+		char sCurString[2];
+		sCurString[0] = m_iCurrentFade;
+		sCurString[1] = 0;
+		engine->LightStyle(m_iStyle, sCurString);
+
+		// UNDONE: Consider making this settable war to control fade speed
+		SetNextThink(gpGlobals->curtime + 0.1f);
+	}
 }
 
 bool CEnvLight::KeyValue( const char *szKeyName, const char *szValue )
 {
-	if ( FStrEq( szKeyName, "pitch" ) )
+	if (FStrEq(szKeyName, "_light"))
 	{
-		m_angSunAngles.SetX( -atof( szValue ) );
+		// Parse raw RGBA (0-255) from Hammer's "_light" key and store it so
+		// external systems (e.g. csm_autospawn) can read the sun color without
+		// needing friend/private access.
+		float tmp[4] = { 255.0f, 255.0f, 255.0f, 255.0f };
+		UTIL_StringToFloatArray( tmp, 4, szValue );
+		// The 4th value is a brightness scalar in Hammer format; keep it raw.
+		m_vecLightRGB.Init( tmp[0], tmp[1], tmp[2] );
+		m_flLightBrightness = tmp[3];
 	}
-	else if ( FStrEq( szKeyName, "angles" ) )
+	else if (FStrEq(szKeyName, "pitch"))
 	{
-		Vector vecParsed;
-		UTIL_StringToVector( vecParsed.Base(), szValue );
-		m_angSunAngles.SetY( vecParsed.y );
-	}
-	else if ( FStrEq( szKeyName, "_light" ) || FStrEq( szKeyName, "_lightHDR" ) )
-	{
-		int iParsed[4];
-		UTIL_StringToIntArray( iParsed, 4, szValue );
-
-		if ( iParsed[0] <= 0 || iParsed[1] <= 0 || iParsed[2] <= 0 )
-			return true;
-
-		if ( FStrEq( szKeyName, "_lightHDR" ) )
-		{
-			// HDR overrides LDR
-			m_bHasHDRLightSet = true;
-		}
-		else if ( m_bHasHDRLightSet )
-		{
-			// If this is LDR and we got HDR already, bail out.
-			return true;
-		}
-
-		m_vecLight = ConvertLightmapGammaToLinear( iParsed );
-		Msg( "Parsed light_environment light: %i %i %i %i\n",
-			 iParsed[0], iParsed[1], iParsed[2], iParsed[3] );
-	}
-	else if ( FStrEq( szKeyName, "_ambient" ) || FStrEq( szKeyName, "_ambientHDR" ) )
-	{
-		int iParsed[4];
-		UTIL_StringToIntArray( iParsed, 4, szValue );
-
-		if ( iParsed[0] <= 0 || iParsed[1] <= 0 || iParsed[2] <= 0 )
-			return true;
-
-		if ( FStrEq( szKeyName, "_ambientHDR" ) )
-		{
-			// HDR overrides LDR
-			m_bHasHDRLightSet = true;
-		}
-		else if ( m_bHasHDRLightSet )
-		{
-			// If this is LDR and we got HDR already, bail out.
-			return true;
-		}
-
-		m_vecAmbient = ConvertLightmapGammaToLinear( iParsed );
-		Msg( "Parsed light_environment ambient: %i %i %i %i\n",
-			 iParsed[0], iParsed[1], iParsed[2], iParsed[3] );
+		m_iPitch = atoi(szValue);
 	}
 	else
 	{
@@ -360,11 +309,84 @@ bool CEnvLight::KeyValue( const char *szKeyName, const char *szValue )
 	return true;
 }
 
-void CEnvLight::Spawn()
+//-----------------------------------------------------------------------------
+// Purpose: Turn the light on
+//-----------------------------------------------------------------------------
+void CEnvLight::TurnOn(void)
 {
-	SetName( MAKE_STRING( "light_environment" ) );
+	if (m_iszPattern != NULL_STRING)
+	{
+		engine->LightStyle(m_iStyle, (char*)STRING(m_iszPattern));
+	}
+	else
+	{
+		engine->LightStyle(m_iStyle, "m");
+	}
 
-	BaseClass::Spawn();
+	CLEARBITS(m_spawnflags, SF_LIGHT_START_OFF);
+}
 
-	m_bCascadedShadowMappingEnabled = HasSpawnFlags( 0x01 );
+//-----------------------------------------------------------------------------
+// Purpose: Turn the light off
+//-----------------------------------------------------------------------------
+void CEnvLight::TurnOff(void)
+{
+	engine->LightStyle(m_iStyle, "a");
+	SETBITS(m_spawnflags, SF_LIGHT_START_OFF);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Toggle the light on/off
+//-----------------------------------------------------------------------------
+void CEnvLight::Toggle(void)
+{
+	//Toggle it
+	if (FBitSet(m_spawnflags, SF_LIGHT_START_OFF))
+	{
+		TurnOn();
+	}
+	else
+	{
+		TurnOff();
+	}
+}
+
+
+void CEnvLight::Spawn( void )
+{
+	// Default to white if no _light key was parsed (e.g. outdoor-only maps)
+	if ( m_vecLightRGB.LengthSqr() == 0.0f )
+	{
+		m_vecLightRGB.Init( 255.0f, 255.0f, 255.0f );
+		m_flLightBrightness = 255.0f;
+	}
+
+	BaseClass::Spawn( );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Handle the "turnon" input handler
+// Input  : &inputdata - 
+//-----------------------------------------------------------------------------
+void CEnvLight::InputTurnOn(inputdata_t& inputdata)
+{
+	TurnOn();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Handle the "turnoff" input handler
+// Input  : &inputdata - 
+//-----------------------------------------------------------------------------
+void CEnvLight::InputTurnOff(inputdata_t& inputdata)
+{
+	TurnOff();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Handle the "toggle" input handler
+// Input  : &inputdata - 
+//-----------------------------------------------------------------------------
+void CEnvLight::InputToggle(inputdata_t& inputdata)
+{
+	Toggle();
 }
