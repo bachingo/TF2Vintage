@@ -993,7 +993,6 @@ private:
 	// Set and clear flashlight target renderable
 	void	SetFlashlightTarget( ClientShadowHandle_t shadowHandle, EHANDLE targetEntity );
 
-#ifdef ASW_PROJECTED_TEXTURES
 	// Get current frustum extents
 	void GetFrustumExtents( ClientShadowHandle_t handle, Vector &vecMin, Vector &vecMax );
 	ShadowHandle_t GetShadowHandle( ClientShadowHandle_t clienthandle );
@@ -1002,7 +1001,6 @@ private:
 	ShadowHandle_t GetShadowDepthHandle( int num );
 	ShadowHandle_t GetActiveDepthTextureHandle();
 	void UpdateUberlightState( FlashlightState_t& flashlightState, const UberlightState_t& uberlightState );
-#endif
 
 	// Set flashlight light world flag
 	void	SetFlashlightLightWorld( ClientShadowHandle_t shadowHandle, bool bLightWorld );
@@ -4397,7 +4395,6 @@ void CClientShadowMgr::SetViewFlashlightState( int nActiveFlashlightCount, Clien
 	}
 }
 
-#ifdef ASW_PROJECTED_TEXTURES
 void AddPointToExtentsHelper( const VMatrix &flashlightToWorld, const Vector &vecPos, Vector &vecMin, Vector &vecMax )
 {
 	Vector worldSpacePos;
@@ -4470,8 +4467,6 @@ void CClientShadowMgr::UpdateUberlightState( FlashlightState_t& flashlightState,
 {
 	// Uberlight is not supported in the Fake-CSM shadow manager.
 }
-
-#endif
 
 //-----------------------------------------------------------------------------
 // Re-render shadow depth textures that lie in the leaf list
