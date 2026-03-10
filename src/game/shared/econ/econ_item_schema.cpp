@@ -4504,9 +4504,26 @@ bool CEconItemSchema::MaybeInitFromBuffer( IDelayedSchemaData *pDelayedSchemaDat
 //-----------------------------------------------------------------------------
 // We're in a safe place to change the contents of the schema, so do so and clean
 // up whatever memory we were using.
+//
+// TF2Vintage: m_pDelayedSchemaData is only populated when the schema arrives via
+// a GC/HTTP download path (MaybeInitFromBuffer).  In standalone/dedicated-server
+// builds the schema is loaded synchronously by BInit() during system init, which
+// never touches m_pDelayedSchemaData at all, leaving it NULL.
+//
+// LevelInit (server) and LevelInitPreEntity (client) both call this function
+// unconditionally, so we must guard against the NULL case.  When there is no
+// pending delayed buffer the schema is already valid -- nothing to do.
 //-----------------------------------------------------------------------------
 bool CEconItemSchema::BInitFromDelayedBuffer()
 {
+	// Guard: no pending delayed data means the schema was already loaded
+	// synchronously via BInit() -- this is the normal standalone-server path.
+	// Dereferencing a null pointer here was the primary CTD on LevelInit.
+	if ( !m_pDelayedSchemaData )
+	{
+		DevMsg( "[Econ] BInitFromDelayedBuffer: no pending schema buffer (schema already loaded synchronously).\n" );
+		return true;
+	}
 
 	bool bSuccess = m_pDelayedSchemaData->InitializeSchema( this );
 	delete m_pDelayedSchemaData;
