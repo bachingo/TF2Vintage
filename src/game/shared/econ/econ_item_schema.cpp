@@ -4274,6 +4274,12 @@ CLootlistJob *CEconItemSchema::CreateLootlistJob( const char *pszContext, KeyVal
 //-----------------------------------------------------------------------------
 void CEconItemSchema::Reset( void )
 {
+	if ( m_pDelayedSchemaData )
+	{
+		delete m_pDelayedSchemaData;
+		m_pDelayedSchemaData = NULL;
+	}
+	
 	++m_unResetCount;
 
 	m_unFirstValidClass = 0;

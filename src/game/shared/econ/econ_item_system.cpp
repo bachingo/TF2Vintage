@@ -95,8 +95,10 @@ CEconItemSystem::~CEconItemSystem( void )
 void CEconItemSystem::Init( void )
 {
 #ifdef USES_ECON_ITEMS
-	ParseItemSchemaFile( "scripts/items/items_game.txt" );
-#endif // USES_ECON_ITEMS
+    if ( m_itemSchema.GetVersion() != 0 )
+        return;  // Already loaded — don't re-parse
+    ParseItemSchemaFile( "scripts/items/items_game.txt" );
+#endif
 }
 
 

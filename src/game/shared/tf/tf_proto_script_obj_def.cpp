@@ -601,11 +601,12 @@ bool CProtoBufScriptObjectDefinitionManager::Init()
 
 void CProtoBufScriptObjectDefinitionManager::PostInit()
 {
-	// PostInit is called automatically on the client/server due to this
-	// deriving from AutoGameSystem.  The schema is also an AutoGameSystem and gets
-	// initialized in the Init() round. To make sure we go after the Schema,
-	// we need to init our defs on the PostInit() round.
-	BPostDefinitionsLoaded();
+    // Only call BPostDefinitionsLoaded if definitions were actually loaded.
+    // BInitDefinitions may have legitimately returned early (no proto def file).
+    if ( m_bDefinitionsLoaded )
+    {
+        BPostDefinitionsLoaded();
+    }
 }
 
 struct SpewOnDestruct
@@ -733,11 +734,12 @@ bool CProtoBufScriptObjectDefinitionManager::BInitDefinitions()
 
 bool CProtoBufScriptObjectDefinitionManager::BPostDefinitionsLoaded()
 {
-	if ( !m_bDefinitionsLoaded && !m_bSourceFilesLoaded )
-	{
-		AssertMsg( false, "BPostDefinitionsLoaded called before BInitDefinitions!\n" );
-		SCHEMA_INIT_SUBSTEP( BInitDefinitions() );
-	}
+    if ( !m_bDefinitionsLoaded && !m_bSourceFilesLoaded )
+    {
+        // Don't recurse into BInitDefinitions - just warn and bail.
+        Warning( "[ProtoScriptDefs] BPostDefinitionsLoaded called before BInitDefinitions -- skipping.\n" );
+        return false;  // was: AssertMsg + SCHEMA_INIT_SUBSTEP which recursed
+    }
 
 	CUtlVector<CUtlString> vecErrors;
 	CUtlVector<CUtlString>* pVecErrors = &vecErrors; // Silly, buy makes the SCHEMA_INIT_ macros work

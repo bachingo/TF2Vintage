@@ -210,7 +210,7 @@ CTFInventoryManager *TFInventoryManager( void )
 // Purpose: 
 //-----------------------------------------------------------------------------
 CTFInventoryManager::CTFInventoryManager( void )
-
+	: m_pDefaultItem( NULL )
 {
 }
 
@@ -225,7 +225,20 @@ CTFInventoryManager::~CTFInventoryManager( void )
 void CTFInventoryManager::PostInit( void )
 {
 	BaseClass::PostInit();
-	GenerateBaseItems();
+
+	// Only build base loadout items if the schema actually loaded something.
+	// Previously this ran unconditionally and would populate items from a
+	// partially-initialized or empty schema when called too early in the
+	// init sequence. With the econ init fixes in place, GetVersion() is
+	// non-zero by the time PostInit fires, so this is safe.
+	if ( ItemSystem() && ItemSystem()->GetItemSchema()->GetVersion() != 0 )
+	{
+		GenerateBaseItems();
+	}
+	else
+	{
+		DevMsg( "[Econ] CTFInventoryManager::PostInit: schema not yet loaded, deferring GenerateBaseItems.\n" );
+	}
 }
 
 //-----------------------------------------------------------------------------
