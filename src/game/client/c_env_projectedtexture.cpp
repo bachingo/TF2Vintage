@@ -55,6 +55,7 @@ IMPLEMENT_CLIENTCLASS_DT( C_EnvProjectedTexture, DT_EnvProjectedTexture, CEnvPro
 	RecvPropFloat( RECVINFO( m_flNearZ ) ),
 	RecvPropFloat( RECVINFO( m_flFarZ ) ),
 	RecvPropInt( RECVINFO( m_nShadowQuality ) ),
+	RecvPropFloat( RECVINFO( m_flShadowFilterSize ) ),
 
 	RecvPropBool(	 RECVINFO( m_bEnableVolumetrics ) ),
 	RecvPropBool(	 RECVINFO( m_bEnableVolumetricsLOD ) ),
@@ -209,6 +210,9 @@ void C_EnvProjectedTexture::UpdateLight(bool bForceUpdate)
 	m_FlashlightState.m_FarZ = m_flFarZ;
 	m_FlashlightState.m_flShadowSlopeScaleDepthBias = mat_slopescaledepthbias_shadowmap.GetFloat();
 	m_FlashlightState.m_flShadowDepthBias = mat_depthbias_shadowmap.GetFloat();
+	// Use per-entity shadow filter size if set, otherwise fall back to global csm_filter
+	extern ConVar csm_filter;
+	m_FlashlightState.m_flShadowFilterSize = ( m_flShadowFilterSize > 0.0f ) ? m_flShadowFilterSize : csm_filter.GetFloat();
 	m_FlashlightState.m_bEnableShadows = m_bEnableShadows;
 	m_FlashlightState.m_pSpotlightTexture = m_SpotlightTexture;
 	m_FlashlightState.m_nSpotlightTextureFrame = m_nSpotlightTextureFrame;

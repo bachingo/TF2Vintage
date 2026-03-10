@@ -33,7 +33,9 @@ ConVar csm_color_a("csm_color_a", "255");
 ConVar csm_round_pos("csm_round_pos", "1");
 
 ConVar csm_filter("csm_filter", "1");
-ConVar csm_enable("csm_enable", "1");
+// csm_enable is now an alias for r_lighting_overhaul.
+// Defined in lighting_overhaul.cpp; referenced here via extern.
+extern ConVar r_lighting_overhaul;
 
 //-----------------------------------------------------------------------------
 // Purpose: main point for change angle of the light
@@ -346,7 +348,7 @@ void C_EnvCascadeLight::UpdateLight( bool bForceUpdate )
 void C_EnvCascadeLight::Simulate( void )
 {
 	
-	m_bState = csm_enable.GetBool();
+	m_bState = r_lighting_overhaul.GetBool();
 	UpdateLight(true);
 	BaseClass::Simulate();
 }
@@ -611,7 +613,7 @@ void C_EnvCascadeLightSecond::UpdateLight(bool bForceUpdate)
 
 void C_EnvCascadeLightSecond::Simulate(void)
 {
-	m_bState = csm_enable.GetBool();
+	m_bState = r_lighting_overhaul.GetBool();
 	UpdateLight(true);
 	BaseClass::Simulate();
 }
@@ -886,7 +888,7 @@ void C_EnvCascadeLightThird::UpdateLight(bool bForceUpdate)
 
 void C_EnvCascadeLightThird::Simulate(void)
 {
-	m_bState = csm_enable.GetBool();
+	m_bState = r_lighting_overhaul.GetBool();
 	UpdateLight(true);
 	BaseClass::Simulate();
 }

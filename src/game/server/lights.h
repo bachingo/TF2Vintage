@@ -50,9 +50,11 @@ class CEnvLight : public CLight
 public:
 	DECLARE_CLASS( CEnvLight, CLight );
 	DECLARE_DATADESC();
+	DECLARE_SERVERCLASS();
 
 	bool	KeyValue( const char *szKeyName, const char *szValue ); 
 	void	Spawn( void );
+	void	Think( void );  // Called by sky_tod to push networked state
 
 	void	FadeThink(void);
 
@@ -76,6 +78,14 @@ public:
 	{
 		return Vector4D( m_vecLightRGB.x, m_vecLightRGB.y, m_vecLightRGB.z, m_flLightBrightness );
 	}
+
+	// Networked sun state — driven by sky_tod.cpp at runtime.
+	// These feed directly into C_EnvLight::GetShadowMappingConstants() on the client
+	// which the engine CSM shadow pass reads every frame.
+	CNetworkVar( QAngle, m_angSunAngles );          // yaw/pitch/roll of sun in sky
+	CNetworkVector( m_vecLight );                   // sun direct light colour (linear)
+	CNetworkVector( m_vecAmbient );                 // sky ambient colour (linear)
+	CNetworkVar( bool, m_bCascadedShadowMappingEnabled );
 
 protected:
 	// Raw sun color (0-255 per channel) from the "_light" BSP key.

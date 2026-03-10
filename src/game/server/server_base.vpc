@@ -452,6 +452,7 @@ $Project
 		$File	"lights.h"
 		$File	"env_cascade_light.cpp"
 		$File	"csm_autospawn.cpp"
+		$File	"sky_tod.cpp"
 		$File	"locksounds.h"
 		$File	"logic_measure_movement.cpp"
 		$File	"logic_navigation.cpp"

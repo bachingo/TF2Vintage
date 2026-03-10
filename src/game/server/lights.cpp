@@ -236,6 +236,13 @@ LINK_ENTITY_TO_CLASS( light_glspot, CLight );
 
 LINK_ENTITY_TO_CLASS( light_environment, CEnvLight );
 
+IMPLEMENT_SERVERCLASS_ST( CEnvLight, DT_CEnvLight )
+	SendPropQAngles( SENDINFO( m_angSunAngles ) ),
+	SendPropVector( SENDINFO( m_vecLight  ) ),
+	SendPropVector( SENDINFO( m_vecAmbient ) ),
+	SendPropBool(   SENDINFO( m_bCascadedShadowMappingEnabled ) ),
+END_SEND_TABLE()
+
 BEGIN_DATADESC(CEnvLight)
 
 DEFINE_FIELD( m_vecLightRGB, FIELD_VECTOR ),
@@ -362,6 +369,42 @@ void CEnvLight::Spawn( void )
 	}
 
 	BaseClass::Spawn( );
+
+	// Populate networked members from the BSP-parsed data so the client
+	// C_EnvLight immediately has valid data before sky_tod begins driving them.
+	{
+		// Sun angles: pitch from m_iPitch (positive = downward), yaw from entity angles
+		QAngle ang = GetAbsAngles();
+		ang.x = (float)( -m_iPitch );
+		m_angSunAngles = ang;
+
+		// Convert 0-255 BSP colour to normalised linear float for the engine
+		const float kInv255 = 1.0f / 255.0f;
+		float flBrightScale = m_flLightBrightness * kInv255;
+		m_vecLight.Init(
+			m_vecLightRGB.x * kInv255 * flBrightScale,
+			m_vecLightRGB.y * kInv255 * flBrightScale,
+			m_vecLightRGB.z * kInv255 * flBrightScale );
+
+		// Ambient: approx 40% of direct for a bright outdoor day
+		m_vecAmbient = m_vecLight * 0.4f;
+
+		m_bCascadedShadowMappingEnabled = true;
+	}
+
+	SetThink( &CEnvLight::Think );
+	SetNextThink( gpGlobals->curtime + 0.05f );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Per-frame think — sky_tod.cpp pushes updated sun state here.
+//-----------------------------------------------------------------------------
+void CEnvLight::Think( void )
+{
+	// The time-of-day system (sky_tod.cpp) drives m_angSunAngles, m_vecLight,
+	// and m_vecAmbient directly by writing to our members each frame.
+	// We just need to reschedule ourselves so NetworkStateChanged() propagates.
+	SetNextThink( gpGlobals->curtime + 0.05f );
 }
 
 //-----------------------------------------------------------------------------

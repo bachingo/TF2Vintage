@@ -94,6 +94,7 @@ private:
 	char	m_SpotlightTextureName[MAX_PATH];
 	int		m_nSpotlightTextureFrame;
 	int		m_nShadowQuality;
+	float		m_flShadowFilterSize;
 
 	FlashlightState_t	m_FlashlightState;
 	UberlightState_t	m_UberlightState;
