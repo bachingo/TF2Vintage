@@ -4668,7 +4668,7 @@ bool CEconItemSchema::BInitSchema( KeyValues *pKVRawDefinition, CUtlVector<CUtlS
 	// Initialize the rarity block -- this is an optional block
 	KeyValues *pKVRarities = pKVRawDefinition->FindKey( "rarities" );
 	KeyValues *pKVRarityWeights = pKVRawDefinition->FindKey( "rarities_lootlist_weights" );
-	if ( NULL != pKVRarities )
+	if ( NULL != pKVRarities || NULL != pKVRarityWeights )
 	{
 		SCHEMA_INIT_SUBSTEP( BInitRarities( pKVRarities, pKVRarityWeights, pVecErrors ) );
 	}
@@ -4752,15 +4752,25 @@ bool CEconItemSchema::BInitSchema( KeyValues *pKVRawDefinition, CUtlVector<CUtlS
 
 	// Parse the item_sets block.
 	KeyValues *pKVItemSets = pKVRawDefinition->FindKey( "item_sets" );
-	SCHEMA_INIT_SUBSTEP( BInitItemSets( pKVItemSets, pVecErrors ) );
+	if ( NULL != pKVItemSets )
+	{
+		SCHEMA_INIT_SUBSTEP( BInitItemSets( pKVItemSets, pVecErrors ) );
+	}
 	
 	// Particles
 	KeyValues *pKVParticleSystems = pKVRawDefinition->FindKey( "attribute_controlled_attached_particles" );
-	SCHEMA_INIT_SUBSTEP( BInitAttributeControlledParticleSystems( pKVParticleSystems, pVecErrors ) );
+	if ( NULL != pKVParticleSystems )
+	{
+		SCHEMA_INIT_SUBSTEP( BInitAttributeControlledParticleSystems( pKVParticleSystems, pVecErrors ) );
+	}
+
 
 	// Parse any recipes block
 	KeyValues *pKVRecipes = pKVRawDefinition->FindKey( "recipes" );
-	SCHEMA_INIT_SUBSTEP( BInitRecipes( pKVRecipes, pVecErrors ) );
+	if ( NULL != pKVRecipes )
+	{
+		SCHEMA_INIT_SUBSTEP( BInitRecipes( pKVRecipes, pVecErrors ) );
+	}
 
 	// Reset our loot lists.
 	m_dictLootLists.RemoveAll();
@@ -4775,11 +4785,17 @@ bool CEconItemSchema::BInitSchema( KeyValues *pKVRawDefinition, CUtlVector<CUtlS
 
 	// Parse the client loot lists block (everywhere)
 	KeyValues *pKVClientLootLists = pKVRawDefinition->FindKey( "client_loot_lists" );
-	SCHEMA_INIT_SUBSTEP( BInitLootLists( pKVClientLootLists, pVecErrors ) );
+	if ( NULL != pKVClientLootLists )
+	{
+		SCHEMA_INIT_SUBSTEP( BInitLootLists( pKVClientLootLists, pVecErrors ) );
+	}
 
 	// Parse the revolving loot lists block
 	KeyValues *pKVRevolvingLootLists = pKVRawDefinition->FindKey( "revolving_loot_lists" );
-	SCHEMA_INIT_SUBSTEP( BInitRevolvingLootLists( pKVRevolvingLootLists, pVecErrors ) );
+		if ( NULL != pKVRevolvingLootLists )
+	{
+		SCHEMA_INIT_SUBSTEP( BInitRevolvingLootLists( pKVRevolvingLootLists, pVecErrors ) );
+	}
 
 	// Init Items that may reference Collections
 	SCHEMA_INIT_SUBSTEP( BInitCollectionReferences( pVecErrors ) );
@@ -4793,12 +4809,18 @@ bool CEconItemSchema::BInitSchema( KeyValues *pKVRawDefinition, CUtlVector<CUtlS
 
 #if   defined( CLIENT_DLL ) || defined( GAME_DLL )
 	KeyValues *pKVArmoryData = pKVRawDefinition->FindKey( "armory_data" );
-	SCHEMA_INIT_SUBSTEP( BInitArmoryData( pKVArmoryData, pVecErrors ) );
+	if ( NULL != pKVArmoryData )
+	{
+		SCHEMA_INIT_SUBSTEP( BInitArmoryData( pKVArmoryData, pVecErrors ) );
+	}
 #endif // GC_DLL
 
 	// Parse any achievement rewards
 	KeyValues *pKVAchievementRewards = pKVRawDefinition->FindKey( "achievement_rewards" );
-	SCHEMA_INIT_SUBSTEP( BInitAchievementRewards( pKVAchievementRewards, pVecErrors ) );
+	if ( NULL != pKVAchievementRewards )
+	{
+		SCHEMA_INIT_SUBSTEP( BInitAchievementRewards( pKVAchievementRewards, pVecErrors ) );
+	}
 
 #ifdef TF_CLIENT_DLL
 	// Compute the number of concrete items, for each item, and cache for quick access
@@ -4807,24 +4829,39 @@ bool CEconItemSchema::BInitSchema( KeyValues *pKVRawDefinition, CUtlVector<CUtlS
 	// We don't have access to Steam's full library of app data on the client so initialize whichever packages
 	// we want to reference.
 	KeyValues *pKVSteamPackages = pKVRawDefinition->FindKey( "steam_packages" );
-	SCHEMA_INIT_SUBSTEP( BInitSteamPackageLocalizationToken( pKVSteamPackages, pVecErrors ) );
+	if ( NULL != pKVSteamPackages )
+	{
+		SCHEMA_INIT_SUBSTEP( BInitSteamPackageLocalizationToken( pKVSteamPackages, pVecErrors ) );
+	}
 #endif // TF_CLIENT_DLL
 
 	// Parse the item levels block
 	KeyValues *pKVItemLevels = pKVRawDefinition->FindKey( "item_levels" );
-	SCHEMA_INIT_SUBSTEP( BInitItemLevels( pKVItemLevels, pVecErrors ) );
+	if ( NULL != pKVItemLevels )
+	{
+		SCHEMA_INIT_SUBSTEP( BInitItemLevels( pKVItemLevels, pVecErrors ) );
+	}
 
 	// Parse the kill eater score types
 	KeyValues *pKVKillEaterScoreTypes = pKVRawDefinition->FindKey( "kill_eater_score_types" );
-	SCHEMA_INIT_SUBSTEP( BInitKillEaterScoreTypes( pKVKillEaterScoreTypes, pVecErrors ) );
+	if ( NULL != pKVKillEaterScoreTypes )
+	{
+		SCHEMA_INIT_SUBSTEP( BInitKillEaterScoreTypes( pKVKillEaterScoreTypes, pVecErrors ) );
+	}
 
 	// Initialize the string tables, if present
 	KeyValues *pKVStringTables = pKVRawDefinition->FindKey( "string_lookups" );
-	SCHEMA_INIT_SUBSTEP( BInitStringTables( pKVStringTables, pVecErrors ) );
+	if ( NULL != pKVStringTables )
+	{
+		SCHEMA_INIT_SUBSTEP( BInitStringTables( pKVStringTables, pVecErrors ) );
+	}
 
 	// Initialize the community Market remaps, if present
 	KeyValues *pKVCommunityMarketRemaps = pKVRawDefinition->FindKey( "community_market_item_remaps" );
-	SCHEMA_INIT_SUBSTEP( BInitCommunityMarketRemaps( pKVCommunityMarketRemaps, pVecErrors ) );
+	if ( NULL != pKVCommunityMarketRemaps )
+	{
+		SCHEMA_INIT_SUBSTEP( BInitCommunityMarketRemaps( pKVCommunityMarketRemaps, pVecErrors ) );
+	}
 
 	double flTotalTime = Plat_FloatTime() - flInitSchemaTime;
 
