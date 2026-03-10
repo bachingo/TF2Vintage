@@ -302,16 +302,18 @@ static void WriteMiniDump(const std::string& path, EXCEPTION_POINTERS* ep)
     mei.ExceptionPointers = ep;
     mei.ClientPointers    = FALSE;
 
-    // MiniDumpWithFullMemoryInfo | MiniDumpWithThreadInfo |
-    // MiniDumpWithUnloadedModules | MiniDumpWithIndirectlyReferencedMemory
+    // Dump type: enough to get a useful stack trace and locals without
+    // writing gigabytes of mapped memory. MiniDumpWithFullMemoryInfo records
+    // page protection info for all virtual ranges (fast, small). Avoid
+    // MiniDumpWithIndirectlyReferencedMemory — that walks all heap pointers
+    // and can produce a dump as large as the full process working set.
     MINIDUMP_TYPE type = (MINIDUMP_TYPE)(
         MiniDumpWithDataSegs              |
         MiniDumpWithProcessThreadData     |
         MiniDumpWithHandleData            |
         MiniDumpWithThreadInfo            |
         MiniDumpWithUnloadedModules       |
-        MiniDumpWithFullMemoryInfo        |
-        MiniDumpWithIndirectlyReferencedMemory
+        MiniDumpWithFullMemoryInfo
     );
 
     MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(),
@@ -443,9 +445,42 @@ static void WriteTextReport(const std::string& path,
 
 // ── Exception filter ──────────────────────────────────────────────────────────
 
+// Exception codes that represent real crashes we want to capture.
+// We deliberately exclude:
+//   0xE06D7363  C++ exception (throw/catch) — fires constantly, not a crash
+//   0x80000003  Breakpoint — fires on every Assert() in debug builds
+//   0x80000004  Single step — debugger artifact
+//   0x40010005  Ctrl+C / CTRL_C_EVENT
+//   0x40010006  Ctrl+Break
+static bool IsFatalException( DWORD code )
+{
+    switch ( code )
+    {
+    case EXCEPTION_ACCESS_VIOLATION:
+    case EXCEPTION_ILLEGAL_INSTRUCTION:
+    case EXCEPTION_STACK_OVERFLOW:
+    case EXCEPTION_INT_DIVIDE_BY_ZERO:
+    case EXCEPTION_FLT_DIVIDE_BY_ZERO:
+    case EXCEPTION_PRIV_INSTRUCTION:
+    case 0xC0000374:   // HEAP_CORRUPTION
+    case 0xC0000409:   // STACK_BUFFER_OVERRUN / fast fail
+        return true;
+    default:
+        return false;
+    }
+}
+
 static LONG WINAPI TF2VExceptionFilter(EXCEPTION_POINTERS* ep)
 {
-    // Avoid re-entering if we crash inside the crash handler
+    // Only capture exceptions that represent real crashes.
+    // Filtering here keeps C++ exceptions, asserts, and other first-chance
+    // exceptions from triggering a dump write during normal operation.
+    if ( !IsFatalException( ep->ExceptionRecord->ExceptionCode ) )
+        return EXCEPTION_CONTINUE_SEARCH;
+
+    // Avoid re-entering if we crash inside the crash handler.
+    // NOTE: we intentionally do NOT reset inHandler after completing —
+    // if the process crashes again inside cleanup we don't want recursion.
     static volatile LONG inHandler = 0;
     if (InterlockedCompareExchange(&inHandler, 1, 0) != 0)
         return EXCEPTION_CONTINUE_SEARCH;
