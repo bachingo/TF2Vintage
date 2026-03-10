@@ -604,7 +604,7 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 	}
 	if ( !CommandLine()->FindParm( "-log_verbose_enable" ) )
 	{
-		CommandLine()->AppendParm( "-log_verbose_enable 1", nullptr );
+		CommandLine()->AppendParm( "-log_verbose_enable", "1" );
 	}
 
 	// Connected in ConnectTier1Libraries

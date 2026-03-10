@@ -953,7 +953,7 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	}
 	if ( !CommandLine()->FindParm( "-log_verbose_enable" ) )
 	{
-		CommandLine()->AppendParm( "-log_verbose_enable 1", nullptr );
+		CommandLine()->AppendParm( "-log_verbose_enable", "1" );
 	}
 	
 	// Client needs to protect from writing files into random locations to avoid becoming a remote-code
