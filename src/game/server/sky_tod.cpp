@@ -236,7 +236,7 @@ static ConVar tod_resolved_tz(
 // Format: three lines — latitude, longitude, tz_meridian (decimal, one per line).
 // Lines starting with // are comments and are skipped.
 //=============================================================================
-// Map geographic location — file-based (Tier B)
+// Map geographic location — file-based (Priority B)
 //
 // At LevelInit, sky_tod looks for:
 //   maps/<mapname>_tod.cfg   (in the MOD search path)
@@ -255,12 +255,12 @@ static ConVar tod_resolved_tz(
 //
 // CFGs ship bundled with the mod in the maps/ folder for all known TF2
 // maps.  For custom or community maps that don't have a cfg, the system
-// falls back to the server ConVars (Tier C):
+// falls back to the server ConVars (Priority C):
 //   tod_latitude / tod_longitude / tod_tz_meridian
 //
 // Lookup priority:
-//   1. maps/<mapname>_tod.cfg  (Tier B — file, zero recompile to add maps)
-//   2. Server ConVars          (Tier C — tod_latitude / longitude / tz_meridian)
+//   1. maps/<mapname>_tod.cfg  (Priority B — file, zero recompile to add maps)
+//   2. Server ConVars          (Priority C — tod_latitude / longitude / tz_meridian)
 //=============================================================================
 
 // Attempt to parse a _tod.cfg file for the current map.
@@ -381,12 +381,12 @@ static bool LoadMapGeoCfg( const char *pszMapName,
 }
 
 //=============================================================================
-// Map geographic location table (Tier B-table)
+// Map geographic location table (Priority B-table)
 //
 // Covers all known TF2 and TF2V maps with real-world coordinates.
-// Checked only when no maps/<mapname>_tod.cfg is found (Tier A).
+// Checked only when no maps/<mapname>_tod.cfg is found (Priority A).
 // Server ConVars (tod_latitude / tod_longitude / tod_tz_meridian) are the
-// final fallback (Tier C) for any map not in this table.
+// final fallback (Priority C) for any map not in this table.
 //
 // Priority at LevelInit:
 //   A. maps/<mapname>_tod.cfg  (file — zero recompile, mapmaker/server drops it)
@@ -1321,8 +1321,8 @@ private:
     // If either cvar is -1, the real astronomical sunrise/sunset is used.
     // This is called once at LevelInit and OnRoundStart so the season
     // automatically updates between maps without any admin intervention.
-    // Resolve geographic coordinates from map name table (Tier B)
-    // or fall back to server ConVars (Tier C).  Must be called once at
+    // Resolve geographic coordinates from map name table (Priority B)
+    // or fall back to server ConVars (Priority C).  Must be called once at
     // LevelInitPostEntity, before ResolveArcBounds or any trig call.
     // Push resolved geo into FCVAR_REPLICATED convars so clients see it.
     void PushResolvedGeo()
@@ -1341,7 +1341,7 @@ private:
         float flLat, flLon, flTZ;
         const char *pszTableLoc = NULL;
 
-        // ── Tier A: maps/<mapname>_tod.cfg (file-based, highest priority) ──
+        // ── Priority A: maps/<mapname>_tod.cfg (file-based, highest priority) ──
         // Mapmakers or server admins drop a three-line cfg alongside the BSP.
         // An optional 4th line is a human-readable location name.
         m_szCfgLocationBuf[0] = '\0';
@@ -1361,7 +1361,7 @@ private:
             return;
         }
 
-        // ── Tier B: hardcoded table (full TF2 + TF2V pool) ──
+        // ── Priority B: hardcoded table (full TF2 + TF2V pool) ──
         if ( LookupMapGeoTable( pszMap, flLat, flLon, flTZ, pszTableLoc ) )
         {
             m_flResolvedLat       = flLat;
@@ -1375,7 +1375,7 @@ private:
             return;
         }
 
-        // ── Tier C: server ConVars (tod_latitude / tod_longitude / tod_tz_meridian) ──
+        // ── Priority C: server ConVars (tod_latitude / tod_longitude / tod_tz_meridian) ──
         m_flResolvedLat       = tod_latitude.GetFloat();
         m_flResolvedLon       = tod_longitude.GetFloat();
         m_flResolvedTZ        = tod_tz_meridian.GetFloat();
@@ -1657,7 +1657,7 @@ private:
     float  m_flArcEnd;         // resolved sunset  or configured end
 
     // Geographic location resolved at LevelInit.
-    // Set from map name table (Tier B) or ConVars (Tier C).
+    // Set from map name table (Priority B) or ConVars (Priority C).
     float        m_flResolvedLat;
     float        m_flResolvedLon;
     float        m_flResolvedTZ;
