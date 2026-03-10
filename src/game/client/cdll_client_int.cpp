@@ -365,12 +365,21 @@ static ConVar *g_pcv_ThreadMode = NULL;
 static class DllOverride {
     public:
         DllOverride() {
+            // NOTE: This constructor runs at DLL load time (static initializer),
+            // BEFORE the engine calls CHLClient::Init(). At this point
+            // CommandLine() is valid (the launcher sets it up before loading DLLs),
+            // but we must NOT use VarArgs() here — it returns a thread-local rotating
+            // buffer that can be overwritten inside AddSearchPath itself, producing a
+            // corrupted path string. Use a fixed stack buffer instead.
             Sys_LoadInterface( "filesystem_stdio.dll", FILESYSTEM_INTERFACE_VERSION, nullptr, (void **)&g_pFullFileSystem );
             if ( !g_pFullFileSystem )
-                return; // ← add this
+                return;
             const char *pGameDir = CommandLine()->ParmValue( "-game", "hl2" );
-            pGameDir = VarArgs( "%s/bin", pGameDir );
-            g_pFullFileSystem->AddSearchPath( pGameDir, "EXECUTABLE_PATH", PATH_ADD_TO_HEAD );
+            // Build the path into a local buffer so the pointer stays valid for the
+            // duration of the AddSearchPath call.
+            char szBinPath[MAX_PATH];
+            V_snprintf( szBinPath, sizeof(szBinPath), "%s/bin", pGameDir );
+            g_pFullFileSystem->AddSearchPath( szBinPath, "EXECUTABLE_PATH", PATH_ADD_TO_HEAD );
         }
 } g_DllOverride;
 #endif
@@ -1701,10 +1710,27 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 	IGameSystem::LevelInitPreEntityAllSystems(pMapName);
 
 #ifdef USES_ECON_ITEMS
-	GameItemSchema_t *pItemSchema = ItemSystem()->GetItemSchema();
-	if ( pItemSchema )
+	// Guard: ItemSystem() can return a valid pointer even when the underlying
+	// schema has not yet loaded items_game.txt (e.g. first map load) OR when
+	// BInitFromDelayedBuffer() has already been called for this session
+	// (e.g. a listen-server map transition on the same process).
+	// Calling it twice is safe per the SDK implementation, but an uninitialized
+	// ItemSystem pointer will crash, so double-check both the system and schema.
+	if ( ItemSystem() )
 	{
-		pItemSchema->BInitFromDelayedBuffer();
+		GameItemSchema_t *pItemSchema = ItemSystem()->GetItemSchema();
+		if ( pItemSchema )
+		{
+			pItemSchema->BInitFromDelayedBuffer();
+		}
+		else
+		{
+			Warning( "[Econ] LevelInitPreEntity: ItemSystem()->GetItemSchema() returned NULL; schema will not be initialized.\n" );
+		}
+	}
+	else
+	{
+		Warning( "[Econ] LevelInitPreEntity: ItemSystem() is NULL; skipping schema init.\n" );
 	}
 #endif // USES_ECON_ITEMS
 
