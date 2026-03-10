@@ -29,7 +29,6 @@ void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
 #else
 #include "tf_gamerules.h"
 #include "tf_fx.h"
-#include "beam_shared.h"
 #endif
 
 #define TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC	50.0
@@ -43,20 +42,12 @@ void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
 
 #define SNIPER_DOT_SPRITE_RED		"effects/sniperdot_red.vmt"
 #define SNIPER_DOT_SPRITE_BLUE		"effects/sniperdot_blue.vmt"
-#define SNIPER_DOT_SPRITE_GREEN		"effects/sniperdot_green.vmt"
-#define SNIPER_DOT_SPRITE_YELLOW	"effects/sniperdot_yellow.vmt"
-#define SNIPER_DOT_SPRITE_CLEAR		"effects/sniperdot_clear.vmt"
 #define SNIPER_CHARGE_BEAM_RED		"tfc_sniper_charge_red"
 #define SNIPER_CHARGE_BEAM_BLUE		"tfc_sniper_charge_blue"
-#define SNIPER_CHARGE_BEAM_GREEN	"tfc_sniper_charge_green"
-#define SNIPER_CHARGE_BEAM_YELLOW	"tfc_sniper_charge_yellow"
 
 #ifdef CLIENT_DLL
 ConVar tf_sniper_fullcharge_bell( "tf_sniper_fullcharge_bell", "0", FCVAR_ARCHIVE );
-ConVar tf2v_sniper_crosshair( "tf2v_sniper_crosshair", "1", FCVAR_CLIENTDLL|FCVAR_ARCHIVE, "Shows the crosshair on Sniper Rifles.", true, 0, true, 1 );
 #endif
-ConVar tf2v_allow_sniper_crosshairs( "tf2v_allow_sniper_crosshairs", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows clients to enable crosshairs on their sniper rifles.", true, 0, true, 1 );
-ConVar tf2v_use_sniper_beams( "tf2v_use_sniper_beams", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Draws a beam on the sniper dot.", true, 0, true, 1 );
 
 //=============================================================================
 //
@@ -94,10 +85,10 @@ LINK_ENTITY_TO_CLASS( tf_weapon_sniperrifle, CTFSniperRifle );
 PRECACHE_WEAPON_REGISTER( tf_weapon_sniperrifle );
 
 BEGIN_DATADESC( CTFSniperRifle )
-	DEFINE_FIELD( m_flUnzoomTime, FIELD_FLOAT ),
-	DEFINE_FIELD( m_flRezoomTime, FIELD_FLOAT ),
-	DEFINE_FIELD( m_bRezoomAfterShot, FIELD_BOOLEAN ),
-	DEFINE_FIELD( m_flChargedDamage, FIELD_FLOAT ),
+DEFINE_FIELD( m_flUnzoomTime, FIELD_FLOAT ),
+DEFINE_FIELD( m_flRezoomTime, FIELD_FLOAT ),
+DEFINE_FIELD( m_bRezoomAfterShot, FIELD_BOOLEAN ),
+DEFINE_FIELD( m_flChargedDamage, FIELD_FLOAT ),
 END_DATADESC()
 
 //=============================================================================
@@ -168,7 +159,6 @@ CTFSniperRifle::~CTFSniperRifle()
 // Server specific.
 #ifdef GAME_DLL
 	DestroySniperDot();
-	DestroySniperBeam();
 #endif
 }
 
@@ -179,9 +169,6 @@ void CTFSniperRifle::Spawn()
 {
 	m_iAltFireHint = HINT_ALTFIRE_SNIPERRIFLE;
 	BaseClass::Spawn();
-#ifdef GAME_DLL
-	m_pBeam = NULL;
-#endif
 
 	ResetTimers();
 }
@@ -194,10 +181,6 @@ void CTFSniperRifle::Precache()
 	BaseClass::Precache();
 	PrecacheModel( SNIPER_DOT_SPRITE_RED );
 	PrecacheModel( SNIPER_DOT_SPRITE_BLUE );
-	PrecacheModel( SNIPER_DOT_SPRITE_GREEN );
-	PrecacheModel( SNIPER_DOT_SPRITE_YELLOW );
-	PrecacheModel( SNIPER_DOT_SPRITE_CLEAR );
-	PrecacheModel( "effects/beam_neutral.vmt" );
 
 	PrecacheScriptSound( "doomsday.warhead" );
 }
@@ -236,9 +219,7 @@ bool CTFSniperRifle::CanHolster( void ) const
 		// don't allow us to holster this weapon if we're in the process of zooming and 
 		// we've just fired the weapon (next primary attack is only 1.5 seconds after firing)
 		if ( ( pPlayer->GetFOV() < pPlayer->GetDefaultFOV() ) && ( m_flNextPrimaryAttack > gpGlobals->curtime ) )
-		{
 			return false;
-		}
 	}
 
 	return BaseClass::CanHolster();
@@ -253,7 +234,6 @@ bool CTFSniperRifle::Holster( CBaseCombatWeapon *pSwitchingTo )
 #ifdef GAME_DLL
 	// Destroy the sniper dot.
 	DestroySniperDot();
-	DestroySniperBeam();
 #endif
 
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
@@ -373,11 +353,6 @@ void CTFSniperRifle::ItemPostFrame( void )
 	if ( m_hSniperDot )
 	{
 		UpdateSniperDot();
-	}
-	// Update the sniper beam position if we have one
-	if ( m_pBeam )
-	{
-		UpdateSniperBeam();
 	}
 #endif
 
@@ -831,16 +806,13 @@ void CTFSniperRifle::Fire( CTFPlayer *pPlayer )
 	// Fire the sniper shot.
 	PrimaryAttack();
 
-	int nWeaponModeScope = 0;
-	CALL_ATTRIB_HOOK_INT( nWeaponModeScope, sniper_no_zoomout );
-
-	if ( nWeaponModeScope == 0 && IsZoomed() )
+	if ( IsZoomed() )
 	{
 		// If we have more bullets, zoom out, play the bolt animation and zoom back in
 		if ( pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) > 0 )
 		{
 			// do not zoom out if we're under rage or about to enter it
-			if ( !pPlayer->m_Shared.InCond( TF_COND_SNIPERCHARGE_RAGE_BUFF ) )
+			if ( !( pPlayer->m_Shared.InCond( TF_COND_SNIPERCHARGE_RAGE_BUFF ) ) )
 			{
 				float flUnzoomDelay = 0.5f;
 				if ( !UsesClipsForAmmo1() )
@@ -961,14 +933,10 @@ void CTFSniperRifle::CreateSniperDot( void )
 	if ( !pPlayer )
 		return;
 
-	int nWeaponModeDot = 0;
-	CALL_ATTRIB_HOOK_INT( nWeaponModeDot, sniper_no_dot );
-	if ( nWeaponModeDot == 0 )
-	{
-		// Create the sniper dot, but do not make it visible yet.
-		m_hSniperDot = CSniperDot::Create( GetAbsOrigin(), pPlayer, true );
-		m_hSniperDot->ChangeTeam( pPlayer->GetTeamNumber() );
-	}
+	// Create the sniper dot, but do not make it visible yet.
+	m_hSniperDot = CSniperDot::Create( GetAbsOrigin(), pPlayer, true );
+	m_hSniperDot->ChangeTeam( pPlayer->GetTeamNumber() );
+
 #endif
 }
 
@@ -1029,134 +997,6 @@ void CTFSniperRifle::UpdateSniperDot( void )
 
 #endif
 }
-
-//-----------------------------------------------------------------------------
-// Purpose: Checks if we should be using sniper beams.
-//-----------------------------------------------------------------------------
-bool CTFSniperRifle::UseSniperBeams( void )
-{
-	return tf2v_use_sniper_beams.GetBool();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Used to create the sniper beam.
-//-----------------------------------------------------------------------------
-void CTFSniperRifle::CreateSniperBeam( void )
-{
-	// Server specific.
-#ifdef GAME_DLL
-	// If beams are disabled or already exist, do not create one.
-	if ( UseSniperBeams() && !m_pBeam )
-	{
-
-		// Get the owning player (make sure we have one).
-		CBasePlayer* pPlayer = ToBasePlayer(GetOwner());
-		if (!pPlayer)
-			return;
-
-		// Create the sniper beam...
-		m_pBeam = CBeam::BeamCreate("effects/beam_neutral.vmt", 1.0f);
-		Vector vBeamColor = GetParticleColor( 0 );
-		m_pBeam->SetColor(vBeamColor[0], vBeamColor[1], vBeamColor[2]);
-
-		m_pBeam->SetNoise(0);
-		m_pBeam->SetEndWidth(0);
-		m_pBeam->SetScrollRate(0);
-		m_pBeam->SetFadeLength(0);
-
-		// ... but do not make it visible yet.
-		m_pBeam->SetWidth(0);
-		m_pBeam->SetBrightness(0);
-
-		// Set our initial beam points.
-		Vector vecStartPos = GetMuzzlePosition();
-		Vector forward;
-		pPlayer->EyeVectors(&forward);
-		Vector vecEndPos = vecStartPos + (forward * MAX_TRACE_LENGTH);
-		m_pBeam->PointsInit(vecEndPos, vecStartPos);
-
-		// Now that we initialized, properly update the parameters of the beam.
-		UpdateSniperBeam();
-		return;
-	}
-
-#endif
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Removes the sniper beam out of use.
-//-----------------------------------------------------------------------------
-void CTFSniperRifle::DestroySniperBeam( void )
-{
-	// Server specific.
-#ifdef GAME_DLL
-	// Destroy the sniper beam
-	if ( m_pBeam )
-	{
-		UTIL_Remove( m_pBeam );
-		m_pBeam = NULL;
-	}
-#endif
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Updates the location of the sniper beam.
-//-----------------------------------------------------------------------------
-void CTFSniperRifle::UpdateSniperBeam( void )
-{
-	// Server specific.
-#ifdef GAME_DLL
-	if ( m_pBeam && !UseSniperBeams() )
-	{
-		DestroySniperBeam();
-		return;
-	}
-	else if ( !m_pBeam )
-		return;
-
-	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
-	if ( !pPlayer )
-		return;
-
-	// Get the start and endpoints.
-	Vector vecStartPos = GetMuzzlePosition();
-	Vector forward;
-	pPlayer->EyeVectors( &forward );
-	Vector vecEndPos = vecStartPos + ( forward * MAX_TRACE_LENGTH );
-
-	trace_t	trace;
-	UTIL_TraceLine(vecStartPos, vecEndPos, ( MASK_SHOT & ~CONTENTS_WINDOW ), GetOwner(), COLLISION_GROUP_NONE, &trace );
-
-	// Update the sniper beam. These are flipped around to taper the start of the beam.
-	m_pBeam->SetEndPos( vecStartPos );
-	m_pBeam->SetStartPos( trace.endpos );
-	m_pBeam->RelinkBeam();
-
-	// Also update the size and brightness of the beam as the shot gets stronger.
-	float nBeamStrength = ( m_flChargedDamage / TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX );
-	m_pBeam->SetBrightness( (int)(nBeamStrength) * 255 );
-	m_pBeam->SetWidth( nBeamStrength );
-#endif
-}
-
-#ifdef GAME_DLL
-//-----------------------------------------------------------------------------
-// Purpose: Starting point of the laser beam.
-//-----------------------------------------------------------------------------
-Vector CTFSniperRifle::GetMuzzlePosition( void )
-{
-	Vector vecMuzzlePos = vec3_origin;
-	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
-	if ( pOwner )
-	{
-		Vector vecForward, vecRight, vecUp;
-		AngleVectors( pOwner->GetAbsAngles(), &vecForward, &vecRight, &vecUp );
-		vecMuzzlePos = pOwner->Weapon_ShootPosition();
-		//vecMuzzlePos +=  vecUp + 2;
-	}
-	return vecMuzzlePos;
-}
-#endif
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -1862,20 +1702,13 @@ void CSniperDot::OnDataChanged( DataUpdateType_t updateType )
 {
 	if ( updateType == DATA_UPDATE_CREATED )
 	{
-		switch ( GetTeamNumber() )
+		if ( GetTeamNumber() == TF_TEAM_BLUE )
 		{
-			case TF_TEAM_RED:
-				m_hSpriteMaterial.Init( SNIPER_DOT_SPRITE_RED, TEXTURE_GROUP_CLIENT_EFFECTS );
-				break;
-			case TF_TEAM_BLUE:
-				m_hSpriteMaterial.Init( SNIPER_DOT_SPRITE_BLUE, TEXTURE_GROUP_CLIENT_EFFECTS );
-				break;
-			case TF_TEAM_GREEN:
-				m_hSpriteMaterial.Init( SNIPER_DOT_SPRITE_GREEN, TEXTURE_GROUP_CLIENT_EFFECTS );
-				break;
-			case TF_TEAM_YELLOW:
-				m_hSpriteMaterial.Init( SNIPER_DOT_SPRITE_YELLOW, TEXTURE_GROUP_CLIENT_EFFECTS );
-				break;
+			m_hSpriteMaterial.Init( SNIPER_DOT_SPRITE_BLUE, TEXTURE_GROUP_CLIENT_EFFECTS );
+		}
+		else
+		{
+			m_hSpriteMaterial.Init( SNIPER_DOT_SPRITE_RED, TEXTURE_GROUP_CLIENT_EFFECTS );
 		}
 
 		SetNextClientThink( CLIENT_THINK_ALWAYS );
@@ -1958,8 +1791,6 @@ void CTFSniperRifleClassic::Precache()
 	BaseClass::Precache();
 	PrecacheParticleSystem( SNIPER_CHARGE_BEAM_RED );
 	PrecacheParticleSystem( SNIPER_CHARGE_BEAM_BLUE );
-	PrecacheParticleSystem( SNIPER_CHARGE_BEAM_GREEN );
-	PrecacheParticleSystem( SNIPER_CHARGE_BEAM_YELLOW );
 }
 
 //-----------------------------------------------------------------------------
@@ -2219,21 +2050,7 @@ void CTFSniperRifleClassic::ManageChargeBeam( void )
 	{
 		if ( !m_pChargedEffect )
 		{
-			switch ( GetTeamNumber() )
-			{
-				case TF_TEAM_RED:
-					m_pChargedEffect = ParticleProp()->Create( SNIPER_CHARGE_BEAM_RED, PATTACH_POINT_FOLLOW, "laser" );
-					break;
-				case TF_TEAM_BLUE:
-					m_pChargedEffect = ParticleProp()->Create( SNIPER_CHARGE_BEAM_BLUE, PATTACH_POINT_FOLLOW, "laser" );
-					break;
-				case TF_TEAM_GREEN:
-					m_pChargedEffect = ParticleProp()->Create( SNIPER_CHARGE_BEAM_GREEN, PATTACH_POINT_FOLLOW, "laser" );
-					break;
-				case TF_TEAM_YELLOW:
-					m_pChargedEffect = ParticleProp()->Create( SNIPER_CHARGE_BEAM_YELLOW, PATTACH_POINT_FOLLOW, "laser" );
-					break;
-			}
+			m_pChargedEffect = ParticleProp()->Create( ( GetTeamNumber() == TF_TEAM_RED ) ? SNIPER_CHARGE_BEAM_RED : SNIPER_CHARGE_BEAM_BLUE, PATTACH_POINT_FOLLOW, "laser" );
 		}
 	}
 	else

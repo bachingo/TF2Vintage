@@ -87,24 +87,21 @@
 	};
 #endif
 
-#if defined ( TF_VINTAGE ) || ( TF_VINTAGE_CLIENT )
-ConVar tf2v_flips( "tf2v_flips", "0", FCVAR_CHEAT|FCVAR_REPLICATED, "Allows players to uncap their look angles, causing flips." );
-#endif
-
 #ifdef CLIENT_DLL
 ConVar mp_usehwmmodels( "mp_usehwmmodels", "0", NULL, "Enable the use of the hw morph models. (-1 = never, 1 = always, 0 = based upon GPU)" ); // -1 = never, 0 = if hasfastvertextextures, 1 = always
 #endif
 
 bool UseHWMorphModels()
 {
-#ifdef CLIENT_DLL 
-	if (mp_usehwmmodels.GetInt() == 0)
-		return g_pMaterialSystemHardwareConfig->HasFastVertexTextures();
-
-	return mp_usehwmmodels.GetInt() > 0;
-#else
+// #ifdef CLIENT_DLL 
+// 	if ( mp_usehwmmodels.GetInt() == 0 )
+// 		return g_pMaterialSystemHardwareConfig->HasFastVertexTextures();
+// 
+// 	return mp_usehwmmodels.GetInt() > 0;
+// #else
+// 	return false;
+// #endif
 	return false;
-#endif
 }
 
 void CopySoundNameWithModifierToken( char *pchDest, const char *pchSource, int nMaxLenInChars, const char *pchToken )
@@ -1892,8 +1889,8 @@ int CBasePlayer::GetDefaultFOV( void ) const
 #endif
 
 	int iFOV = ( m_iDefaultFOV == 0 ) ? g_pGameRules->DefaultFOV() : m_iDefaultFOV;
-	if ( iFOV > MAX_FOV_UNLOCKED )
-		iFOV = MAX_FOV_UNLOCKED;
+	if ( iFOV > MAX_FOV )
+		iFOV = MAX_FOV;
 
 	return iFOV;
 }

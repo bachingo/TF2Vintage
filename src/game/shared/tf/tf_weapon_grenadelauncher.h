@@ -17,7 +17,7 @@
 #define CTFCannon			C_TFCannon
 #endif
 
-#define TF_GRENADE_LAUNCHER_XBOX_CLIP 6
+#define TF_GRENADE_LAUNCHER_XBOX_CLIP 4
 
 //=============================================================================
 //

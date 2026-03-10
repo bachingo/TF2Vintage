@@ -389,6 +389,7 @@ public:
 	void					ShowViewModel( bool bShow );
 	void					ShowCrosshair( bool bShow );
 
+	bool					ScriptIsPlayerNoclipping( void );
 	void					SetForceLocalDraw( bool bForceLocalDraw )
 	{
 		m_Local.m_bForceLocalPlayerDraw = bForceLocalDraw;
@@ -631,34 +632,7 @@ public:
 
 	virtual bool			ShouldAnnounceAchievement( void );
 
-	// ----------------------------------------------------------------------------
-	// VScript accessors
-	// ----------------------------------------------------------------------------
-	bool					ScriptIsPlayerNoclipping( void );
-
-	HSCRIPT					VScriptGetExpresser();
-
-	int						GetButtons() { return m_nButtons; }
-	int						GetButtonPressed() { return m_afButtonPressed; }
-	int						GetButtonReleased() { return m_afButtonReleased; }
-	int						GetButtonLast() { return m_afButtonLast; }
-	int						GetButtonDisabled() { return m_afButtonDisabled; }
-	int						GetButtonForced() { return m_afButtonForced; }
-
-	const Vector&			ScriptGetEyeForward();
-	const Vector&			ScriptGetEyeRight();
-	const Vector&			ScriptGetEyeUp();
-
-	Vector					ScriptGetAutoaimVector( float flScale ) { return GetAutoaimVector( flScale ); }
-	Vector					ScriptGetAutoaimVectorCustomMaxDist( float flScale, float flMaxDist ) { return GetAutoaimVector( flScale, flMaxDist ); }
-
-	const Vector&			ScriptGetPunchAngle();
-	void					ScriptSetPunchAngle( const Vector &punchAngle );
-
-	void					ScriptSetFOV( int iFOV, float flSpeed );					// Overrides player FOV, ignores zoom owner
-	HSCRIPT					ScriptGetFOVOwner() { return ToHScript( m_hZoomOwner ); }
-
-#if defined ( USES_ECON_ITEMS )
+#if defined USES_ECON_ITEMS
 	// Wearables
 	virtual void			EquipWearable( CEconWearable *pItem );
 	virtual void			RemoveWearable( CEconWearable *pItem );
@@ -1189,8 +1163,6 @@ private:
 	// Player name
 	char					m_szNetname[MAX_PLAYER_NAME_LENGTH];
 
-	HSCRIPT					m_hPlayerRunCommand;
-
 protected:
 	// HACK FOR TF2 Prediction
 	friend class CTFGameMovementRecon;
@@ -1429,45 +1401,6 @@ inline bool CBasePlayer::IsFiringWeapon( void ) const
 	return m_weaponFiredTimer.HasStarted() && m_weaponFiredTimer.IsLessThen( 1.0f );
 }
 
-//-----------------------------------------------------------------------------
-// VScript accessors
-//-----------------------------------------------------------------------------
-inline const Vector &CBasePlayer::ScriptGetEyeForward()
-{
-	static Vector vecForward;
-	EyeVectors( &vecForward );
-	return vecForward;
-}
-
-inline const Vector &CBasePlayer::ScriptGetEyeRight()
-{
-	static Vector vecRight;
-	EyeVectors( NULL, &vecRight );
-	return vecRight;
-}
-
-inline const Vector &CBasePlayer::ScriptGetEyeUp()
-{
-	static Vector vecUp;
-	EyeVectors( NULL, NULL, &vecUp );
-	return vecUp;
-}
-
-inline const Vector &CBasePlayer::ScriptGetPunchAngle( void )
-{
-	static Vector vecPunch;
-
-	QAngle ang = GetPunchAngle();
-	vecPunch.Init( ang.x, ang.y, ang.z );
-
-	return vecPunch;
-}
-
-inline void CBasePlayer::ScriptSetPunchAngle( Vector const &punchAngles )
-{
-	QAngle angles( punchAngles.x, punchAngles.y, punchAngles.z );
-	SetPunchAngle( angles );
-}
 
 
 //-----------------------------------------------------------------------------

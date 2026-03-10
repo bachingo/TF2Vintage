@@ -90,7 +90,6 @@
 #include "serverbenchmark_base.h"
 #include "querycache.h"
 #include "player_voice_listener.h"
-#include "ScriptGameEventListener.h"
 
 #ifdef TF_DLL
 #include "gc_clientsystem.h"
@@ -571,41 +570,9 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 		CreateInterfaceFn physicsFactory, CreateInterfaceFn fileSystemFactory, 
 		CGlobalVars *pGlobals)
 {
-	// Load the crash handler as early as possible — before tier libraries,
-	// before any other system — so it catches failures in this very init sequence.
-	// Sys_LoadModule searches the game bin folder (bin/x64/) where the DLL lives.
-	// DllMain (Windows) / __attribute__((constructor)) (Linux) installs the handler.
-	// If the module is absent the call returns null and we continue silently.
-	Sys_LoadModule( "tf2vintage_crash" );
-
 	ConnectTier1Libraries( &appSystemFactory, 1 );
 	ConnectTier2Libraries( &appSystemFactory, 1 );
 	ConnectTier3Libraries( &appSystemFactory, 1 );
-
-	// Append -insecure unconditionally so the engine
-	// never attempts VAC negotiation, regardless of server launch options.
-	if ( !CommandLine()->FindParm( "-insecure" ) )
-	{
-		CommandLine()->AppendParm( "-insecure", nullptr );
-	}
-	
-	// Always append logging.
-	if ( !CommandLine()->FindParm( "-console" ) )
-	{
-		CommandLine()->AppendParm( "-console", nullptr );
-	}
-	if ( !CommandLine()->FindParm( "-dev" ) )
-	{
-		CommandLine()->AppendParm( "-dev", nullptr );
-	}
-	if ( !CommandLine()->FindParm( "-condebug" ) )
-	{
-		CommandLine()->AppendParm( "-condebug", nullptr );
-	}
-	if ( !CommandLine()->FindParm( "-log_verbose_enable" ) )
-	{
-		CommandLine()->AppendParm( "-log_verbose_enable", "1" );
-	}
 
 	// Connected in ConnectTier1Libraries
 	if ( cvar == NULL )
@@ -658,22 +625,9 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 	if ( IsX360() && (matchmaking = (IMatchmaking *)appSystemFactory( VENGINE_MATCHMAKING_VERSION, NULL )) == NULL )
 		return false;
 
-	if ( !CommandLine()->CheckParm( "-noscripting" ) )
+	if ( !CommandLine()->CheckParm( "-noscripting") )
 	{
-	#if defined( TF_VINTAGE )
-		char szCwd[MAX_PATH];
-		engine->GetGameDir( szCwd, MAX_PATH );
-
-		static CDllDemandLoader s_VScript( CFmtStr( "%s\\bin\\%svscript%s", szCwd, PLATFORM_64BITS ? "x64\\" : "", DLL_EXT_STRING ) );
-	#else
-		static CDllDemandLoader s_VScript( "vscript" DLL_EXT_STRING );
-	#endif
-
-		CreateInterfaceFn pAppFactory = s_VScript.GetFactory();
-		if( pAppFactory )
-			scriptmanager = (IScriptManager *)pAppFactory( VSCRIPT_INTERFACE_VERSION, NULL );
-
-		AssertMsg( scriptmanager, "Scripting was not properly initialized" );
+		scriptmanager = (IScriptManager *)appSystemFactory( VSCRIPT_INTERFACE_VERSION, NULL );
 	}
 
 	// If not running dedicated, grab the engine vgui interface
@@ -681,7 +635,7 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 	{
 #ifdef _WIN32
 		// This interface is optional, and is only valid when running with -tools
-		serverenginetools = (IServerEngineTools *)appSystemFactory( VSERVERENGINETOOLS_INTERFACE_VERSION, NULL );
+		serverenginetools = ( IServerEngineTools * )appSystemFactory( VSERVERENGINETOOLS_INTERFACE_VERSION, NULL );
 #endif
 	}
 
@@ -733,7 +687,6 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 	g_pGameSaveRestoreBlockSet->AddBlockHandler( GetCommentarySaveRestoreBlockHandler() );
 	g_pGameSaveRestoreBlockSet->AddBlockHandler( GetEventQueueSaveRestoreBlockHandler() );
 	g_pGameSaveRestoreBlockSet->AddBlockHandler( GetAchievementSaveRestoreBlockHandler() );
-	g_pGameSaveRestoreBlockSet->AddBlockHandler( GetVScriptSaveRestoreBlockHandler() );
 
 	// The string system must init first + shutdown last
 	IGameSystem::Add( GameStringSystem() );
@@ -752,9 +705,6 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 #endif
 	// Add sound emitter
 	IGameSystem::Add( SoundEmitterSystem() );
-
-	// Add VScript game event listener system
-	IGameSystem::Add( &ScriptGameEventListener() );
 
 	// load Mod specific game events ( MUST be before InitAllSystems() so it can pickup the mod specific events)
 	gameeventmanager->LoadEventsFromFile("resource/ModEvents.res");
@@ -793,7 +743,6 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 
 	// init the gamestatsupload connection
 	gamestatsuploader->InitConnection();
-	// Todo: Update the SDK to replace with ShutdownConnection();
 #endif
 
 	return true;
@@ -810,7 +759,6 @@ void CServerGameDLL::DLLShutdown( void )
 	// Due to dependencies, these are not autogamesystems
 	ModelSoundsCacheShutdown();
 
-	g_pGameSaveRestoreBlockSet->RemoveBlockHandler( GetVScriptSaveRestoreBlockHandler() );
 	g_pGameSaveRestoreBlockSet->RemoveBlockHandler( GetAchievementSaveRestoreBlockHandler() );
 	g_pGameSaveRestoreBlockSet->RemoveBlockHandler( GetCommentarySaveRestoreBlockHandler() );
 	g_pGameSaveRestoreBlockSet->RemoveBlockHandler( GetEventQueueSaveRestoreBlockHandler() );
@@ -844,7 +792,6 @@ void CServerGameDLL::DLLShutdown( void )
 #endif
 	// reset (shutdown) the gamestatsupload connection
 	gamestatsuploader->InitConnection();
-	// Todo: Update the SDK to replace with ShutdownConnection();
 #endif
 
 #ifndef _X360

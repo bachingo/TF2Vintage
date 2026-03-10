@@ -1562,7 +1562,7 @@ public:
 			Vector	attackDir = pEntity->WorldSpaceCenter() - m_pAttacker->WorldSpaceCenter();
 			VectorNormalize( attackDir );
 
-			float	flDamage = ( pEntity->IsPlayer() ) ? sk_antlionguard_dmg_shove.GetFloat() : 250;
+			float	flDamage = ( pEntity->IsPlayer() ) ? sk_antlionguard_dmg_shove.GetFloat() : 250;;
 
 			CTakeDamageInfo info( m_pAttacker, m_pAttacker, flDamage, DMG_CRUSH );
 			CalculateMeleeDamageForce( &info, attackDir, info.GetAttacker()->WorldSpaceCenter(), 4.0f );
@@ -2786,7 +2786,7 @@ bool CNPC_AntlionGuard::HandleChargeImpact( Vector vecImpact, CBaseEntity *pEnti
 
 	else
 	{
-		// If we hit a physics prop, smack the crap out of it. (large rocks)
+		// If we hit a physics prop, smack the heck out of it. (large rocks)
 		// Factor the object mass into it, because we want to move it no matter how heavy it is.
 		if ( pEntity->GetMoveType() == MOVETYPE_VPHYSICS )
 		{

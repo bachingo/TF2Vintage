@@ -123,7 +123,7 @@ void CTFGrenadeConcussionProjectile::Detonate()
 {
 	if ( ShouldNotDetonate() )
 	{
-		Destroy();
+		RemoveGrenade();
 		return;
 	}
 
@@ -166,7 +166,7 @@ void CTFGrenadeConcussionProjectile::Explode( trace_t *pTrace, int bitsDamageTyp
 	}
 
 	// Explosion effect on client
-	// SendDispatchEffect();
+	SendDispatchEffect();
 
 	// Explosion sound.
 	CSoundEnt::InsertSound( SOUND_COMBAT, GetAbsOrigin(), BASEGRENADE_EXPLOSION_VOLUME, 3.0 );
@@ -189,7 +189,7 @@ void CTFGrenadeConcussionProjectile::Explode( trace_t *pTrace, int bitsDamageTyp
 		bool bIsThrower = ( pPlayer == pTestPlayer );
 		if ( bIsThrower || ( pTestPlayer && !InSameTeam( pTestPlayer) ) )
 		{
-			//pTestPlayer->m_Shared.Concussion( this, m_DmgRadius );
+			pTestPlayer->m_Shared.Concussion( this, m_DmgRadius );
 		}
 	}
 

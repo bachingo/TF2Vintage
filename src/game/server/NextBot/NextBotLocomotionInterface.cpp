@@ -380,11 +380,6 @@ bool ILocomotion::IsAreaTraversable( const CNavArea *baseArea ) const
 	return !baseArea->IsBlocked( GetBot()->GetEntity()->GetTeamNumber() );
 }
 
-bool ILocomotion::ScriptIsAreaTraversable( HSCRIPT hBaseArea ) const
-{
-	return this->IsAreaTraversable( ToNavArea( hBaseArea ) );
-}
-
 
 //--------------------------------------------------------------------------------------------------------------
 /**

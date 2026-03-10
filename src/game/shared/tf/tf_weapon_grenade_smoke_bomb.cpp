@@ -37,8 +37,6 @@ END_PREDICTION_DATA()
 LINK_ENTITY_TO_CLASS( tf_weapon_grenade_smoke_bomb, CTFGrenadeSmokeBomb );
 PRECACHE_WEAPON_REGISTER( tf_weapon_grenade_smoke_bomb );
 
-ConVar tf_smoke_bomb_time("tf_smoke_bomb_time", "5.0", FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY);
-
 //=============================================================================
 //
 // TF Smoke Bomb functions.
@@ -57,7 +55,8 @@ extern ConVar tf_smoke_bomb_time;
 //-----------------------------------------------------------------------------
 CTFWeaponBaseGrenadeProj *CTFGrenadeSmokeBomb::EmitGrenade( Vector vecSrc, QAngle vecAngles, Vector vecVel, 
 													 AngularImpulse angImpulse, CBasePlayer *pPlayer, float flTime, int iflags )
-{							
+{
+#if 0
 	CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
 
 	if ( pTFPlayer )
@@ -77,11 +76,12 @@ CTFWeaponBaseGrenadeProj *CTFGrenadeSmokeBomb::EmitGrenade( Vector vecSrc, QAngl
 
 		if ( pTFPlayer->CanGoInvisible() )
 		{
-			pTFPlayer->m_Shared.AddCond( TF_COND_STEALTHED_USER_BUFF, tf_smoke_bomb_time.GetFloat() );
+			pTFPlayer->m_Shared.AddCond( TF_COND_SMOKE_BOMB, tf_smoke_bomb_time.GetFloat() );
 		}
 	}
-	return CTFGrenadeSmokeBombProjectile::Create( vecSrc, vecAngles, vecVel, angImpulse, 
-		                                pPlayer, GetTFWpnData(), flTime );
+#endif
+
+	return NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -93,86 +93,3 @@ bool CTFGrenadeSmokeBomb::ShouldDetonate( void )
 }
 
 #endif // GAME_DLL
-
-
-//=============================================================================
-//
-// TF Smoke Bomb Grenade Projectile functions (Server specific).
-//
-#ifdef GAME_DLL
-
-#define GRENADE_MODEL "models/Weapons/w_models/w_grenade_frag.mdl"
-
-LINK_ENTITY_TO_CLASS( tf_weapon_grenade_smoke_bomb_projectile, CTFGrenadeSmokeBombProjectile );
-PRECACHE_WEAPON_REGISTER( tf_weapon_grenade_smoke_bomb_projectile );
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-CTFGrenadeSmokeBombProjectile* CTFGrenadeSmokeBombProjectile::Create( const Vector &position, const QAngle &angles, 
-																const Vector &velocity, const AngularImpulse &angVelocity, 
-																CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, float timer, int iFlags )
-{
-	CTFGrenadeSmokeBombProjectile *pGrenade = static_cast<CTFGrenadeSmokeBombProjectile*>( CTFWeaponBaseGrenadeProj::Create( "tf_weapon_grenade_smoke_bomb_projectile", position, angles, velocity, angVelocity, pOwner, weaponInfo, timer, iFlags ) );
-	if ( pGrenade )
-	{
-		pGrenade->ApplyLocalAngularVelocityImpulse( angVelocity );	
-	}
-
-	return pGrenade;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CTFGrenadeSmokeBombProjectile::Spawn()
-{
-	SetModel( GRENADE_MODEL );
-	BaseClass::Spawn();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CTFGrenadeSmokeBombProjectile::Precache()
-{
-	PrecacheModel( GRENADE_MODEL );
-
-	BaseClass::Precache();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CTFGrenadeSmokeBombProjectile::BounceSound( void )
-{
-	EmitSound( "Weapon_Grenade_Nail.Bounce" );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CTFGrenadeSmokeBombProjectile::Detonate()
-{
-	if ( ShouldNotDetonate() )
-	{
-		Destroy();
-		return;
-	}
-
-	BaseClass::Detonate();
-
-#if 0
-	// Tell the bots an HE grenade has exploded
-	CTFPlayer *pPlayer = ToTFPlayer( GetThrower() );
-	if ( pPlayer )
-	{
-		KeyValues *pEvent = new KeyValues( "tf_weapon_grenade_detonate" );
-		pEvent->SetInt( "userid", pPlayer->GetUserID() );
-		gameeventmanager->FireEventServerOnly( pEvent );
-	}
-#endif
-}
-
-#endif
-

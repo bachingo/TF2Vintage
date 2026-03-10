@@ -152,7 +152,7 @@ void CTFGrenadeHealProjectile::Detonate()
 {
 	if ( ShouldNotDetonate() )
 	{
-		Destroy();
+		RemoveGrenade();
 		return;
 	}
 

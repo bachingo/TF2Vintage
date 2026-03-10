@@ -49,10 +49,10 @@ class CTFMinigun : public CTFWeaponBaseGun
 public:
 
 	DECLARE_CLASS( CTFMinigun, CTFWeaponBaseGun );
-	DECLARE_NETWORKCLASS();
+	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
 
-	// Server specific.
+// Server specific.
 #ifndef CLIENT_DLL
 	DECLARE_DATADESC();
 #endif
@@ -61,10 +61,9 @@ public:
 	~CTFMinigun();
 
 	virtual void	Precache( void );
-	virtual int		GetWeaponID( void ) const { return TF_WEAPON_MINIGUN; }
+	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_MINIGUN; }
 	virtual void	ItemPostFrame( void );
 	virtual void	PrimaryAttack();
-	virtual void	UseRealMinigunBrassEject( void );
 	virtual void	SecondaryAttack();
 	void			SharedAttack();
 	virtual void	WeaponIdle();
@@ -92,21 +91,21 @@ public:
 
 	virtual int		GetCustomDamageType() const { return TF_DMG_CUSTOM_MINIGUN; }
 	int				GetMinigunType( void ) const { int iMode = 0; CALL_ATTRIB_HOOK_INT( iMode, set_weapon_mode ); return iMode; };
-	bool			HasSpinSounds( void ) const { int iMode = 0; CALL_ATTRIB_HOOK_INT( iMode, minigun_no_spin_sounds ); return iMode != 1; };
-	bool			CanHolsterWhileSpinning( void ) const { int iMode = 0; CALL_ATTRIB_HOOK_INT( iMode, mod_minigun_can_holster_while_spinning ); return iMode != 0; };
+	bool			HasSpinSounds( void ) const { int iMode = 0; CALL_ATTRIB_HOOK_INT( iMode, minigun_no_spin_sounds ); return iMode!=1; };
+	bool			CanHolsterWhileSpinning( void ) const { int iMode = 0; CALL_ATTRIB_HOOK_INT( iMode, mod_minigun_can_holster_while_spinning ); return iMode!=0; };
 
 	float			GetFiringDuration( void ) { return ( m_flStartedFiringAt >= 0.f ) ? ( gpGlobals->curtime - m_flStartedFiringAt ) : 0.f; }
 	float			GetWindUpDuration( void ) { return ( m_flStartedWindUpAt >= 0.f ) ? ( gpGlobals->curtime - m_flStartedWindUpAt ) : 0.f; }
 
 	float			GetProgress( void );
 	bool			IsRageFull( void ); // same as GetProgress() without the division by 100.0f
-	const char *GetEffectLabelText( void ) { return "#TF_Rage"; }
+	const char*		GetEffectLabelText( void ) { return "#TF_Rage"; }
 	bool			EffectMeterShouldFlash( void );
 
 	virtual bool	CanInspect() const OVERRIDE;
 
 #ifdef GAME_DLL
-	virtual CDmgAccumulator *GetDmgAccumulator( void ) { return &m_Accumulator; }
+	virtual CDmgAccumulator	*GetDmgAccumulator( void ) { return &m_Accumulator; }
 	virtual float GetInitialAfterburnDuration() const OVERRIDE;
 #endif // GAME_DLL
 
@@ -115,8 +114,8 @@ public:
 #endif
 
 private:
-
-	CTFMinigun( const CTFMinigun & ) { }
+	
+	CTFMinigun( const CTFMinigun & ) {}
 
 	void WindUp( void );
 	void WindDown( void );
@@ -129,15 +128,15 @@ private:
 	// Barrel spinning
 	virtual CStudioHdr *OnNewModel( void );
 	virtual void		StandardBlendingRules( CStudioHdr *hdr, Vector pos[], Quaternion q[], float currentTime, int boneMask );
-
+	
 	virtual void		UpdateOnRemove( void );
 
 	void				CreateMove( float flInputSampleTime, CUserCmd *pCmd, const QAngle &vecOldViewAngles );
 
 	void				OnDataChanged( DataUpdateType_t type );
-
+		
 	virtual void	ItemPreFrame( void );
-
+	
 	// Firing sound
 	void				WeaponSoundUpdate( void );
 	void				PlayStopFiringSound();
@@ -148,10 +147,10 @@ private:
 	virtual void		ViewModelAttachmentBlending( CStudioHdr *hdr, Vector pos[], Quaternion q[], float currentTime, int boneMask );
 #endif
 
-	virtual bool			CanReload( void ) { return false; }
+	virtual bool			CanReload( void ){ return false; }
 
 private:
-	virtual void PlayWeaponShootSound( void ) { }	// override base class call to play shoot sound; we handle that ourselves separately
+	virtual void PlayWeaponShootSound( void ) {}	// override base class call to play shoot sound; we handle that ourselves separately
 
 	void SetWeaponState( MinigunState_t nState );
 
@@ -165,7 +164,7 @@ private:
 	float	m_flBarrelTargetVelocity;
 	int		m_iBarrelBone;
 	float	m_flBarrelAngle;
-	CSoundPatch *m_pSoundCur;				// the weapon sound currently being played
+	CSoundPatch		*m_pSoundCur;				// the weapon sound currently being played
 	int				m_iMinigunSoundCur;			// the enum value of the weapon sound currently being played
 	float			m_flMinigunSoundCurrentPitch;
 
@@ -204,24 +203,5 @@ private:
 	MinigunState_t		m_iPrevMinigunState;
 #endif
 };
-
-
-// More realistic Minigun type.
-
-#if defined CLIENT_DLL
-#define CTFMinigun_Real C_TFMinigun_Real
-#endif
-
-class CTFMinigun_Real : public CTFMinigun
-{
-public:
-
-	DECLARE_CLASS( CTFMinigun_Real, CTFMinigun )
-	DECLARE_NETWORKCLASS();
-	DECLARE_PREDICTABLE();
-
-	virtual int GetWeaponID( void ) const { return TF_WEAPON_MINIGUN_REAL; }
-};
-
 
 #endif // TF_WEAPON_MINIGUN_H

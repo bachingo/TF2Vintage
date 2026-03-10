@@ -14,6 +14,7 @@ $Macro GENERATED_PROTO_DIR	"$SRCDIR\game\server\generated_proto_$GAMENAME"
 $MacroRequired "GAMENAME"
 
 $include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+$include "$SRCDIR\vpc_scripts\protobuf_builder.vpc"
 $Include "$SRCDIR\vpc_scripts\source_replay.vpc"	[$TF]
 $Include "$SRCDIR\game\protobuf_include.vpc"
 
@@ -44,8 +45,8 @@ $Configuration	"Release"
 
 $CustomBuildStep "nut"
 {
-	$CommandLine	"$SRCDIR\devtools\bin\perl.exe $SRCDIR\devtools\bin\texttoarray.pl $(InputPath) g_Script_$(InputName)> $(InputName)_nut.h" [$WINDOWS]
-	$CommandLine	"perl $SRCDIR\devtools\bin\texttoarray.pl $(InputPath) g_Script_$(InputName)> $(InputName)_nut.h" [$POSIX]
+	$CommandLine	"python $SRCDIR\devtools\bin\texttoarray.py $(InputPath) g_Script_$(InputName)> $(InputName)_nut.h" [$WINDOWS]
+	$CommandLine	"python $SRCDIR\devtools\bin\texttoarray.py $(InputPath) g_Script_$(InputName)> $(InputName)_nut.h" [$POSIX]
 	$Description	"$(InputFileName) produces $(InputName)_nut.h"
 	$Outputs		"$(InputName)_nut.h"
 }
@@ -450,9 +451,6 @@ $Project
 		$File	"lightglow.cpp"
 		$File	"lights.cpp"
 		$File	"lights.h"
-		$File	"env_cascade_light.cpp"
-		$File	"csm_autospawn.cpp"
-		$File	"sky_tod.cpp"
 		$File	"locksounds.h"
 		$File	"logic_measure_movement.cpp"
 		$File	"logic_navigation.cpp"
@@ -694,12 +692,6 @@ $Project
 		$File	"$SRCDIR\public\haptics\haptic_utils.cpp"	[$WINDOWS]
 		$File	"netpropmanager.cpp"
 		$File	"netpropmanager.h"
-		$File	"$SRCDIR\game\shared\vscript_consts_shared.cpp"
-		$File	"$SRCDIR\game\shared\vscript_consts_weapons.cpp"
-		$File	"$SRCDIR\game\shared\vscript_funcs_shared.cpp"
-		$File	"$SRCDIR\game\shared\vscript_singletons.cpp"
-		$File	"$SRCDIR\game\shared\logic_script_client.cpp"
-		$File	"$SRCDIR\game\shared\matchers.cpp"
 
 		// Not using precompiled header cbase.h
 

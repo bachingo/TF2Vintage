@@ -12,15 +12,12 @@
 #pragma once
 #endif
 
-#include "vscript/ivscript.h"
-
 //-----------------------------------------------------------------------------
 // Purpose: Basic handler for an rgb set of colors
 //			This class is fully inline
 //-----------------------------------------------------------------------------
 class Color
 {
-	ALLOW_SCRIPT_ACCESS();
 public:
 	// constructors
 	Color()

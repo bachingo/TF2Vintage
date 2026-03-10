@@ -40,7 +40,6 @@ struct loopingsound_t
 };
 
 ConVar soundscape_fadetime( "soundscape_fadetime", "3.0", FCVAR_CHEAT, "Time to crossfade sound effects between soundscapes" );
-ConVar soundscape_debug_cl( "soundscape_debug_cl", "0", FCVAR_DEVELOPMENTONLY, "When enabled, shows the currently active soundscape in the console." );
 
 #include "interval.h"
 
@@ -562,8 +561,7 @@ void C_SoundscapeSystem::UpdateAudioParams( audioparams_t &audio )
 	m_forcedSoundscapeIndex = -1;
 	if ( audio.entIndex > 0 && audio.soundscapeIndex >= 0 && audio.soundscapeIndex < m_soundscapes.Count() )
 	{
-		if( soundscape_debug_cl.GetBool() )
-			DevReportSoundscapeName( audio.soundscapeIndex );
+		DevReportSoundscapeName( audio.soundscapeIndex );
 		StartNewSoundscape( m_soundscapes[audio.soundscapeIndex] );
 	}
 	else

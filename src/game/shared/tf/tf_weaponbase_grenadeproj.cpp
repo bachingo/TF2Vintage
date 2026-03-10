@@ -37,14 +37,11 @@ BEGIN_DATADESC( CTFWeaponBaseGrenadeProj )
 DEFINE_THINKFUNC( DetonateThink ),
 END_DATADESC()
 
-ConVar tf_grenade_show_radius( "tf_grenade_show_radius", "0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Render radius of grenades" );
-ConVar tf_grenade_show_radius_time( "tf_grenade_show_radius_time", "5.0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Time to show grenade radius" );
+
 extern void SendProxy_Origin( const SendProp *pProp, const void *pStruct, const void *pData, DVariant *pOut, int iElement, int objectID );
 extern void SendProxy_Angles( const SendProp *pProp, const void *pStruct, const void *pData, DVariant *pOut, int iElement, int objectID );
 
 #endif
-
-ConVar tf2v_use_new_grenade_radius( "tf2v_use_new_grenade_radius", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Uses modern grenade explosion sizes (146Hu)instead of older ones (159Hu) for Demoman." );
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFWeaponBaseGrenadeProj, DT_TFWeaponBaseGrenadeProj )
 
@@ -74,10 +71,6 @@ BEGIN_NETWORK_TABLE( CTFWeaponBaseGrenadeProj, DT_TFWeaponBaseGrenadeProj )
 	SendPropEHandle(SENDINFO( m_hDeflectOwner )),
 #endif
 END_NETWORK_TABLE()
-
-#define TF_GRENADE_RADIUS					146.0f
-#define TF_GRENADE_RADIUS_OLD				159.0f
-#define TF_GRENADE_SELF_DAMAGE_RADIUS		146.0f
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor.
@@ -216,7 +209,7 @@ void CTFWeaponBaseGrenadeProj::OnDataChanged( DataUpdateType_t type )
 //-----------------------------------------------------------------------------
 CTFWeaponBaseGrenadeProj *CTFWeaponBaseGrenadeProj::Create( const char *szName, const Vector &position, const QAngle &angles, 
 													   const Vector &velocity, const AngularImpulse &angVelocity, 
-													   CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, float flTimer, int iFlags )
+													   CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, int iFlags )
 {
 	CTFWeaponBaseGrenadeProj *pGrenade = static_cast<CTFWeaponBaseGrenadeProj*>( CBaseEntity::Create( szName, position, angles, pOwner ) );
 	if ( pGrenade )
@@ -242,8 +235,6 @@ void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const Angula
 void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const AngularImpulse &angVelocity, 
 									CBaseCombatCharacter *pOwner, const int iDamage, const float flRadius )
 {
-	NOTE_UNUSED( flRadius );
-
 	// We can't use OwnerEntity for grenades, because then the owner can't shoot them with his hitscan weapons (due to collide rules)
 	// Thrower is used to store the person who threw the grenade, for damage purposes.
 	SetOwnerEntity( NULL );
@@ -255,8 +246,8 @@ void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const Angula
 	SetFriction( 0.2f/*BaseClass::GetGrenadeFriction()*/ );
 	SetElasticity( 0.45f/*BaseClass::GetGrenadeElasticity()*/ );
 
-	SetDamageRadius( tf2v_use_new_grenade_radius.GetBool() ? TF_GRENADE_RADIUS : TF_GRENADE_RADIUS_OLD );
 	SetDamage( iDamage );
+	SetDamageRadius( flRadius );
 	ChangeTeam( pOwner ? pOwner->GetTeamNumber() : TEAM_UNASSIGNED );
 
 	IPhysicsObject *pPhysicsObject = VPhysicsGetObject();
@@ -396,14 +387,9 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType )
 	CTakeDamageInfo info( this, GetThrower(), m_hLauncher, GetBlastForce(), GetAbsOrigin(), m_flDamage, bitsDamageType, nCustomDamage, &vecReported );
 
 	float flRadius = GetDamageRadius();
-	
+
 	CTFRadiusDamageInfo radiusinfo( &info, vecOrigin, flRadius, NULL, TF_GRENADE_JUMP_RADIUS );
 	TFGameRules()->RadiusDamage( radiusinfo );
-
-	if ( tf_grenade_show_radius.GetBool() )
-	{
-		DrawRadius( flRadius );
-	}
 
 	// Don't decal players with scorch.
 	if ( pTrace->m_pEnt && !pTrace->m_pEnt->IsPlayer() && ( iNoSelfBlastDamage == 0 ) )
@@ -808,54 +794,5 @@ void CTFWeaponBaseGrenadeProj::VPhysicsUpdate( IPhysicsObject *pPhysics )
 	}
 }
 
-
-void CTFWeaponBaseGrenadeProj::DrawRadius( float flRadius )
-{
-	Vector pos = GetAbsOrigin();
-	int r = 255;
-	int g = 0, b = 0;
-	float flLifetime = tf_grenade_show_radius_time.GetFloat();
-	bool bDepthTest = true;
-
-	Vector edge, lastEdge;
-	NDebugOverlay::Line( pos, pos + Vector( 0, 0, 50 ), r, g, b, !bDepthTest, flLifetime );
-
-	lastEdge = Vector( flRadius + pos.x, pos.y, pos.z );
-	float angle;
-	for( angle=0.0f; angle <= 360.0f; angle += 22.5f )
-	{
-		edge.x = flRadius * cos( angle ) + pos.x;
-		edge.y = pos.y;
-		edge.z = flRadius * sin( angle ) + pos.z;
-
-		NDebugOverlay::Line( edge, lastEdge, r, g, b, !bDepthTest, flLifetime );
-
-		lastEdge = edge;
-	}
-
-	lastEdge = Vector( pos.x, flRadius + pos.y, pos.z );
-	for( angle=0.0f; angle <= 360.0f; angle += 22.5f )
-	{
-		edge.x = pos.x;
-		edge.y = flRadius * cos( angle ) + pos.y;
-		edge.z = flRadius * sin( angle ) + pos.z;
-
-		NDebugOverlay::Line( edge, lastEdge, r, g, b, !bDepthTest, flLifetime );
-
-		lastEdge = edge;
-	}
-
-	lastEdge = Vector( pos.x, flRadius + pos.y, pos.z );
-	for( angle=0.0f; angle <= 360.0f; angle += 22.5f )
-	{
-		edge.x = flRadius * cos( angle ) + pos.x;
-		edge.y = flRadius * sin( angle ) + pos.y;
-		edge.z = pos.z;
-
-		NDebugOverlay::Line( edge, lastEdge, r, g, b, !bDepthTest, flLifetime );
-
-		lastEdge = edge;
-	}
-}
 
 #endif

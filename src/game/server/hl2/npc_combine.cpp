@@ -1885,7 +1885,7 @@ int CNPC_Combine::SelectFailSchedule( int failedSchedule, int failedTask, AI_Tas
 		{
 			// This eases the effects of an unfortunate bug that usually plagues shotgunners. Since their rate of fire is low,
 			// they spend relatively long periods of time without an attack squad slot. If you corner a shotgunner, usually 
-			// the other memebers of the squad will hog all of the attack slots and pick schedules to move to establish line of
+			// the other members of the squad will hog all of the attack slots and pick schedules to move to establish line of
 			// fire. During this time, the shotgunner is prevented from attacking. If he also cannot find cover (the fallback case)
 			// he will stand around like an idiot, right in front of you. Instead of this, we have him run up to you for a melee attack.
 			return SCHED_COMBINE_MOVE_TO_MELEE;
@@ -2798,7 +2798,7 @@ bool CNPC_Combine::CanThrowGrenade( const Vector &vecTarget )
 	{
 		if (m_pSquad->SquadMemberInRange( vecTarget, COMBINE_MIN_GRENADE_CLEAR_DIST ))
 		{
-			// crap, I might blow my own guy up. Don't throw a grenade and don't check again for a while.
+			// I might blow my own guy up. Don't throw a grenade and don't check again for a while.
 			m_flNextGrenadeCheck = gpGlobals->curtime + 1; // one full second.
 
 			// Tell my squad members to clear out so I can get a grenade in

@@ -688,16 +688,6 @@ void CTeamControlPointMaster::CheckWinConditions( void )
 				{
 					pTimer = TFGameRules()->GetBlueKothRoundTimer();
 				}
-#ifdef TF_VINTAGE
-				else if ( iWinners == TF_TEAM_GREEN )
-				{
-					pTimer = TFGameRules()->GetGreenKothRoundTimer();
-				}
-				else if ( iWinners == TF_TEAM_YELLOW )
-				{
-					pTimer = TFGameRules()->GetYellowKothRoundTimer();
-				}
-#endif
 
 				if ( pTimer )
 				{
@@ -1166,6 +1156,9 @@ int CTeamControlPointMaster::GetNumPointsOwnedByTeam( int iTeam )
 //-----------------------------------------------------------------------------	
 int CTeamControlPointMaster::CalcNumRoundsRemaining( int iTeam )
 {
+	if ( m_ControlPointRounds.IsEmpty() )
+		return 0;
+
 	// To determine how many rounds remain for a given team if it consistently wins mini-rounds, we have to 
 	// simulate forward each mini-round and track the control point ownership that would result
 
@@ -1267,11 +1260,6 @@ int CTeamControlPointMaster::CalcNumRoundsRemaining( int iTeam )
 //-----------------------------------------------------------------------------
 float CTeamControlPointMaster::GetPartialCapturePointRate( void )
 {
-	if ( TFGameRules()->IsInEscortMode() )
-		m_flPartialCapturePointsRate = 10.0;
-	else
-		m_flPartialCapturePointsRate = 0.0;
-
 	return m_flPartialCapturePointsRate;
 }
 

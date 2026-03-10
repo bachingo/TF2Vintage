@@ -1058,29 +1058,22 @@ public:
 	void PostProcessCliffAreas();
 	void SimplifySelectedAreas( void );	// Simplifies the selected set by reducing to 1x1 areas and re-merging them up with loosened tolerances
 
-	// ----------------------------------------------------------------------------
-	// VScript accessors
-	// ----------------------------------------------------------------------------
+	// Script accessors
 	HSCRIPT ScriptGetNavAreaByID( int areaID );
-	HSCRIPT ScriptGetNavArea( Vector const &vecOrigin, float flBeneath );
-	HSCRIPT ScriptGetNearestNavArea( Vector const &vecOrigin, float maxDist, bool checkLOS, bool checkGround );
-	int ScriptGetNavAreaCount( void );
-	void GetNavAreasInRadius( Vector const &vecOrigin, float radius, HSCRIPT hTable );
-	HSCRIPT FindNavAreaAlongRay( Vector const &startPos, Vector const &endPos, HSCRIPT ignoreArea );
+	HSCRIPT ScriptGetNavArea( const Vector& pos, float beneathLimt );
+	HSCRIPT ScriptGetNearestNavArea( const Vector& pos, float maxDist, bool checkLOS, bool checkGround );
+	int ScriptGetNavAreaCount() { return ( int )GetNavAreaCount(); }
+	void GetNavAreasInRadius( const Vector& pos, float radius, HSCRIPT hTable );
+	HSCRIPT FindNavAreaAlongRay( const Vector& start, const Vector& end, HSCRIPT hIgnoreArea );
 	void GetAllAreas( HSCRIPT hTable );
 	void GetObstructingEntities( HSCRIPT hTable );
 	void GetAreasWithAttributes( int bits, HSCRIPT hTable );
-
-	bool ScriptNavAreaBuildPath( HSCRIPT hStart, HSCRIPT hGoal, Vector const &goalPos, float flMaxPathLength, int teamID, bool ignoreNavBlockers );
-	float ScriptNavAreaTravelDistance( HSCRIPT hStart, HSCRIPT hGoal, float flMaxPathLength );
-	bool GetNavAreasFromBuildPath( HSCRIPT hStart, HSCRIPT hGoal, Vector const &goalPos, float flMaxPathLength, int teamID, bool ignoreNavBlockers, HSCRIPT hTable );
-
-	void ScriptRegisterAvoidanceObstacle( HSCRIPT hObstacle );
-	void ScriptUnregisterAvoidanceObstacle( HSCRIPT hObstacle );
-
-	void GetNavAreasOverlappingEntityExtent( HSCRIPT hEntity, HSCRIPT hTable );
-
-	float ScriptGetGroundHeight( Vector const &pos );
+	bool ScriptNavAreaBuildPath( HSCRIPT hStartArea, HSCRIPT hGoalArea, const Vector& goalPos, float maxPathLength, int teamID, bool ignoreNavBlockers );
+	float ScriptNavAreaTravelDistance( HSCRIPT hStartArea, HSCRIPT hGoalArea, float maxPathLength );
+	bool ScriptGetNavAreasFromBuildPath( HSCRIPT hStartArea, HSCRIPT hGoalArea, const Vector& goalPos, float maxPathLength, int teamID, bool ignoreNavBlockers, HSCRIPT hTable );
+	void ScriptRegisterAvoidanceObstacle( HSCRIPT hEntity );
+	void ScriptUnregisterAvoidanceObstacle( HSCRIPT hEntity );
+	void ScriptGetNavAreasOverlappingEntityExtent( HSCRIPT hEntity, HSCRIPT hTable );
 
 protected:
 	NavErrorType GetNavDataFromFile( CUtlBuffer &outBuffer, bool *pNavDataFromBSP = NULL );

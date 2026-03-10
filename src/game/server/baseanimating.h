@@ -50,7 +50,6 @@ public:
 	virtual void Activate();
 	virtual void Spawn();
 	virtual void Precache();
-	virtual void UpdateOnRemove();
 	virtual void SetTransmit( CCheckTransmitInfo *pInfo, bool bAlways );
 
 	virtual int	 Restore( IRestore &restore );
@@ -101,7 +100,7 @@ public:
 	inline float SequenceDuration( void ) { return SequenceDuration( m_nSequence ); }
 	float	SequenceDuration( CStudioHdr *pStudioHdr, int iSequence );
 	inline float SequenceDuration( int iSequence ) { return SequenceDuration(GetModelPtr(), iSequence); }
-	float ScriptGetSequenceDuration( int iSequence );
+	float	ScriptGetSequenceDuration( int iSequence );
 	float	GetSequenceCycleRate( CStudioHdr *pStudioHdr, int iSequence );
 	inline float	GetSequenceCycleRate( int iSequence ) { return GetSequenceCycleRate(GetModelPtr(),iSequence); }
 	float	GetLastVisibleCycle( CStudioHdr *pStudioHdr, int iSequence );
@@ -134,7 +133,6 @@ public:
 	virtual bool BecomeRagdollOnClient( const Vector &force );
 	virtual bool IsRagdoll();
 	virtual bool CanBecomeRagdoll( void ); //Check if this entity will ragdoll when dead.
-	bool ScriptHookOnServerRagdoll( HSCRIPT hRagdoll, bool bSubModel );
 
 	virtual	void GetSkeleton( CStudioHdr *pStudioHdr, Vector pos[], Quaternion q[], int boneMask );
 
@@ -154,11 +152,10 @@ public:
 		return this->DispatchAnimEvents( pAnimating );
 	}
 	virtual void HandleAnimEvent( animevent_t *pEvent );
-	bool ScriptHookHandleAnimEvent( animevent_t *pEvent );
 
 	int		LookupPoseParameter( CStudioHdr *pStudioHdr, const char *szName );
 	inline int	LookupPoseParameter( const char *szName ) { return LookupPoseParameter(GetModelPtr(), szName); }
-	inline int	ScriptLookupPoseParameter( const char *szName ) { return LookupPoseParameter( szName ); }
+	int ScriptLookupPoseParameter( const char *szName ) { return LookupPoseParameter( szName ); }
 
 	float	SetPoseParameter( CStudioHdr *pStudioHdr, const char *szName, float flValue );
 	inline float SetPoseParameter( const char *szName, float flValue ) { return SetPoseParameter( GetModelPtr(), szName, flValue ); }
@@ -204,21 +201,6 @@ public:
 	int GetAttachmentBone( int iAttachment );
 	virtual bool GetAttachment( int iAttachment, matrix3x4_t &attachmentToWorld );
 
-	const matrix3x4_t &ScriptGetAttachmentMatrix( int iAttachment );
-	float	ScriptGetPoseParameter( const char *szName );
-
-	int		ScriptGetSequenceActivity( int iSequence ) { return GetSequenceActivity( iSequence ); }
-	float	ScriptGetSequenceMoveDist( int iSequence ) { return GetSequenceMoveDist( GetModelPtr(), iSequence ); }
-	int		ScriptSelectHeaviestSequence( int activity ) { return SelectHeaviestSequence( (Activity)activity ); }
-	int		ScriptSelectWeightedSequence( int activity, int curSequence ) { return SelectWeightedSequence( (Activity)activity, curSequence ); }
-
-	HSCRIPT ScriptGetSequenceKeyValues( int iSequence );
-private:
-	HSCRIPT m_hOnServerRagdoll;
-	HSCRIPT m_hHandleAnimEvent;
-
-public:
-
 	// These return the attachment in the space of the entity
 	bool GetAttachmentLocal( const char *szName, Vector &origin, QAngle &angles );
 	bool GetAttachmentLocal( int iAttachment, Vector &origin, QAngle &angles );
@@ -232,7 +214,6 @@ public:
 	QAngle ScriptGetAttachmentAngles( int iAttachment );
 	Vector ScriptGetBoneOrigin( int iBone );
 	QAngle ScriptGetBoneAngles( int iBone );
-	const matrix3x4_t &ScriptGetBoneTransform( int iBone );
 
 	void SetBodygroup( int iGroup, int iValue );
 	int GetBodygroup( int iGroup );

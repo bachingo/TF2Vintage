@@ -5,7 +5,6 @@
 // $NoKeywords: $
 //===========================================================================//
 #include "cbase.h"
-#include "fmtstr.h"
 #include <crtmemdebug.h>
 #include "vgui_int.h"
 #include "clientmode.h"
@@ -113,14 +112,6 @@
 #include "matsys_controls/matsyscontrols.h"
 #include "gamestats.h"
 #include "particle_parse.h"
-#ifdef _WIN32
-#include <direct.h> // getcwd
-#elif POSIX
-#include <dlfcn.h>
-#include <unistd.h>
-#define _getcwd getcwd
-#endif
-#include "vscript/ivscript.h"
 #if defined( TF_CLIENT_DLL )
 #include "rtime.h"
 #include "tf_hud_disconnect_prompt.h"
@@ -134,7 +125,6 @@
 #include "sourcevr/isourcevirtualreality.h"
 #include "client_virtualreality.h"
 #include "mumble.h"
-#include "bannedwords.h"
 #include "steamshare.h"
 #include "vgui_controls/BuildGroup.h"
 
@@ -159,9 +149,6 @@
 #include "econ/tool_items/custom_texture_cache.h"
 
 #endif
-
-// Discord RPC
-#include "irichpresenceclient.h"
 
 
 extern vgui::IInputInternal *g_InputInternal;
@@ -221,7 +208,6 @@ IXboxSystem *xboxsystem = NULL;	// Xbox 360 only
 IMatchmaking *matchmaking = NULL;
 IUploadGameStats *gamestatsuploader = NULL;
 IClientReplayContext *g_pClientReplayContext = NULL;
-IScriptManager *scriptmanager = NULL;
 #if defined( REPLAY_ENABLED )
 IReplayManager *g_pReplayManager = NULL;
 IReplayMovieManager *g_pReplayMovieManager = NULL;
@@ -359,31 +345,8 @@ ConVar r_lightmap_bicubic_set( "r_lightmap_bicubic_set", "0", FCVAR_ARCHIVE | FC
 bool g_bLevelInitialized;
 bool g_bTextMode = false;
 
+
 static ConVar *g_pcv_ThreadMode = NULL;
-
-#ifdef TF_VINTAGE_CLIENT
-static class DllOverride {
-    public:
-        DllOverride() {
-            // NOTE: This constructor runs at DLL load time (static initializer),
-            // BEFORE the engine calls CHLClient::Init(). At this point
-            // CommandLine() is valid (the launcher sets it up before loading DLLs),
-            // but we must NOT use VarArgs() here — it returns a thread-local rotating
-            // buffer that can be overwritten inside AddSearchPath itself, producing a
-            // corrupted path string. Use a fixed stack buffer instead.
-            Sys_LoadInterface( "filesystem_stdio.dll", FILESYSTEM_INTERFACE_VERSION, nullptr, (void **)&g_pFullFileSystem );
-            if ( !g_pFullFileSystem )
-                return;
-            const char *pGameDir = CommandLine()->ParmValue( "-game", "hl2" );
-            // Build the path into a local buffer so the pointer stays valid for the
-            // duration of the AddSearchPath call.
-            char szBinPath[MAX_PATH];
-            V_snprintf( szBinPath, sizeof(szBinPath), "%s/bin", pGameDir );
-            g_pFullFileSystem->AddSearchPath( szBinPath, "EXECUTABLE_PATH", PATH_ADD_TO_HEAD );
-        }
-} g_DllOverride;
-#endif
-
 
 //-----------------------------------------------------------------------------
 // Purpose: interface for gameui to modify voice bans
@@ -909,13 +872,6 @@ ISourceVirtualReality *g_pSourceVR = NULL;
 //-----------------------------------------------------------------------------
 int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physicsFactory, CGlobalVarsBase *pGlobals )
 {
-	// Load the crash handler as early as possible — before tier libraries,
-	// before any other system — so it catches failures in this very init sequence.
-	// Sys_LoadModule searches the game bin folder (bin/x64/) where the DLL lives.
-	// DllMain (Windows) / __attribute__((constructor)) (Linux) installs the handler.
-	// If the module is absent the call returns null and we continue silently.
-	Sys_LoadModule( "tf2vintage_crash" );
-
 	InitCRTMemDebug();
 	MathLib_Init( 2.2f, 2.2f, 0.0f, 2.0f );
 
@@ -931,31 +887,6 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	ConnectTier2Libraries( &appSystemFactory, 1 );
 	ConnectTier3Libraries( &appSystemFactory, 1 );
 
-	// Append -insecure unconditionally so the engine
-	// never attempts a VAC-secured session, regardless of launch options.
-	if ( !CommandLine()->FindParm( "-insecure" ) )
-	{
-		CommandLine()->AppendParm( "-insecure", nullptr );
-	}
-
-	// Always append logging.
-	if ( !CommandLine()->FindParm( "-console" ) )
-	{
-		CommandLine()->AppendParm( "-console", nullptr );
-	}
-	if ( !CommandLine()->FindParm( "-dev" ) )
-	{
-		CommandLine()->AppendParm( "-dev", nullptr );
-	}
-	if ( !CommandLine()->FindParm( "-condebug" ) )
-	{
-		CommandLine()->AppendParm( "-condebug", nullptr );
-	}
-	if ( !CommandLine()->FindParm( "-log_verbose_enable" ) )
-	{
-		CommandLine()->AppendParm( "-log_verbose_enable", "1" );
-	}
-	
 	// Client needs to protect from writing files into random locations to avoid becoming a remote-code
 	// execution platform.
 	if ( g_pFullFileSystem )
@@ -1172,9 +1103,6 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 #ifndef _X360
 	HookHapticMessages(); // Always hook the messages
 #endif
-
-	// Swear list.
-	g_BannedWords.InitFromFile( "bannedwords.txt" );
 
 	FnUnsafeCmdLineProcessor *pfnUnsafeCmdLineProcessor =
 #ifndef TF_CLIENT_DLL
@@ -1701,36 +1629,14 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 	view->LevelInit();
 	tempents->LevelInit();
 	ResetToneMapping(1.0);
-	
-	if ( rpc )
-	{
-		rpc->SetLevelName( pMapName );
-	}
 
 	IGameSystem::LevelInitPreEntityAllSystems(pMapName);
 
 #ifdef USES_ECON_ITEMS
-	// Guard: ItemSystem() can return a valid pointer even when the underlying
-	// schema has not yet loaded items_game.txt (e.g. first map load) OR when
-	// BInitFromDelayedBuffer() has already been called for this session
-	// (e.g. a listen-server map transition on the same process).
-	// Calling it twice is safe per the SDK implementation, but an uninitialized
-	// ItemSystem pointer will crash, so double-check both the system and schema.
-	if ( ItemSystem() )
+	GameItemSchema_t *pItemSchema = ItemSystem()->GetItemSchema();
+	if ( pItemSchema )
 	{
-		GameItemSchema_t *pItemSchema = ItemSystem()->GetItemSchema();
-		if ( pItemSchema )
-		{
-			pItemSchema->BInitFromDelayedBuffer();
-		}
-		else
-		{
-			Warning( "[Econ] LevelInitPreEntity: ItemSystem()->GetItemSchema() returned NULL; schema will not be initialized.\n" );
-		}
-	}
-	else
-	{
-		Warning( "[Econ] LevelInitPreEntity: ItemSystem() is NULL; skipping schema init.\n" );
+		pItemSchema->BInitFromDelayedBuffer();
 	}
 #endif // USES_ECON_ITEMS
 

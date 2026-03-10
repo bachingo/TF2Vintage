@@ -31,10 +31,12 @@
 #include "tf_mapinfo.h"
 #include "tf_dropped_weapon.h"
 #include "tf_weapon_passtime_gun.h"
+#include "tf_weapon_rocketpack.h"
 #include <functional>
 
 // Client specific.
 #ifdef CLIENT_DLL
+#include "c_baseviewmodel.h"
 #include "c_tf_player.h"
 #include "c_te_effect_dispatch.h"
 #include "c_tf_fx.h"
@@ -206,93 +208,6 @@ extern ConVar weapon_medigun_chargerelease_rate;
 #if defined( _DEBUG ) || defined( STAGING_ONLY )
 extern ConVar mp_developer;
 #endif // _DEBUG || STAGING_ONLY
-
-ConVar tf2v_use_new_bonk_length( "tf2v_use_new_bonk_length", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables standard length BONK duration." );
-
-ConVar sv_showimpacts( "sv_showimpacts", "0", FCVAR_REPLICATED, "Shows client (red) and server (blue) bullet impact point (1=both, 2=client-only, 3=server-only)" );
-ConVar sv_showplayerhitboxes("sv_showplayerhitboxes", "0", FCVAR_REPLICATED, "Show lag compensated hitboxes for the specified player index whenever a player fires." );
-
-ConVar tf2v_building_hauling( "tf2v_building_hauling", "1", FCVAR_REPLICATED, "Toggle Engineer's building hauling ability." );
-ConVar tf2v_disable_player_shadows( "tf2v_disable_player_shadows", "0", FCVAR_REPLICATED, "Disables rendering of player shadows regardless of client's graphical settings." );
-ConVar tf2v_critmod_range( "tf2v_critmod_range", "800", FCVAR_NOTIFY | FCVAR_REPLICATED, "Recent Damage (in HP) before peak critical chance levels off." );
-
-ConVar tf2v_new_flame_damage( "tf2v_new_flame_damage", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables Jungle Inferno fire and afterburn damage calculations." );
-
-ConVar tf2v_clamp_speed( "tf2v_clamp_speed", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable maximum speed bonuses a player can have at a single time." );
-ConVar tf2v_clamp_speed_difference( "tf2v_clamp_speed_difference", "105", FCVAR_NOTIFY | FCVAR_REPLICATED, "Maxmimum speed a player can be boosted from their base speed in HU/s." );
-ConVar tf2v_clamp_speed_absolute( "tf2v_clamp_speed_absolute", "450", FCVAR_NOTIFY | FCVAR_REPLICATED, "Absolute max speed (HU/s) for non-charging players." );
-
-ConVar tf2v_use_new_spy_movespeeds( "tf2v_use_new_spy_movespeeds", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables the MYM era move speed for spies." );
-ConVar tf2v_use_new_hauling_speed( "tf2v_use_new_hauling_speed", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables the F2P era movement decrease type for building hauling." );
-ConVar tf2v_use_spy_moveattrib ("tf2v_use_spy_moveattrib", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Should spies be affected by their disguise's speed attributes?" );
-ConVar tf2v_use_medic_speed_match( "tf2v_use_medic_speed_match", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables movespeed matching for medics." );
-ConVar tf2v_allow_spy_sprint( "tf2v_allow_spy_sprint", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows spies to override their disguise speed by holding reload." );
-ConVar tf2v_disguise_speed_match( "tf2v_disguise_speed_match", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows spies to always move at their disguised class' speed, including faster classes." );
-ConVar tf2v_use_new_yer( "tf2v_use_new_yer", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes Your Eternal Reward + Reskins to allow for disguising at full cloak." );
-ConVar tf2v_use_new_jag( "tf2v_use_new_jag", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes Jag to work like the modern version.", true, 0, true, 2 );
-
-ConVar tf2v_era_ammocounts("tf2v_era_ammocounts", "2", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables retail launch ammo pools for the Rocket Launcher, Grenade Launcher and Stickybomb Launcher." );
-
-ConVar tf2v_use_new_minigun_aim_speed("tf2v_use_new_minigun_aim_speed", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Aims the minigun at 110HU/s compared to the original 80HU/s." );
-
-ConVar tf_enable_grenades( "tf_enable_grenades", "0", FCVAR_REPLICATED, "Enable outfitting the grenade loadout slots" );
-
-ConVar tf2v_allow_disguiseweapons( "tf2v_allow_disguiseweapons", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows spy to change disguise weapon using lastdisguise.", true, 0, true, 1);
-ConVar tf2v_use_fast_redisguise( "tf2v_use_fast_redisguise", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Disguising while currently disguised is faster.", true, 0, true, 1);
-
-ConVar tf2v_use_new_atomizer( "tf2v_use_new_atomizer", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Swaps between the old and modern Atomizer airdash mechanic.", true, 0, true, 1);
-ConVar tf2v_use_new_sodapopper_hype( "tf2v_use_new_sodapopper_hype", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Swaps between minicrits versus five airdashes when under Soda Popper Hype.", true, 0, true, 1);
-ConVar tf2v_use_new_sodapopper_fill( "tf2v_use_new_sodapopper_fill", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Swaps between hype based on distance versus hype based on damage.", true, 0, true, 1);
-ConVar tf2v_use_manual_sodapopper( "tf2v_use_manual_sodapopper", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows Sodapopper Hype to be automatically activated.", true, 0, true, 1);
-
-
-
-
-
-
-
-
-
-ConVar tf2v_use_new_short_circuit( "tf2v_use_new_short_circuit", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Swaps the Short Circuit's Secondary Attack.", true, 0, true, 1);
-
-
-
-ConVar tf2v_use_new_cloak( "tf2v_use_new_cloak", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Gives cloaked spies a 20% damage resist and 25% shorter debuff duration.", true, 0, true, 1);
-
-
-ConVar tf2v_use_new_cleaners( "tf2v_use_new_cleaners", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Swaps Minicrit on Kill for the CRIKEY meter.", true, 0, true, 1);
-
-
-
-ConVar tf2v_use_new_beggars( "tf2v_use_new_beggars", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Deducts ammo from the Beggar's Bazooka when it misfires." );
-
-ConVar tf2v_use_new_axtinguisher("tf2v_use_new_axtinguisher", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Changes the behavior of the Axtinguisher.", true, 0, true, 3);
-
-ConVar tf2v_overflow_ammo( "tf2v_overflow_ammo", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Overflows ammo pools to adjust for partially loaded weapons.", true, 0, true, 1);
-
-
-
-
-
-
-
-
-
-ConVar tf2v_allow_combattext( "tf2v_allow_combattext", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows players to use clientside combat text.", true, 0, true, 1);
-ConVar tf2v_allow_hitsounds( "tf2v_allow_hitsounds", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows players to use clientside hitsounds.", true, 0, true, 1);
-
-#ifdef CLIENT_DLL
-ConVar tf2v_enable_burning_death( "tf2v_enable_burning_death", "0", FCVAR_REPLICATED, "Enables an animation that plays sometimes when dying to fire damage.", true, 0.0f, true, 1.0f );
-#endif
-
-#ifdef GAME_DLL
-extern ConVar tf2v_allow_cosmetics;
-extern ConVar tf2v_randomizer;
-extern ConVar tf2v_random_weapons;
-#endif
-
-ConVar tf2v_force_year_weapons( "tf2v_force_year_weapons", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Limit weapons based on year." );
-ConVar tf2v_allowed_year_weapons( "tf2v_allowed_year_weapons", "2021", FCVAR_NOTIFY | FCVAR_REPLICATED, "Maximum year allowed for items." );
 
 //ConVar tf_spy_stealth_blink_time( "tf_spy_stealth_blink_time", "0.3", FCVAR_DEVELOPMENTONLY, "time after being hit the spy blinks into view" );
 //ConVar tf_spy_stealth_blink_scale( "tf_spy_stealth_blink_scale", "0.85", FCVAR_DEVELOPMENTONLY, "percentage visible scalar after being hit the spy blinks into view" );
@@ -541,6 +456,8 @@ BEGIN_PREDICTION_DATA_NO_BASE( CTFPlayerShared )
 	DEFINE_PRED_FIELD( m_nAirDucked, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flDuckTimer, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flInvisChangeCompleteTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_flLastStealthExposeTime, FIELD_FLOAT, 0 ),
+	DEFINE_PRED_FIELD( m_flStealthNextChangeTime, FIELD_INTEGER, 0 ),
 	DEFINE_PRED_FIELD( m_nDisguiseTeam, FIELD_INTEGER, FTYPEDESC_INSENDTABLE  ),
 	DEFINE_PRED_FIELD( m_nDisguiseClass, FIELD_INTEGER, FTYPEDESC_INSENDTABLE  ),
 	DEFINE_PRED_FIELD( m_nDisguiseSkinOverride, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
@@ -558,7 +475,10 @@ BEGIN_PREDICTION_DATA_NO_BASE( CTFPlayerShared )
 	DEFINE_PRED_FIELD( m_bHasPasstimeBall, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bIsTargetedForPasstimePass, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ), // does this belong here?
 	DEFINE_PRED_FIELD( m_askForBallTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_flHolsterAnimTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_ARRAY( m_flItemChargeMeter, FIELD_FLOAT, LAST_LOADOUT_SLOT_WITH_CHARGE_METER, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_iStunIndex, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_bScattergunJump, FIELD_BOOLEAN, 0 ),
 END_PREDICTION_DATA()
 
 // Server specific.
@@ -871,6 +791,8 @@ CTFPlayerShared::CTFPlayerShared()
 	m_flPrevInvisibility = 0.f;
 	m_flTmpDamageBonusAmount = 1.0f;
 
+	m_bScattergunJump = false;
+
 	m_bFeignDeathReady = false;
 
 	m_fCloakConsumeRate = tf_spy_cloak_consume_rate.GetFloat();
@@ -1092,7 +1014,6 @@ void CTFPlayerShared::Spawn( void )
 	SetRevengeCrits( 0 );
 
 	m_PlayerStuns.RemoveAll();
-	m_iStunIndex = -1;
 
 	m_iPasstimeThrowAnimState = PASSTIME_THROW_ANIM_NONE;
 	m_bHasPasstimeBall = false;
@@ -1101,6 +1022,7 @@ void CTFPlayerShared::Spawn( void )
 #else
 	m_bSyncingConditions = false;
 #endif
+	m_iStunIndex = -1;
 	m_bKingRuneBuffActive = false;
 
 	// Reset our assist here incase something happens before we get killed
@@ -1111,46 +1033,55 @@ void CTFPlayerShared::Spawn( void )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-template < typename tIntType >
+template < typename tType >
 class CConditionVars
 {
 public:
-	CConditionVars( tIntType& nPlayerCond, tIntType& nPlayerCondEx, tIntType& nPlayerCondEx2, tIntType& nPlayerCondEx3, tIntType& nPlayerCondEx4, ETFCond eCond )
+	template < typename t0, typename t1, typename t2, typename t3, typename t4 >
+	CConditionVars( CTFPlayer* pOuter, ETFCond eCond, t0& nPlayerCond, t1& nPlayerCondEx, t2& nPlayerCondEx2, t3& nPlayerCondEx3, t4& nPlayerCondEx4 )
 	{
+		m_pOuter = pOuter;
+
 		if ( eCond >= 128 )
 		{
 			Assert( eCond < 128 + 32 );
-			m_pnCondVar = &nPlayerCondEx4;
-			m_nCondBit = eCond - 128; 
+			m_pnCondVar = ( tType* )&nPlayerCondEx4;
+			m_nCondBit = eCond - 128;
 		}
 		else if ( eCond >= 96 )
 		{
 			Assert( eCond < 96 + 32 );
-			m_pnCondVar = &nPlayerCondEx3;
+			m_pnCondVar = ( tType* )&nPlayerCondEx3;
 			m_nCondBit = eCond - 96;
 		}
-		else if( eCond >= 64 )
+		else if ( eCond >= 64 )
 		{
-			Assert( eCond < (64 + 32) );
-			m_pnCondVar = &nPlayerCondEx2;
+			Assert( eCond < ( 64 + 32 ) );
+			m_pnCondVar = ( tType* )&nPlayerCondEx2;
 			m_nCondBit = eCond - 64;
 		}
 		else if ( eCond >= 32 )
 		{
-			Assert( eCond < (32 + 32) );
-			m_pnCondVar = &nPlayerCondEx;
+			Assert( eCond < ( 32 + 32 ) );
+			m_pnCondVar = ( tType* )&nPlayerCondEx;
 			m_nCondBit = eCond - 32;
 		}
 		else
 		{
-			m_pnCondVar = &nPlayerCond;
+			m_pnCondVar = ( tType* )&nPlayerCond;
 			m_nCondBit = eCond;
 		}
 	}
 
-	tIntType& CondVar() const
+	const int& CondVar() const
 	{
-		return *m_pnCondVar;
+		return m_pnCondVar->m_Value;
+	}
+
+	int& CondVarForModify()
+	{
+		m_pOuter->NetworkStateChanged( m_pnCondVar );
+		return m_pnCondVar->m_Value;
 	}
 
 	int CondBit() const
@@ -1159,9 +1090,13 @@ public:
 	}
 
 private:
-	tIntType *m_pnCondVar;
+	CTFPlayer* m_pOuter;
+	tType* m_pnCondVar;
 	int m_nCondBit;
 };
+
+#define CONDITION_VARS( name, cond ) \
+CConditionVars< decltype( m_nPlayerCond ) > name( m_pOuter, cond, m_nPlayerCond, m_nPlayerCondEx, m_nPlayerCondEx2, m_nPlayerCondEx3, m_nPlayerCondEx4 )
 
 //-----------------------------------------------------------------------------
 // Purpose: Add a condition and duration
@@ -1194,14 +1129,14 @@ void CTFPlayerShared::AddCond( ETFCond eCond, float flDuration /* = PERMANENT_CO
 
 	// Which bitfield are we tracking this condition variable in? Which bit within
 	// that variable will we track it as?
-	CConditionVars<int> cPlayerCond( m_nPlayerCond.m_Value, m_nPlayerCondEx.m_Value, m_nPlayerCondEx2.m_Value, m_nPlayerCondEx3.m_Value, m_nPlayerCondEx4.m_Value, eCond );
+	CONDITION_VARS( cPlayerCond, eCond );
 
 	// See if there is an object representation of the condition.
 	bool bAddedToExternalConditionList = m_ConditionList.Add( eCond, flDuration, m_pOuter, pProvider );
 	if ( !bAddedToExternalConditionList )
 	{
 		// Set the condition bit for this condition.
-		cPlayerCond.CondVar() |= cPlayerCond.CondBit();
+		cPlayerCond.CondVarForModify() |= cPlayerCond.CondBit();
 
 		// Flag for gamecode to query
 		m_ConditionData[eCond].m_bPrevActive = ( m_ConditionData[eCond].m_flExpireTime != 0.f ) ? true : false;
@@ -1236,14 +1171,14 @@ void CTFPlayerShared::RemoveCond( ETFCond eCond, bool ignore_duration )
 	if ( !InCond( eCond ) )
 		return;
 
-	CConditionVars<int> cPlayerCond( m_nPlayerCond.m_Value, m_nPlayerCondEx.m_Value, m_nPlayerCondEx2.m_Value, m_nPlayerCondEx3.m_Value, m_nPlayerCondEx4.m_Value, eCond );
+	CONDITION_VARS( cPlayerCond, eCond );
 
 	// If this variable is handled by the condition list, abort before doing the
 	// work for the condition flags.
 	if ( m_ConditionList.Remove( eCond, ignore_duration ) )
 		return;
 
-	cPlayerCond.CondVar() &= ~cPlayerCond.CondBit();
+	cPlayerCond.CondVarForModify() &= ~cPlayerCond.CondBit();
 	OnConditionRemoved( eCond );
 
 	if ( m_ConditionData[ eCond ].m_nPreventedDamageFromCondition )
@@ -1279,7 +1214,7 @@ bool CTFPlayerShared::InCond( ETFCond eCond ) const
 	if ( eCond < 32 && m_ConditionList.InCond( eCond ) )
 		return true;
 
-	CConditionVars<const int> cPlayerCond( m_nPlayerCond.m_Value, m_nPlayerCondEx.m_Value, m_nPlayerCondEx2.m_Value, m_nPlayerCondEx3.m_Value, m_nPlayerCondEx4.m_Value, eCond );
+	CONDITION_VARS( cPlayerCond, eCond );
 	return (cPlayerCond.CondVar() & cPlayerCond.CondBit()) != 0;
 }
 
@@ -1293,7 +1228,7 @@ bool CTFPlayerShared::WasInCond( ETFCond eCond ) const
 	// assert. And this comment).
 	Assert( eCond >= 32 && eCond < TF_COND_LAST );
 
-	CConditionVars<const int> cPlayerCond( m_nOldConditions, m_nOldConditionsEx, m_nOldConditionsEx2, m_nOldConditionsEx3, m_nOldConditionsEx4, eCond );
+	CONDITION_VARS( cPlayerCond, eCond );
 	return (cPlayerCond.CondVar() & cPlayerCond.CondBit()) != 0;
 }
 
@@ -1306,8 +1241,8 @@ void CTFPlayerShared::ForceRecondNextSync( ETFCond eCond )
 	// Please check if you hit the assert. (And then remove the assert. And this comment).
 	Assert(eCond >= 32 && eCond < TF_COND_LAST);
 
-	CConditionVars<int> playerCond( m_nForceConditions, m_nForceConditionsEx, m_nForceConditionsEx2, m_nForceConditionsEx3, m_nForceConditionsEx4, eCond );
-	playerCond.CondVar() |= playerCond.CondBit();
+	CONDITION_VARS( cPlayerCond, eCond );
+	cPlayerCond.CondVarForModify() |= cPlayerCond.CondBit();
 }
 
 //-----------------------------------------------------------------------------
@@ -1488,7 +1423,11 @@ void CTFPlayerShared::OnPreDataChanged( void )
 	m_nOldDisguiseTeam = GetDisguiseTeam();
 	m_iOldMovementStunParity = m_iMovementStunParity;
 
-	SharedThink();
+	// Local player will run this in PreThink
+	if ( !prediction->InPrediction() )
+	{
+		SharedThink();
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -1551,7 +1490,11 @@ void CTFPlayerShared::OnDataChanged( void )
 		GetActiveTFWeapon()->SetWeaponVisible( false );
 	}
 
-	InvisibilityThink();
+	// Local player will run this in PreThink
+	if ( !prediction->InPrediction() )
+	{
+		InvisibilityThink();
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -3177,9 +3120,46 @@ void CTFPlayerShared::ConditionThink( void )
 
 	VehicleThink();
 
-	if ( m_pOuter->GetFlags() & FL_ONGROUND && InCond( TF_COND_PARACHUTE_ACTIVE ) )
+	if ( m_pOuter->GetFlags() & FL_ONGROUND )
 	{
+		// Airborne conditions end on ground contact
+		RemoveCond( TF_COND_KNOCKED_INTO_AIR );
+		RemoveCond( TF_COND_AIR_CURRENT );
+
 		RemoveCond( TF_COND_PARACHUTE_ACTIVE );
+		RemoveCond( TF_COND_PARACHUTE_DEPLOYED );
+
+		if ( InCond( TF_COND_ROCKETPACK ) )
+		{
+			// Make sure we're still not dealing with launch, where it's possible
+			// to hit your head and fall to the ground before the second stage.
+			CTFWeaponBase *pRocketPack = m_pOuter->Weapon_OwnsThisID( TF_WEAPON_ROCKETPACK );
+			if ( pRocketPack )
+			{
+				if ( gpGlobals->curtime > ( static_cast< CTFRocketPack* >( pRocketPack )->GetRefireTime() ) )
+				{
+#ifdef CLIENT_DLL
+					if ( prediction->IsFirstTimePredicted() )
+#endif
+					{
+						CPASAttenuationFilter filter( m_pOuter );
+						filter.UsePredictionRules();
+						m_pOuter->EmitSound( filter, m_pOuter->entindex(), "Weapon_RocketPack.BoostersShutdown" );
+						m_pOuter->EmitSound( filter, m_pOuter->entindex(), "Weapon_RocketPack.Land" );
+					}
+					RemoveCond( TF_COND_ROCKETPACK );
+
+#ifdef GAME_DLL
+					IGameEvent *pEvent = gameeventmanager->CreateEvent( "rocketpack_landed" );
+					if ( pEvent )
+					{
+						pEvent->SetInt( "userid", m_pOuter->GetUserID() );
+						gameeventmanager->FireEvent( pEvent );
+					}
+#endif
+				}
+			}
+		}
 	}
 
 	// See if we should be pulsing our radius heal
@@ -4812,14 +4792,8 @@ static void RemoveResistParticle( CTFPlayer* pPlayer, medigun_resist_types_t nRe
 	if ( bKeep )
 		return;
 	
-	if ( pPlayer->m_Shared.GetDisplayedTeam() == TF_TEAM_RED )
-	{
-		pPlayer->RemoveOverheadEffect( s_pszRedResistOverheadEffectName[ nResistType ], true );
-	}
-	else
-	{
-		pPlayer->RemoveOverheadEffect( s_pszBlueResistOverheadEffectName[ nResistType ], true );
-	}
+	pPlayer->RemoveOverheadEffect( s_pszRedResistOverheadEffectName[ nResistType ], true );
+	pPlayer->RemoveOverheadEffect( s_pszBlueResistOverheadEffectName[ nResistType ], true );
 }
 
 //-----------------------------------------------------------------------------
@@ -6977,19 +6951,23 @@ void CTFPlayerShared::OnRemoveTmpDamageBonus( void )
 void CTFPlayerShared::OnAddStealthed( void )
 {
 #ifdef CLIENT_DLL
-	if ( m_pOuter->GetPredictable() && ( !prediction->IsFirstTimePredicted() || m_bSyncingConditions ) )
-		return;
+	// Local player wants to predict the offhand weapon, but not the fancy effects multiple times!
+	// Other players always run everything
+	bool bFirstPrediction = !m_pOuter->GetPredictable() || ( prediction->IsFirstTimePredicted() && !m_bSyncingConditions );
 
-	if ( !InCond( TF_COND_FEIGN_DEATH ) )
+	if ( bFirstPrediction )
 	{
-		m_pOuter->EmitSound( "Player.Spy_Cloak" );
-	}
-	m_pOuter->RemoveAllDecals();
-	UpdateCritBoostEffect();
+		if ( !InCond( TF_COND_FEIGN_DEATH ) )
+		{
+			m_pOuter->EmitSound( "Player.Spy_Cloak" );
+		}
+		m_pOuter->RemoveAllDecals();
+		UpdateCritBoostEffect();
 
-	if ( m_pOuter->m_pTempShield && GetCarryingRuneType() == RUNE_RESIST )
-	{
-		RemoveResistShield( &m_pOuter->m_pTempShield, m_pOuter );
+		if ( m_pOuter->m_pTempShield && GetCarryingRuneType() == RUNE_RESIST )
+		{
+			RemoveResistShield( &m_pOuter->m_pTempShield, m_pOuter );
+		}
 	}
 #endif
 
@@ -7001,7 +6979,7 @@ void CTFPlayerShared::OnAddStealthed( void )
 		bSetInvisChangeTime = false;
 	}
 
-	if ( InCond( TF_COND_STEALTHED_USER_BUFF ) && m_pOuter->IsLocalPlayer() )
+	if ( bFirstPrediction && InCond( TF_COND_STEALTHED_USER_BUFF ) && m_pOuter->IsLocalPlayer() )
 	{
 		IMaterial *pMaterial = materials->FindMaterial( TF_SCREEN_OVERLAY_MATERIAL_STEALTH, TEXTURE_GROUP_CLIENT_EFFECTS, false );
 		if ( !IsErrorMaterial( pMaterial ) )
@@ -7048,11 +7026,14 @@ void CTFPlayerShared::OnAddStealthed( void )
 	m_pOuter->TeamFortress_SetSpeed();
 
 #ifdef CLIENT_DLL
-	// Remove water balloon effect if it on player
-	m_pOuter->ParticleProp()->StopParticlesNamed( "balloontoss_drip", true );
+	if ( bFirstPrediction )
+	{
+		// Remove water balloon effect if it on player
+		m_pOuter->ParticleProp()->StopParticlesNamed( "balloontoss_drip", true );
 
-	m_pOuter->UpdateSpyStateChange();
-	m_pOuter->UpdateKillStreakEffects( GetStreak( kTFStreak_Kills ) );
+		m_pOuter->UpdateSpyStateChange();
+		m_pOuter->UpdateKillStreakEffects( GetStreak( kTFStreak_Kills ) );
+	}
 #endif
 
 #ifdef GAME_DLL
@@ -7066,39 +7047,43 @@ void CTFPlayerShared::OnAddStealthed( void )
 void CTFPlayerShared::OnRemoveStealthed( void )
 {
 #ifdef CLIENT_DLL
-	if ( !m_bSyncingConditions )
-		return;
+	// Local player wants to predict the offhand weapon, but not the fancy effects multiple times!
+	// Other players always run everything
+	bool bFirstPrediction = !m_pOuter->GetPredictable() || ( prediction->IsFirstTimePredicted() && !m_bSyncingConditions );
 
-	CTFWeaponInvis *pWpn = (CTFWeaponInvis *) m_pOuter->Weapon_OwnsThisID( TF_WEAPON_INVIS );
+	if ( bFirstPrediction )
+	{
+		CTFWeaponInvis* pWpn = (CTFWeaponInvis*)m_pOuter->Weapon_OwnsThisID( TF_WEAPON_INVIS );
 
-	int iReducedCloak = 0;
-	CALL_ATTRIB_HOOK_INT_ON_OTHER( m_pOuter, iReducedCloak, set_quiet_unstealth );
-	if ( iReducedCloak == 1 )
-	{
-		m_pOuter->EmitSound( "Player.Spy_UnCloakReduced" );
-	}
-	else if ( pWpn && pWpn->HasFeignDeath() )
-	{
-		m_pOuter->EmitSound( "Player.Spy_UnCloakFeignDeath" );
-	}
-	else
-	{
-		m_pOuter->EmitSound( "Player.Spy_UnCloak" );
-	}
-	UpdateCritBoostEffect( kCritBoost_ForceRefresh );
-
-	if ( m_pOuter->IsLocalPlayer() && !InCond( TF_COND_STEALTHED_USER_BUFF_FADING ) )
-	{
-		IMaterial *pMaterial = view->GetScreenOverlayMaterial();
-		if ( pMaterial && FStrEq( pMaterial->GetName(), TF_SCREEN_OVERLAY_MATERIAL_STEALTH ) )
+		int iReducedCloak = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( m_pOuter, iReducedCloak, set_quiet_unstealth );
+		if ( iReducedCloak == 1 )
 		{
-			view->SetScreenOverlayMaterial( NULL );
+			m_pOuter->EmitSound( "Player.Spy_UnCloakReduced" );
 		}
-	}
+		else if ( pWpn && pWpn->HasFeignDeath() )
+		{
+			m_pOuter->EmitSound( "Player.Spy_UnCloakFeignDeath" );
+		}
+		else
+		{
+			m_pOuter->EmitSound( "Player.Spy_UnCloak" );
+		}
+		UpdateCritBoostEffect( kCritBoost_ForceRefresh );
 
-	if ( !m_pOuter->m_pTempShield && GetCarryingRuneType() == RUNE_RESIST )
-	{
-		AddResistShield( &m_pOuter->m_pTempShield, m_pOuter, TF_COND_RUNE_RESIST );
+		if ( m_pOuter->IsLocalPlayer() && !InCond( TF_COND_STEALTHED_USER_BUFF_FADING ) )
+		{
+			IMaterial* pMaterial = view->GetScreenOverlayMaterial();
+			if ( pMaterial && FStrEq( pMaterial->GetName(), TF_SCREEN_OVERLAY_MATERIAL_STEALTH ) )
+			{
+				view->SetScreenOverlayMaterial( NULL );
+			}
+		}
+
+		if ( !m_pOuter->m_pTempShield && GetCarryingRuneType() == RUNE_RESIST )
+		{
+			AddResistShield( &m_pOuter->m_pTempShield, m_pOuter, TF_COND_RUNE_RESIST );
+		}
 	}
 #else
 	if ( m_flCloakStartTime > 0 )
@@ -7132,8 +7117,11 @@ void CTFPlayerShared::OnRemoveStealthed( void )
 	m_bMotionCloak = false;
 
 #ifdef CLIENT_DLL
-	m_pOuter->UpdateSpyStateChange();
-	m_pOuter->UpdateKillStreakEffects( GetStreak( kTFStreak_Kills ) );
+	if ( bFirstPrediction )
+	{
+		m_pOuter->UpdateSpyStateChange();
+		m_pOuter->UpdateKillStreakEffects( GetStreak( kTFStreak_Kills ) );
+	}
 #endif
 
 }
@@ -7388,6 +7376,8 @@ void CTFPlayerShared::OnRemoveStunned( void )
 	m_iStunFlags = 0;
 	m_hStunner = NULL;
 
+	m_iStunIndex = -1;
+
 #ifdef CLIENT_DLL
 	if ( m_pOuter->m_pStunnedEffect )
 	{
@@ -7397,7 +7387,6 @@ void CTFPlayerShared::OnRemoveStunned( void )
 		m_pOuter->m_pStunnedEffect = NULL;
 	}
 #else
-	m_iStunIndex = -1;
 	m_PlayerStuns.RemoveAll();
 #endif
 
@@ -9711,15 +9700,16 @@ bool CTFPlayerShared::AddToSpyCloakMeter( float val, bool bForce )
 
 #endif
 
-#ifdef GAME_DLL
 //-----------------------------------------------------------------------------
 // Purpose: Stun & Snare Application
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::StunPlayer( float flTime, float flReductionAmount, int iStunFlags, CTFPlayer* pAttacker )
 {
+#ifdef GAME_DLL
 	// Insanity prevention
 	if ( ( m_PlayerStuns.Count() + 1 ) >= 250 )
 		return;
+#endif
 
 	if ( InCond( TF_COND_PHASE ) || InCond( TF_COND_PASSTIME_INTERCEPTION ) )
 		return;
@@ -9730,15 +9720,19 @@ void CTFPlayerShared::StunPlayer( float flTime, float flReductionAmount, int iSt
 	if ( InCond( TF_COND_INVULNERABLE_HIDE_UNLESS_DAMAGED ) && !InCond( TF_COND_MVM_BOT_STUN_RADIOWAVE ) )
 		return;
 
+#ifdef GAME_DLL
 	if ( pAttacker && TFGameRules() && TFGameRules()->IsTruceActive() && pAttacker->IsTruceValidForEnt() )
 	{
 		if ( ( pAttacker->GetTeamNumber() == TF_TEAM_RED ) || ( pAttacker->GetTeamNumber() == TF_TEAM_BLUE ) )
 			return;
 	}
+#endif
 
 	float flRemapAmount = RemapValClamped( flReductionAmount, 0.0, 1.0, 0, 255 );
 
+#ifdef GAME_DLL
 	int iOldStunFlags = GetStunFlags();
+#endif
 
 	// Already stunned
 	bool bStomp = false;
@@ -9761,10 +9755,13 @@ void CTFPlayerShared::StunPlayer( float flTime, float flReductionAmount, int iSt
 	}
 	else if ( GetActiveStunInfo() )
 	{
+#ifdef GAME_DLL
 		// Something yanked our TF_COND_STUNNED in an unexpected way
 		if ( !HushAsserts() )
 			Assert( !"Something yanked out TF_COND_STUNNED." );
 		m_PlayerStuns.RemoveAll();
+#endif
+		m_iStunIndex = -1;
 		return;
 	}
 
@@ -9786,7 +9783,16 @@ void CTFPlayerShared::StunPlayer( float flTime, float flReductionAmount, int iSt
 		// This can happen when stuns use TF_STUN_CONTROLS or TF_STUN_LOSER_STATE.
 		float flOldStun = GetActiveStunInfo() ? GetActiveStunInfo()->flStunAmount : 0.f;
 
+#ifdef GAME_DLL
 		m_iStunIndex = m_PlayerStuns.AddToTail( stunEvent );
+#else
+		m_iStunIndex = 0;
+
+		if ( prediction->IsFirstTimePredicted() )
+		{
+			m_ActiveStunInfo = stunEvent;
+		}
+#endif
 
 		if ( flOldStun > flRemapAmount )
 		{
@@ -9796,10 +9802,18 @@ void CTFPlayerShared::StunPlayer( float flTime, float flReductionAmount, int iSt
 	else
 	{
 		// Done for now
+#ifdef GAME_DLL
 		m_PlayerStuns.AddToTail( stunEvent );
+#else
+		if ( prediction->IsFirstTimePredicted() )
+		{
+			m_ActiveStunInfo = stunEvent;
+		}
+#endif
 		return;
 	}
 
+#ifdef GAME_DLL
 	// Add in extra time when TF_STUN_CONTROLS
 	if ( GetActiveStunInfo()->iStunFlags & TF_STUN_CONTROLS )
 	{
@@ -9853,10 +9867,10 @@ void CTFPlayerShared::StunPlayer( float flTime, float flReductionAmount, int iSt
 		m_pOuter->ClearExpression();
 		m_pOuter->ClearWeaponFireScene();
 	}
+#endif
 
 	AddCond( TF_COND_STUNNED, -1.f, pAttacker );
 }
-#endif // GAME_DLL
 
 //-----------------------------------------------------------------------------
 // Purpose: Returns the intensity of the current stun effect, if we have the type of stun indicated.
@@ -10072,6 +10086,14 @@ void CTFPlayer::GetHorriblyHackedRailgunPosition( const Vector& vStart, Vector *
 	// DO NOT LOOK BEHIND THE MAGIC CURTAIN
 	Vector vForward, vRight, vUp;
 	AngleVectors( EyeAngles(), &vForward, &vRight, &vUp );
+
+#ifdef CLIENT_DLL
+	// Flips the horizontal position.
+	if ( TeamFortress_ShouldFlipClientViewModel() )
+	{
+		vRight *= -1;
+	}
+#endif // CLIENT_DLL
 
 	*out_pvStartPos = vStart
 					+ (vForward * 60.9f)
@@ -12197,6 +12219,13 @@ bool CTFPlayer::CanJump() const
 	if ( m_Shared.InCond( TF_COND_TAUNTING ) )
 		return false;
 
+	CTFWeaponBase *pActiveWeapon = m_Shared.GetActiveTFWeapon();
+	if ( pActiveWeapon )
+	{
+		if ( !pActiveWeapon->OwnerCanJump() )
+			return false;
+	}
+
 	int iNoJump = 0;
 	CALL_ATTRIB_HOOK_INT( iNoJump, no_jump );
 
@@ -12348,6 +12377,9 @@ bool CTFPlayer::CanPickupBuilding( CBaseObject *pPickupObject )
 
 	// If we were recently carried & placed we may still be upgrading up to our old level.
 	if ( pPickupObject->GetUpgradeLevel() != pPickupObject->GetHighestUpgradeLevel() )
+		return false;
+
+	if ( !IsAlive() )
 		return false;
 
 	if ( m_Shared.IsCarryingObject() )
@@ -12731,6 +12763,16 @@ bool CTFPlayer::Weapon_CanSwitchTo( CBaseCombatWeapon *pWeapon )
 	return bCanSwitch;
 }
 
+void CTFPlayer::PlayStepSound( Vector &vecOrigin, surfacedata_t *psurface, float fvol, bool force )
+{
+#ifdef CLIENT_DLL
+	// Don't make predicted footstep sounds in third person, animevents will take care of that.
+	if ( prediction->InPrediction() && C_BasePlayer::ShouldDrawLocalPlayer() )
+		return;
+#endif
+
+	BaseClass::PlayStepSound( vecOrigin, psurface, fvol, force );
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Gives the player an opportunity to abort a double jump.

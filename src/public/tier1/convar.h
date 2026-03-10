@@ -375,8 +375,7 @@ public:
 	bool						GetMax( float& maxVal ) const;
 	const char					*GetDefault( void ) const;
 	void						SetDefault( const char *pszDefault );
-	void						SetMin( float min );
-	void						SetMax( float max );
+
 	// True if it has a min/max competitive setting
 	bool						GetCompMin( float& minVal ) const;
 	bool						GetCompMax( float& maxVal ) const;
@@ -739,19 +738,6 @@ private:
    static void name( const CCommand &args ); \
    static ConCommand name##_command( #name, name, description ); \
    static void name( const CCommand &args )
-
-
-#ifdef CLIENT_DLL
-#define CON_COMMAND_SHARED( name, description ) \
-	static void name( const CCommand &args ); \
-	static ConCommand name##_command_client( #name "_client", name, description ); \
-	static void name( const CCommand &args )
-#else
-#define CON_COMMAND_SHARED( name, description ) \
-	static void name( const CCommand &args ); \
-	static ConCommand name##_command( #name, name, description ); \
-	static void name( const CCommand &args )
-#endif
 
 #define CON_COMMAND_F( name, description, flags ) \
    static void name( const CCommand &args ); \

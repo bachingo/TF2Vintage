@@ -279,48 +279,23 @@ bool ReadWeaponDataFromFileForSlot( IFileSystem* pFilesystem, const char *szWeap
 	FileWeaponInfo_t *pFileInfo = GetFileWeaponInfoFromHandle( *phandle );
 	Assert( pFileInfo );
 
-	if ( pFileInfo->bParsedScript && !pFileInfo->bCustom )
+	if ( pFileInfo->bParsedScript )
 		return true;
 
 	char sz[128];
 	Q_snprintf( sz, sizeof( sz ), "scripts/%s", szWeaponName );
 
-	KeyValues *pKV = ReadEncryptedKVFile( filesystem, sz, pICEKey, false );
+	KeyValues *pKV = ReadEncryptedKVFile( pFilesystem, sz, pICEKey,
+#if defined( DOD_DLL )
+		true			// Only read .ctx files!
+#else
+		false
+#endif
+		);
 
 	if ( !pKV )
 		return false;
 
-	pFileInfo->Parse( pKV, szWeaponName );
-
-	pKV->deleteThis();
-
-	return true;
-}
-
-bool ReadCustomWeaponDataFromFileForSlot( IFileSystem* filesystem, const char *szWeaponName, WEAPON_FILE_INFO_HANDLE *phandle, const unsigned char *pICEKey )
-{
-	if ( !phandle )
-	{
-		Assert( 0 );
-		return false;
-	}
-
-	*phandle = FindWeaponInfoSlot( szWeaponName );
-	FileWeaponInfo_t *pFileInfo = GetFileWeaponInfoFromHandle( *phandle );
-	Assert( pFileInfo );
-
-	if ( pFileInfo->bParsedScript && pFileInfo->bCustom )
-		return true;
-
-	char sz[128];
-	Q_snprintf( sz, sizeof( sz ), "scripts/vscripts/%s", szWeaponName );
-
-	KeyValues *pKV = ReadEncryptedKVFile( filesystem, sz, pICEKey, false );
-
-	if ( !pKV )
-		return false;
-
-	pFileInfo->bCustom = true;
 	pFileInfo->Parse( pKV, szWeaponName );
 
 	pKV->deleteThis();
@@ -337,7 +312,6 @@ FileWeaponInfo_t::FileWeaponInfo_t()
 {
 	bParsedScript = false;
 	bLoadedHudElements = false;
-	bCustom = false;
 	szClassName[0] = 0;
 	szPrintName[0] = 0;
 
@@ -373,7 +347,6 @@ FileWeaponInfo_t::FileWeaponInfo_t()
 	bShowUsageHint = false;
 	m_bAllowFlipping = true;
 	m_bBuiltRightHanded = true;
-	iconSmall = 0;
 }
 
 #ifdef CLIENT_DLL

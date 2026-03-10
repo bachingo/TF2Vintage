@@ -20,7 +20,6 @@
 #endif
 
 #define GRENADE_GAS_TIMER	3.0f //Seconds
-#define TF_HALLUCINATION_RADIUS 35.0f
 
 //=============================================================================
 //
@@ -158,7 +157,7 @@ void CTFGrenadeGasProjectile::Detonate()
 {
 	if ( ShouldNotDetonate() )
 	{
-		Destroy();
+		RemoveGrenade();
 		return;
 	}
 

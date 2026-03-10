@@ -63,16 +63,11 @@ END_NETWORK_TABLE()
 // Server specific.
 #ifdef GAME_DLL
 BEGIN_DATADESC( CTFBaseRocket )
-DEFINE_ENTITYFUNC( RocketTouch ),
-DEFINE_THINKFUNC( FlyThink ),
 END_DATADESC()
 #endif
 
-ConVar tf_rocket_show_radius( "tf_rocket_show_radius", "0", FCVAR_REPLICATED | FCVAR_CHEAT /*| FCVAR_DEVELOPMENTONLY*/, "Render rocket radius." );
-
-#ifdef GAME_DLL
-ConVar tf2v_homing_rockets("tf2v_homing_rockets", "0", FCVAR_CHEAT, "What is \"Rocket + x = Death\"?");
-ConVar tf2v_homing_deflected_rockets("tf2v_homing_deflected_rockets", "0", FCVAR_CHEAT, "Homing Crit Rockets 2: Back with Vengeance");
+#ifdef _DEBUG
+ConVar tf_rocket_show_radius( "tf_rocket_show_radius", "0", FCVAR_REPLICATED | FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Render rocket radius." );
 #endif
 
 //=============================================================================
@@ -170,7 +165,6 @@ void CTFBaseRocket::Spawn( void )
 
 	// Setup the touch and think functions.
 	SetTouch( &CTFBaseRocket::RocketTouch );
-	SetThink( &CTFBaseRocket::FlyThink );
 	SetNextThink( gpGlobals->curtime );
 
 	AddFlag( FL_GRENADE );
@@ -261,7 +255,7 @@ int CTFBaseRocket::DrawModel( int flags )
 CTFBaseRocket *CTFBaseRocket::Create( CBaseEntity *pLauncher, const char *pszClassname, const Vector &vecOrigin, 
 									  const QAngle &vecAngles, CBaseEntity *pOwner )
 {
-	CTFBaseRocket *pRocket = static_cast<CTFBaseRocket*>( CBaseEntity::CreateNoSpawn( pszClassname, vecOrigin, vecAngles, pOwner ) );
+	CTFBaseRocket *pRocket = static_cast<CTFBaseRocket*>( CBaseEntity::Create( pszClassname, vecOrigin, vecAngles, pOwner ) );
 	if ( !pRocket )
 		return NULL;
 
@@ -354,55 +348,6 @@ void CTFBaseRocket::RocketTouch( CBaseEntity *pOther )
 	Explode( &trace, pOther );
 }
 
-void CTFBaseRocket::FlyThink( void )
-{
-	if ( tf2v_homing_rockets.GetBool() )
-	{
-		// Find the closest visible enemy player.
-		CUtlVector<CTFPlayer *> vecPlayers;
-		int count = CollectPlayers( &vecPlayers, TEAM_ANY, COLLECT_ONLY_LIVING_PLAYERS );
-		CTFPlayer *pClosest = NULL;
-		float flClosest = FLT_MAX;
-		for (int i = 0; i < count; i++)
-		{
-			CTFPlayer *pPlayer = vecPlayers[i];
-			if ( pPlayer == GetOwnerEntity() )
-				 continue;
-			
-			if ( pPlayer->GetTeamNumber() == GetTeamNumber() )
-				 continue;
-			
-			Vector vecTarget = pPlayer->BodyTarget( GetAbsOrigin(), false );
-			if ( FVisible( vecTarget ) )
-			{
-				float flDist = ( vecTarget - GetAbsOrigin() ).Length();
-				if ( flDist < flClosest )
-				{
-					flClosest = flDist;
-					pClosest = pPlayer;
-				}
-			}
-		}
-		
-		// Head towards him.
-		if ( pClosest )
-
-		{
-			Vector vecTarget = pClosest->BodyTarget( GetAbsOrigin(), false );
-			Vector vecDir = vecTarget - GetAbsOrigin();
-			VectorNormalize( vecDir );
-			
-			float flSpeed = GetAbsVelocity().Length();
-			QAngle angForward;
-			VectorAngles( vecDir, angForward );
-			SetAbsAngles( angForward );
-			SetAbsVelocity( vecDir * flSpeed );
-		}
-	}
-	
-	SetNextThink( gpGlobals->curtime + 0.1f );
-}
-
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -413,30 +358,12 @@ unsigned int CTFBaseRocket::PhysicsSolidMaskForEntity( void ) const
 	if ( !CanCollideWithTeammates() )
 	{
 		// Only collide with the other team
-
-		switch ( GetTeamNumber() )
-		{
-			case TF_TEAM_RED:
-				teamContents = CONTENTS_BLUETEAM | CONTENTS_GREENTEAM | CONTENTS_YELLOWTEAM;
-				break;
-
-			case TF_TEAM_BLUE:
-				teamContents = CONTENTS_REDTEAM | CONTENTS_GREENTEAM | CONTENTS_YELLOWTEAM;
-				break;
-
-			case TF_TEAM_GREEN:
-				teamContents = CONTENTS_REDTEAM | CONTENTS_BLUETEAM | CONTENTS_YELLOWTEAM;
-				break;
-
-			case TF_TEAM_YELLOW:
-				teamContents = CONTENTS_REDTEAM | CONTENTS_BLUETEAM | CONTENTS_GREENTEAM;
-				break;
-		}
+		teamContents = ( GetTeamNumber() == TF_TEAM_RED ) ? CONTENTS_BLUETEAM : CONTENTS_REDTEAM;
 	}
 	else
 	{
-		// Collide with all teams
-		teamContents = CONTENTS_REDTEAM | CONTENTS_BLUETEAM | CONTENTS_GREENTEAM | CONTENTS_YELLOWTEAM;
+		// Collide with both teams
+		teamContents = CONTENTS_REDTEAM | CONTENTS_BLUETEAM;
 	}
 
 	return BaseClass::PhysicsSolidMaskForEntity() | teamContents;

@@ -318,7 +318,6 @@ public:
 
 	DECLARE_CLASS( CSceneEntity, CPointEntity );
 	DECLARE_SERVERCLASS();
-	// script description
 	DECLARE_ENT_SCRIPTDESC();
 
 							CSceneEntity( void );
@@ -344,8 +343,6 @@ public:
 
 	virtual void			OnRestore();
 	virtual void			OnLoaded();
-
-	virtual int				DrawDebugTextOverlays();
 
 	DECLARE_DATADESC();
 
@@ -811,6 +808,7 @@ CSceneEntity::CSceneEntity( void )
 		m_pcvSndMixahead	= cvar->FindVar( "snd_mixahead" );
 
 	m_BusyActor			= SCENE_BUSYACTOR_DEFAULT;
+
 }
 
 //-----------------------------------------------------------------------------
@@ -1459,7 +1457,7 @@ void CSceneEntity::DispatchEndInterrupt( CChoreoScene *scene, CChoreoEvent *even
 //-----------------------------------------------------------------------------
 void CSceneEntity::DispatchStartExpression( CChoreoScene *scene, CBaseFlex *actor, CChoreoEvent *event )
 {
-	actor->AddSceneEvent( scene, event, NULL, this );
+	actor->AddSceneEvent( scene, event );
 }
 
 //-----------------------------------------------------------------------------
@@ -1479,7 +1477,7 @@ void CSceneEntity::DispatchEndExpression( CChoreoScene *scene, CBaseFlex *actor,
 //-----------------------------------------------------------------------------
 void CSceneEntity::DispatchStartFlexAnimation( CChoreoScene *scene, CBaseFlex *actor, CChoreoEvent *event )
 {
-	actor->AddSceneEvent( scene, event, NULL, this );
+	actor->AddSceneEvent( scene, event );
 }
 
 //-----------------------------------------------------------------------------
@@ -1503,7 +1501,7 @@ void CSceneEntity::DispatchStartGesture( CChoreoScene *scene, CBaseFlex *actor, 
 	if ( !Q_stricmp( event->GetName(), "NULL" ) )
 		return;
 
-	actor->AddSceneEvent( scene, event, NULL, this ); 
+	actor->AddSceneEvent( scene, event); 
 }
 
 
@@ -1529,7 +1527,7 @@ void CSceneEntity::DispatchEndGesture( CChoreoScene *scene, CBaseFlex *actor, CC
 void CSceneEntity::DispatchStartGeneric( CChoreoScene *scene, CBaseFlex *actor, CChoreoEvent *event )
 {
 	CBaseEntity *pTarget = FindNamedEntity( event->GetParameters2( ) );
-	actor->AddSceneEvent( scene, event, pTarget, this );
+	actor->AddSceneEvent( scene, event, pTarget );
 }
 
 
@@ -1550,7 +1548,7 @@ void CSceneEntity::DispatchEndGeneric( CChoreoScene *scene, CBaseFlex *actor, CC
 //-----------------------------------------------------------------------------
 void CSceneEntity::DispatchStartLookAt( CChoreoScene *scene, CBaseFlex *actor, CBaseEntity *actor2, CChoreoEvent *event )
 {
-	actor->AddSceneEvent( scene, event, actor2, this );
+	actor->AddSceneEvent( scene, event, actor2 );
 }
 
 
@@ -1569,7 +1567,7 @@ void CSceneEntity::DispatchEndLookAt( CChoreoScene *scene, CBaseFlex *actor, CCh
 //-----------------------------------------------------------------------------
 void CSceneEntity::DispatchStartMoveTo( CChoreoScene *scene, CBaseFlex *actor, CBaseEntity *actor2, CChoreoEvent *event )
 {
-	actor->AddSceneEvent( scene, event, actor2, this );
+	actor->AddSceneEvent( scene, event, actor2 );
 }
 
 
@@ -1823,7 +1821,7 @@ void CSceneEntity::DispatchStartSpeak( CChoreoScene *scene, CBaseFlex *actor, CC
 			}
 
 			EmitSound( filter2, actor->entindex(), es );
-			actor->AddSceneEvent( scene, event, NULL, this );
+			actor->AddSceneEvent( scene, event );
 		}
 	
 		// Close captioning only on master token no matter what...
@@ -1919,7 +1917,7 @@ void CSceneEntity::DispatchEndSpeak( CChoreoScene *scene, CBaseFlex *actor, CCho
 //-----------------------------------------------------------------------------
 void CSceneEntity::DispatchStartFace( CChoreoScene *scene, CBaseFlex *actor, CBaseEntity *actor2, CChoreoEvent *event )
 {
-	actor->AddSceneEvent( scene, event, actor2, this );
+	actor->AddSceneEvent( scene, event, actor2 );
 }
 
 
@@ -1942,7 +1940,7 @@ void CSceneEntity::DispatchEndFace( CChoreoScene *scene, CBaseFlex *actor, CChor
 //-----------------------------------------------------------------------------
 void CSceneEntity::DispatchStartSequence( CChoreoScene *scene, CBaseFlex *actor, CChoreoEvent *event )
 {
-	actor->AddSceneEvent( scene, event, NULL, this );
+	actor->AddSceneEvent( scene, event );
 }
 
 
@@ -4500,28 +4498,6 @@ void CSceneEntity::SetRecipientFilter( IRecipientFilter *filter )
 		m_pRecipientFilter = new CRecipientFilter();
 		m_pRecipientFilter->CopyFrom( (CRecipientFilter &)( *filter ) );
 	}
-}
-
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-int CSceneEntity::DrawDebugTextOverlays()
-{
-	int nOffset = BaseClass::DrawDebugTextOverlays();
-
-	if ( m_debugOverlays & OVERLAY_TEXT_BIT )
-	{
-		char tempstr[ 512 ];
-		Q_snprintf( tempstr, sizeof( tempstr ), "Playing back: %s", m_bIsPlayingBack ? "yes" : "no" );
-		EntityText( nOffset, tempstr, 0 );
-		nOffset++;
-
-		Q_snprintf( tempstr, sizeof( tempstr ), "Paused: %s", m_bPaused ? ( m_bPausedViaInput ? "yes - via input" : "yes" ) : "no" );
-		EntityText( nOffset, tempstr, 0 );
-		nOffset++;
-	}
-
-	return nOffset;
 }
 
 //-----------------------------------------------------------------------------

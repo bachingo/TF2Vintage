@@ -45,7 +45,6 @@ void Sys_Error (char *error, ...);
 const Vector vec3_origin(0,0,0);
 const QAngle vec3_angle(0,0,0);
 const Vector vec3_invalid( FLT_MAX, FLT_MAX, FLT_MAX );
-const Quaternion quat_identity(0, 0, 0, 0);
 const int nanmask = 255<<23;
 
 //-----------------------------------------------------------------------------

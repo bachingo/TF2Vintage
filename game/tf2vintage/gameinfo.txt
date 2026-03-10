@@ -19,57 +19,54 @@
 	}
 	InstancePath 	"maps/instances/"	
 
-	FileSystem 
-	{ 
-		SteamAppId		243750	// Source SDK Base 2013 Multiplayer	
-		SearchPaths 
-		{ 
-			// Firstly, mount all user customizations.  This will search for VPKs and subfolders 
-			// and mount them in alphabetical order.  The easiest way to distribute a mod is to 
-			// pack up the custom content into a VPK.  To "install" a mod, just drop it in this 
-			// folder. 
+	FileSystem
+	{
+		SteamAppId				243750
+		
+		SearchPaths
+		{
+			// First, mount all user customizations.  This will search for VPKs and subfolders
+			// and mount them in alphabetical order.  The easiest way to distribute a mod is to
+			// pack up the custom content into a VPK.  To "install" a mod, just drop it in this
+			// folder.
+			//
 			// Note that this folder is scanned only when the game is booted.
-			// TF2V takes priority, followed by Retail TF2.
-			game+mod+custom_mod	|gameinfo_path|custom/*
-						
-			// Next, add the customizable TF2V parameters in.
-			game+mod			|gameinfo_path|customplayer/*
+			game+mod+custom_mod	mod_tf/custom/*
+			// Enable this if you want to load your TF custom content.
+			//game+mod+custom_mod	|appid_440|tf/custom/*
 			
 			//  Load base TF2V assets.
 			game+mod+vgui		|gameinfo_path|assets/base/*
 
-			// Search loose files.  We'll set the directory containing the gameinfo.txt file
-			// as the first "mod" search path (after any user customizations). This is also the one
+			// Now search loose files.  We'll set the directory containing the gameinfo.txt file
+			// as the first "mod" search path (after any user customizations).  This is also the one
 			// that's used when writing to the "mod" path.
-			// TF2V takes priority, followed by Retail TF2.
-			game+game_write+mod+mod_write+vgui+default_write_path		|gameinfo_path|.
-			
-			// Where the game's binaries are
+			mod+mod_write		|gameinfo_path|.
+			game+game_write		|gameinfo_path|.
+			vgui				|gameinfo_path|.
+			default_write_path	|gameinfo_path|.
 			gamebin				|gameinfo_path|bin
-			
-			// Mount in missing assets from TF2
-			game_lv				|appid_440|tf/tf2_lv.vpk
-			game+mod			|appid_440|tf/tf2_textures.vpk
-			game+mod			|appid_440|tf/tf2_sound_misc.vpk
-			game+mod+vgui		|appid_440|tf/tf2_misc.vpk
-			game+mod			|appid_440|tf/tf2_sound_vo_english.vpk
-			
+
 			// We search VPK files before ordinary folders, because most files will be found in
 			// VPK and we can avoid making thousands of file system calls to attempt to open files
-			// in folders where they don't exist.  (Searching a VPK is much faster than making an 
-			// operating system call.)
+			// in folders where they don't exist.  (Searching a VPK is much faster than making an operating
+			// system call.)
+			game_lv				|appid_440|tf/tf2_lv.vpk
+			game+mod			|appid_440|tf/tf2_textures.vpk
+			game+mod			|appid_440|tf/tf2_sound_vo_english.vpk
+			game+mod			|appid_440|tf/tf2_sound_misc.vpk
+			game+mod+vgui		|appid_440|tf/tf2_misc.vpk
+			game				|appid_243750|hl2/hl2_textures.vpk
+			game				|appid_243750|hl2/hl2_sound_vo_english.vpk
+			game				|appid_243750|hl2/hl2_sound_misc.vpk
+			game+vgui			|appid_243750|hl2/hl2_misc.vpk
+			platform+vgui		|appid_243750|platform/platform_misc.vpk
 
-			game				|appid_440|hl2/hl2_textures.vpk
-			game				|appid_440|hl2/hl2_sound_vo_english.vpk
-			game				|appid_440|hl2/hl2_sound_misc.vpk
-			game+vgui			|appid_440|hl2/hl2_misc.vpk
-			platform+vgui		|appid_440|platform/platform_misc.vpk
+			// Last, mount in shared HL2 and TF2 loose files
+			game				|appid_440|tf
+			game				|appid_243750|hl2
+			platform			|appid_243750|platform
 
-			// Mount in shared HL2 and TF loose files		
-			game				|appid_440|tf			
-			game				|appid_440|hl2		
-			platform			|appid_440|platform		
-			
 			// Random files downloaded from gameservers go into a seperate directory, so
 			// that it's easy to keep those files segregated from the official game files
 			// or customizations intentially installed by the user.
@@ -81,8 +78,7 @@
 			// packed up in the .bsp file so that it will be mounted as a map search pack.
 			// The map search pack is mounted at the top of the search path list,
 			// but only while you are connected that server and on that map.
-			game+download			|gameinfo_path|download/
-			
+			game+download		mod_tf/download
 		}
-	}		
+	}
 }

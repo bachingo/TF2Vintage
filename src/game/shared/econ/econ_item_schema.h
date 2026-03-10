@@ -1256,7 +1256,6 @@ public:
 	const char	*GetDefinitionName( void ) const	{ return m_pszDefinitionName; }
 	const char	*GetItemDefinitionName( void ) const	{ return m_pszDefinitionName; }
 	const char	*GetItemClass( void ) const			{ return m_pszItemClassname; }
-	const char  *GetVScriptName( void ) const		{ return m_pszItemScriptName; }
 	const char	*GetItemBaseName( void ) const		{ return m_pszItemBaseName; }
 	const char	*GetBrassModelOverride( void ) const{ return m_pszBrassModelOverride; }
 	const char	*GetItemTypeName( void ) const		{ return m_pszItemTypeName; }
@@ -1585,7 +1584,6 @@ private:
 	// ---------------------------------------------
 	// The entity classname for this item.
 	const char		*m_pszItemClassname;
-	const char		*m_pszItemScriptName;
 
 	// The entity name that will be displayed in log files.
 	const char		*m_pszItemLogClassname;
@@ -2817,9 +2815,6 @@ protected:
 #ifdef TF_CLIENT_DLL
 	virtual int CalculateNumberOfConcreteItems( const CEconItemDefinition *pItemDef );	// Let derived classes handle custom item types
 #endif // TF_CLIENT_DLL
-
-public:
-	virtual void RegisterScriptFunctions() { }
 
 private:
 	bool BInitGameInfo( KeyValues *pKVGameInfo, CUtlVector<CUtlString> *pVecErrors );

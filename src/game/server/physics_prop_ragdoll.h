@@ -56,7 +56,6 @@ public:
 	virtual IResponseSystem *GetResponseSystem();
 	virtual void ModifyOrAppendCriteria( AI_CriteriaSet& set );
 	void SetSourceClassName( const char *pClassname );
-	const char *GetSourceClassNameAsCStr() { return STRING( m_strSourceClassName ); }
 
 	// Physics attacker
 	virtual CBasePlayer *HasPhysicsAttacker( float dt );
@@ -106,11 +105,7 @@ public:
 	void			InputTurnOff( inputdata_t &inputdata );
 	void			InputFadeAndRemove( inputdata_t &inputdata );
 
-	HSCRIPT			ScriptGetRagdollObject( int iIndex );
-	int				ScriptGetRagdollObjectCount();
-
 	DECLARE_DATADESC();
-	DECLARE_ENT_SCRIPTDESC();
 
 protected:
 	void CalcRagdollSize( void );

@@ -43,8 +43,6 @@ public:
 	virtual void Spawn( void );
 	virtual void UpdateClientSideAnimation( void );
 	virtual ShadowType_t ShadowCastType( void );
-	// HACK: Override to allow clientside interpolation
-	virtual bool IsNPC( void ) OVERRIDE { return true; }
 	virtual bool IsNextBot() { return true; }
 	void ForceShadowCastType( bool bForce, ShadowType_t forcedShadowType = SHADOWS_NONE ) { m_bForceShadowType = bForce; m_forcedShadowType = forcedShadowType; }
 	bool GetForcedShadowCastType( ShadowType_t* pForcedShadowType ) const;

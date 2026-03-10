@@ -27,7 +27,7 @@
 #if !defined( NO_ENTITY_PREDICTION )
 #include "predictableid.h"
 #endif
-#include "../engine/audio/public/sound.h"
+#include "soundflags.h"
 #include "shareddefs.h"
 #include "networkvar.h"
 #include "interpolatedvar.h"
@@ -35,9 +35,6 @@
 #include "particle_property.h"
 #include "toolframework/itoolentity.h"
 #include "tier0/threadtools.h"
-
-#include "vscript/ivscript.h"
-#include "vscript_shared.h"
 
 class C_Team;
 class IPhysicsObject;
@@ -162,14 +159,6 @@ struct thinkfunc_t
 	int			m_nLastThinkTick;
 };
 
-struct scriptthinkfunc_t
-{
-	int				m_nNextThinkTick;
-	HSCRIPT			m_hfnThink;
-	unsigned short	m_iContextHash;
-	bool			m_bNoParam;
-};
-
 #define CREATE_PREDICTED_ENTITY( className )	\
 	C_BaseEntity::CreatePredictedEntityByName( className, __FILE__, __LINE__ );
 
@@ -195,16 +184,10 @@ public:
 	DECLARE_DATADESC();
 	DECLARE_CLIENTCLASS();
 	DECLARE_PREDICTABLE();
-	// script description
-	DECLARE_ENT_SCRIPTDESC();
 
 									C_BaseEntity();
-
-protected:
-	// Use UTIL_Remove to delete!
 	virtual							~C_BaseEntity();
 
-public:
 	static C_BaseEntity				*CreatePredictedEntityByName( const char *classname, const char *module, int line, bool persist = false );
 	
 	// FireBullets uses shared code for prediction.
@@ -272,89 +255,7 @@ public:
 	virtual C_BaseAnimating*		GetBaseAnimating() { return NULL; }
 	virtual void					SetClassname( const char *className );
 
-	string_t				m_iClassname;
-
-	// ----------------------------------------------------------------------------
-	// VScript accessors
-	// ----------------------------------------------------------------------------
-	bool					ValidateScriptScope( void );
-	bool					CallScriptFunction( const char *pFunctionName, ScriptVariant_t *pFunctionReturn );
-
-	HSCRIPT					GetOrCreatePrivateScriptScope( void );
-	HSCRIPT					GetScriptScope( void ) { return m_ScriptScope; }
-
-	HSCRIPT					LookupScriptFunction( const char *pFunctionName );
-	bool					CallScriptFunctionHandle( HSCRIPT hFunc, ScriptVariant_t *pFunctionReturn );
-
-	bool					RunScriptFile( const char *pScriptFile, bool bUseRootScope = false );
-	bool					RunScript( const char *pScriptText, const char *pDebugFilename = "C_BaseEntity::RunScript" );
-	HSCRIPT					GetScriptInstance( void );
-
-	int						GetEntityIndex( void ) const;
-
-	const Vector&			ScriptGetForward( void ) { static Vector vecForward; GetVectors( &vecForward, NULL, NULL ); return vecForward; }
-	const Vector&			ScriptGetRight( void ) { static Vector vecRight; GetVectors( NULL, &vecRight, NULL ); return vecRight; }
-	const Vector&			ScriptGetLeft( void ) { static Vector vecRight; GetVectors( NULL, &vecRight, NULL ); return vecRight; }
-	const Vector&			ScriptGetUp( void ) { static Vector vecUp; GetVectors( NULL, NULL, &vecUp ); return vecUp; }
-	void					ScriptFireBullets( HSCRIPT info );
-
-	HSCRIPT					GetScriptOwnerEntity( void );
-	virtual void			SetScriptOwnerEntity( HSCRIPT pOwner );
-	void					ScriptFollowEntity( HSCRIPT hBaseEntity, bool bBoneMerge );
-	HSCRIPT					ScriptGetFollowedEntity( void );
-
-	void					ScriptSetParent( HSCRIPT hParent, const char *szAttachment );
-	HSCRIPT					ScriptGetMoveParent( void );
-	HSCRIPT					ScriptGetRootMoveParent();
-	HSCRIPT					ScriptFirstMoveChild( void );
-	HSCRIPT					ScriptNextMovePeer( void );
-
-	void					ScriptSetContextThink( const char *szContext, HSCRIPT hFunc, float time );
-	void					ScriptContextThink( void );
-
-	const char*				ScriptGetModelName( void ) const { return STRING( GetModelName() ); }
-
-	void					ScriptStopSound( const char* soundname );
-	void					ScriptEmitSound( const char* soundname );
-	float					ScriptSoundDuration( const char* soundname, const char* actormodel );
-
-	void					VScriptPrecacheScriptSound( const char* soundname );
-
-	const Vector&			ScriptEyePosition( void ) { static Vector vec; vec = EyePosition(); return vec; }
-	const QAngle&			ScriptEyeAngles( void ) { static QAngle ang; ang = EyeAngles(); return ang; }
-	void					ScriptSetForward( const Vector& v ) { QAngle angles; VectorAngles( v, angles ); SetAbsAngles( angles ); }
-
-	const Vector&			ScriptGetBoundingMins( void ) { return m_Collision.OBBMins(); }
-	const Vector&			ScriptGetBoundingMaxs( void ) { return m_Collision.OBBMaxs(); }
-
-	const matrix3x4_t&		ScriptEntityToWorldTransform( void );
-
-	HSCRIPT					ScriptGetPhysicsObject( void );
-
-	const Vector&			ScriptGetColorVector( void );
-	int						ScriptGetColorR( void )	{ return m_clrRender.GetR(); }
-	int						ScriptGetColorG( void )	{ return m_clrRender.GetG(); }
-	int						ScriptGetColorB( void )	{ return m_clrRender.GetB(); }
-	int						ScriptGetAlpha( void )	{ return m_clrRender.GetA(); }
-	void					ScriptSetColorVector( const Vector& vecColor );
-	void					ScriptSetColor( int r, int g, int b );
-	void					ScriptSetColorR( int iVal )	{ SetRenderColorR( iVal ); }
-	void					ScriptSetColorG( int iVal )	{ SetRenderColorG( iVal ); }
-	void					ScriptSetColorB( int iVal )	{ SetRenderColorB( iVal ); }
-	void					ScriptSetAlpha( int iVal )	{ SetRenderColorA( iVal ); }
-
-	int						ScriptGetRenderMode() { return GetRenderMode(); }
-	void					ScriptSetRenderMode( int nRenderMode ) { SetRenderMode( (RenderMode_t)nRenderMode ); }
-
-	int						ScriptGetMoveType() { return GetMoveType(); }
-	void					ScriptSetMoveType( int iMoveType ) { SetMoveType( (MoveType_t)iMoveType ); }
-private:
-	CUtlVector< scriptthinkfunc_t * > m_ScriptThinkFuncs;
-
-public:
-	HSCRIPT					m_hScriptInstance;
-	string_t				m_iszScriptId;
-	CScriptScope			m_ScriptScope;
+	string_t						m_iClassname;
 
 // IClientUnknown overrides.
 public:
@@ -559,9 +460,6 @@ public:
 
 	virtual const Vector&			GetAbsOrigin( void ) const;
 	virtual const QAngle&			GetAbsAngles( void ) const;
-	inline Vector					Forward() const; ///< get my forward (+x) vector
-	inline Vector					Left() const;    ///< get my left    (+y) vector
-	inline Vector					Up() const;      ///< get my up      (+z) vector
 
 	const Vector&					GetNetworkOrigin() const;
 	const QAngle&					GetNetworkAngles() const;
@@ -964,7 +862,6 @@ public:
 public:
 	void							SetSize( const Vector &vecMin, const Vector &vecMax ); // UTIL_SetSize( pev, mins, maxs );
 	char const						*GetClassname( void );
-	char const						*GetEntityName( void );
 	char const						*GetDebugName( void );
 	static int						PrecacheModel( const char *name ); 
 	static bool						PrecacheSound( const char *name );
@@ -1703,8 +1600,6 @@ private:
 	float							m_flGroundChangeTime;
 
 
-	char							m_iName[ MAX_PATH ];
-
 	// Friction.
 	float							m_flFriction;       
 
@@ -2321,19 +2216,6 @@ inline bool C_BaseEntity::ShouldRecordInTools() const
 #else
 	return true;
 #endif
-}
-
-//-----------------------------------------------------------------------------
-// Inline methods
-//-----------------------------------------------------------------------------
-inline const char *C_BaseEntity::GetEntityName()
-{
-	return m_iName;
-}
-
-inline int C_BaseEntity::GetEntityIndex() const 
-{
-	return entindex();
 }
 
 C_BaseEntity *CreateEntityByName( const char *className );

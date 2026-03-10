@@ -777,7 +777,6 @@ typedef unsigned int *LPDWORD;
 #pragma GCC diagnostic ignored "-Wconversion-null"	// passing NULL to non-pointer argument 1
 #pragma GCC diagnostic ignored "-Wpointer-arith"	// NULL used in arithmetic. Ie, vpanel == NULL where VPANEL is uint.
 #pragma GCC diagnostic ignored "-Wswitch"				// enumeration values not handled in switch
-#pragma GCC diagnostic ignored "-Wattributes"		// declared with greater visibility than the type of its field
 #endif
 
 #ifdef OSX

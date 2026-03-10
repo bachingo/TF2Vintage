@@ -96,11 +96,14 @@ BEGIN_DATADESC( CBaseFlex )
 END_DATADESC()
 
 BEGIN_ENT_SCRIPTDESC( CBaseFlex, CBaseAnimating, "Animated characters who have vertex flex capability." )
+#if 0
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetOldestScene, "GetCurrentScene", "Returns the instance of the oldest active scene entity (if any)." )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetSceneByIndex, "GetSceneByIndex", "Returns the instance of the scene entity at the specified index." )
+#endif
 	DEFINE_SCRIPTFUNC_NAMED( ScriptPlayScene, "PlayScene", "Play the specified .vcd file." )
 END_SCRIPTDESC();
 
+#if 0
 //--------------------------------------------------------------------------------------------------
 // Returns the script instance of the scene entity associated with our oldest ("top level") scene event
 //--------------------------------------------------------------------------------------------------
@@ -132,7 +135,7 @@ HSCRIPT CBaseFlex::ScriptGetSceneByIndex( int index )
 		return NULL;
 	}
 }
-
+#endif
 //--------------------------------------------------------------------------------------------------
 float CBaseFlex::ScriptPlayScene( const char* pszScene, float flDelay )
 {
@@ -436,7 +439,7 @@ bool CBaseFlex::ClearSceneEvent( CSceneEventInfo *info, bool fastKill, bool canc
 //			expression - 
 //			duration - 
 //-----------------------------------------------------------------------------
-void CBaseFlex::AddSceneEvent( CChoreoScene *scene, CChoreoEvent *event, CBaseEntity *pTarget, CSceneEntity *pSceneEnt )
+void CBaseFlex::AddSceneEvent( CChoreoScene *scene, CChoreoEvent *event, CBaseEntity *pTarget )
 {
 	if ( !scene || !event )
 	{
@@ -459,8 +462,7 @@ void CBaseFlex::AddSceneEvent( CChoreoScene *scene, CChoreoEvent *event, CBaseEn
 	info.m_pEvent		= event;
 	info.m_pScene		= scene;
 	info.m_hTarget		= pTarget;
-	info.m_bStarted	    = false;
-	info.m_hSceneEntity = pSceneEnt;
+	info.m_bStarted	= false;
 
 	if (StartSceneEvent( &info, scene, event, actor, pTarget ))
 	{

@@ -157,7 +157,9 @@ public:
 	DECLARE_CLASS( CBaseCombatWeapon, BASECOMBATWEAPON_DERIVED_FROM );
 	DECLARE_NETWORKCLASS();
 	DECLARE_PREDICTABLE();
+#ifdef GAME_DLL
 	DECLARE_ENT_SCRIPTDESC();
+#endif
 
 							CBaseCombatWeapon();
 	virtual 				~CBaseCombatWeapon();
@@ -268,10 +270,8 @@ public:
 	bool					DefaultReload( int iClipSize1, int iClipSize2, int iActivity );
 	bool					ReloadsSingly( void ) const;
 
-	virtual bool			AutoFiresFullClip( void ) const;
+	virtual bool			AutoFiresFullClip( void ) const { return false; }
 	virtual void			UpdateAutoFire( void );
-	bool					CanOverload(void) const;
-	void					Overload(void);
 
 	// Weapon firing
 	virtual void			PrimaryAttack( void );						// do "+ATTACK"
@@ -396,52 +396,6 @@ public:
 	virtual void			Activate( void );
 
 	virtual bool ShouldUseLargeViewModelVROverride() { return false; }
-
-	////////////////////////////////////////////////////////////////
-	// VScript Methods
-	virtual const char*	GetWeaponScriptName() { return GetClassname(); }
-
-	HSCRIPT				ScriptGetOwner( void ) { return ToHScript( GetOwner() ); }
-	void				ScriptSetOwner( HSCRIPT hScriptOwner );
-
-	void				ScriptGiveTo( HSCRIPT hOther ) { GiveTo( ToEnt( hOther ) ); }
-
-	void				ScriptSetClip1( int iClip1 ) { m_iClip1 = iClip1; }
-	void				ScriptSetClip2( int iClip2 ) { m_iClip2 = iClip2; }
-	int					ScriptGetMaxAmmo1();
-	int					ScriptGetMaxAmmo2();
-
-	void				ScriptWeaponSound( int sound_type, float soundtime = 0.0f ) { WeaponSound( (WeaponSound_t)sound_type, soundtime ); }
-
-	const Vector&		ScriptGetBulletSpread( void ) { return GetBulletSpread(); }
-	Vector				ScriptGetBulletSpreadForProficiency( int proficiency ) { return GetBulletSpread( (WeaponProficiency_t)proficiency ); }
-
-	int					ScriptGetPrimaryAttackActivity( void ) { return GetPrimaryAttackActivity(); }
-	int					ScriptGetSecondaryAttackActivity( void ) { return GetSecondaryAttackActivity(); }
-	int					ScriptGetDrawActivity( void ) { return GetDrawActivity(); }
-
-	bool				FiresUnderwater() { return m_bFiresUnderwater; }
-	void				SetFiresUnderwater( bool bVal ) { m_bFiresUnderwater = bVal; }
-	bool				AltFiresUnderwater() { return m_bAltFiresUnderwater; }
-	void				SetAltFiresUnderwater( bool bVal ) { m_bAltFiresUnderwater = bVal; }
-	float				MinRange1() { return m_fMinRange1; }
-	void				SetMinRange1( float flVal ) { m_fMinRange1 = flVal; }
-	float				MinRange2() { return m_fMinRange2; }
-	void				SetMinRange2( float flVal ) { m_fMinRange2 = flVal; }
-	float				MaxRange1() { return m_fMaxRange1; }
-	void				SetMaxRange1( float flVal ) { m_fMaxRange1 = flVal; }
-	float				MaxRange2() { return m_fMaxRange2; }
-	void				SetMaxRange2( float flVal ) { m_fMaxRange2 = flVal; }
-	//bool				ReloadsSingly() { return m_bReloadsSingly; }
-	void				SetReloadsSingly( bool bVal ) { m_bReloadsSingly = bVal; }
-	float				FireDuration() { return m_fFireDuration; }
-	void				SetFireDuration( float flVal ) { m_fFireDuration = flVal; }
-
-	float				NextPrimaryAttack() { return m_flNextPrimaryAttack; }
-	void				SetNextPrimaryAttack( float flVal ) { m_flNextPrimaryAttack = flVal; }
-	float				NextSecondaryAttack() { return m_flNextSecondaryAttack; }
-	void				SetNextSecondaryAttack( float flVal ) { m_flNextSecondaryAttack = flVal; }
-	////////////////////////////////////////////////////////////////
 public:
 // Server Only Methods
 #if !defined( CLIENT_DLL )
@@ -631,8 +585,7 @@ public:
 	// Weapon state
 	bool					m_bInReload;			// Are we in the middle of a reload;
 	bool					m_bFireOnEmpty;			// True when the gun is empty and the player is still holding down the attack key(s)
-	bool					m_bFiringWholeClip;		// Are we in the middle of firing the whole clip,
-	bool					m_bIsOverLoaded;		// If we overloaded and are misfiring,
+	bool					m_bFiringWholeClip;		// Are we in the middle of firing the whole clip;
 	// Weapon art
 	CNetworkVar( int, m_iViewModelIndex );
 	CNetworkVar( int, m_iWorldModelIndex );
@@ -718,7 +671,6 @@ protected:
 	COutputEvent			m_OnPlayerPickup;	// Fired when the player picks up the weapon.
 	COutputEvent			m_OnNPCPickup;		// Fired when an NPC picks up the weapon.
 	COutputEvent			m_OnCacheInteraction;	// For awarding lambda cache achievements in HL2 on 360. See .FGD file for details 
-	COutputEvent			m_OnDropped;
 
 #else // Client .dll only
 	bool					m_bJustRestored;

@@ -143,23 +143,6 @@ ConVar tf_airblast_cray_pitch_control( "tf_airblast_cray_pitch_control", "0", FC
 #define TF_FLAMETHROWER_HITACCURACY_MED			40.0f
 #define TF_FLAMETHROWER_HITACCURACY_HIGH		60.0f
 
-#ifdef CLIENT_DLL
-extern ConVar tf2v_muzzlelight;
-
-ConVar tf2v_new_flames( "tf2v_new_flames", "0", FCVAR_CLIENTDLL|FCVAR_ARCHIVE, "Swap out the particle system for the Flamethrower to the newer one?", true, 0.0f, true, 1.0f );
-#endif
-ConVar tf2v_force_flame_visual( "tf2v_force_flame_visual", "2", FCVAR_REPLICATED, "Forces clients to use the new or old flame effect. Set to 2 to disable.", true, 0.0f, true, 2.0f );
-
-ConVar tf2v_airblast( "tf2v_airblast", "1", FCVAR_REPLICATED|FCVAR_NOTIFY, "Enable/Disable the Airblast function of the Flamethrower. 0 = off, 1 = Pre-JI, 2 = Post-JI" );
-ConVar tf2v_airblast_players( "tf2v_airblast_players", "1", FCVAR_REPLICATED, "Enable/Disable the Airblast pushing players." );
-
-ConVar tf2v_use_extinguish_heal( "tf2v_use_extinguish_heal", "0", FCVAR_REPLICATED, "Enables 20HP healing for airblast extinguishing a teammate." );
-
-#ifdef GAME_DLL
-ConVar tf2v_debug_airblast( "tf2v_debug_airblast", "0", FCVAR_CHEAT, "Visualize airblast box." );
-ConVar tf2v_use_new_phlog_taunt( "tf2v_use_new_phlog_taunt", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes behavior when activating Mmmph.", true, 0, true, 2 );
-#endif
-
 //-----------------------------------------------------------------------------
 
 #define TF_WEAPON_BUBBLE_WAND_MODEL		"models/player/items/pyro/mtp_bubble_wand.mdl"
@@ -373,9 +356,6 @@ bool CTFFlameThrower::CanAirBlast() const
 	if ( !pOwner )
 		return false;
 
-	if ( !tf2v_airblast.GetBool() )
-		return false;
-
 	int iAirblastDisabled = 0;
 	CALL_ATTRIB_HOOK_INT( iAirblastDisabled, airblast_disabled );
 
@@ -392,9 +372,6 @@ bool CTFFlameThrower::CanAirBlastPushPlayer() const
 		return false;
 
 	if ( !CanAirBlast() )
-		return false;
-
-	if ( !tf2v_airblast_players.GetBool() )
 		return false;
 
 	int iNoPushPlayer = 0;
@@ -1648,7 +1625,7 @@ bool CTFFlameThrower::DeflectPlayer( CTFPlayer *pTarget, CTFPlayer *pOwner, Vect
 			// We may want to cap the amount of health per extinguish but for now lets test this
 			int iRestoreHealthOnExtinguish = 0;
 			CALL_ATTRIB_HOOK_INT( iRestoreHealthOnExtinguish, extinguish_restores_health );
-			if ( iRestoreHealthOnExtinguish > 0 || tf2v_use_extinguish_heal.GetBool() )
+			if ( iRestoreHealthOnExtinguish > 0 )
 			{
 				pOwner->TakeHealth( iRestoreHealthOnExtinguish, DMG_GENERIC );
 				IGameEvent *healevent = gameeventmanager->CreateEvent( "player_healonhit" );

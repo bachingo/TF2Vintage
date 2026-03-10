@@ -23,10 +23,6 @@
 #include "haptics/ihaptics.h"
 #endif
 
-#define TF_SPEED_BUFF_DURATION_LEGACY 3.0f	// Values used before mid-2016.
-#define TF_SPEED_BUFF_DURATION_MODERN 2.0f	// Values used after mid-2016.
-
-ConVar tf2v_speed_buff_duration( "tf2v_new_speed_buff_duration", "2.0", FCVAR_REPLICATED|FCVAR_NOTIFY, "Swaps between using old (3s) and new (2s) speed buffing times." );
 ConVar tf_weapon_criticals_melee( "tf_weapon_criticals_melee", "1", FCVAR_REPLICATED | FCVAR_NOTIFY, "Controls random crits for melee weapons. 0 - Melee weapons do not randomly crit. 1 - Melee weapons can randomly crit only if tf_weapon_criticals is also enabled. 2 - Melee weapons can always randomly crit regardless of the tf_weapon_criticals setting." );
 
 //=============================================================================
@@ -46,7 +42,7 @@ LINK_ENTITY_TO_CLASS( tf_weaponbase_melee, CTFWeaponBaseMelee );
 // Server specific.
 #if !defined( CLIENT_DLL ) 
 BEGIN_DATADESC( CTFWeaponBaseMelee )
-	DEFINE_THINKFUNC( Smack )
+DEFINE_THINKFUNC( Smack )
 END_DATADESC()
 #endif
 
@@ -54,9 +50,6 @@ END_DATADESC()
 ConVar tf_meleeattackforcescale( "tf_meleeattackforcescale", "80.0", FCVAR_CHEAT | FCVAR_GAMEDLL | FCVAR_DEVELOPMENTONLY );
 #endif
 
-extern ConVar tf2v_critchance_melee;
-extern ConVar tf2v_use_new_jag;
-extern ConVar tf2v_use_new_axtinguisher;
 #ifdef _DEBUG
 extern ConVar tf_weapon_criticals_force_random;
 #endif // _DEBUG
@@ -293,15 +286,8 @@ void CTFWeaponBaseMelee::Swing( CTFPlayer *pPlayer )
 	DoViewModelAnimation();
 
 	// Set next attack times.
-	
 	float flFireDelay = ApplyFireDelay( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay );
 
-	if ( tf2v_use_new_jag.GetInt() > 0 )
-		CALL_ATTRIB_HOOK_FLOAT( flFireDelay, mult_postfiredelay_jag );
-
-	if (tf2v_use_new_axtinguisher.GetInt() == 2)
-		CALL_ATTRIB_HOOK_FLOAT( flFireDelay, mult_postfiredelay_axtinguisher_2 );
-		
 	m_flNextPrimaryAttack = gpGlobals->curtime + flFireDelay;
 	m_flNextSecondaryAttack = gpGlobals->curtime + flFireDelay;
 	pPlayer->m_Shared.SetNextStealthTime( m_flNextSecondaryAttack );
@@ -663,10 +649,8 @@ bool CTFWeaponBaseMelee::OnSwingHit( trace_t &trace )
 			CALL_ATTRIB_HOOK_INT( iSpeedBuffOnHit, speed_buff_ally );
 			if ( iSpeedBuffOnHit > 0 && trace.m_pEnt )
 			{
-				const float flBuffDuration = tf2v_speed_buff_duration.GetFloat();
-				pPlayer->m_Shared.AddCond( TF_COND_SPEED_BOOST, flBuffDuration );
-				// We buff ourselves a little bit longer
-				pPlayer->m_Shared.AddCond( TF_COND_SPEED_BOOST, (flBuffDuration * 1.5) );
+				pTargetPlayer->m_Shared.AddCond( TF_COND_SPEED_BOOST, 2.f );
+				pPlayer->m_Shared.AddCond( TF_COND_SPEED_BOOST, 3.6f );		// give the soldier a bit of additional time to allow them to keep up better with faster classes
 
 				EconEntity_OnOwnerKillEaterEvent( this, pPlayer, pTargetPlayer, kKillEaterEvent_TeammatesWhipped );	// Strange
 			}
@@ -1101,8 +1085,7 @@ bool CTFWeaponBaseMelee::CalcIsAttackCriticalHelper( void )
 		return true;
 
 	float flPlayerCritMult = pPlayer->GetCritMult();
-
-	float flCritChance = ( ( tf2v_critchance_melee.GetFloat() / 100 ) * flPlayerCritMult );
+	float flCritChance = TF_DAMAGE_CRIT_CHANCE_MELEE * flPlayerCritMult;
 	CALL_ATTRIB_HOOK_FLOAT( flCritChance, mult_crit_chance );
 
 	// mess with the crit chance seed so it's not based solely on the prediction seed

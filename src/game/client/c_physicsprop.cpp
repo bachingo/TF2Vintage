@@ -24,12 +24,7 @@ IMPLEMENT_CLIENTCLASS_DT(C_PhysicsProp, DT_PhysicsProp, CPhysicsProp)
 	RecvPropBool( RECVINFO( m_bAwake ) ),
 END_RECV_TABLE()
 
-#define PBR_COMPATIBLE
-#ifdef PBR_COMPATIBLE
-	ConVar r_PhysPropStaticLighting( "r_PhysPropStaticLighting", "0" );
-#else
-	ConVar r_PhysPropStaticLighting( "r_PhysPropStaticLighting", "1" );
-#endif
+ConVar r_PhysPropStaticLighting( "r_PhysPropStaticLighting", "1" );
 
 
 //-----------------------------------------------------------------------------

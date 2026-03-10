@@ -14,6 +14,7 @@
 #include "isaverestore.h"
 #include "gamerules.h"
 #include "vscript_client_nut.h"
+#include "gameui/gameui_interface.h"
 
 #ifdef PANORAMA_ENABLE
 #include "panorama/panorama.h"
@@ -258,6 +259,46 @@ bool IsEntityCreationAllowedInScripts( void )
 {
 	return g_VScriptGameSystem.m_bAllowEntityCreationInScripts;
 }
+
+//
+// Slart: These were Portal 2 only, now they're not
+//
+
+bool __MsgFunc_SetMixLayerTriggerFactor(const CCSUsrMsg_SetMixLayerTriggerFactor &msg)
+{
+	int iLayerID = engine->GetMixLayerIndex(msg.layer().c_str());
+	if (iLayerID < 0)
+	{
+		Warning("Invalid mix layer passed to SetMixLayerTriggerFactor: '%s'\n", msg.layer().c_str());
+		return true;
+	}
+	int iGroupID = engine->GetMixGroupIndex(msg.group().c_str());
+	if (iGroupID < 0)
+	{
+		Warning("Invalid mix group passed to SetMixLayerTriggerFactor: '%s'\n", msg.group().c_str());
+		return true;
+	}
+
+	engine->SetMixLayerTriggerFactor(iLayerID, iGroupID, msg.factor());
+	return true;
+}
+
+class CSetMixLayerTriggerHelper : public CAutoGameSystem 
+{
+	virtual bool Init()
+	{
+		for( int i = 0; i < MAX_SPLITSCREEN_PLAYERS; ++i )
+		{
+			ACTIVE_SPLITSCREEN_PLAYER_GUARD( i );
+			HOOK_MESSAGE( SetMixLayerTriggerFactor );
+		}
+		return true;
+	}
+
+	CUserMessageBinder m_UMCMsgSetMixLayerTriggerFactor;
+};
+
+static CSetMixLayerTriggerHelper g_SetMixLayerTriggerHelper;
 
 #ifdef PANORAMA_ENABLE
 

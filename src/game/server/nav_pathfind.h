@@ -736,8 +736,7 @@ inline void SearchSurroundingAreas( CNavArea *startArea, ISearchSurroundingAreas
  * Areas in the collection will be "marked", returning true for IsMarked(). 
  * Each area in the collection's GetCostSoFar() will be approximate travel distance from 'startArea'.
  */
-template< typename T >
-inline void CollectSurroundingAreas( CUtlVector< T * > *nearbyAreaVector, CNavArea *startArea, float travelDistanceLimit = 1500.0f, float maxStepUpLimit = StepHeight, float maxDropDownLimit = 100.0f )
+inline void CollectSurroundingAreas( CUtlVector< CNavArea * > *nearbyAreaVector, CNavArea *startArea, float travelDistanceLimit = 1500.0f, float maxStepUpLimit = StepHeight, float maxDropDownLimit = 100.0f )
 {
 	nearbyAreaVector->RemoveAll();
 
@@ -773,7 +772,7 @@ inline void CollectSurroundingAreas( CUtlVector< T * > *nearbyAreaVector, CNavAr
 					continue;
 			}
 
-			nearbyAreaVector->AddToTail( (T *)area );
+			nearbyAreaVector->AddToTail( area );
 
 			// mark here to ensure all marked areas are also valid areas that are in the collection
 			area->Mark();

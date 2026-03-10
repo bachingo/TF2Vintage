@@ -83,7 +83,7 @@ public:
 	void			DelaySquadAltFireAttack( float flDelay );
 	float			MaxYawSpeed( void );
 	bool			ShouldMoveAndShoot();
-	bool			OverrideMoveFacing( const AILocalMoveGoal_t &move, float flInterval );
+	bool			OverrideMoveFacing( const AILocalMoveGoal_t &move, float flInterval );;
 	void			HandleAnimEvent( animevent_t *pEvent );
 	Vector			Weapon_ShootPosition( );
 

@@ -1884,7 +1884,7 @@ void CNPC_Citizen::HandleAnimEvent( animevent_t *pEvent )
 			Assert(pTarget);
 			if ( pTarget )
 			{
-				m_flPlayerHealTime 	= gpGlobals->curtime + sk_citizen_heal_toss_player_delay.GetFloat();
+				m_flPlayerHealTime 	= gpGlobals->curtime + sk_citizen_heal_toss_player_delay.GetFloat();;
 				TossHealthKit( pTarget, Vector(48.0f, 0.0f, 0.0f)  );
 			}
 		}

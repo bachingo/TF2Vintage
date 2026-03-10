@@ -13,22 +13,6 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-BEGIN_SCRIPTDESC_ROOT( CAmmoDef, SCRIPT_SINGLETON "The ammo type definition manager." )
-	DEFINE_SCRIPTFUNC( Name, "Gets the name of the specified ammo type index." )
-	DEFINE_SCRIPTFUNC( Index, "Gets the index of the specified ammo type name." )
-	DEFINE_SCRIPTFUNC( PlrDamage, "Gets the damage players deal for the specified ammo type." )
-	DEFINE_SCRIPTFUNC( NPCDamage, "Gets the damage NPCs deal for the specified ammo type." )
-	DEFINE_SCRIPTFUNC( MaxCarry, "Gets the maximum amount of this ammo type which players should be able to carry." )
-	DEFINE_SCRIPTFUNC( DamageType, "Gets the type of damage this ammo type deals." )
-	DEFINE_SCRIPTFUNC( TracerType, "Gets the type of tracer this ammo type uses." )
-	DEFINE_SCRIPTFUNC( DamageForce, "Gets the amount of force this ammo type deals." )
-	DEFINE_SCRIPTFUNC( MinSplashSize, "Gets the minimum size of water splashes caused by impacts from this ammo type." )
-	DEFINE_SCRIPTFUNC( MaxSplashSize, "Gets the maximum size of water splashes caused by impacts from this ammo type." )
-	DEFINE_SCRIPTFUNC( Flags, "Gets the flags this ammo type uses." )
-
-	DEFINE_SCRIPTFUNC( GetNumAmmoTypes, "Gets the number of ammo types which currently exist." )
-END_SCRIPTDESC();
-
 //-----------------------------------------------------------------------------
 // Purpose: Return a pointer to the Ammo at the Index passed in
 //-----------------------------------------------------------------------------
@@ -38,19 +22,6 @@ Ammo_t *CAmmoDef::GetAmmoOfIndex(int nAmmoIndex)
 		return NULL;
 
 	return &m_AmmoType[ nAmmoIndex ];
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-// Input  :
-// Output :
-//-----------------------------------------------------------------------------
-const char *CAmmoDef::Name( int nAmmoIndex )
-{
-	if ( nAmmoIndex < 1 || nAmmoIndex >= m_nAmmoIndex )
-		return NULL;
-
-	return m_AmmoType[nAmmoIndex].pName;
 }
 
 //-----------------------------------------------------------------------------

@@ -95,9 +95,9 @@ ConVar	spec_freeze_traveltime( "spec_freeze_traveltime", "0.4", FCVAR_CHEAT | FC
 
 ConVar sv_bonus_challenge( "sv_bonus_challenge", "0", FCVAR_REPLICATED, "Set to values other than 0 to select a bonus map challenge type." );
 
-ConVar sv_chat_bucket_size_tier1( "sv_chat_bucket_size_tier1", "4", FCVAR_NONE, "The maxmimum size of the short term chat msg bucket." );
+ConVar sv_chat_bucket_size_tier1( "sv_chat_bucket_size_tier1", "4", FCVAR_NONE, "The maximum size of the short term chat msg bucket." );
 ConVar sv_chat_seconds_per_msg_tier1( "sv_chat_seconds_per_msg_tier1", "3", FCVAR_NONE, "The number of seconds to accrue an additional short term chat msg." );
-ConVar sv_chat_bucket_size_tier2( "sv_chat_bucket_size_tier2", "30", FCVAR_NONE, "The maxmimum size of the long term chat msg bucket." );
+ConVar sv_chat_bucket_size_tier2( "sv_chat_bucket_size_tier2", "30", FCVAR_NONE, "The maximum size of the long term chat msg bucket." );
 ConVar sv_chat_seconds_per_msg_tier2( "sv_chat_seconds_per_msg_tier2", "10", FCVAR_NONE, "The number of seconds to accrue an additional long term chat msg." );
 
 static ConVar sv_maxusrcmdprocessticks( "sv_maxusrcmdprocessticks", "24", FCVAR_NOTIFY, "Maximum number of client-issued usrcmd ticks that can be replayed in packet loss conditions, 0 to allow no restrictions" );
@@ -469,71 +469,6 @@ BEGIN_DATADESC( CBasePlayer )
 	// DEFINE_UTLVECTOR( m_vecPlayerSimInfo ),
 END_DATADESC()
 
-BEGIN_ENT_SCRIPTDESC( CBasePlayer, CBaseAnimating, "The player entity." )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptIsPlayerNoclipping, "IsNoclipping", "Returns true if the player is in noclip mode." )
-
-	DEFINE_SCRIPTFUNC_NAMED( VScriptGetExpresser, "GetExpresser", "Gets a handle for this player's expresser." )
-
-	DEFINE_SCRIPTFUNC( GetPlayerName, "Gets the player's name." )
-	DEFINE_SCRIPTFUNC( GetUserID, "Gets the player's user ID." )
-	DEFINE_SCRIPTFUNC_NAMED( GetUserID, "GetPlayerUserId", SCRIPT_HIDE )
-	DEFINE_SCRIPTFUNC( GetNetworkIDString, "Gets the player's network (i.e. Steam) ID." )
-
-	DEFINE_SCRIPTFUNC( FragCount, "Gets the number of frags (kills) this player has in a multiplayer game." )
-	DEFINE_SCRIPTFUNC( DeathCount, "Gets the number of deaths this player has had in a multiplayer game." )
-	DEFINE_SCRIPTFUNC( IsConnected, "Returns true if this player is connected." )
-	DEFINE_SCRIPTFUNC( IsDisconnecting, "Returns true if this player is disconnecting." )
-	DEFINE_SCRIPTFUNC( IsSuitEquipped, "Returns true if this player had the HEV suit equipped." )
-
-	DEFINE_SCRIPTFUNC_NAMED( ArmorValue, "GetArmor", "Gets the player's armor." )
-	DEFINE_SCRIPTFUNC_NAMED( SetArmorValue, "SetArmor", "Sets the player's armor." )
-
-	DEFINE_SCRIPTFUNC( FlashlightIsOn, "Returns true if the flashlight is on." )
-	DEFINE_SCRIPTFUNC( FlashlightTurnOn, "Turns on the flashlight." )
-	DEFINE_SCRIPTFUNC( FlashlightTurnOff, "Turns off the flashlight." )
-
-	DEFINE_SCRIPTFUNC( DisableButtons, "Disables the specified button mask." )
-	DEFINE_SCRIPTFUNC( EnableButtons, "Enables the specified button mask if it was disabled before." )
-	DEFINE_SCRIPTFUNC( ForceButtons, "Forces the specified button mask." )
-	DEFINE_SCRIPTFUNC( UnforceButtons, "Unforces the specified button mask if it was forced before." )
-
-	DEFINE_SCRIPTFUNC( GetButtons, "Gets the player's active buttons." )
-	DEFINE_SCRIPTFUNC( GetButtonPressed, "Gets the player's currently pressed buttons." )
-	DEFINE_SCRIPTFUNC( GetButtonReleased, "Gets the player's just-released buttons." )
-	DEFINE_SCRIPTFUNC( GetButtonLast, "Gets the player's previously active buttons." )
-	DEFINE_SCRIPTFUNC( GetButtonDisabled, "Gets the player's currently unusable buttons." )
-	DEFINE_SCRIPTFUNC( GetButtonForced, "Gets the player's currently forced buttons." )
-
-	DEFINE_SCRIPTFUNC( GetFOV, "" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetFOVOwner, "GetFOVOwner", "Gets current view owner." )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptSetFOV, "SetFOV", "Sets player FOV regardless of view owner." )
-
-	DEFINE_SCRIPTFUNC_NAMED( SnapEyeAngles, "SetEyeAngles", "Snap a players view to a direction" )
-
-	DEFINE_SCRIPTFUNC( ViewPunch, "Punches the player's view with the specified vector." )
-	DEFINE_SCRIPTFUNC( SetMuzzleFlashTime, "Sets the player's muzzle flash time for AI." )
-	DEFINE_SCRIPTFUNC( SetSuitUpdate, "Sets an update for the player's HEV suit." )
-
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetAutoaimVector, "GetAutoaimVector", "Gets the player's autoaim shooting direction with the specified scale." )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetAutoaimVectorCustomMaxDist, "GetAutoaimVectorCustomMaxDist", "Gets the player's autoaim shooting direction with the specified scale and a custom max distance." )
-	DEFINE_SCRIPTFUNC( ShouldAutoaim, "Returns true if the player should be autoaiming." )
-
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetPunchAngle, "GetPunchAngle", "" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptSetPunchAngle, "SetPunchAngle", "" )
-
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetEyeForward, "GetEyeForward", "Gets the player's forward eye vector." )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetEyeRight, "GetEyeRight", "Gets the player's right eye vector." )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetEyeUp, "GetEyeUp", "Gets the player's up eye vector." )
-
-	DEFINE_SCRIPTFUNC( GetScriptOverlayMaterial, "Gets the current view overlay material" )
-	DEFINE_SCRIPTFUNC( SetScriptOverlayMaterial, "Sets a view overlay material" )
-
-	BEGIN_SCRIPTHOOK( PlayerRunCommand, "PlayerRunCommand", FIELD_VOID, "Called when running a player command on the server." )
-		DEFINE_SCRIPTHOOK_PARAM( "command", FIELD_HSCRIPT )
-	END_SCRIPTHOOK()
-
-END_SCRIPTDESC();
-
 int giPrecacheGrunt = 0;
 
 edict_t *CBasePlayer::s_PlayerEdict = NULL;
@@ -717,8 +652,6 @@ CBasePlayer::CBasePlayer( )
 	m_nMovementTicksForUserCmdProcessingRemaining = 0;
 
 	m_flLastObjectiveTime = -1.f;
-
-	m_hPlayerRunCommand = INVALID_HSCRIPT;
 }
 
 CBasePlayer::~CBasePlayer( )
@@ -744,12 +677,6 @@ void CBasePlayer::UpdateOnRemove( void )
 	if ( GetTeam() )
 	{
 		GetTeam()->RemovePlayer( this );
-	}
-
-	if ( m_ScriptScope.IsInitialized() )
-	{
-		if ( m_hPlayerRunCommand != INVALID_HSCRIPT )
-			m_ScriptScope.ReleaseFunction( m_hPlayerRunCommand );
 	}
 
 	// Chain at end to mimic destructor unwind order
@@ -3890,23 +3817,6 @@ void CBasePlayer::PlayerRunCommand(CUserCmd *ucmd, IMoveHelper *moveHelper)
 			}
 		}
 	}
-
-	if ( m_ScriptScope.IsInitialized() )
-	{
-		if ( m_hPlayerRunCommand == INVALID_HSCRIPT )
-		{
-			m_hPlayerRunCommand = m_ScriptScope.LookupFunction( "PlayerRunCommand" );
-		}
-
-		if ( m_hPlayerRunCommand != INVALID_HSCRIPT )
-		{
-			HSCRIPT hCmd = g_pScriptVM->RegisterInstance( ucmd );
-
-			m_ScriptScope.Call( m_hPlayerRunCommand, NULL, hCmd );
-
-			g_pScriptVM->RemoveInstance( hCmd );
-		}
-	}
 	
 	PlayerMove()->RunCommand(this, ucmd, moveHelper);
 }
@@ -5470,6 +5380,11 @@ void CBasePlayer::OnRestore( void )
 	m_nVehicleViewSavedFrame = 0;
 
 	m_nBodyPitchPoseParam = LookupPoseParameter( "body_pitch" );
+
+	if ( gpGlobals->eLoadType == MapLoad_Transition )
+	{
+		g_pScriptVM->SetValue( "player", GetScriptInstance() );
+	}
 }
 
 /* void CBasePlayer::SetTeamName( const char *pTeamName )
@@ -5815,6 +5730,13 @@ void CBasePlayer::LeaveVehicle( const Vector &vecExitPoint, const QAngle &vecExi
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Used by vscript to determine if the player is noclipping
+//-----------------------------------------------------------------------------
+bool CBasePlayer::ScriptIsPlayerNoclipping( void )
+{
+	return ( GetMoveType() == MOVETYPE_NOCLIP );
+}
 
 //==============================================
 // !!!UNDONE:ultra temporary SprayCan entity to apply
@@ -6925,7 +6847,7 @@ bool CBasePlayer::BumpWeapon( CBaseCombatWeapon *pWeapon )
 
 bool CBasePlayer::RemovePlayerItem( CBaseCombatWeapon *pItem )
 {
-	if ( GetActiveWeapon() == pItem )
+	if (GetActiveWeapon() == pItem)
 	{
 		ResetAutoaim( );
 		pItem->Holster( );
@@ -6966,28 +6888,6 @@ void CBasePlayer::ShowCrosshair( bool bShow )
 	{
 		m_Local.m_iHideHUD |= HIDEHUD_CROSSHAIR;
 	}
-}
-
-//-----------------------------------------------------------------------------
-// Used by vscript to determine if the player is noclipping
-//-----------------------------------------------------------------------------
-bool CBasePlayer::ScriptIsPlayerNoclipping( void )
-{
-	return ( GetMoveType() == MOVETYPE_NOCLIP );
-}
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-HSCRIPT CBasePlayer::VScriptGetExpresser()
-{
-	HSCRIPT hScript = NULL;
-	CAI_Expresser *pExpresser = GetExpresser();
-	if ( pExpresser )
-	{
-		hScript = g_pScriptVM->RegisterInstance( pExpresser );
-	}
-
-	return hScript;
 }
 
 //-----------------------------------------------------------------------------
@@ -7871,6 +7771,18 @@ BEGIN_DATADESC( CStripWeapons )
 	DEFINE_INPUTFUNC( FIELD_VOID, "StripWeaponsAndSuit", InputStripWeaponsAndSuit ),
 END_DATADESC()
 	
+BEGIN_ENT_SCRIPTDESC( CBasePlayer, CBaseCombatCharacter, "The player entity." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptIsPlayerNoclipping, "IsNoclipping", "Returns true if the player is in noclip mode." ) 
+	DEFINE_SCRIPTFUNC( ViewPunch, "Ow! Punches the player's view" ) 
+	DEFINE_SCRIPTFUNC( ViewPunchReset, "Reset's the player's view punch" ) 
+	DEFINE_SCRIPTFUNC( SnapEyeAngles, "Snap the player's eye angles to this." ) 
+	DEFINE_SCRIPTFUNC( GetPlayerMins, "" ) 
+	DEFINE_SCRIPTFUNC( GetPlayerMaxs, "" ) 
+	DEFINE_SCRIPTFUNC( SetForceLocalDraw, "Forces the player to be drawn as if they are third person" )
+	DEFINE_SCRIPTFUNC( GetForceLocalDraw, "Gets the state of whether the player is being forced by SetForceLocalDraw to be drawn" )
+	DEFINE_SCRIPTFUNC( GetScriptOverlayMaterial, "Gets the current view overlay material" )
+	DEFINE_SCRIPTFUNC( SetScriptOverlayMaterial, "Sets a view overlay material" )
+END_SCRIPTDESC();
 
 void CStripWeapons::InputStripWeapons(inputdata_t &data)
 {
@@ -8190,13 +8102,6 @@ void CMovementSpeedMod::InputSpeedMod(inputdata_t &data)
 }
 
 
-void SendProxy_CropFlagsToPlayerFlagBitsLength( const SendProp *pProp, const void *pStruct, const void *pVarData, DVariant *pOut, int iElement, int objectID)
-{
-	int mask = (1<<PLAYER_FLAG_BITS) - 1;
-	int data = *(int *)pVarData;
-
-	pOut->m_Int = ( data & mask );
-}
 // -------------------------------------------------------------------------------- //
 // SendTable for CPlayerState.
 // -------------------------------------------------------------------------------- //
@@ -8275,7 +8180,7 @@ void SendProxy_CropFlagsToPlayerFlagBitsLength( const SendProp *pProp, const voi
 		SendPropInt		(SENDINFO(m_iBonusProgress), 15 ),
 		SendPropInt		(SENDINFO(m_iBonusChallenge), 4 ),
 		SendPropFloat	(SENDINFO(m_flMaxspeed), 12, SPROP_ROUNDDOWN, 0.0f, 2048.0f ),  // CL
-		SendPropInt		(SENDINFO(m_fFlags), PLAYER_FLAG_BITS, SPROP_UNSIGNED|SPROP_CHANGES_OFTEN, SendProxy_CropFlagsToPlayerFlagBitsLength ),
+		SendPropInt		(SENDINFO(m_fFlags), 0, SPROP_UNSIGNED|SPROP_CHANGES_OFTEN ),
 		SendPropInt		(SENDINFO(m_iObserverMode), 3, SPROP_UNSIGNED ),
 		SendPropEHandle	(SENDINFO(m_hObserverTarget) ),
 		SendPropInt		(SENDINFO(m_iFOV), 8, SPROP_UNSIGNED ),
@@ -8775,16 +8680,6 @@ float CBasePlayer::GetFOVDistanceAdjustFactorForNetworking()
 void CBasePlayer::SetDefaultFOV( int FOV )
 {
 	m_iDefaultFOV = ( FOV == 0 ) ? g_pGameRules->DefaultFOV() : FOV;
-}
-
-void CBasePlayer::ScriptSetFOV( int iFOV, float flRate )
-{
-	m_iFOVStart = GetFOV();
-
-	m_flFOVTime = gpGlobals->curtime;
-	m_iFOV = iFOV;
-
-	m_Local.m_flFOVRate = flRate;
 }
 
 //-----------------------------------------------------------------------------

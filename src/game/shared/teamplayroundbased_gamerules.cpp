@@ -2348,8 +2348,6 @@ void CTeamplayRoundBasedRules::SetWinningTeam( int team, int iWinReason, bool bF
 	m_iWinningTeam = team;
 	m_iWinReason = iWinReason;
 
-	PlayWinSong( team );
-
 	// only reward the team if they have won the map and we're going to do a full reset or the time has run out and we're changing maps
 	bool bRewardTeam = bForceMapReset || ( IsGameUnderTimeLimit() && ( GetTimeLeft() <= 0 ) );
 
@@ -3675,14 +3673,7 @@ bool CTeamplayRoundBasedRules::AreTeamsUnbalanced( int &iHeaviestTeam, int &iLig
 
 	int i = FIRST_GAME_TEAM;
 
-#if defined( TF_VINTAGE ) || defined( TF_VINTAGE_CLIENT )
-	int iTeamCount = GetNumberOfTeams();
-	if (TFGameRules())
-		iTeamCount = TFGameRules()->IsFourTeamGame() ? 5 : 3;
-	for ( CTeam *pTeam = GetGlobalTeam(i); i <= iTeamCount; pTeam = GetGlobalTeam(++i) )
-#else
 	for ( CTeam *pTeam = GetGlobalTeam(i); pTeam != NULL; pTeam = GetGlobalTeam(++i) )
-#endif
 	{
 		int iNumPlayers = pTeam->GetNumPlayers();
 

@@ -22,6 +22,12 @@
 #include "tier1/utlstring.h"
 #include "tier1/utllinkedlist.h"
 
+const int64 k_nMillion = 1000000;
+const int64 k_nThousand = 1000;
+const int64 k_nKiloByte = 1024;
+const int64 k_nMegabyte = k_nKiloByte * k_nKiloByte;
+const int64 k_nGigabyte = k_nMegabyte * k_nKiloByte;
+
 class CPathString
 {
 public:

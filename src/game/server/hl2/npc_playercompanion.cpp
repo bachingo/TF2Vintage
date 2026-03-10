@@ -2138,7 +2138,7 @@ void CNPC_PlayerCompanion::AimGun()
 			}
 
 			// Aim at my target if it's in my cone
-			vecAimDir = vecAimTargetLoc - Weapon_ShootPosition();
+			vecAimDir = vecAimTargetLoc - Weapon_ShootPosition();;
 			VectorNormalize( vecAimDir );
 			SetAim( vecAimDir);
 

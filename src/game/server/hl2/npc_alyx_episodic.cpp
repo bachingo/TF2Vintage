@@ -3014,7 +3014,7 @@ void CNPC_Alyx::ModifyOrAppendCriteria( AI_CriteriaSet &set )
 bool CNPC_Alyx::IsReadinessCapable( void )
 {
 	// Let the convar decide
-	return npc_alyx_readiness.GetBool();
+	return npc_alyx_readiness.GetBool();;
 }
 
 //-----------------------------------------------------------------------------

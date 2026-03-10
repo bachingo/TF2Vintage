@@ -601,12 +601,11 @@ bool CProtoBufScriptObjectDefinitionManager::Init()
 
 void CProtoBufScriptObjectDefinitionManager::PostInit()
 {
-    // Only call BPostDefinitionsLoaded if definitions were actually loaded.
-    // BInitDefinitions may have legitimately returned early (no proto def file).
-    if ( m_bDefinitionsLoaded )
-    {
-        BPostDefinitionsLoaded();
-    }
+	// PostInit is called automatically on the client/server due to this
+	// deriving from AutoGameSystem.  The schema is also an AutoGameSystem and gets
+	// initialized in the Init() round. To make sure we go after the Schema,
+	// we need to init our defs on the PostInit() round.
+	BPostDefinitionsLoaded();
 }
 
 struct SpewOnDestruct
@@ -619,22 +618,13 @@ struct SpewOnDestruct
 			DevMsg( 0, "%s\n", m_vecErrors[ i ].Get() );
 		}
 		
-		// This assert crashes the game.
-		// Assert( m_vecErrors.Count() == 0 );
+		Assert( m_vecErrors.Count() == 0 );
 	}
 	const CUtlVector<CUtlString>& m_vecErrors;
 };
 
 bool CProtoBufScriptObjectDefinitionManager::BInitDefinitions()
 {
-
-	// TF2 Mods: Skip loading entirely to avoid validation.
-    if ( !g_pFullFileSystem->FileExists( g_pszProtoDefFile, "MOD" ) )
-    {
-        m_bDefinitionsLoaded = true;
-        return true;
-    }
-
 	m_bDefinitionsLoaded = false;
 	m_bDefinitionsPostDataLoadedCalled = false;
 
@@ -734,12 +724,11 @@ bool CProtoBufScriptObjectDefinitionManager::BInitDefinitions()
 
 bool CProtoBufScriptObjectDefinitionManager::BPostDefinitionsLoaded()
 {
-    if ( !m_bDefinitionsLoaded && !m_bSourceFilesLoaded )
-    {
-        // Don't recurse into BInitDefinitions - just warn and bail.
-        Warning( "[ProtoScriptDefs] BPostDefinitionsLoaded called before BInitDefinitions -- skipping.\n" );
-        return false;  // was: AssertMsg + SCHEMA_INIT_SUBSTEP which recursed
-    }
+	if ( !m_bDefinitionsLoaded && !m_bSourceFilesLoaded )
+	{
+		AssertMsg( false, "BPostDefinitionsLoaded called before BInitDefinitions!\n" );
+		SCHEMA_INIT_SUBSTEP( BInitDefinitions() );
+	}
 
 	CUtlVector<CUtlString> vecErrors;
 	CUtlVector<CUtlString>* pVecErrors = &vecErrors; // Silly, buy makes the SCHEMA_INIT_ macros work

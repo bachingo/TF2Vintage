@@ -20,7 +20,7 @@ using namespace vgui;
 
 #include "hudelement.h"
 #include "hud_numericdisplay.h"
-#include "convar.h"
+#include "ConVar.h"
 #include "c_tf_player.h"
 
 //=============================================================================
@@ -217,7 +217,7 @@ private:
 	float			m_flArmorIconHeight;
 };
 
-#if 0
+
 DECLARE_HUDELEMENT( CHudArmor );
 
 //-----------------------------------------------------------------------------
@@ -311,4 +311,3 @@ void CHudArmor::Paint()
 	// Base class paint.
 	BaseClass::Paint();
 }
-#endif

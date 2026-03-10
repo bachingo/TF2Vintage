@@ -53,7 +53,7 @@ ConVar	tf_max_charge_speed( "tf_max_charge_speed", "750", FCVAR_NOTIFY | FCVAR_R
 ConVar  tf_parachute_gravity( "tf_parachute_gravity", "0.2f", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Gravity while parachute is deployed" );
 ConVar  tf_parachute_maxspeed_xy( "tf_parachute_maxspeed_xy", "300.0f", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Max XY Speed while Parachute is deployed" );
 ConVar  tf_parachute_maxspeed_z( "tf_parachute_maxspeed_z", "-100.0f", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Max Z Speed while Parachute is deployed" );
-ConVar  tf_parachute_maxspeed_onfire_z( "tf_parachute_maxspeed_onfire_z", "10.0f", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Max Z Speed when on Fire and Parachute is deployed" );
+ConVar  tf_parachute_maxspeed_onfire_z( "tf_parachute_maxspeed_onfire_z", "-100.0f", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Max Z Speed when on Fire and Parachute is deployed" );
 ConVar  tf_parachute_aircontrol( "tf_parachute_aircontrol", "2.5f", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Multiplier for how much air control players have when Parachute is deployed" );
 ConVar	tf_parachute_deploy_toggle_allowed( "tf_parachute_deploy_toggle_allowed", "0", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 
@@ -77,25 +77,10 @@ ConVar tf_movement_lost_footing_restick( "tf_movement_lost_footing_restick", "50
 ConVar tf_movement_lost_footing_friction( "tf_movement_lost_footing_friction", "0.1", FCVAR_REPLICATED | FCVAR_CHEAT,
                                           "Ground friction for players who have lost their footing" );
 
-ConVar	tf2v_bunnyjump_max_speed_factor("tf2v_bunnyjump_max_speed_factor", "1.2", FCVAR_REPLICATED);
-ConVar  tf2v_autojump("tf2v_autojump", "0", FCVAR_REPLICATED, "Automatically jump while holding the jump button down");
-ConVar  tf2v_duckjump("tf2v_duckjump", "0", FCVAR_REPLICATED, "Toggles jumping while ducked");
-ConVar  tf2v_groundspeed_cap("tf2v_groundspeed_cap", "1", FCVAR_REPLICATED, "Toggles the max speed cap imposed when a player is standing on the ground");
-
-#ifdef GAME_DLL
-ConVar  tf2v_use_triple_jump_sound( "tf2v_use_triple_jump_sound", "1", FCVAR_SERVER_CAN_EXECUTE, "Play the post MYM banana slip multijump sound?" );
-#endif
-
-ConVar  tf2v_disable_updraft( "tf2v_disable_updraft", "1", FCVAR_REPLICATED, "Enables updraft effects when using a parachute on fire." );
-
 extern ConVar cl_forwardspeed;
 extern ConVar cl_backspeed;
 extern ConVar cl_sidespeed;
 extern ConVar mp_tournament_readymode_countdown;
-
-extern ConVar tf2v_use_new_atomizer;
-extern ConVar tf2v_use_new_sodapopper_hype;
-extern ConVar tf2v_use_new_sodapopper_fill;
 
 #define TF_MAX_SPEED   (400 * 1.3)	// 400 is Scout max speed, and we allow up to 3% movement bonus.
 
@@ -285,21 +270,13 @@ unsigned int CTFGameMovement::PlayerSolidMask( bool brushOnly )
 	{
 		switch( m_pTFPlayer->GetTeamNumber() )
 		{
-			case TF_TEAM_RED:
-				uMask = CONTENTS_BLUETEAM | CONTENTS_GREENTEAM | CONTENTS_YELLOWTEAM;
-				break;
+		case TF_TEAM_RED:
+			uMask = CONTENTS_BLUETEAM;
+			break;
 
-			case TF_TEAM_BLUE:
-				uMask = CONTENTS_REDTEAM | CONTENTS_GREENTEAM | CONTENTS_YELLOWTEAM;
-				break;
-
-			case TF_TEAM_GREEN:
-				uMask = CONTENTS_REDTEAM | CONTENTS_BLUETEAM | CONTENTS_YELLOWTEAM;
-				break;
-
-			case TF_TEAM_YELLOW:
-				uMask = CONTENTS_REDTEAM | CONTENTS_BLUETEAM | CONTENTS_GREENTEAM;
-				break;
+		case TF_TEAM_BLUE:
+			uMask = CONTENTS_REDTEAM;
+			break;
 		}
 	}
 
@@ -1090,32 +1067,18 @@ void CTFGameMovement::AirDash( void )
 	// Pitch shift a sound for all airdashes greater then 1
 	if ( iAirDash > 0 )
 	{
-		if ( !tf2v_use_new_atomizer.GetBool() )	// Old Atomizer logic: Take damage on jumping.
-		{
-			// Make sure we're not in any form of airjump buff.
-			if ( ( !m_pTFPlayer->m_Shared.InCond( TF_COND_SODAPOPPER_HYPE )   // Not in any soda popper hype...
-				   || ( m_pTFPlayer->m_Shared.InCond( TF_COND_SODAPOPPER_HYPE ) && !tf2v_use_new_sodapopper_hype.GetBool() ) ) // Or in old variant soda popper hype...
-				 && !m_pTFPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_SPEED_BOOST ) ) // And not in Halloween Speed Boost.
-			{
-				CTakeDamageInfo info( m_pTFPlayer, m_pTFPlayer, vec3_origin, m_pTFPlayer->WorldSpaceCenter(), 10.0f, DMG_BULLET );
-				m_pTFPlayer->TakeDamage( info );
-			}
-		}
-		if ( tf2v_use_triple_jump_sound.GetBool() )
-		{
-			EmitSound_t params;
-			params.m_pSoundName = "General.banana_slip";
-			params.m_flSoundTime = 0;
-			params.m_pflSoundDuration = 0;
-			//params.m_bWarnOnDirectWaveReference = true;
-			CPASFilter filter( m_pTFPlayer->GetAbsOrigin() );
-			params.m_flVolume = 0.1f;
-			params.m_SoundLevel = SNDLVL_25dB;
-			params.m_nPitch = RemapVal( iAirDash, 1.0f, 5.0f, 100.f, 120.f );
-			params.m_nFlags |= ( SND_CHANGE_PITCH | SND_CHANGE_VOL );
-			m_pTFPlayer->StopSound( "General.banana_slip" );
-			m_pTFPlayer->EmitSound( filter, m_pTFPlayer->entindex(), params );
-		}
+		EmitSound_t params;
+		params.m_pSoundName = "General.banana_slip";
+		params.m_flSoundTime = 0;
+		params.m_pflSoundDuration = 0;
+		//params.m_bWarnOnDirectWaveReference = true;
+		CPASFilter filter( m_pTFPlayer->GetAbsOrigin( ) );
+		params.m_flVolume = 0.1f;
+		params.m_SoundLevel = SNDLVL_25dB;
+		params.m_nPitch = RemapVal( iAirDash, 1.0f, 5.0f, 100.f, 120.f );
+		params.m_nFlags |= ( SND_CHANGE_PITCH | SND_CHANGE_VOL );
+		m_pTFPlayer->StopSound( "General.banana_slip" );
+		m_pTFPlayer->EmitSound( filter, m_pTFPlayer->entindex( ), params );
 	}
 #endif // GAME_DLL
 }
@@ -1153,12 +1116,6 @@ void CTFGameMovement::PreventBunnyJumping()
 //-----------------------------------------------------------------------------
 void CTFGameMovement::ToggleParachute()
 {
-	if ( ( m_pTFPlayer->GetFlags() & FL_ONGROUND ) )
-	{
-		m_pTFPlayer->m_Shared.RemoveCond( TF_COND_PARACHUTE_DEPLOYED );
-		return;
-	}
-
 	if ( mv->m_nOldButtons & IN_JUMP )
 		return;
 
@@ -1185,9 +1142,10 @@ void CTFGameMovement::ToggleParachute()
 		}
 		else
 		{
+			bool bOnGround = ( m_pTFPlayer->GetFlags() & FL_ONGROUND );
 			int iParachuteDisabled = 0;
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( m_pTFPlayer, iParachuteDisabled, parachute_disabled );
-			if ( !iParachuteDisabled && ( tf_parachute_deploy_toggle_allowed.GetBool() || !m_pTFPlayer->m_Shared.InCond( TF_COND_PARACHUTE_DEPLOYED ) ) )
+			if ( !bOnGround && !iParachuteDisabled && ( tf_parachute_deploy_toggle_allowed.GetBool() || !m_pTFPlayer->m_Shared.InCond( TF_COND_PARACHUTE_DEPLOYED ) ) )
 			{
 				m_pTFPlayer->m_Shared.AddCond( TF_COND_PARACHUTE_ACTIVE );
 				m_pTFPlayer->m_Shared.AddCond( TF_COND_PARACHUTE_DEPLOYED );
@@ -1419,7 +1377,7 @@ int CTFGameMovement::CheckStuck( void )
 						m_pTFPlayer->GetTeam()->GetName(),
 						m_pTFPlayer->GetAbsOrigin().x, m_pTFPlayer->GetAbsOrigin().y, m_pTFPlayer->GetAbsOrigin().z );
 
-					m_pTFPlayer->TakeDamage( CTakeDamageInfo( m_pTFPlayer, m_pTFPlayer, vec3_origin, m_pTFPlayer->WorldSpaceCenter(), 999999.9f, DMG_CRUSH ) );
+					m_pTFPlayer->CommitSuicide( false, true );
 				}
 				else
 				{
@@ -2667,8 +2625,8 @@ void CTFGameMovement::FullWalkMove()
 	{
 		if ( m_pTFPlayer->m_Shared.InCond( TF_COND_PARACHUTE_ACTIVE ) && mv->m_vecVelocity[2] < 0 )
 		{
-			mv->m_vecVelocity[2] = Max( mv->m_vecVelocity[2], tf_parachute_maxspeed_z.GetFloat() );
-			
+			mv->m_vecVelocity[2] = Max( mv->m_vecVelocity[2], m_pTFPlayer->m_Shared.InCond( TF_COND_BURNING ) ? tf_parachute_maxspeed_onfire_z.GetFloat() : tf_parachute_maxspeed_z.GetFloat() );
+
 			float flDrag = tf_parachute_maxspeed_xy.GetFloat();
 			// Instead of clamping, we'll dampen
 			float flSpeedX = abs( mv->m_vecVelocity[0] );
@@ -2994,9 +2952,9 @@ void CTFGameMovement::SetGroundEntity( trace_t *pm )
 		{
 			m_pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_DOUBLE_JUMP, "started_jumping:0" );
 		}
-		m_pTFPlayer->m_Shared.SetWeaponKnockbackID( -1 );
-		m_pTFPlayer->m_bScattergunJump = false;
 #endif // GAME_DLL
+		m_pTFPlayer->m_Shared.SetWeaponKnockbackID( -1 );
+		m_pTFPlayer->m_Shared.m_bScattergunJump = false;
 		m_pTFPlayer->m_Shared.SetAirDash( 0 );
 		m_pTFPlayer->m_Shared.SetAirDucked( 0 );
 

@@ -62,8 +62,6 @@ ConVar tf_weapon_criticals_bucket_bottom( "tf_weapon_criticals_bucket_bottom", "
 ConVar tf_weapon_criticals_bucket_default( "tf_weapon_criticals_bucket_default", "300.0", FCVAR_REPLICATED | FCVAR_CHEAT );
 #endif // TF
 
-ConVar tf2v_use_new_autofire( "tf2v_use_new_autofire", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows Autofire weapons to hold their shots when fully loaded." );
-
 CBaseCombatWeapon::CBaseCombatWeapon()
 {
 	// Constructor must call this
@@ -256,9 +254,8 @@ void CBaseCombatWeapon::Precache( void )
 	m_iPrimaryAmmoType = m_iSecondaryAmmoType = -1;
 
 	// Add this weapon to the weapon registry, and get our index into it
-	// Get weapon data from script file, allowing map-by-map scripts to be loaded
-	if ( ReadCustomWeaponDataFromFileForSlot( filesystem, GetWeaponScriptName(), &m_hWeaponFileInfo, GetEncryptionKey() ) ||
-		 ReadWeaponDataFromFileForSlot( filesystem, GetWeaponScriptName(), &m_hWeaponFileInfo, GetEncryptionKey() ) )
+	// Get weapon data from script file
+	if ( ReadWeaponDataFromFileForSlot( filesystem, GetClassname(), &m_hWeaponFileInfo, GetEncryptionKey() ) )
 	{
 		// Get the ammo indexes for the ammo's specified in the data file
 		if ( GetWpnData().szAmmo1[0] )
@@ -1494,7 +1491,6 @@ bool CBaseCombatWeapon::Holster( CBaseCombatWeapon *pSwitchingTo )
 	// cancel any reload in progress.
 	m_bInReload = false; 
 	m_bFiringWholeClip = false;
-	m_bIsOverLoaded = false;
 
 	// kill any think functions
 	SetThink(NULL);
@@ -1718,7 +1714,7 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 	{
 		if ( UsesSecondaryAmmo() && pOwner->GetAmmoCount(m_iSecondaryAmmoType) <= 0 )
 		{
-			if ( m_flNextEmptySoundTime < gpGlobals->curtime )
+			if (m_flNextEmptySoundTime < gpGlobals->curtime)
 			{
 				WeaponSound( EMPTY );
 				m_flNextSecondaryAttack = m_flNextEmptySoundTime = gpGlobals->curtime + 0.5;
@@ -1759,18 +1755,18 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 		}
 	}
 	
-	if ( !bFired && ( pOwner->m_nButtons & IN_ATTACK ) && ( m_flNextPrimaryAttack <= gpGlobals->curtime ) )
+	if ( !bFired && (pOwner->m_nButtons & IN_ATTACK) && (m_flNextPrimaryAttack <= gpGlobals->curtime))
 	{
 		// Clip empty? Or out of ammo on a no-clip weapon?
 		if ( !IsMeleeWeapon() &&  
-			( ( UsesClipsForAmmo1() && m_iClip1 <= 0) || ( !UsesClipsForAmmo1() && pOwner->GetAmmoCount( m_iPrimaryAmmoType )<=0 ) ) )
+			(( UsesClipsForAmmo1() && m_iClip1 <= 0) || ( !UsesClipsForAmmo1() && pOwner->GetAmmoCount(m_iPrimaryAmmoType)<=0 )) )
 		{
 			HandleFireOnEmpty();
 		}
-		else if ( pOwner->GetWaterLevel() == 3 && m_bFiresUnderwater == false )
+		else if (pOwner->GetWaterLevel() == 3 && m_bFiresUnderwater == false)
 		{
 			// This weapon doesn't fire underwater
-			WeaponSound( EMPTY );
+			WeaponSound(EMPTY);
 			m_flNextPrimaryAttack = gpGlobals->curtime + 0.2;
 			return;
 		}
@@ -1814,7 +1810,7 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 	// -----------------------
 	//  No buttons down
 	// -----------------------
-	if ( !( ( pOwner->m_nButtons & IN_ATTACK ) || ( pOwner->m_nButtons & IN_ATTACK2 ) || ( CanReload() && pOwner->m_nButtons & IN_RELOAD ) ) )
+	if (!((pOwner->m_nButtons & IN_ATTACK) || (pOwner->m_nButtons & IN_ATTACK2) || (CanReload() && pOwner->m_nButtons & IN_RELOAD)))
 	{
 		// no fire buttons down or reloading
 		if ( !ReloadOrSwitchWeapons() && ( m_bInReload == false ) )
@@ -1834,9 +1830,9 @@ void CBaseCombatWeapon::HandleFireOnEmpty()
 	}
 	else
 	{
-		if ( m_flNextEmptySoundTime < gpGlobals->curtime )
+		if (m_flNextEmptySoundTime < gpGlobals->curtime)
 		{
-			WeaponSound( EMPTY );
+			WeaponSound(EMPTY);
 			m_flNextEmptySoundTime = gpGlobals->curtime + 0.5;
 		}
 		m_bFireOnEmpty = true;
@@ -2163,8 +2159,8 @@ void CBaseCombatWeapon::CheckReload( void )
 				FinishReload();
 				return;
 			}
-			// If clip not full reload again, no overload.
-			else if ( !CanOverload() && ( m_iClip1 < GetMaxClip1() ) )
+			// If clip not full reload again
+			else if (m_iClip1 < GetMaxClip1())
 			{
 				// Add them to the clip
 				m_iClip1 += 1;
@@ -2172,33 +2168,6 @@ void CBaseCombatWeapon::CheckReload( void )
 
 				Reload();
 				return;
-			}
-			// If clip not full reload again, with overload.
-			else if ( CanOverload() && ( m_iClip1 <= GetMaxClip1() ) )
-			{
-				if (!m_bIsOverLoaded)
-				{
-					// Add them to the clip
-					m_iClip1 += 1;
-				}
-				else
-				{
-					Overload();
-				}
-				
-				pOwner->RemoveAmmo( 1, m_iPrimaryAmmoType );
-				
-				if ( m_iClip1 > GetMaxClip1() )
-				{
-					m_iClip1 -= 1;
-					m_bIsOverLoaded = true;
-					Overload();
-				}
-				
-				Reload();
-				return;
-				
-				
 			}
 			// Clip full, stop reloading
 			else
@@ -2212,7 +2181,7 @@ void CBaseCombatWeapon::CheckReload( void )
 	}
 	else
 	{
-		if ( (m_bInReload) && (m_flNextPrimaryAttack <= gpGlobals->curtime) )
+		if ( (m_bInReload) && (m_flNextPrimaryAttack <= gpGlobals->curtime))
 		{
 			FinishReload();
 			m_flNextPrimaryAttack	= gpGlobals->curtime;
@@ -2278,16 +2247,6 @@ void CBaseCombatWeapon::UpdateAutoFire( void )
 	{
 		// Ready to reload again
 		m_bFiringWholeClip = false;
-		m_bIsOverLoaded = false;
-	}
-	
-	// If we overload and have no ammo, or we run out of ammo/have max ammo and can't hold our shot in, start firing.
-	if ( ( CanOverload() && ( pOwner->GetAmmoCount(m_iPrimaryAmmoType) == 0) ) ||
-		( !CanOverload() && ( ( m_iClip1 == GetMaxClip1() ) || pOwner->GetAmmoCount(m_iPrimaryAmmoType) == 0 ) && !tf2v_use_new_autofire.GetBool() ) )
-	{
-		// At max ammo or out of ammo to reload, start firing immediately.
-		m_bFiringWholeClip = true;
-		return;
 	}
 
 	if ( m_bFiringWholeClip )
@@ -2321,35 +2280,6 @@ void CBaseCombatWeapon::UpdateAutoFire( void )
 		// Fake the attack key
 		pOwner->m_nButtons |= IN_ATTACK;
 	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Used for calculating if we fire a clip all at once.
-//-----------------------------------------------------------------------------
-bool CBaseCombatWeapon::AutoFiresFullClip(void) const
-{
-	int iUseAutoFireRules = 0;
-	CALL_ATTRIB_HOOK_INT(iUseAutoFireRules, auto_fires_full_clip);
-	return (iUseAutoFireRules != 0);
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Used for calculating if we fire a clip all at once.
-//-----------------------------------------------------------------------------
-bool CBaseCombatWeapon::CanOverload(void) const
-{
-	int iCanOverload = 0;
-	CALL_ATTRIB_HOOK_INT(iCanOverload, can_overload);
-	return (iCanOverload != 0);
-}
-
-//-----------------------------------------------------------------------------
-// Controls our base overload mechanics.
-//-----------------------------------------------------------------------------
-void CBaseCombatWeapon::Overload(void)
-{
-	// Intentionally left blank.
-	// We use this as a hook in tf_weaponbase.cpp
 }
 
 //-----------------------------------------------------------------------------
@@ -2634,41 +2564,6 @@ void CDmgAccumulator::Process( void )
 }
 #endif // GAME_DLL
 
-int CBaseCombatWeapon::ScriptGetMaxAmmo1()
-{
-	int iAmmo = GetMaxClip1();
-
-	if ( UsesClipsForAmmo1() )
-	{
-		iAmmo += GetAmmoDef()->MaxCarry( GetPrimaryAmmoType() );
-	}
-
-	return iAmmo;
-}
-
-int CBaseCombatWeapon::ScriptGetMaxAmmo2()
-{
-	int iAmmo = GetMaxClip2();
-
-	if ( UsesClipsForAmmo2() )
-	{
-		iAmmo += GetAmmoDef()->MaxCarry( GetSecondaryAmmoType() );
-	}
-
-	return iAmmo;
-}
-
-void CBaseCombatWeapon::ScriptSetOwner(HSCRIPT hScriptOwner)
-{
-	CBaseCombatCharacter *pOwner;
-	if ( !ToEnt( hScriptOwner ) )
-		pOwner = NULL;
-	else
-		pOwner = ToEnt( hScriptOwner )->MyCombatCharacterPointer();
-
-	SetOwner( pOwner );
-}
-
 #if defined( CLIENT_DLL )
 
 BEGIN_PREDICTION_DATA( CBaseCombatWeapon )
@@ -2696,7 +2591,6 @@ BEGIN_PREDICTION_DATA( CBaseCombatWeapon )
 	DEFINE_FIELD( m_bInReload, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_bFireOnEmpty, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_bFiringWholeClip, FIELD_BOOLEAN ),
-	DEFINE_FIELD( m_bIsOverLoaded, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_flNextEmptySoundTime, FIELD_FLOAT ),
 	DEFINE_FIELD( m_Activity, FIELD_INTEGER ),
 	DEFINE_FIELD( m_fFireDuration, FIELD_FLOAT ),
@@ -2809,7 +2703,6 @@ BEGIN_DATADESC( CBaseCombatWeapon )
 	DEFINE_OUTPUT( m_OnPlayerPickup, "OnPlayerPickup"),
 	DEFINE_OUTPUT( m_OnNPCPickup, "OnNPCPickup"),
 	DEFINE_OUTPUT( m_OnCacheInteraction, "OnCacheInteraction" ),
-	DEFINE_OUTPUT( m_OnDropped, "OnDropped" ),
 
 END_DATADESC()
 
@@ -2941,10 +2834,10 @@ END_NETWORK_TABLE()
 //-----------------------------------------------------------------------------
 BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalWeaponData )
 #if !defined( CLIENT_DLL )
-	SendPropIntWithMinusOneFlag( SENDINFO( m_iClip1 ), 8 ),
-	SendPropIntWithMinusOneFlag( SENDINFO( m_iClip2 ), 8 ),
-	SendPropInt( SENDINFO( m_iPrimaryAmmoType ), 8 ),
-	SendPropInt( SENDINFO( m_iSecondaryAmmoType ), 8 ),
+	SendPropIntWithMinusOneFlag( SENDINFO(m_iClip1 ), 8 ),
+	SendPropIntWithMinusOneFlag( SENDINFO(m_iClip2 ), 8 ),
+	SendPropInt( SENDINFO(m_iPrimaryAmmoType ), 8 ),
+	SendPropInt( SENDINFO(m_iSecondaryAmmoType ), 8 ),
 
 	SendPropInt( SENDINFO( m_nViewModelIndex ), VIEWMODEL_INDEX_BITS, SPROP_UNSIGNED ),
 	SendPropModelIndex( SENDINFO( m_nCustomViewmodelModelIndex ) ),
@@ -2952,14 +2845,14 @@ BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalWeaponData )
 	SendPropInt( SENDINFO( m_bFlipViewModel ) ),
 
 #if defined( TF_DLL )
-	SendPropExclude( "DT_AnimTimeMustBeFirst", "m_flAnimTime" ),
+	SendPropExclude( "DT_AnimTimeMustBeFirst" , "m_flAnimTime" ),
 #endif
 
 #else
-	RecvPropIntWithMinusOneFlag( RECVINFO( m_iClip1 ) ),
-	RecvPropIntWithMinusOneFlag( RECVINFO( m_iClip2 ) ),
-	RecvPropInt( RECVINFO( m_iPrimaryAmmoType ) ),
-	RecvPropInt( RECVINFO( m_iSecondaryAmmoType ) ),
+	RecvPropIntWithMinusOneFlag( RECVINFO(m_iClip1 )),
+	RecvPropIntWithMinusOneFlag( RECVINFO(m_iClip2 )),
+	RecvPropInt( RECVINFO(m_iPrimaryAmmoType )),
+	RecvPropInt( RECVINFO(m_iSecondaryAmmoType )),
 
 	RecvPropInt( RECVINFO( m_nViewModelIndex ) ),
 	RecvPropInt( RECVINFO( m_nCustomViewmodelModelIndex ) ),
@@ -2986,85 +2879,3 @@ BEGIN_NETWORK_TABLE(CBaseCombatWeapon, DT_BaseCombatWeapon)
 	RecvPropEHandle( RECVINFO(m_hOwner ), RecvProxy_WeaponOwner ),
 #endif
 END_NETWORK_TABLE()
-
-BEGIN_ENT_SCRIPTDESC( CBaseCombatWeapon, CBaseAnimating, "The base class for all equippable weapons." )
-
-	DEFINE_SCRIPTFUNC( Clip1, "Get the weapon's current primary ammo." )
-	DEFINE_SCRIPTFUNC( Clip2, "Get the weapon's current secondary ammo." )
-#ifndef CLIENT_DLL
-	DEFINE_SCRIPTFUNC_NAMED( ScriptSetClip1, "SetClip1", "Set the weapon's current primary ammo." )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptSetClip2, "SetClip2", "Set the weapon's current secondary ammo." )
-#endif
-	DEFINE_SCRIPTFUNC( GetMaxClip1, "Get the weapon's maximum primary ammo." )
-	DEFINE_SCRIPTFUNC( GetMaxClip2, "Get the weapon's maximum secondary ammo." )
-	DEFINE_SCRIPTFUNC( GetDefaultClip1, "Get the weapon's default primary ammo." )
-	DEFINE_SCRIPTFUNC( GetDefaultClip2, "Get the weapon's default secondary ammo." )
-
-	DEFINE_SCRIPTFUNC( HasAnyAmmo, "Check if the weapon currently has ammo or doesn't need ammo." )
-	DEFINE_SCRIPTFUNC( HasPrimaryAmmo, "Check if the weapon currently has ammo or doesn't need primary ammo." )
-	DEFINE_SCRIPTFUNC( HasSecondaryAmmo, "Check if the weapon currently has ammo or doesn't need secondary ammo." )
-	DEFINE_SCRIPTFUNC( UsesPrimaryAmmo, "Check if the weapon uses primary ammo." )
-	DEFINE_SCRIPTFUNC( UsesSecondaryAmmo, "Check if the weapon uses secondary ammo." )
-	DEFINE_SCRIPTFUNC( GiveDefaultAmmo, "Fill the weapon back up to default ammo." )
-
-	DEFINE_SCRIPTFUNC( UsesClipsForAmmo1, "Check if the weapon uses clips for primary ammo." )
-	DEFINE_SCRIPTFUNC( UsesClipsForAmmo2, "Check if the weapon uses clips for secondary ammo." )
-
-#ifndef CLIENT_DLL
-	DEFINE_SCRIPTFUNC( GetPrimaryAmmoType, "Get the weapon's primary ammo type." )
-	DEFINE_SCRIPTFUNC( GetSecondaryAmmoType, "Get the weapon's secondary ammo type." )
-#endif
-
-	DEFINE_SCRIPTFUNC( GetSubType, "Get the weapon's subtype." )
-	DEFINE_SCRIPTFUNC( SetSubType, "Set the weapon's subtype." )
-
-	DEFINE_SCRIPTFUNC( GetFireRate, "Get the weapon's firing rate." )
-	DEFINE_SCRIPTFUNC( AddViewKick, "Applies the weapon's view kick." )
-
-	DEFINE_SCRIPTFUNC( GetWorldModel, "Get the weapon's world model." )
-	DEFINE_SCRIPTFUNC( GetViewModel, "Get the weapon's view model." )
-
-	DEFINE_SCRIPTFUNC( GetWeight, "Get the weapon's weight." )
-
-	DEFINE_SCRIPTFUNC( CanBePickedUpByNPCs, "Check if the weapon can be picked up by NPCs." )
-
-#ifndef CLIENT_DLL
-	DEFINE_SCRIPTFUNC( CapabilitiesGet, "Get the capabilities the weapon currently possesses." )
-#endif
-
-	DEFINE_SCRIPTFUNC( HasWeaponIdleTimeElapsed, "Returns true if the idle time has elapsed." )
-	DEFINE_SCRIPTFUNC( GetWeaponIdleTime, "Returns the next time WeaponIdle() will run." )
-	DEFINE_SCRIPTFUNC( SetWeaponIdleTime, "Sets the next time WeaponIdle() will run." )
-
-	DEFINE_SCRIPTFUNC_NAMED( ScriptWeaponSound, "WeaponSound", "Plays one of the weapon's sounds." )
-
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetBulletSpread, "GetBulletSpread", "Returns the weapon's default bullet spread." )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetBulletSpreadForProficiency, "GetBulletSpreadForProficiency", "Returns the weapon's bullet spread for the specified proficiency level." )
-
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetPrimaryAttackActivity, "GetPrimaryAttackActivity", "Returns the weapon's primary attack activity." )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetSecondaryAttackActivity, "GetSecondaryAttackActivity", "Returns the weapon's secondary attack activity." )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetDrawActivity, "GetDrawActivity", "Returns the weapon's draw activity." )
-	DEFINE_SCRIPTFUNC( GetDefaultAnimSpeed, "Returns the weapon's default animation speed." )
-	DEFINE_SCRIPTFUNC( SendWeaponAnim, "Sends a weapon animation." )
-	DEFINE_SCRIPTFUNC( GetViewModelSequenceDuration, "Gets the sequence duration of the current view model animation." )
-	DEFINE_SCRIPTFUNC( IsViewModelSequenceFinished, "Returns true if the current view model animation is finished." )
-
-	DEFINE_SCRIPTFUNC( FiresUnderwater, "Returns true if this weapon can fire underwater." )
-	DEFINE_SCRIPTFUNC( SetFiresUnderwater, "Sets whether this weapon can fire underwater." )
-	DEFINE_SCRIPTFUNC( AltFiresUnderwater, "Returns true if this weapon can alt-fire underwater." )
-	DEFINE_SCRIPTFUNC( SetAltFiresUnderwater, "Sets whether this weapon can alt-fire underwater." )
-	DEFINE_SCRIPTFUNC( MinRange1, "Returns the closest this weapon can be used." )
-	DEFINE_SCRIPTFUNC( SetMinRange1, "Sets the closest this weapon can be used." )
-	DEFINE_SCRIPTFUNC( MinRange2, "Returns the closest this weapon can be used." )
-	DEFINE_SCRIPTFUNC( SetMinRange2, "Sets the closest this weapon can be used." )
-	DEFINE_SCRIPTFUNC( ReloadsSingly, "Returns true if this weapon reloads 1 round at a time." )
-	DEFINE_SCRIPTFUNC( SetReloadsSingly, "Sets whether this weapon reloads 1 round at a time." )
-	DEFINE_SCRIPTFUNC( FireDuration, "Returns the amount of time that the weapon has sustained firing." )
-	DEFINE_SCRIPTFUNC( SetFireDuration, "Sets the amount of time that the weapon has sustained firing." )
-
-	DEFINE_SCRIPTFUNC( NextPrimaryAttack, "Returns the next time PrimaryAttack() will run when the player is pressing +ATTACK." )
-	DEFINE_SCRIPTFUNC( SetNextPrimaryAttack, "Sets the next time PrimaryAttack() will run when the player is pressing +ATTACK." )
-	DEFINE_SCRIPTFUNC( NextSecondaryAttack, "Returns the next time SecondaryAttack() will run when the player is pressing +ATTACK2." )
-	DEFINE_SCRIPTFUNC( SetNextSecondaryAttack, "Sets the next time SecondaryAttack() will run when the player is pressing +ATTACK2." )
-
-END_SCRIPTDESC()

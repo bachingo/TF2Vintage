@@ -290,7 +290,7 @@ void CTFWeaponBaseGrenade::ItemPostFrame()
 		// tell our player that we're all done with the grenade throw.
 		if ( IsEffectActive(EF_NODRAW) )
 		{
-			//pPlayer->FinishThrowGrenade();
+			pPlayer->FinishThrowGrenade();
 			return;
 		}
 
@@ -331,7 +331,7 @@ bool CTFWeaponBaseGrenade::ShouldDraw( void )
 			return false;
 
 		// Don't draw primed grenades for local player in first person players
-		if ( !(ToTFPlayer(GetOwner())->ShouldDrawThisPlayer()) )
+		if ( !(ToPlayer(GetOwner())->ShouldDrawThisPlayer()) )
 			return false;
 	}
 

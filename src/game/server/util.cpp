@@ -475,6 +475,11 @@ void UTIL_Remove( IServerNetworkable *oldObj )
 	CBaseEntity *pBaseEnt = oldObj->GetBaseEntity();
 	if ( pBaseEnt )
 	{
+#if 0
+		if ( g_pScriptVM )
+			g_VScriptGameEventListener.RunGameEventCallbacks( "OnEntityRemove", ToHScript( pBaseEnt ) );
+#endif
+
 #ifdef PORTAL //make sure entities are in the primary physics environment for the portal mod, this code should be safe even if the entity is in neither extra environment
 		CPortalSimulator::Pre_UTIL_Remove( pBaseEnt );
 #endif
@@ -1825,6 +1830,11 @@ int DispatchSpawn( CBaseEntity *pEntity, bool bRunVScripts )
 	{
 		MDLCACHE_CRITICAL_SECTION();
 
+#if 0
+		if ( g_pScriptVM )
+			g_VScriptGameEventListener.RunGameEventCallbacks( "OnEntityPreSpawn", ToHScript( pEntity ) );
+#endif
+
 		// keep a smart pointer that will now if the object gets deleted
 		EHANDLE pEntSafe;
 		pEntSafe = pEntity;
@@ -1911,6 +1921,11 @@ int DispatchSpawn( CBaseEntity *pEntity, bool bRunVScripts )
 		{
 			pEntity->RunOnPostSpawnScripts();
 		}
+
+#if 0
+		if ( g_pScriptVM )
+			g_VScriptGameEventListener.RunGameEventCallbacks( "OnEntityPostSpawn", ToHScript( pEntity ) );
+#endif
 	}
 
 	return 0;

@@ -1,1 +1,0 @@
-dir pp_*.fxc /b > pp_shaders.txt

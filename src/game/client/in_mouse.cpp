@@ -133,10 +133,6 @@ ConVar cl_mouselook( "cl_mouselook", "1", FCVAR_ARCHIVE, "Set to 1 to use mouse 
 ConVar cl_mouselook( "cl_mouselook", "1", FCVAR_ARCHIVE | FCVAR_NOT_CONNECTED, "Set to 1 to use mouse for look, 0 for keyboard look. Cannot be set while connected to a server." );
 #endif
 
-#if defined ( TF_VINTAGE_CLIENT )
-extern ConVar tf2v_flips;
-#endif
-
 ConVar cl_mouseenable( "cl_mouseenable", "1" );
 
 // From other modules...
@@ -576,20 +572,6 @@ void CInput::ApplyMouse( QAngle& viewangles, CUserCmd *cmd, float mouse_x, float
 				viewangles[PITCH] += CAM_CapPitch( m_pitch->GetFloat() * mouse_y );
 			}
 
-#if defined ( TF_VINTAGE_CLIENT )
-			if ( !tf2v_flips.GetBool() )
-			{
-				// Check pitch bounds
-				if (viewangles[PITCH] > cl_pitchdown.GetFloat())
-				{
-					viewangles[PITCH] = cl_pitchdown.GetFloat();
-				}
-				if (viewangles[PITCH] < -cl_pitchup.GetFloat())
-				{
-					viewangles[PITCH] = -cl_pitchup.GetFloat();
-				}
-			}
-#else
 			// Check pitch bounds
 			if (viewangles[PITCH] > cl_pitchdown.GetFloat())
 			{
@@ -598,9 +580,7 @@ void CInput::ApplyMouse( QAngle& viewangles, CUserCmd *cmd, float mouse_x, float
 			if (viewangles[PITCH] < -cl_pitchup.GetFloat())
 			{
 				viewangles[PITCH] = -cl_pitchup.GetFloat();
-			}	
-#endif
-
+			}
 		}
 	}
 	else

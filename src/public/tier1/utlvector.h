@@ -249,16 +249,6 @@ class CUtlBlockVector : public CUtlVector< T, CUtlBlockMemory< T, int > >
 public:
 	explicit CUtlBlockVector( int growSize = 0, int initSize = 0 )
 		: CUtlVector< T, CUtlBlockMemory< T, int > >( growSize, initSize ) {}
-
-private:
-	// Private and unimplemented because iterator semantics are not currently supported
-	// on CUtlBlockVector, due to its non-contiguous allocations.
-	// typename is require to disambiguate iterator as a type versus other possibilities.
-	typedef CUtlVector< T, CUtlBlockMemory< T, int > > Base;
-	typename Base::iterator begin();
-	typename Base::const_iterator begin() const;
-	typename Base::iterator end();
-	typename Base::const_iterator end() const;
 };
 
 //-----------------------------------------------------------------------------

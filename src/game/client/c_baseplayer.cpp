@@ -91,7 +91,7 @@ extern ConVar sensitivity;
 
 static C_BasePlayer *s_pLocalPlayer = NULL;
 
-static ConVar	cl_customsounds ( "cl_customsounds", "1", 0, "Enable customized player sound playback" );
+static ConVar	cl_customsounds ( "cl_customsounds", "0", 0, "Enable customized player sound playback" );
 static ConVar	spec_track		( "spec_track", "0", 0, "Tracks an entity in spec mode" );
 static ConVar	cl_smooth		( "cl_smooth", "1", 0, "Smooth view/eye origin after prediction errors" );
 static ConVar	cl_smoothtime	( 
@@ -115,9 +115,7 @@ ConVar	spec_freeze_distance_min( "spec_freeze_distance_min", "96", FCVAR_CHEAT, 
 ConVar	spec_freeze_distance_max( "spec_freeze_distance_max", "200", FCVAR_CHEAT, "Maximum random distance from the target to stop when framing them in observer freeze cam." );
 #endif
 
-static ConVar	cl_first_person_uses_world_model ( "cl_first_person_uses_world_model", "0", FCVAR_ARCHIVE, "Causes the third person model to be drawn instead of the view model" );
-static ConVar	tf2v_use_fp_legs("tf2v_use_fp_legs", "0", FCVAR_ARCHIVE | FCVAR_DEVELOPMENTONLY | FCVAR_CHEAT, "EXPERIMENTAL: Displays the player's legs when in firstperson mode.");
-
+static ConVar	cl_first_person_uses_world_model ( "cl_first_person_uses_world_model", "0", FCVAR_NONE, "Causes the third person model to be drawn instead of the view model" );
 
 ConVar demo_fov_override( "demo_fov_override", "0", FCVAR_CLIENTDLL | FCVAR_DONTRECORD, "If nonzero, this value will be used to override FOV during demo playback." );
 
@@ -420,6 +418,9 @@ LINK_ENTITY_TO_CLASS( player, C_BasePlayer );
 C_BasePlayer::C_BasePlayer() : m_iv_vecViewOffset( "C_BasePlayer::m_iv_vecViewOffset" )
 {
 	AddVar( &m_vecViewOffset, &m_iv_vecViewOffset, LATCH_SIMULATION_VAR );
+
+	AddVar( &m_Local.m_vecPunchAngle, &m_Local.m_iv_vecPunchAngle, LATCH_SIMULATION_VAR );
+	AddVar( &m_Local.m_vecPunchAngleVel, &m_Local.m_iv_vecPunchAngleVel, LATCH_SIMULATION_VAR );
 	
 #ifdef _DEBUG																
 	m_vecLadderNormal.Init();
@@ -466,11 +467,6 @@ C_BasePlayer::~C_BasePlayer()
 	if ( this == s_pLocalPlayer )
 	{
 		s_pLocalPlayer = NULL;
-
-		if ( g_pScriptVM )
-		{
-			g_pScriptVM->SetValue( "player", SCRIPT_VARIANT_NULL );
-		}
 	}
 
 	delete m_pFlashlight;
@@ -841,11 +837,6 @@ void C_BasePlayer::PostDataUpdate( DataUpdateType_t updateType )
 			// changed level, which would cause the snd_soundmixer to be left modified.
 			ConVar *pVar = (ConVar *)cvar->FindVar( "snd_soundmixer" );
 			pVar->Revert();
-
-			if ( g_pScriptVM )
-			{
-				g_pScriptVM->SetValue( "player", GetScriptInstance() );
-			}
 		}
 	}
 
@@ -1008,14 +999,6 @@ void C_BasePlayer::OnRestore()
 		input->ClearInputButton( IN_ATTACK | IN_ATTACK2 );
 		// GetButtonBits() has to be called for the above to take effect
 		input->GetButtonBits( 0 );
-
-		// HACK: (03/25/09) Then the player goes across a transition it doesn't spawn and register
-		// it's instance. We're hacking around this for now, but this will go away when we get around to 
-		// having entities cross transitions and keep their script state.
-		if ( g_pScriptVM )
-		{
-			g_pScriptVM->SetValue( "player", GetScriptInstance() );
-		}
 	}
 
 	// For ammo history icons to current value so they don't flash on level transtions
@@ -2012,7 +1995,7 @@ bool C_BasePlayer::ShouldDrawThisPlayer()
 	{
 		return true;
 	}
-	if ( !UseVR() && ( cl_first_person_uses_world_model.GetBool() || tf2v_use_fp_legs.GetBool() ) )
+	if ( !UseVR() && cl_first_person_uses_world_model.GetBool() )
 	{
 		return true;
 	}
@@ -2026,19 +2009,6 @@ bool C_BasePlayer::ShouldDrawThisPlayer()
 	}
 	return false;
 }
-
-//-----------------------------------------------------------------------------
-// Purpose: Accessor used for determing showing our FP legs.
-//          This should display when the player is in firstperson and not showing another model already.
-//-----------------------------------------------------------------------------
-bool C_BasePlayer::ShouldDrawFirstPersonLegs()
-{
-	if (tf2v_use_fp_legs.GetBool())
-		return ( ShouldDrawThisPlayer() && InFirstPersonView() && DrawingMainView() );
-	
-	return false;
-}
-
 
 
 
@@ -3056,38 +3026,6 @@ void C_BasePlayer::BuildFirstPersonMeathookTransformations( CStudioHdr *hdr, Vec
 	{
 		matrix3x4_t  &transformhelmet = GetBoneForWrite( iHelm );
 		MatrixScaleByZero( transformhelmet );
-	}
-	
-	bool bLegOnlyTransform = ShouldDrawFirstPersonLegs();
-	// Leg only transformations also need additional steps.
-	if ( bLegOnlyTransform && GetModelPtr() )
-	{
-		// Hide every bone that isn't the pelvis, hip, knee, foot, or toe.
-		
-		// This is suffering.
-		int iPelvis = LookupBone( "bip_pelvis" );
-		int iHipL = LookupBone( "bip_hip_L" );
-		int iHipR = LookupBone( "bip_hip_R" );
-		int iKneeL = LookupBone( "bip_knee_L" );
-		int iKneeR = LookupBone( "bip_knee_R" );
-		int iFootL = LookupBone( "bip_foot_L" );
-		int iFootR = LookupBone( "bip_foot_R" );
-		int iToeL = LookupBone( "bip_toe_L" );
-		int iToeR = LookupBone( "bip_toe_R" );
-		
-		// Now we have to go through and check to see if this isn't a leg related bone.
-		// Check all the bones in this model.
-		for (int i = 0; i < GetModelPtr()->numbones()-1; i++)
-		{
-			// If it's a leg bone, skip over it.
-			if (i == iPelvis || i == iHipL || i == iHipR || i == iKneeL || i == iKneeR ||
-				i == iFootL || i == iFootR || i == iToeL || i == iToeR)
-				continue;
-
-			// If we know this definitely is not a leg related item, shrink it.
-			matrix3x4_t  &transformnonleg = GetBoneForWrite(i);
-			MatrixScaleByZero(transformnonleg);
-		}
 	}
 }
 

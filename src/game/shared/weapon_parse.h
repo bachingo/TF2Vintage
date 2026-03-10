@@ -77,8 +77,6 @@ public:
 public:	
 	bool					bParsedScript;
 	bool					bLoadedHudElements;
-	// Indicates the currently loaded data is from a map-specific script and should be flushed.
-	bool					bCustom;
 
 // SHARED
 	char					szClassName[MAX_WEAPON_STRING];
@@ -136,9 +134,7 @@ public:
 
 // The weapon parse function
 bool ReadWeaponDataFromFileForSlot( IFileSystem* filesystem, const char *szWeaponName, 
-									WEAPON_FILE_INFO_HANDLE *phandle, const unsigned char *pICEKey = NULL );
-bool ReadCustomWeaponDataFromFileForSlot( IFileSystem* filesystem, const char *szWeaponName, 
-										  WEAPON_FILE_INFO_HANDLE *phandle, const unsigned char *pICEKey = NULL );
+	WEAPON_FILE_INFO_HANDLE *phandle, const unsigned char *pICEKey = NULL );
 
 // If weapon info has been loaded for the specified class name, this returns it.
 WEAPON_FILE_INFO_HANDLE LookupWeaponInfoSlot( const char *name );

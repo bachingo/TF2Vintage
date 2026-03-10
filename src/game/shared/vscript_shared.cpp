@@ -1,4 +1,4 @@
-//========== Copyright ï¿½ 2008, Valve Corporation, All rights reserved. ========
+//========== Copyright © 2008, Valve Corporation, All rights reserved. ========
 //
 // Purpose:
 //
@@ -14,306 +14,49 @@
 #include "isaverestore.h"
 #include "gamerules.h"
 
-IScriptVM *g_pScriptVM;
+#if defined(CLIENT_DLL) && defined(PANORAMA_ENABLE)
+#include "panorama/uijsregistration.h"
+#endif
+
+IScriptVM * g_pScriptVM;
 extern ScriptClassDesc_t * GetScriptDesc( CBaseEntity * );
 
+DEFINE_LOGGING_CHANNEL_NO_TAGS( LOG_VScript, "VScript", 0, LS_MESSAGE, Color( 245, 175, 238, 255 ) );
 
-// ----------------------------------------------------------------------------
-class CScriptColorInstanceHelper : public IScriptInstanceHelper
+// #define VMPROFILE 1
+
+#ifdef VMPROFILE
+
+#define VMPROF_START double debugStartTime = Plat_FloatTime();
+#define VMPROF_SHOW( funcname, funcdesc  ) DevMsg("***VSCRIPT PROFILE***: %s %s: %6.4f milliseconds\n", (##funcname), (##funcdesc), (Plat_FloatTime() - debugStartTime)*1000.0 );
+
+#else // !VMPROFILE
+
+#define VMPROF_START
+#define VMPROF_SHOW
+
+#endif // VMPROFILE
+
+#ifdef CLIENT_DLL
+/*class CPanoramaVScript
 {
-	bool ToString( void *p, char *pBuf, int bufSize )
+public:
+	void RegisterVariable( const char *pszName, const char *pszInitialValue, const char *pszDesc )
 	{
-		Color *pClr = ( (Color *)p );
-		V_snprintf( pBuf, bufSize, "(color: (%i, %i, %i, %i))", pClr->r(), pClr->g(), pClr->b(), pClr->a() );
-		return true;
+		KeyValues* pKey = m_KeyValues.CreateKey( pszName );
+		pKey->SetStringValue(pszInitialValue);
+
+		panorama::RegisterJSAccessorReadOnly(pszName, PANORAMA_DELEGATE(delegate), pszDesc);
 	}
-} g_ColorScriptInstanceHelper;
-DEFINE_SCRIPT_INSTANCE_HELPER( Color, &g_ColorScriptInstanceHelper )
 
-BEGIN_SCRIPTDESC_ROOT( Color, "" )
-	DEFINE_SCRIPT_CONSTRUCTOR()
-
-	DEFINE_SCRIPTFUNC( SetColor, "Sets the color." )
-
-	DEFINE_SCRIPTFUNC( SetRawColor, "Sets the raw color integer." )
-	DEFINE_SCRIPTFUNC( GetRawColor, "Gets the raw color integer." )
-
-	DEFINE_MEMBERVAR_NAMED( _color[0], FIELD_CHARACTER, "r", "Member variable for red.")
-	DEFINE_MEMBERVAR_NAMED( _color[1], FIELD_CHARACTER, "g", "Member variable for green.")
-	DEFINE_MEMBERVAR_NAMED( _color[2], FIELD_CHARACTER, "b", "Member variable for blue.")
-	DEFINE_MEMBERVAR_NAMED( _color[3], FIELD_CHARACTER, "a", "Member variable for alpha. (transparency)")
-END_SCRIPTDESC();
-
-
-// ----------------------------------------------------------------------------
-// KeyValues access - CBaseEntity::ScriptGetKeyFromModel returns root KeyValues
-// ----------------------------------------------------------------------------
-BEGIN_SCRIPTDESC_ROOT( CScriptKeyValues, "Wrapper class over KeyValues instance" )
-	DEFINE_SCRIPT_CONSTRUCTOR()	
-	DEFINE_SCRIPTFUNC_NAMED( ScriptFindKey, "FindKey", "Given a KeyValues object and a key name, find a KeyValues object associated with the key name" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetFirstSubKey, "GetFirstSubKey", "Given a KeyValues object, return the first sub key object" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetNextKey, "GetNextKey", "Given a KeyValues object, return the next key object in a sub key group" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetKeyValueInt, "GetKeyInt", "Given a KeyValues object and a key name, return associated integer value" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetKeyValueFloat, "GetKeyFloat", "Given a KeyValues object and a key name, return associated float value" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetKeyValueBool, "GetKeyBool", "Given a KeyValues object and a key name, return associated bool value" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetKeyValueString, "GetKeyString", "Given a KeyValues object and a key name, return associated string value" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptIsKeyValueEmpty, "IsKeyEmpty", "Given a KeyValues object and a key name, return true if key name has no value" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptReleaseKeyValues, "ReleaseKeyValues", "Given a root KeyValues object, release its contents" )
-
-	DEFINE_SCRIPTFUNC( TableToSubKeys, "Converts a script table to KeyValues." )
-	DEFINE_SCRIPTFUNC( SubKeysToTable, "Converts to script table." )
-
-	DEFINE_SCRIPTFUNC_NAMED( ScriptFindOrCreateKey, "FindOrCreateKey", "Given a KeyValues object and a key name, find or create a KeyValues object associated with the key name" )
-
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetName, "GetName", "Given a KeyValues object, return its name" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetInt, "GetInt", "Given a KeyValues object, return its own associated integer value" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetFloat, "GetFloat", "Given a KeyValues object, return its own associated float value" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetString, "GetString", "Given a KeyValues object, return its own associated string value" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetBool, "GetBool", "Given a KeyValues object, return its own associated bool value" )
-
-	DEFINE_SCRIPTFUNC_NAMED( ScriptSetKeyValueInt, "SetKeyInt", "Given a KeyValues object and a key name, set associated integer value" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptSetKeyValueFloat, "SetKeyFloat", "Given a KeyValues object and a key name, set associated float value" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptSetKeyValueBool, "SetKeyBool", "Given a KeyValues object and a key name, set associated bool value" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptSetKeyValueString, "SetKeyString", "Given a KeyValues object and a key name, set associated string value" )
-
-	DEFINE_SCRIPTFUNC_NAMED( ScriptSetName, "SetName", "Given a KeyValues object, set its name" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptSetInt, "SetInt", "Given a KeyValues object, set its own associated integer value" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptSetFloat, "SetFloat", "Given a KeyValues object, set its own associated float value" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptSetBool, "SetBool", "Given a KeyValues object, set its own associated bool value" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptSetString, "SetString", "Given a KeyValues object, set its own associated string value" )
-END_SCRIPTDESC();
-
-HSCRIPT CScriptKeyValues::ScriptFindKey( const char *pszName )
-{
-	KeyValues *pKeyValues = m_pKeyValues->FindKey(pszName);
-	if ( pKeyValues == NULL )
-		return NULL;
-
-	CScriptKeyValues *pScriptKey = new CScriptKeyValues( pKeyValues );
-
-	// UNDONE: who calls ReleaseInstance on this??
-	HSCRIPT hScriptInstance = g_pScriptVM->RegisterInstance( pScriptKey );
-	return hScriptInstance;
-}
-
-HSCRIPT CScriptKeyValues::ScriptGetFirstSubKey( void )
-{
-	KeyValues *pKeyValues = m_pKeyValues->GetFirstSubKey();
-	if ( pKeyValues == NULL )
-		return NULL;
-
-	CScriptKeyValues *pScriptKey = new CScriptKeyValues( pKeyValues );
-
-	// UNDONE: who calls ReleaseInstance on this??
-	HSCRIPT hScriptInstance = g_pScriptVM->RegisterInstance( pScriptKey );
-	return hScriptInstance;
-}
-
-HSCRIPT CScriptKeyValues::ScriptGetNextKey( void )
-{
-	KeyValues *pKeyValues = m_pKeyValues->GetNextKey();
-	if ( pKeyValues == NULL )
-		return NULL;
-
-	CScriptKeyValues *pScriptKey = new CScriptKeyValues( pKeyValues );
-
-	// UNDONE: who calls ReleaseInstance on this??
-	HSCRIPT hScriptInstance = g_pScriptVM->RegisterInstance( pScriptKey );
-	return hScriptInstance;
-}
-
-int CScriptKeyValues::ScriptGetKeyValueInt( const char *pszName )
-{
-	int i = m_pKeyValues->GetInt( pszName );
-	return i;
-}
-
-float CScriptKeyValues::ScriptGetKeyValueFloat( const char *pszName )
-{
-	float f = m_pKeyValues->GetFloat( pszName );
-	return f;
-}
-
-const char *CScriptKeyValues::ScriptGetKeyValueString( const char *pszName )
-{
-	const char *psz = m_pKeyValues->GetString( pszName );
-	return psz;
-}
-
-bool CScriptKeyValues::ScriptIsKeyValueEmpty( const char *pszName )
-{
-	bool b = m_pKeyValues->IsEmpty( pszName );
-	return b;
-}
-
-bool CScriptKeyValues::ScriptGetKeyValueBool( const char *pszName )
-{
-	bool b = m_pKeyValues->GetBool( pszName );
-	return b;
-}
-
-void CScriptKeyValues::ScriptReleaseKeyValues( )
-{
-	m_pKeyValues->deleteThis();
-	m_pKeyValues = NULL;
-}
-
-void CScriptKeyValues::TableToSubKeys( HSCRIPT hTable )
-{
-	int nIterator = -1;
-	ScriptVariant_t varKey, varValue;
-	while ((nIterator = g_pScriptVM->GetKeyValue( hTable, nIterator, &varKey, &varValue )) != -1)
+	void SetValue( const char *pszName, const char *pszValue )
 	{
-		switch (varValue.GetType())
-		{
-			case FIELD_CSTRING:		m_pKeyValues->SetString( varKey, varValue ); break;
-			case FIELD_INTEGER:		m_pKeyValues->SetInt( varKey, varValue ); break;
-			case FIELD_FLOAT:		m_pKeyValues->SetFloat( varKey, varValue ); break;
-			case FIELD_BOOLEAN:		m_pKeyValues->SetBool( varKey, varValue ); break;
-			case FIELD_VECTOR:		m_pKeyValues->SetString( varKey, CFmtStr( "%f %f %f", varValue.Get<Vector>().x, varValue.Get<Vector>().y, varValue.Get<Vector>().z)); break;
-			case FIELD_UINT64:		m_pKeyValues->SetUint64( varKey, varValue );
-		}
-
-		g_pScriptVM->ReleaseValue( varKey );
-		g_pScriptVM->ReleaseValue( varValue );
+		m_KeyValues.SetBool( pszName, pszValue );
 	}
-}
-
-void CScriptKeyValues::SubKeysToTable( HSCRIPT hTable )
-{
-	FOR_EACH_SUBKEY( m_pKeyValues, key )
-	{
-		switch ( key->GetDataType() )
-		{
-			case KeyValues::TYPE_STRING: g_pScriptVM->SetValue( hTable, key->GetName(), key->GetString() ); break;
-			case KeyValues::TYPE_INT:    g_pScriptVM->SetValue( hTable, key->GetName(), key->GetInt()    ); break;
-			case KeyValues::TYPE_FLOAT:  g_pScriptVM->SetValue( hTable, key->GetName(), key->GetFloat()  ); break;
-			case KeyValues::TYPE_UINT64: g_pScriptVM->SetValue( hTable, key->GetName(), key->GetUint64() ); break;
-		}
-	}
-}
-
-HSCRIPT CScriptKeyValues::ScriptFindOrCreateKey( const char *pszName )
-{
-	KeyValues *pKeyValues = m_pKeyValues->FindKey(pszName, true);
-	if ( pKeyValues == NULL )
-		return NULL;
-
-	CScriptKeyValues *pScriptKey = new CScriptKeyValues( pKeyValues );
-
-	// UNDONE: who calls ReleaseInstance on this??
-	HSCRIPT hScriptInstance = g_pScriptVM->RegisterInstance( pScriptKey );
-	return hScriptInstance;
-}
-
-const char *CScriptKeyValues::ScriptGetName()
-{
-	const char *psz = m_pKeyValues->GetName();
-	return psz;
-}
-
-int CScriptKeyValues::ScriptGetInt()
-{
-	int i = m_pKeyValues->GetInt();
-	return i;
-}
-
-float CScriptKeyValues::ScriptGetFloat()
-{
-	float f = m_pKeyValues->GetFloat();
-	return f;
-}
-
-const char *CScriptKeyValues::ScriptGetString()
-{
-	const char *psz = m_pKeyValues->GetString();
-	return psz;
-}
-
-bool CScriptKeyValues::ScriptGetBool()
-{
-	bool b = m_pKeyValues->GetBool();
-	return b;
-}
-
-
-void CScriptKeyValues::ScriptSetKeyValueInt( const char *pszName, int iValue )
-{
-	m_pKeyValues->SetInt( pszName, iValue );
-}
-
-void CScriptKeyValues::ScriptSetKeyValueFloat( const char *pszName, float flValue )
-{
-	m_pKeyValues->SetFloat( pszName, flValue );
-}
-
-void CScriptKeyValues::ScriptSetKeyValueString( const char *pszName, const char *pszValue )
-{
-	m_pKeyValues->SetString( pszName, pszValue );
-}
-
-void CScriptKeyValues::ScriptSetKeyValueBool( const char *pszName, bool bValue )
-{
-	m_pKeyValues->SetBool( pszName, bValue );
-}
-
-void CScriptKeyValues::ScriptSetName( const char *pszValue )
-{
-	m_pKeyValues->SetName( pszValue );
-}
-
-void CScriptKeyValues::ScriptSetInt( int iValue )
-{
-	m_pKeyValues->SetInt( NULL, iValue );
-}
-
-void CScriptKeyValues::ScriptSetFloat( float flValue )
-{
-	m_pKeyValues->SetFloat( NULL, flValue );
-}
-
-void CScriptKeyValues::ScriptSetString( const char *pszValue )
-{
-	m_pKeyValues->SetString( NULL, pszValue );
-}
-
-void CScriptKeyValues::ScriptSetBool( bool bValue )
-{
-	m_pKeyValues->SetBool( NULL, bValue );
-}
-
-
-// constructors
-CScriptKeyValues::CScriptKeyValues( KeyValues *pKeyValues = NULL )
-{
-	if (pKeyValues == NULL)
-	{
-		m_pKeyValues = new KeyValues("CScriptKeyValues");
-	}
-	else
-	{
-		m_pKeyValues = pKeyValues;
-	}
-}
-
-// destructor
-CScriptKeyValues::~CScriptKeyValues( )
-{
-	if (m_pKeyValues)
-	{
-		m_pKeyValues->deleteThis();
-	}
-	m_pKeyValues = NULL;
-}
-
-
-// Shorten the string and return it
-const char *VScriptCutDownString( const char* str )
-{
-	static char staticStr[MAX_PATH] = {0};
-	Q_strncpy( staticStr, str, MAX_PATH );
-	return staticStr;
-}
+private:
+	KeyValues m_KeyValues;
+};*/
+#endif
 
 HSCRIPT VScriptCompileScript( const char *pszScriptName, bool bWarnMissing )
 {
@@ -329,14 +72,13 @@ HSCRIPT VScriptCompileScript( const char *pszScriptName, bool bWarnMissing )
 		".nut",	// SL_SQUIRREL
 		".lua", // SL_LUA
 		".py",  // SL_PYTHON
-		".as"	// AS_ANGELSCRIPT
 	};
 
-	const char *pszVMExtension = pszExtensions[ g_pScriptVM->GetLanguage() ];
+	const char *pszVMExtension = pszExtensions[g_pScriptVM->GetLanguage()];
 	const char *pszIncomingExtension = V_strrchr( pszScriptName , '.' );
 	if ( pszIncomingExtension && V_strcmp( pszIncomingExtension, pszVMExtension ) != 0 )
 	{
-		Warning( "Script file type does not match VM type\n" );
+		Log_Warning( LOG_VScript, "Script file type does not match VM type\n" );
 		return NULL;
 	}
 
@@ -364,11 +106,8 @@ HSCRIPT VScriptCompileScript( const char *pszScriptName, bool bWarnMissing )
 
 		if( !bResult )
 		{
-			if( bWarnMissing )
-			{
-				Warning( "Script not found (%s) \n", scriptPath.Get() );
-				Assert( "Error running script" );
-			}
+			Log_Warning( LOG_VScript, "Script not found (%s) \n", scriptPath.operator const char *() );
+			Assert( "Error running script" );
 		}
 
 		pBase = (const char *) bufferScript.Base();
@@ -385,7 +124,7 @@ HSCRIPT VScriptCompileScript( const char *pszScriptName, bool bWarnMissing )
 	HSCRIPT hScript = g_pScriptVM->CompileScript( pBase, pszFilename );
 	if ( !hScript )
 	{
-		Warning( "FAILED to compile and execute script file named %s\n", scriptPath.Get() );
+		Log_Warning( LOG_VScript, "FAILED to compile and execute script file named %s\n", scriptPath.operator const char *() );
 		Assert( "Error running script" );
 	}
 	return hScript;
@@ -402,14 +141,14 @@ bool VScriptRunScript( const char *pszScriptName, HSCRIPT hScope, bool bWarnMiss
 
 	if ( !pszScriptName || !*pszScriptName )
 	{
-		Warning( "Cannot run script: NULL script name\n" );
+		Log_Warning( LOG_VScript, "Cannot run script: NULL script name\n" );
 		return false;
 	}
 
 	// Prevent infinite recursion in VM
 	if ( g_ScriptServerRunScriptDepth > 16 )
 	{
-		Warning( "IncludeScript stack overflow\n" );
+		Log_Warning( LOG_VScript, "IncludeScript stack overflow\n" );
 		return false;
 	}
 
@@ -431,7 +170,7 @@ bool VScriptRunScript( const char *pszScriptName, HSCRIPT hScope, bool bWarnMiss
 		bSuccess = ( g_pScriptVM->Run( hScript, hScope ) != SCRIPT_ERROR );
 		if ( !bSuccess )
 		{
-			Warning( "Error running script named %s\n", pszScriptName );
+			Log_Warning( LOG_VScript, "Error running script named %s\n", pszScriptName );
 			Assert( "Error running script" );
 		}
 	}
@@ -439,22 +178,29 @@ bool VScriptRunScript( const char *pszScriptName, HSCRIPT hScope, bool bWarnMiss
 	return bSuccess;
 }
 
-CON_COMMAND_SHARED( script, "Run the text as a script" )
+#ifdef CLIENT_DLL
+CON_COMMAND( script_client, "Run the text as a script" )
+#else
+CON_COMMAND( script, "Run the text as a script" )
+#endif
 {
-#ifdef GAME_DLL
+#ifdef CLIENT_DLL
+	if ( !engine->IsClientLocalToActiveServer() )
+		return;
+#else
 	if ( !UTIL_IsCommandIssuedByServerAdmin() )
 		return;
 #endif
 
 	if ( !*args[1] )
 	{
-		Warning( "No function name specified\n" );
+		Log_Warning( LOG_VScript, "No function name specified\n" );
 		return;
 	}
 
 	if ( !g_pScriptVM )
 	{
-		Warning( "Scripting disabled or no server running\n" );
+		Log_Warning( LOG_VScript, "Scripting disabled or no server running\n" );
 		return;
 	}
 
@@ -499,53 +245,75 @@ CON_COMMAND_SHARED( script, "Run the text as a script" )
 }
 
 
-CON_COMMAND_SHARED( script_execute, "Run a vscript file" )
+
+#ifdef CLIENT_DLL
+CON_COMMAND( script_execute_client, "Run a vscript file" )
+#else
+CON_COMMAND( script_execute, "Run a vscript file" )
+#endif
 {
-#ifdef GAME_DLL
+#ifdef CLIENT_DLL
+	if ( !engine->IsClientLocalToActiveServer() )
+		return;
+#else
 	if ( !UTIL_IsCommandIssuedByServerAdmin() )
 		return;
 #endif
 
 	if ( !*args[1] )
 	{
-		Warning( "No script specified\n" );
+		Log_Warning( LOG_VScript, "No script specified\n" );
 		return;
 	}
 
 	if ( !g_pScriptVM )
 	{
-		Warning( "Scripting disabled or no server running\n" );
+		Log_Warning( LOG_VScript, "Scripting disabled or no server running\n" );
 		return;
 	}
 
 	VScriptRunScript( args[1], true );
 }
 
-CON_COMMAND_SHARED( script_debug, "Connect the vscript VM to the script debugger" )
+#ifdef CLIENT_DLL
+CON_COMMAND( script_debug_client, "Connect the vscript VM to the script debugger" )
+#else
+CON_COMMAND( script_debug, "Connect the vscript VM to the script debugger" )
+#endif
 {
-#ifdef GAME_DLL
+#ifdef CLIENT_DLL
+	if ( !engine->IsClientLocalToActiveServer() )
+		return;
+#else
 	if ( !UTIL_IsCommandIssuedByServerAdmin() )
 		return;
 #endif
 
 	if ( !g_pScriptVM )
 	{
-		Warning( "Scripting disabled or no server running\n" );
+		Log_Warning( LOG_VScript, "Scripting disabled or no server running\n" );
 		return;
 	}
 	g_pScriptVM->ConnectDebugger();
 }
 
-CON_COMMAND_SHARED( script_help, "Output help for script functions, optionally with a search string" )
+#ifdef CLIENT_DLL
+CON_COMMAND( script_help_client, "Output help for script functions, optionally with a search string" )
+#else
+CON_COMMAND( script_help, "Output help for script functions, optionally with a search string" )
+#endif
 {
-#ifdef GAME_DLL
+#ifdef CLIENT_DLL
+	if ( !engine->IsClientLocalToActiveServer() )
+		return;
+#else
 	if ( !UTIL_IsCommandIssuedByServerAdmin() )
 		return;
 #endif
 
 	if ( !g_pScriptVM )
 	{
-		Warning( "Scripting disabled or no server running\n" );
+		Log_Warning( LOG_VScript, "Scripting disabled or no server running\n" );
 		return;
 	}
 	const char *pszArg1 = "*";
@@ -557,16 +325,23 @@ CON_COMMAND_SHARED( script_help, "Output help for script functions, optionally w
 	g_pScriptVM->Run( CFmtStr( "PrintHelp( \"%s\" );", pszArg1 ) );
 }
 
-CON_COMMAND_SHARED( script_dump_all, "Dump the state of the VM to the console" )
+#ifdef CLIENT_DLL
+CON_COMMAND( script_dump_all_client, "Dump the state of the VM to the console" )
+#else
+CON_COMMAND( script_dump_all, "Dump the state of the VM to the console" )
+#endif
 {
-#ifdef GAME_DLL
+#ifdef CLIENT_DLL
+	if ( !engine->IsClientLocalToActiveServer() )
+		return;
+#else
 	if ( !UTIL_IsCommandIssuedByServerAdmin() )
 		return;
 #endif
 
 	if ( !g_pScriptVM )
 	{
-		Warning( "Scripting disabled or no server running\n" );
+		Log_Warning( LOG_VScript, "Scripting disabled or no server running\n" );
 		return;
 	}
 	g_pScriptVM->DumpState();
