@@ -53,7 +53,7 @@ $Configuration
 
 	$Compiler
 	{
-		$AdditionalIncludeDirectories	".\;$BASE;$SRCDIR\vgui2\include;$SRCDIR\vgui2\controls;$SRCDIR\game\shared;.\game_controls;$SRCDIR\thirdparty\sixensesdk\include"
+		$AdditionalIncludeDirectories	".\;$BASE;$SRCDIR\vgui2\include;$SRCDIR\vgui2\controls;$SRCDIR\game\shared;.\game_controls;$SRCDIR\thirdparty\sixensesdk\include;$SRCDIR\thirdparty\discord_game_sdk\cpp"
 		$PreprocessorDefinitions		"$BASE;NO_STRING_T;CLIENT_DLL;VECTOR;VERSION_SAFE_STEAM_API_INTERFACES;PROTECTED_THINGS_ENABLE;strncpy=use_Q_strncpy_instead;_snprintf=use_Q_snprintf_instead" 
 		$PreprocessorDefinitions		"$BASE;INCLUDED_STEAM2_USERID_STRUCTS" 
 		$PreprocessorDefinitions		"$BASE;fopen=dont_use_fopen" [$WIN32]
@@ -233,6 +233,16 @@ $Project
 		$File	"c_colorcorrection.cpp"
 		$File	"c_colorcorrectionvolume.cpp"
 		$File	"c_dynamiclight.cpp"
+		$File	"c_env_cascade_light.cpp"
+		$File	"c_lights.cpp"
+		$File	"c_lights.h"
+		$File	"lighting_overhaul.cpp"
+		$File	"advanced_lighting.cpp"
+		$File	"tier3_lighting.cpp"
+		$File	"worldlight.cpp"
+		$File	"worldlight.h"
+		$File	"ver_panel.cpp"
+		$File	"ver_panel.h"
 		$File	"c_entitydissolve.cpp"
 		$File	"c_entityparticletrail.cpp"
 		$File	"c_env_fog_controller.cpp"
@@ -437,6 +447,9 @@ $Project
 		$File	"recvproxy.cpp"
 		$File	"basepresence.cpp"			[$WINDOWS||$POSIX]
 		$File	"basepresence_xbox.cpp"		[$X360]
+		$File	"basediscordpresence.cpp"	[$WINDOWS]
+		$File	"basediscordpresence.h"
+		$File	"irichpresenceclient.h"
 		$File	"$SRCDIR\game\shared\rope_helpers.cpp"
 		$File	"$SRCDIR\game\shared\saverestore.cpp"
 		$File	"$SRCDIR\game\shared\sceneentity_shared.cpp"
@@ -516,6 +529,41 @@ $Project
 
 		$File	"$SRCDIR\game\shared\secure_command_line.cpp"
 
+
+		$Folder	"Discord Game SDK"	[$WINDOWS]
+		{
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\achievement_manager.cpp"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\achievement_manager.h"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\activity_manager.cpp"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\activity_manager.h"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\application_manager.cpp"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\application_manager.h"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\core.cpp"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\core.h"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\discord.h"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\event.h"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\ffi.h"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\image_manager.cpp"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\image_manager.h"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\lobby_manager.cpp"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\lobby_manager.h"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\network_manager.cpp"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\network_manager.h"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\overlay_manager.cpp"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\overlay_manager.h"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\relationship_manager.cpp"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\relationship_manager.h"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\storage_manager.cpp"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\storage_manager.h"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\store_manager.cpp"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\store_manager.h"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\types.cpp"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\types.h"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\user_manager.cpp"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\user_manager.h"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\voice_manager.cpp"
+			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\voice_manager.h"
+		}
 
 		$Folder	"Sixense"
 		{
@@ -1269,6 +1317,7 @@ $Project
 
 		$ImpLibexternal steam_api	[!$WIN64]
 		$ImpLibexternal steam_api64	[$WIN64]
+		$ImpLib 	"$SRCDIR\thirdparty\discord_game_sdk\lib\x64\discord_game_sdk"	[$WIN64]
 		
 		$Libexternal $LIBCOMMON/libcrypto [$OSXALL]
 		$Libexternal "$SRCDIR\lib\common\$CRYPTOPPDIR\libcryptopp" [$LINUXALL&&!$SOURCESDK]

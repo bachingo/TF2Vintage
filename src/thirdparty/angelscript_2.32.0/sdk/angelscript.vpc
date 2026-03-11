@@ -1,0 +1,139 @@
+//-----------------------------------------------------------------------------
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR       "..\..\.."
+$Macro OUTLIBDIR    "$LIBCOMMON"
+
+$Include "$SRCDIR\vpc_scripts\source_lib_base.vpc"
+
+$Configuration
+{
+    $Compiler
+    {
+        $PreprocessorDefinitions        "$BASE;ANGELSCRIPT_EXPORT;AS_NO_THREADS"
+        $WarningLevel					"Level 3 (/W3)"
+    }
+}
+
+$Configuration "Debug"
+{
+    $Compiler
+    {
+        $PreprocessorDefinitions        "$BASE;AS_DEBUG"
+    }
+}
+
+$Project "angelscript"
+{
+    $Folder "Source Files"
+    {
+        $File   "angelscript\source\as_atomic.cpp"
+        $File   "angelscript\source\as_builder.cpp"
+        $File   "angelscript\source\as_bytecode.cpp"
+        $File   "angelscript\source\as_callfunc.cpp"
+        {
+            $Configuration
+            {
+                $Compiler
+                {
+                    $AdditionalOptions "$BASE /EHa"
+                }
+            }
+        }
+        $File   "angelscript\source\as_callfunc_arm.cpp"
+        $File   "angelscript\source\as_callfunc_mips.cpp"
+        $File   "angelscript\source\as_callfunc_ppc.cpp"
+        $File   "angelscript\source\as_callfunc_ppc_64.cpp"
+        $File   "angelscript\source\as_callfunc_sh4.cpp"
+        $File   "angelscript\source\as_callfunc_x64_gcc.cpp"
+        $File   "angelscript\source\as_callfunc_x64_mingw.cpp"
+        $File   "angelscript\source\as_callfunc_x64_msvc.cpp"
+        $File   "angelscript\source\as_callfunc_x86.cpp"
+        $File   "angelscript\source\as_callfunc_xenon.cpp"
+        $File   "angelscript\source\as_compiler.cpp"
+        $File   "angelscript\source\as_configgroup.cpp"
+        $File   "angelscript\source\as_context.cpp"
+        {
+            $Configuration
+            {
+                $Compiler
+                {
+                    $AdditionalOptions "$BASE /EHa"
+                }
+            }
+        }
+        $File   "angelscript\source\as_datatype.cpp"
+        $File   "angelscript\source\as_gc.cpp"
+        $File   "angelscript\source\as_generic.cpp"
+        $File   "angelscript\source\as_globalproperty.cpp"
+        $File   "angelscript\source\as_memory.cpp"
+        $File   "angelscript\source\as_module.cpp"
+        $File   "angelscript\source\as_objecttype.cpp"
+        $File   "angelscript\source\as_outputbuffer.cpp"
+        $File   "angelscript\source\as_parser.cpp"
+        $File   "angelscript\source\as_restore.cpp"
+        $File   "angelscript\source\as_scriptcode.cpp"
+        $File   "angelscript\source\as_scriptengine.cpp"
+        {
+            $Configuration
+            {
+                $Compiler
+                {
+                    $AdditionalOptions "$BASE /EHa"
+                }
+            }
+        }
+        $File   "angelscript\source\as_scriptfunction.cpp"
+        $File   "angelscript\source\as_scriptnode.cpp"
+        $File   "angelscript\source\as_scriptobject.cpp"
+        $File   "angelscript\source\as_string.cpp"
+        $File   "angelscript\source\as_string_util.cpp"
+        $File   "angelscript\source\as_thread.cpp"
+        $File   "angelscript\source\as_tokenizer.cpp"
+        $File   "angelscript\source\as_typeinfo.cpp"
+        $File   "angelscript\source\as_variablescope.cpp"
+    }
+
+    $Folder "Header Files"
+    {
+        $File   "angelscript\include\angelscript.h"
+        $File   "angelscript\source\as_array.h"
+        $File   "angelscript\source\as_atomic.h"
+        $File   "angelscript\source\as_builder.h"
+        $File   "angelscript\source\as_bytecode.h"
+        $File   "angelscript\source\as_callfunc.h"
+        $File   "angelscript\source\as_compiler.h"
+        $File   "angelscript\source\as_config.h"
+        $File   "angelscript\source\as_configgroup.h"
+        $File   "angelscript\source\as_context.h"
+        $File   "angelscript\source\as_criticalsection.h"
+        $File   "angelscript\source\as_datatype.h"
+        $File   "angelscript\source\as_debug.h"
+        $File   "angelscript\source\as_gc.h"
+        $File   "angelscript\source\as_generic.h"
+        $File   "angelscript\source\as_map.h"
+        $File   "angelscript\source\as_memory.h"
+        $File   "angelscript\source\as_module.h"
+        $File   "angelscript\source\as_namespace.h"
+        $File   "angelscript\source\as_objecttype.h"
+        $File   "angelscript\source\as_outputbuffer.h"
+        $File   "angelscript\source\as_parser.h"
+        $File   "angelscript\source\as_property.h"
+        $File   "angelscript\source\as_restore.h"
+        $File   "angelscript\source\as_scriptcode.h"
+        $File   "angelscript\source\as_scriptengine.h"
+        $File   "angelscript\source\as_scriptfunction.h"
+        $File   "angelscript\source\as_scriptnode.h"
+        $File   "angelscript\source\as_scriptobject.h"
+        $File   "angelscript\source\as_string.h"
+        $File   "angelscript\source\as_string_util.h"
+        $File   "angelscript\source\as_symboltable.h"
+        $File   "angelscript\source\as_texts.h"
+        $File   "angelscript\source\as_thread.h"
+        $File   "angelscript\source\as_tokendef.h"
+        $File   "angelscript\source\as_tokenizer.h"
+        $File   "angelscript\source\as_typeinfo.h"
+        $File   "angelscript\source\as_variablescope.h"
+    }
+}
