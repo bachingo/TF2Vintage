@@ -233,22 +233,42 @@ LINK_ENTITY_TO_CLASS( light_spot, CLight );
 LINK_ENTITY_TO_CLASS( light_glspot, CLight );
 
 
-class CEnvLight : public CLight
-{
-public:
-	DECLARE_CLASS( CEnvLight, CLight );
-
-	bool	KeyValue( const char *szKeyName, const char *szValue ); 
-	void	Spawn( void );
-};
+// CEnvLight class is declared in lights.h (TF2V extension with networked sun state)
 
 LINK_ENTITY_TO_CLASS( light_environment, CEnvLight );
+
+IMPLEMENT_SERVERCLASS_ST( CEnvLight, DT_CEnvLight )
+	SendPropQAngles( SENDINFO( m_angSunAngles ) ),
+	SendPropVector( SENDINFO( m_vecLight   ) ),
+	SendPropVector( SENDINFO( m_vecAmbient ) ),
+	SendPropBool(   SENDINFO( m_bCascadedShadowMappingEnabled ) ),
+END_SEND_TABLE()
+
+BEGIN_DATADESC(CEnvLight)
+	DEFINE_FIELD( m_vecLightRGB, FIELD_VECTOR ),
+	DEFINE_FIELD( m_flLightBrightness, FIELD_FLOAT ),
+	DEFINE_FUNCTION( FadeThink ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "Toggle",  InputToggle ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "TurnOn",  InputTurnOn ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "TurnOff", InputTurnOff ),
+END_DATADESC()
+
 
 bool CEnvLight::KeyValue( const char *szKeyName, const char *szValue )
 {
 	if (FStrEq(szKeyName, "_light"))
 	{
-		// nothing
+		// Parse raw RGBA (0-255) from Hammer's "_light" key and store it so
+		// external systems (e.g. csm_autospawn) can read the sun color without
+		// needing friend/private access.
+		float tmp[4] = { 255.0f, 255.0f, 255.0f, 255.0f };
+		UTIL_StringToFloatArray( tmp, 4, szValue );
+		m_vecLightRGB.Init( tmp[0], tmp[1], tmp[2] );
+		m_flLightBrightness = tmp[3];
+	}
+	else if (FStrEq(szKeyName, "pitch"))
+	{
+		m_iPitch = atoi(szValue);
 	}
 	else
 	{
@@ -259,7 +279,101 @@ bool CEnvLight::KeyValue( const char *szKeyName, const char *szValue )
 }
 
 
+// ---- FadeThink (light fader) ----
+void CEnvLight::FadeThink( void )
+{
+	if (m_iCurrentFade < m_iTargetFade)
+		m_iCurrentFade++;
+	else if (m_iCurrentFade > m_iTargetFade)
+		m_iCurrentFade--;
+
+	if (m_iCurrentFade == m_iTargetFade)
+	{
+		engine->LightStyle( m_iStyle, (char*)STRING(m_iszPattern) );
+		SetNextThink( TICK_NEVER_THINK );
+	}
+	else
+	{
+		char sCurString[2];
+		sCurString[0] = m_iCurrentFade;
+		sCurString[1] = 0;
+		engine->LightStyle( m_iStyle, sCurString );
+		SetNextThink( gpGlobals->curtime + 0.1f );
+	}
+}
+
+// ---- TurnOn / TurnOff / Toggle ----
+void CEnvLight::TurnOn( void )
+{
+	if (m_iszPattern != NULL_STRING)
+		engine->LightStyle( m_iStyle, (char*)STRING(m_iszPattern) );
+	else
+		engine->LightStyle( m_iStyle, "m" );
+	CLEARBITS( m_spawnflags, SF_LIGHT_START_OFF );
+}
+
+void CEnvLight::TurnOff( void )
+{
+	engine->LightStyle( m_iStyle, "a" );
+	SETBITS( m_spawnflags, SF_LIGHT_START_OFF );
+}
+
+void CEnvLight::Toggle( void )
+{
+	if ( FBitSet(m_spawnflags, SF_LIGHT_START_OFF) )
+		TurnOn();
+	else
+		TurnOff();
+}
+
+void CEnvLight::InputToggle ( inputdata_t &inputdata ) { Toggle();  }
+void CEnvLight::InputTurnOn ( inputdata_t &inputdata ) { TurnOn();  }
+void CEnvLight::InputTurnOff( inputdata_t &inputdata ) { TurnOff(); }
+
+// ---- Spawn ----
 void CEnvLight::Spawn( void )
 {
-	BaseClass::Spawn( );
+	BaseClass::Spawn();
+
+	if( m_iPitch != 0 )
+	{
+		QAngle angles = GetAbsAngles();
+		angles.x = (float)m_iPitch;
+		SetAbsAngles( angles );
+	}
+
+	// Default to white if no _light key was parsed
+	if ( m_vecLightRGB.LengthSqr() == 0.0f )
+	{
+		m_vecLightRGB.Init( 255.0f, 255.0f, 255.0f );
+		m_flLightBrightness = 255.0f;
+	}
+
+	// Initialise networked sun members from BSP-parsed data so C_EnvLight
+	// has valid state immediately before sky_tod.cpp begins driving them.
+	{
+		QAngle ang = GetAbsAngles();
+		ang.x = (float)( -m_iPitch );
+		m_angSunAngles = ang;
+
+		const float kInv255 = 1.0f / 255.0f;
+		float flBrightScale = m_flLightBrightness * kInv255;
+		m_vecLight.Init(
+			m_vecLightRGB.x * kInv255 * flBrightScale,
+			m_vecLightRGB.y * kInv255 * flBrightScale,
+			m_vecLightRGB.z * kInv255 * flBrightScale );
+		m_vecAmbient = m_vecLight * 0.4f;
+		m_bCascadedShadowMappingEnabled = true;
+	}
+
+	SetThink( &CEnvLight::Think );
+	SetNextThink( gpGlobals->curtime + 0.05f );
+}
+
+// ---- Think (20 Hz) ----
+// sky_tod.cpp drives m_angSunAngles, m_vecLight, m_vecAmbient directly each frame.
+// We keep thinking so NetworkStateChanged() propagates those writes to clients.
+void CEnvLight::Think( void )
+{
+	SetNextThink( gpGlobals->curtime + 0.05f );
 }
