@@ -78,7 +78,11 @@ jobs:
           # ── Scheduled Tuesday run (6 PM EST or 6 PM EDT) ─────────────────────
           # Both crons resolve here. Check days since last full release to decide
           # whether this Tuesday is a release week (≥84 days) or a nightly week.
-          if [[ "$CRON" == "0 23 * * 2" || "$CRON" == "0 22 * * 2" ]]; then
+          # Get current hour in Bellevue (Pacific Time)
+          BELLEVUE_HOUR=$(TZ="America/Los_Angeles" date +%H)
+          echo "Current time in Bellevue: $(TZ="America/Los_Angeles" date)"
+          if [[ ( "$CRON" == "0 23 * * 2" || "$CRON" == "0 22 * * 2" ) && "$BELLEVUE_HOUR" -ne 15 ]]; then
+
             LAST_DATE=$(gh release list --exclude-pre-releases --limit 1 \
               --json createdAt --template '{{range .}}{{.createdAt}}{{end}}' 2>/dev/null || echo "")
 
