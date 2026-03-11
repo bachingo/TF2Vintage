@@ -46,6 +46,7 @@ enum ExtendedFieldType_t
 	FIELD_UINT,				// Unsigned integer - it's not declared in fieldtype_t
 	FIELD_UTLSTRINGTOKEN,
 	FIELD_QANGLE,
+	FIELD_MATRIX3X4,
 };
 
 DECLARE_FIELD_SIZE( FIELD_UINT64,		sizeof(uint64) )
@@ -54,6 +55,7 @@ DECLARE_FIELD_SIZE( FIELD_POSITIVEINTEGER_OR_NULL, sizeof(int) )
 DECLARE_FIELD_SIZE( FIELD_UINT,			sizeof( uint ) )
 DECLARE_FIELD_SIZE( FIELD_UTLSTRINGTOKEN,		sizeof( uint32 ) )
 DECLARE_FIELD_SIZE( FIELD_QANGLE,		sizeof( QAngle ) )
+DECLARE_FIELD_SIZE( FIELD_MATRIX3X4,	sizeof(matrix3x4_t) )
 
 typedef int VariantDataType_t;
 
@@ -109,6 +111,7 @@ public:
 	CVariantBase( const Vector *val, bool bCopy = false );
 	CVariantBase( const char *val , bool bCopy = false );
 	CVariantBase( const Quaternion &val, bool bCopy = false );
+	CVariantBase( const matrix3x4_t &val, bool bCopy = false );
 
 	CVariantBase( const CVariantBase<CValueAllocator> &variant ) :m_flags( 0 ), m_type( FIELD_VOID )	{ variant.AssignTo( this ); }
 	void operator=( const CVariantBase<CValueAllocator> &variant )										{ variant.AssignTo( this ); }
@@ -132,6 +135,7 @@ public:
 	operator CBaseHandle() const			{ Assert( m_type == FIELD_EHANDLE );	return CBaseHandle( m_hEntity ); }
         operator CBaseEntity*() const				{ Assert( m_type == FIELD_EHANDLE );    return CHandle<CBaseEntity>(CBaseHandle( m_hEntity )); }
 	operator const Quaternion &() const		{ Assert( m_type == FIELD_QUATERNION );	return m_pData ? *(Quaternion*)m_pData : quat_identity; }
+	operator const matrix3x4_t &() const	{ Assert(m_type == FIELD_MATRIX3X4); static matrix3x4_t mat_ident; SetIdentityMatrix(mat_ident); return m_pData ? *(matrix3x4_t *)m_pData : mat_ident; }
 //	operator CUtlStringToken() const		{ Assert( m_type == FIELD_UTLSTRINGTOKEN );	CUtlStringToken t; t.m_nHashCode = m_utlStringToken; return t; }
 
 	void operator=( int i ) 				{ Free(); m_type = FIELD_INTEGER; m_int = i; }
@@ -145,6 +149,9 @@ public:
 //	void operator=( const Vector4D &vec )	{ CopyData( vec ); }
 	void operator=( const QAngle &vec )		{ CopyData( vec ); }
 	void operator=( const Quaternion &q )	{ CopyData( q ); }
+	void operator=( const matrix3x4_t &mat ){ CopyData( mat ); }
+	void operator=( const matrix3x4_t *mat ){ CopyData( *mat ); }
+	void operator=( matrix3x4_t *mat )		{ CopyData( *mat ); }
 	void operator=( const Vector2D *vec )	{ CopyData( *vec ); }
 	void operator=( QAngle *a )				{ CopyData( *a ); }
 	void operator=( const QAngle *a )		{ CopyData( *a ); }
@@ -176,6 +183,7 @@ public:
 //	bool AssignTo( Vector4D *pDest ) const;
 	bool AssignTo( QAngle *pDest ) const;
 	bool AssignTo( Quaternion *pDest ) const;
+	bool AssignTo( matrix3x4_t *pDest ) const;
 	bool AssignTo( QuaternionAligned *pDest ) const { return AssignTo( (Quaternion*)pDest ); }
 	bool AssignTo( VectorAligned *pDest ) const		{ return AssignTo( (Vector*)pDest ); }
 	bool AssignTo( char *pDest, uint nBufLen ) const;
@@ -231,6 +239,7 @@ private:
 	friend class CLuaVM;
 	friend class CPythonVM;
 	friend class CSquirrelVM;
+	friend class CAngelScriptVM;
 };
 
 typedef CVariantBase<> CVariant;
@@ -261,6 +270,8 @@ DECLARE_DEDUCE_FIELDTYPE( FIELD_HSCRIPT,	HSCRIPT );
 DECLARE_DEDUCE_FIELDTYPE( FIELD_VARIANT,	CVariant );
 DECLARE_DEDUCE_FIELDTYPE( FIELD_EHANDLE,	CBaseHandle );
 DECLARE_DEDUCE_FIELDTYPE( FIELD_QUATERNION,	Quaternion );
+DECLARE_DEDUCE_FIELDTYPE( FIELD_MATRIX3X4,	matrix3x4_t );
+DECLARE_DEDUCE_FIELDTYPE( FIELD_MATRIX3X4,	const matrix3x4_t & );
 DECLARE_DEDUCE_FIELDTYPE( FIELD_QUATERNION,	const Quaternion & );
 //DECLARE_DEDUCE_FIELDTYPE( FIELD_UTLSTRINGTOKEN,	CUtlStringToken );
 
@@ -293,6 +304,7 @@ DECLARE_NAMED_FIELDTYPE( HSCRIPT,	"hscript" );
 DECLARE_NAMED_FIELDTYPE( CVariant,	"variant" );
 DECLARE_NAMED_FIELDTYPE( CBaseHandle,	"ehandle" );
 DECLARE_NAMED_FIELDTYPE( Quaternion,	"quaternion" );
+DECLARE_NAMED_FIELDTYPE( matrix3x4_t,	"matrix" );
 //DECLARE_NAMED_FIELDTYPE( CUtlStringToken,	"utlstringtoken" );
 
 inline const char * VariantFieldTypeName( int16 eType )
@@ -317,6 +329,7 @@ inline const char * VariantFieldTypeName( int16 eType )
 	case FIELD_VARIANT:	return "variant";
 	case FIELD_EHANDLE:	return "ehandle";
 	case FIELD_QUATERNION:	return "quaternion";
+	case FIELD_MATRIX3X4:	return "matrix";
 	case FIELD_UTLSTRINGTOKEN:	return "utlstringtoken";
 
 	default:	return "unknown_variant_type";
@@ -569,7 +582,7 @@ inline bool CVariantBase<CValueAllocator>::AssignTo( T *pDest ) const
 	}
 
 	if ( m_type != FIELD_VECTOR2D && m_type != FIELD_VECTOR && /*m_type != FIELD_VECTOR4D &&*/ m_type != FIELD_QANGLE &&m_type != FIELD_QUATERNION && m_type != FIELD_CSTRING && 
-		destType != FIELD_VECTOR2D && destType != FIELD_VECTOR && /*destType != FIELD_VECTOR4D &&*/ destType != FIELD_QANGLE && destType != FIELD_QUATERNION && destType != FIELD_CSTRING )
+		destType != FIELD_VECTOR2D && destType != FIELD_VECTOR && /*destType != FIELD_VECTOR4D &&*/ destType != FIELD_QANGLE && destType != FIELD_QUATERNION && destType != FIELD_CSTRING && destType != FIELD_MATRIX3X4 )
 	{
 		switch ( m_type )
 		{
@@ -997,5 +1010,36 @@ inline bool operator !=( const CVariantBase<CValueAllocator1> & v1, const CVaria
 	return !( v1 == v2 );
 }
 
+
+
+template< class CValueAllocator >
+inline CVariantBase<CValueAllocator>::CVariantBase( const matrix3x4_t &val, bool bCopy ) : m_flags( 0 ), m_type( FIELD_VOID )
+{
+	CopyData( val, bCopy );
+}
+
+template< class CValueAllocator >
+inline bool CVariantBase<CValueAllocator>::AssignTo( matrix3x4_t *pDest ) const
+{
+	switch( m_type )
+	{
+	case FIELD_VOID:		SetIdentityMatrix( *pDest ); return false;
+	case FIELD_MATRIX3X4:	*pDest = *(matrix3x4_t*)m_pData; return true;
+	case FIELD_QUATERNION:	QuaternionMatrix( *(Quaternion *)m_pData, *pDest ); return true;
+	case FIELD_CSTRING:
+		{
+			int nParsed = sscanf( m_pszString, "%f %f %f %f %f %f %f %f %f %f %f %f",
+						  &pDest->m_flMatVal[0][0], &pDest->m_flMatVal[0][1], &pDest->m_flMatVal[0][2], &pDest->m_flMatVal[0][3],
+						  &pDest->m_flMatVal[1][0], &pDest->m_flMatVal[1][1], &pDest->m_flMatVal[1][2], &pDest->m_flMatVal[1][3],
+						  &pDest->m_flMatVal[2][0], &pDest->m_flMatVal[2][1], &pDest->m_flMatVal[2][2], &pDest->m_flMatVal[2][3] );
+			if ( nParsed == 12 )
+				return true;
+		}
+	default:
+		Warning( "No free conversion of %s variant to matrix3x4_t right now\n", VariantFieldTypeName( m_type ) );
+		break;
+	}
+	return false;
+}
 
 #endif // VARIANT_H

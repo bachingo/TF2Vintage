@@ -11,6 +11,7 @@
 #ifdef _WIN32
 #pragma once
 #endif
+#include "vscript/ivscript.h"
 
 //-----------------------------------------------------------------------------
 // Purpose: Basic handler for an rgb set of colors
@@ -19,6 +20,7 @@
 class Color
 {
 public:
+	ALLOW_SCRIPT_ACCESS();
 	// constructors
 	Color()
 	{

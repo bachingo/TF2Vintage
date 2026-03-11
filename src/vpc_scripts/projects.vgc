@@ -24,6 +24,12 @@ $Project "fgdlib"
 	"fgdlib\fgdlib.vpc" [$WINDOWS]
 }
 
+$Project "game_shader_dx9"
+{
+	"materialsystem\stdshaders\game_shader_dx9_hl2mp.vpc" [$HL2MP]
+	"materialsystem\stdshaders\game_shader_dx9_tf2vintage.vpc" [$TF2VINTAGE]
+}
+
 $Project "game_shader_generic_example"
 {
 	"materialsystem\stdshaders\game_shader_generic_example_hl2mp.vpc" [$HL2MP]
@@ -51,7 +57,12 @@ $Project "height2normal"
 $Project "server"
 {
 	"game\server\server_hl2mp.vpc"		[$HL2MP]
-	"game\server\server_tf2vintage.vpc"			[$TF]
+	"game\server\server_tf2vintage.vpc"			[$TF2VINTAGE]
+}
+
+$Project "crash_handler"
+{
+	"game\crash_handler\tf2vintage_crash.vpc"	[$TF2VINTAGE]
 }
 
 $Project "launcher_main"
@@ -150,3 +161,12 @@ $Project "vvis_launcher"
 	"utils\vvis_launcher\vvis_launcher.vpc" [$WINDOWS]
 }
 
+$Project "vscript"
+{
+	"vscript\vscript.vpc"
+}
+
+$Project "angelscript"
+{
+	"thirdparty\angelscript_2.32.0\sdk\angelscript.vpc"
+}
