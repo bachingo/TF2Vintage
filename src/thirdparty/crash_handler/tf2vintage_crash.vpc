@@ -1,0 +1,57 @@
+//-----------------------------------------------------------------------------
+//	TF2VINTAGE_CRASH.VPC
+//
+//	Minimal crash handler DLL/SO for TF2 Vintage.
+//	Registers before client.dll/server.so so crashes during DLL init and
+//	global constructors are captured before the engine loads.
+//
+//	Windows: unhandled exception filter via AddVectoredExceptionHandler
+//	Linux:   POSIX signal handlers via sigaction + self-pipe + worker thread
+//
+//	Deliberately has NO dependencies on tier0, tier1, mathlib, or any other
+//	Source library - if those fail to load we still need to catch the crash.
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro GAMENAME		"tf2vintage"
+// source_dll_win32_base.vpc and source_dll_posix_base.vpc both append
+// $PLATSUBDIR (\x64 on WIN64, \linux64 on LINUX64) automatically.
+$Macro OUTBINDIR	"$SRCDIR\..\game\$GAMENAME\bin"
+$Macro CRASHSRC		"$SRCDIR\thirdparty\crash_handler"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+// No named $Configuration blocks — the base scripts (source_dll_win32_release.vpc,
+// source_dll_win32_debug.vpc, source_posix_base.vpc) already set OutputDirectory,
+// IntermediateDirectory, optimization, NDEBUG/_DEBUG, and PCH correctly.
+// Overriding OutputDirectory or IntermediateDirectory independently breaks the
+// post-build copy step which expects both to match.
+
+$Configuration
+{
+	$Compiler
+	{
+		$PreprocessorDefinitions	"$BASE;TF_VINTAGE"
+
+		// Disable buffer security check - this IS the crash handler.
+		// /GS inserts a __security_check_cookie call that can fault before
+		// our handler is operational.
+		$BufferSecurityCheck		"No"	[$WINDOWS]
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies		"$BASE dbghelp.lib psapi.lib"	[$WINDOWS]
+		$SystemLibraries			"dl;pthread"					[$POSIX]
+		$GCC_ExtraLinkerFlags		"$BASE -rdynamic"				[$POSIX]
+	}
+}
+
+$Project "tf2vintage_crash"
+{
+	$Folder "Source Files"
+	{
+		$File "$CRASHSRC\crash_handler.cpp"			[$WINDOWS]
+		$File "$CRASHSRC\crash_handler_linux.cpp"	[$POSIX]
+	}
+}
