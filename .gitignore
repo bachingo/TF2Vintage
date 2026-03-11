@@ -32,6 +32,8 @@ ipch
 obj*/
 !devtools/*.mak
 !utils/smdlexp/smdlexp.mak
+src/thirdparty/angelscript_2.32.0/sdk/_vpc_/manifest_angelscript/linux64/manifest.txt
+src/thirdparty/angelscript_2.32.0/sdk/_vpc_/manifest_angelscript/win64/manifest.txt
 
 # Specific Source build products
 [Rr]elease*/
