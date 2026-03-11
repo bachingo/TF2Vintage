@@ -570,6 +570,24 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 		CreateInterfaceFn physicsFactory, CreateInterfaceFn fileSystemFactory, 
 		CGlobalVars *pGlobals)
 {
+	// Load the crash handler as early as possible — before tier libraries,
+	// before any other system — so it catches failures in this very init sequence.
+	// If the module is absent the call returns null and we continue silently.
+	Sys_LoadModule( "tf2vintage_crash" );
+
+	// Append -insecure unconditionally so the engine
+	// never attempts VAC negotiation, regardless of server launch options.
+	if ( !CommandLine()->FindParm( "-insecure" ) )
+	{
+		CommandLine()->AppendParm( "-insecure", nullptr );
+	}
+
+	// Always append logging.
+	if ( !CommandLine()->FindParm( "-console" ) )
+	{
+		CommandLine()->AppendParm( "-console", nullptr );
+	}
+
 	ConnectTier1Libraries( &appSystemFactory, 1 );
 	ConnectTier2Libraries( &appSystemFactory, 1 );
 	ConnectTier3Libraries( &appSystemFactory, 1 );

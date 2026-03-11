@@ -48,7 +48,7 @@ bool CBaseDiscordPresence::Init()
 		return true;
 
 	Assert(g_pDiscord == NULL);
-	auto result = discord::Core::Create( V_atoi64( cl_discord_appid.GetString() ), DiscordCreateFlags_NoRequireDiscord, &g_pDiscord );
+	auto result = discord::Core::Create( atoll( cl_discord_appid.GetString() ), DiscordCreateFlags_NoRequireDiscord, &g_pDiscord );
 	if ( result != discord::Result::Ok )
 		return true;
 

@@ -125,6 +125,7 @@
 #include "sourcevr/isourcevirtualreality.h"
 #include "client_virtualreality.h"
 #include "mumble.h"
+#include "irichpresenceclient.h"		// Discord RPC
 #include "steamshare.h"
 #include "vgui_controls/BuildGroup.h"
 
@@ -872,6 +873,26 @@ ISourceVirtualReality *g_pSourceVR = NULL;
 //-----------------------------------------------------------------------------
 int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physicsFactory, CGlobalVarsBase *pGlobals )
 {
+	// Load the crash handler as early as possible — before tier libraries,
+	// before any other system — so it catches failures in this very init sequence.
+	// Sys_LoadModule searches the game bin folder (bin/x64/) where the DLL lives.
+	// DllMain (Windows) / __attribute__((constructor)) (Linux) installs the handler.
+	// If the module is absent the call returns null and we continue silently.
+	Sys_LoadModule( "tf2vintage_crash" );
+
+	// Append -insecure unconditionally so the engine
+	// never attempts a VAC-secured session, regardless of launch options.
+	if ( !CommandLine()->FindParm( "-insecure" ) )
+	{
+		CommandLine()->AppendParm( "-insecure", nullptr );
+	}
+
+	// Always append logging.
+	if ( !CommandLine()->FindParm( "-console" ) )
+	{
+		CommandLine()->AppendParm( "-console", nullptr );
+	}
+
 	InitCRTMemDebug();
 	MathLib_Init( 2.2f, 2.2f, 0.0f, 2.0f );
 
@@ -1629,6 +1650,12 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 	view->LevelInit();
 	tempents->LevelInit();
 	ResetToneMapping(1.0);
+
+	// Notify Discord RPC of the new map name
+	if ( rpc )
+	{
+		rpc->SetLevelName( pMapName );
+	}
 
 	IGameSystem::LevelInitPreEntityAllSystems(pMapName);
 
