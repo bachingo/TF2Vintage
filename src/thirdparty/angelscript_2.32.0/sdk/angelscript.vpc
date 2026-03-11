@@ -42,6 +42,8 @@ $Project "angelscript"
             }
         }
         $File   "angelscript\source\as_callfunc_arm.cpp"
+        $File   "angelscript\source\as_callfunc_arm_gcc.S"		[$LINUX && $ARM]
+        $File   "angelscript\source\as_callfunc_arm_msvc.asm"	[$WIN32 && $ARM]
         $File   "angelscript\source\as_callfunc_mips.cpp"
         $File   "angelscript\source\as_callfunc_ppc.cpp"
         $File   "angelscript\source\as_callfunc_ppc_64.cpp"
@@ -49,6 +51,7 @@ $Project "angelscript"
         $File   "angelscript\source\as_callfunc_x64_gcc.cpp"
         $File   "angelscript\source\as_callfunc_x64_mingw.cpp"
         $File   "angelscript\source\as_callfunc_x64_msvc.cpp"
+        $File   "angelscript\source\as_callfunc_x64_msvc_asm.asm"		[$WIN64]
         $File   "angelscript\source\as_callfunc_x86.cpp"
         $File   "angelscript\source\as_callfunc_xenon.cpp"
         $File   "angelscript\source\as_compiler.cpp"

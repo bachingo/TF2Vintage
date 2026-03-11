@@ -166,6 +166,11 @@ $Project "vscript"
 	"vscript\vscript.vpc"
 }
 
+$Project "luajit"
+{
+	"thirdparty\luajit\luajit.vpc"
+}
+
 $Project "angelscript"
 {
 	"thirdparty\angelscript_2.32.0\sdk\angelscript.vpc"
