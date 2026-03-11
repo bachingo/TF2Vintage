@@ -647,13 +647,34 @@ void CTeamplayRoundBasedRules::LevelInitPostEntity( void )
 //-----------------------------------------------------------------------------
 float CTeamplayRoundBasedRules::GetRespawnTimeScalar( int iTeam )
 {
-	// For long respawn times, scale the time as the number of players drops
-	int iOptimalPlayers = 8;	// 16 players total, 8 per team
+	// Vanilla: scale respawn time DOWN when player count is low
+	// (fewer players = shorter wave = less waiting alone).
+	// TF2V extension: also scale respawn time UP when player count is HIGH
+	// so that 50v50+ matches don't have near-instant full-team respawns.
+	//
+	// Full curve (applied as a multiplier on the configured wave time):
+	//   1 player  -> 0.25x  (quarter-length wave, unchanged from vanilla)
+	//   8 players -> 1.00x  (vanilla optimal: full-length wave)
+	//  32 players -> 1.50x  (50 % bonus)
+	//  63 players -> 3.00x  (triple -- at default 10s that's 30s waves)
+	//
+	// The upper end is intentionally aggressive: a 30s respawn wave on a
+	// 63v63 server prevents the "infinite respawn conga" that kills large
+	// pub games.  Operators can always lower mp_respawnwavetime to taste.
 
-	int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
+	const int iOptimalPlayers = 8; // vanilla threshold: 16 total, 8 per team
+	const int iLargeServerMax  = 63; // maximum expected per-team size (63v63)
 
-	float flScale = RemapValClamped( iNumPlayers, 1, iOptimalPlayers, 0.25, 1.0 );
-	return flScale;
+	int iNumPlayers = GetGlobalTeam( iTeam )->GetNumPlayers();
+
+	if ( iNumPlayers <= iOptimalPlayers )
+	{
+		// Vanilla low-player scaling: ramp from 0.25x at 1 player to 1.0x at 8.
+		return RemapValClamped( (float)iNumPlayers, 1.f, (float)iOptimalPlayers, 0.25f, 1.0f );
+	}
+
+	// Large-server scaling: ramp from 1.0x at 8 players to 3.0x at 63.
+	return RemapValClamped( (float)iNumPlayers, (float)iOptimalPlayers, (float)iLargeServerMax, 1.0f, 3.0f );
 }
 
 //-----------------------------------------------------------------------------
@@ -2348,6 +2369,8 @@ void CTeamplayRoundBasedRules::SetWinningTeam( int team, int iWinReason, bool bF
 	m_iWinningTeam = team;
 	m_iWinReason = iWinReason;
 
+	PlayWinSong( team );
+
 	// only reward the team if they have won the map and we're going to do a full reset or the time has run out and we're changing maps
 	bool bRewardTeam = bForceMapReset || ( IsGameUnderTimeLimit() && ( GetTimeLeft() <= 0 ) );
 
@@ -3673,7 +3696,14 @@ bool CTeamplayRoundBasedRules::AreTeamsUnbalanced( int &iHeaviestTeam, int &iLig
 
 	int i = FIRST_GAME_TEAM;
 
+#if defined( TF_VINTAGE ) || defined( TF_VINTAGE_CLIENT )
+	int iTeamCount = GetNumberOfTeams();
+	if (TFGameRules())
+		iTeamCount = TFGameRules()->IsFourTeamGame() ? 5 : 3;
+	for ( CTeam *pTeam = GetGlobalTeam(i); i <= iTeamCount; pTeam = GetGlobalTeam(++i) )
+#else
 	for ( CTeam *pTeam = GetGlobalTeam(i); pTeam != NULL; pTeam = GetGlobalTeam(++i) )
+#endif
 	{
 		int iNumPlayers = pTeam->GetNumPlayers();
 

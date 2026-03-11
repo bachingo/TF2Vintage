@@ -417,22 +417,7 @@ static MapInfo_t s_CommunityMaps[] = {
 	{ "ctf_penguin_peak", "Penguin Peak", "#Gametype_CTF" },
 	{ "pl_patagonia", "Patagonia", "#Gametype_Escort" },
 	{ "plr_cutter", "Cutter", "#Gametype_EscortRace" },
-	{ "vsh_maul", "Maul", "#GameType_VSH" },
-	{ "pl_citadel", "Citadel", "#Gametype_Escort" },
-	{ "pl_aquarius", "Aquarius", "#Gametype_Escort" },
-	{ "cp_fulgur", "Fulgur", "#TF_AttackDefend" },
-	{ "cp_cargo", "Cargo", "#TF_AttackDefend" },
-	{ "cp_conifer", "Conifer", "#TF_AttackDefend" },
-	{ "koth_boardwalk", "Boardwalk", "#Gametype_Koth" },
-	{ "koth_blowout", "Blowout", "#Gametype_Koth" },
-	{ "koth_mannhole", "Mannhole", "#Gametype_Koth" },
-	{ "koth_demolition", "Demolition", "#Gametype_Koth" },
-	{ "ctf_pressure", "Pressure", "#Gametype_CTF" },
-	{ "cp_cowerhouse", "Cowerhouse", "#Gametype_CP" },
-	{ "koth_dusker", "Dusker", "#Gametype_Koth" },
-	{ "arena_afterlife", "Afterlife", "#Gametype_Arena" },
-	{ "ctf_doublecross_event", "Devilcross", "#Gametype_CTF" },
-	{ "sd_marshlands", "Marshlands", "#GameType_HTF" },
+	{ "vsh_maul", " Maul", "#GameType_VSH" },
 };
 
 /*
@@ -462,7 +447,7 @@ static FeaturedWorkshopMap_t s_FeaturedWorkshopMaps[] = {
 	{ "koth_probed",           454139808 },
 	{ "pd_watergate",          456016898 },
 	{ "arena_byre",            454142123 },
-	{ "ctf_2fort_invasion",    FIXME     }, // No public workshop entry yet
+	{ "ctf_2fort_invasion",    353779471 },
 
 	// Halloween 2015
 	{ "cp_sunshine_event",     532473747 },
@@ -612,25 +597,6 @@ static FeaturedWorkshopMap_t s_FeaturedWorkshopMaps[] = {
 	{ "pl_patagonia",			3236427113 },
 	{ "plr_cutter",				3363801747 },
 	{ "vsh_maul",				3069796653 },
-
-	// Summer 2025
-	{ "pl_citadel",				3474587494 },
-	{ "pl_aquarius",			3478583193 },
-	{ "cp_fulgur",				2068252300 },
-	{ "cp_cargo",				3488669143 },
-	{ "cp_conifer",				1419048064 },
-	{ "koth_boardwalk",			3475789229 },
-	{ "koth_blowout",			3473248257 },
-	{ "koth_mannhole",			3478225408 },
-	{ "koth_demolition",		3473618662 },
-	{ "ctf_pressure",			3480634190 },
-
-	// Halloween 2025
-	{ "cp_cowerhouse",			3028277335 },
-	{ "koth_dusker",			3562630084 },
-	{ "arena_afterlife",		3557320996 },
-	{ "ctf_doublecross_event",	3024700002 },
-	{ "sd_marshlands",			3565681202 },
 };
 
 */
@@ -739,7 +705,7 @@ ConVar tf_test_special_ducks( "tf_test_special_ducks", "1", FCVAR_DEVELOPMENTONL
 
 ConVar tf_mm_abandoned_players_per_team_max( "tf_mm_abandoned_players_per_team_max", "1", FCVAR_DEVELOPMENTONLY );
 #endif // GAME_DLL
-ConVar tf_mm_next_map_vote_time( "tf_mm_next_map_vote_time", "15", FCVAR_REPLICATED );
+ConVar tf_mm_next_map_vote_time( "tf_mm_next_map_vote_time", "30", FCVAR_REPLICATED );
 
 
 static float g_fEternaweenAutodisableTime = 0.0f;
@@ -830,6 +796,28 @@ ConVar tf_autobalance_dead_candidates_maxtime( "tf_autobalance_dead_candidates_m
 ConVar tf_autobalance_force_candidates_maxtime( "tf_autobalance_force_candidates_maxtime", "5", FCVAR_REPLICATED );
 ConVar tf_autobalance_xp_bonus( "tf_autobalance_xp_bonus", "500", FCVAR_REPLICATED );
 
+// tf2v specific cvars.
+ConVar tf2v_falldamage_disablespread( "tf2v_falldamage_disablespread", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Toggles random 20% fall damage spread." );
+ConVar tf2v_allow_thirdperson( "tf2v_allow_thirdperson", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allow players to switch to third person mode." );
+ConVar tf2v_classlimit( "tf2v_classlimit", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable classlimits, even when tournament mode is disabled." );
+
+ConVar tf2v_critchance( "tf2v_critchance", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Percent chance for regular critical hits.");
+ConVar tf2v_critchance_rapid( "tf2v_critchance_rapid", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Percent chance for rapid fire critical hits.");
+ConVar tf2v_critchance_melee( "tf2v_critchance_melee", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Percent chance of melee critical hits.");
+ConVar tf2v_crit_duration_rapid( "tf2v_crit_duration_rapid", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Length in seconds for rapid fire critical hit duration.");
+ConVar tf2v_ctf_capcrits( "tf2v_ctf_capcrits", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable critical hits on flag capture." );
+ConVar tf2v_minicrits_on_deflect( "tf2v_minicrits_on_deflect", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Deflected projectiles get minicrits." );
+
+ConVar tf2v_allow_objective_glow_ctf( "tf2v_allow_objective_glow_ctf", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable glow for CTF flags." );
+ConVar tf2v_allow_objective_glow_pl( "tf2v_allow_objective_glow_pl", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable glow for Payload carts." );
+
+ConVar tf2v_console_grenadelauncher_damage("tf2v_console_grenadelauncher_damage", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes the grenade launcher damage to reflect console values.", true, 0, true, 1 );
+ConVar tf2v_console_grenadelauncher_magazine("tf2v_console_grenadelauncher_magazine", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes the grenade launcher magazaine capacity to reflect console values.", true, 0, true, 1 );
+
+ConVar tf2v_remove_loser_disguise("tf2v_remove_loser_disguise", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Forces spies on a losing team to undisguise.", true, 0, true, 1 );
+
+extern ConVar tf2v_use_new_blackbox;
+
 
 #ifdef GAME_DLL
 
@@ -909,7 +897,6 @@ ConVar tf_raid_allow_overtime( "tf_raid_allow_overtime", "0"/*, FCVAR_CHEAT*/ );
 
 ConVar tf_mvm_defenders_team_size( "tf_mvm_defenders_team_size", "6", FCVAR_REPLICATED | FCVAR_NOTIFY, "Maximum number of defenders in MvM" );
 ConVar tf_mvm_max_connected_players( "tf_mvm_max_connected_players", "10", FCVAR_GAMEDLL, "Maximum number of connected real players in MvM" );
-ConVar tf_mvm_max_invaders( "tf_mvm_max_invaders", "22", FCVAR_GAMEDLL, "Maximum number of invaders in MvM" );
 
 ConVar tf_mvm_min_players_to_start( "tf_mvm_min_players_to_start", "3", FCVAR_REPLICATED | FCVAR_NOTIFY, "Minimum number of players connected to start a countdown timer" );
 ConVar tf_mvm_respec_enabled( "tf_mvm_respec_enabled", "1", FCVAR_CHEAT | FCVAR_REPLICATED, "Allow players to refund credits spent on player and item upgrades." );
@@ -1014,7 +1001,7 @@ static bool BIsCvarIndicatingHolidayIsActive( int iCvarValue, /*EHoliday*/ int e
 #ifdef GAME_DLL
 bool IsCustomGameMode( const char *pszMapName )
 {
-	return ( MapHasPrefix( pszMapName, "vsh_" ) || MapHasPrefix( pszMapName, "zi_" ) );
+	return ( StringHasPrefix( pszMapName, "vsh_" ) || StringHasPrefix( pszMapName, "zi_" ) );
 }
 
 bool IsCustomGameMode()
@@ -1141,13 +1128,7 @@ ConVar tf_competitive_required_late_join_confirm_timeout( "tf_competitive_requir
 
 ConVar tf_gamemode_community ( "tf_gamemode_community", "0", FCVAR_REPLICATED | FCVAR_NOTIFY | FCVAR_DEVELOPMENTONLY );
 
-ConVar tf_voice_command_suspension_mode( "tf_voice_command_suspension_mode", "2", FCVAR_REPLICATED, "0 = None | 1 = No Voice Commands | 2 = Rate Limited" );
-
 #ifdef GAME_DLL
-
-ConVar tf_voice_command_suspension_rate_limit_bucket_count( "tf_voice_command_suspension_rate_limit_bucket_count", "5" ); // Bucket size of 5.
-ConVar tf_voice_command_suspension_rate_limit_bucket_refill_rate( "tf_voice_command_suspension_rate_limit_bucket_refill_rate", "6" ); // 6s
-
 void cc_powerup_mode( IConVar *pConVar, const char *pOldString, float flOldValue )
 {
 	ConVarRef var( pConVar );
@@ -1169,11 +1150,11 @@ void cc_powerup_mode( IConVar *pConVar, const char *pOldString, float flOldValue
 }
 
 ConVar tf_powerup_mode( "tf_powerup_mode", "0", FCVAR_NOTIFY, "Enable/disable powerup mode. Not compatible with Mann Vs Machine mode", cc_powerup_mode );
-ConVar tf_powerup_mode_imbalance_delta( "tf_powerup_mode_imbalance_delta", "24", FCVAR_REPLICATED, "Powerup kill score lead one team must have before imbalance measures are initiated" );
-ConVar tf_powerup_mode_imbalance_consecutive_min_players( "tf_powerup_mode_imbalance_consecutive_min_players", "10", FCVAR_REPLICATED, "Minimum number of players on the server before consecutive imbalance measures trigger team balancing" );
-ConVar tf_powerup_mode_imbalance_consecutive_time( "tf_powerup_mode_imbalance_consecutive_time", "1200", FCVAR_REPLICATED, "Teams are balanced if consecutive imbalance measures for the same team are triggered in less time (seconds)" );
-ConVar tf_powerup_mode_dominant_multiplier( "tf_powerup_mode_dominant_multiplier", "3", FCVAR_REPLICATED, "The multiple by which a player must exceed the median kills by in order to be considered dominant" );
-ConVar tf_powerup_mode_killcount_timer_length( "tf_powerup_mode_killcount_timer_length", "300", FCVAR_REPLICATED, "How long to wait between kill count tests that determine if a player is dominating" ); //should be a multiple of 60 because we use this to calculate an integer
+ConVar tf_powerup_mode_imbalance_delta( "tf_powerup_mode_imbalance_delta", "24", FCVAR_CHEAT, "Powerup kill score lead one team must have before imbalance measures are initiated" );
+ConVar tf_powerup_mode_imbalance_consecutive_min_players( "tf_powerup_mode_imbalance_consecutive_min_players", "10", FCVAR_CHEAT, "Minimum number of players on the server before consecutive imbalance measures trigger team balancing" );
+ConVar tf_powerup_mode_imbalance_consecutive_time( "tf_powerup_mode_imbalance_consecutive_time", "1200", FCVAR_CHEAT, "Teams are balanced if consecutive imbalance measures for the same team are triggered in less time (seconds)" );
+ConVar tf_powerup_mode_dominant_multiplier( "tf_powerup_mode_dominant_multiplier", "3", FCVAR_CHEAT, "The multiple by which a player must exceed the median kills by in order to be considered dominant" );
+ConVar tf_powerup_mode_killcount_timer_length( "tf_powerup_mode_killcount_timer_length", "300", FCVAR_CHEAT, "How long to wait between kill count tests that determine if a player is dominating" ); //should be a multiple of 60 because we use this to calculate an integer
 
 ConVar tf_skillrating_update_interval( "tf_skillrating_update_interval", "180", FCVAR_ARCHIVE, "How often to update the GC and OGS." );
 
@@ -3550,7 +3531,7 @@ void CTFGameRules::Precache( void )
 		CMerasmus::PrecacheMerasmus();
 	}
 
-	if ( MapHasPrefix( STRING( gpGlobals->mapname ), "mvm_" ) )
+	if ( StringHasPrefix( STRING( gpGlobals->mapname ), "mvm_" ) )
 	{
 		CTFPlayer::PrecacheMvM();
 	}
@@ -3606,13 +3587,36 @@ void CTFGameRules::LevelInitPostEntity( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+// TF2V: global multiplier on the large-server respawn scalar.
+// Set to 0 to completely disable the large-server respawn bonus.
+// Set to 2.0 to double the scaling effect (very long waits on big servers).
+static ConVar tf2v_largegame_respawn_scale(
+	"tf2v_largegame_respawn_scale", "1.0",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"Multiplier on the large-server respawn time bonus. "
+	"0 = disable large-server scaling; 1 = default; 2 = double the effect.",
+	true, 0.f, true, 4.f );
+
 float CTFGameRules::GetRespawnTimeScalar( int iTeam )
 {
 	// In PvE mode, we don't modify respawn times
 	if ( IsPVEModeActive() )
-		return 1.0;
+		return 1.0f;
 
-	return BaseClass::GetRespawnTimeScalar( iTeam );
+	float flScale = BaseClass::GetRespawnTimeScalar( iTeam );
+
+	// Apply the large-server multiplier.
+	// BaseClass returns 1.0 at exactly 8 players per team.  When it returns
+	// MORE than 1.0 (i.e. we are on a large server) we blend the excess with
+	// the operator-controlled scale factor so that the vanilla 8-player
+	// behaviour is never affected and operators can tune large-server feel.
+	if ( flScale > 1.0f )
+	{
+		const float flExcess = flScale - 1.0f;  // portion above vanilla
+		flScale = 1.0f + flExcess * tf2v_largegame_respawn_scale.GetFloat();
+	}
+
+	return flScale;
 }
 
 //-----------------------------------------------------------------------------
@@ -4337,7 +4341,7 @@ void CTFGameRules::Activate()
 		tf_gamemode_mvm.SetValue( 1 );
 		m_nGameType.Set( TF_GAMETYPE_MVM );
 	}
-	else if ( MapHasPrefix( STRING( gpGlobals->mapname ), "sd_" ) )
+	else if ( StringHasPrefix( STRING( gpGlobals->mapname ), "sd_" ) )
 	{
 		m_bPlayingSpecialDeliveryMode.Set( true );
 		tf_gamemode_sd.SetValue( 1 );
@@ -7446,10 +7450,8 @@ float CTFGameRules::ApplyOnDamageAliveModifyRules( const CTakeDamageInfo &info, 
 			}
 		}
 
-		if ( ( pAttacker == pVictimBaseEntity ) &&
-			 ( ( info.GetDamageType() & DMG_BLAST ) || ( info.GetDamageCustom() == TF_DMG_CUSTOM_FLARE_EXPLOSION ) ) &&
-			 ( info.GetDamagedOtherPlayers() == 0 ) && 
-			 ( info.GetDamageCustom() != TF_DMG_CUSTOM_TAUNTATK_GRENADE ) )
+		if ( pAttacker == pVictimBaseEntity && (info.GetDamageType() & DMG_BLAST) &&
+			 info.GetDamagedOtherPlayers() == 0 && (info.GetDamageCustom() != TF_DMG_CUSTOM_TAUNTATK_GRENADE) )
 		{
 			// If we attacked ourselves, hurt no other players, and it is a blast,
 			// check the attribute that reduces rocket jump damage.
@@ -10169,12 +10171,7 @@ VoiceCommandMenuItem_t *CTFGameRules::VoiceCommand( CBaseMultiplayerPlayer *pPla
 	if ( pTFPlayer )
 	{
 		if ( pTFPlayer->BHaveChatSuspensionInCurrentMatch() )
-		{
-			if ( tf_voice_command_suspension_mode.GetInt() == 1 )
-			{
-				return NULL;
-			}
-		}
+			return NULL;
 
 		if ( pTFPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_GHOST_MODE ) )
 		{
@@ -10278,7 +10275,7 @@ void CTFGameRules::ClientSettingsChanged( CBasePlayer *pPlayer )
 
 	pTFPlayer->SetDefaultFOV( iFov );
 
-	pTFPlayer->m_bFlipViewModels = Q_atoi( engine->GetClientConVarValue( pPlayer->entindex(), "cl_flipviewmodels" ) ) > 0;
+	pTFPlayer->m_bFlipViewModels = Q_strcmp( engine->GetClientConVarValue( pPlayer->entindex(), "cl_flipviewmodels" ), "1" ) == 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -12436,10 +12433,6 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 		{
 			killer_weapon_name = "megaton";
 		}
-	}
-	else if ( info.GetDamageCustom() == TF_DMG_CUSTOM_TAUNTATK_TRICKSHOT )
-	{
-		killer_weapon_name = "tf_weapon_taunt_trickshot";
 	}
 	else if ( pScorer && pInflictor && ( pInflictor == pScorer ) )
 	{
@@ -17018,7 +17011,7 @@ int CTFGameRules::CalcPlayerScore( RoundStats_t *pRoundStats, CTFPlayer *pPlayer
 					( pRoundStats->m_iStat[TFSTAT_TELEPORTS] / TF_SCORE_TELEPORTS_PER_POINT ) +
 					( pRoundStats->m_iStat[TFSTAT_INVULNS] / TF_SCORE_INVULN ) +
 					( pRoundStats->m_iStat[TFSTAT_REVENGE] / TF_SCORE_REVENGE ) +
-					( pRoundStats->m_iStat[TFSTAT_BONUS_POINTS] / TF_SCORE_BONUS_POINT_DIVISOR ) +
+					( pRoundStats->m_iStat[TFSTAT_BONUS_POINTS] / TF_SCORE_BONUS_POINT_DIVISOR );
 					( pRoundStats->m_iStat[TFSTAT_CURRENCY_COLLECTED] / TF_SCORE_CURRENCY_COLLECTED );
 
 	if ( pPlayer )
@@ -22367,123 +22360,6 @@ void CTFGameRules::BroadcastSound( int iTeam, const char *sound, int iAdditional
 		event->SetInt( "player", pTFPlayer ? pTFPlayer->entindex() : -1 );
 		gameeventmanager->FireEvent( event );
 	}
-}
-
-#define TF_GAMERULES_SCRIPT_FUNC( function, desc ) \
-	ScriptRegisterFunctionNamed( g_pScriptVM, Script##function, #function, desc )
-
-int		ScriptGetRoundState()										{ return TFGameRules()->GetRoundState(); }
-bool	ScriptIsInWaitingForPlayers()								{ return TFGameRules()->IsInWaitingForPlayers(); }
-int		ScriptGetWinningTeam()										{ return TFGameRules()->GetWinningTeam(); }
-bool	ScriptInOvertime()											{ return TFGameRules()->InOvertime(); }
-bool	ScriptIsBirthday()											{ return TFGameRules()->IsBirthday(); }
-bool	ScriptIsHolidayActive( int eHoliday )						{ return TFGameRules()->IsHolidayActive( eHoliday ); }
-bool	ScriptPointsMayBeCaptured()									{ return TFGameRules()->PointsMayBeCaptured(); }
-int		ScriptGetClassLimit( int iClass )							{ return TFGameRules()->GetClassLimit( iClass ); }
-bool	ScriptFlagsMayBeCapped()									{ return TFGameRules()->FlagsMayBeCapped(); }
-int		ScriptGetStopWatchState()									{ return TFGameRules()->GetStopWatchState(); }
-bool	ScriptIsInArenaMode()										{ return TFGameRules()->IsInArenaMode(); }
-bool	ScriptIsInKothMode()										{ return TFGameRules()->IsInKothMode(); }
-bool	ScriptIsInMedievalMode()									{ return TFGameRules()->IsInMedievalMode(); }
-bool	ScriptIsHolidayMap( int nHoliday )							{ return TFGameRules()->IsHolidayMap( nHoliday ); }
-bool	ScriptIsMannVsMachineMode()									{ return TFGameRules()->IsMannVsMachineMode(); }
-bool	ScriptGetMannVsMachineAlarmStatus()							{ return TFGameRules()->GetMannVsMachineAlarmStatus(); }
-void	ScriptSetMannVsMachineAlarmStatus( bool bEnabled )			{ return TFGameRules()->SetMannVsMachineAlarmStatus( bEnabled ); }
-bool	ScriptIsQuickBuildTime()									{ return TFGameRules()->IsQuickBuildTime(); }
-bool	ScriptGameModeUsesUpgrades()								{ return TFGameRules()->GameModeUsesUpgrades(); }
-bool	ScriptGameModeUsesCurrency()								{ return TFGameRules()->GameModeUsesCurrency(); }
-bool	ScriptGameModeUsesMiniBosses()								{ return TFGameRules()->GameModeUsesMiniBosses(); }
-bool	ScriptIsPasstimeMode()										{ return TFGameRules()->IsPasstimeMode(); }
-bool	ScriptIsMannVsMachineRespecEnabled()						{ return TFGameRules()->IsMannVsMachineRespecEnabled(); }
-bool	ScriptIsPowerupMode()										{ return TFGameRules()->IsPowerupMode(); }
-bool	ScriptIsCompetitiveMode()									{ return TFGameRules()->IsCompetitiveMode(); }
-bool	ScriptIsMatchTypeCasual()									{ return TFGameRules()->IsMatchTypeCasual(); }
-bool	ScriptIsMatchTypeCompetitive()								{ return TFGameRules()->IsMatchTypeCompetitive(); }
-bool	ScriptInMatchStartCountdown()								{ return TFGameRules()->InMatchStartCountdown(); }
-bool	ScriptMatchmakingShouldUseStopwatchMode()					{ return TFGameRules()->MatchmakingShouldUseStopwatchMode(); }
-bool	ScriptIsAttackDefenseMode()									{ return TFGameRules()->IsAttackDefenseMode(); }
-bool	ScriptUsePlayerReadyStatusMode()							{ return TFGameRules()->UsePlayerReadyStatusMode(); }
-bool	ScriptPlayerReadyStatus_HaveMinPlayersToEnable()			{ return TFGameRules()->PlayerReadyStatus_HaveMinPlayersToEnable(); }
-bool	ScriptPlayerReadyStatus_ArePlayersOnTeamReady(int iTeam)	{ return TFGameRules()->PlayerReadyStatus_ArePlayersOnTeamReady( iTeam ); }
-void	ScriptPlayerReadyStatus_ResetState()						{ TFGameRules()->PlayerReadyStatus_ResetState(); }
-bool	ScriptIsDefaultGameMode()									{ return TFGameRules()->IsDefaultGameMode(); }
-bool	ScriptIsPVEModeActive()										{ return TFGameRules()->IsPVEModeActive(); }
-bool	ScriptAllowThirdPersonCamera()								{ return TFGameRules()->AllowThirdPersonCamera(); }
-void	ScriptSetGravityMultiplier( float flMultiplier )			{ return TFGameRules()->SetGravityMultiplier( flMultiplier ); }
-float	ScriptGetGravityMultiplier()								{ return TFGameRules()->GetGravityMultiplier(); }
-void	ScriptSetPlayersInHell( bool bInHell )						{ return TFGameRules()->SetPlayersInHell( bInHell ); }
-bool	ScriptArePlayersInHell()									{ return TFGameRules()->ArePlayersInHell(); }
-void	ScriptSetUsingSpells( bool bUsingSpells )					{ return TFGameRules()->SetUsingSpells( bUsingSpells ); }
-bool	ScriptIsUsingSpells()										{ return TFGameRules()->IsUsingSpells(); }
-bool	ScriptIsUsingGrapplingHook()								{ return TFGameRules()->IsUsingGrapplingHook(); }
-bool	ScriptIsTruceActive()										{ return TFGameRules()->IsTruceActive(); }
-bool	ScriptMapHasMatchSummaryStage()								{ return TFGameRules()->MapHasMatchSummaryStage(); }
-bool	ScriptPlayersAreOnMatchSummaryStage()						{ return TFGameRules()->PlayersAreOnMatchSummaryStage(); }
-bool	ScriptHaveStopWatchWinner()									{ return TFGameRules()->HaveStopWatchWinner(); }
-void	ScriptSetOvertimeAllowedForCTF( bool bAllowed )				{ TFGameRules()->SetOvertimeAllowedForCTF( bAllowed ); }
-bool	ScriptGetOvertimeAllowedForCTF()							{ return TFGameRules()->GetOvertimeAllowedForCTF(); }
-
-void	ScriptForceEnableUpgrades( int nState )						{ TFGameRules()->ForceEnableUpgrades( nState ); }
-void	ScriptForceEscortPushLogic( int nState )					{ TFGameRules()->ForceEscortPushLogic( nState ); }
-
-void CTFGameRules::RegisterScriptFunctions()
-{
-	TF_GAMERULES_SCRIPT_FUNC( GetRoundState,							"Get current round state. See Constants.ERoundState" );
-	TF_GAMERULES_SCRIPT_FUNC( IsInWaitingForPlayers,					"Are we waiting for some stragglers?" );
-	TF_GAMERULES_SCRIPT_FUNC( GetWinningTeam,							"Who won!" );
-	TF_GAMERULES_SCRIPT_FUNC( InOvertime,								"Currently in overtime?" );
-
-	TF_GAMERULES_SCRIPT_FUNC( IsBirthday,								"Are we in birthday mode?" );
-	TF_GAMERULES_SCRIPT_FUNC( IsHolidayActive,							"Is the given holiday active? See Constants.EHoliday" );
-	TF_GAMERULES_SCRIPT_FUNC( PointsMayBeCaptured,						"Are points able to be captured?" );
-	TF_GAMERULES_SCRIPT_FUNC( GetClassLimit,							"Get class limit for class. See Constants.ETFClass" );
-	TF_GAMERULES_SCRIPT_FUNC( FlagsMayBeCapped,							"May a flag be captured?" );
-	TF_GAMERULES_SCRIPT_FUNC( GetStopWatchState,						"Get the current stopwatch state. See Constants.EStopwatchState" );
-	TF_GAMERULES_SCRIPT_FUNC( IsInArenaMode,							"Playing arena mode?" );
-	TF_GAMERULES_SCRIPT_FUNC( IsInKothMode,								"Playing king of the hill mode?" );
-	TF_GAMERULES_SCRIPT_FUNC( IsInMedievalMode,							"Playing medieval mode?" );
-	TF_GAMERULES_SCRIPT_FUNC( IsHolidayMap,								"Playing a holiday map? See Constants.EHoliday" );
-	TF_GAMERULES_SCRIPT_FUNC( IsMannVsMachineMode,						"Playing MvM? Beep boop" );
-	TF_GAMERULES_SCRIPT_FUNC( GetMannVsMachineAlarmStatus,				"" );
-	TF_GAMERULES_SCRIPT_FUNC( SetMannVsMachineAlarmStatus,				"" );
-	TF_GAMERULES_SCRIPT_FUNC( IsQuickBuildTime,							"If an engie places a building, will it immediately upgrade? Eg. MvM pre-round etc." );
-	TF_GAMERULES_SCRIPT_FUNC( GameModeUsesUpgrades,						"Does the current gamemode have upgrades?" );
-	TF_GAMERULES_SCRIPT_FUNC( GameModeUsesCurrency,						"Does the current gamemode have currency?" );
-	TF_GAMERULES_SCRIPT_FUNC( GameModeUsesMiniBosses,					"Does the current gamemode have minibosses?" );
-	TF_GAMERULES_SCRIPT_FUNC( IsPasstimeMode,							"No ball games." );
-	TF_GAMERULES_SCRIPT_FUNC( IsMannVsMachineRespecEnabled,				"Are players allowed to refund their upgrades?" );
-	TF_GAMERULES_SCRIPT_FUNC( IsPowerupMode,							"Playing powerup mode? Not compatible with MvM" );
-	TF_GAMERULES_SCRIPT_FUNC( IsCompetitiveMode,						"Playing competitive?" );
-	TF_GAMERULES_SCRIPT_FUNC( IsMatchTypeCasual,						"Playing casual?" );
-	TF_GAMERULES_SCRIPT_FUNC( IsMatchTypeCompetitive,					"Playing competitive?" );
-	TF_GAMERULES_SCRIPT_FUNC( InMatchStartCountdown,					"Are we in the pre-match state?" );
-	TF_GAMERULES_SCRIPT_FUNC( MatchmakingShouldUseStopwatchMode,		"" );
-	TF_GAMERULES_SCRIPT_FUNC( IsAttackDefenseMode,						"" );
-	TF_GAMERULES_SCRIPT_FUNC( UsePlayerReadyStatusMode,					"" );
-	TF_GAMERULES_SCRIPT_FUNC( PlayerReadyStatus_HaveMinPlayersToEnable,	"" );
-	TF_GAMERULES_SCRIPT_FUNC( PlayerReadyStatus_ArePlayersOnTeamReady,	"" );
-	TF_GAMERULES_SCRIPT_FUNC( PlayerReadyStatus_ResetState,				"" );
-	TF_GAMERULES_SCRIPT_FUNC( IsDefaultGameMode,						"The absence of arena, mvm, tournament mode, etc" );
-	TF_GAMERULES_SCRIPT_FUNC( IsPVEModeActive,							"" );
-	TF_GAMERULES_SCRIPT_FUNC( AllowThirdPersonCamera,					"" );
-	TF_GAMERULES_SCRIPT_FUNC( SetGravityMultiplier,						"" );
-	TF_GAMERULES_SCRIPT_FUNC( GetGravityMultiplier,						"" );
-	TF_GAMERULES_SCRIPT_FUNC( SetPlayersInHell,							"" );
-	TF_GAMERULES_SCRIPT_FUNC( ArePlayersInHell,							"" );
-	TF_GAMERULES_SCRIPT_FUNC( SetUsingSpells,							"" );
-	TF_GAMERULES_SCRIPT_FUNC( IsUsingSpells,							"" );
-	TF_GAMERULES_SCRIPT_FUNC( IsUsingGrapplingHook,						"" );
-	TF_GAMERULES_SCRIPT_FUNC( IsTruceActive,							"" );
-	TF_GAMERULES_SCRIPT_FUNC( MapHasMatchSummaryStage,					"" );
-	TF_GAMERULES_SCRIPT_FUNC( PlayersAreOnMatchSummaryStage,			"" );
-	TF_GAMERULES_SCRIPT_FUNC( HaveStopWatchWinner,						"" );
-	TF_GAMERULES_SCRIPT_FUNC( GetOvertimeAllowedForCTF,					"" );
-	TF_GAMERULES_SCRIPT_FUNC( SetOvertimeAllowedForCTF,					"" );
-
-	TF_GAMERULES_SCRIPT_FUNC( ForceEnableUpgrades,						"Whether to force on MvM-styled upgrades on/off. 0 -> default, 1 -> force off, 2 -> force on" );
-	TF_GAMERULES_SCRIPT_FUNC( ForceEscortPushLogic,						"Forces payload pushing logic. 0 -> default, 1 -> force off, 2 -> force on" );
-
-	g_pScriptVM->RegisterInstance( &PlayerVoiceListener(), "PlayerVoiceListener" );
 }
 
 #endif // GAME_DLL
