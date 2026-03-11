@@ -7,6 +7,9 @@
 //=====================================================================================//
 
 #include "cbase.h"
+#ifndef POSIX
+#include "discord.h"
+#endif
 #include "tf_presence.h"
 #include "c_team_objectiveresource.h"
 #include "tf_gamerules.h"
@@ -14,6 +17,17 @@
 #include "c_tf_playerresource.h"
 #include "engine/imatchmaking.h"
 #include "ixboxsystem.h"
+#include "fmtstr.h"
+#include "steam/steamclientpublic.h"
+#include "steam/isteammatchmaking.h"
+#include "steam/isteamgameserver.h"
+#include "steam/isteamfriends.h"
+#include "steam/steam_api.h"
+#include "tier0/icommandline.h"
+#include "mathlib/IceKey.H"
+#include <inetchannelinfo.h>
+#include "tf_gc_client.h"
+#include "tf_partyclient.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -84,6 +98,33 @@ static s_PresenceTranslation s_PresenceValues[] = {
 	{ X_CONTEXT_GAME_TYPE_STANDARD,			  		"CONTEXT_GAME_TYPE_STANDARD" },
 	{ X_CONTEXT_GAME_TYPE_RANKED,				  	"CONTEXT_GAME_TYPE_RANKED" },
 #endif
+};
+
+
+//-----------------------------------------------------------------------------
+// Discord RPC
+//-----------------------------------------------------------------------------
+struct DRPClassImages_t
+{
+	const char *redTeamImage;
+	const char *redTeamImageDead;
+	const char *bluTeamImage;
+	const char *bluTeamImageDead;
+};
+
+static const DRPClassImages_t s_pClassImages[TF_CLASS_COUNT_ALL] =
+{
+	{ "tf2v_drp_logo",	"tf2v_drp_logo",		"tf2v_drp_logo",	"tf2v_drp_logo"			},
+	{ "scout_red",		"scout_red_gray",		"scout_blue",		"scout_blue_gray"		},
+	{ "sniper_red",		"sniper_red_gray",		"sniper_blue",		"sniper_blue_gray"		},
+	{ "soldier_red",	"soldier_red_gray",		"soldier_blue",		"soldier_blue_gray"		},
+	{ "demoman_red",	"demoman_red_gray",		"demoman_blue",		"demoman_blue_gray"		},
+	{ "medic_red",		"medic_red_gray",		"medic_blue",		"medic_blue_gray"		},
+	{ "heavy_red",		"heavy_red_gray",		"heavy_blue",		"heavy_blue_gray"		},
+	{ "pyro_red",		"pyro_red_gray",		"pyro_blue",		"pyro_blue_gray"		},
+	{ "spy_red",		"spy_red_gray",			"spy_blue",			"spy_blue_gray"			},
+	{ "engineer_red",	"engineer_red_gray",	"engineer_blue",	"engineer_blue_gray"	},
+	{ "tf2v_drp_logo",	"tf2v_drp_logo",		"tf2v_drp_logo",	"tf2v_drp_logo"			}
 };
 
 //-----------------------------------------------------------------------------
@@ -233,6 +274,8 @@ bool CTF_Presence::Init()
 
 	ListenForGameEvent( "controlpoint_initialized" );
 	ListenForGameEvent( "controlpoint_updateowner" );
+	ListenForGameEvent( "controlpoint_timer_updated" );
+	ListenForGameEvent( "controlpoint_unlock_updated" );
 	ListenForGameEvent( "teamplay_round_start" );
 	ListenForGameEvent( "ctf_flag_captured" );
 	ListenForGameEvent( "playing_commentary" );
@@ -529,3 +572,678 @@ void CTF_Presence::UploadStats()
 #endif
 }
 
+#ifndef POSIX
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+static CTFDiscordPresence s_drp;
+
+#define DISCORD_COLOR Color( 114, 137, 218, 255 )
+
+
+CTFDiscordPresence::CTFDiscordPresence()
+	: m_szHostName(""), m_szServerInfo(""), m_szSteamID(""), m_szTeamPref(""), m_nSourceTVPort(27020)
+{
+	VCRHook_Time( &m_iCreationTimestamp );
+	m_flLastPlayerJoinTime = 0;
+
+	rpc = this;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Catch certain events to update the presence
+//-----------------------------------------------------------------------------
+void CTFDiscordPresence::FireGameEvent( IGameEvent *event )
+{
+	bool bIsDead = false;
+	const char *name = event->GetName();
+
+	if ( g_pDiscord == NULL )
+		return;
+
+	if ( FStrEq( name, "server_spawn" ) )
+	{
+		Q_strncpy( m_szHostName, event->GetString( "hostname" ), DISCORD_FIELD_MAXLEN );
+		Q_strncpy( m_szServerInfo, event->GetString( "address" ), DISCORD_FIELD_MAXLEN );
+
+		// Read the SourceTV port from the event (engine provides it as "tvport").
+		// Default to 27020 when the field is absent (e.g. older server builds).
+		m_nSourceTVPort = event->GetInt( "tvport", 27020 );
+		if ( m_nSourceTVPort <= 0 )
+			m_nSourceTVPort = 27020;
+
+		m_Activity.GetSecrets().SetJoin( GetJoinSecret() );
+		m_Activity.GetSecrets().SetSpectate( GetSpectateSecret() );
+
+		// Also sync the party ID so the Steam "Join Game" overlay works.
+		// Use the party ID if the player is in a GC party; fall back to SteamID.
+		if ( GTFPartyClient()->BHaveActiveParty() )
+		{
+			char szPartyID[ 32 ];
+			V_snprintf( szPartyID, sizeof( szPartyID ), "party_%llu", GTFPartyClient()->GetActivePartyID() );
+			m_Activity.GetParty().SetId( szPartyID );
+		}
+
+		g_pDiscord->ActivityManager().UpdateActivity( m_Activity, &OnActivityUpdate );
+	}
+
+	if ( !engine->IsConnected() )
+		return;
+
+	if ( FStrEq( name, "localplayer_changeteam" ) )
+	{
+		// Keep our team preference current so the join secret stays accurate.
+		m_szTeamPref[0] = '\0';
+		C_TFPlayer *pLocal = C_TFPlayer::GetLocalTFPlayer();
+		if ( pLocal )
+		{
+			switch ( pLocal->GetTeamNumber() )
+			{
+				case TF_TEAM_RED:  V_strncpy( m_szTeamPref, "red",  sizeof( m_szTeamPref ) ); break;
+				case TF_TEAM_BLUE: V_strncpy( m_szTeamPref, "blue", sizeof( m_szTeamPref ) ); break;
+				default: break;
+			}
+		}
+		// Refresh join secret so next invitee gets the current team hint.
+		m_Activity.GetSecrets().SetJoin( GetJoinSecret() );
+		g_pDiscord->ActivityManager().UpdateActivity( m_Activity, &OnActivityUpdate );
+	}
+
+	if ( FStrEq( name, "player_connect" ) || FStrEq( name, "player_disconnect" ) )
+	{
+		if ( !g_TF_PR )
+			return;
+
+		const int maxPlayers = gpGlobals->maxClients;
+		int curPlayers = 0;
+
+		for ( int i = 1; i <= maxPlayers; ++i )
+		{
+			if ( g_TF_PR->IsConnected( i ) )
+				curPlayers++;
+		}
+
+		// On map change *all* connected players are reconnected, prevent rate limits here
+		if ( ( gpGlobals->curtime - m_flLastPlayerJoinTime ) < 1.0f )
+		{
+			m_nPlayerCount = curPlayers;
+			return;
+		}
+
+		m_Activity.GetParty().GetSize().SetCurrentSize( curPlayers );
+		m_Activity.GetParty().GetSize().SetMaxSize( maxPlayers );
+
+		m_flLastPlayerJoinTime = gpGlobals->curtime;
+	}
+	else if ( FStrEq( name, "player_death" ) )
+	{
+		int userid = event->GetInt( "userid" );
+		if ( UTIL_PlayerByUserId( userid ) != C_BasePlayer::GetLocalPlayer() )
+			return;
+
+		if ( event->GetInt( "death_flags" ) & TF_DEATH_FEIGN_DEATH )
+			return;
+
+		bIsDead = true;
+	}
+
+	UpdatePresence( bIsDead );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFDiscordPresence::Init( void )
+{
+	ListenForGameEvent( "server_spawn" );
+	ListenForGameEvent( "localplayer_changeteam" );
+	ListenForGameEvent( "localplayer_changeclass" );
+	ListenForGameEvent( "localplayer_respawn" );
+	ListenForGameEvent( "player_death" );
+	ListenForGameEvent( "player_connect" );
+	ListenForGameEvent( "player_disconnect" );
+
+	return BaseClass::Init();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFDiscordPresence::InitPresence( void )
+{
+	if ( g_pDiscord == NULL )
+		return true;
+
+	g_pDiscord->SetLogHook(
+	#ifdef DEBUG
+		discord::LogLevel::Debug,
+	#else
+		discord::LogLevel::Warn,
+	#endif
+		&OnLogMessage
+	);
+
+	Q_memset( &m_CurrentUser, 0, sizeof( discord::User ) );
+	g_pDiscord->UserManager().OnCurrentUserUpdate.Connect( &OnReady );
+
+	char command[512];
+	V_snprintf( command, sizeof( command ), "%s -game \"%s\" -novid -steam", CommandLine()->GetParm( 0 ), CommandLine()->ParmValue( "-game" ) );
+	g_pDiscord->ActivityManager().RegisterCommand( command );
+	g_pDiscord->ActivityManager().RegisterSteam( engine->GetAppID() );
+
+	g_pDiscord->ActivityManager().OnActivityJoin.Connect( &OnJoinedGame );
+	g_pDiscord->ActivityManager().OnActivityJoinRequest.Connect( &OnJoinRequested );
+	g_pDiscord->ActivityManager().OnActivitySpectate.Connect( &OnSpectateGame );
+
+	CSteamID steamID{};
+	if ( steamapicontext && steamapicontext->SteamUser() )
+		steamID = steamapicontext->SteamUser()->GetSteamID();
+	if ( steamID.BIndividualAccount() )
+		V_sprintf_safe( m_szSteamID, "%llu", steamID.ConvertToUint64() );
+
+	m_Activity.GetSecrets().SetMatch( GetMatchSecret() );
+	m_Activity.GetParty().SetId( m_szSteamID );
+	g_pDiscord->ActivityManager().UpdateActivity( m_Activity, &OnActivityUpdate );
+
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFDiscordPresence::Shutdown( void )
+{
+	BaseClass::Shutdown();
+
+	Q_memset( &m_Activity, 0, sizeof( discord::Activity ) );
+	Q_memset( &m_CurrentUser, 0, sizeof( discord::User ) );
+
+	if ( steamapicontext->SteamFriends() )
+		steamapicontext->SteamFriends()->ClearRichPresence();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFDiscordPresence::OnReady()
+{
+	extern ConVar cl_discord_presence_enabled;
+	if ( !cl_discord_presence_enabled.GetBool() )
+	{
+		if ( g_pDiscord )
+		{
+			delete g_pDiscord;
+			g_pDiscord = NULL;
+		}
+
+		if ( steamapicontext->SteamFriends() )
+			steamapicontext->SteamFriends()->ClearRichPresence();
+
+		return;
+	}
+
+	discord::User user;
+	g_pDiscord->UserManager().GetCurrentUser( &user );
+	static_cast<CTFDiscordPresence *>( rpc )->SetCurrentUser( user );
+
+	ConDColorMsg( DISCORD_COLOR, "[DRP] Ready!\n" );
+	ConDColorMsg( DISCORD_COLOR, "[DRP] User %s#%s - %lld\n", user.GetUsername(), user.GetDiscriminator(), user.GetId() );
+
+	rpc->ResetPresence();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Handles the Discord "join game" button.
+// The join secret payload format is "ip:port" or "ip:port/red" / "ip:port/blue".
+// We use GTFGCClientSystem()->ConnectToServer() so the GC matchmaking layer
+// stays informed (records it as a recent match server, etc.).  If the GC client
+// isn't available we fall back to a raw engine connect command.
+// When a team hint is present we queue a "jointeam" after connection so the
+// joiner ends up on the same team as the inviter.
+//-----------------------------------------------------------------------------
+void CTFDiscordPresence::OnJoinedGame( const char *joinSecret )
+{
+	char szDecoded[ DISCORD_FIELD_MAXLEN ];
+	V_strncpy( szDecoded, joinSecret, sizeof( szDecoded ) );
+	UTIL_DecodeICE( (unsigned char *)szDecoded, sizeof( szDecoded ), rpc->GetEncryptionKey() );
+	ConDColorMsg( DISCORD_COLOR, "[DRP] Join Game: %s\n", szDecoded );
+
+	// Split optional team hint: "ip:port/red" → addr="ip:port", team="red"
+	char szAddr[ 64 ];
+	char szTeam[ 16 ];
+	szTeam[0] = '\0';
+
+	char *pSlash = V_strrchr( szDecoded, '/' );
+	if ( pSlash )
+	{
+		const char *pTeamPart = pSlash + 1;
+		if ( FStrEq( pTeamPart, "red" ) || FStrEq( pTeamPart, "blue" ) )
+		{
+			V_strncpy( szTeam, pTeamPart, sizeof( szTeam ) );
+			int nAddrLen = (int)( pSlash - szDecoded );
+			V_strncpy( szAddr, szDecoded, MIN( nAddrLen + 1, (int)sizeof( szAddr ) ) );
+		}
+		else
+		{
+			V_strncpy( szAddr, szDecoded, sizeof( szAddr ) );
+		}
+	}
+	else
+	{
+		V_strncpy( szAddr, szDecoded, sizeof( szAddr ) );
+	}
+
+	// Use the GC system's connect path when available — it records the server in
+	// the recent-match-server list and appends the "matchmaking" connect flag so
+	// the engine handshake completes correctly on insecure servers.
+	CTFGCClientSystem *pGC = GTFGCClientSystem();
+	if ( pGC && pGC->BConnectedtoGC() )
+	{
+		pGC->ConnectToServer( szAddr );
+	}
+	else
+	{
+		char szCommand[ 128 ];
+		Q_snprintf( szCommand, sizeof( szCommand ), "connect %s\n", szAddr );
+		engine->ExecuteClientCmd( szCommand );
+	}
+
+	// Queue a team join hint to fire ~3 seconds after connect (~180 ticks at 66Hz).
+	// HandleCommand_JoinTeam on the server will honour team balance rules, so this
+	// is best-effort rather than a guarantee.
+	if ( szTeam[0] != '\0' )
+	{
+		char szJoinCmd[ 64 ];
+		Q_snprintf( szJoinCmd, sizeof( szJoinCmd ), "wait 180; jointeam %s\n", szTeam );
+		engine->ExecuteClientCmd( szJoinCmd );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Handles the Discord "spectate" button.
+// The spectate secret encodes "ip:stvport" so we connect directly to SourceTV
+// without guessing the port.
+//-----------------------------------------------------------------------------
+void CTFDiscordPresence::OnSpectateGame( const char *spectateSecret )
+{
+	char szDecoded[ DISCORD_FIELD_MAXLEN ];
+	V_strncpy( szDecoded, spectateSecret, sizeof( szDecoded ) );
+	UTIL_DecodeICE( (unsigned char *)szDecoded, sizeof( szDecoded ), rpc->GetEncryptionKey() );
+	ConDColorMsg( DISCORD_COLOR, "[DRP] Spectate Game: %s\n", szDecoded );
+
+	// The secret already encodes "ip:stvport" — connect directly.
+	char szCommand[ 128 ];
+	Q_snprintf( szCommand, sizeof( szCommand ), "connect %s\n", szDecoded );
+	engine->ExecuteClientCmd( szCommand );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Handles an incoming "ask to join" request from another Discord user.
+// cl_discord_join_requests controls behaviour:
+//   1 (default) — auto-accept (original behaviour, fine for casual public servers)
+//   0           — silently decline (server/tournament use)
+// A proper VGUI confirmation dialog is a future TODO.
+//-----------------------------------------------------------------------------
+static ConVar cl_discord_join_requests( "cl_discord_join_requests", "1", FCVAR_ARCHIVE,
+	"Controls how Discord join requests are handled. 1=auto-accept, 0=auto-decline." );
+
+void CTFDiscordPresence::OnJoinRequested( discord::User const &joinRequester )
+{
+	ConDColorMsg( DISCORD_COLOR, "[DRP] Join Request from %s#%s (id %lld)\n",
+		joinRequester.GetUsername(), joinRequester.GetDiscriminator(), joinRequester.GetId() );
+
+	if ( cl_discord_join_requests.GetBool() )
+	{
+		ConDColorMsg( DISCORD_COLOR, "[DRP] Join Request accepted (cl_discord_join_requests=1)\n" );
+		g_pDiscord->ActivityManager().SendRequestReply(
+			joinRequester.GetId(), discord::ActivityJoinRequestReply::Yes, &OnJoinRequestReply );
+	}
+	else
+	{
+		ConDColorMsg( DISCORD_COLOR, "[DRP] Join Request declined (cl_discord_join_requests=0)\n" );
+		g_pDiscord->ActivityManager().SendRequestReply(
+			joinRequester.GetId(), discord::ActivityJoinRequestReply::No, &OnJoinRequestReply );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFDiscordPresence::OnJoinRequestReply( discord::Result result )
+{
+	ConDColorMsg( DISCORD_COLOR, "[DRP] Join Request result: %d", result );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFDiscordPresence::OnLogMessage( discord::LogLevel logLevel, char const *pszMessage )
+{
+	switch ( logLevel )
+	{
+		case discord::LogLevel::Error:
+		case discord::LogLevel::Warn:
+			Warning( "[DRP] %s\n", pszMessage );
+			break;
+		default:
+			ConDColorMsg( DISCORD_COLOR, "[DRP] %s\n", pszMessage );
+			break;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFDiscordPresence::OnActivityUpdate( discord::Result result )
+{
+	ConDColorMsg( DISCORD_COLOR, "[DRP] Activity update: %s\n", ( ( result == discord::Result::Ok ) ? "Succeeded" : "Failed" ) );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Map initialization
+//-----------------------------------------------------------------------------
+void CTFDiscordPresence::LevelInitPostEntity( void )
+{
+	Q_memset( &m_Activity, 0, sizeof( discord::Activity ) );
+
+	// --- Large image + game type tooltip ---
+	char buffer[64];
+	Q_snprintf( buffer, sizeof( buffer ), "#TF_Map_%s", GetLevelName() );
+	wchar *mapName = g_pVGuiLocalize->Find( buffer );
+	char szMapDisplay[ DISCORD_FIELD_MAXLEN ];
+	if ( mapName )
+	{
+		g_pVGuiLocalize->ConvertUnicodeToANSI( mapName, szMapDisplay, sizeof( szMapDisplay ) );
+		m_Activity.GetAssets().SetLargeImage( GetLevelName() );
+	}
+	else
+	{
+		V_strncpy( szMapDisplay, GetLevelName(), sizeof( szMapDisplay ) );
+		m_Activity.GetAssets().SetLargeImage( "default" );
+	}
+
+	if ( TFGameRules() )
+	{
+		extern const char *s_aGameTypeNames[];
+		wchar *gameType = g_pVGuiLocalize->Find( s_aGameTypeNames[ TFGameRules()->GetGameType() ] );
+		if ( gameType )
+		{
+			char szGameType[ DISCORD_FIELD_MAXLEN ];
+			g_pVGuiLocalize->ConvertUnicodeToANSI( gameType, szGameType, sizeof( szGameType ) );
+			m_Activity.GetAssets().SetLargeText( szGameType );
+		}
+	}
+
+	// --- Details = server hostname, State = "Map: <name>" ---
+	// UpdatePresence(bIsDead) will fold in team/class once the player spawns.
+	char szState[ DISCORD_FIELD_MAXLEN ];
+	V_snprintf( szState, sizeof( szState ), "Map: %s", szMapDisplay );
+
+	m_Activity.SetDetails( m_szHostName );
+	m_Activity.SetState( szState );
+	m_Activity.GetAssets().SetSmallImage( "tf2v_drp_logo" );
+	m_Activity.GetTimestamps().SetStart( m_iCreationTimestamp );
+
+	// --- Steam Rich Presence fields (Steam overlay "Join Game" button) ---
+	if ( steamapicontext && steamapicontext->SteamFriends() )
+	{
+		steamapicontext->SteamFriends()->SetRichPresence( "connect",
+			VarArgs( "steam://connect/%s", m_szServerInfo ) );
+		steamapicontext->SteamFriends()->SetRichPresence( "status", m_szHostName );
+		steamapicontext->SteamFriends()->SetRichPresence( "steam_display", GetLevelName() );
+		steamapicontext->SteamFriends()->SetRichPresence( "currentmap", szMapDisplay );
+
+		// Advertise the party group so friends can see it in the overlay.
+		if ( GTFPartyClient()->BHaveActiveParty() )
+		{
+			steamapicontext->SteamFriends()->SetRichPresence( "steam_player_group",
+				CFmtStr( "party_%llu", GTFPartyClient()->GetActivePartyID() ) );
+			steamapicontext->SteamFriends()->SetRichPresence( "steam_player_group_size",
+				CFmtStr( "%d", GTFPartyClient()->CountNumOnlinePartyMembers() ) );
+		}
+	}
+
+	// --- Secrets ---
+	m_Activity.GetSecrets().SetJoin( GetJoinSecret() );
+	m_Activity.GetSecrets().SetSpectate( GetSpectateSecret() );
+
+	// Party ID: use GC party when available so party members share a Discord party.
+	if ( GTFPartyClient()->BHaveActiveParty() )
+	{
+		char szPartyID[ 32 ];
+		V_snprintf( szPartyID, sizeof( szPartyID ), "party_%llu", GTFPartyClient()->GetActivePartyID() );
+		m_Activity.GetParty().SetId( szPartyID );
+	}
+	else
+	{
+		m_Activity.GetParty().SetId( m_szSteamID );
+	}
+
+	if ( g_pDiscord )
+	{
+		g_pDiscord->ActivityManager().UpdateActivity( m_Activity, &OnActivityUpdate );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Reset map details
+//-----------------------------------------------------------------------------
+void CTFDiscordPresence::LevelShutdownPreEntity( void )
+{
+	ResetPresence();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Revert to default state
+//-----------------------------------------------------------------------------
+void CTFDiscordPresence::ResetPresence( void )
+{
+	Q_memset( &m_Activity, 0, sizeof( discord::Activity ) );
+	Q_memset( &m_Activity, 0, sizeof( discord::Lobby ) );
+
+	if ( steamapicontext->SteamFriends() )
+	{
+		steamapicontext->SteamFriends()->SetRichPresence( "status", "Main Menu" );
+		steamapicontext->SteamFriends()->SetRichPresence( "connect", VarArgs( "steam://connect/%s", m_szServerInfo ) );
+		steamapicontext->SteamFriends()->SetRichPresence( "steam_display", "Main Menu" );
+	}
+
+	m_Activity.SetDetails( "Main Menu" );
+	m_Activity.GetAssets().SetLargeImage( "tf2v_drp_logo" );
+	m_Activity.GetTimestamps().SetStart( m_iCreationTimestamp );
+
+	if( g_pDiscord )
+	{
+		g_pDiscord->ActivityManager().UpdateActivity( m_Activity, &OnActivityUpdate );
+	}
+}
+
+void CTFDiscordPresence::UpdatePresence( void )
+{
+	if ( m_flLastPlayerJoinTime != -1.0f && ( gpGlobals->curtime - m_flLastPlayerJoinTime ) > 1.0f )
+	{
+		m_flLastPlayerJoinTime = -1.0f;
+
+		m_Activity.GetParty().GetSize().SetCurrentSize( m_nPlayerCount );
+		m_Activity.GetParty().GetSize().SetMaxSize( gpGlobals->maxClients );
+
+		g_pDiscord->ActivityManager().UpdateActivity( m_Activity, &OnActivityUpdate );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Builds the plaintext payload embedded in the join secret.
+// When the local player is on a real team the payload carries a team hint so
+// OnJoinedGame can queue a jointeam command after connecting.
+// Format:  "ip:port"          (spectator / not on a team)
+//          "ip:port/red"      (on RED)
+//          "ip:port/blue"     (on BLU)
+//-----------------------------------------------------------------------------
+void CTFDiscordPresence::BuildJoinPayload( char *pBuf, int nBufLen ) const
+{
+	if ( m_szTeamPref[0] != '\0' )
+		V_snprintf( pBuf, nBufLen, "%s/%s", m_szServerInfo, m_szTeamPref );
+	else
+		V_strncpy( pBuf, m_szServerInfo, nBufLen );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+char const *CTFDiscordPresence::GetMatchSecret( void ) const
+{
+	IceKey ice(0);
+	ice.set( GetEncryptionKey() );
+	int nBlockSize = ice.blockSize();
+
+	int nLength = V_strlen( m_szSteamID );
+	unsigned char *cypher = (unsigned char *)_alloca( PAD_NUMBER( nLength, nBlockSize ) );
+	unsigned char *temp = (unsigned char *)m_szSteamID;
+
+	int nBytesLeft = nLength;
+	for( ; nBytesLeft >= nBlockSize; nBytesLeft -= nBlockSize )
+	{
+		ice.encrypt( temp, cypher );
+
+		cypher += nBlockSize;
+		temp += nBlockSize;
+	}
+	
+	Q_memcpy( cypher, temp, nLength - nBytesLeft );
+	cypher -= nLength - nBytesLeft;
+	return (char *)cypher;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+char const *CTFDiscordPresence::GetJoinSecret( void ) const
+{
+	IceKey ice( 0 );
+	ice.set( GetEncryptionKey() );
+	int nBlockSize = ice.blockSize();
+
+	// Build payload: "ip:port" or "ip:port/red" / "ip:port/blue"
+	char szPayload[ DISCORD_FIELD_MAXLEN ];
+	BuildJoinPayload( szPayload, sizeof( szPayload ) );
+
+	int nLength = V_strlen( szPayload );
+	unsigned char *cypher = (unsigned char *)_alloca( PAD_NUMBER( nLength, nBlockSize ) );
+	unsigned char *temp = (unsigned char *)szPayload;
+
+	int nBytesLeft = nLength;
+	for ( ; nBytesLeft >= nBlockSize; nBytesLeft -= nBlockSize )
+	{
+		ice.encrypt( temp, cypher );
+
+		cypher += nBlockSize;
+		temp += nBlockSize;
+	}
+
+	Q_memcpy( cypher, temp, nLength - nBytesLeft );
+	cypher -= nLength - nBytesLeft;
+	return (char *)cypher;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Spectate secret encodes "ip:stvport" so the receiving client
+// connects directly to SourceTV without guessing the port.
+//-----------------------------------------------------------------------------
+char const *CTFDiscordPresence::GetSpectateSecret( void ) const
+{
+	IceKey ice( 0 );
+	ice.set( GetEncryptionKey() );
+	int nBlockSize = ice.blockSize();
+
+	// Build "ip:stvport" — strip any existing port from m_szServerInfo (ip:gameport)
+	// then append the SourceTV port.
+	char szBase[64];
+	V_strncpy( szBase, m_szServerInfo, sizeof( szBase ) );
+	char *pColon = V_strrchr( szBase, ':' );
+	if ( pColon )
+		*pColon = '\0'; // strip game port, leaving bare IP
+
+	char szPayload[ DISCORD_FIELD_MAXLEN ];
+	V_snprintf( szPayload, sizeof( szPayload ), "%s:%d", szBase, m_nSourceTVPort );
+
+	int nLength = V_strlen( szPayload );
+	unsigned char *cypher = (unsigned char *)_alloca( PAD_NUMBER( nLength, nBlockSize ) );
+	unsigned char *temp = (unsigned char *)szPayload;
+
+	int nBytesLeft = nLength;
+	for ( ; nBytesLeft >= nBlockSize; nBytesLeft -= nBlockSize )
+	{
+		ice.encrypt( temp, cypher );
+
+		cypher += nBlockSize;
+		temp += nBlockSize;
+	}
+
+	Q_memcpy( cypher, temp, nLength - nBytesLeft );
+	cypher -= nLength - nBytesLeft;
+	return (char *)cypher;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Updates class/team icon and folds team name into the State line.
+//-----------------------------------------------------------------------------
+void CTFDiscordPresence::UpdatePresence( bool bIsDead )
+{
+	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( !pLocalPlayer )
+		return;
+
+	const int iClassNum = pLocalPlayer->GetPlayerClass()->GetClassIndex();
+	const int iTeam    = pLocalPlayer->GetTeamNumber();
+
+	// Keep the team preference member current so join secrets stay accurate.
+	m_szTeamPref[0] = '\0';
+	const char *pTeamName = "Spectator";
+	switch ( iTeam )
+	{
+		case TF_TEAM_RED:
+			pTeamName = "RED";
+			V_strncpy( m_szTeamPref, "red", sizeof( m_szTeamPref ) );
+			break;
+		case TF_TEAM_BLUE:
+			pTeamName = "BLU";
+			V_strncpy( m_szTeamPref, "blue", sizeof( m_szTeamPref ) );
+			break;
+		default:
+			break;
+	}
+
+	// Class label — append "(Dead)" suffix when applicable.
+	char szClassName[ DISCORD_FIELD_MAXLEN ];
+	V_snprintf( szClassName, sizeof( szClassName ), "%s%s",
+		pLocalPlayer->GetPlayerClass()->GetName(),
+		bIsDead ? " (Dead)" : "" );
+
+	// State: "Map: 2Fort | RED"
+	// Details retains the server hostname set in LevelInitPostEntity/server_spawn.
+	char szState[ DISCORD_FIELD_MAXLEN ];
+	V_snprintf( szState, sizeof( szState ), "Map: %s | %s", GetLevelName(), pTeamName );
+	m_Activity.SetState( szState );
+
+	// Small icon = team-colored class portrait, grayed out when dead.
+	switch ( iTeam )
+	{
+		case TF_TEAM_RED:
+			m_Activity.GetAssets().SetSmallImage(
+				bIsDead ? s_pClassImages[iClassNum].redTeamImageDead : s_pClassImages[iClassNum].redTeamImage );
+			m_Activity.GetAssets().SetSmallText( szClassName );
+			break;
+		case TF_TEAM_BLUE:
+			m_Activity.GetAssets().SetSmallImage(
+				bIsDead ? s_pClassImages[iClassNum].bluTeamImageDead : s_pClassImages[iClassNum].bluTeamImage );
+			m_Activity.GetAssets().SetSmallText( szClassName );
+			break;
+		default:
+			m_Activity.GetAssets().SetSmallImage( "tf2v_drp_logo" );
+			m_Activity.GetAssets().SetSmallText( szClassName );
+			break;
+	}
+
+	g_pDiscord->ActivityManager().UpdateActivity( m_Activity, &OnActivityUpdate );
+}
+
+#endif // !POSIX

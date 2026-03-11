@@ -35,6 +35,7 @@
 #include "datacache/imdlcache.h"
 #include "basemultiplayerplayer.h"
 #include "voice_gamemgr.h"
+#include "fmtstr.h"
 
 #ifdef TF_DLL
 #include "tf_player.h"
@@ -44,6 +45,23 @@
 #ifdef HL2_DLL
 #include "weapon_physcannon.h"
 #endif
+
+// TF2V: plain-text word censor and typing-bubble UserMessage helper
+#include "bannedwords_list.h"
+#include "usermessages.h"
+
+// Broadcasts "PlayerTyping" to all clients so they can show a chat bubble over
+// the player's head.  entindex == 0 means an invalid / server entity; callers
+// should pass pPlayer->entindex().  bIsTyping 1 = started, 0 = stopped.
+static void BroadcastPlayerTyping( int entindex, bool bIsTyping )
+{
+	CReliableBroadcastRecipientFilter filter;
+	filter.MakeReliable();
+	UserMessageBegin( filter, "PlayerTyping" );
+		WRITE_BYTE( entindex );
+		WRITE_BYTE( bIsTyping ? 1 : 0 );
+	MessageEnd();
+}
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -158,6 +176,19 @@ char * CheckChatText( CBasePlayer *pPlayer, char *text )
 	// cut off after 127 chars
 	if ( length > 127 )
 		text[127] = 0;
+
+	// TF2V: censor words listed in cfg/bannedlist.txt.
+	// We initialise the dictionary lazily (once) on the first chat message.
+	// The file lives under MOD/cfg/bannedlist.txt and is a plain line-per-phrase
+	// text file (see our CBannedWordList implementation in bannedwords.cpp).
+	static bool s_bTriedInit = false;
+	if ( !s_bTriedInit )
+	{
+		s_bTriedInit = true;
+		g_BannedWordList.InitFromFile( "cfg/bannedlist.txt" );
+	}
+	if ( g_BannedWordList.BInitialized() )
+		g_BannedWordList.CensorBannedWordsInplace( p );
 
 	GameRules()->CheckChatText( pPlayer, p );
 
@@ -847,6 +878,8 @@ CON_COMMAND( say, "Display player message" )
 	{
 		if ( pPlayer->CanPlayerTalk() )
 		{
+			// Player finished composing; clear the typing bubble before the message lands.
+			BroadcastPlayerTyping( pPlayer->entindex(), false );
 			Host_Say( pPlayer->edict(), args, 0 );
 			pPlayer->NotePlayerTalked();
 		}
@@ -871,10 +904,29 @@ CON_COMMAND( say_team, "Display player message to team" )
 	{
 		if ( pPlayer->CanPlayerTalk() )
 		{
+			BroadcastPlayerTyping( pPlayer->entindex(), false );
 			Host_Say( pPlayer->edict(), args, 1 );
 			pPlayer->NotePlayerTalked();
 		}
 	}
+}
+
+
+// TF2V: Client calls this console command when it opens the chat input box.
+// The server re-broadcasts "PlayerTyping" to all other clients.
+CON_COMMAND( tf2v_chat_typing_start, "" )
+{
+	CBasePlayer *pPlayer = ToBasePlayer( UTIL_GetCommandClient() );
+	if ( pPlayer )
+		BroadcastPlayerTyping( pPlayer->entindex(), true );
+}
+
+// Client calls this when it closes the chat box without sending (Escape).
+CON_COMMAND( tf2v_chat_typing_stop, "" )
+{
+	CBasePlayer *pPlayer = ToBasePlayer( UTIL_GetCommandClient() );
+	if ( pPlayer )
+		BroadcastPlayerTyping( pPlayer->entindex(), false );
 }
 
 
@@ -1615,6 +1667,30 @@ void ClientCommand( CBasePlayer *pPlayer, const CCommand &args )
 	{
 		if ( !g_pGameRules->ClientCommand( pPlayer, args ) )
 		{
+			// Console command hook for VScript
+			if ( pPlayer->m_ScriptScope.IsInitialized() )
+			{
+				ScriptVariant_t functionReturn;
+				g_pScriptVM->SetValue( "command", ScriptVariant_t( pCmd ) );
+
+				ScriptVariant_t varTable;
+				g_pScriptVM->CreateTable( varTable );
+				for ( int i = 0; i < args.ArgC(); i++ )
+				{
+					g_pScriptVM->SetValue( varTable, CNumStr( i ), ScriptVariant_t( args[i] ) );
+				}
+				g_pScriptVM->SetValue( "args", varTable );
+
+				pPlayer->CallScriptFunction( "ClientCommand", &functionReturn );
+
+				g_pScriptVM->ClearValue( "command" );
+				g_pScriptVM->ClearValue( "args" );
+				g_pScriptVM->ReleaseValue( varTable );
+
+				if ( functionReturn.Get<bool>() )
+					return;
+			}
+
 			if ( Q_strlen( pCmd ) > 128 )
 			{
 				ClientPrint( pPlayer, HUD_PRINTCONSOLE, "Console command too long.\n" );
