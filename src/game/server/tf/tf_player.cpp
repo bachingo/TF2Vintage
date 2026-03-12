@@ -126,7 +126,6 @@
 #include "tf_revive.h"
 #include "tf_logic_halloween_2014.h"
 #include "tf_logic_player_destruction.h"
-#include "tf_weapon_rocketpack.h"
 #include "tf_weapon_slap.h"
 #include "func_croc.h"
 #include "tf_weapon_bonesaw.h"
@@ -274,12 +273,11 @@ ConVar tf_halloween_allow_ghost_hit_by_kart_delay( "tf_halloween_allow_ghost_hit
 ConVar tf_maxhealth_drain_hp_min( "tf_maxhealth_drain_hp_min", "100", FCVAR_DEVELOPMENTONLY );
 ConVar tf_maxhealth_drain_deploy_cost( "tf_maxhealth_drain_deploy_cost", "20", FCVAR_DEVELOPMENTONLY );
 
-ConVar tf2v_use_new_wrench_mechanics( "tf2v_use_new_wrench_mechanics", "1" );
-
 extern ConVar sv_vote_allow_spectators;
 ConVar sv_vote_late_join_time( "sv_vote_late_join_time", "90", FCVAR_NONE, "Grace period after the match starts before players who join the match receive a vote-creation cooldown" );
 ConVar sv_vote_late_join_cooldown( "sv_vote_late_join_cooldown", "300", FCVAR_NONE, "Length of the vote-creation cooldown when joining the server after the grace period has expired" );
 
+extern ConVar tf_voice_command_suspension_mode;
 extern ConVar tf_feign_death_duration;
 extern ConVar spec_freeze_time;
 extern ConVar spec_freeze_traveltime;
@@ -817,6 +815,7 @@ IMPLEMENT_SERVERCLASS_ST( CTFPlayer, DT_TFPlayer )
 
 	SendPropFloat( SENDINFO( m_flMvMLastDamageTime ), 16, SPROP_ROUNDUP ),
 	SendPropInt( SENDINFO( m_iSpawnCounter ) ),
+	SendPropBool( SENDINFO( m_bFlipViewModels ) ),
 	SendPropBool( SENDINFO( m_bArenaSpectator ) ),
 	SendPropFloat( SENDINFO( m_flHeadScale ) ),
 	SendPropFloat( SENDINFO( m_flTorsoScale ) ),
@@ -845,6 +844,7 @@ IMPLEMENT_SERVERCLASS_ST( CTFPlayer, DT_TFPlayer )
 	SendPropInt( SENDINFO( m_iPlayerSkinOverride ) ),
 	SendPropBool( SENDINFO( m_bViewingCYOAPDA ) ),
 	SendPropBool( SENDINFO( m_bRegenerating ) ),
+	SendPropEHandle( SENDINFO( m_hOffHandWeapon ) ),
 END_SEND_TABLE()
 
 // -------------------------------------------------------------------------------- //
@@ -999,7 +999,6 @@ CTFPlayer::CTFPlayer()
 	m_flNextChangeClassTime = 0.0f;
 	m_flNextChangeTeamTime = 0.0f;
 
-	m_bScattergunJump = false;
 	m_iOldStunFlags = 0;
 	m_iLastWeaponSlot = 1;
 	m_iNumberofDominations = 0;
@@ -1455,35 +1454,6 @@ void CTFPlayer::TFPlayerThink()
 	else
 	{
 		m_iLeftGroundHealth = -1;
-		if ( GetFlags() & FL_ONGROUND )
-		{
-			// Airborne conditions end on ground contact
-			m_Shared.RemoveCond( TF_COND_KNOCKED_INTO_AIR );
-			m_Shared.RemoveCond( TF_COND_AIR_CURRENT );
-
-			if ( m_Shared.InCond( TF_COND_ROCKETPACK ) )
-			{
-				// Make sure we're still not dealing with launch, where it's possible
-				// to hit your head and fall to the ground before the second stage.
-				CTFWeaponBase *pRocketPack = Weapon_OwnsThisID( TF_WEAPON_ROCKETPACK );
-				if ( pRocketPack )
-				{
-					if ( gpGlobals->curtime > ( static_cast< CTFRocketPack* >( pRocketPack )->GetRefireTime() ) )
-					{
-						EmitSound( "Weapon_RocketPack.BoostersShutdown" );
-						EmitSound( "Weapon_RocketPack.Land" );
-						m_Shared.RemoveCond( TF_COND_ROCKETPACK );
-
-						IGameEvent *pEvent = gameeventmanager->CreateEvent( "rocketpack_landed" );
-						if ( pEvent )
-						{
-							pEvent->SetInt( "userid", GetUserID() );
-							gameeventmanager->FireEvent( pEvent );
-						}
-					}
-				}
-			}
-		}
 
 		if ( m_iBlastJumpState )
 		{
@@ -2835,6 +2805,7 @@ void CTFPlayer::PrecacheMvM()
 	PrecacheScriptSound( "MVM.DeployBombGiant" );
 	PrecacheScriptSound( "Weapon_Upgrade.ExplosiveHeadshot" );
 	PrecacheScriptSound( "Spy.MVM_Chuckle" );
+	PrecacheScriptSound( "Spy.MVM_TeaseVictim" );
 	PrecacheScriptSound( "MVM.Robot_Engineer_Spawn" );
 	PrecacheScriptSound( "MVM.Robot_Teleporter_Deliver" );
 	PrecacheScriptSound( "MVM.MoneyPickup" );
@@ -3531,9 +3502,6 @@ CON_COMMAND_F( verifyloadout, "Cause the server to verify the player's items on 
 }
 #endif // DEBUG
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 // TF2V: convar controlling per-player distance culling on large servers.
 // 0 = disabled (rely on PVS only).
 // When > 0 the value overrides the auto-calculated cull distance regardless
@@ -3555,7 +3523,6 @@ static float TF2V_GetLargeGameCullDistSq( void )
 		return flOverride * flOverride;
 
 	// Count all currently-connected human players.
-	// GetNumPlayers on RED+BLU+SPEC is cheaper than iterating all edicts.
 	int nPlayers = 0;
 	for ( int t = FIRST_GAME_TEAM; t < GetNumberOfTeams(); ++t )
 	{
@@ -3575,6 +3542,9 @@ static float TF2V_GetLargeGameCullDistSq( void )
 	                      return 3000.f * 3000.f;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 int	CTFPlayer::ShouldTransmit( const CCheckTransmitInfo *pInfo )
 {
 	// always send information to student or client
@@ -3598,32 +3568,21 @@ int	CTFPlayer::ShouldTransmit( const CCheckTransmitInfo *pInfo )
 		CBaseEntity *pRecipientEntity = CBaseEntity::Instance( pInfo->m_pClientEnt );
 		if ( pRecipientEntity && pRecipientEntity->ShouldForceTransmitsForTeam( GetTeamNumber() ) )
 			return FL_EDICT_ALWAYS;
+	}
 
-		// TF2V adaptive distance culling for large servers.
-		// Only applies when the server population is high enough to warrant it.
-		// We never cull:
-		//   - Ourselves (handled by CBasePlayer::ShouldTransmit before we get here)
-		//   - Players being spectated by the recipient
-		//   - HLTV / Replay clients (they observe everything)
-		//   - Dead / dormant players (base class handles those)
-		const float flCullDistSq = TF2V_GetLargeGameCullDistSq();
-		if ( flCullDistSq > 0.f && pRecipientEntity )
+	// TF2V adaptive distance culling for large servers.
+	// Never cull: ourselves, spectated player, HLTV/Replay clients.
+	const float flCullDistSq = TF2V_GetLargeGameCullDistSq();
+	if ( flCullDistSq > 0.f && pInfo->m_pClientEnt )
+	{
+		CBasePlayer *pRecipientPlayer = static_cast<CBasePlayer *>( CBaseEntity::Instance( pInfo->m_pClientEnt ) );
+		if ( pRecipientPlayer && !pRecipientPlayer->IsHLTV() && !pRecipientPlayer->IsReplay() )
 		{
-			CBasePlayer *pRecipientPlayer = static_cast<CBasePlayer *>( pRecipientEntity );
-
-			// Never cull from HLTV/Replay -- they need everything.
-			if ( !pRecipientPlayer->IsHLTV() && !pRecipientPlayer->IsReplay() )
+			if ( pRecipientPlayer->GetObserverTarget() != this )
 			{
-				// Never cull the player currently being spectated.
-				const CBaseEntity *pObserverTarget = pRecipientPlayer->GetObserverTarget();
-				if ( pObserverTarget != this )
-				{
-					const float flDistSq = ( GetAbsOrigin() - pRecipientEntity->GetAbsOrigin() ).LengthSqr();
-					if ( flDistSq > flCullDistSq )
-					{
-						return FL_EDICT_DONTSEND;
-					}
-				}
+				const float flDistSq = ( GetAbsOrigin() - pRecipientPlayer->GetAbsOrigin() ).LengthSqr();
+				if ( flDistSq > flCullDistSq )
+					return FL_EDICT_DONTSEND;
 			}
 		}
 	}
@@ -3852,7 +3811,6 @@ void CTFPlayer::Spawn()
 
 	m_Shared.SetFeignDeathReady( false );
 
-	m_bScattergunJump = false;
 	m_iOldStunFlags = 0;
 
 	m_flAccumulatedHealthRegen = 0;
@@ -6050,8 +6008,9 @@ void CTFPlayer::HandleAnimEvent( animevent_t *pEvent )
 		char szAttrName[128];
 		float flVal;
 		float flDuration;
-		if ( sscanf( pEvent->options, "%s %f %f", szAttrName, &flVal, &flDuration ) == 3 )
+		if ( sscanf( pEvent->options, "%127s %f %f", szAttrName, &flVal, &flDuration ) == 3 )
 		{
+			szAttrName[ ARRAYSIZE( szAttrName ) - 1 ] = '\0';
 			Assert( flDuration > 0.f );
 			AddCustomAttribute( szAttrName, flVal, flDuration );
 		}
@@ -6969,20 +6928,29 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName, bool bAllowSpaw
 	}
 	else
 	{
-		int iTries = 20;
-		// The player has selected Random class...so let's pick one for them.
-		do{
-			// Don't let them be the same class twice in a row
-			iClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_LAST_NORMAL_CLASS - 1 ); // -1 to remove the civilian from the randomness
-			iTries--;
-		} while( iClass == GetPlayerClass()->GetClassIndex() || (iTries > 0 && !TFGameRules()->CanPlayerChooseClass(this,iClass)) );
+		int iChoices = 0;
+		int iClasses[ TF_LAST_NORMAL_CLASS - 1 ] = {}; // -1 to remove the civilian from the randomness
+		int iCurrentClass = GetPlayerClass()->GetClassIndex();
 
-		if ( iTries <= 0 )
+		for ( iClass = TF_FIRST_NORMAL_CLASS; iClass < TF_LAST_NORMAL_CLASS; iClass++ )
 		{
+			if ( iClass != iCurrentClass && TFGameRules()->CanPlayerChooseClass( this, iClass ) )
+			{
+				iClasses[ iChoices++ ] = iClass;
+			}
+		}
+
+		if ( !iChoices )
+		{
+			if ( TFGameRules()->CanPlayerChooseClass( this, iCurrentClass ) )
+				return;
+
 			// We failed to find a random class. Bring up the class menu again.
 			ShowViewPortPanel( ( GetTeamNumber() == TF_TEAM_RED ) ? PANEL_CLASS_RED : PANEL_CLASS_BLUE );
 			return;
 		}
+
+		iClass = iClasses[ random->RandomInt( 0, iChoices - 1 ) ];
 	}
 
 	if ( TFGameRules() && TFGameRules()->State_Get() == GR_STATE_RND_RUNNING )
@@ -7433,7 +7401,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 	if ( FStrEq( pcmd, "jointeam" ) )
 	{
 		// don't let them spam the server with changes
-		if ( GetNextChangeTeamTime() > gpGlobals->curtime )
+		if ( ( GetNextChangeTeamTime() > gpGlobals->curtime ) && ( GetTeamNumber() != TEAM_UNASSIGNED ) )
 			return true;
 
 		SetNextChangeTeamTime( gpGlobals->curtime + 2.0f );  // limit to one change every 2 secs
@@ -8331,7 +8299,7 @@ float CTFPlayer::GetObjectBuildSpeedMultiplier( int iObjectType, bool bIsRedeplo
 	{
 	case OBJ_SENTRYGUN:
 		CALL_ATTRIB_HOOK_FLOAT( flBuildRate, sentry_build_rate_multiplier );
-		flBuildRate += bIsRedeploy ? tf2v_use_new_wrench_mechanics.GetBool() ? 2.5 : 2.0 : 0.0f;
+		flBuildRate += bIsRedeploy ? 2.0 : 0.0f;
 		break;
 
 	case OBJ_TELEPORTER:
@@ -9198,44 +9166,40 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		}
 	}
 	
-	if ( pTFAttacker && pTFAttacker->IsPlayerClass( TF_CLASS_MEDIC ) )
+	if ( pTFAttacker && pTFAttacker->IsPlayerClass( TF_CLASS_MEDIC ) && pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_BONESAW )
 	{
-		CTFWeaponBase *pAttackerWeapon = pTFAttacker->GetActiveTFWeapon();
-		if ( pAttackerWeapon && pAttackerWeapon->GetWeaponID() == TF_WEAPON_BONESAW )
+		CTFBonesaw *pBoneSaw = static_cast< CTFBonesaw* >( pWeapon );
+		if ( pBoneSaw->GetBonesawType() == BONESAW_UBER_SAVEDONDEATH )
 		{
-			CTFBonesaw *pBoneSaw = static_cast< CTFBonesaw* >( pAttackerWeapon );
-			if ( pBoneSaw->GetBonesawType() == BONESAW_UBER_SAVEDONDEATH )
+			// Spawn their spleen
+			CPhysicsProp *pRandomInternalOrgan = dynamic_cast< CPhysicsProp* >( CreateEntityByName( "prop_physics_override" ) );
+			if ( pRandomInternalOrgan )
 			{
-				// Spawn their spleen
-				CPhysicsProp *pRandomInternalOrgan = dynamic_cast< CPhysicsProp* >( CreateEntityByName( "prop_physics_override" ) );
-				if ( pRandomInternalOrgan )
-				{
-					pRandomInternalOrgan->SetCollisionGroup( COLLISION_GROUP_DEBRIS );
-					pRandomInternalOrgan->AddFlag( FL_GRENADE );
-					char buf[512];
-					Q_snprintf( buf, sizeof( buf ), "%.10f %.10f %.10f", GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z );
-					pRandomInternalOrgan->KeyValue( "origin", buf );
-					Q_snprintf( buf, sizeof( buf ), "%.10f %.10f %.10f", GetAbsAngles().x, GetAbsAngles().y, GetAbsAngles().z );
-					pRandomInternalOrgan->KeyValue( "angles", buf );
-					pRandomInternalOrgan->KeyValue( "model", "models/player/gibs/random_organ.mdl" );
-					pRandomInternalOrgan->KeyValue( "fademindist", "-1" );
-					pRandomInternalOrgan->KeyValue( "fademaxdist", "0" );
-					pRandomInternalOrgan->KeyValue( "fadescale", "1" );
-					pRandomInternalOrgan->KeyValue( "inertiaScale", "1.0" );
-					pRandomInternalOrgan->KeyValue( "physdamagescale", "0.1" );
-					DispatchSpawn( pRandomInternalOrgan );
-					pRandomInternalOrgan->m_takedamage = DAMAGE_YES;	// Take damage, otherwise this can block trains
-					pRandomInternalOrgan->SetHealth( 100 );
-					pRandomInternalOrgan->Activate();
+				pRandomInternalOrgan->SetCollisionGroup( COLLISION_GROUP_DEBRIS );
+				pRandomInternalOrgan->AddFlag( FL_GRENADE );
+				char buf[512];
+				Q_snprintf( buf, sizeof( buf ), "%.10f %.10f %.10f", GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z );
+				pRandomInternalOrgan->KeyValue( "origin", buf );
+				Q_snprintf( buf, sizeof( buf ), "%.10f %.10f %.10f", GetAbsAngles().x, GetAbsAngles().y, GetAbsAngles().z );
+				pRandomInternalOrgan->KeyValue( "angles", buf );
+				pRandomInternalOrgan->KeyValue( "model", "models/player/gibs/random_organ.mdl" );
+				pRandomInternalOrgan->KeyValue( "fademindist", "-1" );
+				pRandomInternalOrgan->KeyValue( "fademaxdist", "0" );
+				pRandomInternalOrgan->KeyValue( "fadescale", "1" );
+				pRandomInternalOrgan->KeyValue( "inertiaScale", "1.0" );
+				pRandomInternalOrgan->KeyValue( "physdamagescale", "0.1" );
+				DispatchSpawn( pRandomInternalOrgan );
+				pRandomInternalOrgan->m_takedamage = DAMAGE_YES;	// Take damage, otherwise this can block trains
+				pRandomInternalOrgan->SetHealth( 100 );
+				pRandomInternalOrgan->Activate();
 
-					Vector vecImpulse = RandomVector( -1.f, 1.f );
-					vecImpulse.z = 1.f;
-					VectorNormalize( vecImpulse );
-					Vector vecVelocity = vecImpulse * 250.0;
-					pRandomInternalOrgan->ApplyAbsVelocityImpulse( vecVelocity );
+				Vector vecImpulse = RandomVector( -1.f, 1.f );
+				vecImpulse.z = 1.f;
+				VectorNormalize( vecImpulse );
+				Vector vecVelocity = vecImpulse * 250.0;
+				pRandomInternalOrgan->ApplyAbsVelocityImpulse( vecVelocity );
 
-					pRandomInternalOrgan->ThinkSet( &CBaseEntity::SUB_Remove, gpGlobals->curtime + 5.f, "DieContext" );
-				}
+				pRandomInternalOrgan->ThinkSet( &CBaseEntity::SUB_Remove, gpGlobals->curtime + 5.f, "DieContext" );
 			}
 		}
 	}
@@ -14857,10 +14821,7 @@ void CTFPlayer::CheatImpulseCommands( int iImpulse )
 
 					pWeapon->GiveDefaultAmmo();
 
-					if ( pWeapon->IsEnergyWeapon() )
-					{
-						pWeapon->WeaponRegenerate();
-					}
+					pWeapon->WeaponRegenerate();
 				}
 
 				m_Shared.m_flRageMeter = 100.f;
@@ -19228,6 +19189,30 @@ void CTFPlayer::DoTauntAttack( void )
 			pLoser->TakeDamage( CTakeDamageInfo( pWinner, pWinner, NULL, 999, DMG_GENERIC, 0 ) );
 		}
 	}
+	else if ( iTauntAttack == TAUNTATK_ENGINEER_TRICKSHOT )
+	{
+		// Engineer "Texan Trickshot" attack
+		Vector vecForward;
+		AngleVectors( EyeAngles(), &vecForward );
+		Vector vecEnd = EyePosition() + vecForward * 500;
+
+		trace_t tr;
+		UTIL_TraceLine( EyePosition(), vecEnd, ( MASK_SOLID | CONTENTS_HITBOX ), this, COLLISION_GROUP_PLAYER, &tr );
+		//		DebugDrawLine( EyePosition(), vecEnd, 0, 0, 255, true, 3.0f );
+
+		if ( tr.fraction < 1.0 )
+		{
+			CBaseEntity *pEnt = tr.m_pEnt;
+
+			if ( pEnt && pEnt->IsPlayer() && pEnt->GetTeamNumber() > LAST_SHARED_TEAM && pEnt->GetTeamNumber() != GetTeamNumber() )
+			{
+				// Launch them up a little
+				AngleVectors( QAngle( -45, m_angEyeAngles[ YAW ], 0 ), &vecForward );
+				pEnt->TakeDamage( CTakeDamageInfo( this, this, GetActiveTFWeapon(), vecForward * 25000, WorldSpaceCenter(), 500.0f, DMG_BULLET, TF_DMG_CUSTOM_TAUNTATK_TRICKSHOT ) );
+			}
+		}
+	}
+
 	// Particle Being played in VCD instead
 	//else if ( iTauntAttack == TAUNTATK_FLIP_LAND_PARTICLE )
 	//{
@@ -20099,7 +20084,20 @@ bool CTFPlayer::ShouldShowVoiceSubtitleToEnemy( void )
 //-----------------------------------------------------------------------------
 bool CTFPlayer::CanSpeakVoiceCommand( void )
 {
-	return ( gpGlobals->curtime > m_flNextVoiceCommandTime );
+	if ( tf_voice_command_suspension_mode.GetInt() == 1 )
+		return false;
+
+	if ( gpGlobals->curtime <= m_flNextVoiceCommandTime )
+		return false;
+
+	// misyl: New F2P voice command rate-limiting path.
+	if ( BHaveChatSuspensionInCurrentMatch() && tf_voice_command_suspension_mode.GetInt() == 2 )
+	{
+		if ( !m_RateLimitedVoiceCommandTokenBucket.BTakeToken( gpGlobals->curtime ) )
+			return false;
+	}
+
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -21664,6 +21662,7 @@ static bool SelectPartnerTaunt( const GameItemDefinition_t *pItemDef, CTFPlayer 
 {
 	static CSchemaItemDefHandle pItemDef_rpsTaunt( "RPS Taunt" );
 	static CSchemaItemDefHandle pItemDef_TauntNeckSnap( "Taunt: Neck Snap" );
+	static CSchemaItemDefHandle pItemDef_TauntBearHug( "Taunt: Bear Hug" );
 
 	CTFTauntInfo *pTauntData = pItemDef->GetTauntData();
 	if ( !pTauntData )
@@ -21712,6 +21711,13 @@ static bool SelectPartnerTaunt( const GameItemDefinition_t *pItemDef, CTFPlayer 
 
 		iInitiator = 0;
 		iReceiver = ( iReceiverClass != TF_CLASS_SOLDIER ) ? 0 : 1;
+	}
+	else if ( pItemDef == pItemDef_TauntBearHug )
+	{
+		Assert( iInitiatorSceneCount == 2 && iReceiverSceneCount > 0 );
+
+		iInitiator = 0;
+		iReceiver = ( iReceiverClass != TF_CLASS_HEAVYWEAPONS ) ? 0 : 1;
 	}
 	else
 	{

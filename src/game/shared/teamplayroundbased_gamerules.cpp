@@ -655,7 +655,6 @@ float CTeamplayRoundBasedRules::GetRespawnTimeScalar( int iTeam )
 	// Full curve (applied as a multiplier on the configured wave time):
 	//   1 player  -> 0.25x  (quarter-length wave, unchanged from vanilla)
 	//   8 players -> 1.00x  (vanilla optimal: full-length wave)
-	//  32 players -> 1.50x  (50 % bonus)
 	//  63 players -> 3.00x  (triple -- at default 10s that's 30s waves)
 	//
 	// The upper end is intentionally aggressive: a 30s respawn wave on a
@@ -2368,8 +2367,6 @@ void CTeamplayRoundBasedRules::SetWinningTeam( int team, int iWinReason, bool bF
 
 	m_iWinningTeam = team;
 	m_iWinReason = iWinReason;
-
-	PlayWinSong( team );
 
 	// only reward the team if they have won the map and we're going to do a full reset or the time has run out and we're changing maps
 	bool bRewardTeam = bForceMapReset || ( IsGameUnderTimeLimit() && ( GetTimeLeft() <= 0 ) );
