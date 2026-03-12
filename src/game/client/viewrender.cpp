@@ -240,6 +240,36 @@ CON_COMMAND( r_cheapwaterend,  "" )
 }
 
 
+
+//-----------------------------------------------------------------------------
+// Describes a pruned set of leaves to be rendered this view. Reference counted
+// because potentially shared by a number of views
+//-----------------------------------------------------------------------------
+struct ClientWorldListInfo_t : public CRefCounted1<WorldListInfo_t>
+{
+	ClientWorldListInfo_t() 
+	{ 
+		memset( (WorldListInfo_t *)this, 0, sizeof(WorldListInfo_t) ); 
+		m_pActualLeafIndex = NULL;
+		m_bPooledAlloc = false;
+	}
+
+	// Allocate a list intended for pruning
+	static ClientWorldListInfo_t *AllocPooled( const ClientWorldListInfo_t &exemplar );
+
+	// Because we remap leaves to eliminate unused leaves, we need a remap
+	// when drawing translucent surfaces, which requires the *original* leaf index
+	// using m_pActualLeafMap[ remapped leaf index ] == actual leaf index
+	LeafIndex_t *m_pActualLeafIndex;
+
+private:
+	virtual bool OnFinalRelease();
+
+	bool m_bPooledAlloc;
+	static CObjectPool<ClientWorldListInfo_t> gm_Pool;
+};
+
+
 //-----------------------------------------------------------------------------
 //
 //-----------------------------------------------------------------------------

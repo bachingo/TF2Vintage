@@ -76,6 +76,12 @@ $Configuration
 		$AdditionalDependencies			"$BASE winmm.lib"	[$WINDOWS]
 		$AdditionalDependencies			"$BASE wsock32.lib Ws2_32.lib" [$BUILD_REPLAY&&$WINDOWS]
 	}
+
+	$PostBuildEvent [!$ANALYZE && $WIN32]
+	{
+		$CommandLine		"$BASE" "copy $QUOTE$SRCDIR\\thirdparty\\discord_game_sdk\\lib\\x64\\discord_game_sdk.dll$QUOTE $OUTBINDIR\\discord_game_sdk.dll" "\n" \
+							"if ERRORLEVEL 1 goto BuildEventFailed" "\n"
+	}
 }
 
 $Project
@@ -233,16 +239,6 @@ $Project
 		$File	"c_colorcorrection.cpp"
 		$File	"c_colorcorrectionvolume.cpp"
 		$File	"c_dynamiclight.cpp"
-		$File	"c_env_cascade_light.cpp"
-		$File	"c_lights.cpp"
-		$File	"c_lights.h"
-		$File	"lighting_overhaul.cpp"
-		$File	"advanced_lighting.cpp"
-		$File	"tier3_lighting.cpp"
-		$File	"worldlight.cpp"
-		$File	"worldlight.h"
-		$File	"ver_panel.cpp"
-		$File	"ver_panel.h"
 		$File	"c_entitydissolve.cpp"
 		$File	"c_entityparticletrail.cpp"
 		$File	"c_env_fog_controller.cpp"
@@ -1317,7 +1313,7 @@ $Project
 
 		$ImpLibexternal steam_api	[!$WIN64]
 		$ImpLibexternal steam_api64	[$WIN64]
-		$ImpLib 	"$SRCDIR\thirdparty\discord_game_sdk\lib\x64\discord_game_sdk"	[$WIN64]
+		$ImpLib 	"$SRCDIR\thirdparty\discord_game_sdk\lib\x86_64\discord_game_sdk"	[$WIN64]
 		
 		$Libexternal $LIBCOMMON/libcrypto [$OSXALL]
 		$Libexternal "$SRCDIR\lib\common\$CRYPTOPPDIR\libcryptopp" [$LINUXALL&&!$SOURCESDK]

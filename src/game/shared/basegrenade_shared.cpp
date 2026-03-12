@@ -54,6 +54,8 @@ BEGIN_DATADESC( CBaseGrenade )
 
 END_DATADESC()
 
+void SendProxy_CropFlagsToPlayerFlagBitsLength( const SendProp *pProp, const void *pStruct, const void *pVarData, DVariant *pOut, int iElement, int objectID);
+
 #endif
 
 IMPLEMENT_NETWORKCLASS_ALIASED( BaseGrenade, DT_BaseGrenade )
@@ -540,7 +542,6 @@ CBaseGrenade::CBaseGrenade(void)
 
 	SetSimulatedEveryTick( true );
 };
-
 
 
 

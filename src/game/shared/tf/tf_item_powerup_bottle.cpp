@@ -763,4 +763,3 @@ void CEquipMvMCanteenNotification::UpdateTick()
 	}
 }
 #endif // client
-

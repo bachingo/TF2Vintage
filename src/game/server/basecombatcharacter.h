@@ -217,6 +217,7 @@ public:
 	void				RemoveAllAmmo( );
 	virtual int			GetAmmoCount( int iAmmoIndex ) const;
 	int					GetAmmoCount( char *szName ) const;
+	void				VScriptGiveAmmo( int iCount, int iAmmoIndex );
 
 	virtual Activity	NPC_TranslateActivity( Activity baseAct );
 
@@ -428,6 +429,39 @@ public:
 	void				RemoveGlowEffect( void );
 	bool				IsGlowEffectActive( void );
 #endif // GLOWS_ENABLE
+
+	// ----------------------------------------------------------------------------
+	// VScript accessors
+	// ----------------------------------------------------------------------------
+	HSCRIPT				GetScriptActiveWeapon();
+	HSCRIPT				GetScriptWeaponIndex( int i );
+	HSCRIPT				GetScriptWeaponByType( const char *pszWeapon, int iSubType = 0 );
+	void				GetScriptAllWeapons( HSCRIPT hTable );
+	int					ScriptGetCurrentWeaponProficiency() { return GetCurrentWeaponProficiency(); }
+
+	void				ScriptDropWeapon( HSCRIPT hWeapon );
+	void				ScriptEquipWeapon( HSCRIPT hWeapon );
+
+	int					ScriptGetAmmoCount( int iType ) const;
+	void				ScriptSetAmmoCount( int iType, int iCount );
+
+	const Vector&		ScriptGetAttackSpread( HSCRIPT hWeapon, HSCRIPT hTarget );
+	float				ScriptGetSpreadBias( HSCRIPT hWeapon, HSCRIPT hTarget );
+
+	int					ScriptRelationType( HSCRIPT pTarget );
+	int					ScriptRelationPriority( HSCRIPT pTarget );
+	void				ScriptSetRelationship( HSCRIPT pTarget, int disposition, int priority );
+
+	HSCRIPT				GetScriptVehicleEntity();
+
+	bool				ScriptInViewCone( const Vector &vecSpot ) { return FInViewCone( vecSpot ); }
+	bool				ScriptEntInViewCone( HSCRIPT pEntity ) { return FInViewCone( ToEnt( pEntity ) ); }
+
+	bool				ScriptInAimCone( const Vector &vecSpot ) { return FInAimCone( vecSpot ); }
+	bool				ScriptEntInAimCone( HSCRIPT pEntity ) { return FInAimCone( ToEnt( pEntity ) ); }
+
+	const QAngle&		ScriptBodyAngles( void ) { static QAngle qa; qa = BodyAngles(); return qa; }
+
 
 #ifdef INVASION_DLL
 public:

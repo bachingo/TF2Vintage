@@ -2607,7 +2607,7 @@ void UTIL_LoadActivityRemapFile( const char *filename, const char *section, CUtl
 		return;
 	}
 
-	KeyValuesAD pkvFile( section );
+	KeyValues *pkvFile = new KeyValues( section );
 
 	if ( pkvFile->LoadFromFile( filesystem, filename, NULL ) )
 	{

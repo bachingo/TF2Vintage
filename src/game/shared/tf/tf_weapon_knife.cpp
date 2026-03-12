@@ -51,6 +51,8 @@ LINK_ENTITY_TO_CLASS( tf_weapon_knife, CTFKnife );
 PRECACHE_WEAPON_REGISTER( tf_weapon_knife );
 
 
+ConVar tf2v_use_new_backstabs( "tf2v_use_new_backstabs", "2", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes knife backstab behavior.", true, 0, true, 2 );
+
 //=============================================================================
 //
 // Weapon Knife functions.
@@ -228,7 +230,10 @@ void CTFKnife::PrimaryAttack( void )
 	// Swing the weapon.
 	Swing( pPlayer );
 	Smack();
-	m_flSmackTime = -1.0f;
+	if ( tf2v_use_new_backstabs.GetInt() < 2 )
+	{
+		m_flSmackTime = -1.0f;
+	}
 
 	m_bReadyToBackstab = false; // Hand is down.
 
@@ -423,6 +428,9 @@ bool CTFKnife::CanPerformBackstabAgainstTarget( CTFPlayer *pTarget )
 			return false;
 		}
 	}
+
+	if ( tf2v_use_new_backstabs.GetInt() == 0 && IsBehindTarget( pTarget ) )
+		return true;
 	
 	// Behind and facing target's back?
 	if ( IsBehindAndFacingTarget( pTarget ) )
@@ -479,6 +487,29 @@ bool CTFKnife::IsBehindAndFacingTarget( CTFPlayer *pTarget )
 	// 	DevMsg( "PosDot: %3.2f FacingDot: %3.2f AnglesDot: %3.2f\n", flPosVsTargetViewDot, flPosVsOwnerViewDot, flViewAnglesDot );
 
 	return ( flPosVsTargetViewDot > 0.f && flPosVsOwnerViewDot > 0.5 && flViewAnglesDot > -0.3f );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: The old, original backstab check.
+//-----------------------------------------------------------------------------
+bool CTFKnife::IsBehindTarget( CTFPlayer *pTarget )
+{
+	Assert( pTarget );
+
+	// Get the forward view vector of the target, ignore Z
+	Vector vecVictimForward;
+	AngleVectors( pTarget->EyeAngles(), &vecVictimForward, NULL, NULL );
+	vecVictimForward.z = 0.0f;
+	vecVictimForward.NormalizeInPlace();
+
+	// Get a vector from my origin to my targets origin
+	Vector vecToTarget;
+	vecToTarget = pTarget->WorldSpaceCenter() - GetOwner()->WorldSpaceCenter();
+	vecToTarget.z = 0.0f;
+	vecToTarget.NormalizeInPlace();
+
+	float flDot = DotProduct( vecVictimForward, vecToTarget );
+	return ( flDot > -0.1 );
 }
 
 //-----------------------------------------------------------------------------
@@ -641,6 +672,9 @@ void CTFKnife::BackstabVMThink( void )
 		return;
 
 	if ( pPlayer->GetActiveWeapon() != this )
+		return;
+
+	if ( tf2v_use_new_backstabs.GetInt() < 2 )
 		return;
 
 	// Don't do this if we are doing something other than idling.

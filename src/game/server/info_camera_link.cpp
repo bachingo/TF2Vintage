@@ -182,4 +182,3 @@ void PointCameraSetupVisibility( CBaseEntity *pPlayer, int area, unsigned char *
 		}
 	}
 }
-

@@ -24,7 +24,7 @@ class C_CaptureZone : public C_BaseEntity, public ICaptureZoneAutoList
 public:
 	DECLARE_CLIENTCLASS();
 
-	bool IsDisabled( void ){ return m_bDisabled; }
+	bool IsDisabled( void ) { return m_bDisabled; }
 
 private:
 	bool m_bDisabled;

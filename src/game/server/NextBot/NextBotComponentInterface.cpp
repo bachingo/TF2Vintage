@@ -42,9 +42,21 @@ HSCRIPT INextBotComponent::GetScriptInstance()
 }
 
 //--------------------------------------------------------------------------------------------------------------
-#ifdef TF_DLL
+static class INextBotComponentScriptInstanceHelper : public IScriptInstanceHelper
+{
+public:
+	bool ToString( void *p, char *pBuf, int bufSize )	
+	{
+		INextBotComponent *pNextBotComponent = (INextBotComponent *)p;
+		if ( pNextBotComponent && pNextBotComponent->GetBot() )
+			V_snprintf( pBuf, bufSize, "([%d] NextBotComponent)", pNextBotComponent->GetBot()->GetBotId() );
+		else
+			V_snprintf( pBuf, bufSize, "(Invalid NextBotComponent)" );
+		return true;
+	}
+} g_NextBotComponentScriptInstanceHelper;
 DEFINE_SCRIPT_INSTANCE_HELPER( INextBotComponent, &g_NextBotComponentScriptInstanceHelper )
-#endif 
+
 BEGIN_ENT_SCRIPTDESC_ROOT( INextBotComponent, "Next bot component" )
 	DEFINE_SCRIPTFUNC( Reset, "Resets the internal update state" )
 	DEFINE_SCRIPTFUNC( ComputeUpdateInterval, "Recomputes the component update interval" )

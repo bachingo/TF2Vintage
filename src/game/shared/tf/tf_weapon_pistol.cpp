@@ -19,6 +19,8 @@
 #include "ilagcompensationmanager.h"
 #endif
 
+ConVar tf2v_use_shortstop_shove( "tf2v_use_shortstop_shove", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows Shortstop to Alt-Fire and shove enemies away." );
+
 //=============================================================================
 //
 // Weapon Pistol tables.
@@ -101,6 +103,9 @@ void CTFPistol_ScoutPrimary::SecondaryAttack( void )
 		return;
 
 	if ( m_flNextSecondaryAttack > gpGlobals->curtime )
+		return;
+	
+	if ( !tf2v_use_shortstop_shove.GetBool() )
 		return;
 
 	pOwner->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_SECONDARY );

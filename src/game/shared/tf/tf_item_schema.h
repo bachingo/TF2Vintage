@@ -670,6 +670,7 @@ public:
 	CTFItemSchema();
 
 	virtual void Reset();
+	void         RegisterScriptFunctions() OVERRIDE;
 
 	CTFItemDefinition *GetTFItemDefinition( int iItemIndex )
 	{

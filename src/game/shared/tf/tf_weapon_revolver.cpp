@@ -16,6 +16,11 @@
 #include "tf_player.h"
 #endif
 
+#if defined( CLIENT_DLL )
+ConVar tf2v_revolver_scale_crosshair( "tf2v_revolver_scale_crosshair", "1", FCVAR_ARCHIVE, "Toggle the crosshair size scaling on the ambassador" );
+ConVar tf2v_new_revolver_reload("tf2v_new_revolver_reload", "0", FCVAR_ARCHIVE, "Toggles between the old and new revolver reload animation.");
+#endif
+
 //=============================================================================
 //
 // Weapon Revolver tables.
@@ -210,7 +215,7 @@ void CTFRevolver::GetWeaponCrosshairScale( float &flScale )
 	if ( !pTFPlayer )
 		return;
 
-	if ( CanHeadshot() )
+	if ( CanHeadshot() && tf2v_revolver_scale_crosshair.GetBool() )
 	{
 		float curtime = pTFPlayer->GetFinalPredictedTime() + ( gpGlobals->interpolation_amount * TICK_INTERVAL );
 		float flTimeSinceCheck = curtime - m_flLastAccuracyCheck;
@@ -220,6 +225,19 @@ void CTFRevolver::GetWeaponCrosshairScale( float &flScale )
 	{
 		BaseClass::GetWeaponCrosshairScale( flScale );
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+Activity CTFRevolver::TranslateViewmodelHandActivityInternal( Activity iActivity )
+{
+	Activity iTranslation = iActivity;
+
+	if ( iActivity == ACT_SECONDARY_VM_RELOAD && !tf2v_new_revolver_reload.GetBool() )
+		iTranslation = ACT_SECONDARY_VM_RELOAD2;
+
+	return BaseClass::TranslateViewmodelHandActivityInternal( iTranslation );
 }
 #endif
 

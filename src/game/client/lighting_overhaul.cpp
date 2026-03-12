@@ -468,7 +468,7 @@ public:
         if ( !IsEnabled() )
             return;
 
-        if ( !g_pMaterialSystemHardwareConfig->GetDXSupportLevel() >= 90 )
+        if ( !g_pMaterialSystemHardwareConfig->SupportsPixelShaders_2_b() )
             return;
 
         // We need the frame buffer captured

@@ -67,6 +67,11 @@ ConVar cl_yawspeed( "cl_yawspeed", "210", FCVAR_NONE, "Client yaw speed.", true,
 ConVar cl_pitchspeed( "cl_pitchspeed", "225", FCVAR_NONE, "Client pitch speed.", true, -100000, true, 100000 );
 ConVar cl_pitchdown( "cl_pitchdown", "89", FCVAR_CHEAT );
 ConVar cl_pitchup( "cl_pitchup", "89", FCVAR_CHEAT );
+
+#if defined ( TF_VINTAGE_CLIENT )
+extern ConVar tf2v_flips;
+#endif
+
 #if defined( CSTRIKE_DLL )
 ConVar cl_sidespeed( "cl_sidespeed", "400", FCVAR_CHEAT );
 ConVar cl_upspeed( "cl_upspeed", "320", FCVAR_ARCHIVE|FCVAR_CHEAT );
@@ -750,6 +755,11 @@ void CInput::ClampAngles( QAngle& viewangles )
 	}
 
 #ifndef PORTAL	// Don't constrain Roll in Portal because the player can be upside down! -Jeep
+#if defined ( TF_VINTAGE_CLIENT )
+	// If we allow the player to flip around, don't constrain our angles.
+	if ( tf2v_flips.GetBool() )
+		return;
+#endif
 	if ( viewangles[ROLL] > 50 )
 	{
 		viewangles[ROLL] = 50;
@@ -1709,4 +1719,3 @@ void CInput::LevelInit( void )
 	m_EntityGroundContact.RemoveAll();
 #endif
 }
-

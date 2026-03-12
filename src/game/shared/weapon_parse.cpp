@@ -296,6 +296,7 @@ bool ReadWeaponDataFromFileForSlot( IFileSystem* pFilesystem, const char *szWeap
 	if ( !pKV )
 		return false;
 
+	pFileInfo->bCustom = true;
 	pFileInfo->Parse( pKV, szWeaponName );
 
 	pKV->deleteThis();
@@ -312,6 +313,7 @@ FileWeaponInfo_t::FileWeaponInfo_t()
 {
 	bParsedScript = false;
 	bLoadedHudElements = false;
+	bCustom = false;
 	szClassName[0] = 0;
 	szPrintName[0] = 0;
 
@@ -347,6 +349,7 @@ FileWeaponInfo_t::FileWeaponInfo_t()
 	bShowUsageHint = false;
 	m_bAllowFlipping = true;
 	m_bBuiltRightHanded = true;
+	iconSmall = 0;
 }
 
 #ifdef CLIENT_DLL
@@ -461,4 +464,3 @@ void FileWeaponInfo_t::Parse( KeyValues *pKeyValuesData, const char *szWeaponNam
 		}
 	}
 }
-

@@ -124,6 +124,10 @@ extern ConVar cam_idealyaw;
 extern ConVar thirdperson_platformer;
 extern ConVar thirdperson_screenspace;
 
+#if defined ( TF_VINTAGE_CLIENT )
+extern ConVar tf2v_flips;
+#endif
+
 //-----------------------------------------------------------------
 // Purpose: Returns true if there's an active joystick connected.
 //-----------------------------------------------------------------
@@ -908,7 +912,14 @@ void CInput::JoyStickMove( float frametime, CUserCmd *cmd )
 	}
 
 	// Bound pitch
+#if defined ( TF_VINTAGE_CLIENT )
+	if ( tf2v_flips.GetBool()  )
+		viewangles[PITCH] = clamp( viewangles[ PITCH ], -360, 360 );
+	else
+		viewangles[PITCH] = clamp( viewangles[ PITCH ], -cl_pitchup.GetFloat(), cl_pitchdown.GetFloat() );
+#else
 	viewangles[PITCH] = clamp( viewangles[ PITCH ], -cl_pitchup.GetFloat(), cl_pitchdown.GetFloat() );
+#endif
 
 	engine->SetViewAngles( viewangles );
 }

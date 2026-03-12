@@ -332,6 +332,9 @@ int C_ObjectDispenser::GetMaxMetal( void )
 
 DECLARE_VGUI_SCREEN_FACTORY( CDispenserControlPanel, "screen_obj_dispenser_blue" );
 DECLARE_VGUI_SCREEN_FACTORY( CDispenserControlPanel_Red, "screen_obj_dispenser_red" );
+DECLARE_VGUI_SCREEN_FACTORY( CDispenserControlPanel_Green, "screen_obj_dispenser_green" );
+DECLARE_VGUI_SCREEN_FACTORY( CDispenserControlPanel_Yellow, "screen_obj_dispenser_yellow" );
+
 
 //-----------------------------------------------------------------------------
 // Constructor: 

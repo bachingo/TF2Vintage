@@ -21,7 +21,9 @@
 #endif
 
 extern ConVar tf_flamethrower_burstammo;
-extern ConVar tf_fireball_distance;
+
+extern ConVar tf2v_airblast;
+
 
 //=============================================================================
 //
@@ -197,6 +199,9 @@ void CTFWeaponFlameBall::SecondaryAttack( void )
 {
 	// Dragon's Fury requires full-pressure (primary meter) to be able to fire
 	if ( !HasFullCharge() )
+		return;
+
+	if ( !tf2v_airblast.GetBool() )
 		return;
 
 	// Get the player owning the weapon.
@@ -396,5 +401,4 @@ void CTFWeaponFlameBall::GetPoseParameters( CStudioHdr *pStudioHdr, float posePa
 }
 
 #endif
-
 

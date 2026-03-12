@@ -69,6 +69,19 @@ BEGIN_DATADESC( CTFMinigun )
 END_DATADESC()
 #endif
 
+CREATE_SIMPLE_WEAPON_TABLE( TFMinigun_Real, tf_weapon_minigun_real )
+
+
+#ifdef CLIENT_DLL
+extern ConVar tf2v_model_muzzleflash;
+extern ConVar cl_ejectbrass;
+ConVar tf2v_minigun_ejectbrass( "tf2v_minigun_ejectbrass", "0", FCVAR_CLIENTDLL|FCVAR_ARCHIVE, "Use real shells instead of sprites?");
+#endif
+
+ConVar tf2v_use_new_minigun_spinup("tf2v_use_new_minigun_spinup", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Makes winding and unwinding the minigun 25% faster." );
+ConVar tf2v_use_new_minigun_rampup("tf2v_use_new_minigun_rampup", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes the accuracy and damage of the minigun based on fire time.", true, 0, true, 3 );
+
+
 //=============================================================================
 //
 // Weapon Minigun functions.
@@ -350,6 +363,7 @@ void CTFMinigun::SharedAttack()
 #endif
 
 				// Only fire if we're actually shooting
+				UseRealMinigunBrassEject();
 				BaseClass::PrimaryAttack();		// fire and do timers
 				
 #ifdef CLIENT_DLL
@@ -1037,6 +1051,35 @@ float CTFMinigun::GetWeaponSpread( void )
 	return flSpread;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFMinigun::UseRealMinigunBrassEject( void )
+{
+#ifdef CLIENT_DLL
+	// If minigun shells or shells in general aren't enabled, bail.
+	if ( tf2v_minigun_ejectbrass.GetBool() && cl_ejectbrass.GetBool() )
+	{
+		// If it's time to fire, then run the calculation.
+		if ( m_flNextPrimaryAttack > gpGlobals->curtime )
+			return;
+		
+		C_BaseEntity *pEffectOwner = GetWeaponForEffect();
+		if ( !pEffectOwner )
+			return;
+		
+		int iEjectBrassAttachmentReal = pEffectOwner->LookupAttachment( "eject_brass" );
+		
+		CEffectData brassejectdata;
+		if ( iEjectBrassAttachmentReal != -1 )
+		{
+			pEffectOwner->GetAttachment( iEjectBrassAttachmentReal, brassejectdata.m_vOrigin, brassejectdata.m_vAngles );
+			brassejectdata.m_nHitBox = TF_WEAPON_MINIGUN;
+			DispatchEffect( "TF_EjectBrass", brassejectdata );
+		}
+	}
+#endif
+}
 
 #ifdef CLIENT_DLL
 //-----------------------------------------------------------------------------
@@ -1125,7 +1168,12 @@ void CTFMinigun::OnDataChanged( DataUpdateType_t updateType )
 {
 	// Brass ejection and muzzle flash.
 	HandleBrassEffect();
-	HandleMuzzleEffect();
+	
+//	if (!ShouldMuzzleFlash())
+	if (!tf2v_model_muzzleflash.GetBool())
+	{
+		HandleMuzzleEffect();
+	}
 
 	BaseClass::OnDataChanged( updateType );
 
@@ -1228,7 +1276,8 @@ void CTFMinigun::StartBrassEffect()
 	// Start the brass ejection, if a system hasn't already been started.
 	if ( m_iEjectBrassAttachment > 0 && m_pEjectBrassEffect == NULL )
 	{
-		m_pEjectBrassEffect = m_hEjectBrassWeapon->ParticleProp()->Create( "eject_minigunbrass", PATTACH_POINT_FOLLOW, m_iEjectBrassAttachment );
+		if ( !cl_ejectbrass.GetBool() || !tf2v_minigun_ejectbrass.GetBool() )
+			m_pEjectBrassEffect = m_hEjectBrassWeapon->ParticleProp()->Create( "eject_minigunbrass", PATTACH_POINT_FOLLOW, m_iEjectBrassAttachment );
 	}
 }
 

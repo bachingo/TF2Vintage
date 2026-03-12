@@ -63,8 +63,10 @@ void PrecacheRing(void *pUser)
 }
 PRECACHE_REGISTER_FN(PrecacheRing);
 
+ConVar tf2v_use_new_bison_damage( "tf2v_use_new_bison_damage", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes Bison's damage mechanics.", true, 0, true, 2 );
 #ifdef GAME_DLL
 ConVar tf_bison_tick_time( "tf_bison_tick_time", "0.025", FCVAR_CHEAT );
+ConVar tf2v_use_new_bison_speed( "tf2v_use_new_bison_speed", "0", FCVAR_NOTIFY, "Decreases Bison speed by 30%." );
 #endif
 
 

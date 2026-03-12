@@ -48,7 +48,7 @@ bool CBaseCombatCharacter::Weapon_Switch( CBaseCombatWeapon *pWeapon, int viewmo
 		return false;
 	}
 
-	if (!Weapon_CanSwitchTo(pWeapon))
+	if ( !Weapon_CanSwitchTo( pWeapon ) )
 	{
 		return false;
 	}

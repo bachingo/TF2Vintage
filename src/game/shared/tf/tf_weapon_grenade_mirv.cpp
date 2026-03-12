@@ -84,7 +84,7 @@ CTFWeaponBaseGrenadeProj *CTFGrenadeMirv::EmitGrenade( Vector vecSrc, QAngle vec
 #ifdef GAME_DLL
 
 BEGIN_DATADESC( CTFGrenadeMirvProjectile )
-DEFINE_THINKFUNC( DetonateThink ),
+	DEFINE_THINKFUNC( DetonateThink ),
 END_DATADESC()
 
 #define GRENADE_MODEL "models/weapons/w_models/w_grenade_mirv.mdl"
@@ -143,7 +143,7 @@ void CTFGrenadeMirvProjectile::Detonate()
 {
 	if ( ShouldNotDetonate() )
 	{
-		RemoveGrenade();
+		Destroy();
 		return;
 	}
 

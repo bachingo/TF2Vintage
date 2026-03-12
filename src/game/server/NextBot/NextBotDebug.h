@@ -19,5 +19,6 @@ enum NextBotDebugType
 
 	NEXTBOT_DEBUG_ALL	= 0xFFFF
 };
+DEFINE_ENUM_BITWISE_OPERATORS( NextBotDebugType )
 
 #endif

@@ -1596,7 +1596,7 @@ void CHudCloseCaption::CreateFonts( void )
 {
 	vgui::IScheme *pScheme = vgui::scheme()->GetIScheme( GetScheme() );
 
-	m_hFonts[CCFONT_NORMAL] = pScheme->GetFont( "CloseCaption", true );
+	m_hFonts[CCFONT_NORMAL] = pScheme->GetFont( "CloseCaption_Normal", true );
 
 	if ( IsPC() )
 	{

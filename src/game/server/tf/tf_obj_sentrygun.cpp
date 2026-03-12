@@ -2395,4 +2395,3 @@ void CTFProjectile_SentryRocket::Spawn()
 
 	ResetSequence( LookupSequence("idle") );
 }
-

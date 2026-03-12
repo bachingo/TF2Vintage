@@ -26,6 +26,10 @@
 #include "c_portal_player.h"
 #endif // PORTAL
 
+#ifdef TF_VINTAGE_CLIENT
+#include "cam_thirdperson.h"
+#endif
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -40,6 +44,10 @@ int ScreenTransform( const Vector& point, Vector& screen );
 // If running TF, we use CHudTFCrosshair instead (which is derived from CHudCrosshair)
 #else
 DECLARE_HUDELEMENT( CHudCrosshair );
+#endif
+
+#if defined( TF_VINTAGE_CLIENT )
+ConVar tf2v_use_real_crosshair_location( "tf2v_use_real_crosshair_location", "0", FCVAR_ARCHIVE, "Enables the crosshair to move around at aimed surfaces for a more accurate shot." );
 #endif
 
 CHudCrosshair::CHudCrosshair( const char *pElementName ) :
@@ -187,6 +195,17 @@ void CHudCrosshair::GetDrawPosition ( float *pX, float *pY, bool *pbBehindCamera
 			AngleVectors( CurrentViewAngles() - g_pSixenseInput->GetViewAngleOffset(), &aimVector );
 			// calculate where the bullet would go so we can draw the cross appropriately
 			vecEnd = vecStart + aimVector * MAX_TRACE_LENGTH;
+			bUseOffset = true;
+		}
+#endif
+
+#ifdef TF_VINTAGE_CLIENT
+		if ( g_ThirdPersonManager.WantToUseGameThirdPerson() || ( !g_ThirdPersonManager.WantToUseGameThirdPerson() && tf2v_use_real_crosshair_location.GetBool() ) )
+		{
+			vecStart = pPlayer->Weapon_ShootPosition();
+			Vector vecDir;
+			pPlayer->EyeVectors( &vecDir );
+			vecEnd = vecStart + vecDir * MAX_TRACE_LENGTH;
 			bUseOffset = true;
 		}
 #endif

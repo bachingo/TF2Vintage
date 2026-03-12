@@ -11,6 +11,7 @@
 #pragma once
 #endif
 
+FORWARD_DECLARE_HANDLE(HSCRIPT);
 #define TICK_INTERVAL			(gpGlobals->interval_per_tick)
 
 
@@ -260,7 +261,7 @@ enum CastVote
 #elif defined( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined( HL2MP )
 	#define MAX_PLAYERS				101
 #else
-	#define MAX_PLAYERS				33   // Absolute max players supported
+	#define MAX_PLAYERS				33  // Absolute max players supported
 #endif
 
 // Josh: Accounts for code that may index this array by an entindex
@@ -278,11 +279,11 @@ inline bool IsIndexIntoPlayerArrayValid( int iIndex )
 #define MAX_PLACE_NAME_LENGTH		18
 
 #if defined ( TF_VINTAGE ) || defined ( TF_VINTAGE_CLIENT )
-#define MAX_FOV					90
-#define MAX_FOV_UNLOCKED		140
+#define MAX_FOV						90
+#define MAX_FOV_UNLOCKED			140
 #else
-#define MAX_FOV					90
-#define MAX_FOV_UNLOCKED		90
+#define MAX_FOV						90
+#define MAX_FOV_UNLOCKED			90
 #endif
 
 //===================================================================================================================
@@ -779,6 +780,44 @@ struct FireBulletsInfo_t
 	CBaseEntity *m_pAdditionalIgnoreEnt;
 	bool m_bPrimaryAttack;
 	bool m_bUseServerRandomSeed;
+
+	int GetShots() { return m_iShots; }
+	void SetShots( int value ) { m_iShots = value; }
+
+	Vector GetSource() { return m_vecSrc; }
+	void SetSource( Vector value ) { m_vecSrc = value; }
+	Vector GetDirShooting() { return m_vecDirShooting; }
+	void SetDirShooting( Vector value ) { m_vecDirShooting = value; }
+	Vector GetSpread() { return m_vecSpread; }
+	void SetSpread( Vector value ) { m_vecSpread = value; }
+
+	float GetDistance() { return m_flDistance; }
+	void SetDistance( float value ) { m_flDistance = value; }
+
+	int GetAmmoType() { return m_iAmmoType; }
+	void SetAmmoType( int value ) { m_iAmmoType = value; }
+
+	int GetTracerFreq() { return m_iTracerFreq; }
+	void SetTracerFreq( int value ) { m_iTracerFreq = value; }
+
+	float GetDamage() { return m_flDamage; }
+	void SetDamage( float value ) { m_flDamage = value; }
+	int GetPlayerDamage() { return m_iPlayerDamage; }
+	void SetPlayerDamage( float value ) { m_iPlayerDamage = value; }
+
+	int GetFlags() { return m_nFlags; }
+	void SetFlags( float value ) { m_nFlags = value; }
+
+	float GetDamageForceScale() { return m_flDamageForceScale; }
+	void SetDamageForceScale( float value ) { m_flDamageForceScale = value; }
+
+	HSCRIPT ScriptGetAttacker();
+	void ScriptSetAttacker( HSCRIPT value );
+	HSCRIPT ScriptGetAdditionalIgnoreEnt();
+	void ScriptSetAdditionalIgnoreEnt( HSCRIPT value );
+
+	bool GetPrimaryAttack() { return m_bPrimaryAttack; }
+	void SetPrimaryAttack( bool value ) { m_bPrimaryAttack = value; }
 };
 
 //-----------------------------------------------------------------------------

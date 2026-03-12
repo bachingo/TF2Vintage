@@ -35,7 +35,7 @@ void CTFAutoRP::ParseDataFile( void )
 	Assert( !m_pDataFileKV );
 
 	// Load & parse the word files
-	KeyValuesAD pFileKV( "AutoRPFile" );
+	KeyValues *pFileKV = new KeyValues( "AutoRPFile" );
 	if ( pFileKV->LoadFromFile( filesystem, "scripts/autorp.txt", "MOD" ) == false )
 		return;
 
@@ -547,7 +547,7 @@ void CTFAutoRP::ModifySpeech( const char *pszInText, char *pszOutText, int iOutL
 				{
 					szStoredWord[0] = toupper( szStoredWord[0] );
 				}
-				else if ( pszCurWord[0] >= 'a' && pszCurWord[0] <= 'z' )
+				else if ( pszCurWord[0] >= 'a' && pszCurWord[0] <= 'a' )
 				{
 					szStoredWord[0] = tolower( szStoredWord[0] );
 				}

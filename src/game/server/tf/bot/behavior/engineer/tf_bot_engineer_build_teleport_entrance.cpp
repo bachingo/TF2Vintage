@@ -29,8 +29,7 @@ ActionResult< CTFBot >	CTFBotEngineerBuildTeleportEntrance::OnStart( CTFBot *me,
 ActionResult< CTFBot >	CTFBotEngineerBuildTeleportEntrance::Update( CTFBot *me, float interval )
 {
 	CTeamControlPoint *point = me->GetMyControlPoint();
-	CCaptureZone *zone = me->GetFlagCaptureZone();
-	if ( !point && !zone )
+	if ( !point )
 	{
 		// wait until a control point becomes available
 		return Continue();
@@ -65,14 +64,7 @@ ActionResult< CTFBot >	CTFBotEngineerBuildTeleportEntrance::Update( CTFBot *me, 
 	if ( !m_path.IsValid() )
 	{
 		CTFBotPathCost cost( me, FASTEST_ROUTE );
-		if ( point )
-		{
-			m_path.Compute( me, point->GetAbsOrigin(), cost );
-		}
-		else if ( zone )
-		{
-			m_path.Compute( me, zone->WorldSpaceCenter(), cost );
-		}
+		m_path.Compute( me, point->GetAbsOrigin(), cost );
 	}
 
 	m_path.Update( me );

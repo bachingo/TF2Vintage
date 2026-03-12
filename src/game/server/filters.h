@@ -38,9 +38,14 @@ class CBaseFilter : public CLogicalEntity
 public:
 
 	DECLARE_DATADESC();
+	DECLARE_ENT_SCRIPTDESC();
 
 	bool PassesFilter( CBaseEntity *pCaller, CBaseEntity *pEntity );
+	bool PassesDamageFilter( CBaseEntity *pCaller, const CTakeDamageInfo &info );
 	bool PassesDamageFilter( const CTakeDamageInfo &info );
+
+	bool ScriptPassesFilter( HSCRIPT pCaller, HSCRIPT pEntity );
+	bool ScriptPassesDamageFilter( HSCRIPT pCaller, HSCRIPT pInfo );
 
 	bool m_bNegated;
 
@@ -55,6 +60,7 @@ protected:
 
 	virtual bool PassesFilterImpl( CBaseEntity *pCaller, CBaseEntity *pEntity );
 	virtual bool PassesDamageFilterImpl(const CTakeDamageInfo &info);
+	virtual bool PassesDamageFilterImpl( CBaseEntity *pCaller, const CTakeDamageInfo &info );
 };
 
 #endif // FILTERS_H

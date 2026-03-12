@@ -243,6 +243,7 @@ bool CTFRocketPack::InitiateLaunch( void )
 			pOwner->m_Shared.IsLoser() ? "Weapon_RocketPack.BoostersNotReady" : "Weapon_RocketPack.BoostersCharge"
 		);
 	}
+#endif // GAME_DLL
 
 	m_flInitLaunchTime = gpGlobals->curtime;
 
@@ -378,6 +379,7 @@ bool CTFRocketPack::ShouldDraw()
 
 #endif // CLIENT_DLL
 
+#ifdef GAME_DLL
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -476,6 +478,7 @@ void CTFRocketPack::RocketLaunchPlayer( CTFPlayer *pPlayer, const Vector& vecFor
 
 	pPlayer->ApplyAbsVelocityImpulse( vecForce );
 }
+#endif // GAME_DLL
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -489,6 +492,7 @@ bool CTFRocketPack::PreLaunch( void )
 	pOwner->DoAnimationEvent( PLAYERANIMEVENT_CUSTOM, ACT_MP_ATTACK_STAND_PRIMARYFIRE );
 	SendWeaponAnim( ACT_VM_PRIMARYATTACK );
 
+#ifdef GAME_DLL
 	// Negate any fall
 	Vector vecVel = pOwner->GetAbsVelocity();
 	if ( vecVel.z < 0.f )
@@ -511,6 +515,7 @@ bool CTFRocketPack::PreLaunch( void )
 #endif // GAME_DLL
 
 	m_flLaunchTime = gpGlobals->curtime + tf_rocketpack_launch_delay.GetFloat();
+#endif // GAME_DLL
 
 	return true;
 }
@@ -526,6 +531,7 @@ bool CTFRocketPack::Launch( void )
 
 	pOwner->StopSound( "Weapon_LooseCannon.Charge" );
 
+#ifdef GAME_DLL
 	m_flLaunchTime = 0.f;
 	pOwner->m_Shared.RemoveCond( TF_COND_PARACHUTE_ACTIVE );
 
@@ -859,6 +865,7 @@ const CEconItemView *CTFRocketPack::GetTauntItem() const
 //-----------------------------------------------------------------------------
 bool CTFRocketPack::Deploy( void )
 {
+#ifdef GAME_DLL
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 	if ( pOwner )
 	{
@@ -874,6 +881,7 @@ bool CTFRocketPack::Deploy( void )
 		SetEnabled( true );
 #endif
 	}
+#endif // GAME_DLL
 
 	return BaseClass::Deploy();
 }
@@ -886,6 +894,7 @@ void CTFRocketPack::StartHolsterAnim( void )
 {
 	BaseClass::StartHolsterAnim();
 
+#ifdef GAME_DLL
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 	if ( pOwner )
 	{
@@ -901,6 +910,7 @@ void CTFRocketPack::StartHolsterAnim( void )
 		SetEnabled( false );
 #endif
 	}
+#endif // GAME_DLL
 }
 
 

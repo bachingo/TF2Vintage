@@ -359,4 +359,3 @@ const char *CCurrencyPackCustom::GetDefaultPowerupModel( void )
 		return "models/items/currencypack_medium.mdl"; 
 	return "models/items/currencypack_small.mdl";
 }
-

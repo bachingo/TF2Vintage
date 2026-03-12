@@ -378,10 +378,9 @@ void CItemSelectionPanel::OnKeyCodePressed( vgui::KeyCode code )
 			NotifySelectionReturned( pItemPanel );
 		}
 	}
-	else if( nButtonCode == KEY_XBUTTON_B || nButtonCode == STEAMCONTROLLER_B )
+	else if( nButtonCode == KEY_XBUTTON_B )
 	{
-		//match the same behaviour as pressing ESC
-		PostMessageSelectionReturned( 0 );
+		PostMessageSelectionReturned( INVALID_ITEM_ID );
 		OnClose();
 	}
 	else
@@ -1086,9 +1085,8 @@ void CEquipSlotItemSelectionPanel::UpdateModelPanelsForSelection( void )
 	int nPageStart = GetCurrentPage() * GetNumSlotsPerPage();
 	nOldSelection += nPageStart;
 
-	//static ConVarRef joystick( "joystick" );
-	bool bSteamController = ::input->IsSteamControllerActive();
-	if ( bSteamController )
+	static ConVarRef joystick( "joystick" );
+	if ( joystick.IsValid() && joystick.GetBool() )
 	{
 		if( nOldSelection == -1 || nOldSelection >= vecDisplayItems.Count() )
 			nOldSelection = nPageStart;
@@ -1104,7 +1102,7 @@ void CEquipSlotItemSelectionPanel::UpdateModelPanelsForSelection( void )
 		m_pItemModelPanels[i]->SetShowGreyedOutTooltip( true );
 		m_pItemModelPanels[i]->SetGreyedOut( NULL );
 		m_pItemModelPanels[i]->SetNoItemText( "#SelectNoItemSlot" );
-		bool bSelected = bSteamController && iItemIndex == nOldSelection;
+		bool bSelected = joystick.IsValid() && joystick.GetBool() && iItemIndex == nOldSelection;
 		m_pItemModelPanels[i]->SetSelected( bSelected );
 		m_pItemModelPanels[i]->SetShowQuantity( true );
 		m_pItemModelPanels[i]->SetForceShowEquipped( false );

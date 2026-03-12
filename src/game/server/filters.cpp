@@ -31,6 +31,16 @@ BEGIN_DATADESC( CBaseFilter )
 
 END_DATADESC()
 
+BEGIN_ENT_SCRIPTDESC( CBaseFilter, CBaseEntity, "All entities which could be used as filters." )
+
+	DEFINE_SCRIPTFUNC_NAMED( ScriptPassesFilter, "PassesFilter", "Check if the given caller and entity pass the filter. The caller is the one who requests the filter result; For example, the entity being damaged when using this as a damage filter." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptPassesDamageFilter, "PassesDamageFilter", "Check if the given caller and damage info pass the damage filter, with the second parameter being a CTakeDamageInfo instance. The caller is the one who requests the filter result; For example, the entity being damaged when using this as a damage filter." )
+	//DEFINE_SCRIPTFUNC_NAMED( ScriptPassesFinalDamageFilter, "PassesFinalDamageFilter", "Used by filter_damage_redirect to distinguish between standalone filter calls and actually damaging an entity. Returns true if there's no unique behavior. Parameters are identical to PassesDamageFilter." )
+	//DEFINE_SCRIPTFUNC_NAMED( ScriptBloodAllowed, "BloodAllowed", "Check if the given caller and damage info allow for the production of blood." )
+	//DEFINE_SCRIPTFUNC_NAMED( ScriptDamageMod, "DamageMod", "Mods the damage info with the given caller." )
+
+END_SCRIPTDESC();
+
 //-----------------------------------------------------------------------------
 
 bool CBaseFilter::PassesFilterImpl( CBaseEntity *pCaller, CBaseEntity *pEntity )
@@ -46,6 +56,12 @@ bool CBaseFilter::PassesFilter( CBaseEntity *pCaller, CBaseEntity *pEntity )
 }
 
 
+bool CBaseFilter::PassesDamageFilter( CBaseEntity *pCaller, const CTakeDamageInfo &info )
+{
+	bool baseResult = PassesDamageFilterImpl( pCaller, info );
+	return ( m_bNegated ) ? !baseResult : baseResult;
+}
+
 bool CBaseFilter::PassesDamageFilter(const CTakeDamageInfo &info)
 {
 	bool baseResult = PassesDamageFilterImpl(info);
@@ -56,6 +72,23 @@ bool CBaseFilter::PassesDamageFilter(const CTakeDamageInfo &info)
 bool CBaseFilter::PassesDamageFilterImpl( const CTakeDamageInfo &info )
 {
 	return PassesFilterImpl( NULL, info.GetAttacker() );
+}
+
+bool CBaseFilter::PassesDamageFilterImpl( CBaseEntity *pCaller, const CTakeDamageInfo &info )
+{
+	return PassesFilterImpl( pCaller, info.GetAttacker() );
+}
+
+
+bool CBaseFilter::ScriptPassesFilter( HSCRIPT pCaller, HSCRIPT pEntity )
+{
+	return PassesFilter( ToEnt( pCaller ), ToEnt( pEntity ) );
+
+}
+
+bool CBaseFilter::ScriptPassesDamageFilter( HSCRIPT pCaller, HSCRIPT pInfo )
+{
+	return ( pInfo ) ? PassesDamageFilter( ToEnt( pCaller ), *HScriptToClass<CTakeDamageInfo>( pInfo ) ) : NULL;
 }
 
 //-----------------------------------------------------------------------------

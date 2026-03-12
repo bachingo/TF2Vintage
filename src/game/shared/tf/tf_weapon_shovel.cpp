@@ -16,6 +16,9 @@
 #include "tf_player.h"
 #endif
 
+ConVar tf2v_use_new_split_equalizer("tf2v_use_new_split_equalizer", "0", FCVAR_REPLICATED|FCVAR_NOTIFY, "Splits the Equalizer and Escape Plan into their modern versions.", true, 0, true, 1);
+ConVar tf2v_use_new_equalizer_damage("tf2v_use_new_equalizer_damage", "1", FCVAR_REPLICATED|FCVAR_NOTIFY, "Makes the Equalizer's damage boost use the newer formula.", true, 0, true, 1);
+
 //=============================================================================
 //
 // Weapon Shovel tables.
@@ -104,7 +107,7 @@ float CTFShovel::GetMeleeDamage( CBaseEntity *pTarget, int* piDamageType, int* p
 {
 	float flDamage = BaseClass::GetMeleeDamage( pTarget, piDamageType, piCustomDamage );
 
-	if ( !HasDamageBoost() )
+	if ( !HasDamageBoost() || ( HasSpeedBoost() && tf2v_use_new_split_equalizer.GetBool() ) )
 		return flDamage;
 
 	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
@@ -112,7 +115,12 @@ float CTFShovel::GetMeleeDamage( CBaseEntity *pTarget, int* piDamageType, int* p
 		return 0;
 
 	float flOwnerHealthRatio = (float) pOwner->GetHealth() / (float) pOwner->GetMaxHealth();
-	float flDamageScale = RemapValClamped( flOwnerHealthRatio, 0.f, 1.f, 1.65f, 0.5f );
+	// Get the damage output.
+	float flDamageScale = 0;
+	if ( tf2v_use_new_equalizer_damage.GetBool() ) // New algorithm [107.25 - 0.37295 * HP ] converted to ratio output and %HP input.
+		flDamageScale =  RemapValClamped( flOwnerHealthRatio, 0.0f, 1.0f, 1.65f, 0.5025f );
+	else 										 // Old algorithm [162.5 - 0.65 * HP ] converted to ratio output and %HP input.
+		flDamageScale =  RemapValClamped( flOwnerHealthRatio, 0.0f, 1.0f, 2.5f, 0.5f );
 
 	return flDamage * flDamageScale;
 }
@@ -122,7 +130,7 @@ float CTFShovel::GetMeleeDamage( CBaseEntity *pTarget, int* piDamageType, int* p
 //-----------------------------------------------------------------------------
 float CTFShovel::GetSpeedMod( void )
 {
-	if ( m_bHolstering || !HasSpeedBoost() )
+	if ( m_bHolstering || !HasSpeedBoost() || ( HasDamageBoost() && tf2v_use_new_split_equalizer.GetBool() ) )
 		return 1.f;
 
 	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );

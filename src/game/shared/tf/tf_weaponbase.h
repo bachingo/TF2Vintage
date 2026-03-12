@@ -282,7 +282,6 @@ class CTFWeaponBase : public CBaseCombatWeapon, public IHasOwner, public IHasGen
 
 	virtual void Spawn();
 	virtual void Activate( void );
-	virtual void GiveDefaultAmmo( void );
 	virtual void Precache();
 	virtual bool IsPredicted() const			{ return true; }
 	virtual void FallInit( void );
@@ -336,7 +335,6 @@ class CTFWeaponBase : public CBaseCombatWeapon, public IHasOwner, public IHasGen
 	void EnableDuck();
 	void DisableDuck();
 
-	virtual bool OwnerCanJump( void ) { return true; }
 	virtual bool OwnerCanTaunt( void ) { return true; }
 	virtual bool CanBeCritBoosted( void );
 	bool CanHaveRevengeCrits( void );

@@ -93,8 +93,18 @@ const char *C_TFObjectiveResource::GetGameSpecificCPCappingSwipe( int index_, in
 	Assert( index_ < m_iNumControlPoints );
 	Assert( iCappingTeam != TEAM_UNASSIGNED );
 
-	if ( iCappingTeam == TF_TEAM_RED )
-		return "sprites/obj_icons/icon_obj_cap_red";
+	switch ( iCappingTeam )
+	{
+		case TF_TEAM_RED:
+			return "sprites/obj_icons/icon_obj_cap_red";
+		case TF_TEAM_BLUE:
+			return "sprites/obj_icons/icon_obj_cap_blu";
+		case TF_TEAM_GREEN:
+			return "sprites/obj_icons/icon_obj_cap_grn";
+		case TF_TEAM_YELLOW:
+			return "sprites/obj_icons/icon_obj_cap_ylw";
+	}
+
 
 	return "sprites/obj_icons/icon_obj_cap_blu";
 }
@@ -106,12 +116,17 @@ const char *C_TFObjectiveResource::GetGameSpecificCPBarFG( int index_, int iOwni
 {
 	Assert( index_ < m_iNumControlPoints );
 
-	if ( iOwningTeam == TF_TEAM_RED )
-		return "progress_bar_red";
-
-	if ( iOwningTeam == TF_TEAM_BLUE )
-		return "progress_bar_blu";
-
+	switch ( iOwningTeam )
+	{
+		case TF_TEAM_RED:
+			return "progress_bar_red";
+		case TF_TEAM_BLUE:
+			return "progress_bar_blu";
+		case TF_TEAM_GREEN:
+			return "progress_bar_grn";
+		case TF_TEAM_YELLOW:
+			return "progress_bar_ylw";
+	}
 	return "progress_bar";
 }
 
@@ -123,8 +138,17 @@ const char *C_TFObjectiveResource::GetGameSpecificCPBarBG( int index_, int iCapp
 	Assert( index_ < m_iNumControlPoints );
 	Assert( iCappingTeam != TEAM_UNASSIGNED );
 
-	if ( iCappingTeam == TF_TEAM_RED )
-		return "progress_bar_red";
+	switch ( iCappingTeam )
+	{
+		case TF_TEAM_RED:
+			return "progress_bar_red";
+		case TF_TEAM_BLUE:
+			return "progress_bar_blu";
+		case TF_TEAM_GREEN:
+			return "progress_bar_grn";
+		case TF_TEAM_YELLOW:
+			return "progress_bar_ylw";
+	}
 
 	return "progress_bar_blu";
 }

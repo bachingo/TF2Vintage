@@ -34,6 +34,7 @@
 #include "ai_behavior_lead.h"
 #include "gameinterface.h"
 #include "ilagcompensationmanager.h"
+#include "tf_gamerules.h"
 
 #ifdef HL2_DLL
 #include "hl2_player.h"
@@ -125,6 +126,13 @@ END_DATADESC()
 
 
 LINK_ENTITY_TO_CLASS( trigger, CBaseTrigger );
+
+
+BEGIN_ENT_SCRIPTDESC( CBaseTrigger, CBaseEntity, "Server-side trigger" )
+	DEFINE_SCRIPTFUNC( Disable, "Disable the trigger" )
+	DEFINE_SCRIPTFUNC( Enable, "Enable the trigger" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptIsTouching, "IsTouching", "Checks whether the passed entity is touching the trigger." )
+END_SCRIPTDESC()
 
 
 CBaseTrigger::CBaseTrigger()
@@ -564,6 +572,15 @@ bool CBaseTrigger::IsTouching( const CBaseEntity *pOther ) const
 	EHANDLE hOther;
 	hOther = pOther;
 	return ( m_hTouchingEntities.Find( hOther ) != m_hTouchingEntities.InvalidIndex() );
+}
+
+bool CBaseTrigger::ScriptIsTouching( HSCRIPT entity )
+{
+	CBaseEntity *pOther = ToEnt(entity);
+	if ( !pOther )
+		return false;
+
+	return IsTouching( pOther );
 }
 
 //-----------------------------------------------------------------------------

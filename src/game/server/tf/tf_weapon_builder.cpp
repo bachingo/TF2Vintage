@@ -25,7 +25,7 @@ extern ISoundEmitterSystemBase *soundemitterbase;
 
 extern ConVar tf2_object_hard_limits;
 extern ConVar tf_fastbuild;
-
+extern ConVar tf2v_use_new_minibuildings;
 
 EXTERN_SEND_TABLE(DT_BaseCombatWeapon)
 

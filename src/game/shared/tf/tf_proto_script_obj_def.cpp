@@ -625,6 +625,14 @@ struct SpewOnDestruct
 
 bool CProtoBufScriptObjectDefinitionManager::BInitDefinitions()
 {
+
+	// TF2 Mods: Skip loading entirely to avoid validation.
+    if ( !g_pFullFileSystem->FileExists( g_pszProtoDefFile, "MOD" ) )
+    {
+        m_bDefinitionsLoaded = true;
+        return true;
+    }
+
 	m_bDefinitionsLoaded = false;
 	m_bDefinitionsPostDataLoadedCalled = false;
 

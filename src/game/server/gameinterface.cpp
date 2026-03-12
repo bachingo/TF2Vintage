@@ -90,7 +90,7 @@
 #include "serverbenchmark_base.h"
 #include "querycache.h"
 #include "player_voice_listener.h"
-#include "ScriptGameEventListener.h"
+
 
 #ifdef TF_DLL
 #include "gc_clientsystem.h"
@@ -658,7 +658,7 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 	if ( IsX360() && (matchmaking = (IMatchmaking *)appSystemFactory( VENGINE_MATCHMAKING_VERSION, NULL )) == NULL )
 		return false;
 
-	if ( !CommandLine()->CheckParm( "-noscripting" ) )
+	if ( !CommandLine()->CheckParm( "-noscripting") )
 	{
 	#if defined( TF_VINTAGE )
 		char szCwd[MAX_PATH];
@@ -681,7 +681,7 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 	{
 #ifdef _WIN32
 		// This interface is optional, and is only valid when running with -tools
-		serverenginetools = (IServerEngineTools *)appSystemFactory( VSERVERENGINETOOLS_INTERFACE_VERSION, NULL );
+		serverenginetools = ( IServerEngineTools * )appSystemFactory( VSERVERENGINETOOLS_INTERFACE_VERSION, NULL );
 #endif
 	}
 
@@ -752,9 +752,6 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 #endif
 	// Add sound emitter
 	IGameSystem::Add( SoundEmitterSystem() );
-
-	// Add VScript game event listener system
-	IGameSystem::Add( &ScriptGameEventListener() );
 
 	// load Mod specific game events ( MUST be before InitAllSystems() so it can pickup the mod specific events)
 	gameeventmanager->LoadEventsFromFile("resource/ModEvents.res");

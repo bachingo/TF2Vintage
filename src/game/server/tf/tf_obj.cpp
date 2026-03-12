@@ -106,6 +106,12 @@ ConVar tf_obj_ground_clearance( "tf_obj_ground_clearance", "32", FCVAR_CHEAT | F
 
 ConVar tf_obj_damage_tank_achievement_amount( "tf_obj_damage_tank_achievement_amount", "2000", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 
+ConVar tf2v_building_upgrades( "tf2v_building_upgrades", "1", FCVAR_REPLICATED, "Toggles the ability to upgrade buildings other than the sentrygun" );
+ConVar tf2v_use_new_minibuildings( "tf2v_use_new_minibuildings", "0", FCVAR_REPLICATED, "Modifies the behavior of minisentries." );
+
+extern ConVar tf2v_use_new_wrench_mechanics;
+extern ConVar tf2v_use_new_jag;
+
 extern short g_sModelIndexFireball;
 extern ConVar tf_cheapobjects;
 
@@ -899,7 +905,28 @@ void CBaseObject::StartPlacement( CTFPlayer *pPlayer )
 	m_vecBuildMaxs -= GetAbsOrigin();
 
 	// Set the skin
-	m_nSkin = ( GetTeamNumber() == TF_TEAM_RED ) ? 0 : 1;
+	switch ( GetTeamNumber() )
+	{
+		case TF_TEAM_RED:
+			m_nSkin = 0;
+			break;
+
+		case TF_TEAM_BLUE:
+			m_nSkin = 1;
+			break;
+
+		case TF_TEAM_GREEN:
+			m_nSkin = 2;
+			break;
+
+		case TF_TEAM_YELLOW:
+			m_nSkin = 3;
+			break;
+
+		default:
+			m_nSkin = 1;
+			break;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -1390,7 +1417,7 @@ bool CBaseObject::StartBuilding( CBaseEntity *pBuilder )
 	else if ( IsMiniBuilding() )
 	{
 		int iHealth = GetMaxHealthForCurrentLevel();
-		if ( !IsDisposableBuilding() )
+		if ( !IsDisposableBuilding() && !tf2v_use_new_minibuildings.GetBool() )
 		{
 			iHealth /= 2.0f;
 		}
@@ -2206,6 +2233,8 @@ float CBaseObject::GetConstructionMultiplier( void )
 	if( pBuilder )
 	{
 		flMultiplier += pBuilder->GetObjectBuildSpeedMultiplier( ObjectType(), m_bCarryDeploy );
+		// Check if this weapon has a build modifier
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pBuilder, flMultiplier, mult_construction_value );
 	}
 
 	return flMultiplier;
@@ -2306,7 +2335,29 @@ CTFAmmoPack* CBaseObject::CreateAmmoPack( const char *pchModel, int nMetal )
 
 		pAmmoPack->SetInitialVelocity( vecImpulse );
 
-		pAmmoPack->m_nSkin = ( GetTeamNumber() == TF_TEAM_RED ) ? 0 : 1;
+		switch ( GetTeamNumber() )
+		{
+			case TF_TEAM_RED:
+				pAmmoPack->m_nSkin = 0;
+				break;
+
+			case TF_TEAM_BLUE:
+				pAmmoPack->m_nSkin = 1;
+				break;
+
+			case TF_TEAM_GREEN:
+				pAmmoPack->m_nSkin = 2;
+				break;
+
+			case TF_TEAM_YELLOW:
+				pAmmoPack->m_nSkin = 3;
+				break;
+
+			default:
+				pAmmoPack->m_nSkin = 1;
+				break;
+
+		}
 
 		// Give the ammo pack some health, so that trains can destroy it.
 		pAmmoPack->SetCollisionGroup( COLLISION_GROUP_DEBRIS );
@@ -2483,6 +2534,23 @@ void CBaseObject::Killed( const CTakeDamageInfo &info )
 		if ( pAmmoPack )
 		{
 			pAmmoPack->SetBodygroup( 1, 1 );
+
+			// Change the toolbox color to match the team.
+			switch ( GetTeamNumber() )
+			{
+				case TF_TEAM_RED:
+					pAmmoPack->m_nSkin = 0;
+					break;
+				case TF_TEAM_BLUE:
+					pAmmoPack->m_nSkin = 1;
+					break;
+				case TF_TEAM_GREEN:
+					pAmmoPack->m_nSkin = 2;
+					break;
+				case TF_TEAM_YELLOW:
+					pAmmoPack->m_nSkin = 3;
+					break;
+			}
 		}
 
 		CObjectSapper *pSapper = GetSapper();
@@ -2809,7 +2877,7 @@ bool CBaseObject::OnWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vector hi
 	bool bRepairHit = false;
 	bool bUpgradeHit = false;
 
-	bRepairHit = ( Command_Repair( pPlayer, pWrench->GetRepairAmount(), 1.f ) > 0 );
+	bRepairHit = ( Command_Repair( pPlayer, pWrench->GetRepairAmount(), 1.f, tf2v_use_new_wrench_mechanics.GetBool() ? 3.f : 5.f ) > 0 );
 
 	if ( !bRepairHit )
 	{
@@ -2923,6 +2991,9 @@ bool CBaseObject::CanBeUpgraded( CTFPlayer *pPlayer )
 		return false;
 
 	if ( IsMiniBuilding() || IsDisposableBuilding() )
+		return false;
+
+	if ( !tf2v_building_upgrades.GetBool() && GetType() != OBJ_SENTRYGUN )
 		return false;
 
 	// only engineers
@@ -3601,7 +3672,21 @@ void CBaseObject::InitializeMapPlacedObject( void )
 	FinishedBuilding();
 
 	// Set the skin
-	m_nSkin = ( GetTeamNumber() == TF_TEAM_RED ) ? 0 : 1;
+	switch ( GetTeamNumber() )
+	{
+		case TF_TEAM_RED:
+			m_nSkin = 0;
+			break;
+		case TF_TEAM_BLUE:
+			m_nSkin = 1;
+			break;
+		case TF_TEAM_GREEN:
+			m_nSkin = 2;
+			break;
+		case TF_TEAM_YELLOW:
+			m_nSkin = 3;
+			break;
+	}
 }
 
 //-----------------------------------------------------------------------------

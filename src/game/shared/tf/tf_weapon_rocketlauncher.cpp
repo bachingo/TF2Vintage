@@ -25,6 +25,8 @@
 
 #endif
 
+extern ConVar tf2v_use_new_beggars;
+
 #define BOMBARDMENT_ROCKET_MODEL "models/buildables/sentry3_rockets.mdl"
 
 //=============================================================================
@@ -256,7 +258,7 @@ bool CTFRocketLauncher::CheckReloadMisfire( void )
 #ifdef GAME_DLL
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
 
-	if ( m_bIsOverloading )
+	if ( m_bIsOverloading && tf2v_use_new_beggars.GetBool() )
 	{
 		if ( Clip1() > 0 )
 		{
@@ -785,4 +787,3 @@ inline float CTFCrossbow::GetProgress( void )
 	float meltedTime = gpGlobals->curtime - m_flLastUsedTimestamp;
 	return meltedTime / m_flRegenerateDuration;
 }
-

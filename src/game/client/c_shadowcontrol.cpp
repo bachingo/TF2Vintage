@@ -32,6 +32,7 @@ private:
 	color32 m_shadowColor;
 	float m_flShadowMaxDist;
 	bool m_bDisableShadows;
+	bool m_bEnableWorldLightShadows;
 };
 
 IMPLEMENT_CLIENTCLASS_DT(C_ShadowControl, DT_ShadowControl, CShadowControl)
@@ -39,6 +40,7 @@ IMPLEMENT_CLIENTCLASS_DT(C_ShadowControl, DT_ShadowControl, CShadowControl)
 	RecvPropInt(RECVINFO(m_shadowColor)),
 	RecvPropFloat(RECVINFO(m_flShadowMaxDist)),
 	RecvPropBool(RECVINFO(m_bDisableShadows)),
+	RecvPropBool(RECVINFO(m_bEnableWorldLightShadows)),
 END_RECV_TABLE()
 
 
@@ -63,4 +65,3 @@ bool C_ShadowControl::ShouldDraw()
 {
 	return false;
 }
-

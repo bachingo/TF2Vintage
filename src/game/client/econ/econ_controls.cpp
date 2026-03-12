@@ -1910,7 +1910,7 @@ void CExplanationPopup::OnKeyCodePressed( vgui::KeyCode code )
 		ButtonCode_t nButtonCode = GetBaseButtonCode( code );
 
 		// swallow all keys
-		if ( nButtonCode == KEY_XBUTTON_B || nButtonCode == STEAMCONTROLLER_B )
+		if ( nButtonCode == KEY_XBUTTON_B )
 		{
 			OnCommand( "close" );
 			return;
@@ -1918,7 +1918,6 @@ void CExplanationPopup::OnKeyCodePressed( vgui::KeyCode code )
 		else if ( nButtonCode == KEY_XBUTTON_LEFT || 
 				  nButtonCode == KEY_XSTICK1_LEFT ||
 				  nButtonCode == KEY_XSTICK2_LEFT ||
-				  nButtonCode == STEAMCONTROLLER_DPAD_LEFT ||
 				  code == KEY_LEFT )
 		{
 			OnCommand( "prevexplanation" );
@@ -1927,7 +1926,6 @@ void CExplanationPopup::OnKeyCodePressed( vgui::KeyCode code )
 		else if ( nButtonCode == KEY_XBUTTON_RIGHT || 
 				  nButtonCode == KEY_XSTICK1_RIGHT ||
 				  nButtonCode == KEY_XSTICK2_RIGHT ||
-				  nButtonCode == STEAMCONTROLLER_DPAD_RIGHT ||
 				  code == KEY_RIGHT )
 		{
 			OnCommand( "nextexplanation" );

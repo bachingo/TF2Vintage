@@ -278,7 +278,8 @@ CTFStreamManager::~CTFStreamManager()
 
 bool CTFStreamManager::Init()
 {
-	RequestTopStreams();
+	// TF2V doesn't use this.
+	// RequestTopStreams();
 
 	return true;
 }

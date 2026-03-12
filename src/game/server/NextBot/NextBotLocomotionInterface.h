@@ -7,26 +7,6 @@
 #define _NEXT_BOT_LOCOMOTION_INTERFACE_H_
 
 #include "NextBotComponentInterface.h"
-#ifdef TF_DLL
-#include "tf/nav_mesh/tf_nav_area.h"
-#else
-class CTFNavArea;
-
-inline HSCRIPT ToHScript( CNavArea *pArea )
-{
-	return NULL;
-}
-
-inline HSCRIPT ToHScript( CTFNavArea *pArea )
-{
-	return NULL;
-}
-
-inline CNavArea *ToNavArea( HSCRIPT hScript )
-{
-	return NULL;
-}
-#endif
 
 class Path;
 class INextBot;
@@ -134,7 +114,7 @@ public:
 	virtual const Vector &GetMotionVector( void ) const;	// return unit vector describing our direction of motion - even if we are currently not moving
 
 	virtual bool IsAreaTraversable( const CNavArea *baseArea ) const;	// return true if given area can be used for navigation
-	bool ScriptIsAreaTraversable( HSCRIPT hBaseArea ) const { return this->IsAreaTraversable( ToNavArea( hBaseArea ) ); }
+	bool ScriptIsAreaTraversable( HSCRIPT hBaseArea ) const;
 
 	virtual float GetTraversableSlopeLimit( void ) const;	// return Z component of unit normal of steepest traversable slope
 

@@ -186,7 +186,7 @@ void ParseParticleEffectsMap( const char *pMapName, bool bLoadSheets )
 		V_snprintf( szMapManifestFilename, sizeof( szMapManifestFilename ), "maps/%s_particles.txt", pMapName );
 	}
 
-	KeyValuesAD manifest( szMapManifestFilename );
+	KeyValues *manifest = new KeyValues( szMapManifestFilename );
 
 	// In order:
 	//  - particles.txt within the map BSP

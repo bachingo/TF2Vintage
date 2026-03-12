@@ -183,7 +183,7 @@ void CHudChat::ApplySchemeSettings( vgui::IScheme *pScheme )
 {
 	BaseClass::ApplySchemeSettings( pScheme );
 
-	m_colorPartyEvent   = pScheme->GetColor( "Green", Color( 255, 255, 255, 255 ) );
+	m_colorPartyEvent = pScheme->GetColor( "Green", Color( 255, 255, 255, 255 ) );
 	m_colorPartyMessage = pScheme->GetColor( "Green", Color( 255, 255, 255, 255 ) );
 
 	// TF2V arrow-prefix colors.  Fall back to sensible defaults if not in scheme.

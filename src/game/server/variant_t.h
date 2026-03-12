@@ -65,6 +65,8 @@ public:
 	void SetOther( void *data );
 	bool Convert( fieldtype_t newType );
 
+	void SetScriptVariant( ScriptVariant_t &var );
+
 	static typedescription_t m_SaveBool[];
 	static typedescription_t m_SaveInt[];
 	static typedescription_t m_SaveFloat[];

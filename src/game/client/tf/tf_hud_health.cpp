@@ -217,7 +217,7 @@ private:
 	float			m_flArmorIconHeight;
 };
 
-
+#if 0
 DECLARE_HUDELEMENT( CHudArmor );
 
 //-----------------------------------------------------------------------------
@@ -311,3 +311,4 @@ void CHudArmor::Paint()
 	// Base class paint.
 	BaseClass::Paint();
 }
+#endif

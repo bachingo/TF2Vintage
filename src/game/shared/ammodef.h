@@ -72,6 +72,7 @@ public:
 	Ammo_t				m_AmmoType[MAX_AMMO_TYPES];
 
 	Ammo_t				*GetAmmoOfIndex(int nAmmoIndex);
+	const char			*Name( int nAmmoIndex );
 	int					Index(const char *psz);
 	int					PlrDamage(int nAmmoIndex);
 	int					NPCDamage(int nAmmoIndex);
@@ -91,6 +92,9 @@ public:
 
 private:
 	bool				AddAmmoType(char const* name, int damageType, int tracerType, int nFlags, int minSplashSize, int maxSplashSize );
+
+	ALLOW_SCRIPT_ACCESS();
+	int					GetNumAmmoTypes() { return m_nAmmoIndex; }
 };
 
 

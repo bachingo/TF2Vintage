@@ -59,6 +59,7 @@ public:
 
 #ifdef CLIENT_DLL
 	virtual void	GetWeaponCrosshairScale( float &flScale );
+	virtual Activity TranslateViewmodelHandActivityInternal( Activity iActivity ) OVERRIDE;
 #else
 	virtual void	Detach();
 	virtual float	GetProjectileDamage( void );

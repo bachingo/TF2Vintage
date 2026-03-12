@@ -95,8 +95,10 @@ CEconItemSystem::~CEconItemSystem( void )
 void CEconItemSystem::Init( void )
 {
 #ifdef USES_ECON_ITEMS
-	ParseItemSchemaFile( "scripts/items/items_game.txt" );
-#endif // USES_ECON_ITEMS
+    if ( m_itemSchema.GetVersion() != 0 )
+        return;  // Already loaded — don't re-parse
+    ParseItemSchemaFile( "scripts/items/items_game.txt" );
+#endif
 }
 
 
@@ -177,14 +179,10 @@ void CEconItemSystem::ReloadWhitelist( void )
 
 	// If we didn't find a file, we're done.
 	if ( !bFoundWhitelist )
-	{
-		pWhitelistKV->deleteThis();
 		return;
-	}
 
 	// Otherwise, go through the KVs and turn on the matching items.
 	Msg("Parsing item whitelist (default: %s)\n", bDefault ? "allowed" : "disallowed" );
-	KeyValues* ownerWhitelistKV = pWhitelistKV;
 	pWhitelistKV = pWhitelistKV->GetFirstSubKey();
 	while ( pWhitelistKV )
 	{
@@ -208,8 +206,6 @@ void CEconItemSystem::ReloadWhitelist( void )
 		pWhitelistKV = pWhitelistKV->GetNextKey();
 	}
 	Msg("Finished.\n");
-
-	ownerWhitelistKV->deleteThis();
 }
 
 #ifdef GAME_DLL

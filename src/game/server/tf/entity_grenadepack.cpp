@@ -83,3 +83,8 @@ bool CGrenadePack::MyTouch( CBasePlayer *pPlayer )
 
 	return bSuccess;
 }
+
+const char * CGrenadePack::GetDefaultPowerupModel(void)
+{
+	return TF_GRENADEPACK_MODEL;
+}>>>>>>> /tmp/d.tmp

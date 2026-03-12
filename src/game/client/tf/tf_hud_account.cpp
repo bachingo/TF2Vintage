@@ -198,7 +198,7 @@ public:
 	virtual const char *GetResFileName( void ) { return "resource/UI/HudAccountPanel.res"; }
 
 protected:
-	virtual Color GetColor( const account_delta_t::eAccountDeltaType_t &type, const int iDeltaValue = 0 );
+	virtual Color GetColor( const account_delta_t::eAccountDeltaType_t& type );
 
 	CUtlVector <account_delta_t> m_AccountDeltaItems;
 
@@ -1030,7 +1030,7 @@ account_delta_t *CAccountPanel::OnAccountValueChanged( int iOldValue, int iNewVa
 		pNewDeltaItem->m_bLargeFont = false;
 		pNewDeltaItem->m_eDataType = type;
 		pNewDeltaItem->m_wzText[0] = NULL;
-		pNewDeltaItem->m_color = GetColor( type, iDelta );
+		pNewDeltaItem->m_color = GetColor( type ); 
 		pNewDeltaItem->m_bShadows = false;
 		return &m_AccountDeltaItems[index];
 	}
@@ -1038,7 +1038,7 @@ account_delta_t *CAccountPanel::OnAccountValueChanged( int iOldValue, int iNewVa
 	return NULL;
 }
 
-Color CAccountPanel::GetColor( const account_delta_t::eAccountDeltaType_t &type, const int iDeltaValue )
+Color CAccountPanel::GetColor( const account_delta_t::eAccountDeltaType_t& type )
 {
 	if ( type == account_delta_t::ACCOUNT_DELTA_BONUS_POINTS )
 	{
@@ -1046,7 +1046,7 @@ Color CAccountPanel::GetColor( const account_delta_t::eAccountDeltaType_t &type,
 	}
 	else if ( type == account_delta_t::ACCOUNT_DELTA_HEALING )
 	{
-		return ( iDeltaValue < 0 ) ? m_DeltaNegativeColor : m_DeltaPositiveColor;
+		return m_DeltaPositiveColor;
 	}
 	else if ( type == account_delta_t::ACCOUNT_DELTA_DAMAGE )
 	{

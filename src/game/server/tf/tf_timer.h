@@ -14,6 +14,7 @@
 #include "ehandle.h"
 #include "tf_shareddefs.h"
 
+#if 0
 
 class CTFPlayer;
 
@@ -56,5 +57,6 @@ void Timer_UpdateAll();
 // Call at round restart.
 void Timer_RemoveAll();
 
+#endif
 
 #endif // TF_TIMER_H

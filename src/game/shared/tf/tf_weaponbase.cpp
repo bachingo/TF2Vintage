@@ -48,7 +48,6 @@
 // Client specific.
 #else
 #include "c_tf_player.h"
-#include "c_baseviewmodel.h"
 #include "tf_viewmodel.h"
 #include "hud_crosshair.h"
 #include "c_tf_playerresource.h"
@@ -75,7 +74,14 @@ extern CTFWeaponInfo *GetTFWeaponInfo( int iWeapon );
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+extern ConVar r_drawviewmodel;
+
 extern ConVar tf_useparticletracers;
+extern ConVar tf2v_critchance;
+extern ConVar tf2v_critchance_rapid;
+extern ConVar tf2v_crit_duration_rapid;
+extern ConVar tf2v_use_shortstop_slowdown;
+extern ConVar tf2v_use_new_axtinguisher;
 ConVar tf_scout_hype_pep_mod( "tf_scout_hype_pep_mod", "1.0", FCVAR_REPLICATED | FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 ConVar tf_scout_hype_pep_max( "tf_scout_hype_pep_max", "99.0", FCVAR_REPLICATED | FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 ConVar tf_scout_hype_pep_min_damage( "tf_scout_hype_pep_min_damage", "5.0", FCVAR_REPLICATED | FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
@@ -92,7 +98,19 @@ extern ConVar tf_weapon_criticals_bucket_bottom;
 
 #ifdef CLIENT_DLL
 extern ConVar cl_crosshair_file;
+extern ConVar cl_flipviewmodels;
+extern ConVar tf2v_model_muzzleflash;
+extern ConVar tf2v_muzzlelight;
 #endif
+
+ConVar tf_weapon_criticals( "tf_weapon_criticals", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Whether or not random crits are enabled." );
+ConVar tf_weapon_always_allow_inspect( "tf_weapon_always_allow_inspect", "1", FCVAR_REPLICATED | FCVAR_ARCHIVE, "Allow the inspect animation on any weapon" );
+ConVar tf2v_allcrit( "tf2v_allcrit", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables or disables always on criticals." );
+ConVar tf2v_use_new_weapon_swap_speed( "tf2v_use_new_weapon_swap_speed", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables faster weapon switching." );
+ConVar tf2v_use_new_blackbox( "tf2v_use_new_blackbox", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Trades the +15HP per hit for +20HP per attack." );
+ConVar tf2v_use_faster_reload( "tf2v_use_faster_reload", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Speeds up end of reloads by 1/5 of a second.");
+ConVar tf2v_use_new_honorbound( "tf2v_use_new_honorbound", "1", FCVAR_REPLICATED | FCVAR_NOTIFY, "Deduct health on switch instead of being unable." );
+ConVar tf2v_use_new_sword_deploy_speed( "tf2v_use_new_sword_deploy_speed", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Uses to new 75% slower deploy speed for swords" );
 
 //=============================================================================
 //
@@ -231,8 +249,6 @@ END_NETWORK_TABLE()
 BEGIN_PREDICTION_DATA( CTFWeaponBase ) 
 #ifdef CLIENT_DLL
 	DEFINE_PRED_FIELD( m_bLowered, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
-	DEFINE_PRED_FIELD( m_bInAttack, FIELD_BOOLEAN, 0 ),
-	DEFINE_PRED_FIELD( m_bInAttack2, FIELD_BOOLEAN, 0 ),
 	DEFINE_PRED_FIELD( m_iReloadMode, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bReloadedThroughAnimEvent, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bDisguiseWeapon, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
@@ -273,8 +289,6 @@ int g_iScopeTextureID = 0;
 int g_iScopeDustTextureID = 0;
 
 #endif
-
-ConVar tf_weapon_criticals( "tf_weapon_criticals", "1", FCVAR_REPLICATED | FCVAR_NOTIFY, "Whether or not random crits are enabled" );
 
 //=============================================================================
 //
@@ -424,19 +438,6 @@ void CTFWeaponBase::Activate( void )
 
 	// Reset our clip, in case we've had it modified
 	GiveDefaultAmmo();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFWeaponBase::GiveDefaultAmmo( void )
-{
-	BaseClass::GiveDefaultAmmo();
-
-	if ( IsEnergyWeapon() )
-	{
-		m_flEnergy = Energy_GetMaxEnergy();
-	}
 }
 
 // -----------------------------------------------------------------------------
@@ -1152,12 +1153,15 @@ bool CTFWeaponBase::CanHolster( void ) const
 	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
 	if ( pPlayer && ( pPlayer->GetActiveWeapon() != this || gpGlobals->curtime >= pPlayer->m_Shared.m_flFirstPrimaryAttack ) )
 	{
-		if ( IsHonorBound() && pPlayer->m_Shared.m_iKillCountSinceLastDeploy == 0 && pPlayer->GetHealth() <= 50 )
+		if ( IsHonorBound() && pPlayer->m_Shared.m_iKillCountSinceLastDeploy == 0 )
 		{
+			if ( !tf2v_use_new_honorbound.GetBool() || pPlayer->GetHealth() <= 50 )
+			{
 #ifdef CLIENT_DLL
-			pPlayer->EmitSound( "Player.DenyWeaponSelection" );
+				pPlayer->EmitSound( "Player.DenyWeaponSelection" );
 #endif
-			return false;
+				return false;
+			}
 		}
 	}
 
@@ -1235,12 +1239,27 @@ bool CTFWeaponBase::Deploy( void )
 		if ( !pPlayer )
 			return false;
 
-		float flWeaponSwitchTime = 0.5f;
+		// Overrides the anim length for calculating ready time.
+		// Don't override primary attacks that are already further out than this. This prevents
+		// people exploiting weapon switches to allow weapons to fire faster.
+
+		float flWeaponSwitchTime = 0.67f;
+		if ( tf2v_use_new_weapon_swap_speed.GetBool() )
+			flWeaponSwitchTime = 0.5f;
 
 		// Overrides the anim length for calculating ready time.
 		float flDeployTimeMultiplier = 1.0f;
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flDeployTimeMultiplier, mult_deploy_time );
 		CALL_ATTRIB_HOOK_FLOAT( flDeployTimeMultiplier, mult_single_wep_deploy_time );
+
+		if ( tf2v_use_new_axtinguisher.GetInt() == 2 )
+		{
+			CALL_ATTRIB_HOOK_FLOAT( flDeployTimeMultiplier, mult_single_wep_deploy_time_axtinguisher_2 );
+		}
+		else if ( tf2v_use_new_axtinguisher.GetInt() == 3 && pPlayer->GetLastWeapon() )
+		{
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer->GetLastWeapon(), flDeployTimeMultiplier, mult_single_wep_deploy_time_axtinguisher_3 );
+		}
 
 		// don't apply mult_switch_from_wep_deploy_time attribute if the last weapon hasn't been deployed for more than 0.67 second to match to weapon script switch time
 		// unless the player latched to a hook target, then allow switching right away
@@ -1262,7 +1281,7 @@ bool CTFWeaponBase::Deploy( void )
 		int iIsSword = 0;
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pLastWeapon, iIsSword, is_a_sword );
 		CALL_ATTRIB_HOOK_INT( iIsSword, is_a_sword );
-		if ( iIsSword )
+		if ( iIsSword && tf2v_use_new_sword_deploy_speed.GetBool() )
 		{
 			// swords deploy and holster 75% slower
 			flDeployTimeMultiplier *= 1.75f;
@@ -1594,6 +1613,10 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 	if ( !pPlayer )
 		return false;
 
+	// Don't bother checking if allcrit is on.
+	if ( tf2v_allcrit.GetBool() )
+		return true;
+
 	float flCritChance = 0.f;
 	float flPlayerCritMult = pPlayer->GetCritMult();
 
@@ -1652,9 +1675,9 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 		}
 
 		// get the total crit chance (ratio of total shots fired we want to be crits)
-		float flTotalCritChance = clamp( TF_DAMAGE_CRIT_CHANCE_RAPID * flPlayerCritMult, 0.01f, 0.99f );
+		float flTotalCritChance = clamp( ( tf2v_critchance_rapid.GetFloat() / 100.f ) * flPlayerCritMult, 0.01f, 0.99f );
 		// get the fixed amount of time that we start firing crit shots for	
-		float flCritDuration = TF_DAMAGE_CRIT_DURATION_RAPID;
+		float flCritDuration = tf2v_crit_duration_rapid.GetFloat();
 		// calculate the amount of time, on average, that we want to NOT fire crit shots for in order to achieve the total crit chance we want
 		float flNonCritDuration = ( flCritDuration / flTotalCritChance ) - flCritDuration;
 		// calculate the chance per second of non-crit fire that we should transition into critting such that on average we achieve the total crit chance we want
@@ -1682,7 +1705,7 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 	else
 	{
 		// single-shot weapon, just use random pct per shot
-		flCritChance = TF_DAMAGE_CRIT_CHANCE * flPlayerCritMult;
+		flCritChance = ( tf2v_critchance.GetFloat() / 100.f ) * flPlayerCritMult;
 		CALL_ATTRIB_HOOK_FLOAT( flCritChance, mult_crit_chance );
 
 		// mess with the crit chance seed so it's not based solely on the prediction seed
@@ -2090,9 +2113,9 @@ void CTFWeaponBase::IncrementAmmo( void )
 		}
 		else if ( !CheckReloadMisfire() ) 
 		{
-			if ( pPlayer && pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) > 0 && ( m_iClip1 < GetMaxClip1() ) )
+			if ( pPlayer && pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) > 0 )
 			{
-				m_iClip1++;
+				m_iClip1 = MIN( ( m_iClip1 + 1 ), GetMaxClip1() );
 				pPlayer->RemoveAmmo( 1, m_iPrimaryAmmoType );
 			}
 		}
@@ -2205,8 +2228,10 @@ bool CTFWeaponBase::DefaultReload( int iClipSize1, int iClipSize2, int iActivity
 	// First, see if we have a reload animation
 	if ( SendWeaponAnim( iActivity ) )
 	{
-		// We consider the reload finished 0.2 sec before the anim is, so that players don't keep accidentally aborting their reloads
-		flReloadTime = SequenceDuration() - 0.2;
+		if ( tf2v_use_faster_reload.GetBool() ) // Modern reload systems speed the "end" of the reload slightly faster than the animation.
+			flReloadTime = SequenceDuration() - 0.2;
+		else	// We reload at the speed of the animation.
+			flReloadTime = SequenceDuration();
 	}
 	else
 	{
@@ -2849,8 +2874,28 @@ const char *CTFWeaponBase::GetTracerType( void )
 		{
 			if ( !m_szTracerName[0] )
 			{
-				Q_snprintf( m_szTracerName, MAX_TRACER_NAME, "%s_%s", pszTracerEffect, 
-					(GetOwner() && GetOwner()->GetTeamNumber() == TF_TEAM_RED ) ? "red" : "blue" );
+				if ( GetOwner() )
+				{
+					switch ( GetOwner()->GetTeamNumber() )
+					{
+						case TF_TEAM_RED:
+							Q_snprintf( m_szTracerName, MAX_TRACER_NAME, "%s_red", pszTracerEffect );
+							break;
+						case TF_TEAM_BLUE:
+							Q_snprintf( m_szTracerName, MAX_TRACER_NAME, "%s_blue", pszTracerEffect );
+							break;
+						case TF_TEAM_GREEN:
+							Q_snprintf( m_szTracerName, MAX_TRACER_NAME, "%s_green", pszTracerEffect );
+							break;
+						case TF_TEAM_YELLOW:
+							Q_snprintf( m_szTracerName, MAX_TRACER_NAME, "%s_yellow", pszTracerEffect );
+							break;
+					}
+				}
+				else
+				{
+					Q_snprintf( m_szTracerName, MAX_TRACER_NAME, "%s_blue", pszTracerEffect );
+				}
 			}
 
 			return m_szTracerName;
@@ -3092,7 +3137,8 @@ C_BaseAnimating *CTFWeaponBase::GetAppropriateWorldOrViewModel()
 	}
 }
 
-
+extern void TE_DynamicLight( IRecipientFilter& filter, float delay,
+					  const Vector* org, int r, int g, int b, int exponent, float radius, float time, float decay, int nLightIndex );
 void CTFWeaponBase::CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int nIndex )
 {
 	Vector vecOrigin;
@@ -3130,10 +3176,11 @@ void CTFWeaponBase::CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int nInd
 		pAttachEnt->GetAttachment( iMuzzleFlashAttachment, vecOrigin, angAngles );
 
 		// Muzzleflash light
-/*
-		CLocalPlayerFilter filter;
-		TE_DynamicLight( filter, 0.0f, &vecOrigin, 255, 192, 64, 5, 70.0f, 0.05f, 70.0f / 0.05f, LIGHT_INDEX_MUZZLEFLASH );
-*/
+		if ( tf2v_muzzlelight.GetBool() )
+		{
+			CLocalPlayerFilter filter;
+			TE_DynamicLight( filter, 0.0f, &vecOrigin, 255, 192, 64, 5, 70.0f, 0.05f, 70.0f / 0.05f, LIGHT_INDEX_MUZZLEFLASH );
+		}
 
 		if ( pszMuzzleFlashEffect )
 		{
@@ -3149,7 +3196,7 @@ void CTFWeaponBase::CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int nInd
 			DispatchEffect( pszMuzzleFlashEffect, muzzleFlashData );
 		}
 
-		if ( pszMuzzleFlashModel )
+		if ( pszMuzzleFlashModel && tf2v_model_muzzleflash.GetBool() )
 		{
 			float flEffectLifetime = GetMuzzleFlashModelLifetime();
 
@@ -3166,6 +3213,9 @@ void CTFWeaponBase::CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int nInd
 				// FIXME: This is an incredibly brutal hack to get muzzle flashes positioned correctly for recording
 				m_hMuzzleFlashModel[nIndex]->SetIs3rdPersonFlash( nIndex == 1 );
 			}
+
+			// If we use a muzzle model, we don't need to do the particle effect
+			return;
 		}
 
 		if ( pszMuzzleFlashParticleEffect ) 
@@ -3310,6 +3360,9 @@ void CTFWeaponBase::ProcessMuzzleFlashEvent( void )
 
 
 	bool bDrawMuzzleFlashOnViewModel = ( pAttachEnt != this );
+	if ( bDrawMuzzleFlashOnViewModel && !r_drawviewmodel.GetBool() )
+		return;
+
 	{
 		CRecordEffectOwner recordOwner( pOwner, bDrawMuzzleFlashOnViewModel );
 		CreateMuzzleFlashEffects( pAttachEnt, 0 );
@@ -4827,15 +4880,19 @@ int CTFWeaponBase::GetSkin()
 	{
 		switch( iTeamNumber )
 		{
-		case TF_TEAM_RED:
-			nSkin = 0;
-			break;
-		case TF_TEAM_BLUE:
-			nSkin = 1;
-			break;
-		default:
-			nSkin = 0;
-			break;
+			default:
+			case TF_TEAM_RED:
+				nSkin = 0;
+				break;
+			case TF_TEAM_BLUE:
+				nSkin = 1;
+				break;
+			case TF_TEAM_GREEN:
+				nSkin = 2;
+				break;
+			case TF_TEAM_YELLOW:
+				nSkin = 3;
+				break;
 		}
 	}
 
@@ -4971,7 +5028,6 @@ void CTFWeaponBase::ApplyOnHitAttributes( CBaseEntity *pVictimBaseEntity, CTFPla
 		if ( pVictim && 
 			 pVictim->IsPlayerClass( TF_CLASS_SPY ) && 
 			 pVictim->m_Shared.InCond( TF_COND_DISGUISED ) && 
-			 ( pVictim->m_Shared.GetDisguiseTeam() != pVictim->GetTeamNumber() ) &&
 			 !( pVictim->m_Shared.IsStealthed() || pVictim->m_Shared.InCond( TF_COND_STEALTHED_BLINK ) ) )
 		{
 			flPercentage = 0.0f;
@@ -5033,7 +5089,7 @@ void CTFWeaponBase::ApplyOnHitAttributes( CBaseEntity *pVictimBaseEntity, CTFPla
 		}
 
 		// On hit attributes don't work when you shoot disguised spies
-		if ( pVictim->m_Shared.InCond( TF_COND_DISGUISED ) && ( pVictim->m_Shared.GetDisguiseTeam() != pVictim->GetTeamNumber() ) )
+		if ( pVictim->m_Shared.InCond( TF_COND_DISGUISED ) )
 			return;
 	}
 
@@ -5596,7 +5652,7 @@ bool CTFWeaponBase::IsViewModelFlipped( void )
 		return true;
 	}
 #else
-	if ( m_bFlipViewModel != TeamFortress_ShouldFlipClientViewModel() )
+	if ( m_bFlipViewModel != cl_flipviewmodels.GetBool() )
 	{
 		return true;
 	}
@@ -6777,7 +6833,7 @@ void CTFWeaponBase::AddStatTrakModel( CEconItemView *pItem, int nStatTrakType, A
 				pStatTrakEnt->m_nSkin = nSkin;
 				m_viewmodelStatTrakAddon = pStatTrakEnt;
 				
-				if ( TeamFortress_ShouldFlipClientViewModel() )
+				if ( cl_flipviewmodels.GetBool() )
 				{
 					pStatTrakEnt->SetBodygroup( 1, 1 ); // use a special mirror-image stattrak module that appears correct for lefties
 					flScale *= -1.0f;					// flip scale

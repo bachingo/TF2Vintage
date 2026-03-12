@@ -40,6 +40,7 @@ public:
 //	void InputSetLightColor( inputdata_t &inputdata );
 	void InputSetSpotlightTexture( inputdata_t &inputdata );
 	void InputSetAmbient( inputdata_t &inputdata );
+	void InputSetShadowFilterSize( inputdata_t &inputdata );
 
 	void InitialThink( void );
 
@@ -60,6 +61,7 @@ private:
 	CNetworkVar( float, m_flNearZ );
 	CNetworkVar( float, m_flFarZ );
 	CNetworkVar( int, m_nShadowQuality );
+	CNetworkVar( float, m_flShadowFilterSize );
 };
 
 LINK_ENTITY_TO_CLASS( env_projectedtexture, CEnvProjectedTexture );
@@ -78,6 +80,7 @@ BEGIN_DATADESC( CEnvProjectedTexture )
 	DEFINE_KEYFIELD( m_flNearZ, FIELD_FLOAT, "nearz" ),
 	DEFINE_KEYFIELD( m_flFarZ, FIELD_FLOAT, "farz" ),
 	DEFINE_KEYFIELD( m_nShadowQuality, FIELD_INTEGER, "shadowquality" ),
+	DEFINE_KEYFIELD( m_flShadowFilterSize, FIELD_FLOAT, "shadowfiltersize" ),
 	DEFINE_FIELD( m_LinearFloatLightColor, FIELD_VECTOR ), 
 
 	DEFINE_INPUTFUNC( FIELD_VOID, "TurnOn", InputTurnOn ),
@@ -91,6 +94,7 @@ BEGIN_DATADESC( CEnvProjectedTexture )
 	// this is broken . . need to be able to set color and intensity like light_dynamic
 //	DEFINE_INPUTFUNC( FIELD_COLOR32, "LightColor", InputSetLightColor ),
 	DEFINE_INPUTFUNC( FIELD_FLOAT, "Ambient", InputSetAmbient ),
+	DEFINE_INPUTFUNC( FIELD_FLOAT, "SetShadowFilterSize", InputSetShadowFilterSize ),
 	DEFINE_INPUTFUNC( FIELD_STRING, "SpotlightTexture", InputSetSpotlightTexture ),
 	DEFINE_THINKFUNC( InitialThink ),
 END_DATADESC()
@@ -110,6 +114,7 @@ IMPLEMENT_SERVERCLASS_ST( CEnvProjectedTexture, DT_EnvProjectedTexture )
 	SendPropFloat( SENDINFO( m_flNearZ ), 16, SPROP_ROUNDDOWN, 0.0f,  500.0f ),
 	SendPropFloat( SENDINFO( m_flFarZ ),  18, SPROP_ROUNDDOWN, 0.0f, 1500.0f ),
 	SendPropInt( SENDINFO( m_nShadowQuality ), 1, SPROP_UNSIGNED ),  // Just one bit for now
+	SendPropFloat( SENDINFO( m_flShadowFilterSize ) ),
 END_SEND_TABLE()
 
 //-----------------------------------------------------------------------------
@@ -137,6 +142,7 @@ CEnvProjectedTexture::CEnvProjectedTexture( void )
 	m_flNearZ = 4.0f;
 	m_flFarZ = 750.0f;
 	m_nShadowQuality = 0;
+	m_flShadowFilterSize = 0.0f;
 }
 
 void UTIL_ColorStringToLinearFloatColor( Vector &color, const char *pString )
@@ -217,6 +223,11 @@ void CEnvProjectedTexture::InputSetEnableShadows( inputdata_t &inputdata )
 void CEnvProjectedTexture::InputSetAmbient( inputdata_t &inputdata )
 {
 	m_flAmbient = inputdata.value.Float();
+}
+
+void CEnvProjectedTexture::InputSetShadowFilterSize( inputdata_t &inputdata )
+{
+	m_flShadowFilterSize = inputdata.value.Float();
 }
 
 void CEnvProjectedTexture::InputSetSpotlightTexture( inputdata_t &inputdata )

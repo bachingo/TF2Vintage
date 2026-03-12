@@ -114,6 +114,50 @@ BEGIN_DATADESC( CBaseCombatCharacter )
 
 END_DATADESC()
 
+BEGIN_ENT_SCRIPTDESC( CBaseCombatCharacter, CBaseAnimating, "The base class shared by players and NPCs." )
+
+	DEFINE_SCRIPTFUNC_NAMED( GetScriptActiveWeapon, "GetActiveWeapon", "Get the character's active weapon entity." )
+	DEFINE_SCRIPTFUNC( WeaponCount, "Get the number of weapons a character possesses." )
+	DEFINE_SCRIPTFUNC_NAMED( GetScriptWeaponIndex, "GetWeapon", "Get a specific weapon in the character's inventory." )
+	DEFINE_SCRIPTFUNC_NAMED( GetScriptWeaponByType, "FindWeapon", "Find a specific weapon in the character's inventory by its classname." )
+	DEFINE_SCRIPTFUNC_NAMED( GetScriptAllWeapons, "GetAllWeapons", "Get the character's weapon inventory." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetCurrentWeaponProficiency, "GetCurrentWeaponProficiency", "Get the character's current proficiency (accuracy) with their current weapon." )
+
+	DEFINE_SCRIPTFUNC_NAMED( Weapon_ShootPosition, "ShootPosition", "Get the character's shoot position." )
+	DEFINE_SCRIPTFUNC_NAMED( Weapon_DropAll, "DropAllWeapons", "Make the character drop all of its weapons." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptEquipWeapon, "EquipWeapon", "Make the character equip the specified weapon entity. If they don't already own the weapon, they will acquire it instantly." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptDropWeapon, "DropWeapon", "Make the character drop the specified weapon entity if they own it." )
+
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetAmmoCount, "GetAmmoCount", "Get the ammo count of the specified ammo type." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSetAmmoCount, "SetAmmoCount", "Set the ammo count of the specified ammo type." )
+
+	DEFINE_SCRIPTFUNC( DoMuzzleFlash, "Does a muzzle flash." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetAttackSpread, "GetAttackSpread", "Get the attack spread." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetSpreadBias, "GetSpreadBias", "Get the spread bias." )
+
+	DEFINE_SCRIPTFUNC_NAMED( ScriptRelationType, "GetRelationship", "Get a character's relationship to a specific entity." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptRelationPriority, "GetRelationPriority", "Get a character's relationship priority for a specific entity." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSetRelationship, "SetRelationship", "Set a character's relationship with a specific entity." )
+
+	DEFINE_SCRIPTFUNC_NAMED( GetScriptVehicleEntity, "GetVehicleEntity", "Get the entity for a character's current vehicle if they're in one." )
+
+	DEFINE_SCRIPTFUNC_NAMED( ScriptInViewCone, "InViewCone", "Check if the specified position is in the character's viewcone." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptEntInViewCone, "EntInViewCone", "Check if the specified entity is in the character's viewcone." )
+
+	DEFINE_SCRIPTFUNC_NAMED( ScriptInAimCone, "InAimCone", "Check if the specified position is in the character's aim cone." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptEntInViewCone, "EntInAimCone", "Check if the specified entity is in the character's aim cone." )
+
+	DEFINE_SCRIPTFUNC_NAMED( ScriptBodyAngles, "BodyAngles", "Get the body's angles." )
+	DEFINE_SCRIPTFUNC( BodyDirection2D, "Get the body's 2D direction." )
+	DEFINE_SCRIPTFUNC( BodyDirection3D, "Get the body's 3D direction." )
+	DEFINE_SCRIPTFUNC( HeadDirection2D, "Get the head's 2D direction." )
+	DEFINE_SCRIPTFUNC( HeadDirection3D, "Get the head's 3D direction." )
+	DEFINE_SCRIPTFUNC( EyeDirection2D, "Get the eyes' 2D direction." )
+	DEFINE_SCRIPTFUNC( EyeDirection3D, "Get the eyes' 3D direction." )
+
+	DEFINE_SCRIPTFUNC_WRAPPED( GetLastKnownArea, "Return the last nav area occupied - NULL if unknown" )
+
+END_SCRIPTDESC();
 
 BEGIN_SIMPLE_DATADESC( Relationship_t )
 	DEFINE_FIELD( entity,			FIELD_EHANDLE ),
@@ -2479,6 +2523,43 @@ int CBaseCombatCharacter::OnTakeDamage( const CTakeDamageInfo &info )
 
 int CBaseCombatCharacter::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 {
+	float flDamage = info.GetDamage();
+
+	if ( m_ScriptScope.IsInitialized() && m_ScriptScope.ValueExists( "OnTakeDamage_Alive" ) )
+	{
+		ScriptVariant_t newDamage;
+		ScriptStatus_t nStatus = m_ScriptScope.Call( "OnTakeDamage_Alive", &newDamage, ToHScript( info.GetInflictor() ), ToHScript( info.GetAttacker() ), ToHScript( info.GetWeapon() ), flDamage, info.GetDamageType(), info.GetAmmoName() );
+
+		if ( nStatus != SCRIPT_DONE )
+		{
+			DevWarning( "%s OnTakeDamage_Alive VScript function did not finish!\n", GetDebugName() );
+		}
+		else
+		{
+			newDamage.AssignTo( &flDamage );
+		}
+	}
+
+	if( g_pScriptVM )
+	{
+		if ( HSCRIPT hFunction = g_pScriptVM->LookupFunction( "OnTakeDamage_Alive_Any" ) )
+		{
+			ScriptVariant_t newDamage;
+			ScriptStatus_t nStatus = g_pScriptVM->Call( hFunction, NULL, true, &newDamage, ToHScript( this ), ToHScript( info.GetInflictor() ), ToHScript( info.GetAttacker() ), ToHScript( info.GetWeapon() ), flDamage, info.GetDamageType(), info.GetAmmoName() );
+
+			if ( nStatus != SCRIPT_DONE )
+			{
+				DevWarning( "OnTakeDamage_Alive_Any VScript function did not finish!\n" );
+			}
+			else
+			{
+				newDamage.AssignTo( &flDamage );
+			}
+
+			g_pScriptVM->ReleaseFunction( hFunction );
+		}
+	}
+
 	// grab the vector of the incoming attack. ( pretend that the inflictor is a little lower than it really is, so the body will tend to fly upward a bit).
 	Vector vecDir = vec3_origin;
 	if (info.GetInflictor())
@@ -3038,6 +3119,17 @@ int CBaseCombatCharacter::GiveAmmo( int iCount, const char *szName, bool bSuppre
 	return GiveAmmo( iCount, iAmmoType, bSuppressSound );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Give the player some ammo.
+//-----------------------------------------------------------------------------
+void CBaseCombatCharacter::VScriptGiveAmmo( int iCount, int iAmmoIndex )
+{
+	if (iCount < 0)
+		return;
+
+	m_iAmmo.Set( iAmmoIndex, iCount );
+}
+
 
 ConVar	phys_stressbodyweights( "phys_stressbodyweights", "5.0" );
 void CBaseCombatCharacter::VPhysicsUpdate( IPhysicsObject *pPhysics )
@@ -3372,6 +3464,174 @@ void CBaseCombatCharacter::DoMuzzleFlash()
 }
 
 //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+HSCRIPT CBaseCombatCharacter::GetScriptActiveWeapon()
+{
+	return ToHScript( GetActiveWeapon() );
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+HSCRIPT CBaseCombatCharacter::GetScriptWeaponIndex( int i )
+{
+	return ToHScript( GetWeapon( i ) );
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+HSCRIPT CBaseCombatCharacter::GetScriptWeaponByType( const char *pszWeapon, int iSubType )
+{
+	return ToHScript( Weapon_OwnsThisType( pszWeapon, iSubType ) );
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CBaseCombatCharacter::GetScriptAllWeapons( HSCRIPT hTable )
+{
+	for ( int i=0; i < MAX_WEAPONS; i++ )
+	{
+		if ( m_hMyWeapons[i] )
+		{
+			g_pScriptVM->SetValue( hTable, m_hMyWeapons[i]->GetClassname(), ToHScript( m_hMyWeapons[i] ) );
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CBaseCombatCharacter::ScriptDropWeapon( HSCRIPT hWeapon )
+{
+	CBaseCombatWeapon *pWeapon = HScriptToClass<CBaseCombatWeapon>( hWeapon );
+	if ( !pWeapon )
+		return;
+
+	if ( pWeapon->GetOwner() == this )
+	{
+		// Drop the weapon
+		Weapon_Drop( pWeapon );
+	}
+	else
+	{
+		Msg( "ScriptDropWeapon: %s is not owned by %s", pWeapon->GetDebugName(), GetDebugName() );
+	}
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CBaseCombatCharacter::ScriptEquipWeapon( HSCRIPT hWeapon )
+{
+	CBaseCombatWeapon *pWeapon = HScriptToClass<CBaseCombatWeapon>( hWeapon );
+	if ( !pWeapon )
+		return;
+
+	if ( pWeapon->GetOwner() == this )
+	{
+		// Switch to this weapon
+		Weapon_Switch( pWeapon );
+	}
+	else
+	{
+		if ( CBaseCombatWeapon *pExistingWeapon = Weapon_OwnsThisType( pWeapon->GetClassname() ) )
+		{
+			// Drop our existing weapon then!
+			Weapon_Drop( pExistingWeapon );
+		}
+
+		if ( IsNPC() )
+		{
+			Weapon_Equip( pWeapon );
+			MyNPCPointer()->OnGivenWeapon( pWeapon );
+		}
+		else
+		{
+			Weapon_Equip( pWeapon );
+		}
+
+		pWeapon->OnPickedUp( this );
+	}
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+int CBaseCombatCharacter::ScriptGetAmmoCount( int iType ) const
+{
+	return GetAmmoCount( iType );
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CBaseCombatCharacter::ScriptSetAmmoCount( int iType, int iCount )
+{
+	if ( iType == -1 )
+	{
+		Warning( "%i is not a valid ammo type\n", iType );
+		return;
+	}
+
+	return SetAmmoCount( iCount, iType );
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+const Vector &CBaseCombatCharacter::ScriptGetAttackSpread( HSCRIPT hWeapon, HSCRIPT hTarget )
+{
+	CBaseEntity *pWeapon = ToEnt( hWeapon );
+	if ( !pWeapon || !pWeapon->IsBaseCombatWeapon() )
+	{
+		Warning( "GetAttackSpread: %s is not a valid weapon\n", pWeapon ? pWeapon->GetDebugName() : "Null entity" );
+		return vec3_origin;
+	}
+
+	// TODO: Make this a simple non-reference Vector?
+	static Vector vec;
+	vec = GetAttackSpread( pWeapon->MyCombatWeaponPointer(), ToEnt( hTarget ) );
+	return vec;
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+float CBaseCombatCharacter::ScriptGetSpreadBias( HSCRIPT hWeapon, HSCRIPT hTarget )
+{
+	CBaseEntity *pWeapon = ToEnt( hWeapon );
+	if ( !pWeapon || !pWeapon->IsBaseCombatWeapon() )
+	{
+		Warning( "GetSpreadBias: %s is not a valid weapon\n", pWeapon ? pWeapon->GetDebugName() : "Null entity" );
+		return 1.0f;
+	}
+
+	return GetSpreadBias( pWeapon->MyCombatWeaponPointer(), ToEnt( hTarget ) );
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+int CBaseCombatCharacter::ScriptRelationType( HSCRIPT pTarget )
+{
+	return (int)IRelationType( ToEnt( pTarget ) );
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+int CBaseCombatCharacter::ScriptRelationPriority( HSCRIPT pTarget )
+{
+	return IRelationPriority( ToEnt( pTarget ) );
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CBaseCombatCharacter::ScriptSetRelationship( HSCRIPT pTarget, int disposition, int priority )
+{
+	AddEntityRelationship( ToEnt( pTarget ), (Disposition_t)disposition, priority );
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+HSCRIPT CBaseCombatCharacter::GetScriptVehicleEntity()
+{
+	return ToHScript( GetVehicleEntity() );
+}
+
+
+//-----------------------------------------------------------------------------
 // Purpose: return true if given target cant be seen because of fog
 //-----------------------------------------------------------------------------
 bool CBaseCombatCharacter::IsHiddenByFog( const Vector &target ) const
@@ -3502,6 +3762,11 @@ void CBaseCombatCharacter::UpdateLastKnownArea( void )
 		m_lastNavArea = area;
 	}
 #endif
+}
+
+HSCRIPT CBaseCombatCharacter::ScriptGetLastKnownArea(void) const
+{
+	return ToHScript( m_lastNavArea );
 }
 
 

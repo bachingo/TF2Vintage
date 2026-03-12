@@ -45,15 +45,6 @@ private:
 	char	m_iTargetFade;
 };
 
-#endif // LIGHTS_H
-
-//-----------------------------------------------------------------------------
-// CEnvLight — TF2V extension of the base light_environment entity.
-//
-// Adds networked sun state (angles, colour, ambient) that sky_tod.cpp drives
-// per-frame, plus I/O handlers and the _light key parser used by csm_autospawn.
-// The client C_EnvLight receives these via DT_CEnvLight (see c_lights.h/cpp).
-//-----------------------------------------------------------------------------
 class CEnvLight : public CLight
 {
 public:
@@ -63,42 +54,50 @@ public:
 
 	bool	KeyValue( const char *szKeyName, const char *szValue ); 
 	void	Spawn( void );
-	void	Think( void );		// 20 Hz — propagates NetworkStateChanged for networked members
-	void	FadeThink( void );	// Light-fade helper (carries over from base CLight)
+	void	Think( void );  // Called by sky_tod to push networked state
 
-	void	TurnOn( void );
-	void	TurnOff( void );
-	void	Toggle( void );
+	void	FadeThink(void);
 
-	void	InputToggle( inputdata_t &inputdata );
-	void	InputTurnOn( inputdata_t &inputdata );
-	void	InputTurnOff( inputdata_t &inputdata );
+	void	TurnOn(void);
+	void	TurnOff(void);
+	void	Toggle(void);
 
-	// Raw sun colour (0-255 per channel) parsed from the Hammer "_light" key.
-	// Available after Spawn(); used by csm_autospawn to seed the initial CSM colour.
-	// Returns Vector4D(r, g, b, brightness) all in [0, 255] range.
+	void	InputToggle(inputdata_t& inputdata);
+	void	InputTurnOn(inputdata_t& inputdata);
+	void	InputTurnOff(inputdata_t& inputdata);
+
+	// Sun pitch (degrees, positive = down). Set via the "pitch" key.
+	int		m_iPitch;
+
+	// Raw RGBA sun color as parsed from the "_light" key (0-255 per channel).
+	// Stored so csm_autospawn (and anything else) can read it without
+	// needing friend access or a separate lookup.
+	// w/a is the brightness scalar (the 4th value in the Hammer color field).
+	// Returns the sun color as (r, g, b, brightness) in 0-255 range.
 	Vector4D GetLightColor() const
 	{
 		return Vector4D( m_vecLightRGB.x, m_vecLightRGB.y, m_vecLightRGB.z, m_flLightBrightness );
 	}
 
-	// ---- Networked sun state (driven by sky_tod.cpp at runtime) ----
-	// These replicate to C_EnvLight; viewrender.cpp reads them for the CSM pass.
-	CNetworkVar( QAngle, m_angSunAngles );				// yaw / pitch / roll
-	CNetworkVector( m_vecLight );						// direct sun colour (linear 0–1)
-	CNetworkVector( m_vecAmbient );						// sky ambient colour (linear 0–1)
+	// Networked sun state — driven by sky_tod.cpp at runtime.
+	// These feed directly into C_EnvLight::GetShadowMappingConstants() on the client
+	// which the engine CSM shadow pass reads every frame.
+	CNetworkVar( QAngle, m_angSunAngles );          // yaw/pitch/roll of sun in sky
+	CNetworkVector( m_vecLight );                   // sun direct light colour (linear)
+	CNetworkVector( m_vecAmbient );                 // sky ambient colour (linear)
 	CNetworkVar( bool, m_bCascadedShadowMappingEnabled );
 
 protected:
-	// Raw parsed sun colour from BSP — NOT replicated, server-only.
-	Vector	m_vecLightRGB;			// R, G, B in [0, 255]
-	float	m_flLightBrightness;	// 4th value from Hammer colour field
+	// Raw sun color (0-255 per channel) from the "_light" BSP key.
+	Vector		m_vecLightRGB;		// R, G, B
+	float		m_flLightBrightness;	// 4th value (Hammer brightness scalar)
 
 private:
-	// These mirror CLight internals we need for FadeThink/TurnOn/TurnOff.
-	// CLight::m_iStyle, m_iDefaultStyle, m_iszPattern, m_iCurrentFade,
-	// m_iTargetFade, m_iPitch are declared in the CLight base (lights.cpp).
-	// We redeclare m_iPitch here since CLight keeps it private.
-	int		m_iPitch;
+	int		m_iStyle;
+	int		m_iDefaultStyle;
+	string_t m_iszPattern;
+	char	m_iCurrentFade;
+	char	m_iTargetFade;
 };
 
+#endif // LIGHTS_H

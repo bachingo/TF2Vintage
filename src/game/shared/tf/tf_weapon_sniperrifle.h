@@ -20,6 +20,8 @@
 #define CSniperDot C_SniperDot
 #endif
 
+class CBeam;
+
 enum RifleTypes_t
 {
 	RIFLE_NORMAL = 0,
@@ -122,6 +124,10 @@ public:
 	virtual void PlayWeaponShootSound( void );
 	virtual bool MustBeZoomedToFire( void );
 
+	bool UseSniperBeams( void );
+	void CreateSniperBeam( void );
+	void DestroySniperBeam( void );
+	void UpdateSniperBeam( void );
 	virtual ETFDmgCustom GetPenetrateType() const;
 
 #ifdef CLIENT_DLL
@@ -143,6 +149,8 @@ public:
 	virtual void	OnBulletFire( int iEnemyPlayersHit ) OVERRIDE;
 
 	void			ExplosiveHeadShot( CTFPlayer *pAttacker, CTFPlayer *pVictim );
+
+	Vector			GetMuzzlePosition( void );
 #endif
 	
 	void			Detach( void ) OVERRIDE;
@@ -191,6 +199,7 @@ protected:
 
 #ifdef GAME_DLL
 	CHandle<CSniperDot>		m_hSniperDot;
+	CBeam					*m_pBeam;
 #else
 	bool m_bPlayedBell;
 #endif

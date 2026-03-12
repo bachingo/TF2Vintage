@@ -47,10 +47,19 @@
 #define TF_WEAPON_PIPEBOMB_TIMER_DMG_REDUCTION		0.6
 
 extern ConVar tf_grenadelauncher_max_chargetime;
+extern ConVar tf2v_minicrits_on_deflect;
+extern ConVar tf2v_console_grenadelauncher_damage;
+
 ConVar tf_grenadelauncher_chargescale( "tf_grenadelauncher_chargescale", "1.0", FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_grenadelauncher_livetime( "tf_grenadelauncher_livetime", "0.8", FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 extern ConVar tf_sticky_radius_ramp_time;
 extern ConVar tf_sticky_airdet_radius;
+
+ConVar tf2v_grenades_explode_contact( "tf2v_grenades_explode_contact", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Should Demoman grenades explode on contact?" );
+ConVar tf2v_fizzle_in_skybox( "tf2v_fizzle_in_skybox", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
+
+ConVar tf2v_use_stickybomb_radius_rampup("tf2v_use_stickybomb_radius_rampup", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Ramps up the radius of new and untouched stickies.");
+ConVar tf2v_use_stickybomb_damage_rampup("tf2v_use_stickybomb_damage_rampup", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Ramps up the damage of new stickies.");
 
 #ifndef CLIENT_DLL
 

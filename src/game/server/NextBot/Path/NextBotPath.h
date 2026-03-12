@@ -405,7 +405,7 @@ public:
 		CNavArea *startArea = bot->GetEntity()->GetLastKnownArea();
 
 		if ( startArea == NULL )
-			return NULL;
+			return false;
 
 		startArea->SetParent( NULL );
 
@@ -414,7 +414,7 @@ public:
 
 		float initCost = costFunc( startArea, NULL, NULL, NULL, -1.0f );
 		if ( initCost < 0.0f )
-			return NULL;
+			return false;
 
 		startArea->SetTotalCost( initCost );
 		startArea->AddToOpenList();

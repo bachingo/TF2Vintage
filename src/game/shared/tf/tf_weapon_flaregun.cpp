@@ -17,6 +17,8 @@
 #include "tf_player.h"
 #endif
 
+extern ConVar tf2v_use_extinguish_heal;
+
 //=============================================================================
 //
 // Weapon Flare Gun tables.
@@ -556,7 +558,7 @@ void CTFFlareGun_Revenge::ChargePostFrame( void )
 						// Return health to the Pyro.
 						int iRestoreHealthOnExtinguish = 0;
 						CALL_ATTRIB_HOOK_INT( iRestoreHealthOnExtinguish, extinguish_restores_health );
-						if ( iRestoreHealthOnExtinguish > 0 && pOwner->TakeHealth( 20, DMG_GENERIC ) > 0 )
+						if ( ( iRestoreHealthOnExtinguish > 0 || tf2v_use_extinguish_heal.GetBool() ) && pOwner->TakeHealth( 20, DMG_GENERIC ) > 0 )
 						{
 							IGameEvent *healevent = gameeventmanager->CreateEvent( "player_healonhit" );
 							if ( healevent )

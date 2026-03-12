@@ -1,0 +1,101 @@
+// We care more about speed than code size
+option optimize_for = SPEED;
+
+// We don't use the service generation functionality
+option cc_generic_services = false;
+
+// 
+// STYLE NOTES:
+//
+// Use CamelCase CMsgMyMessageName style names for messages.
+// 
+// Use lowercase _ delimited names like my_steam_id for field names, this is non-standard for Steam,
+// but plays nice with the Google formatted code generation.  
+// 
+// Try not to use required fields ever. Only do so if you are really really sure you'll never want them removed. 
+// Optional should be preffered as it will make versioning easier and cleaner in the future if someone refactors
+// your message and wants to remove or rename fields.
+//
+// Use fixed64 for JobId_t, GID_t, or SteamID.  This is appropriate for any field that is normally
+// going to be larger than 2^56.  Otherwise use int64 for 64 bit values that are frequently smaller
+// than 2^56 as it will safe space on the wire in those cases.
+//
+// Similar to fixed64, use fixed32 for RTime32 or other 32 bit values that are frequently larger than
+// 2^28.  It will safe space in those cases, otherwise use int32 which will safe space for smaller values.
+// An exception to this rule for RTime32 is if the value will frequently be zero rather than set to an actual 
+// time.
+//
+
+enum EBaseMsg
+{
+	k_EInvalidMsg			= 0;
+	k_EClientHelloMsg		= 1;
+	k_EServerHelloMsg		= 2;
+	k_EMultiplexedMsg		= 5;
+	k_ESystemMessageMsg		= 10;
+	k_EBaseMsg_Max			= 50;
+}
+
+message CProtobufMsgHdr
+{
+	required uint32 protocol_version = 1;
+	optional uint32 protocol_type = 2;
+	// For messages that expect a reply
+	optional fixed64 source_message_id = 4;
+	optional fixed64 target_message_id = 5;
+}
+
+message CClientHelloMsg
+{
+	required uint32 version = 1;
+	required fixed64 remote_steamid = 2;
+}
+
+message CServerHelloMsg
+{
+	required uint32 version = 1;
+	required fixed64 remote_steamid = 2;
+}
+
+message CMultiplexedMsg
+{
+	optional uint32 msgtype = 1;			// ID of the message being sent
+	optional bytes payload = 2;				// Serialized message to send
+	repeated fixed64 steamids = 3;			// Clients to send the message to
+}
+
+message CSystemMessageMsg
+{
+	optional string message = 1;
+}
+
+enum EEconSystemMsg
+{
+	k_EUpdateItemSchemaMsg		= 50;
+	k_EUpdateInventoryMsg		= 51;
+	k_ELoadoutChangedMsg		= 52;
+}
+
+message CUpdateItemSchemaMsg
+{
+	optional bytes items_data = 1;
+	optional string items_game_hash = 2;
+	optional string items_game_url = 3;
+	optional bool use_online_backup = 4 [default = false];
+}
+
+message CUpdateLoadoutMsg
+{
+	required fixed32 class_id = 1;
+	repeated bytes inventory = 2; // Serialized bytes of the classes aviable loadout
+}
+
+message CUpdateInventoryMsg
+{
+	repeated CUpdateLoadoutMsg inventory = 1;
+}
+
+message CLoadoutChangedMsg
+{
+	// Empty notification message
+}

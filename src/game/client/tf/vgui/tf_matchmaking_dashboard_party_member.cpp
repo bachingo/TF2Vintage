@@ -392,7 +392,7 @@ void CDashboardPartyMember::OnCommand( const char *command )
 				{
 					case MEMBER_PRESENT:
 					{
-						// You can always send a message to party members
+						// You can always send a message to party memebers
 						contextMenuBuilder.AddMenuItem( "#TF_Friends_SendMessage", new KeyValues( "Context_SendMessage" ), "party" );
 
 						// If we're the leader, we can kick

@@ -688,6 +688,16 @@ void CTeamControlPointMaster::CheckWinConditions( void )
 				{
 					pTimer = TFGameRules()->GetBlueKothRoundTimer();
 				}
+#ifdef TF_VINTAGE
+				else if ( iWinners == TF_TEAM_GREEN )
+				{
+					pTimer = TFGameRules()->GetGreenKothRoundTimer();
+				}
+				else if ( iWinners == TF_TEAM_YELLOW )
+				{
+					pTimer = TFGameRules()->GetYellowKothRoundTimer();
+				}
+#endif
 
 				if ( pTimer )
 				{
@@ -1260,6 +1270,11 @@ int CTeamControlPointMaster::CalcNumRoundsRemaining( int iTeam )
 //-----------------------------------------------------------------------------
 float CTeamControlPointMaster::GetPartialCapturePointRate( void )
 {
+	if ( TFGameRules()->IsInEscortMode() )
+		m_flPartialCapturePointsRate = 10.0;
+	else
+		m_flPartialCapturePointsRate = 0.0;
+
 	return m_flPartialCapturePointsRate;
 }
 

@@ -78,6 +78,10 @@ ConVar weapon_medigun_chargerelease_rate( "weapon_medigun_chargerelease_rate", "
 ConVar weapon_medigun_resist_num_chunks( "weapon_medigun_resist_num_chunks", "4", FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "How many uber bar chunks the vaccinator has." );
 ConVar tf_vaccinator_uber_charge_rate_modifier( "tf_vaccinator_uber_charge_rate_modifier", "1.0", FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY , "Vaccinator uber charge rate." );
 
+ConVar tf2v_setup_uber_rate( "tf2v_setup_uber_rate", "1", FCVAR_REPLICATED | FCVAR_NOTIFY, "Affects how Uber is built during Setup.", true, 0, true, 2 );
+ConVar tf2v_uber_juggle_penalty( "tf2v_uber_juggle_penalty", "1", FCVAR_REPLICATED | FCVAR_NOTIFY, "Adds Ubercharge Drain penalty when juggling multiple Uber targets.", true, 0, true, 1 );
+ConVar tf2v_enable_healingdetach( "tf2v_enable_healingdetach", "1", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enables the sound when a medigun stops healing a targer." );
+
 #if defined (CLIENT_DLL)
 ConVar tf_medigun_autoheal( "tf_medigun_autoheal", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Setting this to 1 will cause the Medigun's primary attack to be a toggle instead of needing to be held down." );
 #endif
@@ -732,6 +736,7 @@ void CWeaponMedigun::FindNewTargetForSlot()
 	// for leniency, trace for hull instead of hitboxes first
 	UTIL_TraceLine( vecSrc, vecEnd, (MASK_SHOT & ~CONTENTS_HITBOX), pOwner, COLLISION_GROUP_NONE, &tr );
 
+	UTIL_TraceLine( vecSrc, vecEnd, (MASK_SHOT & ~CONTENTS_HITBOX), pOwner, DMG_GENERIC, &tr );
 	if ( tr.fraction != 1.0 && tr.m_pEnt )
 	{
 		CBaseEntity *pTarget = tr.m_pEnt;
@@ -1344,7 +1349,7 @@ bool CWeaponMedigun::FindAndHealTargets( void )
 					{
 						flChargeAmount *= 4.f;
 					}
-					else if ( TFGameRules()->InSetup() && TFGameRules()->GetActiveRoundTimer() )
+					else if ( TFGameRules()->InSetup() && TFGameRules()->GetActiveRoundTimer() && ( tf2v_setup_uber_rate.GetInt() == 2 ) )
 					{
 						flChargeAmount *= 3.f;
 					}
@@ -1444,8 +1449,7 @@ void CWeaponMedigun::DrainCharge( void )
 		float flChargeAmount = gpGlobals->frametime / flUberTime;
 		float flExtraPlayerCost = flChargeAmount * 0.5;
 
-		// Drain faster the more targets we're applying to. Extra targets count for 50% drain to still reward juggling somewhat.
-		for ( int i = m_DetachedTargets.Count()-1; i >= 0; i-- )
+		if ( tf2v_uber_juggle_penalty.GetBool() )
 		{
 			if ( m_DetachedTargets[i].hTarget == NULL || m_DetachedTargets[i].hTarget.Get() == m_hHealingTarget.Get() || 
 				!m_DetachedTargets[i].hTarget->IsAlive() || m_DetachedTargets[i].flTime < (gpGlobals->curtime - tf_invuln_time.GetFloat()) )
@@ -2040,7 +2044,7 @@ void CWeaponMedigun::StopHealSound( bool bStopHealingSound, bool bStopNoTargetSo
 		CSoundEnvelopeController::GetController().SoundDestroy( m_pHealSound );
 		m_pHealSound = NULL;
 
-		if ( !bStopDetachSound )
+		if ( !bStopDetachSound && tf2v_enable_healingdetach.GetBool() )
 		{
 			CLocalPlayerFilter filter;
 			CSoundEnvelopeController &controller = CSoundEnvelopeController::GetController();
@@ -3168,5 +3172,4 @@ int	CTFMedigunShield::OnTakeDamage( const CTakeDamageInfo &info )
 	return 0;
 }
 #endif // GAME_DLL
-
 

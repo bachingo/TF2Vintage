@@ -73,6 +73,57 @@ IMPLEMENT_NETWORKCLASS_ALIASED( GameRulesProxy, DT_GameRulesProxy )
 BEGIN_NETWORK_TABLE_NOBASE( CGameRulesProxy, DT_GameRulesProxy )
 END_NETWORK_TABLE()
 
+BEGIN_SCRIPTDESC_ROOT( CGameRules, SCRIPT_SINGLETON "The container of the game's rules, handling behavior which could be different on a game-by-game basis." )
+	DEFINE_SCRIPTFUNC( Name, "Gets the name of these rules." )
+
+	DEFINE_SCRIPTFUNC( Damage_IsTimeBased, "Damage types that are time-based." )
+	DEFINE_SCRIPTFUNC( Damage_ShouldGibCorpse, "Damage types that gib the corpse." )
+	DEFINE_SCRIPTFUNC( Damage_ShowOnHUD, "Damage types that have client HUD art." )
+	DEFINE_SCRIPTFUNC( Damage_NoPhysicsForce, "Damage types that don't have to supply a physics force & position." )
+	DEFINE_SCRIPTFUNC( Damage_ShouldNotBleed, "Damage types that don't make the player bleed." )
+
+	DEFINE_SCRIPTFUNC( ShouldCollide, "Returns whether two collision groups collide with each other in this game." )
+
+	DEFINE_SCRIPTFUNC( DefaultFOV, "Default player FOV in this game." )
+
+	DEFINE_SCRIPTFUNC( GetDamageMultiplier, "Ammo type damage multiplier." )
+
+	DEFINE_SCRIPTFUNC( IsMultiplayer, "Returns true if this is a multiplayer game (like co-op or deathmatch)." )
+
+	DEFINE_SCRIPTFUNC( InRoundRestart, "Returns true if the round is restarting." )
+
+	DEFINE_SCRIPTFUNC( AllowThirdPersonCamera, "Returns true if third-person camera is allowed." )
+
+#ifdef CLIENT_DLL
+	DEFINE_SCRIPTFUNC( IsBonusChallengeTimeBased, "" )
+	DEFINE_SCRIPTFUNC( AllowMapParticleEffect, "" )
+	DEFINE_SCRIPTFUNC( AllowWeatherParticles, "" )
+	DEFINE_SCRIPTFUNC( AllowMapVisionFilterShaders, "" )
+	DEFINE_SCRIPTFUNC( TranslateEffectForVisionFilter, "" )
+	DEFINE_SCRIPTFUNC( IsLocalPlayer, "" )
+#else
+	DEFINE_SCRIPTFUNC( RefreshSkillData, "" )
+
+	DEFINE_SCRIPTFUNC( IsSkillLevel, "Returns true if the game is set to the specified difficulty/skill level." )
+	DEFINE_SCRIPTFUNC( GetSkillLevel, "Returns the game's difficulty/skill level." )
+	DEFINE_SCRIPTFUNC( SetSkillLevel, "Sets the game's difficulty/skill level." )
+
+	DEFINE_SCRIPTFUNC_NAMED( FAllowFlashlight, "AllowFlashlight", "Returns true if players are allowed to switch on their flashlight." )
+
+	DEFINE_SCRIPTFUNC( IsDeathmatch, "" )
+	DEFINE_SCRIPTFUNC( IsTeamplay, "" )
+	DEFINE_SCRIPTFUNC( IsCoOp, "" )
+
+	DEFINE_SCRIPTFUNC( GetGameDescription, "This is the game description that gets seen in server browsers." )
+
+	DEFINE_SCRIPTFUNC_NAMED( FAllowNPCs, "AllowNPCs", "Returns true if NPCs are allowed." )
+#endif
+
+	DEFINE_SCRIPTFUNC( GetGameTypeName, "" )
+	DEFINE_SCRIPTFUNC( GetGameType, "" )
+
+END_SCRIPTDESC()
+
 
 CGameRulesProxy::CGameRulesProxy()
 {
@@ -839,6 +890,8 @@ void CGameRules::CheckHaptics(CBasePlayer* pPlayer)
 	}
 }
 
+ConVar tf2v_restrict_fov_max( "tf2v_restrict_fov_max", CNumStr( MAX_FOV_UNLOCKED ) );
+
 void CGameRules::ClientSettingsChanged( CBasePlayer *pPlayer )
 {
 	const char *pszName = engine->GetClientConVarValue( pPlayer->entindex(), "name" );
@@ -870,7 +923,15 @@ void CGameRules::ClientSettingsChanged( CBasePlayer *pPlayer )
 	if ( pszFov )
 	{
 		int iFov = atoi(pszFov);
-		iFov = clamp( iFov, 75, 90 );
+		
+		// Check the server's FOV restriction and apply it.
+		int iAllowedFov = tf2v_restrict_fov_max.GetInt();
+		if ( iAllowedFov < MAX_FOV )
+			iAllowedFov = MAX_FOV;
+		else if ( iAllowedFov > MAX_FOV_UNLOCKED )
+			iAllowedFov = MAX_FOV_UNLOCKED;
+
+		iFov = clamp( iFov, 75, iAllowedFov );
 		pPlayer->SetDefaultFOV( iFov );
 	}
 

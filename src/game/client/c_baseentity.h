@@ -36,6 +36,9 @@
 #include "toolframework/itoolentity.h"
 #include "tier0/threadtools.h"
 
+#include "vscript/ivscript.h"
+#include "vscript_shared.h"
+
 class C_Team;
 class IPhysicsObject;
 class IClientVehicle;
@@ -159,6 +162,14 @@ struct thinkfunc_t
 	int			m_nLastThinkTick;
 };
 
+struct scriptthinkfunc_t
+{
+	int				m_nNextThinkTick;
+	HSCRIPT			m_hfnThink;
+	unsigned short	m_iContextHash;
+	bool			m_bNoParam;
+};
+
 #define CREATE_PREDICTED_ENTITY( className )	\
 	C_BaseEntity::CreatePredictedEntityByName( className, __FILE__, __LINE__ );
 
@@ -184,10 +195,16 @@ public:
 	DECLARE_DATADESC();
 	DECLARE_CLIENTCLASS();
 	DECLARE_PREDICTABLE();
+	// script description
+	DECLARE_ENT_SCRIPTDESC();
 
 									C_BaseEntity();
+
+protected:
+	// Use UTIL_Remove to delete!
 	virtual							~C_BaseEntity();
 
+public:
 	static C_BaseEntity				*CreatePredictedEntityByName( const char *classname, const char *module, int line, bool persist = false );
 	
 	// FireBullets uses shared code for prediction.
@@ -460,6 +477,9 @@ public:
 
 	virtual const Vector&			GetAbsOrigin( void ) const;
 	virtual const QAngle&			GetAbsAngles( void ) const;
+	inline Vector					Forward() const; ///< get my forward (+x) vector
+	inline Vector					Left() const;    ///< get my left    (+y) vector
+	inline Vector					Up() const;      ///< get my up      (+z) vector
 
 	const Vector&					GetNetworkOrigin() const;
 	const QAngle&					GetNetworkAngles() const;
@@ -862,6 +882,7 @@ public:
 public:
 	void							SetSize( const Vector &vecMin, const Vector &vecMax ); // UTIL_SetSize( pev, mins, maxs );
 	char const						*GetClassname( void );
+	char const						*GetEntityName( void );
 	char const						*GetDebugName( void );
 	static int						PrecacheModel( const char *name ); 
 	static bool						PrecacheSound( const char *name );
@@ -1600,6 +1621,8 @@ private:
 	float							m_flGroundChangeTime;
 
 
+	char							m_iName[ MAX_PATH ];
+
 	// Friction.
 	float							m_flFriction;       
 
@@ -2216,6 +2239,19 @@ inline bool C_BaseEntity::ShouldRecordInTools() const
 #else
 	return true;
 #endif
+}
+
+//-----------------------------------------------------------------------------
+// Inline methods
+//-----------------------------------------------------------------------------
+inline const char *C_BaseEntity::GetEntityName()
+{
+	return m_iName;
+}
+
+inline int C_BaseEntity::GetEntityIndex() const 
+{
+	return entindex();
 }
 
 C_BaseEntity *CreateEntityByName( const char *className );

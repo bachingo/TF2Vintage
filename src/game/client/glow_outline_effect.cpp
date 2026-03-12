@@ -12,10 +12,18 @@
 #include "materialsystem/itexture.h"
 #include "view_shared.h"
 #include "viewpostprocess.h"
+#include "gamerules.h"
 
 #define FULL_FRAME_TEXTURE "_rt_FullFrameFB"
 
 #ifdef GLOWS_ENABLE
+
+// If you've fixed IMatRenderContext::CopyTextureToRenderTargetEx
+// (see CGlowObjectManager::RenderGlowModels below), then you can enable this and have
+// code that's a bit cleaner. Also, then you won't have to ship debug/debugfbtexture1.
+#define FIXED_COPY_TEXTURE_TO_RENDER_TARGET 1
+
+
 
 ConVar glow_outline_effect_enable( "glow_outline_effect_enable", "1", FCVAR_ARCHIVE, "Enable entity outline glow effects." );
 ConVar glow_outline_effect_width( "glow_outline_width", "10.0f", FCVAR_CHEAT, "Width of glow outline effect in screen space." );
@@ -110,6 +118,8 @@ void CGlowObjectManager::RenderGlowModels( const CViewSetup *pSetup, int nSplitS
 	pMatGlowColor = materials->FindMaterial( "dev/glow_color", TEXTURE_GROUP_OTHER, true );
 	g_pStudioRender->ForcedMaterialOverride( pMatGlowColor );
 
+void CGlowObjectManager::DrawGlowVisible( int nSplitScreenSlot, CMatRenderContextPtr &pRenderContext )
+{
 	ShaderStencilState_t stencilState;
 	stencilState.m_bEnable = false;
 	stencilState.m_nReferenceValue = 0;
@@ -299,6 +309,17 @@ void CGlowObjectManager::ApplyEntityGlowEffects( const CViewSetup *pSetup, int n
 		stencilState.m_FailOp = STENCILOPERATION_KEEP;
 		stencilState.m_ZFailOp = STENCILOPERATION_KEEP;
 		stencilState.SetStencilState( pRenderContext );
+
+		ITexture *const pRtQuarterSize1 = materials->FindTexture( "_rt_SmallFB1", TEXTURE_GROUP_RENDER_TARGET );
+		IMaterial *const pMatHaloAddToScreen = materials->FindMaterial( "dev/halo_add_to_screen", TEXTURE_GROUP_OTHER, true );
+
+		// Write to alpha
+		pRenderContext->OverrideAlphaWriteEnable( true, true );
+
+		const int nSrcWidth = pSetup->width;
+		const int nSrcHeight = pSetup->height;
+		int nViewportX, nViewportY, nViewportWidth, nViewportHeight;
+		pRenderContext->GetViewport( nViewportX, nViewportY, nViewportWidth, nViewportHeight );
 
 		// Draw quad
 		pRenderContext->DrawScreenSpaceRectangle( pMatHaloAddToScreen, 0, 0, nViewportWidth, nViewportHeight,

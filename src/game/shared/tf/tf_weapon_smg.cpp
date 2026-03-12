@@ -62,6 +62,7 @@ PRECACHE_WEAPON_REGISTER( tf_weapon_charged_smg );
 //=============================================================================
 //
 // Weapon SMG functions.
+extern ConVar tf2v_use_new_cleaners;
 
 //-----------------------------------------------------------------------------
 // Purpose: 

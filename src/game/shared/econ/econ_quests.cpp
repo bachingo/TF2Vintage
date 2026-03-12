@@ -64,7 +64,7 @@ COMPILE_TIME_ASSERT( ARRAYSIZE( g_QuestPointsDefs ) == EQuestPoints_ARRAYSIZE );
 extern bool InitPerClassRandomChanceStringArray( KeyValues *pPerClassData, CRandomChanceString (&outputArray)[LOADOUT_COUNT], CUtlVector<CUtlString>* pVecErrors );
 
 #ifdef CLIENT_DLL
-CON_COMMAND( set_party_contract_progress_enabled, "Set whether or not you'd like your party members to be able to make progress on your Contracts along with you." )
+CON_COMMAND( set_party_contract_progress_enabled, "Set whether or not you'd like your party memebers to be able to make progress on your Contracts along with you." )
 {
 	if ( args.ArgC() != 2 )
 	{
@@ -252,6 +252,9 @@ void ReplaceTemplateVariables( const CMsgQuestObjectiveDef& msg, KeyValues* pKVR
 
 bool CQuestObjectiveDefinition::BPostDataLoaded( CUtlVector<CUtlString> *pVecErrors )
 {
+	// TF2 Mods don't use this: Skip validation.
+	return true;
+
 	tmZone( TELEMETRY_LEVEL0, TMZF_NONE, "%s", __FUNCTION__);
 	SCHEMA_INIT_SUBSTEP( CTypedProtoBufScriptObjectDefinition::BPostDataLoaded( pVecErrors ) );
 
@@ -404,9 +407,10 @@ bool CQuestDefinition::BPostDataLoaded( CUtlVector<CUtlString> *pVecErrors )
 
 	for ( int i=0; i < m_msgData.objectives_size(); ++i )
 	{
-		CMsgQuestDef_ObjectiveInstance obj = m_msgData.objectives( i );
-		QuestObjectiveInstance_t instance( obj );
-		m_vecObjectives.AddToTail( instance );
+		// TF2 Mods don't use this. Skip validation as well.
+		// CMsgQuestDef_ObjectiveInstance obj = m_msgData.objectives( i );
+		// QuestObjectiveInstance_t instance( obj );
+		// m_vecObjectives.AddToTail( instance );
 	}
 
 	// Dig up our associated operation def if we have one
