@@ -31,8 +31,6 @@
 const float DEFAULT_ORNAMENT_EXPLODE_RADIUS = 50.0f;
 const float DEFAULT_ORNAMENT_EXPLODE_DAMAGE_MULT = 0.9f;
 
-ConVar tf2v_use_new_stunball( "tf2v_use_new_stunball", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Use the old full stun(0) or new movement stun(1) mechanics for stun balls.", true, 0.0f, true, 1.0f );
-
 //=============================================================================
 //
 // Weapon Bat tables.
@@ -735,12 +733,6 @@ void CTFStunBall::ApplyBallImpactEffectOnVictim( CBaseEntity *pOther )
 	{
 		bool bMax = flLifeTimeRatio >= 1.f;
 		int iStunFlags = ( bMax ) ? TF_STUN_SPECIAL_SOUND | TF_STUN_MOVEMENT : TF_STUN_SOUND | TF_STUN_MOVEMENT;
-		if ( !tf2v_use_new_stunball.GetBool() )
-		{
-			iStunFlags |= TF_STUN_LOSER_STATE;
-			if ( bMax )
-				iStunFlags |= TF_STUN_CONTROLS;
-		}
 		float flStunAmount = 0.5f;
 		float flStunDuration = Max( 2.f, tf_scout_stunball_base_duration.GetFloat() * flLifeTimeRatio );
 		if ( bMax )
@@ -1329,3 +1321,4 @@ void CTFBall_Ornament::Explode( trace_t *pTrace, int bitsDamageType )
 }
 
 #endif
+

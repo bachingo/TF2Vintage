@@ -17,7 +17,6 @@ DECLARE_LOGGING_CHANNEL( LOG_VScript );
 
 extern IScriptVM * g_pScriptVM;
 
-const char *VScriptCutDownString( const char *str );
 HSCRIPT VScriptCompileScript( const char *pszScriptName, bool bWarnMissing = false );
 bool VScriptRunScript( const char *pszScriptName, HSCRIPT hScope, bool bWarnMissing = false );
 inline bool VScriptRunScript( const char *pszScriptName, bool bWarnMissing = false ) { return VScriptRunScript( pszScriptName, NULL, bWarnMissing ); }
@@ -154,8 +153,5 @@ inline CScriptAutoRef & CScriptAutoRef::operator=( const HSCRIPT &other )
 	Set( other );
 	return *this;
 }
-
-void RegisterSharedScriptConstants();
-void RegisterSharedScriptFunctions();
 
 #endif // VSCRIPT_SHARED_H

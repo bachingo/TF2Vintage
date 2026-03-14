@@ -76,6 +76,9 @@
 #include "netadr.h"
 #include "input.h"
 
+// for rescue ranger
+#include "materialsystem/imaterialproxy.h"
+
 #include "gcsdk/gcclientsdk.h"
 #include "econ_gcmessages.h"
 #include "rtime.h"
@@ -220,25 +223,12 @@ ConVar tf_taunt_first_person( "tf_taunt_first_person", "0", FCVAR_NONE, "1 = tau
 ConVar tf_romevision_opt_in( "tf_romevision_opt_in", "0", FCVAR_ARCHIVE, "Enable Romevision in Mann vs. Machine mode when available." );
 ConVar tf_romevision_skip_prompt( "tf_romevision_skip_prompt", "0", FCVAR_ARCHIVE, "If nonzero, skip the prompt about sharing Romevision." );
 
-ConVar cl_forced_vision_filter( "cl_forced_vision_filter", "0", FCVAR_DONTRECORD, "1=Pyrovision, 2=Halloween, 4=Rome" );
-
-ConVar cl_fp_ragdoll( "cl_fp_ragdoll", "1", FCVAR_ARCHIVE, "Allow first person ragdolls" );
-ConVar cl_fp_ragdoll_auto( "cl_fp_ragdoll_auto", "1", FCVAR_ARCHIVE, "Autoswitch to ragdoll thirdperson-view when necessary" );
-
-ConVar tf2v_model_muzzleflash( "tf2v_model_muzzleflash", "0", FCVAR_ARCHIVE, "Use the tf2 beta model based muzzleflash" );
-ConVar tf2v_muzzlelight( "tf2v_muzzlelight", "0", FCVAR_ARCHIVE, "Enable dynamic lights for muzzleflashes and the flamethrower" );
-ConVar tf2v_showchatbubbles( "tf2v_showchatbubbles", "1", FCVAR_ARCHIVE, "Show bubble icons over typing players" );
-
-ConVar tf2v_show_veterancy( "tf2v_show_veterancy", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Enable or disable veterancy status if awarded." );
-
-extern ConVar tf_halloween;
-extern ConVar tf2v_new_flame_damage;
 
 #define BDAY_HAT_MODEL		"models/effects/bday_hat.mdl"
 #define BOMB_HAT_MODEL		"models/props_lakeside_event/bomb_temp_hat.mdl"
 #define BOMBONOMICON_MODEL  "models/props_halloween/bombonomicon.mdl"
 
-IMaterial	*g_pHeadLabelMaterial[4] = { NULL, NULL, NULL, NULL }; 
+IMaterial	*g_pHeadLabelMaterial[2] = { NULL, NULL }; 
 void	SetupHeadLabelMaterials( void );
 
 extern CBaseEntity *BreakModelCreateSingle( CBaseEntity *pOwner, breakmodel_t *pModel, const Vector &position, 
@@ -276,11 +266,8 @@ const char *g_pszBotHeadGibs[] =
 
 const char *pszHeadLabelNames[] =
 {
-	"effects/speech_voice_red",
-	"effects/speech_voice_blue",
-	// TF2V: chat-typing bubble icons (shown when a player has the chat box open)
-	"effects/speech_typing_red",
-	"effects/speech_typing_blue"
+	"effects/speech_voice"
+	"effects/speech_typing"
 };
 
 BonusEffect_t g_BonusEffects[ kBonusEffect_Count ] = 
@@ -297,10 +284,8 @@ BonusEffect_t g_BonusEffects[ kBonusEffect_Count ] =
 
 extern SkyBoxMaterials_t s_PyroSkyboxMaterials;
 
-#define TF_PLAYER_HEAD_LABEL_RED         0
-#define TF_PLAYER_HEAD_LABEL_BLUE        1
-#define TF_PLAYER_HEAD_LABEL_TYPING_RED  2
-#define TF_PLAYER_HEAD_LABEL_TYPING_BLUE 3
+#define TF_PLAYER_HEAD_LABEL_VOICE 0
+#define TF_PLAYER_HEAD_LABEL_TYPING 1
 
 CLIENTEFFECT_REGISTER_BEGIN( PrecacheInvuln )
 CLIENTEFFECT_MATERIAL( "models/effects/invulnfx_blue.vmt" )
@@ -2310,9 +2295,28 @@ EXPOSE_INTERFACE( CProxyBenefactorLevel, IMaterialProxy, "BenefactorLevel" IMATE
 // Purpose: Used for scaling the oscilloscope on the Building Rescue Gun
 // Flattens the Wave when the player has no energy
 //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
 class CProxyBuildingRescueLevel : public CResultProxy
 {
 public:
+// Add this member (default to something safe)
+    float m_flScrollSpeed = -0.1f;
+
+    virtual bool Init( IMaterial *pMaterial, KeyValues *pKeyValues )
+    {
+        // Call base init first if needed
+        if ( !CResultProxy::Init( pMaterial, pKeyValues ) )
+            return false;
+
+        // pKeyValues points to the { "screenScrollRate" "#" ... } subkey
+        if ( pKeyValues )
+        {
+            m_flScrollSpeed = pKeyValues->GetFloat( "screenScrollRate", -0.1f );  // fallback if missing
+        }
+
+        return true;
+    }
 	void OnBind( void *pC_BaseEntity )
 	{
 		Assert( m_pResult );
@@ -2356,6 +2360,17 @@ public:
 		MatrixBuildTranslation( temp, center.x, center.y, 0.0f );
 		MatrixMultiply( temp, mat, mat );
 
+
+		float flScrollSpeed = m_flScrollSpeed;
+
+		float scrollOffset = fmodf( gpGlobals->curtime * flScrollSpeed, 1.0f );
+		if ( scrollOffset < 0.0f )
+			scrollOffset += 1.0f;  // [0,1) range for seamless loop
+
+		// Apply horizontal scroll AFTER the existing scale/center operations
+		MatrixBuildTranslation( temp, scrollOffset, 0.0f, 0.0f );
+		MatrixMultiply( temp, mat, mat );
+
 		m_pResult->SetMatrixValue( mat );
 
 		if ( ToolsEnabled() )
@@ -2365,7 +2380,7 @@ public:
 	}
 };
 
-EXPOSE_INTERFACE( CProxyBuildingRescueLevel, IMaterialProxy, "BuildingRescueLevel" IMATERIAL_PROXY_INTERFACE_VERSION );
+EXPOSE_INTERFACE(CProxyBuildingRescueLevel, IMaterialProxy, "BuildingRescueLevel" IMATERIAL_PROXY_INTERFACE_VERSION);
 
 
 //-----------------------------------------------------------------------------
@@ -3745,6 +3760,7 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFPlayer, DT_TFPlayer, CTFPlayer )
 	RecvPropFloat( RECVINFO( m_flMvMLastDamageTime ) ),
 	RecvPropFloat( RECVINFO_NAME( m_flMvMLastDamageTime, "m_flLastDamageTime" ) ), // Renamed
 	RecvPropInt( RECVINFO( m_iSpawnCounter ) ),
+	RecvPropBool( RECVINFO( m_bFlipViewModels ) ),
 	RecvPropBool( RECVINFO( m_bArenaSpectator ) ),
 
 	RecvPropDataTable( RECVINFO_DT( m_AttributeManager ), 0, &REFERENCE_RECV_TABLE(DT_AttributeManager) ),
@@ -3774,6 +3790,7 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFPlayer, DT_TFPlayer, CTFPlayer )
 	RecvPropInt( RECVINFO( m_iPlayerSkinOverride ) ),
 	RecvPropBool( RECVINFO( m_bViewingCYOAPDA ) ),
 	RecvPropBool( RECVINFO( m_bRegenerating ) ),
+	RecvPropEHandle( RECVINFO( m_hOffHandWeapon ) ),
 END_RECV_TABLE()
 
 
@@ -5873,6 +5890,17 @@ bool C_TFPlayer::IsPlayerOnSteamFriendsList( C_BasePlayer *pPlayer )
 	return false;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_TFPlayer::PreThink( void )
+{
+	// Update timers.
+	UpdateTimers();
+
+	// Pass through to the base class think.
+	BaseClass::PreThink();
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -6071,11 +6099,16 @@ void C_TFPlayer::ClientThink()
 		// 
 		// Passtime ask for ball button
 		//
-	    if ( m_nButtons & IN_ATTACK3 )
+	    if ( m_afButtonPressed & IN_ATTACK3 )
 	    {
 		    engine->ClientCmd("voicemenu 1 8");
 	    }
 	}
+}
+
+void C_TFPlayer::UpdateTimers( void )
+{
+	m_Shared.SharedThink();
 }
 
 void C_TFPlayer::Touch( CBaseEntity *pOther )
@@ -7022,6 +7055,15 @@ void C_TFPlayer::UpdateIDTarget()
 
 	if ( tr.m_pEnt && tr.m_pEnt->IsPlayer() )
 	{
+		trace_t trShot;
+		// use the shot mask to replicate the medigun's trace
+		UTIL_TraceLine( vecStart, vecEnd, MASK_SHOT, this, COLLISION_GROUP_NONE, &trShot );
+
+		if ( trShot.fraction != 1.0 && trShot.m_pEnt && trShot.m_pEnt->IsPlayer() && ( !tr.startsolid || tr.m_pEnt != trShot.m_pEnt ) )
+		{
+			tr = trShot;
+		}
+
 		// It's okay to start solid against enemies because we sometimes press right against them
 		bIsEnemyPlayer = GetTeamNumber() != tr.m_pEnt->GetTeamNumber();
 	}
@@ -9146,7 +9188,7 @@ CNewParticleEffect *C_TFPlayer::SpawnHalloweenSpellFootsteps( ParticleAttachment
 		kHalloweenSpell_RGBConstant_HHH			= 2,
 		kHalloweenSpell_RGBConstant_TeamColor	= 1,
 		kHalloweenSpell_RGB_Red					= 12073019,
-		kHalloweenSpell_RGB_Blue				= 5801378,
+		kHalloweenSpell_RGB_Blue				= 2192591,
 	};
 
 	if ( iHalloweenFootstepType == kHalloweenSpell_RGBConstant_HHH )
@@ -9455,25 +9497,17 @@ IMaterial *C_TFPlayer::GetHeadLabelMaterial( void )
 	// When this player has the chat box open, show a typing icon instead of the
 	// voice icon.  The voice-status system already decides *when* to draw the
 	// label; we just control which material gets used.
-	bool bTyping = IsTyping() && tf2v_showchatbubbles.GetBool();
+	bool bTyping = IsTyping();
 
-	if ( GetTeamNumber() == TF_TEAM_RED )
-	{
-		return bTyping ? g_pHeadLabelMaterial[TF_PLAYER_HEAD_LABEL_TYPING_RED]
-		               : g_pHeadLabelMaterial[TF_PLAYER_HEAD_LABEL_RED];
-	}
-	else
-	{
-		return bTyping ? g_pHeadLabelMaterial[TF_PLAYER_HEAD_LABEL_TYPING_BLUE]
-		               : g_pHeadLabelMaterial[TF_PLAYER_HEAD_LABEL_BLUE];
-	}
+	return bTyping ? g_pHeadLabelMaterial[TF_PLAYER_HEAD_LABEL_TYPING]
+		               : g_pHeadLabelMaterial[TF_PLAYER_HEAD_LABEL_VOICE];
 
 	return BaseClass::GetHeadLabelMaterial();
 }
 
 void SetupHeadLabelMaterials( void )
 {
-	for ( int i = 0; i < 4; i++ )
+	for ( int i = 0; i < 2; i++ )
 	{
 		if ( g_pHeadLabelMaterial[i] )
 		{
@@ -9515,14 +9549,11 @@ bool C_TFPlayer::IsTyping( void ) const
 // Purpose: Draws typing-bubble icons above the heads of all players who have
 // the chat box open.  Called from CViewRender::RenderPlayerSprites, immediately
 // after DrawHeadLabels() so both icon types share the same render pass.
-// Respects tf2v_showchatbubbles and ShouldDrawHeadLabels gamerule flag.
+// Respects ShouldDrawHeadLabels gamerule flag.
 //-----------------------------------------------------------------------------
-extern ConVar tf2v_showchatbubbles;
 
 void DrawTypingHeadLabels( void )
 {
-	if ( !tf2v_showchatbubbles.GetBool() )
-		return;
 
 	if ( GameRules() && !GameRules()->ShouldDrawHeadLabels() )
 		return;
@@ -11743,26 +11774,24 @@ void C_TFPlayer::ClientAdjustVOPitch( int& pitch )
 	{
 		pitch *= 1.3f;
 	}
+
 	// Halloween voice futzery?
-	else
+	float flVoicePitchScale = 1.f;
+	CALL_ATTRIB_HOOK_FLOAT( flVoicePitchScale, voice_pitch_scale );
+
+	int iHalloweenVoiceSpell = 0;
+	if ( TF_IsHolidayActive( kHoliday_HalloweenOrFullMoon ) )
 	{
-		float flVoicePitchScale = 1.f;
-		CALL_ATTRIB_HOOK_FLOAT( flVoicePitchScale, voice_pitch_scale );
+		CALL_ATTRIB_HOOK_INT( iHalloweenVoiceSpell, halloween_voice_modulation );
+	}
 
-		int iHalloweenVoiceSpell = 0;
-		if ( TF_IsHolidayActive( kHoliday_HalloweenOrFullMoon ) )
-		{
-			CALL_ATTRIB_HOOK_INT( iHalloweenVoiceSpell, halloween_voice_modulation );
-		}
-
-		if ( iHalloweenVoiceSpell > 0 )
-		{
-			pitch *= 0.8f;
-		}
-		else if ( flVoicePitchScale != 1.f )
-		{
-			pitch *= flVoicePitchScale;
-		}
+	if ( iHalloweenVoiceSpell > 0 )
+	{
+		pitch *= 0.8f;
+	}
+	else if ( flVoicePitchScale != 1.f )
+	{
+		pitch *= flVoicePitchScale;
 	}
 }
 

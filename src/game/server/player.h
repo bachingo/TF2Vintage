@@ -1163,8 +1163,6 @@ private:
 	// Player name
 	char					m_szNetname[MAX_PLAYER_NAME_LENGTH];
 
-	HSCRIPT					m_hPlayerRunCommand;
-
 protected:
 	// HACK FOR TF2 Prediction
 	friend class CTFGameMovementRecon;
@@ -1403,45 +1401,6 @@ inline bool CBasePlayer::IsFiringWeapon( void ) const
 	return m_weaponFiredTimer.HasStarted() && m_weaponFiredTimer.IsLessThen( 1.0f );
 }
 
-//-----------------------------------------------------------------------------
-// VScript accessors
-//-----------------------------------------------------------------------------
-inline const Vector &CBasePlayer::ScriptGetEyeForward()
-{
-	static Vector vecForward;
-	EyeVectors( &vecForward );
-	return vecForward;
-}
-
-inline const Vector &CBasePlayer::ScriptGetEyeRight()
-{
-	static Vector vecRight;
-	EyeVectors( NULL, &vecRight );
-	return vecRight;
-}
-
-inline const Vector &CBasePlayer::ScriptGetEyeUp()
-{
-	static Vector vecUp;
-	EyeVectors( NULL, NULL, &vecUp );
-	return vecUp;
-}
-
-inline const Vector &CBasePlayer::ScriptGetPunchAngle( void )
-{
-	static Vector vecPunch;
-
-	QAngle ang = GetPunchAngle();
-	vecPunch.Init( ang.x, ang.y, ang.z );
-
-	return vecPunch;
-}
-
-inline void CBasePlayer::ScriptSetPunchAngle( Vector const &punchAngles )
-{
-	QAngle angles( punchAngles.x, punchAngles.y, punchAngles.z );
-	SetPunchAngle( angles );
-}
 
 
 //-----------------------------------------------------------------------------

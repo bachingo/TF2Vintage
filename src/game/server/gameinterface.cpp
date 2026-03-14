@@ -91,7 +91,6 @@
 #include "querycache.h"
 #include "player_voice_listener.h"
 
-
 #ifdef TF_DLL
 #include "gc_clientsystem.h"
 #include "econ_item_inventory.h"
@@ -571,13 +570,14 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 		CreateInterfaceFn physicsFactory, CreateInterfaceFn fileSystemFactory, 
 		CGlobalVars *pGlobals)
 {
+#ifdef DEBUG
 	// Load the crash handler as early as possible — before tier libraries,
 	// before any other system — so it catches failures in this very init sequence.
 	// Sys_LoadModule searches the game bin folder (bin/x64/) where the DLL lives.
 	// DllMain (Windows) / __attribute__((constructor)) (Linux) installs the handler.
 	// If the module is absent the call returns null and we continue silently.
 	Sys_LoadModule( "tf2vintage_crash" );
-
+#endif
 	ConnectTier1Libraries( &appSystemFactory, 1 );
 	ConnectTier2Libraries( &appSystemFactory, 1 );
 	ConnectTier3Libraries( &appSystemFactory, 1 );
@@ -588,7 +588,7 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 	{
 		CommandLine()->AppendParm( "-insecure", nullptr );
 	}
-	
+#ifdef DEBUG
 	// Always append logging.
 	if ( !CommandLine()->FindParm( "-console" ) )
 	{
@@ -606,6 +606,7 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 	{
 		CommandLine()->AppendParm( "-log_verbose_enable", "1" );
 	}
+#endif
 
 	// Connected in ConnectTier1Libraries
 	if ( cvar == NULL )
@@ -733,7 +734,6 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 	g_pGameSaveRestoreBlockSet->AddBlockHandler( GetCommentarySaveRestoreBlockHandler() );
 	g_pGameSaveRestoreBlockSet->AddBlockHandler( GetEventQueueSaveRestoreBlockHandler() );
 	g_pGameSaveRestoreBlockSet->AddBlockHandler( GetAchievementSaveRestoreBlockHandler() );
-	g_pGameSaveRestoreBlockSet->AddBlockHandler( GetVScriptSaveRestoreBlockHandler() );
 
 	// The string system must init first + shutdown last
 	IGameSystem::Add( GameStringSystem() );
@@ -790,7 +790,6 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 
 	// init the gamestatsupload connection
 	gamestatsuploader->InitConnection();
-	// Todo: Update the SDK to replace with ShutdownConnection();
 #endif
 
 	return true;
@@ -807,7 +806,6 @@ void CServerGameDLL::DLLShutdown( void )
 	// Due to dependencies, these are not autogamesystems
 	ModelSoundsCacheShutdown();
 
-	g_pGameSaveRestoreBlockSet->RemoveBlockHandler( GetVScriptSaveRestoreBlockHandler() );
 	g_pGameSaveRestoreBlockSet->RemoveBlockHandler( GetAchievementSaveRestoreBlockHandler() );
 	g_pGameSaveRestoreBlockSet->RemoveBlockHandler( GetCommentarySaveRestoreBlockHandler() );
 	g_pGameSaveRestoreBlockSet->RemoveBlockHandler( GetEventQueueSaveRestoreBlockHandler() );
@@ -841,7 +839,6 @@ void CServerGameDLL::DLLShutdown( void )
 #endif
 	// reset (shutdown) the gamestatsupload connection
 	gamestatsuploader->InitConnection();
-	// Todo: Update the SDK to replace with ShutdownConnection();
 #endif
 
 #ifndef _X360

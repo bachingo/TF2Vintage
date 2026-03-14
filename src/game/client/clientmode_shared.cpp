@@ -857,7 +857,6 @@ void ClientModeShared::StartMessageMode( int iMessageModeType )
 			}
 			return;
 		}
-		return;
 	}
 #endif // TF_CLIENT_DLL
 
@@ -1574,5 +1573,6 @@ void ClientModeShared::DeactivateInGameVGuiContext()
 {
 	vgui::ivgui()->ActivateContext( DEFAULT_VGUI_CONTEXT );
 }
+
 
 

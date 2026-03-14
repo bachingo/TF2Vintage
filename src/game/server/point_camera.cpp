@@ -114,12 +114,6 @@ void CPointCamera::TransmitToPlayer( int nPlayerIndex, bool bTransmit )
 //-----------------------------------------------------------------------------
 void CPointCamera::SetActive( bool bActive )
 {
-	// If the mapmaker's told the camera it's off, it enforces inactive state
-	if ( !m_bIsOn )
-	{
-		bActive = false;
-	}
-
 	if ( m_bActive != bActive )
 	{
 		m_bActive = bActive;

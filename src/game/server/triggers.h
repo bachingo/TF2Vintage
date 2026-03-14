@@ -44,8 +44,6 @@ class CBaseTrigger : public CBaseToggle
 	DECLARE_CLASS( CBaseTrigger, CBaseToggle );
 public:
 	CBaseTrigger();
-
-	DECLARE_ENT_SCRIPTDESC();
 	
 	void Activate( void );
 	virtual void PostClientActive( void );
@@ -73,7 +71,6 @@ public:
 	virtual void EndTouch(CBaseEntity *pOther);
 	virtual void StartTouchAll() {}
 	virtual void EndTouchAll() {}
-	bool ScriptIsTouching( HSCRIPT entity );
 	virtual bool IsTouching( const CBaseEntity *pOther ) const;
 
 	CBaseEntity *GetTouchedEntityOfType( const char *sClassName );

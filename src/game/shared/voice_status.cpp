@@ -18,7 +18,6 @@
 #include "c_playerresource.h"
 #include "cliententitylist.h"
 #include "c_baseplayer.h"
-#include "c_tf_player.h"
 #include "materialsystem/imesh.h"
 #include "view.h"
 #include "convar.h"
@@ -29,8 +28,6 @@
 #include "materialsystem/imaterial.h"
 #include "tier0/dbg.h"
 #include "cdll_int.h"
-#include "tf_player_shared.h"
-#include "tf_shareddefs.h"
 #include <vgui/IPanel.h>
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -236,16 +233,6 @@ void CVoiceStatus::DrawHeadLabels()
 		// Don't show an icon for dead or spectating players (ie: invisible entities).
 		if( pPlayer->IsPlayerDead() )
 			continue;
-
-		C_TFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
-		if (pTFPlayer)
-		{
-			if (pTFPlayer->m_Shared.InCond(TF_COND_STEALTHED) && pPlayer->GetTeamNumber() != GetLocalPlayerTeam())
-				continue;
-
-			if (pTFPlayer->m_Shared.InCond(TF_COND_DISGUISED) && pTFPlayer->m_Shared.GetDisguiseTeam() == GetLocalPlayerTeam() && pPlayer->GetTeamNumber() != GetLocalPlayerTeam())
-				continue;
-		}
 
 		// Place it 20 units above his head.
 		Vector vOrigin = pPlayer->WorldSpaceCenter();

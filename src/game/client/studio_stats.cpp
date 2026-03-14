@@ -101,12 +101,12 @@ void StudioStats_FindClosestEntity( CClientRenderablesList *pClientRenderablesLi
 		return;
 	}
 
-	trace_t tr{};
+	trace_t tr;
 	Vector vecStart, vecEnd;
 	VectorMA( MainViewOrigin(), MAX_TRACE_LENGTH, MainViewForward(), vecEnd );
 	VectorMA( MainViewOrigin(), 10,   MainViewForward(), vecStart );
 
-	Ray_t shotRay{};
+	Ray_t shotRay;
 	shotRay.Init( vecStart, vecEnd );
 	CStudioStatsEnumerator studioEnum( shotRay );
 	::partition->EnumerateElementsAlongRay( PARTITION_ALL_CLIENT_EDICTS, shotRay, false, &studioEnum );

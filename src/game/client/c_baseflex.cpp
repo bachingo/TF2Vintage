@@ -1476,7 +1476,7 @@ bool C_BaseFlex::ClearSceneEvent( CSceneEventInfo *info, bool fastKill, bool can
 //			expression - 
 //			duration - 
 //-----------------------------------------------------------------------------
-void C_BaseFlex::AddSceneEvent( CChoreoScene *scene, CChoreoEvent *event, CBaseEntity *pTarget, bool bClientSide, CSceneEntity *pSceneEnt )
+void C_BaseFlex::AddSceneEvent( CChoreoScene *scene, CChoreoEvent *event, CBaseEntity *pTarget, bool bClientSide )
 {
 	if ( !scene || !event )
 	{

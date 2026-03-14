@@ -64,13 +64,13 @@ private:
 	};
 
 	// Searches the specified SendTable and returns the SendProp or NULL if it DNE
-	SendProp *SearchSendTable( SendTable *pSendTable, const char *pstrProperty ) const;
+	inline SendProp *SearchSendTable( SendTable *pSendTable, const char *pstrProperty ) const;
 
 	// Searches the data map and returns the offset
-	typedescription_t *SearchDataMap( datamap_t *pMap, const char *pstrProperty ) const;
+	inline typedescription_t *SearchDataMap( datamap_t *pMap, const char *pstrProperty ) const;
 
 	// Searches a ServerClass's SendTable and datamap and returns pertinent prop info
-	PropInfo_t GetEntityPropInfo( CBaseEntity *pBaseEntity, const char *pstrProperty, int element );
+	inline PropInfo_t GetEntityPropInfo( CBaseEntity *pBaseEntity, const char *pstrProperty, int element );
 
 	// Gets the value of a SendProp and stores it in a table
 	inline void StoreSendPropValue( SendProp *pSendProp, CBaseEntity *pBaseEntity, int iOffset, int iElement, HSCRIPT hTable );

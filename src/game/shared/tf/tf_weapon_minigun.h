@@ -64,7 +64,6 @@ public:
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_MINIGUN; }
 	virtual void	ItemPostFrame( void );
 	virtual void	PrimaryAttack();
-	virtual void	UseRealMinigunBrassEject( void );
 	virtual void	SecondaryAttack();
 	void			SharedAttack();
 	virtual void	WeaponIdle();
@@ -204,24 +203,5 @@ private:
 	MinigunState_t		m_iPrevMinigunState;
 #endif
 };
-
-
-// More realistic Minigun type.
-
-#if defined CLIENT_DLL
-#define CTFMinigun_Real C_TFMinigun_Real
-#endif
-
-class CTFMinigun_Real : public CTFMinigun
-{
-public:
-
-	DECLARE_CLASS( CTFMinigun_Real, CTFMinigun )
-	DECLARE_NETWORKCLASS();
-	DECLARE_PREDICTABLE();
-
-	virtual int GetWeaponID( void ) const { return TF_WEAPON_MINIGUN_REAL; }
-};
-
 
 #endif // TF_WEAPON_MINIGUN_H

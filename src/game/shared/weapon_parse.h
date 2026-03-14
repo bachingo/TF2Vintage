@@ -77,8 +77,6 @@ public:
 public:	
 	bool					bParsedScript;
 	bool					bLoadedHudElements;
-	// Indicates the currently loaded data is from a map-specific script and should be flushed.
-	bool					bCustom;
 
 // SHARED
 	char					szClassName[MAX_WEAPON_STRING];

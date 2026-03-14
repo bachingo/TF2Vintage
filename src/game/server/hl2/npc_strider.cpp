@@ -1165,7 +1165,7 @@ void CNPC_Strider::GatherHeightConditions( const Vector &vTestPos, CBaseEntity *
 		return;
 
 	float maxZ = (GetAbsOrigin().z - (GetMaxHeightModel() - GetMaxHeight()));
-	float minZ = (maxZ - ( GetMaxHeight() - GetMinHeight()));
+	float minZ = (maxZ - ( GetMaxHeight() - GetMinHeight()));;
 	float newHeight = FLT_MAX;
 
 	if( FInViewCone( pEntity ) && GetWeaponLosZ( vTestPos, minZ, maxZ, GetHeightRange() * .1, pEntity, &newHeight ) )

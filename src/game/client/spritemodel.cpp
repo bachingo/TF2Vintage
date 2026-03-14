@@ -291,8 +291,6 @@ bool CEngineSprite::Init( const char *pName )
 			m_material[ i ]->IncrementReferenceCount();
 		}
 
-		kv->deleteThis();
-
 		m_width = m_material[0]->GetMappingWidth();
 		m_height = m_material[0]->GetMappingHeight();
 		m_numFrames = m_material[0]->GetNumAnimationFrames();

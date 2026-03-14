@@ -336,11 +336,6 @@ void CTeamControlPoint::InputSetOwner( inputdata_t &input )
 
 	Assert( iCapTeam >= 0 && iCapTeam < GetNumberOfTeams() );
 
-	Assert( input.pCaller );
-
-	if ( !input.pCaller )
-		return;
-
 	if ( GetOwner() == iCapTeam )
 		return;
 

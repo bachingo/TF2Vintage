@@ -318,13 +318,6 @@ void CViewRender::Init( void )
 	m_flLastFOV = default_fov.GetFloat();
 #endif
 
-	int iW, iH;
-	materials->GetBackBufferDimensions( iW, iH );
-	materials->BeginRenderTargetAllocation();
-	materials->CreateNamedRenderTargetTextureEx( "_rt_SSAO", iW, iH, RT_SIZE_NO_CHANGE, materials->GetBackBufferFormat(), 
-													MATERIAL_RT_DEPTH_NONE, TEXTUREFLAGS_NOMIP | TEXTUREFLAGS_NOLOD | TEXTUREFLAGS_RENDERTARGET, 0 );
-	materials->EndRenderTargetAllocation();
-		
 }
 
 //-----------------------------------------------------------------------------
@@ -1308,3 +1301,4 @@ CON_COMMAND( getpos, "dump position and angles to the console" )
 	Warning( "%s %f %f %f;", pCommand1, vecOrigin.x, vecOrigin.y, vecOrigin.z );
 	Warning( "%s %f %f %f\n", pCommand2, angles.x, angles.y, angles.z );
 }
+

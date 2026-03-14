@@ -2819,11 +2819,19 @@ void CEconItemDescription::Generate_CollectionDesc( const CLocalizationProvider 
 
 	// For War Painted items (not War Paints themselves) we want highlight the row of the
 	// War Paint itself in the collection.  Look up our corresponding War Paint's item def
+	bool bIsHatOrDecorated = false;
+
+	// For War Painted items (not War Paints themselves) we want highlight the row of the
+	// War Paint itself in the collection.  Look up our corresponding War Paint's item def
 	// and use that as our own if there is one.
 	uint32 nPaintkitDefindex = 0;
 	if ( GetPaintKitDefIndex( pEconItem, &nPaintkitDefindex ) )
 	{
 		auto pPaintkitItemDef = GetItemSchema()->GetPaintKitItemDefinition( nPaintkitDefindex );
+		if ( pPaintkitItemDef == NULL )
+		{
+			bIsHatOrDecorated = true;
+		}
 		pItemDef = pPaintkitItemDef ? pPaintkitItemDef : pItemDef;
 	}
 
@@ -2885,7 +2893,7 @@ void CEconItemDescription::Generate_CollectionDesc( const CLocalizationProvider 
 							return &vecItemsWithDefindex;
 
 						uint32 unPaintkitDefidnex = 0;
-						if ( GetPaintKitDefIndex( pItemDef, &unPaintkitDefidnex ) )
+						if ( GetPaintKitDefIndex( pItemDef, &unPaintkitDefidnex ) && !bIsHatOrDecorated )
 						{
 							auto& vecItemsWithPaintkit = pLocalInv->GetItemsWithPaintkitDefindex( unPaintkitDefidnex );
 							if ( !vecItemsWithPaintkit.IsEmpty() )

@@ -31,8 +31,6 @@
 // Maximum time between robo arm hits to maintain the three-hit-combo
 #define ROBOARM_COMBO_TIMEOUT 1.0f
 
-extern ConVar tf2v_use_new_jag;
-
 //=============================================================================
 //
 // Weapon Wrench tables.
@@ -349,9 +347,6 @@ float CTFWrench::GetRepairAmount( void )
 
 	float flMod = 1.f;
 	CALL_ATTRIB_HOOK_FLOAT( flMod, mult_repair_value );
-
-	if ( tf2v_use_new_jag.GetInt() > 0 )
-		CALL_ATTRIB_HOOK_FLOAT( flMod, mult_repair_value_jag );
 
 #ifdef GAME_DLL
 	if ( GetOwner() )

@@ -97,6 +97,7 @@ class CMannVsMachineUpgrades;
 //extern ConVar tf_populator_damage_multiplier;
 
 extern ConVar tf_mvm_defenders_team_size;
+extern ConVar tf_mvm_max_invaders;
 
 const int kLadder_TeamSize_6v6 = 6;
 const int kLadder_TeamSize_9v9 = 9;
@@ -215,7 +216,6 @@ private:
 // HPE_END
 //=============================================================================
 
-	bool	m_bFourTeamMode;
 
 	bool	m_bOvertimeAllowedForCTF;
 	bool	m_bRopesHolidayLightsAllowed;
@@ -344,8 +344,6 @@ public:
 	virtual int		GetBonusRoundTime( bool bGameOver = false ) OVERRIDE;
 
 	virtual bool	PointsMayBeCaptured( void ) OVERRIDE;
-
-	void			RegisterScriptFunctions() OVERRIDE;
 
 #ifdef GAME_DLL
 public:
@@ -507,6 +505,8 @@ public:
 
 	virtual void	BroadcastSound( int iTeam, const char *sound, int iAdditionalSoundFlags = 0, CBasePlayer *pPlayer = NULL ) override;
 
+	void			RegisterScriptFunctions() override;
+
 	int				GetRoundState() { return (int)State_Get(); }
 
 	bool			InMatchStartCountdown() { return BInMatchStartCountdown(); }
@@ -602,9 +602,6 @@ public:
 #ifdef TF_CREEP_MODE
 bool IsCreepWaveMode( void ) const;
 #endif
-
-	bool IsFourTeamGame( void ) const { return m_bFourTeamMode; };
-	bool IsInEscortMode( void ) const { return m_nGameType == TF_GAMETYPE_ESCORT; }
 
 	bool IsMannVsMachineMode( void ) const { return m_bPlayingMannVsMachine; }
 
@@ -711,8 +708,6 @@ bool IsCreepWaveMode( void ) const;
 
 	CTeamRoundTimer *GetRedKothRoundTimer( void ) { return m_hRedKothTimer.Get(); }
 	CTeamRoundTimer *GetBlueKothRoundTimer( void ) { return m_hBlueKothTimer.Get(); }
-	CTeamRoundTimer *GetGreenKothRoundTimer( void ) { return m_hGreenKothTimer.Get(); }
-	CTeamRoundTimer *GetYellowKothRoundTimer( void ) { return m_hYellowKothTimer.Get(); }
 
 	int		GetStatsMinimumPlayers( void );
 	int		GetStatsMinimumPlayedTime( void );
@@ -984,16 +979,13 @@ public:
 		if ( IsInKothMode() == false )
 			return NULL;
 
-		switch ( iTeam )
+		if ( iTeam == TF_TEAM_RED )
 		{
-			case TF_TEAM_RED:
-				return m_hRedKothTimer.Get();
-			case TF_TEAM_BLUE:
-				return m_hBlueKothTimer.Get();
-			case TF_TEAM_GREEN:
-				return m_hGreenKothTimer.Get();
-			case TF_TEAM_YELLOW:
-				return m_hYellowKothTimer.Get();
+			return m_hRedKothTimer.Get();
+		}
+		else if ( iTeam == TF_TEAM_BLUE )
+		{
+			return m_hBlueKothTimer.Get();
 		}
 
 		return NULL;
@@ -1008,14 +1000,6 @@ public:
 		else if ( iTeam == TF_TEAM_BLUE )
 		{
 			m_hBlueKothTimer.Set( pTimer );
-		}
-		else if ( iTeam == TF_TEAM_GREEN )
-		{
-			m_hGreenKothTimer.Set( pTimer );
-		}
-		else if ( iTeam == TF_TEAM_YELLOW )
-		{
-			m_hYellowKothTimer.Set( pTimer );
 		}
 	}
 
@@ -1230,8 +1214,6 @@ private:
 
 	CNetworkHandle( CTeamRoundTimer, m_hRedKothTimer );
 	CNetworkHandle( CTeamRoundTimer, m_hBlueKothTimer );
-	CNetworkHandle( CTeamRoundTimer, m_hGreenKothTimer );
-	CNetworkHandle( CTeamRoundTimer, m_hYellowKothTimer );
 
 	CNetworkVar( int, m_nMapHolidayType ); // Used by map authors to indicate this is a holiday map
 
@@ -1253,8 +1235,6 @@ public:
 
 	bool m_bControlSpawnsPerTeam[ MAX_TEAMS ][ MAX_CONTROL_POINTS ];
 	int	 m_iPreviousRoundWinners;
-
-	CNetworkVar( bool, m_bFourTeamMode );
 
 	float	GetCapturePointTime( void ) { return m_flCapturePointEnableTime; }
 
@@ -1904,6 +1884,5 @@ public:
 	}
 };
 #endif
-
 
 #endif // TF_GAMERULES_H

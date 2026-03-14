@@ -7,6 +7,8 @@
 
 #include "NextBotInterface.h"
 
+class CTerrorPlayer;
+
 //----------------------------------------------------------------------------------------------------------------
 /**
  * The NextBot manager 
@@ -126,6 +128,11 @@ public:
 	INextBot *GetSelected( void ) const;
 
 	INextBot *GetBotUnderCrosshair( CBasePlayer *picker );	// Get the bot under the given player's crosshair
+
+	//
+	// Put these in a derived class
+	//
+	void OnSurvivorVomitedUpon( CTerrorPlayer *victim );	// when a Survivor has been hit by Boomer Vomit
 
 	static void SetInstance( NextBotManager *pInstance ) { sInstance = pInstance; };
 	static NextBotManager* GetInstance() { return sInstance; }

@@ -2275,7 +2275,6 @@ m_unNumConcreteItems( 0 ),
 m_nPopularitySeed( 0 ),
 m_pszDefinitionName( NULL ),
 m_pszItemClassname( NULL ),
-m_pszItemScriptName( NULL ),
 m_pszClassToken( NULL ),
 m_pszSlotToken( NULL ),
 m_pszItemBaseName( NULL ),
@@ -3096,7 +3095,6 @@ bool CEconItemDefinition::BInitFromKV( KeyValues *pKVItem, CUtlVector<CUtlString
 
 	// Get the item class
 	m_pszItemClassname = m_pKVItem->GetString( "item_class", NULL );
-	m_pszItemScriptName = m_pKVItem->GetString( "item_script", NULL );
 
 	m_pszClassToken = m_pKVItem->GetString( "class_token_id", NULL );
 	m_pszSlotToken = m_pKVItem->GetString( "slot_token_id", NULL );
@@ -4274,12 +4272,6 @@ CLootlistJob *CEconItemSchema::CreateLootlistJob( const char *pszContext, KeyVal
 //-----------------------------------------------------------------------------
 void CEconItemSchema::Reset( void )
 {
-	if ( m_pDelayedSchemaData )
-	{
-		delete m_pDelayedSchemaData;
-		m_pDelayedSchemaData = NULL;
-	}
-	
 	++m_unResetCount;
 
 	m_unFirstValidClass = 0;
@@ -4511,35 +4503,17 @@ bool CEconItemSchema::MaybeInitFromBuffer( IDelayedSchemaData *pDelayedSchemaDat
 // We're in a safe place to change the contents of the schema, so do so and clean
 // up whatever memory we were using.
 //
-// TF2Vintage: m_pDelayedSchemaData is only populated when the schema arrives via
-// a GC/HTTP download path (MaybeInitFromBuffer).  In standalone/dedicated-server
-// builds the schema is loaded synchronously by BInit() during system init, which
-// never touches m_pDelayedSchemaData at all, leaving it NULL.
-//
-// LevelInit (server) and LevelInitPreEntity (client) both call this function
-// unconditionally, so we must guard against the NULL case.  When there is no
-// pending delayed buffer the schema is already valid -- nothing to do.
-//-----------------------------------------------------------------------------
 bool CEconItemSchema::BInitFromDelayedBuffer()
 {
-	// Guard: no pending delayed data means the schema was already loaded
-	// synchronously via BInit() -- this is the normal standalone-server path.
-	// Dereferencing a null pointer here was the primary CTD on LevelInit.
 	if ( !m_pDelayedSchemaData )
-	{
-		DevMsg( "[Econ] BInitFromDelayedBuffer: no pending schema buffer (schema already loaded synchronously).\n" );
 		return true;
-	}
 
 	bool bSuccess = m_pDelayedSchemaData->InitializeSchema( this );
 	delete m_pDelayedSchemaData;
 	m_pDelayedSchemaData = NULL;
 	 
 	// We just got a new schema.  We need another PostInit()
-	if (bSuccess)
-	{
-		ItemSystem()->PostInit();
-	}
+	ItemSystem()->PostInit();
 
 	return bSuccess;
 }
@@ -4683,6 +4657,7 @@ bool CEconItemSchema::BInitSchema( KeyValues *pKVRawDefinition, CUtlVector<CUtlS
 
 	// Initialize the item series block -- this is an optional block
 	KeyValues *pKVItemSeries = pKVRawDefinition->FindKey( "item_series_types" );
+	SCHEMA_INIT_CHECK( NULL != pKVItemSeries, "Required key \"item_series_types\" missing.\n" );
 	if ( NULL != pKVItemSeries )
 	{
 		SCHEMA_INIT_SUBSTEP( BInitItemSeries( pKVItemSeries, pVecErrors ) );
@@ -4691,7 +4666,8 @@ bool CEconItemSchema::BInitSchema( KeyValues *pKVRawDefinition, CUtlVector<CUtlS
 	// Initialize the rarity block -- this is an optional block
 	KeyValues *pKVRarities = pKVRawDefinition->FindKey( "rarities" );
 	KeyValues *pKVRarityWeights = pKVRawDefinition->FindKey( "rarities_lootlist_weights" );
-	if ( NULL != pKVRarities || NULL != pKVRarityWeights )
+	SCHEMA_INIT_CHECK( NULL != pKVRarities, "Required key \"rarities\" missing.\n" );
+	if ( NULL != pKVRarities )
 	{
 		SCHEMA_INIT_SUBSTEP( BInitRarities( pKVRarities, pKVRarityWeights, pVecErrors ) );
 	}
@@ -4743,22 +4719,13 @@ bool CEconItemSchema::BInitSchema( KeyValues *pKVRawDefinition, CUtlVector<CUtlS
 	// Parse the loot lists block (on the GC)
 	// Must be BEFORE Item defs
 	KeyValues *pKVItemCriteriaTemplates = pKVRawDefinition->FindKey( "item_criteria_templates" );
-	if (NULL != pKVItemCriteriaTemplates)
-	{
-		SCHEMA_INIT_SUBSTEP(BInitItemCriteriaTemplates(pKVItemCriteriaTemplates, pVecErrors));
-	}
+	SCHEMA_INIT_SUBSTEP( BInitItemCriteriaTemplates( pKVItemCriteriaTemplates, pVecErrors ) );
 
 	KeyValues *pKVRandomAttributeTemplates = pKVRawDefinition->FindKey( "random_attribute_templates" );
-	if (NULL != pKVRandomAttributeTemplates)
-	{
-		SCHEMA_INIT_SUBSTEP(BInitRandomAttributeTemplates(pKVRandomAttributeTemplates, pVecErrors));
-	}
+	SCHEMA_INIT_SUBSTEP( BInitRandomAttributeTemplates( pKVRandomAttributeTemplates, pVecErrors ) );
 
 	KeyValues *pKVLootlistJobTemplates = pKVRawDefinition->FindKey( "lootlist_job_template_definitions" );
-	if (NULL != pKVLootlistJobTemplates)
-	{
-		SCHEMA_INIT_SUBSTEP(BInitLootlistJobTemplates(pKVLootlistJobTemplates, pVecErrors));
-	}
+	SCHEMA_INIT_SUBSTEP( BInitLootlistJobTemplates( pKVLootlistJobTemplates, pVecErrors ) );
 
 	// Initialize the items block
 	KeyValues *pKVItems = pKVRawDefinition->FindKey( "items" );
@@ -4775,25 +4742,15 @@ bool CEconItemSchema::BInitSchema( KeyValues *pKVRawDefinition, CUtlVector<CUtlS
 
 	// Parse the item_sets block.
 	KeyValues *pKVItemSets = pKVRawDefinition->FindKey( "item_sets" );
-	if ( NULL != pKVItemSets )
-	{
-		SCHEMA_INIT_SUBSTEP( BInitItemSets( pKVItemSets, pVecErrors ) );
-	}
+	SCHEMA_INIT_SUBSTEP( BInitItemSets( pKVItemSets, pVecErrors ) );
 	
 	// Particles
 	KeyValues *pKVParticleSystems = pKVRawDefinition->FindKey( "attribute_controlled_attached_particles" );
-	if ( NULL != pKVParticleSystems )
-	{
-		SCHEMA_INIT_SUBSTEP( BInitAttributeControlledParticleSystems( pKVParticleSystems, pVecErrors ) );
-	}
-
+	SCHEMA_INIT_SUBSTEP( BInitAttributeControlledParticleSystems( pKVParticleSystems, pVecErrors ) );
 
 	// Parse any recipes block
 	KeyValues *pKVRecipes = pKVRawDefinition->FindKey( "recipes" );
-	if ( NULL != pKVRecipes )
-	{
-		SCHEMA_INIT_SUBSTEP( BInitRecipes( pKVRecipes, pVecErrors ) );
-	}
+	SCHEMA_INIT_SUBSTEP( BInitRecipes( pKVRecipes, pVecErrors ) );
 
 	// Reset our loot lists.
 	m_dictLootLists.RemoveAll();
@@ -4808,17 +4765,11 @@ bool CEconItemSchema::BInitSchema( KeyValues *pKVRawDefinition, CUtlVector<CUtlS
 
 	// Parse the client loot lists block (everywhere)
 	KeyValues *pKVClientLootLists = pKVRawDefinition->FindKey( "client_loot_lists" );
-	if ( NULL != pKVClientLootLists )
-	{
-		SCHEMA_INIT_SUBSTEP( BInitLootLists( pKVClientLootLists, pVecErrors ) );
-	}
+	SCHEMA_INIT_SUBSTEP( BInitLootLists( pKVClientLootLists, pVecErrors ) );
 
 	// Parse the revolving loot lists block
 	KeyValues *pKVRevolvingLootLists = pKVRawDefinition->FindKey( "revolving_loot_lists" );
-		if ( NULL != pKVRevolvingLootLists )
-	{
-		SCHEMA_INIT_SUBSTEP( BInitRevolvingLootLists( pKVRevolvingLootLists, pVecErrors ) );
-	}
+	SCHEMA_INIT_SUBSTEP( BInitRevolvingLootLists( pKVRevolvingLootLists, pVecErrors ) );
 
 	// Init Items that may reference Collections
 	SCHEMA_INIT_SUBSTEP( BInitCollectionReferences( pVecErrors ) );
@@ -4832,18 +4783,12 @@ bool CEconItemSchema::BInitSchema( KeyValues *pKVRawDefinition, CUtlVector<CUtlS
 
 #if   defined( CLIENT_DLL ) || defined( GAME_DLL )
 	KeyValues *pKVArmoryData = pKVRawDefinition->FindKey( "armory_data" );
-	if ( NULL != pKVArmoryData )
-	{
-		SCHEMA_INIT_SUBSTEP( BInitArmoryData( pKVArmoryData, pVecErrors ) );
-	}
+	SCHEMA_INIT_SUBSTEP( BInitArmoryData( pKVArmoryData, pVecErrors ) );
 #endif // GC_DLL
 
 	// Parse any achievement rewards
 	KeyValues *pKVAchievementRewards = pKVRawDefinition->FindKey( "achievement_rewards" );
-	if ( NULL != pKVAchievementRewards )
-	{
-		SCHEMA_INIT_SUBSTEP( BInitAchievementRewards( pKVAchievementRewards, pVecErrors ) );
-	}
+	SCHEMA_INIT_SUBSTEP( BInitAchievementRewards( pKVAchievementRewards, pVecErrors ) );
 
 #ifdef TF_CLIENT_DLL
 	// Compute the number of concrete items, for each item, and cache for quick access
@@ -4852,39 +4797,24 @@ bool CEconItemSchema::BInitSchema( KeyValues *pKVRawDefinition, CUtlVector<CUtlS
 	// We don't have access to Steam's full library of app data on the client so initialize whichever packages
 	// we want to reference.
 	KeyValues *pKVSteamPackages = pKVRawDefinition->FindKey( "steam_packages" );
-	if ( NULL != pKVSteamPackages )
-	{
-		SCHEMA_INIT_SUBSTEP( BInitSteamPackageLocalizationToken( pKVSteamPackages, pVecErrors ) );
-	}
+	SCHEMA_INIT_SUBSTEP( BInitSteamPackageLocalizationToken( pKVSteamPackages, pVecErrors ) );
 #endif // TF_CLIENT_DLL
 
 	// Parse the item levels block
 	KeyValues *pKVItemLevels = pKVRawDefinition->FindKey( "item_levels" );
-	if ( NULL != pKVItemLevels )
-	{
-		SCHEMA_INIT_SUBSTEP( BInitItemLevels( pKVItemLevels, pVecErrors ) );
-	}
+	SCHEMA_INIT_SUBSTEP( BInitItemLevels( pKVItemLevels, pVecErrors ) );
 
 	// Parse the kill eater score types
 	KeyValues *pKVKillEaterScoreTypes = pKVRawDefinition->FindKey( "kill_eater_score_types" );
-	if ( NULL != pKVKillEaterScoreTypes )
-	{
-		SCHEMA_INIT_SUBSTEP( BInitKillEaterScoreTypes( pKVKillEaterScoreTypes, pVecErrors ) );
-	}
+	SCHEMA_INIT_SUBSTEP( BInitKillEaterScoreTypes( pKVKillEaterScoreTypes, pVecErrors ) );
 
 	// Initialize the string tables, if present
 	KeyValues *pKVStringTables = pKVRawDefinition->FindKey( "string_lookups" );
-	if ( NULL != pKVStringTables )
-	{
-		SCHEMA_INIT_SUBSTEP( BInitStringTables( pKVStringTables, pVecErrors ) );
-	}
+	SCHEMA_INIT_SUBSTEP( BInitStringTables( pKVStringTables, pVecErrors ) );
 
 	// Initialize the community Market remaps, if present
 	KeyValues *pKVCommunityMarketRemaps = pKVRawDefinition->FindKey( "community_market_item_remaps" );
-	if ( NULL != pKVCommunityMarketRemaps )
-	{
-		SCHEMA_INIT_SUBSTEP( BInitCommunityMarketRemaps( pKVCommunityMarketRemaps, pVecErrors ) );
-	}
+	SCHEMA_INIT_SUBSTEP( BInitCommunityMarketRemaps( pKVCommunityMarketRemaps, pVecErrors ) );
 
 	double flTotalTime = Plat_FloatTime() - flInitSchemaTime;
 
@@ -6803,11 +6733,6 @@ CEconItemDefinition *CEconItemSchema::GetItemDefinitionByName( const char *pszDe
 
 const CEconItemDefinition *CEconItemSchema::GetItemDefinitionByName( const char *pszDefName ) const
 {
-	// This shouldn't happen, but let's not crash if it ever does.
-	Assert( pszDefName != NULL );
-	if ( pszDefName == NULL )
-		return NULL;
-	
 	return const_cast<CEconItemSchema *>(this)->GetItemDefinitionByName( pszDefName );
 }
 

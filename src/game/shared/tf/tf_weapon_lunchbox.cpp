@@ -19,9 +19,6 @@
 #include "tf_gamestats.h"
 #endif
 
-ConVar tf2v_new_chocolate_behavior( "tf2v_new_chocolate_behavior", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Use Gun Mettle rebalancing on chocolates." );
-ConVar tf2v_sandvich_behavior( "tf2v_sandvich_behavior", "1", FCVAR_REPLICATED | FCVAR_NOTIFY, "Changes Sandvich mechanics.", true, 0, true, 2 );
-
 //=============================================================================
 //
 // Weapon Lunchbox tables.
@@ -154,9 +151,6 @@ void CTFLunchBox::WeaponReset( void )
 //-----------------------------------------------------------------------------
 bool CTFLunchBox::UsesPrimaryAmmo( void )
 {
-	if ( !tf2v_new_chocolate_behavior.GetBool() && ( GetLunchboxType() == LUNCHBOX_CHOCOLATE_BAR || GetLunchboxType() == LUNCHBOX_FISHCAKE ) )
-		return false;
-
 	return CBaseCombatWeapon::UsesPrimaryAmmo();
 }
 
@@ -312,8 +306,6 @@ void CTFLunchBox::DrainAmmo( bool bForceCooldown )
 #ifdef GAME_DLL
 
 	int iLunchboxType = GetLunchboxType();
-	if ( !tf2v_new_chocolate_behavior.GetBool() && ( iLunchboxType == LUNCHBOX_CHOCOLATE_BAR || iLunchboxType == LUNCHBOX_FISHCAKE ) )
-		return;
 
 	// If we're damaged while eating/taunting, bForceCooldown will be true
 	if ( pOwner->IsPlayerClass( TF_CLASS_HEAVYWEAPONS ) )

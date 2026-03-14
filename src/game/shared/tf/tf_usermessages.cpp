@@ -136,3 +136,4 @@ void RegisterUserMessages()
 	RegisterHapticMessages();
 	RegisterScriptMessages();
 }
+

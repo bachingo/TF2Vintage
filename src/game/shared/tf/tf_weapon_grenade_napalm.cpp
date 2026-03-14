@@ -119,7 +119,7 @@ void CTFGrenadeNapalmProjectile::Detonate()
 {
 	if ( ShouldNotDetonate() )
 	{
-		Destroy();
+		RemoveGrenade();
 		return;
 	}
 

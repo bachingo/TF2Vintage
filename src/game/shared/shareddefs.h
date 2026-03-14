@@ -11,7 +11,6 @@
 #pragma once
 #endif
 
-FORWARD_DECLARE_HANDLE(HSCRIPT);
 #define TICK_INTERVAL			(gpGlobals->interval_per_tick)
 
 
@@ -253,11 +252,11 @@ enum CastVote
 #if defined( CSTRIKE_DLL )
 	#define MAX_PLAYERS				65   // Absolute max players supported
 #elif defined( TF_VINTAGE ) || defined( TF_VINTAGE_CLIENT )
-	// TF2V supports up to 127 human slots + 1 SourceTV slot = 128.
+	// TF2V supports up to 126 human slots + 1 SourceTV slot = 127.
 	// VOICE_MAX_PLAYERS_DW stays at 4 (128/32 == 4 exactly, no remainder),
 	// so the VoiceMask user-message size is identical to the vanilla TF value
 	// and no network-protocol changes are required.
-	#define MAX_PLAYERS				128
+	#define MAX_PLAYERS				127
 #elif defined( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined( HL2MP )
 	#define MAX_PLAYERS				101
 #else
@@ -278,13 +277,7 @@ inline bool IsIndexIntoPlayerArrayValid( int iIndex )
 
 #define MAX_PLACE_NAME_LENGTH		18
 
-#if defined ( TF_VINTAGE ) || defined ( TF_VINTAGE_CLIENT )
-#define MAX_FOV						90
-#define MAX_FOV_UNLOCKED			140
-#else
-#define MAX_FOV						90
-#define MAX_FOV_UNLOCKED			90
-#endif
+#define MAX_FOV						101
 
 //===================================================================================================================
 // Team Defines
@@ -780,44 +773,6 @@ struct FireBulletsInfo_t
 	CBaseEntity *m_pAdditionalIgnoreEnt;
 	bool m_bPrimaryAttack;
 	bool m_bUseServerRandomSeed;
-
-	int GetShots() { return m_iShots; }
-	void SetShots( int value ) { m_iShots = value; }
-
-	Vector GetSource() { return m_vecSrc; }
-	void SetSource( Vector value ) { m_vecSrc = value; }
-	Vector GetDirShooting() { return m_vecDirShooting; }
-	void SetDirShooting( Vector value ) { m_vecDirShooting = value; }
-	Vector GetSpread() { return m_vecSpread; }
-	void SetSpread( Vector value ) { m_vecSpread = value; }
-
-	float GetDistance() { return m_flDistance; }
-	void SetDistance( float value ) { m_flDistance = value; }
-
-	int GetAmmoType() { return m_iAmmoType; }
-	void SetAmmoType( int value ) { m_iAmmoType = value; }
-
-	int GetTracerFreq() { return m_iTracerFreq; }
-	void SetTracerFreq( int value ) { m_iTracerFreq = value; }
-
-	float GetDamage() { return m_flDamage; }
-	void SetDamage( float value ) { m_flDamage = value; }
-	int GetPlayerDamage() { return m_iPlayerDamage; }
-	void SetPlayerDamage( float value ) { m_iPlayerDamage = value; }
-
-	int GetFlags() { return m_nFlags; }
-	void SetFlags( float value ) { m_nFlags = value; }
-
-	float GetDamageForceScale() { return m_flDamageForceScale; }
-	void SetDamageForceScale( float value ) { m_flDamageForceScale = value; }
-
-	HSCRIPT ScriptGetAttacker();
-	void ScriptSetAttacker( HSCRIPT value );
-	HSCRIPT ScriptGetAdditionalIgnoreEnt();
-	void ScriptSetAdditionalIgnoreEnt( HSCRIPT value );
-
-	bool GetPrimaryAttack() { return m_bPrimaryAttack; }
-	void SetPrimaryAttack( bool value ) { m_bPrimaryAttack = value; }
 };
 
 //-----------------------------------------------------------------------------

@@ -1177,75 +1177,6 @@ void CEventQueue::CancelEventOn( CBaseEntity *pTarget, const char *sInputName )
 //
 // Also removes events that were targeted with their debug name (classname when unnamed).
 // E.g. CancelEventsByInput( pRelay, "Trigger" ) removes all pending logic_relay "Trigger" events.
-//-----------------------------------------------------------------------------
-void CEventQueue::CancelEventsByInput( CBaseEntity *pTarget, const char *szInput )
-{
-	if ( !pTarget )
-		return;
-
-	string_t iszDebugName = MAKE_STRING( pTarget->GetDebugName() );
-	EventQueuePrioritizedEvent_t *pCur = m_Events.m_pNext;
-
-	while ( pCur )
-	{
-		bool bRemove = false;
-
-		if ( pTarget == pCur->m_pEntTarget || pCur->m_iTarget == iszDebugName )
-		{
-			if ( !V_strncmp( STRING( pCur->m_iTargetInput ), szInput, strlen( szInput ) ) )
-			{
-				bRemove = true;
-			}
-		}
-
-		EventQueuePrioritizedEvent_t *pPrev = pCur;
-		pCur = pCur->m_pNext;
-
-		if ( bRemove )
-		{
-			RemoveEvent( pPrev );
-			delete pPrev;
-		}
-	}
-}
-
-bool CEventQueue::RemoveEvent( int event )
-{
-	EventQueuePrioritizedEvent_t *pe = reinterpret_cast<EventQueuePrioritizedEvent_t *>( event ); // INT_TO_POINTER
-
-	for ( EventQueuePrioritizedEvent_t *pCur = m_Events.m_pNext; pCur; pCur = pCur->m_pNext )
-	{
-		if ( pCur == pe )
-		{
-			RemoveEvent( pCur );
-			delete pCur;
-			return true;
-		}
-	}
-
-	return false;
-}
-
-float CEventQueue::GetTimeLeft( int event )
-{
-	EventQueuePrioritizedEvent_t *pe = reinterpret_cast<EventQueuePrioritizedEvent_t *>( event ); // INT_TO_POINTER
-
-	for ( EventQueuePrioritizedEvent_t *pCur = m_Events.m_pNext; pCur; pCur = pCur->m_pNext )
-	{
-		if ( pCur == pe )
-		{
-			return ( pCur->m_flFireTime - gpGlobals->curtime );
-		}
-	}
-
-	return 0.f;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Return true if the target has any pending inputs.
-// Input  : *pTarget - 
-//			*sInputName - NULL for any input, or a specified one
-//-----------------------------------------------------------------------------
 bool CEventQueue::HasEventPending( CBaseEntity *pTarget, const char *sInputName )
 {
 	if (!pTarget)
@@ -2022,3 +1953,4 @@ void CEntityList::DeleteEntity( CBaseEntity *pEnt )
 		e = e->pNext;
 	}
 }
+

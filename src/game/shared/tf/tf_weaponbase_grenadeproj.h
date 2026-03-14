@@ -131,7 +131,6 @@ public:
 
 protected:
 
-	void					DrawRadius( float flRadius );
 
 	bool					m_bUseImpactNormal;
 	Vector					m_vecImpactNormal;

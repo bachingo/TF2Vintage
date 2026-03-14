@@ -2164,11 +2164,7 @@ bool CTFItemSchema::BInitQuestObjectiveConditions( KeyValues *pKVConditionsBlock
 {
 	m_mapQuestObjectiveConditions.PurgeAndDeleteElements();
 
-	// TF2Vintage: quest_objective_conditions is a live-service feature this mod doesn't use.
-	// Treat a missing block the same as an empty one rather than hard-failing the entire
-	// BInitSchema chain (which previously aborted BInitWarDefs and the schema_updated event).
-	if ( pKVConditionsBlock == NULL )
-		return true;
+	SCHEMA_INIT_CHECK( pKVConditionsBlock != NULL, "No quest objective conditions block found!" );
 
 	FOR_EACH_TRUE_SUBKEY( pKVConditionsBlock, pKVCondition )
 	{
@@ -2680,4 +2676,5 @@ IEconTool *CTFItemSchema::CreateEconToolImpl( const char *pszToolType, const cha
 
 	return CEconItemSchema::CreateEconToolImpl( pszToolType, pszUseString, pszUsageRestriction, unCapabilities, pUsageKV );
 }
+
 

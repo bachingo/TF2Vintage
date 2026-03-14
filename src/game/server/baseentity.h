@@ -348,14 +348,6 @@ struct thinkfunc_t
 	DECLARE_SIMPLE_DATADESC();
 };
 
-struct scriptthinkfunc_t
-{
-	int				m_nNextThinkTick;
-	HSCRIPT			m_hfnThink;
-	unsigned short	m_iContextHash;
-	bool			m_bNoParam;
-};
-
 struct EmitSound_t;
 struct rotatingpushmove_t;
 
@@ -452,9 +444,6 @@ public:
 	bool					IsCurrentlyTouching( void ) const;
 	const Vector&			GetAbsOrigin( void ) const;
 	const QAngle&			GetAbsAngles( void ) const;
-	inline Vector			Forward() const; ///< get my forward (+x) vector
-	inline Vector			Left() const;    ///< get my left    (+y) vector
-	inline Vector			Up() const;      ///< get my up      (+z) vector
 
 	SolidType_t				GetSolid() const;
 	int			 			GetSolidFlags( void ) const;
@@ -604,8 +593,6 @@ public:
 	void ValidateEntityConnections();
 	void FireNamedOutput( const char *pszOutput, variant_t variant, CBaseEntity *pActivator, CBaseEntity *pCaller, float flDelay = 0.0f );
 	CBaseEntityOutput *FindNamedOutput( const char *pszOutput );
-	float GetMaxOutputDelay( const char *pszOutput );
-	void CancelEventsByInput( const char *szInput );
 
 	// Activate - called for each entity after each load game and level load
 	virtual void Activate( void );
@@ -635,11 +622,6 @@ public:
 	bool		ClassMatches( const char *pszClassOrWildcard );
 	bool		NameMatches( string_t nameStr );
 	bool		ClassMatches( string_t nameStr );
-	bool		NameMatchesExact( string_t nameStr );
-	bool		ClassMatchesExact( string_t nameStr );
-
-	template <typename T>
-	bool		Downcast( string_t iszClass, T **ppResult );
 
 private:
 	bool		NameMatchesComplex( const char *pszNameOrWildcard );
@@ -924,8 +906,6 @@ protected:
 #endif
 
 	void RemoveExpiredConcepts( void );
-
-public:
 	int	GetContextCount() const;						// Call RemoveExpiredConcepts to clean out expired concepts
 	const char *GetContextName( int index ) const;		// note: context may be expired
 	const char *GetContextValue( int index ) const; 	// note: context may be expired
@@ -1236,7 +1216,6 @@ public:
 
 	virtual void	ModifyOrAppendCriteria( AI_CriteriaSet& set );
 	void			AppendContextToCriteria( AI_CriteriaSet& set, const char *prefix = "" );
-	void			ReAppendContextCriteria( AI_CriteriaSet &set );
 	void			DumpResponseCriteria( void );
 
 	// Return the IHasAttributes interface for this base entity. Removes the need for:
@@ -1391,26 +1370,11 @@ public:
 	virtual float	GetDamage() { return 0; }
 	virtual void	SetDamage(float flDamage) {}
 
-	// Some entities want to use interactions regardless of whether they're a CBaseCombatCharacter.
-	// Valve ran into this issue with frag grenades when they started deriving from CBaseAnimating instead of CBaseCombatCharacter,
-	// preventing them from using the barnacle interactions for rigged grenade timing so it's guaranteed to blow up in the barnacle's face.
-	// We're used to unaltered behavior now, so we're not restoring that as default, but making this a "base entity" thing is supposed to help in situtions like those.
-	// 
-	// Also, keep in mind pretty much all existing DispatchInteraction() calls are only performed on CBaseCombatCharacters.
-	// You'll need to change their code manually if you want other, non-character entities to use the interaction.
-	bool				DispatchInteraction( int interactionType, void *data, CBaseCombatCharacter *sourceEnt );
-
-	// Do not call HandleInteraction directly, use DispatchInteraction
-	virtual bool		HandleInteraction( int interactionType, void *data, CBaseCombatCharacter *sourceEnt ) { return false; }
-
 	virtual Vector	EyePosition( void );			// position of eyes
 	inline Vector ScriptEyePosition() { return EyePosition(); }
 	virtual const QAngle &EyeAngles( void );		// Direction of eyes in world space
 	virtual const QAngle &LocalEyeAngles( void );	// Direction of eyes
 	virtual Vector	EarPosition( void );			// position of ears
-	void	EyePositionZOnly( Vector *pPosition );	// position of eyes, ignoring X and Y
-
-	float	GetDistanceToEntity( const CBaseEntity *other ) const; // Distance between GetAbsOrigins.
 
 	Vector	EyePosition( void ) const;			// position of eyes
 	const QAngle &EyeAngles( void ) const;		// Direction of eyes in world space
@@ -1459,11 +1423,6 @@ public:
 	void			SetGravity( float gravity );
 	float			GetFriction( void ) const;
 	void			SetFriction( float flFriction );
-	float			GetMass();
-	void			SetMass( float mass );
-
-	// Mechanism for overriding friction for a short duration
-	void			OverrideFriction( float duration, float friction );
 
 	virtual	bool FVisible ( CBaseEntity *pEntity, int traceMask = MASK_BLOCKLOS, CBaseEntity **ppBlocker = NULL );
 	virtual bool FVisible( const Vector &vecTarget, int traceMask = MASK_BLOCKLOS, CBaseEntity **ppBlocker = NULL );
@@ -1920,8 +1879,6 @@ private:
 	// was pev->friction
 	CNetworkVarForDerived( float, m_flFriction );
 	CNetworkVar( float, m_flElasticity );
-	float m_flOverriddenFriction;
-	void FrictionRevertThink( void );
 
 	// was pev->ltime
 	float			m_flLocalTime;
@@ -1988,9 +1945,7 @@ public:
 public:
 	void							SetSize( const Vector &vecMin, const Vector &vecMax ); // UTIL_SetSize( this, mins, maxs );
 	static int						PrecacheModel( const char *name, bool bPreload = true ); 
-	void							ScriptPrecacheModel( const char *name );
 	static bool						PrecacheSound( const char *name );
-	void							ScriptPrecacheScriptSound( const char *name );
 	static void						PrefetchSound( const char *name );
 	void							Remove( ); // UTIL_Remove( this );
 
@@ -2067,150 +2022,6 @@ public:
 #endif // TF_DLL
 
 	virtual bool BCanCallVote() { return true; }
-
-	// ----------------------------------------------------------------------------
-	// VScript accessors
-	// ----------------------------------------------------------------------------
-	HSCRIPT GetScriptInstance( void );
-	bool ValidateScriptScope( void );
-	virtual bool CallScriptFunction( const char *pFunctionName, ScriptVariant_t *pFunctionReturn, bool bNoDelegation = false );
-	HSCRIPT LookupScriptFunction( const char *pFunctionName );
-	bool RunScriptFile( const char *pScriptFile, bool bUseRootScope = false );
-	bool RunScript( const char *pScriptText, const char *pDebugFilename = "CBaseEntity::RunScript" );
-	bool CallScriptFunctionHandle( HSCRIPT hFunc, ScriptVariant_t *pFunctionReturn );
-	void ConnectOutputToScript( const char *pszOutput, const char *pszScriptFunc );
-	void DisconnectOutputFromScript( const char *pszOutput, const char *pszScriptFunc );
-	void ScriptThink( void );
-	const char *GetScriptId( void );
-	const char *GetScriptThinkFunc();
-	HSCRIPT GetScriptScope( void );
-	HSCRIPT GetOrCreatePrivateScriptScope();
-	EHANDLE	ScriptGetEHandle( void );
-
-	void RunPrecacheScripts( void );
-	void RunOnPostSpawnScripts( void );
-	void ScriptDispatchSpawn( void );
-
-	void ScriptUtilRemove( void );
-
-	void ScriptSetThinkFunction( const char *szFunc, float time );
-	void ScriptStopThinkFunction();
-	void ScriptSetContextThink( const char *szContext, HSCRIPT hFunc, float time );
-	void ScriptSetThink( HSCRIPT hFunc, float time );
-	void ScriptStopThink();
-	void ScriptContextThink();
-
-	bool ScriptAcceptInput( const char *szInputName, const char *szValue, HSCRIPT hActivator, HSCRIPT hCaller );
-	bool ScriptInputHook( const char *szInputName, CBaseEntity *pActivator, CBaseEntity *pCaller, variant_t Value, ScriptVariant_t &functionReturn );
-private:
-	CUtlVector< scriptthinkfunc_t * > m_ScriptThinkFuncs;
-
-public:
-	HSCRIPT GetScriptOwnerEntity();
-	void SetScriptOwnerEntity( HSCRIPT pOwner );
-	HSCRIPT ScriptGetMoveParent( void );
-	HSCRIPT ScriptGetRootMoveParent( void );
-	HSCRIPT ScriptFirstMoveChild( void );
-	HSCRIPT ScriptNextMovePeer( void );
-	void ScriptFollowEntity( HSCRIPT hBaseEntity, bool bBoneMerge );
-	HSCRIPT ScriptGetFollowedEntity();
-
-	void ScriptFireBullets( HSCRIPT info );
-private:
-	HSCRIPT m_hFireBullets;
-	HSCRIPT m_hOnDeath;
-	HSCRIPT m_hVPhysicsCollision;
-	HSCRIPT m_hHandleInteraction;
-
-public:
-	const Vector &ScriptEyePosition( void );
-	const QAngle &ScriptEyeAngles( void );
-	const QAngle &ScriptLocalEyeAngles( void ) { return ScriptEyeAngles(); }
-	void ScriptSetAngles( const QAngle &angles );
-	const QAngle &ScriptGetAngles( void );
-	void ScriptSetLocalAngles( float fPitch, float fYaw, float fRoll );
-	const Vector &ScriptGetLocalAngles( void );
-
-	void ScriptSetSize( const Vector &mins, const Vector &maxs );
-	const Vector &ScriptGetBoundingMins( void );
-	const Vector &ScriptGetBoundingMaxs( void );
-	const Vector &ScriptGetBoundingMinsOriented( void );
-	const Vector &ScriptGetBoundingMaxsOriented( void );
-
-	void ScriptSetOrigin( const Vector &v );
-	void ScriptTeleport( bool bSetPosition, const Vector &newPosition, bool bSetAngle, const QAngle &newAngle, bool bSetVelocity, const Vector &newVelocity );
-	void ScriptSetForward( const Vector &v );
-	const Vector &ScriptGetLocalAngularVelocity( void );
-	void ScriptSetLocalAngularVelocity( float pitchVel, float yawVel, float rollVel );
-	const Vector &ScriptGetForward( void );
-	const Vector &ScriptGetRight( void );
-	const Vector &ScriptGetLeft( void );
-	const Vector &ScriptGetUp( void );
-
-	void ScriptSetOriginAngles( const Vector &vecOrigin, const QAngle &angAngles );
-	void ScriptSetOriginAnglesVelocity( const Vector &vecOrigin, const QAngle &angAngles, const Vector &vecVelocity );
-
-	const matrix3x4_t &ScriptEntityToWorldTransform( void );
-
-	HSCRIPT ScriptGetPhysicsObject( void );
-
-	void ScriptSetParent( HSCRIPT hParent, const char *szAttachment );
-
-	void ScriptSetName( const char *newName );
-	const char *ScriptGetModelName( void ) const;
-
-	void ScriptEmitSound( const char *soundname );
-	void ScriptStopSound( const char *soundname );
-	float ScriptSoundDuration( const char *soundname, const char *actormodel );
-
-	HSCRIPT ScriptGetModelKeyValues( void );
-
-	bool	ScriptIsVisible( const Vector &vecSpot );
-	bool	ScriptIsEntVisible( HSCRIPT pEntity );
-	bool	ScriptIsVisibleWithMask( const Vector &vecSpot, int traceMask );
-
-	void ScriptAddContext( const char *name, const char *value, float duration = 0.0f );
-	const char *ScriptGetContext( const char *name );
-	HSCRIPT ScriptGetContextIndex( int index );
-
-	int ScriptClassify( void );
-
-	bool ScriptAddOutput( const char *pszOutputName, const char *pszTarget, const char *pszAction, const char *pszParameter, float flDelay, int iMaxTimes );
-	void ScriptFireOutput( const char *pszOutput, HSCRIPT hActivator, HSCRIPT hCaller, const char *szValue, float flDelay );
-	const char *ScriptGetKeyValue( const char *pszKeyName );
-
-	const Vector &ScriptGetColorVector();
-	int ScriptGetColorR();
-	int ScriptGetColorG();
-	int ScriptGetColorB();
-	int ScriptGetAlpha();
-	void ScriptSetColorVector( const Vector &vecColor );
-	void ScriptSetColor( int r, int g, int b );
-	void ScriptSetColorR( int iVal );
-	void ScriptSetColorG( int iVal );
-	void ScriptSetColorB( int iVal );
-	void ScriptSetAlpha( int iVal );
-
-	int ScriptGetRenderMode();
-	void ScriptSetRenderMode( int nRenderMode );
-
-	int ScriptGetMoveType();
-	void ScriptSetMoveType( int iMoveType, int nMoveCollide );
-
-	void ScriptSetSolid( int nSolidType );
-	int ScriptGetSolid( void );
-
-	bool ScriptDispatchInteraction( int interactionType, HSCRIPT data, HSCRIPT sourceEnt );
-
-	int ScriptGetTakeDamage();
-	void ScriptSetTakeDamage( int val );
-
-	string_t		m_iszVScripts;
-	string_t		m_iszScriptThinkFunction;
-	CScriptScope	m_ScriptScope;
-	HSCRIPT			m_hScriptInstance;
-	string_t		m_iszScriptId;
-	CScriptKeyValues *m_pScriptModelKeyValues;
 
 private:
 	CThreadFastMutex m_CalcAbsolutePositionMutex;
@@ -2364,10 +2175,6 @@ inline void CBaseEntity::SetName( string_t newName )
 	m_iName = newName;
 }
 
-inline void CBaseEntity::ScriptSetName( const char *newName )
-{
-	m_iName = AllocPooledString( newName );
-}
 
 inline bool CBaseEntity::NameMatches( const char *pszNameOrWildcard )
 {
@@ -2383,11 +2190,6 @@ inline bool CBaseEntity::NameMatches( string_t nameStr )
 	return NameMatchesComplex( STRING(nameStr) );
 }
 
-inline bool CBaseEntity::NameMatchesExact( string_t nameStr )
-{
-	return IDENT_STRINGS( m_iName, nameStr );
-}
-
 inline void CBaseEntity::MarkNeedsNamePurge()
 {
 	m_bForcePurgeFixedupStrings = true;
@@ -2398,18 +2200,6 @@ inline bool CBaseEntity::ClassMatches( const char *pszClassOrWildcard )
 	if ( IDENT_STRINGS(m_iClassname, pszClassOrWildcard ) )
 		return true;
 	return ClassMatchesComplex( pszClassOrWildcard );
-}
-
-inline bool CBaseEntity::ClassMatches( string_t nameStr )
-{
-	if ( IDENT_STRINGS( m_iClassname, nameStr ) )
-		return true;
-	return ClassMatchesComplex( STRING( nameStr ) );
-}
-
-inline bool CBaseEntity::ClassMatchesExact( string_t nameStr )
-{
-	return IDENT_STRINGS( m_iClassname, nameStr );
 }
 
 inline const char* CBaseEntity::GetClassname()
@@ -2570,35 +2360,6 @@ inline const QAngle& CBaseEntity::GetAbsAngles( void ) const
 		const_cast<CBaseEntity*>(this)->CalcAbsolutePosition();
 	}
 	return m_angAbsRotation;
-}
-
-inline float CBaseEntity::GetMass()
-{
-	IPhysicsObject *vPhys = VPhysicsGetObject();
-	if ( vPhys )
-	{
-		return vPhys->GetMass();
-	}
-	else
-	{
-		Warning( "Tried to call GetMass() on %s but it has no physics.\n", GetDebugName() );
-		return 0;
-	}
-}
-
-inline void CBaseEntity::SetMass( float mass )
-{
-	mass = clamp( mass, VPHYSICS_MIN_MASS, VPHYSICS_MAX_MASS );
-
-	IPhysicsObject *vPhys = VPhysicsGetObject();
-	if ( vPhys )
-	{
-		vPhys->SetMass( mass );
-	}
-	else
-	{
-		Warning( "Tried to call SetMass() on %s but it has no physics.\n", GetDebugName() );
-	}
 }
 
 
@@ -2919,14 +2680,6 @@ inline SolidType_t CBaseEntity::GetSolid() const
 	return CollisionProp()->GetSolid();
 }
 
-inline void	CBaseEntity::EyePositionZOnly( Vector *pPosition )
-{
-	*pPosition = EyePosition();
-	Vector vecAbsOrigin = GetAbsOrigin();
-	pPosition->x = vecAbsOrigin.x;
-	pPosition->y = vecAbsOrigin.y;
-}
-
 		 	 			 
 //-----------------------------------------------------------------------------
 // Methods related to IServerUnknown
@@ -3043,13 +2796,6 @@ inline Vector	CBaseEntity::EarPosition( void ) const			// position of ears
 	return const_cast<CBaseEntity*>(this)->EarPosition();
 }
 
-inline float CBaseEntity::GetDistanceToEntity( const CBaseEntity *other ) const
-{
-	if ( other == NULL )
-		return -1.0f;
-
-	return ( GetAbsOrigin() - other->GetAbsOrigin() ).Length();
-}
 
 //-----------------------------------------------------------------------------
 // Methods relating to networking
@@ -3116,210 +2862,6 @@ inline void CBaseEntity::FireBullets( int cShots, const Vector &vecSrc,
 
 	FireBullets( info );
 }
-
-//-----------------------------------------------------------------------------
-// VScript accessors
-//-----------------------------------------------------------------------------
-inline Vector const &CBaseEntity::ScriptEyePosition( void )
-{
-	static Vector vec;
-	vec = EyePosition();
-	return vec;
-}
-
-inline QAngle const &CBaseEntity::ScriptEyeAngles( void )
-{ 
-	static QAngle ang;
-	ang = EyeAngles();
-	return ang;
-}
-
-inline void CBaseEntity::ScriptSetAngles( const QAngle &angles )
-{
-	Teleport( NULL, &angles, NULL );
-}
-
-inline QAngle const &CBaseEntity::ScriptGetAngles( void )
-{
-	return GetAbsAngles();
-}
-
-inline void CBaseEntity::ScriptSetLocalAngles( float fPitch, float fYaw, float fRoll )
-{
-	QAngle angles( fPitch, fYaw, fRoll );
-	SetLocalAngles( angles );
-}
-
-inline Vector const &CBaseEntity::ScriptGetLocalAngles( void )
-{
-	static Vector vecAng;
-
-	QAngle ang = GetLocalAngles();
-	vecAng.Init( ang.x, ang.y, ang.z );
-
-	return vecAng;
-}
-
-inline void CBaseEntity::ScriptSetSize( Vector const &mins, Vector const &maxs )
-{
-	UTIL_SetSize( this, mins, maxs );
-}
-
-inline void CBaseEntity::ScriptUtilRemove( void )
-{
-	UTIL_Remove( this );
-}
-
-inline void CBaseEntity::ScriptSetOrigin( Vector const &v )
-{
-	Teleport( &v, NULL, NULL );
-}
-
-inline void CBaseEntity::ScriptTeleport( bool bSetPosition, const Vector &newPosition, bool bSetAngle, const QAngle &newAngle, bool bSetVelocity, const Vector &newVelocity )
-{
-	this->Teleport( bSetPosition ? &newPosition : nullptr, bSetAngle ? &newAngle : nullptr, bSetVelocity ? &newVelocity : nullptr );
-}
-
-inline void CBaseEntity::ScriptSetForward( Vector const &v )
-{
-	QAngle a;
-	VectorAngles( v, a );
-	Teleport( NULL, &a, NULL );
-}
-
-inline Vector const &CBaseEntity::ScriptGetForward( void )
-{
-	static Vector vecFwd;
-	GetVectors( &vecFwd, NULL, NULL );
-	return vecFwd;
-}
-
-inline Vector const &CBaseEntity::ScriptGetRight( void )
-{
-	static Vector vecLeft;
-	GetVectors( NULL, &vecLeft, NULL );
-	return vecLeft;
-}
-
-inline Vector const &CBaseEntity::ScriptGetLeft( void )
-{
-	static Vector vecLeft;
-	GetVectors( NULL, &vecLeft, NULL );
-	return vecLeft;
-}
-
-inline Vector const &CBaseEntity::ScriptGetUp( void )
-{
-	static Vector vecUp;
-	GetVectors( NULL, NULL, &vecUp );
-	return vecUp;
-}
-
-inline void CBaseEntity::ScriptSetOriginAngles( const Vector &vecOrigin, const QAngle &angAngles )
-{
-	Teleport( &vecOrigin, &angAngles, NULL );
-}
-
-inline void CBaseEntity::ScriptSetOriginAnglesVelocity( const Vector &vecOrigin, const QAngle &angAngles, const Vector &vecVelocity )
-{
-	Teleport( &vecOrigin, &angAngles, &vecVelocity );
-}
-
-inline bool CBaseEntity::ScriptIsVisible( Vector const &vecSpot )
-{
-	return FVisible( vecSpot );
-}
-
-inline bool CBaseEntity::ScriptIsEntVisible( HSCRIPT pEntity )
-{
-	return FVisible( ToEnt( pEntity ) );
-}
-
-inline bool CBaseEntity::ScriptIsVisibleWithMask( const Vector &vecSpot, int traceMask )
-{
-	return FVisible( vecSpot, traceMask );
-}
-
-inline int CBaseEntity::ScriptGetColorR()
-{
-	return m_clrRender.GetR();
-}
-
-inline int CBaseEntity::ScriptGetColorG()
-{
-	return m_clrRender.GetG();
-}
-
-inline int CBaseEntity::ScriptGetColorB()
-{
-	return m_clrRender.GetB();
-}
-
-inline int CBaseEntity::ScriptGetAlpha()
-{
-	return m_clrRender.GetA();
-}
-
-inline void CBaseEntity::ScriptSetColorR( int iVal )
-{
-	SetRenderColorR( iVal );
-}
-
-inline void CBaseEntity::ScriptSetColorG( int iVal )
-{
-	SetRenderColorG( iVal );
-}
-
-inline void CBaseEntity::ScriptSetColorB( int iVal )
-{
-	SetRenderColorB( iVal );
-}
-
-inline void CBaseEntity::ScriptSetAlpha( int iVal )
-{
-	SetRenderColorA( iVal );
-}
-
-inline int CBaseEntity::ScriptGetRenderMode()
-{
-	return GetRenderMode();
-}
-
-inline void CBaseEntity::ScriptSetRenderMode( int nRenderMode )
-{
-	SetRenderMode( (RenderMode_t)nRenderMode );
-}
-
-inline int CBaseEntity::ScriptGetMoveType()
-{
-	return GetMoveType();
-}
-
-inline void CBaseEntity::ScriptSetMoveType( int iMoveType, int nMoveCollide )
-{
-	SetMoveType( (MoveType_t)iMoveType, (MoveCollide_t)nMoveCollide );
-}
-
-inline void CBaseEntity::ScriptSetSolid( int nSolidType )
-{
-	SetSolid( (SolidType_t) nSolidType );
-}
-
-inline int CBaseEntity::ScriptGetSolid( void )
-{
-	return (int)GetSolid();
-}
-
-inline int CBaseEntity::ScriptGetTakeDamage()
-{
-	return m_takedamage;
-}
-
-inline void CBaseEntity::ScriptSetTakeDamage( int val )
-{
-	m_takedamage = val;
-}
-
 
 // Ugly technique to override base member functions
 // Normally it's illegal to cast a pointer to a member function of a derived class to a pointer to a 

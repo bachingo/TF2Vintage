@@ -147,7 +147,7 @@ void CTFGrenadeNailProjectile::Detonate()
 {
 	if ( ShouldNotDetonate() )
 	{
-		Destroy();
+		RemoveGrenade();
 		return;
 	}
 

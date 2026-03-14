@@ -210,7 +210,7 @@ CTFInventoryManager *TFInventoryManager( void )
 // Purpose: 
 //-----------------------------------------------------------------------------
 CTFInventoryManager::CTFInventoryManager( void )
-	: m_pDefaultItem( NULL )
+
 {
 }
 

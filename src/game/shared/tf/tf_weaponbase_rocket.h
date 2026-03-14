@@ -122,7 +122,6 @@ public:
 
 	virtual void	SetLauncher( CBaseEntity *pLauncher ) OVERRIDE { m_hLauncher = pLauncher; BaseClass::SetLauncher( pLauncher ); }
 	CBaseEntity		*GetLauncher( void ) { return m_hLauncher; }
-	CBaseEntity		*GetOwnerPlayer( void ) const;
 
 	virtual bool	IsDestroyable( bool bOrbAttack = false ) OVERRIDE { return ( !bOrbAttack ? ( gpGlobals->curtime > m_flDestroyableTime ) : true ); }
 

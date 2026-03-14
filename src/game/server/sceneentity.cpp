@@ -318,7 +318,6 @@ public:
 
 	DECLARE_CLASS( CSceneEntity, CPointEntity );
 	DECLARE_SERVERCLASS();
-	// script description
 	DECLARE_ENT_SCRIPTDESC();
 
 							CSceneEntity( void );
@@ -344,8 +343,6 @@ public:
 
 	virtual void			OnRestore();
 	virtual void			OnLoaded();
-
-	virtual int				DrawDebugTextOverlays();
 
 	DECLARE_DATADESC();
 
@@ -4501,28 +4498,6 @@ void CSceneEntity::SetRecipientFilter( IRecipientFilter *filter )
 		m_pRecipientFilter = new CRecipientFilter();
 		m_pRecipientFilter->CopyFrom( (CRecipientFilter &)( *filter ) );
 	}
-}
-
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-int CSceneEntity::DrawDebugTextOverlays()
-{
-	int nOffset = BaseClass::DrawDebugTextOverlays();
-
-	if ( m_debugOverlays & OVERLAY_TEXT_BIT )
-	{
-		char tempstr[ 512 ];
-		Q_snprintf( tempstr, sizeof( tempstr ), "Playing back: %s", m_bIsPlayingBack ? "yes" : "no" );
-		EntityText( nOffset, tempstr, 0 );
-		nOffset++;
-
-		Q_snprintf( tempstr, sizeof( tempstr ), "Paused: %s", m_bPaused ? ( m_bPausedViaInput ? "yes - via input" : "yes" ) : "no" );
-		EntityText( nOffset, tempstr, 0 );
-		nOffset++;
-	}
-
-	return nOffset;
 }
 
 //-----------------------------------------------------------------------------

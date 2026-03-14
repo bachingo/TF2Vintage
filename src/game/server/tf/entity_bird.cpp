@@ -139,8 +139,6 @@ void CEntityBird::SpawnRandomBirds( void )
 			}
 		}
 	}
-
-	pFileKV->deleteThis();
 }
 
 
@@ -175,4 +173,5 @@ void SpawnClientsideFlyingBird( Vector &vecSpawn )
 		WRITE_FLOAT( flGlideTime );
 	MessageEnd();
 }
+
 

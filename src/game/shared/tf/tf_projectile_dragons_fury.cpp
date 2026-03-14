@@ -28,7 +28,6 @@
 
 #ifdef CLIENT_DLL
 	#define CTFProjectile_BallOfFire				C_TFProjectile_BallOfFire
-	extern ConVar tf2v_muzzlelight;
 #endif
 
 ConVar tf_fireball_distance( "tf_fireball_distance", "500", FCVAR_REPLICATED | FCVAR_CHEAT ); // 375 = 3000 * 0.125, which is the speed and lifetime we tested with
@@ -461,7 +460,6 @@ public:
 		if ( updateType == DATA_UPDATE_CREATED )
 		{
 			SetNextClientThink(CLIENT_THINK_ALWAYS);
-			CreateLightEffects();
 
 			// Create the particle on the empty attachment
 			int iAttachment = LookupAttachment( "empty" );
@@ -533,42 +531,6 @@ public:
 		{
 			m_bNearMiss = UTIL_BPerformNearMiss( this, "Weapon_DragonsFury.Nearmiss", 200.f );
 			m_flLastNearMissCheck = gpGlobals->curtime;
-		}
-	}
-
-	void CreateLightEffects( void )
-	{
-		// Handle the dynamic light
-		if ( tf2v_muzzlelight.GetBool() )
-		{
-			AddEffects( EF_DIMLIGHT );
-
-			dlight_t *dl;
-			if ( IsEffectActive( EF_DIMLIGHT ) )
-			{
-				dl = effects->CL_AllocDlight( LIGHT_INDEX_TE_DYNAMIC + index );
-				dl->origin = GetAbsOrigin();
-				switch ( GetTeamNumber() )
-				{
-					case TF_TEAM_RED:
-						if ( !IsCritical() )
-						{ dl->color.r = 255; dl->color.g = 30; dl->color.b = 10; }
-						else
-						{ dl->color.r = 255; dl->color.g = 10; dl->color.b = 10; }
-						break;
-
-					case TF_TEAM_BLUE:
-						if ( !IsCritical() )
-						{ dl->color.r = 10; dl->color.g = 30; dl->color.b = 255; }
-						else
-						{ dl->color.r = 10; dl->color.g = 10; dl->color.b = 255; }
-						break;
-				}
-				dl->radius = 256.0f;
-				dl->die = gpGlobals->curtime + 0.1;
-
-				tempents->RocketFlare( GetAbsOrigin() );
-			}
 		}
 	}
 #endif // CLIENT_DLL

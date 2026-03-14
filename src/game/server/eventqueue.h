@@ -66,10 +66,6 @@ public:
 
 	void Dump( void );
 
-	void CancelEventsByInput( CBaseEntity *pTarget, const char *szInput );
-	bool RemoveEvent( int event );
-	float GetTimeLeft( int event );
-
 private:
 
 	void AddEvent( EventQueuePrioritizedEvent_t *event );
@@ -84,3 +80,4 @@ extern CEventQueue g_EventQueue;
 
 
 #endif // EVENTQUEUE_H
+

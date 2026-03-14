@@ -535,7 +535,7 @@ bool CAI_Enemies::HasFreeKnowledgeOf( CBaseEntity *pEnemy )
 {
 	// I've never seen something that doesn't exist
 	if (!pEnemy)
-		return false;
+		return 0;
 
 	AI_EnemyInfo_t *pMemory = Find( pEnemy, true );
 	if ( pMemory )

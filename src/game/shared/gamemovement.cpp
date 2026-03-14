@@ -4015,6 +4015,18 @@ void CGameMovement::PlayerRoughLandingEffects( float fvol )
 // Purpose: Use for ease-in, ease-out style interpolation (accel/decel)  Used by ducking code.
 // Input  : value - 
 //			scale - 
+void CGameMovement::ResetDuckLatched()
+{
+#ifdef CLIENT_DLL
+	if ( !player->InFirstPersonView() )
+		player->ResetLatched();
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Use for ease-in, ease-out style interpolation (accel/decel)  Used by ducking code.
+// Input  : value - 
+//			scale - 
 // Output : float
 //-----------------------------------------------------------------------------
 float CGameMovement::SplineFraction( float value, float scale )
@@ -4133,9 +4145,7 @@ void CGameMovement::FinishUnDuck( void )
 
 	mv->SetAbsOrigin( newOrigin );
 
-#ifdef CLIENT_DLL
-	player->ResetLatched();
-#endif // CLIENT_DLL
+	ResetDuckLatched();
 
 	// Recategorize position since ducking can change origin
 	CategorizePosition();
@@ -4232,9 +4242,7 @@ void CGameMovement::FinishDuck( void )
    		VectorAdd( mv->GetAbsOrigin(), viewDelta, out );
 		mv->SetAbsOrigin( out );
 
-#ifdef CLIENT_DLL
-		player->ResetLatched();
-#endif // CLIENT_DLL
+		ResetDuckLatched();
 	}
 
 	// See if we are stuck?
@@ -4940,3 +4948,4 @@ void  CGameMovement::TryTouchGround( const Vector& start, const Vector& end, con
 	ray.Init( start, end, mins, maxs );
 	UTIL_TraceRay( ray, fMask, mv->m_nPlayerHandle.Get(), collisionGroup, &pm );
 }
+

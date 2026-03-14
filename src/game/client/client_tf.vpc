@@ -23,7 +23,7 @@ $Configuration
 	$Compiler
 	{
 		$AdditionalIncludeDirectories	".\hl2;.\hl2\elements;.\tf;.\tf\vgui;..\statemachine;$SRCDIR\game\shared\multiplayer;$SRCDIR\game\shared\tf;$SRCDIR\gcsdk\steamextra;$BASE;.\econ"
-		$PreprocessorDefinitions		"$BASE;TF_CLIENT_DLL;ENABLE_GC_MATCHMAKING;GLOWS_ENABLE;USE_DYNAMIC_ASSET_LOADING;VOTING_ENABLED;NEXT_BOT;TF_VINTAGE_CLIENT"
+		$PreprocessorDefinitions		"$BASE;TF_CLIENT_DLL;TF_VINTAGE_CLIENT;USES_ECON_ITEMS;ENABLE_GC_MATCHMAKING;GLOWS_ENABLE;USE_DYNAMIC_ASSET_LOADING;VOTING_ENABLED;NEXT_BOT"
 		$PreprocessorDefinitions		"$BASE;SAXXYMAINMENU_ENABLED" [$SAXXYAWARDS_ENABLE]
 		$PreprocessorDefinitions		"$BASE;WORKSHOP_IMPORT_ENABLED" [$WORKSHOP_IMPORT_ENABLE]
 		$PreprocessorDefinitions		"$BASE;SIXENSE" [!$SOURCESDK]
@@ -320,8 +320,6 @@ $Project "Client (TF)"
 			$File	"$SRCDIR\game\shared\tf\tf_gamemovement.cpp"
 			$File	"$SRCDIR\game\shared\tf\tf_gamerules.cpp"
 			$File	"$SRCDIR\game\shared\tf\tf_gamerules.h"
-			$File	"$SRCDIR\game\shared\tf\tf_gamerules_vscript.cpp"
-			$File	"$SRCDIR\game\shared\tf\tf_gamerules_vscript.h"
 			$File	"$SRCDIR\game\shared\tf\tf_classdata.cpp"
 			$File	"$SRCDIR\game\shared\tf\tf_classdata.h"
 			$File	"tf\tf_hud_account.cpp"
@@ -562,40 +560,10 @@ $Project "Client (TF)"
 				}
 			}
 
-			$File	"tf\c_sdkversionchecker.cpp"
-			$File	"tf\c_sdkversionchecker.h"
-			$File	"tf\c_tf_spymask.cpp"
-			$File	"tf\c_tf_spymask.h"
-
-			$Folder	"Unused"
-			{
-				$File	"tf\tf_hud_health.cpp"
-			}
-
 			$Folder	"Weapon"
 			{
 				$Folder "Custom"
 				{
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_defib.cpp"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_defib.h"
-
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_crowbar.cpp"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_crowbar.h"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_chainsaw.cpp"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_chainsaw.h"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_nailgun.cpp"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_nailgun.h"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_tranq.cpp"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_tranq.h"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_hunterrifle.cpp"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_hunterrifle.h"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_umbrella.cpp"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_umbrella.h"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_heavyartillery.cpp"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_heavyartillery.h"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_hammerfists.cpp"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_hammerfists.h"
-
 					$File	"$SRCDIR\game\shared\tf\tf_weaponbase_grenade.cpp"
 					$File	"$SRCDIR\game\shared\tf\tf_weaponbase_grenade.h"
 					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_caltrop.cpp"
@@ -756,12 +724,6 @@ $Project "Client (TF)"
 
 			$Folder	"vgui"
 			{
-				$Folder	"Unused"
-				{
-					$File	"tf\vgui\tf_overview.cpp"
-					$File	"tf\vgui\tf_overview.h"
-				}
-
 				$File	"tf\vgui\backgroundpanel.cpp"
 				$File	"tf\vgui\backgroundpanel.h"
 				$File	"tf\vgui\blueprint_panel.cpp"
