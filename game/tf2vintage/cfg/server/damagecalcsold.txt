@@ -1,7 +1,0 @@
-tf2v_critchance 5
-tf2v_critchance_rapid 5
-tf2v_critchance_melee 15
-tf2v_critmod_range 1600
-tf2v_bonus_distance_range 15
-tf2v_crit_duration_rapid 2
-tf2v_misschance 5

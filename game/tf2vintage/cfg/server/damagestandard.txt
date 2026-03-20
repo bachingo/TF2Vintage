@@ -1,3 +1,0 @@
-tf_damage_disablespread 0
-tf_use_fixed_weaponspreads 0
-tf2v_falldamage_disablespread 0

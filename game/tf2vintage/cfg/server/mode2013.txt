@@ -1,2 +1,0 @@
-exec server/qol2013.txt
-mapcyclefile maps/mapcycle_2013.txt

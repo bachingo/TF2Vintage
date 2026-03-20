@@ -1,2 +1,0 @@
-tf_weapon_criticals "0"
-tf_weapon_criticals_melee "0"

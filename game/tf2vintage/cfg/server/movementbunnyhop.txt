@@ -1,5 +1,0 @@
-tf2v_autojump "1"
-tf2v_bunnyjump_max_speed_factor "999"
-tf2v_duckjump "1"
-tf2v_groundspeed_cap "999"
-sv_airaccelerate "500"

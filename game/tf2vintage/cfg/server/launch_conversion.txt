@@ -1,2 +1,0 @@
-exec server/qollaunch.txt
-mapcyclefile maps/mapcycle_stock.txt

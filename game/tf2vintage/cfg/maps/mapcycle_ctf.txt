@@ -1,7 +1,0 @@
-ctf_2fort
-ctf_2fort_invasion
-ctf_doublecross
-ctf_landfall
-ctf_sawmill
-ctf_turbine
-ctf_well
