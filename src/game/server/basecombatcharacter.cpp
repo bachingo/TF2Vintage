@@ -3372,7 +3372,7 @@ void CBaseCombatCharacter::DoMuzzleFlash()
 }
 
 //-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
+// Purpose: return true if given target cant be seen because of fog
 //-----------------------------------------------------------------------------
 bool CBaseCombatCharacter::IsHiddenByFog( const Vector &target ) const
 {
