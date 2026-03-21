@@ -677,6 +677,15 @@ extern ConVar tf_damage_disablespread;
 extern ConVar tf_populator_damage_multiplier;
 extern ConVar tf_mm_trusted;
 extern ConVar tf_weapon_criticals;
+
+#ifdef GAME_DLL
+// TF2V era callback forward declarations — defined in the era system
+// implementation block near GetTaggedConVarList.
+static void TF2VEraChanged( IConVar *pConVar, const char *pOldString, float flOldValue );
+static void TF2VEnforcementChanged( IConVar *pConVar, const char *pOldString, float flOldValue );
+static void TF2VMapcycleModeChanged( IConVar *pConVar, const char *pOldString, float flOldValue );
+static void TF2VServerTypeChanged( IConVar *pConVar, const char *pOldString, float flOldValue );
+#endif
 extern ConVar tf_weapon_criticals_melee;
 extern ConVar mp_idledealmethod;
 extern ConVar mp_idlemaxtime;
@@ -830,6 +839,313 @@ ConVar tf_autobalance_dead_candidates_maxtime( "tf_autobalance_dead_candidates_m
 ConVar tf_autobalance_force_candidates_maxtime( "tf_autobalance_force_candidates_maxtime", "5", FCVAR_REPLICATED );
 ConVar tf_autobalance_xp_bonus( "tf_autobalance_xp_bonus", "500", FCVAR_REPLICATED );
 
+// tf2v specific cvars.
+ConVar tf2v_ctf_capcrits( "tf2v_ctf_capcrits", "1", FCVAR_REPLICATED, "Enable critical hits on flag capture." );
+ConVar tf2v_critchance( "tf2v_critchance", "2.0", FCVAR_REPLICATED, "Percent chance for regular critical hits.");
+ConVar tf2v_critchance_rapid( "tf2v_critchance_rapid", "2.0", FCVAR_REPLICATED, "Percent chance for rapid fire critical hits.");
+ConVar tf2v_critchance_melee( "tf2v_critchance_melee", "2.0", FCVAR_REPLICATED, "Percent chance of melee critical hits.");
+
+ConVar tf2v_individual_classlimit( "tf2v_individual_classlimit", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable individual classlimits, even when tournament mode is disabled." );
+
+// =========================================================================
+// TF2V ERA SYSTEM CONVARS
+// =========================================================================
+
+// --- Era management ---
+ConVar tf2v_era( "tf2v_era", TF2V_ERA_MAX_STR, FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"Active era integer. Round numbers = major balance eras (10=GoldRush, "
+	"20=Pyro, 30=Heavy, 40=Feb09, 50=Scout, 60=SnipSpy, 70=Classless, "
+	"80=WAR, 90=Engi, 100=Mann, 110=Uber/F2P, 120=Pyromania, 130=L&W, "
+	"140=GunMettle, 150=ToughBreak, 160=MYM, 170=JI, 180=Mar2018). "
+	"Intermediate integers = content drops between major eras. "
+	"0=PS3internal 4=PClaunch/Xbox."
+#ifdef GAME_DLL
+	, TF2VEraChanged
+#endif
+);
+
+// --- Era enforcement level ---
+// Single convar controlling how strictly the server enforces era accuracy.
+//
+//   0 = MANUAL — full server control. Sub-convars read from server config.
+//               No weapon or map gating by TF2V. No certification possible.
+//               tf2v_era is documentation only. tf2v_allowed_weapon_era is
+//               authoritative for weapon loading if set manually.
+//
+//   1 = ERA MANAGED — ApplyEra() runs automatically, setting all balance
+//               sub-convars from the era integer. No weapon or map gating.
+//               Server can run any maps and any weapon ceiling.
+//               No certification (partial or full) possible.
+//
+//   2 = PARTIAL — Era managed + weapon gate locked to tf2v_era.
+//               Items with min_era > tf2v_era replaced with stock.
+//               Mapcycle is still server choice (any map pool allowed).
+//               Qualifies for PARTIAL CERTIFICATION if QuickPlay compliant.
+//               Example: era 30 balance and weapons but on all modern maps.
+//
+//   3 = STRICT — Era managed + weapon gate + era-accurate mapcycle.
+//               auto-loads maps/mapcycle_eraNN.txt for the active era.
+//               Qualifies for FULL CERTIFICATION if QuickPlay compliant.
+//               Default for servers wanting accurate historical experience.
+//
+ConVar tf2v_enforcement( "tf2v_enforcement", "3",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"Era enforcement level. "
+	"0=manual (no gating). "
+	"1=era managed balance only. "
+	"2=partial: balance + weapon gate (partial certification eligible). "
+	"3=strict: balance + weapon gate + era mapcycle (full certification eligible).",
+	true, 0, true, 3
+#ifdef GAME_DLL
+	, TF2VEnforcementChanged
+#endif
+);
+
+// --- Weapon gate (manual override, enforcement 0 only) ---
+ConVar tf2v_allowed_weapon_era( "tf2v_allowed_weapon_era", TF2V_ERA_MAX_STR,
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"Weapon gate ceiling. Only relevant when tf2v_enforcement is 0 (full manual). "
+	"At enforcement 1+ the gate is driven automatically from tf2v_era. "
+	"Items with min_era above this value are replaced with stock." );
+
+// --- QuickPlay profile ---
+ConVar tf2v_quickplay_profile( "tf2v_quickplay_profile", "1",
+	FCVAR_NOTIFY | FCVAR_GAMEDLL,
+	"QuickPlay/Certified opt-in. 0=off, 1=casual, 2=competitive, 3=either." );
+
+// --- Server type ---
+// Controls which mapcycle variant TF2V loads when tf2v_enforcement is 3.
+// Also used by the certification system to validate mode-specific requirements.
+//
+//   0 = PVP  (default) — standard human vs human. Era mapcycle loads _pvp variant.
+//                        Eras 1-110 have no variant suffix (implicitly all-PVP).
+//   1 = PVE  — Mann vs Machine. Era mapcycle loads _pve variant (mvm_ maps only).
+//              Human player count is controlled by tf_mvm_defenders_team_size (default 6),
+//              NOT by maxplayers — MvM uses gpGlobals->maxClients for bot slots.
+//              Certification requires tf_mvm_defenders_team_size <= 6 and era >= 120.
+//   2 = ASYM — Asymmetric modes (VSH, ZI). Loads _asym variant.
+//              Only available in era 180 — VSH/ZI don't exist before that.
+//
+ConVar tf2v_server_type( "tf2v_server_type", "0",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"Server type for mapcycle and certification. "
+	"0=PVP (standard), 1=PVE (MvM, tf_mvm_defenders_team_size controls human cap), "
+	"2=ASYM (VSH/ZI, era " TF2V_ERA_MAX_STR " only).",
+	true, 0, true, 2
+#ifdef GAME_DLL
+	, TF2VServerTypeChanged
+#endif
+);
+
+
+// =========================================================================
+// TF2V ERA-SPECIFIC CONVARS (added from patch history audit)
+// =========================================================================
+
+// ---- Sniper ----
+ConVar tf2v_sniper_zoom_mode( "tf2v_sniper_zoom_mode", "0",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"Sniper zoom restriction mode. "
+	"0=eras 0-6: no restrictions (pre Jan 15 2008). "
+	"1=era 7: re-zoom lock enforced (0.5s post-fire, Jan 15 2008). "
+	"2=era 7+full: re-zoom lock + 200ms zoom-to-crit delay (Feb 14 2008). "
+	"Era 7 sets mode 2 since both fixes are within 30 days of each other.",
+	true, 0, true, 2 );
+
+// ---- Soldier ----
+ConVar tf2v_soldier_self_damage_reduction( "tf2v_soldier_self_damage_reduction", "1",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"1=Soldier takes 40pct less self-damage from own rockets (era 0-19). "
+	"0=removed at Pyro Update (era 20+).",
+	true, 0, true, 1 );
+ConVar tf2v_gunboats_nerf( "tf2v_gunboats_nerf", "0",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"0=Gunboats 75pct self-damage reduction (era 80-89). "
+	"1=60pct reduction (era 90+, Engineer Update).",
+	true, 0, true, 1 );
+ConVar tf2v_rocket_jumper_health_penalty( "tf2v_rocket_jumper_health_penalty", "0",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"1=Rocket Jumper applies -25 max HP penalty while equipped (era 91+).",
+	true, 0, true, 1 );
+
+// ---- Pyro ----
+ConVar tf2v_airblast_minicrits( "tf2v_airblast_minicrits", "1",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"1=targets launched by airblast take minicrits (era 20-169). "
+	"0=removed at Jungle Inferno (era 170+).",
+	true, 0, true, 1 );
+ConVar tf2v_afterburn_contact_time( "tf2v_afterburn_contact_time", "0",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"1=afterburn duration based on flame contact time, "
+	"min 3s scaling to max 10s (era 170+).",
+	true, 0, true, 1 );
+ConVar tf2v_afterburn_heal_debuff( "tf2v_afterburn_heal_debuff", "0",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"1=afterburn disrupts Medic healing and resist shields by 20pct (era 170+).",
+	true, 0, true, 1 );
+ConVar tf2v_airblast_sticky_push( "tf2v_airblast_sticky_push", "0",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"1=airblast pushes grounded stickies approximately 2x further (era 100+).",
+	true, 0, true, 1 );
+ConVar tf2v_backburner_damage_bonus( "tf2v_backburner_damage_bonus", "0",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"1=Backburner has +20pct damage bonus (era 82+, 119th Update). "
+	"0=no bonus at Heavy Update launch (era 20-81).",
+	true, 0, true, 1 );
+ConVar tf2v_backburner_airblast( "tf2v_backburner_airblast", "0",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"1=Backburner can airblast (era 104+). "
+	"0=no-airblast attribute active (era 20-103).",
+	true, 0, true, 1 );
+
+// ---- Heavy ----
+ConVar tf2v_natascha_fixed( "tf2v_natascha_fixed", "0",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"0=Natascha shipped with inverted slow (75pct speed, reduced damage) "
+	"(era 30-31). 1=corrected 25pct speed slow and proper damage (era 32+).",
+	true, 0, true, 1 );
+
+// ---- Medic ----
+ConVar tf2v_uber_range_falloff( "tf2v_uber_range_falloff", "0",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"1=Uber and cloak drain decrease over distance from target "
+	"(512Hu start, zero at 1536Hu) (era 140+, Gun Mettle).",
+	true, 0, true, 1 );
+ConVar tf2v_quick_fix_weapon_restriction( "tf2v_quick_fix_weapon_restriction", "0",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"1=Quick-Fix cannot use primary weapons while Uber is deployed "
+	"(era 110-129). 0=restriction removed (era 130+, Two Cities).",
+	true, 0, true, 1 );
+
+// ---- Scout ----
+ConVar tf2v_fan_damage_bonus( "tf2v_fan_damage_bonus", "0",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"1=Force-A-Nature has +10pct damage bonus (era 61+, Jun 8 2009). "
+	"0=no bonus at Scout Update launch (era 50-60).",
+	true, 0, true, 1 );
+ConVar tf2v_dead_ringer_flag_carry( "tf2v_dead_ringer_flag_carry", "0",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"1=Dead Ringer can be activated while carrying the Intelligence "
+	"(era 61+, Jun 8 2009). 0=cannot activate with flag (era 60).",
+	true, 0, true, 1 );
+
+// --- Read-only compliance tags (set by TF2VUpdateQuickPlayCompliance) ---
+ConVar tf2v_certified( "tf2v_certified", "0",
+	FCVAR_NOTIFY | FCVAR_GAMEDLL | FCVAR_REPLICATED,
+	"Read-only. 1 if enforcement 3 + valid era + QuickPlay compliant. Full certification." );
+
+ConVar tf2v_certified_partial( "tf2v_certified_partial", "0",
+	FCVAR_NOTIFY | FCVAR_GAMEDLL | FCVAR_REPLICATED,
+	"Read-only. 1 if enforcement 2 + valid era + QuickPlay compliant. Partial certification." );
+
+ConVar tf2v_certified_casual( "tf2v_certified_casual", "0",
+	FCVAR_NOTIFY | FCVAR_GAMEDLL | FCVAR_REPLICATED,
+	"Read-only. 1 if certified + casual mode (crits on)." );
+
+ConVar tf2v_certified_competitive( "tf2v_certified_competitive", "0",
+	FCVAR_NOTIFY | FCVAR_GAMEDLL | FCVAR_REPLICATED,
+	"Read-only. 1 if certified + competitive mode." );
+
+ConVar tf2v_certified_ps3( "tf2v_certified_ps3", "0",
+	FCVAR_NOTIFY | FCVAR_GAMEDLL | FCVAR_REPLICATED,
+	"Read-only. 1 if certified + casual + era 0 + 16 players (PS3 build)." );
+
+ConVar tf2v_certified_xbox( "tf2v_certified_xbox", "0",
+	FCVAR_NOTIFY | FCVAR_GAMEDLL | FCVAR_REPLICATED,
+	"Read-only. 1 if certified + era 4 + 16 players (Xbox 360 build)." );
+
+ConVar tf2v_quickplay_casual( "tf2v_quickplay_casual", "0",
+	FCVAR_NOTIFY | FCVAR_GAMEDLL | FCVAR_REPLICATED,
+	"Read-only. 1 if QuickPlay casual compliant (not certified)." );
+
+ConVar tf2v_quickplay_competitive( "tf2v_quickplay_competitive", "0",
+	FCVAR_NOTIFY | FCVAR_GAMEDLL | FCVAR_REPLICATED,
+	"Read-only. 1 if QuickPlay competitive compliant (not certified)." );
+
+// --- Era sub-convars (managed by ApplyEra, read via EraState()) ---
+// NOTE: Gameplay code must NEVER read these directly during a round.
+//       Use TFGameRules()->EraState().fieldName instead.
+//       Direct reads bypass the era lock and allow mid-round exploits.
+
+ConVar tf2v_crit_model( "tf2v_crit_model", "1", FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"0=Era 1-39: 5% base/1600 ramp. 1=Era 40+: 2% base/800 ramp.", true, 0, true, 1 );
+ConVar tf2v_damage_spread_mode( "tf2v_damage_spread_mode", "2", FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"0=+-25% on, 1=+-10% on, 2=+-10% off by default.", true, 0, true, 2 );
+ConVar tf2v_fall_sounds( "tf2v_fall_sounds", "1", FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"0=TFC-origin thump, 1=retail thump, 2=JI crunch+voice.", true, 0, true, 2 );
+ConVar tf2v_ammo_era( "tf2v_ammo_era", "4", FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"0=PS3 1=PCbeta 2=Launch 3=Feb28_2008 4=Feb02_2009. "
+	"Controls GL clip/reserve, Sticky reserve, RL reserve.", true, 0, true, 4 );
+ConVar tf2v_grenades_explode_contact( "tf2v_grenades_explode_contact", "0",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"1=grenades detonate on contact (era 0-1). 0=era 2+.", true, 0, true, 1 );
+ConVar tf2v_grenade_player_collision( "tf2v_grenade_player_collision", "1",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"0=grenades pass through players after bounce (era 0-2). 1=collide (era 3+).",
+	true, 0, true, 1 );
+ConVar tf2v_targe_own_explosion( "tf2v_targe_own_explosion", "1",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"1=Chargin Targe protects against own explosive damage (era 60-99). 0=removed.",
+	true, 0, true, 1 );
+ConVar tf2v_sticky_bullet_break( "tf2v_sticky_bullet_break", "1",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"1=bullets destroy stickybombs (era 31+).", true, 0, true, 1 );
+ConVar tf2v_spy_cloak_reload( "tf2v_spy_cloak_reload", "0",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"1=Spy can reload revolver while cloaked (era 0-2).", true, 0, true, 1 );
+ConVar tf2v_spy_cloak_ammo_recharge( "tf2v_spy_cloak_ammo_recharge", "1",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"1=cloak recharges from ammo pickups (era 31+).", true, 0, true, 1 );
+ConVar tf2v_spy_base_speed( "tf2v_spy_base_speed", "1",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"0=300 HU/s (era 1-109). 1=320 HU/s (era 110+).", true, 0, true, 1 );
+ConVar tf2v_medigun_heal_rate( "tf2v_medigun_heal_rate", "1",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"0=original rates (era 1-9). 1=24-72 HP/s scaling (era 10+).", true, 0, true, 1 );
+ConVar tf2v_radius_damage_teammates( "tf2v_radius_damage_teammates", "0",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"1=teammates absorb radius damage/break rocket jumps (era 1-69). 0=pass through (era 70+).",
+	true, 0, true, 1 );
+ConVar tf2v_fast_weapon_switch( "tf2v_fast_weapon_switch", "0",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"1=global weapon draw time reduced 0.67s to 0.50s (era 140+). "
+	"Distinct from tf2v_use_new_weapon_swap_speed (holster time, era 100).",
+	true, 0, true, 1 );
+ConVar tf2v_clamp_airducks( "tf2v_clamp_airducks", "0",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"1=air ducking formalised, can duck twice in air (era 51+).",
+	true, 0, true, 1 );
+ConVar tf2v_pistol_fixed_firerate( "tf2v_pistol_fixed_firerate", "0",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"0=eras 0-69: Pistol is semi-automatic — requires a new input edge per shot. "
+	"Holding gives a slow rate; rapid clicking gives a faster-than-intended rate "
+	"(the exploit). 1=era 70+: Pistol fires at a fixed automatic rate regardless "
+	"of input — holding down fires continuously at the correct rate, tapping gives "
+	"the same rate. Both the exploit and the hold-to-fire feature arrived together.",
+	true, 0, true, 1 );
+ConVar tf2v_reload_cancel_available( "tf2v_reload_cancel_available", "1",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"1=clip reload can be cancelled by firing (era 70+). 0=cannot cancel (era 1-69).",
+	true, 0, true, 1 );
+ConVar tf2v_class_death_animations( "tf2v_class_death_animations", "2",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"0=none (era 1-59). 1=Heavy+Sniper only (era 60-69). 2=all (era 70+).",
+	true, 0, true, 2 );
+ConVar tf2v_minicrit_self_inflicted( "tf2v_minicrit_self_inflicted", "0",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"1=self-inflicted minicrits possible (era 1-69). 0=removed (era 70+).",
+	true, 0, true, 1 );
+ConVar tf2v_flame_mode( "tf2v_flame_mode", "6", FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"0=era1 broken. 1=era5 fixed. 2=era20 Pyro. 3=era21. 4=era90. 5=era120. 6=era170 JI.",
+	true, 0, true, 6 );
+ConVar tf2v_disable_updraft( "tf2v_disable_updraft", "1",
+	FCVAR_NOTIFY | FCVAR_REPLICATED,
+	"1=B.A.S.E.Jumper updraft removed (era 150+). 0=bug active (era 130-149).",
+	true, 0, true, 1 );
+
+// =========================================================================
+// END TF2V ERA SYSTEM CONVARS
+// =========================================================================
 
 #ifdef GAME_DLL
 
@@ -8043,6 +8359,16 @@ void CTFGameRules::Think()
 		LoadMapCycleFile();
 	}
 
+#ifdef GAME_DLL
+	// TF2V: periodic QuickPlay/Certified compliance recheck (every 30s)
+	if ( tf2v_quickplay_profile.GetInt() > 0 &&
+	     gpGlobals->curtime >= m_flNextQuickPlayCheck )
+	{
+		m_flNextQuickPlayCheck = gpGlobals->curtime + 30.0f;
+		TF2VUpdateQuickPlayCompliance();
+	}
+#endif
+
 	if ( g_fGameOver )
 	{
 		if ( IsCompetitiveMode() && !IsMannVsMachineMode() )
@@ -15067,6 +15393,45 @@ void CTFGameRules::RoundRespawn( void )
 	// reset player per-round stats
 	CTF_GameStats.ResetRoundStats();
 
+#ifdef GAME_DLL
+	// ── TF2V ERA BOUNDARY ────────────────────────────────────────────────────
+	// Runs before BaseClass::RoundRespawn() so the era state is locked
+	// before any per-player respawn logic reads it.
+	if ( TF2V_EraManaged() )
+	{
+		if ( m_bHasPendingEra )
+		{
+			m_bApplyingEra = true;
+			tf2v_era.SetValue( m_nPendingEra );
+			m_bApplyingEra = false;
+			ApplyEra( m_nPendingEra );
+			m_bHasPendingEra = false;
+			Msg( "[TF2V] Pending era %d applied at round boundary.\n", m_nPendingEra );
+		}
+		else if ( m_bEraDirty )
+		{
+			ApplyEra( tf2v_era.GetInt() );
+		}
+	}
+	else
+	{
+		RestoreManualEraSnapshot();
+		if ( m_bManualSnapshotStale || !m_bManualSnapshotTaken )
+		{
+			TakeManualEraSnapshot();
+			m_bManualSnapshotStale = false;
+		}
+	}
+
+	// Freeze current convar values into m_EraState for this round
+	LockEraState();
+
+	// Revalidate QuickPlay/Certified compliance after era change
+	if ( tf2v_quickplay_profile.GetInt() > 0 )
+		TF2VUpdateQuickPlayCompliance();
+	// ── END TF2V ERA BOUNDARY ─────────────────────────────────────────────────
+#endif
+
 	BaseClass::RoundRespawn();
 
 	if ( m_bForceMapReset || m_bPrevRoundWasWaitingForPlayers )
@@ -17616,7 +17981,7 @@ bool CTFGameRules::ShouldShowPreRoundDoors() const
 //-----------------------------------------------------------------------------
 int CTFGameRules::GetClassLimit( int iClass )
 {
-	if ( IsInTournamentMode() || IsPasstimeMode() )
+	if ( IsInTournamentMode() || tf2v_individual_classlimit.GetBool() )
 	{
 		switch ( iClass )
 		{
@@ -18766,7 +19131,1337 @@ convar_tags_t convars_to_check_for_tags[] =
 	{ "tf_powerup_mode", "powerup", NULL },
 	{ "tf_gamemode_passtime", "passtime", NULL },
 	{ "tf_gamemode_misc", "misc", NULL }, // catch-all for matchmaking to identify sd, tc, and pd servers via sv_tags
+
+	// TF2V Certification / QuickPlay tier tags
+	{ "tf2v_certified",             "certified",             NULL },
+	{ "tf2v_certified_partial",     "certified_partial",     NULL },
+	{ "tf2v_certified_casual",      "certified_casual",      NULL },
+	{ "tf2v_certified_competitive", "certified_competitive", NULL },
+	{ "tf2v_certified_ps3",         "ps3",                   NULL },
+	{ "tf2v_certified_xbox",        "xbox",                  NULL },
+	{ "tf2v_quickplay_casual",      "quickplay_casual",      NULL },
+	{ "tf2v_quickplay_competitive", "quickplay_competitive", NULL },
 };
+
+//=============================================================================
+//
+// TF2V ERA SYSTEM IMPLEMENTATION
+//
+//=============================================================================
+
+#ifdef GAME_DLL
+
+//-----------------------------------------------------------------------------
+// TF2V_GetEraMapcycleFile — returns era-accurate mapcycle filename.
+//
+// Selects variant based on tf2v_server_type:
+//   0=PVP (default) — era files are all-PVP for eras 1-110 (no suffix),
+//                     _pvp suffix for era 120+ which strip MVM/VSH/ZI.
+//   1=PVE           — _pve suffix, MVM maps only, available era 120+.
+//                     Falls back to PVP for eras before MVM existed.
+//   2=ASYM          — _asym suffix, VSH/ZI maps only, era 180 only.
+//                     Falls back to PVP for eras before VSH/ZI existed.
+//
+// Map/mode introduction dates:
+//   Era 120: MVM launch (Aug 15 2012), sd_doomsday, koth_king
+//   Era 130: mvm_mannhattan/rottenburg (Nov 2013), rd_asteroid, pd_watergate
+//   Era 160: PASS Time (Jul 7 2016)
+//   Era 180: VSH, ZI, all post-2018 community additions (terminal era)
+//-----------------------------------------------------------------------------
+static const char *TF2V_GetEraMapcycleFile( int nEra )
+{
+	int nType = tf2v_server_type.GetInt();
+
+	// PVE — MVM-only rotation, era 120+
+	if ( nType == 1 )
+	{
+		if ( nEra < TF2V_ERA_MVM_MIN )
+		{
+			DevWarning( "[TF2V] PVE mapcycle requested for era %d "
+			            "but MVM doesn't exist until era 121. "
+			            "Using PVP mapcycle instead.\n", nEra );
+			// fall through to PVP below
+		}
+		else
+		{
+			if ( nEra <= 121) return "maps/mapcycle_era120_pve.txt";
+			if ( nEra <= 130) return "maps/mapcycle_era130_pve.txt";
+			if ( nEra <= 140) return "maps/mapcycle_era140_pve.txt";
+			if ( nEra <= 150) return "maps/mapcycle_era150_pve.txt";
+			if ( nEra <= 160) return "maps/mapcycle_era160_pve.txt";
+			if ( nEra <= 170) return "maps/mapcycle_era170_pve.txt";
+			static const char *s_pszTermPVE = "maps/mapcycle_era" TF2V_ERA_MAX_STR "_pve.txt";
+			return s_pszTermPVE;
+		}
+	}
+
+	// ASYM — VSH/ZI rotation, era 180 only
+	if ( nType == 2 )
+	{
+		if ( nEra < TF2V_ERA_ASYM_MIN )
+		{
+			DevWarning( "[TF2V] ASYM mapcycle requested for era %d "
+			            "but VSH/ZI don't exist until era 190 (VScript). "
+			            "Using PVP mapcycle instead.\n", nEra );
+			// fall through to PVP below
+		}
+		else
+		{
+			static const char *s_pszTermASYM = "maps/mapcycle_era" TF2V_ERA_MAX_STR "_asym.txt";
+			return s_pszTermASYM;
+		}
+	}
+
+	// PVP — standard rotation (default, and fallback for invalid PVE/ASYM eras)
+	// Eras 1-110: base file, implicitly all-PVP (no suffix)
+	// Eras 120+:  _pvp suffix excludes MVM/VSH/ZI from the rotation
+	if ( nEra <= 7  ) return "maps/mapcycle_era7.txt";
+	if ( nEra <= 9  ) return "maps/mapcycle_era10.txt";
+	if ( nEra <= 21 ) return "maps/mapcycle_era20.txt";
+	if ( nEra <= 31 ) return "maps/mapcycle_era30.txt";
+	if ( nEra <= 50 ) return "maps/mapcycle_era50.txt";
+	if ( nEra <= 60 ) return "maps/mapcycle_era60.txt";
+	if ( nEra <= 70 ) return "maps/mapcycle_era70.txt";
+	if ( nEra <= 80 ) return "maps/mapcycle_era80.txt";
+	if ( nEra <= 81 ) return "maps/mapcycle_era81.txt";
+	if ( nEra <= 90 ) return "maps/mapcycle_era90.txt";
+	if ( nEra <= 91 ) return "maps/mapcycle_era91.txt";
+	if ( nEra <= 102) return "maps/mapcycle_era100.txt";  // pre-degrootkeep
+	if ( nEra <= 109) return "maps/mapcycle_era103.txt";  // post-degrootkeep
+	if ( nEra <= 117) return "maps/mapcycle_era110.txt";
+	if ( nEra <= 121) return "maps/mapcycle_era120_pvp.txt";
+	if ( nEra <= 130) return "maps/mapcycle_era130_pvp.txt";
+	if ( nEra <= 140) return "maps/mapcycle_era140_pvp.txt";
+	if ( nEra <= 150) return "maps/mapcycle_era150_pvp.txt";
+	if ( nEra <= 160) return "maps/mapcycle_era160_pvp.txt";
+	if ( nEra <= 170) return "maps/mapcycle_era170_pvp.txt";
+	static const char *s_pszTermPVP = "maps/mapcycle_era" TF2V_ERA_MAX_STR "_pvp.txt";
+	return s_pszTermPVP;
+}
+
+
+//-----------------------------------------------------------------------------
+// TF2VGetGamemodeMinEra — returns the earliest era a gamemode officially existed.
+// Maps the tf_gamemode_* flag convars to their introduction era.
+// Returns 0 for gamemodes that shipped at launch (CTF, CP, TC).
+// Returns TF2V_ERA_MAX+1 for unknown/unsupported gamemodes.
+//
+// Used by TF2VCheckMapGamemode to enforce period-accurate map rotation on
+// certified strict servers (tf2v_enforcement == 3).
+//-----------------------------------------------------------------------------
+static int TF2VGetGamemodeMinEra( const char *pszGamemodeConvar )
+{
+	struct GamemodeEra_t
+	{
+		const char *pszConvar;
+		int nMinEra;
+	};
+
+	static const GamemodeEra_t s_GamemodeEras[] =
+	{
+
+		// PVP — launch window
+
+		{ "tf_gamemode_ctf",        TF2V_ERA_MIN  },  // Oct 10 2007 launch
+
+		{ "tf_gamemode_cp",         TF2V_ERA_MIN  },  // Oct 10 2007 launch
+
+		{ "tf_gamemode_tc",         TF2V_ERA_MIN  },  // Oct 10 2007 launch (tc_hydro)
+
+		// PVP — content updates
+
+		{ "tf_gamemode_payload",    10   },  // Apr 29 2008 Gold Rush
+
+		{ "tf_gamemode_arena",      30   },  // Aug 19 2008 Heavy Update
+
+		{ "tf_gamemode_koth",       70   },  // Aug 13 2009 Classless Update
+
+		{ "tf_gamemode_plr",        80   },  // Dec 17 2009 WAR! Update
+
+		{ "tf_gamemode_medieval",   103  },  // Dec 17 2010 Australian Christmas
+
+		{ "tf_gamemode_sd",         120  },  // Jun 27 2012 Pyromania
+
+		{ "tf_gamemode_rd",         130  },  // Jun 18 2014 Love & War
+
+		{ "tf_gamemode_pd",         130  },  // Jun 18 2014 Love & War
+
+		{ "tf_gamemode_mannpower",  133  },  // Dec 22 2014 Smissmas 2014 (beta)
+
+		{ "tf_gamemode_passtime",   160  },  // Jul 7 2016 Meet Your Match
+
+		// PVE
+
+		{ "tf_gamemode_mvm",        TF2V_ERA_MVM_MIN  },  // Aug 15 2012 MvM launch
+
+		// ASYM (VScript-based)
+
+		{ "tf_gamemode_vsh",        TF2V_ERA_ASYM_MIN },  // Jul 12 2023 Summer 2023
+
+		{ "tf_gamemode_dr",         TF2V_ERA_ASYM_MIN },  // ZI uses same era floor
+
+	};
+
+	for ( int i = 0; i < ARRAYSIZE( s_GamemodeEras ); i++ )
+
+	{
+		if ( V_strcmp( pszGamemodeConvar, s_GamemodeEras[i].pszConvar ) == 0 )
+
+			return s_GamemodeEras[i].nMinEra;
+	}
+
+	return TF2V_ERA_MAX + 1;  // unknown gamemode — never valid
+}
+
+//-----------------------------------------------------------------------------
+// TF2VCheckMapGamemode — returns false (with reason) if the current map's
+// gamemode is not yet introduced at the active era.
+// Only enforced when tf2v_enforcement == 3 (strict certified).
+// Allows the server to serve as an era-floor guarantee even if the operator
+// manually sets a mapcycle with pre-era maps.
+//-----------------------------------------------------------------------------
+#ifdef GAME_DLL
+
+static bool TF2VCheckMapGamemode( const char **pFail = NULL )
+{
+
+	if ( !TFGameRules() ) return true;
+
+	int nEra = tf2v_era.GetInt();
+
+
+	// Build list of active gamemode convars
+
+	static const char *s_GamemodeConvars[] =
+	{
+
+		"tf_gamemode_ctf", "tf_gamemode_cp", "tf_gamemode_tc",
+
+		"tf_gamemode_payload", "tf_gamemode_arena", "tf_gamemode_koth",
+
+		"tf_gamemode_plr", "tf_gamemode_medieval", "tf_gamemode_sd",
+
+		"tf_gamemode_rd", "tf_gamemode_pd", "tf_gamemode_mannpower",
+
+		"tf_gamemode_passtime", "tf_gamemode_mvm", "tf_gamemode_vsh",
+
+		"tf_gamemode_dr",
+	};
+
+
+	for ( int i = 0; i < ARRAYSIZE( s_GamemodeConvars ); i++ )
+	{
+
+		ConVarRef cv( s_GamemodeConvars[i] );
+
+		if ( !cv.IsValid() || !cv.GetBool() ) continue;
+
+
+		int nMinEra = TF2VGetGamemodeMinEra( s_GamemodeConvars[i] );
+
+		if ( nEra < nMinEra )
+		{
+
+			if ( pFail )
+
+				*pFail = "map gamemode not introduced until a later era";
+
+			DevWarning( "[TF2V] Gamemode %s requires era >= %d (current era %d)\n",
+
+			            s_GamemodeConvars[i], nMinEra, nEra );
+
+			return false;
+		}
+	}
+	return true;
+}
+#endif
+
+//-----------------------------------------------------------------------------
+// TF2VApplyMapcycle — sets mapcyclefile based on current mode and era.
+// Called on mode change, era change (when mode 1), and at round start.
+//-----------------------------------------------------------------------------
+static void TF2VApplyMapcycle()
+{
+	if ( !engine ) return;
+	if ( !TF2V_MapcycleManaged() ) return;  // enforcement < 3 — server controls mapcyclefile
+
+	const char *pszFile = TF2V_GetEraMapcycleFile( tf2v_era.GetInt() );
+	if ( !pszFile )
+	{
+		Msg( "[TF2V] No era-accurate mapcycle for era %d.\n", tf2v_era.GetInt() );
+		return;
+	}
+
+	ConVarRef mapcyclefile( "mapcyclefile" );
+	if ( mapcyclefile.IsValid() &&
+	     V_strcmp( mapcyclefile.GetString(), pszFile ) != 0 )
+	{
+		mapcyclefile.SetValue( pszFile );
+		Msg( "[TF2V] Mapcycle -> %s\n", pszFile );
+		if ( TFGameRules() )
+			TFGameRules()->m_bMapCycleNeedsUpdate = true;
+	}
+}
+
+static void TF2VMapcycleModeChanged( IConVar *pConVar, const char *pOldString, float flOldValue )
+{
+	TF2VApplyMapcycle();
+}
+
+//-----------------------------------------------------------------------------
+// TF2VServerTypeChanged — switches to the matching mapcycle variant.
+// Applies immediately when not mid-round; defers to round boundary if live.
+// Revalidates compliance since PVE/ASYM have different player count rules.
+//-----------------------------------------------------------------------------
+// Returns the minimum valid era for a given server type.
+// A server cannot run below this era without losing its server type designation.
+//   PVP  (0): no floor — any era from TF2V_ERA_MIN is valid
+//   PVE  (1): TF2V_ERA_MVM_MIN — MvM doesn't exist before era 121
+//   ASYM (2): TF2V_ERA_ASYM_MIN — VSH/ZI require VScript (era 190)
+static int TF2VGetServerTypeEraFloor( int nServerType )
+{
+	switch ( nServerType )
+	{
+	case 1:  return TF2V_ERA_MVM_MIN;   // PVE
+	case 2:  return TF2V_ERA_ASYM_MIN;  // ASYM
+	default: return TF2V_ERA_MIN;        // PVP — no floor
+	}
+}
+
+static void TF2VServerTypeChanged( IConVar *pConVar, const char *pOldString, float flOldValue )
+{
+	if ( !TFGameRules() ) return;
+
+	ConVarRef var( pConVar );
+	int nNew = var.GetInt();
+	int nOld = (int)flOldValue;
+	if ( nNew == nOld ) return;
+
+	static const char *s_pszTypeNames[] = { "PVP", "PVE", "ASYM" };
+	Msg( "[TF2V] Server type: %s -> %s\n",
+	     s_pszTypeNames[ clamp( nOld, 0, 2 ) ],
+	     s_pszTypeNames[ clamp( nNew, 0, 2 ) ] );
+
+	// Era floor enforcement: if the new server type requires a higher minimum
+	// era than the current setting, clamp up to that floor immediately.
+	// This prevents a PVE server from sitting at era 50 (no MvM) or an ASYM
+	// server from sitting at era 150 (no VScript/VSH/ZI).
+	// We clamp upward only — switching from ASYM back to PVP does not force
+	// the era down, because a PVP server at era 190 is perfectly valid.
+	if ( TF2V_EraManaged() )
+	{
+		int nFloor = TF2VGetServerTypeEraFloor( nNew );
+		int nEra   = tf2v_era.GetInt();
+		if ( nEra < nFloor )
+		{
+			Msg( "[TF2V] Server type %s requires era >= %d. "
+			     "Raising era from %d to %d.\n",
+			     s_pszTypeNames[ clamp( nNew, 0, 2 ) ], nFloor, nEra, nFloor );
+			tf2v_era.SetValue( nFloor );
+		}
+	}
+
+	// Mapcycle update: only applies when enforcement is managing the mapcycle
+	if ( TF2V_MapcycleManaged() )
+	{
+		if ( CTFGameRules::TF2V_IsRoundActive() )
+		{
+			// Can't safely hot-swap the mapcycle mid-round.
+			// Revert and let admin change it during intermission.
+			TFGameRules()->m_bApplyingEra = true;
+			var.SetValue( nOld );
+			TFGameRules()->m_bApplyingEra = false;
+			Msg( "[TF2V] tf2v_server_type change deferred — "
+			     "make changes during intermission.\n" );
+			return;
+		}
+
+		TF2VApplyMapcycle();
+	}
+
+	// Revalidate compliance — server type floors and cert requirements differ
+	if ( tf2v_quickplay_profile.GetInt() > 0 )
+		TFGameRules()->TF2VUpdateQuickPlayCompliance();
+}
+
+//-----------------------------------------------------------------------------
+// Returns true during active play — era changes must be deferred.
+//-----------------------------------------------------------------------------
+bool CTFGameRules::TF2V_IsRoundActive()
+{
+	if ( !TFGameRules() ) return false;
+	int nState = TFGameRules()->State_Get();
+	return ( nState == GR_STATE_PREROUND    ||
+	         nState == GR_STATE_RND_RUNNING ||
+	         nState == GR_STATE_STALEMATE );
+}
+
+// Convenience: enforcement level accessors used throughout implementation
+static inline bool TF2V_EraManaged()       { return tf2v_enforcement.GetInt() >= 1; }
+static inline bool TF2V_WeaponGated()      { return tf2v_enforcement.GetInt() >= 2; }
+static inline bool TF2V_MapcycleManaged()  { return tf2v_enforcement.GetInt() >= 3; }
+
+//-----------------------------------------------------------------------------
+// TF2VEraChanged — defers if round is live, applies immediately if safe.
+//-----------------------------------------------------------------------------
+static void TF2VEraChanged( IConVar *pConVar, const char *pOldString, float flOldValue )
+{
+	if ( !TFGameRules() || !TF2V_EraManaged() ) return;
+	if ( TFGameRules()->m_bApplyingEra ) return;
+
+	ConVarRef var( pConVar );
+	int nNew = var.GetInt();
+	int nOld = (int)flOldValue;
+	if ( nNew == nOld ) return;
+
+	// Hard clamp to [TF2V_ERA_MIN, TF2V_ERA_MAX]
+	int nClamped = clamp( nNew, TF2V_ERA_MIN, TF2V_ERA_MAX );
+	if ( nClamped != nNew )
+	{
+		Warning( "[TF2V] Era %d out of range [%d, %d] — clamping to %d.\n",
+		         nNew, TF2V_ERA_MIN, TF2V_ERA_MAX, nClamped );
+		TFGameRules()->m_bApplyingEra = true;
+		var.SetValue( nClamped );
+		TFGameRules()->m_bApplyingEra = false;
+		nNew = nClamped;
+	}
+
+	// Server type floor: PVE requires era >= TF2V_ERA_MVM_MIN,
+	// ASYM requires era >= TF2V_ERA_ASYM_MIN.
+	// A managed server cannot be set below its server type's era floor.
+	int nFloor = TF2VGetServerTypeEraFloor( tf2v_server_type.GetInt() );
+	if ( nNew < nFloor )
+	{
+		static const char *s_pszTypeNames[] = { "PVP", "PVE", "ASYM" };
+		Warning( "[TF2V] Era %d is below the floor for %s servers (era %d). "
+		         "Clamping to %d.\n",
+		         nNew,
+		         s_pszTypeNames[ clamp( tf2v_server_type.GetInt(), 0, 2 ) ],
+		         nFloor, nFloor );
+		TFGameRules()->m_bApplyingEra = true;
+		var.SetValue( nFloor );
+		TFGameRules()->m_bApplyingEra = false;
+		nNew = nFloor;
+	}
+
+	if ( CTFGameRules::TF2V_IsRoundActive() )
+	{
+		TFGameRules()->m_nPendingEra    = nNew;
+		TFGameRules()->m_bHasPendingEra = true;
+
+		TFGameRules()->m_bApplyingEra = true;
+		var.SetValue( nOld );
+		TFGameRules()->m_bApplyingEra = false;
+
+		Msg( "[TF2V] Era change to %d queued — takes effect at next round boundary.\n", nNew );
+	}
+	else
+	{
+		TFGameRules()->ApplyEra( nNew );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// TF2VEnforcementChanged — handles switching enforcement levels.
+//-----------------------------------------------------------------------------
+static void TF2VEnforcementChanged( IConVar *pConVar, const char *pOldString, float flOldValue )
+{
+	if ( !TFGameRules() ) return;
+	int nNew = tf2v_enforcement.GetInt();
+	int nOld = (int)flOldValue;
+
+	if ( nNew >= 1 && nOld < 1 )
+	{
+		Msg( "[TF2V] Enforcement %d: era management enabled. Applying era %d.\n",
+		     nNew, tf2v_era.GetInt() );
+		TFGameRules()->ApplyEra( tf2v_era.GetInt() );
+	}
+	else if ( nNew < 1 && nOld >= 1 )
+	{
+		Msg( "[TF2V] Enforcement 0: full manual control.\n" );
+		TFGameRules()->m_bManualSnapshotStale = true;
+	}
+
+	if ( nNew >= 3 && nOld < 3 )
+		TF2VApplyMapcycle();
+	else if ( nNew < 3 && nOld >= 3 )
+		Msg( "[TF2V] Enforcement %d: mapcycle no longer managed by TF2V.\n", nNew );
+
+	if ( tf2v_quickplay_profile.GetInt() > 0 )
+		TFGameRules()->TF2VUpdateQuickPlayCompliance();
+}
+
+//-----------------------------------------------------------------------------
+// TF2VAnySubConvarChanged — reverts mid-round sub-convar changes.
+//-----------------------------------------------------------------------------
+static void TF2VAnySubConvarChanged( IConVar *pConVar, const char *pOldString, float flOldValue )
+{
+	if ( !TFGameRules() ) return;
+	if ( TFGameRules()->m_bApplyingEra ) return;
+
+	ConVarRef var( pConVar );
+
+	if ( CTFGameRules::TF2V_IsRoundActive() )
+	{
+		TFGameRules()->m_bApplyingEra = true;
+		var.SetValue( pOldString );
+		TFGameRules()->m_bApplyingEra = false;
+
+		if ( TF2V_EraManaged() )
+		{
+			TFGameRules()->m_bEraDirty = true;
+			Msg( "[TF2V] %s reverted — change tf2v_era instead, takes effect next round.\n",
+			     var.GetName() );
+		}
+		else
+		{
+			Msg( "[TF2V] %s reverted — make changes during intermission.\n",
+			     var.GetName() );
+		}
+	}
+	else
+	{
+		if ( !TF2V_EraManaged() )
+			TFGameRules()->m_bManualSnapshotStale = true;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// ApplyEra — sets all era sub-convars from the integer era value.
+// Called by managed-mode callbacks and RoundRespawn.
+// See weapon_min_era.md for full integer-to-era mapping.
+//-----------------------------------------------------------------------------
+void CTFGameRules::ApplyEra( int nEra )
+{
+	m_bApplyingEra = true;
+
+	// Weapon era gate — always mirrors nEra in managed mode
+	tf2v_allowed_weapon_era.SetValue( nEra );
+
+	// Constants (never change)
+	tf2v_critchance_melee.SetValue( 15.0f );
+	tf2v_crit_duration_rapid.SetValue( 2.0f );
+
+	// ── BASELINE: ERA 1 (PS3 INTERNAL) ────────────────────────────────────
+	tf2v_damage_spread_mode.SetValue( 0 );
+	tf2v_crit_model.SetValue( 0 );
+	tf2v_ctf_capcrits.SetValue( 0 );
+	tf_arena_first_blood.SetValue( 0 );
+	tf2v_fall_sounds.SetValue( 0 );
+	tf2v_console_grenadelauncher_damage.SetValue( 1 );
+	tf2v_console_grenadelauncher_magazine.SetValue( 1 );
+	tf2v_grenades_explode_contact.SetValue( 1 );
+	tf2v_grenade_player_collision.SetValue( 0 );
+	tf2v_use_new_grenade_radius.SetValue( 0 );
+	tf2v_use_new_demo_explosion_variance.SetValue( 0 );
+	tf2v_use_stickybomb_damage_rampup.SetValue( 0 );
+	tf2v_use_stickybomb_radius_rampup.SetValue( 0 );
+	tf2v_sticky_bullet_break.SetValue( 0 );
+	tf2v_ammo_era.SetValue( 0 );
+	tf2v_use_new_blackbox.SetValue( 0 );
+	tf2v_airblast.SetValue( 0 );
+	tf2v_airblast_players.SetValue( 0 );
+	tf2v_flame_mode.SetValue( 0 );
+	tf2v_minicrits_on_deflect.SetValue( 0 );
+	tf2v_use_extinguish_heal.SetValue( 0 );
+	tf2v_use_extinguish_cooldown.SetValue( 0 );
+	tf2v_use_new_flare.SetValue( 0 );
+	tf2v_use_new_flare_radius.SetValue( 0 );
+	tf2v_use_new_phlog_fill.SetValue( 0 );
+	tf2v_use_new_phlog_taunt.SetValue( 0 );
+	tf2v_use_new_axtinguisher.SetValue( 0 );
+	tf2v_use_new_minigun_rampup.SetValue( 0 );
+	tf2v_sandvich_behavior.SetValue( 0 );
+	tf2v_building_upgrades.SetValue( 0 );
+	tf2v_building_hauling.SetValue( 0 );
+	tf2v_use_new_hauling_speed.SetValue( 0 );
+	tf2v_use_new_wrench_mechanics.SetValue( 0 );
+	tf2v_use_new_sapper_damage.SetValue( 0 );
+	tf2v_use_new_sapper_disable.SetValue( 0 );
+	tf2v_use_new_sentry_minigun_resist.SetValue( 0 );
+	tf2v_new_sentry_wrangle_location.SetValue( 0 );
+	tf2v_new_sentry_damage_falloff.SetValue( 0 );
+	tf2v_use_new_teleporter_cost.SetValue( 0 );
+	tf2v_use_new_short_circuit.SetValue( 0 );
+	tf2v_use_new_minibuildings.SetValue( 0 );
+	tf2v_use_new_medic_regen.SetValue( 0 );
+	tf2v_medigun_heal_rate.SetValue( 0 );
+	tf2v_setup_uber_rate.SetValue( 0 );
+	tf2v_uber_juggle_penalty.SetValue( 0 );
+	tf2v_use_new_uber_taunt.SetValue( 0 );
+	tf2v_use_medic_speed_match.SetValue( 0 );
+	tf2v_use_new_health_regen_attrib.SetValue( 0 );
+	tf2v_sandman_stun_type.SetValue( 0 );
+	tf2v_use_new_bonk_length.SetValue( 0 );
+	tf2v_use_new_sodapopper_hype.SetValue( 0 );
+	tf2v_use_new_sodapopper_fill.SetValue( 0 );
+	tf2v_use_manual_sodapopper.SetValue( 0 );
+	tf2v_use_shortstop_shove.SetValue( 0 );
+	tf2v_use_shortstop_slowdown.SetValue( 0 );
+	tf2v_use_new_guillotine.SetValue( 0 );
+	tf2v_use_new_ball_regen.SetValue( 0 );
+	tf2v_use_new_buff_charges.SetValue( 0 );
+	tf2v_sentry_resist_bonus.SetValue( 0 );
+	tf2v_use_new_equalizer_damage.SetValue( 0 );
+	tf2v_use_new_split_equalizer.SetValue( 0 );
+	tf2v_new_speed_buff_duration.SetValue( 0 );
+	tf2v_use_new_beggars.SetValue( 0 );
+	tf2v_demo_charge_debuff_remove.SetValue( 0 );
+	tf2v_use_new_caber.SetValue( 0 );
+	tf2v_use_new_honorbound.SetValue( 0 );
+	tf2v_spy_cloak_reload.SetValue( 1 );
+	tf2v_spy_cloak_ammo_recharge.SetValue( 0 );
+	tf2v_use_new_cloak.SetValue( 0 );
+	tf2v_new_feign_death_activate.SetValue( 0 );
+	tf2v_new_feign_death_stealth.SetValue( 0 );
+	tf2v_use_new_yer.SetValue( 0 );
+	tf2v_use_new_big_earner.SetValue( 0 );
+	tf2v_use_fast_redisguise.SetValue( 0 );
+	tf2v_allow_disguiseweapons.SetValue( 0 );
+	tf2v_disguise_spy_teleport.SetValue( 0 );
+	tf2v_disguise_speed_match.SetValue( 0 );
+	tf2v_use_new_spy_movespeeds.SetValue( 0 );
+	tf2v_spy_base_speed.SetValue( 0 );
+	tf2v_use_new_ambassador.SetValue( 0 );
+	tf2v_use_new_diamondback.SetValue( 0 );
+	tf2v_use_new_pomson.SetValue( 0 );
+	tf2v_allow_sniper_crosshairs.SetValue( 0 );
+	tf2v_use_new_cleaners.SetValue( 0 );
+	tf2v_use_new_bison_damage.SetValue( 0 );
+	tf2v_use_new_bison_speed.SetValue( 0 );
+	tf2v_use_new_autofire.SetValue( 0 );
+	tf2v_use_new_weapon_swap_speed.SetValue( 0 );
+	tf2v_reload_cancel_available.SetValue( 0 );
+	tf2v_use_faster_reload.SetValue( 0 );
+	tf2v_new_chocolate_behavior.SetValue( 0 );
+	tf2v_use_new_atomizer.SetValue( 0 );
+	tf2v_use_new_backstabs.SetValue( 0 );
+	tf2v_use_new_jag.SetValue( 0 );
+	tf2v_radius_damage_teammates.SetValue( 1 );
+	tf2v_clamp_speed_absolute.SetValue( 450 );
+	tf2v_class_death_animations.SetValue( 0 );
+	tf2v_minicrit_self_inflicted.SetValue( 1 );
+	tf2v_disable_updraft.SetValue( 0 );
+	tf2v_prevent_voice_spam.SetValue( 0 );
+
+	// ── ERA CASCADE ────────────────────────────────────────────────────────
+
+	if ( nEra >= 1 )  // PC BETA Sep 17 2007 (GL clip 4 hotfix absorbed here)
+	{
+		tf2v_console_grenadelauncher_damage.SetValue( 0 );
+		tf2v_console_grenadelauncher_magazine.SetValue( 0 );
+		tf2v_ammo_era.SetValue( 1 );
+	}
+	if ( nEra >= 2 )  // Sep 28 2007
+	{
+		tf2v_grenades_explode_contact.SetValue( 0 );
+		tf2v_flame_mode.SetValue( 1 );
+	}
+	if ( nEra >= 3 )  // Oct 9 2007
+	{
+		tf2v_grenade_player_collision.SetValue( 1 );
+		tf2v_spy_cloak_reload.SetValue( 0 );
+	}
+	if ( nEra >= 4 )  // LAUNCH Oct 10 2007
+	{
+		tf2v_ammo_era.SetValue( 2 );                // GL res 30, Sticky res 40
+	}
+
+	if ( nEra >= 5 )  // Oct 25 2007 — backstab facing check
+	{
+		// "Fixed a Spy backstab exploit where you could stab a player who was
+		// not facing away from you." — IsBehindAndFacingTarget added,
+		// requiring flDotOwner > 0.5 (Spy must face target within ~60 deg).
+		tf2v_use_new_backstabs.SetValue( 1 );
+	}
+	if ( nEra >= 6 )  // Dec 20 2007
+	{
+		tf2v_setup_uber_rate.SetValue( 1 );
+	}
+	if ( nEra >= 7 )  // Jan 15 2008 — Sniper zoom fixes
+	{
+		tf2v_ammo_era.SetValue( 3 );
+	}
+	if ( nEra >= 10 )  // GOLD RUSH Apr 29 2008
+	{
+		tf2v_use_new_medic_regen.SetValue( 1 );
+		tf2v_medigun_heal_rate.SetValue( 1 );
+	}
+	if ( nEra >= 20 )  // PYRO UPDATE Jun 19 2008
+	{
+		tf2v_airblast.SetValue( 1 );
+		tf2v_airblast_players.SetValue( 1 );
+		tf2v_flame_mode.SetValue( 2 );
+		tf2v_fall_sounds.SetValue( 1 );
+	}
+	if ( nEra >= 21 )  // Jul 2008
+	{
+		tf2v_flame_mode.SetValue( 3 );
+	}
+	if ( nEra >= 30 )  // HEAVY UPDATE Aug 19 2008
+	{
+		tf2v_use_new_minigun_rampup.SetValue( 1 );
+	}
+	if ( nEra >= 31 )  // Dec 11 2008
+	{
+		tf2v_building_upgrades.SetValue( 1 );
+		tf2v_spy_cloak_ammo_recharge.SetValue( 1 );
+		tf2v_sticky_bullet_break.SetValue( 1 );
+	}
+	if ( nEra >= 40 )  // Feb 2 2009
+	{
+		tf2v_crit_model.SetValue( 1 );
+		tf2v_damage_spread_mode.SetValue( 1 );
+		tf2v_ammo_era.SetValue( 4 );
+		tf2v_use_stickybomb_damage_rampup.SetValue( 1 );
+		tf2v_use_new_demo_explosion_variance.SetValue( 1 );
+	}
+	if ( nEra >= 50 )  // SCOUT UPDATE Feb 24 2009
+	{
+		tf2v_sandman_stun_type.SetValue( 0 );
+		tf2v_use_new_backstabs.SetValue( 2 );
+		tf2v_sandvich_behavior.SetValue( 1 );
+	}
+	if ( nEra >= 60 )  // SNIPER VS SPY May 21 2009
+	{
+		tf2v_class_death_animations.SetValue( 1 );
+	}
+	if ( nEra >= 70 )  // CLASSLESS UPDATE Aug 13 2009
+	{
+		tf2v_class_death_animations.SetValue( 2 );
+		tf2v_minicrit_self_inflicted.SetValue( 0 );
+		tf2v_radius_damage_teammates.SetValue( 0 );
+		tf2v_reload_cancel_available.SetValue( 1 );
+		tf2v_ctf_capcrits.SetValue( 1 );
+		tf_arena_first_blood.SetValue( 1 );
+		tf2v_allow_sniper_crosshairs.SetValue( 1 );
+		tf2v_disguise_spy_teleport.SetValue( 1 );
+		tf2v_sandman_stun_type.SetValue( 1 );
+	}
+	if ( nEra >= 90 )  // ENGINEER UPDATE Jul 8 2010
+	{
+		tf2v_building_upgrades.SetValue( 2 );
+		tf2v_building_hauling.SetValue( 1 );
+		tf2v_minicrits_on_deflect.SetValue( 1 );
+		tf2v_flame_mode.SetValue( 4 );
+	}
+	if ( nEra >= 100 )  // MANNCONOMY Sep 30 2010
+	{
+		tf2v_use_new_weapon_swap_speed.SetValue( 1 );
+		tf2v_allow_disguiseweapons.SetValue( 1 );
+		tf2v_use_extinguish_heal.SetValue( 1 );
+		tf2v_use_extinguish_cooldown.SetValue( 1 );
+		tf2v_use_new_ambassador.SetValue( 1 );
+		tf2v_use_new_ball_regen.SetValue( 1 );
+		tf2v_use_new_grenade_radius.SetValue( 1 );
+		tf2v_use_new_wrench_mechanics.SetValue( 1 );
+		tf2v_use_new_sapper_damage.SetValue( 1 );
+		tf2v_use_new_sapper_disable.SetValue( 1 );
+		tf2v_use_new_sentry_minigun_resist.SetValue( 1 );
+		tf2v_new_sentry_wrangle_location.SetValue( 1 );
+		tf2v_use_new_uber_taunt.SetValue( 1 );
+	}
+	if ( nEra >= 110 )  // UBER UPDATE + F2P Jun 23 2011
+	{
+		tf2v_spy_base_speed.SetValue( 1 );
+		tf2v_uber_juggle_penalty.SetValue( 1 );
+		tf2v_use_new_blackbox.SetValue( 1 );
+		tf2v_use_new_flare.SetValue( 2 );
+		tf2v_use_new_flare_radius.SetValue( 1 );
+	}
+	if ( nEra >= 120 )  // PYROMANIA Jun 27 2012
+	{
+		tf2v_clamp_speed_absolute.SetValue( 520 );
+		tf2v_flame_mode.SetValue( 5 );
+		tf2v_use_new_buff_charges.SetValue( 1 );
+		tf2v_sentry_resist_bonus.SetValue( 1 );
+		tf2v_use_new_equalizer_damage.SetValue( 1 );
+		tf2v_use_new_split_equalizer.SetValue( 1 );
+		tf2v_sandvich_behavior.SetValue( 2 );
+		tf2v_sandman_stun_type.SetValue( 1 );
+		tf2v_use_new_flare.SetValue( 3 );
+		tf2v_use_shortstop_slowdown.SetValue( 1 );
+	}
+	if ( nEra >= 130 )  // LOVE & WAR Jun 18 2014
+	{
+		tf2v_use_new_minigun_rampup.SetValue( 3 );
+		tf2v_use_stickybomb_radius_rampup.SetValue( 1 );
+		tf2v_use_new_sodapopper_hype.SetValue( 1 );
+		tf2v_use_new_sodapopper_fill.SetValue( 1 );
+		tf2v_use_new_axtinguisher.SetValue( 1 );
+		tf2v_new_speed_buff_duration.SetValue( 1 );
+		tf2v_use_new_flare.SetValue( 4 );
+		tf2v_use_new_guillotine.SetValue( 1 );
+		tf2v_new_chocolate_behavior.SetValue( 1 );
+		tf2v_disable_updraft.SetValue( 0 );
+	}
+	if ( nEra >= 140 )  // GUN METTLE Jul 2 2015
+	{
+		tf2v_damage_spread_mode.SetValue( 2 );
+		tf2v_use_faster_reload.SetValue( 1 );
+		tf2v_use_new_hauling_speed.SetValue( 1 );
+		tf2v_use_medic_speed_match.SetValue( 1 );
+		tf2v_use_shortstop_shove.SetValue( 1 );
+		tf2v_use_shortstop_slowdown.SetValue( 0 );
+		tf2v_use_new_teleporter_cost.SetValue( 1 );
+		tf2v_use_new_autofire.SetValue( 1 );
+		tf2v_new_sentry_damage_falloff.SetValue( 1 );
+		tf2v_use_new_cloak.SetValue( 1 );
+		tf2v_use_new_diamondback.SetValue( 1 );
+		tf2v_use_fast_redisguise.SetValue( 1 );
+		tf2v_use_new_phlog_taunt.SetValue( 1 );
+	}
+	if ( nEra >= 150 )  // TOUGH BREAK Dec 17 2015
+	{
+		tf2v_demo_charge_debuff_remove.SetValue( 1 );
+		tf2v_use_new_honorbound.SetValue( 1 );
+		tf2v_use_new_caber.SetValue( 1 );
+		tf2v_new_feign_death_activate.SetValue( 1 );
+		tf2v_use_new_yer.SetValue( 1 );
+		tf2v_use_new_big_earner.SetValue( 1 );
+		tf2v_use_new_cleaners.SetValue( 1 );
+		tf2v_use_new_phlog_taunt.SetValue( 3 );
+		tf2v_use_new_axtinguisher.SetValue( 2 );
+		tf2v_use_manual_sodapopper.SetValue( 1 );
+		tf2v_use_new_beggars.SetValue( 1 );
+		tf2v_use_new_jag.SetValue( 1 );
+		tf2v_use_new_short_circuit.SetValue( 1 );
+		tf2v_disable_updraft.SetValue( 1 );
+	}
+	if ( nEra >= 160 )  // MEET YOUR MATCH Jul 7 2016
+	{
+		tf2v_disguise_speed_match.SetValue( 1 );
+		tf2v_use_new_spy_movespeeds.SetValue( 1 );
+		tf2v_new_feign_death_activate.SetValue( 2 );
+		tf2v_new_feign_death_stealth.SetValue( 1 );
+		tf2v_use_new_minibuildings.SetValue( 1 );
+		tf2v_use_new_bison_damage.SetValue( 1 );
+		tf2v_use_new_bison_speed.SetValue( 1 );
+	}
+	if ( nEra >= 170 )  // JUNGLE INFERNO Oct 20 2017
+	{
+		tf2v_airblast.SetValue( 2 );
+		tf2v_fall_sounds.SetValue( 2 );
+		tf2v_use_new_axtinguisher.SetValue( 3 );
+		tf2v_sandman_stun_type.SetValue( 2 );
+		tf2v_use_new_phlog_fill.SetValue( 1 );
+		tf2v_use_new_phlog_taunt.SetValue( 2 );
+		tf2v_use_new_atomizer.SetValue( 1 );
+		tf2v_flame_mode.SetValue( 6 );
+		tf2v_prevent_voice_spam.SetValue( 1 );
+		tf2v_use_new_bison_damage.SetValue( 2 );
+	}
+	if ( nEra >= TF2V_ERA_MAX )  // TERMINAL ERA (TF2V_ERA_MAX)
+	{
+		tf2v_use_new_ambassador.SetValue( 2 );
+		tf2v_use_new_health_regen_attrib.SetValue( 1 );
+		tf2v_use_new_demo_explosion_variance.SetValue( 2 );
+		tf2v_use_new_bonk_length.SetValue( 1 );
+	}
+
+	m_bApplyingEra = false;
+	m_bEraDirty    = false;
+
+	// Update era-accurate mapcycle if enforcement level requires it
+	if ( TF2V_MapcycleManaged() )
+		TF2VApplyMapcycle();
+
+	DevMsg( "[TF2V] ApplyEra( %d ) complete.\n", nEra );
+}
+
+//-----------------------------------------------------------------------------
+// LockEraState — snapshots current convar values into m_EraState.
+// Called at round start after any pending era changes are resolved.
+// All gameplay code reads from EraState(), never from convars directly.
+//-----------------------------------------------------------------------------
+void CTFGameRules::LockEraState()
+{
+	TF2VEraState_t &s = m_EraState;
+
+	if ( TF2V_EraManaged() )
+	{
+		// Enforcement 1+: ApplyEra() ran, convars are authoritative.
+		// Weapon era: locked to tf2v_era when enforcement >= 2,
+		// or uses tf2v_allowed_weapon_era when enforcement is 1 (balance only).
+		s.nAllowedWeaponEra = TF2V_WeaponGated()
+			? tf2v_era.GetInt()
+			: tf2v_allowed_weapon_era.GetInt();
+	}
+	else
+	{
+		// Enforcement 0: snapshot system restored server config values.
+		// Weapon gate from tf2v_allowed_weapon_era (server config authority).
+		s.nAllowedWeaponEra = tf2v_allowed_weapon_era.GetInt();
+	}
+
+	// All other fields read from convars regardless of mode —
+	// in managed mode ApplyEra() set them, in manual mode the
+	// snapshot system restored them. Either way they're correct.
+	s.nDamageSpreadMode         = tf2v_damage_spread_mode.GetInt();
+	s.bCritModel                = tf2v_crit_model.GetBool();
+	s.bCtfCapCrits              = tf2v_ctf_capcrits.GetBool();
+	s.bArenaFirstBlood          = tf_arena_first_blood.GetBool();
+	s.nFallSounds               = tf2v_fall_sounds.GetInt();
+	s.bConsoleDamage            = tf2v_console_grenadelauncher_damage.GetBool();
+	s.bConsoleMagazine          = tf2v_console_grenadelauncher_magazine.GetBool();
+	s.bGrenadeContactExplode    = tf2v_grenades_explode_contact.GetBool();
+	s.bGrenadePlayerCollision   = tf2v_grenade_player_collision.GetBool();
+	s.bNewGrenadeRadius         = tf2v_use_new_grenade_radius.GetBool();
+	s.nDemoExplosionVariance    = tf2v_use_new_demo_explosion_variance.GetInt();
+	s.bStickyDamageRampup       = tf2v_use_stickybomb_damage_rampup.GetBool();
+	s.bStickyRadiusRampup       = tf2v_use_stickybomb_radius_rampup.GetBool();
+	s.bStickyBulletBreak        = tf2v_sticky_bullet_break.GetBool();
+	s.nAmmoEra                  = tf2v_ammo_era.GetInt();
+	s.bNewBlackBox              = tf2v_use_new_blackbox.GetBool();
+	s.nAirblast                 = tf2v_airblast.GetInt();
+	s.bAirblastPlayers          = tf2v_airblast_players.GetBool();
+	s.nFlameMode                = tf2v_flame_mode.GetInt();
+	s.bMinicritsOnDeflect       = tf2v_minicrits_on_deflect.GetBool();
+	s.bExtinguishHeal           = tf2v_use_extinguish_heal.GetBool();
+	s.bExtinguishCooldown       = tf2v_use_extinguish_cooldown.GetBool();
+	s.nFlareMode                = tf2v_use_new_flare.GetInt();
+	s.bNewFlareRadius           = tf2v_use_new_flare_radius.GetBool();
+	s.nPhlogFill                = tf2v_use_new_phlog_fill.GetInt();
+	s.nPhlogTaunt               = tf2v_use_new_phlog_taunt.GetInt();
+	s.nAxtinguisher             = tf2v_use_new_axtinguisher.GetInt();
+	s.nMinigunMode              = tf2v_use_new_minigun_rampup.GetInt();
+	s.nSandvichBehavior         = tf2v_sandvich_behavior.GetInt();
+	s.nBuildingUpgrades         = tf2v_building_upgrades.GetInt();
+	s.bBuildingHauling          = tf2v_building_hauling.GetBool();
+	s.bNewHaulingSpeed          = tf2v_use_new_hauling_speed.GetBool();
+	s.bNewWrenchMechanics       = tf2v_use_new_wrench_mechanics.GetBool();
+	s.bNewSapperDamage          = tf2v_use_new_sapper_damage.GetBool();
+	s.bNewSapperDisable         = tf2v_use_new_sapper_disable.GetBool();
+	s.bNewSentryMinigunResist   = tf2v_use_new_sentry_minigun_resist.GetBool();
+	s.bNewSentryWrangleLocation = tf2v_new_sentry_wrangle_location.GetBool();
+	s.bNewSentryDamageFalloff   = tf2v_new_sentry_damage_falloff.GetBool();
+	s.bNewTeleporterCost        = tf2v_use_new_teleporter_cost.GetBool();
+	s.bNewShortCircuit          = tf2v_use_new_short_circuit.GetBool();
+	s.bNewMinibuildings         = tf2v_use_new_minibuildings.GetBool();
+	s.bNewMedicRegen            = tf2v_use_new_medic_regen.GetBool();
+	s.bMedigunHealRate          = tf2v_medigun_heal_rate.GetBool();
+	s.nSetupUberRate            = tf2v_setup_uber_rate.GetInt();
+	s.bUberJugglePenalty        = tf2v_uber_juggle_penalty.GetBool();
+	s.bNewUberTaunt             = tf2v_use_new_uber_taunt.GetBool();
+	s.bMedicSpeedMatch          = tf2v_use_medic_speed_match.GetBool();
+	s.bNewHealthRegenAttrib     = tf2v_use_new_health_regen_attrib.GetBool();
+	s.nSandmanStunType          = tf2v_sandman_stun_type.GetInt();
+	s.bNewBonkLength            = tf2v_use_new_bonk_length.GetBool();
+	s.bNewSodapopperHype        = tf2v_use_new_sodapopper_hype.GetBool();
+	s.bNewSodapopperFill        = tf2v_use_new_sodapopper_fill.GetBool();
+	s.bManualSodapopper         = tf2v_use_manual_sodapopper.GetBool();
+	s.bShortstopShove           = tf2v_use_shortstop_shove.GetBool();
+	s.bShortstopSlowdown        = tf2v_use_shortstop_slowdown.GetBool();
+	s.bNewGuillotine            = tf2v_use_new_guillotine.GetBool();
+	s.bNewBallRegen             = tf2v_use_new_ball_regen.GetBool();
+	s.bNewBuffCharges           = tf2v_use_new_buff_charges.GetBool();
+	s.bSentryResistBonus        = tf2v_sentry_resist_bonus.GetBool();
+	s.bNewEqualizerDamage       = tf2v_use_new_equalizer_damage.GetBool();
+	s.bNewSplitEqualizer        = tf2v_use_new_split_equalizer.GetBool();
+	s.bNewSpeedBuffDuration     = tf2v_new_speed_buff_duration.GetBool();
+	s.bNewBeggars               = tf2v_use_new_beggars.GetBool();
+	s.bDemoChargeDebuffRemove   = tf2v_demo_charge_debuff_remove.GetBool();
+	s.bNewCaber                 = tf2v_use_new_caber.GetBool();
+	s.bNewHonorbound            = tf2v_use_new_honorbound.GetBool();
+	s.bSpyCloakReload           = tf2v_spy_cloak_reload.GetBool();
+	s.bSpyCloakAmmoRecharge     = tf2v_spy_cloak_ammo_recharge.GetBool();
+	s.bNewCloak                 = tf2v_use_new_cloak.GetBool();
+	s.nFeignDeathActivate       = tf2v_new_feign_death_activate.GetInt();
+	s.bFeignDeathStealth        = tf2v_new_feign_death_stealth.GetBool();
+	s.bNewYer                   = tf2v_use_new_yer.GetBool();
+	s.bNewBigEarner             = tf2v_use_new_big_earner.GetBool();
+	s.bFastRedisguise           = tf2v_use_fast_redisguise.GetBool();
+	s.bAllowDisguiseWeapons     = tf2v_allow_disguiseweapons.GetBool();
+	s.bDisguiseSpyTeleport      = tf2v_disguise_spy_teleport.GetBool();
+	s.bDisguiseSpeedMatch       = tf2v_disguise_speed_match.GetBool();
+	s.bNewSpyMovespeeds         = tf2v_use_new_spy_movespeeds.GetBool();
+	s.bSpyBaseSpeed             = tf2v_spy_base_speed.GetBool();
+	s.nAmbassadorMode           = tf2v_use_new_ambassador.GetInt();
+	s.bNewDiamondback           = tf2v_use_new_diamondback.GetBool();
+	s.bNewPomson                = tf2v_use_new_pomson.GetBool();
+	s.bAllowSniperCrosshairs    = tf2v_allow_sniper_crosshairs.GetBool();
+	s.bNewCleaners              = tf2v_use_new_cleaners.GetBool();
+	s.nBisonDamage              = tf2v_use_new_bison_damage.GetInt();
+	s.bNewBisonSpeed            = tf2v_use_new_bison_speed.GetBool();
+	s.bNewAutofire              = tf2v_use_new_autofire.GetBool();
+	s.bNewWeaponSwapSpeed       = tf2v_use_new_weapon_swap_speed.GetBool();
+	s.bFastWeaponSwitch         = tf2v_fast_weapon_switch.GetBool();
+	s.bReloadCancelAvailable    = tf2v_reload_cancel_available.GetBool();
+	s.bFasterReloadDefault      = tf2v_use_faster_reload.GetBool();
+	s.bNewChocolate             = tf2v_new_chocolate_behavior.GetBool();
+	s.bNewAtomizer              = tf2v_use_new_atomizer.GetBool();
+	s.nBackstabMode             = tf2v_use_new_backstabs.GetInt();
+	s.bNewJag                   = tf2v_use_new_jag.GetBool();
+	s.bRadiusDamageTeammates    = tf2v_radius_damage_teammates.GetBool();
+	s.nSpeedCap                 = tf2v_clamp_speed_absolute.GetInt();
+	s.nClassDeathAnimations     = tf2v_class_death_animations.GetInt();
+	s.bMinicritselfInflicted    = tf2v_minicrit_self_inflicted.GetBool();
+	s.bDisableUpdraft           = tf2v_disable_updraft.GetBool();
+	s.bPreventVoiceSpam         = tf2v_prevent_voice_spam.GetBool();
+	s.bClampAirducks            = tf2v_clamp_airducks.GetBool();
+	s.bPistolFixedFirerate      = tf2v_pistol_fixed_firerate.GetBool();
+	s.nSniperZoomMode           = tf2v_sniper_zoom_mode.GetInt();
+	s.bSoldierSelfDamageReduction = tf2v_soldier_self_damage_reduction.GetBool();
+	s.bGunboatsNerf             = tf2v_gunboats_nerf.GetBool();
+	s.bRocketJumperHealthPenalty = tf2v_rocket_jumper_health_penalty.GetBool();
+	s.bBackburnerDamageBonus    = tf2v_backburner_damage_bonus.GetBool();
+	s.bBackburnerAirblast       = tf2v_backburner_airblast.GetBool();
+	s.bAirblastMinicrits        = tf2v_airblast_minicrits.GetBool();
+	s.bAfterburnContactTime     = tf2v_afterburn_contact_time.GetBool();
+	s.bAfterburnHealDebuff      = tf2v_afterburn_heal_debuff.GetBool();
+	s.bAirblastStickyPush       = tf2v_airblast_sticky_push.GetBool();
+	s.bTargeOwnExplosion        = tf2v_targe_own_explosion.GetBool();
+	s.bFaNDamageBonus           = tf2v_fan_damage_bonus.GetBool();
+	s.bDeadRingerFlagCarry      = tf2v_dead_ringer_flag_carry.GetBool();
+	s.bQuickFixWeaponRestriction = tf2v_quick_fix_weapon_restriction.GetBool();
+	s.bNataschaFixed            = tf2v_natascha_fixed.GetBool();
+	s.bUberRangeFalloff         = tf2v_uber_range_falloff.GetBool();
+
+	m_bEraStateLocked = true;
+
+	DevMsg( "[TF2V] LockEraState: enforcement=%d era=%d weapon_era=%d\n",
+		tf2v_enforcement.GetInt(), tf2v_era.GetInt(), s.nAllowedWeaponEra );
+}
+
+//-----------------------------------------------------------------------------
+// Manual mode snapshot — takes/restores convar values for server config auth.
+//-----------------------------------------------------------------------------
+void CTFGameRules::TakeManualEraSnapshot()
+{
+	m_ManualEraSnapshot.RemoveAll();
+	m_bManualSnapshotTaken = false;
+
+	static const char *s_pszManaged[] =
+	{
+		"tf2v_allowed_weapon_era","tf2v_damage_spread_mode","tf2v_crit_model",
+		"tf2v_ctf_capcrits","tf_arena_first_blood","tf2v_fall_sounds",
+		"tf2v_console_grenadelauncher_damage","tf2v_console_grenadelauncher_magazine",
+		"tf2v_grenades_explode_contact","tf2v_grenade_player_collision",
+		"tf2v_use_new_grenade_radius","tf2v_use_new_demo_explosion_variance",
+		"tf2v_use_stickybomb_damage_rampup","tf2v_use_stickybomb_radius_rampup",
+		"tf2v_sticky_bullet_break","tf2v_ammo_era","tf2v_use_new_blackbox",
+		"tf2v_airblast","tf2v_airblast_players","tf2v_flame_mode",
+		"tf2v_minicrits_on_deflect","tf2v_use_extinguish_heal",
+		"tf2v_use_extinguish_cooldown","tf2v_use_new_flare","tf2v_use_new_flare_radius",
+		"tf2v_use_new_phlog_fill","tf2v_use_new_phlog_taunt","tf2v_use_new_axtinguisher",
+		"tf2v_use_new_minigun_rampup","tf2v_sandvich_behavior",
+		"tf2v_building_upgrades","tf2v_building_hauling","tf2v_use_new_hauling_speed",
+		"tf2v_use_new_wrench_mechanics","tf2v_use_new_sapper_damage",
+		"tf2v_use_new_sapper_disable","tf2v_use_new_sentry_minigun_resist",
+		"tf2v_new_sentry_wrangle_location","tf2v_new_sentry_damage_falloff",
+		"tf2v_use_new_teleporter_cost","tf2v_use_new_short_circuit",
+		"tf2v_use_new_minibuildings","tf2v_use_new_medic_regen","tf2v_medigun_heal_rate",
+		"tf2v_setup_uber_rate","tf2v_uber_juggle_penalty","tf2v_use_new_uber_taunt",
+		"tf2v_use_medic_speed_match","tf2v_use_new_health_regen_attrib",
+		"tf2v_sandman_stun_type","tf2v_use_new_bonk_length",
+		"tf2v_use_new_sodapopper_hype","tf2v_use_new_sodapopper_fill",
+		"tf2v_use_manual_sodapopper","tf2v_use_shortstop_shove",
+		"tf2v_use_shortstop_slowdown","tf2v_use_new_guillotine",
+		"tf2v_use_new_ball_regen","tf2v_use_new_buff_charges",
+		"tf2v_sentry_resist_bonus","tf2v_use_new_equalizer_damage",
+		"tf2v_use_new_split_equalizer","tf2v_new_speed_buff_duration",
+		"tf2v_use_new_beggars","tf2v_demo_charge_debuff_remove",
+		"tf2v_use_new_caber","tf2v_use_new_honorbound",
+		"tf2v_spy_cloak_reload","tf2v_spy_cloak_ammo_recharge","tf2v_use_new_cloak",
+		"tf2v_new_feign_death_activate","tf2v_new_feign_death_stealth",
+		"tf2v_use_new_yer","tf2v_use_new_big_earner","tf2v_use_fast_redisguise",
+		"tf2v_allow_disguiseweapons","tf2v_disguise_spy_teleport",
+		"tf2v_disguise_speed_match","tf2v_use_new_spy_movespeeds",
+		"tf2v_spy_base_speed","tf2v_use_new_ambassador","tf2v_use_new_diamondback",
+		"tf2v_use_new_pomson","tf2v_allow_sniper_crosshairs","tf2v_use_new_cleaners",
+		"tf2v_use_new_bison_damage","tf2v_use_new_bison_speed","tf2v_use_new_autofire",
+		"tf2v_use_new_weapon_swap_speed","tf2v_reload_cancel_available",
+		"tf2v_use_faster_reload","tf2v_new_chocolate_behavior","tf2v_use_new_atomizer",
+		"tf2v_use_new_backstabs","tf2v_use_new_jag","tf2v_radius_damage_teammates",
+		"tf2v_clamp_speed_absolute","tf2v_class_death_animations",
+		"tf2v_minicrit_self_inflicted","tf2v_disable_updraft","tf2v_prevent_voice_spam",
+		"tf2v_critchance_melee","tf2v_crit_duration_rapid",
+	};
+
+	for ( int i = 0; i < ARRAYSIZE( s_pszManaged ); i++ )
+	{
+		ConVarRef cv( s_pszManaged[i] );
+		if ( !cv.IsValid() ) continue;
+		TF2VManualSnapshot_t snap;
+		snap.pszName = s_pszManaged[i];
+		V_strncpy( snap.szValue, cv.GetString(), sizeof(snap.szValue) );
+		m_ManualEraSnapshot.AddToTail( snap );
+	}
+
+	m_bManualSnapshotTaken = true;
+	DevMsg( "[TF2V] Manual snapshot taken (%d convars).\n",
+		m_ManualEraSnapshot.Count() );
+}
+
+void CTFGameRules::RestoreManualEraSnapshot()
+{
+	if ( !m_bManualSnapshotTaken )
+	{
+		TakeManualEraSnapshot();
+		return;
+	}
+
+	int nDrifted = 0;
+	m_bApplyingEra = true;
+
+	for ( int i = 0; i < m_ManualEraSnapshot.Count(); i++ )
+	{
+		const TF2VManualSnapshot_t &snap = m_ManualEraSnapshot[i];
+		ConVarRef cv( snap.pszName );
+		if ( !cv.IsValid() ) continue;
+		if ( V_strcmp( cv.GetString(), snap.szValue ) != 0 )
+		{
+			cv.SetValue( snap.szValue );
+			nDrifted++;
+		}
+	}
+
+	m_bApplyingEra = false;
+
+	if ( nDrifted > 0 )
+		Msg( "[TF2V] Restored %d mid-round drifted convar(s) to round-start values.\n",
+			nDrifted );
+}
+
+//-----------------------------------------------------------------------------
+// TF2VUpdateQuickPlayCompliance — computes all tier/mode tags.
+// Called at round boundary and every 30 seconds from Think().
+//-----------------------------------------------------------------------------
+
+// Helper: base QuickPlay requirements
+static bool TF2VCheckQuickPlayBase( CUtlString *pFail )
+{
+	ConVarRef sv_cheats( "sv_cheats" );
+	ConVarRef sv_lan( "sv_lan" );
+	ConVarRef mp_friendlyfire( "mp_friendlyfire" );
+	ConVarRef mp_highlander( "mp_highlander" );
+	ConVarRef sv_password( "sv_password" );
+
+	if ( sv_cheats.IsValid()       && sv_cheats.GetBool() )
+	{ if(pFail)*pFail="sv_cheats 1";        return false; }
+	if ( sv_lan.IsValid()          && sv_lan.GetBool() )
+	{ if(pFail)*pFail="sv_lan 1";           return false; }
+	if ( mp_friendlyfire.IsValid() && mp_friendlyfire.GetBool() )
+	{ if(pFail)*pFail="mp_friendlyfire 1";  return false; }
+	if ( mp_highlander.IsValid()   && mp_highlander.GetBool() )
+	{ if(pFail)*pFail="mp_highlander 1";    return false; }
+	if ( sv_password.IsValid()     && sv_password.GetString()[0] != '\0' )
+	{ if(pFail)*pFail="server has password";return false; }
+	if ( hide_server.GetBool() )
+	{ if(pFail)*pFail="hide_server 1";      return false; }
+	if ( tf2v_allcrit.GetBool() )
+	{ if(pFail)*pFail="tf2v_allcrit 1";     return false; }
+	if ( tf2v_randomizer.GetBool() )
+	{ if(pFail)*pFail="randomizer on";      return false; }
+	if ( gpGlobals->maxClients > 32 )
+	{ if(pFail)*pFail="maxplayers > 32";    return false; }
+	return true;
+}
+
+// Helper: casual mode
+static bool TF2VCheckCasual( CUtlString *pFail )
+{
+	if ( !TF2VCheckQuickPlayBase( pFail ) ) return false;
+	ConVarRef tf_weapon_criticals( "tf_weapon_criticals" );
+	if ( tf_weapon_criticals.IsValid() && !tf_weapon_criticals.GetBool() )
+	{ if(pFail)*pFail="crits off (use competitive)"; return false; }
+	return true;
+}
+
+// Helper: competitive mode
+static bool TF2VCheckCompetitive( CUtlString *pFail )
+{
+	if ( !TF2VCheckQuickPlayBase( pFail ) ) return false;
+	ConVarRef tf_weapon_criticals( "tf_weapon_criticals" );
+	ConVarRef tf_damage_disablespread( "tf_damage_disablespread" );
+	ConVarRef tf_use_fixed_weaponspreads( "tf_use_fixed_weaponspreads" );
+	ConVarRef sv_pure( "sv_pure" );
+	ConVarRef mp_decals( "mp_decals" );
+
+	if ( tf_weapon_criticals.IsValid() && tf_weapon_criticals.GetBool() )
+	{ if(pFail)*pFail="crits on";           return false; }
+	if ( !( ( tf_damage_disablespread.IsValid() && tf_damage_disablespread.GetBool() ) ||
+	        ( tf_use_fixed_weaponspreads.IsValid() && tf_use_fixed_weaponspreads.GetBool() ) ) )
+	{ if(pFail)*pFail="spread not disabled"; return false; }
+	if ( sv_pure.IsValid() && sv_pure.GetInt() < 1 )
+	{ if(pFail)*pFail="sv_pure < 1";        return false; }
+	if ( mp_decals.IsValid() && mp_decals.GetInt() > 0 )
+	{ if(pFail)*pFail="sprays enabled";     return false; }
+	if ( gpGlobals->maxClients != 12 )
+	{ if(pFail)*pFail="maxplayers not 12";  return false; }
+	return true;
+}
+
+// Helper: certified base — enforcement >= 2, valid era, era state locked,
+//         weapon era matches tf2v_era
+static bool TF2VCheckCertifiedBase( CUtlString *pFail )
+{
+	if ( !TF2VCheckQuickPlayBase( pFail ) ) return false;
+
+	// Requires at least partial enforcement (era managed + weapon gated)
+	if ( tf2v_enforcement.GetInt() < 2 )
+	{ if(pFail)*pFail="tf2v_enforcement < 2"; return false; }
+
+	int nEra = tf2v_era.GetInt();
+	if ( nEra < TF2V_ERA_MIN || nEra > TF2V_ERA_MAX )
+	{ if(pFail)*pFail="tf2v_era out of range"; return false; }
+
+	if ( !TFGameRules()->IsEraStateLocked() )
+	{ if(pFail)*pFail="era state not locked"; return false; }
+
+	// Weapon era must be locked to tf2v_era (enforcement >= 2 guarantees this)
+	if ( TFGameRules()->EraState().nAllowedWeaponEra != nEra )
+	{ if(pFail)*pFail="weapon era != tf2v_era"; return false; }
+
+	// PVE servers must be era 120+ (MVM doesn't exist before that).
+	// Human team size is controlled by tf_mvm_defenders_team_size, NOT maxplayers —
+	// MvM runs with bots filling the invader team so gpGlobals->maxClients is
+	// intentionally higher than the human player cap.
+	// Standard MvM = 6 defenders. This is what certification verifies.
+	if ( tf2v_server_type.GetInt() == 1 )
+	{
+		if ( nEra < TF2V_ERA_MVM_MIN )
+		{ if(pFail)*pFail="PVE requires era >= 121 (MVM)"; return false; }
+
+		ConVarRef defenders( "tf_mvm_defenders_team_size" );
+		if ( defenders.IsValid() && defenders.GetInt() > 6 )
+		{ if(pFail)*pFail="PVE certified requires tf_mvm_defenders_team_size <= 6"; return false; }
+	}
+
+	// ASYM servers must be era 180 (VSH/ZI don't exist before that)
+	if ( tf2v_server_type.GetInt() == 2 && nEra < TF2V_ERA_ASYM_MIN )
+	{ if(pFail)*pFail="ASYM requires era 190+ (VScript/VSH/ZI)"; return false; }
+
+	return true;
+}
+
+// Helper: full certified — enforcement == 3, mapcycle matches era + gamemode valid
+static bool TF2VCheckCertified( CUtlString *pFail )
+{
+	if ( !TF2VCheckCertifiedBase( pFail ) ) return false;
+
+	if ( tf2v_enforcement.GetInt() < 3 )
+	{ if(pFail)*pFail="tf2v_enforcement < 3 (no mapcycle gate)"; return false; }
+
+	const char *pszExpected = TF2V_GetEraMapcycleFile( tf2v_era.GetInt() );
+	ConVarRef mapcyclefile( "mapcyclefile" );
+	if ( pszExpected && mapcyclefile.IsValid() &&
+	     V_strcmp( mapcyclefile.GetString(), pszExpected ) != 0 )
+	{ if(pFail)*pFail="mapcyclefile does not match era"; return false; }
+
+	return true;
+}
+
+// Helper: PS3 — full certified + casual + era 0 + 16 players
+static bool TF2VCheckPS3( CUtlString *pFail )
+{
+	if ( !TF2VCheckCertified( pFail ) ) return false;
+	if ( !TF2VCheckCasual( pFail ) )    return false;
+	if ( tf2v_era.GetInt() != 0 )
+	{ if(pFail)*pFail="PS3 requires era 0"; return false; }
+	if ( gpGlobals->maxClients != 16 )
+	{ if(pFail)*pFail="PS3 requires 16 players"; return false; }
+	return true;
+}
+
+// Helper: Xbox 360 — full certified + era 7 + 16 players (mode checked separately)
+static bool TF2VCheckXbox( CUtlString *pFail )
+{
+	if ( !TF2VCheckCertified( pFail ) ) return false;
+	if ( tf2v_era.GetInt() != 4 )
+	{ if(pFail)*pFail="Xbox requires era 4"; return false; }
+	if ( gpGlobals->maxClients != 16 )
+	{ if(pFail)*pFail="Xbox requires 16 players"; return false; }
+	return true;
+}
+
+void CTFGameRules::TF2VUpdateQuickPlayCompliance()
+{
+	auto ClearAll = [&]()
+	{
+		tf2v_certified.SetValue( 0 );
+		tf2v_certified_partial.SetValue( 0 );
+		tf2v_certified_casual.SetValue( 0 );
+		tf2v_certified_competitive.SetValue( 0 );
+		tf2v_certified_ps3.SetValue( 0 );
+		tf2v_certified_xbox.SetValue( 0 );
+		tf2v_quickplay_casual.SetValue( 0 );
+		tf2v_quickplay_competitive.SetValue( 0 );
+	};
+
+	if ( tf2v_quickplay_profile.GetInt() == 0 )
+	{ ClearAll(); return; }
+
+	CUtlString fail;
+	int nProfile = tf2v_quickplay_profile.GetInt();
+
+	// Mode checks
+	bool bCasual        = TF2VCheckCasual( &fail );
+	bool bComp          = TF2VCheckCompetitive( &fail );
+
+	// Certification tiers
+	bool bCertBase      = TF2VCheckCertifiedBase( &fail );  // enforcement >= 2
+	bool bCertFull      = TF2VCheckCertified( &fail );      // enforcement == 3
+
+	bool bPS3           = TF2VCheckPS3( nullptr );
+	bool bXboxBase      = TF2VCheckXbox( nullptr );
+
+	// Full certification (enforcement 3)
+	bool bFullCasual    = bCertFull && bCasual;
+	bool bFullComp      = bCertFull && bComp;
+	bool bFullCert      = bFullCasual || bFullComp;
+
+	// Partial certification (enforcement 2 — balance + weapons, any maps)
+	// Only fires if full cert doesn't — partial is the lower tier
+	bool bPartialCasual = !bFullCasual && bCertBase && bCasual;
+	bool bPartialComp   = !bFullComp   && bCertBase && bComp;
+	bool bPartialCert   = bPartialCasual || bPartialComp;
+
+	// Xbox can be casual or competitive at either cert tier
+	bool bXboxCasual    = bXboxBase && bCasual;
+	bool bXboxComp      = bXboxBase && bComp;
+	bool bXbox          = bXboxCasual || bXboxComp;
+
+	// QuickPlay (non-certified — passes base requirements only)
+	bool bQPCasual      = !bFullCasual  && !bPartialCasual && bCasual &&
+	                      ( nProfile == 1 || nProfile == 3 );
+	bool bQPComp        = !bFullComp    && !bPartialComp   && bComp  &&
+	                      ( nProfile == 2 || nProfile == 3 );
+
+	// Log changes
+	auto Log = [&]( const char *tag, bool bOld, bool bNew )
+	{
+		if ( bOld == bNew ) return;
+		if ( bNew ) Msg( "[TF2V] Tag '%s' ACTIVE.\n", tag );
+		else        Msg( "[TF2V] Tag '%s' lost: %s\n", tag, fail.Get() );
+	};
+
+	Log( "certified",             tf2v_certified.GetBool(),             bFullCert    );
+	Log( "certified_partial",     tf2v_certified_partial.GetBool(),     bPartialCert );
+	Log( "certified_casual",      tf2v_certified_casual.GetBool(),      bFullCasual || bPartialCasual );
+	Log( "certified_competitive", tf2v_certified_competitive.GetBool(), bFullComp   || bPartialComp   );
+	Log( "ps3",                   tf2v_certified_ps3.GetBool(),         bPS3         );
+	Log( "xbox",                  tf2v_certified_xbox.GetBool(),        bXbox        );
+	Log( "quickplay_casual",      tf2v_quickplay_casual.GetBool(),      bQPCasual    );
+	Log( "quickplay_competitive", tf2v_quickplay_competitive.GetBool(), bQPComp      );
+
+	tf2v_certified.SetValue( bFullCert ? 1 : 0 );
+	tf2v_certified_partial.SetValue( bPartialCert ? 1 : 0 );
+	// certified_casual/competitive fire for both full and partial
+	tf2v_certified_casual.SetValue( ( bFullCasual || bPartialCasual ) ? 1 : 0 );
+	tf2v_certified_competitive.SetValue( ( bFullComp || bPartialComp ) ? 1 : 0 );
+	tf2v_certified_ps3.SetValue( bPS3 ? 1 : 0 );
+	tf2v_certified_xbox.SetValue( bXbox ? 1 : 0 );
+	tf2v_quickplay_casual.SetValue( bQPCasual ? 1 : 0 );
+	tf2v_quickplay_competitive.SetValue( bQPComp ? 1 : 0 );
+}
+
+#endif // GAME_DLL
+
+//=============================================================================
+// END TF2V ERA SYSTEM IMPLEMENTATION
+//=============================================================================
 
 //-----------------------------------------------------------------------------
 // Purpose: Engine asks for the list of convars that should tag the server
@@ -20527,12 +22222,15 @@ void CTFGameRules::HandleCTFCaptureBonus( int nTeam )
 	if ( flBonusTime <= 0 )
 		return;
 
-	for ( int i = 1 ; i <= gpGlobals->maxClients ; i++ )
+	if( tf2v_ctf_capcrits.GetBool() )
 	{
-		CTFPlayer *pPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
-		if ( pPlayer && pPlayer->IsAlive() && pPlayer->GetTeamNumber() == nTeam )
+		for ( int i = 1 ; i <= gpGlobals->maxClients ; i++ )
 		{
-			pPlayer->m_Shared.AddCond( TF_COND_CRITBOOSTED_CTF_CAPTURE, flBonusTime );
+			CTFPlayer *pPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
+			if ( pPlayer && pPlayer->IsAlive() && pPlayer->GetTeamNumber() == nTeam )
+			{
+				pPlayer->m_Shared.AddCond( TF_COND_CRITBOOSTED_CTF_CAPTURE, flBonusTime );
+			}
 		}
 	}
 }
