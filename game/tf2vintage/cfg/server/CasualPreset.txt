@@ -1,5 +1,5 @@
 tf_damage_disablespread 0
-tf2v_falldamage_disablespread 0
+tf_fall_damage_disablespread 0
 tf_use_fixed_weaponspreads 0
 tf_weapon_criticals 1
 tf_weapon_criticals_melee 1
