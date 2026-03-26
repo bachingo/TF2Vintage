@@ -154,3 +154,14 @@ koth_krampus
 pd_galleria
 pl_camber
 plr_hacksaw
+cp_canaveral_5cp
+ctf_applejack
+cp_darkmarsh
+cp_freaky_fair
+koth_toxic
+pd_circus
+pl_patagonia
+cp_fortezza
+ctf_penguin_peak
+koth_overcast_final
+plr_cutter

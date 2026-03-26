@@ -154,3 +154,5 @@ koth_krampus
 pd_galleria
 pl_camber
 plr_hacksaw
+cp_canaveral_5cp
+ctf_applejack
