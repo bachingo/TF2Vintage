@@ -19216,33 +19216,43 @@ static const char *TF2V_GetEraMapcycleFile( int nEra )
 		}
 	}
 
-	// PVP — standard rotation (default, and fallback for invalid PVE/ASYM eras)
-	// Eras 1-110: base file, implicitly all-PVP (no suffix)
-	// Eras 120+:  _pvp suffix excludes MVM/VSH/ZI from the rotation
-	if ( nEra <= 7  ) return "maps/mapcycle_era7.txt";
-	if ( nEra <= 9  ) return "maps/mapcycle_era10.txt";
-	if ( nEra <= 21 ) return "maps/mapcycle_era20.txt";
-	if ( nEra <= 31 ) return "maps/mapcycle_era30.txt";
-	if ( nEra <= 50 ) return "maps/mapcycle_era50.txt";
-	if ( nEra <= 60 ) return "maps/mapcycle_era60.txt";
-	if ( nEra <= 70 ) return "maps/mapcycle_era70.txt";
-	if ( nEra <= 80 ) return "maps/mapcycle_era80.txt";
-	if ( nEra <= 81 ) return "maps/mapcycle_era81.txt";
-	if ( nEra <= 90 ) return "maps/mapcycle_era90.txt";
-	if ( nEra <= 91 ) return "maps/mapcycle_era91.txt";
-	if ( nEra <= 102) return "maps/mapcycle_era100.txt";  // pre-degrootkeep
-	if ( nEra <= 109) return "maps/mapcycle_era103.txt";  // post-degrootkeep
-	if ( nEra <= 117) return "maps/mapcycle_era110.txt";
-	if ( nEra <= 121) return "maps/mapcycle_era120_pvp.txt";
-	if ( nEra <= 130) return "maps/mapcycle_era130_pvp.txt";
-	if ( nEra <= 140) return "maps/mapcycle_era140_pvp.txt";
-	if ( nEra <= 150) return "maps/mapcycle_era150_pvp.txt";
-	if ( nEra <= 160) return "maps/mapcycle_era160_pvp.txt";
-	if ( nEra <= 170) return "maps/mapcycle_era170_pvp.txt";
+	// PVP — standard rotation, cumulative pool grows at each content update.
+	// All files use _pvp suffix for consistency.
+	// Eras 1-170: launch through Jungle Inferno, precise per-update files.
+	// Eras 180+:  post-balance-freeze, map-only additions.
+	if ( nEra <=   1 ) return "maps/mapcycle_era1_pvp.txt";   // Oct 10 2007 Launch (6)
+	if ( nEra <=   7 ) return "maps/mapcycle_era7_pvp.txt";   // Jan 25 2008 +ctf_well (7)
+	if ( nEra <=   8 ) return "maps/mapcycle_era8_pvp.txt";   // Feb 14 2008 +cp_badlands (8)
+	if ( nEra <=  10 ) return "maps/mapcycle_era10_pvp.txt";  // Apr 29 2008 Gold Rush (9)
+	if ( nEra <=  20 ) return "maps/mapcycle_era20_pvp.txt";  // Jun 19 2008 Pyro Update (11)
+	if ( nEra <=  30 ) return "maps/mapcycle_era30_pvp.txt";  // Aug 19 2008 Heavy Update (17)
+	if ( nEra <=  31 ) return "maps/mapcycle_era31_pvp.txt";  // Dec 11 2008 +cp_steel (18)
+	if ( nEra <=  50 ) return "maps/mapcycle_era50_pvp.txt";  // Feb 24 2009 Scout Update (19)
+	if ( nEra <=  60 ) return "maps/mapcycle_era60_pvp.txt";  // May 21 2009 Sniper/Spy (20)
+	if ( nEra <=  70 ) return "maps/mapcycle_era70_pvp.txt";  // Aug 13 2009 Classless/KOTH (32)
+	if ( nEra <=  71 ) return "maps/mapcycle_era71_pvp.txt";  // Sep 15 2009 egypt/junction (34)
+	if ( nEra <=  80 ) return "maps/mapcycle_era80_pvp.txt";  // Dec 17 2009 WAR! (35)
+	if ( nEra <=  82 ) return "maps/mapcycle_era82_pvp.txt";  // Apr 28 2010 freight/upward (37)
+	if ( nEra <=  90 ) return "maps/mapcycle_era90_pvp.txt";  // Jul  8 2010 Engineer Update (39)
+	if ( nEra <=  91 ) return "maps/mapcycle_era91_pvp.txt";  // Oct 27 2010 Scream Fortress (42)
+	if ( nEra <= 103 ) return "maps/mapcycle_era103_pvp.txt"; // Dec 17 2010 Aus Christmas (44)
+	if ( nEra <= 104 ) return "maps/mapcycle_era104_pvp.txt"; // Jan 19 2011 +cp_5gorge (45)
+	if ( nEra <= 105 ) return "maps/mapcycle_era105_pvp.txt"; // Apr 14 2011 lakeside/badlands (49)
+	if ( nEra <= 110 ) return "maps/mapcycle_era110_pvp.txt"; // Jun 23 2011 F2P/Uber (51)
+	if ( nEra <= 111 ) return "maps/mapcycle_era111_pvp.txt"; // Aug 31 2011 +viaduct_event (52)
+	if ( nEra <= 112 ) return "maps/mapcycle_era112_pvp.txt"; // Dec 15 2011 Atribute+foundry (53)
+	if ( nEra <= 115 ) return "maps/mapcycle_era115_pvp.txt"; // Jul 10 2013 process/standin (59)
+	if ( nEra <= 117 ) return "maps/mapcycle_era117_pvp.txt"; // Nov 2013 snakewater/helltower (60)
+	if ( nEra <= 130 ) return "maps/mapcycle_era130_pvp.txt"; // Jun 2014 Love & War (65)
+	if ( nEra <= 133 ) return "maps/mapcycle_era133_pvp.txt"; // Dec 2014 Mannpower (65, same)
+	if ( nEra <= 140 ) return "maps/mapcycle_era140_pvp.txt"; // Jul 2015 Gun Mettle (69)
+	if ( nEra <= 150 ) return "maps/mapcycle_era150_pvp.txt"; // Dec 2015 Tough Break (73)
+	if ( nEra <= 160 ) return "maps/mapcycle_era160_pvp.txt"; // Jul 2016 MYM (88)
+	if ( nEra <= 170 ) return "maps/mapcycle_era170_pvp.txt"; // Oct 2017 Jungle Inferno (97)
 
 	// Post-balance-freeze (era 180+): balance unchanged, map pool grows each
 	// holiday update. Each file is cumulative — it includes all prior maps.
-	if ( nEra <= 180 ) return "maps/mapcycle_era180_pvp.txt";  // Mar 2018 freeze
+	if ( nEra <= 180 ) return "maps/mapcycle_era180_pvp.txt";  // Mar 2018 freeze (= era170)
 	if ( nEra <= 181 ) return "maps/mapcycle_era181_pvp.txt";  // SF X  Oct 19 2018 (+5)
 	if ( nEra <= 184 ) return "maps/mapcycle_era182_pvp.txt";  // SF XI Oct 10 2019 (+2); 183-184 no maps
 	if ( nEra <= 185 ) return "maps/mapcycle_era185_pvp.txt";  // SF XII  Oct 1 2020  (+4)
@@ -19251,12 +19261,12 @@ static const char *TF2V_GetEraMapcycleFile( int nEra )
 	if ( nEra <= 188 ) return "maps/mapcycle_era188_pvp.txt";  // Smissmas 2021 Dec 2 (+6)
 	if ( nEra <= 189 ) return "maps/mapcycle_era189_pvp.txt";  // SF XIV  Oct 5 2022  (+5)
 	if ( nEra <= 190 ) return "maps/mapcycle_era190_pvp.txt";  // VScript+Smissmas 2022 (+5)
-	if ( nEra <= 191 ) return "maps/mapcycle_era191_pvp.txt";  // SF XV   Oct 9 2023  (+12 PVP, +2 ZI)
+	if ( nEra <= 191 ) return "maps/mapcycle_era191_pvp.txt";  // SF XV   Oct 9 2023  (+12)
 	if ( nEra <= 192 ) return "maps/mapcycle_era192_pvp.txt";  // Smissmas 2023 Dec 7 (+8)
-	if ( nEra <= 193 ) return "maps/mapcycle_era193_pvp.txt";  // SF XVI  Oct 10 2024 (+5 PVP, +3 ASYM)
-	if ( nEra <= 199 ) return "maps/mapcycle_era194_pvp.txt";  // Smissmas 2024 Dec 11 (+5 PVP, +1 VSH)
-	if ( nEra <= 200 ) return "maps/mapcycle_era200_pvp.txt";  // Summer 2025 Jul 24 (+10)
-	// era 201 = SF XVII Oct 9 2025: maps added to ASYM pool, PVP pool unchanged
+	if ( nEra <= 193 ) return "maps/mapcycle_era193_pvp.txt";  // Summer+SF XVI 2024 (+7)
+	if ( nEra <= 199 ) return "maps/mapcycle_era194_pvp.txt";  // Smissmas 2024 Dec 11 (+5)
+	if ( nEra <= 200 ) return "maps/mapcycle_era200_pvp.txt";  // Summer 2025 Jul 24 (+9)
+	if ( nEra <= 201 ) return "maps/mapcycle_era201_pvp.txt";  // SF XVII Oct 9 2025
 	static const char *s_pszTermPVP = "maps/mapcycle_era" TF2V_ERA_MAX_STR "_pvp.txt";
 	return s_pszTermPVP;
 }
