@@ -132,6 +132,8 @@
 #include "pointhurt.h"
 #include "info_camera_link.h"
 
+#include "tf2v_item_era_enforcement.h"
+
 // NVNT haptic utils
 #include "haptics/haptic_utils.h"
 
@@ -4497,6 +4499,18 @@ bool CTFPlayer::ItemIsAllowed( CEconItemView *pItem )
 	{
 		return TFGameRules() && TFGameRules()->IsPasstimeMode();
 	}
+	
++	// TF2V era enforcement — block items that post-date the active era.
++	// Enforcement level 2+ (weapon gate). Fails gracefully if table missing.
++	{
++		const char *pszAnachronisticReason = NULL;
++		if ( !TF2VIsItemEraAllowed( pItem, &pszAnachronisticReason ) )
++		{
++			// Log reason but return false — GiveDefaultItems will use
++			// stock item for this slot, same as competitive ban path.
++			return false;
++		}
++	}
 
 	// Holiday Restriction
 	CEconItemDefinition* pData = pItem->GetStaticData();
