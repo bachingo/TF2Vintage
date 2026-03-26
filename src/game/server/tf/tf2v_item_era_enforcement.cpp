@@ -207,6 +207,13 @@ static int TF2VDateStringToEra( const char *pszDate )
     return nEra;
 }
 
+
+// Public wrapper — used by tf2v_era_attributes.cpp
+int TF2VDateStringToEra_Public( const char *pszDate )
+{
+	return TF2VDateStringToEra( pszDate );
+}
+
 // ---------------------------------------------------------------------------
 // Component lookups
 // ---------------------------------------------------------------------------

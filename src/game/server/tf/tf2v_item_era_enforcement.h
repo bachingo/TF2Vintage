@@ -73,5 +73,10 @@ int  TF2VGetItemEra( CEconItemView *pItem );
 bool TF2VIsItemEraAllowed( CEconItemView *pItem,
                            CTF2VEraViolation *pViolation = NULL );
 
+
+// Expose date->era conversion for use by tf2v_era_attributes.cpp.
+// Parses "YYYY/MM/DD" from items_game first_sale_date into an era integer.
+// Returns 0 for stock items (no date) or unparseable strings.
+int TF2VDateStringToEra_Public( const char *pszDate );
 // Reload cfg/tf2v_item_eras.vdf without restarting.
 void TF2VReloadItemEraTable();
