@@ -21,7 +21,8 @@
 
 	FileSystem
 	{
-		SteamAppId				243750
+		SteamAppId				440
+		ToolsAppId				243750
 		
 		SearchPaths
 		{
