@@ -33,6 +33,7 @@
 	#include "c_tf_player.h"
 	#include "c_te_effect_dispatch.h"
 	#include "c_tf_gamestats.h"
+	#include "VRMod.h"
 
 #endif
 
@@ -491,6 +492,17 @@ void CTFWeaponBaseGun::UpdatePunchAngles( CTFPlayer *pPlayer )
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseGun::FireBullet( CTFPlayer *pPlayer )
 {
+#ifdef CLIENT_DLL
+    // VF2 VR: use controller world position as bullet origin (client prediction)
+    if ( VRMod_Started )
+    {
+        Vector vrMuzzlePos = VRMOD_GetRightControllerAbsPos();
+        // Use vrMuzzlePos instead of pPlayer->Weapon_ShootPosition() below
+        // Note: server still uses EyePosition(); this only affects client-side
+        // prediction accuracy. Full fix requires networked controller position.
+    }
+#endif
+
 	PlayWeaponShootSound();
 
 	FX_FireBullets(

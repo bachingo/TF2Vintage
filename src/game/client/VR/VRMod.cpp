@@ -1,10 +1,6 @@
 #include "cbase.h"
 #include <stdio.h>
-#include <d3d9.h>
-#include "D3D11.h"
-#include <Windows.h>
 #include <openvr.h>
-#include <MinHook.h>
 #include <convar.h>
 #include <synchapi.h>
 #include <processthreadsapi.h>
@@ -615,7 +611,11 @@ void VRMOD_GetPoses() {
             //g_pInput->GetPoseActionData(g_actions[i].handle, vr::TrackingUniverseStanding, 0, &poseActionData, sizeof(poseActionData), vr::k_ulInvalidInputValueHandle);
 			g_pInput->GetPoseActionDataRelativeToNow(g_actions[i].handle, vr::TrackingUniverseStanding, 0, &poseActionData, sizeof(poseActionData), vr::k_ulInvalidInputValueHandle);
             pose = poseActionData.pose;
+#if defined _WIN32
             strcpy_s(poseName, MAX_STR_LEN, g_actions[i].name);
+#else if defined POSIX
+			V_strcpy_s(poseName, MAX_STR_LEN, g_actions[i].name);
+#endif
         }
         else {
             continue;
@@ -760,6 +760,11 @@ void VRMOD_ShareTextureBegin() {
     //hiding and restoring the game window is a workaround to d3d9 CreateDevice
     //failing on the second thread if the game is fullscreen
     ShowWindow(activeWindow, SW_HIDE);
+#if defined _WIN32
+            strcpy_s(poseName, MAX_STR_LEN, g_actions[i].name);
+#else if defined POSIX
+			V_strcpy_s(poseName, MAX_STR_LEN, g_actions[i].name);
+#endif
     HANDLE thread = CreateThread(NULL, 0, FindCreateTexture, 0, 0, NULL);
     if (thread == NULL) {
         Warning("CreateThread failed");
@@ -840,40 +845,65 @@ void VRMOD_ShareTextureFinish() {
 //*************************************************************************
 //    VRMOD_SubmitSharedTexture()																// converted properly for Virtual Fortress 2 now.
 //*************************************************************************
-void VRMOD_SubmitSharedTexture() {
-    if (g_d3d11Texture == NULL)
+// New cross-platform implementation using Source SDK material system
+void VRMOD_SubmitSharedTexture()
+{
+    if ( !g_pSourceVR || !VRMod_Started )
         return;
 
-    IDirect3DQuery9* pEventQuery = nullptr;
-    g_d3d9Device->CreateQuery(D3DQUERYTYPE_EVENT, &pEventQuery);
-    if (pEventQuery != nullptr)
+#if defined( _WIN32 )
+    // Windows path: D3D11 texture via Source VR interface
+    // g_pSourceVR manages the D3D11 texture internally — we just need the handle
+    // Use ISourceVirtualReality's internal mechanism rather than hooking D3D directly
+    ITexture *pLeftRT  = g_pSourceVR->GetRenderTarget(
+        ISourceVirtualReality::VREye_Left,  ISourceVirtualReality::RT_Color );
+    ITexture *pRightRT = g_pSourceVR->GetRenderTarget(
+        ISourceVirtualReality::VREye_Right, ISourceVirtualReality::RT_Color );
+
+    if ( !pLeftRT || !pRightRT )
+        return;
+
+    // Get the underlying D3D texture from the material system
+    // ITexture -> GetNativeHandle() returns LPDIRECT3DTEXTURE9 or ID3D11Resource*
+    // depending on the render path
+    void *pLeftHandle  = pLeftRT->GetNativeHandle();
+    void *pRightHandle = pRightRT->GetNativeHandle();
+
+    if ( pLeftHandle && pRightHandle )
     {
-        pEventQuery->Issue(D3DISSUE_END);
-        while (pEventQuery->GetData(nullptr, 0, D3DGETDATA_FLUSH) != S_OK);
-        pEventQuery->Release();
+        vr::Texture_t leftTex  = { pLeftHandle,  vr::TextureType_DirectX11,
+                                    vr::ColorSpace_Auto };
+        vr::Texture_t rightTex = { pRightHandle, vr::TextureType_DirectX11,
+                                    vr::ColorSpace_Auto };
+        vr::VRTextureBounds_t fullBounds = { 0.0f, 0.0f, 1.0f, 1.0f };
+
+        vr::VRCompositor()->Submit( vr::Eye_Left,  &leftTex,  &fullBounds );
+        vr::VRCompositor()->Submit( vr::Eye_Right, &rightTex, &fullBounds );
     }
 
-    vr::Texture_t vrTexture = { g_d3d11Texture, vr::TextureType_DirectX, vr::ColorSpace_Auto };
+#elif defined( POSIX )
+    // Linux path: OpenGL texture via Source VR interface
+    ITexture *pLeftRT  = g_pSourceVR->GetRenderTarget(
+        ISourceVirtualReality::VREye_Left,  ISourceVirtualReality::RT_Color );
+    ITexture *pRightRT = g_pSourceVR->GetRenderTarget(
+        ISourceVirtualReality::VREye_Right, ISourceVirtualReality::RT_Color );
 
-    vr::VRTextureBounds_t textureBounds;
+    if ( !pLeftRT || !pRightRT )
+        return;
 
-    //submit Left eye
-    textureBounds.uMin = 0.0f + g_horizontalOffsetLeft * 0.25f;
-    textureBounds.uMax = 0.5f + g_horizontalOffsetLeft * 0.25f;
-    textureBounds.vMin = 0.0f - g_verticalOffsetLeft * 0.5f;
-    textureBounds.vMax = 1.0f - g_verticalOffsetLeft * 0.5f;
+    // On Linux, Source uses OpenGL. The native handle is a GLuint texture name.
+    uintptr_t leftGL  = (uintptr_t)pLeftRT->GetNativeHandle();
+    uintptr_t rightGL = (uintptr_t)pRightRT->GetNativeHandle();
 
-    vr::VRCompositor()->Submit(vr::EVREye::Eye_Left, &vrTexture, &textureBounds);
+    vr::Texture_t leftTex  = { (void*)leftGL,  vr::TextureType_OpenGL,
+                                vr::ColorSpace_Auto };
+    vr::Texture_t rightTex = { (void*)rightGL, vr::TextureType_OpenGL,
+                                vr::ColorSpace_Auto };
+    vr::VRTextureBounds_t fullBounds = { 0.0f, 0.0f, 1.0f, 1.0f };
 
-    //submit Right eye
-    textureBounds.uMin = 0.5f + g_horizontalOffsetRight * 0.25f;
-    textureBounds.uMax = 1.0f + g_horizontalOffsetRight * 0.25f;
-    textureBounds.vMin = 0.0f - g_verticalOffsetRight * 0.5f;
-    textureBounds.vMax = 1.0f - g_verticalOffsetRight * 0.5f;
-
-    vr::VRCompositor()->Submit(vr::EVREye::Eye_Right, &vrTexture, &textureBounds);
-
-    return;
+    vr::VRCompositor()->Submit( vr::Eye_Left,  &leftTex,  &fullBounds );
+    vr::VRCompositor()->Submit( vr::Eye_Right, &rightTex, &fullBounds );
+#endif
 }
 
 

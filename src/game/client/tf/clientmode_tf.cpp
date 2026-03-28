@@ -93,6 +93,7 @@
 
 #include "hud_vote.h"
 #include "c_tf_notification.h"
+#include "VRMod.h"
 
 #if !defined( _X360 ) && !defined( NO_STEAM )
 #include "steam/isteamtimeline.h"
@@ -1450,7 +1451,25 @@ void ClientModeTFNormal::PostRenderVGui()
 //-----------------------------------------------------------------------------
 bool ClientModeTFNormal::CreateMove( float flInputSampleTime, CUserCmd *cmd )
 {
-	return BaseClass::CreateMove( flInputSampleTime, cmd );
+    bool bResult = BaseClass::CreateMove( flInputSampleTime, cmd );
+
+    // VF2 VR: Override aim angles with right controller direction every tick.
+    // This makes the server shoot from where the controller points, not the mouse.
+    if ( VRMod_Started && cmd )
+    {
+        QAngle vrAimAngles = VRMOD_GetRightControllerAbsAngle();
+
+        // Clamp pitch to prevent anti-cheat rejection (server clamps to +/-89)
+        vrAimAngles[PITCH] = clamp( vrAimAngles[PITCH], -89.0f, 89.0f );
+
+        cmd->viewangles = vrAimAngles;
+
+        // Also update the engine view so the camera matches the controller aim.
+        // Without this, the rendering and the server disagree on aim direction.
+        engine->SetViewAngles( vrAimAngles );
+    }
+
+    return bResult;
 }
 
 //-----------------------------------------------------------------------------

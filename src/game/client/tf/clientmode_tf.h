@@ -60,8 +60,8 @@ public:
 	virtual void	FireGameEvent( IGameEvent *event );
 	virtual void	PostRenderVGui();
 
-	virtual bool	CreateMove( float flInputSampleTime, CUserCmd *cmd );
-
+	virtual bool 	CreateMove( float flInputSampleTime, CUserCmd *cmd ) OVERRIDE;
+	
 	virtual int		HudElementKeyInput( int down, ButtonCode_t keynum, const char *pszCurrentBinding );
 	virtual int		HandleSpectatorKeyInput( int down, ButtonCode_t keynum, const char *pszCurrentBinding );
 
