@@ -49,6 +49,7 @@
 #include "steam/steam_api.h"
 #include "sourcevr/isourcevirtualreality.h"
 #include "client_virtualreality.h"
+#include "VRMod.h"   // For VF2 VR
 
 #ifdef TF_CLIENT_DLL
 #include "tf_gamerules.h"
@@ -501,6 +502,10 @@ void C_BasePlayer::Spawn( void )
 
 	SharedSpawn();
 
+    // VF2 VR: reset HMD yaw to player spawn angles
+    if ( VRMod_Started )
+		VRMOD_SetSpawnPlayerHMDAngles();
+	
 	m_bWasFreezeFraming = false;
 
 	m_bFiredWeapon = false;
@@ -2081,6 +2086,14 @@ void C_BasePlayer::PostThink( void )
 
 	if ( IsAlive())
 	{
+
+		if ( VRMod_Started == 1 )
+		{
+			QAngle weapon_angle = VRMOD_GetRightControllerAbsAngle();
+			// Apply weapon_angle to the active weapon's angles here
+			// VF2 left this partially implemented — hits don't register server-side
+		}
+
 		// Need to do this on the client to avoid prediction errors
 		if ( GetFlags() & FL_DUCKING )
 		{

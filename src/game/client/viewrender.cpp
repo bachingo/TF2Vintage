@@ -54,6 +54,7 @@
 #include "sourcevr/isourcevirtualreality.h"
 #include "client_virtualreality.h"
 #include "c_lights.h"
+#include "VRMod.h"
 #ifdef TF_CLIENT_DLL
 #include "tf/c_tf_player.h"
 #endif
@@ -103,6 +104,9 @@ static void testfreezeframe_f( void )
 	view->FreezeFrame( 3.0 );
 }
 static ConCommand test_freezeframe( "test_freezeframe", testfreezeframe_f, "Test the freeze frame code.", FCVAR_CHEAT );
+
+// VF2 VR — tracks which eye we are currently rendering
+static bool SecondEyeRenderPass = false;
 
 //-----------------------------------------------------------------------------
 
