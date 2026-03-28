@@ -353,7 +353,7 @@ CEconItemView *CTFInventoryManager::GetItemInLoadoutForClass( int iClass, int iS
 #endif
 
 	CTFPlayerInventory *pInv = GetInventoryForPlayer( *pID );
-	if ( !pInv )
+	if ( !pInv && !m_bWasOfflineMode )
 		return GetBaseItemForClass( iClass, iSlot );
 
 	return pInv->GetItemInLoadout( iClass, iSlot );
@@ -1787,6 +1787,15 @@ void CTFPlayerInventory::SOCacheSubscribed( const CSteamID & steamIDOwner, GCSDK
 
 	UpdateRealTFLoadoutItems();
 	LoadLocalLoadout();
+
+    // TF2V: If we were in offline mode, mark the transition
+    if ( m_bWasOfflineMode )
+    {
+        m_bWasOfflineMode = false;
+        DevMsg( "[TF2V] GC reconnected — switching from offline to Steam inventory.\n" );
+        // LoadLocalLoadout() has already loaded the GC-backed local_loadout.txt
+        // which reflects the real Steam inventory. The offline VDF is now stale.
+    }
 
 	VerifyChangedLoadoutsAreValid();
 	UpdateCachedServerLoadoutItems();

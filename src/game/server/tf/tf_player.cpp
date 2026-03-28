@@ -3443,10 +3443,8 @@ bool CTFPlayer::ApplyPunchImpulseX ( float flImpulse )
 void CTFPlayer::UpdateInventory( bool bInit )
 {
 #if !defined(NO_STEAM)
-	if ( IsFakeClient() )
-		return;
 
-	if ( bInit || !m_Inventory.GetSOC() )
+	if ( ( bInit || !m_Inventory.GetSOC() ) && !TF2VIsOfflineMode() )
 	{
 		if ( steamgameserverapicontext->SteamGameServer() )
 		{
