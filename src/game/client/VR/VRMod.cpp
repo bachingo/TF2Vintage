@@ -2,8 +2,18 @@
 #include <stdio.h>
 #include <openvr.h>
 #include <convar.h>
-#include <synchapi.h>
-#include <processthreadsapi.h>
+#include <thread>   // std::thread replaces CreateThread on all platforms
+#include <chrono>   // std::this_thread::sleep_for replaces Sleep/WaitForSingleObject
+
+// Platform-specific D3D headers — only on Windows
+#if defined( _WIN32 )
+#   include <d3d9.h>
+#   include "D3D11.h"
+#   include <Windows.h>
+#   include <MinHook.h>
+#   pragma comment( lib, "d3d11.lib" )
+#   pragma comment( lib, "d3d9.lib" )
+#endif
 //#include <isourcevirtualreality.h>
 #include <imaterialsystem.h>
 //#include <cdll_client_int.h>
@@ -27,8 +37,7 @@
 
 
 
-#pragma comment (lib, "d3d11.lib")
-#pragma comment (lib, "d3d9.lib")
+// d3d11/d3d9 libs are conditionally linked via the platform block above
 
 
 
@@ -186,14 +195,16 @@ int                     g_activeActionSetCount = 0;
 action                  g_actions[MAX_ACTIONS];
 int                     g_actionCount = 0;
 
-//directx
+// D3D9/D3D11 texture sharing — Windows only
+#if defined( _WIN32 )
 typedef HRESULT(APIENTRY* CreateTexture) (IDirect3DDevice9*, UINT, UINT, UINT, DWORD, D3DFORMAT, D3DPOOL, IDirect3DTexture9**, HANDLE*);
-CreateTexture           g_CreateTextureOriginal = NULL;
+static CreateTexture    g_CreateTextureOriginal = NULL;
 ID3D11Device*           g_d3d11Device = NULL;
 ID3D11Texture2D*        g_d3d11Texture = NULL;
 HANDLE                  g_sharedTexture = NULL;
 DWORD_PTR               g_CreateTextureAddr = NULL;
 IDirect3DDevice9*       g_d3d9Device = NULL;
+#endif // _WIN32
 
 //other
 float                   g_horizontalOffsetLeft = 0;
@@ -347,6 +358,7 @@ ConVar VRMOD_render_VR_HUD("VRMOD_render_VR_HUD", "1", 0, "Determines if we rend
 //*************************************************************************
 //  CreateTexture hook																			// converted properly for Virtual Fortress 2 now.
 //*************************************************************************
+#if defined( _WIN32 )
 HRESULT APIENTRY CreateTextureHook(IDirect3DDevice9* pDevice, UINT w, UINT h, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture9** tex, HANDLE* shared_handle) {
 		if (g_sharedTexture == NULL) {
 			shared_handle = &g_sharedTexture;
@@ -356,9 +368,12 @@ HRESULT APIENTRY CreateTextureHook(IDirect3DDevice9* pDevice, UINT w, UINT h, UI
 		return g_CreateTextureOriginal(pDevice, w, h, levels, usage, format, pool, tex, shared_handle);
 };
 
+#endif // _WIN32
+
 //*************************************************************************
 //    FindCreateTexture thread																	// converted properly for Virtual Fortress 2 now.
 //*************************************************************************
+#if defined( _WIN32 )
 DWORD WINAPI FindCreateTexture(LPVOID lParam) {
     IDirect3D9* dx = Direct3DCreate9(D3D_SDK_VERSION);
     if (dx == NULL) {
@@ -395,6 +410,8 @@ DWORD WINAPI FindCreateTexture(LPVOID lParam) {
 
     return 0;
 }
+
+#endif // _WIN32
 
 //*************************************************************************
 //    Lua function: VRMOD_GetVersion()															// should be converted properly for Virtual Fortress 2 now
@@ -611,11 +628,7 @@ void VRMOD_GetPoses() {
             //g_pInput->GetPoseActionData(g_actions[i].handle, vr::TrackingUniverseStanding, 0, &poseActionData, sizeof(poseActionData), vr::k_ulInvalidInputValueHandle);
 			g_pInput->GetPoseActionDataRelativeToNow(g_actions[i].handle, vr::TrackingUniverseStanding, 0, &poseActionData, sizeof(poseActionData), vr::k_ulInvalidInputValueHandle);
             pose = poseActionData.pose;
-#if defined _WIN32
-            strcpy_s(poseName, MAX_STR_LEN, g_actions[i].name);
-#else if defined POSIX
-			V_strcpy_s(poseName, MAX_STR_LEN, g_actions[i].name);
-#endif
+V_strncpy( poseName, g_actions[i].name, MAX_STR_LEN );  // portable
         }
         else {
             continue;
@@ -752,61 +765,54 @@ void VRMOD_GetActions() {
 //    VRMOD_ShareTextureBegin()																// converted properly for Virtual Fortress 2 now.
 //*************************************************************************
 void VRMOD_ShareTextureBegin() {
+#if defined( _WIN32 )
+    // Windows: hide the window to work around D3D9 CreateDevice failure
+    // when running on a second thread while the game is fullscreen.
     HWND activeWindow = GetActiveWindow();
-    if (activeWindow == NULL) {
-        Warning("GetActiveWindow failed");
+    if ( activeWindow )
+        ShowWindow( activeWindow, SW_HIDE );
+
+    // Launch D3D9 texture hook discovery on a background thread.
+    // std::thread replaces the Windows-only CreateThread.
+    int exitCode = 0;
+    std::thread hookThread( [&exitCode]() {
+        DWORD result = FindCreateTexture( nullptr );
+        exitCode = (int)result;
+    });
+    // Give the thread at least 27ms — required for CreateTextureHook to fire.
+    std::this_thread::sleep_for( std::chrono::milliseconds( 1000 ) );
+    hookThread.join();
+
+    if ( activeWindow )
+        ShowWindow( activeWindow, SW_RESTORE );
+
+    if ( exitCode != 0 )
+    {
+        if      ( exitCode == 1 ) Warning( "Direct3DCreate9 failed\n" );
+        else if ( exitCode == 2 ) Warning( "CreateWindowA failed\n" );
+        else if ( exitCode == 3 ) Warning( "CreateDevice failed\n" );
+        else                      Warning( "FindCreateTexture failed (unknown)\n" );
     }
 
-    //hiding and restoring the game window is a workaround to d3d9 CreateDevice
-    //failing on the second thread if the game is fullscreen
-    ShowWindow(activeWindow, SW_HIDE);
-#if defined _WIN32
-            strcpy_s(poseName, MAX_STR_LEN, g_actions[i].name);
-#else if defined POSIX
-			V_strcpy_s(poseName, MAX_STR_LEN, g_actions[i].name);
-#endif
-    HANDLE thread = CreateThread(NULL, 0, FindCreateTexture, 0, 0, NULL);
-    if (thread == NULL) {
-        Warning("CreateThread failed");
-    }
-    WaitForSingleObject(thread, 1000);  // Needs to be at least 27 milliseconds before we start seeing CreateTextureHook() being called
-    ShowWindow(activeWindow, SW_RESTORE);
-    DWORD exitCode = 4;
-    GetExitCodeThread(thread, &exitCode);
-    CloseHandle(thread);
-    if (exitCode != 0) {
-        if (exitCode == 1) {
-			Warning("Direct3DCreate9 failed");
-        }
-        else if (exitCode == 2) {
-			Warning("CreateWindowA failed");
-        }
-        else if (exitCode == 3) {
-			Warning("CreateDevice failed");
-        }
-        else {
-			Warning("GetExitCodeThread failed");
-        }
-    }
-
-    if (g_CreateTextureAddr == NULL) {
-		Warning("g_CreateTextureAddr is null");
+    if ( g_CreateTextureAddr == NULL )
+    {
+        Warning( "g_CreateTextureAddr is null\n" );
+        return;
     }
 
     g_CreateTextureOriginal = (CreateTexture)g_CreateTextureAddr;
 
-    if (MH_Initialize() != MH_OK) {
-		Warning("MH_Initialize failed");
-    }
-
-    if (MH_CreateHook((DWORD_PTR*)g_CreateTextureAddr, &CreateTextureHook, reinterpret_cast<void**>(&g_CreateTextureOriginal)) != MH_OK) {
-		Warning("MH_CreateHook failed");
-    }
-
-    if (MH_EnableHook((DWORD_PTR*)g_CreateTextureAddr) != MH_OK) {
-		Warning("MH_EnableHook failed");
-    }
-
+    if ( MH_Initialize() != MH_OK )          { Warning( "MH_Initialize failed\n" );  return; }
+    if ( MH_CreateHook( (DWORD_PTR*)g_CreateTextureAddr, &CreateTextureHook,
+                        reinterpret_cast<void**>( &g_CreateTextureOriginal ) ) != MH_OK )
+                                              { Warning( "MH_CreateHook failed\n" );  return; }
+    if ( MH_EnableHook( (DWORD_PTR*)g_CreateTextureAddr ) != MH_OK )
+                                              { Warning( "MH_EnableHook failed\n" );  return; }
+#else
+    // Linux/macOS: No D3D9 texture hook needed.
+    // VRMOD_SubmitSharedTexture uses g_pSourceVR->GetRenderTarget() + OpenGL path.
+    DevMsg( "[VF2 VR] VRMOD_ShareTextureBegin: skipped on non-Windows (OpenGL path).\n" );
+#endif
     return;
 }
 
@@ -814,6 +820,7 @@ void VRMOD_ShareTextureBegin() {
 //*************************************************************************
 //    VRMOD_ShareTextureFinish()															// converted properly for Virtual Fortress 2 now.
 //*************************************************************************
+#if defined( _WIN32 )
 void VRMOD_ShareTextureFinish() {
     if (g_sharedTexture == NULL) {
 		Warning("g_sharedTexture is null");
@@ -840,6 +847,8 @@ void VRMOD_ShareTextureFinish() {
 
     return;
 }
+
+#endif // _WIN32
 
 
 //*************************************************************************
