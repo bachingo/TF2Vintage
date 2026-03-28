@@ -135,6 +135,7 @@
 // TF2 Vintage
 #include "tf2v_item_era_enforcement.h"
 #include "tf2v_era_attributes.h"
+#include "tf2v_offline_inventory.h"
 
 // NVNT haptic utils
 #include "haptics/haptic_utils.h"
@@ -3440,31 +3441,41 @@ bool CTFPlayer::ApplyPunchImpulseX ( float flImpulse )
 //-----------------------------------------------------------------------------
 // Purpose: Request this player's inventories from the steam backend
 //-----------------------------------------------------------------------------
-void CTFPlayer::UpdateInventory( bool bInit )
-{
-#if !defined(NO_STEAM)
+ void CTFPlayer::UpdateInventory( bool bInit )
+ {
+ #if !defined(NO_STEAM)
+     if ( IsFakeClient() )
+         return;
 
-	if ( ( bInit || !m_Inventory.GetSOC() ) && !TF2VIsOfflineMode() )
-	{
-		if ( steamgameserverapicontext->SteamGameServer() )
-		{
-			CSteamID steamIDForPlayer;
-			if ( GetSteamID( &steamIDForPlayer ) )
-			{
-				TFInventoryManager()->SteamRequestInventory( &m_Inventory, steamIDForPlayer, this );
-			}
-		}
-	}
+    // TF2V: In offline/debug mode, skip GC request and mark inventory valid.
+    // The offline emulator serves items directly via TF2VOfflineInventory_GetItem.
+    if ( TF2VIsOfflineMode() )
+    {
+        TF2VOfflineInventory_Init();
+        m_Shared.SetLoadoutUnavailable( false );  // inventory "available" — from VDF
+        return;
+    }
 
-	// If we have an SOCache, we've got a connection to the GC
-	bool bInvalid = true;
-	if ( m_Inventory.GetSOC() )
-	{
-		bInvalid = m_Inventory.GetSOC()->BIsInitialized() == false;
-	}
-	m_Shared.SetLoadoutUnavailable( bInvalid );
-#endif
-}
+     if ( bInit || !m_Inventory.GetSOC() )
+     {
+         if ( steamgameserverapicontext->SteamGameServer() )
+         {
+             CSteamID steamIDForPlayer;
+             if ( GetSteamID( &steamIDForPlayer ) )
+             {
+                 TFInventoryManager()->SteamRequestInventory( &m_Inventory, steamIDForPlayer, this );
+             }
+         }
+     }
+
+     bool bInvalid = true;
+     if ( m_Inventory.GetSOC() )
+     {
+         bInvalid = m_Inventory.GetSOC()->BIsInitialized() == false;
+     }
+     m_Shared.SetLoadoutUnavailable( bInvalid );
+ #endif
+ }
 
 //-----------------------------------------------------------------------------
 // Purpose: Requests that the GC confirm that this player is supposed to have 
@@ -5024,6 +5035,16 @@ CEconItemView *CTFPlayer::GetLoadoutItem( int iClass, int iSlot, bool bReportWhi
 		CTFInventoryManager *pInventoryManager = TFInventoryManager();
 		return pInventoryManager->GetBaseItemForClass( iClass, iSlot );
 	}
+
+    // TF2V: Offline/debug mode — serve from local VDF inventory.
+    if ( TF2VIsOfflineMode() )
+    {
+        CEconItemView *pOfflineItem = TF2VOfflineInventory_GetItem( iClass, iSlot );
+        if ( pOfflineItem && pOfflineItem->IsValid() )
+            return pOfflineItem;
+        // NULL from offline inventory means "use stock" — fall through to base item below
+        return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+    }
 
 	CEconItemView *pItem = m_Inventory.GetItemInLoadout( iClass, iSlot );
 

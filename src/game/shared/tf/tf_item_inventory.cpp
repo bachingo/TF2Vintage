@@ -43,6 +43,8 @@
 #include "econ_item.h"
 #include "game_item_schema.h"
 
+#include "tf2v_offline_inventory.h"
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -337,48 +339,41 @@ int	CTFInventoryManager::GetAllUsableItemsForSlot( int iClass, int iSlot, CUtlVe
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CEconItemView *CTFInventoryManager::GetItemInLoadoutForClass( int iClass, int iSlot, CSteamID *pID )
-{
-#ifdef CLIENT_DLL
-	CSteamID localSteamID;
-	if ( !pID )
-	{
-		// If they didn't specify a steamID, use the local player
-		if ( !steamapicontext || !steamapicontext->SteamUser() )
-			return NULL;
+ CEconItemView *CTFInventoryManager::GetItemInLoadoutForClass( int iClass, int iSlot, CSteamID *pID )
+ {
+ #ifdef CLIENT_DLL
+     CSteamID localSteamID;
+     if ( !pID )
+     {
+         if ( !steamapicontext || !steamapicontext->SteamUser() )
++        {
++            // TF2V: No Steam — serve offline inventory
++            if ( TF2VIsOfflineMode() )
++            {
++                CEconItemView *p = TF2VOfflineInventory_GetItem( iClass, iSlot );
++                return p ? p : GetBaseItemForClass( iClass, iSlot );
++            }
+             return NULL;
++        }
 
-		localSteamID = steamapicontext->SteamUser()->GetSteamID();
-		pID = &localSteamID;
-	}
-#endif
+         localSteamID = steamapicontext->SteamUser()->GetSteamID();
+         pID = &localSteamID;
+     }
++
++    // TF2V: Even with Steam, serve offline inventory if GC is down
++    if ( TF2VIsOfflineMode() )
++    {
++        CEconItemView *p = TF2VOfflineInventory_GetItem( iClass, iSlot );
++        return p ? p : GetBaseItemForClass( iClass, iSlot );
++    }
+ #endif
 
-	CTFPlayerInventory *pInv = GetInventoryForPlayer( *pID );
-	if ( !pInv && !m_bWasOfflineMode )
-		return GetBaseItemForClass( iClass, iSlot );
+     CTFPlayerInventory *pInv = GetInventoryForPlayer( *pID );
+     if ( !pInv )
+         return GetBaseItemForClass( iClass, iSlot );
 
-	return pInv->GetItemInLoadout( iClass, iSlot );
-}
-
-CEconItemView *CTFInventoryManager::GetItemInLoadoutForAccount( int iSlot, CSteamID *pID )
-{
-#ifdef CLIENT_DLL
-	if ( !pID )
-	{
-		// If they didn't specify a steamID, use the local player
-		if ( !steamapicontext || !steamapicontext->SteamUser() )
-			return NULL;
-
-		CSteamID localSteamID = steamapicontext->SteamUser()->GetSteamID();
-		pID = &localSteamID;
-	}
-#endif
-
-	CTFPlayerInventory *pInv = GetInventoryForPlayer( *pID );
-	if ( !pInv )
-		return NULL;
-
-	return pInv->GetItemInLoadout( GEconItemSchema().GetAccountIndex(), iSlot );
-}
+     return pInv->GetItemInLoadout( iClass, iSlot );
+ }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1782,24 +1777,26 @@ void CTFPlayerInventory::PostSOUpdate( const CSteamID & steamIDOwner, GCSDK::ESO
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTFPlayerInventory::SOCacheSubscribed( const CSteamID & steamIDOwner, GCSDK::ESOCacheEvent eEvent )
-{
-	BaseClass::SOCacheSubscribed( steamIDOwner, eEvent );
+ {
+     BaseClass::SOCacheSubscribed( steamIDOwner, eEvent );
 
-	UpdateRealTFLoadoutItems();
-	LoadLocalLoadout();
+     UpdateRealTFLoadoutItems();
+     LoadLocalLoadout();
 
-    // TF2V: If we were in offline mode, mark the transition
-    if ( m_bWasOfflineMode )
-    {
-        m_bWasOfflineMode = false;
-        DevMsg( "[TF2V] GC reconnected — switching from offline to Steam inventory.\n" );
-        // LoadLocalLoadout() has already loaded the GC-backed local_loadout.txt
-        // which reflects the real Steam inventory. The offline VDF is now stale.
-    }
++    // TF2V: GC reconnected after offline period — clear offline mode flag.
++    // LoadLocalLoadout() already reloads from GC-backed data, so the offline
++    // VDF becomes stale automatically. No explicit flush needed.
++    if ( tf2v_offline_inventory.GetInt() == 0 )  // only if not force-offline
++    {
++        DevMsg( "[TF2V Offline] GC connected — switching to Steam inventory.\n" );
++        // The offline item cache is still live until the next Init().
++        // GiveDefaultItems will be called on respawn, which calls GetLoadoutItem,
++        // which now reads from m_Inventory (GC-backed) because !TF2VIsOfflineMode().
++    }
 
-	VerifyChangedLoadoutsAreValid();
-	UpdateCachedServerLoadoutItems();
-}
+     VerifyChangedLoadoutsAreValid();
+     UpdateCachedServerLoadoutItems();
+ }
 
 //-----------------------------------------------------------------------------
 // Purpose: Helper function to add a new item for a econ item

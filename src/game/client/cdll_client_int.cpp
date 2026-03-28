@@ -1154,6 +1154,10 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	{
 		RegisterSecureLaunchProcessFunc( pfnUnsafeCmdLineProcessor );
 	}
+	
+	// TF2V: Initialize offline inventory if needed
+	if ( TF2VIsOfflineMode() )
+		TF2VOfflineInventory_Init();
 
 	return true;
 }
@@ -1239,6 +1243,9 @@ void CHLClient::PostInit()
 //-----------------------------------------------------------------------------
 void CHLClient::Shutdown( void )
 {
+	
+	TF2VOfflineInventory_Shutdown();
+	
     if (g_pAchievementsAndStatsInterface)
     {
         g_pAchievementsAndStatsInterface->ReleasePanel();
