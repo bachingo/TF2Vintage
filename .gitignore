@@ -216,3 +216,6 @@ src/thirdparty/luajit/src/host/test_minilua_build_log.txt
 src/thirdparty/luajit/src/host/test_minilua_build.bat
 src/thirdparty/luajit/src/host/build_luajit_deps.bat
 src/full_build_output.txt
+src/build_error.txt
+src/build_solution.ps1
+src/build_and_capture.ps1
