@@ -67,8 +67,7 @@ $Project "crash_handler"
 
 $Project "launcher_main"
 {
-	"launcher_main\launcher_main_mod_hl2mp.vpc" [$HL2MP]
-	"launcher_main\launcher_main_mod_tf.vpc" [$TF]
+	"launcher_main\launcher_main_tf2vintage.vpc" [$TF2VINTAGE]
 }
 
 $Project "mathlib"
