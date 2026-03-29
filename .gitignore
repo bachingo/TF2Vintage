@@ -197,3 +197,8 @@ src/materialsystem/stdshaders/inclist.txt
 src/materialsystem/stdshaders/filelistgen.txt
 src/materialsystem/stdshaders/filelist.txt
 /.trae
+src/launcher_main/_vpc_/manifest_launcher_main_tf/win64/manifest.txt
+src/vscript/_vpc_/manifest_vscript/win64/manifest.txt
+src/tier1/_vpc_/manifest_tier1/win64/manifest.txt
+src/msbuild_compile_output.txt
+src/lib/public/x64/matsys_controls.lib
