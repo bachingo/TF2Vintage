@@ -79,7 +79,7 @@ $Configuration
 
 	$PostBuildEvent [!$ANALYZE && $WIN32]
 	{
-		$CommandLine		"$BASE" "copy $QUOTE$SRCDIR\thirdparty\discord_game_sdk\lib\x64\discord_game_sdk.dll$QUOTE $OUTBINDIR\discord_game_sdk.dll" "\n" \
+		$CommandLine		"$BASE" "copy $QUOTE$SRCDIR\thirdparty\discord_game_sdk\lib\x86_64\discord_game_sdk.dll$QUOTE $OUTBINDIR\discord_game_sdk.dll" "\n" \
 							"if ERRORLEVEL 1 goto BuildEventFailed" "\n"
 	}
 }
@@ -1338,7 +1338,7 @@ $Project
 		
 		$ImpLibexternal steam_api	[!$WIN64]
 		$ImpLibexternal steam_api64	[$WIN64]
-		$ImpLib 	"$SRCDIR\thirdparty\discord_game_sdk\lib\x86_64\discord_game_sdk"	[$WIN64]
+		$ImpLib 	"$SRCDIR\thirdparty\discord_game_sdk\lib\x86_64\discord_game_sdk.dll"	[$WIN64]
 		
 		$Libexternal $LIBCOMMON/libcrypto [$OSXALL]
 		$Libexternal "$SRCDIR\lib\common\$CRYPTOPPDIR\libcryptopp" [$LINUXALL&&!$SOURCESDK]
