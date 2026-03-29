@@ -1,4 +1,4 @@
-$Macro OUTBINNAME "mod_tf"
+$Macro OUTBINNAME "tf2vintage"
 
 $Conditional "MOD_LAUNCHER" "1"
 
@@ -12,7 +12,7 @@ $Configuration
 	}
 }
 
-$Project "Launcher Main (Mod TF)"
+$Project "Launcher Main (TF2Vintage)"
 {
     $Folder "Resource Files" [$WINDOWS]
     {
