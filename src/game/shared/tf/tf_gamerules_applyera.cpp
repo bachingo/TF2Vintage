@@ -214,14 +214,6 @@ void CTFGameRules::ApplyEra( int nEra )
     //   tf2v_platform
 
 
-    // =========================================================================
-    // SECTION 2: CONSTANTS
-    // These never change across any era.
-    // =========================================================================
-
-    tf2v_critchance_melee.SetValue( 15.0f );         // [MERGE] constant all eras
-    tf2v_crit_duration_rapid.SetValue( 2.0f );       // [MERGE] constant all eras
-
 
     // =========================================================================
     // SECTION 3: BASELINE — ERA 1 (PS3 INTERNAL ~Aug 2007)
