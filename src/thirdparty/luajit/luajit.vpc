@@ -6,7 +6,7 @@
 //	for lj_vm.asm generation. Build buildvm from host/ before compiling.
 //-----------------------------------------------------------------------------
 
-$Macro SRCDIR		"..\..\..\"
+$Macro SRCDIR		"..\..\"
 $Macro LUAJITSRC	"$SRCDIR\thirdparty\luajit\src"
 $Macro OUTLIBDIR	"$LIBCOMMON"
 
