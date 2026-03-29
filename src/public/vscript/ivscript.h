@@ -138,7 +138,6 @@ enum ScriptLanguage_t
 	SL_GAMEMONKEY,
 	SL_SQUIRREL,
 	SL_LUA,
-	SL_ANGELSCRIPT,
 	SL_PYTHON,
 
 	SL_DEFAULT = SL_SQUIRREL
@@ -256,80 +255,6 @@ public:
 
 //---------------------------------------------------------
 
-
-//---------------------------------------------------------
-// VScript Member Variables
-// 
-// An odd concept. Classes are capable of pretending they
-// have member variables which VScript can get and set.
-//---------------------------------------------------------
-struct ScriptMemberBinding_t
-{
-	ScriptMemberBinding_t() : m_pszMemberName( 0 ), m_pszDescription( 0 ), m_nMemberType( FIELD_TYPEUNKNOWN ), m_unMemberOffs( 0 ), m_unMemberSize( 0 ), m_pszScriptName( 0 ) {}
-	char const *		m_pszScriptName;
-	char const *		m_pszMemberName;
-	char const *		m_pszDescription;
-	ScriptDataType_t	m_nMemberType;
-	ptrdiff_t			m_unMemberOffs;
-	uint32				m_unMemberSize;
-};
-
-//---------------------------------------------------------
-// Function bindings allow script functions to run C++ functions.
-// Hooks allow C++ functions to run script functions.
-// (Mapbase-derived hook system)
-//---------------------------------------------------------
-struct ScriptHook_t
-{
-	ScriptHook_t() : m_pOriginalBytes( 0 ), m_unFunctionBytes( 0 ) {}
-
-	ScriptFunctionBinding_t		m_func;
-	void *						m_pOriginalBytes;
-	uint32						m_unFunctionBytes;
-	CUtlStringList				m_ParamNames;
-};
-
-//---------------------------------------------------------
-// Struct descriptors
-//---------------------------------------------------------
-struct ScriptStructDesc_t
-{
-	ScriptStructDesc_t() : m_pszDescription( 0 ), m_pszStructName( 0 ), m_pszScriptName( 0 ) {}
-	const char *								m_pszScriptName;
-	const char *								m_pszStructName;
-	const char *								m_pszDescription;
-	CUtlVector<ScriptMemberBinding_t>		m_MemberBindings;
-};
-
-//---------------------------------------------------------
-struct ScriptConstantBinding_t
-{
-	ScriptConstantBinding_t() : m_pszDescription( 0 ), m_pszScriptName( 0 ), m_flags( 0 ) {}
-
-	const char		*m_pszScriptName;
-	const char		*m_pszDescription;
-	ScriptVariant_t	m_data;
-	unsigned		m_flags;
-};
-
-//---------------------------------------------------------
-struct ScriptEnumDesc_t
-{
-	static ScriptEnumDesc_t *&GetDescList()
-	{
-		static ScriptEnumDesc_t *pHead = NULL;
-		return pHead;
-	}
-
-	const char			*m_pszScriptName;
-	const char			*m_pszDescription;
-	CUtlVector<ScriptConstantBinding_t> m_ConstantBindings;
-	unsigned			m_flags;
-	ScriptEnumDesc_t	*m_pNext;
-};
-
-//---------------------------------------------------------
-
 struct ScriptClassDesc_t
 {
 	ScriptClassDesc_t( void (*pfnInitializer)() ) : m_pszScriptName( 0 ), m_pszClassname( 0 ), m_pszDescription( 0 ), m_pBaseDesc( 0 ), m_pfnConstruct( 0 ), m_pfnDestruct( 0 ), pHelper(NULL) 
@@ -349,9 +274,6 @@ struct ScriptClassDesc_t
 	void *(*m_pfnConstruct)();
 	void (*m_pfnDestruct)( void *);
 	IScriptInstanceHelper *				pHelper; // optional helper
-
-	CUtlVector<ScriptHook_t>			m_Hooks;
-	CUtlVector<ScriptMemberBinding_t>	m_MemberBindings;
 
 	ScriptClassDesc_t *					m_pNextDesc;
 
@@ -586,16 +508,6 @@ public:
 	// External functions
 	//--------------------------------------------------------
 	virtual void RegisterFunction( ScriptFunctionBinding_t *pScriptFunction ) = 0;
-
-	//--------------------------------------------------------
-	// External constants
-	//--------------------------------------------------------
-	virtual void RegisterConstant( ScriptConstantBinding_t *pScriptConstant ) = 0;
-
-	//--------------------------------------------------------
-	// External enums
-	//--------------------------------------------------------
-	virtual void RegisterEnum( ScriptEnumDesc_t *pEnumDesc ) = 0;
 
 	//--------------------------------------------------------
 	// External classes
@@ -1491,135 +1403,5 @@ inline HSCRIPT IScriptVM::Get<HSCRIPT>( HSCRIPT hScope, const char *pszKey )
 }
 
 #include "tier0/memdbgoff.h"
-
-
-//-----------------------------------------------------------------------------
-// New macros from TF2V (ScriptRegisterConstant, ScriptHook, DEFINE_MEMBERVAR,
-//                       BEGIN_SCRIPTENUM, BEGIN_STRUCT_SCRIPTDESC)
-//-----------------------------------------------------------------------------
-
-#define ScriptRegisterConstant( pVM, constant, description )						ScriptRegisterConstantNamed( pVM, constant, #constant, description )
-#define ScriptRegisterConstantNamed( pVM, constant, scriptName, description )		do { static ScriptConstantBinding_t binding; binding.m_pszScriptName = scriptName; binding.m_pszDescription = description; binding.m_data = ScriptVariant_t( constant ); pVM->RegisterConstant( &binding ); } while (0)
-
-#define ScriptRegisterConstantFromTemp( pVM, constant, description )				ScriptRegisterConstantFromTempNamed( pVM, constant, #constant, description )
-#define ScriptRegisterConstantFromTempNamed( pVM, constant, scriptName, description ) do { static ScriptConstantBinding_t binding; binding.m_pszScriptName = scriptName; binding.m_pszDescription = description; binding.m_data = ScriptVariant_t( constant, true ); pVM->RegisterConstant( &binding ); } while (0)
-
-#define ScriptAddMemberToClassDesc( pClassDesc, class, memberType, memberName, description )			ScriptAddMemberToClassDescNamed( pClassDesc, class, memberType, memberName, #memberName, description )
-#define ScriptAddMemberToClassDescNamed( pClassDesc, class, memberType, memberName, scriptName, description ) do { ScriptMemberBinding_t *pBinding = &((pClassDesc)->m_MemberBindings[(pClassDesc)->m_MemberBindings.AddToTail()]); pBinding->m_nMemberType = memberType; pBinding->m_pszMemberName = #memberName; pBinding->m_pszScriptName = scriptName; pBinding->m_pszDescription = description; pBinding->m_unMemberOffs = offsetof(class, memberName); pBinding->m_unMemberSize = sizeof(((class *)0)->memberName); } while( 0 )
-
-#define DEFINE_MEMBERVAR( memberName, memberType, description )						DEFINE_MEMBERVAR_NAMED( memberName, memberType, #memberName, description )
-#define DEFINE_MEMBERVAR_NAMED( memberName, memberType, scriptName, description )	ScriptAddMemberToClassDescNamed( pDesc, _className, memberType, memberName, scriptName, description );
-
-// Use this for hooks which have no parameters
-#define DEFINE_SIMPLE_SCRIPTHOOK( hook, hookName, returnType, description )	\
-	do { \
-		ScriptHook_t *pHook = &(pDesc->m_Hooks[pDesc->m_Hooks.AddToTail()]); \
-		pHook->m_func.m_desc.m_pszFunction = #hook; \
-		pHook->m_func.m_desc.m_pszScriptName = hookName; \
-		pHook->m_func.m_flags = SF_MEMBER_FUNC; \
-		pHook->m_func.m_desc.m_pszDescription = description; \
-		pHook->m_func.m_desc.m_ReturnType = returnType; \
-	} while (0);
-
-#define BEGIN_SCRIPTHOOK( hook, hookName, returnType, description ) \
-	do { \
-		ScriptHook_t *pHook = &(pDesc->m_Hooks[pDesc->m_Hooks.AddToTail()]); \
-		pHook->m_func.m_desc.m_Parameters.RemoveAll(); \
-		pHook->m_func.m_desc.m_pszFunction = #hook; \
-		pHook->m_func.m_desc.m_pszScriptName = hookName; \
-		pHook->m_func.m_flags = SF_MEMBER_FUNC; \
-		pHook->m_func.m_desc.m_pszDescription = description; \
-		pHook->m_func.m_desc.m_ReturnType = returnType;
-
-#define DEFINE_SCRIPTHOOK_PARAM( paramName, type ) \
-	if( 0 ) {} else { \
-		pHook->m_ParamNames.CopyAndAddToTail( #paramName ); \
-		pHook->m_func.m_desc.m_Parameters.AddToTail( type ); \
-	}
-
-#define END_SCRIPTHOOK() \
-	} while (0);
-
-//-----------------------------------------------------------------------------
-// ScriptEnumDesc macros
-//-----------------------------------------------------------------------------
-#define ScriptAddConstantToEnumDescNamed( pEnumDesc, constant, scriptName, description ) do { ScriptConstantBinding_t *pBinding = &((pEnumDesc)->m_ConstantBindings[(pEnumDesc)->m_ConstantBindings.AddToTail()]); pBinding->m_pszScriptName = scriptName; pBinding->m_pszDescription = description; pBinding->m_data = constant; pBinding->m_flags = SF_MEMBER_FUNC; } while (0)
-
-#define BEGIN_SCRIPTENUM( enumName, description ) \
-		extern void Init##enumName##ScriptDesc(); \
-		struct ScriptEnum##enumName##Desc_t : public ScriptEnumDesc_t \
-		{ \
-			ScriptEnum##enumName##Desc_t( ScriptDescInitFunc_t pInitFunc ) : ScriptEnumDesc_t() \
-			{ \
-				pInitFunc(); \
-				auto pNext = GetDescList(); \
-				GetDescList() = this; \
-				m_pNext = pNext; \
-			} \
-		} g_##enumName##_EnumDesc( &Init##enumName##ScriptDesc ); \
-		template<> ScriptEnumDesc_t *GetScriptEnumDesc<ScriptEnum##enumName##Desc_t>(ScriptEnum##enumName##Desc_t *) \
-		{ \
-			return &g_##enumName##_EnumDesc; \
-		} \
-		void Init##enumName##ScriptDesc() \
-		{ \
-			static bool bInitialized; \
-			if ( bInitialized ) return; \
-			bInitialized = true; \
-			ScriptEnumDesc_t *pDesc = &g_##enumName##_EnumDesc; \
-			pDesc->m_pszScriptName = #enumName; \
-			pDesc->m_pszDescription = description;
-
-#define DEFINE_ENUMCONST( constant, description )			DEFINE_ENUMCONST_NAMED( constant, #constant, description )
-#define DEFINE_ENUMCONST_NAMED( constant, scriptName, description ) ScriptAddConstantToEnumDescNamed( pDesc, constant, scriptName, description );
-
-#define END_SCRIPTENUM() }
-
-typedef void (*ScriptDescInitFunc_t)();
-
-template<typename T>
-ScriptEnumDesc_t *GetScriptEnumDesc( T* );
-
-#define GetScriptDescForEnum( enumName ) GetScriptEnumDesc( ( ScriptEnum##enumName##Desc_t *)NULL )
-
-//-----------------------------------------------------------------------------
-// ScriptStructDesc macros
-//-----------------------------------------------------------------------------
-#define ScriptAddMemberToStructDescNamed(pStructDesc, struct, memberType, memberName, scriptName, description) do { ScriptMemberBinding_t *pBinding = &((pStructDesc)->m_MemberBindings[(pStructDesc)->m_MemberBindings.AddToTail()]); pBinding->m_nMemberType = memberType; pBinding->m_pszMemberName = #memberName; pBinding->m_pszScriptName = scriptName; pBinding->m_pszDescription = description; pBinding->m_unMemberOffs = offsetof(struct, memberName); pBinding->m_unMemberSize = sizeof(((struct *)0)->memberName); } while( 0 )
-#define ScriptInitStructDescNamed(pStructDesc, structName, scriptName, description) do { (pStructDesc)->m_pszScriptName = scriptName; (pStructDesc)->m_pszStructName = #structName; (pStructDesc)->m_pszDescription = description; } while ( 0 )
-
-#define BEGIN_STRUCT_SCRIPTDESC(structName, description) \
-	static ScriptStructDesc_t g_##structName##_ScriptDesc; \
-	template<> ScriptStructDesc_t *GetScriptStructDesc<structName>(structName *) \
-	{ \
-		static bool bInitialized; \
-		if ( bInitialized ) return &g_##structName##_ScriptDesc; \
-		bInitialized = true; \
-		typedef structName _structName; \
-		ScriptStructDesc_t *pDesc = &g_##structName##_ScriptDesc; \
-		ScriptInitStructDescNamed( pDesc, structName, #structName, description );
-
-#define DEFINE_STRUCT_MEMBER(memberType, memberName, description)					ScriptAddMemberToStructDescNamed( pDesc, _structName, memberType, memberName, #memberName, description );
-#define DEFINE_STRUCT_MEMBER_NAMED(memberType, memberName, scriptName, description)	ScriptAddMemberToStructDescNamed( pDesc, _structName, memberType, memberName, scriptName, description );
-
-#define END_STRUCT_SCRIPTDESC() \
-		return pDesc; \
-	}
-
-#define ALLOW_SCRIPT_STRUCT_ACCESS()	template<typename T> friend ScriptStructDesc_t *GetScriptStructDesc(T *);
-
-template<typename T>
-ScriptStructDesc_t *GetScriptStructDesc(T *);
-
-#define GetScriptDescForStruct( structName ) GetScriptStructDesc( ( structName *)NULL )
-
-//-----------------------------------------------------------------------------
-// HScriptToClass helper
-//-----------------------------------------------------------------------------
-template <typename T> T *HScriptToClass( HSCRIPT hObj )
-{
-	extern IScriptVM *g_pScriptVM;
-	return (hObj) ? (T*)g_pScriptVM->GetInstanceValue( hObj, GetScriptDesc( (T*)NULL ) ) : NULL;
-}
 
 #endif // IVSCRIPT_H

@@ -121,7 +121,7 @@
 #define	FL_INWATER				(1<<9)	// In water
 
 // NOTE if you move things up, make sure to change this value
-#define PLAYER_FLAG_BITS		10
+#define PLAYER_FLAG_BITS		32
 
 #define	FL_FLY					(1<<10)	// Changes the SV_Movestep() behavior to not need to be on ground
 #define	FL_SWIM					(1<<11)	// Changes the SV_Movestep() behavior to not need to be on ground (but stay in water)
@@ -163,7 +163,7 @@
 #define	FL_INWATER				(1<<10)	// In water
 
 // NOTE if you move things up, make sure to change this value
-#define PLAYER_FLAG_BITS		11
+#define PLAYER_FLAG_BITS		32
 
 #define	FL_FLY					(1<<11)	// Changes the SV_Movestep() behavior to not need to be on ground
 #define	FL_SWIM					(1<<12)	// Changes the SV_Movestep() behavior to not need to be on ground (but stay in water)
@@ -259,9 +259,7 @@ enum SolidFlags_t
 	FSOLID_ROOT_PARENT_ALIGNED	= 0x0100,	// Collisions are defined in root parent's local coordinate space
 	FSOLID_TRIGGER_TOUCH_DEBRIS	= 0x0200,	// This trigger will touch debris objects
 
-	FSOLID_COLLIDE_WITH_OWNER   = 0X0400,	// Can hit our m_hOwner
-
-	FSOLID_MAX_BITS	= 11
+	FSOLID_MAX_BITS	= 10
 };
 
 //-----------------------------------------------------------------------------

@@ -373,8 +373,6 @@ public:
 	// True if it has a min/max setting
 	bool						GetMin( float& minVal ) const;
 	bool						GetMax( float& maxVal ) const;
-	void						SetMin( float min );
-	void						SetMax( float max );
 	const char					*GetDefault( void ) const;
 	void						SetDefault( const char *pszDefault );
 
@@ -778,17 +776,4 @@ private:
 	CCommandMemberInitializer_##_funcname m_##_funcname##_register;		\
 
 
-
-
-#ifdef CLIENT_DLL
-#define CON_COMMAND_SHARED( name, description ) \
-	static void name( const CCommand &args ); \
-	static ConCommand name##_command_client( #name "_client", name, description ); \
-	static void name( const CCommand &args )
-#else
-#define CON_COMMAND_SHARED( name, description ) \
-	static void name( const CCommand &args ); \
-	static ConCommand name##_command( #name, name, description ); \
-	static void name( const CCommand &args )
-#endif
 #endif // CONVAR_H
