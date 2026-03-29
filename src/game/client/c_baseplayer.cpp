@@ -49,7 +49,7 @@
 #include "steam/steam_api.h"
 #include "sourcevr/isourcevirtualreality.h"
 #include "client_virtualreality.h"
-#include "VRMod.h"   // For VF2 VR
+#include "vr/VRMod.h"   // For VF2 VR
 
 #ifdef TF_CLIENT_DLL
 #include "tf_gamerules.h"

@@ -77,6 +77,13 @@ public:
 
 	DECLARE_CLASS( C_TFPlayer, C_BasePlayer );
 	DECLARE_CLIENTCLASS();
+	
+	int		GetCurrency( void ){ return m_nCurrency; }
+
+	const char *GetEyeGlowEffect() { return m_pszEyeGlowEffectName; }
+	Vector GetEyeGlowColor( bool bAlternate ) { return bAlternate? m_vEyeGlowColor1 : m_vEyeGlowColor2 ; }
+
+	bool	IsPlayerOnSteamFriendsList( C_BasePlayer *pPlayer );
 	DECLARE_PREDICTABLE();
 	DECLARE_INTERPOLATION();
 
@@ -500,13 +507,12 @@ private:
 	void		UpdateDemomanEyeEffect( int iDecapitations );
 	const char* GetDemomanEyeEffectName( int iDecapitations );
 
-	int		GetCurrency( void ){ return m_nCurrency; }
+
 
 	virtual void UpdateMVMEyeGlowEffect( bool bVisible );
 
 	void	UpdateKillStreakEffects( int iCount, bool bKillScored = false );
-	const char *GetEyeGlowEffect() { return m_pszEyeGlowEffectName; }
-	Vector GetEyeGlowColor( bool bAlternate ) { return bAlternate? m_vEyeGlowColor1 : m_vEyeGlowColor2 ; }
+
 
 	// Bounty Mode
 	int	 GetExperienceLevel( void ) { return m_nExperienceLevel; }
@@ -522,7 +528,7 @@ private:
 
 	bool	ShouldPlayerDrawParticles( void );
 
-	bool	IsPlayerOnSteamFriendsList( C_BasePlayer *pPlayer );
+
 
 protected:
 

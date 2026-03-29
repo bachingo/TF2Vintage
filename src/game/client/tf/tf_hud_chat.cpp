@@ -323,7 +323,7 @@ void CHudChat::MsgFunc_PlayerTyping( bf_read &msg )
 // static
 bool CHudChat::GetArrowChatColor( const char *pszText, Color &colorOut )
 {
-	CHudChat *pChat = dynamic_cast<CHudChat *>( GetHud().FindElement( "HudChat" ) );
+	CHudChat *pChat = dynamic_cast<CHudChat *>( gHUD.FindElement( "HudChat" ) );
 	if ( !pChat )
 		return false;
 

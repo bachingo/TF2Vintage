@@ -12,7 +12,7 @@
 
 #include "c_baseentity.h"
 #include "basetypes.h"
-#include "../../materialsystem/stdshaders/IShaderExtension.h"
+// #include "../../materialsystem/stdshaders/IShaderExtension.h" // Removed as file is missing
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------

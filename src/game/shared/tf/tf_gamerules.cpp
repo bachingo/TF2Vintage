@@ -1067,8 +1067,8 @@ ConVar tf2v_quickplay_competitive( "tf2v_quickplay_competitive", "0",
 //       Use TFGameRules()->EraState().fieldName instead.
 //       Direct reads bypass the era lock and allow mid-round exploits.
 
-ConVar tf2v_crit_model( "tf2v_crit_model", "1", FCVAR_NOTIFY | FCVAR_REPLICATED,
-	"0=Era 1-39: 5% base/1600 ramp. 1=Era 40+: 2% base/800 ramp.", true, 0, true, 1 );
+// ConVar tf2v_crit_model( "tf2v_crit_model", "1", FCVAR_NOTIFY | FCVAR_REPLICATED,
+// 	"0=Era 1-39: 5% base/1600 ramp. 1=Era 40+: 2% base/800 ramp.", true, 0, true, 1 );
 ConVar tf2v_damage_spread_mode( "tf2v_damage_spread_mode", "2", FCVAR_NOTIFY | FCVAR_REPLICATED,
 	"0=+-25% on, 1=+-10% on, 2=+-10% off by default.", true, 0, true, 2 );
 ConVar tf2v_fall_sounds( "tf2v_fall_sounds", "1", FCVAR_NOTIFY | FCVAR_REPLICATED,

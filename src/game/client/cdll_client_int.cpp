@@ -118,6 +118,7 @@
 #include "../engine/audio/public/sound.h"
 #include "tf_shared_content_manager.h"
 #include "tf_gamerules.h"
+#include "tf2v_offline_inventory.h"
 #endif
 #include "clientsteamcontext.h"
 #include "renamed_recvtable_compat.h"
@@ -898,7 +899,7 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	ConnectTier2Libraries( &appSystemFactory, 1 );
 	ConnectTier3Libraries( &appSystemFactory, 1 );
 
-	if ( tf2v_hrtf_enabled.getBool() )
+	if ( tf2v_hrtf_enabled.GetBool() )
 	{
 		CommandLine()->AppendParm( "-snddrv al", nullptr );
 	}
