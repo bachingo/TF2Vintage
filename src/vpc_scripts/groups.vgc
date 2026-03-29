@@ -17,18 +17,15 @@ $Group "gamedlls"
 
 $Group "game"
 {
-	"crash_handler"
 	"client"
+	"crash_handler"
 	"launcher_main"
 	"mathlib"
 	"matsys_controls"
-	"angelscript"
-	"luajit"
 	"raytrace"
 	"server"
 	"tier1"
 	"vgui_controls"
-	"vscript"
 }
 
 $Group "shaders"
@@ -41,8 +38,8 @@ $Group "shaders"
 $Group "everything"
 {
 	"captioncompiler"
-	"crash_handler"
 	"client"
+	"crash_handler"
 	"fgdlib"
 	"glview"
 	"height2normal"
@@ -66,12 +63,6 @@ $Group "everything"
 	"vtfdiff"
 	"vvis_dll"
 	"vvis_launcher"
-
-	"angelscript"
-	"game_shader_dx9"
-	"luajit"
-	"game_shader_generic_example"
-	"vscript"
 
 	// You probably don't want to override all shaders by default.
 	// This is just an example mainly! Pick and choose what you want from this project. :D
