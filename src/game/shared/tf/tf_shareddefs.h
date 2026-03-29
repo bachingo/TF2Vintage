@@ -140,24 +140,29 @@ enum
 	DRAW_ARROW_RIGHT
 };
 
-ConVar tf2v_crit_model( "tf2v_crit_model", "0", FCVAR_REPLICATED, "Percent chance for regular critical hits.");
 
 //-----------------------------------------------------------------------------
 // CVar replacements
 //-----------------------------------------------------------------------------
-//Todo: Replace tf2v_crit_model.GetBool() with s.bCritModel when networked
-#define TF_DAMAGE_CRIT_CHANCE				tf2v_crit_model.GetBool() ? 0.02f : 0.05f // Originally 5%
-#define TF_DAMAGE_CRIT_CHANCE_RAPID			tf2v_crit_model.GetBool() ? 0.02f : 0.05f // Originally 5%
+
 #define TF_DAMAGE_CRIT_DURATION_RAPID		2.0f
 #define TF_DAMAGE_CRIT_CHANCE_MELEE			0.15f
 
 #define TF_DAMAGE_CRITMOD_MAXTIME			20
 #define TF_DAMAGE_CRITMOD_MINTIME			2
-#define TF_DAMAGE_CRITMOD_DAMAGE			tf2v_crit_model.GetBool() ? 800 : 1600 // Originally 1600
 #define TF_DAMAGE_CRITMOD_MAXMULT			6
 
 #define TF_DAMAGE_CRIT_MULTIPLIER			3.0f
 #define TF_DAMAGE_MINICRIT_MULTIPLIER		1.35f
+
+//Todo: Replace tf2v_crit_model.GetBool() with s.bCritModel when networked
+#define TF_DAMAGE_CRIT_CHANCE				0.02f
+#define TF_DAMAGE_CRIT_CHANCE_RAPID			0.02f
+#define TF_DAMAGE_CRITMOD_DAMAGE			800
+
+#define TF_DAMAGE_CRIT_CHANCE_OLD			0.05f // Originally 5%
+#define TF_DAMAGE_CRIT_CHANCE_RAPID_OLD		0.05f // Originally 5%
+#define TF_DAMAGE_CRITMOD_DAMAGE_OLD		1600 // Originally 1600
 
 //-----------------------------------------------------------------------------
 // TF-specific viewport panels

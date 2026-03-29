@@ -79,7 +79,7 @@ $Configuration
 
 	$PostBuildEvent [!$ANALYZE && $WIN32]
 	{
-		$CommandLine		"$BASE" "copy $QUOTE$SRCDIR\\thirdparty\\discord_game_sdk\\lib\\x64\\discord_game_sdk.dll$QUOTE $OUTBINDIR\\discord_game_sdk.dll" "\n" \
+		$CommandLine		"$BASE" "copy $QUOTE$SRCDIR\thirdparty\discord_game_sdk\lib\x64\discord_game_sdk.dll$QUOTE $OUTBINDIR\discord_game_sdk.dll" "\n" \
 							"if ERRORLEVEL 1 goto BuildEventFailed" "\n"
 	}
 }
@@ -1335,6 +1335,8 @@ $Project
 		$Lib		tier3
 		$Lib		vgui_controls
 		$Lib		vtf
+		
+		$ImpLib 	discord_game_sdk
 
 		$ImpLibexternal steam_api	[!$WIN64]
 		$ImpLibexternal steam_api64	[$WIN64]
