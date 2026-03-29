@@ -5,18 +5,9 @@
 #include <thread>   // std::thread replaces CreateThread on all platforms
 #include <chrono>   // std::this_thread::sleep_for replaces Sleep/WaitForSingleObject
 
-// Platform-specific D3D headers — only on Windows
-#if defined( _WIN32 )
-#   include <d3d9.h>
-#   include "D3D11.h"
-#   include <Windows.h>
-#   include <MinHook.h>
-#   pragma comment( lib, "d3d11.lib" )
-#   pragma comment( lib, "d3d9.lib" )
-#endif
-//#include <isourcevirtualreality.h>
+#include <isourcevirtualreality.h>
 #include <imaterialsystem.h>
-//#include <cdll_client_int.h>
+
 #include <thread>
 #include <vector>
 //#include "c_baseentity.h"		// Recently added for headtracking calculations
