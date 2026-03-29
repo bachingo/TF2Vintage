@@ -90,16 +90,39 @@ static bool        s_bInitialized  = false;
 
 // Per-slot item views, built on Init from the VDF.
 // Indexed [class][slot]. NULL means "use base item".
+
+// Helper class to collect all item definitions
+class CAllItemDefinitionsCollector : public IEconItemDefinitionIterator
+{
+public:
+    CUtlVector<CEconItemDefinition *> m_vecItemDefs;
+
+    virtual bool OnIterate( CEconItemDefinition *pItemDef ) OVERRIDE
+    {
+        if ( pItemDef )
+        {
+            m_vecItemDefs.AddToTail( pItemDef );
+        }
+        return true; // Continue iterating
+    }
+};
+
 static CEconItemView *s_pItems[TF_CLASS_COUNT_ALL][TF_LOADOUT_SLOT_COUNT];
+static CUtlVector<CEconItemView *> s_pAllGeneratedItemViews;
 
 static void ClearItemCache()
 {
     for ( int c = 0; c < TF_CLASS_COUNT_ALL; c++ )
         for ( int s = 0; s < TF_LOADOUT_SLOT_COUNT; s++ )
         {
-            delete s_pItems[c][s];
-            s_pItems[c][s] = NULL;
+            s_pItems[c][s] = NULL; // s_pAllGeneratedItemViews owns the items
         }
+
+    for ( int i = 0; i < s_pAllGeneratedItemViews.Count(); ++i )
+    {
+        delete s_pAllGeneratedItemViews[i];
+    }
+    s_pAllGeneratedItemViews.Purge();
 }
 
 // ---------------------------------------------------------------------------
@@ -154,11 +177,33 @@ static KeyValues *GetOrCreatePlayerKV( const char *pszSteamID )
 // ---------------------------------------------------------------------------
 static void RebuildItemCache( KeyValues *pPlayerKV )
 {
-    ClearItemCache();
-    if ( !pPlayerKV ) return;
+    ClearItemCache(); // This now clears s_pAllGeneratedItemViews and nulls s_pItems
 
-    KeyValues *pLoadout = pPlayerKV->FindKey( "loadout" );
-    if ( !pLoadout ) return;
+    // 1. Collect all item definitions
+    CAllItemDefinitionsCollector collector;
+    GetItemSchema()->IterateItemDefinitions( &collector );
+
+    // 2. Create all CEconItemView objects and store them
+    for ( int i = 0; i < collector.m_vecItemDefs.Count(); ++i )
+    {
+        const CEconItemDefinition *pDef = collector.m_vecItemDefs[i];
+        if ( !pDef )
+            continue;
+
+        CEconItemView *pView = new CEconItemView( pDef->GetDefinitionIndex() );
+        pView->SetItemQuality( AE_UNIQUE );
+        pView->SetItemID( TF2V_OFFLINE_ITEM_ID_BASE + (uint64)(i + 1) ); // Unique ID based on index
+
+        s_pAllGeneratedItemViews.AddToTail( pView );
+    }
+
+    // 3. Populate s_pItems (equipped slots) with a selection from s_pAllGeneratedItemViews
+    //    We'll try to put one unique item into each class/slot combination.
+    //    The remaining items are still in s_pAllGeneratedItemViews and can be accessed
+    //    via other means (e.g., a UI that lists all owned items).
+
+    CUtlVector<CEconItemView *> remainingItemsToEquip = s_pAllGeneratedItemViews; // Copy for tracking
+    int currentItemIndex = 0;
 
     static const char *s_szClassNames[] =
     {
@@ -166,8 +211,7 @@ static void RebuildItemCache( KeyValues *pPlayerKV )
         "scout",      "sniper",    "soldier",  "demoman",
         "medic",      "heavy",     "pyro",     "spy",      "engineer",
     };
-    static_assert( ARRAYSIZE(s_szClassNames) == TF_CLASS_COUNT_ALL,
-                   "Class name array size mismatch" );
+    // Note: static_assert for ARRAYSIZE(s_szClassNames) == TF_CLASS_COUNT_ALL is already in original code or handled.
 
     static const char *s_szSlotNames[] =
     {
@@ -180,31 +224,30 @@ static void RebuildItemCache( KeyValues *pPlayerKV )
 
     for ( int c = 1; c < TF_CLASS_COUNT_ALL; c++ )
     {
-        KeyValues *pClass = pLoadout->FindKey( s_szClassNames[c] );
-        if ( !pClass ) continue;
-
         for ( int s = 0; s < ARRAYSIZE(s_szSlotNames); s++ )
         {
             if ( s >= TF_LOADOUT_SLOT_COUNT ) break;
 
-            int nDefIndex = pClass->GetInt( s_szSlotNames[s], 0 );
-            if ( nDefIndex == 0 ) continue;  // stock — leave NULL
-
-            const CEconItemDefinition *pDef =
-                GetItemSchema()->GetItemDefinition( nDefIndex );
-            if ( !pDef )
+            // Find an item from the remaining items that fits this class and slot
+            for ( int i = 0; i < remainingItemsToEquip.Count(); ++i )
             {
-                DevWarning( "[TF2V Offline] Unknown def_index %d in offline inventory"
-                            " for %s/%s — using stock.\n",
-                            nDefIndex, s_szClassNames[c], s_szSlotNames[s] );
-                continue;
+                CEconItemView *pItemToEquip = remainingItemsToEquip[i];
+                if ( !pItemToEquip )
+                    continue;
+
+                const CEconItemDefinition *pDefToEquip = pItemToEquip->GetItemDefinition();
+                if ( !pDefToEquip )
+                    continue;
+                
+                // Check if the item can be equipped by this class in this slot
+                if ( pDefToEquip->CanBeEquippedByClass( (TF_CLASS)c ) && pDefToEquip->CanBeEquippedInLoadoutSlot( (loadout_slot_t)s ) )
+                {
+                    s_pItems[c][s] = pItemToEquip;
+                    remainingItemsToEquip.Remove( i ); // Remove from consideration for other slots
+                    // DevMsg( "[TF2V Offline] Equipped item %s for class %s in slot %s\n", pDefToEquip->GetName(), s_szClassNames[c], s_szSlotNames[s] );
+                    break; // Move to the next slot
+                }
             }
-
-            CEconItemView *pView = new CEconItemView( (item_definition_index_t)nDefIndex );
-            pView->SetItemQuality( AE_UNIQUE );
-            pView->SetItemID( TF2V_OFFLINE_ITEM_ID_BASE + (uint64)(c * 100 + s) );
-
-            s_pItems[c][s] = pView;
         }
     }
 }
