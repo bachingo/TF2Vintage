@@ -1521,12 +1521,6 @@ void CTFWeaponBase::CalcIsAttackCritical( void)
 
 	m_bCurrentCritIsRandom = false;
 
-	// Don't bother checking if allcrit is on.
-	if ( tf2v_allcrit.GetBool() )
-	{
-		m_bCurrentAttackIsCrit = true;
-		return;
-	}
 	
 #if !defined( CLIENT_DLL )
 	// in training mode, the all bot team does not get crits

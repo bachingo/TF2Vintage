@@ -106,6 +106,7 @@
 #include "vgui/ILocalize.h"
 #include "vgui/IVGui.h"
 #include "ixboxsystem.h"
+#include "irichpresenceclient.h"
 #include "ipresence.h"
 #include "engine/imatchmaking.h"
 #include "cdll_bounded_cvars.h"

@@ -33,7 +33,7 @@
 	#include "c_tf_player.h"
 	#include "c_te_effect_dispatch.h"
 	#include "c_tf_gamestats.h"
-	#include "VRMod.h"
+	#include "vr/VRMod.h"
 
 #endif
 

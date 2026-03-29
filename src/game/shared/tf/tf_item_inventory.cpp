@@ -346,26 +346,26 @@ int	CTFInventoryManager::GetAllUsableItemsForSlot( int iClass, int iSlot, CUtlVe
      if ( !pID )
      {
          if ( !steamapicontext || !steamapicontext->SteamUser() )
-+        {
-+            // TF2V: No Steam — serve offline inventory
-+            if ( TF2VIsOfflineMode() )
-+            {
-+                CEconItemView *p = TF2VOfflineInventory_GetItem( iClass, iSlot );
-+                return p ? p : GetBaseItemForClass( iClass, iSlot );
-+            }
+        {
+            // TF2V: No Steam — serve offline inventory
+            if ( TF2VIsOfflineMode() )
+            {
+                CEconItemView *p = TF2VOfflineInventory_GetItem( iClass, iSlot );
+                return p ? p : GetBaseItemForClass( iClass, iSlot );
+            }
              return NULL;
-+        }
+        }
 
          localSteamID = steamapicontext->SteamUser()->GetSteamID();
          pID = &localSteamID;
      }
-+
-+    // TF2V: Even with Steam, serve offline inventory if GC is down
-+    if ( TF2VIsOfflineMode() )
-+    {
-+        CEconItemView *p = TF2VOfflineInventory_GetItem( iClass, iSlot );
-+        return p ? p : GetBaseItemForClass( iClass, iSlot );
-+    }
+
+    // TF2V: Even with Steam, serve offline inventory if GC is down
+    if ( TF2VIsOfflineMode() )
+    {
+        CEconItemView *p = TF2VOfflineInventory_GetItem( iClass, iSlot );
+        return p ? p : GetBaseItemForClass( iClass, iSlot );
+    }
  #endif
 
      CTFPlayerInventory *pInv = GetInventoryForPlayer( *pID );
@@ -1783,16 +1783,16 @@ void CTFPlayerInventory::SOCacheSubscribed( const CSteamID & steamIDOwner, GCSDK
      UpdateRealTFLoadoutItems();
      LoadLocalLoadout();
 
-+    // TF2V: GC reconnected after offline period — clear offline mode flag.
-+    // LoadLocalLoadout() already reloads from GC-backed data, so the offline
-+    // VDF becomes stale automatically. No explicit flush needed.
-+    if ( tf2v_offline_inventory.GetInt() == 0 )  // only if not force-offline
-+    {
-+        DevMsg( "[TF2V Offline] GC connected — switching to Steam inventory.\n" );
-+        // The offline item cache is still live until the next Init().
-+        // GiveDefaultItems will be called on respawn, which calls GetLoadoutItem,
-+        // which now reads from m_Inventory (GC-backed) because !TF2VIsOfflineMode().
-+    }
+    // TF2V: GC reconnected after offline period — clear offline mode flag.
+    // LoadLocalLoadout() already reloads from GC-backed data, so the offline
+    // VDF becomes stale automatically. No explicit flush needed.
+    if ( tf2v_offline_inventory.GetInt() == 0 )  // only if not force-offline
+    {
+        DevMsg( "[TF2V Offline] GC connected — switching to Steam inventory.\n" );
+        // The offline item cache is still live until the next Init().
+        // GiveDefaultItems will be called on respawn, which calls GetLoadoutItem,
+        // which now reads from m_Inventory (GC-backed) because !TF2VIsOfflineMode().
+    }
 
      VerifyChangedLoadoutsAreValid();
      UpdateCachedServerLoadoutItems();
