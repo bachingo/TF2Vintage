@@ -526,51 +526,6 @@ $Project
 		$File	"$SRCDIR\game\shared\secure_command_line.cpp"
 
 
-		$Folder	"Discord Game SDK"	[$WINDOWS]
-		{
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\achievement_manager.cpp"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\achievement_manager.h"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\activity_manager.cpp"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\activity_manager.h"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\application_manager.cpp"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\application_manager.h"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\core.cpp"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\core.h"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\discord.h"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\event.h"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\ffi.h"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\image_manager.cpp"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\image_manager.h"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\lobby_manager.cpp"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\lobby_manager.h"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\network_manager.cpp"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\network_manager.h"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\overlay_manager.cpp"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\overlay_manager.h"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\relationship_manager.cpp"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\relationship_manager.h"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\storage_manager.cpp"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\storage_manager.h"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\store_manager.cpp"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\store_manager.h"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\types.cpp"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\types.h"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\user_manager.cpp"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\user_manager.h"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\voice_manager.cpp"
-			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\voice_manager.h"
-				{
-						$Configuration
-						{
-							$Compiler
-							{
-								$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
-								$EnableC++Exceptions			"Yes (/EHsc)"
-							}
-						}
-				}			
-		}
-
 		$Folder	"Sixense"
 		{
 			$File	"sixense\in_sixense.cpp"
@@ -725,6 +680,66 @@ $Project
 
 	}
 
+	$Folder "Discord SDK" [$WINDOWS]
+		{
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\achievement_manager.cpp"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\achievement_manager.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\activity_manager.cpp"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\activity_manager.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\application_manager.cpp"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\application_manager.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\core.cpp"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\core.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\discord.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\event.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\ffi.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\image_manager.cpp"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\image_manager.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\lobby_manager.cpp"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\lobby_manager.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\network_manager.cpp"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\network_manager.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\overlay_manager.cpp"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\overlay_manager.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\relationship_manager.cpp"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\relationship_manager.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\storage_manager.cpp"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\storage_manager.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\store_manager.cpp"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\store_manager.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\types.cpp"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\types.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\user_manager.cpp"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\user_manager.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\voice_manager.cpp"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\voice_manager.h"
+
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\achievement_manager.cpp"	\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\activity_manager.cpp"		\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\application_manager.cpp"	\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\core.cpp"					\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\image_manager.cpp"			\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\lobby_manager.cpp"			\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\network_manager.cpp"		\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\overlay_manager.cpp"		\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\relationship_manager.cpp"	\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\storage_manager.cpp"		\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\store_manager.cpp"			\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\types.cpp"					\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\user_manager.cpp"			\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\voice_manager.cpp"			
+					{
+						$Configuration
+						{
+							$Compiler
+							{
+								$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+								$EnableC++Exceptions			"Yes (/EHsc)"
+							}
+						}
+					}
+		}
+		
 	$Folder	"MP3" [$WINDOWS||$POSIX]
 	{
 		$File	"mp3player.cpp"
