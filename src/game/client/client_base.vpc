@@ -1336,8 +1336,6 @@ $Project
 		$Lib		vgui_controls
 		$Lib		vtf
 		
-		$ImpLib 	discord_game_sdk
-
 		$ImpLibexternal steam_api	[!$WIN64]
 		$ImpLibexternal steam_api64	[$WIN64]
 		$ImpLib 	"$SRCDIR\thirdparty\discord_game_sdk\lib\x86_64\discord_game_sdk"	[$WIN64]
