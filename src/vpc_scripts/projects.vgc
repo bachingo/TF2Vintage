@@ -62,7 +62,7 @@ $Project "server"
 
 $Project "crash_handler"
 {
-	"game\crash_handler\tf2vintage_crash.vpc"	[$TF2VINTAGE]
+	"thirdparty\crash_handler\tf2vintage_crash.vpc"	[$TF2VINTAGE]
 }
 
 $Project "launcher_main"
