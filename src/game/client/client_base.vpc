@@ -559,6 +559,16 @@ $Project
 			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\user_manager.h"
 			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\voice_manager.cpp"
 			$File 	"$SRCDIR\\thirdparty\\discord_game_sdk\\cpp\\voice_manager.h"
+				{
+						$Configuration
+						{
+							$Compiler
+							{
+								$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+								$EnableC++Exceptions			"Yes (/EHsc)"
+							}
+						}
+				}			
 		}
 
 		$Folder	"Sixense"
