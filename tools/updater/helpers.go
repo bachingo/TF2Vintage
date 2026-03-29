@@ -337,21 +337,40 @@ func shortOrNone(commit string) string {
 	return commit
 }
 
-func launchGame(steamArgs []string) {
-	if len(steamArgs) == 0 {
+func launchGame(gameArgs []string) {
+	if len(gameArgs) == 0 {
 		return
 	}
-	cmd := newCmd(steamArgs[0], steamArgs[1:]...)
+	cmd := newCmd(gameArgs[0], gameArgs[1:]...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Run()
 }
 
-func launchIfNotStandalone(standalone bool, steamArgs []string) {
+// prepareGameLaunchArgs constructs the full command line for launching the game.
+// It ensures that tf2vintage_win64.exe is the executable and appends any original arguments.
+func prepareGameLaunchArgs(liveBinDir string, originalArgs []string) []string {
+	gameExeName := "tf2vintage_win64.exe" // Default for Windows
+
+	// Note: If cross-platform game builds are supported, this logic would need to
+	// dynamically determine the executable name based on runtime.GOOS.
+	// For now, focusing on the user's explicit mention of tf2vintage_win64.exe.
+
+	gamePath := filepath.Join(liveBinDir, gameExeName)
+
+	var finalArgs []string
+	finalArgs = append(finalArgs, gamePath)
+	finalArgs = append(finalArgs, originalArgs...) // Append all original arguments
+
+	return finalArgs
+}
+
+func launchIfNotStandalone(standalone bool, liveBinDir string, originalArgs []string) {
 	if standalone {
 		termPause()
 	} else {
-		launchGame(steamArgs)
+		gameLaunchArgs := prepareGameLaunchArgs(liveBinDir, originalArgs)
+		launchGame(gameLaunchArgs)
 	}
 }
 

@@ -75,8 +75,9 @@ func runUpdateMode(exe string) {
 		}
 	}
 
-	steamArgs := os.Args[1:]
-	standaloneMode := len(steamArgs) == 0
+	originalArgs := os.Args[1:]
+	gameLaunchArgs := prepareGameLaunchArgs(liveBinDir, originalArgs)
+	standaloneMode := len(originalArgs) == 0
 
 	termPrintBanner()
 
@@ -110,7 +111,7 @@ func runUpdateMode(exe string) {
 	if err != nil {
 		termWarn("Could not check for updates (%v) — launching with current version.", err)
 		os.RemoveAll(stagingRoot)
-		launchIfNotStandalone(standaloneMode, steamArgs)
+		launchIfNotStandalone(standaloneMode, liveBinDir, originalArgs)
 		return
 	}
 
@@ -201,7 +202,7 @@ func runUpdateMode(exe string) {
 	}
 	fmt.Println("Launching TF2 Vintage in 5 seconds...")
 	time.Sleep(5 * time.Second)
-	launchGame(steamArgs)
+	launchGame(gameLaunchArgs)
 }
 
 // ── Nightly bin update ────────────────────────────────────────────────────────
