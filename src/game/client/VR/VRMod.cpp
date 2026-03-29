@@ -1,14 +1,12 @@
 #include "cbase.h"
 #include <stdio.h>
-#include <openvr.h>
+#include "openvr.h"
 #include <convar.h>
-#include <thread>   // std::thread replaces CreateThread on all platforms
-#include <chrono>   // std::this_thread::sleep_for replaces Sleep/WaitForSingleObject
 
-#include <isourcevirtualreality.h>
+#include "sourcevr/isourcevirtualreality.h"
 #include <imaterialsystem.h>
+#include "tier1/strtools.h"
 
-#include <thread>
 #include <vector>
 //#include "c_baseentity.h"		// Recently added for headtracking calculations
 
@@ -26,11 +24,14 @@
 #include <vgui/IInput.h>				// For testing out the laser pointer 2D menu interaction
 #include <vgui_controls/Controls.h>		// For testing out the laser pointer 2D menu interaction
 
-
-
-// d3d11/d3d9 libs are conditionally linked via the platform block above
-
-
+// VRMod.h globals (single definition for the whole module)
+int VRMod_Started = 0;
+ITexture *RenderTarget_VRMod = NULL;
+ITexture *RenderTarget_VRMod_GUI = NULL;
+float g_horizontalFOVLeft = 0;
+float g_horizontalFOVRight = 0;
+float g_aspectRatioLeft = 0;
+float g_aspectRatioRight = 0;
 
 /*
 //*************************************************************************
@@ -186,16 +187,6 @@ int                     g_activeActionSetCount = 0;
 action                  g_actions[MAX_ACTIONS];
 int                     g_actionCount = 0;
 
-// D3D9/D3D11 texture sharing — Windows only
-#if defined( _WIN32 )
-typedef HRESULT(APIENTRY* CreateTexture) (IDirect3DDevice9*, UINT, UINT, UINT, DWORD, D3DFORMAT, D3DPOOL, IDirect3DTexture9**, HANDLE*);
-static CreateTexture    g_CreateTextureOriginal = NULL;
-ID3D11Device*           g_d3d11Device = NULL;
-ID3D11Texture2D*        g_d3d11Texture = NULL;
-HANDLE                  g_sharedTexture = NULL;
-DWORD_PTR               g_CreateTextureAddr = NULL;
-IDirect3DDevice9*       g_d3d9Device = NULL;
-#endif // _WIN32
 
 //other
 float                   g_horizontalOffsetLeft = 0;
@@ -318,18 +309,19 @@ int X_active_counter = 0;
 bool IsInTriggerMenu = false;
 bool IsInXMenu = false;
 
-//int GestureSelection = 0;
-//int GestureMenuIndex = 1;													// For gesture menu selection
-//int GestureNumItems = 4;													// For gesture menu selection
-//
-//enum XMenu {Main, Voice1, Voice2, Voice3, ClassSelect};
-//XMenu CurrentXMenu = Main;
-//
-//Vector GestureOrigin = Vector(0, 0, 0);
-//Vector GestureOriginLocal = Vector(0, 0, 0);
-//std::string GestureQuadMaterials[6] = {"", "", "", "", "", ""};
-//Vector GestureForward, GestureRight, GestureUp;
-//float GestureMinSelectionDistance = 8.0f;
+#if defined( CLIENT_DLL )
+int GestureSelection = 0;
+int GestureMenuIndex = 1;
+int GestureNumItems = 4;
+
+static VRGestureMenu::XMenu CurrentXMenu = VRGestureMenu::Main;
+
+Vector GestureOrigin = Vector(0, 0, 0);
+Vector GestureOriginLocal = Vector(0, 0, 0);
+std::string GestureQuadMaterials[6] = {"", "", "", "", "", ""};
+Vector GestureForward, GestureRight, GestureUp;
+float GestureMinSelectionDistance = 8.0f;
+#endif
 
 bool DrawLaser = false;
 Vector LaserOrigin = Vector(0, 0, 0);
@@ -345,64 +337,6 @@ ConVar VRMOD_render_VR_HUD("VRMOD_render_VR_HUD", "1", 0, "Determines if we rend
 
 
 
-
-//*************************************************************************
-//  CreateTexture hook																			// converted properly for Virtual Fortress 2 now.
-//*************************************************************************
-#if defined( _WIN32 )
-HRESULT APIENTRY CreateTextureHook(IDirect3DDevice9* pDevice, UINT w, UINT h, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture9** tex, HANDLE* shared_handle) {
-		if (g_sharedTexture == NULL) {
-			shared_handle = &g_sharedTexture;
-			pool = D3DPOOL_DEFAULT;
-			g_d3d9Device = pDevice;
-		}
-		return g_CreateTextureOriginal(pDevice, w, h, levels, usage, format, pool, tex, shared_handle);
-};
-
-#endif // _WIN32
-
-//*************************************************************************
-//    FindCreateTexture thread																	// converted properly for Virtual Fortress 2 now.
-//*************************************************************************
-#if defined( _WIN32 )
-DWORD WINAPI FindCreateTexture(LPVOID lParam) {
-    IDirect3D9* dx = Direct3DCreate9(D3D_SDK_VERSION);
-    if (dx == NULL) {
-        return 1;
-    }
-
-    HWND window = CreateWindowA("BUTTON", " ", WS_SYSMENU | WS_MINIMIZEBOX, CW_USEDEFAULT, CW_USEDEFAULT, 100, 100, NULL, NULL, GetModuleHandle(NULL), NULL);
-    if (window == NULL) {
-        dx->Release();
-        return 2;
-    }
-
-    IDirect3DDevice9* d3d9Device = NULL;
-
-    D3DPRESENT_PARAMETERS params;
-    ZeroMemory(&params, sizeof(params));
-    params.Windowed = TRUE;
-    params.SwapEffect = D3DSWAPEFFECT_DISCARD;
-    params.hDeviceWindow = window;
-    params.BackBufferFormat = D3DFMT_UNKNOWN;
-
-    //calling CreateDevice on the main thread seems to start causing random lua errors
-    if (dx->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &params, &d3d9Device) != D3D_OK) {
-        dx->Release();
-        DestroyWindow(window);
-        return 3;
-    }
-
-    g_CreateTextureAddr = ((DWORD_PTR*)(((DWORD_PTR*)d3d9Device)[0]))[23];
-
-    d3d9Device->Release();
-    dx->Release();
-    DestroyWindow(window);
-
-    return 0;
-}
-
-#endif // _WIN32
 
 //*************************************************************************
 //    Lua function: VRMOD_GetVersion()															// should be converted properly for Virtual Fortress 2 now
@@ -476,40 +410,51 @@ ConCommand vrmod_getversion("vrmod_getversion", VRMOD_GetVersion, "Returns the c
 int VRMOD_SetActionManifest(const char* fileName) {
 
     char currentDir[MAX_STR_LEN];
-    GetCurrentDirectory(MAX_STR_LEN, currentDir);
+    if ( !V_GetCurrentDirectory( currentDir, sizeof( currentDir ) ) )
+    {
+        currentDir[0] = '\0';
+    }
     char path[MAX_STR_LEN];
-    sprintf_s(path, MAX_STR_LEN, "%s\\SteamVrActionManifest\\%s", currentDir, fileName);
+    V_snprintf( path, sizeof( path ), "%s%sSteamVrActionManifest%s%s",
+                currentDir, CORRECT_PATH_SEPARATOR_S, CORRECT_PATH_SEPARATOR_S, fileName );
 
     g_pInput = vr::VRInput();
     if (g_pInput->SetActionManifestPath(path) != vr::VRInputError_None) {
 		Warning("SetActionManifestPath failed");
     }
 
-    FILE* file = NULL;
-    fopen_s(&file, path, "r");
+    FILE* file = fopen(path, "r");
     if (file == NULL) {
 		Warning("failed to open action manifest");
+		return -1;
     }
 
     memset(g_actions, 0, sizeof(g_actions));
 
     char word[MAX_STR_LEN];
-    while (fscanf_s(file, "%*[^\"]\"%[^\"]\"", word, MAX_STR_LEN) == 1 && strcmp(word, "actions") != 0);
-    while (fscanf_s(file, "%[^\"]\"", word, MAX_STR_LEN) == 1) {
+    const int SCAN_WIDTH = MAX_STR_LEN - 1;
+    char scanSkipQuoteStr[32];
+    char scanWordStr[32];
+    Q_snprintf( scanSkipQuoteStr, sizeof( scanSkipQuoteStr ), "%%*[^\"]\"%%%d[^\"]\"", SCAN_WIDTH );
+    Q_snprintf( scanWordStr, sizeof( scanWordStr ), "%%%d[^\"]\"", SCAN_WIDTH );
+
+    while ( fscanf( file, scanSkipQuoteStr, word ) == 1 && strcmp( word, "actions" ) != 0 )
+        ;
+    while ( fscanf( file, scanWordStr, word ) == 1 ) {
         if (strchr(word, ']') != nullptr)
             break;
         if (strcmp(word, "name") == 0) {
-            if (fscanf_s(file, "%*[^\"]\"%[^\"]\"", g_actions[g_actionCount].fullname, MAX_STR_LEN) != 1)
+            if (fscanf( file, scanSkipQuoteStr, g_actions[g_actionCount].fullname ) != 1)
                 break;
             g_actions[g_actionCount].name = g_actions[g_actionCount].fullname;
-            for (int i = 0; i < strlen(g_actions[g_actionCount].fullname); i++) {
+            for (int i = 0; i < (int)strlen(g_actions[g_actionCount].fullname); i++) {
                 if (g_actions[g_actionCount].fullname[i] == '/')
                     g_actions[g_actionCount].name = g_actions[g_actionCount].fullname + i + 1;
             }
             g_pInput->GetActionHandle(g_actions[g_actionCount].fullname, &(g_actions[g_actionCount].handle));
         }
         if (strcmp(word, "type") == 0) {
-            if (fscanf_s(file, "%*[^\"]\"%[^\"]\"", g_actions[g_actionCount].type, MAX_STR_LEN) != 1)
+            if (fscanf( file, scanSkipQuoteStr, g_actions[g_actionCount].type ) != 1)
                 break;
         }
         if (g_actions[g_actionCount].fullname[0] && g_actions[g_actionCount].type[0]) {
@@ -753,93 +698,17 @@ void VRMOD_GetActions() {
 }
 
 //*************************************************************************
-//    VRMOD_ShareTextureBegin()																// converted properly for Virtual Fortress 2 now.
+//    VRMOD_ShareTextureBegin / VRMOD_ShareTextureFinish
+//    Legacy path used D3D9 hooks + D3D11 OpenSharedResource. Submission now uses
+//    ISourceVirtualReality::GetRenderTarget() in VRMOD_SubmitSharedTexture() on all platforms.
 //*************************************************************************
-void VRMOD_ShareTextureBegin() {
-#if defined( _WIN32 )
-    // Windows: hide the window to work around D3D9 CreateDevice failure
-    // when running on a second thread while the game is fullscreen.
-    HWND activeWindow = GetActiveWindow();
-    if ( activeWindow )
-        ShowWindow( activeWindow, SW_HIDE );
-
-    // Launch D3D9 texture hook discovery on a background thread.
-    // std::thread replaces the Windows-only CreateThread.
-    int exitCode = 0;
-    std::thread hookThread( [&exitCode]() {
-        DWORD result = FindCreateTexture( nullptr );
-        exitCode = (int)result;
-    });
-    // Give the thread at least 27ms — required for CreateTextureHook to fire.
-    std::this_thread::sleep_for( std::chrono::milliseconds( 1000 ) );
-    hookThread.join();
-
-    if ( activeWindow )
-        ShowWindow( activeWindow, SW_RESTORE );
-
-    if ( exitCode != 0 )
-    {
-        if      ( exitCode == 1 ) Warning( "Direct3DCreate9 failed\n" );
-        else if ( exitCode == 2 ) Warning( "CreateWindowA failed\n" );
-        else if ( exitCode == 3 ) Warning( "CreateDevice failed\n" );
-        else                      Warning( "FindCreateTexture failed (unknown)\n" );
-    }
-
-    if ( g_CreateTextureAddr == NULL )
-    {
-        Warning( "g_CreateTextureAddr is null\n" );
-        return;
-    }
-
-    g_CreateTextureOriginal = (CreateTexture)g_CreateTextureAddr;
-
-    if ( MH_Initialize() != MH_OK )          { Warning( "MH_Initialize failed\n" );  return; }
-    if ( MH_CreateHook( (DWORD_PTR*)g_CreateTextureAddr, &CreateTextureHook,
-                        reinterpret_cast<void**>( &g_CreateTextureOriginal ) ) != MH_OK )
-                                              { Warning( "MH_CreateHook failed\n" );  return; }
-    if ( MH_EnableHook( (DWORD_PTR*)g_CreateTextureAddr ) != MH_OK )
-                                              { Warning( "MH_EnableHook failed\n" );  return; }
-#else
-    // Linux/macOS: No D3D9 texture hook needed.
-    // VRMOD_SubmitSharedTexture uses g_pSourceVR->GetRenderTarget() + OpenGL path.
-    DevMsg( "[VF2 VR] VRMOD_ShareTextureBegin: skipped on non-Windows (OpenGL path).\n" );
-#endif
-    return;
+void VRMOD_ShareTextureBegin()
+{
 }
 
-
-//*************************************************************************
-//    VRMOD_ShareTextureFinish()															// converted properly for Virtual Fortress 2 now.
-//*************************************************************************
-#if defined( _WIN32 )
-void VRMOD_ShareTextureFinish() {
-    if (g_sharedTexture == NULL) {
-		Warning("g_sharedTexture is null");
-    }
-
-    if (D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, NULL, D3D11_SDK_VERSION, &g_d3d11Device, NULL, NULL) != S_OK) {
-		Warning("D3D11CreateDevice failed");
-    }
-
-    ID3D11Resource* res;
-    if (FAILED(g_d3d11Device->OpenSharedResource(g_sharedTexture, __uuidof(ID3D11Resource), (void**)&res))) {
-		Warning("OpenSharedResource failed");
-    }
-
-    if (FAILED(res->QueryInterface(__uuidof(ID3D11Texture2D), (void**)&g_d3d11Texture))) {
-		Warning("QueryInterface failed");
-    }
-
-    MH_DisableHook((DWORD_PTR*)g_CreateTextureAddr);
-    MH_RemoveHook((DWORD_PTR*)g_CreateTextureAddr);
-    if (MH_Uninitialize() != MH_OK) {
-		Warning("MH_Uninitialize failed");
-    }
-
-    return;
+void VRMOD_ShareTextureFinish()
+{
 }
-
-#endif // _WIN32
 
 
 //*************************************************************************
@@ -881,8 +750,8 @@ void VRMOD_SubmitSharedTexture()
         vr::VRCompositor()->Submit( vr::Eye_Right, &rightTex, &fullBounds );
     }
 
-#elif defined( POSIX )
-    // Linux path: OpenGL texture via Source VR interface
+#else
+    // Linux / macOS: OpenGL texture handles from the material system (POSIX build).
     ITexture *pLeftRT  = g_pSourceVR->GetRenderTarget(
         ISourceVirtualReality::VREye_Left,  ISourceVirtualReality::RT_Color );
     ITexture *pRightRT = g_pSourceVR->GetRenderTarget(
@@ -891,7 +760,6 @@ void VRMOD_SubmitSharedTexture()
     if ( !pLeftRT || !pRightRT )
         return;
 
-    // On Linux, Source uses OpenGL. The native handle is a GLuint texture name.
     uintptr_t leftGL  = (uintptr_t)pLeftRT->GetNativeHandle();
     uintptr_t rightGL = (uintptr_t)pRightRT->GetNativeHandle();
 
@@ -959,17 +827,9 @@ void VRMOD_Shutdown() {
     }
 	VRMod_Started = 0;
 	g_pMaterialSystem->EndRenderTargetAllocation();
-    if (g_d3d11Device != NULL) {
-        g_d3d11Device->Release();
-        g_d3d11Device = NULL;
-    }
-    g_d3d11Texture = NULL;
-    g_sharedTexture = NULL;
-    g_CreateTextureAddr = NULL;
     g_actionCount = 0;
     g_actionSetCount = 0;
     g_activeActionSetCount = 0;
-    g_d3d9Device = NULL;
 	
     return;
 }
@@ -1127,6 +987,7 @@ void VRMOD_UtilHandleTracking()
 #endif
 
 
+#if defined( CLIENT_DLL )
 void VRMOD_SetGestureOrigin(Vector pos, Vector posLocal)
 {
 	GestureOrigin = pos;
@@ -1134,7 +995,6 @@ void VRMOD_SetGestureOrigin(Vector pos, Vector posLocal)
 	return;
 }
 
-#if defined( CLIENT_DLL )			// Client specific.
 int VRMOD_SelectGestureDirection(Vector GesturePos, Vector Forward, Vector Right, Vector Up)
 {
 
@@ -1186,9 +1046,7 @@ int VRMOD_SelectGestureDirection(Vector GesturePos, Vector Forward, Vector Right
 	return SelectedDirection;
 
 }
-#endif
 
-#if defined( CLIENT_DLL )			// Client specific.
 void VRMOD_Process_input()
 {
 
@@ -1489,7 +1347,7 @@ void VRMOD_Process_input()
 
 			switch (CurrentXMenu)
 			{
-			case Main:
+			case VRGestureMenu::Main:
 				GestureQuadMaterials[0] = "effects/speech_voice";
 				GestureQuadMaterials[1] = "effects/speech_voice";
 				GestureQuadMaterials[2] = "backpack/player/items/all_class/all_laugh_taunt_large";
@@ -1497,7 +1355,7 @@ void VRMOD_Process_input()
 				GestureQuadMaterials[4] = "hud/hud_icon_capture";
 				GestureQuadMaterials[5] = "hud/ico_teamswitch";
 				break;
-			case ClassSelect:
+			case VRGestureMenu::ClassSelect:
 				switch (GestureMenuIndex)
 				{
 				case 1:
@@ -1518,9 +1376,9 @@ void VRMOD_Process_input()
 					break;
 				}
 				break;
-			case Voice1:
-			case Voice2:
-			case Voice3:
+			case VRGestureMenu::Voice1:
+			case VRGestureMenu::Voice2:
+			case VRGestureMenu::Voice3:
 				switch (GestureMenuIndex)
 				{
 				case 1:
@@ -1554,7 +1412,7 @@ void VRMOD_Process_input()
 			engine->ClientCmd("r_drawviewmodel 1");
 			switch (CurrentXMenu)
 			{
-				case Main:
+				case VRGestureMenu::Main:
 					GestureMenuIndex = 1;
 					GestureQuadMaterials[0] = "";
 					GestureQuadMaterials[1] = "";
@@ -1565,35 +1423,35 @@ void VRMOD_Process_input()
 					switch (GestureSelection)
 					{
 					case 0:
-						CurrentXMenu = Main;
+						CurrentXMenu = VRGestureMenu::Main;
 						break;
 					case 1:
-						CurrentXMenu = Voice1;
+						CurrentXMenu = VRGestureMenu::Voice1;
 						break;
 					case 2:
-						CurrentXMenu = Voice3;
+						CurrentXMenu = VRGestureMenu::Voice3;
 						break;
 					case 3:
-						CurrentXMenu = Main;
+						CurrentXMenu = VRGestureMenu::Main;
 						engine->ClientCmd("taunt");
 						break;
 					case 4:
-						CurrentXMenu = Voice2;
+						CurrentXMenu = VRGestureMenu::Voice2;
 						break;
 					case 5:
-						CurrentXMenu = Main;
+						CurrentXMenu = VRGestureMenu::Main;
 						engine->ClientCmd("cancelselect");
 						break;
 					case 6:
-						CurrentXMenu = ClassSelect;
+						CurrentXMenu = VRGestureMenu::ClassSelect;
 						break;
 					default:
-						CurrentXMenu = Main;
+						CurrentXMenu = VRGestureMenu::Main;
 						break;
 					}
 					break;
 
-				case ClassSelect:
+				case VRGestureMenu::ClassSelect:
 					GestureQuadMaterials[0] = "";
 					GestureQuadMaterials[1] = "";
 					GestureQuadMaterials[2] = "";
@@ -1606,34 +1464,34 @@ void VRMOD_Process_input()
 						switch (GestureSelection)
 						{
 						case 0:
-							CurrentXMenu = Main;
+							CurrentXMenu = VRGestureMenu::Main;
 							break;
 						case 1:
-							CurrentXMenu = Main;
+							CurrentXMenu = VRGestureMenu::Main;
 							engine->ClientCmd("join_class scout");
 							break;
 						case 2:
-							CurrentXMenu = Main;
+							CurrentXMenu = VRGestureMenu::Main;
 							engine->ClientCmd("join_class soldier");
 							break;
 						case 3:
-							CurrentXMenu = Main;
+							CurrentXMenu = VRGestureMenu::Main;
 							engine->ClientCmd("join_class pyro");
 							break;
 						case 4:
-							CurrentXMenu = Main;
+							CurrentXMenu = VRGestureMenu::Main;
 							engine->ClientCmd("join_class demoman");
 							break;
 						case 5:
-							CurrentXMenu = Main;
+							CurrentXMenu = VRGestureMenu::Main;
 							engine->ClientCmd("join_class heavyweapons");
 							break;
 						case 6:
-							CurrentXMenu = ClassSelect;
+							CurrentXMenu = VRGestureMenu::ClassSelect;
 							GestureMenuIndex = 2;
 							break;
 						default:
-							CurrentXMenu = Main;
+							CurrentXMenu = VRGestureMenu::Main;
 							break;
 						}
 						break;
@@ -1641,43 +1499,43 @@ void VRMOD_Process_input()
 						switch (GestureSelection)
 						{
 						case 0:
-							CurrentXMenu = Main;
+							CurrentXMenu = VRGestureMenu::Main;
 							break;
 						case 1:
-							CurrentXMenu = Main;
+							CurrentXMenu = VRGestureMenu::Main;
 							engine->ClientCmd("join_class engineer");
 							break;
 						case 2:
-							CurrentXMenu = Main;
+							CurrentXMenu = VRGestureMenu::Main;
 							engine->ClientCmd("join_class medic");
 							break;
 						case 3:
-							CurrentXMenu = Main;
+							CurrentXMenu = VRGestureMenu::Main;
 							engine->ClientCmd("join_class sniper");
 							break;
 						case 4:
-							CurrentXMenu = Main;
+							CurrentXMenu = VRGestureMenu::Main;
 							engine->ClientCmd("join_class spy");
 							break;
 						case 5:
-							CurrentXMenu = ClassSelect;
+							CurrentXMenu = VRGestureMenu::ClassSelect;
 							GestureMenuIndex = 1;
 							break;
 						case 6:
-							CurrentXMenu = Main;
+							CurrentXMenu = VRGestureMenu::Main;
 							engine->ClientCmd("changeteam");
 							break;
 						default:
-							CurrentXMenu = Main;
+							CurrentXMenu = VRGestureMenu::Main;
 							break;
 						}
 						break;
 					}
 					break;
-				case Voice1:
-				case Voice2:
-				case Voice3:
-					CurrentXMenu = Main;
+				case VRGestureMenu::Voice1:
+				case VRGestureMenu::Voice2:
+				case VRGestureMenu::Voice3:
+					CurrentXMenu = VRGestureMenu::Main;
 					GestureQuadMaterials[0] = "";
 					GestureQuadMaterials[1] = "";
 					GestureQuadMaterials[2] = "";
@@ -1916,6 +1774,14 @@ void RenderVRCrosshair()
 	meshBuilder.End();
 	pMesh->Draw();
 	return;
+}
+#endif
+
+#if defined( CLIENT_DLL )
+void RenderGestureQuads( int NumItems )
+{
+	(void)NumItems;
+	// TODO: restore radial gesture quad drawing (see commented block below); menu logic lives in VRMOD_Process_input.
 }
 #endif
 

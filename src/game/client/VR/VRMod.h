@@ -1,27 +1,20 @@
+#ifndef TF_VRMOD_H
+#define TF_VRMOD_H
+
 #include "cbase.h"
 #include <stdint.h>
-#include <imaterialsystem.h>
+#include "materialsystem/imaterialsystem.h"
 
+// Globals (defined in VRMod.cpp — keep declarations here so multiple TUs can include this header)
+extern int VRMod_Started;
+extern ITexture *RenderTarget_VRMod;
+extern ITexture *RenderTarget_VRMod_GUI;
+extern float g_horizontalFOVLeft;
+extern float g_horizontalFOVRight;
+extern float g_aspectRatioLeft;
+extern float g_aspectRatioRight;
 
-
-// Globals
-int VRMod_Started = 0;
-ITexture * RenderTarget_VRMod = NULL;
-ITexture * RenderTarget_VRMod_GUI = NULL;
-float g_horizontalFOVLeft = 0;
-float g_horizontalFOVRight = 0;
-float g_aspectRatioLeft = 0;
-float g_aspectRatioRight = 0;
-
-
-
-
-
-
-
-
-// Functions we want to share with other files (mainly viewrender.cpp for now)
-
+// Functions shared with viewrender.cpp and others
 void VRMOD_SubmitSharedTexture();
 
 void VRMOD_UpdatePosesAndActions();
@@ -60,8 +53,10 @@ Vector VRMOD_GetPlayerUp();
 
 void RenderHUDQuad(bool bBlackout, bool bTranslucent);
 
-#if defined( CLIENT_DLL )			// Client specific.
+#if defined( CLIENT_DLL )
 void RenderVRCrosshair();
 void VRMOD_DrawLaserPointer();
 void RenderGestureQuads(int NumItems);
 #endif
+
+#endif // TF_VRMOD_H

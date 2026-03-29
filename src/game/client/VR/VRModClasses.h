@@ -1,6 +1,10 @@
+#ifndef TF_VRMODCLASSES_H
+#define TF_VRMODCLASSES_H
+
 #include "cbase.h"
 #include <string>
 
+class VRGestureMenu;
 
 class VRCollisionBox
 {
@@ -109,4 +113,7 @@ private:
 	//void SetMenuOptionMaterials();
 
 };
-VRGestureMenu *GestureMenu;
+
+extern VRGestureMenu *GestureMenu;
+
+#endif // TF_VRMODCLASSES_H
