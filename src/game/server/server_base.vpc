@@ -602,6 +602,7 @@ $Project
 		$File	"$SRCDIR\game\shared\singleplay_gamerules.h"
 		$File	"SkyCamera.cpp"
 		$File	"skyboxswapper.cpp"
+		$File	"sky_tod.cpp"
 		$File	"slideshow_display.cpp"
 		$File	"sound.cpp"
 		$File	"$SRCDIR\game\shared\SoundEmitterSystem.cpp"
