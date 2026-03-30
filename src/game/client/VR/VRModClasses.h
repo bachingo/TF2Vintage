@@ -52,7 +52,7 @@ class VRGestureMenuOption
 		// The accompanying collission for the option
 		VRCollisionBox *OptionCollission;
 
-		VRGestureMenuOption(std::string Material, int i);
+		VRGestureMenuOption(VRGestureMenu *pMenu, std::string Material, int i);
 		~VRGestureMenuOption();
 
 };

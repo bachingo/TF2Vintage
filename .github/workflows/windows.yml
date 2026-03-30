@@ -33,7 +33,7 @@ jobs:
       - name: Build project
         run: |
           cd src
-          devenv TF2vintage.sln /Build "${{ inputs.build_config }}"
+          MSBuild.exe TF2vintage.sln /p:Configuration="${{ inputs.build_config }}" /m /v:m
 
       - name: Upload binaries
         uses: actions/upload-artifact@v4
