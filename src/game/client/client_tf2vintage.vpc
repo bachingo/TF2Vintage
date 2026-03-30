@@ -985,6 +985,25 @@ $Project "Client (TF)"
 			$File	"tf/tf_replay.cpp"
 			$File	"tf/tf_replay.h"
 		}
+
+		$Folder	"TF2Vintage"
+		{
+			// VF2 Virtual Reality
+			$File	"VR\VRMod.cpp"
+			$File	"VR\VRModClasses.cpp"
+
+			// Offline inventory emulator
+			$File	"$SRCDIR\game\shared\tf\tf2v_offline_inventory.cpp"
+			$File	"$SRCDIR\game\shared\tf\tf2v_offline_inventory.h"
+
+			// Cascaded shadow map env light (required by viewrender)
+			$File	"c_lights.cpp"
+			$File	"c_lights.h"
+
+			// Banned words (required by cdll_client_int)
+			$File	"$SRCDIR\game\shared\bannedwords.cpp"
+			$File	"$SRCDIR\game\shared\bannedwords.h"
+		}
 	}
 
 	$Folder "Useful non-source files" [!$ANALYZE && !$BUILDBOT && !$SOURCESDK && !$JOSH]
