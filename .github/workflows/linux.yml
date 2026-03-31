@@ -30,8 +30,12 @@ jobs:
       - name: Configure Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y zip build-essential gcc-multilib g++-multilib podman ccache binutils
+          sudo apt-get install -y zip build-essential gcc-multilib g++-multilib ccache binutils docker.io
 
+      - name: Alias podman to docker
+        run: |
+          sudo ln -s /usr/bin/docker /usr/bin/podman
+    
       - name: Setup ccache
         run: |
           mkdir -p game/tf2vintage/bin/linux64
