@@ -1,0 +1,15 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "models/weapons/c_items/c_headtrimmer_blue"
+	
+	"$phong" "1"
+	"$phongexponent" "2"
+	"$phongboost" "1"	
+
+	"$speculartexture" "models/weapons/c_items/c_headtrimmer_specular"
+
+	// Rim lighting parameters
+	"$rimlight" "1"												// To enable rim lighting (requires phong)
+	"$rimlightexponent" "1"										// Exponent for phong component of rim lighting	
+	"$rimlightboost" "1"										// 
+}
