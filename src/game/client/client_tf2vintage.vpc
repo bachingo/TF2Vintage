@@ -51,6 +51,13 @@ $Project "Client (TF)"
 		$File	"c_team_objectiveresource.h"
 		$File	"c_team_train_watcher.cpp"
 		$File	"c_team_train_watcher.h"
+
+		$Folder "NextBot"
+		{
+			$File	"$SRCDIR\game\client\NextBot\C_NextBot.cpp"
+			$File	"$SRCDIR\game\client\NextBot\C_NextBot.h"
+		}
+
 		$File	"hud_base_account.cpp"
 		$File	"hud_base_account.h"
 		$File	"tf\hud_basedeathnotice.cpp"
