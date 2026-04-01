@@ -929,8 +929,8 @@ $Project "Client (TF)"
 
 			$Folder	"NextBot"
 			{
-				$File	"NextBot\C_NextBot.cpp"
-				$File	"NextBot\C_NextBot.h"
+				$File	"$SRCDIR/game/client/NextBot/C_NextBot.cpp"
+				$File	"$SRCDIR/game/client/NextBot/C_NextBot.h"
 			}
 
 			$Folder	"PvE"
