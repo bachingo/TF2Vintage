@@ -55,7 +55,7 @@ $Configuration
 
 		$PreprocessorDefinitions		"$BASE;PLATFORM_64BITS"		[$OSX64]
 		$GCC_ExtraCompilerFlags			"$BASE -arch x86_64"		[$OSX64]
-		$GCC_ExtraCompilerFlags			"$BASE -lm -Wno-overloaded-virtual -Wno-placement-new -Wno-c++20-compat -Wno-mismatched-new-delete -Wno-class-memaccess -Wno-conversion-null -Wno-invalid-offsetof -Wno-reorder"
+		$GCC_ExtraCompilerFlags			"$BASE -lm -Wno-overloaded-virtual -Wno-placement-new -Wno-c++20-compat -Wno-class-memaccess -Wno-conversion-null -Wno-invalid-offsetof -Wno-reorder"
 
 		$AdditionalIncludeDirectories	"$BASE;/usr/include/SDL2" [$POSIX]
 

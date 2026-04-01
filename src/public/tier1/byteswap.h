@@ -209,7 +209,7 @@ private:
 	//-----------------------------------------------------------------------------
 	template<typename T> static void LowLevelByteSwap( T *output, const T *input )
 	{
-		T temp = *output;
+		T temp = *input;
 #if defined( _X360 )
 		// Intrinsics need the source type to be fixed-point
 		DWORD* word = (DWORD*)input;

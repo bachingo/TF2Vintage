@@ -45,7 +45,7 @@ $Configuration
 		$SymbolVisibility				"default" 		[$POSIX]
 		$PreprocessorDefinitions		"$BASE;POSIX;_POSIX"		[$POSIX]
 		
-		$GCC_ExtraCompilerFlags			"-U_FORTIFY_SOURCE -Wno-overloaded-virtual -Wno-placement-new -Wno-c++20-compat -Wno-mismatched-new-delete -Wno-class-memaccess -Wno-conversion-null -Wno-invalid-offsetof -Wno-reorder" [$LINUXALL]
+		$GCC_ExtraCompilerFlags			"-U_FORTIFY_SOURCE -Wno-overloaded-virtual -Wno-placement-new -Wno-c++20-compat -Wno-class-memaccess -Wno-conversion-null -Wno-invalid-offsetof -Wno-reorder" [$LINUXALL]
 		$Create/UsePCHThroughFile	"stdafx.h"
 	}
 }
