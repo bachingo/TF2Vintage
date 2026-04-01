@@ -54,8 +54,8 @@ $Project "Client (TF)"
 
 		$Folder "NextBot"
 		{
-			$File	"$SRCDIR\game\client\NextBot\C_NextBot.cpp"
-			$File	"$SRCDIR\game\client\NextBot\C_NextBot.h"
+			$File	"NextBot\C_NextBot.cpp"
+			$File	"NextBot\C_NextBot.h"
 		}
 
 		$File	"hud_base_account.cpp"
