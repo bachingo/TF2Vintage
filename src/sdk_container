@@ -31,7 +31,7 @@ function run_in_sniper() {
             --mount type=bind,\"source="${CCACHE_DIR:-$HOME/.ccache}"\",\"target="${CCACHE_DIR:-$HOME/.ccache}"\" \
             --mount type=bind,\"source="$mod_base_dir"\",target=/my_mod/ \
             "$image" \
-            bash -c \"ln -s /my_mod /tmp/tf2vintage_src_link && cd /tmp/tf2vintage_src_link && exec \"\\\"\$@\\\"\"\" -- \"$@\"
+            bash -c 'ln -s /my_mod /tmp/tf2vintage_src_link && cd /tmp/tf2vintage_src_link && exec "$@"' -- "$@"
     fi
 
     if [[ $(printenv -- "$check_env") != "$script_file" ]]; then
