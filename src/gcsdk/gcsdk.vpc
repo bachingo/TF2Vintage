@@ -1,0 +1,41 @@
+//-----------------------------------------------------------------------------
+// Project: gcsdk
+//-----------------------------------------------------------------------------
+
+$Project "gcsdk"
+{
+    $Folder "Source Files"
+    {
+        $File "steamextra/rtime.cpp"
+        $File "steamextra/tier1/hashglobals.cpp"
+        $File "steamextra/tier1/murmurhash3.cpp"
+        $File "steamextra/tier1/tsmempool.cpp"
+        $File "steamextra/tier1/tsmultimempool.cpp"
+    }
+
+    $Folder "Header Files"
+    {
+        $File "steamextra/misc.h"
+        $File "steamextra/rtime.h"
+        $File "steamextra/tier0/t0constants.h"
+        $File "steamextra/tier1/murmurhash3.h"
+        $File "steamextra/tier1/pearsonshash.h"
+        $File "steamextra/tier1/tsmempool.h"
+        $File "steamextra/tier1/tsmultimempool.h"
+        $File "steamextra/tier1/utlhashmaplarge.h"
+    }
+
+    $Configuration
+    {
+        $Compiler
+        {
+            $AdditionalIncludeDirectories   "$(GameDir)"
+        }
+
+        $Linker
+        {
+            $OutputDirectory                "..\lib\public"
+            $OutputFile                     "gcsdk_sdk"
+        }
+    }
+}
