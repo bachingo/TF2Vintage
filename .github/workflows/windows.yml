@@ -25,15 +25,22 @@ jobs:
         with:
           python-version: '3.x'
 
+      - name: Get Python Path
+        id: get-python-path
+        run: echo "PYTHON_PATH=$(where python | Select-Object -First 1)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
+
       - name: Create project
         run: |
           cd src
           .\devtools\bin\vpc.exe /tf2vintage /define:SOURCESDK /define:TF +game /mksln TF2vintage.sln
 
+      - name: Print PATH
+        run: echo "${{ env.PATH }}"
+
       - name: Build project
         run: |
           cd src
-          MSBuild.exe TF2vintage.sln /p:Configuration=${{ inputs.build_config }} /p:Platform="win64" /m /v:m
+          MSBuild.exe TF2vintage.sln /p:Configuration=${{ inputs.build_config }} /p:Platform="win64" /p:PythonPath="${{ env.PYTHON_PATH }}" /m /v:m
 
       - name: Upload binaries
         uses: actions/upload-artifact@v4
