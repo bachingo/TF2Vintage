@@ -28,7 +28,6 @@ function run_in_sniper() {
             --env "$check_env=$script_file" \
             --env "CCACHE_DIR=${CCACHE_DIR:-$HOME/.ccache}" \
             --rm -it \
-            --privileged \
             --mount type=bind,\"source="${CCACHE_DIR:-$HOME/.ccache}"\",\"target="${CCACHE_DIR:-$HOME/.ccache}"\" \
             --mount type=bind,\"source="$mod_base_dir"\",target=/my_mod/ \
             "$image" \

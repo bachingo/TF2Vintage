@@ -38,6 +38,9 @@ jobs:
           ccache --set-config=cache_dir=${{ env.CCACHE_DIR }}
           ccache --set-config=max_size=2.0G
 
+      - name: Make createtf2vintage executable
+        run: chmod +x src/createtf2vintage
+
       - name: Build
         env:
           BUILD_TYPE: ${{ inputs.build_config }}
