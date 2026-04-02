@@ -1,6 +1,6 @@
 #include "cbase.h"
 #include <stdio.h>
-#include <openvr.h>
+#include "openvr.h"
 #include <convar.h>
 #include <thread>   // std::thread replaces CreateThread on all platforms
 #include <chrono>   // std::this_thread::sleep_for replaces Sleep/WaitForSingleObject

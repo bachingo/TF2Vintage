@@ -172,7 +172,7 @@ static void RebuildItemCache( KeyValues *pPlayerKV )
             }
 
             // Verify the item can actually go in this class/slot
-            int nItemSlot = pDef->GetLoadoutSlot( c );
+            int nItemSlot = ((CTFItemDefinition*)pDef)->GetLoadoutSlot( c );
             if ( nItemSlot != s )
             {
                 DevWarning( "[TF2V Offline] def_index %d doesn't fit slot %s for %s — skipping.\n",
