@@ -31,7 +31,7 @@
 	#include "tf_player.h"
 #endif
 
-#include <VRMod.h>
+#include "VRMod.h"
 #include <vgui/IInput.h>				// For testing out the laser pointer 2D menu interaction
 #include <vgui_controls/Controls.h>		// For testing out the laser pointer 2D menu interaction
 
