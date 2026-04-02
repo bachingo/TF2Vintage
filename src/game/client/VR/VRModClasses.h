@@ -64,6 +64,7 @@ public:
 	int GestureMenuIndex;
 	int GestureNumItems;
 	float GestureMinSelectionDistance;
+	int GestureSelection;
 	//std::string GestureQuadMaterials[6] = { "", "", "", "", "", "" };
 	VRGestureMenuOption *MenuOptions[11];
 	Vector GestureOrigin = Vector(0, 0, 0);

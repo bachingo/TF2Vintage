@@ -14,9 +14,10 @@
 #   pragma comment( lib, "d3d11.lib" )
 #   pragma comment( lib, "d3d9.lib" )
 #endif
-#include <isourcevirtualreality.h>
+#include "sourcevr/isourcevirtualreality.h"
 #include "materialsystem/imaterialsystem.h"
 #include "materialsystem/itexture.h"
+#include "VRModClasses.h"
 //#include <cdll_client_int.h>
 #include <thread>
 #include <vector>
@@ -328,17 +329,11 @@ int X_active_counter = 0;
 bool IsInTriggerMenu = false;
 bool IsInXMenu = false;
 
-//int GestureSelection = 0;
-//int GestureMenuIndex = 1;													// For gesture menu selection
-//int GestureNumItems = 4;													// For gesture menu selection
-//
+
 //enum XMenu {Main, Voice1, Voice2, Voice3, ClassSelect};
 //XMenu CurrentXMenu = Main;
 //
-//Vector GestureOrigin = Vector(0, 0, 0);
-//Vector GestureOriginLocal = Vector(0, 0, 0);
-//std::string GestureQuadMaterials[6] = {"", "", "", "", "", ""};
-//Vector GestureForward, GestureRight, GestureUp;
+
 //float GestureMinSelectionDistance = 8.0f;
 
 bool DrawLaser = false;
@@ -881,9 +876,9 @@ void VRMOD_SubmitSharedTexture()
 
     if ( pLeftHandle && pRightHandle )
     {
-        vr::Texture_t leftTex  = { pLeftHandle,  vr::TextureType_DirectX11,
+        vr::Texture_t leftTex  = { pLeftHandle,  vr::TextureType_DirectX,
                                     vr::ColorSpace_Auto };
-        vr::Texture_t rightTex = { pRightHandle, vr::TextureType_DirectX11,
+        vr::Texture_t rightTex = { pRightHandle, vr::TextureType_DirectX,
                                     vr::ColorSpace_Auto };
         vr::VRTextureBounds_t fullBounds = { 0.0f, 0.0f, 1.0f, 1.0f };
 
@@ -1139,64 +1134,11 @@ void VRMOD_UtilHandleTracking()
 
 void VRMOD_SetGestureOrigin(Vector pos, Vector posLocal)
 {
-	GestureOrigin = pos;
-	GestureOriginLocal = posLocal;
+	GestureMenu->SetGestureOrigin(pos);
 	return;
 }
 
-#if defined( CLIENT_DLL )			// Client specific.
-int VRMOD_SelectGestureDirection(Vector GesturePos, Vector Forward, Vector Right, Vector Up)
-{
 
-	int SelectedDirection = 0;		// Default value = At center, not far enough to select a real direction
-	Vector GestureDistance = GesturePos - GestureOrigin;
-
-	// Express distance in local controller axes
-	float GestureDistance_forward = DotProduct(GestureDistance, Forward);
-	float GestureDistance_right = DotProduct(GestureDistance, Right);
-	float GestureDistance_up = DotProduct(GestureDistance, Up);
-
-	GestureDistance = GestureDistance_forward * Forward + GestureDistance_right * Right + GestureDistance_up * Up;
-
-	// Determine biggest abs component of Vector (-> Direction the player selected)
-	Vector GestureDistanceAbs;
-	VectorAbs(GestureDistance, GestureDistanceAbs);
-	float GestureDistanceAbsMax = VectorMaximum(GestureDistanceAbs);
-
-	if (GestureDistanceAbsMax > GestureMinSelectionDistance)		// If we're far enough from the GestureOrigin to make a selection
-	{
-		if (GestureDistanceAbsMax == GestureDistanceAbs.x) {		// If our max is the X axis
-			if (GestureDistance.x < 0.0f) {			// If negative X axis selected
-				SelectedDirection = 1;
-			}
-			if (GestureDistance.x > 0.0f) {			// If positive X axis selected
-				SelectedDirection = 2;
-			}
-		}
-
-		if (GestureDistanceAbsMax == GestureDistanceAbs.y) {		// If our max is the Y axis
-			if (GestureDistance.y < 0.0f) {			// If negative Y axis selected
-				SelectedDirection = 3;
-			}
-			if (GestureDistance.y > 0.0f) {			// If positive Y axis selected
-				SelectedDirection = 4;
-			}
-		}
-
-		if (GestureDistanceAbsMax == GestureDistanceAbs.z) {		// If our max is the Z axis
-			if (GestureDistance.z < 0.0f) {			// If negative Z axis selected
-				SelectedDirection = 5;
-			}
-			if (GestureDistance.z > 0.0f) {			// If positive Z axis selected
-				SelectedDirection = 6;
-			}
-		}
-	}
-
-	return SelectedDirection;
-
-}
-#endif
 
 #if defined( CLIENT_DLL )			// Client specific.
 void VRMOD_Process_input()
@@ -1298,19 +1240,14 @@ void VRMOD_Process_input()
 			if (Trigger_active_counter == 20)					// If we just started holding down the trigger
 			{
 				VRMOD_SetGestureOrigin(VR_controller_right_pos_abs, TrackedDevicesPoses[7].TrackedDevicePos);
-				LaserOrigin = GestureOrigin;
+				LaserOrigin = GestureMenu->GestureOrigin;
 				engine->ClientCmd("r_drawviewmodel 0");
 
-				GestureMenuIndex = 1;
-				GestureNumItems = 4;
-				GestureMinSelectionDistance = 10.0f;
+				GestureMenu->GestureMenuIndex = 1;
+				GestureMenu->GestureNumItems = 4;
+				GestureMenu->GestureMinSelectionDistance = 10.0f;
 
-				GestureQuadMaterials[0] = "hud/eng_build_sentry_blueprint";
-				GestureQuadMaterials[1] = "hud/eng_build_dispenser_blueprint";
-				GestureQuadMaterials[2] = "hud/eng_build_tele_entrance_blueprint";
-				GestureQuadMaterials[3] = "hud/eng_build_tele_exit_blueprint";
-				GestureQuadMaterials[4] = "";
-				GestureQuadMaterials[5] = "";
+								GestureMenu->SwitchMenuType(VRGestureMenu::Build);
 
 
 
@@ -1321,7 +1258,7 @@ void VRMOD_Process_input()
 				/*GestureMinSelectionDistance = 10.0f;*/
 
 				//GestureSelection = VRMOD_SelectGestureDirection(TrackedDevicesPoses[7].TrackedDevicePos, VR_controller_right_forward, VR_controller_right_right, VR_controller_right_up);
-				GestureSelection = VRMOD_SelectGestureDirection(VR_controller_right_pos_abs, VR_hmd_forward, VR_hmd_right, VR_hmd_up);
+								GestureMenu->GestureSelection = GestureMenu->SelectGestureOption(VR_controller_right_pos_abs);
 				
 				LaserEnd = VR_controller_right_pos_abs;
 
@@ -1334,9 +1271,7 @@ void VRMOD_Process_input()
 
 				//AngleVectors(VRMOD_GetRightControllerAbsAngle(), &GestureForward, &GestureRight, &GestureUp);
 
-				GestureForward = VR_hmd_forward;
-				GestureRight = VR_hmd_right;
-				GestureUp = VR_hmd_up;
+				
 
 			}
 		}
@@ -1353,13 +1288,8 @@ void VRMOD_Process_input()
 		{
 			IsInTriggerMenu = false;
 			engine->ClientCmd("r_drawviewmodel 1");
-			GestureQuadMaterials[0] = "";
-			GestureQuadMaterials[1] = "";
-			GestureQuadMaterials[2] = "";
-			GestureQuadMaterials[3] = "";
-			GestureQuadMaterials[4] = "";
-			GestureQuadMaterials[5] = "";
-			switch (GestureSelection)
+			// GestureMenu should handle clearing materials here.
+			switch (GestureMenu->GestureSelection)
 			{
 			case 0:
 				break;
@@ -1481,15 +1411,15 @@ void VRMOD_Process_input()
 		{
 			IsInXMenu = true;
 			VRMOD_SetGestureOrigin(VR_controller_left_pos_abs, TrackedDevicesPoses[6].TrackedDevicePos);
-			LaserOrigin = GestureOrigin;
+			LaserOrigin = GestureMenu->GestureOrigin;
 			engine->ClientCmd("r_drawviewmodel 0");
-			GestureNumItems = 6;
+			GestureMenu->GestureNumItems = 6;
 		}
 		else if (X_active_counter > 20)
 		{
 			GestureMinSelectionDistance = 0.05f;
 
-			GestureSelection = VRMOD_SelectGestureDirection(VR_controller_left_pos_abs, VR_controller_left_forward, VR_controller_left_right, VR_controller_left_up);
+						GestureMenu->GestureSelection = GestureMenu->SelectGestureOption(VR_controller_left_pos_abs);
 			LaserEnd = VR_controller_left_pos_abs;
 			//AngleVectors(VR_controller_left_ang_abs, &GestureForward, &GestureRight, &GestureUp);
 
@@ -1500,31 +1430,16 @@ void VRMOD_Process_input()
 			switch (CurrentXMenu)
 			{
 			case Main:
-				GestureQuadMaterials[0] = "effects/speech_voice";
-				GestureQuadMaterials[1] = "effects/speech_voice";
-				GestureQuadMaterials[2] = "backpack/player/items/all_class/all_laugh_taunt_large";
-				GestureQuadMaterials[3] = "effects/speech_voice";
-				GestureQuadMaterials[4] = "hud/hud_icon_capture";
-				GestureQuadMaterials[5] = "hud/ico_teamswitch";
+								GestureMenu->SwitchMenuType(VRGestureMenu::Main);
 				break;
 			case ClassSelect:
 				switch (GestureMenuIndex)
 				{
 				case 1:
-					GestureQuadMaterials[0] = "hud/leaderboard_class_scout";
-					GestureQuadMaterials[1] = "hud/leaderboard_class_soldier";
-					GestureQuadMaterials[2] = "hud/leaderboard_class_pyro";
-					GestureQuadMaterials[3] = "hud/leaderboard_class_demo";
-					GestureQuadMaterials[4] = "hud/leaderboard_class_heavy";
-					GestureQuadMaterials[5] = "hud/arrow_big";
+										GestureMenu->SwitchMenuType(VRGestureMenu::ClassSelect);
 					break;
 				case 2:
-					GestureQuadMaterials[0] = "hud/leaderboard_class_engineer";
-					GestureQuadMaterials[1] = "hud/leaderboard_class_medic";
-					GestureQuadMaterials[2] = "hud/leaderboard_class_sniper";
-					GestureQuadMaterials[3] = "hud/leaderboard_class_spy";
-					GestureQuadMaterials[4] = "hud/arrow_big_down";
-					GestureQuadMaterials[5] = "hud/ico_teamswitch";
+										GestureMenu->SwitchMenuType(VRGestureMenu::ClassSelect);
 					break;
 				}
 				break;
@@ -1534,20 +1449,10 @@ void VRMOD_Process_input()
 				switch (GestureMenuIndex)
 				{
 				case 1:
-					GestureQuadMaterials[0] = "effects/speech_voice";
-					GestureQuadMaterials[1] = "effects/speech_voice";
-					GestureQuadMaterials[2] = "effects/speech_voice";
-					GestureQuadMaterials[3] = "effects/speech_voice";
-					GestureQuadMaterials[4] = "effects/speech_voice";
-					GestureQuadMaterials[5] = "hud/arrow_big";
+										GestureMenu->SwitchMenuType(VRGestureMenu::Voice1);
 					break;
 				case 2:
-					GestureQuadMaterials[0] = "effects/speech_voice";
-					GestureQuadMaterials[1] = "effects/speech_voice";
-					GestureQuadMaterials[2] = "effects/speech_voice";
-					GestureQuadMaterials[3] = "effects/speech_voice";
-					GestureQuadMaterials[4] = "hud/arrow_big_down";
-					GestureQuadMaterials[5] = "";
+										GestureMenu->SwitchMenuType(VRGestureMenu::Voice2);
 					break;
 				}
 				break;
@@ -1566,13 +1471,8 @@ void VRMOD_Process_input()
 			{
 				case Main:
 					GestureMenuIndex = 1;
-					GestureQuadMaterials[0] = "";
-					GestureQuadMaterials[1] = "";
-					GestureQuadMaterials[2] = "";
-					GestureQuadMaterials[3] = "";
-					GestureQuadMaterials[4] = "";
-					GestureQuadMaterials[5] = "";
-					switch (GestureSelection)
+										GestureMenu->SwitchMenuType(VRGestureMenu::Main);
+					switch (GestureMenu->GestureSelection)
 					{
 					case 0:
 						CurrentXMenu = Main;
@@ -1604,16 +1504,11 @@ void VRMOD_Process_input()
 					break;
 
 				case ClassSelect:
-					GestureQuadMaterials[0] = "";
-					GestureQuadMaterials[1] = "";
-					GestureQuadMaterials[2] = "";
-					GestureQuadMaterials[3] = "";
-					GestureQuadMaterials[4] = "";
-					GestureQuadMaterials[5] = "";
+										GestureMenu->SwitchMenuType(VRGestureMenu::Main);
 					switch (GestureMenuIndex)
 					{
 					case 1:
-						switch (GestureSelection)
+						switch (GestureMenu->GestureSelection)
 						{
 						case 0:
 							CurrentXMenu = Main;
@@ -1648,7 +1543,7 @@ void VRMOD_Process_input()
 						}
 						break;
 					case 2:
-						switch (GestureSelection)
+						switch (GestureMenu->GestureSelection)
 						{
 						case 0:
 							CurrentXMenu = Main;
@@ -1688,12 +1583,7 @@ void VRMOD_Process_input()
 				case Voice2:
 				case Voice3:
 					CurrentXMenu = Main;
-					GestureQuadMaterials[0] = "";
-					GestureQuadMaterials[1] = "";
-					GestureQuadMaterials[2] = "";
-					GestureQuadMaterials[3] = "";
-					GestureQuadMaterials[4] = "";
-					GestureQuadMaterials[5] = "";
+										GestureMenu->SwitchMenuType(VRGestureMenu::Main);
 					break;
 			}
 		}
@@ -1861,7 +1751,7 @@ void RenderHUDQuad(bool bBlackout, bool bTranslucent)
 	RenderVRCrosshair();
 	if (GestureMenuIndex != 0)
 	{
-		RenderGestureQuads(GestureNumItems);
+		GestureMenu->RenderGestureQuads();
 	}
 	if (DrawLaser)
 	{
