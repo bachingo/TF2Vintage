@@ -52,6 +52,27 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+//=============================================================================
+//  Shared helper used by all three material proxies and the sun-shafts effect.
+//  Reads the current sun colour from the csm_color_r/g/b ConVars that
+//  sky_tod.cpp writes every frame.  Returns a normalised linear RGB Vector.
+//=============================================================================
+// Static ConVarRefs — constructed once on first call (one string hash lookup each),
+// then the same objects are reused on every subsequent call with zero lookup cost.
+static void GetSunColorFromCSM( Vector &vecColor )
+{
+    vecColor.Init( 1.f, 1.f, 1.f );
+    static ConVarRef s_r( "csm_color_r" );
+    static ConVarRef s_g( "csm_color_g" );
+    static ConVarRef s_b( "csm_color_b" );
+    if ( s_r.IsValid() && s_g.IsValid() && s_b.IsValid() )
+    {
+        float fr = s_r.GetFloat()/255.f, fg = s_g.GetFloat()/255.f, fb = s_b.GetFloat()/255.f;
+        if ( fr+fg+fb > 0.01f )
+            vecColor.Init( fr, fg, fb );
+    }
+}
+
 extern ConVar csm_filter;  // defined in c_env_cascade_light.cpp
 
 //-----------------------------------------------------------------------------
@@ -102,7 +123,7 @@ class CLightingOverhaulSystem : public CAutoGameSystemPerFrame
 {
 public:
     CLightingOverhaulSystem()
-        : CAutoGameSystem( "CLightingOverhaulSystem" )
+        : CAutoGameSystemPerFrame( "CLightingOverhaulSystem" )
         , m_bActive( false )
         , m_bLastState( false )
         , m_bSessionLocked( false )
@@ -372,27 +393,6 @@ private:
 };
 
 static CLightingOverhaulSystem s_LightingOverhaulSystem;
-
-//=============================================================================
-//  Shared helper used by all three material proxies and the sun-shafts effect.
-//  Reads the current sun colour from the csm_color_r/g/b ConVars that
-//  sky_tod.cpp writes every frame.  Returns a normalised linear RGB Vector.
-//=============================================================================
-// Static ConVarRefs — constructed once on first call (one string hash lookup each),
-// then the same objects are reused on every subsequent call with zero lookup cost.
-static void GetSunColorFromCSM( Vector &vecColor )
-{
-    vecColor.Init( 1.f, 1.f, 1.f );
-    static ConVarRef s_r( "csm_color_r" );
-    static ConVarRef s_g( "csm_color_g" );
-    static ConVarRef s_b( "csm_color_b" );
-    if ( s_r.IsValid() && s_g.IsValid() && s_b.IsValid() )
-    {
-        float fr = s_r.GetFloat()/255.f, fg = s_g.GetFloat()/255.f, fb = s_b.GetFloat()/255.f;
-        if ( fr+fg+fb > 0.01f )
-            vecColor.Init( fr, fg, fb );
-    }
-}
 
 CON_COMMAND( r_lighting_overhaul_toggle,
     "Toggle r_lighting_overhaul on/off. Bind: bind F5 r_lighting_overhaul_toggle" )
