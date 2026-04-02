@@ -7,10 +7,10 @@
 
 // Platform-specific D3D headers — only on Windows
 #if defined( _WIN32 )
-#   include <d3d9.h>
+#   include "d3d9.h"
 #   include "D3D11.h"
 #   include <Windows.h>
-#   include <MinHook.h>
+#   include "MinHook.h"
 #   pragma comment( lib, "d3d11.lib" )
 #   pragma comment( lib, "d3d9.lib" )
 #endif
