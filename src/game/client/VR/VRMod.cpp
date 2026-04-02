@@ -14,8 +14,9 @@
 #   pragma comment( lib, "d3d11.lib" )
 #   pragma comment( lib, "d3d9.lib" )
 #endif
-//#include <isourcevirtualreality.h>
+#include <isourcevirtualreality.h>
 #include "materialsystem/imaterialsystem.h"
+#include "materialsystem/itexture.h"
 //#include <cdll_client_int.h>
 #include <thread>
 #include <vector>
