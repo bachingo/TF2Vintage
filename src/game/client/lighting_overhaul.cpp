@@ -37,6 +37,7 @@
 #include "igamesystem.h"
 #include "c_baseplayer.h"
 #include "iclientshadowmgr.h"
+#include "view.h"
 #include "ScreenSpaceEffects.h"
 #include "materialsystem/imaterialproxy.h"
 #include "materialsystem/imaterial.h"
@@ -97,7 +98,7 @@ static ConVar r_rimlight_b( "r_rimlight_b", "0", FCVAR_ARCHIVE | FCVAR_CLIENTDLL
 static ClientShadowHandle_t s_hRimLights[ MAX_RIMLIGHT_HANDLES ];
 static bool                 s_bRimInit = false;
 
-class CLightingOverhaulSystem : public CAutoGameSystem
+class CLightingOverhaulSystem : public CAutoGameSystemPerFrame
 {
 public:
     CLightingOverhaulSystem()
@@ -151,7 +152,7 @@ public:
         KillAllRimLights();
     }
 
-    virtual void FrameUpdatePostEntityThink() OVERRIDE
+    virtual void Update( float frametime ) OVERRIDE
     {
         if ( m_bSessionLocked )
             return;
@@ -372,15 +373,6 @@ private:
 
 static CLightingOverhaulSystem s_LightingOverhaulSystem;
 
-CON_COMMAND( r_lighting_overhaul_toggle,
-    "Toggle r_lighting_overhaul on/off. Bind: bind F5 r_lighting_overhaul_toggle" )
-{
-    int iNew = r_lighting_overhaul.GetBool() ? 0 : 1;
-    r_lighting_overhaul.SetValue( iNew );
-    Msg( "[LightingOverhaul] %s\n", iNew ? "ON" : "OFF" );
-}
-
-
 //=============================================================================
 //  Shared helper used by all three material proxies and the sun-shafts effect.
 //  Reads the current sun colour from the csm_color_r/g/b ConVars that
@@ -401,6 +393,15 @@ static void GetSunColorFromCSM( Vector &vecColor )
             vecColor.Init( fr, fg, fb );
     }
 }
+
+CON_COMMAND( r_lighting_overhaul_toggle,
+    "Toggle r_lighting_overhaul on/off. Bind: bind F5 r_lighting_overhaul_toggle" )
+{
+    int iNew = r_lighting_overhaul.GetBool() ? 0 : 1;
+    r_lighting_overhaul.SetValue( iNew );
+    Msg( "[LightingOverhaul] %s\n", iNew ? "ON" : "OFF" );
+}
+
 
 
 //=============================================================================
@@ -488,7 +489,8 @@ public:
 
         // Push the sun far out along its direction and project to NDC
         const float flSunDist = 100000.f;
-        Vector vecSunWorld = MainViewOrigin() + vecSunDir * flSunDist;
+        Vector vecSunWorld = MainViewOrigin();
+        vecSunWorld += vecSunDir * flSunDist;
 
         Vector vecSunScreen;
         bool bBehind = false;
