@@ -22,6 +22,7 @@
 #include "tier0/vprof_telemetry.h"
 #include <time.h>
 #include "steam/steam_api.h"
+#include "VR/VRMod.h"					// For Virtual Fortress 2 related things
 
 const char *COM_GetModDirectory(); // return the mod dir (rather than the complete -game param, which can be a path)
 
@@ -414,8 +415,8 @@ void CClientVirtualReality::DrawMainMenu()
 	// render both eyes
 	for( int nView = STEREO_EYE_LEFT; nView <= STEREO_EYE_RIGHT; nView++ )
 	{
-		CMatRenderContextPtr pRenderContextMat( materials );
-		PIXEvent pixEvent( pRenderContextMat, nView == STEREO_EYE_LEFT ? "left eye" : "right eye" );
+		CMatRenderContextPtr pRenderContext( materials );
+		PIXEvent pixEvent( pRenderContext, nView == STEREO_EYE_LEFT ? "left eye" : "right eye" );
 
 		ITexture *pColor = g_pSourceVR->GetRenderTarget( (ISourceVirtualReality::VREye)(nView-1), ISourceVirtualReality::RT_Color );
 		ITexture *pDepth = g_pSourceVR->GetRenderTarget( (ISourceVirtualReality::VREye)(nView-1), ISourceVirtualReality::RT_Depth );
@@ -1064,11 +1065,17 @@ bool CClientVirtualReality::CanOverlayHudQuad()
 // --------------------------------------------------------------------
 void CClientVirtualReality::GetHUDBounds( Vector *pViewer, Vector *pUL, Vector *pUR, Vector *pLL, Vector *pLR )
 {
-	Vector vHalfWidth = m_WorldFromHud.GetLeft() * -m_fHudHalfWidth;
-	Vector vHalfHeight = m_WorldFromHud.GetUp() * m_fHudHalfHeight;
-	Vector vHUDOrigin = m_PlayerViewOrigin + m_WorldFromHud.GetForward() * vr_hud_forward.GetFloat();
+	//Vector vHalfWidth = m_WorldFromHud.GetLeft() * -m_fHudHalfWidth;
+	//Vector vHalfHeight = m_WorldFromHud.GetUp() * m_fHudHalfHeight;
+	//Vector vHUDOrigin = m_PlayerViewOrigin + m_WorldFromHud.GetForward() * vr_hud_forward.GetFloat();
 
-	*pViewer = m_PlayerViewOrigin;
+	// CUstom VRMod Code
+	Vector vHalfWidth = (-VRMOD_GetPlayerRight()) * -m_fHudHalfWidth;
+	Vector vHalfHeight = VRMOD_GetPlayerUp() * m_fHudHalfHeight;
+	Vector vHUDOrigin = VRMOD_GetViewOriginLeft() + VRMOD_GetPlayerForward() * vr_hud_forward.GetFloat();
+
+	//*pViewer = m_PlayerViewOrigin;
+	*pViewer = VRMOD_GetViewOriginLeft();
 	*pUL = vHUDOrigin - vHalfWidth + vHalfHeight;
 	*pUR = vHUDOrigin + vHalfWidth + vHalfHeight;
 	*pLL = vHUDOrigin - vHalfWidth - vHalfHeight;
@@ -1082,8 +1089,8 @@ void CClientVirtualReality::GetHUDBounds( Vector *pViewer, Vector *pUL, Vector *
 void CClientVirtualReality::RenderHUDQuad( bool bBlackout, bool bTranslucent )
 {
 	// If we can overlay the HUD directly onto the target later, we'll do that instead (higher image quality).
-	if ( CanOverlayHudQuad() )
-		return;
+	//if ( CanOverlayHudQuad() )
+	//	return;
 
 	Vector vHead, vUL, vUR, vLL, vLR;
 	GetHUDBounds ( &vHead, &vUL, &vUR, &vLL, &vLR );
@@ -1326,8 +1333,8 @@ void CClientVirtualReality::OverlayHUDQuadWithUndistort( const CViewSetup &eyeVi
 		return;
 
 	// If we can't overlay the HUD, it will be handled on another path (rendered into the scene with RenderHUDQuad()).
-	if ( ! CanOverlayHudQuad() )
-		return;
+	//if ( ! CanOverlayHudQuad() )
+	//	return;
 
 	// Get the position of the HUD quad in world space as used by RenderHUDQuad().  Then convert to a rectangle in normalized
 	// device coordinates.
