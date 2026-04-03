@@ -108,6 +108,13 @@ $Project "Server (TF)"
 			$File	"$SRCDIR\game\shared\tf\tf_quest_map_utils.cpp"
 		}
 
+		$Folder	"TF2V"
+		{
+			// Offline inventory emulator
+			$File	"$SRCDIR\game\shared\tf\tf2v_offline_inventory.cpp"
+			$File	"$SRCDIR\game\shared\tf\tf2v_offline_inventory.h"
+		}
+		
 		$Folder "Steam Workshop"
 		{
 			$File	"$SRCDIR\game\shared\workshop\ugc_utils.h"
@@ -386,7 +393,7 @@ $Project "Server (TF)"
 				{
 					$Compiler
 					{
-						$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+						$Create\UsePrecompiledHeader	"Not Using Precompiled Headers"
 					}
 				}
 			}

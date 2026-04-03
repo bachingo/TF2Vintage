@@ -34,7 +34,7 @@ $Configuration	"Release"
 {
 	$General
 	{
-		// Windows generator doesn't sandbox these directories per configuration but others do :-/
+		// Windows generator doesn't sandbox these directories per configuration but others do :-\
 		$OutputDirectory		".\Release_$GAMENAME" [$WINDOWS]
 		$IntermediateDirectory	".\Release_$GAMENAME" [$WINDOWS]
 
@@ -46,7 +46,7 @@ $Configuration	"Release"
 $CustomBuildStep "nut"
 {
 	$CommandLine	"python $SRCDIR\devtools\bin\texttoarray.py $(InputPath) g_Script_$(InputName)> $(InputName)_nut.h" [$WINDOWS]
-	$CommandLine	"python3 $SRCDIR/devtools/bin/texttoarray.py $(InputPath) g_Script_$(InputName)> $(InputName)_nut.h" [$POSIX]
+	$CommandLine	"python3 $SRCDIR\devtools\bin\texttoarray.py $(InputPath) g_Script_$(InputName)> $(InputName)_nut.h" [$POSIX]
 	$Description	"$(InputFileName) produces $(InputName)_nut.h"
 	$Outputs		"$(InputName)_nut.h"
 }
@@ -66,8 +66,8 @@ $Configuration
 		$PreprocessorDefinitions		"$BASE;INCLUDED_STEAM2_USERID_STRUCTS" 
 		$PreprocessorDefinitions		"$BASE;SWDS" [$POSIX]
 		$PreprocessorDefinitions		"$BASE;fopen=dont_use_fopen" [$WINDOWS||$X360]
-		$Create/UsePrecompiledHeader	"Use Precompiled Header (/Yu)"
-		$Create/UsePCHThroughFile		"cbase.h"
+		$Create\UsePrecompiledHeader	"Use Precompiled Header (\Yu)"
+		$Create\UsePCHThroughFile		"cbase.h"
 
 		// misyl: We should eliminate these someday.
 		$DisableSpecificWarnings		"$BASE;4267" [$WIN64] // warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
@@ -740,7 +740,7 @@ $Project
 			{
 				$Compiler
 				{
-					$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+					$Create\UsePrecompiledHeader	"Not Using Precompiled Headers"
 				}
 			}
 		}
@@ -753,7 +753,7 @@ $Project
 				{
 					$Compiler
 					{
-						$Create/UsePrecompiledHeader	"Create Precompiled Header (/Yc)"
+						$Create\UsePrecompiledHeader	"Create Precompiled Header (\Yc)"
 					}
 				}
 			}
