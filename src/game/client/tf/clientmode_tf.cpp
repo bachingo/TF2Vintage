@@ -1455,7 +1455,7 @@ bool ClientModeTFNormal::CreateMove( float flInputSampleTime, CUserCmd *cmd )
 
     // VF2 VR: Override aim angles with right controller direction every tick.
     // This makes the server shoot from where the controller points, not the mouse.
-    if ( VRMod_Started && cmd )
+    if ( UseVRMod() && cmd )
     {
         QAngle vrAimAngles = VRMOD_GetRightControllerAbsAngle();
 

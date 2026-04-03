@@ -53,6 +53,8 @@ Vector VRMOD_GetPlayerUp();
 
 void RenderHUDQuad(bool bBlackout, bool bTranslucent);
 
+bool UseVRMod( void ) { return VRMod_Started == 1; }
+
 #if defined( CLIENT_DLL )
 void RenderVRCrosshair();
 void VRMOD_DrawLaserPointer();

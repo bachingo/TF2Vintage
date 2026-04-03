@@ -1187,7 +1187,7 @@ void CViewRender::Render( vrect_t *rect )
 	    }
 
 	    int flags = 0;
-		if( eEye == STEREO_EYE_MONO || eEye == STEREO_EYE_LEFT || ( g_ClientVirtualReality.ShouldRenderHUDInWorld() ) )
+		if( eEye == STEREO_EYE_MONO || eEye == STEREO_EYE_LEFT || ( ( g_ClientVirtualReality.ShouldRenderHUDInWorld() ) || IsVRMod() ) )
 		{
 			flags = RENDERVIEW_DRAWHUD;
 		}
@@ -1241,7 +1241,7 @@ void CViewRender::Render( vrect_t *rect )
 	// Draw all of the UI stuff "fullscreen"
     // (this is not health, ammo, etc. Nor is it pre-game briefing interface stuff - this is the stuff that appears when you hit Esc in-game)
 	// In stereo mode this is rendered inside of RenderView so it goes into the render target
-	if( !g_ClientVirtualReality.ShouldRenderHUDInWorld() )
+	if( !g_ClientVirtualReality.ShouldRenderHUDInWorld() && !IsVRMod() )
 	{
 		CViewSetup view2d;
 		view2d.x				= rect->x;

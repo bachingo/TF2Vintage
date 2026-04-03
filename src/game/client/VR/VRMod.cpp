@@ -853,7 +853,7 @@ void VRMOD_ShareTextureFinish() {
 // New cross-platform implementation using Source SDK material system
 void VRMOD_SubmitSharedTexture()
 {
-    if ( !g_pSourceVR || !VRMod_Started )
+    if ( !g_pSourceVR || !IsVRMod() )
         return;
 
 #if defined( _WIN32 )

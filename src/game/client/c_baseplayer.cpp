@@ -503,7 +503,7 @@ void C_BasePlayer::Spawn( void )
 	SharedSpawn();
 
     // VF2 VR: reset HMD yaw to player spawn angles
-    if ( VRMod_Started )
+    if ( UseVRMod() )
 		VRMOD_SetSpawnPlayerHMDAngles();
 	
 	m_bWasFreezeFraming = false;
@@ -2087,7 +2087,7 @@ void C_BasePlayer::PostThink( void )
 	if ( IsAlive())
 	{
 
-		if ( VRMod_Started == 1 )
+		if ( UseVRMod() )
 		{
 			QAngle weapon_angle = VRMOD_GetRightControllerAbsAngle();
 			// Apply weapon_angle to the active weapon's angles here

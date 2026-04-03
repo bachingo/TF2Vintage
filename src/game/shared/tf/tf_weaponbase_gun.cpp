@@ -494,7 +494,7 @@ void CTFWeaponBaseGun::FireBullet( CTFPlayer *pPlayer )
 {
 #ifdef CLIENT_DLL
     // VF2 VR: use controller world position as bullet origin (client prediction)
-    if ( VRMod_Started )
+    if ( UseVRMod() )
     {
         Vector vrMuzzlePos = VRMOD_GetRightControllerAbsPos();
         // Use vrMuzzlePos instead of pPlayer->Weapon_ShootPosition() below
