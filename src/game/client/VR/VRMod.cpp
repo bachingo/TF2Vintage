@@ -331,8 +331,9 @@ bool IsInXMenu = false;
 
 
 using XMenu = VRGestureMenu::XMenu;
-XMenu CurrentXMenu = XMenu::Main;
-int GestureMenuIndex = 0; 
+static XMenu CurrentXMenu = XMenu::Main;
+static Vector GestureForward, GestureRight, GestureUp;
+static int GestureMenuIndex = 0;
 
 float GestureMinSelectionDistance = 8.0f;
 
@@ -857,34 +858,16 @@ void VRMOD_SubmitSharedTexture()
         return;
 
 #if defined( _WIN32 )
-    // Windows path: D3D11 texture via Source VR interface
-    // g_pSourceVR manages the D3D11 texture internally — we just need the handle
-    // Use ISourceVirtualReality's internal mechanism rather than hooking D3D directly
-    ITexture *pLeftRT  = g_pSourceVR->GetRenderTarget(
-        ISourceVirtualReality::VREye_Left,  ISourceVirtualReality::RT_Color );
-    ITexture *pRightRT = g_pSourceVR->GetRenderTarget(
-        ISourceVirtualReality::VREye_Right, ISourceVirtualReality::RT_Color );
-
-    if ( !pLeftRT || !pRightRT )
+    if ( !g_d3d11Texture )
         return;
 
-    // Get the underlying D3D texture from the material system
-    // ITexture -> GetNativeHandle() returns LPDIRECT3DTEXTURE9 or ID3D11Resource*
-    // depending on the render path
-    void *pLeftHandle  = pLeftRT->GetNativeHandle();
-    void *pRightHandle = pRightRT->GetNativeHandle();
+    vr::Texture_t leftTex  = { (void*)g_d3d11Texture, vr::TextureType_DirectX, vr::ColorSpace_Auto };
+    vr::Texture_t rightTex = { (void*)g_d3d11Texture, vr::TextureType_DirectX, vr::ColorSpace_Auto };
+    vr::VRTextureBounds_t leftBounds  = { 0.0f, 0.0f, 0.5f, 1.0f };
+    vr::VRTextureBounds_t rightBounds = { 0.5f, 0.0f, 1.0f, 1.0f };
 
-    if ( pLeftHandle && pRightHandle )
-    {
-        vr::Texture_t leftTex  = { pLeftHandle,  vr::TextureType_DirectX11,
-                                    vr::ColorSpace_Auto };
-        vr::Texture_t rightTex = { pRightHandle, vr::TextureType_DirectX11,
-                                    vr::ColorSpace_Auto };
-        vr::VRTextureBounds_t fullBounds = { 0.0f, 0.0f, 1.0f, 1.0f };
-
-        vr::VRCompositor()->Submit( vr::Eye_Left,  &leftTex,  &fullBounds );
-        vr::VRCompositor()->Submit( vr::Eye_Right, &rightTex, &fullBounds );
-    }
+    vr::VRCompositor()->Submit( vr::Eye_Left,  &leftTex,  &leftBounds );
+    vr::VRCompositor()->Submit( vr::Eye_Right, &rightTex, &rightBounds );
 
 #elif defined( POSIX )
     // Linux path: OpenGL texture via Source VR interface
@@ -897,8 +880,8 @@ void VRMOD_SubmitSharedTexture()
         return;
 
     // On Linux, Source uses OpenGL. The native handle is a GLuint texture name.
-    uintptr_t leftGL  = (uintptr_t)pLeftRT->GetNativeHandle();
-    uintptr_t rightGL = (uintptr_t)pRightRT->GetNativeHandle();
+	uintptr_t leftGL  = (uintptr_t)g_pSourceVR->GetEyeTexture( ISourceVirtualReality::VREye_Left );
+	uintptr_t rightGL = (uintptr_t)g_pSourceVR->GetEyeTexture( ISourceVirtualReality::VREye_Right );
 
     vr::Texture_t leftTex  = { (void*)leftGL,  vr::TextureType_OpenGL,
                                 vr::ColorSpace_Auto };
@@ -1038,7 +1021,7 @@ int VRMOD_GetRecHeight()																				// works properly for Virtual Fortre
 // Sets vr origin so that hmd will be at given pos
 void VRMOD_UtilSetOrigin(Vector pos)
 {
-	VRMOD_GetPoses;
+	VRMOD_GetPoses();
 	Vector VR_hmd_pos_local = TrackedDevicesPoses[0].TrackedDevicePos;   // The hmd should be device 0 i think, implement something more robust later.
 	//VR_origin = pos + (VR_origin - VR_hmd_pos_local);
 	VR_origin = pos + (VR_origin - (VR_hmd_pos_local * VR_scale));
