@@ -44,6 +44,9 @@ jobs:
       - name: Make vpc executable
         run: chmod +x src/devtools/bin/vpc
 
+      - name: Make protoc executable
+        run: chmod +x src/thirdparty/protobuf-2.6.1/bin/linux32/protoc
+
       - name: Build
         env:
           BUILD_TYPE: ${{ inputs.build_config }}
