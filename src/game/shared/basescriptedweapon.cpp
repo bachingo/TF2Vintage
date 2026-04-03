@@ -2,7 +2,7 @@
 #include "npcevent.h"
 #include "ammodef.h"
 #include "weapon_parse.h"
-#if defined(TF_VINTAGE) || defined(TF_VINTAGE_CLIENT)
+#if defined(TF_DLL) || defined(TF_CLIENT_DLL)
 	#include "tf_weaponbase.h"
 #endif
 #include "basescriptedweapon.h"

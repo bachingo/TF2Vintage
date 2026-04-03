@@ -16,7 +16,7 @@
 #define CBaseScriptedWeapon C_BaseScriptedWeapon
 #endif
 
-#if defined(TF_VINTAGE) || defined(TF_VINTAGE_CLIENT)
+#if defined(TF_DLL) || defined(TF_CLIENT_DLL)
 #include "tf_weaponbase.h"
 #define SCRIPTED_WEAPON_DERIVE_FROM CTFWeaponBase
 #else

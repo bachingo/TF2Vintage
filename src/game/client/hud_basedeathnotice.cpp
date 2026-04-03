@@ -684,7 +684,7 @@ void CHudBaseDeathNotice::FireGameEvent( IGameEvent *event )
 		// Try and find the death identifier in the icon list
 		// On consoles, we flip usage of the inverted icon to make it more visible
 		bool bInverted = m_DeathNotices[iMsg].bLocalPlayerInvolved;
-#ifdef TF_VINTAGE_CLIENT
+#ifdef TF_CLIENT_DLL
 		ConVarRef cl_hud_console( "cl_hud_console" );
 		if ( IsConsole() || ( cl_hud_console.IsValid() && cl_hud_console.GetBool() ) )
 #else
