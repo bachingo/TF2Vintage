@@ -329,13 +329,18 @@ int X_active_counter = 0;
 bool IsInTriggerMenu = false;
 bool IsInXMenu = false;
 
-
-using XMenu = VRGestureMenu::XMenu;
-static XMenu CurrentXMenu = XMenu::Main;
-static Vector GestureForward, GestureRight, GestureUp;
-static int GestureMenuIndex = 0;
-
-float GestureMinSelectionDistance = 8.0f;
+//int GestureSelection = 0;
+//int GestureMenuIndex = 1;													// For gesture menu selection
+//int GestureNumItems = 4;													// For gesture menu selection
+//
+//enum XMenu {Main, Voice1, Voice2, Voice3, ClassSelect};
+//XMenu CurrentXMenu = Main;
+//
+//Vector GestureOrigin = Vector(0, 0, 0);
+//Vector GestureOriginLocal = Vector(0, 0, 0);
+//std::string GestureQuadMaterials[6] = {"", "", "", "", "", ""};
+//Vector GestureForward, GestureRight, GestureUp;
+//float GestureMinSelectionDistance = 8.0f;
 
 bool DrawLaser = false;
 Vector LaserOrigin = Vector(0, 0, 0);

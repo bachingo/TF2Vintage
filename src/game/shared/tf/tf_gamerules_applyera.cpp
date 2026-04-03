@@ -132,6 +132,7 @@
 //   [RENAME]    = exists under old name, rename on port
 //   [TRUNCATED] = multiple old convars collapsed into one
 //=============================================================================
+#include "cbase.h"
 
 void CTFGameRules::ApplyEra( int nEra )
 {
