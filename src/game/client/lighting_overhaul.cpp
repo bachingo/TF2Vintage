@@ -48,6 +48,7 @@
 #include "rendertexture.h"
 #include "mathlib/mathlib.h"
 #include "tier0/icommandline.h"
+#include "c_env_cascade_light.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
