@@ -513,8 +513,13 @@ int VRMOD_SetActionManifest(const char* fileName) {
     memset(g_actions, 0, sizeof(g_actions));
 
     char word[MAX_STR_LEN];
+#if defined( _WIN32 )
     while (fscanf_s(file, "%*[^\"]\"%[^\"]\"", word, MAX_STR_LEN) == 1 && strcmp(word, "actions") != 0);
     while (fscanf_s(file, "%[^\"]\"", word, MAX_STR_LEN) == 1) {
+#else
+    while (fscanf(file, "%*[^\"]\"%[^\"]\"", word, MAX_STR_LEN) == 1 && strcmp(word, "actions") != 0);
+    while (fscanf(file, "%[^\"]\"", word, MAX_STR_LEN) == 1) {
+#endif
         if (strchr(word, ']') != nullptr)
             break;
         if (strcmp(word, "name") == 0) {
@@ -528,7 +533,11 @@ int VRMOD_SetActionManifest(const char* fileName) {
             g_pInput->GetActionHandle(g_actions[g_actionCount].fullname, &(g_actions[g_actionCount].handle));
         }
         if (strcmp(word, "type") == 0) {
-            if (fscanf_s(file, "%*[^\"]\"%[^\"]\"", g_actions[g_actionCount].type, MAX_STR_LEN) != 1)
+#if defined( _WIN32 )
+			if (fscanf_s(file, "%*[^\"]\"%[^\"]\"", g_actions[g_actionCount].type, MAX_STR_LEN) != 1)
+#else
+			if (fscanf(file, "%*[^\"]\"%[^\"]\"", g_actions[g_actionCount].type, MAX_STR_LEN) != 1)
+#endif
                 break;
         }
         if (g_actions[g_actionCount].fullname[0] && g_actions[g_actionCount].type[0]) {
@@ -924,9 +933,9 @@ void VRMOD_Start() {
     ITexture *pRightRT = g_pSourceVR->GetRenderTarget( ISourceVirtualReality::VREye_Right, ISourceVirtualReality::RT_Color );
     // ShaderAPI gives us the underlying GL name via GetTextureHandle
     if ( pLeftRT )
-        g_glTextureLeft  = (uintptr_t)pLeftRT->GetTextureHandle( 0 );
+        g_glTextureLeft  = (uintptr_t)g_pShaderAPI->GetTextureHandle( pLeftRT->GetTextureID() );
     if ( pRightRT )
-        g_glTextureRight = (uintptr_t)pRightRT->GetTextureHandle( 0 );
+        g_glTextureRight = (uintptr_t)g_pShaderAPI->GetTextureHandle( pRightRT->GetTextureID() );
 #endif
 
 	VRMOD_SetActionManifest("vrmod_action_manifest.txt");	// Newly added for headtracking.
