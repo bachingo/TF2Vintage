@@ -62,11 +62,6 @@ $Project "Server (TF)"
 		$File	"trigger_area_capture.cpp"
 		$File	"trigger_area_capture.h"
 
-		$File   "$SRCDIR\game\shared\basescriptedweapon.cpp"
-		$File   "$SRCDIR\game\shared\basescriptedweapon.h"
-		$File	"$SRCDIR\game\shared\bannedwords.cpp"
-		$File	"$SRCDIR\game\shared\bannedwords.h"
-
 		$Folder "Common"
 		{
 			$File	"$SRCDIR\common\protoutils.cpp"
@@ -109,6 +104,8 @@ $Project "Server (TF)"
 
 		$Folder	"TF2V"
 		{
+			$File	"$SRCDIR\game\shared\bannedwords.cpp"
+			$File	"$SRCDIR\game\shared\bannedwords.h"
 			// Offline inventory emulator
 			$File	"$SRCDIR\game\shared\tf\tf2v_offline_inventory.cpp"
 			$File	"$SRCDIR\game\shared\tf\tf2v_offline_inventory.h"
