@@ -6,7 +6,6 @@
 
 $Macro SRCDIR		"..\.."
 $Macro GAMENAME 	"tf" [!$SOURCESDK]
-$Macro GAMENAME 	"tf2vintage" [$SOURCESDK]
 
 $Include "$SRCDIR\game\server\server_base.vpc"
 $Include "$SRCDIR\game\server\server_econ_base.vpc"
@@ -393,7 +392,7 @@ $Project "Server (TF)"
 				{
 					$Compiler
 					{
-						$Create\UsePrecompiledHeader	"Not Using Precompiled Headers"
+						$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
 					}
 				}
 			}

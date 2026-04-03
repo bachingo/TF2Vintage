@@ -5,29 +5,17 @@
 //-----------------------------------------------------------------------------
 
 $Macro SRCDIR		"..\.."
-$Macro GAMENAME 	"tf" [!$SOURCESDK]
-$Macro GAMENAME 	"tf2vintage" [$SOURCESDK]
+$Macro GAMENAME 	"tf2vintage"
 
-// This code currently only builds on Windows (itemtest_lib and dependencies)
-$Conditional WORKSHOP_IMPORT_ENABLE	1 [$WINDOWS && !$SOURCESDK]
-
-$Include "$SRCDIR\game\client\client_base.vpc"
-$Include "$SRCDIR\game\client\client_econ_base.vpc"
-$include "$SRCDIR\game\shared\tf\tf_gcmessages_include.vpc"
-$include "$SRCDIR\game\shared\tf\tf_proto_def_messages_include.vpc"
-$Include "$SRCDIR\vpc_scripts\source_saxxyawards.vpc" [!$SOURCESDK]
-$Include "$SRCDIR\utils\itemtest_lib\itemtest_lib_support.vpc" [$WORKSHOP_IMPORT_ENABLE]
+$Include "$SRCDIR\game\client\client_tf.vpc"
+//$Include "$SRCDIR\coplay\src\coplay.vpc"
 
 $Configuration
 {
 	$Compiler
 	{
-		$AdditionalIncludeDirectories	".\hl2;.\hl2\elements;.\tf;.\tf\vgui;..\statemachine;$SRCDIR\game\shared\multiplayer;$SRCDIR\game\shared\tf;$SRCDIR\gcsdk\steamextra;$BASE;.\econ"
-		$PreprocessorDefinitions		"$BASE;TF_CLIENT_DLL;TF_VINTAGE_CLIENT;USES_ECON_ITEMS;ENABLE_GC_MATCHMAKING;GLOWS_ENABLE;USE_DYNAMIC_ASSET_LOADING;VOTING_ENABLED;NEXT_BOT"
-		$PreprocessorDefinitions		"$BASE;SAXXYMAINMENU_ENABLED" [$SAXXYAWARDS_ENABLE]
-		$PreprocessorDefinitions		"$BASE;WORKSHOP_IMPORT_ENABLED" [$WORKSHOP_IMPORT_ENABLE]
-		$PreprocessorDefinitions		"$BASE;SIXENSE" [!$SOURCESDK]
-		$PreprocessorDefinitions		"$BASE;DISABLE_GC_CONNECTION;DISABLE_IN_SOURCESDK;INVENTORY_VIA_WEBAPI" [$SOURCESDK]
+		$AdditionalIncludeDirectories		"$BASE;tf\vgui"
+		$PreprocessorDefinitions			"$BASE;TF_VINTAGE_CLIENT"
 	}
 }
 

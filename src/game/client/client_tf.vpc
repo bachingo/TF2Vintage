@@ -6,7 +6,6 @@
 
 $Macro SRCDIR		"..\.."
 $Macro GAMENAME 	"tf" [!$SOURCESDK]
-$Macro GAMENAME 	"tf2vintage" [$SOURCESDK]
 
 // This code currently only builds on Windows (itemtest_lib and dependencies)
 $Conditional WORKSHOP_IMPORT_ENABLE	1 [$WINDOWS && !$SOURCESDK]
@@ -87,7 +86,7 @@ $Project "Client (TF)"
 				{
 					$Compiler
 					{
-						$Create\UsePrecompiledHeader	"Not Using Precompiled Headers"
+						$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
 					}
 				}
 			}
@@ -101,7 +100,7 @@ $Project "Client (TF)"
 				{
 					$Compiler
 					{
-						$Create\UsePrecompiledHeader	"Not Using Precompiled Headers"
+						$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
 					}
 				}
 			}
@@ -112,7 +111,7 @@ $Project "Client (TF)"
 				{
 					$Compiler
 					{
-						$Create\UsePrecompiledHeader	"Not Using Precompiled Headers"
+						$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
 					}
 				}
 			}
@@ -562,7 +561,7 @@ $Project "Client (TF)"
 				{
 					$Compiler
 					{
-						$Create\UsePrecompiledHeader	"Not Using Precompiled Headers"
+						$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
 					}
 				}
 			}

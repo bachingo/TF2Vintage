@@ -58,8 +58,8 @@ $Configuration
 		$PreprocessorDefinitions		"$BASE;INCLUDED_STEAM2_USERID_STRUCTS" 
 		$PreprocessorDefinitions		"$BASE;fopen=dont_use_fopen" [$WIN32]
 		$PreprocessorDefinitions		"$BASE;USE_WEBM_FOR_REPLAY;" [$LINUXALL]
-		$Create\UsePrecompiledHeader	"Use Precompiled Header (\Yu)"
-		$Create\UsePCHThroughFile		"cbase.h"
+		$Create/UsePrecompiledHeader	"Use Precompiled Header (/Yu)"
+		$Create/UsePCHThroughFile		"cbase.h"
 		$PrecompiledHeaderFile			"$(IntDir)\client.pch"
 
 		// misyl: We should eliminate these someday.
@@ -119,7 +119,7 @@ $Project
 			{
 				$Compiler
 				{
-					$Create\UsePrecompiledHeader	"Not Using Precompiled Headers"
+					$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
 				}
 			}
 		}
@@ -174,7 +174,7 @@ $Project
 				{
 					$Compiler
 					{
-						$Create\UsePrecompiledHeader	"Not Using Precompiled Headers"
+						$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
 					}
 				}
 			}
@@ -579,7 +579,7 @@ $Project
 					{
 						$Compiler
 						{
-							$Create\UsePrecompiledHeader	"Not Using Precompiled Headers"
+							$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
 						}
 					}
 				}
@@ -592,7 +592,7 @@ $Project
 				{
 					$Compiler
 					{
-						$Create\UsePrecompiledHeader	"Create Precompiled Header (\Yc)"
+						$Create/UsePrecompiledHeader	"Create Precompiled Header (/Yc)"
 					}
 				}
 			}
@@ -747,8 +747,8 @@ $Project
 						{
 							$Compiler
 							{
-								$Create\UsePrecompiledHeader	"Not Using Precompiled Headers"
-								$EnableC++Exceptions			"Yes (\EHsc)"
+								$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+								$EnableC++Exceptions			"Yes (/EHsc)"
 							}
 						}
 					}

@@ -5,22 +5,16 @@
 //-----------------------------------------------------------------------------
 
 $Macro SRCDIR		"..\.."
-$Macro GAMENAME 	"tf" [!$SOURCESDK]
 $Macro GAMENAME 	"tf2vintage" [$SOURCESDK]
 
-$Include "$SRCDIR\game\server\server_base.vpc"
-$Include "$SRCDIR\game\server\server_econ_base.vpc"
-$include "$SRCDIR\game\shared\tf\tf_gcmessages_include.vpc"
-$include "$SRCDIR\game\shared\tf\tf_proto_def_messages_include.vpc"
-$Include "$SRCDIR\game\server\nav_mesh.vpc"
+$Include "$SRCDIR\game\server\server_tf.vpc"
 
 $Configuration
 {
 	$Compiler
 	{
-		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\game\shared\hl2;.\tf;.\tf\vgui;$SRCDIR\statemachine;$SRCDIR\game\shared\Multiplayer;$SRCDIR\game\shared\tf"
-		$PreprocessorDefinitions		"$BASE;TF_DLL;TF_VINTAGE;ENABLE_GC_MATCHMAKING;GLOWS_ENABLE;USE_DYNAMIC_ASSET_LOADING;NEXT_BOT"
-		$PreprocessorDefinitions		"$BASE;DISABLE_GC_CONNECTION;DISABLE_IN_SOURCESDK;INVENTORY_VIA_WEBAPI" [$SOURCESDK]		
+		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\game\shared\tf,.\tf,.\tf\bot"
+		$PreprocessorDefinitions		"$BASE;TF_VINTAGE"
 	}
 }
 
