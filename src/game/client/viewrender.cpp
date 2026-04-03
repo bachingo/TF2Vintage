@@ -2697,8 +2697,8 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 		pRenderContext->Flush();
 		pRenderContext.SafeRelease();
 	}
-
-	CDebugviewActive::Draw2DDebuggingInfo( viewActive );
+					
+	CDebugViewRender::Draw2DDebuggingInfo( viewActive );
 
 	Render2DEffectsPostHUD( viewActive );
 
@@ -2709,7 +2709,7 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 
 	if ( IsPC() )
 	{
-		CDebugviewActive::GenerateOverdrawForTesting();
+		CDebugViewRender::GenerateOverdrawForTesting();
 	}
 
     // VF2 VR: after second eye renders, update tracking and submit frame
