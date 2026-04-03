@@ -133,11 +133,12 @@
 //   [TRUNCATED] = multiple old convars collapsed into one
 //=============================================================================
 #include "cbase.h"
+#include "tf/tf_gamerules.h"
 
 void CTFGameRules::ApplyEra( int nEra )
 {
     m_bApplyingEra = true;
-
+/*
     // =========================================================================
     // SECTION 1: PERMANENT SERVER OPTIONS
     // Not era-gated. Set once from server.cfg. Never touched by ApplyEra.
@@ -1060,7 +1061,7 @@ void CTFGameRules::ApplyEra( int nEra )
     // =========================================================================
     // SECTION 5: FINALISE
     // =========================================================================
-
+*/
     m_bApplyingEra = false;
     m_bEraDirty    = false;
 
