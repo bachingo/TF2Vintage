@@ -102,15 +102,6 @@ $Project "Server (TF)"
 			$File	"$SRCDIR\game\shared\tf\tf_quest_map_utils.cpp"
 		}
 
-		$Folder	"TF2V"
-		{
-			$File	"$SRCDIR\game\shared\bannedwords.cpp"
-			$File	"$SRCDIR\game\shared\bannedwords.h"
-			// Offline inventory emulator
-			$File	"$SRCDIR\game\shared\tf\tf2v_offline_inventory.cpp"
-			$File	"$SRCDIR\game\shared\tf\tf2v_offline_inventory.h"
-		}
-		
 		$Folder "Steam Workshop"
 		{
 			$File	"$SRCDIR\game\shared\workshop\ugc_utils.h"
@@ -121,16 +112,6 @@ $Project "Server (TF)"
 
 		$Folder	"TF"
 		{
-			$Folder	"Unused"
-			{
-				$File	"tf\entity_grenadepack.cpp"
-				$File	"tf\entity_grenadepack.h"
-				$File	"tf\tf_mapitems.cpp"
-				$File	"tf\tf_mapitems.h"
-				$File	"tf\tf_timer.cpp"
-				$File	"tf\tf_timer.h"
-			}
-
 			$File	"$SRCDIR\game\shared\tf\tf_weapon_passtime_gun.cpp"
 			$File	"$SRCDIR\game\shared\tf\tf_weapon_passtime_gun.h"
 			$File	"$SRCDIR\game\shared\tf\passtime_game_events.cpp"
@@ -263,8 +244,6 @@ $Project "Server (TF)"
 			$File	"$SRCDIR\game\shared\tf\tf_gamemovement.cpp"
 			$File	"$SRCDIR\game\shared\tf\tf_gamerules.cpp"
 			$File	"$SRCDIR\game\shared\tf\tf_gamerules.h"
-			$File	"$SRCDIR\game\shared\tf\tf_gamerules_vscript.cpp"
-			$File	"$SRCDIR\game\shared\tf\tf_gamerules_vscript.h"
 			$File	"$SRCDIR\game\shared\tf\tf_classdata.cpp"
 			$File	"$SRCDIR\game\shared\tf\tf_classdata.h"
 			$File	"tf\tf_gamestats.cpp"
@@ -396,30 +375,6 @@ $Project "Server (TF)"
 
 			$Folder	"Weapon"
 			{
-				$Folder "Custom"
-				{
-
-					$File	"$SRCDIR\game\shared\tf\tf_weaponbase_grenade.cpp"
-					$File	"$SRCDIR\game\shared\tf\tf_weaponbase_grenade.h"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_caltrop.cpp"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_caltrop.h"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_concussion.cpp"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_concussion.h"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_emp.cpp"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_emp.h"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_gas.cpp"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_gas.h"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_heal.cpp"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_heal.h"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_mirv.cpp"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_mirv.h"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_nail.cpp"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_nail.h"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_napalm.cpp"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_napalm.h"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_smoke_bomb.cpp"
-					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_smoke_bomb.h"
-				}
 				$File	"$SRCDIR\game\shared\tf\tf_dropped_weapon.cpp"
 				$File	"$SRCDIR\game\shared\tf\tf_dropped_weapon.h"
 				$File	"$SRCDIR\game\shared\tf\tf_weapon_bat.cpp"
@@ -1113,6 +1068,18 @@ $Project "Server (TF)"
 			$File	"$SRCDIR\game\shared\weapon_ifmbasecamera.h"
 			$File	"$SRCDIR\game\shared\weapon_ifmsteadycam.cpp"
 			$File	"$SRCDIR\game\shared\weapon_ifmsteadycam.h"
+		}
+		
+		$Folder	"TF2V"
+		{
+			// Word Censor
+			$File	"$SRCDIR\game\shared\bannedwords.cpp"
+			$File	"$SRCDIR\game\shared\bannedwords.h"
+			// Offline inventory emulator
+			$File	"$SRCDIR\game\shared\tf\tf2v_offline_inventory.cpp"
+			$File	"$SRCDIR\game\shared\tf\tf2v_offline_inventory.h"
+			// Era Enforcement
+			$File	"$SRCDIR\game\shared\tf\tf_gamerules_applyera.cpp"
 		}
 	}
 }
