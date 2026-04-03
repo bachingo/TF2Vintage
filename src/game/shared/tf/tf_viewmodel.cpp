@@ -17,7 +17,7 @@
 #include "materialsystem/imaterial.h"
 #include "materialsystem/imaterialvar.h"
 #include "prediction.h"
-
+#include "VR/VRMod.h"
 #endif
 
 #include "bone_setup.h"	//temp

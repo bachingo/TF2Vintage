@@ -330,11 +330,11 @@ bool IsInTriggerMenu = false;
 bool IsInXMenu = false;
 
 
-//enum XMenu {Main, Voice1, Voice2, Voice3, ClassSelect};
-//XMenu CurrentXMenu = Main;
-//
+using XMenu = VRGestureMenu::XMenu;
+XMenu CurrentXMenu = XMenu::Main;
+int GestureMenuIndex = 0; 
 
-//float GestureMinSelectionDistance = 8.0f;
+float GestureMinSelectionDistance = 8.0f;
 
 bool DrawLaser = false;
 Vector LaserOrigin = Vector(0, 0, 0);

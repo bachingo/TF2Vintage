@@ -2253,41 +2253,43 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
     // VF2 VR: override view parameters for each eye when VR is active
     static const int width_VR  = 960;   // safe fallback; HMD res causes black frames above 720p
     static const int height_VR = 1080;
-    CViewSetup viewRender = view_const; // mutable copy
-
+	
+    CViewSetup viewSetup = viewRender; // mutable copy
     if ( UseVRMod() )
     {
-        viewRender.width            = width_VR;
-        viewRender.height           = height_VR;
-        viewRender.m_nUnscaledWidth  = width_VR;
-        viewRender.m_nUnscaledHeight = height_VR;
+        viewSetup.width            = width_VR;
+        viewSetup.height           = height_VR;
+        viewSetup.m_nUnscaledWidth  = width_VR;
+        viewSetup.m_nUnscaledHeight = height_VR;
 
         if ( !SecondEyeRenderPass )  // first eye (left)
         {
-            viewRender.x              = 0;
-            viewRender.fov            = g_horizontalFOVLeft;
-            viewRender.fovViewmodel   = g_horizontalFOVLeft;
-            viewRender.m_flAspectRatio = g_aspectRatioLeft;
-            viewRender.angles         = VRMOD_GetViewAngle();
-            viewRender.origin         = VRMOD_GetViewOriginLeft();
+            viewSetup.x              = 0;
+            viewSetup.fov            = g_horizontalFOVLeft;
+            viewSetup.fovViewmodel   = g_horizontalFOVLeft;
+            viewSetup.m_flAspectRatio = g_aspectRatioLeft;
+            viewSetup.angles         = VRMOD_GetViewAngle();
+            viewSetup.origin         = VRMOD_GetViewOriginLeft();
         }
         else  // second eye (right)
         {
-            viewRender.x              = width_VR;
-            viewRender.fov            = g_horizontalFOVRight;
-            viewRender.fovViewmodel   = g_horizontalFOVRight;
-            viewRender.m_flAspectRatio = g_aspectRatioRight;
-            viewRender.angles         = VRMOD_GetViewAngle();
-            viewRender.origin         = VRMOD_GetViewOriginRight();
+            viewSetup.x              = width_VR;
+            viewSetup.fov            = g_horizontalFOVRight;
+            viewSetup.fovViewmodel   = g_horizontalFOVRight;
+            viewSetup.m_flAspectRatio = g_aspectRatioRight;
+            viewSetup.angles         = VRMOD_GetViewAngle();
+            viewSetup.origin         = VRMOD_GetViewOriginRight();
         }
     }
 	
+	const CViewSetup viewActive = viewSetup;	// Now we lock in the viewrender info for the rest of the function.
+	
 	m_UnderWaterOverlayMaterial.Shutdown();					// underwater view will set
 
-	m_CurrentView = viewRender;
+	m_CurrentView = viewActive;
 
 	C_BaseAnimating::AutoAllowBoneAccess boneaccess( true, true );
-	VPROF( "CViewRender::RenderView" );
+	VPROF( "CviewActive::RenderView" );
 	tmZone( TELEMETRY_LEVEL0, TMZF_NONE, "%s", __FUNCTION__ );
 
 	// Don't want TF2 running less than DX 8
@@ -2311,10 +2313,10 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 	ITexture *saveRenderTarget = pRenderContext->GetRenderTarget();
 	pRenderContext.SafeRelease(); // don't want to hold for long periods in case in a locking active share thread mode
 
-	if ( !m_rbTakeFreezeFrame[viewRender.m_eStereoEye ] && m_flFreezeFrameUntil > gpGlobals->curtime )
+	if ( !m_rbTakeFreezeFrame[viewActive.m_eStereoEye ] && m_flFreezeFrameUntil > gpGlobals->curtime )
 	{
 		CRefPtr<CFreezeFrameView> pFreezeFrameView = new CFreezeFrameView( this );
-		pFreezeFrameView->Setup( viewRender );
+		pFreezeFrameView->Setup( viewActive );
 		AddViewToScene( pFreezeFrameView );
 
 		g_bRenderingView = true;
@@ -2346,14 +2348,14 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 		pRenderContext.SafeRelease();
 
 		// clear happens here probably
-		SetupMain3DView( viewRender, nClearFlags );
+		SetupMain3DView( viewActive, nClearFlags );
 			 	  
 		bool bDrew3dSkybox = false;
 		SkyboxVisibility_t nSkyboxVisible = SKYBOX_NOT_VISIBLE;
 
 		// if the 3d skybox world is drawn, then don't draw the normal skybox
 		CSkyboxView *pSkyView = new CSkyboxView( this );
-		if ( ( bDrew3dSkybox = pSkyView->Setup( viewRender, &nClearFlags, &nSkyboxVisible ) ) != false )
+		if ( ( bDrew3dSkybox = pSkyView->Setup( viewActive, &nClearFlags, &nSkyboxVisible ) ) != false )
 		{
 			AddViewToScene( pSkyView );
 		}
@@ -2362,7 +2364,7 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 		// Force it to clear the framebuffer if they're in solid space.
 		if ( ( nClearFlags & VIEW_CLEAR_COLOR ) == 0 )
 		{
-			if ( enginetrace->GetPointContents( viewRender.origin ) == CONTENTS_SOLID )
+			if ( enginetrace->GetPointContents( viewActive.origin ) == CONTENTS_SOLID )
 			{
 				nClearFlags |= VIEW_CLEAR_COLOR;
 			}
@@ -2371,11 +2373,11 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 		// Render world and all entities, particles, etc.
 		if( !g_pIntroData )
 		{
-			ViewDrawScene( bDrew3dSkybox, nSkyboxVisible, viewRender, nClearFlags, VIEW_MAIN, whatToDraw & RENDERVIEW_DRAWVIEWMODEL );
+			ViewDrawScene( bDrew3dSkybox, nSkyboxVisible, viewActive, nClearFlags, VIEW_MAIN, whatToDraw & RENDERVIEW_DRAWVIEWMODEL );
 		}
 		else
 		{
-			ViewDrawScene_Intro( viewRender, nClearFlags, *g_pIntroData );
+			ViewDrawScene_Intro( viewActive, nClearFlags, *g_pIntroData );
 		}
 
 		// We can still use the 'current view' stuff set up in ViewDrawScene
@@ -2395,7 +2397,7 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 		RenderPlayerSprites();
 
 		// Image-space motion blur
-		if ( !building_cubemaps.GetBool() && viewRender.m_bDoBloomAndToneMapping ) // We probably should use a different view. variable here
+		if ( !building_cubemaps.GetBool() && viewActive.m_bDoBloomAndToneMapping ) // We probably should use a different view. variable here
 		{
 			static ConVarRef mat_motion_blur_enabled( "mat_motion_blur_enabled" );
 			if ( ( mat_motion_blur_enabled.GetInt() ) && ( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() >= 90 ) )
@@ -2403,16 +2405,16 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 				pRenderContext.GetFrom( materials );
 				{
 					PIXEVENT( pRenderContext, "DoImageSpaceMotionBlur" );
-					DoImageSpaceMotionBlur( viewRender, viewRender.x, viewRender.y, viewRender.width, viewRender.height );
+					DoImageSpaceMotionBlur( viewActive, viewActive.x, viewActive.y, viewActive.width, viewActive.height );
 				}
 				pRenderContext.SafeRelease();
 			}
 		}
 
-		GetClientModeNormal()->DoPostScreenSpaceEffects( &viewRender );
+		GetClientModeNormal()->DoPostScreenSpaceEffects( &viewActive );
 
 		// Now actually draw the viewmodel
-		DrawViewModels( viewRender, whatToDraw & RENDERVIEW_DRAWVIEWMODEL );
+		DrawViewModels( viewActive, whatToDraw & RENDERVIEW_DRAWVIEWMODEL );
 
 		DrawUnderwaterOverlay();
 
@@ -2429,12 +2431,12 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 		// Overlay screen fade on entire screen
 		IMaterial* pMaterial = blend ? m_ModulateSingleColor : m_TranslucentSingleColor;
 		render->ViewDrawFade( color, pMaterial );
-		PerformScreenOverlay( viewRender.x, viewRender.y, viewRender.width, viewRender.height );
+		PerformScreenOverlay( viewActive.x, viewActive.y, viewActive.width, viewActive.height );
 
 		// Prevent sound stutter if going slow
 		engine->Sound_ExtraUpdate();	
 	
-		if ( !building_cubemaps.GetBool() && viewRender.m_bDoBloomAndToneMapping )
+		if ( !building_cubemaps.GetBool() && viewActive.m_bDoBloomAndToneMapping )
 		{
 			pRenderContext.GetFrom( materials );
 			{
@@ -2446,7 +2448,7 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 				{
 					bFlashlightIsOn = pLocal->IsEffectActive( EF_DIMLIGHT );
 				}
-				DoEnginePostProcessing( viewRender.x, viewRender.y, viewRender.width, viewRender.height, bFlashlightIsOn );
+				DoEnginePostProcessing( viewActive.x, viewActive.y, viewActive.width, viewActive.height, bFlashlightIsOn );
 			}
 			pRenderContext.SafeRelease();
 		}
@@ -2458,10 +2460,10 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 			tmZone( TELEMETRY_LEVEL0, TMZF_NONE, "GrabPreColorCorrectedFrame" );
 
 			// Grab the pre-color corrected frame for editing purposes
-			engine->GrabPreColorCorrectedFrame( viewRender.x, viewRender.y, viewRender.width, viewRender.height );
+			engine->GrabPreColorCorrectedFrame( viewActive.x, viewActive.y, viewActive.width, viewActive.height );
 		}
 
-		PerformScreenSpaceEffects( 0, 0, viewRender.width, viewRender.height );
+		PerformScreenSpaceEffects( 0, 0, viewActive.width, viewActive.height );
 
 		if ( g_pMaterialSystemHardwareConfig->GetHDRType() == HDR_TYPE_INTEGER )
 		{
@@ -2470,15 +2472,15 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 			pRenderContext.SafeRelease();
 		}
 
-		CleanupMain3DView( viewRender );
+		CleanupMain3DView( viewActive );
 
-		if ( m_rbTakeFreezeFrame[viewRender.m_eStereoEye ] )
+		if ( m_rbTakeFreezeFrame[viewActive.m_eStereoEye ] )
 		{
 			Rect_t rect;
-			rect.x = viewRender.x;
-			rect.y = viewRender.y;
-			rect.width = viewRender.width;
-			rect.height = viewRender.height;
+			rect.x = viewActive.x;
+			rect.y = viewActive.y;
+			rect.width = viewActive.width;
+			rect.height = viewActive.height;
 
 			pRenderContext = materials->GetRenderContext();
 			if ( IsX360() )
@@ -2491,7 +2493,7 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 				pRenderContext->CopyRenderTargetToTextureEx( GetFullscreenTexture(), 0, &rect, &rect );
 			}
 			pRenderContext.SafeRelease();
-			m_rbTakeFreezeFrame[viewRender.m_eStereoEye ] = false;
+			m_rbTakeFreezeFrame[viewActive.m_eStereoEye ] = false;
 		}
 
 		pRenderContext = materials->GetRenderContext();
@@ -2525,15 +2527,15 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 
 		Rect_t	DownscaleRect, UpscaleRect;
 
-		DownscaleRect.x = viewRender.x;
-		DownscaleRect.y = viewRender.y;
-		DownscaleRect.width = viewRender.width;
-		DownscaleRect.height = viewRender.height;
+		DownscaleRect.x = viewActive.x;
+		DownscaleRect.y = viewActive.y;
+		DownscaleRect.width = viewActive.width;
+		DownscaleRect.height = viewActive.height;
 
-		UpscaleRect.x = viewRender.m_nUnscaledX;
-		UpscaleRect.y = viewRender.m_nUnscaledY;
-		UpscaleRect.width = viewRender.m_nUnscaledWidth;
-		UpscaleRect.height = viewRender.m_nUnscaledHeight;
+		UpscaleRect.x = viewActive.m_nUnscaledX;
+		UpscaleRect.y = viewActive.m_nUnscaledY;
+		UpscaleRect.width = viewActive.m_nUnscaledWidth;
+		UpscaleRect.height = viewActive.m_nUnscaledHeight;
 
 		pRenderContextUpscale->CopyRenderTargetToTextureEx( pFullFrameFB1, 0, &DownscaleRect, &DownscaleRect );
 		pRenderContextUpscale->DrawScreenSpaceRectangle( pCopyMaterial, UpscaleRect.x, UpscaleRect.y, UpscaleRect.width, UpscaleRect.height,
@@ -2546,23 +2548,23 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 	// if we're in VR mode we might need to override the render target
 	if( UseVR() )
 	{
-		saveRenderTarget = g_pSourceVR->GetRenderTarget( (ISourceVirtualReality::VREye)(viewRender.m_eStereoEye - 1), ISourceVirtualReality::RT_Color );
+		saveRenderTarget = g_pSourceVR->GetRenderTarget( (ISourceVirtualReality::VREye)(viewActive.m_eStereoEye - 1), ISourceVirtualReality::RT_Color );
 	}
 
 	// Draw the 2D graphics
-	render->Push2DView( viewRender, 0, saveRenderTarget, GetFrustum() );
+	render->Push2DView( viewActive, 0, saveRenderTarget, GetFrustum() );
 
-	Render2DEffectsPreHUD( viewRender );
+	Render2DEffectsPreHUD( viewActive );
 
 	if ( whatToDraw & RENDERVIEW_DRAWHUD )
 	{
 		VPROF_BUDGET( "VGui_DrawHud", VPROF_BUDGETGROUP_OTHER_VGUI );
-		int viewWidth = viewRender.m_nUnscaledWidth;
-		int viewHeight = viewRender.m_nUnscaledHeight;
-		int viewActualWidth = viewRender.m_nUnscaledWidth;
-		int viewActualHeight = viewRender.m_nUnscaledHeight;
-		int viewX = viewRender.m_nUnscaledX;
-		int viewY = viewRender.m_nUnscaledY;
+		int viewWidth = viewActive.m_nUnscaledWidth;
+		int viewHeight = viewActive.m_nUnscaledHeight;
+		int viewActualWidth = viewActive.m_nUnscaledWidth;
+		int viewActualHeight = viewActive.m_nUnscaledHeight;
+		int viewX = viewActive.m_nUnscaledX;
+		int viewY = viewActive.m_nUnscaledY;
 		int viewFramebufferX = 0;
 		int viewFramebufferY = 0;
 		int viewFramebufferWidth = viewWidth;
@@ -2587,14 +2589,14 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 					vgui::surface()->GetScreenSize( viewWidth, viewHeight );
 
 					viewFramebufferX = 0;
-					if( viewRender.m_eStereoEye == STEREO_EYE_RIGHT && !saveRenderTarget )
+					if( viewActive.m_eStereoEye == STEREO_EYE_RIGHT && !saveRenderTarget )
 						viewFramebufferX = viewFramebufferWidth;
 					viewFramebufferY = 0;
 				}
 			}
 			else
 			{
-				viewFramebufferX = viewRender.m_eStereoEye == STEREO_EYE_RIGHT ? viewWidth : 0;
+				viewFramebufferX = viewActive.m_eStereoEye == STEREO_EYE_RIGHT ? viewWidth : 0;
 				viewFramebufferY = 0;
 			}
 		}
@@ -2683,12 +2685,12 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 				// Now we've rendered the HUD to its texture, actually get it on the screen.
 				// Since we're drawing it as a 3D object, we need correctly set up frustum, etc.
 				int ClearFlags = 0;
-				SetupMain3DView( viewRender, ClearFlags );
+				SetupMain3DView( viewActive, ClearFlags );
 
 				// TODO - a bit of a shonky test - basically trying to catch the main menu, the briefing screen, the loadout screen, etc.
 				bool bTranslucent = !g_pMatSystemSurface->IsCursorVisible();
 				g_ClientVirtualReality.RenderHUDQuad( g_pClientMode->ShouldBlackoutAroundHUD(), bTranslucent );
-				CleanupMain3DView( viewRender );
+				CleanupMain3DView( viewActive );
 			}
 		}
 
@@ -2696,9 +2698,9 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 		pRenderContext.SafeRelease();
 	}
 
-	CDebugViewRender::Draw2DDebuggingInfo( viewRender );
+	CDebugviewActive::Draw2DDebuggingInfo( viewActive );
 
-	Render2DEffectsPostHUD( viewRender );
+	Render2DEffectsPostHUD( viewActive );
 
 	g_bRenderingView = false;
 
@@ -2707,7 +2709,7 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 
 	if ( IsPC() )
 	{
-		CDebugViewRender::GenerateOverdrawForTesting();
+		CDebugviewActive::GenerateOverdrawForTesting();
 	}
 
     // VF2 VR: after second eye renders, update tracking and submit frame
@@ -2725,9 +2727,7 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 
     if ( SecondEyeRenderPass && UseVRMod() )
     {
-        // Queue a second render pass for the right eye.
-        // The engine will call RenderView again this frame.
-        // VF2's implementation re-enters via the engine's stereo path.
+		CViewRender::RenderView(viewRender, nClearFlags, whatToDraw);
     }
 }
 

@@ -45,6 +45,7 @@
 #include "ScreenSpaceEffects.h"
 #include "sourcevr/isourcevirtualreality.h"
 #include "client_virtualreality.h"
+#include "VR/VRMod.h"
 
 #if defined( REPLAY_ENABLED )
 #include "replay/ireplaysystem.h"
