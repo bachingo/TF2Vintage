@@ -148,7 +148,7 @@ void CTFViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePosit
 
 	vecNewAngles += vecLoweredAngles;
 	
-	if ( IsVRMode() )
+	if ( UseVRMod() )
 	{
 		vecNewOrigin = VRMOD_GetRecommendedViewmodelAbsPos();
 		vecNewAngles = VRMOD_GetRecommendedViewmodelAbsAngle();

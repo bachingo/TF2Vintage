@@ -853,7 +853,7 @@ void VRMOD_ShareTextureFinish() {
 // New cross-platform implementation using Source SDK material system
 void VRMOD_SubmitSharedTexture()
 {
-    if ( !g_pSourceVR || !IsVRMod() )
+    if ( !g_pSourceVR || !UseVRMod() )
         return;
 
 #if defined( _WIN32 )
@@ -876,9 +876,9 @@ void VRMOD_SubmitSharedTexture()
 
     if ( pLeftHandle && pRightHandle )
     {
-        vr::Texture_t leftTex  = { pLeftHandle,  vr::TextureType_DirectX,
+        vr::Texture_t leftTex  = { pLeftHandle,  vr::TextureType_DirectX11,
                                     vr::ColorSpace_Auto };
-        vr::Texture_t rightTex = { pRightHandle, vr::TextureType_DirectX,
+        vr::Texture_t rightTex = { pRightHandle, vr::TextureType_DirectX11,
                                     vr::ColorSpace_Auto };
         vr::VRTextureBounds_t fullBounds = { 0.0f, 0.0f, 1.0f, 1.0f };
 

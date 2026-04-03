@@ -2250,6 +2250,38 @@ const char *COM_GetModDirectory();
 // This renders the entire 3D view.
 void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int whatToDraw )
 {
+    // VF2 VR: override view parameters for each eye when VR is active
+    static const int width_VR  = 960;   // safe fallback; HMD res causes black frames above 720p
+    static const int height_VR = 1080;
+    CViewSetup viewRender = view_const; // mutable copy
+
+    if ( UseVRMod() )
+    {
+        viewRender.width            = width_VR;
+        viewRender.height           = height_VR;
+        viewRender.m_nUnscaledWidth  = width_VR;
+        viewRender.m_nUnscaledHeight = height_VR;
+
+        if ( !SecondEyeRenderPass )  // first eye (left)
+        {
+            viewRender.x              = 0;
+            viewRender.fov            = g_horizontalFOVLeft;
+            viewRender.fovViewmodel   = g_horizontalFOVLeft;
+            viewRender.m_flAspectRatio = g_aspectRatioLeft;
+            viewRender.angles         = VRMOD_GetViewAngle();
+            viewRender.origin         = VRMOD_GetViewOriginLeft();
+        }
+        else  // second eye (right)
+        {
+            viewRender.x              = width_VR;
+            viewRender.fov            = g_horizontalFOVRight;
+            viewRender.fovViewmodel   = g_horizontalFOVRight;
+            viewRender.m_flAspectRatio = g_aspectRatioRight;
+            viewRender.angles         = VRMOD_GetViewAngle();
+            viewRender.origin         = VRMOD_GetViewOriginRight();
+        }
+    }
+	
 	m_UnderWaterOverlayMaterial.Shutdown();					// underwater view will set
 
 	m_CurrentView = viewRender;
@@ -2678,8 +2710,25 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 		CDebugViewRender::GenerateOverdrawForTesting();
 	}
 
+    // VF2 VR: after second eye renders, update tracking and submit frame
+    if ( UseVRMod() && SecondEyeRenderPass )
+    {
+        VRMOD_UpdatePosesAndActions();
+        VRMOD_UtilHandleTracking();
+        VRMOD_SubmitSharedTexture();
+    }
+	
 	render->PopView( GetFrustum() );
 	g_WorldListCache.Flush();
+	
+    SecondEyeRenderPass = !SecondEyeRenderPass;
+
+    if ( SecondEyeRenderPass && UseVRMod() )
+    {
+        // Queue a second render pass for the right eye.
+        // The engine will call RenderView again this frame.
+        // VF2's implementation re-enters via the engine's stereo path.
+    }
 }
 
 //-----------------------------------------------------------------------------
