@@ -964,12 +964,9 @@ void VRMOD_Shutdown() {
     }
 	VRMod_Started = 0;
 	g_pMaterialSystem->EndRenderTargetAllocation();
-    if (g_d3d11Device != NULL) {
-        g_d3d11Device->Release();
-        g_d3d11Device = NULL;
-    }
+
 #if defined( _WIN32 )
-    if (g_d3d11Device != NULL) { ... }
+    if (g_d3d11Device != NULL)
     g_d3d11Texture   = NULL;
     g_sharedTexture  = NULL;
     g_CreateTextureAddr = NULL;
