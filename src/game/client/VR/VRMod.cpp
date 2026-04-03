@@ -208,6 +208,11 @@ DWORD_PTR               g_CreateTextureAddr = NULL;
 IDirect3DDevice9*       g_d3d9Device = NULL;
 #endif // _WIN32
 
+#if defined( POSIX )
+static uintptr_t g_glTextureLeft  = 0;
+static uintptr_t g_glTextureRight = 0;
+#endif
+
 //other
 float                   g_horizontalOffsetLeft = 0;
 float                   g_horizontalOffsetRight = 0;
@@ -479,9 +484,14 @@ ConCommand vrmod_getversion("vrmod_getversion", VRMOD_GetVersion, "Returns the c
 int VRMOD_SetActionManifest(const char* fileName) {
 
     char currentDir[MAX_STR_LEN];
-    GetCurrentDirectory(MAX_STR_LEN, currentDir);
     char path[MAX_STR_LEN];
-    sprintf_s(path, MAX_STR_LEN, "%s\\SteamVrActionManifest\\%s", currentDir, fileName);
+#if defined( _WIN32 )
+    GetCurrentDirectory( MAX_STR_LEN, currentDir );
+    sprintf_s( path, MAX_STR_LEN, "%s\\SteamVrActionManifest\\%s", currentDir, fileName );
+#else
+    V_GetCurrentDirectory( currentDir, MAX_STR_LEN );
+    snprintf( path, MAX_STR_LEN, "%s/SteamVrActionManifest/%s", currentDir, fileName );
+#endif
 
     g_pInput = vr::VRInput();
     if (g_pInput->SetActionManifestPath(path) != vr::VRInputError_None) {
@@ -489,7 +499,13 @@ int VRMOD_SetActionManifest(const char* fileName) {
     }
 
     FILE* file = NULL;
-    fopen_s(&file, path, "r");
+#if defined( _WIN32 )
+    fopen_s( &file, path, "r" );
+    // fscanf_s calls...
+#else
+    file = fopen( path, "r" );
+    // fscanf calls (no _s suffix)...
+#endif
     if (file == NULL) {
 		Warning("failed to open action manifest");
     }
@@ -868,26 +884,16 @@ void VRMOD_SubmitSharedTexture()
 
 #elif defined( POSIX )
     // Linux path: OpenGL texture via Source VR interface
-    ITexture *pLeftRT  = g_pSourceVR->GetRenderTarget(
-        ISourceVirtualReality::VREye_Left,  ISourceVirtualReality::RT_Color );
-    ITexture *pRightRT = g_pSourceVR->GetRenderTarget(
-        ISourceVirtualReality::VREye_Right, ISourceVirtualReality::RT_Color );
-
-    if ( !pLeftRT || !pRightRT )
+    if ( !g_glTextureLeft || !g_glTextureRight )
         return;
 
-    // On Linux, Source uses OpenGL. The native handle is a GLuint texture name.
-	uintptr_t leftGL  = (uintptr_t)g_pSourceVR->GetEyeTexture( ISourceVirtualReality::VREye_Left );
-	uintptr_t rightGL = (uintptr_t)g_pSourceVR->GetEyeTexture( ISourceVirtualReality::VREye_Right );
+    vr::Texture_t leftTex  = { (void*)g_glTextureLeft,  vr::TextureType_OpenGL, vr::ColorSpace_Auto };
+    vr::Texture_t rightTex = { (void*)g_glTextureRight, vr::TextureType_OpenGL, vr::ColorSpace_Auto };
+    vr::VRTextureBounds_t leftBounds  = { 0.0f, 0.0f, 0.5f, 1.0f };
+    vr::VRTextureBounds_t rightBounds = { 0.5f, 0.0f, 1.0f, 1.0f };
 
-    vr::Texture_t leftTex  = { (void*)leftGL,  vr::TextureType_OpenGL,
-                                vr::ColorSpace_Auto };
-    vr::Texture_t rightTex = { (void*)rightGL, vr::TextureType_OpenGL,
-                                vr::ColorSpace_Auto };
-    vr::VRTextureBounds_t fullBounds = { 0.0f, 0.0f, 1.0f, 1.0f };
-
-    vr::VRCompositor()->Submit( vr::Eye_Left,  &leftTex,  &fullBounds );
-    vr::VRCompositor()->Submit( vr::Eye_Right, &rightTex, &fullBounds );
+    vr::VRCompositor()->Submit( vr::Eye_Left,  &leftTex,  &leftBounds );
+    vr::VRCompositor()->Submit( vr::Eye_Right, &rightTex, &rightBounds );
 #endif
 }
 
@@ -906,8 +912,22 @@ void VRMOD_Start() {
 	g_pMaterialSystem->BeginRenderTargetAllocation();
 	//RenderTarget_VRMod = g_pMaterialSystem->CreateNamedRenderTargetTextureEx("vrmod_rt", 2 * recommendedWidth, recommendedHeight, RT_SIZE_DEFAULT, g_pMaterialSystem->GetBackBufferFormat(), MATERIAL_RT_DEPTH_SHARED, TEXTUREFLAGS_NOMIP);
 	RenderTarget_VRMod = materials->CreateNamedRenderTargetTextureEx("vrmod_rt", 2 * recommendedWidth, recommendedHeight, RT_SIZE_DEFAULT, materials->GetBackBufferFormat(), MATERIAL_RT_DEPTH_SHARED, TEXTUREFLAGS_NOMIP);
-	VRMOD_ShareTextureFinish();
+	
+#if defined( _WIN32 )
+    VRMOD_ShareTextureFinish();
+#endif
 
+#if defined( POSIX )
+    // Capture the GL texture IDs now while the render target is freshly allocated.
+    // Left eye = left half, right eye = right half of the side-by-side RT.
+    ITexture *pLeftRT  = g_pSourceVR->GetRenderTarget( ISourceVirtualReality::VREye_Left,  ISourceVirtualReality::RT_Color );
+    ITexture *pRightRT = g_pSourceVR->GetRenderTarget( ISourceVirtualReality::VREye_Right, ISourceVirtualReality::RT_Color );
+    // ShaderAPI gives us the underlying GL name via GetTextureHandle
+    if ( pLeftRT )
+        g_glTextureLeft  = (uintptr_t)pLeftRT->GetTextureHandle( 0 );
+    if ( pRightRT )
+        g_glTextureRight = (uintptr_t)pRightRT->GetTextureHandle( 0 );
+#endif
 
 	VRMOD_SetActionManifest("vrmod_action_manifest.txt");	// Newly added for headtracking.
 	ActiveActionSetNames[0] = "/actions/vrmod";
@@ -948,13 +968,16 @@ void VRMOD_Shutdown() {
         g_d3d11Device->Release();
         g_d3d11Device = NULL;
     }
-    g_d3d11Texture = NULL;
-    g_sharedTexture = NULL;
+#if defined( _WIN32 )
+    if (g_d3d11Device != NULL) { ... }
+    g_d3d11Texture   = NULL;
+    g_sharedTexture  = NULL;
     g_CreateTextureAddr = NULL;
+    g_d3d9Device     = NULL;
+#endif
     g_actionCount = 0;
     g_actionSetCount = 0;
     g_activeActionSetCount = 0;
-    g_d3d9Device = NULL;
 	
     return;
 }
