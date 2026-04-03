@@ -1912,9 +1912,9 @@ void VRMOD_General_Debug()
 	TrackedDevicePoseStruct DebugTrackedDevicesPoses = TrackedDevicesPoses[0];
 	vr::VRActiveActionSet_t DebugActiveActionSets = g_activeActionSets[0];
 	action DebugActions = g_actions[0];
-	int DebugActiveActionSetCount = g_activeActionSetCount;
-	int DebugActionSetCount = g_actionSetCount;
-	int DebugActionCount = g_actionCount;
+	//int DebugActiveActionSetCount = g_activeActionSetCount;
+	//int DebugActionSetCount = g_actionSetCount;
+	//int DebugActionCount = g_actionCount;
 
 	Msg("End of Debug function\n");
 }
