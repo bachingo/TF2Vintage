@@ -54,7 +54,7 @@
 #include "sourcevr/isourcevirtualreality.h"
 #include "client_virtualreality.h"
 #include "c_lights.h"
-#include "vr/VRMod.h"
+#include "VR/VRMod.h"
 #ifdef TF_CLIENT_DLL
 #include "tf/c_tf_player.h"
 #endif

@@ -17,7 +17,7 @@
 #include "vprof.h"
 #include "icommandline.h"
 #include "sourcevr/isourcevirtualreality.h"
-#include "vr/VRMod.h"
+#include "VR/VRMod.h"
 
 static void PixelvisDrawChanged( IConVar *pPixelvisVar, const char *pOld, float flOldValue );
 

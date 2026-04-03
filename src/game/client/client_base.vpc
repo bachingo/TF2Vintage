@@ -602,7 +602,9 @@ $Project
 		{
 			// VF2 Virtual Reality
 			$File	"$SRCDIR\game\client\VR\VRMod.cpp"
+			$File	"$SRCDIR\game\client\VR\VRMod.h"
 			$File	"$SRCDIR\game\client\VR\VRModClasses.cpp"
+			$File	"$SRCDIR\game\client\VR\VRModClasses.h"
 		}
 		
 		$Folder	"Temporary Entities"
