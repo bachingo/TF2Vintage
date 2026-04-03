@@ -492,7 +492,7 @@ public:
         Vector vecSunWorld = MainViewOrigin();
         vecSunWorld += vecSunDir * flSunDist;
 
-        Vector vecSunScreen;
+        Vector vecSunScreen = vec3_origin;
         bool bBehind = false;
         {
             const VMatrix &worldToScreen = engine->WorldToScreenMatrix();

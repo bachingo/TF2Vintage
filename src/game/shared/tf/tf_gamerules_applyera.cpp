@@ -133,7 +133,7 @@
 //   [TRUNCATED] = multiple old convars collapsed into one
 //=============================================================================
 #include "cbase.h"
-#include "tf/tf_gamerules.h"
+#include "tf_gamerules.h"
 
 void CTFGameRules::ApplyEra( int nEra )
 {

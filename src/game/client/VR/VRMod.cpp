@@ -1397,7 +1397,7 @@ void VRMOD_Process_input()
 		}
 		else if (X_active_counter > 20)
 		{
-			GestureMinSelectionDistance = 0.05f;
+			GestureMenu->GestureMinSelectionDistance = 0.05f;
 
 						GestureMenu->GestureSelection = GestureMenu->SelectGestureOption(VR_controller_left_pos_abs);
 			LaserEnd = VR_controller_left_pos_abs;
