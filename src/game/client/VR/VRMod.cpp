@@ -517,8 +517,8 @@ int VRMOD_SetActionManifest(const char* fileName) {
     while (fscanf_s(file, "%*[^\"]\"%[^\"]\"", word, MAX_STR_LEN) == 1 && strcmp(word, "actions") != 0);
     while (fscanf_s(file, "%[^\"]\"", word, MAX_STR_LEN) == 1) {
 #else
-    while (fscanf(file, "%*[^\"]\"%[^\"]\"", word, MAX_STR_LEN) == 1 && strcmp(word, "actions") != 0);
-    while (fscanf(file, "%*[^\"]\"%[^\"]\"", word) == 1 ...
+    while (fscanf(file, "%*[^\"]\"%[^\"]\"", word) == 1 && strcmp(word, "actions") != 0);
+    while (fscanf(file, "%[^\"]\"", word) == 1) {
 #endif
         if (strchr(word, ']') != nullptr)
             break;
@@ -526,7 +526,7 @@ int VRMOD_SetActionManifest(const char* fileName) {
 #if defined( _WIN32 )
             if (fscanf_s(file, "%*[^\"]\"%[^\"]\"", g_actions[g_actionCount].fullname, MAX_STR_LEN) != 1)
 #else
-            if (fscanf(file, "%*[^\"]\"%[^\"]\"", g_actions[g_actionCount].fullname, word) != 1)
+            if (fscanf(file, "%*[^\"]\"%[^\"]\"", g_actions[g_actionCount].fullname) != 1)
 #endif
                 break;
             g_actions[g_actionCount].name = g_actions[g_actionCount].fullname;
@@ -540,7 +540,7 @@ int VRMOD_SetActionManifest(const char* fileName) {
 #if defined( _WIN32 )
 			if (fscanf_s(file, "%*[^\"]\"%[^\"]\"", g_actions[g_actionCount].type, MAX_STR_LEN) != 1)
 #else
-			if (fscanf(file, "%*[^\"]\"%[^\"]\"", g_actions[g_actionCount].type, word) != 1)
+			if (fscanf(file, "%*[^\"]\"%[^\"]\"", g_actions[g_actionCount].type) != 1)
 #endif
                 break;
         }
@@ -896,21 +896,20 @@ void VRMOD_SubmitSharedTexture()
     vr::VRCompositor()->Submit( vr::Eye_Right, &rightTex, &rightBounds );
 
 #elif defined( POSIX )
-    if ( !g_glTextureLeft )  // RT not initialized yet
+    if ( !RenderTarget_VRMod )
         return;
 
-    ITexture *pLeftRT  = g_pSourceVR->GetRenderTarget( ISourceVirtualReality::VREye_Left,  ISourceVirtualReality::RT_Color );
-    ITexture *pRightRT = g_pSourceVR->GetRenderTarget( ISourceVirtualReality::VREye_Right, ISourceVirtualReality::RT_Color );
+    // Bind the render target through the material system to get the GL texture name
+    CMatRenderContextPtr pRenderContext( materials );
+    pRenderContext->Bind( RenderTarget_VRMod->GetTextureValue() );
+    GLuint glHandle = 0;
+    pRenderContext->GetNativeTextureHandle( 0, &glHandle );
 
-    if ( !pLeftRT || !pRightRT )
+    if ( !glHandle )
         return;
 
-    // Submit via shared GL texture handle from ISourceVirtualReality
-    vr::SharedTextureHandle_t leftHandle  = g_pSourceVR->GetSharedTextureHandle( ISourceVirtualReality::VREye_Left );
-    vr::SharedTextureHandle_t rightHandle = g_pSourceVR->GetSharedTextureHandle( ISourceVirtualReality::VREye_Right );
-
-    vr::Texture_t leftTex  = { (void*)leftHandle,  vr::TextureType_OpenGL, vr::ColorSpace_Auto };
-    vr::Texture_t rightTex = { (void*)rightHandle, vr::TextureType_OpenGL, vr::ColorSpace_Auto };
+    vr::Texture_t leftTex  = { (void*)(uintptr_t)glHandle, vr::TextureType_OpenGL, vr::ColorSpace_Auto };
+    vr::Texture_t rightTex = { (void*)(uintptr_t)glHandle, vr::TextureType_OpenGL, vr::ColorSpace_Auto };
     vr::VRTextureBounds_t leftBounds  = { 0.0f, 0.0f, 0.5f, 1.0f };
     vr::VRTextureBounds_t rightBounds = { 0.5f, 0.0f, 1.0f, 1.0f };
 
