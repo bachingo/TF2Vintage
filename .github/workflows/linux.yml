@@ -54,6 +54,10 @@ jobs:
           cd src
           bash createtf2vintage
 
+      - name: Debug ninja file
+        if: failure()
+        run: sed -n '45,55p' src/_vpc_/ninja/sdk_everything_release.ninja
+      
       - name: Move binaries to bin/linux64
         run: |
           # The build outputs .so files into bin/ — move them to the
