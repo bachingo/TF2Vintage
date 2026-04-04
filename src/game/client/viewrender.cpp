@@ -71,7 +71,6 @@
 #include "tfvr/vr_collision_warning.h"
 #include "tfvr/vr_hand_render.h"
 #include "c_lights.h"
-#include "VR/VRMod.h"
 
 #ifdef TF_CLIENT_DLL
 #include "tf/c_tf_player.h"

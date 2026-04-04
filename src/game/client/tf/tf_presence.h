@@ -13,7 +13,6 @@
 #include "GameEventListener.h"
 #include "basepresence.h"
 #include "hl2orange.spa.h"
-#include "basediscordpresence.h"
 
 #ifndef POSIX
 #include "basediscordpresence.h"

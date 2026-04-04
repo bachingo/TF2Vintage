@@ -28,6 +28,7 @@
 #include "view.h"
 #include "ivrenderview.h"
 #include "model_types.h"
+#include "tfvr/vr_lipsync.h"
 #include "iefx.h"
 #include "dlight.h"
 #include <imapoverview.h>
@@ -51,6 +52,7 @@
 #include "glow_outline_effect.h"
 #include "vgui/IInput.h"
 #include "tf_hud_mainmenuoverride.h"
+#include "tfvr/openxr_manager.h"
 #include "tf_controls.h"
 #include "econ_notifications.h"
 #include "rtime.h"
@@ -76,6 +78,11 @@
 #include "tf_quickplay_shared.h"
 #include "sourcevr/isourcevirtualreality.h"
 #include "client_virtualreality.h"
+#include "igameevents.h"
+#include "GameEventListener.h"
+
+// VR rotation control
+extern ConVar tfvr_hmd_drive_rotation;
 
 #include "econ_gcmessages.h"
 
@@ -93,7 +100,6 @@
 
 #include "hud_vote.h"
 #include "c_tf_notification.h"
-#include "VR/VRMod.h"
 
 #if !defined( _X360 ) && !defined( NO_STEAM )
 #include "steam/isteamtimeline.h"
@@ -330,6 +336,8 @@ void CTFModeManager::Init()
 
 void CTFModeManager::LevelInit( const char *newmap )
 {
+	CVRLipSync::Instance().Init();
+
 	g_pClientMode->LevelInit( newmap );
 
 	ConVarRef voice_steal( "voice_steal" );
@@ -348,10 +356,13 @@ void CTFModeManager::LevelShutdown( void )
 	extern void CL_Coaching_LevelShutdown();
 	extern void CL_Consumables_LevelShutdown();
 	extern void CL_Halloween_LevelShutdown();
+	extern void CleanupAllVRHands();
 	CL_Training_LevelShutdown();
 	CL_Coaching_LevelShutdown();
 	CL_Consumables_LevelShutdown();
 	CL_Halloween_LevelShutdown();
+	CleanupAllVRHands();
+	CVRLipSync::Instance().Shutdown();
 }
 
 //-----------------------------------------------------------------------------
@@ -587,6 +598,10 @@ bool ClientModeTFNormal::ShouldDrawViewModel()
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( pPlayer )
 	{
+		// Don't draw viewmodel in VR mode - we use VR hand models instead
+		if ( pPlayer->IsInVRMode() )
+			return false;
+		
 		if ( pPlayer->m_Shared.InCond( TF_COND_ZOOMED ) )
 			return false;
 	}
@@ -1451,25 +1466,7 @@ void ClientModeTFNormal::PostRenderVGui()
 //-----------------------------------------------------------------------------
 bool ClientModeTFNormal::CreateMove( float flInputSampleTime, CUserCmd *cmd )
 {
-    bool bResult = BaseClass::CreateMove( flInputSampleTime, cmd );
-
-    // VF2 VR: Override aim angles with right controller direction every tick.
-    // This makes the server shoot from where the controller points, not the mouse.
-    if ( UseVRMod() && cmd )
-    {
-        QAngle vrAimAngles = VRMOD_GetRightControllerAbsAngle();
-
-        // Clamp pitch to prevent anti-cheat rejection (server clamps to +/-89)
-        vrAimAngles[PITCH] = clamp( vrAimAngles[PITCH], -89.0f, 89.0f );
-
-        cmd->viewangles = vrAimAngles;
-
-        // Also update the engine view so the camera matches the controller aim.
-        // Without this, the rendering and the server disagree on aim direction.
-        engine->SetViewAngles( vrAimAngles );
-    }
-
-    return bResult;
+	return BaseClass::CreateMove( flInputSampleTime, cmd );
 }
 
 //-----------------------------------------------------------------------------
@@ -1849,6 +1846,8 @@ void ClientModeTFNormal::RemoveFilesInPath( const char *pszPath ) const
 void ClientModeTFNormal::Update()
 {
 	BaseClass::Update();
+
+	CVRLipSync::Instance().Update();
 
 	if ( m_bPendingRichPresenceUpdate )
 	{
@@ -2461,6 +2460,38 @@ USER_MESSAGE( ForcePlayerViewAngles )
 		pPlayer->SetAbsAngles( viewangles );
 		pPlayer->SetTauntYaw( viewangles[YAW] );
 		pPlayer->m_Shared.SetVehicleMoveAngles( viewangles );
+		
+		// For VR players, recalibrate tracking offsets
+		if ( UseVR() && tfvr_hmd_drive_rotation.GetBool() )
+		{
+			C_TFPlayer* pTFPlayer = dynamic_cast<C_TFPlayer*>(pPlayer);
+			if (pTFPlayer)
+			{
+				// Store the new target angles for VR calibration
+				pTFPlayer->m_spawnViewAngles = viewangles;
+				
+				// Get current HMD angles and recalibrate tracking offsets
+				QAngle hmdAngles;
+				MatrixAngles(g_pOpenXRManager->GetMideyePose().As3x4(), hmdAngles);
+				
+				// Recalibrate VR tracking: set offset so current HMD orientation = target orientation
+				float newOffset = hmdAngles.y - viewangles.y;
+				
+				// Normalize the offset to be in the range [-180, 180]
+				while (newOffset > 180.0f) newOffset -= 360.0f;
+				while (newOffset < -180.0f) newOffset += 360.0f;
+				
+				pTFPlayer->m_calibratedHmdYaw = newOffset;
+				
+				// Reset roomscale position offset: set base position so current HMD position = target position
+				Vector currentHmdPos = g_pOpenXRManager->GetMideyePose().GetTranslation();
+				pTFPlayer->m_calibratedHmdXYPosition = currentHmdPos;
+				pTFPlayer->m_calibratedHmdXYPosition.z = 0; // Don't correct Z axis
+				
+				// Reset local tracking accumulation
+				pTFPlayer->m_localRoomscaleOffset = vec3_origin;
+			}
+		}
 	}
 }
 

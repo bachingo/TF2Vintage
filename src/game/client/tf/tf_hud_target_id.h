@@ -40,6 +40,7 @@ public:
 	void			VidInit( void );
 	virtual bool	ShouldDraw( void );
 	virtual void	PerformLayout( void );
+	virtual void	Paint( void );
 	virtual void	ApplySettings( KeyValues *inResourceData );
 	virtual void	ApplySchemeSettings( vgui::IScheme *scheme );
 
@@ -56,6 +57,10 @@ public:
 
 	virtual	bool	DrawHealthIcon();
 	virtual	C_TFPlayer *GetTargetForSteamAvatar( C_TFPlayer *pTFPlayer );
+	
+	// VR: Public getter for the floating health icon
+	CFloatingHealthIcon* GetFloatingHealthIcon() const { return m_pFloatingHealthIcon; }
+	
 private:
 
 	bool IsValidIDTarget( int nEntIndex, float flOldTargetRetainFOV, float &flNewTargetRetainFOV );
@@ -132,6 +137,7 @@ public:
 	CSecondaryTargetID( const char *pElementName );
 
 	virtual bool	ShouldDraw( void );
+	virtual void	Paint( void );
 	virtual int		CalculateTargetIndex( C_TFPlayer *pLocalTFPlayer );
 	virtual wchar_t	*GetPrepend( void ) { return m_wszPrepend; }
 

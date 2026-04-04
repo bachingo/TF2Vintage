@@ -1131,6 +1131,42 @@ void CHudMainMenuOverride::OnUpdateMenu( void )
 			m_pVRModeButton->SetText( "#MMenu_VRMode_Activate" );
 	}
 
+	// Update VR Seated/Standing toggle button icon and tooltip based on current mode
+	// Only update when the mode actually changes to avoid breaking the tooltip system
+	if ( bInGame )
+	{
+		ConVar *pSeatedMode = cvar->FindVar( "tfvr_seated_mode" );
+		int nCurrentSeatedState = (pSeatedMode && pSeatedMode->GetBool()) ? 1 : 0;
+		
+		// Only update if the state has changed
+		if ( nCurrentSeatedState != m_nLastSeatedModeState )
+		{
+			m_nLastSeatedModeState = nCurrentSeatedState;
+			
+			vgui::EditablePanel *pVRSeatedToggle = dynamic_cast<vgui::EditablePanel*>( FindChildByName( "VRSeatedToggleButton" ) );
+			if ( pVRSeatedToggle )
+			{
+				CExImageButton *pButton = dynamic_cast<CExImageButton*>( pVRSeatedToggle->FindChildByName( "SubButton" ) );
+				if ( pButton )
+				{
+					// Show the icon and tooltip for the mode we'll switch TO (opposite of current)
+					// If currently seated (1), show standing icon (to switch to standing)
+					// If currently standing (0), show seated icon (to switch to seated)
+					const char *pszImage = (nCurrentSeatedState == 1) ? "glyph_standing" : "glyph_seated";
+					const char *pszTooltip = (nCurrentSeatedState == 1) ? "#MMenu_VRSwitchToStanding" : "#MMenu_VRSwitchToSeated";
+					
+					pButton->SetSubImage( pszImage );
+					pButton->SetTooltip( m_pToolTip, pszTooltip );
+				}
+			}
+		}
+	}
+	else
+	{
+		// Reset state when leaving game so it updates correctly when re-entering
+		m_nLastSeatedModeState = -1;
+	}
+
 	if ( !IsLayoutInvalid() )
 	{
 		if ( !m_bStabilizedInitialLayout )

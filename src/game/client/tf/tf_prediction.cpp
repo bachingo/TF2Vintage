@@ -14,6 +14,8 @@
 static CMoveData g_MoveData;
 CMoveData *g_pMoveData = &g_MoveData;
 
+// VR rotation control
+extern ConVar tfvr_hmd_drive_rotation;
 
 class CTFPrediction : public CPrediction
 {
@@ -46,6 +48,8 @@ void CTFPrediction::SetupMove( C_BasePlayer *player, CUserCmd *ucmd, IMoveHelper
 
 	// Call the default SetupMove code.
 	BaseClass::SetupMove( player, ucmd, pHelper, move );
+	
+	move->m_postFullBodyIKDeltaOrigin = ucmd->postFullBodyIKDeltaOrigin;
 }
 
 //-----------------------------------------------------------------------------

@@ -246,6 +246,9 @@ private:
 	bool m_bStabilizedInitialLayout;
 	bool m_bBackgroundUsesCharacterImages;
 	const char* m_pszForcedCharacterImage = NULL;
+	
+	// VR seated mode tracking for dynamic button updates
+	int m_nLastSeatedModeState = -1; // -1 = uninitialized, 0 = standing, 1 = seated
 
 	CPvPRankPanel*	m_pRankPanel = NULL;
 	CPvPRankPanel*	m_pRankModelPanel = NULL;

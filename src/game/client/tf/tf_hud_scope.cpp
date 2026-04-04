@@ -22,12 +22,14 @@
 #include <KeyValues.h>
 #include <vgui_controls/AnimationController.h>
 
+
 //for screenfade
 #include "ivieweffects.h"
 #include "shake.h"
 #include "view_scene.h"
 
 #include "tf_weapon_sniperrifle.h"
+#include "tfvr/openxr_manager.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -350,7 +352,7 @@ void CHudScope::ApplySchemeSettings( vgui::IScheme *scheme )
 	{
 		// Make it fill the screen.
 		int iViewportWidth, iViewportHeight;
-		g_pSourceVR->GetViewportBounds( ISourceVirtualReality::VREye_Left, NULL, NULL, &iViewportWidth, &iViewportHeight );
+		g_pOpenXRManager->GetViewportBounds( ISourceVirtualReality::VREye_Left, NULL, NULL, &iViewportWidth, &iViewportHeight );
 	    SetSize ( iViewportWidth, iViewportHeight );
 		SetBounds ( 0, 0, iViewportWidth, iViewportHeight );
 		// Force it to go direct to the framebuffer.

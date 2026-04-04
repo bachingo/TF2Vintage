@@ -24,6 +24,7 @@
 #include <vgui_controls/AnimationController.h>
 
 #include "c_tf_objective_resource.h"
+#include "tfvr/vr_damage_numbers.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -1117,6 +1118,10 @@ void CAccountPanel::Paint( void )
 			float flXPos = m_AccountDeltaItems[i].m_nX + ( flLifetimePercent * flWidth );
 			if ( m_AccountDeltaItems[i].m_bWorldSpace )
 			{
+				// In VR, world-space damage numbers are rendered by the VR system
+				if ( CVRDamageNumberManager::ShouldSuppressVanillaRendering() )
+					continue;
+				
 				Vector vecWorld( m_AccountDeltaItems[i].m_nX, m_AccountDeltaItems[i].m_nY, flYPos );
 				int iX,iY;
 				if ( !GetVectorInHudSpace( vecWorld, iX, iY ) )				// Tested - NOT GetVectorInScreenSpace

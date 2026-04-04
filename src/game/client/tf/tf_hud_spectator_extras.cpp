@@ -16,6 +16,7 @@
 #include "tf_hud_target_id.h"
 #include "c_baseobject.h"
 #include "tf_hud_spectator_extras.h"
+#include "tfvr/vr_spectator_extras.h"
 
 #include <vgui/ILocalize.h>
 #include <vgui/ISurface.h>
@@ -366,6 +367,10 @@ void CTFHudSpectatorExtras::OnTick()
 void CTFHudSpectatorExtras::Paint()
 {
 	BaseClass::Paint();
+
+	// In VR, spectator extras are rendered in 3D world space
+	if ( CVRSpectatorExtrasManager::ShouldSuppressVanillaRendering() )
+		return;
 
 	if ( !g_PR )
 		return;

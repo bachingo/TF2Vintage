@@ -103,6 +103,8 @@ public:
 
 	virtual void ApplyBoneMatrixTransform( matrix3x4_t& transform );
 	virtual void BuildTransformations( CStudioHdr *hdr, Vector *pos, Quaternion q[], const matrix3x4_t& cameraTransform, int boneMask, CBoneBitList &boneComputed );
+	void BuildVRControllerIK( CStudioHdr *hdr, Vector *pos, Quaternion q[], const matrix3x4_t& cameraTransform, int boneMask, CBoneBitList &boneComputed );
+	void ResolveVRIKBones( CStudioHdr *hdr );
 
 	virtual bool CreateMove( float flInputSampleTime, CUserCmd *pCmd ) OVERRIDE;
 	void CreateVehicleMove( float flInputSampleTime, CUserCmd *pCmd );
@@ -113,6 +115,7 @@ public:
 
 	virtual void PreThink( void );
 	virtual void ClientThink();
+	void UpdateVRWeapons();
 
 	void	UpdateTimers();
 
@@ -163,7 +166,20 @@ public:
 
 	virtual float GetMinFOV() const;
 
-	virtual const QAngle& EyeAngles();
+	virtual Vector EyePosition() override;
+	const QAngle &EyeAngles() override;
+	
+	// VR-specific weapon shooting position override
+	virtual Vector		Weapon_ShootPosition( void );
+	
+	// VR-specific weapon shooting angles override
+	virtual QAngle		Weapon_ShootAngles( void );
+	
+	// VR-specific: Returns VR render weapon when in VR mode (for particle effects like medigun beam)
+	virtual C_BaseAnimating*	GetRenderedWeaponModel() OVERRIDE;
+	
+	// VR-specific autoaim override to use controller angles instead of headset
+	virtual Vector		GetAutoaimVector( float flScale );
 
 	bool	ShouldDrawSpyAsDisguised();
 	virtual int GetBody( void );
@@ -198,7 +214,12 @@ public:
 	bool			IsRegenerating( void ) const { return m_bRegenerating; }
 
 	virtual void	InitPhonemeMappings();
+	virtual bool	SetupGlobalWeights( const matrix3x4_t *pBoneToWorld, int nFlexWeightCount, float *pFlexWeights, float *pFlexDelayedWeights );
 
+private:
+	void			ApplyOVRLipSync();
+
+public:
 	// Gibs.
 	void InitPlayerGibs( void );
 	void CheckAndUpdateGibType( void );
@@ -308,6 +329,8 @@ public:
 
 	virtual void OverrideView( CViewSetup *pSetup );
 
+	void			RecalibrateView();
+
 	bool			CanAirDash( void ) const;
 	bool			CanGetWet() const;
 
@@ -344,6 +367,9 @@ public:
 	// ITFMvMBossProgressUser
 	virtual const char* GetBossProgressImageName() const OVERRIDE;
 	virtual float GetBossStatusProgress() const OVERRIDE;
+
+	// VR Related
+	void			ComputeFullBodyIK( CUserCmd *pCmd );
 
 protected:
 	CNetworkVarEmbedded(	CAttributeContainerPlayer, m_AttributeManager );
@@ -518,6 +544,8 @@ public:
 
 
 	bool	IsUsingVRHeadset( void ){ return m_bUsingVRHeadset; }
+	bool	IsInVRMode( void ) const { return m_bInVRMode; }
+	bool	HasHeadCollisionWarning( void ) const { return m_bHeadCollisionWarning; }
 
 	bool	ShouldPlayerDrawParticles( void );
 
@@ -587,6 +615,59 @@ private:
 	bool				m_bOldCustomModelVisible;
 
 	CHandle< C_BaseCombatWeapon > m_hOldActiveWeapon;
+
+public:
+
+	// VR Related
+	bool				m_isCalibrated = false;
+	Vector				m_calibratedHmdXYPosition;
+	float				m_calibratedHmdYaw;
+	Vector				m_roomscaleOffset;
+	Vector				m_localRoomscaleOffset;
+	CInterpolatedVar<Vector> m_iv_roomscaleOffset;
+	Vector				m_headInPlayerO;
+	QAngle				m_headInPlayerA;
+
+	// VR IK: networked hand data for third-person arm IK (player-relative offsets)
+	Vector				m_vecVRHandOffsetL;
+	QAngle				m_angVRHandAngL;
+	Vector				m_vecVRHandOffsetR;
+	QAngle				m_angVRHandAngR;
+	CInterpolatedVar<Vector> m_iv_vecVRHandOffsetL;
+	CInterpolatedVar<Vector> m_iv_vecVRHandOffsetR;
+
+	// VR IK: cached bone indices (resolved on first use, invalidated on model change)
+	int					m_iHeadBone;
+	int					m_iCollarBoneL, m_iCollarBoneR;
+	int					m_iUpperArmBoneL, m_iLowerArmBoneL, m_iHandBoneL;
+	int					m_iUpperArmBoneR, m_iLowerArmBoneR, m_iHandBoneR;
+	bool				m_bVRIKBonesResolved;
+	float				m_flCollarLen;
+	float				m_flUpperArmLen, m_flForearmLen;
+	bool				m_bPhysicalCrouch;
+	bool				m_bDuckWasPhysical;
+
+	QAngle				m_cachedEyeAngles;
+
+	// VR recalibration on spawn
+	bool				m_bNeedsVRRecalibration = false;
+	float				m_flVRRecalibrationTime = 0.0f;
+	QAngle				m_spawnViewAngles; // Store spawn angles before VR processing
+	bool				m_bWasVRRotationEnabled = false; // Store original VR rotation state
+	float				m_flSpawnTime = 0.0f; // Time when player spawned
+
+	// VR death camera - keeps player fixed in place when dead instead of following ragdoll
+	Vector				m_vecVRDeathPosition;       // Last alive eye position
+	QAngle				m_angVRDeathAngles;         // Last alive eye angles
+	Vector				m_vecVRDeathHmdCalibration; // HMD position at death (for relative tracking)
+	float				m_flVRDeathHmdYaw = 0.0f;   // HMD yaw at death
+	bool				m_bHasVRDeathPosition = false;
+
+	float               VRHeightOffset();
+	Vector              GetVRViewPosition(); // Returns death position if dead, else EyePosition()
+	bool                IsUsingVRDeathPosition() const { return m_bHasVRDeathPosition; }
+
+private:
 
 	// Look At
 	/*
@@ -662,7 +743,7 @@ public:
 	int				m_iOldPlayerClass;	// Used to detect player class changes
 	bool			m_bIsDisplayingNemesisIcon;
 	bool			m_bIsDisplayingDuelingIcon;
-	bool			m_bIsDisplayingIconForIT;
+bool			m_bIsDisplayingIconForIT;
 	bool			m_bIsDisplayingTranqMark;
 	bool			m_bShouldShowBirthdayEffect;
 
@@ -675,12 +756,12 @@ public:
 	bool			m_bFlipViewModels;
 
 	bool			m_bIsMiniBoss;
-	bool			m_bIsABot;
+bool			m_bIsABot;
 	int				m_nBotSkill;
 	int				m_nOldBotSkill;
 	bool			m_bSaveMeParity;
 	bool			m_bOldSaveMeParity;
-	bool			m_bIsCoaching;
+bool			m_bIsCoaching;
 
 private:
 	void			UpdateTauntItem();
@@ -817,7 +898,7 @@ public:
 
 	int				m_iOldTeam;
 	int				m_iOldClass;
-	int				m_iOldDisguiseTeam;
+int				m_iOldDisguiseTeam;
 	int				m_iOldDisguiseClass;
 	int				m_iOldObserverMode;
 	EHANDLE			m_hOldObserverTarget;
@@ -909,6 +990,8 @@ private:
 	CNetworkVar( bool, m_bUseBossHealthBar );
 
 	CNetworkVar( bool, m_bUsingVRHeadset );
+	CNetworkVar( bool, m_bInVRMode );		// Tracks actual VR mode usage
+	CNetworkVar( bool, m_bHeadCollisionWarning );
 
 	CNetworkVar( bool, m_bForcedSkin );
 	CNetworkVar( int, m_nForcedSkin );
@@ -1145,6 +1228,7 @@ private:
 	CUtlVector< CHandle< CEconWearable > > m_hClientWearables;	// wearables on the ragdoll that are "following" it
 
 	bool  m_bCreatedWhilePlaybackSkipping;
+	
 };
 
 #endif // C_TF_PLAYER_H
