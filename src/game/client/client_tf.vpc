@@ -5,7 +5,7 @@
 //-----------------------------------------------------------------------------
 
 $Macro SRCDIR		"..\.."
-$Macro GAMENAME 	"tf" [!$SOURCESDK]
+$Macro GAMENAME  	"tf" [!$SOURCESDK && !$TF2VINTAGE]
 
 // This code currently only builds on Windows (itemtest_lib and dependencies)
 $Conditional WORKSHOP_IMPORT_ENABLE	1 [$WINDOWS && !$SOURCESDK]

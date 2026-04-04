@@ -5,7 +5,7 @@
 //-----------------------------------------------------------------------------
 
 $Macro SRCDIR		"..\.."
-$Macro GAMENAME 	"tf2vintage" [$SOURCESDK]
+$Macro GAMENAME 	"tf2vintage"
 
 $Include "$SRCDIR\game\server\server_tf.vpc"
 
