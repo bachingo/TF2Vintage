@@ -133,8 +133,11 @@
 //   [TRUNCATED] = multiple old convars collapsed into one
 //=============================================================================
 #include "cbase.h"
+
 #ifdef GAME_DLL
 #include "tf_gamerules.h"
+extern ConVar tf2v_quickplay_profile;
+
 
 void CTFGameRules::ApplyEra( int nEra )
 {
