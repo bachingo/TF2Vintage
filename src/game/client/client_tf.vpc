@@ -22,8 +22,7 @@ $Configuration
 {
 	$Compiler
 	{
-		$AdditionalIncludeDirectories	".\hl2;.\hl2\elements;.\tf;.\tf\vr\thirdparty\openxr\include;.\tf\vr;.\tf\vgui;..\statemachine;$SRCDIR\game\shared\multiplayer;$SRCDIR\game\shared\tf;$SRCDIR\gcsdk\steamextra;$BASE;.\econ"
-		$AdditionalIncludeDirectories	"$BASE;$(VULKAN_SDK)/Include"	[$WINDOWS]
+		$AdditionalIncludeDirectories	".\hl2;.\hl2\elements;.\tf;.\tf\vr\thirdparty\openxr\include;.\tf\vr;.\tf\vgui;..\statemachine;$SRCDIR\game\shared\multiplayer;$SRCDIR\game\shared\tf;$SRCDIR\gcsdk\steamextra;$BASE;.\econ;$SRCDIR\thirdparty\vulkan\include"
 		
 		$PreprocessorDefinitions		"$BASE;TF_CLIENT_DLL;USES_ECON_ITEMS;ENABLE_GC_MATCHMAKING;GLOWS_ENABLE;USE_DYNAMIC_ASSET_LOADING;VOTING_ENABLED;NEXT_BOT"
 		$PreprocessorDefinitions		"$BASE;SAXXYMAINMENU_ENABLED" [$SAXXYAWARDS_ENABLE]
