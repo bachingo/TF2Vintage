@@ -52,7 +52,7 @@ $Project "height2normal"
 
 $Project "server"
 {
-	"game\server\client_tf2vintage.vpc"		[$TF2VINTAGE]
+	"game\server\server_tf2vintage.vpc"		[$TF2VINTAGE]
 	"game\server\server_tf.vpc"			[$TF && !$TF2VINTAGE]
 	"game\server\server_hl2mp.vpc"		[$HL2MP]
 }
