@@ -220,3 +220,10 @@ src/build_error.txt
 src/build_solution.ps1
 src/build_and_capture.ps1
 vcpkg/
+src/mathlib/_vpc_/manifest_mathlib/win64/manifest.txt
+src/raytrace/_vpc_/manifest_raytrace/win64/manifest.txt
+src/thirdparty/crash_handler/_vpc_/manifest_crash_handler_tf2vintage/win64/manifest.txt
+src/vgui2/matsys_controls/_vpc_/manifest_matsys_controls/win64/manifest.txt
+src/vgui2/vgui_controls/_vpc_/manifest_vgui_controls/win64/manifest.txt
+src/game/server/_vpc_/manifest_server_tf/win64/manifest.txt
+src/game/client/_vpc_/manifest_client_tf/win64/manifest.txt

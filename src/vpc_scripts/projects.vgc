@@ -15,9 +15,9 @@ $Project "captioncompiler"
 
 $Project "client"
 {
-	"game\client\client_tf2vintage.vpc"		[$TF2VINTAGE]
-	"game\client\client_tf.vpc"			[$TF && !$TF2VINTAGE]
-	"game\client\client_hl2mp.vpc"		[$HL2MP]
+    "game\\client\\client_tf2vintage.vpc"    [$TF2VINTAGE]
+    "game\\client\\client_tf.vpc"            [$TF]
+    "game\\client\\client_hl2mp.vpc"         [$HL2MP]
 	
 }
 
@@ -53,7 +53,7 @@ $Project "height2normal"
 $Project "server"
 {
 	"game\server\server_tf2vintage.vpc"		[$TF2VINTAGE]
-	"game\server\server_tf.vpc"			[$TF && !$TF2VINTAGE]
+	"game\server\server_tf.vpc"			[$TF]
 	"game\server\server_hl2mp.vpc"		[$HL2MP]
 }
 
