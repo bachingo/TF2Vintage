@@ -183,7 +183,7 @@ public:
 	// Wrench hits
 	virtual bool	InputWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vector hitLoc );
 	virtual bool	OnWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vector hitLoc );
-	virtual bool	CheckUpgradeOnHit( CTFPlayer *pPlayer );
+	virtual bool	CheckUpgradeOnHit( CTFPlayer *pPlayer, float flHitMod = 1.0f );
 	virtual int		Command_Repair( CTFPlayer *pActivator, float flAmount, float flRepairMod, float flRepairToMetalRatio = 3.f, bool bSendEvent = true );
 	virtual void	DoWrenchHitEffect( Vector hitLoc, bool bRepairHit, bool bUpgradeHit );
 

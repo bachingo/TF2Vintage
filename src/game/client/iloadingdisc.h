@@ -3,9 +3,6 @@
 // Purpose: 
 //
 // $Workfile:     $
-// $Date:         $
-// $NoKeywords: $
-//=============================================================================//
 
 #ifndef ILOADINGDISC_H
 #define ILOADINGDISC_H

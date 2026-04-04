@@ -32,7 +32,7 @@ public:
 	
 	// constructor/deconstructor
 	CUtlHash( int bucketCount = 0, int growCount = 0, int initCount = 0,
-		      CompareFunc_t compareFunc = {}, KeyFunc_t keyFunc = {} );
+		      CompareFunc_t compareFunc = 0, KeyFunc_t keyFunc = 0 );
 	~CUtlHash();
 
 	// invalid handle

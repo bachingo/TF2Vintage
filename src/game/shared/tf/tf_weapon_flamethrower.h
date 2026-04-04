@@ -90,6 +90,7 @@ public:
 
 	float			GetSpinUpTime( void ) const;
 	virtual bool	IsFiring( void ) const OVERRIDE { return m_iWeaponState == FT_STATE_FIRING; }
+	int				GetWeaponState( void ) const { return m_iWeaponState; }
 	void			SetWeaponState( int nWeaponState );
 
 	void			UseRage( void );

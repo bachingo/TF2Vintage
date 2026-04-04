@@ -938,7 +938,8 @@ bool CBaseObject::FindNearestBuildPoint( CBaseEntity *pEntity, CBasePlayer *pBui
 						continue;
 
 					// Do a trace to make sure we don't place attachments through things (players, world, etc...)
-					Vector vecStart = pBuilder->EyePosition();
+					// Use weapon position for VR support (controller position instead of head)
+					Vector vecStart = pBuilder->Weapon_ShootPosition();
 					trace_t trace;
 					CTraceFilterNoNPCsOrPlayer ignorePlayersFilter( pBuilder, COLLISION_GROUP_NONE );
 					UTIL_TraceLine( vecStart, vecBPOrigin, MASK_SOLID, &ignorePlayersFilter, &trace );
@@ -2809,11 +2810,13 @@ bool CBaseObject::OnWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vector hi
 	bool bRepairHit = false;
 	bool bUpgradeHit = false;
 
+	float flVRMod = pWrench ? pWrench->GetVRBuildingHitMod() : 1.0f;
+
 	bRepairHit = ( Command_Repair( pPlayer, pWrench->GetRepairAmount(), 1.f ) > 0 );
 
 	if ( !bRepairHit )
 	{
-		bUpgradeHit = CheckUpgradeOnHit( pPlayer );
+		bUpgradeHit = CheckUpgradeOnHit( pPlayer, flVRMod );
 	}
 
 	DoWrenchHitEffect( hitLoc, bRepairHit, bUpgradeHit );
@@ -2843,7 +2846,7 @@ void CBaseObject::DoWrenchHitEffect( Vector hitLoc, bool bRepairHit, bool bUpgra
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CBaseObject::CheckUpgradeOnHit( CTFPlayer *pPlayer )
+bool CBaseObject::CheckUpgradeOnHit( CTFPlayer *pPlayer, float flHitMod )
 {
 	if ( !CanBeUpgraded() )
 		return false;
@@ -2854,7 +2857,7 @@ bool CBaseObject::CheckUpgradeOnHit( CTFPlayer *pPlayer )
 	if ( CanBeUpgraded( pPlayer ) )
 	{
 		int iPlayerMetal = pPlayer->GetAmmoCount( TF_AMMO_METAL );
-		int nMaxToAdd = GetUpgradeAmountPerHit();
+		int nMaxToAdd = (int)( GetUpgradeAmountPerHit() * flHitMod );
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pPlayer, nMaxToAdd, upgrade_rate_mod );
 		int iAmountToAdd = Min( nMaxToAdd, iPlayerMetal );
 

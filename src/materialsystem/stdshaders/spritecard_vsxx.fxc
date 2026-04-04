@@ -183,10 +183,22 @@ VS_OUTPUT main( CONST_PC VS_INPUT v
 #endif
 
 	float2 sc_yaw;
+#if ORIENTATION == 1
+	// VR: For Z-aligned particles, ignore yaw to prevent roll influence on billboard basis
+	// But we'll apply particle's own rotation separately below
+	sincos( 0.0, sc_yaw.y, sc_yaw.x );
+#else
 	sincos( YAW, sc_yaw.y, sc_yaw.x );
+#endif
 
 	float2 sc;
+#if ORIENTATION == 1
+	// VR: For Z-aligned particles, still apply the particle's own ROTATION
+	// This allows particle spin/rotation animations while keeping billboard upright
 	sincos( ROTATION, sc.y, sc.x );
+#else
+	sincos( ROTATION, sc.y, sc.x );
+#endif
 
 	float2 ix=2*v.vCornerID.xy-1;
 	float x1=dot(ix,sc);
@@ -249,6 +261,7 @@ VS_OUTPUT main( CONST_PC VS_INPUT v
 	{
 		float3 up = float3(0,0,1);
 		float3 right = normalize(cross(up, v2p));
+		// VR: sc_yaw is already zeroed above for ORIENTATION==1
 		float tmpx=right.x*sc_yaw.x+right.y*sc_yaw.y;
 		right.y = right.y*sc_yaw.x-right.x*sc_yaw.y;
 		right.x=tmpx;

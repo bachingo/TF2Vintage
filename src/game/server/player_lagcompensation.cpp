@@ -13,6 +13,7 @@
 #include "utllinkedlist.h"
 #include "BaseAnimatingOverlay.h"
 #include "tier0/vprof.h"
+#include "tf/tf_player.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -84,6 +85,11 @@ public:
 		{
 			m_flPoseParameters[i] = 0;
 		}
+
+		m_vecVRHandOffsetL.Init();
+		m_vecVRHandOffsetR.Init();
+		m_angVRHandAngL.Init();
+		m_angVRHandAngR.Init();
 	}
 
 	LagRecord( const LagRecord& src )
@@ -105,6 +111,11 @@ public:
 		{
 			m_flPoseParameters[i] = src.m_flPoseParameters[i];
 		}
+
+		m_vecVRHandOffsetL = src.m_vecVRHandOffsetL;
+		m_vecVRHandOffsetR = src.m_vecVRHandOffsetR;
+		m_angVRHandAngL = src.m_angVRHandAngL;
+		m_angVRHandAngR = src.m_angVRHandAngR;
 	}
 
 	// Did player die this frame
@@ -124,6 +135,12 @@ public:
 	float					m_masterCycle;
 
 	float					m_flPoseParameters[MAXSTUDIOPOSEPARAM];
+
+	// VR hand offsets for IK'd hitboxes
+	Vector					m_vecVRHandOffsetL;
+	Vector					m_vecVRHandOffsetR;
+	QAngle					m_angVRHandAngL;
+	QAngle					m_angVRHandAngR;
 };
 
 
@@ -335,6 +352,15 @@ void CLagCompensationManager::FrameUpdatePostEntityThink()
 		{
 			record.m_flPoseParameters[i] = pPlayer->GetPoseParameter(i);
 		}
+
+		CTFPlayer *pTFPlayer = dynamic_cast<CTFPlayer*>( pPlayer );
+		if ( pTFPlayer && pTFPlayer->IsInVRMode() )
+		{
+			record.m_vecVRHandOffsetL = pTFPlayer->m_vecVRHandOffsetL;
+			record.m_vecVRHandOffsetR = pTFPlayer->m_vecVRHandOffsetR;
+			record.m_angVRHandAngL = pTFPlayer->m_angVRHandAngL;
+			record.m_angVRHandAngR = pTFPlayer->m_angVRHandAngR;
+		}
 	}
 
 	//Clear the current player.
@@ -443,6 +469,8 @@ void CLagCompensationManager::BacktrackPlayer( CBasePlayer *pPlayer, float flTar
 	Vector minsPreScaled;
 	Vector maxsPreScaled;
 	QAngle ang;
+	Vector vrHandOffsetL, vrHandOffsetR;
+	QAngle vrHandAngL, vrHandAngR;
 
 	VPROF_BUDGET( "BacktrackPlayer", "CLagCompensationManager" );
 	int pl_index = pPlayer->entindex() - 1;
@@ -526,6 +554,10 @@ void CLagCompensationManager::BacktrackPlayer( CBasePlayer *pPlayer, float flTar
 		org				= Lerp( frac, record->m_vecOrigin, prevRecord->m_vecOrigin );
 		minsPreScaled	= Lerp( frac, record->m_vecMinsPreScaled, prevRecord->m_vecMinsPreScaled );
 		maxsPreScaled	= Lerp( frac, record->m_vecMaxsPreScaled, prevRecord->m_vecMaxsPreScaled );
+		vrHandOffsetL	= Lerp( frac, record->m_vecVRHandOffsetL, prevRecord->m_vecVRHandOffsetL );
+		vrHandOffsetR	= Lerp( frac, record->m_vecVRHandOffsetR, prevRecord->m_vecVRHandOffsetR );
+		vrHandAngL		= Lerp( frac, record->m_angVRHandAngL, prevRecord->m_angVRHandAngL );
+		vrHandAngR		= Lerp( frac, record->m_angVRHandAngR, prevRecord->m_angVRHandAngR );
 	}
 	else
 	{
@@ -535,6 +567,10 @@ void CLagCompensationManager::BacktrackPlayer( CBasePlayer *pPlayer, float flTar
 		ang				= record->m_vecAngles;
 		minsPreScaled	= record->m_vecMinsPreScaled;
 		maxsPreScaled	= record->m_vecMaxsPreScaled;
+		vrHandOffsetL	= record->m_vecVRHandOffsetL;
+		vrHandOffsetR	= record->m_vecVRHandOffsetR;
+		vrHandAngL		= record->m_angVRHandAngL;
+		vrHandAngR		= record->m_angVRHandAngR;
 	}
 
 	// See if this is still a valid position for us to teleport to
@@ -742,6 +778,23 @@ void CLagCompensationManager::BacktrackPlayer( CBasePlayer *pPlayer, float flTar
 		}
 	}
 	
+	// Restore VR hand offsets for IK'd hitboxes
+	CTFPlayer *pTFPlayer = dynamic_cast<CTFPlayer*>( pPlayer );
+	if ( pTFPlayer && pTFPlayer->IsInVRMode() )
+	{
+		restore->m_vecVRHandOffsetL = pTFPlayer->m_vecVRHandOffsetL;
+		restore->m_vecVRHandOffsetR = pTFPlayer->m_vecVRHandOffsetR;
+		restore->m_angVRHandAngL = pTFPlayer->m_angVRHandAngL;
+		restore->m_angVRHandAngR = pTFPlayer->m_angVRHandAngR;
+
+		pTFPlayer->m_vecVRHandOffsetL = vrHandOffsetL;
+		pTFPlayer->m_angVRHandAngL = vrHandAngL;
+		pTFPlayer->m_vecVRHandOffsetR = vrHandOffsetR;
+		pTFPlayer->m_angVRHandAngR = vrHandAngR;
+
+		flags |= LC_ANIMATION_CHANGED;
+	}
+
 	if ( !flags )
 		return; // we didn't change anything
 
@@ -860,6 +913,15 @@ void CLagCompensationManager::FinishLagCompensation( CBasePlayer *player )
 			for( int i=0; i<MAXSTUDIOPOSEPARAM; i++ )
 			{
 				pPlayer->SetPoseParameter( i, restore->m_flPoseParameters[i] );
+			}
+
+			CTFPlayer *pTFPlayer = dynamic_cast<CTFPlayer*>( pPlayer );
+			if ( pTFPlayer )
+			{
+				pTFPlayer->m_vecVRHandOffsetL = restore->m_vecVRHandOffsetL;
+				pTFPlayer->m_vecVRHandOffsetR = restore->m_vecVRHandOffsetR;
+				pTFPlayer->m_angVRHandAngL = restore->m_angVRHandAngL;
+				pTFPlayer->m_angVRHandAngR = restore->m_angVRHandAngR;
 			}
 		}
 

@@ -47,7 +47,7 @@ public:
 	virtual bool		DefaultDeploy( char *szViewModel, char *szWeaponModel, int iActivity, char *szAnimExt );
 	int					GetBonesawType( void ) const		{ int iMode = 0; CALL_ATTRIB_HOOK_INT( iMode, set_weapon_mode ); return iMode; };
 
-	virtual void		DoMeleeDamage( CBaseEntity* ent, trace_t& trace ) OVERRIDE;
+	virtual void		DoMeleeDamage( CBaseEntity* ent, trace_t& trace, float flDamageMod ) OVERRIDE;
 	
 	float				GetProgress( void ) { return 0.f; }
 	const char*			GetEffectLabelText( void ) { return "#TF_ORGANS"; }

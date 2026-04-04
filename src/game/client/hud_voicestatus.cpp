@@ -15,6 +15,7 @@
 #include "c_playerresource.h"
 #include "voice_common.h"
 #include "vgui_avatarimage.h"
+#include "tfvr/vr_popup_hud.h"
 
 ConVar *sv_alltalk = NULL;
 
@@ -71,6 +72,10 @@ void CHudVoiceSelfStatus::VidInit( void )
 
 bool CHudVoiceSelfStatus::ShouldDraw()
 {
+	// TF2VR: Suppress 2D rendering when VR popup HUD is handling voice status
+	if (CVRPopupHUDManager::ShouldSuppressVoiceSelfStatus())
+		return false;
+	
 	return GetClientVoiceMgr()->IsLocalPlayerSpeaking();
 }
 
@@ -315,6 +320,10 @@ void CHudVoiceStatus::OnThink( void )
 
 bool CHudVoiceStatus::ShouldDraw()
 {
+	// TF2VR: Suppress 2D rendering when VR popup HUD is handling voice status
+	if (CVRPopupHUDManager::ShouldSuppressVoiceStatus())
+		return false;
+	
 	if ( IsInFreezeCam() == true )
 		return false;
 

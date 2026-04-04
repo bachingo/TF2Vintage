@@ -42,6 +42,10 @@ public:
 	bool				IsPDQ( void ) { int iMode = 0; CALL_ATTRIB_HOOK_INT( iMode, wrench_builds_minisentry ); return iMode==1; };
 	float				GetConstructionValue( void );
 	float				GetRepairAmount( void );
+
+	float				GetVRBuildingHitMod( void ) const { return m_flVRBuildingHitMod; }
+	virtual bool		HandleVRBuildingHit( trace_t &trace, float flDamageMod ) OVERRIDE;
+
 #ifdef GAME_DLL
 	virtual void		Equip( CBaseCombatCharacter *pOwner );
 	virtual void		Detach();
@@ -56,6 +60,7 @@ public:
 
 private:
 	bool				m_bReloadDown;
+	float				m_flVRBuildingHitMod;
 	CTFWrench( const CTFWrench & ) {}
 };
 

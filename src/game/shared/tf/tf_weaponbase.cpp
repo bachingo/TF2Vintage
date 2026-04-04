@@ -13,6 +13,12 @@
 #include "econ_item_system.h"
 #include "activitylist.h"
 
+#ifdef CLIENT_DLL
+#include "tfvr/c_tfvr_hand.h"
+#include "debugoverlay_shared.h"
+#include "engine/IEngineSound.h"
+#endif
+
 #include "gcsdk/gcmsg.h"
 #include "econ_gcmessages.h"
 #include "tf_gcmessages.h"
@@ -61,6 +67,7 @@
 #include "hud_chat.h"
 #include "econ_notifications.h"
 #include "prediction.h"
+#include "tfvr/openxr_manager.h"
 
 // for spy material proxy
 #include "tf_proxyentity.h"
@@ -79,6 +86,9 @@ extern ConVar tf_useparticletracers;
 ConVar tf_scout_hype_pep_mod( "tf_scout_hype_pep_mod", "1.0", FCVAR_REPLICATED | FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 ConVar tf_scout_hype_pep_max( "tf_scout_hype_pep_max", "99.0", FCVAR_REPLICATED | FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 ConVar tf_scout_hype_pep_min_damage( "tf_scout_hype_pep_min_damage", "5.0", FCVAR_REPLICATED | FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
+
+ConVar tfvr_weapon_wall_clip_check( "tfvr_weapon_wall_clip_check", "1", FCVAR_REPLICATED | FCVAR_NOT_CONNECTED, "Prevent VR weapons from firing when the muzzle is clipped through a wall" );
+ConVar tfvr_weapon_wall_clip_fan_offset( "tfvr_weapon_wall_clip_fan_offset", "12", FCVAR_REPLICATED | FCVAR_NOT_CONNECTED, "Lateral offset (units) for fan traces that distinguish gates/walls from corner peeks" );
 
 ConVar tf_weapon_criticals_nopred( "tf_weapon_criticals_nopred", "1.0", FCVAR_REPLICATED | FCVAR_CHEAT );
 
@@ -334,6 +344,7 @@ CTFWeaponBase::CTFWeaponBase()
 #ifdef CLIENT_DLL
 	m_iCachedModelIndex = 0;
 	m_iEjectBrassAttachpoint = -2;
+	m_bHeldByVRHand = false;
 
 	m_bInitViewmodelOffset = false;
 	m_vecViewmodelOffset = vec3_origin;
@@ -426,9 +437,9 @@ void CTFWeaponBase::Activate( void )
 	GiveDefaultAmmo();
 }
 
-// -----------------------------------------------------------------------------
-// Purpose:
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFWeaponBase::GiveDefaultAmmo( void )
 {
 	BaseClass::GiveDefaultAmmo();
@@ -786,6 +797,38 @@ bool CTFWeaponBase::SendWeaponAnim( int iActivity )
 	if ( !pPlayer )
 		return BaseClass::SendWeaponAnim( iActivity );
 
+#ifdef CLIENT_DLL
+	if ( m_bHeldByVRHand )
+	{
+		C_TFVRHand *pRightHand = GetLocalPlayerRightHand();
+		if ( pRightHand && pRightHand->GetHeldWeapon() == this )
+		{
+			if ( iActivity == ACT_VM_PRIMARYATTACK )
+			{
+				pRightHand->PlayWeaponFireAnimation();
+			}
+
+			// Sticky launcher / loose cannon: charge on ACT_VM_PULLBACK
+			// Huntsman: initial draw on ACT_ITEM2_VM_CHARGE (remapped from ACT_VM_PULLBACK),
+			//   max-charge shake on ACT_ITEM2_VM_CHARGE_IDLE_3, looping via ACT_ITEM2_VM_IDLE_3
+			if ( iActivity == ACT_VM_PULLBACK || iActivity == ACT_ITEM2_VM_CHARGE )
+			{
+				pRightHand->PlayWeaponChargeAnimation();
+			}
+			else if ( iActivity == ACT_ITEM2_VM_CHARGE_IDLE_3 )
+			{
+				pRightHand->PlayWeaponChargeAnimation2();
+			}
+			else if ( pRightHand->IsPlayingChargeAnim()
+				&& iActivity != ACT_ITEM2_VM_IDLE_2
+				&& iActivity != ACT_ITEM2_VM_IDLE_3 )
+			{
+				pRightHand->StopWeaponChargeAnimation();
+			}
+		}
+	}
+#endif
+
 	if ( m_nInspectStage != INSPECT_INVALID )
 	{
 		if ( iActivity == GetActivity() )
@@ -982,7 +1025,7 @@ void CTFWeaponBase::UpdateExtraWearables()
 				// Precaching may be needed here, because we allow virtually everything to be loaded on demand now.
 				pExtraWearableItem->PrecacheModel( pEconItemView->GetExtraWearableViewModel() );
 			}
-
+			pExtraWearableItem->SetDisguiseWearable(m_bDisguiseWeapon);
 			pExtraWearableItem->AddSpawnFlags( SF_NORESPAWN );
 			pExtraWearableItem->SetAlwaysAllow( true );
 			DispatchSpawn( pExtraWearableItem );
@@ -1008,6 +1051,7 @@ void CTFWeaponBase::UpdateExtraWearables()
 				pExtraWearableItem->PrecacheModel( pEconItemView->GetExtraWearableModel() );
 			}
 
+			pExtraWearableItem->SetDisguiseWearable(m_bDisguiseWeapon);
 			pExtraWearableItem->AddSpawnFlags( SF_NORESPAWN );
 			pExtraWearableItem->SetAlwaysAllow( true );
 			DispatchSpawn( pExtraWearableItem );
@@ -1521,7 +1565,6 @@ void CTFWeaponBase::CalcIsAttackCritical( void)
 
 	m_bCurrentCritIsRandom = false;
 
-	
 #if !defined( CLIENT_DLL )
 	// in training mode, the all bot team does not get crits
 	if ( TFGameRules()->IsInTraining() )
@@ -2203,21 +2246,46 @@ bool CTFWeaponBase::DefaultReload( int iClipSize1, int iClipSize2, int iActivity
 	pPlayer->DoAnimationEvent( PLAYERANIMEVENT_RELOAD );
 
 	float flReloadTime;
-	// First, see if we have a reload animation
-	if ( SendWeaponAnim( iActivity ) )
+	bool bSendAnimSuccess = SendWeaponAnim( iActivity );
+	if ( bSendAnimSuccess )
 	{
-		// We consider the reload finished 0.2 sec before the anim is, so that players don't keep accidentally aborting their reloads
 		flReloadTime = SequenceDuration() - 0.2;
 	}
 	else
 	{
-		// No reload animation. Use the script time.
 		flReloadTime = GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeReload;  
 		if ( bReloadSecondary )
 		{
 			flReloadTime = GetTFWpnData().m_WeaponData[TF_WEAPON_SECONDARY_MODE].m_flTimeReload;  
 		}
 	}
+
+#ifdef CLIENT_DLL
+	// VR: The client weapon entity uses the weapon mesh (c_model) which doesn't
+	// have reload animations -- those live on the arms model. The server uses
+	// the arms model so SequenceDuration() works there.
+	// Activity ID lookups fail on the client viewmodel (stale activity table),
+	// so scan the viewmodel's sequences by label instead.
+	if ( m_bHeldByVRHand && flReloadTime <= 0.0f )
+	{
+		CBaseViewModel *pVM = pPlayer->GetViewModel( 0 );
+		if ( pVM )
+		{
+			CStudioHdr *pStudioHdr = pVM->GetModelPtr();
+			if ( pStudioHdr )
+			{
+				for ( int i = 0; i < pStudioHdr->GetNumSeq(); i++ )
+				{
+					if ( Q_stristr( pStudioHdr->pSeqdesc( i ).pszLabel(), "reload" ) )
+					{
+						flReloadTime = pVM->SequenceDuration( i ) - 0.2f;
+						break;
+					}
+				}
+			}
+		}
+	}
+#endif
 
 	SetReloadTimer( flReloadTime );
 
@@ -2431,6 +2499,16 @@ void CTFWeaponBase::ItemPostFrame( void )
 	{
 		return;
 	}
+
+#ifdef CLIENT_DLL
+	// VR FIX: Keep weapon entity position updated every frame for correct sound spatialization
+	// This ensures single-shot weapon sounds also emit from the correct position
+	if ( m_bHeldByVRHand )
+	{
+		Vector vrPos = GetVRSoundPosition();
+		SetAbsOrigin( vrPos );
+	}
+#endif
 
 	bool bNeedsReload = NeedsReloadForAmmo1( GetMaxClip1() ) || ( IsEnergyWeapon() && !Energy_FullyCharged() );
 
@@ -3055,6 +3133,14 @@ bool CTFWeaponBase::IsFirstPersonView()
 
 bool CTFWeaponBase::UsingViewModel()
 {
+#ifdef CLIENT_DLL
+	// VR: If held by a VR hand, use world model (not viewmodel)
+	if ( m_bHeldByVRHand )
+	{
+		return false;
+	}
+#endif
+
 	C_TFPlayer *pPlayerOwner = GetTFPlayerOwner();
 	bool bIsFirstPersonView = IsFirstPersonView();
 	bool bUsingViewModel = bIsFirstPersonView && ( pPlayerOwner != NULL ) && !pPlayerOwner->ShouldDrawThisPlayer();
@@ -3063,6 +3149,14 @@ bool CTFWeaponBase::UsingViewModel()
 
 C_BaseAnimating *CTFWeaponBase::GetAppropriateWorldOrViewModel()
 {
+#ifdef CLIENT_DLL
+	// VR: Always use the weapon worldmodel (this) if held by VR hand
+	if ( m_bHeldByVRHand )
+	{
+		return this;
+	}
+#endif
+	
 	C_TFPlayer *pPlayerOwner = GetTFPlayerOwner();
 	if ( pPlayerOwner && UsingViewModel() )
 	{
@@ -3102,7 +3196,8 @@ void CTFWeaponBase::CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int nInd
 	if ( !pAttachEnt )
 		return;
 
-	if ( UsingViewModel() && !g_pClientMode->ShouldDrawViewModel() )
+	// VR: Don't block muzzle flashes in VR mode - we're using world models
+	if ( !m_bHeldByVRHand && UsingViewModel() && !g_pClientMode->ShouldDrawViewModel() )
 	{
 		// Prevent effects when the ViewModel is hidden with r_drawviewmodel=0
 		return;
@@ -3115,8 +3210,12 @@ void CTFWeaponBase::CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int nInd
 	const char *pszMuzzleFlashParticleEffect = GetMuzzleFlashParticleEffect();
 
 	// Pick the right muzzleflash (3rd / 1st person)
-	// (this uses IsFirstPersonView() rather than UsingViewModel() because even when NOT using the viewmodel, in 1st-person mode we still want the 1st-person muzzleflash effect)
-	if ( IsFirstPersonView() )
+	// VR: Always use 3rd person muzzle flash since we're using world models
+	if ( m_bHeldByVRHand )
+	{
+		pszMuzzleFlashEffect = GetMuzzleFlashEffectName_3rd();
+	}
+	else if ( IsFirstPersonView() )
 	{
 		pszMuzzleFlashEffect = GetMuzzleFlashEffectName_1st();
 	}
@@ -3178,6 +3277,29 @@ void CTFWeaponBase::CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int nInd
 
 void CTFWeaponBase::DispatchMuzzleFlash( const char* effectName, C_BaseEntity* pAttachEnt )
 {
+	// VR: Create particle effect directly on render weapon with proper entity binding
+	if ( m_bHeldByVRHand )
+	{
+		C_TFVRHand *pRightHand = GetLocalPlayerRightHand();
+		if ( pRightHand && pRightHand->GetHeldWeapon() == this )
+		{
+			C_BaseAnimating *pRenderWeapon = pRightHand->GetRenderWeapon();
+			if ( pRenderWeapon )
+			{
+				// Create the particle using ParticleProp on the render weapon
+				// This properly binds the particle to follow the entity
+				CNewParticleEffect *pEffect = pRenderWeapon->ParticleProp()->Create( effectName, PATTACH_POINT_FOLLOW, "muzzle" );
+				if ( pEffect )
+				{
+					// Explicitly bind control point 0 to the render weapon entity
+					pEffect->SetControlPointEntity( 0, pRenderWeapon );
+				}
+				return;
+			}
+		}
+	}
+	
+	// Attach to the "muzzle" attachment point and follow it
 	DispatchParticleEffect( effectName, PATTACH_POINT_FOLLOW, pAttachEnt, "muzzle" );
 }
 
@@ -3193,6 +3315,16 @@ bool CTFWeaponBase::ShouldDraw( void )
 	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( !pLocalPlayer )
 		return true;
+
+#ifdef CLIENT_DLL
+	// VR: If held by a VR hand, DON'T draw the original weapon - we use a separate VR render weapon instead
+	// The VR render weapon is positioned by the VR hand and draws the weapon model
+	// Drawing this would cause a "ghost" weapon at player origin
+	if ( m_bHeldByVRHand )
+	{
+		return false;
+	}
+#endif
 
 	if ( pOwner->IsPlayer() )
 	{
@@ -3301,14 +3433,122 @@ bool CTFWeaponBase::OnInternalDrawModel( ClientModelRenderInfo_t *pInfo )
 	return BaseClass::OnInternalDrawModel( pInfo );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Override for disguise weapons to use team 0 for attachment lookups
+//-----------------------------------------------------------------------------
+void CTFWeaponBase::UpdateAttachmentModels( void )
+{
+#ifdef CLIENT_DLL
+	// For disguise weapons, we need to use the disguise target's team when fetching attachment models
+	// because GetTeamNumber() returns the spy's team, not the disguised target's team.
+	if ( m_bDisguiseWeapon )
+	{
+		C_TFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
+		if ( !pOwner )
+		{
+			BaseClass::UpdateAttachmentModels();
+			return;
+		}
+
+		C_TFPlayer *pDisguiseTarget = pOwner->m_Shared.GetDisguiseTarget();
+		int iTeamNumber = pDisguiseTarget ? pDisguiseTarget->GetTeamNumber() : 0;
+
+		CEconItemView *pItem = GetAttributeContainer()->GetItem();
+		GameItemDefinition_t *pItemDef = pItem && pItem->IsValid() ? pItem->GetStaticData() : NULL;
+
+		// Update the state of additional model attachments
+		m_vecAttachedModels.Purge();
+		if ( pItemDef && AttachmentModelsShouldBeVisible() )
+		{
+			{
+				int iAttachedModels = pItemDef->GetNumAttachedModels( iTeamNumber );
+				for ( int i = 0; i < iAttachedModels; i++ )
+				{
+					attachedmodel_t	*pModel = pItemDef->GetAttachedModelData( iTeamNumber, i );
+
+					int iModelIndex = modelinfo->GetModelIndex( pModel->m_pszModelName );
+					if ( iModelIndex >= 0 )
+					{
+						AttachedModelData_t attachedModelData;
+						attachedModelData.m_pModel			   = modelinfo->GetModel( iModelIndex );
+						attachedModelData.m_iModelDisplayFlags = pModel->m_iModelDisplayFlags;
+						m_vecAttachedModels.AddToTail( attachedModelData );
+					}
+				}
+			}
+
+			// Check for Festive attachedmodels for festivized weapons
+			{
+				int iAttachedModels = pItemDef->GetNumAttachedModelsFestivized( iTeamNumber );
+				if ( iAttachedModels )
+				{
+					int iFestivized = 0;
+					CALL_ATTRIB_HOOK_INT( iFestivized, is_festivized );
+					if ( iFestivized )
+					{
+						for ( int i = 0; i < iAttachedModels; i++ )
+						{
+							attachedmodel_t	*pModel = pItemDef->GetAttachedModelDataFestivized( iTeamNumber, i );
+
+							int iModelIndex = modelinfo->GetModelIndex( pModel->m_pszModelName );
+							if ( iModelIndex >= 0 )
+							{
+								AttachedModelData_t attachedModelData;
+								attachedModelData.m_pModel = modelinfo->GetModel( iModelIndex );
+								attachedModelData.m_iModelDisplayFlags = pModel->m_iModelDisplayFlags;
+								m_vecAttachedModels.AddToTail( attachedModelData );
+							}
+						}
+					}
+				}
+			}
+		}
+		// Note: We skip the viewmodel attachment section (ShouldAttachToHands) because
+		// disguise weapons are world models only and don't need viewmodel attachments.
+	}
+	else
+	{
+		// Normal weapons use the base class implementation
+		BaseClass::UpdateAttachmentModels();
+	}
+#endif
+}
+
 void CTFWeaponBase::ProcessMuzzleFlashEvent( void )
 {
-	C_BaseAnimating *pAttachEnt = GetAppropriateWorldOrViewModel();
 	C_TFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
 
 	if ( pOwner == NULL )
 		return;
 
+	C_BaseAnimating *pAttachEnt = NULL;
+	
+	// VR: Use the VR render weapon for muzzle flashes
+#ifdef CLIENT_DLL
+	if ( m_bHeldByVRHand )
+	{
+		C_TFVRHand *pRightHand = GetLocalPlayerRightHand();
+		if ( pRightHand && pRightHand->GetHeldWeapon() == this )
+		{
+			C_BaseAnimating *pRenderWeapon = pRightHand->GetRenderWeapon();
+			if ( pRenderWeapon )
+			{
+				// Force bone setup on the hand (this also sets up the weapon via PositionWeaponFromBones)
+				pRightHand->InvalidateBoneCache();
+				matrix3x4_t handBones[MAXSTUDIOBONES];
+				pRightHand->SetupBones( handBones, MAXSTUDIOBONES, BONE_USED_BY_ANYTHING, gpGlobals->curtime );
+				
+				pAttachEnt = pRenderWeapon;
+			}
+		}
+	}
+#endif // CLIENT_DLL
+	
+	// Fall back to normal behavior
+	if ( !pAttachEnt )
+	{
+		pAttachEnt = GetAppropriateWorldOrViewModel();
+	}
 
 	bool bDrawMuzzleFlashOnViewModel = ( pAttachEnt != this );
 	{
@@ -3328,6 +3568,28 @@ void CTFWeaponBase::ProcessMuzzleFlashEvent( void )
 		CreateMuzzleFlashEffects( this, 1 );
 		SetModelIndex( nModelIndex );
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: VR Override - Prevent re-parenting when held by VR hand
+//-----------------------------------------------------------------------------
+void CTFWeaponBase::SetParent( CBaseEntity *pNewParent, int iAttachment )
+{
+#ifdef CLIENT_DLL
+	// VR: Don't allow parenting when held by VR hand - we need absolute positioning!
+	if ( m_bHeldByVRHand && pNewParent != NULL )
+	{
+		static int blockCount = 0;
+		if ( ++blockCount % 30 == 0 )
+		{
+			DevMsg( "VR: BLOCKED SetParent to %p (%s)\n", pNewParent, pNewParent->GetClassname() );
+		}
+		// Ignore the parent change
+		return;
+	}
+#endif
+	
+	BaseClass::SetParent( pNewParent, iAttachment );
 }
 
 //-----------------------------------------------------------------------------
@@ -3360,6 +3622,14 @@ void CTFWeaponBase::PostDataUpdate( DataUpdateType_t updateType )
 	UpdateModelIndex();
 
 	BaseClass::PostDataUpdate( updateType );
+	
+#ifdef CLIENT_DLL
+	// VR: Forcibly remove parent after base update - the engine might have re-parented us
+	if ( m_bHeldByVRHand && GetMoveParent() != NULL )
+	{
+		SetParent( NULL );
+	}
+#endif
 }
 
 void CTFWeaponBase::UpdateModelIndex()
@@ -3368,7 +3638,14 @@ void CTFWeaponBase::UpdateModelIndex()
 	// clientside animation sequences on this model, which will be using bad sequences for the world model.
 	int iDesiredModelIndex = 0;
 	C_BasePlayer *pOwner = ToBasePlayer(GetOwner());
-	if ( !pOwner->ShouldDrawThisPlayer() )
+	
+	// VR: If held by VR hand, always use world model
+	if ( m_bHeldByVRHand )
+	{
+		iDesiredModelIndex = GetWorldModelIndex();
+		SetSequence( 0 );
+	}
+	else if ( !pOwner->ShouldDrawThisPlayer() )
 	{
 		iDesiredModelIndex = m_iViewModelIndex;
 	}
@@ -3403,6 +3680,16 @@ void CTFWeaponBase::OnPreDataChanged( DataUpdateType_t type )
 void CTFWeaponBase::OnDataChanged( DataUpdateType_t type )
 {
 	BaseClass::OnDataChanged( type );
+
+	// VR FIX: Keep weapon entity position updated for correct sound spatialization
+	// In VR mode, the weapon entity's position is garbage because ShouldDraw() returns false
+	// and the engine doesn't properly update positions for non-drawn entities.
+	// This affects ALL weapon sounds (flamethrower, minigun, medigun, etc.)
+	if ( m_bHeldByVRHand )
+	{
+		Vector vrPos = GetVRSoundPosition();
+		SetAbsOrigin( vrPos );
+	}
 
 	if ( type == DATA_UPDATE_CREATED )
 	{
@@ -4460,12 +4747,129 @@ CTFPlayer *CTFWeaponBase::GetTFPlayerOwner() const
 	return dynamic_cast<CTFPlayer*>( GetOwner() );
 }
 
+// -----------------------------------------------------------------------------
+// Purpose: In VR, emit weapon sounds (fire, deploy, etc.) from the muzzle
+//          position via enginesound with custom soundlevel/volume from ConVars.
+// -----------------------------------------------------------------------------
+void CTFWeaponBase::WeaponSound( WeaponSound_t sound_type, float soundtime /* = 0.0f */ )
+{
+#ifdef CLIENT_DLL
+	if ( m_bHeldByVRHand )
+	{
+		const char *shootsound = GetShootSound( sound_type );
+		if ( !shootsound || !shootsound[0] )
+			return;
+
+		CSoundParameters params;
+		if ( !GetParametersForSound( shootsound, params, NULL ) )
+			return;
+
+		C_TFVRHand *pRightHand = GetLocalPlayerRightHand();
+		
+		if ( pRightHand )
+		{
+			Vector muzzlePos;
+			QAngle muzzleAngles;
+			if ( pRightHand->GetWeaponMuzzlePositionAndAngles( muzzlePos, muzzleAngles ) )
+			{
+				SetAbsOrigin( muzzlePos );
+
+				CPASAttenuationFilter filter( muzzlePos, params.soundlevel );
+				if ( IsPredicted() && CBaseEntity::GetPredictionPlayer() )
+				{
+					filter.UsePredictionRules();
+				}
+
+				extern ConVar tfvr_sound_level;
+				extern ConVar tfvr_sound_volume;
+				enginesound->EmitSound(
+					filter, entindex(), params.channel, params.soundname,
+					params.volume * tfvr_sound_volume.GetFloat(),
+					(soundlevel_t)tfvr_sound_level.GetInt(),
+					0, params.pitch, 0, &muzzlePos, NULL, NULL, true, soundtime );
+				return;
+			}
+		}
+	}
+#endif
+
+	// Non-VR: use default behavior
+	BaseClass::WeaponSound( sound_type, soundtime );
+}
+
+#ifdef GAME_DLL
+// -----------------------------------------------------------------------------
+// Purpose: Override sound emission origin to use correct position in VR (server)
+// -----------------------------------------------------------------------------
+Vector CTFWeaponBase::GetSoundEmissionOrigin() const
+{
+	// Server-side: use weapon shoot position for VR players
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( pPlayer && pPlayer->IsInVRMode() )
+	{
+		return pPlayer->Weapon_ShootPosition();
+	}
+	
+	// Fall back to default behavior
+	return BaseClass::GetSoundEmissionOrigin();
+}
+#endif
+
+#ifdef CLIENT_DLL
+// -----------------------------------------------------------------------------
+// Purpose: Get correct sound position for VR weapons (client helper)
+// -----------------------------------------------------------------------------
+Vector CTFWeaponBase::GetVRSoundPosition() const
+{
+	// VR FIX: In VR mode, the weapon entity's position is not updated properly
+	// Use the cached muzzle position from the VR hand for consistency with visuals
+	if ( m_bHeldByVRHand )
+	{
+		// Primary: Use VR hand's cached muzzle position (same as visuals/effects)
+		C_TFVRHand *pRightHand = GetLocalPlayerRightHand();
+		if ( pRightHand && pRightHand->GetHeldWeapon() == this )
+		{
+			Vector muzzlePos;
+			QAngle muzzleAngles;
+			if ( pRightHand->GetWeaponMuzzlePositionAndAngles( muzzlePos, muzzleAngles ) )
+			{
+				return muzzlePos;
+			}
+		}
+		
+		// Fallback: Use cached Weapon_ShootPosition
+		C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+		if ( pPlayer )
+		{
+			return pPlayer->Weapon_ShootPosition();
+		}
+	}
+	
+	// Non-VR: use normal position
+	return GetAbsOrigin();
+}
+#endif
+
 #ifdef CLIENT_DLL
 // -----------------------------------------------------------------------------
 // Purpose:
 // -----------------------------------------------------------------------------
 C_BaseEntity *CTFWeaponBase::GetWeaponForEffect()
 {
+	// In VR, get the VR render weapon from the hand - it has correct position and attachments
+	if ( m_bHeldByVRHand )
+	{
+		C_TFVRHand *pRightHand = GetLocalPlayerRightHand();
+		if ( pRightHand )
+		{
+			C_BaseAnimating *pRenderWeapon = pRightHand->GetRenderWeapon();
+			if ( pRenderWeapon )
+			{
+				return pRenderWeapon;
+			}
+		}
+	}
+	
 	return GetAppropriateWorldOrViewModel();
 }
 
@@ -4491,9 +4895,79 @@ bool CTFWeaponBase::CanAttack()
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
 
 	if ( pPlayer )
+	{
+		if ( IsVRMuzzleClippedThroughWall( pPlayer ) )
+			return false;
+
 		return pPlayer->CanAttack( GetCanAttackFlags() );
+	}
 
 	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: In VR, prevent firing when the weapon muzzle has clipped through
+//          a wall or gate. Two checks:
+//          1) startsolid -- muzzle is embedded inside solid geometry.
+//          2) Fan trace -- three traces from the eye to the muzzle region:
+//             center, and two laterally offset points. If ALL three hit
+//             non-damageable solids, there is a continuous barrier (gate/wall)
+//             between the player and the muzzle. For corner peeks, the offset
+//             on the open side passes through freely, so not all three are
+//             blocked, and firing is allowed.
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::IsVRMuzzleClippedThroughWall( CTFPlayer *pPlayer ) const
+{
+	if ( !tfvr_weapon_wall_clip_check.GetBool() )
+		return false;
+
+	if ( !pPlayer->IsInVRMode() )
+		return false;
+
+	Vector vecShootPos = pPlayer->Weapon_ShootPosition();
+
+	trace_t trace;
+	CTraceFilterSimple traceFilter( pPlayer, COLLISION_GROUP_NONE );
+
+	UTIL_TraceLine( vecShootPos, vecShootPos, MASK_SOLID_BRUSHONLY, &traceFilter, &trace );
+	if ( trace.startsolid )
+		return true;
+
+	Vector vecEye = pPlayer->EyePosition();
+	Vector vecToMuzzle = vecShootPos - vecEye;
+	float flDist = vecToMuzzle.NormalizeInPlace();
+
+	if ( flDist < 1.0f )
+		return false;
+
+	Vector vecPerp;
+	CrossProduct( vecToMuzzle, Vector( 0, 0, 1 ), vecPerp );
+	float flPerpLen = vecPerp.NormalizeInPlace();
+
+	if ( flPerpLen < 0.1f )
+	{
+		CrossProduct( vecToMuzzle, Vector( 0, 1, 0 ), vecPerp );
+		vecPerp.NormalizeInPlace();
+	}
+
+	float flOffset = tfvr_weapon_wall_clip_fan_offset.GetFloat();
+
+	auto IsBlockedByWall = [&]( const Vector &vecEnd ) -> bool
+	{
+		UTIL_TraceLine( vecEye, vecEnd, MASK_SOLID, &traceFilter, &trace );
+		return trace.fraction < 1.0f && ( !trace.m_pEnt || trace.m_pEnt->m_takedamage == DAMAGE_NO );
+	};
+
+	if ( !IsBlockedByWall( vecShootPos ) )
+		return false;
+
+	if ( !IsBlockedByWall( vecShootPos + vecPerp * flOffset ) )
+		return false;
+
+	if ( !IsBlockedByWall( vecShootPos - vecPerp * flOffset ) )
+		return false;
+
+	return true;
 }
 
 
@@ -4859,20 +5333,46 @@ bool CTFWeaponBase::OnFireEvent( C_BaseViewModel *pViewModel, const Vector& orig
 		}
 
 		CEffectData data;
-		// Look for 'eject_brass' attachment first instead of using options which is a seemingly magic number
-		if ( m_iEjectBrassAttachpoint == -2 )
+		bool bGotAttachment = false;
+		
+		// In VR, get the attachment from the VR render weapon instead of viewmodel
+		if ( m_bHeldByVRHand )
 		{
-			m_iEjectBrassAttachpoint = pViewModel->LookupAttachment( "eject_brass" );
+			C_TFVRHand *pRightHand = GetLocalPlayerRightHand();
+			if ( pRightHand )
+			{
+				C_BaseAnimating *pRenderWeapon = pRightHand->GetRenderWeapon();
+				if ( pRenderWeapon )
+				{
+					int iEjectAttach = pRenderWeapon->LookupAttachment( "eject_brass" );
+					if ( iEjectAttach > 0 )
+					{
+						pRenderWeapon->GetAttachment( iEjectAttach, data.m_vOrigin, data.m_vAngles );
+						bGotAttachment = true;
+					}
+				}
+			}
 		}
+		
+		// Fallback to viewmodel if VR attachment not found
+		if ( !bGotAttachment )
+		{
+			// Look for 'eject_brass' attachment first instead of using options which is a seemingly magic number
+			if ( m_iEjectBrassAttachpoint == -2 )
+			{
+				m_iEjectBrassAttachpoint = pViewModel->LookupAttachment( "eject_brass" );
+			}
 
-		if ( m_iEjectBrassAttachpoint > 0 )
-		{
-			pViewModel->GetAttachment( m_iEjectBrassAttachpoint, data.m_vOrigin, data.m_vAngles );
+			if ( m_iEjectBrassAttachpoint > 0 )
+			{
+				pViewModel->GetAttachment( m_iEjectBrassAttachpoint, data.m_vOrigin, data.m_vAngles );
+			}
+			else
+			{
+				pViewModel->GetAttachment( atoi(options), data.m_vOrigin, data.m_vAngles );
+			}
 		}
-		else
-		{
-			pViewModel->GetAttachment( atoi(options), data.m_vOrigin, data.m_vAngles );
-		}
+		
 		data.m_nDamageType = GetAttributeContainer()->GetItem() ? GetAttributeContainer()->GetItem()->GetItemDefIndex() : 0;
 		data.m_nHitBox = GetWeaponID();
 		DispatchEffect( "TF_EjectBrass", data );
@@ -5159,7 +5659,7 @@ void CTFWeaponBase::ApplyOnHitAttributes( CBaseEntity *pVictimBaseEntity, CTFPla
 		}
 	}
 
-	// Add ubercharge on hit
+	// Add ubercharge on hit (VR: scale by cooldown like damage)
 	if ( pAttacker->IsPlayerClass( TF_CLASS_MEDIC ) )
 	{
 		float flUberChargeBonus = 0;
@@ -5169,6 +5669,8 @@ void CTFWeaponBase::ApplyOnHitAttributes( CBaseEntity *pVictimBaseEntity, CTFPla
 			CWeaponMedigun *pMedigun = (CWeaponMedigun *)pAttacker->Weapon_OwnsThisID( TF_WEAPON_MEDIGUN );
 			if ( pMedigun )
 			{
+				flUberChargeBonus *= GetVRHitDamageMod();
+
 				if ( TFGameRules() && TFGameRules()->IsPowerupMode() )
 				{
 					if ( pAttacker->m_Shared.GetCarryingRuneType() != RUNE_NONE )
@@ -5661,7 +6163,83 @@ void CTFWeaponBase::GetProjectileFireSetup( CTFPlayer *pPlayer, Vector vecOffset
 	{
 		vecOffset.y = 0;
 	}
+	
+	// VR-specific implementation
+#ifdef CLIENT_DLL
+	extern ConVar tfvr_enable_controller_tracking;
+	C_TFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
+	if (pTFPlayer && g_pOpenXRManager && g_pOpenXRManager->IsActive() && tfvr_enable_controller_tracking.GetBool())
+	{
+		// Try to get muzzle position from VR hand's render weapon first
+		C_TFVRHand *pRightHand = GetLocalPlayerRightHand();
+		if (pRightHand && pRightHand->GetHeldWeapon() == this)
+		{
+			Vector muzzlePos;
+			QAngle muzzleAngles;
+			if (pRightHand->GetWeaponMuzzlePositionAndAngles(muzzlePos, muzzleAngles))
+			{
+				// Apply spread angles if any
+				QAngle angSpread = GetSpreadAngles();
+				
+				// Use muzzle position and angles for projectile
+				*vecSrc = muzzlePos;
+				*angForward = angSpread;
+				return;
+			}
+		}
+		
+		// Fallback: use raw controller position if muzzle not available
+		VMatrix rightControllerPose;
+		if (g_pOpenXRManager->GetRightControllerPose(rightControllerPose))
+		{
+			Vector controllerPos = rightControllerPose.GetTranslation();
+			QAngle controllerAngles;
+			MatrixAngles(rightControllerPose.As3x4(), controllerAngles);
+			
+			QAngle angSpread = GetSpreadAngles();
+			
+			*vecSrc = controllerPos;
+			*angForward = angSpread;
+			return;
+		}
+	}
+#else
+	CTFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
+	if (pTFPlayer && pTFPlayer->IsInVRMode() && pTFPlayer->m_rightControllerOrigin != vec3_origin)
+	{
+		// Use right controller position and angles for projectile firing
+		Vector controllerPos = pTFPlayer->m_rightControllerOrigin;
+		QAngle controllerAngles = pTFPlayer->m_rightControllerAngles;
+		
+		// Validate controller data is reasonable (not too far from player)
+		float flDistSqr = (controllerPos - pPlayer->GetAbsOrigin()).LengthSqr();
+		if (flDistSqr > (200.0f * 200.0f)) // More than 200 units away
+		{
+			// Controller data seems invalid, fall back to default
+			DevMsg("VR Warning: Controller position too far from player (%.1f units), using fallback\n", 
+				sqrt(flDistSqr));
+			goto fallback;
+		}
+		
+		// Apply spread angles if any
+		CTFWeaponBase *pWeapon = pTFPlayer->GetActiveTFWeapon();
+		QAngle angSpread = pWeapon ? pWeapon->GetSpreadAngles() : controllerAngles;
+		
+		// Get firing vectors from controller angles
+		Vector vecForward, vecRight, vecUp;
+		AngleVectors(angSpread, &vecForward, &vecRight, &vecUp);
+		
+		// In VR, projectiles start exactly at the controller position without offsets
+		*vecSrc = controllerPos;
+		
+		// Use controller angles directly for projectile direction
+		*angForward = angSpread;
+		
+		return;
+	}
+#endif
 
+fallback:
 	QAngle angSpread = GetSpreadAngles();
 	Vector vecForward, vecRight, vecUp;
 	AngleVectors( angSpread, &vecForward, &vecRight, &vecUp );
@@ -5719,7 +6297,7 @@ QAngle CTFWeaponBase::GetSpreadAngles( void )
 	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
 	Assert( pOwner );
 
-	QAngle angEyes = pOwner->EyeAngles();
+	QAngle angEyes = pOwner->Weapon_ShootAngles();
 
 	float flSpreadAngle = 0.0f; 
 	CALL_ATTRIB_HOOK_FLOAT( flSpreadAngle, projectile_spread_angle );
@@ -5811,9 +6389,10 @@ bool CTFWeaponBase::DeflectProjectiles()
 
 	lagcompensation->StartLagCompensation( pOwner, pOwner->GetCurrentCommand() );
 
-	Vector vecEye = pOwner->EyePosition();
+	// Use weapon shoot position and angles for VR support
+	Vector vecEye = pOwner->Weapon_ShootPosition();
 	Vector vecForward, vecRight, vecUp;
-	AngleVectors( pOwner->EyeAngles(), &vecForward, &vecRight, &vecUp );
+	AngleVectors( pOwner->Weapon_ShootAngles(), &vecForward, &vecRight, &vecUp );
 	Vector vecCenter = vecEye + vecForward * GetDeflectionRadius();
 
 	// Get a list of entities in the box defined by vecSize at VecCenter.
@@ -6884,6 +7463,17 @@ bool CTFWeaponAttachmentModel::ShouldDraw( void )
 	// some code is overriding the weapon model (taunt), don't show the attachment model
 	if ( m_hWeaponAssociatedWith->IsUsingOverrideModel() )
 		return false;
+
+	// VR: If weapon is held by VR hand, always draw (we re-parent to VR render weapon)
+	if ( m_hWeaponAssociatedWith->IsHeldByVRHand() )
+	{
+		// Make sure the weapon is still active
+		C_TFPlayer *pOwner = ToTFPlayer( m_hWeaponAssociatedWith->GetOwner() );
+		if ( pOwner && pOwner->GetActiveWeapon() == m_hWeaponAssociatedWith.Get() )
+		{
+			return true;
+		}
+	}
 
 	if ( m_hWeaponAssociatedWith->IsFirstPersonView() && !m_bIsViewModelAttachment )
 	{

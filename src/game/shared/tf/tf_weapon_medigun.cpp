@@ -679,7 +679,9 @@ void CWeaponMedigun::MaintainTargetInSlot()
 		CMedigunFilter drainFilter( pOwner );
 
 		Vector vecAiming;
-		pOwner->EyeVectors( &vecAiming );
+		// Use weapon shoot angles for VR support (controller angles if in VR)
+		QAngle angAiming = pOwner->Weapon_ShootAngles();
+		AngleVectors( angAiming, &vecAiming );
 
 		Vector vecEnd = vecSrc + vecAiming * GetTargetRange();
 		UTIL_TraceLine( vecSrc, vecEnd, (MASK_SHOT & ~CONTENTS_HITBOX), pOwner, COLLISION_GROUP_NONE, &tr );
@@ -724,7 +726,9 @@ void CWeaponMedigun::FindNewTargetForSlot()
 
 	// In Normal mode, we heal players under our crosshair
 	Vector vecAiming;
-	pOwner->EyeVectors( &vecAiming );
+	// Use weapon shoot angles for VR support (controller angles if in VR)
+	QAngle angAiming = pOwner->Weapon_ShootAngles();
+	AngleVectors( angAiming, &vecAiming );
 
 	// Find a player in range of this player, and make sure they're healable.
 	Vector vecEnd = vecSrc + vecAiming * GetTargetRange();

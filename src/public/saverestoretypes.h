@@ -284,7 +284,7 @@ private:
 	class CHashFuncs
 	{
 	public:
-		CHashFuncs() {}
+		CHashFuncs( int ) {}
 
 		// COMPARE
 		bool operator()( const CHashElement &lhs, const CHashElement &rhs ) const

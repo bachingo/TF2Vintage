@@ -6576,6 +6576,14 @@ void C_BaseAnimating::UpdateBoneAttachments( void )
 		QAngle absAngle;
 		MatrixAngles( GetBone( 0 ), absAngle );
 		SetAbsAngles( absAngle);
+
+		// Force SetupBones to recalculate each time DrawModel is called.
+		// Without this, SetupBones recalculates for the first eye (overwriting
+		// bone 0 with the correct bind-pose-adjusted transform) but is a
+		// cache-hit no-op for the second eye (which still has the raw attachment
+		// transform from above), causing bone-attached entities like arrows
+		// to render at different orientations in each eye in VR.
+		InvalidateBoneCache();
 	}
 }
 

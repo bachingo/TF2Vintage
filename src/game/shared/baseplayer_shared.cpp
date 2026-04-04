@@ -1412,6 +1412,14 @@ void CBasePlayer::ViewPunch( const QAngle &angleOffset )
 	if ( IsInAVehicle() )
 		return;
 
+	// VR FIX: Don't apply view punch in VR - it causes nausea
+	// The HMD should remain stable, camera shake is jarring in VR
+#ifdef CLIENT_DLL
+	extern bool UseVR();
+	if ( UseVR() )
+		return;
+#endif
+
 	m_Local.m_vecPunchAngleVel += angleOffset * 20;
 }
 
@@ -1613,17 +1621,24 @@ void CBasePlayer::CalcPlayerView( Vector& eyeOrigin, QAngle& eyeAngles, float& f
 	// Snack off the origin before bob + water offset are applied
 	Vector vecBaseEyePosition = eyeOrigin;
 
-	CalcViewRoll( eyeAngles );
+#if defined( CLIENT_DLL )
+	// VR FIX: Don't apply view roll, punch angle, or view shake in VR - they cause nausea
+	extern bool UseVR();
+	if ( !UseVR() )
+	{
+#endif
+		CalcViewRoll( eyeAngles );
 
-	// Apply punch angle
-	VectorAdd( eyeAngles, m_Local.m_vecPunchAngle, eyeAngles );
+		// Apply punch angle
+		VectorAdd( eyeAngles, m_Local.m_vecPunchAngle, eyeAngles );
 
 #if defined( CLIENT_DLL )
-	if ( !prediction->InPrediction() )
-	{
-		// Shake it up baby!
-		vieweffects->CalcShake();
-		vieweffects->ApplyShake( eyeOrigin, eyeAngles, 1.0 );
+		if ( !prediction->InPrediction() )
+		{
+			// Shake it up baby!
+			vieweffects->CalcShake();
+			vieweffects->ApplyShake( eyeOrigin, eyeAngles, 1.0 );
+		}
 	}
 #endif
 
@@ -1669,17 +1684,24 @@ void CBasePlayer::CalcVehicleView(
 	// Snack off the origin before bob + water offset are applied
 	Vector vecBaseEyePosition = eyeOrigin;
 
-	CalcViewRoll( eyeAngles );
+#if defined( CLIENT_DLL )
+	// VR FIX: Don't apply view roll, punch angle, or view shake in VR - they cause nausea
+	extern bool UseVR();
+	if ( !UseVR() )
+	{
+#endif
+		CalcViewRoll( eyeAngles );
 
-	// Apply punch angle
-	VectorAdd( eyeAngles, m_Local.m_vecPunchAngle, eyeAngles );
+		// Apply punch angle
+		VectorAdd( eyeAngles, m_Local.m_vecPunchAngle, eyeAngles );
 
 #if defined( CLIENT_DLL )
-	if ( !prediction->InPrediction() )
-	{
-		// Shake it up baby!
-		vieweffects->CalcShake();
-		vieweffects->ApplyShake( eyeOrigin, eyeAngles, 1.0 );
+		if ( !prediction->InPrediction() )
+		{
+			// Shake it up baby!
+			vieweffects->CalcShake();
+			vieweffects->ApplyShake( eyeOrigin, eyeAngles, 1.0 );
+		}
 	}
 #endif
 

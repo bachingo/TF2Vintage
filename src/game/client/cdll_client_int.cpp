@@ -133,6 +133,8 @@
 
 #include "secure_command_line.h"
 
+#include "tfvr/vr_integration.h"
+
 // NVNT includes
 #include "hud_macros.h"
 #include "haptics/ihaptics.h"
@@ -1586,7 +1588,9 @@ void CHLClient::View_Render( vrect_t *rect )
 	if ( rect->width == 0 || rect->height == 0 )
 		return;
 
-	view->Render( rect );
+
+	view->Render(rect);
+
 	UpdatePerfStats();
 }
 
@@ -1665,6 +1669,11 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 	if (g_bLevelInitialized)
 		return;
 	g_bLevelInitialized = true;
+	
+	// TF2VR: FORCE loading state immediately when level init starts
+	extern void TF2VR_SetLoadingState(bool isLoading);
+	TF2VR_SetLoadingState(true);
+	DevMsg("TF2VR: 🚨 LEVEL INIT START - forcing loading state to TRUE\n");
 
 	input->LevelInit();
 
@@ -2339,6 +2348,10 @@ void CHLClient::FrameStageNotify( ClientFrameStage_t curStage )
 	case FRAME_RENDER_START:
 		{
 			VPROF( "CHLClient::FrameStageNotify FRAME_RENDER_START" );
+
+			// TF2VR: GUARANTEED frame hook - monitor connection state even during loading
+			extern void TF2VR_CheckEarlyLoadingState();
+			TF2VR_CheckEarlyLoadingState();
 
 			// Last thing before rendering, run simulation.
 			OnRenderStart();

@@ -232,9 +232,38 @@ void CTFBat_Wood::SecondaryAttackAnim( CTFPlayer *pPlayer )
 void CTFBat_Wood::GetBallDynamics( Vector& vecLoc, QAngle& vecAngles, Vector& vecVelocity, AngularImpulse& angImpulse, CTFPlayer* pPlayer )
 {
 	Vector vecForward, vecUp;
-	AngleVectors( pPlayer->EyeAngles(), &vecForward, NULL, &vecUp );
-	vecLoc    = pPlayer->GetAbsOrigin() + pPlayer->GetModelScale() * ( Vector( 0, 0, 50 ) + vecForward * 32.f );
-	vecAngles = pPlayer->GetAbsAngles();
+	QAngle shootAngles;
+	
+	// VR: Use weapon shoot position and angles (works on both client and server)
+	if ( pPlayer && pPlayer->IsInVRMode() )
+	{
+		// VR ball aim: launch from offhand (left) controller when aiming
+		const CUserCmd *pCmd = pPlayer->GetCurrentUserCommand();
+		if ( pCmd && pCmd->vrBallAimActive &&
+			 pPlayer->m_leftControllerOrigin != vec3_origin )
+		{
+			shootAngles = pPlayer->m_leftControllerAngles;
+			shootAngles[ROLL] = 0.0f;
+			vecLoc = pPlayer->m_leftControllerOrigin;
+		}
+		else
+		{
+			shootAngles = pPlayer->Weapon_ShootAngles();
+			vecLoc = pPlayer->Weapon_ShootPosition();
+		}
+		vecAngles = shootAngles;
+	}
+	else
+	{
+		// Standard: Use eye angles and offset from player origin
+		shootAngles = pPlayer->EyeAngles();
+		AngleVectors( shootAngles, &vecForward, NULL, &vecUp );
+		vecLoc = pPlayer->GetAbsOrigin() + pPlayer->GetModelScale() * ( Vector( 0, 0, 50 ) + vecForward * 32.f );
+		vecAngles = pPlayer->GetAbsAngles();
+	}
+	
+	// Get direction vectors from shoot angles
+	AngleVectors( shootAngles, &vecForward, NULL, &vecUp );
 
 	// Calculate the initial impulse on the item.
 	vecVelocity = Vector( 0.0f, 0.0f, 0.0f );
@@ -481,6 +510,47 @@ void CTFBat_Wood::LaunchBall( void )
 
 // SERVER ONLY --
 #ifdef GAME_DLL
+
+//-----------------------------------------------------------------------------
+// Purpose: The wooden bat creates a baseball that stuns whomever it hits.
+//-----------------------------------------------------------------------------
+//          controller's aim direction.
+//-----------------------------------------------------------------------------
+void CTFBat_Wood::VRBallAimLaunch( void )
+{
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( !pPlayer )
+		return;
+
+	int iBallCount = pPlayer->GetAmmoCount( TF_AMMO_GRENADES1 );
+	if ( iBallCount <= 0 || !CanCreateBall( pPlayer ) )
+		return;
+
+	CBaseEntity *pBall = CreateBall();
+	if ( !pBall )
+		return;
+
+	if ( IsCurrentAttackACrit() )
+	{
+		WeaponSound( BURST );
+	}
+	WeaponSound( SPECIAL2 );
+	pPlayer->RemoveAmmo( 1, TF_AMMO_GRENADES1 );
+
+	StartEffectBarRegen();
+
+	m_flNextPrimaryAttack = gpGlobals->curtime + 0.25f;
+
+	pPlayer->SpeakWeaponFire( MP_CONCEPT_BAT_BALL );
+	CTF_GameStats.Event_PlayerFiredWeapon( pPlayer, IsCurrentAttackACrit() );
+
+	if ( pPlayer->m_Shared.IsStealthed() )
+	{
+		pPlayer->RemoveInvisibility();
+	}
+
+	pPlayer->m_Shared.OnAttack();
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: The wooden bat creates a baseball that stuns whomever it hits.

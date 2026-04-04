@@ -661,20 +661,7 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 
 	if ( !CommandLine()->CheckParm( "-noscripting") )
 	{
-	#if defined( TF_VINTAGE )
-		char szCwd[MAX_PATH];
-		engine->GetGameDir( szCwd, MAX_PATH );
-
-		static CDllDemandLoader s_VScript( CFmtStr( "%s\\bin\\%svscript%s", szCwd, PLATFORM_64BITS ? "x64\\" : "", DLL_EXT_STRING ) );
-	#else
-		static CDllDemandLoader s_VScript( "vscript" DLL_EXT_STRING );
-	#endif
-
-		CreateInterfaceFn pAppFactory = s_VScript.GetFactory();
-		if( pAppFactory )
-			scriptmanager = (IScriptManager *)pAppFactory( VSCRIPT_INTERFACE_VERSION, NULL );
-
-		AssertMsg( scriptmanager, "Scripting was not properly initialized" );
+		scriptmanager = (IScriptManager *)appSystemFactory( VSCRIPT_INTERFACE_VERSION, NULL );
 	}
 
 	// If not running dedicated, grab the engine vgui interface

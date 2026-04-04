@@ -90,7 +90,7 @@ public:
 
 	// Upgrading
 	virtual bool	IsUpgrading( void ) const { return ( m_iState == TELEPORTER_STATE_UPGRADING ); }
-	virtual bool	CheckUpgradeOnHit( CTFPlayer *pPlayer );
+	virtual bool	CheckUpgradeOnHit( CTFPlayer *pPlayer, float flHitMod = 1.0f );
 	void			CopyUpgradeStateToMatch( CObjectTeleporter *pMatch, bool bFrom );
 
 	virtual void	Explode( void );

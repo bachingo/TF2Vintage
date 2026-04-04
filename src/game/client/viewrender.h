@@ -318,7 +318,7 @@ public:
 	void			AddViewToScene( CRendering3dView *pView ) { m_SimpleExecutor.AddView( pView ); }
 protected:
 	// Sets up the view parameters for all views (left, middle and right eyes).
-    void            SetUpViews();
+    virtual void    SetUpViews();
 
 	// Sets up the view parameters of map overview mode (cl_leveloverview)
 	void			SetUpOverView();
@@ -364,6 +364,9 @@ public:
 	virtual void	RenderPlayerSprites();
 	virtual void	Render2DEffectsPreHUD( const CViewSetup &view );
 	virtual void	Render2DEffectsPostHUD( const CViewSetup &view );
+
+	void RenderHUD(const CViewSetup &view);
+	void RenderMenuTextureToScreen(const CViewSetup &view, bool isCinema);
 
 
 	void			DisableFog( void );
@@ -431,11 +434,7 @@ private:
 	// baseDrawFlags is a combination of DF_ defines. DF_MONITOR is passed into here while drawing a monitor.
 	void			ViewDrawScene( bool bDrew3dSkybox, SkyboxVisibility_t nSkyboxVisible, const CViewSetup &view, int nClearFlags, view_id_t viewID, bool bDrawViewModel = false, int baseDrawFlags = 0, ViewCustomVisibility_t *pCustomVisibility = NULL );
 
-
 	void			DrawMonitors( const CViewSetup &cameraView );
-
-	void			SSAO_DepthPass( const CViewSetup &viewSet );
-	void			SSAO_DrawResults();
 
 	bool			DrawOneMonitor( ITexture *pRenderTarget, int cameraNum, C_PointCamera *pCameraEnt, const CViewSetup &cameraView, C_BasePlayer *localPlayer, 
 						int x, int y, int width, int height );
@@ -443,20 +442,30 @@ private:
 	// Drawing primitives
 	bool			ShouldDrawViewModel( bool drawViewmodel );
 	void			DrawViewModels( const CViewSetup &view, bool drawViewmodel );
+	void			DrawVRHands( const CViewSetup &view );
 
 	void			PerformScreenSpaceEffects( int x, int y, int w, int h );
+
+	// Overlays
+	void        SaveRenderTargetToTGA(ITexture* pRenderTarget, const char* filename);
+
+	// Sets the view parameters for water reflections
+	void		SetReflectionViewParameters( const ViewCustomVisibility_t& viewCustomVisibility, CViewSetup &waterView, bool bViewToProjectionOverride, const VMatrix &viewToProjection );
 
 	// Overlays
 	void			SetScreenOverlayMaterial( IMaterial *pMaterial );
 	IMaterial		*GetScreenOverlayMaterial( );
 	void			PerformScreenOverlay( int x, int y, int w, int h );
 
+	void			RenderVREyeToScreen(const CViewSetup &view, StereoEye_t eye);
+
 	void DrawUnderwaterOverlay( void );
 
 	// Water-related methods
 	void			DrawWorldAndEntities( bool drawSkybox, const CViewSetup &view, int nClearFlags, ViewCustomVisibility_t *pCustomVisibility = NULL );
-	
+
 	virtual void			ViewDrawScene_Intro( const CViewSetup &view, int nClearFlags, const IntroData_t &introData );
+
 #ifdef PORTAL 
 	// Intended for use in the middle of another ViewDrawScene call, this allows stencils to be drawn after opaques but before translucents are drawn in the main view.
 	void			ViewDrawScene_PortalStencil( const CViewSetup &view, ViewCustomVisibility_t *pCustomVisibility );

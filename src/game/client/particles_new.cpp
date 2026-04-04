@@ -16,6 +16,7 @@
 #include "model_types.h"
 #include "vprof.h"
 #include "input.h"
+#include "tfvr/vr_hand_render.h"
 
 extern ConVar cl_particleeffect_aabb_buffer;
 
@@ -518,6 +519,16 @@ int CNewParticleEffect::DrawModel( int flags )
 	if ( ( flags & ( STUDIO_SHADOWDEPTHTEXTURE | STUDIO_SSAODEPTHTEXTURE ) ) != 0 )
 	{
 		return 0;
+	}
+
+	if ( VRHandLayer_ShouldSkipDraw() )
+	{
+		C_BaseEntity *pOwner = GetOwner();
+		if ( pOwner && VRHandLayer_IsParticleOwner( pOwner ) )
+		{
+			VRHandLayer_AddDeferredParticle( this );
+			return 0;
+		}
 	}
 	
 	// do distance cull check here. We do it here instead of in particles so we can easily only do

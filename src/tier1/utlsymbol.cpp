@@ -13,26 +13,8 @@
 #include "tier0/threadtools.h"
 #include "tier0/memdbgon.h"
 #include "stringpool.h"
-#include "utlhash.h" // Changed from utlhashtable.h
-#include "tier1/utlstring.h" // For CUtlConstString
-#include "tier1/utlcommon.h" // For StringHashFunctor and StringEqualFunctor
-
-// Custom functors for CUtlConstString
-struct CUtlConstStringHashFunctor
-{
-    unsigned int operator()( const CUtlConstString &s ) const
-    {
-        return StringHashFunctor()( s.Get() );
-    }
-};
-
-struct CUtlConstStringEqualFunctor
-{
-    bool operator()( const CUtlConstString &a, const CUtlConstString &b ) const
-    {
-        return StringEqualFunctor()( a.Get(), b.Get() );
-    }
-};
+#include "utlhashtable.h"
+#include "utlstring.h"
 
 // Ensure that everybody has the right compiler version installed. The version
 // number can be obtained by looking at the compiler output when you type 'cl'
@@ -307,12 +289,8 @@ void CUtlSymbolTable::RemoveAll()
 
 
 
-class CUtlFilenameSymbolTable::HashTable : public CUtlHash<CUtlConstString, CUtlConstStringEqualFunctor, CUtlConstStringHashFunctor>
+class CUtlFilenameSymbolTable::HashTable : public CUtlStableHashtable<CUtlConstString>
 {
-public:
-    HashTable( int bucketCount = 0, int growCount = 0, int initCount = 0 )
-        : CUtlHash<CUtlConstString, CUtlConstStringEqualFunctor, CUtlConstStringHashFunctor>( bucketCount, growCount, initCount, {}, {} )
-    {}
 };
 
 CUtlFilenameSymbolTable::CUtlFilenameSymbolTable()
@@ -360,8 +338,8 @@ FileNameHandle_t CUtlFilenameSymbolTable::FindOrAddFileName( const char *pFileNa
 	// not found, lock and look again
 	FileNameHandleInternal_t handle;
 	m_lock.LockForWrite();
-	handle.path = m_Strings->Insert( CUtlConstString( basepath ) ) + 1;
-	handle.file = m_Strings->Insert( CUtlConstString( filename ) ) + 1;
+	handle.path = m_Strings->Insert( basepath ) + 1;
+	handle.file = m_Strings->Insert( filename ) + 1;
 	//handle.path = m_StringPool.FindStringHandle( basepath );
 	//handle.file = m_StringPool.FindStringHandle( filename );
 	//if ( handle.path != m_Strings.InvalidHandle() && handle.file )
@@ -403,8 +381,8 @@ FileNameHandle_t CUtlFilenameSymbolTable::FindFileName( const char *pFileName )
 	Assert( (uint16)(m_Strings->InvalidHandle() + 1) == 0 );
 
 	m_lock.LockForRead();
-	handle.path = m_Strings->Find(CUtlConstString(basepath)) + 1;
-	handle.file = m_Strings->Find(CUtlConstString(filename)) + 1;
+	handle.path = m_Strings->Find(basepath) + 1;
+	handle.file = m_Strings->Find(filename) + 1;
 	//handle.path = m_StringPool.FindStringHandle(basepath);
 	//handle.file = m_StringPool.FindStringHandle(filename);
 	m_lock.UnlockRead();

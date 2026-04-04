@@ -18,6 +18,10 @@
 #include "client_virtualreality.h"
 #include "sourcevr/isourcevirtualreality.h"
 
+#ifdef TF_CLIENT_DLL
+#include "tfvr/openxr_manager.h"
+#endif
+
 #ifdef SIXENSE
 #include "sixense/in_sixense.h"
 #endif
@@ -291,12 +295,112 @@ void CHudCrosshair::Paint( void )
 	int iX = (int)( x + 0.5f );
 	int iY = (int)( y + 0.5f );
 
-	m_pCrosshair->DrawSelfCropped (
-		iX-(iWidth/2), iY-(iHeight/2),
-		0, 0,
-		iTextureW, iTextureH,
-		iWidth, iHeight,
-		clr );
+	// Check if we should rotate crosshair with controller roll in VR
+	bool bRotateCrosshair = false;
+	float flRotationAngle = 0.0f;
+	
+#ifdef TF_CLIENT_DLL
+	extern ConVar tfvr_crosshair_follow_controller_roll;
+	if (UseVR() && g_pOpenXRManager && g_pOpenXRManager->IsActive())
+	{
+		if (tfvr_crosshair_follow_controller_roll.GetBool())
+		{
+			// Use the stored roll angle from VR system
+			if (g_ClientVirtualReality.m_bCrosshairRollValid)
+			{
+				flRotationAngle = g_ClientVirtualReality.m_flCrosshairRollAngle;
+				bRotateCrosshair = true;
+			}
+		}
+		
+		// Compensate for head roll to keep crosshair level when head tilts
+		// Since we zero head roll in m_headInPlayerA, we need to get the raw HMD roll
+		QAngle rawHmdAngles;
+		MatrixAngles(g_pOpenXRManager->GetMideyePose().As3x4(), rawHmdAngles);
+		float headRollCompensation = -rawHmdAngles.z; // Negative to counteract the roll
+		
+		if (bRotateCrosshair)
+		{
+			// Add head roll compensation to controller roll
+			flRotationAngle += headRollCompensation;
+		}
+		else
+		{
+			// Use only head roll compensation
+			flRotationAngle = headRollCompensation;
+			bRotateCrosshair = (fabs(flRotationAngle) > 0.1f);
+		}
+	}
+#endif
+	
+	if (bRotateCrosshair && fabs(flRotationAngle) > 0.1f) // Only rotate if significant angle
+	{
+		// Draw rotated crosshair using polygon method with proper cropping
+		Vertex_t vertices[4];
+		
+		// Convert rotation angle to radians
+		float flRadians = DEG2RAD(flRotationAngle);
+		float cosAngle = cos(flRadians);
+		float sinAngle = sin(flRadians);
+		
+		// Calculate rotated corner positions relative to center
+		float halfWidth = (float)iWidth;
+		float halfHeight = (float)iHeight;
+		
+		// Calculate texture coordinates using the same logic as DrawSelfCropped
+		// This crops the texture to show only the specific crosshair from the texture atlas
+		float fw = (float)m_pCrosshair->Width();
+		float fh = (float)m_pCrosshair->Height();
+		float twidth = m_pCrosshair->texCoords[2] - m_pCrosshair->texCoords[0];
+		float theight = m_pCrosshair->texCoords[3] - m_pCrosshair->texCoords[1];
+		
+		// Use the entire crosshair texture area (no additional cropping beyond what's defined in texCoords)
+		float tCoords[4];
+		tCoords[0] = m_pCrosshair->texCoords[0]; // left
+		tCoords[1] = m_pCrosshair->texCoords[1]; // top  
+		tCoords[2] = m_pCrosshair->texCoords[2]; // right
+		tCoords[3] = m_pCrosshair->texCoords[3]; // bottom
+		
+		// Top-left vertex (rotated)
+		vertices[0].m_Position.x = iX + (-halfWidth * cosAngle - -halfHeight * sinAngle);
+		vertices[0].m_Position.y = iY + (-halfWidth * sinAngle + -halfHeight * cosAngle);
+		vertices[0].m_TexCoord.x = tCoords[0];
+		vertices[0].m_TexCoord.y = tCoords[1];
+		
+		// Top-right vertex (rotated)
+		vertices[1].m_Position.x = iX + (halfWidth * cosAngle - -halfHeight * sinAngle);
+		vertices[1].m_Position.y = iY + (halfWidth * sinAngle + -halfHeight * cosAngle);
+		vertices[1].m_TexCoord.x = tCoords[2];
+		vertices[1].m_TexCoord.y = tCoords[1];
+		
+		// Bottom-right vertex (rotated)
+		vertices[2].m_Position.x = iX + (halfWidth * cosAngle - halfHeight * sinAngle);
+		vertices[2].m_Position.y = iY + (halfWidth * sinAngle + halfHeight * cosAngle);
+		vertices[2].m_TexCoord.x = tCoords[2];
+		vertices[2].m_TexCoord.y = tCoords[3];
+		
+		// Bottom-left vertex (rotated)
+		vertices[3].m_Position.x = iX + (-halfWidth * cosAngle - halfHeight * sinAngle);
+		vertices[3].m_Position.y = iY + (-halfWidth * sinAngle + halfHeight * cosAngle);
+		vertices[3].m_TexCoord.x = tCoords[0];
+		vertices[3].m_TexCoord.y = tCoords[3];
+		
+		// Use the crosshair texture for rendering
+		vgui::ISurface *pSurf = vgui::surface();
+		pSurf->DrawSetColor( clr );
+		pSurf->DrawSetTexture( m_pCrosshair->textureId );
+		pSurf->DrawTexturedPolygon( 4, vertices );
+	}
+	else
+	{
+		// Draw normal non-rotated crosshair
+		m_pCrosshair->DrawSelfCropped (
+			iX-(iWidth/2), iY-(iHeight/2),
+			0, 0,
+			iTextureW, iTextureH,
+			iWidth, iHeight,
+			clr );
+	}
 }
 
 //-----------------------------------------------------------------------------

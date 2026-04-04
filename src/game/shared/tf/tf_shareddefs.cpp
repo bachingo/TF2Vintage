@@ -461,7 +461,7 @@ ETFCond GetTFConditionFromName( const char *pszCondName )
 //-----------------------------------------------------------------------------
 // Gametypes.
 //-----------------------------------------------------------------------------
-const char *s_aGameTypeNames[] =
+static const char *s_aGameTypeNames[] =
 {
 	"Undefined",
 	"#Gametype_CTF",

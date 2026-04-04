@@ -1041,9 +1041,12 @@ void CTFPlayerInventory::EquipLocal(uint64 ulItemID, equipped_class_t unClass, e
 	// These interactions normally result from a round-trip with the GC.
 	// We will never get those messages, so we do everything locally.
 
+	// Check if the loadout is actually changing
+	itemid_t ulPreviousItem = m_LoadoutItems[unClass][unSlot];
+	bool bChanged = (ulPreviousItem != ulItemID);
+
 	// Unequip whatever was previously in the slot.
 	{
-		itemid_t ulPreviousItem = m_LoadoutItems[unClass][unSlot];
 		CEconItemView *pPreviousItem = GetInventoryItemByItemID(ulPreviousItem);
 		if (pPreviousItem) {
 			pPreviousItem->GetSOCData()->UnequipFromClass(unClass);
@@ -1058,6 +1061,12 @@ void CTFPlayerInventory::EquipLocal(uint64 ulItemID, equipped_class_t unClass, e
 	}
 
 	m_LoadoutItems[unClass][unSlot] = ulItemID;
+	
+	// Mark loadout as changed so CheckInstantLoadoutRespawn knows to respawn
+	if ( bChanged )
+	{
+		m_bLoadoutChanged[unClass] = true;
+	}
 
 #ifdef CLIENT_DLL
 	int activePreset = m_ActivePreset[unClass];

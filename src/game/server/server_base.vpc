@@ -34,7 +34,7 @@ $Configuration	"Release"
 {
 	$General
 	{
-		// Windows generator doesn't sandbox these directories per configuration but others do :-\
+		// Windows generator doesn't sandbox these directories per configuration but others do :-/
 		$OutputDirectory		".\Release_$GAMENAME" [$WINDOWS]
 		$IntermediateDirectory	".\Release_$GAMENAME" [$WINDOWS]
 
@@ -46,7 +46,7 @@ $Configuration	"Release"
 $CustomBuildStep "nut"
 {
 	$CommandLine	"python $SRCDIR\devtools\bin\texttoarray.py $(InputPath) g_Script_$(InputName)> $(InputName)_nut.h" [$WINDOWS]
-	$CommandLine	"python3 $SRCDIR\devtools\bin\texttoarray.py $(InputPath) g_Script_$(InputName)> $(InputName)_nut.h" [$POSIX]
+	$CommandLine	"python $SRCDIR\devtools\bin\texttoarray.py $(InputPath) g_Script_$(InputName)> $(InputName)_nut.h" [$POSIX]
 	$Description	"$(InputFileName) produces $(InputName)_nut.h"
 	$Outputs		"$(InputName)_nut.h"
 }
@@ -664,14 +664,6 @@ $Project
 		$File	"vscript_server.cpp"
 		$File	"$SRCDIR\game\shared\vscript_shared.cpp"
 		$File	"vscript_server.nut"
-		// TF2V VScript extensions
-		$File	"$SRCDIR\\game\\shared\\vscript_consts_shared.cpp"
-		$File	"$SRCDIR\\game\\shared\\vscript_consts_weapons.cpp"
-		$File	"$SRCDIR\\game\\shared\\vscript_funcs_shared.cpp"
-		$File	"$SRCDIR\\game\\shared\\vscript_singletons.cpp"
-		$File	"$SRCDIR\\game\\shared\\logic_script_client.cpp"
-		$File	"$SRCDIR\\game\\shared\\matchers.cpp"
-		$File	"ScriptGameEventListener.cpp"
 		$file	"point_worldtext.cpp"
 		$file	"point_worldtext.h"
 		$File	"player_voice_listener.h"

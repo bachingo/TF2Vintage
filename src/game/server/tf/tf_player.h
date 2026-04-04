@@ -337,6 +337,9 @@ public:
 	virtual CBaseEntity *FindNextObserverTarget(bool bReverse);
 	virtual bool		IsValidObserverTarget(CBaseEntity * target); // true, if player is allowed to see this target
 	virtual bool		SetObserverTarget(CBaseEntity * target);
+	virtual bool		StartObserverMode(int mode);
+	virtual void		SetAbsOrigin( const Vector& absOrigin );
+	virtual void		SetViewOffset( const Vector& vecViewOffset );
 	virtual bool		ModeWantsSpectatorGUI( int iMode ) { return (iMode != OBS_MODE_FREEZECAM && iMode != OBS_MODE_DEATHCAM); }
 	void				FindInitialObserverTarget( void );
 	CBaseEntity		    *FindNearestObservableTarget( Vector vecOrigin, float flMaxDist );
@@ -631,6 +634,11 @@ public:
 	void SetUseBossHealthBar( bool bUseBossHealthBar ) { m_bUseBossHealthBar = bUseBossHealthBar; }
 
 	void SetUsingVRHeadset( bool bState ){ m_bUsingVRHeadset = bState; }
+	bool IsUsingVRHeadset( void ){ return m_bUsingVRHeadset; }
+	
+	// VR mode tracking (separate from cosmetic headset)
+	void SetInVRMode( bool bState ){ m_bInVRMode = bState; }
+	bool IsInVRMode( void ) const { return m_bInVRMode; }
 
 	static bool m_bTFPlayerNeedsPrecache;
 
@@ -852,6 +860,16 @@ public:
 	}
 
 	Vector	ScriptWeapon_ShootPosition();
+	
+	// VR-specific weapon shooting position override
+	virtual Vector		Weapon_ShootPosition( void );
+	
+	// VR-specific weapon shooting angles override
+	virtual QAngle		Weapon_ShootAngles( void );
+	
+	// VR-specific autoaim override to use controller angles instead of headset
+	virtual Vector		GetAutoaimVector( float flScale );
+	
 	bool	ScriptWeapon_CanUse( HSCRIPT hWeapon );
 	void	ScriptWeapon_Equip( HSCRIPT hWeapon );
 	void	ScriptWeapon_Drop( HSCRIPT hWeapon );
@@ -1183,6 +1201,10 @@ private:
 	bool				m_bSeenRoundInfo;
 	CNetworkVar( bool, m_bRegenerating );
 	bool				m_bRespawning;
+	
+	// Origin freezing on death
+	bool				m_bOriginFrozenOnDeath;
+	Vector				m_vecDeathOrigin;
 
 	// Items.
 	CNetworkHandle( CTFItem, m_hItem );
@@ -1454,6 +1476,8 @@ private:
 	CNetworkVar( bool, m_bUseBossHealthBar );
 
 	CNetworkVar( bool, m_bUsingVRHeadset );
+	CNetworkVar( bool, m_bInVRMode );		// Tracks actual VR mode usage
+	CNetworkVar( bool, m_bHeadCollisionWarning );
 
 	CNetworkVar( bool, m_bForcedSkin );
 	CNetworkVar( int, m_nForcedSkin );
@@ -1588,6 +1612,59 @@ public:
 
 	virtual bool BCanCallVote() OVERRIDE;
 	bool m_bFirstSpawnAndCanCallVote = false;
+
+	// Begin VR
+public:
+	Vector 					m_headInPlayerO;
+	QAngle                  m_headInPlayerA;
+	bool					m_bPhysicalCrouch;
+	bool					m_bDuckWasPhysical;
+	
+	// VR Head collision detection
+	void					CheckForHeadCollisions( void );
+	
+	Vector					m_clientEyePosition;
+	
+	// VR methods that need to be public
+	virtual Vector			EyePosition();			// position of eyes
+    const QAngle			&EyeAngles();
+	virtual Vector			BodyTarget( const Vector &posSrc, bool bNoisy ) OVERRIDE;	// VR-aware body target
+
+	void					RecalibrateView();
+	float					VRHeightOffset();
+
+	QAngle                  m_cachedEyeAngles;
+	
+	// VR Controller positions for weapon shooting
+	Vector					m_leftControllerOrigin;
+	QAngle					m_leftControllerAngles;
+	Vector					m_rightControllerOrigin;
+	QAngle					m_rightControllerAngles;
+	float					m_flLastControllerUpdateTime;
+
+	CNetworkVar(Vector, m_roomscaleOffset);
+
+	// VR IK: raw hand positions for third-person arm IK (player-relative offsets)
+	CNetworkVar(Vector, m_vecVRHandOffsetL);
+	CNetworkVar(QAngle, m_angVRHandAngL);
+	CNetworkVar(Vector, m_vecVRHandOffsetR);
+	CNetworkVar(QAngle, m_angVRHandAngR);
+
+	// Server-side VR arm IK for hitboxes
+	virtual void SetupBones( matrix3x4_t *pBoneToWorld, int boneMask ) OVERRIDE;
+	void ResolveVRIKBones( void );
+	int		m_iHeadBone;
+	int		m_iCollarBoneL, m_iCollarBoneR;
+	int		m_iUpperArmBoneL, m_iLowerArmBoneL, m_iHandBoneL;
+	int		m_iUpperArmBoneR, m_iLowerArmBoneR, m_iHandBoneR;
+	bool	m_bVRIKBonesResolved;
+	float	m_flCollarLen, m_flUpperArmLen, m_flForearmLen;
+
+private:
+	float					m_lastTimeHeadCleared;
+	float					m_flLastRecalibrateTime;
+	float					m_flSmoothedFadeIntensity;
+	float					m_flLastClientEyeUpdateTime;
 };
 
 //-----------------------------------------------------------------------------

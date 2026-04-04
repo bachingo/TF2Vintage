@@ -46,6 +46,7 @@ public:
 	virtual float GetProjectileSpeed( void ) OVERRIDE;
 	virtual void Equip( CBaseCombatCharacter* pOwner ) OVERRIDE;
 	virtual bool CanAttack() OVERRIDE;
+	virtual VRThrowParams GetVRThrowParams( void ) OVERRIDE;
 
 #ifdef GAME_DLL
 	virtual CTFProjectile_Jar* CreateJarProjectile( const Vector &position, const QAngle &angles, const Vector &velocity, const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo ) OVERRIDE;

@@ -16,6 +16,40 @@
 // TF2 specific, need enough space for OBJ_LAST items from tf_shareddefs.h
 #define WEAPON_SUBTYPE_BITS	6
 
+template<typename Vec3>
+static void WriteVec3Diff( bf_write *buf, const Vec3 &to, const Vec3 &from )
+{
+	if (to[0] != from[0])
+	{
+		buf->WriteOneBit(1);
+		buf->WriteFloat(to[0]);
+	}
+	else
+	{
+		buf->WriteOneBit(0);
+	}
+
+	if (to[1] != from[1])
+	{
+		buf->WriteOneBit(1);
+		buf->WriteFloat(to[1]);
+	}
+	else
+	{
+		buf->WriteOneBit(0);
+	}
+
+	if (to[2] != from[2])
+	{
+		buf->WriteOneBit(1);
+		buf->WriteFloat(to[2]);
+	}
+	else
+	{
+		buf->WriteOneBit(0);
+	}
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: Write a delta compressed user command.
 // Input  : *buf - 
@@ -169,6 +203,46 @@ void WriteUsercmd( bf_write *buf, const CUserCmd *to, const CUserCmd *from )
 		buf->WriteOneBit( 0 );
 	}
 
+	WriteVec3Diff(buf, to->playerToHmdOrigin, from->playerToHmdOrigin);
+	WriteVec3Diff(buf, to->playerToHmdAngles, from->playerToHmdAngles);
+	WriteVec3Diff(buf, to->postFullBodyIKDeltaOrigin, from->postFullBodyIKDeltaOrigin);
+	WriteVec3Diff(buf, to->clientEyePosition, from->clientEyePosition);
+	WriteVec3Diff(buf, to->leftControllerOrigin, from->leftControllerOrigin);
+	WriteVec3Diff(buf, to->leftControllerAngles, from->leftControllerAngles);
+	WriteVec3Diff(buf, to->rightControllerOrigin, from->rightControllerOrigin);
+	WriteVec3Diff(buf, to->rightControllerAngles, from->rightControllerAngles);
+	WriteVec3Diff(buf, to->vrIKHandPosL, from->vrIKHandPosL);
+	WriteVec3Diff(buf, to->vrIKHandAngL, from->vrIKHandAngL);
+	WriteVec3Diff(buf, to->vrIKHandPosR, from->vrIKHandPosR);
+	WriteVec3Diff(buf, to->vrIKHandAngR, from->vrIKHandAngR);
+	WriteVec3Diff(buf, to->vrThrowVelocity, from->vrThrowVelocity);
+	WriteVec3Diff(buf, to->vrThrowOrigin, from->vrThrowOrigin);
+	WriteVec3Diff(buf, to->vrThrowAngles, from->vrThrowAngles);
+	WriteVec3Diff(buf, to->vrThrowAngVel, from->vrThrowAngVel);
+
+	if ( to->vrMeleeGripSpeed != from->vrMeleeGripSpeed )
+	{
+		buf->WriteOneBit( 1 );
+		buf->WriteFloat( to->vrMeleeGripSpeed );
+	}
+	else
+	{
+		buf->WriteOneBit( 0 );
+	}
+
+	if ( to->vrMeleeGripSpeedLeft != from->vrMeleeGripSpeedLeft )
+	{
+		buf->WriteOneBit( 1 );
+		buf->WriteFloat( to->vrMeleeGripSpeedLeft );
+	}
+	else
+	{
+		buf->WriteOneBit( 0 );
+	}
+
+	buf->WriteOneBit( to->vrBallAimActive ? 1 : 0 );
+	buf->WriteOneBit( to->vrPhysicalCrouch ? 1 : 0 );
+
 #if defined( HL2_CLIENT_DLL )
 	if ( to->entitygroundcontact.Count() != 0 )
 	{
@@ -187,6 +261,23 @@ void WriteUsercmd( bf_write *buf, const CUserCmd *to, const CUserCmd *from )
 		buf->WriteOneBit( 0 );
 	}
 #endif
+}
+
+template<typename Vec3>
+static void ReadVec3Diff( bf_read *buf, Vec3 &to )
+{
+	if (buf->ReadOneBit())
+	{
+		to[0] = buf->ReadFloat();
+	}
+	if (buf->ReadOneBit())
+	{
+		to[1] = buf->ReadFloat();
+	}
+	if (buf->ReadOneBit())
+	{
+		to[2] = buf->ReadFloat();
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -276,7 +367,6 @@ void ReadUsercmd( bf_read *buf, CUserCmd *move, CUserCmd *from )
 		}
 	}
 
-
 	move->random_seed = MD5_PseudoRandom( move->command_number ) & 0x7fffffff;
 
 	if ( buf->ReadOneBit() )
@@ -288,6 +378,36 @@ void ReadUsercmd( bf_read *buf, CUserCmd *move, CUserCmd *from )
 	{
 		move->mousedy = buf->ReadShort();
 	}
+
+	ReadVec3Diff(buf, move->playerToHmdOrigin);
+	ReadVec3Diff(buf, move->playerToHmdAngles);
+	ReadVec3Diff(buf, move->postFullBodyIKDeltaOrigin);
+	ReadVec3Diff(buf, move->clientEyePosition);
+	ReadVec3Diff(buf, move->leftControllerOrigin);
+	ReadVec3Diff(buf, move->leftControllerAngles);
+	ReadVec3Diff(buf, move->rightControllerOrigin);
+	ReadVec3Diff(buf, move->rightControllerAngles);
+	ReadVec3Diff(buf, move->vrIKHandPosL);
+	ReadVec3Diff(buf, move->vrIKHandAngL);
+	ReadVec3Diff(buf, move->vrIKHandPosR);
+	ReadVec3Diff(buf, move->vrIKHandAngR);
+	ReadVec3Diff(buf, move->vrThrowVelocity);
+	ReadVec3Diff(buf, move->vrThrowOrigin);
+	ReadVec3Diff(buf, move->vrThrowAngles);
+	ReadVec3Diff(buf, move->vrThrowAngVel);
+
+	if ( buf->ReadOneBit() )
+	{
+		move->vrMeleeGripSpeed = buf->ReadFloat();
+	}
+
+	if ( buf->ReadOneBit() )
+	{
+		move->vrMeleeGripSpeedLeft = buf->ReadFloat();
+	}
+
+	move->vrBallAimActive = buf->ReadOneBit() ? true : false;
+	move->vrPhysicalCrouch = buf->ReadOneBit() ? true : false;
 
 #if defined( HL2_DLL )
 	if ( buf->ReadOneBit() )

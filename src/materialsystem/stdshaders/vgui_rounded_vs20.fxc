@@ -1,0 +1,34 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+//
+// Purpose: Simple vertex shader for VGUI rounded corners (2D and 3D compatible)
+//
+//=============================================================================
+
+#include "common_vs_fxc.h"
+
+struct VS_INPUT
+{
+	float3 vPos			: POSITION;
+	float4 vColor		: COLOR0;
+	float2 vTexCoord0	: TEXCOORD0;
+};
+
+struct VS_OUTPUT
+{
+	float4 projPos		: POSITION;
+	float4 color		: COLOR0;
+	float2 texCoord0	: TEXCOORD0;
+};
+
+VS_OUTPUT main( const VS_INPUT v )
+{
+	VS_OUTPUT o = (VS_OUTPUT)0;
+
+	// Transform position (works for both 2D VGUI and 3D world)
+	o.projPos = mul( float4( v.vPos, 1.0f ), cModelViewProj );
+	
+	o.color = v.vColor;
+	o.texCoord0 = v.vTexCoord0;
+
+	return o;
+}

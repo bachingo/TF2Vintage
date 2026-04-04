@@ -113,8 +113,19 @@ void CTFJarGas::OnResourceMeterFilled()
 // Purpose: 
 //-----------------------------------------------------------------------------
 float CTFJarGas::GetProjectileSpeed( void )
-{ 
+{
 	return TF_GAS_PROJ_SPEED;
+}
+
+//-----------------------------------------------------------------------------
+VRThrowParams CTFJarGas::GetVRThrowParams( void )
+{
+	VRThrowParams params;
+	params.flBaseSpeed = TF_GAS_PROJ_SPEED;
+	params.flMinSpeedMult = 0.1f;
+	params.flMaxSpeedMult = 1.5f;
+	params.flReferenceHandSpeed = 300.0f;
+	return params;
 }
 
 //-----------------------------------------------------------------------------

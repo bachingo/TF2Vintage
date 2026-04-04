@@ -1,0 +1,42 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+//
+// Purpose: Simple pixel shader for VGUI rounded corners with alpha masking
+//
+//=============================================================================
+
+sampler BaseSampler		: register( s0 );
+sampler AlphaMaskSampler	: register( s1 );
+
+const float4 g_ShaderParams	: register( c0 );  // x=hasAlphaMask, y=fullOpacity
+
+struct PS_INPUT
+{
+	float4 color		: COLOR0;
+	float2 texCoord0	: TEXCOORD0;
+};
+
+float4 main( PS_INPUT i ) : COLOR
+{
+	// Sample base texture (VGUI content)
+	float4 baseColor = tex2D( BaseSampler, i.texCoord0 );
+	
+	// DEBUG: Skip vertex color modulation to test for tinting issues
+	float4 result = baseColor;
+	// Original: float4 result = baseColor * i.color;
+	
+	// Apply alpha mask based on shader parameters
+	float4 alphaMask = tex2D( AlphaMaskSampler, i.texCoord0 );
+	
+	if ( g_ShaderParams.y > 0.5 )  // Full opacity mode
+	{
+		// Use mask as cutout: 0 = transparent, >0 = fully opaque
+		result.a = (alphaMask.r > 0.5) ? 1.0 : 0.0;
+	}
+	else  // Normal blending mode
+	{
+		// Use mask to modulate existing alpha
+		result.a *= alphaMask.r;
+	}
+
+	return result;
+}

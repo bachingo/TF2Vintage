@@ -99,8 +99,50 @@ protected:
 
 private:
 	bool DoSwingTraceInternal( trace_t &trace, bool bCleave, CUtlVector< trace_t >* pTargetTraceVector );
-	bool OnSwingHit( trace_t &trace );
+	bool OnSwingHit( trace_t &trace, float flDamageMod = 1.0f );
 
+	// VR Physical Melee System
+public:
+	virtual float	GetVRSwingRange( const Vector *pGripPos = NULL );
+	bool			IsOwnerInVR();
+	bool			IsVRPhysicalMeleeWeapon();
+
+	// Called in VRPhysicalMeleeUpdate before/after hit processing.
+	// Override in weapon subclasses (e.g. knife) for weapon-specific logic.
+	virtual void	OnVRSwingStart() {}
+	virtual void	OnVRPreMeleeHit( trace_t &trace ) {}
+	virtual void	OnVRPostMeleeHit( trace_t &trace ) {}
+	virtual bool	IsVRMeleeBlocked( void ) { return false; }
+	bool			IsVRSwingActive( void ) const { return m_bVRSwingActive; }
+
+	// Override to intercept VR melee hits for non-damage interactions
+	// (e.g. wrench building repair). Return true to skip normal damage.
+	virtual bool	HandleVRBuildingHit( trace_t &trace, float flDamageMod ) { return false; }
+
+#ifdef GAME_DLL
+	virtual float	GetVRHitDamageMod() const OVERRIDE { return m_flVRHitDamageMod; }
+#endif
+	bool			CanVRAddHead();
+
+protected:
+	void			VRPhysicalMeleeUpdate();
+	void			OnVRSwingMiss();
+	bool			DoVRSwingTrace( trace_t &trace );
+	bool			DoVRSwingTraceFromHand( trace_t &trace, const Vector &vecStart, const QAngle &angBone );
+	float			CalcVRCooldownDamageMod();
+	bool			GetVRWeaponBoneTransform( Vector &outPos, QAngle &outAng );
+	bool			GetVRWeaponBoneTransformLeft( Vector &outPos, QAngle &outAng );
+
+	float	m_flVRGripSpeed;
+	float	m_flVRLastHitTime;		// shared between both hands for damage cooldown
+	float	m_flVRHitDamageMod;		// last VR cooldown damage multiplier (for on-hit effects)
+	float	m_flVRLastHeadAddTime;	// when a head/organ was last granted (for head-count gating)
+	bool	m_bVRSwingActive;		// right hand: above swing threshold
+	bool	m_bVRSwingHit;			// right hand: hit registered this swing arc
+	bool	m_bVRSwingActiveLeft;	// left hand (fists only)
+	bool	m_bVRSwingHitLeft;		// left hand (fists only)
+
+private:
 	CTFWeaponBaseMelee( const CTFWeaponBaseMelee & ) {}
 };
 

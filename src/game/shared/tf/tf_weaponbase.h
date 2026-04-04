@@ -357,6 +357,9 @@ class CTFWeaponBase : public CBaseCombatWeapon, public IHasOwner, public IHasGen
 	virtual void Misfire( void );
 	virtual void FireFullClipAtOnce( void );
 	virtual void PrimaryAttack();
+	
+	// VR: Override to emit sounds from weapon muzzle position instead of player center
+	virtual void WeaponSound( WeaponSound_t sound_type, float soundtime = 0.0f ) OVERRIDE;
 	virtual void SecondaryAttack();
 	void CalcIsAttackCritical( void );
 	virtual bool CalcIsAttackCriticalHelper();
@@ -412,6 +415,7 @@ class CTFWeaponBase : public CBaseCombatWeapon, public IHasOwner, public IHasGen
 	virtual void	AddAssociatedObject( CBaseObject *pObject ) { }
 	virtual void	RemoveAssociatedObject( CBaseObject *pObject ) { }
 
+	virtual float	GetVRHitDamageMod() const { return 1.0f; }
 	virtual void	ApplyOnHitAttributes( CBaseEntity *pVictimBaseEntity, CTFPlayer *pAttacker, const CTakeDamageInfo &info );
 	virtual void	ApplyPostHitEffects( const CTakeDamageInfo &inputInfo, CTFPlayer *pPlayer );
 	virtual void	ApplyOnInjuredAttributes( CTFPlayer *pVictim, CTFPlayer *pAttacker, const CTakeDamageInfo &info );		// when owner of this weapon is hit
@@ -437,8 +441,16 @@ class CTFWeaponBase : public CBaseCombatWeapon, public IHasOwner, public IHasGen
 	CBasePlayer *GetPlayerOwner() const;
 	CTFPlayer *GetTFPlayerOwner() const;
 
+#ifdef GAME_DLL
+	// VR: Override sound emission origin to use correct position (server only)
+	virtual Vector GetSoundEmissionOrigin() const OVERRIDE;
+#endif
+
 #ifdef CLIENT_DLL
 	virtual bool	ShouldPlayClientReloadSound() { return false; }
+	
+	// VR: Get correct position for sounds (since weapon entity position is garbage in VR)
+	Vector GetVRSoundPosition() const;
 
 	C_BaseEntity *GetWeaponForEffect();
 
@@ -450,6 +462,8 @@ class CTFWeaponBase : public CBaseCombatWeapon, public IHasOwner, public IHasGen
 
 	virtual bool	CanAttack();
 	virtual int		GetCanAttackFlags() const { return TF_CAN_ATTACK_FLAG_NONE; }
+
+	bool			IsVRMuzzleClippedThroughWall( CTFPlayer *pPlayer ) const;
 
 	// Raising & Lowering for grenade throws
 	bool			WeaponShouldBeLowered( void );
@@ -567,6 +581,13 @@ class CTFWeaponBase : public CBaseCombatWeapon, public IHasOwner, public IHasGen
 	virtual bool	ShouldDraw( void ) OVERRIDE;
 	virtual void	UpdateVisibility( void ) OVERRIDE;
 
+	// VR: Accessors for VR hand holding state
+	void			SetHeldByVRHand( bool bHeld ) { m_bHeldByVRHand = bHeld; }
+	bool			IsHeldByVRHand() const { return m_bHeldByVRHand; }
+	
+	// VR: Override SetParent to prevent re-parenting when held by VR hand
+	void			SetParent( CBaseEntity *pNewParent, int iAttachment = -1 );
+
 	virtual void	ProcessMuzzleFlashEvent( void );
 	virtual void	DispatchMuzzleFlash( const char* effectName, C_BaseEntity* pAttachEnt );
 	virtual int		InternalDrawModel( int flags );
@@ -586,6 +607,7 @@ class CTFWeaponBase : public CBaseCombatWeapon, public IHasOwner, public IHasGen
 	virtual	float	CalcViewmodelBob( void );
 	BobState_t		*GetBobState();
 	virtual bool	AttachmentModelsShouldBeVisible( void ) OVERRIDE { return (m_iState == WEAPON_IS_ACTIVE) && !IsBeingRepurposedForTaunt(); }
+	virtual void	UpdateAttachmentModels( void ) OVERRIDE;
 
 	virtual bool ShouldEjectBrass() { return true; }
 
@@ -720,6 +742,7 @@ protected:
 	bool m_bOldResetParity;
 	int m_iCachedModelIndex;
 	int m_iEjectBrassAttachpoint;
+	bool m_bHeldByVRHand;  // VR: True if held by a VR hand
 
 #endif
 

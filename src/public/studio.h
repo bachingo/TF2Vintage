@@ -2664,7 +2664,8 @@ public:
 			class HashFuncs
 			{
 			public:
-				HashFuncs() {} // Default constructor added
+				// dummy constructor (gndn)
+				HashFuncs( int ) {}
 
 				// COMPARE
 				// compare two entries for uniqueness. We should never have two different

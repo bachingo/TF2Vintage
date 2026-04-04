@@ -6229,7 +6229,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 //-----------------------------------------------------------------------------
 bool CTFGameRules::ApplyOnDamageModifyRules( CTakeDamageInfo &info, CBaseEntity *pVictimBaseEntity, bool bAllowDamage )
 {
-	info.SetDamageForForceCalc( info.GetDamage() );
+	if (!info.GetDamageForForceCalc()) info.SetDamageForForceCalc( info.GetDamage() );
 	bool bDebug = tf_debug_damage.GetBool();
 
 	CTFPlayer *pVictim = ToTFPlayer( pVictimBaseEntity );
@@ -15557,6 +15557,18 @@ void CTFGameRules::ClientCommandKeyValues( edict_t *pEntity, KeyValues *pKeyValu
 				}
 			}
 		}
+		else if ( FStrEq( pszCommand, "VRModeActive" ) )
+		{
+			// Set VR mode flag when client reports VR is active
+			pTFPlayer->SetInVRMode( true );
+			DevMsg( "Player %s activated VR mode\n", pTFPlayer->GetPlayerName() );
+		}
+		else if ( FStrEq( pszCommand, "VRModeInactive" ) )
+		{
+			// Clear VR mode flag when client reports VR is inactive
+			pTFPlayer->SetInVRMode( false );
+			DevMsg( "Player %s deactivated VR mode\n", pTFPlayer->GetPlayerName() );
+		}
 		else if ( FStrEq( pszCommand, "TestItems" ) )
 		{
 			pTFPlayer->ItemTesting_Start( pKeyValues );
@@ -17981,7 +17993,7 @@ bool CTFGameRules::ShouldShowPreRoundDoors() const
 //-----------------------------------------------------------------------------
 int CTFGameRules::GetClassLimit( int iClass )
 {
-	if ( IsInTournamentMode() || tf2v_individual_classlimit.GetBool() )
+	if ( ( IsInTournamentMode() || IsPasstimeMode() ) || tf2v_individual_classlimit.GetBool() )
 	{
 		switch ( iClass )
 		{
@@ -22254,15 +22266,12 @@ void CTFGameRules::HandleCTFCaptureBonus( int nTeam )
 	if ( flBonusTime <= 0 )
 		return;
 
-	if( tf2v_ctf_capcrits.GetBool() )
+	for ( int i = 1 ; i <= gpGlobals->maxClients ; i++ )
 	{
-		for ( int i = 1 ; i <= gpGlobals->maxClients ; i++ )
+		CTFPlayer *pPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
+		if ( pPlayer && pPlayer->IsAlive() && pPlayer->GetTeamNumber() == nTeam )
 		{
-			CTFPlayer *pPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
-			if ( pPlayer && pPlayer->IsAlive() && pPlayer->GetTeamNumber() == nTeam )
-			{
-				pPlayer->m_Shared.AddCond( TF_COND_CRITBOOSTED_CTF_CAPTURE, flBonusTime );
-			}
+			pPlayer->m_Shared.AddCond( TF_COND_CRITBOOSTED_CTF_CAPTURE, flBonusTime );
 		}
 	}
 }
@@ -22987,9 +22996,14 @@ void CTFGameRules::MatchSummaryTeleport()
 
 					if ( pObserverPoint )
 					{
-						pTFPlayer->SetViewEntity( pObserverPoint );
-						pTFPlayer->SetViewOffset( vec3_origin );
-						pTFPlayer->SetFOV( pObserverPoint, pObserverPoint->m_flFOV );
+						// Don't override camera control for VR players - let them maintain HMD control
+						bool bPlayerInVR = pTFPlayer->IsInVRMode() && !pTFPlayer->IsFakeClient();
+						if ( !bPlayerInVR )
+						{
+							pTFPlayer->SetViewEntity( pObserverPoint );
+							pTFPlayer->SetViewOffset( vec3_origin );
+							pTFPlayer->SetFOV( pObserverPoint, pObserverPoint->m_flFOV );
+						}
 					}
 
 					// use this to force the client player anim to face the right direction

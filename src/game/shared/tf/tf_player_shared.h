@@ -595,6 +595,9 @@ public:
 
 	float GetInvulOffTime( void ) { return m_flInvulnerabilityRemoveTime; }
 
+	// VR support
+	bool	IsUsingVRHeadset( void ) const;
+
 	int		GetDisguiseBody( void ) const	{ return m_iDisguiseBody; }
 	void	SetDisguiseBody( int iVal )		{ m_iDisguiseBody = iVal; }
 
@@ -1280,6 +1283,9 @@ private:
 
 	CNetworkVar( float, m_flHolsterAnimTime );
 	CNetworkHandle( CBaseCombatWeapon, m_hSwitchTo );
+
+	// VR support
+	CNetworkVar( bool, m_bUsingVRHeadset );
 };
 
 extern const char *g_pszBDayGibs[22];

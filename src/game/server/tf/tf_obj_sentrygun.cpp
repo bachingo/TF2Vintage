@@ -610,6 +610,8 @@ bool CObjectSentrygun::OnWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vect
 	if ( IsDisposableBuilding() )
 		return false;
 
+	float flVRMod = pWrench ? pWrench->GetVRBuildingHitMod() : 1.0f;
+
 	bool bDidWork = false;
 
 	// If the player repairs it at all, we're done
@@ -633,7 +635,7 @@ bool CObjectSentrygun::OnWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vect
 	// Don't put in upgrade metal until the sentry is fully healed
 	if ( !bDidWork )
 	{
-		if ( CheckUpgradeOnHit( pPlayer ) )
+		if ( CheckUpgradeOnHit( pPlayer, flVRMod ) )
 		{
 			DoWrenchHitEffect( hitLoc, false, true );
 			bDidWork = true;
@@ -649,13 +651,16 @@ bool CObjectSentrygun::OnWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vect
 
 		int iPlayerMetal = pPlayer->GetAmmoCount( TF_AMMO_METAL );
 
+		int nMaxShells = (int)( SENTRYGUN_ADD_SHELLS * flVRMod );
+		int nMaxRockets = (int)( SENTRYGUN_ADD_ROCKETS * flVRMod );
+
 		// If the sentry has less that 100% ammo, put some ammo in it
-		if ( m_iAmmoShells < m_iMaxAmmoShells && iPlayerMetal > 0 )
+		if ( nMaxShells > 0 && m_iAmmoShells < m_iMaxAmmoShells && iPlayerMetal > 0 )
 		{
 			int iMaxShellsPlayerCanAfford = (int)( (float)iPlayerMetal / tf_sentrygun_metal_per_shell.GetFloat() );
 
 			// cap the amount we can add
-			int iAmountToAdd = MIN( SENTRYGUN_ADD_SHELLS, iMaxShellsPlayerCanAfford );
+			int iAmountToAdd = MIN( nMaxShells, iMaxShellsPlayerCanAfford );
 			iAmountToAdd = MIN( ( m_iMaxAmmoShells - m_iAmmoShells ), iAmountToAdd );
 
 			// STAGING_ENGY
@@ -677,11 +682,11 @@ bool CObjectSentrygun::OnWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vect
 		// One rocket per two ammo
 		iPlayerMetal = pPlayer->GetAmmoCount( TF_AMMO_METAL );
 
-		if ( m_iAmmoRockets < m_iMaxAmmoRockets && m_iUpgradeLevel == 3 && iPlayerMetal > 0  )
+		if ( nMaxRockets > 0 && m_iAmmoRockets < m_iMaxAmmoRockets && m_iUpgradeLevel == 3 && iPlayerMetal > 0  )
 		{
 			int iMaxRocketsPlayerCanAfford = (int)( (float)iPlayerMetal / tf_sentrygun_metal_per_rocket.GetFloat() );
 
-			int iAmountToAdd = MIN( ( SENTRYGUN_ADD_ROCKETS ), iMaxRocketsPlayerCanAfford );
+			int iAmountToAdd = MIN( nMaxRockets, iMaxRocketsPlayerCanAfford );
 			iAmountToAdd = MIN( ( m_iMaxAmmoRockets - m_iAmmoRockets ), iAmountToAdd );
 
 			// STAGING_ENGY

@@ -11,16 +11,28 @@
 
 #ifdef CLIENT_DLL
 #include "c_tf_player.h"
+#include "tfvr/c_tfvr_hand.h"
+#include "cl_animevent.h"
+#include "eventlist.h"
+#include "engine/IEngineSound.h"
 
 // for spy material proxy
 #include "tf_proxyentity.h"
 #include "materialsystem/imaterial.h"
 #include "materialsystem/imaterialvar.h"
 #include "prediction.h"
-#include "VR/VRMod.h"
+#include "econ/ihasowner.h"
+
 #endif
 
 #include "bone_setup.h"	//temp
+
+#ifdef CLIENT_DLL
+ConVar tfvr_sound_level( "tfvr_sound_level", "80", FCVAR_NONE,
+	"Soundlevel (attenuation) for first-person VR weapon sounds. Higher = less falloff. 140 = gunfire, 80 = default, 75 = normal, 0 = no spatial" );
+ConVar tfvr_sound_volume( "tfvr_sound_volume", "1.0", FCVAR_NONE,
+	"Volume scale for first-person VR weapon sounds (0.0 - 1.0)." );
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -147,88 +159,80 @@ void CTFViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePosit
 	vecLoweredAngles.x += m_vLoweredWeaponOffset.x;
 
 	vecNewAngles += vecLoweredAngles;
-	
-	if ( UseVRMod() )
-	{
-		vecNewOrigin = VRMOD_GetRecommendedViewmodelAbsPos();
-		vecNewAngles = VRMOD_GetRecommendedViewmodelAbsAngle();
-	}
-	else
-	{
-		CTFWeaponBase *pWeapon = assert_cast< CTFWeaponBase* >( GetWeapon() );
-		if ( pWeapon )
-		{
-			bool bInspecting = pWeapon && pWeapon->GetInspectStage() != CTFWeaponBase::INSPECT_INVALID;
 
-			static float s_inspectInterp = 0.f;
-			if ( bInspecting )
+	CTFWeaponBase *pWeapon = assert_cast< CTFWeaponBase* >( GetWeapon() );
+	if ( pWeapon )
+	{
+		bool bInspecting = pWeapon && pWeapon->GetInspectStage() != CTFWeaponBase::INSPECT_INVALID;
+
+		static float s_inspectInterp = 0.f;
+		if ( bInspecting )
+		{
+			if ( pWeapon->GetInspectStage() == CTFWeaponBase::INSPECT_END )
 			{
-				if ( pWeapon->GetInspectStage() == CTFWeaponBase::INSPECT_END )
-				{
-					// use the last second of the anim
-					const float flOutroDuration = 0.3f;
-					s_inspectInterp = Clamp( ( pWeapon->GetInspectAnimEndTime() - gpGlobals->curtime ) - flOutroDuration, 0.f, 1.f );
-				}
-				else
-				{
-					s_inspectInterp = Clamp( s_inspectInterp + gpGlobals->frametime, 0.f, 1.f );
-				}
+				// use the last second of the anim
+				const float flOutroDuration = 0.3f;
+				s_inspectInterp = Clamp( ( pWeapon->GetInspectAnimEndTime() - gpGlobals->curtime ) - flOutroDuration, 0.f, 1.f );
 			}
 			else
 			{
-				s_inspectInterp = Clamp( s_inspectInterp - gpGlobals->frametime, 0.f, 1.f );
+				s_inspectInterp = Clamp( s_inspectInterp + gpGlobals->frametime, 0.f, 1.f );
 			}
+		}
+		else
+		{
+			s_inspectInterp = Clamp( s_inspectInterp - gpGlobals->frametime, 0.f, 1.f );
+		}
 
-			// inspect custom offset
-			if ( bInspecting )
+		// inspect custom offset
+		if ( bInspecting )
+		{
+			CAttribute_String attrInspectOffsetVMOverride;
+			CALL_ATTRIB_HOOK_STRING_ON_OTHER( pWeapon, attrInspectOffsetVMOverride, inspect_viewmodel_offset );
+			const char *pszValue = attrInspectOffsetVMOverride.value().c_str();
+			if ( pszValue && *pszValue )
 			{
-				CAttribute_String attrInspectOffsetVMOverride;
-				CALL_ATTRIB_HOOK_STRING_ON_OTHER( pWeapon, attrInspectOffsetVMOverride, inspect_viewmodel_offset );
-				const char *pszValue = attrInspectOffsetVMOverride.value().c_str();
-				if ( pszValue && *pszValue )
-				{
-					Vector vmOffset;
-					UTIL_StringToVector( vmOffset.Base(), pszValue );
+				Vector vmOffset;
+				UTIL_StringToVector( vmOffset.Base(), pszValue );
 
-					Vector forward, right, up;
-					AngleVectors( eyeAngles, &forward, &right, &up );
-
-					Vector vOffset = vmOffset.x * forward + vmOffset.y * right + vmOffset.z * up;
-					vOffset *= Gain( s_inspectInterp, 0.5f );
-					vecNewOrigin += vOffset;
-				}
-			}
-
-			// we want to always enable this internally
-			bool bMinMode = tf_use_min_viewmodels.GetBool();
-
-			// are we overriding vm offset?
-			const char *pszVMOffsetOverride = tf_viewmodels_offset_override.GetString();
-			bool bForceOverride = ( pszVMOffsetOverride && *pszVMOffsetOverride );
-			bMinMode |= bForceOverride;
-
-			// min mode custom offset
-			if ( bMinMode )
-			{
 				Vector forward, right, up;
 				AngleVectors( eyeAngles, &forward, &right, &up );
 
-				Vector viewmodelOffset;
-				if ( bForceOverride )
-				{
-					UTIL_StringToVector( viewmodelOffset.Base(), pszVMOffsetOverride );
-				}
-				else
-				{
-					viewmodelOffset = pWeapon->GetViewmodelOffset();
-				}
-				Vector vOffset = viewmodelOffset.x * forward + viewmodelOffset.y * right + viewmodelOffset.z * up;
-				vOffset *= Gain( 1.f - s_inspectInterp, 0.5f );
+				Vector vOffset = vmOffset.x * forward + vmOffset.y * right + vmOffset.z * up;
+				vOffset *= Gain( s_inspectInterp, 0.5f );
 				vecNewOrigin += vOffset;
 			}
 		}
+
+		// we want to always enable this internally
+		bool bMinMode = tf_use_min_viewmodels.GetBool();
+
+		// are we overriding vm offset?
+		const char *pszVMOffsetOverride = tf_viewmodels_offset_override.GetString();
+		bool bForceOverride = ( pszVMOffsetOverride && *pszVMOffsetOverride );
+		bMinMode |= bForceOverride;
+
+		// min mode custom offset
+		if ( bMinMode )
+		{
+			Vector forward, right, up;
+			AngleVectors( eyeAngles, &forward, &right, &up );
+
+			Vector viewmodelOffset;
+			if ( bForceOverride )
+			{
+				UTIL_StringToVector( viewmodelOffset.Base(), pszVMOffsetOverride );
+			}
+			else
+			{
+				viewmodelOffset = pWeapon->GetViewmodelOffset();
+			}
+			Vector vOffset = viewmodelOffset.x * forward + viewmodelOffset.y * right + viewmodelOffset.z * up;
+			vOffset *= Gain( 1.f - s_inspectInterp, 0.5f );
+			vecNewOrigin += vOffset;
+		}
 	}
-	
+
 	BaseClass::CalcViewModelView( owner, vecNewOrigin, vecNewAngles );
 
 #endif // CLIENT_DLL
@@ -360,6 +364,8 @@ void CTFViewModel::ProcessMuzzleFlashEvent()
 	if ( !pWeapon || C_BasePlayer::ShouldDrawLocalPlayer() ) 
 		return;
 
+	// VR: Let the weapon handle VR-specific muzzle flash logic
+	// The weapon's ProcessMuzzleFlashEvent() will use the VR render weapon
 	pWeapon->ProcessMuzzleFlashEvent();
 }
 
@@ -474,6 +480,28 @@ void CViewModelInvisProxy::OnBind( C_BaseEntity *pEnt )
 			bIsViewModel = true;
 		}
 	}
+	
+	// Check GetOwnerEntity (for VR hands, etc.)
+	// Treat VR hands like viewmodels for local player visibility
+	bool bIsVRHand = false;
+	if ( !pPlayer )
+	{
+		pPlayer = ToTFPlayer( pEnt->GetOwnerEntity() );
+		if ( pPlayer )
+			bIsVRHand = true;
+	}
+	
+	// Check IHasOwner interface (for VR hands, etc.)
+	if ( !pPlayer )
+	{
+		IHasOwner *pOwnerInterface = dynamic_cast<IHasOwner*>( pEnt );
+		if ( pOwnerInterface )
+		{
+			pPlayer = ToTFPlayer( pOwnerInterface->GetOwnerViaInterface() );
+			if ( pPlayer )
+				bIsVRHand = true;
+		}
+	}
 
 	// do we have a player from viewmodel?
 	if ( !pPlayer )
@@ -485,7 +513,10 @@ void CViewModelInvisProxy::OnBind( C_BaseEntity *pEnt )
 	float flPercentInvisible = pPlayer->GetPercentInvisible();
 	float flWeaponInvis = flPercentInvisible;
 
-	if ( bIsViewModel == true )
+	// For viewmodels and VR hands owned by local player, keep them partially visible
+	bool bApplyViewmodelClamp = bIsViewModel || (bIsVRHand && pPlayer->IsLocalPlayer());
+	
+	if ( bApplyViewmodelClamp )
 	{
 		// remap from 0.22 to 0.5
 		// but drop to 0.0 if we're not invis at all
@@ -554,6 +585,7 @@ void CInvisProxy::OnBind( C_BaseEntity *pC_BaseEntity )
 		}
 	}
 	
+	// Check if entity is a player, or has an owner via IHasOwner (for VR hands, etc.)
 	if ( !pPlayer )
 	{
 		if ( pEnt->IsPlayer() )
@@ -566,6 +598,11 @@ void CInvisProxy::OnBind( C_BaseEntity *pC_BaseEntity )
 			if ( pOwnerInterface )
 			{
 				pPlayer = ToTFPlayer( pOwnerInterface->GetOwnerViaInterface() );
+			}
+
+			if ( !pPlayer )
+			{
+				pPlayer = ToTFPlayer( pEnt->GetOwnerEntity() );
 			}
 		}
 	}
@@ -580,10 +617,11 @@ void CInvisProxy::OnBind( C_BaseEntity *pC_BaseEntity )
 		return;
 	}
 
+	float flPercentInvisible = pPlayer->GetPercentInvisible();
+
 	// If we're the local player, use the old "vm_invis" code. Otherwise, use the "weapon_invis".
 	if ( pPlayer->IsLocalPlayer() )
 	{
-		float flPercentInvisible = pPlayer->GetPercentInvisible();
 		float flWeaponInvis = flPercentInvisible;
 
 		// remap from 0.22 to 0.5
@@ -617,5 +655,40 @@ void CInvisProxy::OnBind( C_BaseEntity *pC_BaseEntity )
 //	Makes the vm_invis & weapon_invis proxies obsolete, do not use them.
 EXPOSE_INTERFACE( CInvisProxy, IMaterialProxy, "invis" IMATERIAL_PROXY_INTERFACE_VERSION );
 
+//-----------------------------------------------------------------------------
+// Purpose: In VR, redirect viewmodel sound events (draw, reload, pump, idle)
+//          to the VR render weapon's position via enginesound with custom
+//          soundlevel/volume from ConVars. Non-sound events are suppressed
+//          since the viewmodel is invisible in VR.
+//-----------------------------------------------------------------------------
+void CTFViewModel::FireEvent( const Vector& origin, const QAngle& angles, int event, const char *options )
+{
+	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( GetWeapon() );
+	if ( pTFWeapon && pTFWeapon->IsHeldByVRHand() )
+	{
+		if ( event == AE_CL_PLAYSOUND || event == CL_EVENT_SOUND )
+		{
+			CSoundParameters params;
+			if ( CBaseEntity::GetParametersForSound( options, params, NULL ) )
+			{
+				C_TFVRHand *pHand = GetLocalPlayerRightHand();
+				C_BaseAnimating *pRenderWeapon = pHand ? pHand->GetRenderWeapon() : NULL;
+				int iEntIndex = pRenderWeapon ? pRenderWeapon->GetSoundSourceIndex()
+					: ( GetOwner() ? GetOwner()->GetSoundSourceIndex() : -1 );
+				Vector vecOrigin = pRenderWeapon ? pRenderWeapon->GetAbsOrigin() : GetAbsOrigin();
+
+				CLocalPlayerFilter filter;
+				enginesound->EmitSound(
+					filter, iEntIndex, params.channel, params.soundname,
+					params.volume * tfvr_sound_volume.GetFloat(),
+					(soundlevel_t)tfvr_sound_level.GetInt(),
+					0, params.pitch, 0, &vecOrigin );
+			}
+		}
+		return;
+	}
+
+	BaseClass::FireEvent( origin, angles, event, options );
+}
 
 #endif // CLIENT_DLL

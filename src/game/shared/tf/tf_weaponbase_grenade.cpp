@@ -160,7 +160,7 @@ void CTFWeaponBaseGrenade::Throw()
 	else
 	{
 		// Determine the throw angle and velocity.
-		QAngle angThrow = pPlayer->LocalEyeAngles();
+		QAngle angThrow = pPlayer->Weapon_ShootAngles();
 		if ( angThrow.x < 90.0f )
 		{
 			angThrow.x = -10.0f + angThrow.x * ( ( 90.0f + 10.0f ) / 90.0f );

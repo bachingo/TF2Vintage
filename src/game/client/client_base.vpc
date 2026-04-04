@@ -34,7 +34,7 @@ $Configuration	"Release"
 {
 	$General
 	{
-		// Windows generator doesn't sandbox these directories per configuration but others do :-\
+		// Windows generator doesn't sandbox these directories per configuration but others do :-/
 		$OutputDirectory			".\Release_$GAMENAME" [$WINDOWS]
 		$IntermediateDirectory		".\Release_$GAMENAME" [$WINDOWS]
 
@@ -73,7 +73,7 @@ $Configuration
 		$SystemFrameworks				"Carbon" [$OSXALL]
 		$SystemLibraries				"rt;z" [$LINUXALL]
 		$IgnoreImportLibrary			"TRUE"
-		$AdditionalDependencies			"$BASE winmm.lib"	[$WINDOWS]
+		$AdditionalDependencies			"$BASE winmm.lib d3d9.lib"	[$WINDOWS]
 		$AdditionalDependencies			"$BASE wsock32.lib Ws2_32.lib" [$WINDOWS]
 	}
 
@@ -599,22 +599,11 @@ $Project
 			}
 		}
 
-		$Folder	"Virtual Reality"
-		{
-			// VF2 Virtual Reality
-			$File	"$SRCDIR\game\client\VR\VRMod.cpp"
-			$File	"$SRCDIR\game\client\VR\VRMod.h"
-			$File	"$SRCDIR\game\client\VR\VRModClasses.cpp"
-			$File	"$SRCDIR\game\client\VR\VRModClasses.h"
-		}
-		
 		$Folder	"Temporary Entities"
 		{
 			$File	"c_basetempentity.cpp"
 			$File	"c_effects.cpp"
 			$File	"c_impact_effects.cpp"
-			$File	"c_lights.cpp"
-			$File	"c_lights.h"
 			$File	"c_movie_explosion.cpp"
 			$File	"c_particle_fire.cpp"
 			$File	"c_particle_smokegrenade.cpp"
@@ -1353,13 +1342,15 @@ $Project
 		$Lib		tier3
 		$Lib		vgui_controls
 		$Lib		vtf
-		
+
 		$ImpLibexternal steam_api	[!$WIN64]
 		$ImpLibexternal steam_api64	[$WIN64]
 		$ImpLib 	"$SRCDIR\thirdparty\discord_game_sdk\lib\x86_64\discord_game_sdk.dll"	[$WIN64]
 		
 		$Libexternal $LIBCOMMON\libcrypto [$OSXALL]
 		$Libexternal "$SRCDIR\lib\common\$CRYPTOPPDIR\libcryptopp" [$LINUXALL&&!$SOURCESDK]
+		$Libexternal "$(VULKAN_SDK)\lib\vulkan-1" [$WINDOWS]
+		$Libexternal "$(OPENXR_SDK)\src\loader\Release\openxr_loader" [$WINDOWS]
 		$Lib   "libz" [$WINDOWS]
 
 		//$Libexternal	libz [$LINUXALL]

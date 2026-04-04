@@ -12,6 +12,7 @@
 
 #include "tf_weaponbase_gun.h"
 #include "tf_weapon_grenade_pipebomb.h"
+#include "tfvr/tfvr_vr_throw.h"
 
 #ifdef CLIENT_DLL
 #define CTFJar C_TFJar
@@ -62,13 +63,14 @@ public:
 
 	virtual void		GetProjectileEntityName( CAttribute_String *attrProjectileEntityName );
 
+	// VR physical throw tuning — override per weapon for different feel
+	virtual VRThrowParams GetVRThrowParams( void );
+
 #ifdef GAME_DLL
 	virtual const AngularImpulse GetAngularImpulse( void ){ return AngularImpulse( 300, 0, 0 ); }
 	virtual Vector GetVelocityVector( const Vector &vecForward, const Vector &vecRight, const Vector &vecUp );
 
 	virtual bool		ShouldSpeakWhenFiring( void ){ return true; }
-
-//	virtual bool		SendWeaponAnim( int iActivity );
 
 	virtual CTFProjectile_Jar	*CreateJarProjectile( const Vector &position, const QAngle &angles, const Vector &velocity, 
 		const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo );
@@ -79,6 +81,14 @@ public:
 private:
 
 	int m_iProjectileType;
+
+#ifdef GAME_DLL
+	Vector m_vecVRThrowVelocity;
+	Vector m_vecVRThrowOrigin;	// player-relative offset
+	QAngle m_angVRThrowAngles;	// hand orientation at release
+	Vector m_vecVRThrowAngVel;	// angular velocity (deg/sec)
+	bool m_bUseVRThrow;
+#endif
 
 	CTFJar( const CTFJar & ) {}
 };
@@ -118,6 +128,8 @@ public:
 	virtual const char*			GetEffectLabelText( void ) { return "#TF_CLEAVER"; }
 
 	virtual float		InternalGetEffectBarRechargeTime( void ) { return 5.1; }
+
+	virtual VRThrowParams GetVRThrowParams( void ) OVERRIDE;
 
 #ifdef GAME_DLL
 	virtual const AngularImpulse GetAngularImpulse( void ){ return AngularImpulse( 0, 500, 0 ); }

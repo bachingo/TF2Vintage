@@ -77,6 +77,7 @@
 #include "econ_gcmessages.h"
 #include "tf_gcmessages.h"
 #include "tf_obj_sentrygun.h"
+#include "tf_vr_ik_shared.h"
 #include "tf_weapon_shovel.h"
 #include "bot/tf_bot.h"
 #include "bot/tf_bot_manager.h"
@@ -111,6 +112,10 @@
 #include "tf_weapon_passtime_gun.h"
 #include "player_resource.h"
 #include "tf_player_resource.h"
+// VR-specific convars
+ConVar tfvr_pvs_radius( "tfvr_pvs_radius", "1", FCVAR_REPLICATED | FCVAR_CHEAT, "Radius around VR player's head to add PVS origins (prevents entity culling near walls)" );
+ConVar tfvr_disable_collisionfade( "tfvr_disable_collisionfade", "0", FCVAR_ARCHIVE, "Disable VR head collision fade effect" );
+ConVar tfvr_debug_eyeposition( "tfvr_debug_eyeposition", "0", FCVAR_ARCHIVE, "Debug EyePosition calculation differences between client and server" );
 #include "gcsdk/gcclient_sharedobjectcache.h"
 #include "tf_party.h"
 
@@ -756,6 +761,12 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayer, DT_TFNonLocalPlayerExclusive )
 	SendPropFloat( SENDINFO_VECTORELEM(m_angEyeAngles, 0), 8, SPROP_CHANGES_OFTEN, -90.0f, 90.0f ),
 	SendPropAngle( SENDINFO_VECTORELEM(m_angEyeAngles, 1), 10, SPROP_CHANGES_OFTEN ),
 
+	// VR IK hand data for third-person arm IK
+	SendPropVector( SENDINFO(m_vecVRHandOffsetL), -1, SPROP_NOSCALE ),
+	SendPropQAngles( SENDINFO(m_angVRHandAngL), 13 ),
+	SendPropVector( SENDINFO(m_vecVRHandOffsetR), -1, SPROP_NOSCALE ),
+	SendPropQAngles( SENDINFO(m_angVRHandAngR), 13 ),
+
 END_SEND_TABLE()
 
 //-----------------------------------------------------------------------------
@@ -829,6 +840,7 @@ IMPLEMENT_SERVERCLASS_ST( CTFPlayer, DT_TFPlayer )
 	SendPropBool( SENDINFO( m_bUseBossHealthBar ) ),
 
 	SendPropBool( SENDINFO( m_bUsingVRHeadset ) ),
+	SendPropBool( SENDINFO( m_bInVRMode ) ),
 
 	SendPropBool( SENDINFO( m_bForcedSkin ) ),
 	SendPropInt( SENDINFO( m_nForcedSkin ), ANIMATION_SKIN_BITS ),
@@ -849,6 +861,11 @@ IMPLEMENT_SERVERCLASS_ST( CTFPlayer, DT_TFPlayer )
 	SendPropInt( SENDINFO( m_iPlayerSkinOverride ) ),
 	SendPropBool( SENDINFO( m_bViewingCYOAPDA ) ),
 	SendPropBool( SENDINFO( m_bRegenerating ) ),
+
+	// VR Related
+	SendPropVector(SENDINFO(m_roomscaleOffset), -1, SPROP_CHANGES_OFTEN | SPROP_NOSCALE),
+	SendPropBool( SENDINFO( m_bHeadCollisionWarning ) ),
+	
 	SendPropEHandle( SENDINFO( m_hOffHandWeapon ) ),
 END_SEND_TABLE()
 
@@ -1087,6 +1104,33 @@ CTFPlayer::CTFPlayer()
 	m_bUseBossHealthBar = false;
 
 	m_bUsingVRHeadset = false;
+	m_bInVRMode = false;
+	
+	m_lastTimeHeadCleared = 0.0f;
+	m_flLastRecalibrateTime = 0.0f;
+	m_flSmoothedFadeIntensity = 0.0f;
+	m_flLastClientEyeUpdateTime = 0.0f;
+	m_bHeadCollisionWarning = false;
+	m_clientEyePosition.Init();
+
+	// Initialize VR controller positions
+	m_leftControllerOrigin.Init();
+	m_leftControllerAngles.Init();
+	m_rightControllerOrigin.Init();
+	m_rightControllerAngles.Init();
+	m_flLastControllerUpdateTime = 0.0f;
+
+	m_vecVRHandOffsetL = vec3_origin;
+	m_angVRHandAngL = QAngle( 0, 0, 0 );
+	m_vecVRHandOffsetR = vec3_origin;
+	m_angVRHandAngR = QAngle( 0, 0, 0 );
+
+	m_bVRIKBonesResolved = false;
+	m_iHeadBone = -1;
+	m_iCollarBoneL = m_iCollarBoneR = -1;
+	m_iUpperArmBoneL = m_iLowerArmBoneL = m_iHandBoneL = -1;
+	m_iUpperArmBoneR = m_iLowerArmBoneR = m_iHandBoneR = -1;
+	m_flCollarLen = m_flUpperArmLen = m_flForearmLen = 0.0f;
 
 	m_bForcedSkin = false;
 	m_nForcedSkin = 0;
@@ -1127,6 +1171,9 @@ CTFPlayer::CTFPlayer()
 
 	m_bRegenerating = false;
 	m_bRespawning = false;
+	// Origin freezing on death
+	m_bOriginFrozenOnDeath = false;
+	m_vecDeathOrigin.Init();
 
 	m_bAlreadyUsedExtendFreezeThisDeath = false;
 }
@@ -1776,6 +1823,9 @@ void CTFPlayer::TFPlayerThink()
 	}
 #endif
 */
+
+	// VR head collision detection
+	CheckForHeadCollisions();
 
 	SetContextThink( &CTFPlayer::TFPlayerThink, gpGlobals->curtime, "TFPlayerThink" );
 	m_flLastThinkTime = gpGlobals->curtime;
@@ -2937,6 +2987,30 @@ void CTFPlayer::PrecacheTFPlayer()
 
 	// Precache the player models and gibs.
 	PrecachePlayerModels();
+	
+	// Precache VR hand models for all classes
+	PrecacheModel("models/weapons/vr_models/vr_scout_hand_l.mdl");
+	PrecacheModel("models/weapons/vr_models/vr_scout_hand_r.mdl");
+	PrecacheModel("models/weapons/vr_models/vr_soldier_hand_l.mdl");
+	PrecacheModel("models/weapons/vr_models/vr_soldier_hand_r.mdl");
+	PrecacheModel("models/weapons/vr_models/vr_pyro_hand_l.mdl");
+	PrecacheModel("models/weapons/vr_models/vr_pyro_hand_r.mdl");
+	PrecacheModel("models/weapons/vr_models/vr_demo_hand_l.mdl");
+	PrecacheModel("models/weapons/vr_models/vr_demo_hand_r.mdl");
+	PrecacheModel("models/weapons/vr_models/vr_heavy_hand_l.mdl");
+	PrecacheModel("models/weapons/vr_models/vr_heavy_hand_r.mdl");
+	PrecacheModel("models/weapons/vr_models/vr_engineer_hand_l.mdl");
+	PrecacheModel("models/weapons/vr_models/vr_engineer_hand_r.mdl");
+	PrecacheModel("models/weapons/vr_models/vr_engineer_gunslinger.mdl");
+	PrecacheModel("models/weapons/vr_models/vr_medic_hand_l.mdl");
+	PrecacheModel("models/weapons/vr_models/vr_medic_hand_r.mdl");
+	PrecacheModel("models/weapons/vr_models/vr_sniper_hand_l.mdl");
+	PrecacheModel("models/weapons/vr_models/vr_sniper_hand_r.mdl");
+	PrecacheModel("models/weapons/vr_models/vr_spy_hand_l.mdl");
+	PrecacheModel("models/weapons/vr_models/vr_spy_hand_r.mdl");
+	
+	// Precache spy watch models for VR
+	PrecacheModel("models/weapons/c_models/c_spy_watch.mdl");
 
 	// Precache the player sounds.
 	PrecacheScriptSound( "Player.Spawn" );
@@ -3199,6 +3273,53 @@ void CTFPlayer::PlayerRunCommand( CUserCmd *ucmd, IMoveHelper *moveHelper )
 			m_flNextAllowTauntRemapInputTime = gpGlobals->curtime + flSceneDuration;
 		}
 	}
+
+	m_headInPlayerA = ucmd->playerToHmdAngles;
+    m_headInPlayerO = ucmd->playerToHmdOrigin;
+	m_bPhysicalCrouch = ucmd->vrPhysicalCrouch;
+	if ( ucmd->vrPhysicalCrouch )
+		m_bDuckWasPhysical = true;
+	else if ( ucmd->buttons & IN_DUCK )
+		m_bDuckWasPhysical = false;
+	m_clientEyePosition = ucmd->clientEyePosition;
+	m_flLastClientEyeUpdateTime = gpGlobals->curtime;
+    // Store VR controller positions for weapon shooting (only when client is using VR)
+    if (ucmd->playerToHmdOrigin != vec3_origin)
+    {
+        m_leftControllerOrigin = ucmd->leftControllerOrigin;
+        m_leftControllerAngles = ucmd->leftControllerAngles;
+        m_rightControllerOrigin = ucmd->rightControllerOrigin;
+        m_rightControllerAngles = ucmd->rightControllerAngles;
+        // Store the command time for lag compensation
+        m_flLastControllerUpdateTime = gpGlobals->curtime;
+
+        // Store hand positions as offsets from the VR headset (clientEyePosition).
+        // On reconstruction, these offsets are applied relative to the model's head bone,
+        // so the arms always look correct relative to the body.
+        Vector headRef = ucmd->clientEyePosition;
+        if ( headRef == vec3_origin )
+            headRef = GetAbsOrigin();
+        m_vecVRHandOffsetL = ucmd->vrIKHandPosL - headRef;
+        m_angVRHandAngL = ucmd->vrIKHandAngL;
+        m_vecVRHandOffsetR = ucmd->vrIKHandPosR - headRef;
+        m_angVRHandAngR = ucmd->vrIKHandAngR;
+    }
+    else
+    {
+        // Client is not using VR, reset controller data to prevent stale data usage
+        m_leftControllerOrigin = vec3_origin;
+        m_leftControllerAngles = QAngle(0, 0, 0);
+        m_rightControllerOrigin = vec3_origin;
+        m_rightControllerAngles = QAngle(0, 0, 0);
+        m_flLastControllerUpdateTime = 0.0f;
+
+        m_vecVRHandOffsetL = vec3_origin;
+        m_angVRHandAngL = QAngle( 0, 0, 0 );
+        m_vecVRHandOffsetR = vec3_origin;
+        m_angVRHandAngR = QAngle( 0, 0, 0 );
+    }
+
+
 }
 
 //-----------------------------------------------------------------------------
@@ -3271,7 +3392,8 @@ bool CTFPlayer::IsReadyToSpawn( void )
 	if ( GetRespawnTimeOverride() != -1.f && gpGlobals->curtime < GetDeathTime() + GetRespawnTimeOverride() )
 		return false;
 
-	return ( StateGet() != TF_STATE_DYING );
+	// Allow respawn if not in dying state, or if in dying state with frozen origin (waiting for respawn)
+	return ( StateGet() != TF_STATE_DYING || m_bOriginFrozenOnDeath );
 }
 
 //-----------------------------------------------------------------------------
@@ -3302,6 +3424,18 @@ void CTFPlayer::ResetScores( void )
 void CTFPlayer::InitialSpawn( void )
 {
 	BaseClass::InitialSpawn();
+
+	// For VR players, reset server-side head tracking and send spawn angles
+	if ( IsInVRMode() && !IsFakeClient() )
+	{
+		m_headInPlayerO = vec3_origin;
+		m_bPhysicalCrouch = false;
+		m_bDuckWasPhysical = false;
+		m_roomscaleOffset = vec3_origin;
+		
+		// Send ForcePlayerViewAngles with the initial spawn angles for VR rotation calibration
+		ForcePlayerViewAngles( GetAbsAngles() );
+	}
 
 	m_AttributeManager.InitializeAttributes( this );
 	m_AttributeManager.SetPlayer( this );
@@ -3515,6 +3649,12 @@ CON_COMMAND_F( verifyloadout, "Cause the server to verify the player's items on 
 }
 #endif // DEBUG
 
+CON_COMMAND(tfvr_recalibrate_view, "Recalibrate VR view")
+{
+	CTFPlayer *player = ToTFPlayer(UTIL_GetCommandClient());
+	if (player)
+		player->RecalibrateView();
+}
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -3631,6 +3771,30 @@ void CTFPlayer::SetupVisibility( CBaseEntity *pViewEntity, unsigned char *pvs, i
 	else
 	{
 		BaseClass::SetupVisibility( pViewEntity, pvs, pvssize );
+		// VR-specific visibility fix: Add additional PVS origins around the player
+		// to prevent entity culling when the VR head position moves near walls
+		if ( IsInVRMode() && !IsFakeClient() )
+		{
+			Vector eyePos = EyePosition();
+			// Add PVS points in a radius around the player's eye position
+			// This ensures entities remain visible even when the VR head moves close to walls
+			const float radiusOffset = tfvr_pvs_radius.GetFloat();
+			// Add additional PVS origins around the head position
+			// Forward/backward
+			Vector forward, right, up;
+			AngleVectors( EyeAngles(), &forward, &right, &up );
+			engine->AddOriginToPVS( eyePos + forward * radiusOffset );
+			engine->AddOriginToPVS( eyePos - forward * radiusOffset );
+			// Left/right
+			engine->AddOriginToPVS( eyePos + right * radiusOffset );
+			engine->AddOriginToPVS( eyePos - right * radiusOffset );
+			// Up/down (important for crouching/standing transitions)
+			engine->AddOriginToPVS( eyePos + up * radiusOffset );
+			engine->AddOriginToPVS( eyePos - up * radiusOffset );
+			// Also add the player's body center position to ensure entities near the body are visible
+			Vector bodyCenter = GetAbsOrigin() + GetViewOffset() * 0.5f;
+			engine->AddOriginToPVS( bodyCenter );
+		}
 	}
 
 	int area = pViewEntity ? pViewEntity->NetworkProp()->AreaNum() : NetworkProp()->AreaNum();
@@ -3663,6 +3827,18 @@ void CTFPlayer::Spawn()
 
 	SetMoveType( MOVETYPE_WALK );
 	BaseClass::Spawn();
+	
+	// For VR players, reset server-side head tracking and send spawn angles
+	if ( IsInVRMode() && !IsFakeClient() )
+	{
+		m_headInPlayerO = vec3_origin;
+		m_bPhysicalCrouch = false;
+		m_bDuckWasPhysical = false;
+		m_roomscaleOffset = vec3_origin;
+		
+		// Send ForcePlayerViewAngles with the spawn point angles
+		ForcePlayerViewAngles( GetAbsAngles() );
+	}
 
 	// We have to clear this early, so that the sword knows its max health in ManageRegularWeapons below
 	m_Shared.SetDecapitations( 0 );
@@ -6833,6 +7009,8 @@ void CTFPlayer::ChangeTeam( int iTeamNum, bool bAutoTeam, bool bSilent, bool bAu
 	}
 	else // active player
 	{
+		// Clear origin freezing when joining an active team
+		m_bOriginFrozenOnDeath = false;
 		bool bKill = true;
 
 
@@ -12529,7 +12707,15 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	
 	ClearZoomOwner();
 
-	m_vecLastDeathPosition = GetAbsOrigin();
+	// For VR players, anchor the death position to the client's actual
+	// eye position.  On a remote server the client and server origins can
+	// diverge by 10-20+ units due to network latency, and the dead-state
+	// fade check compares against the client eye position, so using the
+	// server origin would cause an immediate false fade on death.
+	if (IsInVRMode() && m_clientEyePosition != vec3_origin)
+		m_vecLastDeathPosition = m_clientEyePosition;
+	else
+		m_vecLastDeathPosition = GetAbsOrigin();
 
 	CTakeDamageInfo info_modified = info;
 
@@ -13849,7 +14035,8 @@ void CTFPlayer::StateEnterACTIVE()
 	RemoveSolidFlags( FSOLID_NOT_SOLID );
 	m_Local.m_iHideHUD = 0;
 	PhysObjectWake();
-
+	// Clear origin freezing on respawn
+	m_bOriginFrozenOnDeath = false;
 	m_flLastAction = gpGlobals->curtime;
 	m_flLastHealthRegenAt = gpGlobals->curtime;
 	SetContextThink( &CTFPlayer::RegenThink, gpGlobals->curtime + TF_REGEN_TIME, "RegenThink" );
@@ -13975,7 +14162,77 @@ bool CTFPlayer::SetObserverMode(int mode)
 
 	return true;	
 }
-
+//-----------------------------------------------------------------------------
+// Purpose: Override StartObserverMode to prevent origin changes during frozen death state
+//-----------------------------------------------------------------------------
+bool CTFPlayer::StartObserverMode(int mode)
+{
+	if ( !IsObserver() )
+	{
+		// If origin is frozen on death, don't change the position
+		if ( !m_bOriginFrozenOnDeath )
+		{
+			// set position to last view offset (normal behavior)
+			SetAbsOrigin( GetAbsOrigin() + GetViewOffset() );
+		}
+		// Always reset view offset
+		SetViewOffset( vec3_origin );
+	}
+	Assert( mode > OBS_MODE_NONE );
+	m_afPhysicsFlags |= PFLAG_OBSERVER;
+	// Holster weapon immediately, to allow it to cleanup
+    if ( GetActiveWeapon() )
+		GetActiveWeapon()->Holster();
+	// clear out the suit message cache so we don't keep chattering
+    SetSuitUpdate(NULL, FALSE, 0);
+	SetGroundEntity( (CBaseEntity *)NULL );
+	RemoveFlag( FL_DUCKING );
+    AddSolidFlags( FSOLID_NOT_SOLID );
+	SetObserverMode( mode );
+	if ( gpGlobals->eLoadType != MapLoad_Background )
+	{
+		ShowViewPortPanel( "specgui" , ModeWantsSpectatorGUI(mode) );
+	}
+	// Setup flags
+    m_Local.m_iHideHUD = HIDEHUD_HEALTH;
+	m_takedamage = DAMAGE_NO;		
+	// Become invisible
+	AddEffects( EF_NODRAW );		
+	m_iHealth = 1;
+	m_lifeState = LIFE_DEAD; // Can't be dead, otherwise movement doesn't work right.
+	m_flDeathAnimTime = gpGlobals->curtime;
+	pl.deadflag = true;
+	return true;
+}
+//-----------------------------------------------------------------------------
+// Purpose: Override SetAbsOrigin to prevent position changes during frozen death state
+//-----------------------------------------------------------------------------
+void CTFPlayer::SetAbsOrigin( const Vector& absOrigin )
+{
+	// If origin is frozen on death, ignore position changes except for respawn
+	if ( m_bOriginFrozenOnDeath && m_Shared.InState( TF_STATE_OBSERVER ) )
+	{
+		// Don't change position, keep at death location
+		BaseClass::SetAbsOrigin( m_vecDeathOrigin );
+		return;
+	}
+	// Normal behavior
+	BaseClass::SetAbsOrigin( absOrigin );
+}
+//-----------------------------------------------------------------------------
+// Purpose: Override SetViewOffset to prevent dead view height change for VR frozen deaths
+//-----------------------------------------------------------------------------
+void CTFPlayer::SetViewOffset( const Vector& vecViewOffset )
+{
+	// If origin is frozen on death and this is VR, don't apply dead view height
+	if ( m_bOriginFrozenOnDeath && IsInVRMode() && !IsFakeClient() )
+	{
+		// Keep current view offset, don't change to dead view height
+		return;
+	}
+	// Normal behavior
+	BaseClass::SetViewOffset( vecViewOffset );
+}
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -14048,7 +14305,9 @@ void CTFPlayer::StateEnterDYING( void )
 {
 	SetMoveType( MOVETYPE_NONE );
 	AddSolidFlags( FSOLID_NOT_SOLID );
-
+	// Store death position to freeze origin during spectator mode
+	m_bOriginFrozenOnDeath = true;
+	m_vecDeathOrigin = GetAbsOrigin();
 	m_bPlayedFreezeCamSound = false;
 	m_bAbortFreezeCam = false;
 
@@ -14153,8 +14412,17 @@ void CTFPlayer::StateThinkDYING( void )
 
 		if ( GetMoveType() != MOVETYPE_NONE && (GetFlags() & FL_ONGROUND) )
 			SetMoveType( MOVETYPE_NONE );
-
-		StateTransition( TF_STATE_OBSERVER );
+		// Only transition to observer if origin is not frozen on death
+		if ( !m_bOriginFrozenOnDeath )
+		{
+			StateTransition( TF_STATE_OBSERVER );
+		}
+		else
+		{
+			// For VR frozen origin, set respawnable state but stay in dying to maintain position
+			// The HUD should now recognize LIFE_RESPAWNABLE and show respawn timer
+			pl.deadflag = true;
+		}
 	}
 }
 
@@ -23200,6 +23468,79 @@ Vector CTFPlayer::ScriptWeapon_ShootPosition()
 {
 	return this->Weapon_ShootPosition();
 }
+//-----------------------------------------------------------------------------
+// Purpose: VR-specific weapon shooting position that uses controller positions
+//         Medigun uses left controller, all other weapons use right controller
+//-----------------------------------------------------------------------------
+Vector CTFPlayer::Weapon_ShootPosition( void )
+{
+	// Check if client is using VR and we have valid controller data
+	if (m_bInVRMode && m_rightControllerOrigin != vec3_origin)
+	{
+		// Check if active weapon is a medigun - use left controller
+		CTFWeaponBase *pActiveWeapon = GetActiveTFWeapon();
+		if (pActiveWeapon && pActiveWeapon->GetWeaponID() == TF_WEAPON_MEDIGUN)
+		{
+			if (m_leftControllerOrigin != vec3_origin)
+			{
+				return m_leftControllerOrigin;
+			}
+		}
+		
+		// Use raw controller position without offset for VR consistency
+		Vector shootPos = m_rightControllerOrigin;
+
+		return shootPos;
+	}
+
+	// Fall back to base implementation (eye position) if no VR data available
+	return BaseClass::Weapon_ShootPosition();
+}
+//-----------------------------------------------------------------------------
+// Purpose: VR-specific weapon shooting angles that uses controller angles
+//         Medigun uses left controller, all other weapons use right controller
+//-----------------------------------------------------------------------------
+QAngle CTFPlayer::Weapon_ShootAngles( void )
+{
+	// Check if client is using VR and we have valid controller data
+	if (m_bInVRMode && m_rightControllerOrigin != vec3_origin)
+	{
+		// Check if active weapon is a medigun - use left controller
+		CTFWeaponBase *pActiveWeapon = GetActiveTFWeapon();
+		if (pActiveWeapon && pActiveWeapon->GetWeaponID() == TF_WEAPON_MEDIGUN)
+		{
+			if (m_leftControllerOrigin != vec3_origin)
+			{
+				return m_leftControllerAngles;
+			}
+		}
+		
+		// Use right controller angles for weapon shooting (typically the shooting hand)
+		return m_rightControllerAngles;
+	}
+	// Fall back to base implementation (eye angles) if no VR data available
+	return EyeAngles();
+}
+//-----------------------------------------------------------------------------
+// Purpose: VR-specific autoaim override to use controller angles instead of headset
+//-----------------------------------------------------------------------------
+Vector CTFPlayer::GetAutoaimVector( float flScale )
+{
+	// Check if client is using VR and we have valid controller data
+	if (m_bInVRMode && m_rightControllerOrigin != vec3_origin)
+	{
+		// Use right controller angles for autoaim (typically the shooting hand)
+		QAngle controllerAngles = m_rightControllerAngles;
+		// Apply punch angle if any
+		controllerAngles += m_Local.m_vecPunchAngle;
+		Vector forward;
+		AngleVectors(controllerAngles, &forward);
+		return forward;
+	}
+	// Fall back to base implementation (headset angles) if no VR data available
+	return BaseClass::GetAutoaimVector(flScale);
+}
+
 
 bool CTFPlayer::ScriptWeapon_CanUse( HSCRIPT hWeapon )
 {
@@ -23275,4 +23616,420 @@ void CTFPlayer::ScriptEquipWearableViewModel( HSCRIPT hWearableViewModel )
 void CTFPlayer::ScriptStunPlayer( float flTime, float flReductionAmount, int iStunFlags /* = TF_STUN_MOVEMENT */, HSCRIPT hAttacker /* = NULL */ )
 {
 	m_Shared.StunPlayer( flTime, flReductionAmount, iStunFlags, ScriptToEntClass< CTFPlayer >( hAttacker ) );
+}
+
+void CTFPlayer::RecalibrateView()
+{
+	//TODO: Need absolute yaw rather than calibrated hmd yaw
+
+	Log("Server: recalibrating view\n");
+	// apply HMD yaw to the player
+	QAngle angles = GetAbsAngles();
+	angles[YAW] += m_headInPlayerA[YAW];
+	m_headInPlayerA[YAW] = 0;
+
+	m_roomscaleOffset = vec3_origin;
+	m_flLastRecalibrateTime = gpGlobals->curtime;
+
+	// engine->ClientCommand(edict(), "tfvr_cl_recalibrate_view\n");
+
+	// use teleport to properly apply new player angles
+	// Teleport(nullptr, &angles, nullptr);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: VR-aware body target that uses a more stable position for VR players
+//-----------------------------------------------------------------------------
+Vector CTFPlayer::BodyTarget( const Vector &posSrc, bool bNoisy )
+{
+	// For VR players, use origin + view offset instead of eye position
+	// This provides a more stable target that isn't affected by head tracking
+	if ( IsInVRMode() )
+	{
+		if ( bNoisy )
+		{
+			// Add some randomness like the base implementation
+			return GetAbsOrigin() + (GetViewOffset() * random->RandomFloat( 0.7, 1.0 ));
+		}
+		else
+		{
+			// Use origin + view offset for consistent body position
+			return GetAbsOrigin() + GetViewOffset();
+		}
+	}
+	// Non-VR players use the default implementation
+	return BaseClass::BodyTarget( posSrc, bNoisy );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Simple VR head collision detection using client's exact eye position
+//-----------------------------------------------------------------------------
+void CTFPlayer::CheckForHeadCollisions()
+{
+	if (tfvr_disable_collisionfade.GetBool())
+		return;
+
+	bool bAlive = IsAlive();
+
+	if (bAlive && IsInAVehicle())
+		return;
+
+	if (bAlive && GetMoveType() == MOVETYPE_NOCLIP)
+		return;
+
+	if (engine->IsPaused())
+		return;
+
+	if (bAlive && (GetFlags() & FL_FROZEN))
+		return;
+
+	// Only check for VR players
+	if (!IsInVRMode())
+		return;
+
+	// Only check when player is actually in-match (on a team with a class selected)
+	if (!IsReadyToPlay())
+		return;
+
+	// Grace period after spawn, death, or recalibration so transient
+	// eye positions don't trigger a false fade.
+	float graceCutoff = Max(m_flSpawnTime, m_flLastRecalibrateTime);
+	if (!bAlive)
+		graceCutoff = Max(graceCutoff, GetDeathTime());
+	graceCutoff += 0.5f;
+	if (gpGlobals->curtime < graceCutoff)
+	{
+		m_flSmoothedFadeIntensity = 0.f;
+		return;
+	}
+
+	// Use client's EyePosition for collision detection (we know this works correctly)
+	Vector clientHeadPosition = m_clientEyePosition;
+	if (clientHeadPosition == vec3_origin)
+	{
+		DevMsg("VR collision: No valid client eye position received\n");
+		return;  // No valid position from client
+	}
+	
+	// Simple anti-cheat: validate client position is reasonable relative to player position
+	Vector serverHeadPosition = EyePosition();  // Server's calculation for comparison
+	
+	// Anti-cheat: Basic validation that client position is reasonable
+	Vector deltaFromPlayer = clientHeadPosition - GetAbsOrigin();
+	
+	// Use client position for collision detection (known to work correctly)
+	Vector headPosition = clientHeadPosition;
+
+	byte fadeIntensity = 0;
+
+	if (bAlive)
+	{
+		// --- Wall / prop collision (alive only) ---
+		trace_t pm;
+		CTraceFilterSimpleList filter(COLLISION_GROUP_PLAYER_MOVEMENT);
+		filter.AddEntityToIgnore(this);
+		unsigned int mask = MASK_PLAYERSOLID & ~CONTENTS_MONSTER;
+
+		// VIEW_NEARZ is 7 units -- anything closer gets clipped and the
+		// player can see through geometry.  Inner hull = zNear + buffer
+		// so the fade reaches full opacity before clipping occurs.
+		//
+		// The upward extent is reduced because ceiling geometry rarely
+		// causes visible clipping -- the near plane only matters for
+		// surfaces roughly in front of the camera, not directly above.
+		const float zNear = 7.f;
+		const float buffer = 5.f;
+		const float sideHalf = zNear + buffer;   // 12 units horizontally / down
+		const float upHalf   = zNear * 0.5f;     // 3.5 units above the eye
+		float maxDist = 4.f;
+
+		for (float closeness = 0.01f; closeness <= maxDist; closeness += 0.1f)
+		{
+			Vector mins(-sideHalf - closeness, -sideHalf - closeness, -sideHalf - closeness);
+			Vector maxs( sideHalf + closeness,  sideHalf + closeness,  upHalf   + closeness);
+			UTIL_TraceHull(headPosition, headPosition, mins, maxs, mask, &filter, &pm);
+			
+			if (pm.DidHit())
+			{
+				fadeIntensity = (maxDist - closeness) / maxDist * 256.f;
+				break;
+			}
+		}
+
+		// --- Distance-from-origin checks (alive only) ---
+		float speed = GetAbsVelocity().Length2D();
+
+		// The client eye position lags behind by up to one client frame.
+		// During that interval the server keeps advancing the origin by
+		// velocity, creating a false distance delta.  Compensate using
+		// the measured staleness of the client position, capped at 100ms
+		// to prevent abuse via artificially withheld usercmds.
+		float staleness = Clamp(gpGlobals->curtime - m_flLastClientEyeUpdateTime, 0.f, 0.1f);
+		float velocityLeniency = speed * (staleness + 0.015f);
+
+		Vector delta = headPosition - GetAbsOrigin();
+		float horizontalDist = delta.Length2D();
+		float verticalDist = fabs(delta.z);
+
+		// Lean compensation: lowering your head naturally shifts it forward.
+		float expectedEyeHeight = GetViewOffset().z;
+		float headDrop = Max(0.f, expectedEyeHeight - delta.z);
+		float leanLeniency = headDrop * 0.45f;
+
+		float maxHorizontalDist = 28.f + velocityLeniency + leanLeniency;
+		float maxVerticalDist = 100.f;
+
+		byte distanceFadeIntensity = 0;
+
+		if (horizontalDist > maxHorizontalDist)
+		{
+			float fadeDist = Clamp((horizontalDist - maxHorizontalDist) / 8.f, 0.f, 1.f);
+			distanceFadeIntensity = Max(distanceFadeIntensity, byte(fadeDist * 255.f));
+		}
+
+		if (verticalDist > maxVerticalDist)
+		{
+			float fadeDist = Clamp((verticalDist - maxVerticalDist) / 8.f, 0.f, 1.f);
+			distanceFadeIntensity = Max(distanceFadeIntensity, byte(fadeDist * 255.f));
+		}
+
+		fadeIntensity = Max(fadeIntensity, distanceFadeIntensity);
+	}
+	else
+	{
+		// --- Dead: distance from death position ---
+		// No wall trace (client eye position isn't reliable when dead),
+		// but limit how far the player can drift from where they died.
+		Vector deathDelta = headPosition - m_vecLastDeathPosition;
+		float horizFromDeath = deathDelta.Length2D();
+		float vertFromDeath = fabs(deathDelta.z);
+
+		float maxDeathHorizontal = 36.f;
+		float maxDeathVertical = 100.f;
+
+		byte deathFade = 0;
+
+		if (horizFromDeath > maxDeathHorizontal)
+		{
+			float f = Clamp((horizFromDeath - maxDeathHorizontal) / 8.f, 0.f, 1.f);
+			deathFade = Max(deathFade, byte(f * 255.f));
+		}
+
+		if (vertFromDeath > maxDeathVertical)
+		{
+			float f = Clamp((vertFromDeath - maxDeathVertical) / 8.f, 0.f, 1.f);
+			deathFade = Max(deathFade, byte(f * 255.f));
+		}
+
+		fadeIntensity = deathFade;
+	}
+
+	// Temporal smoothing: dampen single-tick spikes that occur when the
+	// client eye position is a few ticks stale relative to the server
+	// origin (common at lower client framerates or during knockback).
+	// A real collision persists across many ticks and ramps up quickly;
+	// a transient spike barely registers visually.
+	float targetFade = (float)fadeIntensity;
+	float dt = Max(gpGlobals->frametime, 0.001f);
+
+	const float kRampUpRate  = 800.f;   // ~0.32s from 0 to full opacity
+	const float kRampDownRate = 1200.f;  // ~0.21s from full to clear
+
+	if (targetFade > m_flSmoothedFadeIntensity)
+		m_flSmoothedFadeIntensity = Min(targetFade, m_flSmoothedFadeIntensity + kRampUpRate * dt);
+	else
+		m_flSmoothedFadeIntensity = Max(targetFade, m_flSmoothedFadeIntensity - kRampDownRate * dt);
+
+	byte smoothedFade = (byte)Clamp(m_flSmoothedFadeIntensity, 0.f, 255.f);
+
+	if (smoothedFade > 0)
+	{
+		color32 fadeColor{ 0, 0, 0, smoothedFade };
+		UTIL_ScreenFade(this, fadeColor, 0.0f, 0.0f, FFADE_STAYOUT | FFADE_PURGE);
+
+		float timeFaded = gpGlobals->curtime - m_lastTimeHeadCleared;
+		if (smoothedFade >= 192 && timeFaded > 1.0f)
+		{
+			m_bHeadCollisionWarning = true;
+		}
+	}
+	else
+	{
+		if (m_lastTimeHeadCleared < gpGlobals->curtime - gpGlobals->frametime)
+		{
+			color32 clearColor{ 0, 0, 0, 0 };
+			UTIL_ScreenFade(this, clearColor, 0.15f, 0.0f, FFADE_IN | FFADE_PURGE);
+		}
+		m_lastTimeHeadCleared = gpGlobals->curtime;
+		m_bHeadCollisionWarning = false;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Server-side VR arm IK bone index resolution.
+//-----------------------------------------------------------------------------
+void CTFPlayer::ResolveVRIKBones( void )
+{
+	m_iHeadBone = LookupBone( "bip_head" );
+	m_iCollarBoneL = LookupBone( "bip_collar_L" );
+	m_iCollarBoneR = LookupBone( "bip_collar_R" );
+	m_iUpperArmBoneL = LookupBone( "bip_upperArm_L" );
+	m_iLowerArmBoneL = LookupBone( "bip_lowerArm_L" );
+	m_iHandBoneL = LookupBone( "bip_hand_L" );
+	m_iUpperArmBoneR = LookupBone( "bip_upperArm_R" );
+	m_iLowerArmBoneR = LookupBone( "bip_lowerArm_R" );
+	m_iHandBoneR = LookupBone( "bip_hand_R" );
+
+	m_flCollarLen = 0.0f;
+	m_flUpperArmLen = 0.0f;
+	m_flForearmLen = 0.0f;
+
+	m_bVRIKBonesResolved = true;
+}
+
+//-----------------------------------------------------------------------------
+// Server-side SetupBones override: applies VR arm IK to hitbox bones.
+//-----------------------------------------------------------------------------
+void CTFPlayer::SetupBones( matrix3x4_t *pBoneToWorld, int boneMask )
+{
+	BaseClass::SetupBones( pBoneToWorld, boneMask );
+
+	if ( !pBoneToWorld || !m_bInVRMode || !IsAlive() )
+		return;
+
+	if ( (Vector)m_vecVRHandOffsetL == vec3_origin && (Vector)m_vecVRHandOffsetR == vec3_origin )
+		return;
+
+	if ( !m_bVRIKBonesResolved )
+		ResolveVRIKBones();
+
+	if ( m_flUpperArmLen < 1.0f || m_flForearmLen < 1.0f )
+	{
+		// Arm lengths not measured yet -- measure from the bones we just set up
+		if ( m_iUpperArmBoneR != -1 && m_iLowerArmBoneR != -1 && m_iHandBoneR != -1 )
+		{
+			Vector upperPos, elbowPos, handPos;
+			MatrixPosition( pBoneToWorld[m_iUpperArmBoneR], upperPos );
+			MatrixPosition( pBoneToWorld[m_iLowerArmBoneR], elbowPos );
+			MatrixPosition( pBoneToWorld[m_iHandBoneR], handPos );
+			m_flUpperArmLen = ( elbowPos - upperPos ).Length();
+			m_flForearmLen = ( handPos - elbowPos ).Length();
+
+			if ( m_iCollarBoneR != -1 )
+			{
+				Vector collarPos;
+				MatrixPosition( pBoneToWorld[m_iCollarBoneR], collarPos );
+				m_flCollarLen = ( upperPos - collarPos ).Length();
+			}
+		}
+
+		if ( m_flUpperArmLen < 1.0f || m_flForearmLen < 1.0f )
+			return;
+	}
+
+	const studiohdr_t *pHdr = modelinfo->GetStudiomodel( GetModel() );
+	if ( !pHdr )
+		return;
+
+	// Reconstruct hand world positions from head bone (offsets are head-relative)
+	Vector headBonePos;
+	if ( m_iHeadBone >= 0 )
+		MatrixPosition( pBoneToWorld[m_iHeadBone], headBonePos );
+	else
+		headBonePos = GetAbsOrigin();
+
+	Vector vForward, vRight, vUp;
+	AngleVectors( GetAbsAngles(), &vForward, &vRight, &vUp );
+
+	float shoulderRange = 25.0f;
+	float wristTwistShare = 0.5f;
+	float poleBlend = 0.4f;
+	float poleDist = 50.0f;
+	float upBias = 0.8f;
+	float fwdBias = 0.5f;
+	float crossBias = 0.6f;
+
+	// Right arm
+	if ( (Vector)m_vecVRHandOffsetR != vec3_origin && m_iUpperArmBoneR != -1 )
+	{
+		Vector targetPosR = headBonePos + (Vector)m_vecVRHandOffsetR;
+		QAngle targetAngR = m_angVRHandAngR;
+
+		Vector shoulderPos;
+		MatrixPosition( pBoneToWorld[m_iUpperArmBoneR], shoulderPos );
+
+		Vector reachDir = ( targetPosR - shoulderPos );
+		reachDir.NormalizeInPlace();
+
+		float dotFwd = DotProduct( reachDir, vForward );
+		float dotRight = DotProduct( reachDir, vRight );
+		float dotUp = DotProduct( reachDir, vUp );
+
+		Vector pole = -vForward * 0.5f - vUp * 0.3f;
+
+		if ( dotUp > 0.0f )
+			pole += ( -vUp * upBias + vForward * 0.3f ) * dotUp;
+
+		if ( dotFwd > 0.0f )
+			pole += -vUp * fwdBias * dotFwd;
+
+		float crossAmount = -dotRight;
+		if ( crossAmount > 0.0f )
+			pole += vRight * crossBias * crossAmount;
+
+		pole.NormalizeInPlace();
+
+		Vector hFwd, hRight, hUp;
+		AngleVectors( targetAngR, &hFwd, &hRight, &hUp );
+		Vector poleDir = pole * ( 1.0f - poleBlend ) + ( -hUp ) * poleBlend;
+		poleDir.NormalizeInPlace();
+
+		Vector poleTarget = shoulderPos + poleDir * poleDist;
+
+		VRIK_ApplyArmIK( this, pHdr, pBoneToWorld, m_iCollarBoneR, m_iUpperArmBoneR, m_iLowerArmBoneR, m_iHandBoneR,
+			m_flCollarLen, m_flUpperArmLen, m_flForearmLen, targetPosR, targetAngR, poleTarget,
+			shoulderRange, wristTwistShare, false );
+	}
+
+	// Left arm
+	if ( (Vector)m_vecVRHandOffsetL != vec3_origin && m_iUpperArmBoneL != -1 )
+	{
+		Vector targetPosL = headBonePos + (Vector)m_vecVRHandOffsetL;
+		QAngle targetAngL = m_angVRHandAngL;
+
+		Vector shoulderPos;
+		MatrixPosition( pBoneToWorld[m_iUpperArmBoneL], shoulderPos );
+
+		Vector reachDir = ( targetPosL - shoulderPos );
+		reachDir.NormalizeInPlace();
+
+		float dotFwd = DotProduct( reachDir, vForward );
+		float dotRight = DotProduct( reachDir, vRight );
+		float dotUp = DotProduct( reachDir, vUp );
+
+		Vector pole = -vForward * 0.5f - vUp * 0.3f;
+
+		if ( dotUp > 0.0f )
+			pole += ( -vUp * upBias + vForward * 0.3f ) * dotUp;
+
+		if ( dotFwd > 0.0f )
+			pole += -vUp * fwdBias * dotFwd;
+
+		float crossAmount = dotRight;
+		if ( crossAmount > 0.0f )
+			pole += -vRight * crossBias * crossAmount;
+
+		pole.NormalizeInPlace();
+
+		Vector hFwd, hRight, hUp;
+		AngleVectors( targetAngL, &hFwd, &hRight, &hUp );
+		Vector poleDir = pole * ( 1.0f - poleBlend ) + ( -hUp ) * poleBlend;
+		poleDir.NormalizeInPlace();
+
+		Vector poleTarget = shoulderPos + poleDir * poleDist;
+
+		VRIK_ApplyArmIK( this, pHdr, pBoneToWorld, m_iCollarBoneL, m_iUpperArmBoneL, m_iLowerArmBoneL, m_iHandBoneL,
+			m_flCollarLen, m_flUpperArmLen, m_flForearmLen, targetPosL, targetAngL, poleTarget,
+			shoulderRange, wristTwistShare, false );
+	}
 }

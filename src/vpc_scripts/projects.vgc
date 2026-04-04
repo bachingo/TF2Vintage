@@ -15,19 +15,15 @@ $Project "captioncompiler"
 
 $Project "client"
 {
-	"game\client\client_hl2mp.vpc"		[$HL2MP]
 	"game\client\client_tf2vintage.vpc"		[$TF2VINTAGE]
+	"game\client\client_tf.vpc"			[$TF]
+	"game\client\client_hl2mp.vpc"		[$HL2MP]
+	
 }
 
 $Project "fgdlib"
 {
 	"fgdlib\fgdlib.vpc" [$WINDOWS]
-}
-
-$Project "game_shader_dx9"
-{
-	"materialsystem\stdshaders\game_shader_dx9_hl2mp.vpc" [$HL2MP]
-	"materialsystem\stdshaders\game_shader_dx9_tf2vintage.vpc" [$TF2VINTAGE]
 }
 
 $Project "game_shader_generic_example"
@@ -56,8 +52,9 @@ $Project "height2normal"
 
 $Project "server"
 {
+	"game\server\client_tf2vintage.vpc"		[$TF2VINTAGE]
+	"game\server\server_tf.vpc"			[$TF]
 	"game\server\server_hl2mp.vpc"		[$HL2MP]
-	"game\server\server_tf2vintage.vpc"			[$TF2VINTAGE]
 }
 
 $Project "crash_handler"
@@ -160,17 +157,3 @@ $Project "vvis_launcher"
 	"utils\vvis_launcher\vvis_launcher.vpc" [$WINDOWS]
 }
 
-$Project "vscript"
-{
-	"vscript\vscript.vpc"
-}
-
-$Project "luajit"
-{
-	"thirdparty\luajit\luajit.vpc"
-}
-
-$Project "angelscript"
-{
-	"thirdparty\angelscript_2.32.0\sdk\angelscript.vpc"
-}

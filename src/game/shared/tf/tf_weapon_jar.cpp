@@ -11,8 +11,10 @@
 // Client specific.
 #ifdef CLIENT_DLL
 #include "c_tf_player.h"
+#include "c_tf_gamestats.h"
 // Server specific.
 #else
+#include "convar.h"
 #include "soundent.h"
 #include "te_effect_dispatch.h"
 #include "tf_player.h"
@@ -26,6 +28,11 @@
 #include "particle_parse.h"
 #include "bone_setup.h"
 #include "tf_flame.h"
+
+ConVar tfvr_throw_angvel_deadzone( "tfvr_throw_angvel_deadzone", "100", FCVAR_ARCHIVE,
+	"VR physical throw: angular velocity below this (deg/sec) is zeroed so straight throws don't spin from jitter." );
+ConVar tfvr_throw_angvel_scale( "tfvr_throw_angvel_scale", "0.3", FCVAR_ARCHIVE,
+	"VR physical throw: scale hand angular velocity (0.3 = subtle spin, 1.0 = 1:1 with hand)." );
 #endif
 
 //=============================================================================
@@ -101,11 +108,29 @@ PRECACHE_WEAPON_REGISTER( tf_projectile_cleaver );
 //-----------------------------------------------------------------------------
 CTFJar::CTFJar()
 {
+#ifdef GAME_DLL
+	m_vecVRThrowVelocity = vec3_origin;
+	m_vecVRThrowOrigin = vec3_origin;
+	m_angVRThrowAngles.Init();
+	m_vecVRThrowAngVel = vec3_origin;
+	m_bUseVRThrow = false;
+#endif
 }
 
 float CTFJar::GetProjectileSpeed( void )
 {
 	return TF_JAR_LAUNCH_SPEED;
+}
+
+//-----------------------------------------------------------------------------
+VRThrowParams CTFJar::GetVRThrowParams( void )
+{
+	VRThrowParams params;
+	params.flBaseSpeed = TF_JAR_LAUNCH_SPEED;
+	params.flMinSpeedMult = 0.1f;
+	params.flMaxSpeedMult = 1.8f;
+	params.flReferenceHandSpeed = 300.0f;
+	return params;
 }
 
 //-----------------------------------------------------------------------------
@@ -124,6 +149,42 @@ void CTFJar::PrimaryAttack( void )
 	if ( ( pPlayer->GetWaterLevel() == WL_Eyes ) && !CanThrowUnderWater() )
 		return;
 
+	// VR physical throw: skip the base class PrimaryAttack (which plays the
+	// wind-up animation and adds fire delay) and go straight to FireJar,
+	// which will spawn the projectile immediately.
+	// Check on both client and server so the client prediction also skips the animation.
+	const CUserCmd *pCmd = pPlayer->GetCurrentUserCommand();
+	if ( pCmd && pCmd->vrThrowVelocity.LengthSqr() > 0.0f )
+	{
+		if ( !CanAttack() )
+			return;
+
+		CalcIsAttackCritical();
+
+#ifdef GAME_DLL
+		if ( pPlayer->m_Shared.IsStealthed() && ShouldRemoveInvisibilityOnPrimaryAttack() )
+			pPlayer->RemoveInvisibility();
+
+		pPlayer->SpeakWeaponFire();
+		CTF_GameStats.Event_PlayerFiredWeapon( pPlayer, IsCurrentAttackACrit() );
+#else
+		C_CTF_GameStats.Event_PlayerFiredWeapon( pPlayer, IsCurrentAttackACrit() );
+#endif
+
+		m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
+
+		FireJar( pPlayer );
+
+		// Consume ammo so the weapon goes on cooldown and auto-switches
+		RemoveProjectileAmmo( pPlayer );
+
+		m_flLastFireTime = gpGlobals->curtime;
+
+		float flFireDelay = ApplyFireDelay( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay );
+		m_flNextPrimaryAttack = gpGlobals->curtime + flFireDelay;
+		return;
+	}
+
 	BaseClass::PrimaryAttack();
 }
 
@@ -133,6 +194,25 @@ void CTFJar::PrimaryAttack( void )
 CBaseEntity *CTFJar::FireJar( CTFPlayer *pPlayer )
 {
 	StartEffectBarRegen();
+
+#ifdef GAME_DLL
+	// Check for VR physical throw velocity in the current usercmd
+	CUserCmd *pCmd = pPlayer->GetCurrentCommand();
+	if ( pCmd && pCmd->vrThrowVelocity.LengthSqr() > 0.0f )
+	{
+		m_vecVRThrowVelocity = pCmd->vrThrowVelocity;
+		m_vecVRThrowOrigin = pCmd->vrThrowOrigin;
+		m_angVRThrowAngles = pCmd->vrThrowAngles;
+		m_vecVRThrowAngVel = pCmd->vrThrowAngVel;
+		m_bUseVRThrow = true;
+
+		// Physical arm motion replaces the wind-up animation — fire immediately
+		TossJarThink();
+		return NULL;
+	}
+#endif
+
+	// Classic mode: delay for wind-up animation
 	SetContextThink( &CTFJar::TossJarThink, gpGlobals->curtime + 0.1f, "TOSS_JAR_THINK" );
 
 	return NULL;
@@ -171,15 +251,26 @@ void CTFJar::TossJarThink( void )
 #ifdef GAME_DLL
 
 	Vector vecForward, vecRight, vecUp;
-	AngleVectors( pPlayer->EyeAngles(), &vecForward, &vecRight, &vecUp );
+	// Use weapon shoot angles for VR support (controller angles if in VR)
+	AngleVectors( pPlayer->Weapon_ShootAngles(), &vecForward, &vecRight, &vecUp );
 
 	float fRight = 8.f;
 	if ( IsViewModelFlipped() )
 	{
 		fRight *= -1;
 	}
-	Vector vecSrc = pPlayer->Weapon_ShootPosition();
-	vecSrc +=  vecForward * 16.0f + vecRight * fRight + vecUp * -6.0f;
+	Vector vecSrc;
+	if ( m_bUseVRThrow && m_vecVRThrowOrigin != vec3_origin )
+	{
+		// Origin was sent as a player-relative offset; reconstruct
+		// world-space using the server's current player position so the
+		// spawn point doesn't lag behind when the player is moving.
+		vecSrc = pPlayer->GetAbsOrigin() + m_vecVRThrowOrigin;
+	}
+	else
+	{
+		vecSrc = pPlayer->Weapon_ShootPosition();
+	}
 
 	trace_t trace;	
 	Vector vecEye = pPlayer->EyePosition();
@@ -190,13 +281,96 @@ void CTFJar::TossJarThink( void )
 	if ( trace.startsolid )
 		return;
 
-	Vector vecVelocity = GetVelocityVector( vecForward, vecRight, vecUp );
+	Vector vecVelocity;
+	QAngle angSpawn;
+	AngularImpulse angImpulse;
+	bool bVRThrow = false;
 
-	CTFProjectile_Jar *pProjectile = CreateJarProjectile( trace.endpos, pPlayer->EyeAngles(), vecVelocity, 
-		GetAngularImpulse(), pPlayer, GetTFWpnData() );
+	if ( m_bUseVRThrow )
+	{
+		VRThrowParams params = GetVRThrowParams();
+		float flHandSpeed = m_vecVRThrowVelocity.Length();
+
+		float flSpeedMult = ( params.flReferenceHandSpeed > 0.0f )
+			? ( flHandSpeed / params.flReferenceHandSpeed )
+			: 1.0f;
+		flSpeedMult = clamp( flSpeedMult, params.flMinSpeedMult, params.flMaxSpeedMult );
+
+		if ( flHandSpeed > 0.0f )
+		{
+			Vector vecDir = m_vecVRThrowVelocity / flHandSpeed;
+			vecVelocity = vecDir * ( params.flBaseSpeed * flSpeedMult );
+		}
+		else
+		{
+			// Zero velocity — drop straight down
+			vecVelocity = Vector( 0, 0, -1 ) * ( params.flBaseSpeed * params.flMinSpeedMult );
+		}
+
+		// Add player movement velocity as a flat bonus (not amplified by the
+		// speed multiplier) so running throws travel further without being
+		// disproportionately inflated.
+		Vector vecPlayerVel;
+		pPlayer->GetVelocity( &vecPlayerVel, NULL );
+		vecVelocity += vecPlayerVel;
+
+		// Use the hand orientation at the moment of release so the
+		// projectile's visual pose matches what the player saw in-hand.
+		angSpawn = m_angVRThrowAngles;
+
+		// VPhysics expects angular velocity in the object's LOCAL axes, but we
+		// have world-space hand rotation. Transform world -> local using the
+		// projectile orientation (same as hand at release). Negate so spin
+		// direction matches the hand (engine convention is opposite). Dead zone filters jitter.
+		Vector vecForward, vecRight, vecUp;
+		AngleVectors( angSpawn, &vecForward, &vecRight, &vecUp );
+		Vector vecLocalAngVel;
+		vecLocalAngVel.x = -DotProduct( m_vecVRThrowAngVel, vecForward );
+		vecLocalAngVel.y = -DotProduct( m_vecVRThrowAngVel, vecRight );
+		vecLocalAngVel.z = -DotProduct( m_vecVRThrowAngVel, vecUp );
+
+		float flAngVelMag = vecLocalAngVel.Length();
+		bVRThrow = true;
+		if ( flAngVelMag >= tfvr_throw_angvel_deadzone.GetFloat() )
+		{
+			vecLocalAngVel *= tfvr_throw_angvel_scale.GetFloat();
+			angImpulse = AngularImpulse( vecLocalAngVel.x, vecLocalAngVel.y, vecLocalAngVel.z );
+		}
+		else
+		{
+			angImpulse = AngularImpulse( 0, 0, 0 );
+		}
+
+		m_bUseVRThrow = false;
+		m_vecVRThrowVelocity = vec3_origin;
+		m_vecVRThrowOrigin = vec3_origin;
+		m_angVRThrowAngles.Init();
+		m_vecVRThrowAngVel = vec3_origin;
+	}
+	else
+	{
+		bVRThrow = false;
+		vecVelocity = GetVelocityVector( vecForward, vecRight, vecUp );
+		angSpawn = pPlayer->Weapon_ShootAngles();
+		angImpulse = GetAngularImpulse();
+	}
+
+	// For VR throws we pass zero angular so the pipeline doesn't add it twice;
+	// we set it once below with SetVelocity for exact 1:1 hand match.
+	AngularImpulse angForCreate = bVRThrow ? AngularImpulse( 0, 0, 0 ) : angImpulse;
+
+	CTFProjectile_Jar *pProjectile = CreateJarProjectile( trace.endpos, angSpawn, vecVelocity, 
+		angForCreate, pPlayer, GetTFWpnData() );
 
 	if ( pProjectile )
 	{
+		if ( bVRThrow )
+		{
+			// Set velocity and angular velocity exactly (no double-add, correct local space).
+			IPhysicsObject *pPhys = pProjectile->VPhysicsGetObject();
+			if ( pPhys )
+				pPhys->SetVelocity( &vecVelocity, &angImpulse );
+		}
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
 		pProjectile->SetLauncher( this );
 	}
@@ -931,6 +1105,17 @@ CTFProjectile_Jar *CTFCleaver::CreateJarProjectile( const Vector &position, cons
 float CTFCleaver::GetProjectileSpeed( void )
 {
 	return TF_CLEAVER_LAUNCH_SPEED;
+}
+
+//-----------------------------------------------------------------------------
+VRThrowParams CTFCleaver::GetVRThrowParams( void )
+{
+	VRThrowParams params;
+	params.flBaseSpeed = 1800.0f;
+	params.flMinSpeedMult = 0.05f;
+	params.flMaxSpeedMult = 2.5f;
+	params.flReferenceHandSpeed = 350.0f;
+	return params;
 }
 
 //-----------------------------------------------------------------------------

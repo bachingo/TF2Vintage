@@ -583,7 +583,7 @@ public:
 	CNetworkVar( float, m_flNextSecondaryAttack );					// soonest time ItemPostFrame will call SecondaryAttack
 	CNetworkVar( float, m_flTimeWeaponIdle );							// soonest time ItemPostFrame will call WeaponIdle
 	// Weapon state
-	bool					m_bInReload;			// Are we in the middle of a reload;
+	CNetworkVar( bool,		m_bInReload );			// Are we in the middle of a reload;
 	bool					m_bFireOnEmpty;			// True when the gun is empty and the player is still holding down the attack key(s)
 	bool					m_bFiringWholeClip;		// Are we in the middle of firing the whole clip;
 	// Weapon art

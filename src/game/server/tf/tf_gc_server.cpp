@@ -4397,6 +4397,28 @@ void CTFGCServerSystem::SDK_ApplyLocalLoadout(CGCClientSharedObjectCache* pCache
 			}
 		}
 	}
+	
+	// After applying loadout, trigger respawn check for this player
+	// This replaces the GC message path which doesn't work without real GC connection
+	DevMsg( "SDK_ApplyLocalLoadout: Completed, triggering respawn check for steamID %llu\n", playerSteamID.ConvertToUint64() );
+	
+	for ( int i = 1; i <= gpGlobals->maxClients; i++ )
+	{
+		CTFPlayer *pPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
+		if ( !pPlayer )
+			continue;
+		
+		CSteamID tmpID;
+		if ( !pPlayer->GetSteamID( &tmpID ) )
+			continue;
+		
+		if ( tmpID == playerSteamID )
+		{
+			DevMsg( "SDK_ApplyLocalLoadout: Found player %s, calling CheckInstantLoadoutRespawn\n", pPlayer->GetPlayerName() );
+			pPlayer->CheckInstantLoadoutRespawn();
+			break;
+		}
+	}
 }
 
 #endif // #ifdef ENABLE_GC_MATCHMAKING

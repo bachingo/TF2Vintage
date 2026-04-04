@@ -55,10 +55,20 @@ public:
 	bool				CanPerformBackstabAgainstTarget( CTFPlayer *pTarget );		// "backstab" sometimes means "frontstab"
 	bool				IsBehindAndFacingTarget( CTFPlayer *pTarget );
 	bool				IsBackstab( void ) { return (m_hBackstabVictim.Get() != NULL); }
+	bool				IsReadyToBackstab( void ) const { return m_bReadyToBackstab; }
 	void				BackstabBlocked( void );
 	bool				ShouldDisguiseOnBackstab( void );
 	void				DisguiseOnKill();
 	void				ProcessDisguiseImpulse();
+
+	// VR backstab support
+	virtual void		OnVRSwingStart() OVERRIDE;
+	virtual void		OnVRPreMeleeHit( trace_t &trace ) OVERRIDE;
+	virtual void		OnVRPostMeleeHit( trace_t &trace ) OVERRIDE;
+	virtual bool		IsVRMeleeBlocked( void ) OVERRIDE { return IsInBackstabCooldown(); }
+	void				VRBackstabThink( void );
+	bool				IsInBackstabCooldown( void ) const { return gpGlobals->curtime < m_flBackstabCooldownEnd; }
+	float				GetBackstabCooldownEnd( void ) const { return m_flBackstabCooldownEnd; }
 
 	virtual bool		CanHolster( void ) const OVERRIDE;
 
@@ -96,6 +106,7 @@ private:
 	CNetworkVar( float, m_flKnifeMeltTimestamp );
 
 	bool m_bWasTaunting;
+	CNetworkVar( float, m_flBackstabCooldownEnd );	// blocks VR melee until backstab anim finishes
 
 	CTFKnife( const CTFKnife & ) {}
 };

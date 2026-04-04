@@ -88,6 +88,7 @@ LINK_ENTITY_TO_CLASS( tf_wearable_robot_arm, CTFWearableRobotArm );
 //-----------------------------------------------------------------------------
 CTFWrench::CTFWrench()
 	: m_bReloadDown( false )
+	, m_flVRBuildingHitMod( 1.0f )
 {}
 
 
@@ -141,6 +142,31 @@ void CTFWrench::OnFriendlyBuildingHit( CBaseObject *pObject, CTFPlayer *pPlayer,
 	}
 }
 #endif
+
+bool CTFWrench::HandleVRBuildingHit( trace_t &trace, float flDamageMod )
+{
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( !pPlayer )
+		return false;
+
+	if ( trace.m_pEnt &&
+		 trace.m_pEnt->IsBaseObject() &&
+		 trace.m_pEnt->GetTeamNumber() == pPlayer->GetTeamNumber() )
+	{
+#ifdef GAME_DLL
+		CBaseObject *pObject = dynamic_cast< CBaseObject * >( trace.m_pEnt );
+		if ( pObject )
+		{
+			m_flVRBuildingHitMod = flDamageMod;
+			OnFriendlyBuildingHit( pObject, pPlayer, trace.endpos );
+			m_flVRBuildingHitMod = 1.0f;
+		}
+#endif
+		return true;
+	}
+
+	return false;
+}
 
 void CTFWrench::Smack( void )
 {
@@ -359,7 +385,7 @@ float CTFWrench::GetRepairAmount( void )
 	}
 #endif
 
-	return flRepairAmount * flMod;
+	return flRepairAmount * flMod * m_flVRBuildingHitMod;
 }
 
 //-----------------------------------------------------------------------------

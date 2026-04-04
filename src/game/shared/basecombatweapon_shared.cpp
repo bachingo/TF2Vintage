@@ -2586,9 +2586,9 @@ BEGIN_PREDICTION_DATA( CBaseCombatWeapon )
 
 	DEFINE_PRED_FIELD( m_nViewModelIndex, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 
-	// Not networked
+	DEFINE_PRED_FIELD( m_bInReload, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 
-	DEFINE_FIELD( m_bInReload, FIELD_BOOLEAN ),
+	// Not networked
 	DEFINE_FIELD( m_bFireOnEmpty, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_bFiringWholeClip, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_flNextEmptySoundTime, FIELD_FLOAT ),
@@ -2816,6 +2816,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalActiveWeaponData )
 	SendPropTime( SENDINFO( m_flNextSecondaryAttack ) ),
 	SendPropInt( SENDINFO( m_nNextThinkTick ) ),
 	SendPropTime( SENDINFO( m_flTimeWeaponIdle ) ),
+	SendPropBool( SENDINFO( m_bInReload ) ),
 
 #if defined( TF_DLL )
 	SendPropExclude( "DT_AnimTimeMustBeFirst" , "m_flAnimTime" ),
@@ -2826,6 +2827,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalActiveWeaponData )
 	RecvPropTime( RECVINFO( m_flNextSecondaryAttack ) ),
 	RecvPropInt( RECVINFO( m_nNextThinkTick ) ),
 	RecvPropTime( RECVINFO( m_flTimeWeaponIdle ) ),
+	RecvPropBool( RECVINFO( m_bInReload ) ),
 #endif
 END_NETWORK_TABLE()
 

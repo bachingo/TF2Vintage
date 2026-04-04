@@ -263,12 +263,12 @@ private:
 	float			*m_flFlexDelayedWeight;
 	int				m_cFlexDelayedWeight;
 
+protected:
+
 	// shared flex controllers
 	static int		g_numflexcontrollers;
 	static char		*g_flexcontroller[MAXSTUDIOFLEXCTRL*4]; // room for global set of flexcontrollers
 	static float	g_flexweight[MAXSTUDIOFLEXDESC];
-
-protected:
 
 	Emphasized_Phoneme m_PhonemeClasses[ NUM_PHONEME_CLASSES ];
 

@@ -1977,6 +1977,10 @@ void CGameMovement::WalkMove( void )
 	dest[1] = mv->GetAbsOrigin()[1] + mv->m_vecVelocity[1]*gpGlobals->frametime;	
 	dest[2] = mv->GetAbsOrigin()[2];
 
+	dest[0] += mv->m_postFullBodyIKDeltaOrigin[0];
+    dest[1] += mv->m_postFullBodyIKDeltaOrigin[1];
+
+
 	// first try moving directly to the next spot
 	TracePlayerBBox( mv->GetAbsOrigin(), dest, PlayerSolidMask(), COLLISION_GROUP_PLAYER_MOVEMENT, pm );
 
@@ -2794,20 +2798,23 @@ int CGameMovement::TryPlayerMove( Vector *pFirstDest, trace_t *pFirstTrace, floa
 		VectorCopy (vec3_origin, mv->m_vecVelocity);
 	}
 
-	// Check if they slammed into a wall
-	float fSlamVol = 0.0f;
-
-	float fLateralStoppingAmount = primal_velocity.Length2D() - mv->m_vecVelocity.Length2D();
-	if ( fLateralStoppingAmount > PLAYER_MAX_SAFE_FALL_SPEED * 2.0f )
+	if(!m_silentMove)
 	{
-		fSlamVol = 1.0f;
-	}
-	else if ( fLateralStoppingAmount > PLAYER_MAX_SAFE_FALL_SPEED )
-	{
-		fSlamVol = 0.85f;
-	}
+		// Check if they slammed into a wall
+		float fSlamVol = 0.0f;
 
-	PlayerRoughLandingEffects( fSlamVol );
+		float fLateralStoppingAmount = primal_velocity.Length2D() - mv->m_vecVelocity.Length2D();
+		if ( fLateralStoppingAmount > PLAYER_MAX_SAFE_FALL_SPEED * 2.0f )
+		{
+			fSlamVol = 1.0f;
+		}
+		else if ( fLateralStoppingAmount > PLAYER_MAX_SAFE_FALL_SPEED )
+		{
+			fSlamVol = 0.85f;
+		}
+
+		PlayerRoughLandingEffects( fSlamVol );
+	}
 
 	return blocked;
 }
