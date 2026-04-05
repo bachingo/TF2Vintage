@@ -2584,7 +2584,7 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 				pRenderContext.GetFrom( materials );
 				{
 					PIXEVENT( pRenderContext, "DoImageSpaceMotionBlur" );
-					DoImageSpaceMotionBlur( viewActive, viewActive.x, viewActive.y, viewActive.width, viewActive.height );
+					DoImageSpaceMotionBlur( viewRender, viewRender.x, viewRender.y, viewRender.width, viewRender.height );
 				}
 				pRenderContext.SafeRelease();
 			}

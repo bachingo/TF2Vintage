@@ -1661,6 +1661,7 @@ private:
     float        m_flResolvedLat;
     float        m_flResolvedLon;
     float        m_flResolvedTZ;
+	char  		 m_szCfgLocationBuf[256];  // scratch buffer for file-based geo config
     const char  *m_pszResolvedLocation;  // points into table or literal — never freed
     bool         m_bGeoFromTable;        // true = table match, false = ConVar fallback
 

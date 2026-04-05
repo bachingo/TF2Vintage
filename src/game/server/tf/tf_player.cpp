@@ -311,6 +311,8 @@ extern CBaseEntity *FindPickerEntity( CBasePlayer *pPlayer );
 extern bool CanScatterGunKnockBack( CTFWeaponBase *pWeapon, float flDamage, float flDistanceSq );
 extern bool IsCustomGameMode();
 
+extern ConVar tf2v_enforcement;
+
 static const char *s_pszTauntRPSParticleNames[] =
 {
 	"rps_rock_red",
@@ -4891,46 +4893,45 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 
 				if ( !bAlreadyHave && pItem->GetStaticData()->GetItemClass() )
 				{
--                    CEconEntity *pNewItem = dynamic_cast<CEconEntity*>(GiveNamedItem( pItem->GetStaticData()->GetItemClass(), 0, pItem ));
-+                    // TF2V: Build a potentially-modified item view for era compliance.
-+                    // This may strip anachronistic modifiers (stat clock, paint, quality)
-+                    // from a *copy* of the item view. The player's inventory is never touched.
-+                    CEconItemView strippedView;
-+                    CEconItemView *pItemToSpawn = const_cast<CEconItemView*>(pItem);
-+
-+                    if ( tf2v_enforcement.GetInt() >= 2 )
-+                    {
-+                        int nActiveEra = tf2v_era.GetInt();
-+                        CTF2VStripLog stripLog;
-+
-+                        if ( !TF2VStripAnachronisticModifiers( pItem, &strippedView,
-+                                                               nActiveEra, &stripLog ) )
-+                        {
-+                            // Base item post-dates era — use stock (ItemIsAllowed
-+                            // should have caught this, but be safe).
-+                            continue;
-+                        }
-+
-+                        // Log what was stripped for server console / VGUI
-+                        for ( int s = 0; s < stripLog.nEntries; s++ )
-+                        {
-+                            DevMsg( "[TF2V] Stripped %s from %s "
-+                                    "(introduced %s — %s; server era %d).\n",
-+                                    stripLog.entries[s].szWhat,
-+                                    pItem->GetItemDefinition()
-+                                        ? pItem->GetItemDefinition()->GetItemBaseName()
-+                                        : "unknown",
-+                                    stripLog.entries[s].szDate,
-+                                    stripLog.entries[s].szUpdate,
-+                                    nActiveEra );
-+                        }
-+
-+                        pItemToSpawn = &strippedView;
-+                    }
-+
-+                    CEconEntity *pNewItem = dynamic_cast<CEconEntity*>(
-+                        GiveNamedItem( pItem->GetStaticData()->GetItemClass(),
-+                                       0, pItemToSpawn ));
+                    // TF2V: Build a potentially-modified item view for era compliance.
+                    // This may strip anachronistic modifiers (stat clock, paint, quality)
+                    // from a *copy* of the item view. The player's inventory is never touched.
+                    CEconItemView strippedView;
+                    CEconItemView *pItemToSpawn = const_cast<CEconItemView*>(pItem);
+
+                    if ( tf2v_enforcement.GetInt() >= 2 )
+                    {
+                        int nActiveEra = tf2v_era.GetInt();
+                        CTF2VStripLog stripLog;
+
+                        if ( !TF2VStripAnachronisticModifiers( pItem, &strippedView,
+                                                               nActiveEra, &stripLog ) )
+                        {
+                            // Base item post-dates era — use stock (ItemIsAllowed
+                            // should have caught this, but be safe).
+                            continue;
+                        }
+
+                        // Log what was stripped for server console / VGUI
+                        for ( int s = 0; s < stripLog.nEntries; s++ )
+                        {
+                            DevMsg( "[TF2V] Stripped %s from %s "
+                                    "(introduced %s — %s; server era %d).\n",
+                                    stripLog.entries[s].szWhat,
+                                    pItem->GetItemDefinition()
+                                        ? pItem->GetItemDefinition()->GetItemBaseName()
+                                        : "unknown",
+                                    stripLog.entries[s].szDate,
+                                    stripLog.entries[s].szUpdate,
+                                    nActiveEra );
+                        }
+
+                        pItemToSpawn = &strippedView;
+                    }
+
+                    CEconEntity *pNewItem = dynamic_cast<CEconEntity*>(
+                        GiveNamedItem( pItem->GetStaticData()->GetItemClass(),
+                                       0, pItemToSpawn ));
 
 					Assert( pNewItem );
 					if ( pNewItem )

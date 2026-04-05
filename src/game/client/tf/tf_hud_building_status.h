@@ -335,6 +335,7 @@ public:
 	virtual bool ShouldDraw( void );
 	virtual void ApplySchemeSettings( vgui::IScheme *scheme );
 	virtual void OnTick( void );
+	virtual void PaintTraverse( bool forceRepaint, bool allowForce ) OVERRIDE;
 
 	virtual void LevelInit( void );
 
