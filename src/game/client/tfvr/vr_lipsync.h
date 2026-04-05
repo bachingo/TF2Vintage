@@ -11,11 +11,11 @@
 #pragma once
 #endif
 
-#include "OVRLipSync.h"
+#include "../../../thirdparty/OVRLipSync/OVRLipSync.h"
 #include "steam/isteamuser.h"
 #include "steam/steam_api.h"
 
-#define VR_LIPSYNC_MAX_PLAYERS     34     // MAX_PLAYERS + 1 + padding
+#define VR_LIPSYNC_MAX_PLAYERS     127     // MAX_PLAYERS + 1 + padding
 #define OVR_VISEME_COUNT           15
 
 // ISteamUser vtable index for DecompressVoice (SteamUser023)
