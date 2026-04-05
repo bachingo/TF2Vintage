@@ -15,7 +15,7 @@ $MacroRequired "GAMENAME"
 
 $Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
 $include "$SRCDIR\vpc_scripts\protobuf_builder.vpc"
-$Include "$SRCDIR\vpc_scripts\source_replay.vpc"	[$TF]
+$Include "$SRCDIR\vpc_scripts\source_replay.vpc"
 $Include "$SRCDIR\game\protobuf_include.vpc"
 
 $Configuration	"Debug"
@@ -65,6 +65,8 @@ $Configuration
 		// misyl: We should eliminate these someday.
 		$DisableSpecificWarnings		"$BASE;4267" [$WIN64] // warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
 		$DisableSpecificWarnings		"$BASE;4101" [$WINDOWS] // warning C4101: 'topColor': unreferenced local variable
+		
+		$AdditionalOptions    			"$BASE /FS"
 	}
 
 	$Linker
