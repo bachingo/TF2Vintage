@@ -5,8 +5,9 @@
 //=============================================================================
 
 #include "cbase.h"
-#include "tf_gamerules_convars.h"
-#include "tf_gamerules_era_internal.h"
+#include "tf_gamerules.h"            // CTFGameRules class + era member declarations
+#include "tf_gamerules_convars.h"    // extern ConVar tf2v_* declarations
+#include "tf_gamerules_era_internal.h"  // callback fwd decls + inline helpers
 
 #ifdef GAME_DLL
 

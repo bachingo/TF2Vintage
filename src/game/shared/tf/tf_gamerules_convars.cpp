@@ -20,10 +20,11 @@
 //=============================================================================
 
 #include "cbase.h"
-#include "tf_gamerules_convars.h"
+#include "tf_gamerules.h"               // TF2V_ERA_MAX_STR and era #defines
+#include "tf_gamerules_convars.h"        // our own extern declarations
 
 #ifdef GAME_DLL
-#include "tf_gamerules_era_internal.h"
+#include "tf_gamerules_era_internal.h"  // callback fwd decls + inline helpers
 #endif
 
 

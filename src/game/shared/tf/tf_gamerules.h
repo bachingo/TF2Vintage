@@ -19,6 +19,21 @@
 #pragma once
 #endif
 
+// -------------------------------------------------------------------------
+// Era integer bounds and stringify helpers.
+// Placed here (rather than in tf_gamerules_era_internal.h) so that client
+// code and any header that includes tf_gamerules.h can use TF2V_ERA_MAX_STR
+// in ConVar default strings without pulling in the server-only internal header.
+// -------------------------------------------------------------------------
+#define TF2V_ERA_MIN            0       // PS3 internal build (~Aug 2007)
+#define TF2V_ERA_MAX            200     // TF2 SDK Release (Feb 18 2025)
+#define TF2V_ERA_POST_BALANCE   180     // Mar 2018 — balance freeze point
+#define TF2V_ERA_VSCRIPT        190     // Dec 2022 — VScript; VSH/ZI basis
+#define TF2V_ERA_ASYM_MIN       190     // Earliest era with official ASYM modes
+#define TF2V_ERA_MVM_MIN        121     // Mann vs. Machine (Aug 15 2012)
+#define _TF2V_STRINGIFY(x)      #x
+#define TF2V_STRINGIFY(x)       _TF2V_STRINGIFY(x)
+#define TF2V_ERA_MAX_STR        TF2V_STRINGIFY(TF2V_ERA_MAX)    // "200"
 
 #include "teamplayroundbased_gamerules.h"
 #include "convar.h"
@@ -1490,6 +1505,16 @@ public:
 	const char * GetNextMvMPopfile ();
 
 	virtual void BalanceTeams( bool bRequireSwitcheesToBeDead );
+#endif
+
+	// =========================================================================
+	// TF2V ERA SYSTEM
+	// Class members (TF2VEraState_t, method declarations, private data) are
+	// declared in tf_gamerules_era_members.h and injected here. Implementations
+	// live in tf_gamerules_era_internal.cpp and tf_gamerules_applyera.cpp.
+	// =========================================================================
+#ifdef GAME_DLL
+#include "tf_gamerules_era_members.h"
 #endif
 };
 
