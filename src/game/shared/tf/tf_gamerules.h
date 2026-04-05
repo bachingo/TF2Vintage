@@ -20,7 +20,6 @@
 #endif
 
 
-
 #include "teamplayroundbased_gamerules.h"
 #include "convar.h"
 #include "gamevars_shared.h"
@@ -1055,6 +1054,8 @@ private:
 	void ComputeHealthAndAmmoVectors( void );		// compute internal vectors of health and ammo locations
 	bool m_areHealthAndAmmoVectorsReady;
 
+
+#ifdef GAME_DLL
 
 	
 	void CheckHelltowerCartAchievement( int iTeam );

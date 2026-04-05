@@ -679,8 +679,6 @@ extern ConVar tf_damage_disablespread;
 extern ConVar tf_populator_damage_multiplier;
 extern ConVar tf_mm_trusted;
 extern ConVar tf_weapon_criticals;
-
-
 extern ConVar tf_weapon_criticals_melee;
 extern ConVar mp_idledealmethod;
 extern ConVar mp_idlemaxtime;
@@ -834,6 +832,7 @@ ConVar tf_autobalance_dead_candidates_maxtime( "tf_autobalance_dead_candidates_m
 ConVar tf_autobalance_force_candidates_maxtime( "tf_autobalance_force_candidates_maxtime", "5", FCVAR_REPLICATED );
 ConVar tf_autobalance_xp_bonus( "tf_autobalance_xp_bonus", "500", FCVAR_REPLICATED );
 
+
 #ifdef GAME_DLL
 
 static const float g_flStrangeEventBatchProcessInterval = 30.0f;
@@ -932,6 +931,11 @@ extern ConVar mp_tournament_post_match_period;
 extern ConVar tf_flag_return_on_touch;
 extern ConVar tf_flag_return_time_credit_factor;
 ConVar tf_grapplinghook_enable( "tf_grapplinghook_enable", "0", FCVAR_REPLICATED );
+
+
+// TF2V calls
+extern ConVar tf2v_individual_classlimit;
+extern ConVar tf2v_quickplay_profile;
 
 #ifdef GAME_DLL
 CUtlString s_strNextMvMPopFile;
@@ -15244,18 +15248,6 @@ void CTFGameRules::ClientCommandKeyValues( edict_t *pEntity, KeyValues *pKeyValu
 				}
 			}
 		}
-		else if ( FStrEq( pszCommand, "VRModeActive" ) )
-		{
-			// Set VR mode flag when client reports VR is active
-			pTFPlayer->SetInVRMode( true );
-			DevMsg( "Player %s activated VR mode\n", pTFPlayer->GetPlayerName() );
-		}
-		else if ( FStrEq( pszCommand, "VRModeInactive" ) )
-		{
-			// Clear VR mode flag when client reports VR is inactive
-			pTFPlayer->SetInVRMode( false );
-			DevMsg( "Player %s deactivated VR mode\n", pTFPlayer->GetPlayerName() );
-		}
 		else if ( FStrEq( pszCommand, "TestItems" ) )
 		{
 			pTFPlayer->ItemTesting_Start( pKeyValues );
@@ -18840,8 +18832,8 @@ convar_tags_t convars_to_check_for_tags[] =
 	{ "tf2v_certified_xbox",        "xbox",                  NULL },
 	{ "tf2v_quickplay_casual",      "quickplay_casual",      NULL },
 	{ "tf2v_quickplay_competitive", "quickplay_competitive", NULL },
+	{ "tf2v_quiet", 				"quiet",				 NULL },
 };
-
 
 //-----------------------------------------------------------------------------
 // Purpose: Engine asks for the list of convars that should tag the server
@@ -21332,14 +21324,9 @@ void CTFGameRules::MatchSummaryTeleport()
 
 					if ( pObserverPoint )
 					{
-						// Don't override camera control for VR players - let them maintain HMD control
-						bool bPlayerInVR = pTFPlayer->IsInVRMode() && !pTFPlayer->IsFakeClient();
-						if ( !bPlayerInVR )
-						{
-							pTFPlayer->SetViewEntity( pObserverPoint );
-							pTFPlayer->SetViewOffset( vec3_origin );
-							pTFPlayer->SetFOV( pObserverPoint, pObserverPoint->m_flFOV );
-						}
+						pTFPlayer->SetViewEntity( pObserverPoint );
+						pTFPlayer->SetViewOffset( vec3_origin );
+						pTFPlayer->SetFOV( pObserverPoint, pObserverPoint->m_flFOV );
 					}
 
 					// use this to force the client player anim to face the right direction
