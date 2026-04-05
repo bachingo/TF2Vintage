@@ -60,7 +60,7 @@ $Configuration
 		$PreprocessorDefinitions		"$BASE;USE_WEBM_FOR_REPLAY;" [$LINUXALL]
 		$Create/UsePrecompiledHeader	"Use Precompiled Header (/Yu)"
 		$Create/UsePCHThroughFile		"cbase.h"
-		$PrecompiledHeaderFile			"$(IntDir)\client.pch"
+		$PrecompiledHeaderFile			"$(IntDir)/client.pch"
 
 		// misyl: We should eliminate these someday.
 		$DisableSpecificWarnings		"$BASE;4267" [$WIN64] // warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
@@ -88,26 +88,26 @@ $Project
 {
 	$Folder "Replay"
 	{
-		$File	"replay\replaycamera.cpp"
-		$File	"replay\replaycamera.h"
-		$File	"replay\cdll_replay.cpp"
-		$File	"replay\cdll_replay.h"
+		$File	"replay/replaycamera.cpp"
+		$File	"replay/replaycamera.h"
+		$File	"replay/cdll_replay.cpp"
+		$File	"replay/cdll_replay.h"
 		
-		$File	"replay\gamedefs.h"	[$BUILD_REPLAY]
-		$File	"replay\gamedefs.cpp"	[$BUILD_REPLAY]
-		$File	"replay\replay_ragdoll.cpp"	[$BUILD_REPLAY]
-		$File	"replay\replay_ragdoll.h"	[$BUILD_REPLAY]
-		$File	"replay\replay_screenshot.cpp"	[$BUILD_REPLAY]
-		$File	"replay\replay_screenshot.h"	[$BUILD_REPLAY]
-		$File	"replay\replayperformanceplaybackhandler.h"	[$BUILD_REPLAY]
-		$File	"replay\replayperformanceplaybackhandler.cpp"	[$BUILD_REPLAY]
-		$File	"replay\replayrenderer.cpp"	[$BUILD_REPLAY]
-		$File	"replay\replayrenderer.h"	[$BUILD_REPLAY]
-		$File	"replay\replayvideo.cpp"	[$BUILD_REPLAY]
-		$File	"replay\replayvideo.h"	[$BUILD_REPLAY]
+		$File	"replay/gamedefs.h"	[$BUILD_REPLAY]
+		$File	"replay/gamedefs.cpp"	[$BUILD_REPLAY]
+		$File	"replay/replay_ragdoll.cpp"	[$BUILD_REPLAY]
+		$File	"replay/replay_ragdoll.h"	[$BUILD_REPLAY]
+		$File	"replay/replay_screenshot.cpp"	[$BUILD_REPLAY]
+		$File	"replay/replay_screenshot.h"	[$BUILD_REPLAY]
+		$File	"replay/replayperformanceplaybackhandler.h"	[$BUILD_REPLAY]
+		$File	"replay/replayperformanceplaybackhandler.cpp"	[$BUILD_REPLAY]
+		$File	"replay/replayrenderer.cpp"	[$BUILD_REPLAY]
+		$File	"replay/replayrenderer.h"	[$BUILD_REPLAY]
+		$File	"replay/replayvideo.cpp"	[$BUILD_REPLAY]
+		$File	"replay/replayvideo.h"	[$BUILD_REPLAY]
 		
-		$File	"replay\genericclassbased_replay.cpp"	[$BUILD_REPLAY]
-		$File	"replay\genericclassbased_replay.h"	[$BUILD_REPLAY]
+		$File	"replay/genericclassbased_replay.cpp"	[$BUILD_REPLAY]
+		$File	"replay/genericclassbased_replay.h"	[$BUILD_REPLAY]
 		
 		$File	"$SRCDIR\game\shared\replay_gamestats_shared.cpp"	[$BUILD_REPLAY]
 		$File	"$SRCDIR\game\shared\replay_gamestats_shared.h"	[$BUILD_REPLAY]
@@ -1342,7 +1342,7 @@ $Project
 		$ImpLibexternal steam_api64	[$WIN64]
 		$ImpLib 	"$SRCDIR\thirdparty\discord_game_sdk\lib\x86_64\discord_game_sdk.dll"	[$WIN64]
 		
-		$Libexternal $LIBCOMMON\libcrypto [$OSXALL]
+		$Libexternal $LIBCOMMON/libcrypto [$OSXALL]
 		$Libexternal "$SRCDIR\lib\common\$CRYPTOPPDIR\libcryptopp" [$LINUXALL&&!$SOURCESDK]
 		$Lib   "libz" [$WINDOWS]
 
