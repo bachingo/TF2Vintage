@@ -662,8 +662,8 @@ float CTeamplayRoundBasedRules::GetRespawnTimeScalar( int iTeam )
 	else if ( iNumPlayers <= iOptimalPlayersStandard ) // 1x, no math needed.
 		return 1.0f;
 
-	// XL scaling: ramp from 1x at 8 players to 3x at 63.
-	return RemapValClamped( (float)iNumPlayers, (float)iOptimalPlayersStandard, (float)iLargeServerMax, 1.0f, 3.0f );
+	// XL scaling: ramp from 1x at 8 players to 4x at 63.
+	return RemapValClamped( (float)iNumPlayers, (float)iOptimalPlayersStandard, (float)iLargeServerMax, 1.0f, 4.0f );
 }
 
 //-----------------------------------------------------------------------------

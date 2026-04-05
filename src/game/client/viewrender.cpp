@@ -39,7 +39,6 @@
 #include "c_rope.h"
 #include "c_effects.h"
 #include "smoke_fog_overlay.h"
-#include "menu.h"
 #include "materialsystem/imaterialsystemhardwareconfig.h"
 #include "VGuiMatSurface/IMatSystemSurface.h"
 #include "vgui_int.h"
@@ -54,24 +53,6 @@
 #include "clientmode_shared.h"
 #include "sourcevr/isourcevirtualreality.h"
 #include "client_virtualreality.h"
-#include "tfvr/vr_integration.h"
-#include "tfvr/openxr_manager.h"
-#include "tfvr/vr_laser_pointer.h"
-#include "tfvr/vr_hand_hud_compositor.h"
-#include "tfvr/vr_spring_hud.h"
-#include "tfvr/vr_damage_indicator.h"
-#include "tfvr/vr_weapon_select.h"
-#include "tfvr/vr_popup_hud.h"
-#include "tfvr/vr_world_health_icon.h"
-#include "tfvr/vr_damage_numbers.h"
-#include "tfvr/vr_world_ui_queue.h"
-#include "tfvr/vr_spectator_extras.h"
-#include "tfvr/vr_controller_model.h"
-#include "tfvr/vr_spectator_camera.h"
-#include "tfvr/vr_collision_warning.h"
-#include "tfvr/vr_hand_render.h"
-#include "c_lights.h"
-
 #ifdef TF_CLIENT_DLL
 #include "tf/c_tf_player.h"
 #endif
@@ -99,31 +80,9 @@
 // Projective textures
 #include "C_Env_Projected_Texture.h"
 
-// TF2 UI panels for material selection logic
-#include "tf/vgui/character_info_panel.h"
-#include "tf/vgui/class_loadout_panel.h"
-#include "econ/econ_controls.h"
-#include "shareddefs.h"
-#include "game/client/iviewport.h"
-#include "viewport_panel_names.h"
-#include "tf/tf_shareddefs.h"
-
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-static ConVar gstring_csm_color_light( "gstring_csm_color_light", "0" );
-static ConVar gstring_csm_color_ambient( "gstring_csm_color_ambient", "0" );
-
-static Vector ConvertLightmapGammaToLinear( int *iColor4 )
-{
-	Vector vecColor;
-	for ( int i = 0; i < 3; ++i )
-	{
-		vecColor[i] = powf( iColor4[i] / 255.0f, 2.2f );
-	}
-	vecColor *= iColor4[3] / 255.0f;
-	return vecColor;
-}
 
 static void testfreezeframe_f( void )
 {
@@ -131,7 +90,7 @@ static void testfreezeframe_f( void )
 }
 static ConCommand test_freezeframe( "test_freezeframe", testfreezeframe_f, "Test the freeze frame code.", FCVAR_CHEAT );
 
-// VF2 VR — tracks which eye we are currently rendering
+//-----------------------------------------------------------------------------
 
 static ConVar r_visocclusion( "r_visocclusion", "0", FCVAR_CHEAT );
 extern ConVar r_flashlightdepthtexture;
@@ -212,8 +171,6 @@ static ConVar r_eyewaterepsilon( "r_eyewaterepsilon", "10.0f", FCVAR_CHEAT );
 #ifdef TF_CLIENT_DLL
 static ConVar pyro_dof( "pyro_dof", "1", FCVAR_ARCHIVE );
 #endif
-
-static ConVar save_render_target( "save_render_target", "0", 0, "Set to 1 to save the current VR render target to a TGA file." );
 
 extern ConVar cl_leveloverview;
 
@@ -915,15 +872,7 @@ void SetupCurrentView( const Vector &vecOrigin, const QAngle &angles, view_id_t 
 	g_vecCurrentRenderAngles = angles;
 
 	// Compute the world->main camera transform
-	// This makes screen-aligned particles stay upright regardless of head tilt
-	QAngle particleAngles = angles;
-	if ( g_pOpenXRManager && g_pOpenXRManager->IsActive() )
-	{
-		particleAngles.z = 0.0f; // Zero out roll
-	}
-
-	// Compute the world->main camera transform (used by particles for billboarding)
-	ComputeCameraVariables( vecOrigin, particleAngles, 
+	ComputeCameraVariables( vecOrigin, angles, 
 		&g_vecCurrentVForward, &g_vecCurrentVRight, &g_vecCurrentVUp, &g_matCurrentCamInverse );
 
 	g_CurrentViewID = viewID;
@@ -1127,10 +1076,10 @@ void CViewRender::DrawViewModels( const CViewSetup &viewRender, bool drawViewmod
 
 	ITexture *pRTColor = NULL;
 	ITexture *pRTDepth = NULL;
-
 	if( viewRender.m_eStereoEye != STEREO_EYE_MONO )
 	{
-		pRTColor = g_pOpenXRManager->GetRenderTarget();
+		pRTColor = g_pSourceVR->GetRenderTarget( (ISourceVirtualReality::VREye)(viewRender.m_eStereoEye-1), ISourceVirtualReality::RT_Color );
+		pRTDepth = g_pSourceVR->GetRenderTarget( (ISourceVirtualReality::VREye)(viewRender.m_eStereoEye-1), ISourceVirtualReality::RT_Depth );
 	}
 
 	// Josh: Reset modulation color + blend
@@ -1138,7 +1087,7 @@ void CViewRender::DrawViewModels( const CViewSetup &viewRender, bool drawViewmod
 	render->SetColorModulation(	one );
 	render->SetBlend( 1.0f );
 
-	render->Push3DView( viewModelSetup, 0, pRTColor, GetFrustum());
+	render->Push3DView( viewModelSetup, 0, pRTColor, GetFrustum(), pRTDepth );
 
 #ifdef PORTAL //the depth range hack doesn't work well enough for the portal mod (and messing with the depth hack values makes some models draw incorrectly)
 				//step up to a full depth clear if we're extremely close to a portal (in a portal environment)
@@ -1208,177 +1157,6 @@ void CViewRender::DrawViewModels( const CViewSetup &viewRender, bool drawViewmod
 	render->PopView( GetFrustum() );
 
 	// Restore the matrices
-	pRenderContext->MatrixMode( MATERIAL_PROJECTION );
-	pRenderContext->PopMatrix();
-}
-
-
-static ConVar tfvr_hands_over_hud("tfvr_hands_over_hud", "1", FCVAR_ARCHIVE,
-	"Render VR hands/weapons in front of popup HUD elements (stencil masking)");
-
-//-----------------------------------------------------------------------------
-// Purpose: Draw VR hands/weapons on a separate layer from the world.
-//          Uses the world's depth buffer for occlusion (no depth clear).
-//          When a different zNear is configured, uses DepthRange to linearly
-//          remap hand-projection depth values into world-projection depth
-//          space. The mapping z_world = a*z_hand + b is mathematically exact.
-//-----------------------------------------------------------------------------
-void CViewRender::DrawVRHands( const CViewSetup &viewRender )
-{
-	if (!VRHandLayer_IsEnabled())
-		return;
-
-	int nRenderables = VRHandLayer_GetRenderableCount();
-	int nParticles = VRHandLayer_GetDeferredParticleCount();
-	if (nRenderables == 0 && nParticles == 0)
-	{
-		VRHandLayer_ClearRenderables();
-		VRHandLayer_ClearDeferredParticles();
-		return;
-	}
-
-	VPROF("CViewRender::DrawVRHands");
-
-	CMatRenderContextPtr pRenderContext( materials );
-	PIXEVENT( pRenderContext, "DrawVRHands" );
-
-	CViewSetup handSetup( viewRender );
-
-	float zNearOverride = VRHandLayer_GetZNearOverride();
-	float zFarOverride = VRHandLayer_GetZFarOverride();
-
-	if (zNearOverride > 0.0f)
-		handSetup.zNear = zNearOverride;
-	if (zFarOverride > 0.0f)
-		handSetup.zFar = zFarOverride;
-
-	bool bNeedsDepthRemap = (handSetup.zNear != viewRender.zNear || handSetup.zFar != viewRender.zFar);
-
-	if (bNeedsDepthRemap)
-	{
-		if (handSetup.m_bViewToProjectionOverride && g_pOpenXRManager && g_pOpenXRManager->IsActive())
-		{
-			ISourceVirtualReality::VREye vrEye = (viewRender.m_eStereoEye == STEREO_EYE_RIGHT)
-				? ISourceVirtualReality::VREye_Right
-				: ISourceVirtualReality::VREye_Left;
-			g_pOpenXRManager->GetEyeProjectionMatrix(
-				handSetup.m_ViewToProjection, vrEye,
-				handSetup.zNear, handSetup.zFar);
-		}
-	}
-
-	ITexture *pRTColor = NULL;
-	if (viewRender.m_eStereoEye != STEREO_EYE_MONO)
-	{
-		pRTColor = g_pOpenXRManager->GetRenderTarget();
-	}
-
-	pRenderContext->MatrixMode( MATERIAL_PROJECTION );
-	pRenderContext->PushMatrix();
-
-	render->Push3DView( handSetup, 0, pRTColor, GetFrustum() );
-
-	// Compute the linear depth remap from hand-projection to world-projection.
-	// In NDC, the mapping is exact: z_world = a * z_hand + b
-	// This maps directly to DepthRange(b, a + b).
-	// Requires DXVK viewport depth unclamped (no [0,1] restriction).
-	float depthRangeMin = 0.0f;
-	float depthRangeMax = 1.0f;
-
-	if (bNeedsDepthRemap)
-	{
-		float wZN = viewRender.zNear;
-		float wZF = viewRender.zFar;
-		float hZN = handSetup.zNear;
-		float hZF = handSetup.zFar;
-
-		// D3D depth: C = zF/(zF-zN), D = -zN*zF/(zF-zN)
-		// z_ndc = C + D/z_eye
-		// Mapping: z_world = (D_w/D_h) * z_hand + (C_w - C_h * D_w/D_h)
-		float C_w = wZF / (wZF - wZN);
-		float C_h = hZF / (hZF - hZN);
-		float D_w = -wZN * wZF / (wZF - wZN);
-		float D_h = -hZN * hZF / (hZF - hZN);
-
-		float a = D_w / D_h;
-		float b = C_w - C_h * a;
-
-		// DepthRange(min, max) applies: z_out = min + z_in * (max - min)
-		// We need: z_out = b + z_in * a, so min = b, max = a + b
-		depthRangeMin = b;
-		depthRangeMax = a + b;
-
-		pRenderContext->DepthRange(depthRangeMin, depthRangeMax);
-	}
-
-	float one[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	render->SetColorModulation( one );
-	render->SetBlend( 1.0f );
-
-	bool bMaskForHUD = tfvr_hands_over_hud.GetBool();
-	if (bMaskForHUD)
-	{
-		pRenderContext->SetStencilEnable(true);
-		pRenderContext->SetStencilReferenceValue(0x80);
-		pRenderContext->SetStencilTestMask(0x80);
-		pRenderContext->SetStencilWriteMask(0x80);
-		pRenderContext->SetStencilCompareFunction(STENCILCOMPARISONFUNCTION_ALWAYS);
-		pRenderContext->SetStencilPassOperation(STENCILOPERATION_REPLACE);
-		pRenderContext->SetStencilFailOperation(STENCILOPERATION_KEEP);
-		pRenderContext->SetStencilZFailOperation(STENCILOPERATION_KEEP);
-	}
-
-	VRHandLayer_SetHandPassActive( true );
-
-	for (int i = 0; i < nRenderables; i++)
-	{
-		IClientRenderable *pRenderable = VRHandLayer_GetRenderable(i);
-		if (pRenderable)
-		{
-			pRenderable->DrawModel( STUDIO_RENDER );
-		}
-	}
-
-	// Stop writing stencil before particles so translucent effects
-	// (muzzle flashes, trails, etc.) don't fully mask the HUD.
-	// Opaque hand/weapon geometry already wrote the stencil mask above.
-	if (bMaskForHUD)
-	{
-		pRenderContext->SetStencilEnable(false);
-	}
-
-	// Draw weapon/hand particles that were deferred from the world translucent pass.
-	// DepthRange is still active so particle depth is remapped to world-projection
-	// space, giving correct depth-test against both hand geometry and the world.
-	nParticles = VRHandLayer_GetDeferredParticleCount();
-	for (int i = 0; i < nParticles; i++)
-	{
-		IClientRenderable *pParticle = VRHandLayer_GetDeferredParticle(i);
-		if (pParticle)
-		{
-			if ( pParticle->UsesPowerOfTwoFrameBufferTexture() )
-			{
-				UpdateRefractTexture();
-			}
-			if ( pParticle->UsesFullFrameBufferTexture() )
-			{
-				UpdateScreenEffectTexture();
-			}
-			pParticle->DrawModel( STUDIO_RENDER | STUDIO_TRANSPARENCY );
-		}
-	}
-	VRHandLayer_ClearDeferredParticles();
-
-	VRHandLayer_SetHandPassActive( false );
-	VRHandLayer_ClearRenderables();
-
-	if (bNeedsDepthRemap)
-	{
-		pRenderContext->DepthRange(0.0f, 1.0f);
-	}
-
-	render->PopView( GetFrustum() );
-
 	pRenderContext->MatrixMode( MATERIAL_PROJECTION );
 	pRenderContext->PopMatrix();
 }
@@ -1653,16 +1431,7 @@ void CViewRender::ViewDrawScene( bool bDrew3dSkybox, SkyboxVisibility_t nSkyboxV
 
 	ParticleMgr()->IncrementFrameCode();
 
-	// VR hand layer: flag the world pass so VR hands skip drawing and
-	// register themselves for the separate hand layer pass instead.
-	// Only active for the main view (not shadows, monitors, reflections).
-	if (VRHandLayer_IsEnabled() && viewID == VIEW_MAIN)
-		VRHandLayer_BeginWorldPass();
-
 	DrawWorldAndEntities( drawSkybox, viewRender, nClearFlags, pCustomVisibility );
-
-	if (VRHandLayer_IsEnabled() && viewID == VIEW_MAIN)
-		VRHandLayer_EndWorldPass();
 
 	// Disable fog for the rest of the stuff
 	DisableFog();
@@ -1691,12 +1460,7 @@ void CViewRender::ViewDrawScene( bool bDrew3dSkybox, SkyboxVisibility_t nSkyboxV
 
 	// Draw client side effects
 	// NOTE: These are not sorted against the rest of the frame
-	
-	// TFVR - Based on HL2VR: Only advance effects on the last eye to prevent double simulation
-	if (viewRender.m_eStereoEye == GetLastEye())
-		clienteffects->DrawEffects( gpGlobals->frametime );
-	else
-		clienteffects->DrawEffects( 0.0f );	
+	clienteffects->DrawEffects( gpGlobals->frametime );	
 
 	// Mark the frame as locked down for client fx additions
 	SetFXCreationAllowed( false );
@@ -2154,10 +1918,6 @@ void CViewRender::RenderPlayerSprites()
 	tmZone( TELEMETRY_LEVEL0, TMZF_NONE, "%s", __FUNCTION__ );
 
 	GetClientVoiceMgr()->DrawHeadLabels();
-
-	// TF2V: draw chat-typing icons above players who have the chat box open.
-	extern void DrawTypingHeadLabels( void );
-	DrawTypingHeadLabels();
 }
 
 //-----------------------------------------------------------------------------
@@ -2178,20 +1938,31 @@ void CViewRender::SetupMain3DView( const CViewSetup &viewRender, int &nClearFlag
 		nClearFlags |= nDepthStencilFlags; // Add them back in if we're clearing color
 	}
 
-	ITexture *pRT = NULL;
-	if (viewRender.m_eStereoEye != STEREO_EYE_MONO)
+	// If we are using HDR, we render to the HDR full frame buffer texture
+	// instead of whatever was previously the render target
+	if( g_pMaterialSystemHardwareConfig->GetHDRType() == HDR_TYPE_FLOAT )
 	{
-		pRT = g_pOpenXRManager->GetRenderTarget();
+		render->Push3DView( viewRender, nClearFlags, GetFullFrameFrameBufferTexture( 0 ), GetFrustum() );
 	}
+	else
+	{
+		ITexture *pRTColor = NULL;
+		ITexture *pRTDepth = NULL;
+		if( viewRender.m_eStereoEye != STEREO_EYE_MONO )
+		{
+			pRTColor = g_pSourceVR->GetRenderTarget( (ISourceVirtualReality::VREye)(viewRender.m_eStereoEye-1), ISourceVirtualReality::RT_Color );
+			pRTDepth = g_pSourceVR->GetRenderTarget( (ISourceVirtualReality::VREye)(viewRender.m_eStereoEye-1), ISourceVirtualReality::RT_Depth );
+		}
 
-	render->Push3DView(viewRender, nClearFlags, pRT, GetFrustum());
+		render->Push3DView( viewRender, nClearFlags, pRTColor, GetFrustum(), pRTDepth );
+	}
 
 	// If we didn't clear the depth here, we'll need to clear it later
 	nClearFlags ^= nDepthStencilFlags; // Toggle these bits
-	if (nClearFlags & VIEW_CLEAR_COLOR)
+	if ( nClearFlags & VIEW_CLEAR_COLOR )
 	{
 		// If we cleared the color here, we don't need to clear it later
-		nClearFlags &= ~(VIEW_CLEAR_COLOR | VIEW_CLEAR_FULL_TARGET);
+		nClearFlags &= ~( VIEW_CLEAR_COLOR | VIEW_CLEAR_FULL_TARGET );
 	}
 }
 
@@ -2200,195 +1971,6 @@ void CViewRender::CleanupMain3DView( const CViewSetup &viewRender )
 	render->PopView( GetFrustum() );
 }
 
-void CViewRender::UpdateCascadedShadow( const CViewSetup &view )
-{
-	static CTextureReference s_CascadedShadowDepthTexture;
-	static CTextureReference s_CascadedShadowColorTexture;
-	if ( !s_CascadedShadowDepthTexture.IsValid() )
-	{
-		s_CascadedShadowDepthTexture.Init( "_rt_CascadedShadowDepth", TEXTURE_GROUP_OTHER );
-	}
-
-	if ( !s_CascadedShadowColorTexture.IsValid() )
-	{
-		s_CascadedShadowColorTexture.Init( "_rt_CascadedShadowColor", TEXTURE_GROUP_OTHER );
-	}
-
-	ITexture *pDepthTexture = s_CascadedShadowDepthTexture;
-	CMatRenderContextPtr pRenderContext( materials );
-	pRenderContext->SetIntRenderingParameter( INT_CASCADED_DEPTHTEXTURE, *reinterpret_cast<int *>( pDepthTexture ) );
-
-	QAngle angCascadedAngles;
-	Vector vecLight, vecAmbient;
-	g_pCSMEnvLight->GetShadowMappingConstants( angCascadedAngles, vecLight, vecAmbient );
-
-	if ( gstring_csm_color_light.GetBool() )
-	{
-		int iParsed[4];
-		UTIL_StringToIntArray( iParsed, 4, gstring_csm_color_light.GetString() );
-		vecLight = ConvertLightmapGammaToLinear( iParsed );
-	}
-
-	if ( gstring_csm_color_ambient.GetBool() )
-	{
-		int iParsed[4];
-		UTIL_StringToIntArray( iParsed, 4, gstring_csm_color_ambient.GetString() );
-		vecAmbient = ConvertLightmapGammaToLinear( iParsed );
-	}
-
-	for ( int i = 0; i < 3; i++ )
-	{
-		vecAmbient[i] = MIN( vecAmbient[i], vecLight[i] );
-	}
-
-	Vector vecAmbientDelta = vecLight - vecAmbient;
-	vecAmbientDelta.NormalizeInPlace();
-	pRenderContext->SetVectorRenderingParameter( VECTOR_RENDERPARM_GSTRING_CASCADED_AMBIENT_MIN, vecAmbient );
-	pRenderContext->SetVectorRenderingParameter( VECTOR_RENDERPARM_GSTRING_CASCADED_AMBIENT_DELTA, vecAmbientDelta );
-
-	Vector vecFwd, vecRight, vecUp;
-	AngleVectors( angCascadedAngles, &vecFwd, &vecRight, &vecUp );
-
-	pRenderContext->SetVectorRenderingParameter( VECTOR_RENDERPARM_GSTRING_CASCADED_FORWARD, vecFwd );
-
-	Vector vecMainViewFwd;
-	AngleVectors( view.angles, &vecMainViewFwd );
-
-	CViewSetup cascadedShadowView;
-	cascadedShadowView.angles = angCascadedAngles;
-	cascadedShadowView.m_bOrtho = true;
-
-	cascadedShadowView.width = s_CascadedShadowDepthTexture->GetMappingWidth() / 2;
-	cascadedShadowView.height = s_CascadedShadowDepthTexture->GetMappingHeight();
-
-	cascadedShadowView.m_flAspectRatio = 1.0f;
-	cascadedShadowView.m_bDoBloomAndToneMapping = false;
-	cascadedShadowView.zFar = cascadedShadowView.zFarViewmodel = 2000.0f;
-	cascadedShadowView.zNear = cascadedShadowView.zNearViewmodel = 7.0f;
-	cascadedShadowView.fov = cascadedShadowView.fovViewmodel = 90.0f;
-
-	struct ShadowConfig_t
-	{
-		float flOrthoSize;
-		float flForwardOffset;
-		float flUVOffsetX;
-		float flViewDepthBiasHack;
-	} shadowConfigs[] = {
-		{ 64.0f, 0.0f, 0.25f, 0.0f },
-		{ 384.0f, 256.0f, 0.75f, 0.0f }
-	};
-	const int iCascadedShadowCount = ARRAYSIZE( shadowConfigs );
-
-	/*switch ( mode )
-	{
-	case CASCADEDCONFIG_NORMAL:
-	{
-		ShadowConfig_t &closeShadow = shadowConfigs[0];
-		ShadowConfig_t &farShadow = shadowConfigs[1];
-		closeShadow.flOrthoSize = 256.0f;
-		closeShadow.flForwardOffset = 102.0f;
-		farShadow.flOrthoSize = 786.0f;
-		farShadow.flForwardOffset = 384.0f;
-
-		vecMainViewFwd.z = 0.0f;
-		vecMainViewFwd.NormalizeInPlace();
-	}
-	break;
-
-	case CASCADEDCONFIG_SPACE:
-	{
-		ShadowConfig_t &closeShadow = shadowConfigs[0];
-		ShadowConfig_t &farShadow = shadowConfigs[1];
-		closeShadow.flOrthoSize = 4.0f;
-		closeShadow.flForwardOffset = 2.0f;
-		closeShadow.flUVOffsetX = 0.25f;
-		farShadow.flViewDepthBiasHack = 1.5f;
-	}
-	break;
-	}*/
-
-	g_pCSMEnvLight->CopyShadowConfigData( shadowConfigs );
-
-	vecMainViewFwd -= vecFwd * DotProduct( vecMainViewFwd, vecFwd );
-
-	static VMatrix s_CSMSwapMatrix[2];
-	static int s_iCSMSwapIndex = 0;
-
-	//C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
-
-	//Vector vecCascadeOrigin( ( mode == CASCADEDCONFIG_SPACE ) ? view.origin :
-	//						 pPlayer ? pPlayer->GetRenderOrigin() : vec3_origin );
-	Vector vecCascadeOrigin = view.origin - ( vecFwd * 1536 );
-
-	// This can only be set once per frame, not per shadow view. Fuckers.
-	/*if ( mode == CASCADEDCONFIG_SPACE )
-	{
-		pRenderContext->SetShadowDepthBiasFactors( 1.0f, 0.000005f );
-	}
-	else*/
-	{
-		pRenderContext->SetShadowDepthBiasFactors( 8.0f, 0.0005f );
-	}
-
-	for ( int i = 0; i < iCascadedShadowCount; i++ )
-	{
-		const ShadowConfig_t &shadowConfig = shadowConfigs[i];
-
-		cascadedShadowView.m_OrthoTop = -shadowConfig.flOrthoSize;
-		cascadedShadowView.m_OrthoRight = shadowConfig.flOrthoSize;
-		cascadedShadowView.m_OrthoBottom = shadowConfig.flOrthoSize;
-		cascadedShadowView.m_OrthoLeft = -shadowConfig.flOrthoSize;
-
-		cascadedShadowView.x = i * cascadedShadowView.width;
-		cascadedShadowView.y = 0;
-
-		Vector vecOrigin = vecCascadeOrigin + vecMainViewFwd * shadowConfig.flForwardOffset;
-		const float flViewFrustumWidthScale = shadowConfig.flOrthoSize * 2.0f / cascadedShadowView.width;
-		const float flViewFrustumHeightScale = shadowConfig.flOrthoSize * 2.0f / cascadedShadowView.height;
-		const float flFractionX = fmod( DotProduct( vecOrigin, vecRight ), flViewFrustumWidthScale );
-		const float flFractionY = fmod( DotProduct( vecOrigin, vecUp ), flViewFrustumHeightScale );
-		vecOrigin -= flFractionX * vecRight;
-		vecOrigin -= flFractionY * vecUp;
-
-		if ( i > 0 )
-		{
-			const ShadowConfig_t &prevShadowConfig = shadowConfigs[i - 1];
-			const float flCascadedScale = prevShadowConfig.flOrthoSize / shadowConfig.flOrthoSize;
-			Vector vecOffsetShadowMapSpace = vecOrigin - cascadedShadowView.origin;
-			Vector2D vecCascadedOffset( DotProduct( -vecRight, vecOffsetShadowMapSpace ) * 0.5f,
-										DotProduct( vecUp, vecOffsetShadowMapSpace ) );
-			vecCascadedOffset *= 0.5f / shadowConfig.flOrthoSize;
-
-			vecCascadedOffset.x = vecCascadedOffset.x + 0.5f + 0.25f * ( 1.0f - flCascadedScale );
-			vecCascadedOffset.y = vecCascadedOffset.y + 0.5f - flCascadedScale * 0.5f;
-
-			vecOffsetShadowMapSpace.Init( flCascadedScale, vecCascadedOffset.x, vecCascadedOffset.y );
-			pRenderContext->SetVectorRenderingParameter( VECTOR_RENDERPARM_GSTRING_CASCADED_STEP, vecOffsetShadowMapSpace );
-		}
-
-		cascadedShadowView.origin = vecOrigin;
-
-		VMatrix worldToView, viewToProjection, worldToProjection, worldToTexture;
-		render->GetMatricesForView( cascadedShadowView, &worldToView, &viewToProjection, &worldToProjection, &worldToTexture );
-
-		if ( i == 0 )
-		{
-			VMatrix tmp;
-			MatrixBuildScale( tmp, 0.25f, -0.5f, 1.0f );
-			tmp[0][3] = shadowConfig.flUVOffsetX;
-			tmp[1][3] = 0.5f;
-
-			VMatrix &currentSwapMatrix = s_CSMSwapMatrix[s_iCSMSwapIndex];
-			MatrixMultiply( tmp, worldToProjection, currentSwapMatrix );
-			pRenderContext->SetIntRenderingParameter( INT_CASCADED_MATRIX_ADDRESS_0, *reinterpret_cast<int *>( &currentSwapMatrix ) );
-		}
-
-		cascadedShadowView.origin -= vecFwd * shadowConfig.flViewDepthBiasHack;
-		UpdateShadowDepthTexture( s_CascadedShadowColorTexture, s_CascadedShadowDepthTexture, cascadedShadowView );
-	}
-
-	s_iCSMSwapIndex = ( s_iCSMSwapIndex + 1 ) % 2;
-}
 
 //-----------------------------------------------------------------------------
 // Queues up an overlay rendering
@@ -2445,30 +2027,13 @@ const char *COM_GetModDirectory();
 // This renders the entire 3D view.
 void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int whatToDraw )
 {
-	VPROF_BUDGET("CViewRender::RenderView", "CViewRender::RenderView");
-	tmZone(TELEMETRY_LEVEL0, TMZF_NONE, "%s", __FUNCTION__);
-
-	if (viewRender.m_eStereoEye == STEREO_EYE_MONO)
-	{
-		// Only use VR rendering when VR is actually active
-		if (UseVR() && whatToDraw != -1)
-		{
-			RenderVREyeToScreen(viewRender, STEREO_EYE_LEFT);
-			//RenderMenuToMenuTexture(view);
-			RenderMenuTextureToScreen(viewRender, false);
-			return;
-		}
-		// When VR is off, proceed with normal rendering
-		whatToDraw = 0;
-	}
-	whatToDraw |= RENDERVIEW_DRAWHUD;
-
 	m_UnderWaterOverlayMaterial.Shutdown();					// underwater view will set
 
 	m_CurrentView = viewRender;
 
 	C_BaseAnimating::AutoAllowBoneAccess boneaccess( true, true );
-	
+	VPROF( "CViewRender::RenderView" );
+	tmZone( TELEMETRY_LEVEL0, TMZF_NONE, "%s", __FUNCTION__ );
 
 	// Don't want TF2 running less than DX 8
 	if ( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() < 80 )
@@ -2504,7 +2069,6 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 	{
 		g_flFreezeFlash = 0.0f;
 
-	if (viewRender.m_eStereoEye == GetLastEye())
 		g_pClientShadowMgr->AdvanceFrame();
 
 	#ifdef USE_MONITORS
@@ -2576,7 +2140,7 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 		RenderPlayerSprites();
 
 		// Image-space motion blur
-		if ( !VRIntegration::IsVRActive() && ( !building_cubemaps.GetBool() && viewRender.m_bDoBloomAndToneMapping ) ) // We probably should use a different view. variable here
+		if ( !building_cubemaps.GetBool() && viewRender.m_bDoBloomAndToneMapping ) // We probably should use a different view. variable here
 		{
 			static ConVarRef mat_motion_blur_enabled( "mat_motion_blur_enabled" );
 			if ( ( mat_motion_blur_enabled.GetInt() ) && ( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() >= 90 ) )
@@ -2589,10 +2153,8 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 				pRenderContext.SafeRelease();
 			}
 		}
-		GetClientModeNormal()->DoPostScreenSpaceEffects( &viewRender );
 
-		// Draw VR hands on a separate layer (after world, preserving depth for occlusion)
-		DrawVRHands( viewRender );
+		GetClientModeNormal()->DoPostScreenSpaceEffects( &viewRender );
 
 		// Now actually draw the viewmodel
 		DrawViewModels( viewRender, whatToDraw & RENDERVIEW_DRAWVIEWMODEL );
@@ -2698,7 +2260,7 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 
 	}
 
-	if ( mat_viewportupscale.GetBool() && mat_viewportscale.GetFloat() < 1.0f && !VRIntegration::IsVRActive())
+	if ( mat_viewportupscale.GetBool() && mat_viewportscale.GetFloat() < 1.0f ) 
 	{
 		CMatRenderContextPtr pRenderContextUpscale( materials );
 
@@ -2729,7 +2291,7 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 	// if we're in VR mode we might need to override the render target
 	if( UseVR() )
 	{
-		saveRenderTarget = g_pOpenXRManager->GetRenderTarget();
+		saveRenderTarget = g_pSourceVR->GetRenderTarget( (ISourceVirtualReality::VREye)(viewRender.m_eStereoEye - 1), ISourceVirtualReality::RT_Color );
 	}
 
 	// Draw the 2D graphics
@@ -2739,23 +2301,6 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 
 	if ( whatToDraw & RENDERVIEW_DRAWHUD )
 	{
-		// setup framebuffer access for vehicle crosshair
-		int viewFramebufferX = viewRender.x;
-		if (viewRender.m_eStereoEye == STEREO_EYE_RIGHT && !saveRenderTarget)
-			viewFramebufferX = viewRender.m_nUnscaledWidth;
-		g_pMatSystemSurface->SetFullscreenViewportAndRenderTarget(viewFramebufferX, 0, viewRender.m_nUnscaledWidth, viewRender.m_nUnscaledHeight, saveRenderTarget);
-
-		// Get the render context out of materials to avoid some debug stuff.
-		// WARNING THIS REQUIRES THE .SafeRelease below or it'll never release the ref
-		// into the VR HUD block where it prevents panels from drawing over hands.
-		pRenderContext = materials->GetRenderContext();
-		bool bKeepStencil = VRHandLayer_IsEnabled() && tfvr_hands_over_hud.GetBool();
-		pRenderContext->ClearBuffers(false, true, !bKeepStencil);
-		pRenderContext.SafeRelease();
-
-		RenderHUD(viewRender);
-
-		/*
 		VPROF_BUDGET( "VGui_DrawHud", VPROF_BUDGETGROUP_OTHER_VGUI );
 		int viewWidth = viewRender.m_nUnscaledWidth;
 		int viewHeight = viewRender.m_nUnscaledHeight;
@@ -2770,30 +2315,33 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 		bool bClear = false;
 		bool bPaintMainMenu = false;
 		ITexture *pTexture = NULL;
-		if(VRIntegration::IsVRActive())
+		if( UseVR() )
 		{
-			pTexture = materials->FindTexture( "_rt_vgui", NULL, false );
-			if( pTexture )
+			if( g_ClientVirtualReality.ShouldRenderHUDInWorld() )
 			{
-				bPaintMainMenu = true;
-				bClear = true;
-				viewX = 0;
-				viewY = 0;
-				viewActualWidth = pTexture->GetActualWidth();
-				viewActualHeight = pTexture->GetActualHeight();
+				pTexture = materials->FindTexture( "_rt_gui", NULL, false );
+				if( pTexture )
+				{
+					bPaintMainMenu = true;
+					bClear = true;
+					viewX = 0;
+					viewY = 0;
+					viewActualWidth = pTexture->GetActualWidth();
+					viewActualHeight = pTexture->GetActualHeight();
 
-				vgui::surface()->GetScreenSize( viewWidth, viewHeight );
+					vgui::surface()->GetScreenSize( viewWidth, viewHeight );
 
-				viewFramebufferX = 0;
-				if( viewRender.m_eStereoEye == STEREO_EYE_RIGHT && !saveRenderTarget )
-					viewFramebufferX = viewFramebufferWidth;
+					viewFramebufferX = 0;
+					if( viewRender.m_eStereoEye == STEREO_EYE_RIGHT && !saveRenderTarget )
+						viewFramebufferX = viewFramebufferWidth;
+					viewFramebufferY = 0;
+				}
+			}
+			else
+			{
+				viewFramebufferX = viewRender.m_eStereoEye == STEREO_EYE_RIGHT ? viewWidth : 0;
 				viewFramebufferY = 0;
 			}
-		}
-		else
-		{
-			viewFramebufferX = viewRender.m_eStereoEye == STEREO_EYE_RIGHT ? viewWidth : 0;
-			viewFramebufferY = 0;
 		}
 
 		// Get the render context out of materials to avoid some debug stuff.
@@ -2815,7 +2363,7 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 		}
 
 		// let vgui know where to render stuff for the forced-to-framebuffer panels
-		if( VRIntegration::IsVRActive() && !enginevgui->IsGameUIVisible())
+		if( UseVR() )
 		{
 			g_pMatSystemSurface->SetFullscreenViewportAndRenderTarget( viewFramebufferX, viewFramebufferY, viewFramebufferWidth, viewFramebufferHeight, saveRenderTarget );
 		}
@@ -2856,224 +2404,41 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 		if( bPaintMainMenu )
 			render->VGui_Paint( PAINT_UIPANELS | PAINT_CURSOR );
 
-		// Get the render context out of materials to avoid some debug stuff.
-		// WARNING THIS REQUIRES THE .SafeRelease below or it'll never release the ref
+		AllowCurrentViewAccess( false );
+
+		VGui_PostRender();
+
+		g_pClientMode->PostRenderVGui();
 		pRenderContext = materials->GetRenderContext();
-
-		// clear depth in the backbuffer before we push the render target
-		if( bClear )
+		if (pTexture)
 		{
-			pRenderContext->ClearBuffers( false, true, true );
+			pRenderContext->OverrideAlphaWriteEnable( false, true );
 		}
+		pRenderContext->PopRenderTargetAndViewport();
 
-		// constrain where VGUI can render to the view
-		pRenderContext->PushRenderTargetAndViewport( pTexture, NULL, viewX, viewY, viewActualWidth, viewActualHeight );
-		*/
-		//if ( viewRender.m_eStereoEye != STEREO_EYE_MONO )
-		//{
+		if ( UseVR() )
+		{
 			// figure out if we really want to draw the HUD based on freeze cam
 			C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
 			bool bInFreezeCam = ( pPlayer && pPlayer->GetObserverMode() == OBS_MODE_FREEZECAM );
 
 			// draw the HUD after the view model so its "I'm closer" depth queues work right.
-			if (!bInFreezeCam && g_ClientVirtualReality.ShouldRenderHUDInWorld())
+			if( !bInFreezeCam && g_ClientVirtualReality.ShouldRenderHUDInWorld() )
 			{
 				// Now we've rendered the HUD to its texture, actually get it on the screen.
 				// Since we're drawing it as a 3D object, we need correctly set up frustum, etc.
 				int ClearFlags = 0;
 				SetupMain3DView( viewRender, ClearFlags );
 
-			// Activate stencil test so VR HUD panels don't draw over hand pixels
-			bool bHandsOverHUD = VRHandLayer_IsEnabled() && tfvr_hands_over_hud.GetBool();
-			if (bHandsOverHUD)
-			{
-				pRenderContext = materials->GetRenderContext();
-				pRenderContext->SetStencilEnable(true);
-				pRenderContext->SetStencilReferenceValue(0x80);
-				pRenderContext->SetStencilTestMask(0x80);
-				pRenderContext->SetStencilWriteMask(0x00);
-				pRenderContext->SetStencilCompareFunction(STENCILCOMPARISONFUNCTION_NOTEQUAL);
-				pRenderContext->SetStencilPassOperation(STENCILOPERATION_KEEP);
-				pRenderContext->SetStencilFailOperation(STENCILOPERATION_KEEP);
-				pRenderContext->SetStencilZFailOperation(STENCILOPERATION_KEEP);
-				pRenderContext.SafeRelease();
-			}
-
-			// Material selection (translucent vs opaque) is now handled automatically
-			// based on whether HUD is attached to face or positioned in world space
-			// ConVar to control VR HUD quad rendering behavior (doesn't affect 2D screen HUD)
-			static ConVar tfvr_hud_only_in_menus("tfvr_hud_only_in_menus", "1", FCVAR_ARCHIVE, "Only render main VR HUD quad when in menus (0=always, 1=menus only). 2D screen HUD always renders.");
-			static ConVar tfvr_disable_hud("tfvr_disable_hud", "0", FCVAR_ARCHIVE, "Completely disable VR HUD rendering for performance testing (0=enabled, 1=disabled)");
-				
-				bool bShouldRenderVRQuad = true;
-				
-				// Performance testing: Completely disable HUD if requested
-				if (tfvr_disable_hud.GetBool())
-				{
-					bShouldRenderVRQuad = false;
-				}
-				else if (tfvr_hud_only_in_menus.GetBool())
-				{
-					// Menu-only mode: check if we're actually in a menu
-					extern class CVRMenuManager* g_pVRMenuManager;
-					if (g_pVRMenuManager && g_pVRMenuManager->IsMenuVisible())
-					{
-						// Menu is open - render the VR HUD quad for menu interaction
-						bShouldRenderVRQuad = true;
-					}
-					else
-					{
-						// In gameplay - skip VR HUD quad, use hand health overlay instead
-						bShouldRenderVRQuad = false;
-					}
-				}
-				else
-				{
-					// Always render mode (default behavior)
-					bShouldRenderVRQuad = true;
-				}
-				
-				if (bShouldRenderVRQuad)
-				{
-					// Ensure VR menu manager has processed menu visibility before rendering HUD quad
-					// This prevents single frame flash where menu shows at wrong scale/position
-					if (g_pVRMenuManager && g_pVRMenuManager->IsMenuVisible())
-					{
-						// Menu is visible - let VR menu manager set proper bounds first
-						// Check if custom bounds are already set
-						Vector viewer, ul, ur, ll, lr;
-						if (g_ClientVirtualReality.GetCustomHUDBounds(&viewer, &ul, &ur, &ll, &lr))
-						{
-							// Custom bounds are set, safe to render
-							g_ClientVirtualReality.RenderHUDQuad( g_pClientMode->ShouldBlackoutAroundHUD() );
-						}
-						// If custom bounds not set yet, skip this frame to prevent wrong scale/position
-					}
-					else
-					{
-						// No menu visible, render normally
-						g_ClientVirtualReality.RenderHUDQuad( g_pClientMode->ShouldBlackoutAroundHUD() );
-					}
-				}
-				
-				// Begin VR World UI frame for distance-sorted rendering
-				// All managers queue their panels, then FlushRenderQueue renders them sorted
-				if (g_pVRWorldUIQueue && g_pVRWorldUIQueue->IsInitialized())
-				{
-					// Get head position for distance sorting
-					Vector headPos;
-					if (g_pOpenXRManager && g_pOpenXRManager->IsActive())
-					{
-						VMatrix worldFromMideye = g_ClientVirtualReality.GetWorldFromMidEye();
-						headPos = worldFromMideye.GetTranslation();
-					}
-					else
-					{
-						C_BasePlayer* pPlayer = C_BasePlayer::GetLocalPlayer();
-						headPos = pPlayer ? pPlayer->EyePosition() : vec3_origin;
-					}
-					g_pVRWorldUIQueue->BeginFrame(headPos);
-				}
-				
-			// NOTE: Controller models, Status HUD, and Weapon HUD are rendered
-			// after stencil is disabled so they aren't masked by the hands.
-
-			// Render VR Spring HUD (head-relative: kill feed)
-				if (g_pVRSpringHUDManager)
-				{
-					g_pVRSpringHUDManager->Render();
-				}
-				
-				// Render VR Damage Indicator (head-relative: damage direction)
-				if (g_pVRDamageIndicatorManager)
-				{
-					g_pVRDamageIndicatorManager->Render();
-				}
-				
-				// Render VR Popup HUD (head-relative: win/loss panels, scoreboard)
-				if (g_pVRPopupHUDManager)
-				{
-					g_pVRPopupHUDManager->Render();
-				}
-				
-				// Render VR Collision Warning (head-relative: desync/collision warning text)
-				if (g_pVRCollisionWarningManager)
-				{
-					g_pVRCollisionWarningManager->Render();
-				}
-				
-				// Render VR Spectator Extras (world-space player names and health bars)
-				// Rendered before World Health Icons so targetID appears on top
-				if (g_pVRSpectatorExtrasManager)
-				{
-					g_pVRSpectatorExtrasManager->Render();
-				}
-				
-				// Render VR World Health Icons (world-space health above players, includes targetID)
-				if (g_pVRWorldHealthIconManager)
-				{
-					g_pVRWorldHealthIconManager->Render();
-				}
-				
-				// Render VR Damage Numbers (world-space floating damage/healing numbers)
-				if (g_pVRDamageNumberManager)
-				{
-					g_pVRDamageNumberManager->Render();
-				}
-				
-				// Render VR Weapon Select Menu (radial weapon selection)
-				if (g_pVRWeaponSelectManager)
-				{
-					g_pVRWeaponSelectManager->Render();
-				}
-				
-			// Flush the VR World UI queue - renders all panels sorted by distance
-			if (g_pVRWorldUIQueue && g_pVRWorldUIQueue->IsInitialized())
-			{
-				g_pVRWorldUIQueue->FlushRenderQueue();
-			}
-			
-			// Done with stencil-masked HUD panels - disable hand stencil mask
-			if (bHandsOverHUD)
-			{
-				pRenderContext = materials->GetRenderContext();
-				pRenderContext->SetStencilEnable(false);
-				pRenderContext.SafeRelease();
-			}
-
-			// figure out if we really want to draw the HUD based on freeze cam
-			// draw the HUD after the view model so its "I'm closer" depth queues work right.
-			if (g_pVRControllerModelManager)
-			{
-				g_pVRControllerModelManager->Render();
-			}
-			if (g_pVRStatusHUDManager)
-			{
-				g_pVRStatusHUDManager->Render();
-			}
-			if (g_pVRWeaponHUDManager)
-			{
-				g_pVRWeaponHUDManager->Render();
-			}
-			if (g_pVRWorldUIQueue && g_pVRWorldUIQueue->IsInitialized())
-			{
-				g_pVRWorldUIQueue->FlushRenderQueue();
-			}
-
-			// Render VR laser pointer on top of HUD/menus (always last)
-			if (g_pVRLaserPointer)
-				{
-					g_pVRLaserPointer->RenderLaserOnTop();
-				}
-				
+				// TODO - a bit of a shonky test - basically trying to catch the main menu, the briefing screen, the loadout screen, etc.
+				bool bTranslucent = !g_pMatSystemSurface->IsCursorVisible();
+				g_ClientVirtualReality.RenderHUDQuad( g_pClientMode->ShouldBlackoutAroundHUD(), bTranslucent );
 				CleanupMain3DView( viewRender );
 			}
-		//}
+		}
 
-		pRenderContext = materials->GetRenderContext();
 		pRenderContext->Flush();
 		pRenderContext.SafeRelease();
-
 	}
 
 	CDebugViewRender::Draw2DDebuggingInfo( viewRender );
@@ -3105,7 +2470,8 @@ void CViewRender::Render2DEffectsPreHUD( const CViewSetup &viewRender )
 // Purpose: Renders extra 2D effects in derived classes while the 2D view is on the stack
 //-----------------------------------------------------------------------------
 void CViewRender::Render2DEffectsPostHUD( const CViewSetup &viewRender )
-{}
+{
+}
 
 
 
@@ -5555,11 +4921,7 @@ void CSkyboxView::DrawInternal( view_id_t iSkyBoxViewID, bool bInvokePreAndPostR
 	BuildRenderableRenderLists( iSkyBoxViewID );
 	render->EndUpdateLightmaps();
 
-	// TFVR: Only compute shadow textures for the first eye to avoid double rendering in skybox
-	if (m_eStereoEye == STEREO_EYE_LEFT || !UseVR())
-	{
-		g_pClientShadowMgr->ComputeShadowTextures( (*this), m_pWorldListInfo->m_LeafCount, m_pWorldListInfo->m_pLeafList );
-	}
+	g_pClientShadowMgr->ComputeShadowTextures( (*this), m_pWorldListInfo->m_LeafCount, m_pWorldListInfo->m_pLeafList );
 
 	DrawWorld( 0.0f );
 
@@ -5635,12 +4997,12 @@ void CSkyboxView::Draw()
 
 	ITexture *pRTColor = NULL;
 	ITexture *pRTDepth = NULL;
-
-	if (m_eStereoEye != STEREO_EYE_MONO)
+	if( m_eStereoEye != STEREO_EYE_MONO )
 	{
-		pRTColor = g_pOpenXRManager->GetRenderTarget();
-		pRTDepth = NULL;
+		pRTColor = g_pSourceVR->GetRenderTarget( (ISourceVirtualReality::VREye)(m_eStereoEye-1), ISourceVirtualReality::RT_Color );
+		pRTDepth = g_pSourceVR->GetRenderTarget( (ISourceVirtualReality::VREye)(m_eStereoEye-1), ISourceVirtualReality::RT_Depth );
 	}
+
 	DrawInternal(VIEW_3DSKY, true, pRTColor, pRTDepth );
 }
 
@@ -5756,10 +5118,6 @@ void CShadowDepthView::Draw()
 		render->Push3DView( (*this), VIEW_CLEAR_DEPTH, m_pRenderTarget, GetFrustum() );
 	}
 
-	pRenderContext.GetFrom(materials);
-	pRenderContext->PushRenderTargetAndViewport(m_pRenderTarget, m_pDepthTexture, 0, 0, m_pDepthTexture->GetMappingWidth(), m_pDepthTexture->GetMappingWidth());
-	pRenderContext.SafeRelease();
-
 	SetupCurrentView( origin, angles, VIEW_SHADOW_DEPTH_TEXTURE );
 
 	MDLCACHE_CRITICAL_SECTION();
@@ -5803,8 +5161,6 @@ void CShadowDepthView::Draw()
 		//Resolve() the depth texture here. Before the pop so the copy will recognize that the resolutions are the same
 		pRenderContext->CopyRenderTargetToTextureEx( m_pDepthTexture, -1, NULL, NULL );
 	}
-
-	pRenderContext->PopRenderTargetAndViewport();
 
 	render->PopView( GetFrustum() );
 
@@ -7039,510 +6395,4 @@ void CRefractiveGlassView::Draw()
 
 	pRenderContext->ClearColor4ub( 0, 0, 0, 255 );
 	pRenderContext->Flush();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: TFVR: This copies the left or right eye image to the mono image so as to not render a 3rd time
-// Input  : &view -
-//			eye -
-//-----------------------------------------------------------------------------
-void CViewRender::RenderVREyeToScreen(const CViewSetup &view, StereoEye_t eye)
-{
-	if (eye != STEREO_EYE_LEFT && eye != STEREO_EYE_RIGHT)
-		return;
-
-	Rect_t SourceRect, ScreenRect;
-	int vrWidth, vrHeight;
-
-	ScreenRect.height = view.height;
-	ScreenRect.width = view.width;
-	ScreenRect.x = view.x;
-	ScreenRect.y = view.y;
-
-	g_pOpenXRManager->GetViewportBounds(ISourceVirtualReality::VREye_Left, NULL, NULL, &vrWidth, &vrHeight);
-	vrWidth *= 2;
-
-	extern ConVar tfvr_r_show_both_eyes;
-	if (tfvr_r_show_both_eyes.GetBool())
-	{
-		SourceRect.width = vrWidth;
-		SourceRect.height = SourceRect.width * ((float)ScreenRect.height / (float)ScreenRect.width);
-		SourceRect.x = 0;
-		SourceRect.y = (vrHeight - SourceRect.height) / 2;
-	}
-	else
-	{
-		SourceRect.width = vrWidth / 2;
-		SourceRect.height = SourceRect.width * ((float)ScreenRect.height / (float)ScreenRect.width);
-		SourceRect.x = (eye == STEREO_EYE_LEFT ? 0 : vrWidth / 2);
-		SourceRect.y = (vrHeight - SourceRect.height) / 2;
-	}
-
-	// Spectator camera smoothing (Mode 1: mirror-only)
-	// Smooths roll for streaming without affecting the player's VR view
-	float spectatorZoom = 1.0f;
-	float rollDelta = 0.0f;
-	
-	if (g_pVRSpectatorCamera && g_pVRSpectatorCamera->IsMirrorOnlyMode())
-	{
-		spectatorZoom = g_pVRSpectatorCamera->GetMirrorZoom();
-		rollDelta = g_pVRSpectatorCamera->GetMirrorSmoothingDelta().z;
-		g_pVRSpectatorCamera->DrawDebug();
-	}
-
-	IMaterial *pCurrentRenderMat = g_pOpenXRManager->GetRenderTargetMat();
-	pCurrentRenderMat->IncrementReferenceCount();
-
-	CMatRenderContextPtr pRenderContext(materials);
-	
-	bool useSpectatorRendering = (g_pVRSpectatorCamera && g_pVRSpectatorCamera->IsMirrorOnlyMode());
-	
-	if (useSpectatorRendering)
-	{
-		// Sample the full eye texture, scale to fit screen width, apply zoom and roll rotation
-		int eyeWidth = vrWidth / 2;
-		int eyeHeight = vrHeight;
-		int eyeX = (eye == STEREO_EYE_LEFT ? 0 : vrWidth / 2);
-		
-		float u0 = (float)eyeX / (float)vrWidth;
-		float v0 = 0.0f;
-		float u1 = (float)(eyeX + eyeWidth) / (float)vrWidth;
-		float v1 = 1.0f;
-		
-		// At 1.0x zoom: width = screen width, height maintains VR aspect ratio
-		float vrAspect = (float)eyeWidth / (float)eyeHeight;
-		float baseQuadWidth = (float)ScreenRect.width;
-		float baseQuadHeight = baseQuadWidth / vrAspect;
-		
-		float scaledWidth = baseQuadWidth * spectatorZoom;
-		float scaledHeight = baseQuadHeight * spectatorZoom;
-		float offsetX = ((float)ScreenRect.width - scaledWidth) * 0.5f;
-		float offsetY = ((float)ScreenRect.height - scaledHeight) * 0.5f;
-		
-		// Set up orthographic projection
-		pRenderContext->MatrixMode(MATERIAL_VIEW);
-		pRenderContext->PushMatrix();
-		pRenderContext->LoadIdentity();
-		
-		pRenderContext->MatrixMode(MATERIAL_PROJECTION);
-		pRenderContext->PushMatrix();
-		pRenderContext->LoadIdentity();
-		pRenderContext->Ortho(0, ScreenRect.height, ScreenRect.width, 0, -99999, 99999);
-		
-		pRenderContext->MatrixMode(MATERIAL_MODEL);
-		pRenderContext->PushMatrix();
-		pRenderContext->LoadIdentity();
-		
-		// Apply roll compensation
-		float cx = ScreenRect.width * 0.5f;
-		float cy = ScreenRect.height * 0.5f;
-		pRenderContext->Translate(cx, cy, 0.0f);
-		pRenderContext->Rotate(rollDelta, 0.0f, 0.0f, 1.0f);
-		pRenderContext->Translate(-cx, -cy, 0.0f);
-		
-		// Draw quad
-		pRenderContext->Bind(pCurrentRenderMat);
-		IMesh *pMesh = pRenderContext->GetDynamicMesh(true);
-		CMeshBuilder meshBuilder;
-		meshBuilder.Begin(pMesh, MATERIAL_QUADS, 1);
-		
-		meshBuilder.Position3f(offsetX, offsetY, 0.0f);
-		meshBuilder.TexCoord2f(0, u0, v0);
-		meshBuilder.Color4ub(255, 255, 255, 255);
-		meshBuilder.AdvanceVertex();
-		
-		meshBuilder.Position3f(offsetX + scaledWidth, offsetY, 0.0f);
-		meshBuilder.TexCoord2f(0, u1, v0);
-		meshBuilder.Color4ub(255, 255, 255, 255);
-		meshBuilder.AdvanceVertex();
-		
-		meshBuilder.Position3f(offsetX + scaledWidth, offsetY + scaledHeight, 0.0f);
-		meshBuilder.TexCoord2f(0, u1, v1);
-		meshBuilder.Color4ub(255, 255, 255, 255);
-		meshBuilder.AdvanceVertex();
-		
-		meshBuilder.Position3f(offsetX, offsetY + scaledHeight, 0.0f);
-		meshBuilder.TexCoord2f(0, u0, v1);
-		meshBuilder.Color4ub(255, 255, 255, 255);
-		meshBuilder.AdvanceVertex();
-		
-		meshBuilder.End();
-		pMesh->Draw();
-		
-		pRenderContext->MatrixMode(MATERIAL_MODEL);
-		pRenderContext->PopMatrix();
-		pRenderContext->MatrixMode(MATERIAL_PROJECTION);
-		pRenderContext->PopMatrix();
-		pRenderContext->MatrixMode(MATERIAL_VIEW);
-		pRenderContext->PopMatrix();
-	}
-	else
-	{
-		// Standard rendering (spectator mode off)
-		pRenderContext->DrawScreenSpaceRectangle(pCurrentRenderMat,
-			0, 0, ScreenRect.width, ScreenRect.height,
-			SourceRect.x, SourceRect.y, SourceRect.x + SourceRect.width - 1, SourceRect.y + SourceRect.height - 1,
-			vrWidth, vrHeight);
-	}
-
-	pCurrentRenderMat->DecrementReferenceCount();
-}
-
-void CViewRender::RenderHUD(const CViewSetup &view)
-{
-	VPROF_BUDGET("VR_VGui_DrawHud", VPROF_BUDGETGROUP_OTHER_VGUI);
-	ITexture *pTexture = materials->FindTexture("_rt_vgui", NULL);
-
-	bool bPaintMainMenu = !building_cubemaps.GetBool() && (enginevgui && enginevgui->IsGameUIVisible());
-	int viewActualWidth = pTexture->GetActualWidth();
-	int viewActualHeight = pTexture->GetActualHeight();
-
-	surface()->ForceScreenSizeOverride(true, viewActualWidth, viewActualHeight);
-
-	// Get the render context out of materials to avoid some debug stuff.
-	// WARNING THIS REQUIRES THE .SafeRelease below or it'll never release the ref
-	CMatRenderContextPtr pRenderContext = materials->GetRenderContext();
-
-	// constrain where VGUI can render to the view
-	pRenderContext->PushRenderTargetAndViewport(pTexture, nullptr, 0, 0, viewActualWidth, viewActualHeight);
-	pRenderContext->OverrideAlphaWriteEnable(true, true);
-
-	// clear the render target
-	pRenderContext->ClearColor4ub(0, 0, 0, 0);
-	pRenderContext->ClearBuffers(true, false);
-	pRenderContext.SafeRelease();
-
-	tmZone(TELEMETRY_LEVEL0, TMZF_NONE, "VGui_DrawHud", __FUNCTION__);
-
-	// paint the vgui screen
-	VGui_PreRender();
-
-	// Make sure the client .dll root panel is at the proper point before doing the "SolveTraverse" calls
-	vgui::VPANEL root = enginevgui->GetPanel(PANEL_CLIENTDLL);
-	if (root != 0)
-	{
-		vgui::ipanel()->SetSize(root, viewActualWidth, viewActualHeight);
-	}
-	// Same for client .dll tools
-	root = enginevgui->GetPanel(PANEL_CLIENTDLL_TOOLS);
-	if (root != 0)
-	{
-		vgui::ipanel()->SetSize(root, viewActualWidth, viewActualHeight);
-	}
-
-	// The crosshair, etc. needs to get at the current setup stuff
-	AllowCurrentViewAccess(true);
-	// Draw the in-game stuff based on the actual viewport being used
-	render->VGui_Paint(PAINT_INGAMEPANELS);
-	AllowCurrentViewAccess(false);
-
-	// Get the render context out of materials to avoid some debug stuff.
-	// WARNING THIS REQUIRES THE .SafeRelease below or it'll never release the ref
-	pRenderContext = materials->GetRenderContext();
-
-	// clear depth in the backbuffer before we push the render target
-	pRenderContext->ClearBuffers(false, true, true);
-
-	// constrain where VGUI can render to the view
-	pRenderContext->SetRenderTarget(pTexture);
-	pRenderContext->Viewport(0, 0, viewActualWidth, viewActualHeight);
-	pRenderContext->OverrideAlphaWriteEnable(true, true);
-	pRenderContext.SafeRelease();
-
-	// maybe paint the main menu and cursor too if we're in stereo hud mode
-	if (bPaintMainMenu)
-		render->VGui_Paint(PAINT_UIPANELS | PAINT_CURSOR);
-
-	VGui_PostRender();
-
-	g_pClientMode->PostRenderVGui();
-	pRenderContext = materials->GetRenderContext();
-	pRenderContext->OverrideAlphaWriteEnable(false, true);
-	pRenderContext->PopRenderTargetAndViewport();
-	pRenderContext.SafeRelease();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: TFVR: This copies the third eye to the screen
-// Input  : &view -
-//	
-//-----------------------------------------------------------------------------
-ConVar tfvr_hud_on_mirror("tfvr_hud_on_mirror", "1", FCVAR_ARCHIVE, "If enabled, displays the HUD on the desktop mirror window.");
-ConVar tfvr_menu_on_mirror("tfvr_menu_on_mirror", "1", FCVAR_ARCHIVE, "If enabled, displays the HUD on the desktop mirror window.");
-void CViewRender::RenderMenuTextureToScreen(const CViewSetup &view, bool isCinema)
-{
-	// Early exit if menu mirror is disabled and any menu type is visible
-	if (!tfvr_menu_on_mirror.GetBool())
-	{
-		// Check main game UI
-		if (enginevgui && enginevgui->IsGameUIVisible())
-			return;
-			
-		// Check for ViewPort panels (class select, team select, intro, MOTD, etc.)
-		extern IViewPort* gViewPortInterface;
-		if (gViewPortInterface)
-		{
-			IViewPortPanel* pPanel = nullptr;
-			
-			// Check class selection panels
-			pPanel = gViewPortInterface->FindPanelByName(PANEL_CLASS_RED);
-			if (pPanel && pPanel->IsVisible()) 
-				return;
-			
-			pPanel = gViewPortInterface->FindPanelByName(PANEL_CLASS_BLUE);
-			if (pPanel && pPanel->IsVisible()) 
-				return;
-			
-			// Check team selection panel
-			pPanel = gViewPortInterface->FindPanelByName(PANEL_TEAM);
-			if (pPanel && pPanel->IsVisible()) 
-				return;
-			
-			// Check intro panel
-			pPanel = gViewPortInterface->FindPanelByName(PANEL_INTRO);
-			if (pPanel && pPanel->IsVisible()) 
-				return;
-			
-			// Check info panel (MOTD, etc.)
-			pPanel = gViewPortInterface->FindPanelByName(PANEL_INFO);
-			if (pPanel && pPanel->IsVisible()) 
-				return;
-			
-			// Check map info panel
-			pPanel = gViewPortInterface->FindPanelByName(PANEL_MAPINFO);
-			if (pPanel && pPanel->IsVisible()) 
-				return;
-			
-			// Check arena team panel
-			pPanel = gViewPortInterface->FindPanelByName(PANEL_ARENA_TEAM);
-			if (pPanel && pPanel->IsVisible()) 
-				return;
-		}
-		
-		// Check for HUD menus (voice commands, etc.)
-		if (g_pClientMode)
-		{
-			CHudMenu* pHudMenu = GET_HUDELEMENT(CHudMenu);
-			if (pHudMenu && pHudMenu->IsMenuOpen())
-				return;
-		}
-	}
-		
-	// If HUD on mirror is disabled, skip rendering the HUD texture
-	if (!tfvr_hud_on_mirror.GetBool())
-		return;
-	ITexture* pMenuFrame = materials->FindTexture("_rt_vgui", NULL);
-
-	if (pMenuFrame == NULL)
-		return;
-
-	Rect_t	SourceRect, DestinationRect;
-
-	SourceRect.x = 0;
-	SourceRect.y = 0;
-	SourceRect.width = pMenuFrame->GetActualWidth();
-	SourceRect.height = pMenuFrame->GetActualHeight();
-
-	float aspect = float(SourceRect.height) / SourceRect.width;
-
-	DestinationRect.x = 0;
-	DestinationRect.y = 0;
-	DestinationRect.width = view.width;
-	DestinationRect.height = DestinationRect.width * aspect;
-	if (DestinationRect.height > view.height)
-	{
-		float scale = float(view.height) / DestinationRect.height;
-		DestinationRect.width *= scale;
-		DestinationRect.height *= scale;
-	}
-	if (DestinationRect.width < view.width)
-	{
-		DestinationRect.x += (view.width - DestinationRect.width) / 2;
-	}
-	if (DestinationRect.height < view.height)
-	{
-		DestinationRect.y += (view.height - DestinationRect.height) / 2;
-	}
-
-
-	// Use proper material selection logic (same as RenderHUDQuad and VR menu manager)
-	bool bUseTranslucent = false;
-	
-	// Check if we're in main pause menu vs overlay menus
-	bool bIsMainMenu = enginevgui && enginevgui->IsGameUIVisible();
-	bool bIsEconUIVisible = false;
-	bool bIsConnectedToServer = engine && engine->IsConnected();
-	bool bIsLoadoutOrArmoryScreen = false;
-	
-	// Check if normal gameplay HUD is visible (health, ammo, etc.)
-	bool bIsNormalHUDVisible = false;
-	bool bIsDeadPlayerInGame = false;
-	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
-	if (pPlayer && engine->IsInGame())
-	{
-		// Check if HUD elements are not hidden
-		int iHideHud = pPlayer->m_Local.m_iHideHUD;
-		extern ConVar hidehud;
-		if (hidehud.GetInt())
-		{
-			iHideHud = hidehud.GetInt();
-		}
-		
-		// HUD is visible if not all hidden and not in VGui input mode
-		bool bHUDNotHidden = !(iHideHud & HIDEHUD_ALL) && !pPlayer->IsInVGuiInputMode() && !bIsMainMenu;
-		
-		if (pPlayer->IsAlive())
-		{
-			// Living player with normal HUD
-			bIsNormalHUDVisible = bHUDNotHidden;
-		}
-		else 
-		{
-			// Dead player - check if they're spectating or in death cam (should still use translucent)
-			bIsDeadPlayerInGame = bHUDNotHidden;
-		}
-	}
-	
-	// Check if any EconUI panels are visible (loadout, backpack, crafting, etc.)
-	if ( EconUI() )
-	{
-		bIsEconUIVisible = EconUI()->IsUIPanelVisible( ECONUI_BACKPACK ) ||
-						   EconUI()->IsUIPanelVisible( ECONUI_LOADOUT ) ||
-						   EconUI()->IsUIPanelVisible( ECONUI_CRAFTING ) ||
-						   EconUI()->IsUIPanelVisible( ECONUI_ARMORY ) ||
-						   EconUI()->IsUIPanelVisible( ECONUI_TRADING );
-	}
-	
-	// Additional checks for loadout/armory screens that EconUI might miss
-	if (engine && engine->IsConnected())
-	{
-		// Check for class menu state via console variables
-		ConVar* pClassMenuOpen = g_pCVar->FindVar("_cl_classmenuopen");
-		if (pClassMenuOpen && pClassMenuOpen->GetBool())
-		{
-			bIsLoadoutOrArmoryScreen = true;
-		}
-		
-		// Check for class loadout panel specifically
-		extern CClassLoadoutPanel* g_pClassLoadoutPanel;
-		if (g_pClassLoadoutPanel && g_pClassLoadoutPanel->IsVisible())
-		{
-			bIsLoadoutOrArmoryScreen = true;
-		}
-		
-		// Check for character info panel (class selection screen) 
-		extern CCharacterInfoPanel* GetCharInfoPanel(bool);
-		CCharacterInfoPanel* pCharInfoPanel = GetCharInfoPanel(false);
-		if (pCharInfoPanel && pCharInfoPanel->IsVisible())
-		{
-			bIsLoadoutOrArmoryScreen = true;
-		}
-		
-		// Check for ViewPort panels (class select, team select, intro, MOTD, etc.)
-		extern IViewPort* gViewPortInterface;
-		if (gViewPortInterface)
-		{
-			// Check class selection panels
-			IViewPortPanel* pPanel = gViewPortInterface->FindPanelByName(PANEL_CLASS_RED);
-			if (pPanel && pPanel->IsVisible()) 
-			{
-				bIsLoadoutOrArmoryScreen = true;
-			}
-			
-			pPanel = gViewPortInterface->FindPanelByName(PANEL_CLASS_BLUE);
-			if (pPanel && pPanel->IsVisible()) 
-			{
-				bIsLoadoutOrArmoryScreen = true;
-			}
-			
-			// Check team selection panel
-			pPanel = gViewPortInterface->FindPanelByName(PANEL_TEAM);
-			if (pPanel && pPanel->IsVisible()) 
-			{
-				bIsLoadoutOrArmoryScreen = true;
-			}
-			
-			// Check intro panel
-			pPanel = gViewPortInterface->FindPanelByName(PANEL_INTRO);
-			if (pPanel && pPanel->IsVisible()) 
-			{
-				bIsLoadoutOrArmoryScreen = true;
-			}
-			
-			// Check info panel (MOTD, etc.)
-			pPanel = gViewPortInterface->FindPanelByName(PANEL_INFO);
-			if (pPanel && pPanel->IsVisible()) 
-			{
-				bIsLoadoutOrArmoryScreen = true;
-			}
-			
-			// Check map info panel
-			pPanel = gViewPortInterface->FindPanelByName(PANEL_MAPINFO);
-			if (pPanel && pPanel->IsVisible()) 
-			{
-				bIsLoadoutOrArmoryScreen = true;
-			}
-			
-			// Check arena team panel
-			pPanel = gViewPortInterface->FindPanelByName(PANEL_ARENA_TEAM);
-			if (pPanel && pPanel->IsVisible()) 
-			{
-				bIsLoadoutOrArmoryScreen = true;
-			}
-		}
-	}
-	
-	// Material selection logic with proper priority:
-	// 1. True main menu (not connected) = opaque
-	// 2. Overlay menus (class select, loadout, inventory, etc.) = opaque  
-	// 3. In-game pause menu = translucent
-	// 4. Normal gameplay HUD (health, ammo, etc.) = translucent
-	// 5. Dead player in-game (spectating, death cam) = translucent
-	// 6. Default = opaque
-	if (!bIsConnectedToServer)
-	{
-		// True main menu (not connected) - use opaque
-		bUseTranslucent = false;
-	}
-	else if (bIsEconUIVisible || bIsLoadoutOrArmoryScreen)
-	{
-		// Overlay menus (class select, loadout, inventory, etc.) - use opaque
-		bUseTranslucent = false;
-	}
-	else if (bIsMainMenu)
-	{
-		// In-game pause menu - use translucent
-		bUseTranslucent = true;
-	}
-	else if (bIsNormalHUDVisible || bIsDeadPlayerInGame)
-	{
-		// Normal gameplay HUD with health/ammo OR dead player in-game - use translucent
-		bUseTranslucent = true;
-	}
-	else
-	{
-		// Default: opaque for unknown states
-		bUseTranslucent = false;
-	}
-	
-	// Select the appropriate material based on menu type
-	IMaterial *pMenuFrameMat = nullptr;
-	if ( bUseTranslucent )
-	{
-		pMenuFrameMat = materials->FindMaterial("vgui/screenui", TEXTURE_GROUP_OTHER, true);
-	}
-	else
-	{
-		pMenuFrameMat = materials->FindMaterial("vgui/screenui_opaque", TEXTURE_GROUP_OTHER, true);
-	}
-	
-	pMenuFrameMat->IncrementReferenceCount();
-
-	CMatRenderContextPtr pRenderContext(materials);
-	pRenderContext->DrawScreenSpaceRectangle(pMenuFrameMat,
-		DestinationRect.x, DestinationRect.y, DestinationRect.width, DestinationRect.height,
-		SourceRect.x, SourceRect.y, SourceRect.width - 1, SourceRect.height - 1,
-		SourceRect.width, SourceRect.height);
-
-	pMenuFrameMat->DecrementReferenceCount();
 }

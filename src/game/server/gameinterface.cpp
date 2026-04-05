@@ -577,18 +577,6 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 	// DllMain (Windows) / __attribute__((constructor)) (Linux) installs the handler.
 	// If the module is absent the call returns null and we continue silently.
 	Sys_LoadModule( "tf2vintage_crash" );
-#endif
-	ConnectTier1Libraries( &appSystemFactory, 1 );
-	ConnectTier2Libraries( &appSystemFactory, 1 );
-	ConnectTier3Libraries( &appSystemFactory, 1 );
-
-	// Append -insecure unconditionally so the engine
-	// never attempts VAC negotiation, regardless of server launch options.
-	if ( !CommandLine()->FindParm( "-insecure" ) )
-	{
-		CommandLine()->AppendParm( "-insecure", nullptr );
-	}
-#ifdef DEBUG
 	// Always append logging.
 	if ( !CommandLine()->FindParm( "-console" ) )
 	{
@@ -607,6 +595,16 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 		CommandLine()->AppendParm( "-log_verbose_enable", "1" );
 	}
 #endif
+	// Append -insecure unconditionally so the engine
+	// never attempts VAC negotiation, regardless of server launch options.
+	if ( !CommandLine()->FindParm( "-insecure" ) )
+	{
+		CommandLine()->AppendParm( "-insecure", nullptr );
+	}
+	
+	ConnectTier1Libraries( &appSystemFactory, 1 );
+	ConnectTier2Libraries( &appSystemFactory, 1 );
+	ConnectTier3Libraries( &appSystemFactory, 1 );
 
 	// Connected in ConnectTier1Libraries
 	if ( cvar == NULL )

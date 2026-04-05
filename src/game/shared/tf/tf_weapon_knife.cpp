@@ -33,27 +33,22 @@ BEGIN_NETWORK_TABLE( CTFKnife, DT_TFWeaponKnife )
 	RecvPropBool( RECVINFO( m_bKnifeExists ) ),
 	RecvPropFloat( RECVINFO( m_flKnifeRegenerateDuration ) ),
 	RecvPropFloat( RECVINFO( m_flKnifeMeltTimestamp ) ),
-	RecvPropFloat( RECVINFO( m_flBackstabCooldownEnd ) ),
 #else
 	SendPropBool( SENDINFO( m_bReadyToBackstab ) ),
 	SendPropBool( SENDINFO( m_bKnifeExists ) ),
 	SendPropFloat( SENDINFO( m_flKnifeRegenerateDuration ), 0, SPROP_NOSCALE ),
 	SendPropFloat( SENDINFO( m_flKnifeMeltTimestamp ), 0, SPROP_NOSCALE ),
-	SendPropFloat( SENDINFO( m_flBackstabCooldownEnd ), 0, SPROP_NOSCALE ),
 #endif
 END_NETWORK_TABLE()
 
 BEGIN_PREDICTION_DATA( CTFKnife )
 #ifdef CLIENT_DLL
 	DEFINE_PRED_FIELD( m_bReadyToBackstab, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
-	DEFINE_PRED_FIELD( m_flBackstabCooldownEnd, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 #endif
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_knife, CTFKnife );
 PRECACHE_WEAPON_REGISTER( tf_weapon_knife );
-
-ConVar tfvr_backstab_cooldown( "tfvr_backstab_cooldown", "0.8", FCVAR_REPLICATED, "Seconds of melee lockout after a VR backstab kill (vanilla melee interval is 0.8)" );
 
 
 //=============================================================================
@@ -69,7 +64,6 @@ CTFKnife::CTFKnife()
 	m_bReadyToBackstab = false;
 	m_flBlockedTime = 0.f;
 	m_bAllowHolsterBecauseForced = false;
-	m_flBackstabCooldownEnd = 0.f;
 
 	ResetVars();
 }
@@ -182,9 +176,6 @@ bool CTFKnife::DecreaseRegenerationTime( float value, bool bForce )
 void CTFKnife::PrimaryAttack( void )
 {
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
-
-	if ( pPlayer && pPlayer->IsInVRMode() && IsVRPhysicalMeleeWeapon() )
-		return;
 
 	if ( !CanAttack() )
 		return;
@@ -466,23 +457,14 @@ bool CTFKnife::IsBehindAndFacingTarget( CTFPlayer *pTarget )
 	vecToTarget.NormalizeInPlace();
 
 	// Get owner forward view vector
-	// In VR, use the HMD (head) direction -- "looking at their back" is
-	// the natural backstab cue, same as vanilla's eye-angle check.
 	Vector vecOwnerForward;
 	AngleVectors( pOwner->EyeAngles(), &vecOwnerForward, NULL, NULL );
 	vecOwnerForward.z = 0.0f;
 	vecOwnerForward.NormalizeInPlace();
 
-	// Get target forward view vector.
-	// On the client, pl.v_angle is only replicated to the owning player
-	// (it lives in DT_LocalPlayerExclusive).  For other players/bots,
-	// use the separately-networked m_angEyeAngles instead.
+	// Get target forward view vector
 	Vector vecTargetForward;
-#ifdef CLIENT_DLL
-	AngleVectors( pTarget->GetNetworkEyeAngles(), &vecTargetForward, NULL, NULL );
-#else
 	AngleVectors( pTarget->EyeAngles(), &vecTargetForward, NULL, NULL );
-#endif
 	vecTargetForward.z = 0.0f;
 	vecTargetForward.NormalizeInPlace();
 
@@ -661,12 +643,6 @@ void CTFKnife::BackstabVMThink( void )
 	if ( pPlayer->GetActiveWeapon() != this )
 		return;
 
-	if ( pPlayer->IsInVRMode() )
-	{
-		VRBackstabThink();
-		return;
-	}
-
 	// Don't do this if we are doing something other than idling.
 //	int iIdealActivity = GetIdealActivity();
 //	if ( (iIdealActivity != ACT_VM_IDLE) && (iIdealActivity != ACT_BACKSTAB_VM_IDLE) )
@@ -764,175 +740,4 @@ bool CTFKnife::CanHolster( void ) const
 		return false;
 	else
 		return BaseClass::CanHolster();
-}
-
-//=============================================================================
-// VR Backstab Support
-//=============================================================================
-
-//-----------------------------------------------------------------------------
-// Purpose: Per-frame backstab readiness check for VR.
-//          Uses a direct eye-based trace (bypassing Weapon_ShootAngles which
-//          returns controller angles in VR) so the check depends purely on
-//          where the player is looking, matching vanilla behavior exactly.
-//          Uses the standard body eye position (not VR HMD) for the trace
-//          origin so it stays consistent with IsBehindAndFacingTarget.
-//-----------------------------------------------------------------------------
-void CTFKnife::VRBackstabThink( void )
-{
-	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
-	if ( !pPlayer )
-		return;
-
-	if ( !CanAttack() || IsInBackstabCooldown() )
-	{
-		m_bReadyToBackstab = false;
-		return;
-	}
-
-	bool bWantsReady = false;
-
-	Vector vecForward;
-	AngleVectors( pPlayer->EyeAngles(), &vecForward );
-	Vector vecStart = pPlayer->GetAbsOrigin() + pPlayer->GetViewOffset();
-
-	float fSwingRange = GetSwingRange();
-	CALL_ATTRIB_HOOK_FLOAT( fSwingRange, melee_range_multiplier );
-	Vector vecEnd = vecStart + vecForward * fSwingRange;
-
-	static Vector vecSwingMins( -18, -18, -18 );
-	static Vector vecSwingMaxs( 18, 18, 18 );
-
-	CTraceFilterSimple filter( pPlayer, COLLISION_GROUP_NONE );
-	trace_t trace;
-	UTIL_TraceLine( vecStart, vecEnd, MASK_SOLID, &filter, &trace );
-	if ( trace.fraction >= 1.0f )
-		UTIL_TraceHull( vecStart, vecEnd, vecSwingMins, vecSwingMaxs, MASK_SOLID, &filter, &trace );
-
-	if ( trace.fraction < 1.0f && trace.m_pEnt && trace.m_pEnt->IsPlayer() )
-	{
-		CTFPlayer *pTarget = ToTFPlayer( trace.m_pEnt );
-		if ( pTarget && pTarget->GetTeamNumber() != pPlayer->GetTeamNumber() )
-		{
-			if ( CanPerformBackstabAgainstTarget( pTarget ) )
-				bWantsReady = true;
-		}
-	}
-
-	m_bReadyToBackstab = bWantsReady;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Called when a VR physical melee swing begins (speed threshold exceeded).
-//          Removes spy disguise on swing, matching vanilla behavior where any
-//          knife attack breaks disguise regardless of whether it connects.
-//-----------------------------------------------------------------------------
-void CTFKnife::OnVRSwingStart()
-{
-	CTFPlayer *pPlayer = GetTFPlayerOwner();
-	if ( !pPlayer )
-		return;
-
-	if ( pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) )
-	{
-		pPlayer->RemoveDisguise();
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Called by VRPhysicalMeleeUpdate right before hit processing.
-//          Sets m_hBackstabVictim so GetMeleeDamage and CalcIsAttackCritical
-//          can detect the backstab.
-//-----------------------------------------------------------------------------
-void CTFKnife::OnVRPreMeleeHit( trace_t &trace )
-{
-	m_hBackstabVictim = NULL;
-
-	if ( !trace.m_pEnt || !trace.m_pEnt->IsPlayer() )
-		return;
-
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if ( !pOwner )
-		return;
-
-	CTFPlayer *pTarget = ToTFPlayer( trace.m_pEnt );
-	if ( !pTarget || pTarget->GetTeamNumber() == pOwner->GetTeamNumber() )
-		return;
-
-	if ( CanPerformBackstabAgainstTarget( pTarget ) )
-	{
-		m_hBackstabVictim.Set( pTarget );
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Called by VRPhysicalMeleeUpdate after hit processing (damage applied).
-//          Handles knife-specific post-hit effects that PrimaryAttack normally
-//          covers: disguise handling and Conniver's Kunai health steal.
-//-----------------------------------------------------------------------------
-void CTFKnife::OnVRPostMeleeHit( trace_t &trace )
-{
-	CTFPlayer *pPlayer = GetTFPlayerOwner();
-	if ( !pPlayer )
-		return;
-
-	m_bReadyToBackstab = false;
-
-	bool bSuccessfulBackstab = IsBackstab() && m_hBackstabVictim.Get() &&
-		( !m_hBackstabVictim->IsAlive() || m_hBackstabVictim->m_Shared.InCond( TF_COND_HALLOWEEN_GHOST_MODE ) );
-
-	if ( bSuccessfulBackstab )
-	{
-		m_flBackstabCooldownEnd = gpGlobals->curtime + tfvr_backstab_cooldown.GetFloat();
-	}
-
-	ETFFlagType ignoreTypes[] = { TF_FLAGTYPE_PLAYER_DESTRUCTION };
-	if ( ShouldDisguiseOnBackstab() && bSuccessfulBackstab && !pPlayer->HasTheFlag( ignoreTypes, ARRAYSIZE( ignoreTypes ) ) )
-	{
-		bool bDropDisguise = m_hBackstabVictim->IsBot() && TFGameRules() && TFGameRules()->IsMannVsMachineMode();
-		if ( bDropDisguise )
-		{
-			pPlayer->RemoveDisguise();
-		}
-
-		const float flDelay = bDropDisguise ? 1.5f : 0.2f;
-		SetContextThink( &CTFKnife::DisguiseOnKill, gpGlobals->curtime + flDelay, "DisguiseOnKill" );
-	}
-	else
-	{
-		pPlayer->RemoveDisguise();
-	}
-
-#ifdef GAME_DLL
-	if ( bSuccessfulBackstab )
-	{
-		int iSanguisuge = 0;
-		CALL_ATTRIB_HOOK_INT( iSanguisuge, sanguisuge );
-		if ( iSanguisuge > 0 )
-		{
-			int iBackstabVictimHealth = Max( m_hBackstabVictim->GetHealth(), 75 );
-
-			if ( TFGameRules() && TFGameRules()->IsPowerupMode() )
-			{
-				iBackstabVictimHealth = Max( ( m_hBackstabVictim->GetHealth() - m_hBackstabVictim->GetRuneHealthBonus() ), 75 );
-			}
-
-			int iBaseMaxHealth = ( pPlayer->GetMaxHealth() - pPlayer->GetRuneHealthBonus() ) * 3;
-			int iNewHealth = MIN( pPlayer->GetHealth() + iBackstabVictimHealth, iBaseMaxHealth );
-			int iDeltaHealth = iNewHealth - pPlayer->GetHealth();
-
-			if ( TFGameRules() && TFGameRules()->IsPowerupMode() &&
-				 m_hBackstabVictim->m_Shared.GetCarryingRuneType() == RUNE_REFLECT )
-			{
-				iDeltaHealth = 0;
-			}
-
-			if ( iDeltaHealth > 0 )
-			{
-				pPlayer->TakeHealth( iDeltaHealth, DMG_IGNORE_MAXHEALTH );
-				pPlayer->m_Shared.HealthKitPickupEffects( iDeltaHealth );
-			}
-		}
-	}
-#endif
 }

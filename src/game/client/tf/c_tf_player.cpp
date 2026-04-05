@@ -42,7 +42,6 @@
 #include "materialsystem/imaterialvar.h"
 #include "soundenvelope.h"
 #include "voice_status.h"
-#include "tfvr/vr_lipsync.h"
 #include "clienteffectprecachesystem.h"
 #include "functionproxy.h"
 #include "toolframework_client.h"
@@ -70,11 +69,6 @@
 #include "cam_thirdperson.h"
 #include "c_tf_projectile_arrow.h"
 #include "econ_entity.h"
-
-// VR controller tracking ConVars
-extern ConVar tfvr_enable_controller_tracking;
-extern ConVar tfvr_controller_tracking_debug;
-#include "tf_vr_ik_shared.h"
 #include "ihasowner.h"
 #include "tf_hud_itemeffectmeter.h"
 #include "replay/vgui/replayinputpanel.h"
@@ -96,15 +90,6 @@ extern ConVar tfvr_controller_tracking_debug;
 #include "player_vs_environment/c_tf_upgrades.h"
 #include "sourcevr/isourcevirtualreality.h"
 #include "tempent.h"
-#include "cliententitylist.h"
-#include "tier0/vprof.h"
-
-// VR rotation control
-extern ConVar tfvr_hmd_drive_rotation;
-
-// VR hands
-#include "tfvr/c_tfvr_hand.h"
-
 #include "confirm_dialog.h"
 #include "c_tf_weapon_builder.h"
 #include "tf_shared_content_manager.h"
@@ -132,8 +117,6 @@ extern ConVar tfvr_hmd_drive_rotation;
 #include "econ_paintkit.h"
 #include "soundstartparams.h"
 #include "SoundEmitterSystem/isoundemittersystembase.h"
-
-#include "tfvr/openxr_manager.h"
 
 
 #if defined( REPLAY_ENABLED )
@@ -239,14 +222,6 @@ ConVar tf_taunt_first_person( "tf_taunt_first_person", "0", FCVAR_NONE, "1 = tau
 
 ConVar tf_romevision_opt_in( "tf_romevision_opt_in", "0", FCVAR_ARCHIVE, "Enable Romevision in Mann vs. Machine mode when available." );
 ConVar tf_romevision_skip_prompt( "tf_romevision_skip_prompt", "0", FCVAR_ARCHIVE, "If nonzero, skip the prompt about sharing Romevision." );
-
-CON_COMMAND(tfvr_cl_recalibrate_view, "Recalibrate the VR view")
-{
-	if (C_TFPlayer *vrPlayer = dynamic_cast<C_TFPlayer *>(C_BasePlayer::GetLocalPlayer()))
-	{
-		vrPlayer->RecalibrateView();
-	}
-}
 
 
 #define BDAY_HAT_MODEL		"models/effects/bday_hat.mdl"
@@ -1738,23 +1713,12 @@ void CSpyInvisProxy::OnBind( C_BaseEntity *pBaseEntity )
 		return;
 
 	float fInvis = 0.0f;
-	float r = 1.0f, g = 1.0f, b = 1.0f;
 
 	C_TFPlayer *pPlayer = ToTFPlayer( pBaseEntity );
 
 	if ( !pPlayer )
 	{
 		C_TFPlayer *pOwningPlayer = ToTFPlayer( pBaseEntity->GetOwnerEntity() );
-		
-		// Also try IHasOwner interface (for VR hands, etc.)
-		if ( !pOwningPlayer )
-		{
-			IHasOwner *pOwnerInterface = dynamic_cast<IHasOwner*>( pBaseEntity );
-			if ( pOwnerInterface )
-			{
-				pOwningPlayer = ToTFPlayer( pOwnerInterface->GetOwnerViaInterface() );
-			}
-		}
 
 		C_TFRagdoll *pRagdoll = dynamic_cast< C_TFRagdoll* >( pBaseEntity );
 		if ( pRagdoll && pRagdoll->IsCloaked() )
@@ -1765,23 +1729,11 @@ void CSpyInvisProxy::OnBind( C_BaseEntity *pBaseEntity )
 		{
 			// mimic the owner's invisibility
 			fInvis = pOwningPlayer->GetEffectiveInvisibilityLevel();
-			
-			// Set the color tint based on owner's team
-			switch( pOwningPlayer->GetTeamNumber() )
-			{
-			case TF_TEAM_RED:
-				r = 1.0; g = 0.5; b = 0.4;
-				break;
-
-			case TF_TEAM_BLUE:
-			default:
-				r = 0.4; g = 0.5; b = 1.0;
-				break;
-			}
 		}
 	}
 	else
 	{
+		float r = 1.0f, g = 1.0f, b = 1.0f;
 		fInvis = pPlayer->GetEffectiveInvisibilityLevel();
 
 		switch( pPlayer->GetTeamNumber() )
@@ -1795,9 +1747,10 @@ void CSpyInvisProxy::OnBind( C_BaseEntity *pBaseEntity )
 			r = 0.4; g = 0.5; b = 1.0;
 			break;
 		}
+
+		m_pCloakColorTint->SetVecValue( r, g, b );
 	}
 
-	m_pCloakColorTint->SetVecValue( r, g, b );
 	m_pPercentInvisible->SetFloatValue( fInvis );
 }
 
@@ -2604,12 +2557,6 @@ CEconItemView *GetEconItemViewFromProxyEntity( void *pEntity )
 		{
 			return pDroppedWeapon->GetItem();
 		}
-
-		// VR render weapon - forwards to the source weapon's item
-		extern CEconItemView *GetVRRenderWeaponEconItemView( CBaseEntity *pEntity );
-		CEconItemView *pVRItem = GetVRRenderWeaponEconItemView( pBaseEntity );
-		if ( pVRItem )
-			return pVRItem;
 	}
 	// No direct entity, might be a EconItem (PlayerModelPanels)
 	else
@@ -2635,12 +2582,6 @@ C_TFPlayer *GetOwnerFromProxyEntity( void *pEntity )
 	// If an entity, find out what types it is and get the econ item view
 	if ( pBaseEntity )
 	{
-		// VR render weapon - return the owner player directly
-		extern C_TFPlayer *GetVRRenderWeaponOwner( CBaseEntity *pEntity );
-		C_TFPlayer *pVROwner = GetVRRenderWeaponOwner( pBaseEntity );
-		if ( pVROwner )
-			return pVROwner;
-
 		CBaseEntity* pOwner = pBaseEntity->GetOwnerEntity();
 		if ( pOwner )
 			return dynamic_cast<C_TFPlayer*>( pOwner->GetOwnerEntity() );
@@ -3782,12 +3723,6 @@ BEGIN_RECV_TABLE_NOBASE( C_TFPlayer, DT_TFNonLocalPlayerExclusive )
 	RecvPropFloat( RECVINFO( m_angEyeAngles[0] ) ),
 	RecvPropFloat( RECVINFO( m_angEyeAngles[1] ) ),
 
-	// VR IK hand data for third-person arm IK
-	RecvPropVector( RECVINFO(m_vecVRHandOffsetL) ),
-	RecvPropQAngles( RECVINFO(m_angVRHandAngL) ),
-	RecvPropVector( RECVINFO(m_vecVRHandOffsetR) ),
-	RecvPropQAngles( RECVINFO(m_angVRHandAngR) ),
-
 END_RECV_TABLE()
 
 //-----------------------------------------------------------------------------
@@ -3837,6 +3772,7 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFPlayer, DT_TFPlayer, CTFPlayer )
 
 	RecvPropBool( RECVINFO( m_bUseBossHealthBar ) ),
 
+	RecvPropBool( RECVINFO( m_bUsingVRHeadset ) ),
 
 	RecvPropBool( RECVINFO( m_bForcedSkin ) ),
 	RecvPropInt( RECVINFO( m_nForcedSkin ) ),
@@ -3856,13 +3792,6 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFPlayer, DT_TFPlayer, CTFPlayer )
 	RecvPropInt( RECVINFO( m_iPlayerSkinOverride ) ),
 	RecvPropBool( RECVINFO( m_bViewingCYOAPDA ) ),
 	RecvPropBool( RECVINFO( m_bRegenerating ) ),
-
-	// VR Related
-	RecvPropBool( RECVINFO( m_bUsingVRHeadset ) ),
-	RecvPropBool( RECVINFO( m_bInVRMode ) ),
-	RecvPropVector(RECVINFO(m_roomscaleOffset)),
-	RecvPropBool( RECVINFO( m_bHeadCollisionWarning ) ),
-
 	RecvPropEHandle( RECVINFO( m_hOffHandWeapon ) ),
 END_RECV_TABLE()
 
@@ -3884,7 +3813,6 @@ BEGIN_PREDICTION_DATA( C_TFPlayer )
 	DEFINE_PRED_FIELD( m_flVehicleReverseTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flInspectTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flHelpmeButtonPressTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
-	DEFINE_PRED_FIELD( m_roomscaleOffset, FIELD_VECTOR, FTYPEDESC_INSENDTABLE ),
 END_PREDICTION_DATA()
 
 // ------------------------------------------------------------------------------------------ //
@@ -3893,9 +3821,6 @@ END_PREDICTION_DATA()
 
 C_TFPlayer::C_TFPlayer() : 
 	m_iv_angEyeAngles( "C_TFPlayer::m_iv_angEyeAngles" ),
-	m_iv_roomscaleOffset( "C_TFPlayer::m_roomscaleOffset" ),
-	m_iv_vecVRHandOffsetL( "C_TFPlayer::m_iv_vecVRHandOffsetL" ),
-	m_iv_vecVRHandOffsetR( "C_TFPlayer::m_iv_vecVRHandOffsetR" ),
 	m_mapOverheadEffects( DefLessFunc( const char * ) )
 {
 	m_pAttributes = this;
@@ -4028,7 +3953,6 @@ C_TFPlayer::C_TFPlayer() :
 	m_bIsMiniBoss = false;
 	m_bUseBossHealthBar = false;
 	m_bUsingVRHeadset = false;
-	m_bInVRMode = false;
 
 	m_bForcedSkin = false;
 	m_nForcedSkin = 0;
@@ -4058,27 +3982,6 @@ C_TFPlayer::C_TFPlayer() :
 	m_pPasstimeAskForBallReticle = NULL;
 
 	m_iPlayerSkinOverride = 0;
-
-	m_headInPlayerO = vec3_origin;
-    m_headInPlayerA = vec3_angle;
-	m_bPhysicalCrouch = false;
-	m_bDuckWasPhysical = false;
-	m_roomscaleOffset = vec3_origin;
-	m_localRoomscaleOffset = vec3_origin;
-
-	AddVar(&m_roomscaleOffset, &m_iv_roomscaleOffset, LATCH_SIMULATION_VAR);
-
-	m_vecVRHandOffsetL = vec3_origin;
-	m_angVRHandAngL.Init();
-	m_vecVRHandOffsetR = vec3_origin;
-	m_angVRHandAngR.Init();
-	m_bVRIKBonesResolved = false;
-	m_iHeadBone = -1;
-	m_flUpperArmLen = 0.0f;
-	m_flForearmLen = 0.0f;
-
-	AddVar(&m_vecVRHandOffsetL, &m_iv_vecVRHandOffsetL, LATCH_SIMULATION_VAR);
-	AddVar(&m_vecVRHandOffsetR, &m_iv_vecVRHandOffsetR, LATCH_SIMULATION_VAR);
 
 	ListenForGameEvent( "player_hurt" );
 	ListenForGameEvent( "hltv_changed_mode" );
@@ -4229,203 +4132,6 @@ const QAngle& C_TFPlayer::GetRenderAngles()
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: VR-specific weapon shooting position that uses controller positions
-//-----------------------------------------------------------------------------
-Vector C_TFPlayer::Weapon_ShootPosition( void )
-{
-	// Check if VR is active and controller tracking is enabled
-	if (IsInVRMode() && g_pOpenXRManager && g_pOpenXRManager->IsActive() && tfvr_enable_controller_tracking.GetBool())
-	{
-		// Determine which hand holds the weapon (medigun uses left hand)
-		C_TFVRHand* pWeaponHand = NULL;
-		C_TFWeaponBase* pActiveWeapon = GetActiveTFWeapon();
-		if (pActiveWeapon && pActiveWeapon->GetWeaponID() == TF_WEAPON_MEDIGUN)
-		{
-			pWeaponHand = GetLocalPlayerLeftHand();
-		}
-		else
-		{
-			pWeaponHand = GetLocalPlayerRightHand();
-		}
-		
-		if (pWeaponHand && pWeaponHand->GetHeldWeapon())
-		{
-			C_TFWeaponBase *pWeapon = pWeaponHand->GetHeldWeapon();
-			const char *cls = pWeapon->GetClassname();
-			bool bUseRawController = (pWeapon->GetWeaponID() == TF_WEAPON_FISTS);
-			if (cls && (V_stristr(cls, "sapper") || V_stristr(cls, "builder")))
-				bUseRawController = true;
-
-			if (!bUseRawController)
-			{
-				Vector muzzlePos;
-				QAngle muzzleAngles;
-				if (pWeaponHand->GetWeaponMuzzlePositionAndAngles(muzzlePos, muzzleAngles))
-				{
-					return muzzlePos;
-				}
-			}
-		}
-		
-		// Fallback: Get the appropriate controller pose
-		VMatrix controllerPose;
-		bool bGotPose = false;
-		if (pActiveWeapon && pActiveWeapon->GetWeaponID() == TF_WEAPON_MEDIGUN)
-		{
-			bGotPose = g_pOpenXRManager->GetLeftControllerPose(controllerPose);
-		}
-		else
-		{
-			bGotPose = g_pOpenXRManager->GetRightControllerPose(controllerPose);
-		}
-		if (bGotPose)
-		{
-			Vector controllerPos = controllerPose.GetTranslation();
-			return controllerPos;
-		}
-	}
-	
-	// Fall back to base implementation (eye position) if VR is not available
-	return BaseClass::Weapon_ShootPosition();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: VR-specific weapon shooting angles that uses controller angles
-//-----------------------------------------------------------------------------
-QAngle C_TFPlayer::Weapon_ShootAngles( void )
-{
-	// Only use VR controller angles if VR is actually active
-	if (IsInVRMode() && g_pOpenXRManager && g_pOpenXRManager->IsActive() && tfvr_enable_controller_tracking.GetBool())
-	{
-		// Determine which hand holds the weapon (medigun uses left hand)
-		C_TFVRHand* pWeaponHand = NULL;
-		C_TFWeaponBase* pActiveWeapon = GetActiveTFWeapon();
-		bool bIsMedigun = (pActiveWeapon && pActiveWeapon->GetWeaponID() == TF_WEAPON_MEDIGUN);
-		if (bIsMedigun)
-		{
-			pWeaponHand = GetLocalPlayerLeftHand();
-		}
-		else
-		{
-			pWeaponHand = GetLocalPlayerRightHand();
-		}
-		
-		if (pWeaponHand && pWeaponHand->GetHeldWeapon())
-		{
-			C_TFWeaponBase* pWeapon = pWeaponHand->GetHeldWeapon();
-			const char *cls = pWeapon->GetClassname();
-			bool bUseRawController = (pWeapon->GetTFWpnData().m_iWeaponType == TF_WPN_TYPE_MELEE);
-			if (cls && (V_stristr(cls, "sapper") || V_stristr(cls, "builder")))
-				bUseRawController = true;
-
-			if (bUseRawController)
-			{
-				VMatrix rightControllerPose;
-				if (g_pOpenXRManager->GetRightControllerPose(rightControllerPose))
-				{
-					QAngle controllerAngles;
-					MatrixAngles(rightControllerPose.As3x4(), controllerAngles);
-					return controllerAngles;
-				}
-			}
-			
-			Vector muzzlePos;
-			QAngle muzzleAngles;
-			if (pWeaponHand->GetWeaponMuzzlePositionAndAngles(muzzlePos, muzzleAngles))
-			{
-				return muzzleAngles;
-			}
-		}
-		
-		// Fallback: Get the appropriate controller pose
-		VMatrix controllerPose;
-		bool bGotPose = false;
-		if (bIsMedigun)
-		{
-			bGotPose = g_pOpenXRManager->GetLeftControllerPose(controllerPose);
-		}
-		else
-		{
-			bGotPose = g_pOpenXRManager->GetRightControllerPose(controllerPose);
-		}
-		if (bGotPose)
-		{
-			QAngle controllerAngles;
-			MatrixAngles(controllerPose.As3x4(), controllerAngles);
-			return controllerAngles;
-		}
-	}
-	
-	// Fall back to base implementation (eye angles) if VR is not available
-	return EyeAngles();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Returns the weapon model for particle effect attachment
-//          In VR mode, returns the VR render weapon for proper beam origin
-//          Medigun uses left hand, all other weapons use right hand
-//-----------------------------------------------------------------------------
-C_BaseAnimating* C_TFPlayer::GetRenderedWeaponModel()
-{
-	// Check if VR is active and we have a VR render weapon
-	if (IsInVRMode() && IsLocalPlayer())
-	{
-		// Determine which hand holds the weapon (medigun uses left hand)
-		C_TFVRHand* pWeaponHand = NULL;
-		C_TFWeaponBase* pActiveWeapon = GetActiveTFWeapon();
-		if (pActiveWeapon && pActiveWeapon->GetWeaponID() == TF_WEAPON_MEDIGUN)
-		{
-			pWeaponHand = GetLocalPlayerLeftHand();
-		}
-		else
-		{
-			pWeaponHand = GetLocalPlayerRightHand();
-		}
-		
-		if (pWeaponHand)
-		{
-			C_BaseAnimating* pRenderWeapon = pWeaponHand->GetRenderWeapon();
-			if (pRenderWeapon)
-			{
-				return pRenderWeapon;
-			}
-		}
-	}
-	
-	// Fall back to base implementation
-	return BaseClass::GetRenderedWeaponModel();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: VR-specific autoaim override to use controller angles instead of headset
-//-----------------------------------------------------------------------------
-Vector C_TFPlayer::GetAutoaimVector( float flScale )
-{
-	// Check if VR is active and controller tracking is enabled
-	if (g_pOpenXRManager && g_pOpenXRManager->IsActive() && tfvr_enable_controller_tracking.GetBool())
-	{
-		// Get the right controller pose for autoaim (typically the shooting hand)
-		VMatrix rightControllerPose;
-		if (g_pOpenXRManager->GetRightControllerPose(rightControllerPose))
-		{
-			// Extract angles from the pose matrix
-			QAngle controllerAngles;
-			MatrixAngles(rightControllerPose.As3x4(), controllerAngles);
-			
-			// Apply punch angle if any
-			controllerAngles += m_Local.m_vecPunchAngle;
-			
-			Vector forward;
-			AngleVectors(controllerAngles, &forward);
-			return forward;
-		}
-	}
-	
-	// Fall back to base implementation (headset angles) if VR is not available
-	return BaseClass::GetAutoaimVector(flScale);
-}
-
 bool C_TFPlayer::CanDisplayAllSeeEffect( EAttackBonusEffects_t effect ) const
 { 
 	if( effect >= EAttackBonusEffects_t(0) && effect < kBonusEffect_Count )
@@ -4469,11 +4175,6 @@ void C_TFPlayer::UpdateOnRemove( void )
 	m_Shared.RemoveAllCond();
 
 	m_Inventory.RemoveListener( this );
-	
-	if ( IsLocalPlayer() )
-	{
-		C_TFVRHand::RemoveVRHands( this );
-	}
 
 	BaseClass::UpdateOnRemove();
 }
@@ -4777,8 +4478,6 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 
 	GetAttributeManager()->OnDataChanged( updateType );
 
-	
-
 	// Check for full health and remove decals.
 	if ( ( m_iHealth > m_iOldHealth && m_iHealth >= GetMaxHealth() ) || m_Shared.IsInvulnerable() )
 	{
@@ -4991,10 +4690,6 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 			{
 				KeyValues *kv = new KeyValues( "UsingVRHeadset" );
 				engine->ServerCmdKeyValues( kv );
-				
-				// Also notify server of actual VR mode
-				KeyValues *kvMode = new KeyValues( "VRModeActive" );
-				engine->ServerCmdKeyValues( kvMode );
 			}
 		}
 
@@ -5561,8 +5256,6 @@ void C_TFPlayer::UpdateRuneIcon( bool bForceStop /*= false */ )
 //-----------------------------------------------------------------------------
 void C_TFPlayer::OnPlayerClassChange( void )
 {
-	m_bVRIKBonesResolved = false;
-
 	// Init the anim movement vars
 	m_PlayerAnimState->SetRunSpeed( GetPlayerClass()->GetMaxSpeed() );
 	m_PlayerAnimState->SetWalkSpeed( GetPlayerClass()->GetMaxSpeed() * 0.5 );
@@ -5570,10 +5263,6 @@ void C_TFPlayer::OnPlayerClassChange( void )
 	if ( IsLocalPlayer() )
 	{
 		g_ItemEffectMeterManager.SetPlayer( this );
-		
-		// Spawn VR hands when class changes (will respawn with new model)
-		extern void SpawnVRHandsForPlayer(C_TFPlayer *pPlayer);
-		SpawnVRHandsForPlayer(this);
 	}
 	ShowNemesisIcon( false );
 	ShowDuelingIcon( false );
@@ -5600,78 +5289,6 @@ void C_TFPlayer::InitPhonemeMappings()
 		else
 		{
 			BaseClass::InitPhonemeMappings();
-		}
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-bool C_TFPlayer::SetupGlobalWeights( const matrix3x4_t *pBoneToWorld, int nFlexWeightCount,
-									 float *pFlexWeights, float *pFlexDelayedWeights )
-{
-	bool result = BaseClass::SetupGlobalWeights( pBoneToWorld, nFlexWeightCount,
-												  pFlexWeights, pFlexDelayedWeights );
-	if ( result )
-	{
-		ApplyOVRLipSync();
-	}
-	return result;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Apply OVR Lip Sync viseme weights into g_flexweight[].
-//          Skipped when a scripted voice line is driving the mouth.
-//-----------------------------------------------------------------------------
-void C_TFPlayer::ApplyOVRLipSync()
-{
-	if ( !vr_lipsync_enable.GetBool() )
-		return;
-
-	CVRLipSync &lipSync = CVRLipSync::Instance();
-	if ( !lipSync.IsInitialized() )
-		return;
-
-	int idx = entindex();
-
-	// Don't override scripted voice lines (scene/VCD phoneme playback)
-	if ( MouthInfo().IsActive() )
-		return;
-
-	float visemeWeights[OVR_VISEME_COUNT];
-	if ( !lipSync.GetVisemeWeights( idx, visemeWeights ) )
-		return;
-
-	// Phoneme class setup: use the NORMAL emphasis class for VFE lookup
-	Emphasized_Phoneme *pPhonemeClass = &m_PhonemeClasses[PHONEME_CLASS_NORMAL];
-	if ( !pPhonemeClass->basechecked || !pPhonemeClass->base )
-		return;
-
-	const flexsettinghdr_t *pVFEHeader = pPhonemeClass->base;
-
-	for ( int v = 0; v < OVR_VISEME_COUNT; v++ )
-	{
-		if ( visemeWeights[v] < 0.01f )
-			continue;
-
-		int phonemeCode = g_OVRVisemeToSourcePhoneme[v];
-		const flexsetting_t *pSetting = pVFEHeader->pIndexedSetting( phonemeCode );
-		if ( !pSetting )
-			continue;
-
-		flexweight_t *pWeights = NULL;
-		int truecount = pSetting->psetting( (byte *)pVFEHeader, 0, &pWeights );
-		if ( !pWeights )
-			continue;
-
-		for ( int i = 0; i < truecount; i++ )
-		{
-			int j = FlexControllerLocalToGlobal( pVFEHeader, pWeights[i].key );
-			if ( j >= 0 && j < MAXSTUDIOFLEXDESC )
-			{
-				g_flexweight[j] += visemeWeights[v] * pWeights[i].weight;
-			}
 		}
 	}
 }
@@ -5934,10 +5551,6 @@ void C_TFPlayer::TurnOnTauntCam( void )
 		return;
 
 	if ( TFGameRules() && TFGameRules()->ShowMatchSummary() )
-		return;
-
-	// Don't activate taunt camera for VR players - they should maintain HMD control
-	if ( UseVR() )
 		return;
 
 	m_flTauntCamTargetDist = ( m_flTauntCamTargetDist != 0.0f ) ? m_flTauntCamTargetDist : tf_tauntcam_dist.GetFloat();
@@ -6539,76 +6152,6 @@ void C_TFPlayer::ClientThink()
 		    engine->ClientCmd("voicemenu 1 8");
 	    }
 	}
-
-	// VR weapon management - attach active weapon to hand
-	if ( IsLocalPlayer() && IsInVRMode() )
-	{
-		UpdateVRWeapons();
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Update VR weapon attachment to hands
-// NOTE: Weapon equipping is now handled in C_TFVRHand::Update() which has
-// per-weapon hand routing (medigun to left hand, others to right hand)
-//-----------------------------------------------------------------------------
-void C_TFPlayer::UpdateVRWeapons()
-{
-	// Weapon equipping is handled in C_TFVRHand::Update()
-	return;
-	
-	// Get the dominant hand (right hand for now - could be made configurable)
-	C_TFVRHand *pDominantHand = GetLocalPlayerRightHand();
-	if ( !pDominantHand )
-		return;
-
-	// VR: Check if we should unequip weapons due to round loss or stalemate
-	// This matches vanilla TF2 behavior where players lose their weapons on failure
-	bool bShouldUnequipForRoundEnd = false;
-	if ( m_Shared.IsLoser() )
-	{
-		bShouldUnequipForRoundEnd = true;
-	}
-	else if ( TFGameRules() )
-	{
-		if ( TFGameRules()->InStalemate() )
-		{
-			bShouldUnequipForRoundEnd = true;
-		}
-		else if ( TFGameRules()->RoundHasBeenWon() )
-		{
-			int iWinningTeam = TFGameRules()->GetWinningTeam();
-			if ( GetTeamNumber() != iWinningTeam )
-			{
-				bShouldUnequipForRoundEnd = true;
-			}
-		}
-	}
-
-	// If player should not have weapons (loser/stalemate), unequip and don't re-equip
-	if ( bShouldUnequipForRoundEnd )
-	{
-		if ( pDominantHand->GetHeldWeapon() )
-		{
-			pDominantHand->UnequipWeapon();
-		}
-		return;
-	}
-
-	// Get the active weapon from TF2's weapon slot system
-	CTFWeaponBase *pActiveWeapon = GetActiveTFWeapon();
-	if ( !pActiveWeapon )
-		return;
-
-	// If the hand is already holding the active weapon, just update its transform
-	if ( pDominantHand->GetHeldWeapon() == pActiveWeapon )
-	{
-		pDominantHand->UpdateWeaponTransform();
-		return;
-	}
-
-	// Otherwise, equip the active weapon to the hand
-	pDominantHand->EquipWeapon( pActiveWeapon );
 }
 
 void C_TFPlayer::UpdateTimers( void )
@@ -7042,124 +6585,6 @@ void C_TFPlayer::AvoidPlayers( CUserCmd *pCmd )
 	//Msg( "Pforwardmove=%f, sidemove=%f\n", pCmd->forwardmove, pCmd->sidemove );
 }
 
-extern bool g_bExtraMouseSample;
-ConVar tfvr_roomscale_movement("tfvr_roomscale_movement", "1");
-ConVar tfvr_roomscale_debug("tfvr_roomscale_debug", "0");
-
-void C_TFPlayer::ComputeFullBodyIK( CUserCmd *pCmd )
-{
-	if (!m_isCalibrated)
-	{
-		Log("Calibrating VR base position\n");
-		m_calibratedHmdXYPosition = g_pOpenXRManager->GetMideyePose().GetTranslation();
-		m_calibratedHmdXYPosition.z = 0; // cancel out the original vertical position so we don't correct for it
-
-		QAngle tempYawContainer;
-		MatrixAngles(g_pOpenXRManager->GetMideyePose().As3x4(), tempYawContainer);
-		m_calibratedHmdYaw = tempYawContainer[YAW];
-		m_isCalibrated = true;
-		DevMsg("VR: Initial calibration - HMD Yaw: %.1f (will be recalibrated on spawn)\n", m_calibratedHmdYaw);
-	}
-
-	// world here is aligned with the identity rotation and has origin the player spawn;
-	Vector currentHmdInWorldO;
-	QAngle currentHmdInWorldA;
-
-	const Vector currentHmdPosInOriginal = g_pOpenXRManager->GetMideyePose().GetTranslation() - m_calibratedHmdXYPosition;
-
-	VectorRotate(currentHmdPosInOriginal, QAngle(0, -m_calibratedHmdYaw, 0), currentHmdInWorldO);
-	//currentHmdInWorldO = currentHmdPosInOriginal;
-
-	MatrixAngles(g_pOpenXRManager->GetMideyePose().As3x4(), currentHmdInWorldA);
-	currentHmdInWorldA[YAW] -= m_calibratedHmdYaw;
-
-	// For now, simplest full body roomscale...
-	// Snap the player to the desired changes... Meaning that head in player x_y and all angles are 0
-	// also meaning that the player rotation and x_y origin will follow the headset exactly
-
-	if (!g_bExtraMouseSample)
-	{
-		// Calculate head movement delta (restore original logic)
-		Vector deltaHeadOrigin = currentHmdInWorldO - m_localRoomscaleOffset;
-		deltaHeadOrigin.z = currentHmdInWorldO.z;
-
-		m_headInPlayerO = currentHmdInWorldO;
-		m_headInPlayerA = currentHmdInWorldA;
-
-		// Send rotated position (restore original behavior)
-		pCmd->playerToHmdOrigin = m_headInPlayerO;
-		pCmd->playerToHmdAngles = m_headInPlayerA;
-		
-		// Send the client's actual eye position for collision detection
-		Vector clientEyePos = EyePosition();
-		pCmd->clientEyePosition = clientEyePos;
-		// DevMsg("Client playerToHmdAngles: %f %f %f\n", pCmd->playerToHmdAngles.x, pCmd->playerToHmdAngles.y, pCmd->playerToHmdAngles.z);
-		if (tfvr_roomscale_movement.GetBool())
-		{
-			// Send movement in calibrated world space
-			pCmd->postFullBodyIKDeltaOrigin = deltaHeadOrigin;
-
-						
-			/*
-			DevMsg("Client roomscale debug:\n");
-			DevMsg("  deltaHeadOrigin: %.2f %.2f %.2f\n", 
-				deltaHeadOrigin.x, deltaHeadOrigin.y, deltaHeadOrigin.z);
-			DevMsg("  currentHmdInWorldO: %.2f %.2f %.2f\n", 
-				currentHmdInWorldO.x, currentHmdInWorldO.y, currentHmdInWorldO.z);
-			DevMsg("  player abs angles: %.2f %.2f %.2f\n", 
-				GetAbsAngles().x, GetAbsAngles().y, GetAbsAngles().z);
-			DevMsg("  calibrated HMD yaw: %.2f\n", m_calibratedHmdYaw);
-			DevMsg("  head in player angles: %.2f %.2f %.2f\n", 
-				m_headInPlayerA.x, m_headInPlayerA.y, m_headInPlayerA.z);
-			*/
-
-		}
-		pCmd->postFullBodyIKDeltaOrigin.z = 0;
-
-		// Apply client-side prediction - accumulate the movement locally
-		m_localRoomscaleOffset += deltaHeadOrigin;
-
-		// Periodically correct based on server offset (smooth correction to avoid snapping)
-		Vector serverOffset = m_roomscaleOffset;
-		Vector offsetError = serverOffset - m_localRoomscaleOffset;
-		float errorMagnitude = offsetError.Length2D();
-		
-		// Only apply correction if error is significant and gradually
-		if (errorMagnitude > 1.0f) // 1 unit threshold
-		{
-			float correctionRate = MIN(0.1f, errorMagnitude * 0.01f); // Smooth correction
-			m_localRoomscaleOffset += offsetError * correctionRate;
-		}
-	}
-	else
-	{
-		// However, if we are in extraMouseSample, then we've likely received an update from the hmd between ticks
-		// Update m_headInPlayerO so that the view is correctly modified for frames rendered in between client <-> server updates
-		m_headInPlayerO = currentHmdInWorldO;
-		m_headInPlayerA = currentHmdInWorldA;
-	}
-	
-	// CRITICAL FIX FOR MUZZLE FLASH/TRACER LAG:
-	// Force VR hand bone setup NOW, before any game logic (weapon firing, effects) runs.
-	// This ensures the muzzle attachment positions are up-to-date when effects are spawned.
-	// Without this, effects spawn using stale bone data from the previous frame.
-	C_TFVRHand *pRightHand = GetLocalPlayerRightHand();
-	C_TFVRHand *pLeftHand = GetLocalPlayerLeftHand();
-	
-	if (pRightHand)
-	{
-		pRightHand->InvalidateBoneCache();
-		matrix3x4_t boneArray[MAXSTUDIOBONES];
-		pRightHand->SetupBones(boneArray, MAXSTUDIOBONES, BONE_USED_BY_ANYTHING, gpGlobals->curtime);
-	}
-	
-	if (pLeftHand)
-	{
-		pLeftHand->InvalidateBoneCache();
-		matrix3x4_t boneArray[MAXSTUDIOBONES];
-		pLeftHand->SetupBones(boneArray, MAXSTUDIOBONES, BONE_USED_BY_ANYTHING, gpGlobals->curtime);
-	}
-}
 
 
 //-----------------------------------------------------------------------------
@@ -7266,10 +6691,6 @@ bool C_TFPlayer::CreateMove( float flInputSampleTime, CUserCmd *pCmd )
 		VectorCopy( pCmd->viewangles, angMoveAngle );
 	}
 
-	// CRITICAL: Set up VR bones BEFORE BaseClass::CreateMove runs weapon prediction
-	// This ensures muzzle flash/tracer effects spawn at the correct current positions
-	ComputeFullBodyIK(pCmd);
-
 	BaseClass::CreateMove( flInputSampleTime, pCmd );
 
 	// Don't avoid players if in the middle of a high five. This prevents high-fivers from becoming separated.
@@ -7277,7 +6698,6 @@ bool C_TFPlayer::CreateMove( float flInputSampleTime, CUserCmd *pCmd )
 	{
 		AvoidPlayers( pCmd );
 	}
-
 
 	return bNoTaunt;
 }
@@ -7657,22 +7077,8 @@ void C_TFPlayer::UpdateIDTarget()
 
 	trace_t tr;
 	Vector vecStart, vecEnd;
-	
-	// VR: Use weapon aim direction instead of head/view direction
-	if ( UseVR() )
-	{
-		Vector aimOrigin = Weapon_ShootPosition();
-		QAngle aimAngles = Weapon_ShootAngles();
-		Vector aimForward;
-		AngleVectors( aimAngles, &aimForward );
-		VectorMA( aimOrigin, MAX_TRACE_LENGTH, aimForward, vecEnd );
-		VectorMA( aimOrigin, 10, aimForward, vecStart );
-	}
-	else
-	{
-		VectorMA( MainViewOrigin(), MAX_TRACE_LENGTH, MainViewForward(), vecEnd );
-		VectorMA( MainViewOrigin(), 10,   MainViewForward(), vecStart );
-	}
+	VectorMA( MainViewOrigin(), MAX_TRACE_LENGTH, MainViewForward(), vecEnd );
+	VectorMA( MainViewOrigin(), 10,   MainViewForward(), vecStart );
 
 	// If we're in observer mode, ignore our observer target. Otherwise, ignore ourselves.
 	if ( IsObserver() )
@@ -7879,6 +7285,21 @@ float C_TFPlayer::GetMinFOV() const
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+const QAngle& C_TFPlayer::EyeAngles()
+{
+	if ( IsLocalPlayer() && g_nKillCamMode == OBS_MODE_NONE )
+	{
+		return BaseClass::EyeAngles();
+	}
+	else
+	{
+		return m_angEyeAngles;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  : &color - 
 //-----------------------------------------------------------------------------
 void C_TFPlayer::GetTeamColor( Color &color )
 {
@@ -8564,65 +7985,6 @@ void C_TFPlayer::ClientPlayerRespawn( void )
 
 		// make sure the chat window has been restored to the appropriate place
 		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "CompetitiveGame_RestoreChatWindow", false );
-		
-		// For VR, capture spawn angles and apply immediately
-		if (UseVR())
-		{
-			// Notify server that we're using VR
-			KeyValues *kv = new KeyValues( "UsingVRHeadset" );
-			engine->ServerCmdKeyValues( kv );
-			
-			// Also notify server of actual VR mode
-			KeyValues *kvMode = new KeyValues( "VRModeActive" );
-			engine->ServerCmdKeyValues( kvMode );
-			
-			if (tfvr_hmd_drive_rotation.GetBool())
-			{
-				// Store the current eye angles as spawn angles (these come from server)
-				m_spawnViewAngles = m_angEyeAngles;
-				
-				// Get current HMD angles and immediately recalibrate
-				QAngle hmdAngles;
-				MatrixAngles(g_pOpenXRManager->GetMideyePose().As3x4(), hmdAngles);
-				
-				// Immediately align HMD with spawn rotation
-				float oldCalibratedYaw = m_calibratedHmdYaw;
-				m_calibratedHmdYaw = hmdAngles.y - m_spawnViewAngles.y;
-				
-				// Normalize the offset to be in the range [-180, 180]
-				while (m_calibratedHmdYaw > 180.0f) m_calibratedHmdYaw -= 360.0f;
-				while (m_calibratedHmdYaw < -180.0f) m_calibratedHmdYaw += 360.0f;
-				
-				// Reset VR position tracking completely
-				// The key insight: we need to reset BOTH the calibrated position AND the accumulated offset
-				// so that the HMD appears at the spawn point without affecting where the server thinks the player is
-				Vector currentHmdPos = g_pOpenXRManager->GetMideyePose().GetTranslation();
-				
-				// Reset calibrated position to current HMD location
-				m_calibratedHmdXYPosition = currentHmdPos;
-				m_calibratedHmdXYPosition.z = 0;
-				
-				// CRITICAL: Reset local tracking accumulation to prevent server feedback
-				m_localRoomscaleOffset = vec3_origin;
-				
-				// Reset head-in-player offset to prevent server from using old position data
-				m_headInPlayerO = vec3_origin;
-				
-				// Add debug to understand what's happening
-				Vector spawnPos = GetAbsOrigin();
-				DevMsg("VR: Position reset - HMD at (%.1f, %.1f), Player spawn at (%.1f, %.1f), Resetting all VR offsets\n",
-					currentHmdPos.x, currentHmdPos.y, 
-					spawnPos.x, spawnPos.y);
-				DevMsg("VR: Reset - Calibrated: (%.1f, %.1f), LocalOffset: (%.1f, %.1f), HeadInPlayer: (%.1f, %.1f)\n",
-					m_calibratedHmdXYPosition.x, m_calibratedHmdXYPosition.y,
-					m_localRoomscaleOffset.x, m_localRoomscaleOffset.y,
-					m_headInPlayerO.x, m_headInPlayerO.y);
-				
-				// Set spawn time for VR rotation code
-				m_flSpawnTime = gpGlobals->curtime;
-				
-			}
-		}
 	}
 
 	UpdateVisibility();
@@ -9265,6 +8627,27 @@ void BuildNeckScaleTransformations( CBaseAnimating *pObject, CStudioHdr *hdr, Ve
 }
 
 
+//-----------------------------------------------------------------------------
+// Purpose: Get child bones from a specified bone index
+//-----------------------------------------------------------------------------
+void AppendChildren_R( CUtlVector< const mstudiobone_t * > *pChildBones, const studiohdr_t *pHdr, int nBone )
+{
+	if ( !pChildBones || !pHdr )
+		return;
+
+    // Child bones have to have a larger bone index than their parent, so start searching from nBone + 1
+    for ( int i = nBone + 1; i < pHdr->numbones; ++i )
+    {
+        const mstudiobone_t *pBone = pHdr->pBone( i );
+        if ( pBone->parent == nBone )
+        {
+            pChildBones->AddToTail( pBone );
+            // If you just want immediate children don't recurse, this will do a depth first traversal, could do
+			// breadth first by adding all children first and then looping through the added bones and recursing
+            AppendChildren_R( pChildBones, pHdr, i );
+        }
+    }
+}
 
 
 //-----------------------------------------------------------------------------
@@ -9318,7 +8701,7 @@ void BuildTorsoScaleTransformations( CBaseAnimating *pObject, CStudioHdr *hdr, V
 
 		// apply to all its child bones
 		CUtlVector< const mstudiobone_t * > vecChildBones;
-		VRIK_AppendChildren_R( &vecChildBones, pHdr, iMoveBone );
+		AppendChildren_R( &vecChildBones, pHdr, iMoveBone );
 		for ( int j=0; j<vecChildBones.Count(); ++j )
 		{
 			int iChildBone = pObject->LookupBone( vecChildBones[j]->pszName() );
@@ -9365,7 +8748,7 @@ void BuildHandScaleTransformations( CBaseAnimating *pObject, CStudioHdr *hdr, Ve
 
 		// apply to all its child bones
 		CUtlVector< const mstudiobone_t * > vecChildBones;
-		VRIK_AppendChildren_R( &vecChildBones, pHdr, iHand );
+		AppendChildren_R( &vecChildBones, pHdr, iHand );
 		for ( int j=0; j<vecChildBones.Count(); ++j )
 		{
 			int iChildBone = pObject->LookupBone( vecChildBones[j]->pszName() );
@@ -9378,279 +8761,6 @@ void BuildHandScaleTransformations( CBaseAnimating *pObject, CStudioHdr *hdr, Ve
 	}
 }
 
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-ConVar tfvr_ik_enabled("tfvr_ik_enabled", "1", FCVAR_NONE, "Enable third-person arm IK for VR players");
-ConVar tfvr_ik_local_body("tfvr_ik_local_body", "0", FCVAR_NONE, "Show IK'd body on local VR player (first-person full body)");
-ConVar tfvr_ik_pole_blend("tfvr_ik_pole_blend", "0.4", FCVAR_NONE, "How much hand orientation affects elbow direction (0-1)");
-ConVar tfvr_ik_shoulder_range("tfvr_ik_shoulder_range", "25", FCVAR_NONE, "Max collar bone rotation in degrees for shoulder reach");
-ConVar tfvr_ik_wrist_twist_share("tfvr_ik_wrist_twist_share", "0.5", FCVAR_NONE, "Fraction of wrist twist distributed to forearm (0=all wrist, 1=all forearm)");
-ConVar tfvr_ik_debug("tfvr_ik_debug", "0", FCVAR_NONE, "Draw debug lines for VR arm IK");
-ConVar tfvr_ik_pole_dist("tfvr_ik_pole_dist", "50", FCVAR_NONE, "Distance from shoulder to pole target point");
-ConVar tfvr_ik_elbow_up_bias("tfvr_ik_elbow_up_bias", "0.8", FCVAR_NONE, "How strongly the elbow drops when reaching up");
-ConVar tfvr_ik_elbow_fwd_bias("tfvr_ik_elbow_fwd_bias", "0.5", FCVAR_NONE, "How strongly the elbow drops when reaching forward");
-ConVar tfvr_ik_elbow_cross_bias("tfvr_ik_elbow_cross_bias", "0.6", FCVAR_NONE, "How strongly the elbow pushes outward when reaching across body");
-
-// IK solver functions are in tf_vr_ik_shared.cpp (shared client/server).
-
-//-----------------------------------------------------------------------------
-// Resolve VR IK bone indices and arm lengths. Called once per model.
-//-----------------------------------------------------------------------------
-void C_TFPlayer::ResolveVRIKBones( CStudioHdr *hdr )
-{
-	m_iHeadBone = LookupBone( "bip_head" );
-	m_iCollarBoneL = LookupBone( "bip_collar_L" );
-	m_iCollarBoneR = LookupBone( "bip_collar_R" );
-	m_iUpperArmBoneL = LookupBone( "bip_upperArm_L" );
-	m_iLowerArmBoneL = LookupBone( "bip_lowerArm_L" );
-	m_iHandBoneL = LookupBone( "bip_hand_L" );
-	m_iUpperArmBoneR = LookupBone( "bip_upperArm_R" );
-	m_iLowerArmBoneR = LookupBone( "bip_lowerArm_R" );
-	m_iHandBoneR = LookupBone( "bip_hand_R" );
-
-	m_flCollarLen = 0.0f;
-	m_flUpperArmLen = 0.0f;
-	m_flForearmLen = 0.0f;
-
-	if ( m_iUpperArmBoneR != -1 && m_iLowerArmBoneR != -1 && m_iHandBoneR != -1 )
-	{
-		Vector upperPos, elbowPos, handPos;
-		MatrixPosition( GetBone( m_iUpperArmBoneR ), upperPos );
-		MatrixPosition( GetBone( m_iLowerArmBoneR ), elbowPos );
-		MatrixPosition( GetBone( m_iHandBoneR ), handPos );
-		m_flUpperArmLen = ( elbowPos - upperPos ).Length();
-		m_flForearmLen = ( handPos - elbowPos ).Length();
-
-		if ( m_iCollarBoneR != -1 )
-		{
-			Vector collarPos;
-			MatrixPosition( GetBone( m_iCollarBoneR ), collarPos );
-			m_flCollarLen = ( upperPos - collarPos ).Length();
-		}
-	}
-
-	m_bVRIKBonesResolved = true;
-}
-
-//-----------------------------------------------------------------------------
-// Main entry point for VR arm IK. Called from BuildTransformations.
-//-----------------------------------------------------------------------------
-void C_TFPlayer::BuildVRControllerIK( CStudioHdr *hdr, Vector *pos, Quaternion q[], const matrix3x4_t& cameraTransform, int boneMask, CBoneBitList &boneComputed )
-{
-	bool bDebugTrace = tfvr_ik_debug.GetBool();
-
-	if ( !tfvr_ik_enabled.GetBool() || !m_bInVRMode )
-	{
-		if ( bDebugTrace )
-			DevMsg( "VR IK: skipped (enabled=%d, inVR=%d)\n", tfvr_ik_enabled.GetBool(), (int)m_bInVRMode );
-		return;
-	}
-
-	if ( IsLocalPlayer() && !tfvr_ik_local_body.GetBool() )
-	{
-		if ( bDebugTrace )
-			DevMsg( "VR IK: skipped (local player, ik_local_body=0)\n" );
-		return;
-	}
-
-	if ( !IsAlive() || m_Shared.InCond( TF_COND_TAUNTING ) )
-		return;
-
-	// Resolve hand targets from the appropriate source
-	Vector targetPosL, targetPosR;
-	QAngle targetAngL, targetAngR;
-	bool bHaveL = false, bHaveR = false;
-
-	if ( IsLocalPlayer() )
-	{
-		// Local player: read bip_hand bone transform from the VR hand entities,
-		// then re-anchor relative to the model's head bone so arms look correct
-		// on the body regardless of animation/HMD position differences.
-		C_TFVRHand *pLeftHand = GetLocalPlayerLeftHand();
-		C_TFVRHand *pRightHand = GetLocalPlayerRightHand();
-
-		Vector hmdPos = EyePosition();
-		Vector headBonePos;
-		if ( m_iHeadBone >= 0 )
-			MatrixPosition( GetBone( m_iHeadBone ), headBonePos );
-		else
-			headBonePos = hmdPos;
-
-		matrix3x4_t handBones[MAXSTUDIOBONES];
-
-		if ( pLeftHand )
-		{
-			int iHandBone = pLeftHand->GetHandBoneIndex();
-			if ( iHandBone >= 0 && iHandBone < MAXSTUDIOBONES &&
-				 pLeftHand->SetupBones( handBones, MAXSTUDIOBONES, BONE_USED_BY_ANYTHING, gpGlobals->curtime ) )
-			{
-				Vector worldHandPos;
-				MatrixAngles( handBones[iHandBone], targetAngL, worldHandPos );
-				targetPosL = headBonePos + ( worldHandPos - hmdPos );
-				bHaveL = true;
-			}
-		}
-		if ( pRightHand )
-		{
-			int iHandBone = pRightHand->GetHandBoneIndex();
-			if ( iHandBone >= 0 && iHandBone < MAXSTUDIOBONES &&
-				 pRightHand->SetupBones( handBones, MAXSTUDIOBONES, BONE_USED_BY_ANYTHING, gpGlobals->curtime ) )
-			{
-				Vector worldHandPos;
-				MatrixAngles( handBones[iHandBone], targetAngR, worldHandPos );
-				targetPosR = headBonePos + ( worldHandPos - hmdPos );
-				bHaveR = true;
-			}
-		}
-		if ( bDebugTrace )
-			DevMsg( "VR IK: local player, haveL=%d haveR=%d\n", bHaveL, bHaveR );
-	}
-	else
-	{
-		// Remote player: offsets are head-relative, reconstruct from model's head bone
-		Vector headBonePos;
-		if ( m_iHeadBone >= 0 )
-			MatrixPosition( GetBone( m_iHeadBone ), headBonePos );
-		else
-			headBonePos = GetAbsOrigin();
-
-		if ( m_vecVRHandOffsetL != vec3_origin )
-		{
-			targetPosL = headBonePos + m_vecVRHandOffsetL;
-			targetAngL = m_angVRHandAngL;
-			bHaveL = true;
-		}
-		if ( m_vecVRHandOffsetR != vec3_origin )
-		{
-			targetPosR = headBonePos + m_vecVRHandOffsetR;
-			targetAngR = m_angVRHandAngR;
-			bHaveR = true;
-		}
-	}
-
-	if ( !bHaveL && !bHaveR )
-	{
-		if ( bDebugTrace )
-			DevMsg( "VR IK: skipped (no hand targets)\n" );
-		return;
-	}
-
-	// Resolve bone indices on first use or after model change
-	if ( !m_bVRIKBonesResolved )
-	{
-		ResolveVRIKBones( hdr );
-		if ( bDebugTrace )
-			DevMsg( "VR IK: resolved bones - upperR=%d lowerR=%d handR=%d upperL=%d lowerL=%d handL=%d, armLen=%.1f foreLen=%.1f\n",
-				m_iUpperArmBoneR, m_iLowerArmBoneR, m_iHandBoneR,
-				m_iUpperArmBoneL, m_iLowerArmBoneL, m_iHandBoneL,
-				m_flUpperArmLen, m_flForearmLen );
-	}
-
-	if ( m_flUpperArmLen < 1.0f || m_flForearmLen < 1.0f )
-	{
-		if ( bDebugTrace )
-			DevMsg( "VR IK: skipped (arm lengths too small: upper=%.2f fore=%.2f)\n", m_flUpperArmLen, m_flForearmLen );
-		return;
-	}
-
-	const studiohdr_t *pHdr = modelinfo->GetStudiomodel( GetModel() );
-	if ( !pHdr )
-		return;
-
-	bool bDebug = tfvr_ik_debug.GetBool();
-
-	Vector vForward, vRight, vUp;
-	AngleVectors( GetRenderAngles(), &vForward, &vRight, &vUp );
-
-	float poleBlend = tfvr_ik_pole_blend.GetFloat();
-	float poleDist = tfvr_ik_pole_dist.GetFloat();
-	float upBias = tfvr_ik_elbow_up_bias.GetFloat();
-	float fwdBias = tfvr_ik_elbow_fwd_bias.GetFloat();
-	float crossBias = tfvr_ik_elbow_cross_bias.GetFloat();
-
-	// Right arm IK
-	if ( bHaveR && m_iUpperArmBoneR != -1 )
-	{
-		Vector shoulderPos;
-		MatrixPosition( GetBone( m_iUpperArmBoneR ), shoulderPos );
-
-		// Adaptive pole: direction depends on where the hand is relative to shoulder
-		Vector reachDir = ( targetPosR - shoulderPos );
-		reachDir.NormalizeInPlace();
-
-		float dotFwd = DotProduct( reachDir, vForward );
-		float dotRight = DotProduct( reachDir, vRight );
-		float dotUp = DotProduct( reachDir, vUp );
-
-		Vector pole = -vForward * 0.5f - vUp * 0.3f;
-
-		if ( dotUp > 0.0f )
-			pole += ( -vUp * upBias + vForward * 0.3f ) * dotUp;
-
-		if ( dotFwd > 0.0f )
-			pole += -vUp * fwdBias * dotFwd;
-
-		float crossAmount = -dotRight;
-		if ( crossAmount > 0.0f )
-			pole += vRight * crossBias * crossAmount;
-
-		pole.NormalizeInPlace();
-
-		// Blend with hand orientation
-		Vector hFwd, hRight, hUp;
-		AngleVectors( targetAngR, &hFwd, &hRight, &hUp );
-		Vector poleDir = pole * ( 1.0f - poleBlend ) + ( -hUp ) * poleBlend;
-		poleDir.NormalizeInPlace();
-
-		Vector poleTarget = shoulderPos + poleDir * poleDist;
-
-		VRIK_ApplyArmIK( this, pHdr, m_BoneAccessor.GetBoneArrayForWrite(), m_iCollarBoneR, m_iUpperArmBoneR, m_iLowerArmBoneR, m_iHandBoneR,
-			m_flCollarLen, m_flUpperArmLen, m_flForearmLen, targetPosR, targetAngR, poleTarget,
-			tfvr_ik_shoulder_range.GetFloat(), tfvr_ik_wrist_twist_share.GetFloat(), bDebug );
-	}
-
-	// Left arm IK
-	if ( bHaveL && m_iUpperArmBoneL != -1 )
-	{
-		Vector shoulderPos;
-		MatrixPosition( GetBone( m_iUpperArmBoneL ), shoulderPos );
-
-		Vector reachDir = ( targetPosL - shoulderPos );
-		reachDir.NormalizeInPlace();
-
-		float dotFwd = DotProduct( reachDir, vForward );
-		float dotRight = DotProduct( reachDir, vRight );
-		float dotUp = DotProduct( reachDir, vUp );
-
-		Vector pole = -vForward * 0.5f - vUp * 0.3f;
-
-		if ( dotUp > 0.0f )
-			pole += ( -vUp * upBias + vForward * 0.3f ) * dotUp;
-
-		if ( dotFwd > 0.0f )
-			pole += -vUp * fwdBias * dotFwd;
-
-		// Left arm: crossing is when dotRight > 0 (reaching rightward)
-		float crossAmount = dotRight;
-		if ( crossAmount > 0.0f )
-			pole += -vRight * crossBias * crossAmount;
-
-		pole.NormalizeInPlace();
-
-		Vector hFwd, hRight, hUp;
-		AngleVectors( targetAngL, &hFwd, &hRight, &hUp );
-		Vector poleDir = pole * ( 1.0f - poleBlend ) + ( -hUp ) * poleBlend;
-		poleDir.NormalizeInPlace();
-
-		Vector poleTarget = shoulderPos + poleDir * poleDist;
-
-		VRIK_ApplyArmIK( this, pHdr, m_BoneAccessor.GetBoneArrayForWrite(), m_iCollarBoneL, m_iUpperArmBoneL, m_iLowerArmBoneL, m_iHandBoneL,
-			m_flCollarLen, m_flUpperArmLen, m_flForearmLen, targetPosL, targetAngL, poleTarget,
-			tfvr_ik_shoulder_range.GetFloat(), tfvr_ik_wrist_twist_share.GetFloat(), bDebug );
-	}
-}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -9714,8 +8824,6 @@ void C_TFPlayer::BuildTransformations( CStudioHdr *hdr, Vector *pos, Quaternion 
 	BuildBigHeadTransformations( this, hdr, pos, q, cameraTransform, boneMask, boneComputed, flHeadScale );
 	BuildTorsoScaleTransformations( this, hdr, pos, q, cameraTransform, boneMask, boneComputed, m_flTorsoScale, GetPlayerClass()->GetClassIndex() );
 	BuildHandScaleTransformations( this, hdr, pos, q, cameraTransform, boneMask, boneComputed, m_flHandScale );
-
-	BuildVRControllerIK( hdr, pos, q, cameraTransform, boneMask, boneComputed );
 
 	BuildFirstPersonMeathookTransformations( hdr, pos, q, cameraTransform, boneMask, boneComputed, "bip_head" );
 }
@@ -9951,7 +9059,9 @@ void C_TFPlayer::Simulate( void )
 		Flashlight();
 	}
 
-	BaseClass::Simulate();
+	// TF doesn't do step sounds based on velocity, instead using anim events
+	// So we deliberately skip over the base player simulate, which calls them.
+	BaseClass::BaseClass::Simulate();
 }
 
 //-----------------------------------------------------------------------------
@@ -10112,16 +9222,6 @@ void C_TFPlayer::UpdateStepSound( surfacedata_t *psurface, const Vector &vecOrig
 	// don't play footstep sound while taunting
 	if ( IsTaunting() )
 	{
-		return;
-	}
-
-	// TF uses animation events for footstep sounds, not velocity-based
-	// Block velocity-based footsteps that would be called from C_BasePlayer::Simulate()
-	// Animation events (event 7001) reset m_flStepSoundTime to 0 before calling this,
-	// so we can use that to distinguish between animation events and velocity-based calls
-	if ( m_flStepSoundTime > 0 && ShouldDrawLocalPlayer())
-	{
-		// This is a velocity-based call from C_BasePlayer::Simulate, block it
 		return;
 	}
 
@@ -10603,88 +9703,7 @@ void C_TFPlayer::ComputeFxBlend( void )
 void C_TFPlayer::CalcView( Vector &eyeOrigin, QAngle &eyeAngles, float &zNear, float &zFar, float &fov )
 {
 	HandleTaunting();
-	
-	// VR Death Camera: Keep player fixed in place when dead instead of following ragdoll
-	if ( UseVR() && IsLocalPlayer() && g_pOpenXRManager )
-	{
-		int currentObsMode = m_iObserverMode;
-		bool bIsInDeathMode = (currentObsMode == OBS_MODE_DEATHCAM || currentObsMode == OBS_MODE_FREEZECAM);
-		
-		// Clear death state when respawning
-		if ( !bIsInDeathMode && m_bHasVRDeathPosition )
-		{
-			m_bHasVRDeathPosition = false;
-		}
-		
-		// Use stored death position with VR head tracking
-		if ( m_bHasVRDeathPosition && bIsInDeathMode )
-		{
-			Vector currentHmdPos = g_pOpenXRManager->GetMideyePose().GetTranslation();
-			QAngle hmdAngles;
-			MatrixAngles(g_pOpenXRManager->GetMideyePose().As3x4(), hmdAngles);
-			
-			// Calculate head movement since death
-			Vector hmdOffset = currentHmdPos - m_calibratedHmdXYPosition;
-			Vector worldOffset;
-			VectorRotate(Vector(hmdOffset.x, hmdOffset.y, 0), QAngle(0, -m_calibratedHmdYaw, 0), worldOffset);
-			worldOffset.z = hmdOffset.z;
-			
-			eyeOrigin = m_vecVRDeathPosition + worldOffset;
-			eyeAngles = hmdAngles;
-			eyeAngles.y -= m_calibratedHmdYaw;
-			zNear = VIEW_NEARZ;
-			zFar = MAX_TRACE_LENGTH;
-			fov = GetFOV();
-			return;
-		}
-		
-		// Transition to death mode - lock position using last alive frame's view
-		if ( bIsInDeathMode && !m_bHasVRDeathPosition )
-		{
-			m_bHasVRDeathPosition = true;
-			m_calibratedHmdXYPosition = m_vecVRDeathHmdCalibration;
-			m_calibratedHmdYaw = m_flVRDeathHmdYaw - m_angVRDeathAngles.y;
-			while (m_calibratedHmdYaw > 180.0f) m_calibratedHmdYaw -= 360.0f;
-			while (m_calibratedHmdYaw < -180.0f) m_calibratedHmdYaw += 360.0f;
-			m_localRoomscaleOffset = vec3_origin;
-			m_headInPlayerO = vec3_origin;
-			
-			eyeOrigin = m_vecVRDeathPosition;
-			eyeAngles = m_angVRDeathAngles;
-			zNear = VIEW_NEARZ;
-			zFar = MAX_TRACE_LENGTH;
-			fov = GetFOV();
-			return;
-		}
-	}
-	
 	BaseClass::CalcView( eyeOrigin, eyeAngles, zNear, zFar, fov );
-	
-	// Store view state while alive for use when death occurs
-	if ( UseVR() && IsLocalPlayer() && g_pOpenXRManager && IsAlive() && m_iObserverMode == OBS_MODE_NONE )
-	{
-		m_vecVRDeathPosition = eyeOrigin;
-		m_angVRDeathAngles = eyeAngles;
-		m_vecVRDeathHmdCalibration = g_pOpenXRManager->GetMideyePose().GetTranslation();
-		QAngle hmdAngles;
-		MatrixAngles(g_pOpenXRManager->GetMideyePose().As3x4(), hmdAngles);
-		m_flVRDeathHmdYaw = hmdAngles.y;
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Returns the correct view position for VR, using death position if in death mode
-//-----------------------------------------------------------------------------
-Vector C_TFPlayer::GetVRViewPosition()
-{
-	// If we're using VR death position, return that instead of EyePosition()
-	// This is needed because EyePosition() uses dead view height when dead
-	if ( UseVR() && m_bHasVRDeathPosition )
-	{
-		return m_vecVRDeathPosition;
-	}
-	
-	return EyePosition();
 }
 
 void SelectDisguise( int iClass, int iTeam );
@@ -11948,6 +10967,7 @@ bool C_TFPlayer::ShouldPlayEffect( EBonusEffectFilter_t filter, const C_TFPlayer
 	};
 }
 
+
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -12831,19 +11851,6 @@ void C_TFPlayer::ClientAdjustVOPitch( int& pitch )
 	}
 }
 
-void C_TFPlayer::RecalibrateView()
-{
-	Log("Client recalibrating view\n");
-	m_isCalibrated = false;
-	m_roomscaleOffset = vec3_origin;
-	m_iv_roomscaleOffset.Reset();
-	m_vecVRHandOffsetL = vec3_origin;
-	m_vecVRHandOffsetR = vec3_origin;
-	m_iv_vecVRHandOffsetL.Reset();
-	m_iv_vecVRHandOffsetR.Reset();
-	m_bVRIKBonesResolved = false;
-}
-
 
 //------------------------------------------------------------------------------
 // The serverbrowser has just added a server to the favorite list.
@@ -12945,12 +11952,3 @@ static void cc_helpme_released( const CCommand &args )
 	engine->ServerCmdKeyValues( kv );
 }
 static ConCommand helpme_released( "-helpme", cc_helpme_released );
-
-void SpawnVRHandsForPlayer(C_TFPlayer *pPlayer)
-{
-	if (!pPlayer || !pPlayer->IsLocalPlayer())
-		return;
-		
-	C_TFVRHand::SpawnVRHands(pPlayer);
-}
-

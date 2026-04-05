@@ -233,80 +233,22 @@ LINK_ENTITY_TO_CLASS( light_spot, CLight );
 LINK_ENTITY_TO_CLASS( light_glspot, CLight );
 
 
+class CEnvLight : public CLight
+{
+public:
+	DECLARE_CLASS( CEnvLight, CLight );
+
+	bool	KeyValue( const char *szKeyName, const char *szValue ); 
+	void	Spawn( void );
+};
 
 LINK_ENTITY_TO_CLASS( light_environment, CEnvLight );
-
-IMPLEMENT_SERVERCLASS_ST( CEnvLight, DT_CEnvLight )
-	SendPropQAngles( SENDINFO( m_angSunAngles ) ),
-	SendPropVector( SENDINFO( m_vecLight  ) ),
-	SendPropVector( SENDINFO( m_vecAmbient ) ),
-	SendPropBool(   SENDINFO( m_bCascadedShadowMappingEnabled ) ),
-END_SEND_TABLE()
-
-BEGIN_DATADESC(CEnvLight)
-
-DEFINE_FIELD( m_vecLightRGB, FIELD_VECTOR ),
-DEFINE_FIELD( m_flLightBrightness, FIELD_FLOAT ),
-
-// Fuctions
-DEFINE_FUNCTION(FadeThink),
-
-// Inputs
-DEFINE_INPUTFUNC(FIELD_VOID, "Toggle", InputToggle),
-DEFINE_INPUTFUNC(FIELD_VOID, "TurnOn", InputTurnOn),
-DEFINE_INPUTFUNC(FIELD_VOID, "TurnOff", InputTurnOff),
-
-END_DATADESC()
-
-//------------------------------------------------------------------------------
-// Purpose : Fade light to new starting pattern value then stop thinking
-//------------------------------------------------------------------------------
-void CEnvLight::FadeThink(void)
-{
-	if (m_iCurrentFade < m_iTargetFade)
-	{
-		m_iCurrentFade++;
-	}
-	else if (m_iCurrentFade > m_iTargetFade)
-	{
-		m_iCurrentFade--;
-	}
-
-	// If we're done fading instantiate our light pattern and stop thinking
-	if (m_iCurrentFade == m_iTargetFade)
-	{
-		engine->LightStyle(m_iStyle, (char*)STRING(m_iszPattern));
-		SetNextThink(TICK_NEVER_THINK);
-	}
-	// Otherwise instantiate our current fade value and keep thinking
-	else
-	{
-		char sCurString[2];
-		sCurString[0] = m_iCurrentFade;
-		sCurString[1] = 0;
-		engine->LightStyle(m_iStyle, sCurString);
-
-		// UNDONE: Consider making this settable war to control fade speed
-		SetNextThink(gpGlobals->curtime + 0.1f);
-	}
-}
 
 bool CEnvLight::KeyValue( const char *szKeyName, const char *szValue )
 {
 	if (FStrEq(szKeyName, "_light"))
 	{
-		// Parse raw RGBA (0-255) from Hammer's "_light" key and store it so
-		// external systems (e.g. csm_autospawn) can read the sun color without
-		// needing friend/private access.
-		float tmp[4] = { 255.0f, 255.0f, 255.0f, 255.0f };
-		UTIL_StringToFloatArray( tmp, 4, szValue );
-		// The 4th value is a brightness scalar in Hammer format; keep it raw.
-		m_vecLightRGB.Init( tmp[0], tmp[1], tmp[2] );
-		m_flLightBrightness = tmp[3];
-	}
-	else if (FStrEq(szKeyName, "pitch"))
-	{
-		m_iPitch = atoi(szValue);
+		// nothing
 	}
 	else
 	{
@@ -316,120 +258,8 @@ bool CEnvLight::KeyValue( const char *szKeyName, const char *szValue )
 	return true;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: Turn the light on
-//-----------------------------------------------------------------------------
-void CEnvLight::TurnOn(void)
-{
-	if (m_iszPattern != NULL_STRING)
-	{
-		engine->LightStyle(m_iStyle, (char*)STRING(m_iszPattern));
-	}
-	else
-	{
-		engine->LightStyle(m_iStyle, "m");
-	}
-
-	CLEARBITS(m_spawnflags, SF_LIGHT_START_OFF);
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Turn the light off
-//-----------------------------------------------------------------------------
-void CEnvLight::TurnOff(void)
-{
-	engine->LightStyle(m_iStyle, "a");
-	SETBITS(m_spawnflags, SF_LIGHT_START_OFF);
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Toggle the light on/off
-//-----------------------------------------------------------------------------
-void CEnvLight::Toggle(void)
-{
-	//Toggle it
-	if (FBitSet(m_spawnflags, SF_LIGHT_START_OFF))
-	{
-		TurnOn();
-	}
-	else
-	{
-		TurnOff();
-	}
-}
-
 
 void CEnvLight::Spawn( void )
 {
-	// Default to white if no _light key was parsed (e.g. outdoor-only maps)
-	if ( m_vecLightRGB.LengthSqr() == 0.0f )
-	{
-		m_vecLightRGB.Init( 255.0f, 255.0f, 255.0f );
-		m_flLightBrightness = 255.0f;
-	}
-
 	BaseClass::Spawn( );
-
-	// Populate networked members from the BSP-parsed data so the client
-	// C_EnvLight immediately has valid data before sky_tod begins driving them.
-	{
-		// Sun angles: pitch from m_iPitch (positive = downward), yaw from entity angles
-		QAngle ang = GetAbsAngles();
-		ang.x = (float)( -m_iPitch );
-		m_angSunAngles = ang;
-
-		// Convert 0-255 BSP colour to normalised linear float for the engine
-		const float kInv255 = 1.0f / 255.0f;
-		float flBrightScale = m_flLightBrightness * kInv255;
-		m_vecLight.Init(
-			m_vecLightRGB.x * kInv255 * flBrightScale,
-			m_vecLightRGB.y * kInv255 * flBrightScale,
-			m_vecLightRGB.z * kInv255 * flBrightScale );
-
-		// Ambient: approx 40% of direct for a bright outdoor day
-		m_vecAmbient = m_vecLight * 0.4f;
-
-		m_bCascadedShadowMappingEnabled = true;
-	}
-
-	SetThink( &CEnvLight::Think );
-	SetNextThink( gpGlobals->curtime + 0.05f );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Per-frame think — sky_tod.cpp pushes updated sun state here.
-//-----------------------------------------------------------------------------
-void CEnvLight::Think( void )
-{
-	// The time-of-day system (sky_tod.cpp) drives m_angSunAngles, m_vecLight,
-	// and m_vecAmbient directly by writing to our members each frame.
-	// We just need to reschedule ourselves so NetworkStateChanged() propagates.
-	SetNextThink( gpGlobals->curtime + 0.05f );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Handle the "turnon" input handler
-// Input  : &inputdata - 
-//-----------------------------------------------------------------------------
-void CEnvLight::InputTurnOn(inputdata_t& inputdata)
-{
-	TurnOn();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Handle the "turnoff" input handler
-// Input  : &inputdata - 
-//-----------------------------------------------------------------------------
-void CEnvLight::InputTurnOff(inputdata_t& inputdata)
-{
-	TurnOff();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Handle the "toggle" input handler
-// Input  : &inputdata - 
-//-----------------------------------------------------------------------------
-void CEnvLight::InputToggle(inputdata_t& inputdata)
-{
-	Toggle();
 }

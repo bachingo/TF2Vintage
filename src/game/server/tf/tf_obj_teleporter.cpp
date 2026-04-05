@@ -761,9 +761,9 @@ bool CObjectTeleporter::IsSendingPlayer( CTFPlayer *pPlayer )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CObjectTeleporter::CheckUpgradeOnHit( CTFPlayer *pPlayer, float flHitMod )
+bool CObjectTeleporter::CheckUpgradeOnHit( CTFPlayer *pPlayer )
 {
-	if ( BaseClass::CheckUpgradeOnHit( pPlayer, flHitMod ) )
+	if ( BaseClass::CheckUpgradeOnHit( pPlayer ) )
 	{
 		CopyUpgradeStateToMatch( GetMatchingTeleporter(), false );
 		return true;

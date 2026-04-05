@@ -16,25 +16,14 @@
 #include "vgui_controls/Controls.h"
 #include "sourcevr/isourcevirtualreality.h"
 #include "ienginevgui.h"
-#include "tfvr/hmdWrapper.h"
 #include "cdll_client_int.h"
 #include "vgui/IVGui.h"
 #include "vgui_controls/Controls.h"
 #include "tier0/vprof_telemetry.h"
 #include <time.h>
 #include "steam/steam_api.h"
-#include <tfvr/openxr_manager.h>
-#include "tf/c_tf_player.h"
-#include "engine/ivdebugoverlay.h"
-#include "econ/econ_ui.h"
-#include "tf/vgui/class_loadout_panel.h"
-#include "tf/vgui/character_info_panel.h"
-#include "tfvr/vr_menu_manager.h"
 
 const char *COM_GetModDirectory(); // return the mod dir (rather than the complete -game param, which can be a path)
-
-// External debug overlay interface for drawing debug visualizations
-extern IVDebugOverlay *debugoverlay;
 
 CClientVirtualReality g_ClientVirtualReality;
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR( CClientVirtualReality, IClientVirtualReality, 
@@ -46,8 +35,6 @@ EXPOSE_SINGLE_INTERFACE_GLOBALVAR( CClientVirtualReality, IClientVirtualReality,
 // --------------------------------------------------------------------
 ConVar vr_activate_default( "vr_activate_default",		"0", FCVAR_ARCHIVE, "If this is true the game will switch to VR mode once startup is complete." );
 
-// Debug visualization ConVars
-ConVar tfvr_debug_playspace_origin( "tfvr_debug_playspace_origin", "0", FCVAR_NONE, "Draw a debug cube at the calculated playspace origin in world coordinates" );
 
 ConVar vr_moveaim_mode      ( "vr_moveaim_mode",      "3", FCVAR_ARCHIVE, "0=move+shoot from face. 1=move with torso. 2,3,4=shoot with face+mouse cursor. 5+ are probably not that useful." );
 ConVar vr_moveaim_mode_zoom ( "vr_moveaim_mode_zoom", "3", FCVAR_ARCHIVE, "0=move+shoot from face. 1=move with torso. 2,3,4=shoot with face+mouse cursor. 5+ are probably not that useful." );
@@ -102,16 +89,7 @@ ConVar vr_viewmodel_offset_forward_large( "vr_viewmodel_offset_forward_large", "
 
 ConVar vr_force_windowed ( "vr_force_windowed", "0", FCVAR_ARCHIVE );
 
-ConVar vr_first_person_uses_world_model ( "vr_first_person_uses_world_model", "0", 0, "Causes the third person model to be drawn instead of the view model" );
-
-extern ConVar tfvr_menu_distance;
-extern ConVar tfvr_menu_scale;
-
-extern ConVar tfvr_hud_onwrist;
-extern ConVar tfvr_hud_forward;
-extern ConVar tfvr_hud_scale;
-extern ConVar tfvr_hud_axis_lock_to_world;
-extern ConVar tfvr_hud_height_adjust;
+ConVar vr_first_person_uses_world_model ( "vr_first_person_uses_world_model", "1", 0, "Causes the third person model to be drawn instead of the view model" );
 
 // --------------------------------------------------------------------
 // Purpose: Cycle through the aim & move modes.
@@ -157,9 +135,9 @@ CON_COMMAND( vr_deactivate, "Switch from VR mode to normal mode" )
 }
 CON_COMMAND( vr_toggle, "Toggles VR mode" )
 {
-	if( g_pOpenXRManager )
+	if( g_pSourceVR )
 	{
-		if( g_pOpenXRManager->IsActive() )
+		if( g_pSourceVR->ShouldRunInVR() )
 			g_ClientVirtualReality.Deactivate();
 		else
 			g_ClientVirtualReality.Activate();
@@ -209,10 +187,6 @@ bool IsOrthonormal ( VMatrix Mat, float fTolerance )
 	return true;
 }
 
-static bool IsMenuUp()
-{
-	return (enginevgui && enginevgui->IsGameUIVisible()) || vgui::surface()->IsCursorVisible();
-}
 
 // --------------------------------------------------------------------
 // Purpose: Computes the FOV from the projection matrix
@@ -275,7 +249,6 @@ CClientVirtualReality::CClientVirtualReality()
 	m_PlayerTorsoAngle.Init();
 	m_WorldFromWeapon.Identity();
 	m_WorldFromMidEye.Identity();
-	m_WorldFromMidEyeRaw.Identity();
 	
 	m_bOverrideTorsoAngle = false;
 	m_OverrideTorsoOffset.Init();
@@ -286,14 +259,6 @@ CClientVirtualReality::CClientVirtualReality()
 	m_WorldZoomScale = 1.0f;
 	m_hmmMovementActual = HMM_SHOOTFACE_MOVEFACE;
 	m_iAlignTorsoAndViewToWeaponCountdown = 0;
-	
-	// Initialize custom HUD bounds
-	m_bCustomHUDBoundsSet = false;
-	m_CustomHUDViewer.Init();
-	m_CustomHUDUL.Init();
-	m_CustomHUDUR.Init();
-	m_CustomHUDLL.Init();
-	m_CustomHUDLR.Init();
 
 	m_rtLastMotionSample = 0;
 	m_bMotionUpdated = false;
@@ -372,7 +337,7 @@ void CClientVirtualReality::DrawMainMenu()
 	// have to draw the UI in stereo via the render texture or it won't fuse properly
 
 	// Draw it into the render target first
-	ITexture *pTexture = materials->FindTexture( "_rt_vgui", NULL, false );
+	ITexture *pTexture = materials->FindTexture( "_rt_gui", NULL, false );
 	Assert( pTexture );
 	if( !pTexture) 
 		return;
@@ -418,8 +383,8 @@ void CClientVirtualReality::DrawMainMenu()
 	pRenderContext->Flush();
 
 	int leftX, leftY, leftW, leftH, rightX, rightY, rightW, rightH;
-	g_pOpenXRManager->GetViewportBounds( ISourceVirtualReality::VREye_Left, &leftX, &leftY, &leftW, &leftH );
-	g_pOpenXRManager->GetViewportBounds( ISourceVirtualReality::VREye_Right, &rightX, &rightY, &rightW, &rightH );
+	g_pSourceVR->GetViewportBounds( ISourceVirtualReality::VREye_Left, &leftX, &leftY, &leftW, &leftH );
+	g_pSourceVR->GetViewportBounds( ISourceVirtualReality::VREye_Right, &rightX, &rightY, &rightW, &rightH );
 
 
 	// render the main view
@@ -452,10 +417,10 @@ void CClientVirtualReality::DrawMainMenu()
 		CMatRenderContextPtr pRenderContextMat( materials );
 		PIXEvent pixEvent( pRenderContextMat, nView == STEREO_EYE_LEFT ? "left eye" : "right eye" );
 
-		ITexture *pColor = g_pOpenXRManager->GetRenderTarget();
-		ITexture *pDepth = g_pOpenXRManager->GetRenderTarget();
+		ITexture *pColor = g_pSourceVR->GetRenderTarget( (ISourceVirtualReality::VREye)(nView-1), ISourceVirtualReality::RT_Color );
+		ITexture *pDepth = g_pSourceVR->GetRenderTarget( (ISourceVirtualReality::VREye)(nView-1), ISourceVirtualReality::RT_Depth );
 		render->Push3DView( viewEye[nView], VIEW_CLEAR_DEPTH|VIEW_CLEAR_COLOR, pColor, NULL, pDepth );
-		RenderHUDQuad( false );
+		RenderHUDQuad( false,  false );
 		render->PopView( NULL );
 
 		PostProcessFrame( (StereoEye_t)nView );
@@ -472,6 +437,134 @@ void CClientVirtualReality::DrawMainMenu()
 // --------------------------------------------------------------------
 bool CClientVirtualReality::OverrideView ( CViewSetup *pViewMiddle, Vector *pViewModelOrigin, QAngle *pViewModelAngles, HeadtrackMovementMode_t hmmMovementOverride )
 {
+	if( !UseVR() )
+	{
+		return false;
+	}
+
+	if ( hmmMovementOverride == HMM_NOOVERRIDE )
+	{
+		if ( CurrentlyZoomed() )
+		{
+			m_hmmMovementActual = static_cast<HeadtrackMovementMode_t>( vr_moveaim_mode_zoom.GetInt() );
+		}
+		else
+		{
+			m_hmmMovementActual = static_cast<HeadtrackMovementMode_t>( vr_moveaim_mode.GetInt() );
+		}
+	}
+	else
+	{
+		m_hmmMovementActual = hmmMovementOverride;
+	}
+
+
+	// Incoming data may or may not be useful - it is the origin and aim of the "player", i.e. where bullets come from.
+	// In some modes it is an independent thing, guided by the mouse & keyboard = useful.
+	// In other modes it's just where the HMD was pointed last frame, modified slightly by kbd+mouse.
+	// In those cases, we should use our internal reference (which keeps track thanks to OverridePlayerMotion)
+	QAngle originalMiddleAngles = pViewMiddle->angles;
+	Vector originalMiddleOrigin = pViewMiddle->origin;
+
+	// Figure out the in-game "torso" concept, which corresponds to the player's physical torso.
+	m_PlayerTorsoOrigin = pViewMiddle->origin;
+
+	// Ignore what was passed in - it's just the direction the weapon is pointing, which was determined by last frame's HMD orientation!
+	// Instead use our cached value.
+	QAngle torsoAngles = m_PlayerTorsoAngle;
+
+	VMatrix worldFromTorso;
+	worldFromTorso.SetupMatrixOrgAngles( m_PlayerTorsoOrigin, torsoAngles );
+
+	//// Scale translation e.g. to allow big in-game leans with only a small head movement.
+	//// Clamp HMD movement to a reasonable amount to avoid wallhacks, vis problems, etc.
+	float limit = vr_translation_limit.GetFloat();
+	VMatrix matMideyeZeroFromMideyeCurrent = g_pSourceVR->GetMideyePose();
+	Vector viewTranslation = matMideyeZeroFromMideyeCurrent.GetTranslation();
+	if ( viewTranslation.IsLengthGreaterThan ( limit ) )
+	{
+		viewTranslation.NormalizeInPlace();
+		viewTranslation *= limit;
+		matMideyeZeroFromMideyeCurrent.SetTranslation( viewTranslation );
+	}
+
+	// Now figure out the three principal matrices: m_TorsoFromMideye, m_WorldFromMidEye, m_WorldFromWeapon
+	// m_TorsoFromMideye is done so that OverridePlayerMotion knows what to do with WASD.
+
+	switch ( m_hmmMovementActual )
+	{
+	case HMM_SHOOTFACE_MOVEFACE:
+	case HMM_SHOOTFACE_MOVETORSO:
+		// Aim point is down your nose, i.e. same as the view angles.
+		m_TorsoFromMideye = matMideyeZeroFromMideyeCurrent;
+		m_WorldFromMidEye = worldFromTorso * matMideyeZeroFromMideyeCurrent;
+		m_WorldFromWeapon = m_WorldFromMidEye;
+		break;
+
+	case HMM_SHOOTBOUNDEDMOUSE_LOOKFACE_MOVEFACE:
+	case HMM_SHOOTBOUNDEDMOUSE_LOOKFACE_MOVEMOUSE:
+	case HMM_SHOOTMOUSE_MOVEFACE:
+	case HMM_SHOOTMOVEMOUSE_LOOKFACE:
+		// Aim point is independent of view - leave it as it was, just copy it into m_WorldFromWeapon for our use.
+		m_TorsoFromMideye = matMideyeZeroFromMideyeCurrent;
+		m_WorldFromMidEye = worldFromTorso * matMideyeZeroFromMideyeCurrent;
+		m_WorldFromWeapon.SetupMatrixOrgAngles( originalMiddleOrigin, originalMiddleAngles );
+		break;
+
+	case HMM_SHOOTMOVELOOKMOUSE:
+		// HMD is ignored completely, mouse does everything.
+		m_PlayerTorsoAngle = originalMiddleAngles;
+
+		worldFromTorso.SetupMatrixOrgAngles( m_PlayerTorsoOrigin, originalMiddleAngles );
+
+		m_TorsoFromMideye.Identity();
+		m_WorldFromMidEye = worldFromTorso;
+		m_WorldFromWeapon = worldFromTorso;
+		break;
+
+	case HMM_SHOOTMOVELOOKMOUSEFACE:
+		// mouse does everything, and then we add head tracking on top of that
+		worldFromTorso = worldFromTorso * matMideyeZeroFromMideyeCurrent; 
+
+		m_TorsoFromMideye = matMideyeZeroFromMideyeCurrent;
+		m_WorldFromWeapon = worldFromTorso;
+		m_WorldFromMidEye = worldFromTorso;
+		break;
+
+	default: Assert ( false ); break;
+	}
+
+	// Finally convert back to origin+angles that the game understands.
+	pViewMiddle->origin = m_WorldFromMidEye.GetTranslation();
+	VectorAngles ( m_WorldFromMidEye.GetForward(), m_WorldFromMidEye.GetUp(), pViewMiddle->angles );
+
+	*pViewModelAngles = pViewMiddle->angles;
+	if ( vr_viewmodel_translate_with_head.GetBool() )
+	{
+		*pViewModelOrigin = pViewMiddle->origin;
+	}
+	else
+	{
+		*pViewModelOrigin = originalMiddleOrigin;
+	}
+
+	m_WorldFromMidEyeNoDebugCam = m_WorldFromMidEye;
+	if ( vr_debug_remote_cam.GetBool() )
+	{
+		Vector vOffset ( vr_debug_remote_cam_pos_x.GetFloat(), vr_debug_remote_cam_pos_y.GetFloat(), vr_debug_remote_cam_pos_z.GetFloat() );
+		Vector vLookat ( vr_debug_remote_cam_target_x.GetFloat(), vr_debug_remote_cam_target_y.GetFloat(), vr_debug_remote_cam_target_z.GetFloat() );
+		pViewMiddle->origin += vOffset;
+		Vector vView = vLookat - vOffset;
+		VectorAngles ( vView, m_WorldFromMidEye.GetUp(), pViewMiddle->angles );
+
+		m_WorldFromMidEye.SetupMatrixOrgAngles( pViewMiddle->origin, pViewMiddle->angles );
+
+		m_TorsoFromMideye.Identity();
+	}
+
+	// set the near clip plane so the local player clips less
+	pViewMiddle->zNear *= vr_projection_znear_multiplier.GetFloat();
+
 	return true;
 }
 
@@ -491,77 +584,11 @@ bool CClientVirtualReality::OverrideWeaponHudAimVectors ( Vector *pAimOrigin, Ve
 	Assert ( pAimOrigin != NULL );
 	Assert ( pAimDirection != NULL );
 
-	// VR ball aim: use offhand (left) controller for crosshair when aiming a ball
-	extern bool g_bVRBallAimActive;
-	extern Vector g_vecVRBallAimOrigin;
-	extern QAngle g_angVRBallAimAngles;
+	// So give it some nice high-fps numbers, not the low-fps ones we get from the game.
+	*pAimOrigin = m_WorldFromWeapon.GetTranslation();
+	*pAimDirection = m_WorldFromWeapon.GetForward();
 
-	if (g_bVRBallAimActive && g_vecVRBallAimOrigin != vec3_origin)
-	{
-		*pAimOrigin = g_vecVRBallAimOrigin;
-
-		Vector forward;
-		AngleVectors( g_angVRBallAimAngles, &forward );
-		*pAimDirection = forward;
-
-		extern ConVar tfvr_crosshair_follow_controller_roll;
-		if (tfvr_crosshair_follow_controller_roll.GetBool())
-		{
-			m_flCrosshairRollAngle = g_angVRBallAimAngles.z - 90.0f;
-			m_bCrosshairRollValid = true;
-		}
-		else
-		{
-			m_bCrosshairRollValid = false;
-		}
-
-		return true;
-	}
-
-	// Use the player's weapon shooting position and angles for crosshair (controller-based in VR)
-	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
-	if ( pPlayer )
-	{
-		// Cast to TF player to access VR-specific functions
-		C_TFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
-		if ( pTFPlayer )
-		{
-			// Use weapon shoot position for origin (controller position in VR)
-			*pAimOrigin = pTFPlayer->Weapon_ShootPosition();
-			
-			// Use weapon shoot angles for direction (controller angles in VR)
-			QAngle weaponAngles = pTFPlayer->Weapon_ShootAngles();
-			Vector forward;
-			AngleVectors( weaponAngles, &forward );
-			*pAimDirection = forward;
-			
-			// Store the weapon roll angle for crosshair rotation
-			extern ConVar tfvr_crosshair_follow_controller_roll;
-			if (tfvr_crosshair_follow_controller_roll.GetBool())
-			{
-				// Use weapon roll instead of controller roll
-				// Add 90 degree offset to account for weapon model orientation
-				m_flCrosshairRollAngle = weaponAngles.z - 90.0f;
-				m_bCrosshairRollValid = true;
-			}
-			else
-			{
-				m_bCrosshairRollValid = false;
-			}
-			
-			// Apply crosshair offset if any ConVars are set
-			extern ConVar tfvr_crosshair_offset_x, tfvr_crosshair_offset_y, tfvr_crosshair_offset_z;
-			if (tfvr_crosshair_offset_x.GetFloat() != 0.0f || tfvr_crosshair_offset_y.GetFloat() != 0.0f || tfvr_crosshair_offset_z.GetFloat() != 0.0f)
-			{
-				Vector offset(tfvr_crosshair_offset_x.GetFloat(), tfvr_crosshair_offset_y.GetFloat(), tfvr_crosshair_offset_z.GetFloat());
-				*pAimOrigin += offset;
-			}
-			
-			return true;
-		}
-	}
-
-	return false;
+	return true;
 }
 
 
@@ -575,32 +602,31 @@ bool CClientVirtualReality::OverrideStereoView( CViewSetup *pViewMiddle, CViewSe
 	// Everything in here is in Source coordinate space.
 	if( !UseVR() )
 	{
-		// CRITICAL: When VR is off, ensure projection matrix overrides are disabled
-		// This restores normal FOV calculation instead of using VR projection matrices
-		DevMsg("OverrideStereoView: VR is OFF - resetting projection overrides. Middle was: %s\n", 
-			pViewMiddle->m_bViewToProjectionOverride ? "OVERRIDDEN" : "NORMAL");
-		pViewMiddle->m_bViewToProjectionOverride = false;
-		pViewLeft->m_bViewToProjectionOverride = false; 
-		pViewRight->m_bViewToProjectionOverride = false;
 		return false;
 	}
 
-	const VMatrix viewAsMatrix = SetupMatrixOrgAngles(pViewMiddle->origin, pViewMiddle->angles);
+	VMatrix matOffsetLeft = g_pSourceVR->GetMidEyeFromEye( ISourceVirtualReality::VREye_Left );
+	VMatrix matOffsetRight = g_pSourceVR->GetMidEyeFromEye( ISourceVirtualReality::VREye_Right );
 
-	VMatrix leftEyeView = viewAsMatrix * g_pOpenXRManager->GetEyeViewFromMidEyeView(ISourceVirtualReality::VREye_Left);
-	VMatrix rightEyeView = viewAsMatrix * g_pOpenXRManager->GetEyeViewFromMidEyeView(ISourceVirtualReality::VREye_Right);
+	// Move eyes to IPD positions.
+	VMatrix worldFromLeftEye  = m_WorldFromMidEye * matOffsetLeft;
+	VMatrix worldFromRightEye = m_WorldFromMidEye * matOffsetRight;
 
-	MatrixToAngles(leftEyeView, pViewLeft->angles);
-	pViewLeft->origin = leftEyeView.GetTranslation();
+	Assert ( IsOrthonormal ( worldFromLeftEye, 0.001f ) );
+	Assert ( IsOrthonormal ( worldFromRightEye, 0.001f ) );
 
-	MatrixToAngles(rightEyeView, pViewRight->angles);
-	pViewRight->origin = rightEyeView.GetTranslation();
+	// Finally convert back to origin+angles.
+	MatrixAngles( worldFromLeftEye.As3x4(),  pViewLeft->angles, pViewLeft->origin );
+	MatrixAngles( worldFromRightEye.As3x4(),  pViewRight->angles, pViewRight->origin );
 
 	// Find the projection matrices.
+
+	// TODO: this isn't the fastest thing in the world. Cache them?
+	float headtrackFovScale = m_WorldZoomScale;
 	pViewLeft->m_bViewToProjectionOverride = true;
 	pViewRight->m_bViewToProjectionOverride = true;
-	g_pOpenXRManager->GetEyeProjectionMatrix(pViewLeft->m_ViewToProjection, ISourceVirtualReality::VREye_Left, pViewMiddle->zNear, pViewMiddle->zFar);
-	g_pOpenXRManager->GetEyeProjectionMatrix(pViewRight->m_ViewToProjection, ISourceVirtualReality::VREye_Right, pViewMiddle->zNear, pViewMiddle->zFar);
+	g_pSourceVR->GetEyeProjectionMatrix (  &pViewLeft->m_ViewToProjection, ISourceVirtualReality::VREye_Left,  pViewMiddle->zNear, pViewMiddle->zFar, 1.0f/headtrackFovScale );
+	g_pSourceVR->GetEyeProjectionMatrix ( &pViewRight->m_ViewToProjection, ISourceVirtualReality::VREye_Right, pViewMiddle->zNear, pViewMiddle->zFar, 1.0f/headtrackFovScale );
 
 	// And bodge together some sort of average for our cyclops friends.
 	pViewMiddle->m_bViewToProjectionOverride = true;
@@ -643,21 +669,31 @@ bool CClientVirtualReality::OverrideStereoView( CViewSetup *pViewMiddle, CViewSe
 	CalcFovFromProjection ( &(pViewRight ->fov), pViewRight ->m_ViewToProjection );
 	CalcFovFromProjection ( &(pViewMiddle->fov), pViewMiddle->m_ViewToProjection );
 
-	// Figure out the current HUD FOV.
-	m_fHudHorizontalFov = pViewLeft->fov * (IsMenuUp() ? tfvr_menu_scale : tfvr_hud_scale).GetFloat();
+	// if we don't know the HUD FOV, figure that out now
+	if( m_fHudHorizontalFov == 0.f )
+	{
+		// Figure out the current HUD FOV.
+		m_fHudHorizontalFov = pViewLeft->fov * vr_hud_display_ratio.GetFloat();
+		if( m_fHudHorizontalFov > vr_hud_max_fov.GetFloat() )
+		{
+			m_fHudHorizontalFov = vr_hud_max_fov.GetFloat();
+		}
+	}
 
 	// remember the view angles so we can limit the weapon to something near those
 	m_PlayerViewAngle = pViewMiddle->angles;
-	m_PlayerViewOrigin = pViewMiddle->origin + Vector(0, 0, tfvr_hud_height_adjust.GetFloat());
+	m_PlayerViewOrigin = pViewMiddle->origin;
+
+
 
 	// Figure out the HUD vectors and frustum.
+
 	// The aspect ratio of the HMD may be something bizarre (e.g. Rift is 640x800), and the pixels may not be square, so don't use that!
-	// Use 16:9 aspect ratio to match the _rt_vgui texture (all presets are 16:9)
-	static const float fAspectRatio = 16.f/9.f;
+	static const float fAspectRatio = 4.f/3.f;
 	float fHFOV = m_fHudHorizontalFov;
 	float fVFOV = m_fHudHorizontalFov / fAspectRatio;
 
-	const float fHudForward = (IsMenuUp() ? tfvr_menu_distance.GetFloat() : tfvr_hud_forward.GetFloat());
+	const float fHudForward = vr_hud_forward.GetFloat();
 	m_fHudHalfWidth = tan( DEG2RAD( fHFOV * 0.5f ) ) * fHudForward * m_WorldZoomScale;
 	m_fHudHalfHeight = tan( DEG2RAD( fVFOV * 0.5f ) ) * fHudForward * m_WorldZoomScale;
 
@@ -684,73 +720,23 @@ bool CClientVirtualReality::OverrideStereoView( CViewSetup *pViewMiddle, CViewSe
 	}
 
 	// This is a bitfield. A set bit means lock to the world, a clear bit means don't.
-	int iVrHudAxisLockToWorld = tfvr_hud_axis_lock_to_world.GetInt();
-	
-	// When locking roll to world, we need to compute orientation using world-up
-	// Simply zeroing the roll Euler angle doesn't work because the angles are coupled
-	bool bLockRoll = ( iVrHudAxisLockToWorld & (1<<ROLL) ) != 0;
-	bool bLockPitch = ( iVrHudAxisLockToWorld & (1<<PITCH) ) != 0;
-	
-	if ( bLockRoll )
+	int iVrHudAxisLockToWorld = vr_hud_axis_lock_to_world.GetInt();
+	if ( ( iVrHudAxisLockToWorld & (1<<ROLL) ) != 0 )
 	{
-		// Compute HUD forward from angles (ignoring roll)
-		Vector hudForward;
-		AngleVectors( HudAngles, &hudForward, nullptr, nullptr );
-		
-		// If locking pitch, project forward onto horizontal plane
-		if ( bLockPitch )
-		{
-			hudForward.z = 0.0f;
-			float len = hudForward.NormalizeInPlace();
-			if ( len < 0.001f )
-			{
-				// Looking straight up/down, use a default forward
-				hudForward = Vector(1, 0, 0);
-			}
-		}
-		
-		// Use world-up to compute a level orientation
-		Vector worldUp(0, 0, 1);
-		Vector hudRight = CrossProduct(worldUp, hudForward);
-		float rightLen = hudRight.NormalizeInPlace();
-		
-		Vector hudUp;
-		if ( rightLen < 0.001f )
-		{
-			// HUD forward is straight up/down
-			hudRight = Vector(1, 0, 0);
-			hudUp = CrossProduct(hudForward, hudRight);
-			hudUp.NormalizeInPlace();
-		}
-		else
-		{
-			hudUp = CrossProduct(hudForward, hudRight);
-			hudUp.NormalizeInPlace();
-		}
-		
-		// Build the matrix directly instead of using SetupMatrixOrgAngles
-		m_WorldFromHud.Identity();
-		m_WorldFromHud[0][0] = hudForward.x;  m_WorldFromHud[0][1] = -hudRight.x;  m_WorldFromHud[0][2] = hudUp.x;
-		m_WorldFromHud[1][0] = hudForward.y;  m_WorldFromHud[1][1] = -hudRight.y;  m_WorldFromHud[1][2] = hudUp.y;
-		m_WorldFromHud[2][0] = hudForward.z;  m_WorldFromHud[2][1] = -hudRight.z;  m_WorldFromHud[2][2] = hudUp.z;
-		m_WorldFromHud.SetTranslation( m_PlayerViewOrigin );
+		HudAngles[ROLL] = 0.0f;
 	}
-	else
+	if ( ( iVrHudAxisLockToWorld & (1<<PITCH) ) != 0 )
 	{
-		// Original behavior - just zero out angles as requested
-		if ( bLockPitch )
-		{
-			HudAngles[PITCH] = 0.0f;
-		}
-		if ( ( iVrHudAxisLockToWorld & (1<<YAW) ) != 0 )
-		{
-			// Locking the yaw to the world is not particularly helpful, so what it actually means is lock it to the weapon.
-			QAngle aimAngles;
-			MatrixAngles( m_WorldFromWeapon.As3x4(), aimAngles );
-			HudAngles[YAW] = aimAngles[YAW];
-		}
-		m_WorldFromHud.SetupMatrixOrgAngles( m_PlayerViewOrigin, HudAngles );
+		HudAngles[PITCH] = 0.0f;
 	}
+	if ( ( iVrHudAxisLockToWorld & (1<<YAW) ) != 0 )
+	{
+		// Locking the yaw to the world is not particularly helpful, so what it actually means is lock it to the weapon.
+		QAngle aimAngles;
+		MatrixAngles( m_WorldFromWeapon.As3x4(), aimAngles );
+		HudAngles[YAW] = aimAngles[YAW];
+	}
+	m_WorldFromHud.SetupMatrixOrgAngles( m_PlayerViewOrigin, HudAngles );
 
 	// Remember in source X forwards, Y left, Z up.
 	// We need to transform to a more conventional X right, Y up, Z backwards before doing the projection.
@@ -799,128 +785,10 @@ bool CClientVirtualReality::OverridePlayerMotion( float flInputSampleFrametime, 
 	// We need to compute what weapon angles WE want and return them in *pNewAngles - called "new"
 
 
+
 	VMatrix worldFromTorso;
 
-	CBasePlayer* pPlayer = C_BasePlayer::GetLocalPlayer();
-
-    // Whatever position is already here (set up by OverrideView) needs to be preserved.
-    Vector vWeaponOrigin = m_WorldFromWeapon.GetTranslation();
-
-	/*
-    if (!m_bRunYet && pPlayer)
-    {
-        g_pOpenXRManager->rotationOffset = 0.f;
-        QAngle hmdrot;
-        MatrixToAngles(g_pOpenXRManager->GetMideyePose(), hmdrot);
-        g_pOpenXRManager->rotationOffset = -hmdrot.y + pPlayer->GetAbsAngles().y;
-        DevMsg("player: %f, head: %f, torso: %f\n", pPlayer->GetAbsAngles().y, hmdrot.y, m_PlayerTorsoAngle.y);
-        savedPlayerViewOrigin = Vector(0.f, 0.f, 0.f);
-        m_bRunYet = true;
-    }
-
-    if (!isnan<float>(curAngles.y)) 
-    {
-        g_pOpenXRManager->rotationOffset += curAngles.y - oldAngles.y;
-    }
-
-    g_pOpenXRManager->rotationOffset += m_PlayerTorsoAngle.y;
-	*/
-
-    if ( pPlayer )
-    {
-        // VR FIX: Calculate smoothed position directly here since OverridePlayerMotion
-        // runs BEFORE CalcView (during input processing, not view rendering)
-        // We need to apply the same smoothing that CalcView will apply
-        
-        // Get base eye position
-        Vector eyeOrigin = pPlayer->EyePosition();
-        QAngle eyeAngles = pPlayer->EyeAngles();
-        
-        // Apply prediction error smoothing (same as CalcView does)
-        C_BasePlayer *pBasePlayer = dynamic_cast<C_BasePlayer*>(pPlayer);
-        if (pBasePlayer)
-        {
-            Vector smoothingOffset;
-            pBasePlayer->GetPredictionErrorSmoothingVector(smoothingOffset);
-            eyeOrigin += smoothingOffset;
-        }
-        
-        m_PlayerTorsoOrigin = eyeOrigin;
-        m_PlayerTorsoAngle = eyeAngles;
-        m_PlayerTorsoAngle[PITCH] = 0.0f;  // Don't tilt the body up/down
-        m_PlayerTorsoAngle[ROLL] = 0.0f;   // Don't roll the body
-		
-		// Apply the VR torso transform to the local player model
-		OverrideTorsoTransform( m_PlayerTorsoOrigin, m_PlayerTorsoAngle );
-    }
-    else
-    {
-        m_PlayerTorsoAngle = QAngle(0, 0, 0);
-		m_PlayerTorsoOrigin = Vector(0, 0, 0);
-    }
-    
-    // Update worldFromTorso with smoothed data
-    worldFromTorso.SetupMatrixOrgAngles(m_PlayerTorsoOrigin, m_PlayerTorsoAngle);
-
-    // NOTE: Don't update m_WorldFromMidEye here - it will be updated later by
-    // UpdateWorldFromMidEyeMatrices() with the FINAL smoothed data from CalcView
-    // which includes both stair smoothing AND prediction error smoothing
-    m_TorsoFromMideye.Identity();
-    // m_WorldFromMidEye = worldFromTorso;  // REMOVED - causes desync with smoothing
-
-    // Weapon view = mideye view, so apply that to the torso to find the world view direction.
-    // Set up m_WorldFromWeapon with correct VR position and orientation
-    if ( pPlayer )
-    {
-        // Check if we should use controller roll for crosshair rotation
-        extern ConVar tfvr_crosshair_follow_controller_roll;
-        if (g_pOpenXRManager && g_pOpenXRManager->IsActive() && tfvr_crosshair_follow_controller_roll.GetBool())
-        {
-            // Get the controller pose for weapon orientation
-            VMatrix rightControllerPose;
-            if (g_pOpenXRManager->GetRightControllerPose(rightControllerPose))
-            {
-                // Extract controller angles including roll
-                QAngle controllerAngles;
-                MatrixAngles(rightControllerPose.As3x4(), controllerAngles);
-                
-                // Use controller angles for weapon matrix (this affects crosshair rotation)
-                m_WorldFromWeapon.SetupMatrixOrgAngles( m_PlayerTorsoOrigin, controllerAngles );
-            }
-            else
-            {
-                // Fallback to eye angles if controller not available
-                m_WorldFromWeapon.SetupMatrixOrgAngles( m_PlayerTorsoOrigin, pPlayer->EyeAngles() );
-            }
-        }
-        else
-        {
-            // Original behavior: use eye angles (no controller roll)
-            m_WorldFromWeapon.SetupMatrixOrgAngles( m_PlayerTorsoOrigin, pPlayer->EyeAngles() );
-        }
-    }
-    else
-    {
-        m_WorldFromWeapon.SetupMatrixOrgAngles( Vector(0,0,0), QAngle(0,0,0) );
-    }
-
-    //Override rotation, disabled as it's done later per the weapon
-    //g_pVRManager->OverrideWeaponMatrix(m_WorldFromWeapon); 
-
-    //MatrixAngles(m_WorldFromWeapon.As3x4(), *pNewAngles);
-	// *pNewAngles = pPlayer->EyeAngles();
-	// *pNewAngles = QAngle(0, curAngles.y, 0);
-
-    // Figure out player motion. It says weapon, but it's the HMD
-    VMatrix mideyeFromWorld = m_WorldFromMidEye.InverseTR();
-    VMatrix newMidEyeFromWeapon = mideyeFromWorld * m_WorldFromWeapon;
-    newMidEyeFromWeapon.SetTranslation(Vector(0.0f, 0.0f, 0.0f));;
-    //*pNewMotion = newMidEyeFromWeapon * curMotion;
-
-	m_WorldFromMidEyeNoDebugCam = m_WorldFromMidEye;
-
 	// Whatever position is already here (set up by OverrideView) needs to be preserved.
-	/*
 	Vector vWeaponOrigin = m_WorldFromWeapon.GetTranslation();
 
 	switch ( m_hmmMovementActual )
@@ -1116,10 +984,11 @@ bool CClientVirtualReality::OverridePlayerMotion( float flInputSampleFrametime, 
 		m_PlayerTorsoAngle[ YAW ] = weaponAngles[ YAW ] - torsoFromHeadAngles[ YAW ] ;
 		NormalizeAngles( m_PlayerTorsoAngle );
 	}
-	*/
 
 	// remember the motion for stat tracking
 	m_PlayerLastMovement = *pNewMotion;
+
+
 
 	return true;
 }
@@ -1178,7 +1047,14 @@ void CClientVirtualReality::CancelTorsoTransformOverride()
 
 bool CClientVirtualReality::CanOverlayHudQuad()
 {
-	return false;
+	bool bCanOverlay = true;
+
+	bCanOverlay = bCanOverlay && vr_render_hud_in_world.GetBool();
+	bCanOverlay = bCanOverlay && ( ! vr_hud_never_overlay.GetBool() );
+	bCanOverlay = bCanOverlay && ( vr_hud_axis_lock_to_world.GetInt() == 0 );
+	bCanOverlay = bCanOverlay && ( m_hmmMovementActual != HMM_SHOOTFACE_MOVETORSO );
+
+	return bCanOverlay;
 }
 
 
@@ -1188,17 +1064,6 @@ bool CClientVirtualReality::CanOverlayHudQuad()
 // --------------------------------------------------------------------
 void CClientVirtualReality::GetHUDBounds( Vector *pViewer, Vector *pUL, Vector *pUR, Vector *pLL, Vector *pLR )
 {
-	// If custom HUD bounds are set, use those instead of the dynamic head-based bounds
-	if ( m_bCustomHUDBoundsSet )
-	{
-		*pViewer = m_CustomHUDViewer;
-		*pUL = m_CustomHUDUL;
-		*pUR = m_CustomHUDUR;
-		*pLL = m_CustomHUDLL;
-		*pLR = m_CustomHUDLR;
-		return;
-	}
-
 	Vector vHalfWidth = m_WorldFromHud.GetLeft() * -m_fHudHalfWidth;
 	Vector vHalfHeight = m_WorldFromHud.GetUp() * m_fHudHalfHeight;
 	Vector vHUDOrigin = m_PlayerViewOrigin + m_WorldFromHud.GetForward() * vr_hud_forward.GetFloat();
@@ -1208,475 +1073,17 @@ void CClientVirtualReality::GetHUDBounds( Vector *pViewer, Vector *pUL, Vector *
 	*pUR = vHUDOrigin + vHalfWidth + vHalfHeight;
 	*pLL = vHUDOrigin - vHalfWidth - vHalfHeight;
 	*pLR = vHUDOrigin + vHalfWidth - vHalfHeight;
-	
-	// Only capture HUD position during gameplay (when compositor is NOT active)
-	// This preserves the last known gameplay position for seamless transitions
-	extern bool dxvkIsCompositorActive();
-	if ( !dxvkIsCompositorActive() )
-	{
-		// Notify compositor about dynamic HUD position (for gameplay)
-		NotifyCompositorHUDPosition( *pViewer, *pUL, *pUR, *pLL, *pLR, false );
-	}
-}
-
-// --------------------------------------------------------------------
-void CClientVirtualReality::SetCustomHUDBounds( const Vector& viewer, const Vector& ul, const Vector& ur, const Vector& ll, const Vector& lr )
-{
-	m_bCustomHUDBoundsSet = true;
-	m_CustomHUDViewer = viewer;
-	m_CustomHUDUL = ul;
-	m_CustomHUDUR = ur;
-	m_CustomHUDLL = ll;
-	m_CustomHUDLR = lr;
-}
-
-// --------------------------------------------------------------------
-bool CClientVirtualReality::GetCustomHUDBounds( Vector *pViewer, Vector *pUL, Vector *pUR, Vector *pLL, Vector *pLR )
-{
-	if ( !m_bCustomHUDBoundsSet )
-		return false;
-		
-	if ( pViewer )
-		*pViewer = m_CustomHUDViewer;
-	if ( pUL )
-		*pUL = m_CustomHUDUL;
-	if ( pUR )
-		*pUR = m_CustomHUDUR;
-	if ( pLL )
-		*pLL = m_CustomHUDLL;
-	if ( pLR )
-		*pLR = m_CustomHUDLR;
-		
-	return true;
-}
-
-// --------------------------------------------------------------------
-void CClientVirtualReality::ClearCustomHUDBounds()
-{
-	m_bCustomHUDBoundsSet = false;
-}
-
-// --------------------------------------------------------------------
-// Purpose: Update VR matrices with fresh player data
-// Note: Spectator camera smoothing (Mode 2) is applied in view.cpp before this is called
-// --------------------------------------------------------------------
-void CClientVirtualReality::UpdateWorldFromMidEyeMatrices( const Vector &origin, const QAngle &angles )
-{
-	// m_WorldFromMidEye: Full head orientation including pitch/roll (for menus)
-	m_WorldFromMidEye.SetupMatrixOrgAngles(origin, angles);
-	
-	// m_WorldFromMidEyeRaw: Same as m_WorldFromMidEye when no smoothing is active
-	m_WorldFromMidEyeRaw.SetupMatrixOrgAngles(origin, angles);
-	
-	// m_WorldFromMidEyeNoDebugCam: Torso angles without pitch/roll tilt (for player body/meathook)
-	QAngle torsoAngles = angles;
-	torsoAngles[PITCH] = 0.0f;  // Don't tilt the body up/down
-	torsoAngles[ROLL] = 0.0f;   // Don't roll the body
-	m_WorldFromMidEyeNoDebugCam.SetupMatrixOrgAngles(origin, torsoAngles);
-}
-
-// --------------------------------------------------------------------
-// Purpose: Update VR matrices with separate smoothed (for view) and raw (for controllers) angles
-// Used by spectator camera Mode 2 to keep hands stable while smoothing the view
-// --------------------------------------------------------------------
-void CClientVirtualReality::UpdateWorldFromMidEyeMatricesWithRaw( const Vector &origin, const QAngle &smoothedAngles, const QAngle &rawAngles )
-{
-	// m_WorldFromMidEye: Smoothed head orientation (for view rendering and menus)
-	m_WorldFromMidEye.SetupMatrixOrgAngles(origin, smoothedAngles);
-	
-	// m_WorldFromMidEyeRaw: Raw (unsmoothed) head orientation (for controller positioning)
-	m_WorldFromMidEyeRaw.SetupMatrixOrgAngles(origin, rawAngles);
-	
-	// m_WorldFromMidEyeNoDebugCam: Torso angles without pitch/roll tilt (for player body/meathook)
-	// Use smoothed angles for consistency with the view
-	QAngle torsoAngles = smoothedAngles;
-	torsoAngles[PITCH] = 0.0f;
-	torsoAngles[ROLL] = 0.0f;
-	m_WorldFromMidEyeNoDebugCam.SetupMatrixOrgAngles(origin, torsoAngles);
-}
-
-// --------------------------------------------------------------------
-// Purpose: Notify the VR compositor about the current HUD quad position
-// Full coordinate conversion preserving exact calculated position
-// --------------------------------------------------------------------
-void CClientVirtualReality::NotifyCompositorHUDPosition( const Vector& viewer, const Vector& ul, const Vector& ur, const Vector& ll, const Vector& lr, bool isCustomBounds )
-{
-	// Only send updates when VR is active and we have valid data
-	if ( !UseVR() )
-		return;
-	
-	// Get the current frame number for tracking
-	static int s_frameNumber = 0;
-	s_frameNumber++;
-	
-	// DEBUG: Initialize debug counter
-	static int s_debugCallCount = 0;
-	s_debugCallCount++;
-	
-	// COORDINATE CONVERSION: Convert from Source world coordinates to playspace-anchored coordinates
-	// This follows the same approach as VR menu manager's playspace anchoring
-	
-	// Calculate the center of the HUD quad
-	Vector hudCenter = (ul + ur + ll + lr) * 0.25f;
-	
-	// Get the actual playspace origin from the VR system (same as VR menu manager)
-	// BUT force it to use canonical orientation instead of current player world yaw
-	Vector playspaceOriginWorldPos = Vector(0, 0, 0);
-	if (g_pVRMenuManager) {
-		// TODO: We need a version of GetPlayspaceOriginWorldPos that doesn't include player world rotation
-		// For now, use the current implementation but we'll correct for it below
-		playspaceOriginWorldPos = g_pVRMenuManager->GetPlayspaceOriginWorldPos();
-	}
-	
-	// FALLBACK: If playspace origin calculation fails, use current head position as approximation
-	if (playspaceOriginWorldPos == Vector(0, 0, 0)) {
-		if (C_BasePlayer* pPlayer = C_BasePlayer::GetLocalPlayer()) {
-			playspaceOriginWorldPos = pPlayer->EyePosition();
-			Msg("VR Client: Using head position fallback for playspace origin\n");
-		}
-	}
-	
-	// DEBUG: Check if the issue is player height offset
-	Vector currentHeadWorldPos = Vector(0,0,0);
-	QAngle currentHeadWorldAngles = QAngle(0,0,0);
-	if (C_BasePlayer* pPlayer = C_BasePlayer::GetLocalPlayer()) {
-		currentHeadWorldPos = pPlayer->EyePosition();
-		currentHeadWorldAngles = pPlayer->EyeAngles();
-	}
-
-	// PROPER APPROACH: Derive a complete worldToPlayspace transformation matrix
-	// This ensures we encode coordinates correctly in one clean operation
-	
-	// Get scale factor first
-	extern COpenXRManager* g_pOpenXRManager;
-	extern ConVar tfvr_worldscale;
-	float dynamicWorldScale = (g_pOpenXRManager && g_pOpenXRManager->IsActive()) ? 
-							   g_pOpenXRManager->GetWorldScale() : 48.0f;
-	
-	// Convert Source units to meters
-	float scaleToMeters = 1.0f / dynamicWorldScale;
-	
-	// Step 1: Get the complete playspace transformation matrix from VR manager
-	// This gives us the complete worldToPlayspace matrix including orientation
-	VMatrix playspaceWorldMatrix;
-	playspaceWorldMatrix.Identity();
-	
-	C_BasePlayer* pPlayer = C_BasePlayer::GetLocalPlayer();
-	if (g_pVRMenuManager && g_pOpenXRManager && pPlayer) {
-		// Use the exact same calculation as CVRMenuManager::CalculateCurrentPlayspaceOriginWorldPos()
-		VMatrix headRelativeToPlayspace = g_pOpenXRManager->GetMideyePose();
-		
-		// Get current head world matrix (reuse existing variables)
-		// currentHeadWorldPos and currentHeadWorldAngles already defined above
-		
-		VMatrix currentHeadWorldMatrix;
-		currentHeadWorldMatrix.Identity();
-		matrix3x4_t headMatrix3x4;
-		
-		// For custom bounds (menus), use GetVRViewPosition() to match how menu bounds
-		// are calculated. During death, EyePosition() returns dead view height (ground
-		// level), but menus are positioned using GetVRViewPosition() which returns the
-		// VR death position (standing height). Using mismatched heights causes the
-		// compositor menu to appear too high when quitting while dead.
-		Vector playerHeadPos;
-		if (isCustomBounds)
-		{
-			C_TFPlayer* pTFPlayer = C_TFPlayer::GetLocalTFPlayer();
-			if (pTFPlayer)
-			{
-				playerHeadPos = pTFPlayer->GetVRViewPosition();
-			}
-			else
-			{
-				playerHeadPos = pPlayer->EyePosition();
-			}
-		}
-		else
-		{
-			playerHeadPos = pPlayer->EyePosition();
-		}
-		QAngle playerHeadAngles = pPlayer->EyeAngles();
-		AngleMatrix(playerHeadAngles, playerHeadPos, headMatrix3x4);
-		currentHeadWorldMatrix.CopyFrom3x4(headMatrix3x4);
-		
-		// Calculate playspace origin relative to head
-		VMatrix headToPlayspaceTransform = headRelativeToPlayspace.InverseTR();
-		
-		// Get the complete playspace transformation (position + orientation)
-		playspaceWorldMatrix = currentHeadWorldMatrix * headToPlayspaceTransform;
-	} else {
-		// Fallback: Create matrix from just the position
-		matrix3x4_t playspaceMatrix3x4;
-		AngleMatrix(QAngle(0, 0, 0), playspaceOriginWorldPos, playspaceMatrix3x4);
-		playspaceWorldMatrix.CopyFrom3x4(playspaceMatrix3x4);
-	}
-	
-	// Step 2: Get the worldToPlayspace transformation matrix (inverse of playspaceWorldMatrix)
-	VMatrix worldToPlayspace = playspaceWorldMatrix.InverseTR();
-
-	// Step 3: Transform HUD center to playspace coordinates (in Source units first)
-	Vector hudPositionInPlayspace = worldToPlayspace * hudCenter;
-	
-	// Step 4: Apply scaling to convert Source units to meters AFTER the transformation
-	hudPositionInPlayspace *= scaleToMeters;
-	
-	// Scale factor already calculated above in worldToPlayspace matrix
-	
-	// Apply the worldToPlayspace matrix to all four corners, then scale
-	Vector hudULInPlayspace = worldToPlayspace * ul;
-	Vector hudURInPlayspace = worldToPlayspace * ur;
-	Vector hudLLInPlayspace = worldToPlayspace * ll;
-	Vector hudLRInPlayspace = worldToPlayspace * lr;
-	
-	// CACHE: Scale coordinates back to base world scale for menu consistency
-	// If we saved coords at worldscale 52 (Heavy), scale them back to base worldscale 48
-	extern ConVar tfvr_worldscale;
-	float baseWorldScale = tfvr_worldscale.GetFloat(); // Base/standard world scale (usually 48.0)
-	float scaleRatio = baseWorldScale / dynamicWorldScale; // e.g., 48/52 = 0.923
-	
-	Vector cachedUL = hudULInPlayspace * scaleRatio;
-	Vector cachedUR = hudURInPlayspace * scaleRatio;
-	Vector cachedLL = hudLLInPlayspace * scaleRatio;
-	Vector cachedLR = hudLRInPlayspace * scaleRatio;
-	
-	SetCachedCompositorCoords(cachedUL, cachedUR, cachedLL, cachedLR);
-	
-	// Apply scaling to convert Source units to meters AFTER the transformation
-	hudULInPlayspace *= scaleToMeters;
-	hudURInPlayspace *= scaleToMeters;
-	hudLLInPlayspace *= scaleToMeters;
-	hudLRInPlayspace *= scaleToMeters;
-	
-	// Coordinates are already scaled to meters by the worldToPlayspace matrix
-	Vector playspaceUL = hudULInPlayspace;
-	Vector playspaceUR = hudURInPlayspace;
-	Vector playspaceLL = hudLLInPlayspace;
-	Vector playspaceLR = hudLRInPlayspace;
-	Vector playspaceHudCenter = hudPositionInPlayspace;
-	
-	// Convert from Source coordinate system to OpenGL/Vulkan coordinate system  
-	// Source: +X=forward, +Y=left, +Z=up
-	// OpenGL/Vulkan: +X=right, +Y=up, +Z=back (negative Z = forward)
-	// TEST: Try multiple coordinate system mappings to find the right one
-	auto ConvertToVR = [&](const Vector& src) -> Vector {
-		Vector vr;
-		
-		// Source(X=fwd,Y=left,Z=up) -> VR(X=right,Y=up,Z=back)
-		vr.x = -src.y;  // Source Y (left) -> -X (right)
-		vr.y = -src.z;  // Source Z (up) -> Y (up), flipped for correct orientation
-		vr.z = -src.x;  // Source X (forward) -> -Z (back)
-
-		return vr;
-	};
-	
-	// Convert all corners to VR coordinate system
-	Vector vrUL = ConvertToVR(playspaceUL);
-	Vector vrUR = ConvertToVR(playspaceUR);
-	Vector vrLL = ConvertToVR(playspaceLL);
-	Vector vrLR = ConvertToVR(playspaceLR);
-	Vector vrHudCenter = ConvertToVR(playspaceHudCenter);
-
-	if (vrUL.y < vrLL.y) {
-		Vector tempUL = vrUL;
-		Vector tempUR = vrUR;
-		vrUL = vrLL;
-		vrUR = vrLR;
-		vrLL = tempUL;
-		vrLR = tempUR;
-	}
-	
-	// Calculate the distance for reference
-	float hudDistance = vrHudCenter.Length();
-	
-	// No artificial distance scaling - let the coordinate conversion be natural
-	// Focus on getting the Source->VR unit conversion correct
-	
-	// Fix aspect ratio to proper 16:9 while preserving orientation
-	Vector vrHudCenterUpdated = (vrUL + vrUR + vrLL + vrLR) * 0.25f;
-	Vector originalWidthVec = vrUR - vrUL;
-	Vector originalHeightVec = vrLL - vrUL;
-	
-	float measuredWidth = originalWidthVec.Length();
-	float measuredHeight = originalHeightVec.Length();
-	float actualAspectRatio = (measuredHeight > 0.01f) ? (measuredWidth / measuredHeight) : 0.0f;
-	
-	// Use natural HUD dimensions (aspect ratio correction disabled by default)
-	float correctedHeight = measuredHeight;
-	
-	// Log essential info for first few calls
-	if ( s_debugCallCount <= 3 ) {
-		DevMsg("VR Client: Positioning HUD #%d - Custom: %s, Distance: %.2fm\n", 
-			s_debugCallCount, isCustomBounds ? "true" : "false", hudDistance);
-	}
-	
-	// Send the converted coordinates to the compositor
-	extern void TF2VR_UpdateHUDPosition(
-		float viewer_x, float viewer_y, float viewer_z,
-		float ul_x, float ul_y, float ul_z,
-		float ur_x, float ur_y, float ur_z,
-		float ll_x, float ll_y, float ll_z,
-		float lr_x, float lr_y, float lr_z,
-		bool is_custom_bounds, int frame_number, float world_scale);
-	
-	TF2VR_UpdateHUDPosition(
-		0.0f, 0.0f, 0.0f,  // Viewer is now at origin (playspace center)
-		vrUL.x, vrUL.y, vrUL.z,  // Upper-left (converted)
-		vrUR.x, vrUR.y, vrUR.z,  // Upper-right (converted)
-		vrLL.x, vrLL.y, vrLL.z,  // Lower-left (converted)
-		vrLR.x, vrLR.y, vrLR.z,  // Lower-right (converted)
-		isCustomBounds, s_frameNumber, 1.0f  // world_scale = 1.0 since we already converted
-	);
-}
-
-// --------------------------------------------------------------------
-// Purpose: Generate fallback HUD bounds for startup when no player exists
-// Uses raw head pose (already in playspace coordinates) to calculate menu position
-// --------------------------------------------------------------------
-void GetFallbackStartupHUDBounds( Vector *pViewer, Vector *pUL, Vector *pUR, Vector *pLL, Vector *pLR )
-{
-	// Get the raw head pose (already in playspace coordinates)
-	extern COpenXRManager* g_pOpenXRManager;
-	if ( !g_pOpenXRManager )
-	{
-		// Fallback if no VR manager available
-		*pViewer = Vector( 0.0f, 0.0f, 64.0f );
-		*pUL = *pUR = *pLL = *pLR = *pViewer;
-		return;
-	}
-	
-	// Get head pose from VR manager (already in playspace/Source coordinates)
-	VMatrix headPose = g_pOpenXRManager->GetMideyePose();
-	Vector headPos = headPose.GetTranslation();
-	QAngle headAngles;
-	MatrixToAngles( headPose, headAngles );
-	
-	// Remove pitch rotation to keep HUD level (no tilting up/down)
-	headAngles.x = 0.0f;  // Zero out pitch
-	headAngles.z = 0.0f;  // Zero out roll
-	
-	// Use head position as viewer position
-	*pViewer = headPos;
-	
-	// Get menu distance from ConVar (same as used by VR menu manager)
-	extern ConVar tfvr_menu_distance;
-	extern ConVar tfvr_menu_scale;
-	float hudDistance = tfvr_menu_distance.GetFloat();
-	
-	// HUD dimensions: same as VR menu manager uses (with scaling)
-	float baseHeight = 80.0f;
-	float scale = tfvr_menu_scale.GetFloat();
-	float hudHeight = baseHeight * scale;
-	float hudWidth = hudHeight * (16.0f / 9.0f); // 16:9 aspect ratio
-	
-	// Calculate forward direction from leveled head orientation (no pitch)
-	Vector forward, right, up;
-	AngleVectors( headAngles, &forward, &right, &up );
-	
-	// Position menu at the specified distance in front of head
-	Vector hudCenter = headPos + forward * hudDistance;
-	
-	// Calculate corner positions using the head orientation
-	*pUL = hudCenter + right * (-hudWidth * 0.5f) + up * (hudHeight * 0.5f);
-	*pUR = hudCenter + right * (hudWidth * 0.5f) + up * (hudHeight * 0.5f);
-	*pLL = hudCenter + right * (-hudWidth * 0.5f) + up * (-hudHeight * 0.5f);
-	*pLR = hudCenter + right * (hudWidth * 0.5f) + up * (-hudHeight * 0.5f);
-	
-	DevMsg( "VR Client: Generated startup fallback HUD bounds using raw head pose\n" );
-}
-
-// --------------------------------------------------------------------
-// Purpose: Update compositor HUD position when playspace anchor changes
-// This is called from VR menu manager during playspace updates
-// --------------------------------------------------------------------
-void NotifyCompositorPlayspaceUpdate()
-{
-	// Only send updates when VR is active
-	if ( !UseVR() )  // Fixed: should be NOT UseVR()
-		return;
-	
-	// Check if we have custom menu bounds set - use those instead of HUD bounds
-	Vector viewer, ul, ur, ll, lr;
-	bool hasCustomBounds = false;
-	
-	if ( g_ClientVirtualReality.GetCustomHUDBounds( &viewer, &ul, &ur, &ll, &lr ) )
-	{
-		// Use the custom menu bounds (close, comfortable for VR)
-		hasCustomBounds = true;
-		// DevMsg( "VR Client: Using custom menu bounds for compositor update\n" );
-	}
-	else
-	{
-		// Check if we have a valid player to get HUD bounds from
-		C_BasePlayer* pPlayer = C_BasePlayer::GetLocalPlayer();
-		if ( pPlayer && pPlayer->IsAlive() )
-		{
-			// Player exists - use normal HUD bounds
-			g_ClientVirtualReality.GetHUDBounds( &viewer, &ul, &ur, &ll, &lr );
-			// DevMsg( "VR Client: Using player-based HUD bounds for compositor update\n" );
-		}
-		else
-		{
-			// No player available (startup) - use fallback bounds as if player at origin
-			GetFallbackStartupHUDBounds( &viewer, &ul, &ur, &ll, &lr );
-			hasCustomBounds = true;  // Treat as custom bounds since it's not player-based
-			// DevMsg( "VR Client: Using startup fallback HUD bounds (no player available)\n" );
-		}
-	}
-	
-	// Send the position to the compositor
-	g_ClientVirtualReality.NotifyCompositorHUDPosition(viewer, ul, ur, ll, lr, hasCustomBounds);
-}
-
-// --------------------------------------------------------------------
-// Purpose: Ensure compositor gets HUD position when it starts
-// This is called from DXVK side when compositor initializes
-// --------------------------------------------------------------------
-extern "C" void TF2VR_RefreshCompositorHUDPosition()
-{
-	// This is called from the compositor when it starts to get current HUD position
-	NotifyCompositorPlayspaceUpdate();
-}
-
-// --------------------------------------------------------------------
-// Purpose: Cache the final coordinates sent to compositor for cursor collision
-// --------------------------------------------------------------------
-void CClientVirtualReality::SetCachedCompositorCoords( const Vector& ul, const Vector& ur, const Vector& ll, const Vector& lr )
-{
-	m_bHasCachedCompositorCoords = true;
-	m_CachedCompositorUL = ul;
-	m_CachedCompositorUR = ur;
-	m_CachedCompositorLL = ll;
-	m_CachedCompositorLR = lr;
-}
-
-// --------------------------------------------------------------------
-void CClientVirtualReality::GetCachedCompositorCoords( Vector& ul, Vector& ur, Vector& ll, Vector& lr ) const
-{
-	ul = m_CachedCompositorUL;
-	ur = m_CachedCompositorUR;
-	ll = m_CachedCompositorLL;
-	lr = m_CachedCompositorLR;
 }
 
 
 // --------------------------------------------------------------------
 // Purpose: Renders the HUD in the world.
 // --------------------------------------------------------------------
-void CClientVirtualReality::RenderHUDQuad( bool bBlackout )
+void CClientVirtualReality::RenderHUDQuad( bool bBlackout, bool bTranslucent )
 {
-	VPROF("VR_ClientVR_RenderHUDQuad");
-	
 	// If we can overlay the HUD directly onto the target later, we'll do that instead (higher image quality).
 	if ( CanOverlayHudQuad() )
-	{
-		static int s_overlayCount = 0;
-		s_overlayCount++;
-		if ( s_overlayCount % 120 == 0 )
-		{
-			DevMsg("RenderHUDQuad: Using overlay path instead of quad rendering\n");
-		}
 		return;
-	}
 
 	Vector vHead, vUL, vUR, vLL, vLR;
 	GetHUDBounds ( &vHead, &vUL, &vUR, &vLL, &vLR );
@@ -1685,124 +1092,7 @@ void CClientVirtualReality::RenderHUDQuad( bool bBlackout )
 
 	{
 		IMaterial *mymat = NULL;
-		
-		// Determine material selection based on HUD type and menu state
-		bool bUseTranslucent = false;
-		
-		// Declare variables outside scope so they can be used in debug output
-		bool bIsMainMenu = enginevgui && enginevgui->IsGameUIVisible();
-		bool bIsEconUIVisible = false;
-		bool bIsConnectedToServer = engine && engine->IsConnected();
-		bool bIsCursorVisible = vgui::surface() && vgui::surface()->IsCursorVisible();
-		bool bIsLoadoutOrArmoryScreen = false;
-		
-		// Check if normal gameplay HUD is visible (health, ammo, etc.)
-		bool bIsNormalHUDVisible = false;
-		bool bIsDeadPlayerInGame = false;
-		C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
-		if (pPlayer && engine->IsInGame())
-		{
-			// Check if HUD elements are not hidden
-			int iHideHud = pPlayer->m_Local.m_iHideHUD;
-			extern ConVar hidehud;
-			if (hidehud.GetInt())
-			{
-				iHideHud = hidehud.GetInt();
-			}
-			
-			// HUD is visible if not all hidden and not in VGui input mode
-			bool bHUDNotHidden = !(iHideHud & HIDEHUD_ALL) && !pPlayer->IsInVGuiInputMode() && !bIsMainMenu;
-			
-			if (pPlayer->IsAlive())
-			{
-				// Living player with normal HUD
-				bIsNormalHUDVisible = bHUDNotHidden;
-			}
-			else 
-			{
-				// Dead player - check if they're spectating or in death cam (should still use translucent)
-				bIsDeadPlayerInGame = bHUDNotHidden;
-			}
-		}
-
-		if ( !m_bCustomHUDBoundsSet )
-		{
-			// HUD is attached to face - use translucent for normal HUD or dead player
-			bUseTranslucent = bIsNormalHUDVisible || bIsDeadPlayerInGame;
-		}
-		else
-		{
-			// HUD is positioned in world space (menus)
-			// Check if any EconUI panels are visible (loadout, backpack, crafting, etc.)
-			if ( EconUI() )
-			{
-				bIsEconUIVisible = EconUI()->IsUIPanelVisible( ECONUI_BACKPACK ) ||
-								   EconUI()->IsUIPanelVisible( ECONUI_LOADOUT ) ||
-								   EconUI()->IsUIPanelVisible( ECONUI_CRAFTING ) ||
-								   EconUI()->IsUIPanelVisible( ECONUI_ARMORY ) ||
-								   EconUI()->IsUIPanelVisible( ECONUI_TRADING );
-			}
-		
-		// Additional checks for loadout/armory screens that EconUI might miss
-		if (bIsConnectedToServer)
-		{
-			// Check for class menu state via console variables
-			ConVar* pClassMenuOpen = g_pCVar->FindVar("_cl_classmenuopen");
-			if (pClassMenuOpen && pClassMenuOpen->GetBool())
-			{
-				bIsLoadoutOrArmoryScreen = true;
-			}
-			
-			// Check for class loadout panel specifically
-			if (g_pClassLoadoutPanel && g_pClassLoadoutPanel->IsVisible())
-			{
-				bIsLoadoutOrArmoryScreen = true;
-			}
-			
-			// Check for character info panel (class selection screen) 
-			CCharacterInfoPanel* pCharInfoPanel = GetCharInfoPanel(false);
-			if (pCharInfoPanel && pCharInfoPanel->IsVisible())
-			{
-				bIsLoadoutOrArmoryScreen = true;
-			}
-		}
-		
-		// Material selection logic with proper priority (same as viewrender.cpp and vr_menu_manager.cpp):
-		// 1. True main menu (not connected) = opaque
-		// 2. Overlay menus (class select, loadout, inventory, etc.) = opaque  
-		// 3. In-game pause menu = translucent
-		// 4. Normal gameplay HUD (health, ammo, etc.) = translucent
-		// 5. Dead player in-game (spectating, death cam) = translucent
-		// 6. Default = opaque
-		if (!bIsConnectedToServer)
-		{
-			// True main menu (not connected) - use opaque
-			bUseTranslucent = false;
-		}
-		else if (bIsEconUIVisible || bIsLoadoutOrArmoryScreen)
-		{
-			// Overlay menus (class select, loadout, inventory, etc.) - use opaque
-			bUseTranslucent = false;
-		}
-		else if (bIsMainMenu)
-		{
-			// In-game pause menu - use translucent
-			bUseTranslucent = true;
-		}
-		else if (bIsNormalHUDVisible || bIsDeadPlayerInGame)
-		{
-			// Normal gameplay HUD with health/ammo OR dead player in-game - use translucent
-			bUseTranslucent = true;
-		}
-		else
-		{
-			// Default: opaque for unknown states
-			bUseTranslucent = false;
-		}
-		}
-		
-		// Select the appropriate material
-		if ( bUseTranslucent )
+		if ( bTranslucent )
 		{
 			mymat = materials->FindMaterial( "vgui/inworldui", TEXTURE_GROUP_VGUI );
 		}
@@ -1810,50 +1100,7 @@ void CClientVirtualReality::RenderHUDQuad( bool bBlackout )
 		{
 			mymat = materials->FindMaterial( "vgui/inworldui_opaque", TEXTURE_GROUP_VGUI );
 		}
-		
-		// Debug output to verify material selection - always print for now
-		static int s_debugFrameCount = 0;
-		s_debugFrameCount++;
-		
-		// Print debug info every 60 frames (about once per second at 60fps)
-		if ( s_debugFrameCount % 60 == 0 )
-		{
-			bool bIsMainMenu = enginevgui && enginevgui->IsGameUIVisible();
-			bool bIsEconUIVisible = false;
-			
-			// Check if any EconUI panels are visible (same logic as above)
-			if ( EconUI() )
-			{
-				bIsEconUIVisible = EconUI()->IsUIPanelVisible( ECONUI_BACKPACK ) ||
-								   EconUI()->IsUIPanelVisible( ECONUI_LOADOUT ) ||
-								   EconUI()->IsUIPanelVisible( ECONUI_CRAFTING ) ||
-								   EconUI()->IsUIPanelVisible( ECONUI_ARMORY ) ||
-								   EconUI()->IsUIPanelVisible( ECONUI_TRADING );
-					}
-		
-		// Log material changes for debugging
-		static bool s_bLastUseTranslucent = true;
-		if ( s_bLastUseTranslucent != bUseTranslucent )
-		{
-			s_bLastUseTranslucent = bUseTranslucent;
-			DevMsg("VR HUD: Switching to %s rendering\n", bUseTranslucent ? "TRANSLUCENT" : "OPAQUE");
-		}
-	}
-		Assert( mymat && !mymat->IsErrorMaterial() );
-
-		if (!mymat->IsPrecached()) {
-			PrecacheMaterial(mymat->GetName());
-			mymat->IncrementReferenceCount();
-		}
-		
-		// Force render state for opaque materials to ensure no transparency
-		if ( !bUseTranslucent )
-		{
-			// For opaque materials, force full opacity and disable blending
-			float color[3] = { 1.0f, 1.0f, 1.0f };
-			render->SetColorModulation( color );
-			render->SetBlend( 1.0f );
-		}
+		Assert( !mymat->IsErrorMaterial() );
 
 		IMesh *pMesh = pRenderContext->GetDynamicMesh( true, NULL, NULL, mymat );
 
@@ -1880,7 +1127,7 @@ void CClientVirtualReality::RenderHUDQuad( bool bBlackout )
 		pMesh->Draw();
 	}
 
-	if( false && bBlackout )
+	if( bBlackout )
 	{
 		Vector vbUL, vbUR, vbLL, vbLR;
 		// "Reflect" the HUD bounds through the viewer to find the ones behind the head.
@@ -1890,7 +1137,6 @@ void CClientVirtualReality::RenderHUDQuad( bool bBlackout )
 		vbLR = 2 * vHead - vUL;
 
 		IMaterial *mymat = materials->FindMaterial( "vgui/black", TEXTURE_GROUP_VGUI );
-		mymat->IncrementReferenceCount();
 		IMesh *pMesh = pRenderContext->GetDynamicMesh( true, NULL, NULL, mymat );
 
 		// Tube around the outside.
@@ -1981,8 +1227,8 @@ bool CClientVirtualReality::ProcessCurrentTrackingState( float fGameFOV )
 		// Therefore... (remembering that a zoom > 1.0 means you zoom *out*)
 		m_WorldZoomScale = wantedGameTanfov / overlayActualPhysicalTanfov;
 	}
-	return false;
-	// return g_pSourceVR->SampleTrackingState( fGameFOV, 0.f /* seconds to predict */ );
+
+	return g_pSourceVR->SampleTrackingState( fGameFOV, 0.f /* seconds to predict */ );
 }
 
 
@@ -2012,7 +1258,7 @@ void CClientVirtualReality::GetTorsoRelativeAim( Vector *pPosition, QAngle *pAng
 // --------------------------------------------------------------------
 float CClientVirtualReality::GetHUDDistance()
 {
-	return tfvr_hud_forward.GetFloat();
+	return vr_hud_forward.GetFloat();
 }
 
 
@@ -2022,7 +1268,7 @@ float CClientVirtualReality::GetHUDDistance()
 // --------------------------------------------------------------------
 bool CClientVirtualReality::ShouldRenderHUDInWorld()
 {
-	return UseVR();
+	return UseVR() && vr_render_hud_in_world.GetBool();
 }
 
 
@@ -2048,7 +1294,13 @@ void CClientVirtualReality::OverrideViewModelTransform( Vector & vmorigin, QAngl
 // --------------------------------------------------------------------
 void CClientVirtualReality::AlignTorsoAndViewToWeapon()
 {
-	return;
+	if( !UseVR() )
+		return;
+
+	if( g_pSourceVR->WillDriftInYaw() )
+	{
+		m_iAlignTorsoAndViewToWeaponCountdown = 2;
+	}
 }
 
 
@@ -2060,12 +1312,7 @@ void CClientVirtualReality::PostProcessFrame( StereoEye_t eEye )
 	if( !UseVR() )
 		return;
 
-	// Only draw debug overlays for the left eye to avoid duplicates
-	if (eEye == STEREO_EYE_LEFT) {
-		DrawPlayspaceDebugVisualization();
-	}
-
-	// g_pSourceVR->DoDistortionProcessing( eEye == STEREO_EYE_LEFT ? ISourceVirtualReality::VREye_Left : ISourceVirtualReality::VREye_Right );
+	g_pSourceVR->DoDistortionProcessing( eEye == STEREO_EYE_LEFT ? ISourceVirtualReality::VREye_Left : ISourceVirtualReality::VREye_Right );
 }
 
 
@@ -2104,8 +1351,9 @@ void CClientVirtualReality::OverlayHUDQuadWithUndistort( const CViewSetup &eyeVi
 	ndcHudBounds[2] = Max ( Max( pUL.x, pUR.x ), Max( pLL.x, pLR.x ) );
 	ndcHudBounds[3] = Max ( Max( pUL.y, pUR.y ), Max( pLL.y, pLR.y ) );
 
-	// ISourceVirtualReality::VREye sourceVrEye = ( eyeView.m_eStereoEye == STEREO_EYE_LEFT ) ? ISourceVirtualReality::VREye_Left : ISourceVirtualReality::VREye_Right;
-	// g_pSourceVR->CompositeHud ( sourceVrEye, ndcHudBounds, bDoUndistort, bBlackout, bTranslucent );
+	ISourceVirtualReality::VREye sourceVrEye = ( eyeView.m_eStereoEye == STEREO_EYE_LEFT ) ? ISourceVirtualReality::VREye_Left : ISourceVirtualReality::VREye_Right;
+
+	g_pSourceVR->CompositeHud ( sourceVrEye, ndcHudBounds, bDoUndistort, bBlackout, bTranslucent );
 }
 
 
@@ -2114,22 +1362,64 @@ void CClientVirtualReality::OverlayHUDQuadWithUndistort( const CViewSetup &eyeVi
 // --------------------------------------------------------------------
 void CClientVirtualReality::Activate()
 {
-	// Try to reactivate existing session first, fallback to full initialization
-	if( g_pOpenXRManager->IsActive() )
-		return; // Already active
-		
-	// Try reactivation first (faster if session exists)
-	g_pOpenXRManager->Reactivate();
-	
-	// If reactivation failed and we're still not active, do full initialization
-	if( !g_pOpenXRManager->IsActive() && !g_pOpenXRManager->Initialize() )
+	// we can only do this if a headtrack DLL is loaded
+	if( !g_pSourceVR )
 		return;
 
-	// General all-game stuff
-	engine->ExecuteClientCmd("mat_reset_rendertargets\n");
+	// These checks don't apply if we're in VR mode because Steam said so.
+	if ( !ShouldForceVRActive() )
+	{
+		// see if VR mode is even enabled
+		if ( materials->GetCurrentConfigForVideoCard().m_nVRModeAdapter == -1 )
+		{
+			Warning( "Enable VR mode in the video options before trying to use it.\n" );
+			return;
+		}
 
-	// Game specific VR config
-	engine->ExecuteClientCmd("exec tfvr\n");
+		// See if we have an actual adapter
+		int32 nVRModeAdapter = g_pSourceVR->GetVRModeAdapter();
+		if ( nVRModeAdapter == -1 )
+		{
+			Warning( "Unable to get VRMode adapter from OpenVR. VR mode cannot be enabled. Try restarting and then enabling VR again.\n" );
+			return;
+		}
+
+		// we can only activate if we've got a VR device
+		if ( materials->GetCurrentConfigForVideoCard().m_nVRModeAdapter != nVRModeAdapter )
+		{
+			Warning( "VR Mode expects adapter %d which is different from %d which we are currently using. Try restarting and enabling VR mode again.\n",
+				nVRModeAdapter, materials->GetCurrentConfigForVideoCard().m_nVRModeAdapter );
+			engine->ExecuteClientCmd( "mat_enable_vrmode 0\n" );
+			return;
+		}
+	}
+
+
+	// can't activate twice
+	if( UseVR() )
+		return;
+
+	// remember where we were
+	m_bNonVRWindowed = g_pMaterialSystem->GetCurrentConfigForVideoCard().Windowed();
+	vgui::surface()->GetScreenSize( m_nNonVRWidth, m_nNonVRHeight );
+#if defined( USE_SDL )
+    static ConVarRef sdl_displayindex( "sdl_displayindex" );
+    m_nNonVRSDLDisplayIndex = sdl_displayindex.GetInt();
+#endif
+
+	if( !g_pSourceVR->Activate() )
+	{
+		// we couldn't activate, so just punt on this whole thing
+		return;
+	}
+
+	// general all-game stuff
+	engine->ExecuteClientCmd( "mat_reset_rendertargets\n" );
+
+	// game specific VR config
+	CUtlString sCmd;
+	sCmd.Format( "exec sourcevr_%s.cfg\n", COM_GetModDirectory() );
+	engine->ExecuteClientCmd( sCmd.Get() );
 
     vgui::surface()->SetSoftwareCursor( true );
 
@@ -2142,11 +1432,27 @@ void CClientVirtualReality::Activate()
 	mat_vsync.SetValue( 0 );
 #endif
 
-	vgui::ivgui()->SetVRMode(true);
-	uint32_t width, height;
-	g_pOpenXRManager->GetSpectatorScreenDims(width, height);
+	g_pMatSystemSurface->ForceScreenSizeOverride(true, 640, 480 );
+	int nViewportWidth, nViewportHeight;
 
-	g_pMatSystemSurface->SetFullscreenViewportAndRenderTarget( 0, 0, width, height, NULL );
+	g_pSourceVR->GetViewportBounds( ISourceVirtualReality::VREye_Left, NULL, NULL, &nViewportWidth, &nViewportHeight );
+	g_pMatSystemSurface->SetFullscreenViewportAndRenderTarget( 0, 0, nViewportWidth, nViewportHeight, g_pSourceVR->GetRenderTarget( ISourceVirtualReality::VREye_Left, ISourceVirtualReality::RT_Color ) );
+
+	vgui::ivgui()->SetVRMode( true );
+
+	// we can skip this extra mode change if we've always been in VR mode
+	if ( !ShouldForceVRActive() )
+	{
+		VRRect_t rect;
+		if ( g_pSourceVR->GetDisplayBounds( &rect ) )
+		{
+
+			// set mode
+			char szCmd[256];
+			Q_snprintf( szCmd, sizeof(szCmd), "mat_setvideomode %i %i %i\n", rect.nWidth, rect.nHeight, vr_force_windowed.GetBool() ? 1 : 0 );
+			engine->ClientCmd_Unrestricted( szCmd );
+		}
+	}
 }
 
 
@@ -2156,13 +1462,11 @@ void CClientVirtualReality::Deactivate()
 	if( !UseVR() )
 		return;
 
-	g_pOpenXRManager->Deactivate();
-	
-	// CRITICAL: Notify server that VR mode is deactivated 
-	// This disables server-side VR features like head collision detection
-	KeyValues *kvMode = new KeyValues( "VRModeInactive" );
-	engine->ServerCmdKeyValues( kvMode );
-	DevMsg("VR Deactivate: Sent VRModeInactive to server - disabling head collision detection\n");
+	g_pSourceVR->Deactivate();
+
+	g_pMatSystemSurface->ForceScreenSizeOverride(false, 0, 0 );
+	g_pMaterialSystem->GetRenderContext()->Viewport( 0, 0, m_nNonVRWidth, m_nNonVRHeight );
+	g_pMatSystemSurface->SetFullscreenViewportAndRenderTarget( 0, 0, m_nNonVRWidth, m_nNonVRHeight, NULL );
 
     static ConVarRef cl_software_cursor( "cl_software_cursor" );
     vgui::surface()->SetSoftwareCursor( cl_software_cursor.GetBool() );
@@ -2177,7 +1481,6 @@ void CClientVirtualReality::Deactivate()
     m_rawinput.SetValue( m_bNonVRRawInput );
 #endif
 
-	/*
     // Make sure the client .dll root panel is at the proper point before doing the "SolveTraverse" calls
 	vgui::VPANEL root = enginevgui->GetPanel( PANEL_CLIENTDLL );
 	if ( root != 0 )
@@ -2193,16 +1496,14 @@ void CClientVirtualReality::Deactivate()
 
 	int viewWidth, viewHeight;
 	vgui::surface()->GetScreenSize( viewWidth, viewHeight );
-	*/
 
 	engine->ExecuteClientCmd( "mat_reset_rendertargets\n" );
 
 	// set mode
-	/*
 	char szCmd[ 256 ];
 	Q_snprintf( szCmd, sizeof( szCmd ), "mat_setvideomode %i %i %i\n", m_nNonVRWidth, m_nNonVRHeight, m_bNonVRWindowed ? 1 : 0 );
 	engine->ClientCmd_Unrestricted( szCmd );
-	*/
+
 }
 
 
@@ -2211,59 +1512,5 @@ void CClientVirtualReality::StartupComplete()
 {
 	if ( vr_activate_default.GetBool() || ShouldForceVRActive() )
 		Activate();
-}
-
-// --------------------------------------------------------------------
-// Purpose: Draw debug visualizations for playspace origin and HUD positions
-// Called every frame during PostProcessFrame
-// --------------------------------------------------------------------
-void CClientVirtualReality::DrawPlayspaceDebugVisualization()
-{
-	if (!debugoverlay || !tfvr_debug_playspace_origin.GetBool())
-		return;
-		
-	// Get current player for head position
-	C_BasePlayer* pPlayer = C_BasePlayer::GetLocalPlayer();
-	if (!pPlayer)
-		return;
-
-	// Get playspace origin from VR menu manager (same calculation as HUD positioning)
-	Vector playspaceOriginWorldPos = Vector(0, 0, 0);
-	if (g_pVRMenuManager) {
-		playspaceOriginWorldPos = g_pVRMenuManager->GetPlayspaceOriginWorldPos();
-	}
-	
-	// Fallback to head position if playspace calculation fails
-	if (playspaceOriginWorldPos == Vector(0, 0, 0)) {
-		playspaceOriginWorldPos = pPlayer->EyePosition();
-	}
-	
-	// Draw playspace origin - MAGENTA cube with coordinate axes
-	float cubeSize = 5.0f; // 50 Source units ≈ 1 meter
-	Vector boxSize(cubeSize, cubeSize, cubeSize);
-	debugoverlay->AddBoxOverlay(playspaceOriginWorldPos, -boxSize, boxSize, QAngle(0, 0, 0), 255, 0, 255, 100, 0.1f);
-	
-	// Draw Source coordinate system axes (no duration = persistent until next frame)
-	Vector forward = Vector(100, 0, 0);   // X-axis (forward in Source) = RED
-	Vector right = Vector(0, 100, 0);     // Y-axis (left in Source) = GREEN  
-	Vector up = Vector(0, 0, 100);        // Z-axis (up in Source) = BLUE
-	debugoverlay->AddLineOverlayAlpha(playspaceOriginWorldPos, playspaceOriginWorldPos + forward, 255, 0, 0, 255, false, 0.0f);
-	debugoverlay->AddLineOverlayAlpha(playspaceOriginWorldPos, playspaceOriginWorldPos + right, 0, 255, 0, 255, false, 0.0f);
-	debugoverlay->AddLineOverlayAlpha(playspaceOriginWorldPos, playspaceOriginWorldPos + up, 0, 0, 255, 255, false, 0.0f);
-	
-	// Draw current head position - CYAN cube for comparison
-	Vector headPos = pPlayer->EyePosition();
-	float headCubeSize = 25.0f;
-	Vector headBoxSize(headCubeSize, headCubeSize, headCubeSize);
-	debugoverlay->AddBoxOverlay(headPos, -headBoxSize, headBoxSize, QAngle(0, 0, 0), 0, 255, 255, 100, 0.0f);
-	
-	// If we have custom HUD bounds set, draw the HUD center too
-	if (m_bCustomHUDBoundsSet) {
-		Vector hudCenter = (m_CustomHUDUL + m_CustomHUDUR + m_CustomHUDLL + m_CustomHUDLR) * 0.25f;
-		float hudCubeSize = 20.0f;
-		Vector hudBoxSize(hudCubeSize, hudCubeSize, hudCubeSize);
-		// YELLOW cube for HUD center
-		debugoverlay->AddBoxOverlay(hudCenter, -hudBoxSize, hudBoxSize, QAngle(0, 0, 0), 255, 255, 0, 100, 0.0f);
-	}
 }
 

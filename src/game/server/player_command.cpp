@@ -14,7 +14,6 @@
 #include "movehelper_server.h"
 #include "iservervehicle.h"
 #include "tier0/vprof.h"
-#include "tf_player.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -145,7 +144,6 @@ void CPlayerMove::SetupMove( CBasePlayer *player, CUserCmd *ucmd, IMoveHelper *p
 
 	// Prepare the usercmd fields
 	move->m_nImpulseCommand		= ucmd->impulse;	
-	// ucmd->viewangles 			= player->EyeAngles();
 	move->m_vecViewAngles		= ucmd->viewangles;
 
 	CBaseEntity *pMoveParent = player->GetMoveParent();
@@ -178,16 +176,10 @@ void CPlayerMove::SetupMove( CBasePlayer *player, CUserCmd *ucmd, IMoveHelper *p
 	}
 
 	// Prepare remaining fields
-	move->m_postFullBodyIKDeltaOrigin = ucmd->postFullBodyIKDeltaOrigin;
-	//move->m_playerToHmdOrigin = ucmd->playerToHmdOrigin;
-	//move->m_playerToHmdAngles = ucmd->playerToHmdAngles;
-
-	// Prepare remaining fields
 	move->m_flClientMaxSpeed		= player->m_flMaxspeed;
 	move->m_nOldButtons			= player->m_Local.m_nOldButtons;
 	move->m_flOldForwardMove = player->m_Local.m_flOldForwardMove;
 	move->m_vecAngles			= player->pl.v_angle;
-	// move->m_vecAngles			= ucmd->viewangles;
 
 	move->m_vecVelocity			= player->GetAbsVelocity();
 
@@ -236,16 +228,7 @@ void CPlayerMove::FinishMove( CBasePlayer *player, CUserCmd *ucmd, CMoveData *mo
 
 	player->SetBodyPitch( pitch );
 
-	// For VR players, use the VR-specific angles instead of standard movement angles
-	CTFPlayer *tfPlayer = dynamic_cast<CTFPlayer *>(player);
-	if (tfPlayer)
-	{
-		// Get the player's eye angles
-		QAngle eyeAngles = tfPlayer->EyeAngles();
-		
-		// Force the absolute angles to match eye angles for VR
-		// tfPlayer->SetAbsAngles(eyeAngles);
-	}
+	player->SetLocalAngles( move->m_vecAngles );
 
 	// The class had better not have changed during the move!!
 	if ( player->m_hConstraintEntity )

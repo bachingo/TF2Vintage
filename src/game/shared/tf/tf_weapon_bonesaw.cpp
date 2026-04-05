@@ -78,14 +78,14 @@ bool CTFBonesaw::DefaultDeploy( char *szViewModel, char *szWeaponModel, int iAct
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFBonesaw::DoMeleeDamage( CBaseEntity* ent, trace_t& trace, float flDamageMod )
+void CTFBonesaw::DoMeleeDamage( CBaseEntity* ent, trace_t& trace )
 {
 	if ( !TFGameRules() || !TFGameRules()->IsTruceActive() )
 	{
 		if ( ent && ent->IsPlayer() )
 		{
 			CTFPlayer *pTFOwner = ToTFPlayer( GetOwnerEntity() );
-			if ( pTFOwner && pTFOwner->GetTeamNumber() != ent->GetTeamNumber() && CanVRAddHead() )
+			if ( pTFOwner && pTFOwner->GetTeamNumber() != ent->GetTeamNumber() )
 			{
 				int iDecaps = pTFOwner->m_Shared.GetDecapitations() + 1;
 
@@ -93,9 +93,9 @@ void CTFBonesaw::DoMeleeDamage( CBaseEntity* ent, trace_t& trace, float flDamage
 				CALL_ATTRIB_HOOK_INT( iTakeHeads, add_head_on_hit );
 				if ( iTakeHeads )
 				{
+					// We hit a target, take a head
 					pTFOwner->m_Shared.SetDecapitations( iDecaps );
 					pTFOwner->TeamFortress_SetSpeed();
-					m_flVRLastHeadAddTime = gpGlobals->curtime;
 				}
 
 				float flPreserveUber = 0.f;
@@ -109,13 +109,12 @@ void CTFBonesaw::DoMeleeDamage( CBaseEntity* ent, trace_t& trace, float flDamage
 					{
 						pMedigun->SetChargeLevelToPreserve( ( iDecaps * VITASAW_CHARGE_PER_HIT ) );
 					}
-					m_flVRLastHeadAddTime = gpGlobals->curtime;
 				}
 			}
 		}
 	}
 
-	BaseClass::DoMeleeDamage( ent, trace, flDamageMod );
+	BaseClass::DoMeleeDamage( ent, trace );
 }
 
 //-----------------------------------------------------------------------------

@@ -33,7 +33,6 @@
 	#include "c_tf_player.h"
 	#include "c_te_effect_dispatch.h"
 	#include "c_tf_gamestats.h"
-	#include "tfvr/c_tfvr_hand.h"
 
 #endif
 
@@ -494,74 +493,11 @@ void CTFWeaponBaseGun::FireBullet( CTFPlayer *pPlayer )
 {
 	PlayWeaponShootSound();
 
-#ifdef CLIENT_DLL
-	// Debug: Log which weapon is firing
-	static int debugCounter = 0;
-	if (++debugCounter % 5 == 0)
-	{
-		C_TFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
-		DevMsg("=== CLIENT FireBullet Debug ===\n");
-		DevMsg("Weapon ptr: %p, classname: %s\n", this, GetClassname());
-		DevMsg("UsingViewModel: %d, m_bHeldByVRHand: %d\n", UsingViewModel(), m_bHeldByVRHand);
-		
-		if (pTFPlayer && pTFPlayer->IsInVRMode())
-		{
-			C_TFVRHand* pRightHand = GetLocalPlayerRightHand();
-			if (pRightHand)
-			{
-				C_TFWeaponBase* pHandWeapon = pRightHand->GetHeldWeapon();
-				DevMsg("VR Hand weapon ptr: %p\n", pHandWeapon);
-				DevMsg("Is VR hand weapon: %s\n", (pHandWeapon == this) ? "YES" : "NO");
-				
-				if (pHandWeapon)
-				{
-					DevMsg("Hand weapon origin: (%.1f, %.1f, %.1f)\n",
-						pHandWeapon->GetAbsOrigin().x,
-						pHandWeapon->GetAbsOrigin().y,
-						pHandWeapon->GetAbsOrigin().z);
-				}
-				
-				DevMsg("This weapon origin: (%.1f, %.1f, %.1f)\n",
-					GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z);
-			}
-		}
-		
-		Vector shootPos = pPlayer->Weapon_ShootPosition();
-		QAngle shootAngles = pPlayer->Weapon_ShootAngles();
-		DevMsg("Shoot from: (%.1f, %.1f, %.1f), angles: (%.1f, %.1f, %.1f)\n",
-			shootPos.x, shootPos.y, shootPos.z,
-			shootAngles.x, shootAngles.y, shootAngles.z);
-	}
-	
-	// CRITICAL VR FIX: When in VR mode, only show visual effects from worldmodel, not viewmodel
-	// The same weapon entity switches between viewmodel/worldmodel rendering modes.
-	// When UsingViewModel() == true, effects are drawn at viewmodel position (wrong for VR)
-	// When UsingViewModel() == false, effects are drawn at worldmodel position (correct for VR hand)
-	C_TFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
-	if (pTFPlayer && pTFPlayer->IsInVRMode())
-	{
-		if (UsingViewModel())
-		{
-			// Weapon is in viewmodel mode - DON'T show visual effects
-			// They will be shown when the weapon renders in worldmodel mode
-			if (debugCounter % 5 == 0)
-			{
-				DevMsg("BLOCKING visual effects - weapon is using VIEWMODEL mode!\n");
-			}
-			return;
-		}
-		else if (debugCounter % 5 == 0)
-		{
-			DevMsg("ALLOWING visual effects - weapon is using WORLDMODEL mode!\n");
-		}
-	}
-#endif
-
 	FX_FireBullets(
 		this,
 		pPlayer->entindex(),
 		pPlayer->Weapon_ShootPosition(),
-		pPlayer->Weapon_ShootAngles() + pPlayer->GetPunchAngle(),
+		pPlayer->EyeAngles() + pPlayer->GetPunchAngle(),
 		GetWeaponID(),
 		m_iWeaponMode,
 		CBaseEntity::GetPredictionRandomSeed( UseServerRandomSeed() ) & 255,
@@ -589,37 +525,12 @@ CBaseEntity *CTFWeaponBaseGun::FireRocket( CTFPlayer *pPlayer, int iRocketType )
 	}
 	GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false );
 
-	// Validate spawn position isn't inside solid geometry
-	trace_t tr;
-	UTIL_TraceHull( vecSrc, vecSrc, -Vector(2,2,2), Vector(2,2,2), MASK_SOLID, pPlayer, COLLISION_GROUP_NONE, &tr );
-	if ( tr.startsolid )
-	{
-		// Spawn position is inside solid geometry, try to find a clear spot
-		Vector vecDir;
-		AngleVectors( angForward, &vecDir );
-		
-		// Try backing up along the firing direction
-		for ( float dist = 5.0f; dist <= 30.0f; dist += 5.0f )
-		{
-			Vector vecTest = vecSrc - vecDir * dist;
-			UTIL_TraceHull( vecTest, vecTest, -Vector(2,2,2), Vector(2,2,2), MASK_SOLID, pPlayer, COLLISION_GROUP_NONE, &tr );
-			if ( !tr.startsolid )
-			{
-				vecSrc = vecTest;
-				DevMsg("VR Warning: Rocket spawn adjusted back %.1f units to clear geometry\n", dist);
-				break;
-			}
-		}
-	}
-	
-	// Create the rocket at the calculated spawn position
-	CTFProjectile_Rocket *pProjectile = CTFProjectile_Rocket::Create( this, vecSrc, angForward, pPlayer, pPlayer );
+	trace_t trace;	
+	Vector vecEye = pPlayer->EyePosition();
+	CTraceFilterSimple traceFilter( this, COLLISION_GROUP_NONE );
+	UTIL_TraceLine( vecEye, vecSrc, MASK_SOLID_BRUSHONLY, &traceFilter, &trace );
 
-	if ( developer.GetInt() > 0 )
-	{
-		DevMsg("FireRocket: vecSrc = (%.2f, %.2f, %.2f), angForward = (%.2f, %.2f, %.2f)\n", 
-			vecSrc.x, vecSrc.y, vecSrc.z, angForward.x, angForward.y, angForward.z);
-	}
+	CTFProjectile_Rocket *pProjectile = CTFProjectile_Rocket::Create( this, trace.endpos, angForward, pPlayer, pPlayer );
 
 	if ( pProjectile )
 	{
@@ -650,9 +561,14 @@ CBaseEntity *CTFWeaponBaseGun::FireEnergyBall( CTFPlayer *pPlayer, bool bRing )
 	}
 	GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false );
 
+	trace_t trace;
+	Vector vecEye = pPlayer->EyePosition();
+	CTraceFilterSimple traceFilter( this, COLLISION_GROUP_NONE );
+	UTIL_TraceLine( vecEye, vecSrc, MASK_SOLID_BRUSHONLY, &traceFilter, &trace );
+
 	if ( bRing )
 	{
-		CTFProjectile_EnergyRing* pProjectile = CTFProjectile_EnergyRing::Create( this, vecSrc, angForward, 
+		CTFProjectile_EnergyRing* pProjectile = CTFProjectile_EnergyRing::Create( this, trace.endpos, angForward, 
 			GetProjectileSpeed(), GetProjectileGravity(), pPlayer, pPlayer, GetParticleColor(1), GetParticleColor(2), IsCurrentAttackACrit() );
 		if ( pProjectile )
 		{
@@ -667,7 +583,7 @@ CBaseEntity *CTFWeaponBaseGun::FireEnergyBall( CTFPlayer *pPlayer, bool bRing )
 	else
 	{
 #ifdef GAME_DLL
-		CTFProjectile_EnergyBall* pProjectile = CTFProjectile_EnergyBall::Create( vecSrc, angForward, GetProjectileSpeed(), GetProjectileGravity(), pPlayer, pPlayer );
+		CTFProjectile_EnergyBall* pProjectile = CTFProjectile_EnergyBall::Create( trace.endpos, angForward, GetProjectileSpeed(), GetProjectileGravity(), pPlayer, pPlayer );
 		if ( pProjectile )
 		{
 			pProjectile->SetLauncher( this );
@@ -733,8 +649,7 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, int iPipeBombTy
 	PlayWeaponShootSound();
 
 #ifdef GAME_DLL
-	// Use weapon shoot angles for VR support (controller angles if in VR)
-	QAngle angEyes = pPlayer->Weapon_ShootAngles();
+	QAngle angEyes = pPlayer->EyeAngles();
 
 	float flSpreadAngle = 0.0f; 
 	CALL_ATTRIB_HOOK_FLOAT( flSpreadAngle, projectile_spread_angle );
@@ -746,24 +661,22 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, int iPipeBombTy
 		DevMsg( "Fire bomb at %f %f %f\n", XYZ(angEyes) );
 	}
 
+	Vector vecForward, vecRight, vecUp;
+	AngleVectors( angEyes, &vecForward, &vecRight, &vecUp );
+
 	// Create grenades here!!
-	Vector vecSrc;
-	QAngle angProjectile;
-	Vector vecOffset( 16.0f, 8.0f, -6.0f );
+	float fRight = 8.f;
 	if ( IsViewModelFlipped() )
 	{
-		vecOffset.y *= -1;
+		fRight *= -1;
 	}
-	GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angProjectile, false );
+	Vector vecSrc = pPlayer->Weapon_ShootPosition();
+	vecSrc +=  vecForward * 16.0f + vecRight * fRight + vecUp * -6.0f;
 
-	// Use the projectile angles for velocity calculation in VR
-	Vector vecForward, vecRight, vecUp;
-	AngleVectors( angProjectile, &vecForward, &vecRight, &vecUp );
-
-	// Check if we can spawn the projectile at this position
 	trace_t trace;	
+	Vector vecEye = pPlayer->EyePosition();
 	CTraceFilterSimple traceFilter( this, COLLISION_GROUP_NONE );
-	UTIL_TraceHull( vecSrc, vecSrc, -Vector(8,8,8), Vector(8,8,8), MASK_SOLID_BRUSHONLY, &traceFilter, &trace );
+	UTIL_TraceHull( vecEye, vecSrc, -Vector(8,8,8), Vector(8,8,8), MASK_SOLID_BRUSHONLY, &traceFilter, &trace );
 
 	// If we started in solid, don't let them fire at all
 	if ( trace.startsolid )
@@ -786,38 +699,7 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, int iPipeBombTy
 		angImpulse.Zero();
 	}
 
-	// Validate spawn position isn't inside solid geometry
-	trace_t tr;
-	UTIL_TraceHull( vecSrc, vecSrc, -Vector(2,2,2), Vector(2,2,2), MASK_SOLID, pPlayer, COLLISION_GROUP_NONE, &tr );
-	if ( tr.startsolid )
-	{
-		// Spawn position is inside solid geometry, try to find a clear spot
-		Vector vecDir;
-		AngleVectors( angProjectile, &vecDir );
-		
-		// Try backing up along the firing direction
-		for ( float dist = 5.0f; dist <= 30.0f; dist += 5.0f )
-		{
-			Vector vecTest = vecSrc - vecDir * dist;
-			UTIL_TraceHull( vecTest, vecTest, -Vector(2,2,2), Vector(2,2,2), MASK_SOLID, pPlayer, COLLISION_GROUP_NONE, &tr );
-			if ( !tr.startsolid )
-			{
-				vecSrc = vecTest;
-				DevMsg("VR Warning: Grenade spawn adjusted back %.1f units to clear geometry\n", dist);
-				break;
-			}
-		}
-	}
-	
-	if ( developer.GetInt() > 0 )
-	{
-		DevMsg("FirePipeBomb: angEyes=(%.2f, %.2f, %.2f) angProjectile=(%.2f, %.2f, %.2f) vecSrc=(%.2f, %.2f, %.2f)\n",
-			angEyes.x, angEyes.y, angEyes.z,
-			angProjectile.x, angProjectile.y, angProjectile.z,
-			vecSrc.x, vecSrc.y, vecSrc.z);
-	}
-
-	CTFGrenadePipebombProjectile *pProjectile = CTFGrenadePipebombProjectile::Create( vecSrc, angProjectile, vecVelocity, angImpulse, pPlayer, GetTFWpnData(), iPipeBombType, flMultDmg );
+	CTFGrenadePipebombProjectile *pProjectile = CTFGrenadePipebombProjectile::Create( trace.endpos, angEyes, vecVelocity, angImpulse, pPlayer, GetTFWpnData(), iPipeBombType, flMultDmg );
 
 	if ( pProjectile )
 	{

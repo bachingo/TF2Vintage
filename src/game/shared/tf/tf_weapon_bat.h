@@ -93,7 +93,6 @@ public:
 
 #ifdef GAME_DLL
 	virtual void		GetBallDynamics( Vector& vecLoc, QAngle& vecAngles, Vector& vecVelocity, AngularImpulse& angImpulse, CTFPlayer* pPlayer );
-	void				VRBallAimLaunch( void );
 #endif
 
 #ifdef CLIENT_DLL

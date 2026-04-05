@@ -264,8 +264,7 @@ void VGui_PreRender()
 	// 360 does not use these plaques
 	if ( IsPC() )
 	{
-		bool bIsCurrentlyLoading = engine->IsDrawingLoadingImage() && !engine->IsPlayingDemo();
-		loadingdisc->SetLoadingVisible( bIsCurrentlyLoading );
+		loadingdisc->SetLoadingVisible( engine->IsDrawingLoadingImage() && !engine->IsPlayingDemo() );
 		
 		bool bShowPausedImage = !enginevgui->IsGameUIVisible() && cl_showpausedimage.GetBool() && engine->IsPaused() && !engine->IsTakingScreenshot() && !engine->IsPlayingDemo();
 #if !defined( TF_CLIENT_DLL )

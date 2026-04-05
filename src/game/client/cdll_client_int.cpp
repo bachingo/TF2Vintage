@@ -133,8 +133,6 @@
 
 #include "secure_command_line.h"
 
-#include "tfvr/vr_integration.h"
-
 // NVNT includes
 #include "hud_macros.h"
 #include "haptics/ihaptics.h"
@@ -886,36 +884,7 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	// DllMain (Windows) / __attribute__((constructor)) (Linux) installs the handler.
 	// If the module is absent the call returns null and we continue silently.
 	Sys_LoadModule( "tf2vintage_crash" );
-#endif
-	InitCRTMemDebug();
-	MathLib_Init( 2.2f, 2.2f, 0.0f, 2.0f );
-
-
-#ifdef SIXENSE
-	g_pSixenseInput = new SixenseInput;
-#endif
-
-	// Hook up global variables
-	gpGlobals = pGlobals;
-
-	ConnectTier1Libraries( &appSystemFactory, 1 );
-	ConnectTier2Libraries( &appSystemFactory, 1 );
-	ConnectTier3Libraries( &appSystemFactory, 1 );
-
-	if ( tf2v_hrtf_enabled.GetBool() )
-	{
-		CommandLine()->AppendParm( "-snddrv al", nullptr );
-	}
-
-	// Append -insecure unconditionally so the engine
-	// never attempts a VAC-secured session, regardless of launch options.
-	if ( !CommandLine()->FindParm( "-insecure" ) )
-	{
-		CommandLine()->AppendParm( "-insecure", nullptr );
-	}
-
-#ifdef DEBUG
-	// Always append logging.
+	// Always append logging. That way, we have a clean sequence if failure occurs.
 	if ( !CommandLine()->FindParm( "-console" ) )
 	{
 		CommandLine()->AppendParm( "-console", nullptr );
@@ -933,7 +902,33 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 		CommandLine()->AppendParm( "-log_verbose_enable", "1" );
 	}
 #endif
+	if ( tf2v_hrtf_enabled.GetBool() )
+	{
+		CommandLine()->AppendParm( "-snddrv al", nullptr );
+	}
+
+	// Append -insecure unconditionally so the engine
+	// never attempts a VAC-secured session, regardless of launch options.
+	if ( !CommandLine()->FindParm( "-insecure" ) )
+	{
+		CommandLine()->AppendParm( "-insecure", nullptr );
+	}
 	
+	InitCRTMemDebug();
+	MathLib_Init( 2.2f, 2.2f, 0.0f, 2.0f );
+
+
+#ifdef SIXENSE
+	g_pSixenseInput = new SixenseInput;
+#endif
+
+	// Hook up global variables
+	gpGlobals = pGlobals;
+
+	ConnectTier1Libraries( &appSystemFactory, 1 );
+	ConnectTier2Libraries( &appSystemFactory, 1 );
+	ConnectTier3Libraries( &appSystemFactory, 1 );
+
 	// Client needs to protect from writing files into random locations to avoid becoming a remote-code
 	// execution platform.
 	if ( g_pFullFileSystem )
@@ -1588,9 +1583,7 @@ void CHLClient::View_Render( vrect_t *rect )
 	if ( rect->width == 0 || rect->height == 0 )
 		return;
 
-
-	view->Render(rect);
-
+	view->Render( rect );
 	UpdatePerfStats();
 }
 
@@ -1669,11 +1662,6 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 	if (g_bLevelInitialized)
 		return;
 	g_bLevelInitialized = true;
-	
-	// TF2VR: FORCE loading state immediately when level init starts
-	extern void TF2VR_SetLoadingState(bool isLoading);
-	TF2VR_SetLoadingState(true);
-	DevMsg("TF2VR: 🚨 LEVEL INIT START - forcing loading state to TRUE\n");
 
 	input->LevelInit();
 
@@ -2348,10 +2336,6 @@ void CHLClient::FrameStageNotify( ClientFrameStage_t curStage )
 	case FRAME_RENDER_START:
 		{
 			VPROF( "CHLClient::FrameStageNotify FRAME_RENDER_START" );
-
-			// TF2VR: GUARANTEED frame hook - monitor connection state even during loading
-			extern void TF2VR_CheckEarlyLoadingState();
-			TF2VR_CheckEarlyLoadingState();
 
 			// Last thing before rendering, run simulation.
 			OnRenderStart();

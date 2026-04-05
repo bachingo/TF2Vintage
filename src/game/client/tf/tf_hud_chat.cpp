@@ -17,7 +17,6 @@
 #include "tf_gamerules.h"
 #include "ihudlcd.h"
 #include "tf_hud_freezepanel.h"
-#include "tfvr/vr_popup_hud.h"
 #if defined( REPLAY_ENABLED )
 #include "replay/ienginereplay.h"
 #endif
@@ -268,9 +267,6 @@ bool CHudChat::ShouldDraw( void )
 	if ( g_pEngineClientReplay->IsPlayingReplayDemo() )
 		return false;
 #endif
-
-	if ( CVRPopupHUDManager::ShouldSuppressChat() )
-		return false;
 
 	return CHudElement::ShouldDraw();
 }

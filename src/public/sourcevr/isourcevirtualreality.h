@@ -18,8 +18,6 @@
 #include "appframework/IAppSystem.h"
 #include "mathlib/vmatrix.h"
 
-#include "../../../game/client/tfvr/vr_integration.h"
-
 //-----------------------------------------------------------------------------
 // forward declarations
 //-----------------------------------------------------------------------------
@@ -101,7 +99,7 @@ public:
 	// ----------------------------------------------------------------------
 
 	// returns the pose relative to the zero point
-	virtual VMatrix GetMideyePose() const = 0;
+	virtual VMatrix GetMideyePose() = 0;
 
 	// All-in-one interfaces (they call GetCameraPoseZeroFromCurrent)
 	// Grabs the current tracking data and sets up state for the Override* calls.
@@ -166,7 +164,7 @@ extern ISourceVirtualReality *g_pSourceVR;
 
 inline bool UseVR()
 {
-	return VRIntegration::IsVRActive();
+	return g_pSourceVR != NULL && g_pSourceVR->ShouldRunInVR();
 }
 
 inline bool ShouldForceVRActive()

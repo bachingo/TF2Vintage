@@ -311,14 +311,17 @@ CTFProjectile_Throwable *CTFThrowable::FireProjectileInternal( void )
 		return NULL;
 
 	Vector vecForward, vecRight, vecUp;
-	// Use weapon shoot angles for VR support (controller angles if in VR)
-	AngleVectors( pPlayer->Weapon_ShootAngles(), &vecForward, &vecRight, &vecUp );
+	AngleVectors( pPlayer->EyeAngles(), &vecForward, &vecRight, &vecUp );
 
-	// Use weapon shoot position for VR support (controller position if in VR)
+	float fRight = 8.f;
+	if ( IsViewModelFlipped() )
+	{
+		fRight *= -1;
+	}
 	Vector vecSrc = pPlayer->Weapon_ShootPosition();
 
 	// Make spell toss position at the hand
-	// vecSrc = vecSrc + ( vecUp * -9.0f ) + ( vecRight * 7.0f ) + ( vecForward * 3.0f );
+	vecSrc = vecSrc + ( vecUp * -9.0f ) + ( vecRight * 7.0f ) + ( vecForward * 3.0f );
 
 	trace_t trace;
 	Vector vecEye = pPlayer->EyePosition();
@@ -332,8 +335,7 @@ CTFProjectile_Throwable *CTFThrowable::FireProjectileInternal( void )
 	CalcIsAttackCritical();
 
 	// Create the Grenade and Intialize it appropriately
-	// Use weapon shoot angles for VR support (controller angles if in VR)
-	CTFProjectile_Throwable *pGrenade = static_cast<CTFProjectile_Throwable*>( CBaseEntity::CreateNoSpawn( attrProjectileEntityName.value().c_str(), trace.endpos, pPlayer->Weapon_ShootAngles(), pPlayer ) );
+	CTFProjectile_Throwable *pGrenade = static_cast<CTFProjectile_Throwable*>( CBaseEntity::CreateNoSpawn( attrProjectileEntityName.value().c_str(), trace.endpos, pPlayer->EyeAngles(), pPlayer ) );
 	if ( pGrenade )
 	{
 		// Set the pipebomb mode before calling spawn, so the model & associated vphysics get setup properly.

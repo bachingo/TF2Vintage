@@ -147,12 +147,6 @@ private:
 	void		PreventBunnyJumping();
 	void		ToggleParachute( void );
 	void		CheckKartWallBumping();
-	typedef void(CTFGameMovement::*ProcessMoveFunc)(Vector &);
-
-
-	// VR-related functions
-	void        ProcessRoomscaleMovement( ProcessMoveFunc processMove );
-	void        ProcessWalkMove(Vector &dest);
 
 	// Ducking.
 #if 0
@@ -1876,11 +1870,9 @@ void CTFGameMovement::WalkMove( void )
 	if ( flSpeed < 1.0f )
 	{
 		// I didn't remove the base velocity here since it wasn't moving us in the first place.
-		// mv->m_vecVelocity.Init();
-		// return;
+		mv->m_vecVelocity.Init();
+		return;
 	}
-
-	m_silentMove = false;
 
 	// Calculate the destination.
 	Vector vecDestination;
@@ -1898,8 +1890,46 @@ void CTFGameMovement::WalkMove( void )
 	}
 #endif
 
-	ProcessWalkMove(vecDestination);
-	ProcessRoomscaleMovement(&CTFGameMovement::ProcessWalkMove);
+	// Try moving to the destination.
+	trace_t trace;
+	TracePlayerBBox( mv->GetAbsOrigin(), vecDestination, PlayerSolidMask(), COLLISION_GROUP_PLAYER_MOVEMENT, trace );
+	if ( trace.fraction == 1.0f )
+	{
+		// Made it to the destination (remove the base velocity).
+		mv->SetAbsOrigin( trace.endpos );
+		VectorSubtract( mv->m_vecVelocity, player->GetBaseVelocity(), mv->m_vecVelocity );
+
+		// Save the wish velocity.
+		mv->m_outWishVel += ( vecWishDirection * flWishSpeed );
+
+		// Try and keep the player on the ground.
+		// NOTE YWB 7/5/07: Don't do this here, our version of CategorizePosition encompasses this test
+		// StayOnGround();
+
+#ifdef CLIENT_DLL
+		// Track how far we moved (if we're a Scout or an Engineer carrying a building).
+		CTFPlayer* pTFPlayer = ToTFPlayer( player );
+		if ( pTFPlayer->IsPlayerClass( TF_CLASS_SCOUT ) ||
+			( pTFPlayer->IsPlayerClass( TF_CLASS_ENGINEER ) && pTFPlayer->m_Shared.IsCarryingObject() ) )
+		{
+			float fInchesToMeters = 0.0254f;
+			float fWorldScale = 0.25;
+			float fMeters = pTFPlayer->GetMetersRan();
+			float fMetersRan = flSpeed*fInchesToMeters*fWorldScale*gpGlobals->frametime;
+			pTFPlayer->SetMetersRan( fMeters + fMetersRan, gpGlobals->framecount );
+		}
+#endif
+		return;
+	}
+
+	CTFPlayer* pBumpPlayer = ToTFPlayer( trace.m_pEnt );
+	if ( pBumpPlayer )
+	{
+		m_pTFPlayer->m_Shared.EndCharge();
+	}
+
+	// Now try and do a step move.
+	StepMove( vecDestination, trace );
 
 	// Remove base velocity.
 	Vector baseVelocity = player->GetBaseVelocity();
@@ -1908,7 +1938,7 @@ void CTFGameMovement::WalkMove( void )
 	CheckKartWallBumping();
 
 	// Save the wish velocity.
-	// mv->m_outWishVel += ( vecWishDirection * flWishSpeed );
+	mv->m_outWishVel += ( vecWishDirection * flWishSpeed );
 
 	// Try and keep the player on the ground.
 	// NOTE YWB 7/5/07: Don't do this here, our version of CategorizePosition encompasses this test
@@ -1930,120 +1960,6 @@ void CTFGameMovement::WalkMove( void )
 	}
 
 #endif
-}
-
-void CTFGameMovement::ProcessWalkMove(Vector &dest)
-{
-	// Try moving to the destination.
-	trace_t trace;
-	TracePlayerBBox( mv->GetAbsOrigin(), dest, PlayerSolidMask(), COLLISION_GROUP_PLAYER_MOVEMENT, trace );
-	if ( trace.fraction == 1.0f )
-	{
-		// Made it to the destination (remove the base velocity).
-		mv->SetAbsOrigin( trace.endpos );
-		VectorSubtract( mv->m_vecVelocity, player->GetBaseVelocity(), mv->m_vecVelocity );
-
-		// Save the wish velocity.
-		// mv->m_outWishVel += ( vecWishDirection * flWishSpeed );
-
-		// Try and keep the player on the ground.
-		// NOTE YWB 7/5/07: Don't do this here, our version of CategorizePosition encompasses this test
-		// StayOnGround();
-
-#ifdef CLIENT_DLL
-		// Track how far we moved (if we're a Scout or an Engineer carrying a building).
-		CTFPlayer* pTFPlayer = ToTFPlayer( player );
-		if ( pTFPlayer->IsPlayerClass( TF_CLASS_SCOUT ) ||
-			( pTFPlayer->IsPlayerClass( TF_CLASS_ENGINEER ) && pTFPlayer->m_Shared.IsCarryingObject() ) )
-		{
-			float fInchesToMeters = 0.0254f;
-			float fWorldScale = 0.25;
-			float fMeters = pTFPlayer->GetMetersRan();
-			float flSpeed = VectorLength( mv->m_vecVelocity );
-			float fMetersRan = flSpeed*fInchesToMeters*fWorldScale*gpGlobals->frametime;
-			pTFPlayer->SetMetersRan( fMeters + fMetersRan, gpGlobals->framecount );
-		}
-#endif
-		return;
-	}
-
-	CTFPlayer* pBumpPlayer = ToTFPlayer( trace.m_pEnt );
-	if ( pBumpPlayer )
-	{
-		m_pTFPlayer->m_Shared.EndCharge();
-	}
-
-	// Now try and do a step move.
-	StepMove( dest, trace );
-}
-
-void CTFGameMovement::ProcessRoomscaleMovement(ProcessMoveFunc processMove)
-{
-	CTFPlayer *vrPlayer = dynamic_cast<CTFPlayer *>(player);
-	if (vrPlayer == nullptr || (vrPlayer->GetFlags() & FL_FROZEN))
-		return;
-
-	Vector roomscaleMove = mv->m_postFullBodyIKDeltaOrigin;
-	// Remove base velocity.
-	roomscaleMove.z = 0;
-
-	// limit the amount of movement in one frame
-	Vector movementDir = roomscaleMove.Normalized();
-	float distance = roomscaleMove.Length();
-	Vector clampedMove = movementDir * Clamp(distance, 0.f, mv->m_flMaxSpeed * gpGlobals->frametime);
-
-	// Save the wish velocity.
-	if (fabsf(clampedMove.x) < 0.1f && fabsf(clampedMove.y) < 0.1f)
-		return;
-
-	Vector originalPos = mv->GetAbsOrigin();
-	Vector dest = originalPos + clampedMove;
-	Vector origVel = mv->m_vecVelocity;
-
-	mv->m_vecVelocity = clampedMove / gpGlobals->frametime;
-	m_silentMove = true;
-	(this->*processMove)(dest);
-	m_silentMove = false;
-	mv->m_vecVelocity = origVel;
-
-	Vector diff = mv->GetAbsOrigin() - originalPos;
-	float fraction = Clamp(diff.Length2D() / roomscaleMove.Length2D(), 0.f, 1.f);
-	// Debugging!!!
-	Vector expectedDir = (dest - originalPos);
-	expectedDir.z = 0;
-	expectedDir.NormalizeInPlace();
-	movementDir = diff;
-	movementDir.z = 0;
-	movementDir.NormalizeInPlace();
-	if (DotProduct(expectedDir, movementDir) < 0.99f)
-	{
-		mv->SetAbsOrigin(originalPos);
-		fraction = 0.f;
-	}
-	else
-	{
-		// accept roomscale movement and adjust our roomscsale offset accordingly
-		Vector roomscaleAdjustment = fraction * mv->m_postFullBodyIKDeltaOrigin;
-		//vrPlayer->m_headInPlayerO -= roomscaleAdjustment;
-		vrPlayer->m_roomscaleOffset += roomscaleAdjustment;
-	}
-	mv->m_outWishVel += roomscaleMove * fraction / gpGlobals->frametime;
-	
-	// Debug output
-	static float lastDebugTime = 0;
-	//if (gpGlobals->curtime - lastDebugTime > 0.1f) // Print every 100ms
-	//{
-#ifdef GAME_DLL
-/*
-
-#endif
-}
-
-//-----------------------------------------------------------------------------
-*/
-#endif
-		lastDebugTime = gpGlobals->curtime;
-	//}
 }
 
 //-----------------------------------------------------------------------------

@@ -16,7 +16,6 @@
 #include "c_tf_player.h"
 #include "c_tf_gamestats.h"
 #include "bone_setup.h"
-#include "tfvr/c_tfvr_hand.h"
 
 // Server specific.
 #else
@@ -568,26 +567,13 @@ float CTFGrenadeLauncher::GetMortarDetonateTimeLength()
 #ifdef CLIENT_DLL
 void CTFGrenadeLauncher::StartChargeEffects()
 {
-	C_BaseAnimating *pEffectEntity = this;
-
-	if ( m_bHeldByVRHand )
-	{
-		C_TFVRHand *pRightHand = GetLocalPlayerRightHand();
-		if ( pRightHand && pRightHand->GetHeldWeapon() == this )
-		{
-			C_BaseAnimating *pRenderWeapon = pRightHand->GetRenderWeapon();
-			if ( pRenderWeapon )
-				pEffectEntity = pRenderWeapon;
-		}
-	}
-
 	if ( !m_pCannonFuseSparkEffect )
 	{
-		m_pCannonFuseSparkEffect = pEffectEntity->ParticleProp()->Create( "loose_cannon_sparks", PATTACH_POINT_FOLLOW, "cannon_fuse" );
+		m_pCannonFuseSparkEffect = ParticleProp()->Create( "loose_cannon_sparks", PATTACH_POINT_FOLLOW, "cannon_fuse" );
 	}
 	if ( !m_pCannonCharge )
 	{
-		m_pCannonCharge = pEffectEntity->ParticleProp()->Create( "loose_cannon_buildup_smoke3", PATTACH_POINT_FOLLOW, "muzzle" );
+		m_pCannonCharge = ParticleProp()->Create( "loose_cannon_buildup_smoke3", PATTACH_POINT_FOLLOW, "muzzle" );
 	}
 }
 
@@ -596,12 +582,12 @@ void CTFGrenadeLauncher::StopChargeEffects()
 {
 	if ( m_pCannonFuseSparkEffect )
 	{
-		m_pCannonFuseSparkEffect->StopEmission();
+		ParticleProp()->StopEmission( m_pCannonFuseSparkEffect );
 		m_pCannonFuseSparkEffect = NULL;
 	}
 	if ( m_pCannonCharge )
 	{
-		m_pCannonCharge->StopEmission();
+		ParticleProp()->StopEmission( m_pCannonCharge );
 		m_pCannonCharge = NULL;
 	}
 }

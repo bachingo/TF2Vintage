@@ -279,8 +279,6 @@ protected:
 
 	float			m_fFrameTime;
 
-	bool			m_silentMove;
-
 //private:
 	int				m_iSpeedCropped;
 

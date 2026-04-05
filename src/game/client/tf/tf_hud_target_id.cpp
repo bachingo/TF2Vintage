@@ -27,13 +27,10 @@
 
 #include "VGuiMatSurface/IMatSystemSurface.h"
 #include "renderparm.h"
-#include "tfvr/vr_world_health_icon.h"
 
 #include "tf_dropped_weapon.h"
 #include "econ/econ_item_description.h"
 #include "inputsystem/iinputsystem.h"
-#include "tfvr/vr_world_health_icon.h"
-#include "tfvr/vr_popup_hud.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -688,32 +685,16 @@ void CTargetID::PerformLayout( void )
 
 	SetSize( iWidth, GetTall() );
 
-	// VR: When rendering in 3D world space, position at (0,0) - the VR manager handles world positioning
-	if ( CVRWorldHealthIconManager::IsRendering3D() )
-	{
-		SetPos( 0, 0 );
-		return;
-	}
-
 	int nOffset = m_bArenaPanelVisible ? YRES (120) : 0; // HACK: move the targetID up a bit so it won't overlap the panel
-	// Always center horizontally - VR popup system handles 3D positioning
-	SetPos( (ScreenWidth() - iWidth) * 0.5,  m_nOriginalY - nOffset + YRES( tf_hud_target_id_offset.GetInt() ) );
-};
-
-//-----------------------------------------------------------------------------
-// Purpose: VR: Skip 2D painting when VR is handling this in 3D
-//-----------------------------------------------------------------------------
-void CTargetID::Paint( void )
-{
-	// VR: When VR is active but NOT doing 3D rendering, skip the 2D paint
-	// (the VR world health icon system renders this in 3D world space instead)
-	if ( UseVR() && !CVRWorldHealthIconManager::IsRendering3D() )
+	if( UseVR() )
 	{
-		return;
+		SetPos( ScreenWidth() - iWidth - m_iXOffset,  m_nOriginalY - nOffset + YRES( tf_hud_target_id_offset.GetInt() ) );
 	}
-	
-	BaseClass::Paint();
-}
+	else
+	{
+		SetPos( (ScreenWidth() - iWidth) * 0.5,  m_nOriginalY - nOffset + YRES( tf_hud_target_id_offset.GetInt() ) );
+	}
+};
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1181,20 +1162,6 @@ bool CSecondaryTargetID::ShouldDraw( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CSecondaryTargetID::Paint( void )
-{
-	// VR: Suppress 2D rendering when popup HUD is handling this in 3D
-	if ( CVRPopupHUDManager::ShouldSuppressSecondaryTargetID() )
-	{
-		return;
-	}
-
-	BaseClass::Paint();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 int CSecondaryTargetID::CalculateTargetIndex( C_TFPlayer *pLocalTFPlayer )
 {
 	// If we're a medic & we're healing someone, target him.
@@ -1512,21 +1479,11 @@ void CFloatingHealthIcon::OnTick( void )
 	float flMaxHealth = m_hEntity->GetMaxHealth();
 	float iMaxBuffedHealth = m_hEntity->GetMaxHealth();
 
-	// For TF players, use proper max buffed health for overheal calculations
-	if ( pTargetPlayer )
+	if ( pTargetPlayer && pTargetPlayer->m_Shared.InCond( TF_COND_DISGUISED ) && pTargetPlayer->IsEnemyPlayer() )
 	{
-		if ( pTargetPlayer->m_Shared.InCond( TF_COND_DISGUISED ) && pTargetPlayer->IsEnemyPlayer() )
-		{
-			// Use disguise stats for disguised enemies
-			flHealth = (float)pTargetPlayer->m_Shared.GetDisguiseHealth();
-			flMaxHealth = (float)pTargetPlayer->m_Shared.GetDisguiseMaxHealth();
-			iMaxBuffedHealth = pTargetPlayer->m_Shared.GetDisguiseMaxBuffedHealth();
-		}
-		else
-		{
-			// Use actual max buffed health for proper overheal visualization
-			iMaxBuffedHealth = pTargetPlayer->m_Shared.GetMaxBuffedHealth();
-		}
+		flHealth = (float)pTargetPlayer->m_Shared.GetDisguiseHealth();
+		flMaxHealth = (float)pTargetPlayer->m_Shared.GetDisguiseMaxHealth();
+		iMaxBuffedHealth = pTargetPlayer->m_Shared.GetDisguiseMaxBuffedHealth();
 	}
 		
 	if ( flHealth != m_flPrevHealth )
@@ -1543,18 +1500,6 @@ void CFloatingHealthIcon::OnTick( void )
 ConVar tf_healthicon_height_offset( "tf_healthicon_height_offset", "10", FCVAR_ARCHIVE, "Offset of the health icon away from the top of the target." );
 void CFloatingHealthIcon::Paint( void )
 {
-	// VR: When rendering in 3D (called from DrawPanelIn3DSpace), skip 2D positioning
-	// and go directly to painting the content
-	if ( CVRWorldHealthIconManager::IsRendering3D() )
-	{
-		BaseClass::Paint();
-		return;
-	}
-	
-	// VR: Skip 2D rendering - the VR manager handles 3D world-space rendering
-	if ( CVRWorldHealthIconManager::ShouldSuppressVanillaRendering() )
-		return;
-
 	if ( !CalculatePosition() )
 		return;
 
@@ -1571,13 +1516,6 @@ bool CFloatingHealthIcon::CalculatePosition( )
 	if ( !m_hEntity || m_hEntity->IsDormant() )
 	{
 		return false;
-	}
-
-	// VR: Always position at (0,0) - the VR manager handles 3D world positioning
-	if ( CVRWorldHealthIconManager::ShouldSuppressVanillaRendering() || CVRWorldHealthIconManager::IsRendering3D() )
-	{
-		SetPos( 0, 0 );
-		return true;
 	}
 
 	Vector vecTarget = m_hEntity->GetAbsOrigin();
@@ -1598,11 +1536,7 @@ void CFloatingHealthIcon::SetVisible( bool state )
 {
 	if ( state )
 	{
-		// VR: Skip 2D positioning when doing 3D rendering
-		if ( !CVRWorldHealthIconManager::IsRendering3D() )
-		{
-			CalculatePosition();
-		}
+		CalculatePosition();
 	}
 
 	BaseClass::SetVisible( state );

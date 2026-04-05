@@ -51,10 +51,6 @@ void CTFFists::ItemPreFrame( void )
 // -----------------------------------------------------------------------------
 void CTFFists::PrimaryAttack()
 {
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if ( pOwner && pOwner->IsInVRMode() && IsVRPhysicalMeleeWeapon() )
-		return;
-
 	if ( !CanAttack() )
 		return;
 
@@ -77,10 +73,6 @@ void CTFFists::PrimaryAttack()
 // -----------------------------------------------------------------------------
 void CTFFists::SecondaryAttack()
 {
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if ( pOwner && pOwner->IsInVRMode() && IsVRPhysicalMeleeWeapon() )
-		return;
-
 	if ( !CanAttack() )
 		return;
 

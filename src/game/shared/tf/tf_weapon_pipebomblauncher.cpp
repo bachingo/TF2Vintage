@@ -583,24 +583,6 @@ bool CTFPipebombLauncher::ModifyPipebombsInView( int iEffect )
 	// Dot product from the view angle to determine which bombs to detonate.
 	bool bFailedToDetonate = true;
 	int count = m_Pipebombs.Count();
-	
-	// VR: Use weapon aim direction instead of eye/head direction
-	Vector vecAimOrigin;
-	Vector vecAimForward;
-	if ( pPlayer->IsInVRMode() )
-	{
-		// Use weapon shoot position and angles (controller-based in VR)
-		vecAimOrigin = pPlayer->Weapon_ShootPosition();
-		AngleVectors( pPlayer->Weapon_ShootAngles(), &vecAimForward, NULL, NULL );
-	}
-	else
-	{
-		// Standard: use eye position and angles
-		vecAimOrigin = pPlayer->EyePosition();
-		AngleVectors( pPlayer->EyeAngles(), &vecAimForward, NULL, NULL );
-	}
-	vecAimForward.NormalizeInPlace();
-	
 	for ( int i=0; i<count; ++i )
 	{
 		CTFGrenadePipebombProjectile *pTemp = m_Pipebombs[i];
@@ -608,10 +590,12 @@ bool CTFPipebombLauncher::ModifyPipebombsInView( int iEffect )
 			continue;
 
 		Vector vecToTarget;
-		vecToTarget = pTemp->WorldSpaceCenter() - vecAimOrigin;
+		vecToTarget = pTemp->WorldSpaceCenter() - pPlayer->EyePosition();
 		vecToTarget.NormalizeInPlace();
 
-		Vector vecPlayerForward = vecAimForward;
+		Vector vecPlayerForward;
+		AngleVectors( pPlayer->EyeAngles(), &vecPlayerForward, NULL, NULL );
+		vecPlayerForward.NormalizeInPlace();
 
 		bool bArmed = ( ( gpGlobals->curtime - pTemp->m_flCreationTime ) > pTemp->GetLiveTime() );
 		float flDist = pPlayer->GetAbsOrigin().DistTo( pTemp->GetAbsOrigin() );

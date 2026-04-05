@@ -21,7 +21,6 @@
 	#include "prediction.h"
 	#include "haptics/ihaptics.h"
 	#include "c_tf_gamestats.h"
-	#include "tfvr/c_tfvr_hand.h"
 #else
 
 	#include "explode.h"
@@ -831,8 +830,7 @@ void CTFFlameThrower::PrimaryAttack()
 		// Find eligible entities in a cone in front of us.
 		// Vector vOrigin = pOwner->Weapon_ShootPosition();
 		Vector vForward, vRight, vUp;
-		// VR: Use Weapon_ShootAngles for VR support (controller direction if in VR)
-		QAngle vAngles = pOwner->Weapon_ShootAngles() + pOwner->GetPunchAngle();
+		QAngle vAngles = pOwner->EyeAngles() + pOwner->GetPunchAngle();
 		AngleVectors( vAngles, &vForward, &vRight, &vUp );
 
 		#define NUM_TEST_VECTORS	30
@@ -996,8 +994,7 @@ void CTFFlameThrower::FireAirBlast( int iAmmoPerShot )
 		Vector vDashDir = pOwner->GetAbsVelocity();
 		if ( !pOwner->GetGroundEntity() || vDashDir.Length() == 0.0f )
 		{
-			// Use weapon shoot angles for VR support (controller angles if in VR)
-			AngleVectors( pOwner->Weapon_ShootAngles(), &vDashDir );
+			AngleVectors( pOwner->EyeAngles(), &vDashDir );
 		}
 		vDashDir.z = 0.0f;
 		VectorNormalize( vDashDir );
@@ -1021,15 +1018,6 @@ void CTFFlameThrower::FireAirBlast( int iAmmoPerShot )
 	if ( prediction->IsFirstTimePredicted() == true )
 	{
 		StartFlame();
-	}
-
-	if ( m_bHeldByVRHand )
-	{
-		C_TFVRHand *pRightHand = GetLocalPlayerRightHand();
-		if ( pRightHand && pRightHand->GetHeldWeapon() == this )
-		{
-			pRightHand->PlayWeaponAltFireAnimation();
-		}
 	}
 #endif
 
@@ -2127,34 +2115,13 @@ Vector CTFFlameThrower::GetMuzzlePosHelper( bool bVisualPos )
 	if ( pOwner ) 
 	{
 		Vector vecForward, vecRight, vecUp;
-		QAngle angAiming;
-		
-#ifdef CLIENT_DLL
-		// For non-local players (bots), use networked eye angles
-		// Weapon_ShootAngles uses EyeAngles which uses pl.v_angle - NOT networked to clients
-		// GetNetworkEyeAngles returns the networked m_angEyeAngles that the server sends
-		if ( pOwner != C_BasePlayer::GetLocalPlayer() )
-		{
-			angAiming = pOwner->GetNetworkEyeAngles();
-		}
-		else
-		{
-			// Local player: Use weapon shoot angles for VR support (controller angles if in VR)
-			angAiming = pOwner->Weapon_ShootAngles();
-		}
-#else
-		// Server: Use weapon shoot angles (handles VR controller data)
-		angAiming = pOwner->Weapon_ShootAngles();
-#endif
-		
-		AngleVectors( angAiming, &vecForward, &vecRight, &vecUp );
+		AngleVectors( pOwner->GetNetworkEyeAngles(), &vecForward, &vecRight, &vecUp );
 		{
 			Vector vecOffset;
 			UTIL_StringToVector( vecOffset.Base(), tf_flamethrower_new_flame_offset.GetString() );
 
 			vecOffset *= pOwner->GetModelScale();
-			// Use weapon shoot position for VR support (controller position if in VR)
-			vecMuzzlePos = pOwner->Weapon_ShootPosition() + vecOffset.x * vecForward + vecOffset.y * vecRight + vecOffset.z * vecUp;
+			vecMuzzlePos = pOwner->EyePosition() + vecOffset.x * vecForward + vecOffset.y * vecRight + vecOffset.z * vecUp;
 		}
 	}
 	return vecMuzzlePos;
@@ -2244,12 +2211,6 @@ void CTFFlameThrower::OnDataChanged(DataUpdateType_t updateType)
 	}
 	else 
 	{
-		// VR DEBUG: Log why we're stopping flame
-		if ( m_pFiringLoop || m_pFiringStartSound )
-		{
-			DevMsg( "VR Flamethrower OnDataChanged else: IsCarrierAlive=%d, WeaponState=%d (need %d), Ammo=%d, m_iWeaponState=%d\n",
-				IsCarrierAlive() ? 1 : 0, WeaponState(), WEAPON_IS_ACTIVE, bLocalPlayerAmmo ? 1 : 0, m_iWeaponState );
-		}
 		StopFlame();
 		StopPilotLight();
 		StopFullCritEffect();
@@ -2372,18 +2333,10 @@ void CTFFlameThrower::StartFlame()
 {
 	if ( m_iWeaponState == FT_STATE_SECONDARY )
 	{
-		// VR: Use GetWeaponForEffect() to attach to VR render weapon's muzzle
-		GetWeaponForEffect()->ParticleProp()->Create( "pyro_blast", PATTACH_POINT_FOLLOW, "muzzle" );
-
-		if ( m_bHeldByVRHand )
-		{
-			WeaponSound( WPN_DOUBLE );
-		}
-		else
-		{
-			CLocalPlayerFilter filter;
-			EmitSound( filter, entindex(), GetShootSound( WPN_DOUBLE ) );
-		}
+		GetAppropriateWorldOrViewModel()->ParticleProp()->Create( "pyro_blast", PATTACH_POINT_FOLLOW, "muzzle" );
+		CLocalPlayerFilter filter;
+		const char *shootsound = GetShootSound( WPN_DOUBLE );
+		EmitSound( filter, entindex(), shootsound );
 
 		return;
 	}
@@ -2491,11 +2444,6 @@ void CTFFlameThrower::StopHitSound()
 //-----------------------------------------------------------------------------
 void CTFFlameThrower::StopFlame( bool bAbrupt /* = false */ )
 {
-	if ( m_pFiringLoop || m_pFiringStartSound )
-	{
-		DevMsg( "VR Flamethrower StopFlame called with active sounds!\n" );
-	}
-	
 	if ( ( m_pFiringLoop || m_pFiringStartSound ) && !bAbrupt )
 	{
 		// play a quick wind-down poof when the flame stops

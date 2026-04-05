@@ -257,7 +257,7 @@ enum CastVote
 	#define MAX_PLAYERS				127
 #elif defined( CSTRIKE_DLL )
 	#define MAX_PLAYERS				65   // Absolute max players supported
-#elif defined( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined( HL2MP )
+#elif ( defined( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined( HL2MP ) ) && ( !defined( TF_VINTAGE ) || !defined( TF_VINTAGE_CLIENT ))
 	#define MAX_PLAYERS				101
 #else
 	#define MAX_PLAYERS				33  // Absolute max players supported
@@ -277,7 +277,11 @@ inline bool IsIndexIntoPlayerArrayValid( int iIndex )
 
 #define MAX_PLACE_NAME_LENGTH		18
 
-#define MAX_FOV						101
+#if defined( TF_VINTAGE ) || defined( TF_VINTAGE_CLIENT )
+#define MAX_FOV						100
+#else
+#define MAX_FOV						90
+#endif
 
 //===================================================================================================================
 // Team Defines

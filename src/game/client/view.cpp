@@ -27,7 +27,6 @@
 #include "smoke_fog_overlay.h"
 #include "bitmap/tgawriter.h"
 #include "hltvcamera.h"
-#include "tf/c_tf_player.h"
 #if defined( REPLAY_ENABLED )
 #include "replay/replaycamera.h"
 #include "replay/replay_screenshot.h"
@@ -46,11 +45,6 @@
 #include "ScreenSpaceEffects.h"
 #include "sourcevr/isourcevirtualreality.h"
 #include "client_virtualreality.h"
-#include "tfvr/openxr_manager.h"
-#include "tfvr/openxr_hand_tracking.h"
-#include "tfvr/vr_input.h"
-#include "tfvr/vr_laser_pointer.h"
-#include "tfvr/vr_spectator_camera.h"
 
 #if defined( REPLAY_ENABLED )
 #include "replay/ireplaysystem.h"
@@ -68,8 +62,6 @@
 	
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
-#include <tfvr/vr_integration.h>
-#include <c_tf_player.h>
 		  
 void ToolFramework_AdjustEngineViewport( int& x, int& y, int& width, int& height );
 bool ToolFramework_SetupEngineView( Vector &origin, QAngle &angles, float &fov );
@@ -78,8 +70,6 @@ bool ToolFramework_SetupEngineMicrophone( Vector &origin, QAngle &angles );
 
 extern ConVar default_fov;
 extern bool g_bRenderingScreenshot;
-
-extern COpenXRManager* g_pOpenXRManager;
 
 #if !defined( _X360 )
 #define SAVEGAME_SCREENSHOT_WIDTH	180
@@ -487,7 +477,10 @@ void CViewRender::DriftPitch (void)
 
 StereoEye_t		CViewRender::GetFirstEye() const
 {
-	return STEREO_EYE_MONO;
+	if( UseVR() )
+		return STEREO_EYE_LEFT;
+	else
+		return STEREO_EYE_MONO;
 }
 
 StereoEye_t		CViewRender::GetLastEye() const
@@ -499,7 +492,7 @@ StereoEye_t		CViewRender::GetLastEye() const
 }
 
 
-extern bool g_bExtraMouseSample;
+
 
 // This is called by cdll_client_int to setup view model origins. This has to be done before
 // simulation so entities can access attachment points on view models during simulation.
@@ -507,27 +500,10 @@ void CViewRender::OnRenderStart()
 {
 	VPROF_("CViewRender::OnRenderStart", 2, VPROF_BUDGETGROUP_OTHER_UNACCOUNTED, false, 0);
 
-	if (g_pOpenXRManager && g_pOpenXRManager->IsActive())
-	{
-		g_pOpenXRManager->BeginFrame();
-		g_pOpenXRManager->UpdateOpenXRViewData();
-	}
-
-	C_TFPlayer *player = dynamic_cast<C_TFPlayer*>(C_BasePlayer::GetLocalPlayer());
-
-	if (player)
-	{
-		CUserCmd cmd;
-		// update head poses with the latest poses from SteamVR
-		g_bExtraMouseSample = true;
-		player->ComputeFullBodyIK(&cmd);
-		// player->UpdateHandsInPlayer(&cmd);
-		g_bExtraMouseSample = false;
-		//player->PreRenderUpdatePoses();
-	}
-
     SetUpViews();
 
+	// Adjust mouse sensitivity based upon the current FOV
+	C_BasePlayer *player = C_BasePlayer::GetLocalPlayer();
 	if ( player )
 	{
 		default_fov.SetValue( player->m_iDefaultFOV );
@@ -614,17 +590,8 @@ static QAngle s_DbgSetupAngles;
 //-----------------------------------------------------------------------------
 // Gets znear + zfar
 //-----------------------------------------------------------------------------
-ConVar tfvr_znear( "tfvr_znear", "2", FCVAR_ARCHIVE, "Z-near clipping distance for VR rendering (default: 7)" );
-
 float CViewRender::GetZNear()
 {
-	// Use VR-specific Z-near when in VR mode
-	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
-	if ( pLocalPlayer && pLocalPlayer->IsInVRMode() )
-	{
-		return tfvr_znear.GetFloat();
-	}
-	
 	return VIEW_NEARZ;
 }
 
@@ -677,7 +644,7 @@ void CViewRender::SetUpViews()
 	viewEye.fov				= default_fov.GetFloat();
 
 	viewEye.m_bOrtho			= false;
-	viewEye.m_bViewToProjectionOverride = UseVR();  // Only override projection in VR mode
+	viewEye.m_bViewToProjectionOverride = false;
 	viewEye.m_eStereoEye		= STEREO_EYE_MONO;
 
 	// Enable spatial partition access to edicts
@@ -689,7 +656,6 @@ void CViewRender::SetUpViews()
 	bool bCalcViewModelView = false;
 	Vector ViewModelOrigin;
 	QAngle ViewModelAngles;
-
 
 	if ( engine->IsHLTV() )
 	{
@@ -708,65 +674,6 @@ void CViewRender::SetUpViews()
 		if (pPlayer)
 		{
 			pPlayer->CalcView( viewEye.origin, viewEye.angles, viewEye.zNear, viewEye.zFar, viewEye.fov );
-
-			// If we are looking through another entities eyes, then override the angles/origin for view
-			extern CVRMenuManager* g_pVRMenuManager;
-			extern COpenXRManager* g_pOpenXRManager;
-			extern CClientVirtualReality g_ClientVirtualReality;
-			if (g_pOpenXRManager && g_pOpenXRManager->IsActive() && UseVR())
-			{
-				// CRITICAL: Use the smoothed viewEye.origin from CalcView - don't override it!
-				// CalcView already applied GetPredictionErrorSmoothingVector() smoothing
-				
-				// Store raw angles before any spectator smoothing
-				QAngle rawAngles = viewEye.angles;
-				
-				// Apply spectator camera smoothing for Mode 2 (full smoothing)
-				// This modifies the actual view angles, creating cinematic smoothing for trailers
-				// WARNING: This creates input lag - only use for recording, not gameplay!
-				if (g_pVRSpectatorCamera && g_pVRSpectatorCamera->IsFullSmoothingMode())
-				{
-					QAngle smoothedAngles;
-					g_pVRSpectatorCamera->ApplySmoothing(rawAngles, smoothedAngles);
-					viewEye.angles = smoothedAngles;
-					
-					// Store BOTH smoothed (for view) and raw (for controllers) transforms
-					// This keeps hands stable while the view is smoothed
-					g_ClientVirtualReality.UpdateWorldFromMidEyeMatricesWithRaw(viewEye.origin, smoothedAngles, rawAngles);
-				}
-				// For Mode 1 (mirror-only), just track angles without modifying view
-				else if (g_pVRSpectatorCamera && g_pVRSpectatorCamera->IsMirrorOnlyMode())
-				{
-					QAngle unused;
-					g_pVRSpectatorCamera->ApplySmoothing(viewEye.angles, unused);
-					g_ClientVirtualReality.UpdateWorldFromMidEyeMatrices(viewEye.origin, viewEye.angles);
-				}
-				else
-				{
-					// No spectator smoothing - store the view for VR rendering
-					g_ClientVirtualReality.UpdateWorldFromMidEyeMatrices(viewEye.origin, viewEye.angles);
-				}
-				
-				// Render hand tracking debug visualization AFTER smoothing is set
-				// so the debug cubes use the current frame's smoothed transforms
-				if (g_pOpenXRManager->GetHandTracker())
-				{
-					g_pOpenXRManager->GetHandTracker()->RenderDebugCubes();
-				}
-				
-				// Now update menu cursor position with fresh VR matrices
-				if (g_pVRMenuManager)
-				{
-					g_pVRMenuManager->UpdateCursorPosition();
-				}
-				
-				// Also update VR laser pointer with fresh data
-				extern class CVRLaserPointer* g_pVRLaserPointer;
-				if (g_pVRLaserPointer)
-				{
-					g_pVRLaserPointer->Update(gpGlobals->frametime);
-				}
-			}
 
 			// If we are looking through another entities eyes, then override the angles/origin for view
 			int viewentity = render->GetViewEntity();
@@ -834,8 +741,8 @@ void CViewRender::SetUpViews()
 			g_ClientVirtualReality.ProcessCurrentTrackingState ( viewEye.fov );
 		}
 
-		// HeadtrackMovementMode_t hmmOverrideMode = g_pClientMode->ShouldOverrideHeadtrackControl();
-		// g_ClientVirtualReality.OverrideView( &m_View, &ViewModelOrigin, &ViewModelAngles, hmmOverrideMode );
+		HeadtrackMovementMode_t hmmOverrideMode = g_pClientMode->ShouldOverrideHeadtrackControl();
+		g_ClientVirtualReality.OverrideView( &m_View, &ViewModelOrigin, &ViewModelAngles, hmmOverrideMode );
 
 		// left and right stereo views should default to being the same as the mono/middle view
 		m_ViewLeft = m_View;
@@ -852,8 +759,6 @@ void CViewRender::SetUpViews()
 		m_ViewRight = m_View;
 		m_ViewLeft.m_eStereoEye = STEREO_EYE_LEFT;
 		m_ViewRight.m_eStereoEye = STEREO_EYE_RIGHT;
-		m_ViewLeft.m_bViewToProjectionOverride = false;
-		m_ViewRight.m_bViewToProjectionOverride = false;
 	}
 
 	if ( bCalcViewModelView )
@@ -871,13 +776,7 @@ void CViewRender::SetUpViews()
 
 	// Compute the world->main camera transform
     // This is only done for the main "middle-eye" view, not for the various other views.
-	// For VR: compute view vectors without roll so particles don't tilt with HMD
-	QAngle particleAngles = viewEye.angles;
-	if ( g_pOpenXRManager && g_pOpenXRManager->IsActive() )
-	{
-		particleAngles.z = 0.0f; // Zero out roll for particle billboarding
-	}
-	ComputeCameraVariables( viewEye.origin, particleAngles,
+	ComputeCameraVariables( viewEye.origin, viewEye.angles,
 		&g_vecVForward, &g_vecVRight, &g_vecVUp, &g_matCamInverse );
 
 	// set up the hearing origin...
@@ -1167,7 +1066,7 @@ void CViewRender::Render( vrect_t *rect )
     // Set for console commands, etc.
     render->SetMainView ( m_View.origin, m_View.angles );
 
-    for (StereoEye_t eEye = GetLastEye(); eEye >= GetFirstEye(); eEye = (StereoEye_t)(eEye - 1))
+    for( StereoEye_t eEye = GetFirstEye(); eEye <= GetLastEye(); eEye = (StereoEye_t)(eEye+1) )
 	{
 		CViewSetup &viewEye = GetView( eEye );
 
@@ -1185,7 +1084,7 @@ void CViewRender::Render( vrect_t *rect )
 		viewEye.fovViewmodel = ScaleFOVByWidthRatio( viewEye.fovViewmodel, aspectRatio );
 
 	    // Let the client mode hook stuff.
-	    g_pClientMode->PreRender(&viewEye);
+	    g_pClientMode->PreRender(&viewEye );
 
 	    g_pClientMode->AdjustEngineViewport( vr.x, vr.y, vr.width, vr.height );
 
@@ -1222,7 +1121,7 @@ void CViewRender::Render( vrect_t *rect )
 			case STEREO_EYE_RIGHT:
 			case STEREO_EYE_LEFT:
 			{
-				g_pOpenXRManager->GetViewportBounds( (ISourceVirtualReality::VREye)(eEye - 1 ), &viewEye.x, &viewEye.y, &viewEye.width, &viewEye.height );
+				g_pSourceVR->GetViewportBounds( (ISourceVirtualReality::VREye)(eEye - 1 ), &viewEye.x, &viewEye.y, &viewEye.width, &viewEye.height );
 				viewEye.m_nUnscaledWidth = viewEye.width;
 				viewEye.m_nUnscaledHeight = viewEye.height;
 				viewEye.m_nUnscaledX = viewEye.x;
@@ -1236,7 +1135,8 @@ void CViewRender::Render( vrect_t *rect )
 		}
 
 		// if we still don't have an aspect ratio, compute it from the view size
-		viewEye.m_flAspectRatio	= (float)viewEye.width / (float)viewEye.height;
+		if( viewEye.m_flAspectRatio <= 0.f )
+			viewEye.m_flAspectRatio	= (float)viewEye.width / (float)viewEye.height;
 
 	    int nClearFlags = VIEW_CLEAR_DEPTH | VIEW_CLEAR_STENCIL;
 
@@ -1287,7 +1187,7 @@ void CViewRender::Render( vrect_t *rect )
 	    }
 
 	    int flags = 0;
-		if ( eEye == STEREO_EYE_LEFT || !UseVR() )
+		if( eEye == STEREO_EYE_MONO || eEye == STEREO_EYE_LEFT || ( g_ClientVirtualReality.ShouldRenderHUDInWorld() ) )
 		{
 			flags = RENDERVIEW_DRAWHUD;
 		}
@@ -1327,6 +1227,7 @@ void CViewRender::Render( vrect_t *rect )
 		}
     }
 
+
 	// TODO: should these be inside or outside the stereo eye stuff?
 	g_pClientMode->PostRender();
 	engine->EngineStats_EndFrame();
@@ -1335,11 +1236,12 @@ void CViewRender::Render( vrect_t *rect )
 	// Stop stubbing the material system so we can see the budget panel
 	matStub.End();
 #endif
-	
+
+
 	// Draw all of the UI stuff "fullscreen"
     // (this is not health, ammo, etc. Nor is it pre-game briefing interface stuff - this is the stuff that appears when you hit Esc in-game)
 	// In stereo mode this is rendered inside of RenderView so it goes into the render target
-	if (!g_ClientVirtualReality.ShouldRenderHUDInWorld())
+	if( !g_ClientVirtualReality.ShouldRenderHUDInWorld() )
 	{
 		CViewSetup view2d;
 		view2d.x				= rect->x;
@@ -1352,7 +1254,7 @@ void CViewRender::Render( vrect_t *rect )
 		render->PopView( GetFrustum() );
 	}
 
-	materials->EndFrame();
+
 }
 
 

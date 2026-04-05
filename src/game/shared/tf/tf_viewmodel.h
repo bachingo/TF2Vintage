@@ -56,8 +56,6 @@ public:
 	virtual bool OnPostInternalDrawModel( ClientModelRenderInfo_t *pInfo );
 
 	virtual const char* ModifyEventParticles( const char* token );
-
-	virtual void FireEvent( const Vector& origin, const QAngle& angles, int event, const char *options ) OVERRIDE;
 #endif
 
 	bool m_bBodygroupsDirty;

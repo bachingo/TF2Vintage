@@ -6,7 +6,6 @@
 
 #include "cbase.h"
 #include "tf_item_wearable.h"
-#include "tf_weaponbase.h"
 #include "vcollide_parse.h"
 #include "tf_gamerules.h"
 #include "animation.h"
@@ -18,7 +17,6 @@
 #include "props_shared.h"
 #include "tf_mapinfo.h"
 #include "usermessages.h"
-
 #else
 #include "tf_player.h"
 #endif
@@ -382,25 +380,8 @@ bool CTFWearable::ShouldDraw()
 	{
 		// See if the visibility is controlled by a weapon.
 		CTFWeaponBase *pWeapon = assert_cast< CTFWeaponBase* >( GetWeaponAssociatedWith() );
-		
 		if ( pWeapon )
 		{
-			// If the weapon isn't active, don't draw
-			// The wearable has been re-parented to the VR render weapon via FollowEntity
-			// and we need to bypass BaseClass::ShouldDraw which has viewmodel/worldmodel checks
-			if ( pWeapon->IsHeldByVRHand() )
-			{
-				// Make sure the weapon is still active
-				if ( pOwner && pOwner->GetActiveWeapon() == pWeapon )
-				{
-					// Still check for taunt repurposing
-					if ( !pWeapon->IsBeingRepurposedForTaunt() )
-					{
-						return true;
-					}
-				}
-			}
-			
 			// If the weapon isn't active, don't draw
 			if ( pOwner && pOwner->GetActiveWeapon() != pWeapon )
 			{
@@ -537,7 +518,7 @@ void CTFWearable::ValidateModelIndex( void )
 #endif
 
 //-----------------------------------------------------------------------------
-// Purpose: Hides or shows masked bodygroups associated with this item.
+// Purpose: Helper to apply bodygroups from an item to a disguise target.
 //-----------------------------------------------------------------------------
 void CTFWearable::UpdateDisguiseBodygroups( CTFPlayer *pTFOwner, CTFPlayer *pDisguiseTarget, CEconItemView *pItem, int iTeam, int iState )
 {

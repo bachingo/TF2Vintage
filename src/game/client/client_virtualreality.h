@@ -85,16 +85,7 @@ public:
 	void CancelTorsoTransformOverride( ) ;
 	bool CanOverlayHudQuad();
 	void GetHUDBounds( Vector *pViewer, Vector *pUL, Vector *pUR, Vector *pLL, Vector *pLR );
-	void SetCustomHUDBounds( const Vector& viewer, const Vector& ul, const Vector& ur, const Vector& ll, const Vector& lr );
-	bool GetCustomHUDBounds( Vector *pViewer, Vector *pUL, Vector *pUR, Vector *pLL, Vector *pLR );
-	void ClearCustomHUDBounds();
-	void NotifyCompositorHUDPosition( const Vector& viewer, const Vector& ul, const Vector& ur, const Vector& ll, const Vector& lr, bool isCustomBounds );
-	
-	// Cache the final coordinates sent to compositor for cursor collision
-	bool HasCachedCompositorCoords() const { return m_bHasCachedCompositorCoords; }
-	void GetCachedCompositorCoords( Vector& ul, Vector& ur, Vector& ll, Vector& lr ) const;
-	void SetCachedCompositorCoords( const Vector& ul, const Vector& ur, const Vector& ll, const Vector& lr );
-	void RenderHUDQuad( bool bBlackout );
+	void RenderHUDQuad( bool bBlackout, bool bTranslucent );
 	float GetZoomedModeMagnification();
 	bool ProcessCurrentTrackingState( float fGameFOV );
 	const VMatrix &GetHudProjectionFromWorld();
@@ -106,15 +97,6 @@ public:
 	void AlignTorsoAndViewToWeapon();
 	void PostProcessFrame( StereoEye_t eEye );
 	void OverlayHUDQuadWithUndistort( const CViewSetup &view, bool bDoUndistort, bool bBlackout, bool bTranslucent );
-	void DrawPlayspaceDebugVisualization();
-
-	//---------------------------------------------------------
-	// VR Matrix Updates
-	//---------------------------------------------------------
-	void UpdateWorldFromMidEyeMatrices( const Vector &origin, const QAngle &angles );
-	void UpdateWorldFromMidEyeMatricesWithRaw( const Vector &origin, const QAngle &smoothedAngles, const QAngle &rawAngles );
-	const VMatrix & GetWorldFromMidEyeWithPitchRoll() const { return m_WorldFromMidEye; }
-	const VMatrix & GetWorldFromMidEyeRaw() const { return m_WorldFromMidEyeRaw; }
 
 	//---------------------------------------------------------
 	// Enter/leave VR mode
@@ -122,18 +104,11 @@ public:
 	void Activate();
 	void Deactivate();
 
-	// Crosshair roll angle storage for consistent rotation
-	float m_flCrosshairRollAngle;
-	bool m_bCrosshairRollValid;
-
 private:
 	HeadtrackMovementMode_t m_hmmMovementActual;
 
 	// Where the current mideye is relative to the (game)world.
 	VMatrix			m_WorldFromMidEye;
-	
-	// Raw (unsmoothed) head transform - used for controller positioning during spectator Mode 2
-	VMatrix			m_WorldFromMidEyeRaw;
 
 	// used for drawing the HUD
 	float			m_fHudHorizontalFov;
@@ -141,21 +116,6 @@ private:
 	VMatrix			m_HudProjectionFromWorld;
 	float			m_fHudHalfWidth;
 	float			m_fHudHalfHeight;
-	
-	// Custom HUD bounds for fixed menu positioning
-	bool			m_bCustomHUDBoundsSet;
-	Vector			m_CustomHUDViewer;
-	Vector			m_CustomHUDUL;
-	Vector			m_CustomHUDUR;
-	Vector			m_CustomHUDLL;
-	Vector			m_CustomHUDLR;
-	
-	// Cached compositor coordinates for cursor collision
-	bool			m_bHasCachedCompositorCoords;
-	Vector			m_CachedCompositorUL;
-	Vector			m_CachedCompositorUR;
-	Vector			m_CachedCompositorLL;
-	Vector			m_CachedCompositorLR;
 
 	// Where the current mideye is relative to the zero (torso) (currently always the same as m_MideyeZeroFromMideyeCurrent!)
 	VMatrix			m_TorsoFromMideye;
@@ -170,8 +130,6 @@ private:
 	QAngle			m_PlayerTorsoAngle;
 	Vector			m_PlayerTorsoOrigin;
 	Vector			m_PlayerLastMovement;
-
-	Vector			m_PrevHmdPosition;
 
 	// The player's current view angles/pos in the world.
 	QAngle			m_PlayerViewAngle;
@@ -189,8 +147,6 @@ private:
 	int				m_iAlignTorsoAndViewToWeaponCountdown;
 
 	bool			m_bMotionUpdated;
-
-	bool			m_bRunYet;
 
 	RTime32			m_rtLastMotionSample;
 

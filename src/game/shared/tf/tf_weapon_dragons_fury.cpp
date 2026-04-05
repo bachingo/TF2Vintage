@@ -144,21 +144,19 @@ CBaseEntity* CTFWeaponFlameBall::FireProjectile( CTFPlayer *pPlayer )
 	RemoveProjectileAmmo( pPlayer );
 
 #ifdef GAME_DLL
-	Vector vecSrc;
-	QAngle angForward;
-	Vector vecOffset( 3.0f, 7.0f, -9.0f );
+	QAngle angForward = pPlayer->EyeAngles();
+
+	Vector vecForward, vecRight, vecUp;
+	AngleVectors( angForward, &vecForward, &vecRight, &vecUp );
+
+	float fRight = 7.0f;
 	if ( IsViewModelFlipped() )
 	{
-		vecOffset.y *= -1;
+		fRight *= -1;
 	}
-	GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false );
-
-	trace_t trace;
-	CTraceFilterSimple traceFilter( this, COLLISION_GROUP_NONE );
-	UTIL_TraceHull( vecSrc, vecSrc, -Vector(8,8,8), Vector(8,8,8), MASK_SOLID_BRUSHONLY, &traceFilter, &trace );
-
-	Vector vecForward;
-	AngleVectors( angForward, &vecForward );
+	Vector vecShootPos = pPlayer->Weapon_ShootPosition();
+	// Shoot from the right location
+	Vector vecSrc = vecShootPos + ( vecUp * -9.0f ) + ( vecRight * fRight ) + ( vecForward * 3.0f );
 
 	CTFProjectile_Rocket *pRocket = static_cast<CTFProjectile_Rocket*>( CBaseEntity::CreateNoSpawn( "tf_projectile_balloffire", vecSrc, angForward, pPlayer ) );
 	if ( pRocket )
@@ -172,7 +170,7 @@ CBaseEntity* CTFWeaponFlameBall::FireProjectile( CTFPlayer *pPlayer )
 
 		float flEndDist = tf_fireball_distance.GetFloat();
 
-		Vector vecProjForward = ( vecSrc + vecForward * flEndDist ) - vecSrc;
+		Vector vecProjForward = ( vecShootPos + vecForward * flEndDist ) - vecSrc;
 		VectorNormalize( vecProjForward );
 
 		pRocket->SetAbsVelocity( vecProjForward * 600 );

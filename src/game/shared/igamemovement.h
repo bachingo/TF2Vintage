@@ -73,15 +73,11 @@ public:
 	float			m_flConstraintWidth;
 	float			m_flConstraintSpeedFactor;
 
-	// HMD Tracking
-	Vector          m_postFullBodyIKDeltaOrigin;
-
 	void			SetAbsOrigin( const Vector &vec );
 	const Vector	&GetAbsOrigin() const;
 
 private:
 	Vector			m_vecAbsOrigin;		// edict::origin
-	
 };
 
 inline const Vector &CMoveData::GetAbsOrigin() const

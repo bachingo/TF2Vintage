@@ -8,12 +8,6 @@
 
 #include "BaseVSShader.h"
 #include "convar.h"
-#include "mathlib/mathlib.h"
-
-// VR: ConVar to enable upright particle billboarding (removes camera roll from particle orientation)
-// Forces screen-aligned particles to use Z-aligned mode which uses world up
-static ConVar vr_particle_stabilize_roll( "vr_particle_stabilize_roll", "1", FCVAR_NONE, 
-	"When enabled, particles ignore camera roll for billboarding (for VR comfort)" );
 
 // STDSHADER_DX9_DLL_EXPORT
 #include "spritecard_ps20.inc"
@@ -414,14 +408,6 @@ SHADER_DRAW
 		nOrientation = clamp( nOrientation, 0, 2 );
 
 		// VR: Force billboard particles to use Z-aligned mode when VR stabilization is enabled
-		// Z-aligned mode uses world up (0,0,1) so particles stay upright regardless of head roll
-		// nOrientation: 0 = screen-aligned (faces camera), 1 = z-aligned (rotate around Z), 2 = parallel to ground
-		if ( vr_particle_stabilize_roll.GetBool() && (nOrientation == 0 || nOrientation == 2) )
-		{
-			nOrientation = 1; // Switch to Z-aligned (uses world up)
-		}
-		
-		// We need these only when screen-orienting
 		if ( nOrientation == 0 )
 		{
 			LoadModelViewMatrixIntoVertexShaderConstant( VERTEX_SHADER_SHADER_SPECIFIC_CONST_0 );
@@ -443,7 +429,7 @@ SHADER_DRAW
 		float VC0[8]={ params[MINSIZE]->GetFloatValue(), params[MAXSIZE]->GetFloatValue(),
 			params[STARTFADESIZE]->GetFloatValue(), params[ENDFADESIZE]->GetFloatValue(),
 			flStartFade, (float)(1.0/(flMaxDistance-flStartFade)),
-			0, 0 };
+			0,0 };
 
 		pShaderAPI->SetVertexShaderConstant( VERTEX_SHADER_SHADER_SPECIFIC_CONST_8, VC0, ARRAYSIZE(VC0)/4 );
 

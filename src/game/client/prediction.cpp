@@ -28,9 +28,6 @@
 #include "tier0/vprof.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
-extern ConVar tfvr_hmd_drive_rotation;
-
-// memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 IPredictionSystem *IPredictionSystem::g_pPredictionSystems = NULL;

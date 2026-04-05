@@ -1192,12 +1192,7 @@ bool C_BasePlayer::CreateMove( float flInputSampleTime, CUserCmd *pCmd )
 		if ( pVehicle )
 		{
 			pVehicle->UpdateViewAngles( this, pCmd );
-			// Don't override VR rotation if it's enabled
-			extern ConVar tfvr_hmd_drive_rotation;
-			if (!UseVR() || !tfvr_hmd_drive_rotation.GetBool())
-			{
-				engine->SetViewAngles( pCmd->viewangles );
-			}
+			engine->SetViewAngles( pCmd->viewangles );
 		}
 	}
 	else 
@@ -1223,33 +1218,15 @@ bool C_BasePlayer::CreateMove( float flInputSampleTime, CUserCmd *pCmd )
 	if ( GetFlags() & FL_FROZEN )
 	{
 		// Don't stomp the first time we get frozen
-		// The frozen flag is used for things like MOTD/intro screens, and freezing the view causes VR sickness
-		extern ConVar tfvr_hmd_drive_rotation;
-		if ( UseVR() && tfvr_hmd_drive_rotation.GetBool() )
+		if ( m_bWasFrozen )
 		{
 			// Stomp the new viewangles with old ones
-			// Player can still look around with their head while movement is frozen
-			static float lastDebugTime = 0.0f;
-			if (gpGlobals->curtime - lastDebugTime > 2.0f)
-			{
-				DevMsg("VR: FL_FROZEN active - allowing free head movement\n");
-				lastDebugTime = gpGlobals->curtime;
-			}
-			m_bWasFrozen = true;
+			pCmd->viewangles = m_vecOldViewAngles;
+			engine->SetViewAngles( pCmd->viewangles );
 		}
 		else
 		{
-			// Non-VR: Don't stomp the first time we get frozen
-			if ( m_bWasFrozen )
-			{
-				// Stomp the new viewangles with old ones
-				pCmd->viewangles = m_vecOldViewAngles;
-				engine->SetViewAngles( pCmd->viewangles );
-			}
-			else
-			{
-				m_bWasFrozen = true;
-			}
+			m_bWasFrozen = true;
 		}
 	}
 	else
@@ -1643,43 +1620,8 @@ void C_BasePlayer::CalcRoamingView(Vector& eyeOrigin, QAngle& eyeAngles, float& 
 
 	m_flObserverChaseDistance = 0.0;
 
-	// VR: Check if we're in MOTD/intro/waiting to spawn vs actual spectating
-	extern ConVar tfvr_hmd_drive_rotation;
-	bool bIsWaitingToSpawn = false;
-	if ( UseVR() && tfvr_hmd_drive_rotation.GetBool() )
-	{
-		// Determine if player is waiting to spawn (MOTD/team/class selection) vs actually spectating
-		// We're "waiting to spawn" if:
-		// 1. On team 0 (unassigned - MOTD/intro), OR
-		// 2. Have no class selected yet (class selection screen)
-		// But NOT if we're actively spectating someone (which happens after death)
-		C_TFPlayer *pTFPlayer = dynamic_cast<C_TFPlayer*>(this);
-		bool bHasNoClass = pTFPlayer && (pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_UNDEFINED);
-		bool bIsSpectatingTarget = (GetObserverMode() != OBS_MODE_NONE) && (GetObserverMode() != OBS_MODE_FIXED) && (GetObserverTarget() != NULL);
-		
-		// Free look only during initial setup, not when spectating after death
-		bIsWaitingToSpawn = ((GetTeamNumber() == 0) || bHasNoClass) && !bIsSpectatingTarget;
-		
-		if ( bIsWaitingToSpawn )
-		{
-			// Waiting to spawn: Use current VR position and angles (free look & movement)
-			// Don't lock to a fixed camera position
-			eyeOrigin = EyePosition();
-			eyeAngles = EyeAngles();
-		}
-		else
-		{
-			// Actually spectating or in gameplay: Lock to spectator camera position and angles
-			eyeOrigin = target->EyePosition();
-			eyeAngles = target->EyeAngles();
-		}
-	}
-	else
-	{
-		// Non-VR: Always use target's eye position and angles (fixed camera)
-		eyeOrigin = target->EyePosition();
-		eyeAngles = target->EyeAngles();
-	}
+	eyeOrigin = target->EyePosition();
+	eyeAngles = target->EyeAngles();
 	
 	if ( spec_track.GetInt() > 0 )
 	{
@@ -1691,13 +1633,8 @@ void C_BasePlayer::CalcRoamingView(Vector& eyeOrigin, QAngle& eyeAngles, float& 
 			QAngle a; VectorAngles( v - eyeOrigin, a );
 
 			NormalizeAngles( a );
-			
-			// VR: Don't force eye angles while waiting to spawn
-			if ( !bIsWaitingToSpawn )
-			{
-				eyeAngles = a;
-				engine->SetViewAngles( a );
-			}
+			eyeAngles = a;
+			engine->SetViewAngles( a );
 		}
 	}
 
@@ -2012,8 +1949,6 @@ void C_BasePlayer::ThirdPersonSwitch( bool bThirdperson )
 //-----------------------------------------------------------------------------
 // Purpose: single place to decide whether the local player should draw
 //-----------------------------------------------------------------------------
-extern ConVar tfvr_ik_local_body;
-
 /*static*/ bool C_BasePlayer::ShouldDrawLocalPlayer()
 {
 	if ( !UseVR() )
@@ -2022,7 +1957,7 @@ extern ConVar tfvr_ik_local_body;
 	}
 
 	static ConVarRef vr_first_person_uses_world_model( "vr_first_person_uses_world_model" );
-	return !LocalPlayerInFirstPersonView() || vr_first_person_uses_world_model.GetBool() || tfvr_ik_local_body.GetBool();
+	return !LocalPlayerInFirstPersonView() || vr_first_person_uses_world_model.GetBool();
 }
 
 
@@ -2068,10 +2003,6 @@ bool C_BasePlayer::ShouldDrawThisPlayer()
 	{
 		static ConVarRef vr_first_person_uses_world_model( "vr_first_person_uses_world_model" );
 		if ( vr_first_person_uses_world_model.GetBool() )
-		{
-			return true;
-		}
-		if ( tfvr_ik_local_body.GetBool() )
 		{
 			return true;
 		}
@@ -3016,24 +2947,6 @@ void C_BasePlayer::BuildFirstPersonMeathookTransformations( CStudioHdr *hdr, Vec
 
 	m_BoneAccessor.SetWritableBones( BONE_USED_BY_ANYTHING );
 
-	// VR IK body mode: don't translate skeleton to HMD, just hide head and accessories
-	if ( UseVR() && tfvr_ik_local_body.GetBool() )
-	{
-		int iHead = LookupBone( pchHeadBoneName );
-		if ( iHead != -1 )
-			MatrixScaleByZero( GetBoneForWrite( iHead ) );
-
-		int iHelm = LookupBone( "prp_helmet" );
-		if ( iHelm != -1 )
-			MatrixScaleByZero( GetBoneForWrite( iHelm ) );
-
-		iHelm = LookupBone( "prp_hat" );
-		if ( iHelm != -1 )
-			MatrixScaleByZero( GetBoneForWrite( iHelm ) );
-
-		return;
-	}
-
 	int iHead = LookupBone( pchHeadBoneName );
 	if ( iHead == -1 )
 	{
@@ -3064,13 +2977,7 @@ void C_BasePlayer::BuildFirstPersonMeathookTransformations( CStudioHdr *hdr, Vec
 		// The head bone is the neck pivot point of the in-game character.
 
 		Vector vRealMidEyePos = mWorldFromMideye.GetTranslation();
-		
-		// VR FIX: Use the smoothed mid-eye position directly instead of GetAbsOrigin()
-		// mWorldFromMideye already includes stair smoothing and prediction error smoothing from CalcView
-		// Using GetAbsOrigin() here would cause the body to desync when walking on stairs
-		Vector vBodyBasePos = vRealMidEyePos;
-		
-		vRealPivotPoint = vBodyBasePos - ( mWorldFromMideye.GetUp() * cl_meathook_neck_pivot_ingame_up.GetFloat() ) - ( mWorldFromMideye.GetForward() * cl_meathook_neck_pivot_ingame_fwd.GetFloat() );
+		vRealPivotPoint = vRealMidEyePos - ( mWorldFromMideye.GetUp() * cl_meathook_neck_pivot_ingame_up.GetFloat() ) - ( mWorldFromMideye.GetForward() * cl_meathook_neck_pivot_ingame_fwd.GetFloat() );
 	}
 	else
 	{

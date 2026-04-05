@@ -132,6 +132,5 @@ private:
 };
 
 CCheatDetectionDialog *OpenCheatDetectionDialog( vgui::Panel *pParent, const char *pszCheatMessage );
-CCharacterInfoPanel* GetCharInfoPanel(bool bRecreate = false);
 
 #endif // CHARACTER_INFO_PANEL_H

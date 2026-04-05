@@ -1073,9 +1073,6 @@ $Project "Server (TF)"
 		
 		$Folder	"TF2V"
 		{
-			// Word Censor
-			$File	"$SRCDIR\game\shared\bannedwords.cpp"
-			$File	"$SRCDIR\game\shared\bannedwords.h"
 			// Offline inventory emulator
 			$File	"$SRCDIR\game\shared\tf\tf2v_offline_inventory.cpp"
 			$File	"$SRCDIR\game\shared\tf\tf2v_offline_inventory.h"

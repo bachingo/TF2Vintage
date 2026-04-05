@@ -101,10 +101,6 @@ void CTFSlap::Precache()
 // -----------------------------------------------------------------------------
 void CTFSlap::PrimaryAttack()
 {
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if ( pOwner && pOwner->IsInVRMode() && IsVRPhysicalMeleeWeapon() )
-		return;
-
 	if ( !CanAttack() )
 		return;
 

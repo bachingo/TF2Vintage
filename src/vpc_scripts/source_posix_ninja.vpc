@@ -40,7 +40,7 @@ $Macro NINJA_EXTRA_C_FLAGS			"-Usprintf -Ustrncpy -UPROTECTED_THINGS_ENABLE"
 $Macro NINJA_EXTRA_CXX_FLAGS		"$NINJA_EXTRA_C_FLAGS"
 
 $Macro NINJA_COMMON_LINK_FLAGS		"-Wl,--build-id -Wl,-z,noexecstack"
-$Macro NINJA_SHLIB_LINK_FLAGS		"$NINJA_COMMON_LINK_FLAGS -shared $$project_ldflags -Wl,--no-undefined"
+$Macro NINJA_SHLIB_LINK_FLAGS		"$NINJA_COMMON_LINK_FLAGS -shared $project_ldflags -Wl,--no-undefined"
 $Macro NINJA_EXEC_LINK_FLAGS		"$NINJA_COMMON_LINK_FLAGS"
 
 $Macro NINJA_LIB_START_SHLIB 		"$NINJA_PATHWRAP -static-libgcc -Wl,--start-group"

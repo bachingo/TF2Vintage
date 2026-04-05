@@ -19,17 +19,12 @@
 #include "bitbuf.h"
 #include "checksum_md5.h"
 #include "hltvcamera.h"
-#include "c_tf_player.h"
 #if defined( REPLAY_ENABLED )
 #include "replay/replaycamera.h"
 #endif
 #include <ctype.h> // isalnum()
 #include <voice_status.h>
 #include "cam_thirdperson.h"
-
-#include "tfvr/openxr_manager.h"
-#include "tfvr/vr_menu_manager.h"
-#include "tfvr/vr_weapon_select.h"
 
 #ifdef SIXENSE
 #include "sixense/in_sixense.h"
@@ -92,19 +87,7 @@ ConVar thirdperson_screenspace( "thirdperson_screenspace", "0", 0, "Movement wil
 
 ConVar sv_noclipduringpause( "sv_noclipduringpause", "0", FCVAR_REPLICATED | FCVAR_CHEAT, "If cheats are enabled, then you can noclip with the game paused (for doing screenshots, etc.)." );
 
-ConVar tfvr_hmd_drive_rotation( "tfvr_hmd_drive_rotation", "1", FCVAR_REPLICATED | FCVAR_CHEAT, "Drive player rotation using HMD YAW in VR" );
-
-// Extern VR Turning ConVars (defined in vr_input.cpp)
-extern ConVar tfvr_turning_mode;
-extern ConVar tfvr_smooth_turn_rate;
-extern ConVar tfvr_snap_turn_angle;
-extern ConVar tfvr_turn_deadzone;
-extern ConVar tfvr_snap_turn_delay;
-
 extern ConVar cl_mouselook;
-
-// External static variable for snap turn timing (defined in vr_input.cpp)
-extern float s_flLastSnapTurnTime;
 
 #define UsingMouselook() cl_mouselook.GetBool()
 
@@ -1014,187 +997,6 @@ CreateMove
 
 Send the intended movement message to the server
 if active == 1 then we are 1) not playing back demos ( where our commands are ignored ) and
-*/
-
-// Static variables for smooth turning interpolation
-static float s_flAccumulatedTurnInput = 0.0f;
-static float s_flLastTurnUpdateTime = 0.0f;
-
-void ProcessVRTurning(CUserCmd* cmd, float frametime)
-{
-    if (!UseVR() || !g_pOpenXRManager)
-        return;
-
-    // Check if menu is visible - if so, disable turning
-    bool bMenuVisible = g_pVRMenuManager && g_pVRMenuManager->IsMenuVisible();
-    if (bMenuVisible)
-    {
-        // Don't process turning when menu is open
-        return;
-    }
-    
-    // Check if weapon select is open - if so, disable turning to prevent accidental rotation
-    if (g_pVRWeaponSelectManager && g_pVRWeaponSelectManager->IsMenuOpen())
-    {
-        return;
-    }
-
-    int turningMode = tfvr_turning_mode.GetInt();
-    if (turningMode == 0) // Turning disabled
-        return;
-
-    // Get the turn input from OpenXR
-    float turnInput = g_pOpenXRManager->GetAnalogValue("turn_x");
-    
-    // Apply deadzone
-    float deadzone = tfvr_turn_deadzone.GetFloat();
-    if (fabs(turnInput) < deadzone)
-    {
-        // Reset accumulation when input stops
-        s_flAccumulatedTurnInput = 0.0f;
-        return;
-    }
-
-    // Normalize input beyond deadzone (0 to 1 range)
-    float normalizedInput = (fabs(turnInput) - deadzone) / (1.0f - deadzone);
-    if (turnInput < 0)
-        normalizedInput = -normalizedInput;
-
-    // Get current view angles
-    QAngle currentAngles;
-    engine->GetViewAngles(currentAngles);
-
-    if (turningMode == 1) // Smooth turning
-    {
-        float turnRate = tfvr_smooth_turn_rate.GetFloat();
-        
-        // Use fixed tick interval for consistent turning speed regardless of framerate
-        // This prevents stuttering from 66Hz server vs 75Hz VR mismatch
-        float fixedDeltaTime = TICK_INTERVAL;
-        float targetDeltaYaw = -normalizedInput * turnRate * fixedDeltaTime;
-        
-        // Accumulate turn input to handle framerate differences smoothly
-        s_flAccumulatedTurnInput += targetDeltaYaw;
-        
-        // Apply accumulated turning in chunks based on time passage
-        float currentTime = gpGlobals->realtime;
-        if (s_flLastTurnUpdateTime == 0.0f)
-            s_flLastTurnUpdateTime = currentTime;
-            
-        float timeDelta = currentTime - s_flLastTurnUpdateTime;
-        
-        // Apply smoothed turning using linear interpolation
-        float appliedDeltaYaw = 0.0f;
-        if (timeDelta > 0.0f)
-        {
-            // Calculate how much turning to apply this frame for smooth motion
-            float lerpFactor = clamp(timeDelta / fixedDeltaTime, 0.0f, 1.0f);
-            appliedDeltaYaw = s_flAccumulatedTurnInput * lerpFactor;
-            s_flAccumulatedTurnInput -= appliedDeltaYaw;
-            s_flLastTurnUpdateTime = currentTime;
-        }
-        
-        currentAngles.y += appliedDeltaYaw;
-        
-        // Normalize angle
-        currentAngles.y = anglemod(currentAngles.y);
-        
-        // Update engine and command angles
-        engine->SetViewAngles(currentAngles);
-        
-        // Update HMD calibration if HMD rotation is enabled
-        if (tfvr_hmd_drive_rotation.GetBool())
-        {
-            C_TFPlayer *pPlayer = ToTFPlayer(C_BasePlayer::GetLocalPlayer());
-            if (pPlayer && pPlayer->m_isCalibrated)
-            {
-                // Update calibrated yaw so rotation calculations use current position as pivot
-                pPlayer->m_calibratedHmdYaw -= appliedDeltaYaw;
-                
-                // CRITICAL: Update m_headInPlayerA.y to match new yaw for hitscan weapons
-                pPlayer->m_headInPlayerA.y += appliedDeltaYaw;
-                
-                // Also update the calibrated position to current HMD position to fix pivot point
-                Vector currentHmdPos = g_pOpenXRManager->GetMideyePose().GetTranslation();
-                currentHmdPos.z = 0; // Keep Z at zero like original calibration
-                pPlayer->m_calibratedHmdXYPosition = currentHmdPos;
-                
-                // CRITICAL: Sync cmd->viewangles with what EyeAngles() will return for server consistency
-                cmd->viewangles = pPlayer->EyeAngles();
-            }
-            else
-            {
-                cmd->viewangles = currentAngles;
-            }
-        }
-        else
-        {
-            cmd->viewangles = currentAngles;
-        }
-    }
-    else if (turningMode == 2) // Snap turning
-    {
-        float currentTime = gpGlobals->realtime;
-        float snapDelay = tfvr_snap_turn_delay.GetFloat();
-        
-        // Check if enough time has passed since last snap turn
-        if (currentTime - s_flLastSnapTurnTime >= snapDelay)
-        {
-            float snapAngle = tfvr_snap_turn_angle.GetFloat();
-            if (normalizedInput < 0)
-                snapAngle = snapAngle; // Negative input = positive turn
-            else
-                snapAngle = -snapAngle; // Positive input = negative turn
-                
-            currentAngles.y += snapAngle;
-            
-            // Normalize angle
-            currentAngles.y = anglemod(currentAngles.y);
-            
-            // Update engine and command angles
-            engine->SetViewAngles(currentAngles);
-            
-            // Update HMD calibration if HMD rotation is enabled
-            if (tfvr_hmd_drive_rotation.GetBool())
-            {
-                C_TFPlayer *pPlayer = ToTFPlayer(C_BasePlayer::GetLocalPlayer());
-                if (pPlayer && pPlayer->m_isCalibrated)
-                {
-                    // Update calibrated yaw so rotation calculations use current position as pivot
-                    pPlayer->m_calibratedHmdYaw -= snapAngle;
-                    
-                    // CRITICAL: Update m_headInPlayerA.y to match new yaw for hitscan weapons
-                    pPlayer->m_headInPlayerA.y += snapAngle;
-                    
-                    // Also update the calibrated position to current HMD position to fix pivot point
-                    Vector currentHmdPos = g_pOpenXRManager->GetMideyePose().GetTranslation();
-                    currentHmdPos.z = 0; // Keep Z at zero like original calibration
-                    pPlayer->m_calibratedHmdXYPosition = currentHmdPos;
-                    
-                    // CRITICAL: Sync cmd->viewangles with what EyeAngles() will return for server consistency
-                    cmd->viewangles = pPlayer->EyeAngles();
-                }
-                else
-                {
-                    cmd->viewangles = currentAngles;
-                }
-            }
-            else
-            {
-                cmd->viewangles = currentAngles;
-            }
-            
-            s_flLastSnapTurnTime = currentTime;
-        }
-    }
-}
-
-/*
-================
-CreateMove
-
-Send the intended movement message to the server
-if active == 1 then we are 1) not playing back demos ( where our commands are ignored ) and
 2 ) we have finished signing on to server
 ================
 */
@@ -1214,28 +1016,7 @@ void CInput::ExtraMouseSample( float frametime, bool active )
 	if ( active )
 	{
 		// Determine view angles
-		if (!UseVR() || !tfvr_hmd_drive_rotation.GetBool())
-		{
-			// Determine view angles
-			AdjustAngles ( frametime );
-		}
-		else
-		{
-			// Reset mouse accumulators in VR mode to prevent drift
-			if (!m_fCameraInterceptingMouse && m_fMouseActive)
-			{
-				float mx, my;
-				GetAccumulatedMouseDeltasAndResetAccumulators(&mx, &my);
-				ResetMouse();
-			}
-		}
-
-		// Process VR turning before movement calculations
-		ProcessVRTurning( cmd, frametime );
-
-		// Update original view angles after turning to fix VR motion pivot
-		engine->GetViewAngles( viewangles );
-		originalViewangles = viewangles;
+		AdjustAngles ( frametime );
 
 		// Determine sideways movement
 		ComputeSideMove( cmd );
@@ -1294,6 +1075,7 @@ void CInput::ExtraMouseSample( float frametime, bool active )
 	// Let the move manager override anything it wants to.
 	if ( g_pClientMode->CreateMove( frametime, cmd ) )
 	{
+		// Get current view angles after the client mode tweaks with it
 		engine->SetViewAngles( cmd->viewangles );
 		prediction->SetLocalViewAngles( cmd->viewangles );
 	}
@@ -1306,63 +1088,23 @@ void CInput::ExtraMouseSample( float frametime, bool active )
 		C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
 		if( pPlayer && !pPlayer->GetVehicle() )
 		{
-					// Always populate HMD data for other systems to use
-		cmd->playerToHmdOrigin = g_pOpenXRManager->GetMideyePose().GetTranslation();
-        QAngle rotation;
-        MatrixAngles(g_pOpenXRManager->GetMideyePose().As3x4(), rotation);
-        cmd->playerToHmdAngles = rotation;
+			QAngle curViewangles, newViewangles;
+			Vector curMotion, newMotion;
+			engine->GetViewAngles( curViewangles );
+			curMotion.Init ( 
+				cmd->forwardmove,
+				cmd->sidemove,
+				cmd->upmove );
+			g_ClientVirtualReality.OverridePlayerMotion ( frametime, originalViewangles, curViewangles, curMotion, &newViewangles, &newMotion );
+			engine->SetViewAngles( newViewangles );
+			cmd->forwardmove = newMotion[0];
+			cmd->sidemove = newMotion[1];
+			cmd->upmove = newMotion[2];
 
-		// Handle VR rotation - either through the VR system or direct HMD yaw
-		if (tfvr_hmd_drive_rotation.GetBool())
-		{
-			// Apply HMD yaw directly via m_headInPlayerA for immediate response like pitch/roll
-			C_TFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
-			if (pTFPlayer && pTFPlayer->m_isCalibrated)
-			{
-				// Force OpenXR to update to the absolute latest pose data
-				g_pOpenXRManager->UpdateOpenXRViewData();
-				
-				// Get the absolute freshest HMD data possible
-				QAngle freshRotation;
-				MatrixAngles(g_pOpenXRManager->GetMideyePose().As3x4(), freshRotation);
-				
-				// Apply HMD yaw directly to m_headInPlayerA for immediate response
-				// This bypasses the engine view angle system that causes lag
-				pTFPlayer->m_headInPlayerA.y = freshRotation.y - pTFPlayer->m_calibratedHmdYaw;
-				pTFPlayer->m_headInPlayerA.x = freshRotation.x;
-				pTFPlayer->m_headInPlayerA.z = 0;
-				
-				// Also update engine view angles for consistency (but this isn't what EyeAngles() uses for yaw)
-				QAngle currentViewAngles;
-				engine->GetViewAngles(currentViewAngles);
-				currentViewAngles = pTFPlayer->m_headInPlayerA;
-				engine->SetViewAngles(currentViewAngles);
-				cmd->viewangles = currentViewAngles;
-			}
-		}
-			else
-			{
-				// Use the VR motion system
-				QAngle curViewangles, newViewangles;
-				Vector curMotion, newMotion;
-				engine->GetViewAngles( curViewangles );
-				curMotion.Init ( 
-					cmd->forwardmove,
-					cmd->sidemove,
-					cmd->upmove );
-				g_ClientVirtualReality.OverridePlayerMotion ( frametime, originalViewangles, curViewangles, curMotion, &newViewangles, &newMotion );
-				engine->SetViewAngles( newViewangles );
-				cmd->forwardmove = newMotion[0];
-				cmd->sidemove = newMotion[1];
-				cmd->upmove = newMotion[2];
-
-				cmd->viewangles = newViewangles;
-				prediction->SetLocalViewAngles( cmd->viewangles );
-			}
+			cmd->viewangles = newViewangles;
+			prediction->SetLocalViewAngles( cmd->viewangles );
 		}
 	}
-
-
 
 }
 
@@ -1384,13 +1126,6 @@ void CInput::CreateMove ( int sequence_number, float input_sample_frametime, boo
 	{
 		// Determine view angles
 		AdjustAngles ( input_sample_frametime );
-
-		// Determine sideways movement
-		ProcessVRTurning( cmd, input_sample_frametime );
-
-		// Update original view angles after turning to fix VR motion pivot
-		engine->GetViewAngles( viewangles );
-		originalViewangles = viewangles;
 
 		// Determine sideways movement
 		ComputeSideMove( cmd );
@@ -1493,23 +1228,20 @@ void CInput::CreateMove ( int sequence_number, float input_sample_frametime, boo
 	if ( g_pClientMode->CreateMove( input_sample_frametime, cmd ) )
 	{
 		// Get current view angles after the client mode tweaks with it
-		// Only set the engine angles if sixense is not enabled. It is done in SixenseInput::SetView otherwise.
-		if (!UseVR() || !tfvr_hmd_drive_rotation.GetBool())
-		{
 #ifdef SIXENSE
-			// Only set the engine angles if sixense is not enabled. It is done in SixenseInput::SetView otherwise.
-			if( !g_pSixenseInput->IsEnabled() )
-			{
-				engine->SetViewAngles( cmd->viewangles );
-			}
-#else
+		// Only set the engine angles if sixense is not enabled. It is done in SixenseInput::SetView otherwise.
+		if( !g_pSixenseInput->IsEnabled() )
+		{
 			engine->SetViewAngles( cmd->viewangles );
-#endif
 		}
+#else
+		engine->SetViewAngles( cmd->viewangles );
+
+#endif
 
 		if ( UseVR() )
 		{
-			C_TFPlayer *pPlayer = ToTFPlayer(C_BasePlayer::GetLocalPlayer());
+			C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
 			if( pPlayer && !pPlayer->GetVehicle() )
 			{
 				QAngle curViewangles, newViewangles;
@@ -1520,33 +1252,11 @@ void CInput::CreateMove ( int sequence_number, float input_sample_frametime, boo
 					cmd->sidemove,
 					cmd->upmove );
 				g_ClientVirtualReality.OverridePlayerMotion ( input_sample_frametime, originalViewangles, curViewangles, curMotion, &newViewangles, &newMotion );
+				engine->SetViewAngles( newViewangles );
 				cmd->forwardmove = newMotion[0];
 				cmd->sidemove = newMotion[1];
 				cmd->upmove = newMotion[2];
-
-				cmd->playerToHmdOrigin = g_pOpenXRManager->GetMideyePose().GetTranslation();
-
-				QAngle rotation;
-                MatrixAngles(g_pOpenXRManager->GetMideyePose().As3x4(), rotation);
-                cmd->playerToHmdAngles = rotation;
-
-				// Drive player's absolute rotation using HMD YAW
-				if (tfvr_hmd_drive_rotation.GetBool())
-				{
-					// HMD yaw rotation is handled in ExtraMouseSample for high-frequency updates
-					// Just sync the current angles without reprocessing
-					QAngle currentAngles;
-					engine->GetViewAngles(currentAngles);
-					cmd->viewangles = currentAngles;
-					// Note: Skip SetLocalViewAngles here to avoid prediction conflicts
-				}
-				else
-				{
-					// Use VR motion system view angles if HMD rotation is disabled
-					cmd->viewangles = newViewangles;
-					engine->SetViewAngles(cmd->viewangles);
-					prediction->SetLocalViewAngles(cmd->viewangles);
-				}
+				cmd->viewangles = newViewangles;
 			}
 			else
 			{
@@ -1560,7 +1270,6 @@ void CInput::CreateMove ( int sequence_number, float input_sample_frametime, boo
 	m_flLastForwardMove = cmd->forwardmove;
 
 	cmd->random_seed = MD5_PseudoRandom( sequence_number ) & 0x7fffffff;
-	
 
 	HLTVCamera()->CreateMove( cmd );
 #if defined( REPLAY_ENABLED )

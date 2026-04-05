@@ -27,8 +27,6 @@
 
 #include "tf_gamerules.h"
 #include "tf_logic_halloween_2014.h"
-#include "tfvr/vr_popup_hud.h"
-#include "tfvr/vr_world_ui_queue.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -1308,19 +1306,6 @@ bool CHudBuildingStatusContainer::ShouldDraw( void )
 		return false;
 
 	return CHudElement::ShouldDraw();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-//          can still be captured for the 3D texture.
-//-----------------------------------------------------------------------------
-void CHudBuildingStatusContainer::PaintTraverse( bool forceRepaint, bool allowForce )
-{
-	if ( CVRPopupHUDManager::ShouldSuppressBuildingStatus() )
-		return;
-
-	BaseClass::PaintTraverse( forceRepaint, allowForce );
 }
 
 //-----------------------------------------------------------------------------

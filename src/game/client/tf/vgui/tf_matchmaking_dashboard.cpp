@@ -28,7 +28,6 @@
 #include "tf_matchmaking_dashboard_side_panel.h"
 #include "tf_matchmaking_dashboard_explanations.h"
 #include "tf_matchmaking_dashboard_mvm_criteria.h"
-#include "tf_create_server_dialog.h"
 
 using namespace vgui;
 using namespace GCSDK;
@@ -926,7 +925,7 @@ void CTFMatchmakingDashboard::OnCreateServer()
 {
 	ClearAllStacks();
 	// Just call the command directly
-	ShowCreateServerDialog( this );
+	engine->ClientCmd_Unrestricted( "gamemenucommand OpenCreateMultiplayerGameDialog" );
 }
 
 void CTFMatchmakingDashboard::OnPlayEvent()

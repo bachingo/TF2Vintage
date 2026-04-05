@@ -22,8 +22,7 @@ $Configuration
 {
 	$Compiler
 	{
-		$AdditionalIncludeDirectories	".\hl2;.\hl2\elements;.\tf;.\tf\vr\thirdparty\openxr\include;.\tf\vr;.\tf\vgui;..\statemachine;$SRCDIR\game\shared\multiplayer;$SRCDIR\game\shared\tf;$SRCDIR\gcsdk\steamextra;$BASE;.\econ;$SRCDIR\thirdparty\vulkan\include"
-		
+		$AdditionalIncludeDirectories	".\hl2;.\hl2\elements;.\tf;.\tf\vgui;..\statemachine;$SRCDIR\game\shared\multiplayer;$SRCDIR\game\shared\tf;$SRCDIR\gcsdk\steamextra;$BASE;.\econ"
 		$PreprocessorDefinitions		"$BASE;TF_CLIENT_DLL;USES_ECON_ITEMS;ENABLE_GC_MATCHMAKING;GLOWS_ENABLE;USE_DYNAMIC_ASSET_LOADING;VOTING_ENABLED;NEXT_BOT"
 		$PreprocessorDefinitions		"$BASE;SAXXYMAINMENU_ENABLED" [$SAXXYAWARDS_ENABLE]
 		$PreprocessorDefinitions		"$BASE;WORKSHOP_IMPORT_ENABLED" [$WORKSHOP_IMPORT_ENABLE]
@@ -734,8 +733,6 @@ $Project "Client (TF)"
 				$File	"tf\vgui\tf_matchmaking_dashboard_next_map_winner.cpp"
 				$File	"tf\vgui\tf_matchmaking_dashboard.cpp"
 				$File	"tf\vgui\tf_matchmaking_dashboard.h"
-				$File	"tf\vgui\tf_create_server_dialog.cpp"
-				$File	"tf\vgui\tf_create_server_dialog.h"
 				$File	"tf\vgui\tf_matchmaking_dashboard_comp_access.cpp"
 				$File	"tf\vgui\tf_matchmaking_dashboard_comp.cpp"
 				$File	"tf\vgui\tf_matchmaking_dashboard_comp.h"
@@ -966,17 +963,6 @@ $Project "Client (TF)"
 				$File	"$SRCDIR\game\shared\tf\tf_progression_debug.cpp"
 			}
 		}
-		
-		$Folder "VR"
-		{
-			$File   "tfvr\openxr_manager.h"
-			$File   "tfvr\openxr_manager.cpp"
-			$File   "tfvr\vr_integration.h"
-			$File   "tfvr\vr_integration.h"
-			$File   "tfvr\vr_integration.cpp"
-			$File   "tfvr\hmdWrapper.h"
-			$File   "tfvr\stCommon.h"
-		}
 
 		$Folder	"game_controls"
 		{
@@ -1002,9 +988,6 @@ $Project "Client (TF)"
 		
 		$Folder	"TF2V"
 		{
-			// Word Censor
-			$File	"$SRCDIR\game\shared\bannedwords.cpp"
-			$File	"$SRCDIR\game\shared\bannedwords.h"
 			// Offline inventory emulator
 			$File	"$SRCDIR\game\shared\tf\tf2v_offline_inventory.cpp"
 			$File	"$SRCDIR\game\shared\tf\tf2v_offline_inventory.h"

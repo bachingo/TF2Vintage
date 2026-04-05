@@ -336,15 +336,12 @@ void CTFScatterGun::FireBullet( CTFPlayer *pPlayer )
 
 			float flForce = AirBurstDamageForce( pOwner->WorldAlignSize(), 60, 6.f );
 
-			// Use weapon firing direction for knockback (VR: controller, non-VR: eye angles)
-			QAngle shootAngles = pOwner->Weapon_ShootAngles();
-			
 			Vector vecForward;
-			AngleVectors( shootAngles, &vecForward );
+			AngleVectors( pOwner->EyeAngles(), &vecForward );
 			Vector vecForce = vecForward * -flForce;
 
 			VMatrix mtxPlayer;
-			mtxPlayer.SetupMatrixOrgAngles( pOwner->GetAbsOrigin(), shootAngles );
+			mtxPlayer.SetupMatrixOrgAngles( pOwner->GetAbsOrigin(), pOwner->EyeAngles() );
 			Vector vecAbsVelocity = pOwner->GetAbsVelocity();
 			Vector vecAbsVelocityAsPoint = vecAbsVelocity + pOwner->GetAbsOrigin();
 			Vector vecLocalVelocity = mtxPlayer.VMul4x3Transpose( vecAbsVelocityAsPoint );

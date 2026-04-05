@@ -129,9 +129,6 @@ void RegisterUserMessages()
 
 	usermessages->Register( "BuiltObject", 3 ); // object type, object mode (entrance vs. exit), index
 
-	// TF2V: typing bubble over player head (entindex[1] + bIsTyping[1])
-	usermessages->Register( "PlayerTyping", 2 );
-
 	// NVNT register haptic user messages
 	RegisterHapticMessages();
 	RegisterScriptMessages();

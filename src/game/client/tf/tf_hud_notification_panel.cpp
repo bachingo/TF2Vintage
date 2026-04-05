@@ -20,7 +20,6 @@
 #include "tf_hud_notification_panel.h"
 #include "tf_hud_freezepanel.h"
 #include <filesystem.h>
-#include "tfvr/vr_popup_hud.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -299,14 +298,6 @@ bool CHudNotificationPanel::ShouldDraw( void )
 		return false;
 
 	return CHudElement::ShouldDraw();
-}
-
-void CHudNotificationPanel::Paint( void )
-{
-	if ( CVRPopupHUDManager::ShouldSuppressNotificationPanel() )
-		return;
-
-	BaseClass::Paint();
 }
 
 //-----------------------------------------------------------------------------

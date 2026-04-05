@@ -73,8 +73,8 @@ $Configuration
 		$SystemFrameworks				"Carbon" [$OSXALL]
 		$SystemLibraries				"rt;z" [$LINUXALL]
 		$IgnoreImportLibrary			"TRUE"
-		$AdditionalDependencies			"$BASE winmm.lib d3d9.lib"	[$WINDOWS]
-		$AdditionalDependencies			"$BASE wsock32.lib Ws2_32.lib" [$WINDOWS]
+		$AdditionalDependencies			"$BASE winmm.lib"	[$WINDOWS]
+		$AdditionalDependencies			"$BASE wsock32.lib Ws2_32.lib" [$BUILD_REPLAY&&$WINDOWS]
 	}
 
 	$PostBuildEvent [!$ANALYZE && $WIN32]
@@ -243,7 +243,6 @@ $Project
 		$File	"c_dynamiclight.cpp"
 		$File	"c_entitydissolve.cpp"
 		$File	"c_entityparticletrail.cpp"
-		$File	"c_env_cascade_light.cpp"
 		$File	"c_env_fog_controller.cpp"
 		$File	"c_env_particlescript.cpp"
 		$File	"c_env_projectedtexture.cpp"
@@ -265,8 +264,6 @@ $Project
 		$File	"c_hairball.cpp"
 		$File	"c_info_overlay_accessor.cpp"
 		$File	"c_lightglow.cpp"
-		$File	"c_lights.cpp"
-		$File	"c_lights.h"
 		$File	"C_MaterialModifyControl.cpp"
 		$File	"c_particle_system.cpp"
 		$File	"c_physbox.cpp"
@@ -397,7 +394,6 @@ $Project
 		$File	"IsNPCProxy.cpp"
 		$File	"lampbeamproxy.cpp"
 		$File	"lamphaloproxy.cpp"
-		$File	"lighting_overhaul.cpp"
 		$File	"$SRCDIR\game\shared\mapentities_shared.cpp"
 		$File	"mathproxy.cpp"
 		$File	"matrixproxy.cpp"
@@ -782,7 +778,6 @@ $Project
 		$File	"c_breakableprop.h"
 		$File	"c_effects.h"
 		$File	"c_entitydissolve.h"
-		$File	"c_env_cascade_light.h"
 		$File	"c_env_fog_controller.h"
 		$File	"c_fire_smoke.h"
 		$File	"c_func_dust.h"
@@ -1349,8 +1344,6 @@ $Project
 		
 		$Libexternal $LIBCOMMON\libcrypto [$OSXALL]
 		$Libexternal "$SRCDIR\lib\common\$CRYPTOPPDIR\libcryptopp" [$LINUXALL&&!$SOURCESDK]
-		$Libexternal "$(VULKAN_SDK)\lib\vulkan-1" [$WINDOWS]
-		$Libexternal "$(OPENXR_SDK)\src\loader\Release\openxr_loader" [$WINDOWS]
 		$Lib   "libz" [$WINDOWS]
 
 		//$Libexternal	libz [$LINUXALL]

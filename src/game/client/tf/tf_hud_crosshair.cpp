@@ -19,14 +19,12 @@
 #include "tf_logic_halloween_2014.h"
 #include "tf_gamerules.h"
 #include "mathlib/mathlib.h"
-#include "tfvr/openxr_manager.h"
-#include "client_virtualreality.h"
 
 ConVar cl_crosshair_red( "cl_crosshair_red", "200", FCVAR_ARCHIVE );
 ConVar cl_crosshair_green( "cl_crosshair_green", "200", FCVAR_ARCHIVE );
 ConVar cl_crosshair_blue( "cl_crosshair_blue", "200", FCVAR_ARCHIVE );
 
-ConVar cl_crosshair_file( "cl_crosshair_file", "default", FCVAR_ARCHIVE );
+ConVar cl_crosshair_file( "cl_crosshair_file", "", FCVAR_ARCHIVE );
 
 ConVar cl_crosshair_scale( "cl_crosshair_scale", "32.0", FCVAR_ARCHIVE );
 
@@ -81,50 +79,6 @@ bool CHudTFCrosshair::ShouldDraw( void )
 
 		if ( pPlayer->IsTaunting() )
 			return false;
-
-		// VR: hide crosshair on throwables when physical throw is active
-		extern ConVar tfvr_physical_throw;
-		if ( tfvr_physical_throw.GetBool() )
-		{
-			CTFWeaponBase *pWeapon = pPlayer->GetActiveTFWeapon();
-			if ( pWeapon )
-			{
-				int wid = pWeapon->GetWeaponID();
-				if ( wid == TF_WEAPON_JAR || wid == TF_WEAPON_JAR_MILK ||
-					 wid == TF_WEAPON_CLEAVER || wid == TF_WEAPON_JAR_GAS ||
-					 wid == TF_WEAPON_THROWABLE )
-				{
-					return false;
-				}
-			}
-		}
-
-		// VR: hide crosshair on melee weapons (physical melee is always active)
-		// Exception: ball-launching bats show the crosshair during ball aim mode
-		if ( pPlayer->IsInVRMode() )
-		{
-			CTFWeaponBase *pWeapon = pPlayer->GetActiveTFWeapon();
-			if ( pWeapon )
-			{
-				int wtype = pWeapon->GetTFWpnData().m_iWeaponType;
-				bool bIsRobotArm = V_stristr( pWeapon->GetClassname(), "robot_arm" ) != NULL;
-				if ( wtype == TF_WPN_TYPE_MELEE || wtype == TF_WPN_TYPE_MELEE_ALLCLASS || bIsRobotArm )
-				{
-					int wid = pWeapon->GetWeaponID();
-
-					extern bool g_bVRBallAimActive;
-					if ( g_bVRBallAimActive &&
-						 ( wid == TF_WEAPON_BAT_WOOD || wid == TF_WEAPON_BAT_GIFTWRAP ) )
-					{
-						// Allow crosshair - ball aim is active on offhand
-					}
-					else if ( wid != TF_WEAPON_BUFF_ITEM && wid != TF_WEAPON_ROCKETPACK )
-					{
-						return false;
-					}
-				}
-			}
-		}
 	}
 
 	if ( m_flTimeToHideUntil > gpGlobals->curtime )
@@ -220,28 +174,6 @@ void CHudTFCrosshair::Paint()
 
 	if ( m_szPreviousCrosshair[0] == '\0' )
 	{
-		// Handle VR controller roll for default crosshair (when cl_crosshair_file is empty)
-		if ( UseVR() && g_pOpenXRManager && g_pOpenXRManager->IsActive() )
-		{
-			extern ConVar tfvr_crosshair_follow_controller_roll;
-			if ( tfvr_crosshair_follow_controller_roll.GetBool() )
-			{
-				// Set up VR crosshair roll angle before calling base class
-				VMatrix rightControllerPose;
-				if (g_pOpenXRManager->GetRightControllerPose(rightControllerPose))
-				{
-					QAngle controllerAngles;
-					MatrixAngles(rightControllerPose.As3x4(), controllerAngles);
-					g_ClientVirtualReality.m_flCrosshairRollAngle = controllerAngles.z;
-					g_ClientVirtualReality.m_bCrosshairRollValid = true;
-				}
-				else
-				{
-					g_ClientVirtualReality.m_bCrosshairRollValid = false;
-				}
-			}
-		}
-		
 		return BaseClass::Paint();
 	}
 
@@ -280,91 +212,8 @@ void CHudTFCrosshair::Paint()
 	vgui::ISurface *pSurf = vgui::surface();
 	pSurf->DrawSetColor( clr );
 	pSurf->DrawSetTexture( m_iCrosshairTextureID );
-	
-	// Check if we should rotate crosshair with controller roll in VR
-	extern ConVar tfvr_crosshair_follow_controller_roll;
-	bool bRotateCrosshair = false;
-	float flRotationAngle = 0.0f;
-	
-	if (g_pOpenXRManager && g_pOpenXRManager->IsActive())
-	{
-		if (tfvr_crosshair_follow_controller_roll.GetBool())
-		{
-			// Use the stored roll angle from OverrideWeaponHudAimVectors for consistency
-			if (g_ClientVirtualReality.m_bCrosshairRollValid)
-			{
-				flRotationAngle = g_ClientVirtualReality.m_flCrosshairRollAngle;
-				bRotateCrosshair = true;
-			}
-		}
-		
-		// Compensate for head roll to keep crosshair level when head tilts
-		// Since we zero head roll in m_headInPlayerA, we need to get the raw HMD roll
-		QAngle rawHmdAngles;
-		MatrixAngles(g_pOpenXRManager->GetMideyePose().As3x4(), rawHmdAngles);
-		float headRollCompensation = -rawHmdAngles.z; // Negative to counteract the roll
-		
-		if (bRotateCrosshair)
-		{
-			// Add head roll compensation to controller roll
-			flRotationAngle += headRollCompensation;
-		}
-		else
-		{
-			// Use only head roll compensation
-			flRotationAngle = headRollCompensation;
-			bRotateCrosshair = (fabs(flRotationAngle) > 0.1f);
-		}
-	}
-	
-	if (bRotateCrosshair && fabs(flRotationAngle) > 0.1f) // Only rotate if significant angle
-	{
-		// Draw rotated crosshair using polygon method with proper texture coordinates
-		Vertex_t vertices[4];
-		
-		// Convert rotation angle to radians
-		float flRadians = DEG2RAD(flRotationAngle);
-		float cosAngle = cos(flRadians);
-		float sinAngle = sin(flRadians);
-		
-		// Calculate rotated corner positions relative to center
-		float halfWidth = (float)iWidth;
-		float halfHeight = (float)iHeight;
-		
-		// For custom crosshairs, we typically want to use the full texture (0,0 to 1,1)
-		// since custom crosshairs are usually individual files, not texture atlases
-		// Top-left vertex (rotated)
-		vertices[0].m_Position.x = iX + (-halfWidth * cosAngle - -halfHeight * sinAngle);
-		vertices[0].m_Position.y = iY + (-halfWidth * sinAngle + -halfHeight * cosAngle);
-		vertices[0].m_TexCoord.x = 0.0f;
-		vertices[0].m_TexCoord.y = 0.0f;
-		
-		// Top-right vertex (rotated)
-		vertices[1].m_Position.x = iX + (halfWidth * cosAngle - -halfHeight * sinAngle);
-		vertices[1].m_Position.y = iY + (halfWidth * sinAngle + -halfHeight * cosAngle);
-		vertices[1].m_TexCoord.x = 1.0f;
-		vertices[1].m_TexCoord.y = 0.0f;
-		
-		// Bottom-right vertex (rotated)
-		vertices[2].m_Position.x = iX + (halfWidth * cosAngle - halfHeight * sinAngle);
-		vertices[2].m_Position.y = iY + (halfWidth * sinAngle + halfHeight * cosAngle);
-		vertices[2].m_TexCoord.x = 1.0f;
-		vertices[2].m_TexCoord.y = 1.0f;
-		
-		// Bottom-left vertex (rotated)
-		vertices[3].m_Position.x = iX + (-halfWidth * cosAngle - halfHeight * sinAngle);
-		vertices[3].m_Position.y = iY + (-halfWidth * sinAngle + halfHeight * cosAngle);
-		vertices[3].m_TexCoord.x = 0.0f;
-		vertices[3].m_TexCoord.y = 1.0f;
-		
-		// Draw as textured polygon
-		pSurf->DrawTexturedPolygon( 4, vertices );
-	}
-	else
-	{
-		// Draw normal non-rotated crosshair
-		pSurf->DrawTexturedRect( iX-iWidth, iY-iHeight, iX+iWidth, iY+iHeight );
-	}
-	
+	pSurf->DrawTexturedRect( iX-iWidth, iY-iHeight, iX+iWidth, iY+iHeight );
 	pSurf->DrawSetTexture(0);
 }
+
+

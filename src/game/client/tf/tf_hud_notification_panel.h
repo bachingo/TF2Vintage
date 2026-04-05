@@ -38,7 +38,6 @@ public:
 	virtual void	ApplySchemeSettings( IScheme *scheme );
 	virtual bool	ShouldDraw( void );
 	virtual void	OnTick( void );
-	virtual void	Paint( void );
 	virtual void	PerformLayout( void );
 
 	const char *GetNotificationByType( int iType, float& flDuration );

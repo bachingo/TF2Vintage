@@ -43,26 +43,6 @@ public:
 		command_number = 0;
 		tick_count = 0;
 		viewangles.Init();
-		postFullBodyIKDeltaOrigin.Init();
-		playerToHmdOrigin.Init();
-		playerToHmdAngles.Init();
-		clientEyePosition.Init();
-		leftControllerOrigin.Init();
-		leftControllerAngles.Init();
-		rightControllerOrigin.Init();
-		rightControllerAngles.Init();
-		vrIKHandPosL.Init();
-		vrIKHandAngL.Init();
-		vrIKHandPosR.Init();
-		vrIKHandAngR.Init();
-		vrThrowVelocity.Init();
-		vrThrowOrigin.Init();
-		vrThrowAngles.Init();
-		vrThrowAngVel.Init();
-		vrMeleeGripSpeed = 0.0f;
-		vrMeleeGripSpeedLeft = 0.0f;
-		vrBallAimActive = false;
-		vrPhysicalCrouch = false;
 		forwardmove = 0.0f;
 		sidemove = 0.0f;
 		upmove = 0.0f;
@@ -91,26 +71,6 @@ public:
 		command_number		= src.command_number;
 		tick_count			= src.tick_count;
 		viewangles			= src.viewangles;
-		postFullBodyIKDeltaOrigin = src.postFullBodyIKDeltaOrigin;
-		playerToHmdOrigin = src.playerToHmdOrigin;
-		playerToHmdAngles = src.playerToHmdAngles;
-		clientEyePosition = src.clientEyePosition;
-		leftControllerOrigin = src.leftControllerOrigin;
-		leftControllerAngles = src.leftControllerAngles;
-		rightControllerOrigin = src.rightControllerOrigin;
-		rightControllerAngles = src.rightControllerAngles;
-		vrIKHandPosL		= src.vrIKHandPosL;
-		vrIKHandAngL		= src.vrIKHandAngL;
-		vrIKHandPosR		= src.vrIKHandPosR;
-		vrIKHandAngR		= src.vrIKHandAngR;
-		vrThrowVelocity		= src.vrThrowVelocity;
-		vrThrowOrigin		= src.vrThrowOrigin;
-		vrThrowAngles		= src.vrThrowAngles;
-		vrThrowAngVel		= src.vrThrowAngVel;
-		vrMeleeGripSpeed	= src.vrMeleeGripSpeed;
-		vrMeleeGripSpeedLeft = src.vrMeleeGripSpeedLeft;
-		vrBallAimActive		= src.vrBallAimActive;
-		vrPhysicalCrouch	= src.vrPhysicalCrouch;
 		forwardmove			= src.forwardmove;
 		sidemove			= src.sidemove;
 		upmove				= src.upmove;
@@ -147,25 +107,6 @@ public:
 		CRC32_ProcessBuffer( &crc, &command_number, sizeof( command_number ) );
 		CRC32_ProcessBuffer( &crc, &tick_count, sizeof( tick_count ) );
 		CRC32_ProcessBuffer( &crc, &viewangles, sizeof( viewangles ) );    
-		CRC32_ProcessBuffer( &crc, &postFullBodyIKDeltaOrigin, sizeof( postFullBodyIKDeltaOrigin ) );
-		CRC32_ProcessBuffer( &crc, &playerToHmdOrigin, sizeof( playerToHmdOrigin ) );
-		CRC32_ProcessBuffer( &crc, &playerToHmdAngles, sizeof( playerToHmdAngles ) );
-		CRC32_ProcessBuffer( &crc, &leftControllerOrigin, sizeof( leftControllerOrigin ) );
-		CRC32_ProcessBuffer( &crc, &leftControllerAngles, sizeof( leftControllerAngles ) );
-		CRC32_ProcessBuffer( &crc, &rightControllerOrigin, sizeof( rightControllerOrigin ) );
-		CRC32_ProcessBuffer( &crc, &rightControllerAngles, sizeof( rightControllerAngles ) );
-		CRC32_ProcessBuffer( &crc, &vrIKHandPosL, sizeof( vrIKHandPosL ) );
-		CRC32_ProcessBuffer( &crc, &vrIKHandAngL, sizeof( vrIKHandAngL ) );
-		CRC32_ProcessBuffer( &crc, &vrIKHandPosR, sizeof( vrIKHandPosR ) );
-		CRC32_ProcessBuffer( &crc, &vrIKHandAngR, sizeof( vrIKHandAngR ) );
-		CRC32_ProcessBuffer( &crc, &vrThrowVelocity, sizeof( vrThrowVelocity ) );
-		CRC32_ProcessBuffer( &crc, &vrThrowOrigin, sizeof( vrThrowOrigin ) );
-		CRC32_ProcessBuffer( &crc, &vrThrowAngles, sizeof( vrThrowAngles ) );
-		CRC32_ProcessBuffer( &crc, &vrThrowAngVel, sizeof( vrThrowAngVel ) );
-		CRC32_ProcessBuffer( &crc, &vrMeleeGripSpeed, sizeof( vrMeleeGripSpeed ) );
-		CRC32_ProcessBuffer( &crc, &vrMeleeGripSpeedLeft, sizeof( vrMeleeGripSpeedLeft ) );
-		CRC32_ProcessBuffer( &crc, &vrBallAimActive, sizeof( vrBallAimActive ) );
-		CRC32_ProcessBuffer( &crc, &vrPhysicalCrouch, sizeof( vrPhysicalCrouch ) );
 		CRC32_ProcessBuffer( &crc, &forwardmove, sizeof( forwardmove ) );   
 		CRC32_ProcessBuffer( &crc, &sidemove, sizeof( sidemove ) );      
 		CRC32_ProcessBuffer( &crc, &upmove, sizeof( upmove ) );         
@@ -185,24 +126,6 @@ public:
 	void MakeInert( void )
 	{
 		viewangles = vec3_angle;
-		playerToHmdOrigin.Init();
-        playerToHmdAngles.Init();
-		leftControllerOrigin.Init();
-		leftControllerAngles.Init();
-		rightControllerOrigin.Init();
-		rightControllerAngles.Init();
-		vrIKHandPosL.Init();
-		vrIKHandAngL.Init();
-		vrIKHandPosR.Init();
-		vrIKHandAngR.Init();
-		vrThrowVelocity.Init();
-		vrThrowOrigin.Init();
-		vrThrowAngles.Init();
-		vrThrowAngVel.Init();
-		vrMeleeGripSpeed = 0.0f;
-		vrMeleeGripSpeedLeft = 0.0f;
-		vrBallAimActive = false;
-		vrPhysicalCrouch = false;
 		forwardmove = 0.f;
 		sidemove = 0.f;
 		upmove = 0.f;
@@ -218,41 +141,6 @@ public:
 	
 	// Player instantaneous view angles.
 	QAngle	viewangles;     
-	
-	// HMD Tracking
-	Vector	postFullBodyIKDeltaOrigin;
-	Vector	playerToHmdOrigin;
-	QAngle	playerToHmdAngles;
-	Vector	clientEyePosition;  // Direct eye position from client for collision detection
-	
-	// VR Controller Tracking for weapon shooting
-	Vector	leftControllerOrigin;
-	QAngle	leftControllerAngles;
-	Vector	rightControllerOrigin;
-	QAngle	rightControllerAngles;
-
-	// VR IK: raw controller grip positions for third-person arm IK (always grip pose, never muzzle)
-	Vector	vrIKHandPosL;
-	QAngle	vrIKHandAngL;
-	Vector	vrIKHandPosR;
-	QAngle	vrIKHandAngR;
-
-	// VR physical throw (set on grip/trigger release for throwable weapons)
-	Vector	vrThrowVelocity;
-	Vector	vrThrowOrigin;		// player-relative offset (reconstructed on server)
-	QAngle	vrThrowAngles;		// hand orientation at moment of release
-	Vector	vrThrowAngVel;		// angular velocity of hand (deg/sec, as Vector)
-
-	// VR melee: grip speed computed client-side in tracking space (u/s)
-	float	vrMeleeGripSpeed;
-	float	vrMeleeGripSpeedLeft;
-
-	// VR ball aim: true when offhand trigger is held with a ball-launching bat
-	bool	vrBallAimActive;
-
-	// VR physical crouch: true when player is physically crouching (HMD below threshold)
-	bool	vrPhysicalCrouch;
-
 	// Intended velocities
 	//	forward velocity.
 	float	forwardmove;   

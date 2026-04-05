@@ -170,7 +170,7 @@ protected:
 	void		ValidateUserCmd( CUserCmd *usercmd, int sequence_number );
 
 // Private Data
-protected:
+private:
 	typedef struct
 	{
 		unsigned int AxisFlags;

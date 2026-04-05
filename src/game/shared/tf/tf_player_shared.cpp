@@ -38,9 +38,6 @@
 #ifdef CLIENT_DLL
 #include "c_baseviewmodel.h"
 #include "c_tf_player.h"
-#include "tfvr/c_tfvr_hand.h"
-#include "tfvr/openxr_manager.h"
-#include "debugoverlay_shared.h"
 #include "c_te_effect_dispatch.h"
 #include "c_tf_fx.h"
 #include "soundenvelope.h"
@@ -59,7 +56,6 @@
 #include "tempent.h"
 #include "cam_thirdperson.h"
 #include "vgui/IInput.h"
-#include "sourcevr/isourcevirtualreality.h"
 
 #define CTFPlayerClass C_TFPlayerClass
 #define CCaptureZone C_CaptureZone
@@ -106,7 +102,6 @@
 
 #include "tf_wearable_weapons.h"
 #include "tf_weapon_bonesaw.h"
-#include "collisionutils.h"
 
 static ConVar tf_demoman_charge_frametime_scaling( "tf_demoman_charge_frametime_scaling", "1", FCVAR_REPLICATED | FCVAR_CHEAT, "When enabled, scale yaw limiting based on client performance (frametime)." );
 static const float YAW_CAP_SCALE_MIN = 0.2f;
@@ -119,14 +114,6 @@ ConVar tf_scout_air_dash_count( "tf_scout_air_dash_count", "1", FCVAR_REPLICATED
 
 ConVar tf_spy_invis_time( "tf_spy_invis_time", "1.0", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Transition time in and out of spy invisibility", true, 0.1, true, 5.0 );
 ConVar tf_spy_invis_unstealth_time( "tf_spy_invis_unstealth_time", "2.0", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Transition time in and out of spy invisibility", true, 0.1, true, 5.0 );
-
-// VR tracer offset ConVars
-ConVar tfvr_tracer_offset_forward( "tfvr_tracer_offset_forward", "0", FCVAR_ARCHIVE, "VR tracer offset along forward axis" );
-ConVar tfvr_tracer_offset_right( "tfvr_tracer_offset_right", "0", FCVAR_ARCHIVE, "VR tracer offset along right axis" );
-ConVar tfvr_tracer_offset_up( "tfvr_tracer_offset_up", "-4", FCVAR_ARCHIVE, "VR tracer offset along up axis" );
-ConVar tfvr_tracer_velocity_compensation( "tfvr_tracer_velocity_compensation", "0.001", FCVAR_ARCHIVE, "VR tracer velocity compensation factor (seconds)" );
-ConVar tfvr_self_headshot( "tfvr_self_headshot", "1", FCVAR_REPLICATED, "Allow VR players to damage themselves by shooting their own head" );
-ConVar tfvr_self_headshot_radius( "tfvr_self_headshot_radius", "10", FCVAR_REPLICATED, "Radius of the head sphere for VR self-headshot detection" );
 
 ConVar tf_spy_max_cloaked_speed( "tf_spy_max_cloaked_speed", "999", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED );	// no cap
 ConVar tf_whip_speed_increase( "tf_whip_speed_increase", "105", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED );
@@ -1533,7 +1520,7 @@ void CTFPlayerShared::SyncConditions( int nPreviousConditions, int nNewCondition
 			{
 				OnConditionRemoved((ETFCond)(nBaseCondBit + i));
 			}
-			OnConditionAdded( (ETFCond)(nBaseCondBit + i) );
+			OnConditionAdded((ETFCond)(nBaseCondBit + i));
 		}
 		else
 		{
@@ -2612,7 +2599,7 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 
 								// Add this to the one-second-healing counter
 								m_aHealers[i].flHealedLastSecond += flHealAmount;
-								
+					
 								HandleRageGain( m_pOuter, kRageBuffFlag_OnMedicHealingReceived, flHealAmount / 2.f, 1.0f );
 								
 								float flRage = flHealAmount;
@@ -2936,7 +2923,7 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 				{
 					flBurnDamage *= tf_afterburn_mult_second_degree;
 				}
-	
+		
 				// Halloween Spell
 				if ( TF_IsHolidayActive( kHoliday_HalloweenOrFullMoon ) )
 				{
@@ -10462,35 +10449,6 @@ void CTFPlayer::FireBullet( CTFWeaponBase *pWpn, const FireBulletsInfo_t &info, 
 			}
 		}
 	}
-
-	// VR self-headshot: if the player is in VR, check if their bullet ray
-	// intersects their own head (approximated as a sphere at the tracked head position).
-	if ( tfvr_self_headshot.GetBool() && IsInVRMode() && m_clientEyePosition != vec3_origin )
-	{
-		float flHeadRadius = tfvr_self_headshot_radius.GetFloat();
-		Vector vecRayDelta = vecEnd - vecStart;
-
-		float t1, t2;
-		if ( IntersectRayWithSphere( vecStart, vecRayDelta, m_clientEyePosition, flHeadRadius, &t1, &t2 ) )
-		{
-			if ( t1 < trace.fraction )
-			{
-				CTakeDamageInfo selfDmg( this, this, 99999, nDamageType | DMG_CRITICAL );
-				selfDmg.SetWeapon( GetActiveWeapon() );
-				selfDmg.SetDamageCustom( TF_DMG_CUSTOM_SUICIDE );
-				selfDmg.SetDamagePosition( m_clientEyePosition );
-				CalculateBulletDamageForce( &selfDmg, info.m_iAmmoType, info.m_vecDirShooting, m_clientEyePosition, 1.0 );
-
-				if ( pWpn )
-				{
-					pWpn->WeaponSound( BURST );
-				}
-
-				TakeDamage( selfDmg );
-			}
-		}
-	}
-
 	if ( pWpn )
 	{
 		pWpn->OnBulletFire( iEnemyPlayersHit );
@@ -10583,45 +10541,15 @@ void CTFPlayer::FireBullet( CTFWeaponBase *pWpn, const FireBulletsInfo_t &info, 
 
 				bool bInToolRecordingMode = clienttools->IsInRecordingMode();
 
-	// VR: Check for VR weapon FIRST before other logic
-	// Use the VR hand's cached muzzle position (set during PositionWeaponFromBones)
-	CTFWeaponBase *pTFWpn = dynamic_cast<CTFWeaponBase*>( pWpn );
-	if ( pTFWpn && pTFWpn->IsHeldByVRHand() && pLocalPlayer )
-	{
-		C_TFPlayer *pTFPlayer = ToTFPlayer( pLocalPlayer );
-		if ( pTFPlayer && pTFPlayer->IsInVRMode() )
-		{
-			Vector muzzlePos;
-			QAngle muzzleAngles;
-			
-			// Use VR hand's muzzle position (cached during bone setup)
-			C_TFVRHand *pRightHand = GetLocalPlayerRightHand();
-			if ( pRightHand && pRightHand->GetHeldWeapon() == pTFWpn )
-			{
-				if ( pRightHand->GetWeaponMuzzlePositionAndAngles( muzzlePos, muzzleAngles ) )
+				// If we're using a viewmodel, override vecStart with the muzzle of that - just for the visual effect, not gameplay.
+				if ( ( pLocalPlayer != NULL ) && !pLocalPlayer->ShouldDrawThisPlayer() && !bInToolRecordingMode && pWpn )
 				{
-					// Apply manual offset from ConVars for fine-tuning
-					Vector forward, right, up;
-					AngleVectors( muzzleAngles, &forward, &right, &up );
-					muzzlePos += forward * tfvr_tracer_offset_forward.GetFloat();
-					muzzlePos += right * tfvr_tracer_offset_right.GetFloat();
-					muzzlePos += up * tfvr_tracer_offset_up.GetFloat();
-					
-					vecStart = muzzlePos;
+					C_BaseAnimating *pAttachEnt = pWpn->GetAppropriateWorldOrViewModel();
+					if ( pAttachEnt != NULL )
+					{
+						pAttachEnt->GetAttachment( iAttachment, vecStart );
+					}
 				}
-			}
-		}
-	}
-	// If we're using a viewmodel, override vecStart with the muzzle of that - just for the visual effect, not gameplay.
-	else if ( ( pLocalPlayer != NULL ) && !pLocalPlayer->ShouldDrawThisPlayer() && !bInToolRecordingMode && pWpn )
-	{
-		// Standard weapon - use viewmodel
-		C_BaseAnimating *pAttachEnt = pWpn->GetAppropriateWorldOrViewModel();
-		if ( pAttachEnt != NULL )
-		{
-			pAttachEnt->GetAttachment( iAttachment, vecStart );
-		}
-	}
 				else if ( !IsDormant() )
 				{
 					// fill in with third person weapon model index
@@ -14827,160 +14755,6 @@ CTFDroppedWeapon* CTFPlayer::GetDroppedWeaponInRange()
 		return NULL;
 
 	return pDroppedWeapon;
-}
-
-float CTFPlayer::VRHeightOffset()
-{
-	float vecViewZ = VEC_VIEW.z;
-	float vecViewOffsetZ = GetViewOffset().z;
-	return vecViewZ - vecViewOffsetZ;
-}
-
-Vector CTFPlayer::EyePosition()
-{
-	// Check if this player is actually using VR
-	bool bInVR = false;
-#ifdef CLIENT_DLL
-	if (IsLocalPlayer())
-	{
-		bInVR = UseVR();
-	}
-#else
-	// On server, check if player is in VR mode (not bots!)
-	bInVR = IsInVRMode() && !IsFakeClient();
-#endif
-	
-	// If not in VR, use standard eye position
-	if (!bInVR)
-	{
-		return BaseClass::EyePosition();
-	}
-	
-	// VR-specific eye position calculation
-	Vector basePos = GetAbsOrigin();
-
-	Vector localHeadPos = m_headInPlayerO - m_roomscaleOffset;
-	
-	// Use raw VR headset position - let the world scaling system handle class height differences
-	// Calculate crouch delta and apply class height compensation for consistent VR positioning
-	float vecViewZ = VEC_VIEW.z;
-	float vecViewOffsetZ = GetViewOffset().z;
-	float crouchDelta = vecViewZ - vecViewOffsetZ;
-	
-	// Physical crouch suppression: strip the duck offset from crouchDelta
-	// but preserve the class-height component (VEC_VIEW.z - classEyeHeight)
-	// so that the downstream class scaling produces the same result as
-	// standing.  Setting crouchDelta to the standing value instead of 0
-	// avoids an offset mismatch between physical and button crouching.
-	float standingCrouchDelta = vecViewZ - GetClassEyeHeight().z;
-	if ( m_bPhysicalCrouch )
-	{
-		crouchDelta = standingCrouchDelta;
-	}
-	else if ( m_bDuckWasPhysical )
-	{
-		if ( fabsf( crouchDelta - standingCrouchDelta ) < 1.0f )
-			m_bDuckWasPhysical = false;
-		else
-			crouchDelta = standingCrouchDelta;
-	}
-	
-	// Handle seated mode - add height offset to simulate standing position
-	bool seatedMode = false;
-	float seatedHeightOffset = 0.0f;
-	
-#ifdef CLIENT_DLL
-		extern ICvar* cvar;
-		if (cvar)
-		{
-			// Check for seated mode first
-			ConVar* tfvr_seated_mode = cvar->FindVar("tfvr_seated_mode");
-			ConVar* tfvr_seated_height_offset = cvar->FindVar("tfvr_seated_height_offset");
-			
-			if (tfvr_seated_mode && tfvr_seated_mode->GetBool())
-			{
-				seatedMode = true;
-				if (tfvr_seated_height_offset)
-				{
-					// Convert inches to game units and apply
-					seatedHeightOffset = tfvr_seated_height_offset->GetFloat();
-					localHeadPos.z += seatedHeightOffset;
-				}
-			}
-			
-			ConVar* tfvr_dynamic_worldscale = cvar->FindVar("tfvr_dynamic_worldscale");
-			if (tfvr_dynamic_worldscale && tfvr_dynamic_worldscale->GetBool())
-			{
-				const C_TFPlayerClass* pPlayerClass = GetPlayerClass();
-				if (pPlayerClass)
-				{
-					float classEyeHeight = 72.0f;
-					int classIndex = pPlayerClass->GetClassIndex();
-					
-					switch (classIndex)
-					{
-						case TF_CLASS_SCOUT:
-						case TF_CLASS_CIVILIAN:
-							classEyeHeight = 65.0f;
-							break;
-						case TF_CLASS_SNIPER:
-						case TF_CLASS_MEDIC:
-						case TF_CLASS_HEAVYWEAPONS:
-						case TF_CLASS_SPY:
-							classEyeHeight = 75.0f;
-							break;
-						case TF_CLASS_SOLDIER:
-						case TF_CLASS_DEMOMAN:
-						case TF_CLASS_PYRO:
-						case TF_CLASS_ENGINEER:
-							classEyeHeight = 68.0f;
-							break;
-						default:
-							classEyeHeight = 72.0f;
-							break;
-					}
-					
-					// Scale crouch delta by class height and apply height compensation
-					float scaleFactor = classEyeHeight / 72.0f;
-					crouchDelta = crouchDelta * scaleFactor + (classEyeHeight - 72.0f);
-				}
-			}
-		}
-#endif
-		
-		localHeadPos.z -= crouchDelta;
-	
-	return basePos + localHeadPos;
-}
-
-const QAngle &CTFPlayer::EyeAngles()
-{
-	m_cachedEyeAngles = BaseClass::EyeAngles();
-	
-#ifdef CLIENT_DLL
-	// Only apply VR logic if VR is actually active
-	if (UseVR())
-	{
-		// In VR mode with HMD rotation enabled, use HMD yaw directly for immediate response
-		extern ConVar tfvr_hmd_drive_rotation;
-		if (tfvr_hmd_drive_rotation.GetBool())
-		{
-			// Use HMD data for all three axes to ensure they're all immediate
-			m_cachedEyeAngles.x = m_headInPlayerA.x;  // HMD pitch
-			m_cachedEyeAngles.y = m_headInPlayerA.y;  // HMD yaw  
-			m_cachedEyeAngles.z = m_headInPlayerA.z;  // HMD roll
-		}
-		else
-		{
-			// Standard VR mode: base yaw + HMD pitch/roll
-			QAngle HMDPitchRoll(m_headInPlayerA.x, 0, m_headInPlayerA.z);
-			m_cachedEyeAngles += HMDPitchRoll;
-		}
-	}
-	// When VR is completely off, just use the base class angles (no modification needed)
-#endif
-	
-	return m_cachedEyeAngles;
 }
 
 

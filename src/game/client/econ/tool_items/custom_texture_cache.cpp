@@ -729,11 +729,6 @@ void CCustomTextureOnItemProxy::OnBind( void *pC_BaseEntity )
 					pScriptItem = pDroppedWeapon->GetItem();
 				}
 			}
-			if ( !pScriptItem )
-			{
-				extern CEconItemView *GetVRRenderWeaponEconItemView( CBaseEntity *pEntity );
-				pScriptItem = GetVRRenderWeaponEconItemView( pEntity );
-			}
 #endif // TF_CLIENT_DLL
 		}
 		else

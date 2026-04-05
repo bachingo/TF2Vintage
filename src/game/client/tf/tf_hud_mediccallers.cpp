@@ -16,7 +16,6 @@
 #include "viewrender.h"
 #include "prediction.h"
 #include "GameEventListener.h"
-#include "tfvr/vr_damage_indicator.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -396,11 +395,6 @@ void CTFMedicCallerPanel::PaintBackground( void )
 	}
 
 	m_bOnscreen = false;
-	
-	// VR: Suppress 2D rendering when VR handles it in 3D
-	if ( CVRDamageIndicatorManager::ShouldSuppressMedicCallerPanel() )
-		return;
-	
 	BaseClass::PaintBackground();
 }
 
@@ -411,10 +405,6 @@ void CTFMedicCallerPanel::Paint( void )
 {
 	// Don't draw if our target is visible. The particle effect will be doing it for us.
 	if ( m_bOnscreen )
-		return;
-	
-	// VR: Suppress 2D rendering when VR handles it in 3D
-	if ( CVRDamageIndicatorManager::ShouldSuppressMedicCallerPanel() )
 		return;
 
 	BaseClass::Paint();
