@@ -52,11 +52,11 @@
 // respective TUs. The callbacks are never called across TU boundaries —
 // the ConVar system holds function pointers, so this is safe.
 // -------------------------------------------------------------------------
-static void TF2VEraChanged         ( IConVar *pConVar, const char *pOldString, float flOldValue );
-static void TF2VEnforcementChanged ( IConVar *pConVar, const char *pOldString, float flOldValue );
-static void TF2VMapcycleModeChanged( IConVar *pConVar, const char *pOldString, float flOldValue );
-static void TF2VServerTypeChanged  ( IConVar *pConVar, const char *pOldString, float flOldValue );
-static void TF2VAnySubConvarChanged( IConVar *pConVar, const char *pOldString, float flOldValue );
+void TF2VEraChanged         ( IConVar *pConVar, const char *pOldString, float flOldValue );
+void TF2VEnforcementChanged ( IConVar *pConVar, const char *pOldString, float flOldValue );
+void TF2VMapcycleModeChanged( IConVar *pConVar, const char *pOldString, float flOldValue );
+void TF2VServerTypeChanged  ( IConVar *pConVar, const char *pOldString, float flOldValue );
+void TF2VAnySubConvarChanged( IConVar *pConVar, const char *pOldString, float flOldValue );
 
 // -------------------------------------------------------------------------
 // Enforcement level inline accessors.
@@ -68,9 +68,9 @@ static void TF2VAnySubConvarChanged( IConVar *pConVar, const char *pOldString, f
 // -------------------------------------------------------------------------
 extern ConVar tf2v_enforcement;
 
-static inline bool TF2V_EraManaged()      { return tf2v_enforcement.GetInt() >= 1; }
-static inline bool TF2V_WeaponGated()     { return tf2v_enforcement.GetInt() >= 2; }
-static inline bool TF2V_MapcycleManaged() { return tf2v_enforcement.GetInt() >= 3; }
+inline bool TF2V_EraManaged()      { return tf2v_enforcement.GetInt() >= 1; }
+inline bool TF2V_WeaponGated()     { return tf2v_enforcement.GetInt() >= 2; }
+inline bool TF2V_MapcycleManaged() { return tf2v_enforcement.GetInt() >= 3; }
 
 #endif // GAME_DLL
 

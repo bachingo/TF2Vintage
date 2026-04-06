@@ -1431,6 +1431,8 @@ public:
 
 	void ForceEnableUpgrades( int nState ) { m_nForceUpgrades = nState; }
 	void ForceEscortPushLogic( int nState ) { m_nForceEscortPushLogic = nState; }
+	
+	void ForceMapCycleNeedsUpdate( void ) { m_bMapCycleNeedsUpdate = true; } // Used for era management
 
 private:
 	CUtlVector< CHandle< CGhost > > m_ghostVector;

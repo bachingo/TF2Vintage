@@ -9,7 +9,10 @@
 #include "tf_gamerules_convars.h"    // extern ConVar tf2v_* declarations
 #include "tf_gamerules_era_internal.h"  // callback fwd decls + inline helpers
 
+
 #ifdef GAME_DLL
+extern ConVar tf_arena_first_blood;
+extern ConVar hide_server;
 
 //-----------------------------------------------------------------------------
 // TF2V_GetEraMapcycleFile — returns era-accurate mapcycle filename.
@@ -292,7 +295,7 @@ static void TF2VApplyMapcycle()
 		mapcyclefile.SetValue( pszFile );
 		Msg( "[TF2V] Mapcycle -> %s\n", pszFile );
 		if ( TFGameRules() )
-			TFGameRules()->m_bMapCycleNeedsUpdate = true;
+			TFGameRules()->ForceMapCycleNeedsUpdate() = true;
 	}
 }
 
@@ -388,11 +391,6 @@ bool CTFGameRules::TF2V_IsRoundActive()
 	         nState == GR_STATE_RND_RUNNING ||
 	         nState == GR_STATE_STALEMATE );
 }
-
-// Convenience: enforcement level accessors used throughout implementation
-static inline bool TF2V_EraManaged()       { return tf2v_enforcement.GetInt() >= 1; }
-static inline bool TF2V_WeaponGated()      { return tf2v_enforcement.GetInt() >= 2; }
-static inline bool TF2V_MapcycleManaged()  { return tf2v_enforcement.GetInt() >= 3; }
 
 //-----------------------------------------------------------------------------
 // TF2VEraChanged — defers if round is live, applies immediately if safe.
