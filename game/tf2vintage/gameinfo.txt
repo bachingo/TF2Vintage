@@ -19,6 +19,8 @@
 	}
 	InstancePath 	"maps/instances/"	
 
+	DependsOnAppID 			440
+
 	FileSystem
 	{
 		SteamAppId				440
