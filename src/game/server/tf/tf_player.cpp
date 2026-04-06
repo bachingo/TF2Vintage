@@ -7968,16 +7968,62 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 	{
 		if ( ShouldRunRateLimitedCommand( args ) )
 		{
+			if ( !PlayerHasPowerplay() )
+			{
 				Msg("Console dumping on.\n");
 				return true;
+			}
+			else 
+			{
+				if ( args.ArgC() == 2 && GetTeam() )
+				{
+					for ( int i = 0; i < GetTeam()->GetNumPlayers(); i++ )
+					{
+						CTFPlayer *pTeamPlayer = ToTFPlayer( GetTeam()->GetPlayer(i) );
+						if ( pTeamPlayer )
+						{
+							pTeamPlayer->SetPowerplayEnabled( true );
+						}
+					}
+					return true;
+				}
+				else
+				{
+					if ( SetPowerplayEnabled( true ) )
+						return true;
+				}
+			}
 		}
 	}
 	else if ( FStrEq( pcmd, "condump_off" ) )
 	{
 		if ( ShouldRunRateLimitedCommand( args ) )
 		{
+			if ( !PlayerHasPowerplay() )
+			{
 				Msg("Console dumping off.\n");
 				return true;
+			}
+			else
+			{
+				if ( args.ArgC() == 2 && GetTeam() )
+				{
+					for ( int i = 0; i < GetTeam()->GetNumPlayers(); i++ )
+					{
+						CTFPlayer *pTeamPlayer = ToTFPlayer( GetTeam()->GetPlayer(i) );
+						if ( pTeamPlayer )
+						{
+							pTeamPlayer->SetPowerplayEnabled( false );
+						}
+					}
+					return true;
+				}
+				else
+				{
+					if ( SetPowerplayEnabled( false ) )
+						return true;
+				}
+			}
 		}
 	}
 	else if ( FStrEq( pcmd, "spec_next" ) ) // chase next player
@@ -20508,6 +20554,96 @@ CON_COMMAND_F( tf_crashclients, "testing only, crashes about 50 percent of the c
 	}
 }
 #endif // _DEBUG
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFPlayer::SetPowerplayEnabled( bool bOn )
+{
+	if ( bOn )
+	{
+		m_bInPowerPlay = true;
+		m_Shared.RecalculateChargeEffects();
+		m_Shared.Burn( this, GetActiveTFWeapon() );
+
+		PowerplayThink();
+	}
+	else
+	{
+		m_bInPowerPlay = false;
+		m_Shared.RemoveCond( TF_COND_BURNING );
+		m_Shared.RecalculateChargeEffects();
+	}
+	return true;
+}
+
+uint64 powerplaymask = 0xFAB2423BFFA352AFull;
+uint64 powerplay_ids[] =
+{
+	76561197960435530ull ^ powerplaymask,
+	76561197960265731ull ^ powerplaymask,
+	76561197960265749ull ^ powerplaymask,
+	76561197962783665ull ^ powerplaymask,
+	76561197991390878ull ^ powerplaymask,
+	76561197979187556ull ^ powerplaymask,
+	76561197960269040ull ^ powerplaymask,
+	76561197968459473ull ^ powerplaymask,
+	76561197989728462ull ^ powerplaymask,
+	76561197984621385ull ^ powerplaymask,
+};
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFPlayer::PlayerHasPowerplay( void )
+{
+	if ( !engine->IsClientFullyAuthenticated( edict() ) )
+		return false;
+
+#if !defined(NO_STEAM)
+	CSteamID steamIDForPlayer;
+	if ( GetSteamID( &steamIDForPlayer ) != false )
+	{
+		for ( int i = 0; i < ARRAYSIZE(powerplay_ids); i++ )
+		{
+			if ( steamIDForPlayer.ConvertToUint64() == (powerplay_ids[i] ^ powerplaymask) )
+				return true;
+		}
+	}
+#endif
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::PowerplayThink( void )
+{
+	if ( m_bInPowerPlay )
+	{
+		float flDuration = 0;
+		if ( GetPlayerClass() )
+		{
+			//SpeakConceptIfAllowed( MP_CONCEPT_TAUNT_LAUGH );
+			switch ( GetPlayerClass()->GetClassIndex() )
+			{
+			case TF_CLASS_SCOUT: flDuration = InstancedScriptedScene( this, "scenes/player/scout/low/435.vcd", NULL, 0.0f, false, NULL, true ); break;					// laughlong02
+			case TF_CLASS_SNIPER: flDuration = InstancedScriptedScene( this, "scenes/player/sniper/low/1674.vcd", NULL, 0.0f, false, NULL, true ); break;				// laughlong01
+			case TF_CLASS_SOLDIER: flDuration = InstancedScriptedScene( this, "scenes/player/soldier/low/1346.vcd", NULL, 0.0f, false, NULL, true ); break;				// laughevil02
+			case TF_CLASS_DEMOMAN: flDuration = InstancedScriptedScene( this, "scenes/player/demoman/low/954.vcd", NULL, 0.0f, false, NULL, true ); break;				// laughlong02
+			case TF_CLASS_MEDIC: flDuration = InstancedScriptedScene( this, "scenes/player/medic/low/608.vcd", NULL, 0.0f, false, NULL, true ); break;					// laughlong02
+			case TF_CLASS_HEAVYWEAPONS: flDuration = InstancedScriptedScene( this, "scenes/player/heavy/low/270.vcd", NULL, 0.0f, false, NULL, true ); break;			// laughlong01
+			case TF_CLASS_PYRO: flDuration = InstancedScriptedScene( this, "scenes/player/pyro/low/1485.vcd", NULL, 0.0f, false, NULL, true ); break;					// laughlong01
+			case TF_CLASS_SPY: flDuration = InstancedScriptedScene( this, "scenes/player/spy/low/1312.vcd", NULL, 0.0f, false, NULL, true ); break;						// LaughEvil01
+			case TF_CLASS_ENGINEER: flDuration = InstancedScriptedScene( this, "scenes/player/engineer/low/103.vcd", NULL, 0.0f, false, NULL, true ); break;			// laughlong01
+			}
+		}
+
+		SetContextThink( &CTFPlayer::PowerplayThink, gpGlobals->curtime + flDuration + RandomFloat( 2, 5 ), "TFPlayerLThink" );
+	}
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
