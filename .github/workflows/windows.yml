@@ -31,13 +31,18 @@ jobs:
 
       - name: Create project
         run: |
+          # Extract the directory from the full python path and add to PATH
+          $pythonDir = Split-Path "${{ env.PYTHON_PATH }}"
+          $env:PATH = "$pythonDir;$env:PATH"
           cd src
           .\createtf2vintage.bat
-
       - name: Build project
         run: |
+          # Ensure PATH is updated in this step's shell as well
+          $pythonDir = Split-Path "${{ env.PYTHON_PATH }}"
+          $env:PATH = "$pythonDir;$env:PATH"
           cd src
-          MSBuild.exe TF2vintage.sln /p:Configuration=${{ inputs.build_config }} /p:Platform="win64" /p:PythonPath="${{ env.PYTHON_PATH }}" /m /v:m
+          MSBuild.exe TF2vintage.sln /p:Configuration=${{ inputs.build_config }} /p:Platform="win64" /m /v:m
 
       - name: Upload binaries
         uses: actions/upload-artifact@v4
