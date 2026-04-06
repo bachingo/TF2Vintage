@@ -369,7 +369,6 @@ bool TF2VIsItemEraAllowed( CEconItemView *pItem, CTF2VEraViolation *pViolation )
         pViolation->nActiveEra    = nActiveEra;
 
         const TF2VEraInfo_t *pActiveInfo  = TF2VGetEraInfo( nActiveEra );
-        const TF2VEraInfo_t *pRequiredInfo = TF2VGetEraInfo( nWorstEra );
 
         V_snprintf( pViolation->szItemName, sizeof(pViolation->szItemName),
                     "%s", pDef->GetItemBaseName() );
