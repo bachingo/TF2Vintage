@@ -1070,7 +1070,6 @@ $Project "Server (TF)"
 			$File	"$SRCDIR\game\shared\weapon_ifmsteadycam.cpp"
 			$File	"$SRCDIR\game\shared\weapon_ifmsteadycam.h"
 		}
-		
 	}
 }
 
