@@ -33,6 +33,38 @@ if [[ ! -e "$solution_out.ninja" ]]; then
     sed -i 's|/tf2vintage/src|.|g' compile_commands.json
 fi
 
+# -----------------------------------------------------------------------
+# Pre-generate all .pb.cc / .pb.h files from .proto sources.
+# The VPC CustomBuildStep for protoc is a Windows/MSBuild concept and
+# does NOT get translated to a Ninja build rule by the Source SDK VPC
+# tool. We must run protoc ourselves before ninja tries to compile the
+# generated .pb.cc files.
+# -----------------------------------------------------------------------
+PROTOC="thirdparty/protobuf-2.6.1/bin/linux32/protoc"
+PROTO_INCLUDES="-I thirdparty/protobuf-2.6.1/src -I game/shared -I gcsdk"
+
+run_protoc() {
+    local proto_file="$1"
+    local out_dir="$2"
+    mkdir -p "$out_dir"
+    "$PROTOC" $PROTO_INCLUDES --proto_path="$(dirname "$proto_file")" \
+        --cpp_out="$out_dir" "$proto_file"
+}
+
+# Client: generated_proto_tf2vintage
+run_protoc game/shared/base_gcmessages.proto        game/client/generated_proto_tf2vintage
+run_protoc game/shared/econ/econ_gcmessages.proto   game/client/generated_proto_tf2vintage
+run_protoc game/shared/tf/tf_gcmessages.proto        game/client/generated_proto_tf2vintage
+run_protoc game/shared/tf/tf_proto_def_messages.proto game/client/generated_proto_tf2vintage
+
+# Server: generated_proto_tf2vintage (server uses same GAMENAME macro)
+run_protoc game/shared/base_gcmessages.proto        game/server/generated_proto_tf2vintage
+run_protoc game/shared/econ/econ_gcmessages.proto   game/server/generated_proto_tf2vintage
+run_protoc game/shared/tf/tf_gcmessages.proto        game/server/generated_proto_tf2vintage
+run_protoc game/shared/tf/tf_proto_def_messages.proto game/server/generated_proto_tf2vintage
+
+# -----------------------------------------------------------------------
+
 ninja -f "$solution_out.ninja" -j$(nproc)
 
 popd
