@@ -150,7 +150,6 @@ public:
 	DECLARE_NETWORKCLASS();
 
 #ifdef GAME_DLL
-	
 	DECLARE_DATADESC();
 
 	CTFGameRulesProxy();
