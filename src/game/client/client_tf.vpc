@@ -985,15 +985,6 @@ $Project "Client (TF)"
 			$File	"tf/tf_replay.cpp"
 			$File	"tf/tf_replay.h"
 		}
-		
-		$Folder	"TF2V"
-		{
-			// Offline inventory emulator
-			$File	"$SRCDIR\game\shared\tf\tf2v_offline_inventory.cpp"
-			$File	"$SRCDIR\game\shared\tf\tf2v_offline_inventory.h"
-			// Era Enforcement
-			$File	"$SRCDIR\game\shared\tf\tf_gamerules_applyera.cpp"
-		}
 			
 	}
 

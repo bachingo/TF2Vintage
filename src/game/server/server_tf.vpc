@@ -1071,14 +1071,6 @@ $Project "Server (TF)"
 			$File	"$SRCDIR\game\shared\weapon_ifmsteadycam.h"
 		}
 		
-		$Folder	"TF2V"
-		{
-			// Offline inventory emulator
-			$File	"$SRCDIR\game\shared\tf\tf2v_offline_inventory.cpp"
-			$File	"$SRCDIR\game\shared\tf\tf2v_offline_inventory.h"
-			// Era Enforcement
-			$File	"$SRCDIR\game\shared\tf\tf_gamerules_applyera.cpp"
-		}
 	}
 }
 
