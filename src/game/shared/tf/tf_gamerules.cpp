@@ -837,7 +837,6 @@ ConVar tf_autobalance_dead_candidates_maxtime( "tf_autobalance_dead_candidates_m
 ConVar tf_autobalance_force_candidates_maxtime( "tf_autobalance_force_candidates_maxtime", "5", FCVAR_REPLICATED );
 ConVar tf_autobalance_xp_bonus( "tf_autobalance_xp_bonus", "500", FCVAR_REPLICATED );
 
-
 #ifdef GAME_DLL
 
 static const float g_flStrangeEventBatchProcessInterval = 30.0f;
@@ -940,7 +939,6 @@ ConVar tf_grapplinghook_enable( "tf_grapplinghook_enable", "0", FCVAR_REPLICATED
 
 // TF2V ConVar calls (Should always be serverside)
 #ifdef GAME_DLL
-extern ConVar tf2v_individual_classlimit;
 extern ConVar tf2v_quickplay_profile;
 #endif
 
@@ -17679,24 +17677,7 @@ bool CTFGameRules::ShouldShowPreRoundDoors() const
 //-----------------------------------------------------------------------------
 int CTFGameRules::GetClassLimit( int iClass )
 {
-	if ( ( IsInTournamentMode() || IsPasstimeMode() ) || tf2v_individual_classlimit.GetBool() )
-	{
-		switch ( iClass )
-		{
-		case TF_CLASS_SCOUT: return tf_tournament_classlimit_scout.GetInt(); break;
-		case TF_CLASS_SNIPER: return tf_tournament_classlimit_sniper.GetInt(); break;
-		case TF_CLASS_SOLDIER: return tf_tournament_classlimit_soldier.GetInt(); break;
-		case TF_CLASS_DEMOMAN: return tf_tournament_classlimit_demoman.GetInt(); break;
-		case TF_CLASS_MEDIC: return tf_tournament_classlimit_medic.GetInt(); break;
-		case TF_CLASS_HEAVYWEAPONS: return tf_tournament_classlimit_heavy.GetInt(); break;
-		case TF_CLASS_PYRO: return tf_tournament_classlimit_pyro.GetInt(); break;
-		case TF_CLASS_SPY: return tf_tournament_classlimit_spy.GetInt(); break;
-		case TF_CLASS_ENGINEER: return tf_tournament_classlimit_engineer.GetInt(); break;
-		default:
-			break;
-		}
-	}
-	else if ( IsInHighlanderMode() )
+	if ( IsInHighlanderMode() )
 	{
 		return 1;
 	}
@@ -17704,7 +17685,26 @@ int CTFGameRules::GetClassLimit( int iClass )
 	{
 		return tf_classlimit.GetInt();
 	}
-
+	else
+	{
+		int nClassLimit = NO_CLASS_LIMIT;
+		switch ( iClass )
+		{
+		case TF_CLASS_SCOUT: nClassLimit = tf_tournament_classlimit_scout.GetInt(); break;
+		case TF_CLASS_SNIPER: nClassLimit = tf_tournament_classlimit_sniper.GetInt(); break;
+		case TF_CLASS_SOLDIER: nClassLimit = tf_tournament_classlimit_soldier.GetInt(); break;
+		case TF_CLASS_DEMOMAN: nClassLimit = tf_tournament_classlimit_demoman.GetInt(); break;
+		case TF_CLASS_MEDIC: nClassLimit = tf_tournament_classlimit_medic.GetInt(); break;
+		case TF_CLASS_HEAVYWEAPONS: nClassLimit = tf_tournament_classlimit_heavy.GetInt(); break;
+		case TF_CLASS_PYRO: nClassLimit = tf_tournament_classlimit_pyro.GetInt(); break;
+		case TF_CLASS_SPY: nClassLimit = tf_tournament_classlimit_spy.GetInt(); break;
+		case TF_CLASS_ENGINEER: nClassLimit = tf_tournament_classlimit_engineer.GetInt(); break;
+		default:
+			break;
+		}
+		if (nClassLimit != NO_CLASS_LIMIT)
+			return nClassLimit;
+	}
 	return NO_CLASS_LIMIT;
 }
 

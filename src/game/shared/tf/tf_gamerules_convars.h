@@ -56,7 +56,6 @@ extern ConVar tf2v_critchance;
 extern ConVar tf2v_critchance_rapid;
 extern ConVar tf2v_critchance_melee;
 extern ConVar tf2v_crit_duration_rapid;
-extern ConVar tf2v_individual_classlimit;
 extern ConVar tf2v_allcrit;
 extern ConVar tf2v_randomizer;
 

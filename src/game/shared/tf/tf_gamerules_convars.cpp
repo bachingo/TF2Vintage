@@ -140,10 +140,6 @@ ConVar tf2v_crit_duration_rapid( "tf2v_crit_duration_rapid", "2.0",
 	"Duration in seconds of rapid-fire crit windows.",
 	true, 0.5f, true, 5.0f );
 
-ConVar tf2v_individual_classlimit( "tf2v_individual_classlimit", "1",
-	FCVAR_NOTIFY | FCVAR_REPLICATED,
-	"Enable individual classlimits, even when tournament mode is disabled." );
-
 ConVar tf2v_allcrit( "tf2v_allcrit", "0",
 	FCVAR_NOTIFY | FCVAR_REPLICATED,
 	"1=all hits are critical hits (fun/novelty option, not era-gated).",
