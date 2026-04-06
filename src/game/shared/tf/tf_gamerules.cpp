@@ -148,9 +148,11 @@
 #include "passtime_convars.h"
 
 //TF2V additions
-#include "tf_gamerules_convars.h"
 #include "tf_gamerules_era_internal.h"
-// #include "tf_gamerules_era_members.h" // Not included here.
+#ifdef GAME_DLL
+#include "tf_gamerules_convars.h"
+// #include "tf_gamerules_era_members.h" // Included in tf_gamerules.h instead.
+#endif
 
 #include "tier3/tier3.h"
 // memdbgon must be the last include file in a .cpp file!!!
