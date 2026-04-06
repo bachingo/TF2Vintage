@@ -295,11 +295,11 @@ static void TF2VApplyMapcycle()
 		mapcyclefile.SetValue( pszFile );
 		Msg( "[TF2V] Mapcycle -> %s\n", pszFile );
 		if ( TFGameRules() )
-			TFGameRules()->ForceMapCycleNeedsUpdate() = true;
+			TFGameRules()->ForceMapCycleNeedsUpdate();
 	}
 }
 
-static void TF2VMapcycleModeChanged( IConVar *pConVar, const char *pOldString, float flOldValue )
+void TF2VMapcycleModeChanged( IConVar *pConVar, const char *pOldString, float flOldValue )
 {
 	TF2VApplyMapcycle();
 }
@@ -324,7 +324,7 @@ static int TF2VGetServerTypeEraFloor( int nServerType )
 	}
 }
 
-static void TF2VServerTypeChanged( IConVar *pConVar, const char *pOldString, float flOldValue )
+void TF2VServerTypeChanged( IConVar *pConVar, const char *pOldString, float flOldValue )
 {
 	if ( !TFGameRules() ) return;
 
@@ -395,7 +395,7 @@ bool CTFGameRules::TF2V_IsRoundActive()
 //-----------------------------------------------------------------------------
 // TF2VEraChanged — defers if round is live, applies immediately if safe.
 //-----------------------------------------------------------------------------
-static void TF2VEraChanged( IConVar *pConVar, const char *pOldString, float flOldValue )
+void TF2VEraChanged( IConVar *pConVar, const char *pOldString, float flOldValue )
 {
 	if ( !TFGameRules() || !TF2V_EraManaged() ) return;
 	if ( TFGameRules()->m_bApplyingEra ) return;
@@ -455,7 +455,7 @@ static void TF2VEraChanged( IConVar *pConVar, const char *pOldString, float flOl
 //-----------------------------------------------------------------------------
 // TF2VEnforcementChanged — handles switching enforcement levels.
 //-----------------------------------------------------------------------------
-static void TF2VEnforcementChanged( IConVar *pConVar, const char *pOldString, float flOldValue )
+void TF2VEnforcementChanged( IConVar *pConVar, const char *pOldString, float flOldValue )
 {
 	if ( !TFGameRules() ) return;
 	int nNew = tf2v_enforcement.GetInt();
@@ -485,7 +485,7 @@ static void TF2VEnforcementChanged( IConVar *pConVar, const char *pOldString, fl
 //-----------------------------------------------------------------------------
 // TF2VAnySubConvarChanged — reverts mid-round sub-convar changes.
 //-----------------------------------------------------------------------------
-static void TF2VAnySubConvarChanged( IConVar *pConVar, const char *pOldString, float flOldValue )
+void TF2VAnySubConvarChanged( IConVar *pConVar, const char *pOldString, float flOldValue )
 {
 	if ( !TFGameRules() ) return;
 	if ( TFGameRules()->m_bApplyingEra ) return;
