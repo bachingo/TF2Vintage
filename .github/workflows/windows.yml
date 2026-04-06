@@ -25,12 +25,10 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Alias Python as py
-        run: |
-          $pythonPath = (Get-Command python).Source
-          $pyDir = Split-Path $pythonPath
-          Copy-Item $pythonPath "$pyDir\py.exe"
-          echo "$pyDir" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: Export Python to PATH for MSBuild subprocesses
+      run: |
+          $pythonPath = (Get-Command python).Source | Split-Path
+          echo "$pythonPath" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Appen
 
       - name: Create project
         run: |
