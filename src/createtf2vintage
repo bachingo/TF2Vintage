@@ -26,39 +26,32 @@ solution_out="_vpc_/ninja/sdk_everything_$VPC_NINJA_BUILD_MODE"
 if [[ ! -e "$solution_out.ninja" ]]; then
     devtools/bin/vpc /tf2vintage /linux64 /ninja /define:SOURCESDK +game /mksln "$solution_out"
 
-    # Generate compile commands.
     ninja -f "$solution_out.ninja" -t compdb > compile_commands.json
-    # Remove some unsupported clang commands.
     sed -i 's/-fpredictive-commoning//g; s/-fvar-tracking-assignments//g' compile_commands.json
     sed -i 's|/tf2vintage/src|.|g' compile_commands.json
 fi
 
-# -----------------------------------------------------------------------
-# Pre-generate all protobuf .pb.cc / .pb.h files.
-#
-# The VPC $CustomBuildStep for protoc is a Windows/MSBuild concept and
-# does NOT produce Ninja build rules. We must run protoc ourselves before
-# ninja tries to compile the generated files.
-#
-# GAMENAME expands to "mod_tf" (not "tf2vintage") for the base Client (TF)
-# and Server (TF) projects because client_tf.vpc sets:
-#   $Macro GAMENAME "mod_tf" [$SOURCESDK]
-# So we must populate BOTH generated_proto_mod_tf AND generated_proto_tf2vintage.
-# -----------------------------------------------------------------------
+# Pre-generate protobuf sources — mirrors what MSBuild does automatically
+# via $CustomBuildStep "proto" in protobuf_builder.vpc. The Ninja generator
+# silently drops CustomBuildStep, so we replicate it manually here.
+# linux32/protoc is the code-generator tool (host); it outputs .pb.cc/.pb.h
+# which are then compiled by the linux64 compiler. linux64/libprotobuf is
+# the runtime linked into the final .so — these are separate concerns.
 PROTOC="thirdparty/protobuf-2.6.1/bin/linux32/protoc"
+SRCDIR="$(pwd)"
+
 PROTO_SRCS=(
     "game/shared/base_gcmessages.proto"
     "game/shared/econ/econ_gcmessages.proto"
     "game/shared/tf/tf_gcmessages.proto"
     "game/shared/tf/tf_proto_def_messages.proto"
 )
-PROTO_INCLUDE_DIRS=(
-    "thirdparty/protobuf-2.6.1/src"
-    "game/shared"
-    "game/shared/tf"
-    "game/shared/econ"
-    "gcsdk"
-)
+
+# GAMENAME="mod_tf" for Client(TF)/Server(TF) because client_tf.vpc and
+# server_tf.vpc set $Macro GAMENAME "mod_tf" [$SOURCESDK].
+# GAMENAME="tf2vintage" for the tf2vintage override projects.
+# Both sets of projects reference $GENERATED_PROTO_DIR, so all four dirs
+# must be populated.
 PROTO_OUT_DIRS=(
     "game/client/generated_proto_mod_tf"
     "game/client/generated_proto_tf2vintage"
@@ -66,23 +59,20 @@ PROTO_OUT_DIRS=(
     "game/server/generated_proto_tf2vintage"
 )
 
-# Build -I flags
-PROTO_INCLUDE_FLAGS=""
-for inc in "${PROTO_INCLUDE_DIRS[@]}"; do
-    PROTO_INCLUDE_FLAGS="$PROTO_INCLUDE_FLAGS -I $inc"
-done
-
 for out_dir in "${PROTO_OUT_DIRS[@]}"; do
     mkdir -p "$out_dir"
     for proto in "${PROTO_SRCS[@]}"; do
-        "$PROTOC" $PROTO_INCLUDE_FLAGS \
-            -I "$(dirname "$proto")" \
-            --cpp_out="$out_dir" \
-            "$proto"
+        input_dir="$SRCDIR/$(dirname "$proto")"
+        "$PROTOC" \
+            --proto_path="$SRCDIR/thirdparty/protobuf-2.6.1/src" \
+            --proto_path="$input_dir" \
+            --proto_path="$SRCDIR/gcsdk" \
+            --proto_path="$SRCDIR/game/shared" \
+            --cpp_out="$SRCDIR/$out_dir" \
+            "$SRCDIR/$proto"
     done
 done
-
-# -----------------------------------------------------------------------
+echo "Protobuf generation complete."
 
 ninja -f "$solution_out.ninja" -j$(nproc)
 

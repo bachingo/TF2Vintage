@@ -47,6 +47,9 @@ jobs:
       - name: Make protoc executable
         run: chmod +x src/thirdparty/protobuf-2.6.1/bin/linux32/protoc
 
+      - name: Clear stale ninja solution
+        run: rm -f src/_vpc_/ninja/sdk_everything_release.ninja src/_vpc_/ninja/sdk_everything_debug.ninja
+        
       - name: Build
         env:
           BUILD_TYPE: ${{ inputs.build_config }}
