@@ -26,7 +26,7 @@ jobs:
           python-version: '3.x'
 
       - name: Export Python to PATH for MSBuild subprocesses
-      run: |
+        run: |
           $pythonPath = (Get-Command python).Source | Split-Path
           echo "$pythonPath" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Appen
 
