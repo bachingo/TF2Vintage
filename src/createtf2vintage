@@ -9,7 +9,7 @@ source sdk_container
 run_in_sniper "$@"
 
 if [ $# -eq 0 ]; then
-    export VPC_NINJA_BUILD_MODE="release"     
+    export VPC_NINJA_BUILD_MODE="release"
 else
     if [[ "$1" == "debug" ]]; then
         export VPC_NINJA_BUILD_MODE="debug"
@@ -34,34 +34,53 @@ if [[ ! -e "$solution_out.ninja" ]]; then
 fi
 
 # -----------------------------------------------------------------------
-# Pre-generate all .pb.cc / .pb.h files from .proto sources.
-# The VPC CustomBuildStep for protoc is a Windows/MSBuild concept and
-# does NOT get translated to a Ninja build rule by the Source SDK VPC
-# tool. We must run protoc ourselves before ninja tries to compile the
-# generated .pb.cc files.
+# Pre-generate all protobuf .pb.cc / .pb.h files.
+#
+# The VPC $CustomBuildStep for protoc is a Windows/MSBuild concept and
+# does NOT produce Ninja build rules. We must run protoc ourselves before
+# ninja tries to compile the generated files.
+#
+# GAMENAME expands to "mod_tf" (not "tf2vintage") for the base Client (TF)
+# and Server (TF) projects because client_tf.vpc sets:
+#   $Macro GAMENAME "mod_tf" [$SOURCESDK]
+# So we must populate BOTH generated_proto_mod_tf AND generated_proto_tf2vintage.
 # -----------------------------------------------------------------------
 PROTOC="thirdparty/protobuf-2.6.1/bin/linux32/protoc"
-PROTO_INCLUDES="-I thirdparty/protobuf-2.6.1/src -I game/shared -I gcsdk"
+PROTO_SRCS=(
+    "game/shared/base_gcmessages.proto"
+    "game/shared/econ/econ_gcmessages.proto"
+    "game/shared/tf/tf_gcmessages.proto"
+    "game/shared/tf/tf_proto_def_messages.proto"
+)
+PROTO_INCLUDE_DIRS=(
+    "thirdparty/protobuf-2.6.1/src"
+    "game/shared"
+    "game/shared/tf"
+    "game/shared/econ"
+    "gcsdk"
+)
+PROTO_OUT_DIRS=(
+    "game/client/generated_proto_mod_tf"
+    "game/client/generated_proto_tf2vintage"
+    "game/server/generated_proto_mod_tf"
+    "game/server/generated_proto_tf2vintage"
+)
 
-run_protoc() {
-    local proto_file="$1"
-    local out_dir="$2"
+# Build -I flags
+PROTO_INCLUDE_FLAGS=""
+for inc in "${PROTO_INCLUDE_DIRS[@]}"; do
+    PROTO_INCLUDE_FLAGS="$PROTO_INCLUDE_FLAGS -I $inc"
+done
+
+for out_dir in "${PROTO_OUT_DIRS[@]}"; do
     mkdir -p "$out_dir"
-    "$PROTOC" $PROTO_INCLUDES --proto_path="$(dirname "$proto_file")" \
-        --cpp_out="$out_dir" "$proto_file"
-}
-
-# Client: generated_proto_tf2vintage
-run_protoc game/shared/base_gcmessages.proto        game/client/generated_proto_tf2vintage
-run_protoc game/shared/econ/econ_gcmessages.proto   game/client/generated_proto_tf2vintage
-run_protoc game/shared/tf/tf_gcmessages.proto        game/client/generated_proto_tf2vintage
-run_protoc game/shared/tf/tf_proto_def_messages.proto game/client/generated_proto_tf2vintage
-
-# Server: generated_proto_tf2vintage (server uses same GAMENAME macro)
-run_protoc game/shared/base_gcmessages.proto        game/server/generated_proto_tf2vintage
-run_protoc game/shared/econ/econ_gcmessages.proto   game/server/generated_proto_tf2vintage
-run_protoc game/shared/tf/tf_gcmessages.proto        game/server/generated_proto_tf2vintage
-run_protoc game/shared/tf/tf_proto_def_messages.proto game/server/generated_proto_tf2vintage
+    for proto in "${PROTO_SRCS[@]}"; do
+        "$PROTOC" $PROTO_INCLUDE_FLAGS \
+            -I "$(dirname "$proto")" \
+            --cpp_out="$out_dir" \
+            "$proto"
+    done
+done
 
 # -----------------------------------------------------------------------
 
