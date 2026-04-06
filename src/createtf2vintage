@@ -41,17 +41,13 @@ PROTOC="thirdparty/protobuf-2.6.1/bin/linux32/protoc"
 SRCDIR="$(pwd)"
 
 PROTO_SRCS=(
+    "gcsdk/steammessages.proto"
     "game/shared/base_gcmessages.proto"
     "game/shared/econ/econ_gcmessages.proto"
     "game/shared/tf/tf_gcmessages.proto"
     "game/shared/tf/tf_proto_def_messages.proto"
 )
 
-# GAMENAME="mod_tf" for Client(TF)/Server(TF) because client_tf.vpc and
-# server_tf.vpc set $Macro GAMENAME "mod_tf" [$SOURCESDK].
-# GAMENAME="tf2vintage" for the tf2vintage override projects.
-# Both sets of projects reference $GENERATED_PROTO_DIR, so all four dirs
-# must be populated.
 PROTO_OUT_DIRS=(
     "game/client/generated_proto_mod_tf"
     "game/client/generated_proto_tf2vintage"
