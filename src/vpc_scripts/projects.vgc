@@ -57,7 +57,7 @@ $Project "server"
 	"game\server\server_hl2mp.vpc"		[$HL2MP]
 }
 
-$Project "crash_handler"
+$Project "crash_handler" [!$RELEASE]
 {
 	"thirdparty\crash_handler\tf2vintage_crash.vpc"	[$TF2VINTAGE]
 }

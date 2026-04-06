@@ -10,7 +10,7 @@
 
 $Group "gamedlls"
 {
-	"crash_handler"
+	"crash_handler" [!$RELEASE]
 	"client"
 	"server"
 }
@@ -18,7 +18,7 @@ $Group "gamedlls"
 $Group "game"
 {
 	"client"
-	"crash_handler"
+	"crash_handler" [!$RELEASE]
 	"launcher_main"
 	"mathlib"
 	"matsys_controls"
