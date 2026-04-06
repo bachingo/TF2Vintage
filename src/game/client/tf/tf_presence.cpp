@@ -963,8 +963,7 @@ void CTFDiscordPresence::LevelInitPostEntity( void )
 
 	if ( TFGameRules() )
 	{
-		extern const char *s_aGameTypeNames[];
-		wchar *gameType = g_pVGuiLocalize->Find( GameRules()->GetGameTypeName() );
+		wchar *gameType = g_pVGuiLocalize->Find( TFGameRules()->GetGameTypeName() );
 		if ( gameType )
 		{
 			char szGameType[ DISCORD_FIELD_MAXLEN ];
