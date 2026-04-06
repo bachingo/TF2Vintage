@@ -19,6 +19,7 @@
 #pragma once
 #endif
 
+
 #include "teamplayroundbased_gamerules.h"
 #include "convar.h"
 #include "gamevars_shared.h"
@@ -353,6 +354,7 @@ public:
 	// live in tf_gamerules_era_internal.cpp and tf_gamerules_applyera.cpp.
 	// =========================================================================
 	#include "tf_gamerules_era_members.h"
+public:
 	
 	virtual void	Precache( void );
 
