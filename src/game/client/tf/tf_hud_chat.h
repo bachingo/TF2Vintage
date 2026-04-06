@@ -95,7 +95,7 @@ public:
 	static bool		GetArrowChatColor( const char *pszText, Color &colorOut );
 
 	// Override ChatPrintf to apply arrow coloring before handing off to base.
-	virtual void	ChatPrintf( int iPlayerIndex, int iFilter, PRINTF_FORMAT_STRING const char *fmt, ... ) FMTFUNCTION( 4, 5 ) OVERRIDE;
+	virtual void	ChatPrintf( int iPlayerIndex, int iFilter, PRINTF_FORMAT_STRING const char *fmt, ... ) OVERRIDE FMTFUNCTION( 4, 5 );
 
 #if defined( _X360 )
 	// hide behind other panels ( stats , build menu ) in 360
