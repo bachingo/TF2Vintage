@@ -346,7 +346,12 @@ public:
 
 #ifdef GAME_DLL
 public:
-	// TF2V: We inject the era member code here.
+	// =========================================================================
+	// TF2V ERA SYSTEM
+	// Class members (TF2VEraState_t, method declarations, private data) are
+	// declared in tf_gamerules_era_members.h and injected here. Implementations
+	// live in tf_gamerules_era_internal.cpp and tf_gamerules_applyera.cpp.
+	// =========================================================================
 	#include "tf_gamerules_era_members.h"
 	
 	virtual void	Precache( void );
@@ -1492,16 +1497,6 @@ public:
 	const char * GetNextMvMPopfile ();
 
 	virtual void BalanceTeams( bool bRequireSwitcheesToBeDead );
-#endif
-
-	// =========================================================================
-	// TF2V ERA SYSTEM
-	// Class members (TF2VEraState_t, method declarations, private data) are
-	// declared in tf_gamerules_era_members.h and injected here. Implementations
-	// live in tf_gamerules_era_internal.cpp and tf_gamerules_applyera.cpp.
-	// =========================================================================
-#ifdef GAME_DLL
-#include "tf_gamerules_era_members.h"
 #endif
 };
 
