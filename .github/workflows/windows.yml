@@ -25,19 +25,18 @@ jobs:
         with:
           python-version: '3.x'
 
+      - name: Fix Python PATH
+        run: |
+          $pythonPath = (Get-Command python).Source | Split-Path
+          echo "$pythonPath" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
       - name: Create project
         run: |
-          # Force the use of the Python version set up by the previous step
-          $pythonPath = (Get-Command python).Source | Split-Path
-          $env:PATH = "$pythonPath;$env:PATH"
           cd src
           .\createtf2vintage.bat
 
       - name: Build project
         run: |
-          # Do the same for the build step
-          $pythonPath = (Get-Command python).Source | Split-Path
-          $env:PATH = "$pythonPath;$env:PATH"
           cd src
           MSBuild.exe TF2vintage.sln /p:Configuration=${{ inputs.build_config }} /p:Platform="win64" /m /v:m
 
