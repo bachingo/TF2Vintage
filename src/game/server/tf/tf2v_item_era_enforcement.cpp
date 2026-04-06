@@ -40,7 +40,9 @@
 #include "filesystem.h"
 #include "KeyValues.h"
 #include "tf_gamerules.h"
+#include "tf_gamerules_convars.h"
 #include "tf2v_item_era_enforcement.h"
+
 
 // ---------------------------------------------------------------------------
 // Era human-readable date table.
