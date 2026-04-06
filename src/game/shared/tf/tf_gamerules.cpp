@@ -938,9 +938,11 @@ extern ConVar tf_flag_return_time_credit_factor;
 ConVar tf_grapplinghook_enable( "tf_grapplinghook_enable", "0", FCVAR_REPLICATED );
 
 
-// TF2V calls
+// TF2V ConVar calls (Should always be serverside)
+#ifdef GAME_DLL
 extern ConVar tf2v_individual_classlimit;
 extern ConVar tf2v_quickplay_profile;
+#endif
 
 #ifdef GAME_DLL
 CUtlString s_strNextMvMPopFile;
