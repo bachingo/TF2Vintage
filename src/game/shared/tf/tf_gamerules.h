@@ -19,22 +19,6 @@
 #pragma once
 #endif
 
-// -------------------------------------------------------------------------
-// Era integer bounds and stringify helpers.
-// Placed here (rather than in tf_gamerules_era_internal.h) so that client
-// code and any header that includes tf_gamerules.h can use TF2V_ERA_MAX_STR
-// in ConVar default strings without pulling in the server-only internal header.
-// -------------------------------------------------------------------------
-#define TF2V_ERA_MIN            0       // PS3 internal build (~Aug 2007)
-#define TF2V_ERA_MAX            200     // TF2 SDK Release (Feb 18 2025)
-#define TF2V_ERA_POST_BALANCE   180     // Mar 2018 — balance freeze point
-#define TF2V_ERA_VSCRIPT        190     // Dec 2022 — VScript; VSH/ZI basis
-#define TF2V_ERA_ASYM_MIN       190     // Earliest era with official ASYM modes
-#define TF2V_ERA_MVM_MIN        121     // Mann vs. Machine (Aug 15 2012)
-#define _TF2V_STRINGIFY(x)      #x
-#define TF2V_STRINGIFY(x)       _TF2V_STRINGIFY(x)
-#define TF2V_ERA_MAX_STR        TF2V_STRINGIFY(TF2V_ERA_MAX)    // "200"
-
 #include "teamplayroundbased_gamerules.h"
 #include "convar.h"
 #include "gamevars_shared.h"
@@ -166,6 +150,7 @@ public:
 	DECLARE_NETWORKCLASS();
 
 #ifdef GAME_DLL
+	
 	DECLARE_DATADESC();
 
 	CTFGameRulesProxy();
@@ -362,6 +347,9 @@ public:
 
 #ifdef GAME_DLL
 public:
+	// TF2V: We inject the era member code here.
+	#include "tf_gamerules_era_members.h"
+	
 	virtual void	Precache( void );
 
 	// Override this to prevent removal of game specific entities that need to persist

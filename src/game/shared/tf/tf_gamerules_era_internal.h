@@ -22,9 +22,18 @@
 #pragma once
 #endif
 
-// Era integer bounds and TF2V_ERA_MAX_STR are defined in tf_gamerules.h,
-// which every TU that includes this header also includes first.
-// Do not redefine them here.
+// -------------------------------------------------------------------------
+// Era integer bounds and stringify helpers.
+// -------------------------------------------------------------------------
+#define TF2V_ERA_MIN            0       // PS3 internal build (~Aug 2007)
+#define TF2V_ERA_MAX            200     // TF2 SDK Release (Feb 18 2025)
+#define TF2V_ERA_POST_BALANCE   180     // Mar 2018 — balance freeze point
+#define TF2V_ERA_VSCRIPT        190     // Dec 2022 — VScript; VSH/ZI basis
+#define TF2V_ERA_ASYM_MIN       190     // Earliest era with official ASYM modes
+#define TF2V_ERA_MVM_MIN        121     // Mann vs. Machine (Aug 15 2012)
+#define _TF2V_STRINGIFY(x)      #x
+#define TF2V_STRINGIFY(x)       _TF2V_STRINGIFY(x)
+#define TF2V_ERA_MAX_STR        TF2V_STRINGIFY(TF2V_ERA_MAX)    // "200"
 
 #ifdef GAME_DLL
 

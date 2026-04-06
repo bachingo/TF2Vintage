@@ -150,8 +150,7 @@
 //TF2V additions
 #include "tf_gamerules_convars.h"
 #include "tf_gamerules_era_internal.h"
-#include "tf_gamerules_era_members.h"
-#include "tf_gamerules_era_internal.h"
+// #include "tf_gamerules_era_members.h" // Not included here.
 
 #include "tier3/tier3.h"
 // memdbgon must be the last include file in a .cpp file!!!
