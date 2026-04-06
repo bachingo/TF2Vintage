@@ -27,15 +27,17 @@ jobs:
 
       - name: Create project
         run: |
-          # setup-python sets the 'pythonLocation' env var automatically
-          $env:PATH = "$env:pythonLocation;$env:PATH"
+          # Force the use of the Python version set up by the previous step
+          $pythonPath = (Get-Command python).Source | Split-Path
+          $env:PATH = "$pythonPath;$env:PATH"
           cd src
           .\createtf2vintage.bat
 
       - name: Build project
         run: |
-          # Prepend the path again for the build shell
-          $env:PATH = "$env:pythonLocation;$env:PATH"
+          # Do the same for the build step
+          $pythonPath = (Get-Command python).Source | Split-Path
+          $env:PATH = "$pythonPath;$env:PATH"
           cd src
           MSBuild.exe TF2vintage.sln /p:Configuration=${{ inputs.build_config }} /p:Platform="win64" /m /v:m
 
