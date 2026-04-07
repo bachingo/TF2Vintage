@@ -596,6 +596,7 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 			CommandLine()->AppendParm( "-log_verbose_enable", "1" );
 		}
 	}
+	
 	// Append -insecure unconditionally so the engine
 	// never attempts VAC negotiation, regardless of server launch options.
 	if ( !CommandLine()->FindParm( "-insecure" ) )

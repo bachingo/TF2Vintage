@@ -903,6 +903,7 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 			CommandLine()->AppendParm( "-log_verbose_enable", "1" );
 		}
 	}
+	
 	if ( tf2v_hrtf_enabled.GetBool() )
 	{
 		CommandLine()->AppendParm( "-snddrv al", nullptr );
