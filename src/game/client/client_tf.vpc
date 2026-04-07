@@ -985,7 +985,6 @@ $Project "Client (TF)"
 			$File	"tf/tf_replay.cpp"
 			$File	"tf/tf_replay.h"
 		}
-			
 	}
 
 	$Folder "Useful non-source files" [!$ANALYZE && !$BUILDBOT && !$SOURCESDK && !$JOSH]

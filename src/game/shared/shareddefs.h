@@ -254,7 +254,7 @@ enum CastVote
 	// VOICE_MAX_PLAYERS_DW stays at 4 (128/32 == 4 exactly, no remainder),
 	// so the VoiceMask user-message size is identical to the vanilla TF value
 	// and no network-protocol changes are required.
-	#define MAX_PLAYERS				127
+	#define MAX_PLAYERS				128
 #elif defined( CSTRIKE_DLL )
 	#define MAX_PLAYERS				65   // Absolute max players supported
 #elif ( defined( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined( HL2MP ) ) && ( !defined( TF_VINTAGE ) || !defined( TF_VINTAGE_CLIENT ))

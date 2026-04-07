@@ -1253,11 +1253,11 @@ void CTFClassMenu::Go()
 		// Increment (archives)
 		replay_replaywelcomedlgcount.SetValue( replay_replaywelcomedlgcount.GetInt() + 1 );
 	}
+#endif
 
 	// This will complete any pending replay, commit if necessary, and clear - this way when the player respawns
 	// we will start with a fresh replay for the new life.
 	g_pClientReplayContext->OnPlayerClassChanged();
-#endif
 
 	// Change class
 	BaseClass::OnCommand( CFmtStr( "joinclass %s", g_aRawPlayerClassNames[ iClass ] ).Access() );

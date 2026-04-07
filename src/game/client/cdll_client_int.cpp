@@ -1141,9 +1141,6 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	HookHapticMessages(); // Always hook the messages
 #endif
 
-	// Swear list.
-	g_BannedWords.InitFromFile( "bannedwords.txt" );
-
 	FnUnsafeCmdLineProcessor *pfnUnsafeCmdLineProcessor =
 #ifndef TF_CLIENT_DLL
 		&UnsafeCmdLineProcessor;
@@ -1156,6 +1153,10 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 		RegisterSecureLaunchProcessFunc( pfnUnsafeCmdLineProcessor );
 	}
 	
+	// Swear list.
+	g_BannedWords.InitFromFile( "bannedwords.txt" );
+
+
 	// TF2V: Initialize offline inventory if needed
 	if ( TF2VIsOfflineMode() )
 		TF2VOfflineInventory_Init();

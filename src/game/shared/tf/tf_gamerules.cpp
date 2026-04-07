@@ -837,6 +837,7 @@ ConVar tf_autobalance_dead_candidates_maxtime( "tf_autobalance_dead_candidates_m
 ConVar tf_autobalance_force_candidates_maxtime( "tf_autobalance_force_candidates_maxtime", "5", FCVAR_REPLICATED );
 ConVar tf_autobalance_xp_bonus( "tf_autobalance_xp_bonus", "500", FCVAR_REPLICATED );
 
+
 #ifdef GAME_DLL
 
 static const float g_flStrangeEventBatchProcessInterval = 30.0f;
@@ -5925,7 +5926,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 //-----------------------------------------------------------------------------
 bool CTFGameRules::ApplyOnDamageModifyRules( CTakeDamageInfo &info, CBaseEntity *pVictimBaseEntity, bool bAllowDamage )
 {
-	if (!info.GetDamageForForceCalc()) info.SetDamageForForceCalc( info.GetDamage() );
+	info.SetDamageForForceCalc( info.GetDamage() );
 	bool bDebug = tf_debug_damage.GetBool();
 
 	CTFPlayer *pVictim = ToTFPlayer( pVictimBaseEntity );
