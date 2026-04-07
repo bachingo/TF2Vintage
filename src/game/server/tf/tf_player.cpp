@@ -3510,29 +3510,9 @@ CON_COMMAND_F( verifyloadout, "Cause the server to verify the player's items on 
 }
 #endif // DEBUG
 
-// Returns the squared distance beyond which a remote player entity should be
-// suppressed when the server has a large population.  Returns 0 if no extra
-// culling is needed for the current population.
-static float TF2V_GetLargeGameCullDistSq( void )
-{
-	// Count all currently-connected human players.
-	// GetNumPlayers on RED+BLU+SPEC is cheaper than iterating all edicts.
-	int nPlayers = 0;
-	for ( int t = FIRST_GAME_TEAM; t < GetNumberOfTeams(); ++t )
-	{
-		CTeam *pTeam = GetGlobalTeam( t );
-		if ( pTeam )
-			nPlayers += pTeam->GetNumPlayers();
-	}
-
-	//  0-32  : no extra culling -- vanilla behavior
-	//  33  : culling begins, starting at max mapsize
-	//	127 : aggressive culling, 1024 units (the longest shot with damage falloff)
-	if ( nPlayers <= 32 )  
-		return 0.f;
-	return RemapValClamped( nPlayers, 32, 127, 32768.f, 1024.f );
-}
-
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 int	CTFPlayer::ShouldTransmit( const CCheckTransmitInfo *pInfo )
 {
 	// always send information to student or client
@@ -3556,34 +3536,6 @@ int	CTFPlayer::ShouldTransmit( const CCheckTransmitInfo *pInfo )
 		CBaseEntity *pRecipientEntity = CBaseEntity::Instance( pInfo->m_pClientEnt );
 		if ( pRecipientEntity && pRecipientEntity->ShouldForceTransmitsForTeam( GetTeamNumber() ) )
 			return FL_EDICT_ALWAYS;
-
-		// TF2V adaptive distance culling for large servers.
-		// Only applies when the server population is high enough to warrant it.
-		// We never cull:
-		//   - Ourselves (handled by CBasePlayer::ShouldTransmit before we get here)
-		//   - Players being spectated by the recipient
-		//   - HLTV / Replay clients (they observe everything)
-		//   - Dead / dormant players (base class handles those)
-		const float flCullDistSq = TF2V_GetLargeGameCullDistSq();
-		if ( flCullDistSq > 0.f && pRecipientEntity )
-		{
-			CBasePlayer *pRecipientPlayer = static_cast<CBasePlayer *>( pRecipientEntity );
-
-			// Never cull from HLTV/Replay -- they need everything.
-			if ( !pRecipientPlayer->IsHLTV() && !pRecipientPlayer->IsReplay() )
-			{
-				// Never cull the player currently being spectated.
-				const CBaseEntity *pObserverTarget = pRecipientPlayer->GetObserverTarget();
-				if ( pObserverTarget != this )
-				{
-					const float flDistSq = ( GetAbsOrigin() - pRecipientEntity->GetAbsOrigin() ).LengthSqr();
-					if ( flDistSq > flCullDistSq )
-					{
-						return FL_EDICT_DONTSEND;
-					}
-				}
-			}
-		}
 	}
 
 	return BaseClass::ShouldTransmit( pInfo );
