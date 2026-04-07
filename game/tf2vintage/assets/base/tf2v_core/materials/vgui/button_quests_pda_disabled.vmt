@@ -1,7 +1,0 @@
-"UnlitGeneric"
-{
-	"$basetexture" "vgui\button_quests_disabled"
-	"$translucent" 1
-	"$ignorez" 1
-	"$vertexcolor" 1
-}

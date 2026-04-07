@@ -38,9 +38,6 @@
 			game+mod+custom_mod	tf2vintage/custom/*
 			// Enable this if you want to load your TF custom content.
 			//game+mod+custom_mod	|appid_440|tf/custom/*
-			
-			//  Load base TF2V assets.
-			//game+mod+vgui		|gameinfo_path|assets/base/*
 
 			// Now search loose files.  We'll set the directory containing the gameinfo.txt file
 			// as the first "mod" search path (after any user customizations).  This is also the one
@@ -82,7 +79,7 @@
 			// packed up in the .bsp file so that it will be mounted as a map search pack.
 			// The map search pack is mounted at the top of the search path list,
 			// but only while you are connected that server and on that map.
-			game+download		mod_tf/download
+			game+download		tf2vintage/download
 		}
 	}
 }

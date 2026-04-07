@@ -1,6 +1,0 @@
-Refract
-{
-	$normalmap "glass\frostedglass01_nrm"
-	$refracttint "[3 3 3]"
-	$refractamount .1
-}

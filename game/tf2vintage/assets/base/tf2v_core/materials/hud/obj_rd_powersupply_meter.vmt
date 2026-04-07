@@ -1,7 +1,0 @@
-"UnlitGeneric"
-{
-	"$baseTexture" "HUD/obj_rd_powersupply_meter"
-	$translucent 1
-	"$vertexcolor" 1
-
-}

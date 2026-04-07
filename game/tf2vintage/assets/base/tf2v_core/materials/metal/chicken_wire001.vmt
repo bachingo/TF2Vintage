@@ -1,9 +1,0 @@
-"LightmappedGeneric"
-{
-	"$baseTexture" "Metal/Chicken_Wire001"
-	"$surfaceprop" "chainlink"
-	"%keywords" "tf"
-	"$AlphaTest" "1"
-	"$AlphaTestReference" ".25"
-	"$AllowAlphaToCoverage" "1"
-}

@@ -1,8 +1,0 @@
-"UnlitGeneric"
-{
-	"$baseTexture" "vgui\class_icons/filter_all_motd"
-	"$translucent" 1
-	"$ignorez" 1
-	"$vertexcolor" 1
-	"$vertexalpha" 1
-}

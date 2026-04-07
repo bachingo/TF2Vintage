@@ -1,7 +1,0 @@
-"VertexlitGeneric"
-{
-	"$baseTexture" "models\props_powerhouse/powerhouse_computer_industrial04_tur"
-	
-	"$selfillum" 1
-	"$selfillummask" "models\props_powerhouse/powerhouse_computer_industrial04_illum"
-}

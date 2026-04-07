@@ -1,6 +1,0 @@
-"UnlitGeneric"
-{
-	"$baseTexture" "HUD/obj_rd_thief_dropped_blue"
-	$translucent 1
-	$vertexalpha 1
-}

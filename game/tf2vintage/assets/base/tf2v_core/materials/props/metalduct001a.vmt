@@ -1,9 +1,0 @@
-"LightMappedGeneric"
-{
-	"$basetexture"	"Props/metalduct001a"
-	"$surfaceprop"	"metalvent"
-	"$bumpmap" "Props/metalduct001a_normal"
-	"$envmap" "env_cubemap"
-	"$normalmapalphaenvmapmask" 1
-	"%keywords" "tf"
-}
