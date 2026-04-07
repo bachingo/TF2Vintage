@@ -6,9 +6,9 @@
 	icon		"resource/game"		
 	developer 	"Team Fortress 2 Vintage Team"
 	developer_url 	"https://github.com/TF2V/TF2Vintage/"
-	nomodels 		1
-	nohimodel 		1
-	nocrosshair 	0
+	nomodels				1
+	nohimodel 				1
+	nocrosshair				0
 	advcrosshair 	1
 	nodegraph		0
 	supportsvr 		1
@@ -24,7 +24,6 @@
 	FileSystem
 	{
 		SteamAppId				440
-		ToolsAppId				243750
 		
 		SearchPaths
 		{
