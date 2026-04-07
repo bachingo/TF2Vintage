@@ -6,6 +6,7 @@
 
 #include "cbase.h"
 #include "basepresence.h"
+#include "irichpresenceclient.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -13,6 +14,8 @@
 // Default global singleton.  Mods should override this.
 static CBasePresence s_basePresence;
 IPresence *presence = NULL;
+
+IRichPresenceClient *rpc = NULL;
 
 //-----------------------------------------------------------------------------
 // Steam version of Rich Presence is a WIP, so PC implementation is stubbed for now.

@@ -10,9 +10,6 @@ discord::Core *g_pDiscord = NULL;
 ConVar cl_discord_appid( "cl_discord_appid", "451227888230858752", FCVAR_DEVELOPMENTONLY | FCVAR_PROTECTED, "This is for your Client ID for Discord Applications and is unique per sourcemod." );
 ConVar cl_discord_presence_enabled( "cl_discord_presence_enabled", "1", FCVAR_ARCHIVE | FCVAR_NOT_CONNECTED );
 
-IRichPresenceClient *rpc = NULL;
-
-
 #ifndef POSIX
 
 //-----------------------------------------------------------------------------
