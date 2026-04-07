@@ -249,19 +249,16 @@ enum CastVote
 //You might be wondering why these aren't multiple of 2. Well the reason is that if servers decide to have HLTV or Replay enabled we need the extra slot.
 //This is ok since MAX_PLAYERS is used for code specific things like arrays and loops, but it doesn't really means that this is the max number of players allowed
 //Since this is decided by the gamerules (and it can be whatever number as long as its less than MAX_PLAYERS).
-#if defined( TF_VINTAGE ) || defined( TF_VINTAGE_CLIENT )
-	// TF2V supports up to 126 human slots + 1 SourceTV slot = 127.
-	// VOICE_MAX_PLAYERS_DW stays at 4 (128/32 == 4 exactly, no remainder),
-	// so the VoiceMask user-message size is identical to the vanilla TF value
-	// and no network-protocol changes are required.
-	#define MAX_PLAYERS				128
-#elif defined( CSTRIKE_DLL )
-	#define MAX_PLAYERS				65   // Absolute max players supported
-#elif ( defined( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined( HL2MP ) ) && ( !defined( TF_VINTAGE ) || !defined( TF_VINTAGE_CLIENT ))
+/*
+#if defined( CSTRIKE_DLL )
+	#define MAX_PLAYERS				65  // Absolute max players supported
+#elif defined( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined( HL2MP )
 	#define MAX_PLAYERS				101
 #else
 	#define MAX_PLAYERS				33  // Absolute max players supported
 #endif
+*/
+#define MAX_PLAYERS				33  // We cap it at 32 because the engine isn't meant for >32 players, and more risks errors.
 
 // Josh: Accounts for code that may index this array by an entindex
 // of player rather than the player index... :s

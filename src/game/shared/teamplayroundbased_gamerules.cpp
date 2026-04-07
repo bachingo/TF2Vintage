@@ -648,22 +648,12 @@ void CTeamplayRoundBasedRules::LevelInitPostEntity( void )
 float CTeamplayRoundBasedRules::GetRespawnTimeScalar( int iTeam )
 {
 	// Vanilla: scale respawn time DOWN when player count is low
-	const int iOptimalPlayers = 8;	// 16 players total, 8 per team
-	const int iOptimalPlayersStandard = 16; // 32 players total, 16 per team.
-	const int iLargeServerMax = 63; // maximum expected per-team size (63v63)
-	
+	int iOptimalPlayers = 8;	// 16 players total, 8 per team
+
 	int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
 
-	if ( iNumPlayers <= iOptimalPlayers ) // Use vanilla respawn time.
-	{
-		// Vanilla low-player scaling: ramp from 0.25x at 1 player to 1.0x at 8.
-		return RemapValClamped( (float)iNumPlayers, 1.f, (float)iOptimalPlayers, 0.25f, 1.0f );
-	}
-	else if ( iNumPlayers <= iOptimalPlayersStandard ) // 1x, no math needed.
-		return 1.0f;
-
-	// XL scaling: ramp from 1x at 8 players to 4x at 63.
-	return RemapValClamped( (float)iNumPlayers, (float)iOptimalPlayersStandard, (float)iLargeServerMax, 1.0f, 4.0f );
+	float flScale = RemapValClamped( iNumPlayers, 1, iOptimalPlayers, 0.25, 1.0 );
+	return flScale;
 }
 
 //-----------------------------------------------------------------------------
