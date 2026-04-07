@@ -1,7 +1,6 @@
 "GameInfo"
 {
 	game		"Team Fortress 2 Vintage"
-	gamelogo		 0
 	type 		multiplayer_only 
 	icon		"resource/game"		
 	developer 	"Team Fortress 2 Vintage Team"
@@ -41,7 +40,7 @@
 			//game+mod+custom_mod	|appid_440|tf/custom/*
 			
 			//  Load base TF2V assets.
-			game+mod+vgui		|gameinfo_path|assets/base/*
+			//game+mod+vgui		|gameinfo_path|assets/base/*
 
 			// Now search loose files.  We'll set the directory containing the gameinfo.txt file
 			// as the first "mod" search path (after any user customizations).  This is also the one
@@ -61,16 +60,16 @@
 			game+mod			|appid_440|tf/tf2_sound_vo_english.vpk
 			game+mod			|appid_440|tf/tf2_sound_misc.vpk
 			game+mod+vgui		|appid_440|tf/tf2_misc.vpk
-			game				|appid_440|hl2/hl2_textures.vpk
-			game				|appid_440|hl2/hl2_sound_vo_english.vpk
-			game				|appid_440|hl2/hl2_sound_misc.vpk
-			game+vgui			|appid_440|hl2/hl2_misc.vpk
-			platform+vgui		|appid_440|platform/platform_misc.vpk
+			game				|appid_243750|hl2/hl2_textures.vpk
+			game				|appid_243750|hl2/hl2_sound_vo_english.vpk
+			game				|appid_243750|hl2/hl2_sound_misc.vpk
+			game+vgui			|appid_243750|hl2/hl2_misc.vpk
+			platform+vgui		|appid_243750|platform/platform_misc.vpk
 
 			// Last, mount in shared HL2 and TF2 loose files
 			game				|appid_440|tf
-			game				|appid_440|hl2
-			platform			|appid_440|platform
+			game				|appid_243750|hl2
+			platform			|appid_243750|platform
 
 			// Random files downloaded from gameservers go into a seperate directory, so
 			// that it's easy to keep those files segregated from the official game files
