@@ -57,15 +57,18 @@ jobs:
           cd src
           bash createtf2vintage
       
-      - name: Move binaries to bin/linux64
+      - name: Collect binaries into bin/linux64
         run: |
           mkdir -p game/tf2vintage/bin/linux64
 
-          # client.so / server.so / Discord RPC etc. land flat in bin/
-          find game/tf2vintage/bin/ -maxdepth 1 -name "*.so" \
-            -exec mv {} game/tf2vintage/bin/linux64/ \;
+          # client.so / server.so — MSBuild outputs these to game/mod_tf/bin/linux64/
+          find game/mod_tf/bin/linux64/ -maxdepth 1 -name "*.so" \
+            -exec cp {} game/tf2vintage/bin/linux64/ \;
 
-          # launcher_tf2vintage (main executable) lands in the mod root, not in bin/
+          # crash_handler.so and other tf2vintage-specific libs already land
+          # directly in game/tf2vintage/bin/linux64/ — nothing to move there.
+
+          # launcher_tf2vintage (main executable) — lands in the mod root if present
           find game/tf2vintage/ -maxdepth 1 -name "launcher_tf2vintage*" \
             -exec mv {} game/tf2vintage/bin/linux64/ \;
 

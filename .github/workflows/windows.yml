@@ -30,18 +30,31 @@ jobs:
           cd src
           MSBuild.exe TF2vintage.sln /p:Configuration=${{ inputs.build_config }} /p:Platform="win64" /m /v:m
 
-      - name: Move binaries to bin/x64
-        shell: pwsh
+      - name: Collect binaries into bin/x64
+        shell: cmd
         run: |
-          New-Item -ItemType Directory -Force -Path game/tf2vintage/bin/x64 | Out-Null
+          mkdir game\tf2vintage\bin\x64 2>nul || true
 
-          # client.dll / server.dll / Discord RPC etc. land flat in bin\
-          Get-ChildItem game/tf2vintage/bin/ -MaxDepth 1 -Include *.dll,*.exe |
-            Move-Item -Destination game/tf2vintage/bin/x64/
+          :: MSBuild places outputs under <Config>_mod_tf\ or <Config>tf2vintage\ depending on the project.
+          :: We copy each known output explicitly so nothing is missed.
+          set CFG=${{ inputs.build_config }}
 
-          # launcher_tf2vintage.exe lands in the mod root, not in bin\
-          Get-ChildItem game/tf2vintage/ -MaxDepth 1 -Include launcher_tf2vintage* |
-            Move-Item -Destination game/tf2vintage/bin/x64/
+          :: client.dll — src\game\client\<Config>_mod_tf\
+          copy /Y src\game\client\%CFG%_mod_tf\client.dll game\tf2vintage\bin\x64\
+          copy /Y src\game\client\%CFG%_mod_tf\client.pdb game\tf2vintage\bin\x64\ 2>nul
+
+          :: server.dll — src\game\server\<Config>_mod_tf\
+          copy /Y src\game\server\%CFG%_mod_tf\server.dll game\tf2vintage\bin\x64\
+          copy /Y src\game\server\%CFG%_mod_tf\server.pdb game\tf2vintage\bin\x64\ 2>nul
+
+          :: crash_handler.dll — src\thirdparty\crash_handler\<Config>tf2vintage\x64\
+          copy /Y src\thirdparty\crash_handler\%CFG%tf2vintage\x64\crash_handler.dll game\tf2vintage\bin\x64\
+          copy /Y src\thirdparty\crash_handler\%CFG%tf2vintage\x64\crash_handler.pdb game\tf2vintage\bin\x64\ 2>nul
+
+          :: launcher_tf2vintage — copy from mod root if present
+          if exist game\tf2vintage\launcher_tf2vintage.exe (
+            copy /Y game\tf2vintage\launcher_tf2vintage.exe game\tf2vintage\bin\x64\
+          )
 
       - name: Upload binaries
         uses: actions/upload-artifact@v4
