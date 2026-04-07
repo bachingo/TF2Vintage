@@ -344,8 +344,6 @@ static ConVar s_cl_load_hl1_content("cl_load_hl1_content", "0", FCVAR_ARCHIVE, "
 
 ConVar r_lightmap_bicubic_set( "r_lightmap_bicubic_set", "0", FCVAR_ARCHIVE | FCVAR_HIDDEN, "Hack to get this convar to be re-set on first launch." );
 
-ConVar tf2v_hrtf_enabled( "tf2v_hrtf_enabled", "1", FCVAR_ARCHIVE, "Enable HRTF spatial audio (requires OpenAL Soft). " );
-
 // Physics system
 bool g_bLevelInitialized;
 bool g_bTextMode = false;
@@ -902,11 +900,6 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 		{
 			CommandLine()->AppendParm( "-log_verbose_enable", "1" );
 		}
-	}
-	
-	if ( tf2v_hrtf_enabled.GetBool() )
-	{
-		CommandLine()->AppendParm( "-snddrv al", nullptr );
 	}
 
 	// Append -insecure unconditionally so the engine
