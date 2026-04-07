@@ -875,7 +875,7 @@ ISourceVirtualReality *g_pSourceVR = NULL;
 //-----------------------------------------------------------------------------
 int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physicsFactory, CGlobalVarsBase *pGlobals )
 {
-	if ( !CommandLine()->FindParm( "-tf2vdebug" ) )
+	if ( CommandLine()->FindParm( "-tf2vlogging" ) )
 	{
 		// Load the crash handler as early as possible — before tier libraries,
 		// before any other system — so it catches failures in this very init sequence.

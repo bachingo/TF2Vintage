@@ -570,7 +570,7 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 		CreateInterfaceFn physicsFactory, CreateInterfaceFn fileSystemFactory, 
 		CGlobalVars *pGlobals)
 {
-	if ( !CommandLine()->FindParm( "-nologging" ) )
+	if ( CommandLine()->FindParm( "-tf2vlogging" ) )
 	{
 		// Load the crash handler as early as possible — before tier libraries,
 		// before any other system — so it catches failures in this very init sequence.
