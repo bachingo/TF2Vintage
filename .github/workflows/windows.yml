@@ -30,16 +30,29 @@ jobs:
           cd src
           MSBuild.exe TF2vintage.sln /p:Configuration=${{ inputs.build_config }} /p:Platform="win64" /m /v:m
 
+      - name: Move binaries to bin/x64
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path game/tf2vintage/bin/x64 | Out-Null
+
+          # client.dll / server.dll / Discord RPC etc. land flat in bin\
+          Get-ChildItem game/tf2vintage/bin/ -MaxDepth 1 -Include *.dll,*.exe |
+            Move-Item -Destination game/tf2vintage/bin/x64/
+
+          # launcher_tf2vintage.exe lands in the mod root, not in bin\
+          Get-ChildItem game/tf2vintage/ -MaxDepth 1 -Include launcher_tf2vintage* |
+            Move-Item -Destination game/tf2vintage/bin/x64/
+
       - name: Upload binaries
         uses: actions/upload-artifact@v4
         with:
           name: tf2vintage-windows
           path: |
-            game/tf2vintage/bin/**/*.dll
-            game/tf2vintage/bin/**/*.exe
+            game/tf2vintage/bin/x64/*.dll
+            game/tf2vintage/bin/x64/*.exe
 
       - name: Upload debug symbols
         uses: actions/upload-artifact@v4
         with:
           name: tf2vintage-windows-debugsymbols
-          path: game/tf2vintage/bin/**/*.pdb
+          path: game/tf2vintage/bin/x64/*.pdb

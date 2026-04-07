@@ -323,7 +323,7 @@ jobs:
       - name: Stage Windows bin files
         run: |
           mkdir -p staging/bin/x64
-          find game/tf2vintage/bin/x64/ -name "*.dll" -o -name "*.exe" | xargs -I{} cp {} staging/bin/x64/
+          find game/tf2vintage/bin/x64/ \( -name "*.dll" -o -name "*.exe" \) -exec cp {} staging/bin/x64/ \;
           mkdir -p standalone-updater-windows
           cp game/tf2vintage/bin/x64/tf2vintage-updater.exe standalone-updater-windows/tf2vintage-updater.exe
 
@@ -396,7 +396,7 @@ jobs:
       - name: Stage Linux bin files
         run: |
           mkdir -p staging/bin/linux64
-          find game/tf2vintage/bin/linux64/ -name "*.so" -o -name "tf2vintage-updater" | xargs -I{} cp {} staging/bin/linux64/
+          find game/tf2vintage/bin/linux64/ \( -name "*.so" -o -name "tf2vintage-updater" -o -name "launcher_tf2vintage" \) -exec cp {} staging/bin/linux64/ \;
           mkdir -p standalone-updater-linux
           cp game/tf2vintage/bin/linux64/tf2vintage-updater standalone-updater-linux/tf2vintage-updater
 

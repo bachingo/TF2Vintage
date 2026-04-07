@@ -59,15 +59,21 @@ jobs:
       
       - name: Move binaries to bin/linux64
         run: |
-          # The build outputs .so files into bin/ — move them to the
-          # platform-specific subdirectory the updater and release expect.
+          mkdir -p game/tf2vintage/bin/linux64
+
+          # client.so / server.so / Discord RPC etc. land flat in bin/
           find game/tf2vintage/bin/ -maxdepth 1 -name "*.so" \
+            -exec mv {} game/tf2vintage/bin/linux64/ \;
+
+          # launcher_tf2vintage (main executable) lands in the mod root, not in bin/
+          find game/tf2vintage/ -maxdepth 1 -name "launcher_tf2vintage*" \
             -exec mv {} game/tf2vintage/bin/linux64/ \;
 
       - name: Split debug symbols from binaries
         run: |
           mkdir -p debug-symbols
-          find game/tf2vintage/bin/linux64/ -name "*.so" | while read lib; do
+          # Process all .so files AND the launcher executable
+          find game/tf2vintage/bin/linux64/ \( -name "*.so" -o -name "launcher_tf2vintage" \) | while read lib; do
             base=$(basename "$lib")
             dbg="debug-symbols/${base}.debug"
 
