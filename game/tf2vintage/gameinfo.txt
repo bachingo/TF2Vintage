@@ -9,21 +9,24 @@
 	nomodels				1
 	nohimodel 				1
 	nocrosshair				0
-	advcrosshair 	1
-	nodegraph		0
-	supportsvr 		1
-	supportsDX8 	0
-	GameData	"tf2v.fgd"
-	hidden_maps 
+	hidden_maps
 	{
+		"test_speakers"		1
+		"test_hardware"		1
 	}
-	InstancePath 	"maps/instances/"	
+	nodegraph 				0
+	GameData				"tf.fgd"
+	AdditionalLocalization	"tf"
+	InstancePath			"maps/instances/"
+	advcrosshair 			1
+	supportsvr				0
+	ReplayRequired 			1
 
 	DependsOnAppID 			440
 
 	FileSystem
 	{
-		SteamAppId				440
+		SteamAppId				243750
 		
 		SearchPaths
 		{
@@ -33,7 +36,7 @@
 			// folder.
 			//
 			// Note that this folder is scanned only when the game is booted.
-			game+mod+custom_mod	mod_tf/custom/*
+			game+mod+custom_mod	tf2vintage/custom/*
 			// Enable this if you want to load your TF custom content.
 			//game+mod+custom_mod	|appid_440|tf/custom/*
 			
