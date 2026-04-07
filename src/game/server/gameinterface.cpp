@@ -899,7 +899,10 @@ bool CServerGameDLL::GameInit( void )
 	// the HLTV client slot during map init.
 	engine->ServerCommand( "tv_enable 1\n" );
 	engine->ServerExecute();
-
+	
+	engine->ServerCommand( "replay_enable 1\n" );
+	engine->ServerExecute();
+	
 	CBaseEntity::sm_bAccurateTriggerBboxChecks = true;
 
 	IGameEvent *event = gameeventmanager->CreateEvent( "game_init" );
