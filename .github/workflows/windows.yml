@@ -51,7 +51,11 @@ jobs:
           copy /Y src\thirdparty\crash_handler\%CFG%tf2vintage\x64\crash_handler.dll game\tf2vintage\bin\x64\
           copy /Y src\thirdparty\crash_handler\%CFG%tf2vintage\x64\crash_handler.pdb game\tf2vintage\bin\x64\ 2>nul
 
-          :: launcher_tf2vintage — copy from mod root if present
+          :: launcher_main (tf2vintage_win64.exe) — src\launcher_main\<Config>_tf2vintage_win64\
+          copy /Y src\launcher_main\%CFG%_tf2vintage_win64\tf2vintage_win64.exe game\tf2vintage\bin\x64\
+          copy /Y src\launcher_main\%CFG%_tf2vintage_win64\tf2vintage_win64.pdb game\tf2vintage\bin\x64\ 2>nul
+
+          :: legacy launcher_tf2vintage — copy from mod root if present
           if exist game\tf2vintage\launcher_tf2vintage.exe (
             copy /Y game\tf2vintage\launcher_tf2vintage.exe game\tf2vintage\bin\x64\
           )
