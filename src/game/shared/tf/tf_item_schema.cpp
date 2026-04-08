@@ -1538,7 +1538,7 @@ const char *g_szLoadoutStrings[] =
 	"",				// LOADOUT_POSITION_TAUNT8
 
 };
-COMPILE_TIME_ASSERT( ARRAYSIZE( g_szLoadoutStrings ) <= CLASS_LOADOUT_POSITION_COUNT );	// we don't support mapping directly to slots like "misc2", "taunt2-8", etc.
+COMPILE_TIME_ASSERT( ARRAYSIZE( g_szLoadoutStrings ) <= CLASS_LOADOUT_POSITION_COUNT );	// we don't support mapping directly to slots like "misc2-3", "taunt2-8", etc.
 
 // Loadout positions used to display loadout slots to players (localized)
 const char *g_szLoadoutStringsForDisplay[] =
@@ -1578,7 +1578,7 @@ const char *g_szAccountLoadoutStrings[] =
 	""
 	""
 };
-COMPILE_TIME_ASSERT( ARRAYSIZE( g_szAccountLoadoutStrings ) <= ACCOUNT_LOADOUT_POSITION_COUNT );	// we don't support mapping directly to slots like "misc2", "taunt2-8", etc.
+COMPILE_TIME_ASSERT( ARRAYSIZE( g_szAccountLoadoutStrings ) <= ACCOUNT_LOADOUT_POSITION_COUNT );	// we don't support mapping directly to slots like "misc2-3", "taunt2-8", etc.
 
 // Loadout positions used to display loadout slots to players (localized)
 const char *g_szAccountLoadoutStringsForDisplay[] =
