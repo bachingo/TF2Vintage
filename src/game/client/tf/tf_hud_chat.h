@@ -82,13 +82,6 @@ public:
 
 	virtual int				GetFilterFlags( void );
 
-	// TF2V: notify the server when the local player opens / closes the chat box
-	// so other clients can show the typing bubble.
-	virtual void	StartMessageMode( int iMessageModeType ) OVERRIDE;
-	virtual void	StopMessageMode( void ) OVERRIDE;
-
-	// TF2V: receive typing-state broadcasts from other clients.
-	void			MsgFunc_PlayerTyping( bf_read &msg );
 
 	// TF2V: colorize lines starting with ">" or "<" in the chat body.
 	// Called from ChatPrintf after the message text is assembled.
