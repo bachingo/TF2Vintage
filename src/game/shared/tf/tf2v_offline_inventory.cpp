@@ -51,8 +51,16 @@ bool TF2VIsOfflineMode()
     return true;
 #endif
 
-    if ( tf2v_offline_inventory.GetBool() )
-        return true;
+#ifdef GAME_DLL
+    // Source 2013 MP has no GC — always treat as online
+    // (inventory comes from m_Inventory via the econ system).
+    // Only override to offline if the convar forces it.
+    return tf2v_offline_inventory.GetBool();
+#else
+    // Client: check actual Steam/GC connectivity
+    if ( tf2v_offline_inventory.GetBool() ) 
+		return true;
+#endif
 
 #ifndef NO_STEAM
 #ifdef CLIENT_DLL

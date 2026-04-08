@@ -298,15 +298,17 @@ int TF2VGetItemEra( CEconItemView *pItem )
 
     if ( s_pEraTable )
     {
-        for ( int i = 0; i < ARRAYSIZE(s_AttributeFloors); i++ )
-        {
-            static CSchemaAttributeDefHandle pAttr( s_AttributeFloors[i].pszAttrName );
-            if ( pAttr && pItem->FindAttribute( pAttr ) )
-            {
-                const char *p = s_pEraTable->GetString( s_AttributeFloors[i].pszVDFKey, NULL );
-                if ( p ) nAttr = MAX( nAttr, Q_atoi( p ) );
-            }
-        }
+		static CSchemaAttributeDefHandle s_pAttrHandles[ARRAYSIZE(s_AttributeFloors)] = {
+			CSchemaAttributeDefHandle("kill eater"),
+			CSchemaAttributeDefHandle("set item texture wear"),
+			CSchemaAttributeDefHandle("halloween spell type"),
+			CSchemaAttributeDefHandle("paint color"),
+			CSchemaAttributeDefHandle("paint color 2"),
+		};
+		for ( int i = 0; i < ARRAYSIZE(s_AttributeFloors); i++ )
+		{
+			if ( s_pAttrHandles[i] && pItem->FindAttribute( s_pAttrHandles[i] ) ) { ... }
+		}
     }
 
     return MAX( nBase, MAX( nQual, nAttr ) );
@@ -337,23 +339,17 @@ bool TF2VIsItemEraAllowed( CEconItemView *pItem, CTF2VEraViolation *pViolation )
 
     if ( s_pEraTable )
     {
-        for ( int i = 0; i < ARRAYSIZE(s_AttributeFloors); i++ )
-        {
-            static CSchemaAttributeDefHandle pAttr( s_AttributeFloors[i].pszAttrName );
-            if ( pAttr && pItem->FindAttribute( pAttr ) )
-            {
-                const char *p = s_pEraTable->GetString( s_AttributeFloors[i].pszVDFKey, NULL );
-                if ( p )
-                {
-                    int nFloor = Q_atoi( p );
-                    if ( nFloor > nWorstAttrEra )
-                    {
-                        nWorstAttrEra    = nFloor;
-                        pszWorstAttrName = s_AttributeFloors[i].pszDisplayName;
-                    }
-                }
-            }
-        }
+		static CSchemaAttributeDefHandle s_pAttrHandles[ARRAYSIZE(s_AttributeFloors)] = {
+			CSchemaAttributeDefHandle("kill eater"),
+			CSchemaAttributeDefHandle("set item texture wear"),
+			CSchemaAttributeDefHandle("halloween spell type"),
+			CSchemaAttributeDefHandle("paint color"),
+			CSchemaAttributeDefHandle("paint color 2"),
+		};
+		for ( int i = 0; i < ARRAYSIZE(s_AttributeFloors); i++ )
+		{
+			if ( s_pAttrHandles[i] && pItem->FindAttribute( s_pAttrHandles[i] ) ) { ... }
+		}
     }
 
     nWorstEra = MAX( nWorstEra, nWorstAttrEra );
