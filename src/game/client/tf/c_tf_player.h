@@ -486,6 +486,8 @@ public:
 	bool ShouldShowNemesisIcon();
 
 	virtual	IMaterial *GetHeadLabelMaterial( void );
+	
+	void UpdateTypingBubble( void );
 
 	// Spy Cigarette
 	bool CanLightCigarette( void );
@@ -1019,8 +1021,6 @@ public:
 	int GetTeam() const { return m_nTeam; }
 
 	CMaterialReference *GetInvulnMaterialRef( void ) { return &m_InvulnerableMaterial; }
-	
-	void UpdateTypingBubble( void );
 
 	void Reset();
 
