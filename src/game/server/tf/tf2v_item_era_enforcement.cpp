@@ -307,7 +307,11 @@ int TF2VGetItemEra( CEconItemView *pItem )
 		};
 		for ( int i = 0; i < ARRAYSIZE(s_AttributeFloors); i++ )
 		{
-			if ( s_pAttrHandles[i] && pItem->FindAttribute( s_pAttrHandles[i] ) ) { ... }
+			if ( s_pAttrHandles[i] && pItem->FindAttribute( s_pAttrHandles[i] ) )
+			{
+                const char *p = s_pEraTable->GetString( s_AttributeFloors[i].pszVDFKey, NULL );
+                if ( p ) nAttr = MAX( nAttr, Q_atoi( p ) );
+            }
 		}
     }
 
@@ -348,7 +352,19 @@ bool TF2VIsItemEraAllowed( CEconItemView *pItem, CTF2VEraViolation *pViolation )
 		};
 		for ( int i = 0; i < ARRAYSIZE(s_AttributeFloors); i++ )
 		{
-			if ( s_pAttrHandles[i] && pItem->FindAttribute( s_pAttrHandles[i] ) ) { ... }
+			if ( s_pAttrHandles[i] && pItem->FindAttribute( s_pAttrHandles[i] ) )
+			{
+                const char *p = s_pEraTable->GetString( s_AttributeFloors[i].pszVDFKey, NULL );
+                if ( p )
+                {
+                    int nFloor = Q_atoi( p );
+                    if ( nFloor > nWorstAttrEra )
+                    {
+                        nWorstAttrEra    = nFloor;
+                        pszWorstAttrName = s_AttributeFloors[i].pszDisplayName;
+                    }
+                }
+            }
 		}
     }
 
