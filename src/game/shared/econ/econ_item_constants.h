@@ -37,7 +37,6 @@ enum testitem_itemtypes_t
 	TI_TYPE_HEADGEAR,
 	TI_TYPE_MISC1,
 	TI_TYPE_MISC2,
-	TI_TYPE_MISC3,
 
 	TI_TYPE_COUNT,
 };
