@@ -6690,6 +6690,12 @@ bool C_TFPlayer::CreateMove( float flInputSampleTime, CUserCmd *pCmd )
 		VectorCopy( pCmd->viewangles, angMoveAngle );
 	}
 
+	// HACK: We're using an unused bit in buttons var to set the typing status based on whether player's chat panel is open.
+	if ( GetTFChatHud() && GetTFChatHud()->GetMessageMode() != MM_NONE )
+	{
+		pCmd->buttons |= IN_TYPING;
+	}
+	
 	BaseClass::CreateMove( flInputSampleTime, pCmd );
 
 	// Don't avoid players if in the middle of a high five. This prevents high-fivers from becoming separated.
