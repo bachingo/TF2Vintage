@@ -487,12 +487,6 @@ public:
 
 	virtual	IMaterial *GetHeadLabelMaterial( void );
 
-	// TF2V: typing bubble support
-	void	SetIsTyping( bool bTyping );
-	bool	IsTyping( void ) const;
-
-	float	m_flTypingExpireTime;	// gpGlobals->curtime when typing state should auto-expire
-
 	// Spy Cigarette
 	bool CanLightCigarette( void );
 
@@ -606,6 +600,7 @@ private:
 
 	// Medic callout particle effect
 	CNewParticleEffect	*m_pSaveMeEffect;
+	CNewParticleEffect	*m_pTypingEffect;
 	CNewParticleEffect	*m_pTauntWithMeEffect;
 
 	bool m_bUpdateObjectHudState;
@@ -827,6 +822,8 @@ public:
 
 	int GetNumActivePipebombs( void );
 
+	bool			m_bTyping;
+	
 	int				m_iSpyMaskBodygroup;
 	Vector			m_vecCustomModelOrigin;
 
@@ -1022,6 +1019,8 @@ public:
 	int GetTeam() const { return m_nTeam; }
 
 	CMaterialReference *GetInvulnMaterialRef( void ) { return &m_InvulnerableMaterial; }
+	
+	void UpdateTypingBubble( void );
 
 	void Reset();
 

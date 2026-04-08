@@ -228,7 +228,7 @@ ConVar tf_romevision_skip_prompt( "tf_romevision_skip_prompt", "0", FCVAR_ARCHIV
 #define BOMB_HAT_MODEL		"models/props_lakeside_event/bomb_temp_hat.mdl"
 #define BOMBONOMICON_MODEL  "models/props_halloween/bombonomicon.mdl"
 
-IMaterial	*g_pHeadLabelMaterial[3] = { NULL, NULL, NULL }; 
+IMaterial	*g_pHeadLabelMaterial[2] = { NULL, NULL }; 
 void	SetupHeadLabelMaterials( void );
 
 extern CBaseEntity *BreakModelCreateSingle( CBaseEntity *pOwner, breakmodel_t *pModel, const Vector &position, 
@@ -267,8 +267,7 @@ const char *g_pszBotHeadGibs[] =
 const char *pszHeadLabelNames[] =
 {
 	"effects/speech_voice_red",
-	"effects/speech_voice_blue",
-	"effects/speech_typing"
+	"effects/speech_voice_blue"
 };
 
 BonusEffect_t g_BonusEffects[ kBonusEffect_Count ] = 
@@ -287,7 +286,6 @@ extern SkyBoxMaterials_t s_PyroSkyboxMaterials;
 
 #define TF_PLAYER_HEAD_LABEL_RED 0
 #define TF_PLAYER_HEAD_LABEL_BLUE 1
-#define TF_PLAYER_HEAD_LABEL_TYPING 2
 
 CLIENTEFFECT_REGISTER_BEGIN( PrecacheInvuln )
 CLIENTEFFECT_MATERIAL( "models/effects/invulnfx_blue.vmt" )
@@ -3753,6 +3751,7 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFPlayer, DT_TFPlayer, CTFPlayer )
 	RecvPropBool( RECVINFO( m_bIsReadyToHighFive ) ),
 	RecvPropEHandle( RECVINFO( m_hHighFivePartner ) ),
 	RecvPropInt( RECVINFO( m_nForceTauntCam ) ),
+	RecvPropBool( RECVINFO( m_bTyping ) ),
 	RecvPropFloat( RECVINFO( m_flTauntYaw ) ),
 	RecvPropInt( RECVINFO( m_nActiveTauntSlot ) ),
 	RecvPropInt( RECVINFO( m_iTauntItemDefIndex ) ),
@@ -3860,6 +3859,7 @@ C_TFPlayer::C_TFPlayer() :
 	m_flCurrentMouthOpen = 0.0f;
 	m_pDisguisingEffect = NULL;
 	m_pSaveMeEffect = NULL;
+	m_pTypingEffect = NULL;
 	m_pTauntWithMeEffect = NULL;
 	m_hOldObserverTarget = NULL;
 	m_iOldObserverMode = OBS_MODE_NONE;
@@ -3905,6 +3905,8 @@ C_TFPlayer::C_TFPlayer() :
 	m_bWaterExitEffectActive = false;
 
 	m_bUpdateObjectHudState = false;
+	
+	m_bTyping = false;
 
 	m_flSaveMeExpireTime = 0;
 
@@ -3918,9 +3920,6 @@ C_TFPlayer::C_TFPlayer() :
 	m_bIsCoaching = false;
 	m_pStudentGlowEffect = NULL;
 	m_pPowerupGlowEffect = NULL;
-
-	// TF2V: chat-typing bubble state
-	m_flTypingExpireTime = -1.0f;
 
 	m_nBotSkill = -1;
 	m_nOldBotSkill = -1;
@@ -9542,20 +9541,13 @@ IMaterial *C_TFPlayer::GetHeadLabelMaterial( void )
 	if ( g_pHeadLabelMaterial[0] == NULL )
 		SetupHeadLabelMaterials();
 
-	// When this player has the chat box open, show a typing icon instead of the
-	// voice icon.  The voice-status system already decides *when* to draw the
-	// label; we just control which material gets used.
-	bool bTyping = IsTyping();
-
 	if ( GetTeamNumber() == TF_TEAM_RED )
 	{
-		return bTyping ? g_pHeadLabelMaterial[TF_PLAYER_HEAD_LABEL_TYPING]
-		               : g_pHeadLabelMaterial[TF_PLAYER_HEAD_LABEL_RED];
+		return g_pHeadLabelMaterial[TF_PLAYER_HEAD_LABEL_RED];
 	}
 	else
 	{
-		return bTyping ? g_pHeadLabelMaterial[TF_PLAYER_HEAD_LABEL_TYPING]
-		               : g_pHeadLabelMaterial[TF_PLAYER_HEAD_LABEL_BLUE];
+		return g_pHeadLabelMaterial[TF_PLAYER_HEAD_LABEL_BLUE];
 	}
 
 	return BaseClass::GetHeadLabelMaterial();
@@ -9576,108 +9568,6 @@ void SetupHeadLabelMaterials( void )
 		{
 			g_pHeadLabelMaterial[i]->IncrementReferenceCount();
 		}
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Called from MsgFunc_PlayerTyping to record that this player opened
-// the chat box.  An expiry timer auto-clears the state after 30 seconds in
-// case the stop message is lost (e.g. disconnect while typing).
-//-----------------------------------------------------------------------------
-void C_TFPlayer::SetIsTyping( bool bTyping )
-{
-	if ( bTyping )
-	{
-		m_flTypingExpireTime = gpGlobals->curtime + 30.0f; // safety timeout
-	}
-	else
-	{
-		m_flTypingExpireTime = -1.0f;
-	}
-}
-
-bool C_TFPlayer::IsTyping( void ) const
-{
-	return ( m_flTypingExpireTime > 0.0f ) && ( gpGlobals->curtime < m_flTypingExpireTime );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Draws typing-bubble icons above the heads of all players who have
-// the chat box open.  Called from CViewRender::RenderPlayerSprites, immediately
-// after DrawHeadLabels() so both icon types share the same render pass.
-// Respects ShouldDrawHeadLabels gamerule flag.
-//-----------------------------------------------------------------------------
-
-void DrawTypingHeadLabels( void )
-{
-
-	if ( GameRules() && !GameRules()->ShouldDrawHeadLabels() )
-		return;
-
-	if ( g_pHeadLabelMaterial[TF_PLAYER_HEAD_LABEL_TYPING] == NULL )
-		SetupHeadLabelMaterials();
-
-	const float flSize = 10.0f;
-	const float flOffset = GetClientVoiceMgr()->GetHeadLabelOffset();
-
-	CMatRenderContextPtr pRenderContext( materials );
-
-	for ( int i = 1; i <= gpGlobals->maxClients; i++ )
-	{
-		C_TFPlayer *pPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
-		if ( !pPlayer || pPlayer->IsDormant() || pPlayer->IsPlayerDead() )
-			continue;
-
-		if ( !pPlayer->IsTyping() )
-			continue;
-
-		// Pick the correct typing material for this player's team
-		IMaterial *pMat = NULL;
-		if ( pPlayer->GetTeamNumber() == TF_TEAM_RED )
-			pMat = g_pHeadLabelMaterial[TF_PLAYER_HEAD_LABEL_TYPING];
-		else
-			pMat = g_pHeadLabelMaterial[TF_PLAYER_HEAD_LABEL_TYPING];
-
-		if ( !pMat )
-			continue;
-
-		Vector vOrigin = pPlayer->WorldSpaceCenter();
-		vOrigin.z += flOffset;
-
-		Vector vUp( 0, 0, 1 );
-		Vector vRight = CurrentViewRight();
-		if ( fabs( vRight.z ) > 0.95f )
-			continue;
-		vRight.z = 0;
-		VectorNormalize( vRight );
-
-		pRenderContext->Bind( pMat );
-		IMesh *pMesh = pRenderContext->GetDynamicMesh();
-		CMeshBuilder meshBuilder;
-		meshBuilder.Begin( pMesh, MATERIAL_QUADS, 1 );
-
-		meshBuilder.Color3f( 1.0f, 1.0f, 1.0f );
-		meshBuilder.TexCoord2f( 0, 0, 0 );
-		meshBuilder.Position3fv( ( vOrigin + ( vRight * -flSize ) + ( vUp * flSize ) ).Base() );
-		meshBuilder.AdvanceVertex();
-
-		meshBuilder.Color3f( 1.0f, 1.0f, 1.0f );
-		meshBuilder.TexCoord2f( 0, 1, 0 );
-		meshBuilder.Position3fv( ( vOrigin + ( vRight * -flSize ) - ( vUp * flSize ) ).Base() );
-		meshBuilder.AdvanceVertex();
-
-		meshBuilder.Color3f( 1.0f, 1.0f, 1.0f );
-		meshBuilder.TexCoord2f( 0, 1, 1 );
-		meshBuilder.Position3fv( ( vOrigin + ( vRight * flSize ) - ( vUp * flSize ) ).Base() );
-		meshBuilder.AdvanceVertex();
-
-		meshBuilder.Color3f( 1.0f, 1.0f, 1.0f );
-		meshBuilder.TexCoord2f( 0, 0, 1 );
-		meshBuilder.Position3fv( ( vOrigin + ( vRight * flSize ) + ( vUp * flSize ) ).Base() );
-		meshBuilder.AdvanceVertex();
-
-		meshBuilder.End();
-		pMesh->Draw();
 	}
 }
 
@@ -9814,6 +9704,32 @@ static ConCommand tf_crashclient( "tf_crashclient", cc_tf_crashclient, "Crashes 
 void C_TFPlayer::ForceUpdateObjectHudState( void )
 {
 	m_bUpdateObjectHudState = true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void C_TFPlayer::UpdateTypingBubble( void )
+{
+	// Don't show the bubble for local player.
+	if ( IsLocalPlayer() )
+		return;
+
+	if ( m_bTyping && IsAlive() && ( !m_Shared.IsStealthed() || !IsEnemyPlayer() ) )
+	{
+		if ( !m_pTypingEffect )
+		{
+			m_pTypingEffect = ParticleProp()->Create( "speech_typing", PATTACH_POINT_FOLLOW, "head" );
+		}
+	}
+	else
+	{
+		if ( m_pTypingEffect )
+		{
+			ParticleProp()->StopEmissionAndDestroyImmediately( m_pTypingEffect );
+			m_pTypingEffect = NULL;
+		}
+	}
 }
 
 #include "c_obj_sentrygun.h"

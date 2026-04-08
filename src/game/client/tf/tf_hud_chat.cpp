@@ -29,7 +29,6 @@ DECLARE_HUD_MESSAGE( CHudChat, SayText );
 DECLARE_HUD_MESSAGE( CHudChat, SayText2 );
 DECLARE_HUD_MESSAGE( CHudChat, TextMsg );
 DECLARE_HUD_MESSAGE( CHudChat, VoiceSubtitle );
-DECLARE_HUD_MESSAGE( CHudChat, PlayerTyping );
 
 extern ConVar hud_saytext_time;
 
@@ -214,7 +213,6 @@ void CHudChat::Init( void )
 	HOOK_HUD_MESSAGE( CHudChat, SayText2 );
 	HOOK_HUD_MESSAGE( CHudChat, TextMsg );
 	HOOK_HUD_MESSAGE( CHudChat, VoiceSubtitle );
-	HOOK_HUD_MESSAGE( CHudChat, PlayerTyping );
 }
 
 void CHudChat::FireGameEvent( IGameEvent *event )
@@ -278,41 +276,6 @@ void CHudChat::Reset( void )
 {
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: Override to notify server when local player opens the chat box,
-// so other clients can show a typing bubble over the player's head.
-//-----------------------------------------------------------------------------
-void CHudChat::StartMessageMode( int iMessageModeType )
-{
-	BaseClass::StartMessageMode( iMessageModeType );
-	engine->ClientCmd_Unrestricted( "tf2v_chat_typing_start\n" );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Override to notify server when the chat box closes without sending.
-//-----------------------------------------------------------------------------
-void CHudChat::StopMessageMode( void )
-{
-	BaseClass::StopMessageMode();
-	engine->ClientCmd_Unrestricted( "tf2v_chat_typing_stop\n" );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Server broadcasts PlayerTyping(entindex, bIsTyping) when any player
-// opens or closes the chat box.  We forward it to C_TFPlayer so it can drive
-// GetHeadLabelMaterial().
-//-----------------------------------------------------------------------------
-void CHudChat::MsgFunc_PlayerTyping( bf_read &msg )
-{
-	int entindex  = msg.ReadByte();
-	bool bTyping  = !!msg.ReadByte();
-
-	C_TFPlayer *pPlayer = ToTFPlayer( ClientEntityList().GetEnt( entindex ) );
-	if ( !pPlayer )
-		return;
-
-	pPlayer->SetIsTyping( bTyping );
-}
 
 //-----------------------------------------------------------------------------
 // Purpose: Checks whether the visible chat body (after the "Name: " prefix)

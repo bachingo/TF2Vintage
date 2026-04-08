@@ -50,19 +50,6 @@
 #include "bannedwords_list.h"
 #include "usermessages.h"
 
-// Broadcasts "PlayerTyping" to all clients so they can show a chat bubble over
-// the player's head.  entindex == 0 means an invalid / server entity; callers
-// should pass pPlayer->entindex().  bIsTyping 1 = started, 0 = stopped.
-static void BroadcastPlayerTyping( int entindex, bool bIsTyping )
-{
-	CReliableBroadcastRecipientFilter filter;
-	filter.MakeReliable();
-	UserMessageBegin( filter, "PlayerTyping" );
-		WRITE_BYTE( entindex );
-		WRITE_BYTE( bIsTyping ? 1 : 0 );
-	MessageEnd();
-}
-
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -878,8 +865,6 @@ CON_COMMAND( say, "Display player message" )
 	{
 		if ( pPlayer->CanPlayerTalk() )
 		{
-			// Player finished composing; clear the typing bubble before the message lands.
-			BroadcastPlayerTyping( pPlayer->entindex(), false );
 			Host_Say( pPlayer->edict(), args, 0 );
 			pPlayer->NotePlayerTalked();
 		}
@@ -904,29 +889,10 @@ CON_COMMAND( say_team, "Display player message to team" )
 	{
 		if ( pPlayer->CanPlayerTalk() )
 		{
-			BroadcastPlayerTyping( pPlayer->entindex(), false );
 			Host_Say( pPlayer->edict(), args, 1 );
 			pPlayer->NotePlayerTalked();
 		}
 	}
-}
-
-
-// TF2V: Client calls this console command when it opens the chat input box.
-// The server re-broadcasts "PlayerTyping" to all other clients.
-CON_COMMAND( tf2v_chat_typing_start, "" )
-{
-	CBasePlayer *pPlayer = ToBasePlayer( UTIL_GetCommandClient() );
-	if ( pPlayer )
-		BroadcastPlayerTyping( pPlayer->entindex(), true );
-}
-
-// Client calls this when it closes the chat box without sending (Escape).
-CON_COMMAND( tf2v_chat_typing_stop, "" )
-{
-	CBasePlayer *pPlayer = ToBasePlayer( UTIL_GetCommandClient() );
-	if ( pPlayer )
-		BroadcastPlayerTyping( pPlayer->entindex(), false );
 }
 
 
