@@ -27,6 +27,7 @@ static const char *s_loadout_position_names[] =
 	
 	// More wearables, yay!
 	"LOADOUT_POSITION_MISC2",
+	"LOADOUT_POSITION_MISC3",
 	
 	// taunts
 	"LOADOUT_POSITION_TAUNT",

@@ -90,6 +90,13 @@ void Misc2Offset_Callback( IConVar *pConVar, char const *pOldString, float flOld
 }
 ConVar tf_misc2_effect_offset( "tf_misc2_effect_offset", "0", FCVAR_HIDDEN, "Adjust the position of the unusual effect for your hat.", true, -8.0f, true, 8.0f, Misc2Offset_Callback );
 
+void Misc3Offset_Callback( IConVar *pConVar, char const *pOldString, float flOldValue )
+{
+	ConVarRef cVarRef( pConVar );
+	ParticleSlider_UpdateRequest( LOADOUT_POSITION_MISC3, cVarRef.GetFloat() );
+}
+ConVar tf_misc3_effect_offset( "tf_misc3_effect_offset", "0", FCVAR_HIDDEN, "Adjust the position of the unusual effect for your hat.", true, -8.0f, true, 8.0f, Misc3Offset_Callback );
+
 
 // Hacky solution to different classes wanting different slots visible in their loadouts, and in different positions
 struct LoadoutPanelPositioningInstance
@@ -114,16 +121,17 @@ const LoadoutPanelPositioningInstance g_DefaultLoadoutPanelPositioning =
 		0,	// LOADOUT_POSITION_PDA2,
 		5,	// LOADOUT_POSITION_HEAD,
 		6,	// LOADOUT_POSITION_MISC,
-		8,	// LOADOUT_POSITION_ACTION,
+		9,	// LOADOUT_POSITION_ACTION,
 		7,	// LOADOUT_POSITION_MISC2,
-		9,	// LOADOUT_POSITION_TAUNT,
-		10,	// LOADOUT_POSITION_TAUNT2,
-		11,	// LOADOUT_POSITION_TAUNT3,
-		12,	// LOADOUT_POSITION_TAUNT4,
-		13,	// LOADOUT_POSITION_TAUNT5,
-		14,	// LOADOUT_POSITION_TAUNT6,
-		15,	// LOADOUT_POSITION_TAUNT7,
-		16,	// LOADOUT_POSITION_TAUNT8,
+		8,	// LOADOUT_POSITION_MISC3,
+		10,	// LOADOUT_POSITION_TAUNT,
+		11,	// LOADOUT_POSITION_TAUNT2,
+		12,	// LOADOUT_POSITION_TAUNT3,
+		13,	// LOADOUT_POSITION_TAUNT4,
+		14,	// LOADOUT_POSITION_TAUNT5,
+		15,	// LOADOUT_POSITION_TAUNT6,
+		16,	// LOADOUT_POSITION_TAUNT7,
+		17,	// LOADOUT_POSITION_TAUNT8,
 
 	}
 };
@@ -140,16 +148,17 @@ const LoadoutPanelPositioningInstance g_LoadoutPanelPositioning_Spy =
 		3,	// LOADOUT_POSITION_PDA2,			// Watch
 		5,	// LOADOUT_POSITION_HEAD,
 		6,	// LOADOUT_POSITION_MISC,
-		8,	// LOADOUT_POSITION_ACTION,
+		9,	// LOADOUT_POSITION_ACTION,
 		7,	// LOADOUT_POSITION_MISC2,
-		9,	// LOADOUT_POSITION_TAUNT,
-		10,	// LOADOUT_POSITION_TAUNT2,
-		11,	// LOADOUT_POSITION_TAUNT3,
-		12,	// LOADOUT_POSITION_TAUNT4,
-		13,	// LOADOUT_POSITION_TAUNT5,
-		14,	// LOADOUT_POSITION_TAUNT6,
-		15,	// LOADOUT_POSITION_TAUNT7,
-		16,	// LOADOUT_POSITION_TAUNT8,
+		8,	// LOADOUT_POSITION_MISC3,
+		10,	// LOADOUT_POSITION_TAUNT,
+		11,	// LOADOUT_POSITION_TAUNT2,
+		12,	// LOADOUT_POSITION_TAUNT3,
+		13,	// LOADOUT_POSITION_TAUNT4,
+		14,	// LOADOUT_POSITION_TAUNT5,
+		15,	// LOADOUT_POSITION_TAUNT6,
+		16,	// LOADOUT_POSITION_TAUNT7,
+		17,	// LOADOUT_POSITION_TAUNT8,
 	}
 };
 
@@ -165,16 +174,17 @@ const LoadoutPanelPositioningInstance g_LoadoutPanelPositioning_Engineer =
 		0,	// LOADOUT_POSITION_PDA2,
 		5,	// LOADOUT_POSITION_HEAD,
 		6,	// LOADOUT_POSITION_MISC,
-		8,	// LOADOUT_POSITION_ACTION,
+		9,	// LOADOUT_POSITION_ACTION,
 		7,	// LOADOUT_POSITION_MISC2,
-		9,	// LOADOUT_POSITION_TAUNT,
-		10,	// LOADOUT_POSITION_TAUNT2,
-		11,	// LOADOUT_POSITION_TAUNT3,
-		12,	// LOADOUT_POSITION_TAUNT4,
-		13,	// LOADOUT_POSITION_TAUNT5,
-		14,	// LOADOUT_POSITION_TAUNT6,
-		15,	// LOADOUT_POSITION_TAUNT7,
-		16,	// LOADOUT_POSITION_TAUNT8,
+		8,	// LOADOUT_POSITION_MISC3,
+		10,	// LOADOUT_POSITION_TAUNT,
+		11,	// LOADOUT_POSITION_TAUNT2,
+		12,	// LOADOUT_POSITION_TAUNT3,
+		13,	// LOADOUT_POSITION_TAUNT4,
+		14,	// LOADOUT_POSITION_TAUNT5,
+		15,	// LOADOUT_POSITION_TAUNT6,
+		16,	// LOADOUT_POSITION_TAUNT7,
+		17,	// LOADOUT_POSITION_TAUNT8,
 	}
 };
 
@@ -297,6 +307,9 @@ void CLoadoutItemOptionsPanel::SetItemSlot( loadout_positions_t eItemSlot, int i
 		break;
 	case LOADOUT_POSITION_MISC2 :
 		pszConVarName = "tf_misc2_effect_offset";
+		break;
+	case LOADOUT_POSITION_MISC3 :
+		pszConVarName = "tf_misc3_effect_offset";
 		break;
 	default:
 		break;

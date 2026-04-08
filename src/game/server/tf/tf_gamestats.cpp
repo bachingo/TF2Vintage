@@ -2840,7 +2840,7 @@ void CTFGameStats::Event_PlayerLoadoutChanged( CTFPlayer *pPlayer, bool bForceRe
 	// Table updated, using v2
 	KeyValues* pKVData = new KeyValues( "TF2ServerPlayerLoadoutv2" );
 	
-	int iSlotCount = LOADOUT_POSITION_MISC2 + 1;
+	int iSlotCount = LOADOUT_POSITION_MISC3 + 1;
 	for ( int iSlot = 0; iSlot < iSlotCount; ++iSlot )
 	{
 		int iDefIndex = stats.loadoutStats.iLoadoutItemDefIndices[ iSlot ];

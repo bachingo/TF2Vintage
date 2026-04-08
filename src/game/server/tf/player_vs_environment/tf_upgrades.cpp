@@ -168,7 +168,7 @@ void CUpgrades::GrantOrRemoveAllUpgrades( CTFPlayer *pTFPlayer, bool bRemove /*=
 
 			if ( pAttribDef )
 			{
-				loadout_positions_t nLastLoadoutPos = bRespec ? LOADOUT_POSITION_MISC2 : LOADOUT_POSITION_HEAD;
+				loadout_positions_t nLastLoadoutPos = bRespec ? LOADOUT_POSITION_MISC3 : LOADOUT_POSITION_HEAD;
 				// for each item
 				for ( int iItemSlot = LOADOUT_POSITION_PRIMARY ; iItemSlot < nLastLoadoutPos ; iItemSlot++ )	
 				{

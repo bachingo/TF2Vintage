@@ -1471,7 +1471,7 @@ void BotMirrorPlayerClassAndItems( CTFPlayer *pBot, CTFPlayer *pPlayer )
 		pBot->HandleCommand_JoinClass( pPlayer->GetPlayerClass()->GetName() );
 	}
 
-	int nLastSlot = LOADOUT_POSITION_MISC2;
+	int nLastSlot = LOADOUT_POSITION_MISC3;
 
 
 	pBot->RemoveAllItems( false );

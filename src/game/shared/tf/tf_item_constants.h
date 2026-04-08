@@ -66,6 +66,7 @@ enum loadout_positions_t
 
 	// More wearables, yay!
 	LOADOUT_POSITION_MISC2,
+	LOADOUT_POSITION_MISC3,
 
 	// taunts
 	LOADOUT_POSITION_TAUNT,
@@ -82,7 +83,7 @@ enum loadout_positions_t
 };
 
 const loadout_positions_t FIRST_LOADOUT_SLOT_WITH_CHARGE_METER( LOADOUT_POSITION_PRIMARY );
-const loadout_positions_t LAST_LOADOUT_SLOT_WITH_CHARGE_METER( LOADOUT_POSITION_MISC2 );
+const loadout_positions_t LAST_LOADOUT_SLOT_WITH_CHARGE_METER( LOADOUT_POSITION_MISC3 );
 
 const char *GetLoadoutPositionName( loadout_positions_t iLoadout );
 loadout_positions_t GetLoadoutPositionByName( const char *pszLoadoutPositionName );
@@ -106,6 +107,7 @@ inline bool IsMiscSlot( int iSlot )
 {
 	return iSlot == LOADOUT_POSITION_MISC
 		|| iSlot == LOADOUT_POSITION_MISC2
+		|| iSlot == LOADOUT_POSITION_MISC3
 		|| iSlot == LOADOUT_POSITION_HEAD
 		;
 }
