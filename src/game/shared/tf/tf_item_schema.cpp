@@ -1526,7 +1526,6 @@ const char *g_szLoadoutStrings[] =
 	"misc",			// LOADOUT_POSITION_MISC,
 	"action",		// LOADOUT_POSITION_ACTION,
 	"",				// LOADOUT_POSITION_MISC2
-	"",				// LOADOUT_POSITION_MISC3
 
 	"taunt",		// LOADOUT_POSITION_TAUNT
 	"",				// LOADOUT_POSITION_TAUNT2
@@ -1557,7 +1556,6 @@ const char *g_szLoadoutStringsForDisplay[] =
 	"#LoadoutSlot_Misc",		// LOADOUT_POSITION_MISC
 	"#LoadoutSlot_Action",		// LOADOUT_POSITION_ACTION
 	"#LoadoutSlot_Misc",		// LOADOUT_POSITION_MISC2
-	"#LoadoutSlot_Misc",		// LOADOUT_POSITION_MISC3
 	
 	"#LoadoutSlot_Taunt",		// LOADOUT_POSITION_TAUNT,
 	"#LoadoutSlot_Taunt2",		// LOADOUT_POSITION_TAUNT2,

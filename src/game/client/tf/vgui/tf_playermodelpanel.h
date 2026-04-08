@@ -89,7 +89,6 @@ private:
 		SYSTEM_HEAD = 0,
 		SYSTEM_MISC1,
 		SYSTEM_MISC2,
-		SYSTEM_MISC3,
 		SYSTEM_WEAPON, // there can only be one weapon equipped
 		SYSTEM_ACTIONSLOT,
 		SYSTEM_EYEGLOW_LEFT,

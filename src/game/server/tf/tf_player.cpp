@@ -4485,7 +4485,6 @@ bool CTFPlayer::ItemIsAllowed( CEconItemView *pItem )
 		case LOADOUT_POSITION_HEAD:
 		case LOADOUT_POSITION_MISC:
 		case LOADOUT_POSITION_MISC2:
-		case LOADOUT_POSITION_MISC3:
 		case LOADOUT_POSITION_ACTION:
 		case LOADOUT_POSITION_TAUNT:
 		case LOADOUT_POSITION_TAUNT2:
@@ -19477,7 +19476,6 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet& criteriaSet )
 			"loadout_slot_misc",		// LOADOUT_POSITION_MISC,
 			"loadout_slot_action",		// LOADOUT_POSITION_ACTION,
 			"loadout_slot_misc2",		// LOADOUT_POSITION_MISC2
-			"loadout_slot_misc3",		// LOADOUT_POSITION_MISC3
 			"loadout_slot_taunt",		// LOADOUT_POSITION_TAUNT
 			"loadout_slot_taunt2",		// LOADOUT_POSITION_TAUNT2
 			"loadout_slot_taunt3",		// LOADOUT_POSITION_TAUNT3
