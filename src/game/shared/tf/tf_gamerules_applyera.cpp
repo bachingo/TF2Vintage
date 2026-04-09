@@ -137,6 +137,7 @@
 #ifdef GAME_DLL
 #include "tf_gamerules.h"
 #include "tf_gamerules_convars.h"
+#include "tf_gamerules_era_internal.h"
 #include "tf_player.h"
 
 extern ConVar tf2v_quickplay_profile;
