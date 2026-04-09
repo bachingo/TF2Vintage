@@ -17,17 +17,23 @@
 //   was actually introduced, expressed as a human-readable date string rather
 //   than an internal era number. This feeds the VGUI ban popup.
 //
+// SINGLE SOURCE OF TRUTH:
+//   All era thresholds for both the allowed-check AND the strip logic read
+//   from the same place: VDF override > first_sale_date > 0 (stock).
+//   TF2VGetBaseItemEra(), TF2VGetQualityEra(), TF2VGetAttributeEra() are
+//   the public accessors that tf2v_era_attributes.cpp uses for stripping,
+//   so the two systems can never drift apart.
+//
 // VIOLATION DISPLAY (CTF2VEraViolation):
 //   "Your Strange Rocket Launcher cannot appear in era 50 (Feb 2009).
 //    — Base item: Rocket Launcher (Oct 2007) ✓
-//    — Quality: Strange quality (Dec 2011) ✗  first appeared Dec 15, 2011
-//    — Attribute: Kill eater / stat clock (Dec 2015) ✗  first appeared Dec 17, 2015"
+//    — Quality: Strange quality (Dec 2011) ✗  first appeared Dec 15, 2011"
 //
 // ITEMS_GAME INTEGRATION:
-//   The merge branch's CEconItemDefinition has GetFirstSaleDate() which returns
-//   a YYYY/MM/DD string from items_game.txt. This is the canonical source for
-//   per-item dates. The VDF supplements it for items missing first_sale_date
-//   and provides modifier floors that items_game doesn't track.
+//   The merge branch's CEconItemDefinition has GetFirstSaleDate() which
+//   returns a YYYY/MM/DD string from items_game.txt. The VDF supplements it
+//   for items missing first_sale_date and provides modifier floors that
+//   items_game doesn't track.
 //
 //   Priority: VDF era override > first_sale_date derived era > 0 (stock)
 //=============================================================================
@@ -47,77 +53,78 @@
 // ---------------------------------------------------------------------------
 // Era human-readable date table.
 // Maps era integer -> display string shown to the player.
-// These are the dates players understand, not internal era numbers.
 // ---------------------------------------------------------------------------
 struct TF2VEraInfo_t
 {
     int         nEra;
-    const char *pszDate;       // Human-readable, e.g. "August 19, 2008"
-    const char *pszUpdateName; // e.g. "Heavy Update"
+    const char *pszDate;
+    const char *pszUpdateName;
 };
 
 static const TF2VEraInfo_t s_EraInfoTable[] =
 {
-    {   0, "October 10, 2007",  "Launch"                    },
-    {   1, "October 10, 2007",  "Launch"                    },
-    {   7, "January 25, 2008",  "January 2008 patch"        },
-    {   8, "February 14, 2008", "February 2008 patch"       },
-    {  10, "April 29, 2008",    "Gold Rush Update"          },
-    {  20, "June 19, 2008",     "Pyro Update"               },
-    {  30, "August 19, 2008",   "Heavy Update"              },
-    {  31, "December 11, 2008", "December 2008 patch"       },
-    {  50, "February 24, 2009", "Scout Update"              },
-    {  60, "May 21, 2009",      "Sniper vs. Spy Update"     },
-    {  70, "August 13, 2009",   "Classless Update"          },
-    {  71, "September 15, 2009","September 2009 patch"      },
-    {  80, "December 17, 2009", "WAR! Update"               },
-    {  82, "April 28, 2010",    "April 2010 patch"          },
-    {  90, "July 8, 2010",      "Engineer Update"           },
-    {  91, "October 27, 2010",  "Scream Fortress 2010"      },
-    { 100, "September 30, 2010","Mann-Conomy Update"        },
-    { 103, "December 17, 2010", "Australian Christmas 2010" },
-    { 104, "January 19, 2011",  "January 2011 patch"        },
-    { 105, "April 14, 2011",    "April 2011 patch"          },
-    { 110, "June 23, 2011",     "Über Update"               },
-    { 111, "August 31, 2011",   "August 2011 patch"         },
-    { 112, "December 15, 2011", "Australian Christmas 2011" },
-    { 115, "July 10, 2013",     "July 2013 patch"           },
-    { 117, "October–November 2013", "Scream Fortress 2013"  },
-    { 120, "June 27, 2012",     "Pyromania Update"          },
-    { 121, "August 15, 2012",   "Mann vs. Machine"          },
-    { 130, "June 18, 2014",     "Love & War Update"         },
-    { 133, "December 22, 2014", "Smissmas 2014"             },
-    { 140, "July 2, 2015",      "Gun Mettle Update"         },
-    { 150, "December 17, 2015", "Tough Break Update"        },
-    { 160, "July 7, 2016",      "Meet Your Match Update"    },
-    { 170, "October 20, 2017",  "Jungle Inferno Update"     },
-    { 180, "March 28, 2018",    "March 2018 update"         },
-    { 181, "October 19, 2018",  "Scream Fortress X"         },
-    { 182, "October 10, 2019",  "Scream Fortress XI"        },
-    { 185, "October 1, 2020",   "Scream Fortress XII"       },
-    { 186, "December 3, 2020",  "Smissmas 2020"             },
-    { 187, "October 5, 2021",   "Scream Fortress XIII"      },
-    { 188, "December 2, 2021",  "Smissmas 2021"             },
-    { 189, "October 5, 2022",   "Scream Fortress XIV"       },
-    { 190, "December 1–5, 2022","VScript / Smissmas 2022"   },
-    { 191, "October 9, 2023",   "Scream Fortress XV"        },
-    { 192, "December 7, 2023",  "Smissmas 2023"             },
-    { 193, "October 10, 2024",  "Scream Fortress XVI"       },
-    { 194, "December 11, 2024", "Smissmas 2024"             },
-    { 200, "February 18, 2025", "TF2 SDK Release"           },
-    { 201, "July 24, 2025",     "Summer 2025"               },
+    {   0, "October 10, 2007",       "Launch"                    },
+    {   1, "October 10, 2007",       "Launch"                    },
+    {   7, "January 25, 2008",       "January 2008 patch"        },
+    {   8, "February 14, 2008",      "February 2008 patch"       },
+    {  10, "April 29, 2008",         "Gold Rush Update"          },
+    {  20, "June 19, 2008",          "Pyro Update"               },
+    {  30, "August 19, 2008",        "Heavy Update"              },
+    {  31, "December 11, 2008",      "December 2008 patch"       },
+    {  50, "February 24, 2009",      "Scout Update"              },
+    {  60, "May 21, 2009",           "Sniper vs. Spy Update"     },
+    {  70, "August 13, 2009",        "Classless Update"          },
+    {  71, "September 15, 2009",     "September 2009 patch"      },
+    {  80, "December 17, 2009",      "WAR! Update"               },
+    {  82, "April 28, 2010",         "April 2010 patch"          },
+    {  90, "July 8, 2010",           "Engineer Update"           },
+    {  91, "October 27, 2010",       "Scream Fortress 2010"      },
+    { 100, "September 30, 2010",     "Mann-Conomy Update"        },
+    { 103, "December 17, 2010",      "Australian Christmas 2010" },
+    { 104, "January 19, 2011",       "January 2011 patch"        },
+    { 105, "April 14, 2011",         "April 2011 patch"          },
+    { 110, "June 23, 2011",          "Über Update"               },
+    { 111, "August 31, 2011",        "August 2011 patch"         },
+    { 112, "December 15, 2011",      "Australian Christmas 2011" },
+    { 115, "July 10, 2013",          "July 2013 patch"           },
+    { 117, "October–November 2013",  "Scream Fortress 2013"      },
+    { 120, "June 27, 2012",          "Pyromania Update"          },
+    { 121, "August 15, 2012",        "Mann vs. Machine"          },
+    { 130, "June 18, 2014",          "Love & War Update"         },
+    { 133, "December 22, 2014",      "Smissmas 2014"             },
+    { 140, "July 2, 2015",           "Gun Mettle Update"         },
+    { 150, "December 17, 2015",      "Tough Break Update"        },
+    { 160, "July 7, 2016",           "Meet Your Match Update"    },
+    { 170, "October 20, 2017",       "Jungle Inferno Update"     },
+    { 180, "March 28, 2018",         "March 2018 update"         },
+    { 181, "October 19, 2018",       "Scream Fortress X"         },
+    { 182, "October 10, 2019",       "Scream Fortress XI"        },
+    { 185, "October 1, 2020",        "Scream Fortress XII"       },
+    { 186, "December 3, 2020",       "Smissmas 2020"             },
+    { 187, "October 5, 2021",        "Scream Fortress XIII"      },
+    { 188, "December 2, 2021",       "Smissmas 2021"             },
+    { 189, "October 5, 2022",        "Scream Fortress XIV"       },
+    { 190, "December 1–5, 2022",     "VScript / Smissmas 2022"   },
+    { 191, "October 9, 2023",        "Scream Fortress XV"        },
+    { 192, "December 7, 2023",       "Smissmas 2023"             },
+    { 193, "October 10, 2024",       "Scream Fortress XVI"       },
+    { 194, "December 11, 2024",      "Smissmas 2024"             },
+    { 200, "February 18, 2025",      "TF2 SDK Release"           },
+    { 201, "July 24, 2025",          "Summer 2025"               },
 };
 
+// NOTE: The table above contains some out-of-order era numbers (e.g. 120/121
+// appear after 117 but are chronologically earlier). We do a full linear scan
+// instead of breaking early so the correct best-fit entry is always found
+// regardless of insertion order.
 static const TF2VEraInfo_t *TF2VGetEraInfo( int nEra )
 {
-    // Walk backwards to find the highest entry <= nEra
     const TF2VEraInfo_t *pBest = &s_EraInfoTable[0];
     for ( int i = 0; i < ARRAYSIZE(s_EraInfoTable); i++ )
     {
         if ( s_EraInfoTable[i].nEra <= nEra )
             pBest = &s_EraInfoTable[i];
-        else
-            break;
+        // No early break — table has non-monotone entries.
     }
     return pBest;
 }
@@ -167,17 +174,13 @@ static int TF2VDateStringToEra( const char *pszDate )
     if ( !pszDate || *pszDate == '\0' || V_strcmp( pszDate, "1960/00/00" ) == 0 )
         return 0;  // no date = stock item = era 0
 
-    // Parse YYYY/MM/DD
     int y = 0, m = 1, d = 1;
     if ( sscanf( pszDate, "%d/%d/%d", &y, &m, &d ) < 1 ) return 0;
     if ( m <= 0 ) m = 1;
     if ( d <= 0 ) d = 1;
 
-    // Build a comparable YYYYMMDD integer
     int nDateInt = y * 10000 + m * 100 + d;
 
-    // Walk era table to find which era this date falls into
-    // Table boundary dates as YYYYMMDD
     static const struct { int nDate; int nEra; } s_DateBounds[] =
     {
         { 20071010,  1 }, { 20080125,  7 }, { 20080214,  8 },
@@ -209,22 +212,24 @@ static int TF2VDateStringToEra( const char *pszDate )
     return nEra;
 }
 
-
 // Public wrapper — used by tf2v_era_attributes.cpp
 int TF2VDateStringToEra_Public( const char *pszDate )
 {
-	return TF2VDateStringToEra( pszDate );
+    return TF2VDateStringToEra( pszDate );
 }
 
 // ---------------------------------------------------------------------------
-// Component lookups
+// Component lookups — these are now PUBLIC so TF2VStripAnachronisticModifiers
+// in tf2v_era_attributes.cpp reads from the same source of truth.
 // ---------------------------------------------------------------------------
 
-static int TF2VGetBaseItemEraFromSchema( const CEconItemDefinition *pDef )
+int TF2VGetBaseItemEra( const CEconItemDefinition *pDef )
 {
     if ( !pDef ) return 0;
 
-    // 1. Check VDF override first
+    TF2VEnsureEraTableLoaded();
+
+    // 1. VDF era override takes highest priority
     if ( s_pEraTable )
     {
         char szKey[16];
@@ -233,12 +238,13 @@ static int TF2VGetBaseItemEraFromSchema( const CEconItemDefinition *pDef )
         if ( pszEra ) return Q_atoi( pszEra );
     }
 
-    // 2. Parse first_sale_date from items_game via SDK accessor
+    // 2. Parse first_sale_date from items_game
     return TF2VDateStringToEra( pDef->GetFirstSaleDate() );
 }
 
-static int TF2VGetQualityEraFloor( int nQuality, const char **pszNameOut )
+int TF2VGetQualityEra( int nQuality, const char **pszNameOut )
 {
+    TF2VEnsureEraTableLoaded();
     if ( !s_pEraTable ) return 0;
 
     struct { int nQuality; const char *pszKey; const char *pszName; } s_QualityMap[] =
@@ -265,20 +271,30 @@ static int TF2VGetQualityEraFloor( int nQuality, const char **pszNameOut )
     return 0;
 }
 
+int TF2VGetAttributeEra( const char *pszVDFKey )
+{
+    TF2VEnsureEraTableLoaded();
+    if ( !s_pEraTable || !pszVDFKey ) return 0;
+    const char *pszEra = s_pEraTable->GetString( pszVDFKey, NULL );
+    return pszEra ? Q_atoi( pszEra ) : 0;
+}
+
+
+// ---------------------------------------------------------------------------
+// Attribute floor table — used by both TF2VGetItemEra and TF2VIsItemEraAllowed
+// ---------------------------------------------------------------------------
 struct AttributeFloor_t
 {
-    const char *pszAttrName;   // attribute string key
-    const char *pszVDFKey;     // key in tf2v_item_eras.vdf
-    const char *pszDisplayName;// shown to player
+    const char *pszAttrName;
+    const char *pszVDFKey;
+    const char *pszDisplayName;
 };
 
 static const AttributeFloor_t s_AttributeFloors[] =
 {
-    { "kill eater",           "_a_kill_eater",           "Stat clock (kill eater)"       },
-    { "set item texture wear","_a_set_item_texture_wear", "Weapon skin / war paint"       },
-    { "halloween spell type", "_a_spell_type",            "Halloween spell"               },
-    { "paint color",          "_a_paint",                 "Paint"                         },
-    { "paint color 2",        "_a_paint",                 "Paint"                         },
+    { "kill eater",            "_a_kill_eater",            "Stat clock (kill eater)"  },
+    { "set item texture wear", "_a_set_item_texture_wear", "Weapon skin / war paint"  },
+    { "halloween spell type",  "_a_spell_type",            "Halloween spell"          },
 };
 
 // ---------------------------------------------------------------------------
@@ -292,27 +308,25 @@ int TF2VGetItemEra( CEconItemView *pItem )
     const CEconItemDefinition *pDef = pItem->GetItemDefinition();
     if ( !pDef ) return 0;
 
-    int nBase  = TF2VGetBaseItemEraFromSchema( pDef );
-    int nQual  = TF2VGetQualityEraFloor( pItem->GetItemQuality(), NULL );
-    int nAttr  = 0;
+    int nBase = TF2VGetBaseItemEra( pDef );
+    int nQual = TF2VGetQualityEra( pItem->GetItemQuality(), NULL );
+    int nAttr = 0;
 
     if ( s_pEraTable )
     {
-		static CSchemaAttributeDefHandle s_pAttrHandles[ARRAYSIZE(s_AttributeFloors)] = {
-			CSchemaAttributeDefHandle("kill eater"),
-			CSchemaAttributeDefHandle("set item texture wear"),
-			CSchemaAttributeDefHandle("halloween spell type"),
-			CSchemaAttributeDefHandle("paint color"),
-			CSchemaAttributeDefHandle("paint color 2"),
-		};
-		for ( int i = 0; i < ARRAYSIZE(s_AttributeFloors); i++ )
-		{
-			if ( s_pAttrHandles[i] && pItem->FindAttribute( s_pAttrHandles[i] ) )
-			{
+        static CSchemaAttributeDefHandle s_pAttrHandles[ARRAYSIZE(s_AttributeFloors)] = {
+            CSchemaAttributeDefHandle("kill eater"),
+            CSchemaAttributeDefHandle("set item texture wear"),
+            CSchemaAttributeDefHandle("halloween spell type"),
+        };
+        for ( int i = 0; i < ARRAYSIZE(s_AttributeFloors); i++ )
+        {
+            if ( s_pAttrHandles[i] && pItem->FindAttribute( s_pAttrHandles[i] ) )
+            {
                 const char *p = s_pEraTable->GetString( s_AttributeFloors[i].pszVDFKey, NULL );
                 if ( p ) nAttr = MAX( nAttr, Q_atoi( p ) );
             }
-		}
+        }
     }
 
     return MAX( nBase, MAX( nQual, nAttr ) );
@@ -331,29 +345,25 @@ bool TF2VIsItemEraAllowed( CEconItemView *pItem, CTF2VEraViolation *pViolation )
 
     int nActiveEra = tf2v_era.GetInt();
 
-    // --- Check each component individually ---
-    int nBaseEra = TF2VGetBaseItemEraFromSchema( pDef );
-    const char *pszQualName  = NULL;
-    int nQualEra  = TF2VGetQualityEraFloor( pItem->GetItemQuality(), &pszQualName );
+    int nBaseEra = TF2VGetBaseItemEra( pDef );
+    const char *pszQualName = NULL;
+    int nQualEra  = TF2VGetQualityEra( pItem->GetItemQuality(), &pszQualName );
     int nWorstEra = MAX( nBaseEra, nQualEra );
 
-    // Attribute floors
     int nWorstAttrEra = 0;
     const char *pszWorstAttrName = NULL;
 
     if ( s_pEraTable )
     {
-		static CSchemaAttributeDefHandle s_pAttrHandles[ARRAYSIZE(s_AttributeFloors)] = {
-			CSchemaAttributeDefHandle("kill eater"),
-			CSchemaAttributeDefHandle("set item texture wear"),
-			CSchemaAttributeDefHandle("halloween spell type"),
-			CSchemaAttributeDefHandle("paint color"),
-			CSchemaAttributeDefHandle("paint color 2"),
-		};
-		for ( int i = 0; i < ARRAYSIZE(s_AttributeFloors); i++ )
-		{
-			if ( s_pAttrHandles[i] && pItem->FindAttribute( s_pAttrHandles[i] ) )
-			{
+        static CSchemaAttributeDefHandle s_pAttrHandles[ARRAYSIZE(s_AttributeFloors)] = {
+            CSchemaAttributeDefHandle("kill eater"),
+            CSchemaAttributeDefHandle("set item texture wear"),
+            CSchemaAttributeDefHandle("halloween spell type"),
+        };
+        for ( int i = 0; i < ARRAYSIZE(s_AttributeFloors); i++ )
+        {
+            if ( s_pAttrHandles[i] && pItem->FindAttribute( s_pAttrHandles[i] ) )
+            {
                 const char *p = s_pEraTable->GetString( s_AttributeFloors[i].pszVDFKey, NULL );
                 if ( p )
                 {
@@ -365,29 +375,28 @@ bool TF2VIsItemEraAllowed( CEconItemView *pItem, CTF2VEraViolation *pViolation )
                     }
                 }
             }
-		}
+        }
     }
 
     nWorstEra = MAX( nWorstEra, nWorstAttrEra );
 
     if ( nWorstEra <= nActiveEra )
-        return true;  // item is valid
+        return true;  // item is valid in this era
 
     // --- Build violation report ---
     if ( pViolation )
     {
-        pViolation->bViolation    = true;
-        pViolation->nRequiredEra  = nWorstEra;
-        pViolation->nActiveEra    = nActiveEra;
+        pViolation->bViolation   = true;
+        pViolation->nRequiredEra = nWorstEra;
+        pViolation->nActiveEra   = nActiveEra;
 
-        const TF2VEraInfo_t *pActiveInfo  = TF2VGetEraInfo( nActiveEra );
+        const TF2VEraInfo_t *pActiveInfo = TF2VGetEraInfo( nActiveEra );
 
         V_snprintf( pViolation->szItemName, sizeof(pViolation->szItemName),
                     "%s", pDef->GetItemBaseName() );
         V_snprintf( pViolation->szActiveEraDate, sizeof(pViolation->szActiveEraDate),
                     "%s", pActiveInfo ? pActiveInfo->pszDate : "?" );
 
-        // Build component lines
         pViolation->nViolatingComponents = 0;
 
         auto AddComp = [&]( const char *pszLabel, int nEra, bool bFailing )
@@ -405,17 +414,12 @@ bool TF2VIsItemEraAllowed( CEconItemView *pItem, CTF2VEraViolation *pViolation )
                         sizeof(pViolation->components[idx].szUpdateName),
                         "%s", pInfo ? pInfo->pszUpdateName : "?" );
             pViolation->components[idx].bFailing = bFailing;
-            pViolation->components[idx].nEra = nEra;
+            pViolation->components[idx].nEra     = nEra;
         };
 
-        // Base item component
         AddComp( pDef->GetItemBaseName(), nBaseEra, nBaseEra > nActiveEra );
-
-        // Quality component (only if non-standard quality)
         if ( nQualEra > 0 && pszQualName )
             AddComp( pszQualName, nQualEra, nQualEra > nActiveEra );
-
-        // Worst attribute component
         if ( nWorstAttrEra > 0 && pszWorstAttrName )
             AddComp( pszWorstAttrName, nWorstAttrEra, nWorstAttrEra > nActiveEra );
     }

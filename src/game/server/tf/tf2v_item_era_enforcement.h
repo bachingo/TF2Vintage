@@ -1,82 +1,55 @@
 //=============================================================================
 // tf2v_item_era_enforcement.h
-// Include in tf_player.cpp (server-side only, GAME_DLL).
 //=============================================================================
 #pragma once
 
-class CEconItemView;
+#include "econ_item_view.h"
 
-// ---------------------------------------------------------------------------
-// Violation report — one struct per rejected item.
-// Each component explains what part of the item post-dates the active era.
-// Populated by TF2VIsItemEraAllowed() when returning false.
-// ---------------------------------------------------------------------------
-#define TF2V_MAX_VIOLATION_COMPONENTS 4
+// Maximum violation components shown in the VGUI popup
+#define TF2V_MAX_VIOLATION_COMPONENTS 8
+
+struct CTF2VEraViolationComponent
+{
+    char szLabel[64];
+    char szDate[64];
+    char szUpdateName[64];
+    int  nEra;
+    bool bFailing;
+};
 
 struct CTF2VEraViolation
 {
-	bool  bViolation;
-	int   nRequiredEra;   // earliest era this item can exist
-	int   nActiveEra;     // current server era
+    bool   bViolation        = false;
+    int    nRequiredEra      = 0;
+    int    nActiveEra        = 0;
+    char   szItemName[64]    = {};
+    char   szActiveEraDate[64] = {};
+    int    nViolatingComponents = 0;
+    CTF2VEraViolationComponent components[TF2V_MAX_VIOLATION_COMPONENTS];
 
-	char  szItemName[64];         // base item name (e.g. "Rocket Launcher")
-	char  szActiveEraDate[32];    // e.g. "February 24, 2009"
-
-	int   nViolatingComponents;
-	struct Component_t
-	{
-		char szLabel[64];      // e.g. "Rocket Launcher" / "Strange quality" / "Stat clock"
-		char szDate[32];       // e.g. "December 15, 2011"
-		char szUpdateName[48]; // e.g. "Australian Christmas 2011"
-		bool bFailing;         // true if this component post-dates active era
-		int  nEra;
-	} components[TF2V_MAX_VIOLATION_COMPONENTS];
-
-	CTF2VEraViolation() { memset( this, 0, sizeof(*this) ); }
-
-	// Returns a formatted summary string for the chat/console log.
-	// For VGUI use the components array directly.
-	const char *GetSummary() const
-	{
-		static char s_szBuf[512];
-		V_snprintf( s_szBuf, sizeof(s_szBuf),
-		            "[TF2V] %s cannot appear before %s.",
-		            szItemName, components[0].szDate );
-		for ( int i = 0; i < nViolatingComponents; i++ )
-		{
-			if ( components[i].bFailing )
-			{
-				char szLine[128];
-				V_snprintf( szLine, sizeof(szLine),
-				            " %s first appeared %s (%s).",
-				            components[i].szLabel,
-				            components[i].szDate,
-				            components[i].szUpdateName );
-				V_strcat( s_szBuf, szLine, sizeof(s_szBuf) );
-			}
-		}
-		return s_szBuf;
-	}
+    const char *GetSummary() const;
 };
 
-// ---------------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------------
+// Reload the era table without restarting the server
+void TF2VReloadItemEraTable();
 
-// Returns the earliest era at which this item instance could exist,
-// accounting for base item first_sale_date, quality, and attributes.
+// Compute the earliest era at which pItem (with all its modifiers) is valid.
 int  TF2VGetItemEra( CEconItemView *pItem );
 
-// Returns true if the item is valid at the current server era.
-// Fills *pViolation with a detailed breakdown if returning false.
-// Only enforces when tf2v_enforcement >= 2. Fails open if VDF not loaded.
-bool TF2VIsItemEraAllowed( CEconItemView *pItem,
-                           CTF2VEraViolation *pViolation = NULL );
+// Returns false and fills pViolation if pItem is not legal in the active era.
+bool TF2VIsItemEraAllowed( CEconItemView *pItem, CTF2VEraViolation *pViolation );
 
+// Public helper — converts a "YYYY/MM/DD" first_sale_date string to an era int.
+int  TF2VDateStringToEra_Public( const char *pszDate );
 
-// Expose date->era conversion for use by tf2v_era_attributes.cpp.
-// Parses "YYYY/MM/DD" from items_game first_sale_date into an era integer.
-// Returns 0 for stock items (no date) or unparseable strings.
-int TF2VDateStringToEra_Public( const char *pszDate );
-// Reload cfg/tf2v_item_eras.vdf without restarting.
-void TF2VReloadItemEraTable();
+// Public helper — returns the base era for a definition, respecting VDF overrides.
+// Used by TF2VStripAnachronisticModifiers so both systems share the same source.
+int  TF2VGetBaseItemEra( const CEconItemDefinition *pDef );
+
+// Public helper — returns the era floor for a quality integer.
+// Pass nullptr for pszNameOut if you don't need the display name.
+int  TF2VGetQualityEra( int nQuality, const char **pszNameOut = nullptr );
+
+// Public helper — returns the era floor for a named attribute VDF key (e.g. "_a_kill_eater").
+// Returns 0 if the key is not in the era table.
+int  TF2VGetAttributeEra( const char *pszVDFKey );

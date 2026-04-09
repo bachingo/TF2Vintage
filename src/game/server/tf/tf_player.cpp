@@ -4636,35 +4636,40 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
                     CEconItemView strippedView;
                     CEconItemView *pItemToSpawn = const_cast<CEconItemView*>(pItem);
 
-                    if ( tf2v_enforcement.GetInt() >= 2 )
-                    {
-                        int nActiveEra = tf2v_era.GetInt();
-                        CTF2VStripLog stripLog;
+					if ( tf2v_enforcement.GetInt() >= 2 )
+					{
+						int nActiveEra = tf2v_era.GetInt();
+						CTF2VStripLog stripLog;
 
-                        if ( !TF2VStripAnachronisticModifiers( pItem, &strippedView,
-                                                               nActiveEra, &stripLog ) )
-                        {
-                            // Base item post-dates era — use stock (ItemIsAllowed
-                            // should have caught this, but be safe).
-                            continue;
-                        }
+						if ( !TF2VStripAnachronisticModifiers( pItem, &strippedView,
+															   nActiveEra, &stripLog ) )
+						{
+							// Base item post-dates era — skip this slot.
+							// The player will receive the stock weapon for this
+							// loadout position instead.
+							continue;
+						}
 
-                        // Log what was stripped for server console / VGUI
-                        for ( int s = 0; s < stripLog.nEntries; s++ )
-                        {
-                            DevMsg( "[TF2V] Stripped %s from %s "
-                                    "(introduced %s — %s; server era %d).\n",
-                                    stripLog.entries[s].szWhat,
-                                    pItem->GetItemDefinition()
-                                        ? pItem->GetItemDefinition()->GetItemBaseName()
-                                        : "unknown",
-                                    stripLog.entries[s].szDate,
-                                    stripLog.entries[s].szUpdate,
-                                    nActiveEra );
-                        }
+						if ( stripLog.nEntries > 0 )
+						{
+							// One or more modifiers were stripped. Use the sanitised copy.
+							pItemToSpawn = &strippedView;
 
-                        pItemToSpawn = &strippedView;
-                    }
+							for ( int s = 0; s < stripLog.nEntries; s++ )
+							{
+								DevMsg( "[TF2V] Stripped '%s' from '%s' "
+										"(introduced %s — %s; server era %d).\n",
+										stripLog.entries[s].szWhat,
+										pItem->GetItemDefinition()
+											? pItem->GetItemDefinition()->GetItemBaseName()
+											: "unknown",
+										stripLog.entries[s].szDate,
+										stripLog.entries[s].szUpdate,
+										nActiveEra );
+							}
+						}
+						// else: item was already era-clean; pItemToSpawn stays as pItem.
+					}
 
                     CEconEntity *pNewItem = dynamic_cast<CEconEntity*>(
                         GiveNamedItem( pItem->GetStaticData()->GetItemClass(),
@@ -4951,35 +4956,18 @@ CEconItemView *CTFPlayer::GetLoadoutItem( int iClass, int iSlot, bool bReportWhi
 	}
 
 	CEconItemView *pItem = m_Inventory.GetItemInLoadout( iClass, iSlot );
-	
+
     // TF2V: Offline/debug mode — serve from local VDF inventory.
     if ( TF2VIsOfflineMode() )
     {
         CEconItemView *pOfflineItem = TF2VOfflineInventory_GetItem( iClass, iSlot );
         if ( pOfflineItem && pOfflineItem->IsValid() )
             return pOfflineItem;
-        // NULL from offline inventory means "use stock" — fall through to base item below
+        // NULL from offline inventory means "use stock" — fall through.
         pItem = TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
     }
 
-
-	// TF2V era enforcement — block items that post-date the active era.
-	// Enforcement level 2+ (weapon gate). Fails open if VDF not loaded.
-	// The violation struct is available for VGUI display if needed.
-	if ( tf2v_enforcement.GetInt() >= 2 )
-	{
-		CTF2VEraViolation violation;
-		if ( !TF2VIsItemEraAllowed( pItem, &violation ) )
-		{
-			// Log the violation for server console
-			DevMsg( "%s\n", violation.GetSummary() );
-	
-			pItem = TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
-		}
-	}
-	
-	// Check to see if this item passes the tournament rules (in whitelist/or normal quality).
-	// If it doesn't, we fall back to the base item for the loadout slot.
+	// Check to see if this item passes the tournament rules.
 	if ( (pItem && pItem->IsValid()) && (pItem->GetItemQuality() != AE_NORMAL) && !pItem->GetStaticData()->IsAllowedInMatch() && TFGameRules()->IsInTournamentMode() )
 	{
 		if ( bReportWhitelistFails )

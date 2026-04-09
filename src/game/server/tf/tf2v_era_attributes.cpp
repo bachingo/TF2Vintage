@@ -43,12 +43,9 @@
 //               "airblast_disabled"            "0"
 //           }
 //       }
-//       // etc.
 //   }
 //
-// Eras are applied using "highest era <= active era" logic, identical to the
-// mapcycle routing. If no era block exists for an item, the schema defaults
-// are used unchanged.
+// Eras are applied using "highest era <= active era" logic.
 // ---------------------------------------------------------------------------
 
 static bool       s_bAttrTableLoaded = false;
@@ -62,7 +59,6 @@ static void TF2VEnsureAttrTableLoaded()
     KeyValues *pKV = new KeyValues( "tf2v_era_attributes" );
     if ( !pKV->LoadFromFile( filesystem, "cfg/tf2v_era_attributes.vdf", "MOD" ) )
     {
-        // Not an error — servers running latest era don't need the file.
         DevMsg( "[TF2V] cfg/tf2v_era_attributes.vdf not found — "
                 "per-era attribute overrides disabled.\n" );
         pKV->deleteThis();
@@ -88,21 +84,8 @@ CON_COMMAND( tf2v_reload_era_attributes,
 }
 
 // ---------------------------------------------------------------------------
-// System 2: TF2VStripAnachronisticModifiers
-//
-// Strips newest-first modifiers from a copy of the item view until it
-// complies with nActiveEra. Each modifier has a known introduction era.
-// Stripping order (newest to oldest):
-//   1. War paint / weapon skin     (era 170 — Jungle Inferno)
-//   2. Stat clock / kill eater     (era 150 — Tough Break)
-//   3. Collector's quality         (era 133 — Smissmas 2014)
-//   4. Haunted quality             (era 117 — Scream Fortress 2012)
-//   5. Strange quality             (era 112 — Atribute Dec 2011)
-//   6. Unusual quality             (era 103 — Australian Christmas 2010)
-//   7. Paint                       (era 100 — Mannconomy Sep 2010)
-//   8. Genuine quality             (era 100 — Mannconomy)
+// StripLog helper
 // ---------------------------------------------------------------------------
-
 static void StripLog( CTF2VStripLog *pLog,
                       const char *pszWhat, const char *pszDate,
                       const char *pszUpdate )
@@ -114,6 +97,28 @@ static void StripLog( CTF2VStripLog *pLog,
     V_strncpy( pLog->entries[i].szUpdate, pszUpdate, sizeof(pLog->entries[i].szUpdate) );
 }
 
+// ---------------------------------------------------------------------------
+// System 2: TF2VStripAnachronisticModifiers
+//
+// Goal: given a player's loadout item and the active era, produce a copy
+// of that item with only the modifiers that existed in the active era.
+//
+// Holy Mackerel example (def era 100, Mann-Conomy):
+//   Server era 2025 (201+) — Strange + Decoration: nothing stripped, spawn as-is.
+//   Server era 2015 (150)  — Strange OK (112), Decoration (170) stripped.
+//   Server era 2010 (100)  — Strange (112) and Decoration (170) both stripped;
+//                            item spawns as plain Unique Holy Mackerel.
+//   Server era 2009 (70)   — base item era 100 > active era 70: return false,
+//                            caller falls back to stock (bat).
+//
+// All era thresholds are read from the VDF via TF2VGetBaseItemEra(),
+// TF2VGetQualityEra(), and TF2VGetAttributeEra() — the same functions used
+// by TF2VIsItemEraAllowed(). The two systems cannot drift apart.
+//
+// Returns true  — pOutView is valid; spawn it (modifiers may have been stripped).
+// Returns false — base item post-dates active era; caller must use stock.
+// ---------------------------------------------------------------------------
+
 bool TF2VStripAnachronisticModifiers( const CEconItemView *pOriginal,
                                       CEconItemView       *pOutView,
                                       int                  nActiveEra,
@@ -122,18 +127,19 @@ bool TF2VStripAnachronisticModifiers( const CEconItemView *pOriginal,
     Assert( pOriginal && pOutView );
     if ( !pOriginal || !pOutView ) return false;
 
-    // Deep-copy the original. We will mutate pOutView only.
+    // Deep-copy the original. We mutate pOutView only.
     *pOutView = *pOriginal;
 
     const CEconItemDefinition *pDef = pOutView->GetItemDefinition();
     if ( !pDef ) return false;
 
-    // Actually check just the item's own date:
-    int nItemOnlyEra = TF2VDateStringToEra_Public( pDef->GetFirstSaleDate() );
-    if ( nItemOnlyEra > nActiveEra )
-        return false;  // base item post-dates era — use stock
+    // --- Gate 1: is the base item itself too new? ---
+    // Uses TF2VGetBaseItemEra so VDF overrides are respected.
+    int nBaseEra = TF2VGetBaseItemEra( pDef );
+    if ( nBaseEra > nActiveEra )
+        return false;  // base item post-dates era — caller gives stock
 
-    // Helper: attribute removal by schema name
+    // Helper: remove attribute by schema name, returns true if it existed.
     auto RemoveAttr = [&]( const char *pszAttr ) -> bool
     {
         static CSchemaAttributeDefHandle hAttr( pszAttr );
@@ -145,107 +151,172 @@ bool TF2VStripAnachronisticModifiers( const CEconItemView *pOriginal,
         return false;
     };
 
-    // --- Strip newest-first ---
-
-    // 1. War Paint (era 170)
-    if ( nActiveEra < 170 )
+    // Helper: get era threshold from VDF for a quality, with a sane fallback
+    // if the VDF key is absent (should never happen with a complete VDF, but
+    // we don't want a missing key to disable stripping entirely).
+    auto QualEra = [&]( int nQuality, int nFallback ) -> int
     {
-        if ( pOutView->GetItemQuality() == AE_PAINTKITWEAPON )
+        int n = TF2VGetQualityEra( nQuality, nullptr );
+        return ( n > 0 ) ? n : nFallback;
+    };
+
+    // Helper: get era threshold from VDF for an attribute floor key.
+    auto AttrEra = [&]( const char *pszVDFKey, int nFallback ) -> int
+    {
+        int n = TF2VGetAttributeEra( pszVDFKey );
+        return ( n > 0 ) ? n : nFallback;
+    };
+
+    // --- Strip in newest-first order ---
+    // Each block only fires if the active era is below that modifier's
+    // introduction era. The era threshold is always read from the VDF.
+
+    // 1. War Paint / weapon skin  (VDF: _q_paintkitweapon, _a_set_item_texture_wear)
+    {
+        int nEra = QualEra( AE_PAINTKITWEAPON, 170 );
+        if ( nActiveEra < nEra )
         {
-            pOutView->SetItemQuality( AE_UNIQUE );
-            RemoveAttr( "set item texture wear" );
-            RemoveAttr( "set item texture seed" );
-            RemoveAttr( "paintkit_proto_def_index" );
-            StripLog( pLog, "War Paint / weapon skin",
-                      "October 20, 2017", "Jungle Inferno Update" );
+            if ( pOutView->GetItemQuality() == AE_PAINTKITWEAPON )
+            {
+                pOutView->SetItemQuality( AE_UNIQUE );
+                RemoveAttr( "set item texture wear" );
+                RemoveAttr( "set item texture seed" );
+                RemoveAttr( "paintkit_proto_def_index" );
+                StripLog( pLog, "War Paint / weapon skin",
+                          "October 20, 2017", "Jungle Inferno Update" );
+            }
         }
     }
 
-    // 2. Stat clock / kill eater (era 150)
-    if ( nActiveEra < 150 )
+    // 2. Stat clock / kill eater  (VDF: _a_kill_eater)
     {
-        if ( RemoveAttr( "kill eater" ) )
+        int nEra = AttrEra( "_a_kill_eater", 150 );
+        if ( nActiveEra < nEra )
         {
-            RemoveAttr( "kill eater score type" );
-            RemoveAttr( "kill eater 2" );
-            RemoveAttr( "kill eater score type 2" );
-            RemoveAttr( "kill eater 3" );
-            RemoveAttr( "kill eater score type 3" );
-            // If quality was Strange-for-kill-eater, drop to Unique
+            if ( RemoveAttr( "kill eater" ) )
+            {
+                RemoveAttr( "kill eater score type" );
+                RemoveAttr( "kill eater 2" );
+                RemoveAttr( "kill eater score type 2" );
+                RemoveAttr( "kill eater 3" );
+                RemoveAttr( "kill eater score type 3" );
+                // If the item is Strange because of the kill eater, drop to Unique.
+                // Check this AFTER stripping the kill eater, not before, so we
+                // don't accidentally downgrade items that are Strange for other
+                // reasons (handled by the Strange quality block below).
+                if ( pOutView->GetItemQuality() == AE_STRANGE )
+                {
+                    int nStrangeEra = QualEra( AE_STRANGE, 112 );
+                    if ( nActiveEra < nStrangeEra )
+                        pOutView->SetItemQuality( AE_UNIQUE );
+                }
+                StripLog( pLog, "Stat clock (kill eater)",
+                          "December 17, 2015", "Tough Break Update" );
+            }
+        }
+    }
+
+    // 3. Collector's quality  (VDF: _q_collectors)
+    {
+        int nEra = QualEra( AE_COLLECTORS, 133 );
+        if ( nActiveEra < nEra )
+        {
+            if ( pOutView->GetItemQuality() == AE_COLLECTORS )
+            {
+                pOutView->SetItemQuality( AE_UNIQUE );
+                StripLog( pLog, "Collector's quality",
+                          "December 22, 2014", "Smissmas 2014" );
+            }
+        }
+    }
+
+    // 4. Haunted quality  (VDF: _q_haunted)
+    {
+        int nEra = QualEra( AE_HAUNTED, 117 );
+        if ( nActiveEra < nEra )
+        {
+            if ( pOutView->GetItemQuality() == AE_HAUNTED )
+            {
+                pOutView->SetItemQuality( AE_UNIQUE );
+                StripLog( pLog, "Haunted quality",
+                          "October 2012", "Scream Fortress 2012" );
+            }
+        }
+    }
+
+    // 5. Strange quality  (VDF: _q_strange)
+    {
+        int nEra = QualEra( AE_STRANGE, 112 );
+        if ( nActiveEra < nEra )
+        {
             if ( pOutView->GetItemQuality() == AE_STRANGE )
             {
                 pOutView->SetItemQuality( AE_UNIQUE );
+                // Kill eater was already removed in step 2 if applicable,
+                // but strip again defensively for items that have Strange
+                // quality without a kill eater (e.g. legacy Strange items).
+                RemoveAttr( "kill eater" );
+                RemoveAttr( "kill eater score type" );
+                StripLog( pLog, "Strange quality",
+                          "December 15, 2011", "Australian Christmas 2011" );
             }
-            StripLog( pLog, "Stat clock (kill eater)",
-                      "December 17, 2015", "Tough Break Update" );
         }
     }
 
-    // 3. Collector's quality (era 133)
-    if ( nActiveEra < 133 )
+    // 6. Halloween spells  (VDF: _a_spell_type)
     {
-        if ( pOutView->GetItemQuality() == AE_COLLECTORS )
+        int nEra = AttrEra( "_a_spell_type", 117 );
+        if ( nActiveEra < nEra )
         {
-            pOutView->SetItemQuality( AE_UNIQUE );
-            StripLog( pLog, "Collector's quality",
-                      "December 22, 2014", "Smissmas 2014" );
+            if ( RemoveAttr( "halloween spell type" ) )
+            {
+                StripLog( pLog, "Halloween spell",
+                          "October 2012", "Scream Fortress 2012" );
+            }
         }
     }
 
-    // 4. Haunted quality (era 117)
-    if ( nActiveEra < 117 )
+    // 7. Unusual quality  (VDF: _q_unusual)
     {
-        if ( pOutView->GetItemQuality() == AE_HAUNTED )
+        int nEra = QualEra( AE_UNUSUAL, 103 );
+        if ( nActiveEra < nEra )
         {
-            pOutView->SetItemQuality( AE_UNIQUE );
-            StripLog( pLog, "Haunted quality",
-                      "October 2012", "Scream Fortress 2012" );
+            if ( pOutView->GetItemQuality() == AE_UNUSUAL )
+            {
+                pOutView->SetItemQuality( AE_UNIQUE );
+                RemoveAttr( "attach particle effect" );
+                StripLog( pLog, "Unusual quality",
+                          "December 17, 2010", "Australian Christmas 2010" );
+            }
         }
     }
 
-    // 5. Strange quality (era 112)
-    if ( nActiveEra < 112 )
+    // 8. Paint  (VDF: _a_paint_color — add to VDF if you need server-side tuning;
+    //            falls back to era 100 / Mann-Conomy if key absent)
     {
-        if ( pOutView->GetItemQuality() == AE_STRANGE )
+        int nEra = AttrEra( "_a_paint_color", 100 );
+        if ( nActiveEra < nEra )
         {
-            pOutView->SetItemQuality( AE_UNIQUE );
-            RemoveAttr( "kill eater" );
-            RemoveAttr( "kill eater score type" );
-            StripLog( pLog, "Strange quality",
-                      "December 15, 2011", "Australian Christmas 2011" );
+            bool bHadPaint = RemoveAttr( "paint color" );
+            bHadPaint     |= RemoveAttr( "paint color 2" );
+            if ( bHadPaint )
+                StripLog( pLog, "Paint",
+                          "September 30, 2010", "Mann-Conomy Update" );
         }
     }
 
-    // 6. Unusual quality (era 103)
-    if ( nActiveEra < 103 )
+    // 9. Genuine quality  (VDF: _q_genuine — add to VDF to override;
+    //                      falls back to era 100 / Mann-Conomy if key absent)
     {
-        if ( pOutView->GetItemQuality() == AE_UNUSUAL )
+        int nEra = QualEra( AE_RARITY1, 100 );  // AE_RARITY1 == Genuine
+        if ( nActiveEra < nEra )
         {
-            pOutView->SetItemQuality( AE_UNIQUE );
-            RemoveAttr( "attach particle effect" );
-            StripLog( pLog, "Unusual quality",
-                      "December 17, 2010", "Australian Christmas 2010" );
-        }
-    }
-
-    // 7. Paint (era 100)
-    if ( nActiveEra < 100 )
-    {
-        bool bHadPaint = RemoveAttr( "paint color" );
-        bHadPaint     |= RemoveAttr( "paint color 2" );
-        if ( bHadPaint )
-            StripLog( pLog, "Paint",
-                      "September 30, 2010", "Mann-Conomy Update" );
-    }
-
-    // 8. Genuine quality (era 100 — promo items)
-    if ( nActiveEra < 100 )
-    {
-        if ( pOutView->GetItemQuality() == AE_RARITY1 )
-        {
-            pOutView->SetItemQuality( AE_UNIQUE );
-            StripLog( pLog, "Genuine quality",
-                      "September 30, 2010", "Mann-Conomy Update" );
+            if ( pOutView->GetItemQuality() == AE_RARITY1 )
+            {
+                pOutView->SetItemQuality( AE_UNIQUE );
+                StripLog( pLog, "Genuine quality",
+                          "September 30, 2010", "Mann-Conomy Update" );
+            }
         }
     }
 
@@ -257,9 +328,7 @@ bool TF2VStripAnachronisticModifiers( const CEconItemView *pOriginal,
 //
 // Finds the correct era block in tf2v_era_attributes.vdf for this item
 // and applies attribute values to the live entity via SetRuntimeAttributeValue.
-//
 // "Highest era block <= active era" — same cascading logic as mapcycles.
-// If no file or no matching entry, this is a no-op.
 // ---------------------------------------------------------------------------
 
 void TF2VApplyEraAttributeOverrides( CEconEntity *pEntity,
@@ -269,7 +338,6 @@ void TF2VApplyEraAttributeOverrides( CEconEntity *pEntity,
     TF2VEnsureAttrTableLoaded();
     if ( !s_pAttrTable || !pEntity ) return;
 
-    // Find this item's entry
     char szDefKey[16];
     V_snprintf( szDefKey, sizeof(szDefKey), "%d", nDefIndex );
     KeyValues *pItemKV = s_pAttrTable->FindKey( szDefKey );
@@ -290,12 +358,11 @@ void TF2VApplyEraAttributeOverrides( CEconEntity *pEntity,
         }
     }
 
-    if ( !pBestBlock ) return;  // no era block applies
+    if ( !pBestBlock ) return;
 
     CAttributeList *pAttrList = pEntity->GetAttributeList();
     if ( !pAttrList ) return;
 
-    // Apply each attribute in the era block
     for ( KeyValues *pAttr = pBestBlock->GetFirstValue();
           pAttr; pAttr = pAttr->GetNextValue() )
     {
