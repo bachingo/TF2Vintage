@@ -2,9 +2,10 @@
 {
 	// Auto-generated from items_game.txt first_sale_date fields.
 	// Format: "item_def_index" "era_integer"
-	// Stock items (no first_sale_date) are omitted — they are era 0 by default.
+	// Stock items are era 0 (launch). Note: items_game gives many pre-Mannconomy items
+	// a first_sale_date of 2010/09/29; VDF overrides are used to correct these.
 	// Modifier era floors (quality, attributes) are listed at the end.
-	// Last generated: 2026-03-26
+	// Last updated: 2026-04-09 (corrected pre-Mannconomy item eras)
 
 	// ================================================================
 	// ITEMS (weapons, cosmetics, tools, taunts)
@@ -41,32 +42,39 @@
 	"28"		"0"		// TF_WEAPON_BUILDER
 	"29"		"0"		// TF_WEAPON_MEDIGUN
 	"30"		"0"		// TF_WEAPON_INVIS
-	"35"		"20"		// The Kritzkrieg
-	"36"		"20"		// The Blutsauger
-	"37"		"20"		// The Ubersaw
-	"38"		"30"		// The Axtinguisher
-	"40"		"30"		// The Backburner
-	"41"		"30"		// Natascha
-	"42"		"30"		// The Sandvich
-	"43"		"30"		// The Killing Gloves of Boxing
-	"44"		"90"		// The Sandman
-	"45"		"90"		// The Force-a-Nature
-	"46"		"90"		// Bonk! Atomic Punch
-	"47"		"90"		// Demoman's Fro
-	"48"		"90"		// Mining Light
-	"49"		"90"		// Football Helmet
-	"50"		"90"		// Prussian Pickelhaube
-	"51"		"90"		// Pyro's Beanie
-	"52"		"90"		// Batter's Helmet
-	"53"		"90"		// Trophy Belt
-	"54"		"90"		// Soldier's Stash
-	"55"		"90"		// Fancy Fedora
-	"56"		"90"		// The Huntsman
-	"57"		"90"		// The Razorback
-	"58"		"90"		// Jarate
-	"59"		"90"		// The Dead Ringer
-	"60"		"90"		// The Cloak and Dagger
-	"61"		"90"		// The Ambassador
+	// --- Era 20: Pyro Update Jun 19 2008 ---
+	"35"		"20"		// The Kritzkrieg — Pyro Update Jun 2008
+	"36"		"20"		// The Blutsauger — Pyro Update Jun 2008
+	"37"		"20"		// The Ubersaw — Pyro Update Jun 2008
+	"38"		"20"		// The Axtinguisher — Pyro Update Jun 2008
+	"40"		"20"		// The Backburner — Pyro Update Jun 2008
+	// --- Era 30: Heavy Update Aug 19 2008 ---
+	"41"		"30"		// Natascha — Heavy Update Aug 2008
+	"42"		"30"		// The Sandvich — Heavy Update Aug 2008
+	"43"		"30"		// The Killing Gloves of Boxing — Heavy Update Aug 2008
+	// --- Era 50: Scout Update Feb 24 2009 ---
+	"44"		"50"		// The Sandman — Scout Update Feb 2009
+	"45"		"50"		// The Force-a-Nature — Scout Update Feb 2009
+	"46"		"50"		// Bonk! Atomic Punch — Scout Update Feb 2009
+	// --- Era 70: Classless Update Aug 13 2009 (milestone hats) ---
+	"47"		"70"		// Demoman's Fro — Classless Update Aug 2009 milestone reward
+	"48"		"70"		// Mining Light — Classless Update Aug 2009 milestone reward
+	"49"		"70"		// Football Helmet — Classless Update Aug 2009 milestone reward
+	"50"		"70"		// Prussian Pickelhaube — Classless Update Aug 2009 milestone reward
+	"51"		"70"		// Pyro's Beanie — Classless Update Aug 2009 milestone reward
+	"52"		"70"		// Batter's Helmet — Classless Update Aug 2009 milestone reward
+	"53"		"70"		// Trophy Belt — Classless Update Aug 2009 milestone reward
+	// --- Era 80: WAR! Update Dec 17 2009 (milestone hats + weapons) ---
+	"54"		"80"		// Soldier's Stash — WAR! Update Dec 2009 milestone reward
+	"55"		"70"		// Fancy Fedora — Classless Update Aug 2009 milestone reward
+	// --- Era 60: Sniper vs. Spy Update May 21 2009 ---
+	"56"		"60"		// The Huntsman — Sniper vs. Spy Update May 2009
+	"57"		"60"		// The Razorback — Sniper vs. Spy Update May 2009
+	"58"		"60"		// Jarate — Sniper vs. Spy Update May 2009
+	"59"		"60"		// The Dead Ringer — Sniper vs. Spy Update May 2009
+	"60"		"60"		// The Cloak and Dagger — Sniper vs. Spy Update May 2009
+	"61"		"60"		// The Ambassador — Sniper vs. Spy Update May 2009
+	// --- Era 90: Engineer Update Jul 8 2010 (community hats + Engineer weapons) ---
 	"94"		"90"		// Texas Ten Gallon
 	"95"		"90"		// Engineer's Cap
 	"96"		"90"		// Officer's Ushanka
@@ -85,8 +93,9 @@
 	"109"		"90"		// Professional's Panama
 	"110"		"90"		// Master's Yellow Belt
 	"111"		"90"		// Baseball Bill's Sports Shine
-	"115"		"90"		// Mildly Disturbing Halloween Mask
-	"116"		"90"		// Ghastly Gibus
+	// --- Era 71: Halloween 2009 / Sep 2009 patch ---
+	"115"		"71"		// Mildly Disturbing Halloween Mask — Halloween 2009
+	"116"		"71"		// Ghastly Gibus — Halloween 2009
 	"117"		"90"		// Ritzy Rick's Hair Fixative
 	"118"		"90"		// Texas Slim's Dome Shine
 	"120"		"90"		// Scotsman's Stove Pipe
@@ -96,13 +105,14 @@
 	"124"		"90"		// CheatDetectedHonesty
 	"125"		"90"		// Honest Halo
 	"126"		"90"		// L4D Hat
-	"127"		"90"		// The Direct Hit
-	"128"		"90"		// The Equalizer
-	"129"		"90"		// The Buff Banner
-	"130"		"90"		// The Scottish Resistance
-	"131"		"90"		// The Chargin' Targe
-	"132"		"90"		// The Eyelander
-	"133"		"90"		// The Gunboats
+	// --- Era 80: WAR! Update Dec 17 2009 (weapons) ---
+	"127"		"80"		// The Direct Hit — WAR! Update Dec 2009
+	"128"		"80"		// The Equalizer — WAR! Update Dec 2009
+	"129"		"80"		// The Buff Banner — WAR! Update Dec 2009
+	"130"		"80"		// The Scottish Resistance — WAR! Update Dec 2009
+	"131"		"80"		// The Chargin' Targe — WAR! Update Dec 2009
+	"132"		"80"		// The Eyelander — WAR! Update Dec 2009
+	"133"		"80"		// The Gunboats — WAR! Update Dec 2009
 	"134"		"90"		// Propaganda Contest First Place
 	"135"		"90"		// Towering Pillar of Hats
 	"136"		"90"		// Propaganda Contest Second Place
@@ -125,19 +135,19 @@
 	"154"		"90"		// The Pain Train
 	"155"		"90"		// The Southern Hospitality
 	"158"		"90"		// Sniper Pith Helmet
-	"159"		"90"		// The Dalokohs Bar
+	"159"		"50"		// The Dalokohs Bar — Scout Update Feb 2009
 	"160"		"90"		// TTG Max Pistol
 	"161"		"90"		// TTG Sam Revolver
 	"162"		"90"		// TTG Max Hat
-	"163"		"90"		// Crit-a-Cola
+	"163"		"50"		// Crit-a-Cola — Scout Update Feb 2009
 	"164"		"90"		// Employee Badge A
 	"165"		"90"		// Employee Badge B
 	"166"		"90"		// Employee Badge C
 	"169"		"90"		// Golden Wrench
 	"170"		"90"		// Employee Badge Plat
-	"171"		"90"		// The Tribalman's Shiv
-	"172"		"90"		// The Scotsman's Skullcutter
-	"173"		"90"		// The Vita-Saw
+	"171"		"60"		// The Tribalman's Shiv — Sniper vs. Spy Update May 2009
+	"172"		"80"		// The Scotsman's Skullcutter — WAR! Update Dec 2009
+	"173"		"80"		// The Vita-Saw — WAR! Update Dec 2009
 	"174"		"90"		// Scout Whoopee Cap
 	"175"		"90"		// Pyro Monocle
 	"177"		"90"		// Medic Goggles
@@ -150,29 +160,30 @@
 	"184"		"90"		// Medic Gatsby
 	"185"		"90"		// Heavy Do-rag
 	"189"		"90"		// Parasite Hat
-	"190"		"90"		// Upgradeable TF_WEAPON_BAT
-	"191"		"90"		// Upgradeable TF_WEAPON_BOTTLE
-	"192"		"90"		// Upgradeable TF_WEAPON_FIREAXE
-	"193"		"90"		// Upgradeable TF_WEAPON_CLUB
-	"194"		"90"		// Upgradeable TF_WEAPON_KNIFE
-	"195"		"90"		// Upgradeable TF_WEAPON_FISTS
-	"196"		"90"		// Upgradeable TF_WEAPON_SHOVEL
-	"197"		"90"		// Upgradeable TF_WEAPON_WRENCH
-	"198"		"90"		// Upgradeable TF_WEAPON_BONESAW
-	"199"		"90"		// Upgradeable TF_WEAPON_SHOTGUN_PRIMARY
-	"200"		"90"		// Upgradeable TF_WEAPON_SCATTERGUN
-	"201"		"90"		// Upgradeable TF_WEAPON_SNIPERRIFLE
-	"202"		"90"		// Upgradeable TF_WEAPON_MINIGUN
-	"203"		"90"		// Upgradeable TF_WEAPON_SMG
-	"204"		"90"		// Upgradeable TF_WEAPON_SYRINGEGUN_MEDIC
-	"205"		"90"		// Upgradeable TF_WEAPON_ROCKETLAUNCHER
-	"206"		"90"		// Upgradeable TF_WEAPON_GRENADELAUNCHER
-	"207"		"90"		// Upgradeable TF_WEAPON_PIPEBOMBLAUNCHER
-	"208"		"90"		// Upgradeable TF_WEAPON_FLAMETHROWER
-	"209"		"90"		// Upgradeable TF_WEAPON_PISTOL
-	"210"		"90"		// Upgradeable TF_WEAPON_REVOLVER
-	"211"		"90"		// Upgradeable TF_WEAPON_MEDIGUN
-	"212"		"90"		// Upgradeable TF_WEAPON_INVIS
+	// --- Era 121: Mann vs. Machine (MvM upgradeable weapon variants) ---
+	"190"		"121"		// Upgradeable TF_WEAPON_BAT — Mann vs. Machine Aug 2012
+	"191"		"121"		// Upgradeable TF_WEAPON_BOTTLE — Mann vs. Machine Aug 2012
+	"192"		"121"		// Upgradeable TF_WEAPON_FIREAXE — Mann vs. Machine Aug 2012
+	"193"		"121"		// Upgradeable TF_WEAPON_CLUB — Mann vs. Machine Aug 2012
+	"194"		"121"		// Upgradeable TF_WEAPON_KNIFE — Mann vs. Machine Aug 2012
+	"195"		"121"		// Upgradeable TF_WEAPON_FISTS — Mann vs. Machine Aug 2012
+	"196"		"121"		// Upgradeable TF_WEAPON_SHOVEL — Mann vs. Machine Aug 2012
+	"197"		"121"		// Upgradeable TF_WEAPON_WRENCH — Mann vs. Machine Aug 2012
+	"198"		"121"		// Upgradeable TF_WEAPON_BONESAW — Mann vs. Machine Aug 2012
+	"199"		"121"		// Upgradeable TF_WEAPON_SHOTGUN_PRIMARY — Mann vs. Machine Aug 2012
+	"200"		"121"		// Upgradeable TF_WEAPON_SCATTERGUN — Mann vs. Machine Aug 2012
+	"201"		"121"		// Upgradeable TF_WEAPON_SNIPERRIFLE — Mann vs. Machine Aug 2012
+	"202"		"121"		// Upgradeable TF_WEAPON_MINIGUN — Mann vs. Machine Aug 2012
+	"203"		"121"		// Upgradeable TF_WEAPON_SMG — Mann vs. Machine Aug 2012
+	"204"		"121"		// Upgradeable TF_WEAPON_SYRINGEGUN_MEDIC — Mann vs. Machine Aug 2012
+	"205"		"121"		// Upgradeable TF_WEAPON_ROCKETLAUNCHER — Mann vs. Machine Aug 2012
+	"206"		"121"		// Upgradeable TF_WEAPON_GRENADELAUNCHER — Mann vs. Machine Aug 2012
+	"207"		"121"		// Upgradeable TF_WEAPON_PIPEBOMBLAUNCHER — Mann vs. Machine Aug 2012
+	"208"		"121"		// Upgradeable TF_WEAPON_FLAMETHROWER — Mann vs. Machine Aug 2012
+	"209"		"121"		// Upgradeable TF_WEAPON_PISTOL — Mann vs. Machine Aug 2012
+	"210"		"121"		// Upgradeable TF_WEAPON_REVOLVER — Mann vs. Machine Aug 2012
+	"211"		"121"		// Upgradeable TF_WEAPON_MEDIGUN — Mann vs. Machine Aug 2012
+	"212"		"121"		// Upgradeable TF_WEAPON_INVIS — Mann vs. Machine Aug 2012
 	"213"		"90"		// The Attendant
 	"214"		"90"		// The Powerjack
 	"215"		"90"		// The Degreaser
@@ -192,11 +203,11 @@
 	"232"		"90"		// The Bushwacka
 	"233"		"90"		// Gift - 1 Player
 	"234"		"90"		// Gift - 24 Players
-	"237"		"90"		// Rocket Jumper
-	"239"		"90"		// Gloves of Running Urgently
-	"241"		"90"		// Duel MiniGame
-	"736"		"90"		// Upgradeable TF_WEAPON_BUILDER_SPY
-	"737"		"90"		// Upgradeable TF_WEAPON_PDA_ENGINEER_BUILD
+	"237"		"115"		// Rocket Jumper — July 2013 patch (became equippable)
+	"239"		"70"		// Gloves of Running Urgently — Classless Update Aug 2009
+	"241"		"100"		// Duel MiniGame — Mann-Conomy Update Sep 2010
+	"736"		"121"		// Upgradeable TF_WEAPON_BUILDER_SPY — Mann vs. Machine Aug 2012
+	"737"		"121"		// Upgradeable TF_WEAPON_PDA_ENGINEER_BUILD — Mann vs. Machine Aug 2012
 	"2000"		"90"		// Polycount Pyro Bundle
 	"2001"		"90"		// Polycount Spy Bundle
 	"2002"		"90"		// Polycount Soldier Bundle
@@ -274,7 +285,7 @@
 	"5050"		"91"		// Backpack Expander
 
 	// --- Era 100: Mannconomy Sep 30 2010 ---
-	"265"		"100"		// Stickybomb Jumper
+	"265"		"115"		// Stickybomb Jumper — July 2013 patch (became equippable)
 	"280"		"100"		// Halloween Noise Maker - Black Cat
 	"281"		"100"		// Halloween Noise Maker - Gremlin
 	"282"		"100"		// Halloween Noise Maker - Werewolf
