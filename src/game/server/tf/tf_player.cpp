@@ -4628,13 +4628,14 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 					}
 				}
 
-				if ( !bAlreadyHave && pItem->GetStaticData()->GetItemClass() )
+				if ( pItem->GetStaticData()->GetItemClass() )
 				{
                     // TF2V: Build a potentially-modified item view for era compliance.
                     // This may strip anachronistic modifiers (stat clock, paint, quality)
                     // from a *copy* of the item view. The player's inventory is never touched.
                     CEconItemView strippedView;
                     CEconItemView *pItemToSpawn = const_cast<CEconItemView*>(pItem);
+					bool bForcedStock = false;
 
 					if ( tf2v_enforcement.GetInt() >= 2 )
 					{
@@ -4644,13 +4645,14 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 						if ( !TF2VStripAnachronisticModifiers( pItem, &strippedView,
 															   nActiveEra, &stripLog ) )
 						{
-							// Base item post-dates era — skip this slot.
+							// Base item post-dates era.
 							// The player will receive the stock weapon for this
 							// loadout position instead.
-							continue;
+							pItem = TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+							bool bForcedStock = true;
 						}
 
-						if ( stripLog.nEntries > 0 )
+						if ( stripLog.nEntries > 0 && !bForcedStock )
 						{
 							// One or more modifiers were stripped. Use the sanitised copy.
 							pItemToSpawn = &strippedView;
@@ -4671,6 +4673,10 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 						// else: item was already era-clean; pItemToSpawn stays as pItem.
 					}
 
+				}
+				
+				if ( !bAlreadyHave && pItem->GetStaticData()->GetItemClass() )
+				{
                     CEconEntity *pNewItem = dynamic_cast<CEconEntity*>(
                         GiveNamedItem( pItem->GetStaticData()->GetItemClass(),
                                        0, pItemToSpawn ));
