@@ -128,11 +128,9 @@ bool TF2VStripAnachronisticModifiers( const CEconItemView *pOriginal,
     const CEconItemDefinition *pDef = pOutView->GetItemDefinition();
     if ( !pDef ) return false;
 
-    // If the base item itself post-dates the era, no amount of stripping helps.
-	int nBaseEra = TF2VGetItemEra( pOutView );  // call without quality/attr floors
     // Actually check just the item's own date:
     int nItemOnlyEra = TF2VDateStringToEra_Public( pDef->GetFirstSaleDate() );
-    if ( nItemOnlyEra > nBaseEra )
+    if ( nItemOnlyEra > nActiveEra )
         return false;  // base item post-dates era — use stock
 
     // Helper: attribute removal by schema name

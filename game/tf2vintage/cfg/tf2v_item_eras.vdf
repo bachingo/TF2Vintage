@@ -10,50 +10,45 @@
 	// ITEMS (weapons, cosmetics, tools, taunts)
 	// ================================================================
 
-	// --- Era 81: Era 81 ---
-	"362"		"81"		// Charity Noise Maker - Bell
-	"364"		"81"		// Charity Noise Maker - Tingsha
-
-	// --- Era 90: Engineer Update Jul 8 2010 ---
-	"0"		"90"		// TF_WEAPON_BAT
-	"1"		"90"		// TF_WEAPON_BOTTLE
-	"2"		"90"		// TF_WEAPON_FIREAXE
-	"3"		"90"		// TF_WEAPON_CLUB
-	"4"		"90"		// TF_WEAPON_KNIFE
-	"5"		"90"		// TF_WEAPON_FISTS
-	"6"		"90"		// TF_WEAPON_SHOVEL
-	"7"		"90"		// TF_WEAPON_WRENCH
-	"8"		"90"		// TF_WEAPON_BONESAW
-	"9"		"90"		// TF_WEAPON_SHOTGUN_PRIMARY
-	"10"		"90"		// TF_WEAPON_SHOTGUN_SOLDIER
-	"11"		"90"		// TF_WEAPON_SHOTGUN_HWG
-	"12"		"90"		// TF_WEAPON_SHOTGUN_PYRO
-	"13"		"90"		// TF_WEAPON_SCATTERGUN
-	"14"		"90"		// TF_WEAPON_SNIPERRIFLE
-	"15"		"90"		// TF_WEAPON_MINIGUN
-	"16"		"90"		// TF_WEAPON_SMG
-	"17"		"90"		// TF_WEAPON_SYRINGEGUN_MEDIC
-	"18"		"90"		// TF_WEAPON_ROCKETLAUNCHER
-	"19"		"90"		// TF_WEAPON_GRENADELAUNCHER
-	"20"		"90"		// TF_WEAPON_PIPEBOMBLAUNCHER
-	"21"		"90"		// TF_WEAPON_FLAMETHROWER
-	"22"		"90"		// TF_WEAPON_PISTOL
-	"23"		"90"		// TF_WEAPON_PISTOL_SCOUT
-	"24"		"90"		// TF_WEAPON_REVOLVER
-	"25"		"90"		// TF_WEAPON_PDA_ENGINEER_BUILD
-	"26"		"90"		// TF_WEAPON_PDA_ENGINEER_DESTROY
-	"27"		"90"		// TF_WEAPON_PDA_SPY
-	"28"		"90"		// TF_WEAPON_BUILDER
-	"29"		"90"		// TF_WEAPON_MEDIGUN
-	"30"		"90"		// TF_WEAPON_INVIS
-	"35"		"90"		// The Kritzkrieg
-	"36"		"90"		// The Blutsauger
-	"37"		"90"		// The Ubersaw
-	"38"		"90"		// The Axtinguisher
-	"40"		"90"		// The Backburner
-	"41"		"90"		// Natascha
-	"42"		"90"		// The Sandvich
-	"43"		"90"		// The Killing Gloves of Boxing
+	"0"		"0"		// TF_WEAPON_BAT
+	"1"		"0"		// TF_WEAPON_BOTTLE
+	"2"		"0"		// TF_WEAPON_FIREAXE
+	"3"		"0"		// TF_WEAPON_CLUB
+	"4"		"0"		// TF_WEAPON_KNIFE
+	"5"		"0"		// TF_WEAPON_FISTS
+	"6"		"0"		// TF_WEAPON_SHOVEL
+	"7"		"0"		// TF_WEAPON_WRENCH
+	"8"		"0"		// TF_WEAPON_BONESAW
+	"9"		"0"		// TF_WEAPON_SHOTGUN_PRIMARY
+	"10"		"0"		// TF_WEAPON_SHOTGUN_SOLDIER
+	"11"		"0"		// TF_WEAPON_SHOTGUN_HWG
+	"12"		"0"		// TF_WEAPON_SHOTGUN_PYRO
+	"13"		"0"		// TF_WEAPON_SCATTERGUN
+	"14"		"0"		// TF_WEAPON_SNIPERRIFLE
+	"15"		"0"		// TF_WEAPON_MINIGUN
+	"16"		"0"		// TF_WEAPON_SMG
+	"17"		"0"		// TF_WEAPON_SYRINGEGUN_MEDIC
+	"18"		"0"		// TF_WEAPON_ROCKETLAUNCHER
+	"19"		"0"		// TF_WEAPON_GRENADELAUNCHER
+	"20"		"0"		// TF_WEAPON_PIPEBOMBLAUNCHER
+	"21"		"0"		// TF_WEAPON_FLAMETHROWER
+	"22"		"0"		// TF_WEAPON_PISTOL
+	"23"		"0"		// TF_WEAPON_PISTOL_SCOUT
+	"24"		"0"		// TF_WEAPON_REVOLVER
+	"25"		"0"		// TF_WEAPON_PDA_ENGINEER_BUILD
+	"26"		"0"		// TF_WEAPON_PDA_ENGINEER_DESTROY
+	"27"		"0"		// TF_WEAPON_PDA_SPY
+	"28"		"0"		// TF_WEAPON_BUILDER
+	"29"		"0"		// TF_WEAPON_MEDIGUN
+	"30"		"0"		// TF_WEAPON_INVIS
+	"35"		"20"		// The Kritzkrieg
+	"36"		"20"		// The Blutsauger
+	"37"		"20"		// The Ubersaw
+	"38"		"30"		// The Axtinguisher
+	"40"		"30"		// The Backburner
+	"41"		"30"		// Natascha
+	"42"		"30"		// The Sandvich
+	"43"		"30"		// The Killing Gloves of Boxing
 	"44"		"90"		// The Sandman
 	"45"		"90"		// The Force-a-Nature
 	"46"		"90"		// Bonk! Atomic Punch
