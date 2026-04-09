@@ -253,8 +253,6 @@ ConVar mp_match_end_at_timelimit( "mp_match_end_at_timelimit", "0", FCVAR_NOTIFY
 
 ConVar mp_holiday_nogifts( "mp_holiday_nogifts", "0", FCVAR_NOTIFY, "Set to 1 to prevent holiday gifts from spawning when players are killed." );
 
-ConVar tf2v_alt_respawn_time( "tf2v_alt_respawn_time", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Uses an alternate calculation for respawn timers to scale with playercount.", true, 0, true, 1  );
-
 const char *m_pszRoundStateStrings[] = 
 {
 	"GR_STATE_INIT",
@@ -401,6 +399,8 @@ CON_COMMAND_F( mp_forcewin, "Forces team to win", FCVAR_CHEAT )
 }
 
 #endif // GAME_DLL
+
+ConVar tf2v_alt_respawn_time( "tf2v_alt_respawn_time", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Uses an alternate calculation for respawn timers to scale with playercount.", true, 0, true, 1  );
 
 // Utility function
 bool FindInList( const char **pStrings, const char *pToFind )
