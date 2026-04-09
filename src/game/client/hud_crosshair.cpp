@@ -47,7 +47,7 @@ DECLARE_HUDELEMENT( CHudCrosshair );
 #endif
 
 #if defined( TF_VINTAGE_CLIENT )
-ConVar tf2v_use_real_crosshair_location( "tf2v_use_real_crosshair_location", "1", FCVAR_NONE, "Enables the crosshair to move around at aimed surfaces for a more accurate shot." );
+ConVar tf2v_use_real_crosshair_location( "tf2v_use_real_crosshair_location", "0", FCVAR_NONE, "Enables the crosshair to move around at aimed surfaces for a more accurate shot." );
 #endif
 
 CHudCrosshair::CHudCrosshair( const char *pElementName ) :
