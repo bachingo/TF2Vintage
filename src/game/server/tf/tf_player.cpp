@@ -4628,7 +4628,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 					}
 				}
 
-				if ( pItem->GetStaticData()->GetItemClass() )
+				if ( !bAlreadyHave && pItem->GetStaticData()->GetItemClass() )
 				{
                     // TF2V: Build a potentially-modified item view for era compliance.
                     // This may strip anachronistic modifiers (stat clock, paint, quality)
@@ -4648,7 +4648,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 							// Base item post-dates era.
 							// The player will receive the stock weapon for this
 							// loadout position instead.
-							pItem = TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+							pItemToSpawn = TFInventoryManager()->GetBaseItemForClass( iClass, i );
 							bool bForcedStock = true;
 						}
 
@@ -4673,10 +4673,6 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 						// else: item was already era-clean; pItemToSpawn stays as pItem.
 					}
 
-				}
-				
-				if ( !bAlreadyHave && pItem->GetStaticData()->GetItemClass() )
-				{
                     CEconEntity *pNewItem = dynamic_cast<CEconEntity*>(
                         GiveNamedItem( pItem->GetStaticData()->GetItemClass(),
                                        0, pItemToSpawn ));
