@@ -651,19 +651,20 @@ float CTeamplayRoundBasedRules::GetRespawnTimeScalar( int iTeam )
 {
 	float flScale;
 	int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
-	if ( tf2v_alt_respawn_time.GetBool() ) // Scaled respawns to players, where the "standard" is 16 players. Meant to balance player density.
+	if ( tf2v_alt_respawn_time.GetBool() )
 	{
+		// Scaled respawns to players, where the "standard" is 16 players.
+		// Meant to balance player density at any size.
 		flScale = iNumPlayers * (1/8);
 		return flScale;
 	}
-	else // Original respawn logic.
-	{
-		// For long respawn times, scale the time as the number of players drops
-		int iOptimalPlayers = 8;	// 16 players total, 8 per team
+	
+	// For long respawn times, scale the time as the number of players drops
+	int iOptimalPlayers = 8;	// 16 players total, 8 per team
 
-		flScale = RemapValClamped( iNumPlayers, 1, iOptimalPlayers, 0.25, 1.0 );
-		return flScale;
-	}
+	flScale = RemapValClamped( iNumPlayers, 1, iOptimalPlayers, 0.25, 1.0 );
+	return flScale;
+
 }
 
 //-----------------------------------------------------------------------------
