@@ -253,6 +253,8 @@ ConVar mp_match_end_at_timelimit( "mp_match_end_at_timelimit", "0", FCVAR_NOTIFY
 
 ConVar mp_holiday_nogifts( "mp_holiday_nogifts", "0", FCVAR_NOTIFY, "Set to 1 to prevent holiday gifts from spawning when players are killed." );
 
+ConVar tf2v_alt_respawn_time( "tf2v_alt_respawn_time", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Uses an alternate calculation for respawn timers to scale with playercount.", true, 0, true, 1  );
+
 const char *m_pszRoundStateStrings[] = 
 {
 	"GR_STATE_INIT",
@@ -647,13 +649,21 @@ void CTeamplayRoundBasedRules::LevelInitPostEntity( void )
 //-----------------------------------------------------------------------------
 float CTeamplayRoundBasedRules::GetRespawnTimeScalar( int iTeam )
 {
-	// For long respawn times, scale the time as the number of players drops
-	int iOptimalPlayers = 8;	// 16 players total, 8 per team
-
+	float flScale;
 	int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
+	if ( tf2v_alt_respawn_time.GetBool() ) // Scaled respawns to players, where the "standard" is 16 players. Meant to balance player density.
+	{
+		flScale = iNumPlayers * (1/8);
+		return flScale;
+	}
+	else // Original respawn logic.
+	{
+		// For long respawn times, scale the time as the number of players drops
+		int iOptimalPlayers = 8;	// 16 players total, 8 per team
 
-	float flScale = RemapValClamped( iNumPlayers, 1, iOptimalPlayers, 0.25, 1.0 );
-	return flScale;
+		flScale = RemapValClamped( iNumPlayers, 1, iOptimalPlayers, 0.25, 1.0 );
+		return flScale;
+	}
 }
 
 //-----------------------------------------------------------------------------
