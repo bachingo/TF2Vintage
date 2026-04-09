@@ -42,6 +42,7 @@
 			// Now search loose files.  We'll set the directory containing the gameinfo.txt file
 			// as the first "mod" search path (after any user customizations).  This is also the one
 			// that's used when writing to the "mod" path.
+			game+mod+vgui		|gameinfo_path|base
 			game+mod+vgui		|gameinfo_path|assets
 			mod+mod_write		|gameinfo_path|.
 			game+game_write		|gameinfo_path|.
