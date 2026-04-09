@@ -33,6 +33,7 @@
 #define TF2V_ERA_MVM_MIN        121     // Mann vs. Machine (Aug 15 2012)
 #define _TF2V_STRINGIFY(x)      #x
 #define TF2V_STRINGIFY(x)       _TF2V_STRINGIFY(x)
+#define TF2V_ERA_MIN_STR        TF2V_STRINGIFY(TF2V_ERA_MIN)    // "0"
 #define TF2V_ERA_MAX_STR        TF2V_STRINGIFY(TF2V_ERA_MAX)    // "200"
 
 #ifdef GAME_DLL

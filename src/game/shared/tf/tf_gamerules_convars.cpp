@@ -29,11 +29,15 @@
 // SECTION 1: ERA MANAGEMENT
 // =========================================================================
 
-ConVar tf2v_era( "tf2v_era", TF2V_ERA_MAX, FCVAR_NOTIFY | FCVAR_REPLICATED,
-	"Active era integer. Round numbers = major balance eras (10=GoldRush, 20=Pyro, 30=Heavy, 40=Feb09, 50=Scout, 60=SnipSpy, 70=Classless, 80=WAR, 90=Engi, 100=Mann, 110=Uber/F2P, 120=Pyromania, 130=L&W, 140=GunMettle, 150=ToughBreak, 160=MYM, 170=JI, 180=Mar2018). Intermediate integers = content drops between major eras. 0=PS3internal 4=PClaunch/Xbox.",
-	true, TF2V_ERA_MIN, true, TF2V_ERA_MAX
+ConVar tf2v_era( 
+    "tf2v_era", 
+    TF2V_ERA_MAX_STR,
+    FCVAR_NOTIFY | FCVAR_REPLICATED,
+    "Active era integer. Round numbers = major balance eras (10=GoldRush, 20=Pyro, 30=Heavy, 40=Feb09, 50=Scout, 60=SnipSpy, 70=Classless, 80=WAR, 90=Engi, 100=Mann, 110=Uber/F2P, 120=Pyromania, 130=L&W, 140=GunMettle, 150=ToughBreak, 160=MYM, 170=JI, 180=Mar2018). Intermediate integers = content drops between major eras. 0=PS3internal 4=PClaunch/Xbox.",
+    true, (float)TF2V_ERA_MIN, 
+    true, (float)TF2V_ERA_MAX
 #ifdef GAME_DLL
-	, TF2VEraChanged
+    , TF2VEraChanged
 #endif
 );
 
@@ -46,10 +50,14 @@ ConVar tf2v_enforcement( "tf2v_enforcement", "3",
 #endif
 );
 
-ConVar tf2v_allowed_weapon_era( "tf2v_allowed_weapon_era", TF2V_ERA_MAX,
-	FCVAR_NOTIFY | FCVAR_REPLICATED,
-	"Weapon gate ceiling. Only relevant when tf2v_enforcement is 0 (full manual). At enforcement 1+ the gate is driven automatically from tf2v_era. Items with min_era above this value are replaced with stock.",
-	true, TF2V_ERA_MIN, true, TF2V_ERA_MAX	);
+ConVar tf2v_allowed_weapon_era( 
+    "tf2v_allowed_weapon_era", 
+    TF2V_ERA_MAX_STR,
+    FCVAR_NOTIFY | FCVAR_REPLICATED,
+    "Weapon gate ceiling. Only relevant when tf2v_enforcement is 0 (full manual). At enforcement 1+ the gate is driven automatically from tf2v_era. Items with min_era above this value are replaced with stock.",
+    true, (float)TF2V_ERA_MIN, 
+    true, (float)TF2V_ERA_MAX 
+);
 
 ConVar tf2v_quickplay_profile( "tf2v_quickplay_profile", "1",
 	FCVAR_NOTIFY | FCVAR_GAMEDLL,
