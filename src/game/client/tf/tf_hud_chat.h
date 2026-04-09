@@ -102,7 +102,8 @@ public:
 	Color m_colorGreenText;   // lines starting with ">"
 	Color m_colorQuoteText;   // lines starting with "<"
 	
-	CHudChat *GetTFChatHud( void );
 };
 
+CHudChat *GetTFChatHud( void );
+	
 #endif	//CS_HUD_CHAT_H
