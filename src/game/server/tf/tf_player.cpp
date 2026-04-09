@@ -4950,6 +4950,8 @@ CEconItemView *CTFPlayer::GetLoadoutItem( int iClass, int iSlot, bool bReportWhi
 		return pInventoryManager->GetBaseItemForClass( iClass, iSlot );
 	}
 
+	CEconItemView *pItem = m_Inventory.GetItemInLoadout( iClass, iSlot );
+	
     // TF2V: Offline/debug mode — serve from local VDF inventory.
     if ( TF2VIsOfflineMode() )
     {
@@ -4957,10 +4959,9 @@ CEconItemView *CTFPlayer::GetLoadoutItem( int iClass, int iSlot, bool bReportWhi
         if ( pOfflineItem && pOfflineItem->IsValid() )
             return pOfflineItem;
         // NULL from offline inventory means "use stock" — fall through to base item below
-        return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+        pItem = TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
     }
 
-	CEconItemView *pItem = m_Inventory.GetItemInLoadout( iClass, iSlot );
 
 	// TF2V era enforcement — block items that post-date the active era.
 	// Enforcement level 2+ (weapon gate). Fails open if VDF not loaded.
@@ -4973,7 +4974,7 @@ CEconItemView *CTFPlayer::GetLoadoutItem( int iClass, int iSlot, bool bReportWhi
 			// Log the violation for server console
 			DevMsg( "%s\n", violation.GetSummary() );
 	
-			return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+			pItem = TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
 		}
 	}
 	
