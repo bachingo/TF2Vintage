@@ -4653,21 +4653,47 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 															   nActiveEra, &stripLog ) )
 						{
 							// Base item post-dates the active era.
-							// Look up the stock item for this loadout slot and give that instead.
-							CEconItemView *pStockItem = TFInventoryManager()->GetBaseItemForClass( iClass, i );
-							if ( pStockItem && pStockItem->IsValid() )
+							// For weapon slots: give the stock item instead.
+							// For wearable-only slots (cosmetics): skip the slot entirely —
+							// cosmetics have no stock fallback, so we just don't give one.
+							const char *pszItemName = pItem->GetItemDefinition()
+								? pItem->GetItemDefinition()->GetItemBaseName() : "item";
+
+							if ( IsWearableSlot( i ) && !pItem->GetItemDefinition()->IsActingAsAWeapon() )
 							{
-								pItemToSpawn = pStockItem;
+								// Cosmetic slot — simply skip, no stock fallback exists.
+								DevMsg( "[TF2V] Cosmetic '%s' post-dates era %d -- not given.\n",
+										pszItemName, nActiveEra );
+								// Compose the message into a buffer first — ClientPrint does not
+								// accept printf-style format args; it treats the string as a
+								// localization token and crashes on bare %s.
+								char szMsg[256];
+								V_snprintf( szMsg, sizeof(szMsg),
+									"[TF2V] %s is not available in this era and was not given.",
+									pszItemName );
+								ClientPrint( this, HUD_PRINTTALK, szMsg );
+								continue;
 							}
+
+							// Weapon slot — give the stock item for this loadout position.
+							CEconItemView *pStockItem = TFInventoryManager()->GetBaseItemForClass( iClass, i );
+							if ( !pStockItem || !pStockItem->IsValid() )
+							{
+								// No stock item found for this slot — skip it.
+								// This should not happen for any normal weapon slot.
+								DevWarning( "[TF2V] No stock item for slot %d (class %d) — skipping.\n", i, iClass );
+								continue;
+							}
+							pItemToSpawn = pStockItem;
 							bForcedStock = true;
 
-							const char *pszForcedName = pItem->GetItemDefinition()
-								? pItem->GetItemDefinition()->GetItemBaseName() : "item";
 							DevMsg( "[TF2V] '%s' post-dates era %d -- replaced with stock.\n",
-									pszForcedName, nActiveEra );
-							ClientPrint( this, HUD_PRINTTALK,
+									pszItemName, nActiveEra );
+							char szMsg[256];
+							V_snprintf( szMsg, sizeof(szMsg),
 								"[TF2V] %s is not available in this era and has been replaced with the stock weapon.",
-								pszForcedName );
+								pszItemName );
+							ClientPrint( this, HUD_PRINTTALK, szMsg );
 						}
 
 						if ( stripLog.nEntries > 0 && !bForcedStock )
@@ -4675,7 +4701,10 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 							// Anachronistic modifiers were stripped; spawn the sanitised copy.
 							pItemToSpawn = &strippedView;
 
-							// Build a comma-separated list for the single client message.
+							// Build a comma-separated stripped-modifier list for the single
+							// client message, then compose it into a buffer.
+							// ClientPrint does NOT accept printf-style format args — it treats
+							// the string as a localization token and crashes on bare %s.
 							char szStrippedList[256];
 							szStrippedList[0] = '\0';
 							for ( int s = 0; s < stripLog.nEntries; s++ )
@@ -4694,11 +4723,13 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 								V_strncat( szStrippedList, stripLog.entries[s].szWhat, sizeof(szStrippedList) );
 							}
 
-							const char *pszStrippedName = pItem->GetItemDefinition()
+							const char *pszItemName2 = pItem->GetItemDefinition()
 								? pItem->GetItemDefinition()->GetItemBaseName() : "item";
-							ClientPrint( this, HUD_PRINTTALK,
+							char szMsg[256];
+							V_snprintf( szMsg, sizeof(szMsg),
 								"[TF2V] Your %s has been downgraded for this era (removed: %s).",
-								pszStrippedName, szStrippedList );
+								pszItemName2, szStrippedList );
+							ClientPrint( this, HUD_PRINTTALK, szMsg );
 						}
 						// else: item is era-clean as-is; pItemToSpawn stays as pItem.
 					}
