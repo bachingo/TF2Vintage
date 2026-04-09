@@ -164,7 +164,11 @@ void CHudChatInputLine::ApplySchemeSettings(vgui::IScheme *pScheme)
 	BaseClass::ApplySchemeSettings(pScheme);
 }
 
-
+static CHudChat *g_pTFChatHud = NULL;
+CHudChat *GetTFChatHud( void )
+{
+	return g_pTFChatHud;
+}
 
 //=====================
 //CHudChat
@@ -176,6 +180,7 @@ CHudChat::CHudChat( const char *pElementName ) : BaseClass( pElementName )
 #if defined ( _X360 )
 	RegisterForRenderGroup( "mid" );
 #endif
+	g_pTFChatHud = this;
 }
 
 void CHudChat::ApplySchemeSettings( vgui::IScheme *pScheme )

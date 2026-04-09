@@ -101,6 +101,8 @@ public:
 	// TF2V: colors for ">" and "<" prefixed chat lines.
 	Color m_colorGreenText;   // lines starting with ">"
 	Color m_colorQuoteText;   // lines starting with "<"
+	
+	CHudChat *GetTFChatHud( void );
 };
 
 #endif	//CS_HUD_CHAT_H
