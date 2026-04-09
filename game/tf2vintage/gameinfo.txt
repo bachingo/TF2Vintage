@@ -1,6 +1,6 @@
 "GameInfo"
 {
-	game		Vintage Fortress 2025"
+	game		"Vintage Fortress 2025"
 	type 		multiplayer_only 
 	icon		"resource/game"		
 	developer 	"Team Fortress 2 Vintage Team"
