@@ -4440,21 +4440,6 @@ bool CTFPlayer::ItemIsAllowed( CEconItemView *pItem )
 	{
 		return TFGameRules() && TFGameRules()->IsPasstimeMode();
 	}
-	
-	// TF2V era enforcement — block items that post-date the active era.
-	// Enforcement level 2+ (weapon gate). Fails open if VDF not loaded.
-	// The violation struct is available for VGUI display if needed.
-	if ( tf2v_enforcement.GetInt() >= 2 )
-	{
-		CTF2VEraViolation violation;
-		if ( !TF2VIsItemEraAllowed( pItem, &violation ) )
-		{
-			// Log the violation for server console
-			DevMsg( "%s\n", violation.GetSummary() );
-	
-			return false;  // GiveDefaultItems will use stock item for this slot
-		}
-	}
 
 	// Holiday Restriction
 	CEconItemDefinition* pData = pItem->GetStaticData();
