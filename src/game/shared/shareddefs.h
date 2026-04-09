@@ -258,7 +258,7 @@ enum CastVote
 	#define MAX_PLAYERS				33  // Absolute max players supported
 #endif
 */
-#define MAX_PLAYERS				25  // Cap this to 12v12) because that's what TF2 was designed for. Fun fact: This was the original pre-Gold Rush cap!
+#define MAX_PLAYERS				33  // The Source limit from 2008-2023
 
 // Josh: Accounts for code that may index this array by an entindex
 // of player rather than the player index... :s
