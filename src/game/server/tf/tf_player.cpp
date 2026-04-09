@@ -4949,7 +4949,19 @@ CEconItemView *CTFPlayer::GetLoadoutItem( int iClass, int iSlot, bool bReportWhi
 		CTFInventoryManager *pInventoryManager = TFInventoryManager();
 		return pInventoryManager->GetBaseItemForClass( iClass, iSlot );
 	}
-	
+
+    // TF2V: Offline/debug mode — serve from local VDF inventory.
+    if ( TF2VIsOfflineMode() )
+    {
+        CEconItemView *pOfflineItem = TF2VOfflineInventory_GetItem( iClass, iSlot );
+        if ( pOfflineItem && pOfflineItem->IsValid() )
+            return pOfflineItem;
+        // NULL from offline inventory means "use stock" — fall through to base item below
+        return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+    }
+
+	CEconItemView *pItem = m_Inventory.GetItemInLoadout( iClass, iSlot );
+
 	// TF2V era enforcement — block items that post-date the active era.
 	// Enforcement level 2+ (weapon gate). Fails open if VDF not loaded.
 	// The violation struct is available for VGUI display if needed.
@@ -4964,19 +4976,7 @@ CEconItemView *CTFPlayer::GetLoadoutItem( int iClass, int iSlot, bool bReportWhi
 			return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
 		}
 	}
-
-    // TF2V: Offline/debug mode — serve from local VDF inventory.
-    if ( TF2VIsOfflineMode() )
-    {
-        CEconItemView *pOfflineItem = TF2VOfflineInventory_GetItem( iClass, iSlot );
-        if ( pOfflineItem && pOfflineItem->IsValid() )
-            return pOfflineItem;
-        // NULL from offline inventory means "use stock" — fall through to base item below
-        return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
-    }
-
-	CEconItemView *pItem = m_Inventory.GetItemInLoadout( iClass, iSlot );
-
+	
 	// Check to see if this item passes the tournament rules (in whitelist/or normal quality).
 	// If it doesn't, we fall back to the base item for the loadout slot.
 	if ( (pItem && pItem->IsValid()) && (pItem->GetItemQuality() != AE_NORMAL) && !pItem->GetStaticData()->IsAllowedInMatch() && TFGameRules()->IsInTournamentMode() )
