@@ -29,11 +29,11 @@
 // SECTION 1: ERA MANAGEMENT
 // =========================================================================
 
-ConVar tf2v_era( "tf2v_era", TF2V_ERA_MAX_STR, FCVAR_NOTIFY | FCVAR_REPLICATED,
+ConVar tf2v_era( "tf2v_era", TF2V_ERA_MAX, FCVAR_NOTIFY | FCVAR_REPLICATED,
 	"Active era integer. Round numbers = major balance eras (10=GoldRush, "
 	"20=Pyro, 30=Heavy, 40=Feb09, 50=Scout, 60=SnipSpy, 70=Classless, "
 	"80=WAR, 90=Engi, 100=Mann, 110=Uber/F2P, 120=Pyromania, 130=L&W, "
-	"140=GunMettle, 150=ToughBreak, 160=MYM, 170=JI, 180=Mar2018). "
+	"140=GunMettle, 150=ToughBreak, 160=MYM, 170=JI, 180=Mar2018). "z
 	"Intermediate integers = content drops between major eras. "
 	"0=PS3internal 4=PClaunch/Xbox."
 #ifdef GAME_DLL
@@ -54,7 +54,7 @@ ConVar tf2v_enforcement( "tf2v_enforcement", "3",
 #endif
 );
 
-ConVar tf2v_allowed_weapon_era( "tf2v_allowed_weapon_era", TF2V_ERA_MAX_STR,
+ConVar tf2v_allowed_weapon_era( "tf2v_allowed_weapon_era", TF2V_ERA_MAX,
 	FCVAR_NOTIFY | FCVAR_REPLICATED,
 	"Weapon gate ceiling. Only relevant when tf2v_enforcement is 0 (full manual). "
 	"At enforcement 1+ the gate is driven automatically from tf2v_era. "
@@ -68,7 +68,7 @@ ConVar tf2v_server_type( "tf2v_server_type", "0",
 	FCVAR_NOTIFY | FCVAR_REPLICATED,
 	"Server type for mapcycle and certification. "
 	"0=PVP (standard), 1=PVE (MvM, tf_mvm_defenders_team_size controls human cap), "
-	"2=ASYM (VSH/ZI, era " TF2V_ERA_MAX_STR " only).",
+	"2=ASYM (VSH/ZI, era 200 only).",
 	true, 0, true, 2
 #ifdef GAME_DLL
 	, TF2VServerTypeChanged
