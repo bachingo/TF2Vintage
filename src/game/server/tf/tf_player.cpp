@@ -307,7 +307,6 @@ extern CBaseEntity *FindPickerEntity( CBasePlayer *pPlayer );
 extern bool CanScatterGunKnockBack( CTFWeaponBase *pWeapon, float flDamage, float flDistanceSq );
 extern bool IsCustomGameMode();
 
-extern ConVar tf2v_enforcement;
 
 static const char *s_pszTauntRPSParticleNames[] =
 {
@@ -4630,37 +4629,59 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 
 				if ( !bAlreadyHave && pItem->GetStaticData()->GetItemClass() )
 				{
-                    // TF2V: Build a potentially-modified item view for era compliance.
-                    // This may strip anachronistic modifiers (stat clock, paint, quality)
-                    // from a *copy* of the item view. The player's inventory is never touched.
-                    CEconItemView strippedView;
-                    CEconItemView *pItemToSpawn = const_cast<CEconItemView*>(pItem);
-					bool bForcedStock = false;
+					// TF2V era enforcement: produce a stripped copy of the item if needed.
+					// pItemToSpawn is what actually gets given to the player.
+					// The player's real inventory item (pItem) is never modified.
+					CEconItemView  strippedView;
+					CEconItemView *pItemToSpawn = const_cast<CEconItemView*>( pItem );
+					bool bForcedStock = false;	// true when base item post-dates active era
 
-					if ( tf2v_enforcement.GetInt() >= 2 )
+					// Use the era-state locked weapon era rather than reading convars directly.
+					// nAllowedWeaponEra is set by LockEraState() and encodes the right gate for
+					// every enforcement level:
+					//   enforcement 0 (manual)  -> tf2v_allowed_weapon_era  (server cfg, default TF2V_ERA_MAX)
+					//   enforcement 1 (balance) -> tf2v_allowed_weapon_era  (same)
+					//   enforcement 2/3 (gated) -> tf2v_era                 (era-locked)
+					// At enforcement 0 with default settings nAllowedWeaponEra == TF2V_ERA_MAX,
+					// so nothing is stripped unless the operator explicitly configured it.
+					if ( TFGameRules() && TFGameRules()->IsEraStateLocked() )
 					{
-						int nActiveEra = tf2v_era.GetInt();
+						const int nActiveEra = TFGameRules()->EraState().nAllowedWeaponEra;
 						CTF2VStripLog stripLog;
 
 						if ( !TF2VStripAnachronisticModifiers( pItem, &strippedView,
 															   nActiveEra, &stripLog ) )
 						{
-							// Base item post-dates era.
-							// The player will receive the stock weapon for this
-							// loadout position instead.
-							pItemToSpawn = TFInventoryManager()->GetBaseItemForClass( iClass, i );
-							bool bForcedStock = true;
+							// Base item post-dates the active era.
+							// Look up the stock item for this loadout slot and give that instead.
+							CEconItemView *pStockItem = TFInventoryManager()->GetBaseItemForClass( iClass, i );
+							if ( pStockItem && pStockItem->IsValid() )
+							{
+								pItemToSpawn = pStockItem;
+							}
+							bForcedStock = true;
+
+							const char *pszForcedName = pItem->GetItemDefinition()
+								? pItem->GetItemDefinition()->GetItemBaseName() : "item";
+							DevMsg( "[TF2V] '%s' post-dates era %d -- replaced with stock.\n",
+									pszForcedName, nActiveEra );
+							ClientPrint( this, HUD_PRINTTALK,
+								"[TF2V] %s is not available in this era and has been replaced with the stock weapon.",
+								pszForcedName );
 						}
 
 						if ( stripLog.nEntries > 0 && !bForcedStock )
 						{
-							// One or more modifiers were stripped. Use the sanitised copy.
+							// Anachronistic modifiers were stripped; spawn the sanitised copy.
 							pItemToSpawn = &strippedView;
 
+							// Build a comma-separated list for the single client message.
+							char szStrippedList[256];
+							szStrippedList[0] = '\0';
 							for ( int s = 0; s < stripLog.nEntries; s++ )
 							{
 								DevMsg( "[TF2V] Stripped '%s' from '%s' "
-										"(introduced %s — %s; server era %d).\n",
+										"(introduced %s, %s; server era %d).\n",
 										stripLog.entries[s].szWhat,
 										pItem->GetItemDefinition()
 											? pItem->GetItemDefinition()->GetItemBaseName()
@@ -4668,14 +4689,26 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 										stripLog.entries[s].szDate,
 										stripLog.entries[s].szUpdate,
 										nActiveEra );
+								if ( s > 0 )
+									V_strncat( szStrippedList, ", ", sizeof(szStrippedList) );
+								V_strncat( szStrippedList, stripLog.entries[s].szWhat, sizeof(szStrippedList) );
 							}
+
+							const char *pszStrippedName = pItem->GetItemDefinition()
+								? pItem->GetItemDefinition()->GetItemBaseName() : "item";
+							ClientPrint( this, HUD_PRINTTALK,
+								"[TF2V] Your %s has been downgraded for this era (removed: %s).",
+								pszStrippedName, szStrippedList );
 						}
-						// else: item was already era-clean; pItemToSpawn stays as pItem.
+						// else: item is era-clean as-is; pItemToSpawn stays as pItem.
 					}
 
-                    CEconEntity *pNewItem = dynamic_cast<CEconEntity*>(
-                        GiveNamedItem( pItem->GetStaticData()->GetItemClass(),
-                                       0, pItemToSpawn ));
+					// Use pItemToSpawn (not the original pItem) for the entity class string.
+					// When we fell back to stock, pItemToSpawn points to the stock item view
+					// whose GetItemClass() may differ from the original (e.g. different slot).
+					CEconEntity *pNewItem = dynamic_cast<CEconEntity*>(
+						GiveNamedItem( pItemToSpawn->GetStaticData()->GetItemClass(),
+								   0, pItemToSpawn ));
 
 					Assert( pNewItem );
 					if ( pNewItem )
@@ -14681,6 +14714,30 @@ void CTFPlayer::ForceRegenerateAndRespawn( void )
 	m_bRegenerating.Set( true );
 	ForceRespawn();
 	m_bRegenerating.Set( false );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: TF2V -- called when tf2v_era or tf2v_enforcement changes at runtime.
+//
+// Forces a full weapon strip-and-reissue for this player so era changes take
+// effect immediately without a round restart or class change.
+//
+// Sequence:
+//   1. m_bForceItemRemovalOnRespawn = true  -> ValidateWeapons(bResetWeapons=true)
+//      sets bOverrideRemoval and removes every live weapon unconditionally.
+//   2. ForceRegenerateAndRespawn() -> ForceRespawn() -> InitClass() ->
+//      ManageRegularWeapons(), which re-issues items through the strip path.
+//
+// If the player is dead this is a no-op; they receive correct weapons on
+// their next natural spawn.
+//-----------------------------------------------------------------------------
+void CTFPlayer::TF2VRefreshEraLoadout( void )
+{
+	if ( !IsAlive() )
+		return;
+
+	m_bForceItemRemovalOnRespawn = true;
+	ForceRegenerateAndRespawn();
 }
 
 //-----------------------------------------------------------------------------

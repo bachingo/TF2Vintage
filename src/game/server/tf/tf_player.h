@@ -142,6 +142,7 @@ public:
 
 	virtual void		SetupVisibility( CBaseEntity *pViewEntity, unsigned char *pvs, int pvssize );
 	virtual void		Spawn();
+	void 				TF2VRefreshEraLoadout( void );
 	virtual void		ForceRespawn();
 	void				ForceRegenerateAndRespawn( void );
 	virtual CBaseEntity	*EntSelectSpawnPoint( void );

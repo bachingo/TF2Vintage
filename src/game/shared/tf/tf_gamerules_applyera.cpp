@@ -137,6 +137,7 @@
 #ifdef GAME_DLL
 #include "tf_gamerules.h"
 #include "tf_gamerules_convars.h"
+#include "tf_player.h"
 
 extern ConVar tf2v_quickplay_profile;
 
@@ -1073,6 +1074,26 @@ void CTFGameRules::ApplyEra( int nEra )
 
     if ( tf2v_quickplay_profile.GetInt() > 0 )
         TF2VUpdateQuickPlayCompliance();
+
+    // Refresh live player loadouts so weapon era gating takes effect immediately.
+    // TF2VRefreshEraLoadout() is a no-op for dead players (they get correct
+    // weapons on their next natural spawn). For alive players it sets
+    // m_bForceItemRemovalOnRespawn and calls ForceRegenerateAndRespawn(),
+    // which strips all live weapons via ValidateWeapons then re-issues them
+    // through the TF2VStripAnachronisticModifiers path in ManageRegularWeapons.
+    //
+    // ApplyEra() is never called during an active round (TF2VEraChanged defers
+    // mid-round changes to the next round boundary), so this never interrupts
+    // a live game.
+    if ( TF2V_WeaponGated() )
+    {
+        for ( int i = 1; i <= gpGlobals->maxClients; i++ )
+        {
+            CTFPlayer *pPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
+            if ( pPlayer )
+                pPlayer->TF2VRefreshEraLoadout();
+        }
+    }
 
     DevMsg( "[TF2V] ApplyEra( %d ) complete.\n", nEra );
 }
