@@ -96,15 +96,17 @@
 	// --- Era 71: Halloween 2009 / Sep 2009 patch ---
 	"115"		"71"		// Mildly Disturbing Halloween Mask — Halloween 2009
 	"116"		"71"		// Ghastly Gibus — Halloween 2009
-	"117"		"90"		// Ritzy Rick's Hair Fixative
-	"118"		"90"		// Texas Slim's Dome Shine
-	"120"		"90"		// Scotsman's Stove Pipe
-	"121"		"90"		// Web Easteregg Medal
-	"122"		"90"		// CheatDetectedMinor
-	"123"		"90"		// CheatDetectedMajor
-	"124"		"90"		// CheatDetectedHonesty
-	"125"		"90"		// Honest Halo
-	"126"		"90"		// L4D Hat
+	// --- Era 70: Classless Update Aug 13 2009 (hats) ---
+	"117"		"70"		// Ritzy Rick's Hair Fixative — Classless Update Aug 2009
+	"118"		"70"		// Texas Slim's Dome Shine — Classless Update Aug 2009
+	"120"		"70"		// Scotsman's Stove Pipe — Classless Update Aug 2009
+	"121"		"1"		// Web Easteregg Medal — Launch (internal item)
+	"122"		"1"		// CheatDetectedMinor — Launch (internal VAC indicator)
+	"123"		"1"		// CheatDetectedMajor — Launch (internal VAC indicator)
+	"124"		"1"		// CheatDetectedHonesty — Launch (internal VAC indicator)
+	"125"		"1"		// Honest Halo — Launch (internal item)
+	// --- Era 31: December 2008 patch (promotional items) ---
+	"126"		"31"		// L4D Hat — December 2008 promotional (Left 4 Dead)
 	// --- Era 80: WAR! Update Dec 17 2009 (weapons) ---
 	"127"		"80"		// The Direct Hit — WAR! Update Dec 2009
 	"128"		"80"		// The Equalizer — WAR! Update Dec 2009
@@ -113,12 +115,13 @@
 	"131"		"80"		// The Chargin' Targe — WAR! Update Dec 2009
 	"132"		"80"		// The Eyelander — WAR! Update Dec 2009
 	"133"		"80"		// The Gunboats — WAR! Update Dec 2009
-	"134"		"90"		// Propaganda Contest First Place
-	"135"		"90"		// Towering Pillar of Hats
-	"136"		"90"		// Propaganda Contest Second Place
-	"137"		"90"		// Noble Amassment of Hats
-	"138"		"90"		// Propaganda Contest Third Place
-	"139"		"90"		// Modest Pile of Hat
+	// --- Era 71: Scream Fortress 2009 (propaganda contest + promo) ---
+	"134"		"71"		// Propaganda Contest First Place — Scream Fortress 2009
+	"135"		"71"		// Towering Pillar of Hats — Scream Fortress 2009
+	"136"		"71"		// Propaganda Contest Second Place — Scream Fortress 2009
+	"137"		"71"		// Noble Amassment of Hats — Scream Fortress 2009
+	"138"		"71"		// Propaganda Contest Third Place — Scream Fortress 2009
+	"139"		"71"		// Modest Pile of Hat — Scream Fortress 2009
 	"140"		"90"		// The Wrangler
 	"141"		"90"		// The Frontier Justice
 	"142"		"90"		// The Gunslinger
@@ -136,29 +139,30 @@
 	"155"		"90"		// The Southern Hospitality
 	"158"		"90"		// Sniper Pith Helmet
 	"159"		"50"		// The Dalokohs Bar — Scout Update Feb 2009
-	"160"		"90"		// TTG Max Pistol
-	"161"		"90"		// TTG Sam Revolver
-	"162"		"90"		// TTG Max Hat
+	"160"		"31"		// TTG Max Pistol — December 2008 promotional (Sam & Max)
+	"161"		"31"		// TTG Sam Revolver — December 2008 promotional (Sam & Max)
+	"162"		"31"		// TTG Max Hat — December 2008 promotional (Sam & Max)
 	"163"		"50"		// Crit-a-Cola — Scout Update Feb 2009
-	"164"		"90"		// Employee Badge A
-	"165"		"90"		// Employee Badge B
-	"166"		"90"		// Employee Badge C
+	"164"		"1"		// Employee Badge A — Launch (internal Valve item)
+	"165"		"1"		// Employee Badge B — Launch (internal Valve item)
+	"166"		"1"		// Employee Badge C — Launch (internal Valve item)
 	"169"		"90"		// Golden Wrench
-	"170"		"90"		// Employee Badge Plat
+	"170"		"1"		// Employee Badge Plat — Launch (internal Valve item)
 	"171"		"60"		// The Tribalman's Shiv — Sniper vs. Spy Update May 2009
 	"172"		"80"		// The Scotsman's Skullcutter — WAR! Update Dec 2009
 	"173"		"80"		// The Vita-Saw — WAR! Update Dec 2009
-	"174"		"90"		// Scout Whoopee Cap
-	"175"		"90"		// Pyro Monocle
-	"177"		"90"		// Medic Goggles
-	"178"		"90"		// Engineer Earmuffs
-	"179"		"90"		// Demoman Tricorne
-	"180"		"90"		// Spy Beret
-	"181"		"90"		// Sniper Fishing Hat
-	"182"		"90"		// Pyro Helm
-	"183"		"90"		// Soldier Drill Hat
-	"184"		"90"		// Medic Gatsby
-	"185"		"90"		// Heavy Do-rag
+	// --- Era 100: Mann-Conomy Sep 30 2010 (Polycount set misc + weapons) ---
+	"174"		"100"		// Scout Whoopee Cap — Polycount / Mann-Conomy Sep 2010
+	"175"		"100"		// Pyro Monocle — Polycount / Mann-Conomy Sep 2010
+	"177"		"100"		// Medic Goggles — Polycount / Mann-Conomy Sep 2010
+	"178"		"100"		// Engineer Earmuffs — Polycount / Mann-Conomy Sep 2010
+	"179"		"100"		// Demoman Tricorne — Polycount / Mann-Conomy Sep 2010
+	"180"		"100"		// Spy Beret — Polycount / Mann-Conomy Sep 2010
+	"181"		"100"		// Sniper Fishing Hat — Polycount / Mann-Conomy Sep 2010
+	"182"		"100"		// Pyro Helm — Polycount / Mann-Conomy Sep 2010
+	"183"		"100"		// Soldier Drill Hat — Polycount / Mann-Conomy Sep 2010
+	"184"		"100"		// Medic Gatsby — Polycount / Mann-Conomy Sep 2010
+	"185"		"100"		// Heavy Do-rag — Polycount / Mann-Conomy Sep 2010
 	"189"		"90"		// Parasite Hat
 	// --- Era 121: Mann vs. Machine (MvM upgradeable weapon variants) ---
 	"190"		"121"		// Upgradeable TF_WEAPON_BAT — Mann vs. Machine Aug 2012
@@ -187,22 +191,22 @@
 	"213"		"90"		// The Attendant
 	"214"		"90"		// The Powerjack
 	"215"		"90"		// The Degreaser
-	"219"		"90"		// The Milkman
-	"220"		"90"		// The Shortstop
-	"221"		"90"		// The Holy Mackerel
-	"222"		"90"		// Mad Milk
-	"223"		"90"		// The Familiar Fez
-	"224"		"90"		// L'Etranger
-	"225"		"90"		// Your Eternal Reward
-	"226"		"90"		// The Battalion's Backup
-	"227"		"90"		// The Grenadier's Softcap
-	"228"		"90"		// The Black Box
-	"229"		"90"		// Ol' Snaggletooth
-	"230"		"90"		// The Sydney Sleeper
-	"231"		"90"		// Darwin's Danger Shield
-	"232"		"90"		// The Bushwacka
-	"233"		"90"		// Gift - 1 Player
-	"234"		"90"		// Gift - 24 Players
+	"219"		"100"		// The Milkman — Polycount / Mann-Conomy Sep 2010
+	"220"		"100"		// The Shortstop — Polycount / Mann-Conomy Sep 2010
+	"221"		"100"		// The Holy Mackerel — Polycount / Mann-Conomy Sep 2010
+	"222"		"100"		// Mad Milk — Polycount / Mann-Conomy Sep 2010
+	"223"		"100"		// The Familiar Fez — Polycount / Mann-Conomy Sep 2010
+	"224"		"100"		// L'Etranger — Polycount / Mann-Conomy Sep 2010
+	"225"		"100"		// Your Eternal Reward — Polycount / Mann-Conomy Sep 2010
+	"226"		"100"		// The Battalion's Backup — Polycount / Mann-Conomy Sep 2010
+	"227"		"100"		// The Grenadier's Softcap — Polycount / Mann-Conomy Sep 2010
+	"228"		"100"		// The Black Box — Polycount / Mann-Conomy Sep 2010
+	"229"		"100"		// Ol' Snaggletooth — Polycount / Mann-Conomy Sep 2010
+	"230"		"100"		// The Sydney Sleeper — Polycount / Mann-Conomy Sep 2010
+	"231"		"100"		// Darwin's Danger Shield — Polycount / Mann-Conomy Sep 2010
+	"232"		"100"		// The Bushwacka — Polycount / Mann-Conomy Sep 2010
+	"233"		"100"		// Gift - 1 Player — Mann-Conomy Sep 2010
+	"234"		"100"		// Gift - 24 Players — Mann-Conomy Sep 2010
 	"237"		"115"		// Rocket Jumper — July 2013 patch (became equippable)
 	"239"		"70"		// Gloves of Running Urgently — Classless Update Aug 2009
 	"241"		"100"		// Duel MiniGame — Mann-Conomy Update Sep 2010
@@ -482,10 +486,11 @@
 	"603"		"110"		// The Outdoorsman
 	"604"		"110"		// The Tavish DeGroot Experience
 	"605"		"110"		// The Pencil Pusher
-	"606"		"110"		// The Builder's Blueprints
-	"607"		"110"		// The Buccaneer's Bicorne
+	// NOTE: Items 606-630 below were community drops added Aug-Sep 2011 (era 111), not Uber Update (110)
+	"606"		"111"		// The Builder's Blueprints — August 2011 patch
+	"607"		"111"		// The Buccaneer's Bicorne — August 2011 patch
 	"608"		"110"		// The Bootlegger
-	"609"		"110"		// The Scottish Handshake
+	"609"		"111"		// The Scottish Handshake — August 2011 patch
 	"610"		"110"		// A Whiff of the Old Brimstone
 	"611"		"110"		// The Salty Dog
 	"612"		"110"		// The Little Buddy
@@ -494,18 +499,18 @@
 	"615"		"110"		// The Birdcage
 	"616"		"110"		// The Surgeon's Stahlhelm
 	"617"		"110"		// The Backwards Ballcap
-	"618"		"110"		// The Crocodile Smile
-	"619"		"110"		// Flair!
-	"620"		"110"		// Couvre Corner
-	"621"		"110"		// The Surgeon's Stethoscope
+	"618"		"111"		// The Crocodile Smile — August 2011 patch
+	"619"		"111"		// Flair! — August 2011 patch
+	"620"		"111"		// Couvre Corner — August 2011 patch
+	"621"		"111"		// The Surgeon's Stethoscope — August 2011 patch
 	"622"		"110"		// L'Inspecteur
-	"623"		"110"		// Photo Badge
-	"625"		"110"		// Clan Pride
+	"623"		"111"		// Photo Badge — August 2011 patch
+	"625"		"111"		// Clan Pride — August 2011 patch
 	"626"		"110"		// The Swagman's Swatter
 	"627"		"110"		// The Flamboyant Flamenco
 	"628"		"110"		// The Virtual Reality Headset
-	"629"		"110"		// The Spectre's Spectacles
-	"630"		"110"		// The Stereoscopic Shades
+	"629"		"111"		// The Spectre's Spectacles — August 2011 patch
+	"630"		"111"		// The Stereoscopic Shades — August 2011 patch
 	"631"		"110"		// The Hat With No Name
 	"632"		"110"		// The Cremator's Conscience
 	"633"		"110"		// The Hermes
@@ -662,7 +667,7 @@
 	"2079"		"116"		// Map Token Bundle 4
 	"2080"		"116"		// Hero Academy Gold Bundle
 
-	// --- Era 117: Scream Fortress 2012 ---
+	// --- Era 117: Scream Fortress 2012–2013 (Oct 2012 through Nov 2013) ---
 	"489"		"117"		// Power Up Canteen (MvM)
 	"785"		"117"		// Robot Chicken Hat
 	"821"		"117"		// The Soviet Gentleman
@@ -705,7 +710,8 @@
 	"930"		"117"		// The Grand Duchess Tutu
 	"931"		"117"		// The Grand Duchess Fairy Wings
 	"932"		"117"		// The Grand Duchess Tiara
-	"933"		"117"		// The Ap-Sap
+	// --- Era 112: Australian Christmas 2012 / early-2013 community items ---
+	"933"		"112"		// The Ap-Sap — April 2013 patch
 	"934"		"117"		// The Dead Little Buddy
 	"935"		"117"		// The Voodoo Juju (Slight Return)
 	"936"		"117"		// The Exorcizor
@@ -716,7 +722,7 @@
 	"944"		"117"		// That '70s Chapeau
 	"945"		"117"		// The Chief Constable
 	"946"		"117"		// The Siberian Sophisticate
-	"947"		"117"		// The Quackenbirdt
+	"947"		"112"		// The Quackenbirdt — November 2012 patch
 	"948"		"117"		// The Deadliest Duckling
 	"949"		"117"		// The DethKapp
 	"950"		"117"		// Nose Candy
@@ -744,14 +750,14 @@
 	"991"		"117"		// The Hunger Force
 	"992"		"117"		// Smissmas Wreath
 	"993"		"117"		// Antlers
-	"995"		"117"		// Pet Reindoonicorn
+	"995"		"112"		// Pet Reindoonicorn — Australian Christmas 2012
 	"996"		"117"		// The Loose Cannon
 	"997"		"117"		// The Rescue Ranger
-	"998"		"117"		// The Vaccinator
+	"998"		"112"		// The Vaccinator — Australian Christmas 2012
 	"1008"		"117"		// The Prize Plushy
 	"1009"		"117"		// The Grizzled Growth
 	"1010"		"117"		// The Last Straw
-	"1011"		"117"		// Tux
+	"1011"		"112"		// Tux — January 2013 patch
 	"1012"		"117"		// The Wilson Weave
 	"1013"		"117"		// The Ham Shank
 	"1014"		"117"		// The Brutal Bouffant
@@ -772,7 +778,7 @@
 	"1030"		"117"		// The Dapper Disguise
 	"1031"		"117"		// The Necronomicrown
 	"1032"		"117"		// The Long Fall Loafers
-	"1033"		"117"		// The TF2VRH
+	"1033"		"112"		// The TF2VRH — March 2013 patch
 	"1038"		"117"		// The Breather Bag
 	"1039"		"117"		// The Weather Master
 	"1040"		"117"		// The Bacteria Blocker
@@ -833,8 +839,8 @@
 	"5631"		"117"		// Naughty Winter Key 2012
 	"5632"		"117"		// Nice Winter Key 2012
 	"5636"		"117"		// Robo Key 2013
-	"5637"		"117"		// Gift - 23 RoboKeys 2013
-	"5638"		"117"		// Gift - 1 RoboKey 2013
+	"5637"		"121"		// Gift - 23 RoboKeys 2013 — Mann vs. Machine content
+	"5638"		"121"		// Gift - 1 RoboKey 2013 — Mann vs. Machine content
 	"5641"		"117"		// July 2013 Early Key
 	"5643"		"117"		// July 2013 Key 01
 	"5645"		"117"		// July 2013 Key 02
