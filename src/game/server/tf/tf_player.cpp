@@ -20588,7 +20588,13 @@ bool CTFPlayer::SetPowerplayEnabled( bool bOn )
 	{
 		m_bInPowerPlay = true;
 		m_Shared.RecalculateChargeEffects();
-		m_Shared.Burn( this, GetActiveTFWeapon() );
+		m_Shared.Burn( this );
+		m_Shared.AddCond( TF_COND_INVULNERABLE );
+		m_Shared.AddCond( TF_COND_CRITBOOSTED );
+		m_Shared.AddCond( TF_COND_MEGAHEAL );
+		m_Shared.AddCond( TF_COND_MEDIGUN_UBER_BULLET_RESIST );
+		m_Shared.AddCond( TF_COND_MEDIGUN_UBER_BLAST_RESIST );
+		m_Shared.AddCond( TF_COND_MEDIGUN_UBER_FIRE_RESIST );
 
 		PowerplayThink();
 	}
@@ -20597,6 +20603,12 @@ bool CTFPlayer::SetPowerplayEnabled( bool bOn )
 		m_bInPowerPlay = false;
 		m_Shared.RemoveCond( TF_COND_BURNING );
 		m_Shared.RecalculateChargeEffects();
+		m_Shared.RemoveCond( TF_COND_INVULNERABLE );
+		m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
+		m_Shared.RemoveCond( TF_COND_MEGAHEAL );
+		m_Shared.RemoveCond( TF_COND_MEDIGUN_UBER_BULLET_RESIST );
+		m_Shared.RemoveCond( TF_COND_MEDIGUN_UBER_BLAST_RESIST );
+		m_Shared.RemoveCond( TF_COND_MEDIGUN_UBER_FIRE_RESIST );
 	}
 	return true;
 }
@@ -20663,6 +20675,20 @@ void CTFPlayer::PowerplayThink( void )
 			case TF_CLASS_ENGINEER: flDuration = InstancedScriptedScene( this, "scenes/player/engineer/low/103.vcd", NULL, 0.0f, false, NULL, true ); break;			// laughlong01
 			}
 		}
+		if ( !m_Shared.InCond( TF_COND_BURNING ) )
+			m_Shared.Burn( this );
+		if ( !m_Shared.InCond( TF_COND_INVULNERABLE ) )
+			m_Shared.AddCond( TF_COND_INVULNERABLE );
+		if ( !m_Shared.InCond( TF_COND_CRITBOOSTED ) )
+			m_Shared.AddCond( TF_COND_CRITBOOSTED );
+		if ( !m_Shared.InCond( TF_COND_MEGAHEAL ) )
+			m_Shared.AddCond( TF_COND_MEGAHEAL );
+		if ( !m_Shared.InCond( TF_COND_MEDIGUN_UBER_BULLET_RESIST ) )
+			m_Shared.AddCond( TF_COND_MEDIGUN_UBER_BULLET_RESIST );
+		if ( !m_Shared.InCond( TF_COND_MEDIGUN_UBER_BLAST_RESIST ) )
+			m_Shared.AddCond( TF_COND_MEDIGUN_UBER_BLAST_RESIST );
+		if ( !m_Shared.InCond( TF_COND_MEDIGUN_UBER_FIRE_RESIST ) )
+			m_Shared.AddCond( TF_COND_MEDIGUN_UBER_FIRE_RESIST );		
 
 		SetContextThink( &CTFPlayer::PowerplayThink, gpGlobals->curtime + flDuration + RandomFloat( 2, 5 ), "TFPlayerLThink" );
 	}
