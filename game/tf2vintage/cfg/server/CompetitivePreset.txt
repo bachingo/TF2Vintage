@@ -3,11 +3,11 @@ tf_fall_damage_disablespread 1
 tf_use_fixed_weaponspreads 1
 tf_weapon_criticals 0
 tf_weapon_criticals_melee 0
-tf2v_random_weapons 0
-mp_disable_respawn_times "0"
-tf2v_homing_deflected_rockets 0
-tf2v_homing_rockets 0
-tf2v_allcrit 0
+mp_disable_respawn_times 0
 sv_gravity 800
 sv_maxplayers 12
 sv_password ""
+sv_pure 2
+mp_tournament 1
+mp_timelimit 30
+mp_winlimit 2
