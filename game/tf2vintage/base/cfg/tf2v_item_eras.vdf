@@ -1785,6 +1785,7 @@
 	// ================================================================
 
 	// Quality floors
+	"_q_vintage"		"100"	// Vintage — Mannconomy September 30 2010
 	"_q_unusual"		"103"	// Unusual — Australian Christmas Dec 17 2010
 	"_q_strange"		"112"	// Strange — Atribute Dec 15 2011
 	"_q_haunted"		"117"	// Haunted — Scream Fortress 2012
