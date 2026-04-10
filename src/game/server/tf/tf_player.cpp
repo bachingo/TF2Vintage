@@ -4594,42 +4594,15 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 					const int nActiveEra = TFGameRules()->EraState().nAllowedWeaponEra;
 					CTF2VStripLog stripLog;
 
+					// GetLoadoutItem already replaced post-era base items with stock
+					// (or returned nullptr for cosmetics), so TF2VStripAnachronisticModifiers
+					// returning false here should not happen in normal play. Guard anyway.
 					if ( !TF2VStripAnachronisticModifiers( pItem, &strippedView, nActiveEra, &stripLog ) )
 					{
-						// Base item post-dates the active era.
-						const char *pszToken = pItem->GetItemDefinition()
-							? pItem->GetItemDefinition()->GetItemBaseName() : "#TF_UNKNOWN";
-
-						if ( IsWearableSlot( i ) && !pItem->GetItemDefinition()->IsActingAsAWeapon() )
-						{
-							// Cosmetic — no stock fallback. Skip this slot entirely.
-							DevMsg( "[TF2V] Cosmetic '%s' post-dates era %d -- not given.\n",
-									pszToken, nActiveEra );
-							// ClientPrint: pass the localization token as the substitution
-							// argument to a TF2V format key, not as a format string itself.
-							ClientPrint( this, HUD_PRINTTALK,
-								"#TF2V_Cosmetic_Era_Blocked", pszToken );
-							continue;
-						}
-
-						// Weapon slot — look up and use the stock item for this slot.
-						CEconItemView *pStockItem = TFInventoryManager()->GetBaseItemForClass( iClass, i );
-						if ( !pStockItem || !pStockItem->IsValid() )
-						{
-							DevWarning( "[TF2V] No stock item for slot %d (class %d) -- skipping.\n",
-									i, iClass );
-							continue;
-						}
-
-						DevMsg( "[TF2V] '%s' post-dates era %d -- giving stock.\n",
-								pszToken, nActiveEra );
-						ClientPrint( this, HUD_PRINTTALK,
-							"#TF2V_Weapon_Era_Replaced", pszToken );
-
-						// Rebind pItem to the stock view. All downstream code
-						// (m_EquippedLoadoutItemIndices, bAlreadyHave, GiveNamedItem)
-						// will now operate on the stock item as if it were the loadout choice.
-						pItem = pStockItem;
+						// Shouldn't reach here — GetLoadoutItem handles this. Skip defensively.
+						DevWarning( "[TF2V] ManageRegularWeapons: strip returned false unexpectedly "
+								"for slot %d — skipping.\n", i );
+						continue;
 					}
 					else if ( stripLog.nEntries > 0 )
 					{
@@ -5016,6 +4989,37 @@ CEconItemView *CTFPlayer::GetLoadoutItem( int iClass, int iSlot, bool bReportWhi
         // NULL from offline inventory means "use stock" — fall through.
         pItem = TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
     }
+
+	// TF2V era gate — base-item-post-dates-era only.
+	// We check only whether the base item itself is too new. Modifier stripping
+	// (Strange quality, stat clock, paint, etc.) is handled in ManageRegularWeapons
+	// so it does not affect ValidateWeapons or any other GetLoadoutItem caller.
+	// By returning the stock item here when the base item is too new, ValidateWeapons
+	// and ManageRegularWeapons both see the same item and agree on what to keep/give.
+	if ( pItem && pItem->IsValid() &&
+	     TFGameRules() && TFGameRules()->IsEraStateLocked() )
+	{
+		const CEconItemDefinition *pDef = pItem->GetItemDefinition();
+		if ( pDef )
+		{
+			const int nActiveEra = TFGameRules()->EraState().nAllowedWeaponEra;
+			const int nBaseEra   = TF2VGetBaseItemEra( pDef );
+			if ( nBaseEra > nActiveEra )
+			{
+				// Base item post-dates the active era. For weapon slots, fall back to
+				// stock so ValidateWeapons keeps the stock weapon instead of removing it.
+				// For wearable-only (cosmetic) slots there is no stock fallback; return
+				// nullptr so the caller skips this slot cleanly.
+				if ( IsWearableSlot( iSlot ) )
+				{
+					const CEconItemDefinition *pSlotDef = pItem->GetItemDefinition();
+					if ( !pSlotDef || !pSlotDef->IsActingAsAWeapon() )
+						return nullptr;
+				}
+				pItem = TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+			}
+		}
+	}
 
 	// Check to see if this item passes the tournament rules.
 	if ( (pItem && pItem->IsValid()) && (pItem->GetItemQuality() != AE_NORMAL) && !pItem->GetStaticData()->IsAllowedInMatch() && TFGameRules()->IsInTournamentMode() )
