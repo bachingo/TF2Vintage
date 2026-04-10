@@ -4980,16 +4980,6 @@ CEconItemView *CTFPlayer::GetLoadoutItem( int iClass, int iSlot, bool bReportWhi
 
 	CEconItemView *pItem = m_Inventory.GetItemInLoadout( iClass, iSlot );
 
-    // TF2V: Offline/debug mode — serve from local VDF inventory.
-    if ( TF2VIsOfflineMode() )
-    {
-        CEconItemView *pOfflineItem = TF2VOfflineInventory_GetItem( iClass, iSlot );
-        if ( pOfflineItem && pOfflineItem->IsValid() )
-            return pOfflineItem;
-        // NULL from offline inventory means "use stock" — fall through.
-        pItem = TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
-    }
-
 	// TF2V era gate — base-item-post-dates-era only.
 	// We check only whether the base item itself is too new. Modifier stripping
 	// (Strange quality, stat clock, paint, etc.) is handled in ManageRegularWeapons

@@ -24,9 +24,6 @@ $Project "Client (TF2V)"
 {
 		$Folder	"TF2Vintage"
 		{
-			// Offline inventory emulator
-			$File	"$SRCDIR\game\shared\tf\tf2v_offline_inventory.cpp"
-			$File	"$SRCDIR\game\shared\tf\tf2v_offline_inventory.h"
 			// Era Enforcement
 			$File	"$SRCDIR\game\shared\tf\tf_gamerules_era_internal.h"
 		}
