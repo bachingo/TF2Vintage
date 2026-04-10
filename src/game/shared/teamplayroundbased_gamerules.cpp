@@ -400,8 +400,6 @@ CON_COMMAND_F( mp_forcewin, "Forces team to win", FCVAR_CHEAT )
 
 #endif // GAME_DLL
 
-ConVar tf2v_alt_respawn_time( "tf2v_alt_respawn_time", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Uses an alternate calculation for respawn timers to scale with playercount.", true, 0, true, 1  );
-
 // Utility function
 bool FindInList( const char **pStrings, const char *pToFind )
 {
@@ -649,22 +647,13 @@ void CTeamplayRoundBasedRules::LevelInitPostEntity( void )
 //-----------------------------------------------------------------------------
 float CTeamplayRoundBasedRules::GetRespawnTimeScalar( int iTeam )
 {
-	float flScale;
-	int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
-	if ( tf2v_alt_respawn_time.GetBool() )
-	{
-		// Scaled respawns to players, where the "standard" is 16 players.
-		// Meant to balance player density at any size.
-		flScale = RemapValClamped( iNumPlayers, 1, 128, 0.125, 16.0 );
-		return flScale;
-	}
-	
 	// For long respawn times, scale the time as the number of players drops
 	int iOptimalPlayers = 8;	// 16 players total, 8 per team
 
-	flScale = RemapValClamped( iNumPlayers, 1, iOptimalPlayers, 0.25, 1.0 );
-	return flScale;
+	int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
 
+	float flScale = RemapValClamped( iNumPlayers, 1, iOptimalPlayers, 0.25, 1.0 );
+	return flScale;
 }
 
 //-----------------------------------------------------------------------------
