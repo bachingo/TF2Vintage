@@ -5,7 +5,7 @@
 	// Stock items are era 0 (launch). Note: items_game gives many pre-Mannconomy items
 	// a first_sale_date of 2010/09/29; VDF overrides are used to correct these.
 	// Modifier era floors (quality, attributes) are listed at the end.
-	// Last updated: 2026-04-09 (corrected pre-Mannconomy item eras)
+	// Last updated: 2026-04-10 (corrected Mannconomy to Jungle Inferno item eras)
 
 	// ================================================================
 	// ITEMS (weapons, cosmetics, tools, taunts)
@@ -74,7 +74,16 @@
 	"59"		"60"		// The Dead Ringer — Sniper vs. Spy Update May 2009
 	"60"		"60"		// The Cloak and Dagger — Sniper vs. Spy Update May 2009
 	"61"		"60"		// The Ambassador — Sniper vs. Spy Update May 2009
-	// --- Era 90: Engineer Update Jul 8 2010 (community hats + Engineer weapons) ---
+	// --- Era 82: April 2010 patch (Japan charity items) ---
+	"362"		"82"		// Charity Noise Maker - Bell — April 2010 Japan charity
+	"364"		"82"		// Charity Noise Maker - Tingsha — April 2010 Japan charity
+	// --- Era 90: Engineer Update
+	"260"		"90"		// Wiki Cap — Engineer Update community contribution reward
+	"261"		"90"		// Mann Co. Cap — Mann-Conomy store item
+	"263"		"90"		// Ellis Hat — Left 4 Dead 2 promotional
+	"264"		"90"		// Frying Pan — Left 4 Dead 2 promotional
+	"302"		"90"		// Camera Helm — Valve ARG item
+ Jul 8 2010 (community hats + Engineer weapons) ---
 	"94"		"90"		// Texas Ten Gallon
 	"95"		"90"		// Engineer's Cap
 	"96"		"90"		// Officer's Ushanka
@@ -104,7 +113,13 @@
 	"122"		"1"		// CheatDetectedMinor — Launch (internal VAC indicator)
 	"123"		"1"		// CheatDetectedMajor — Launch (internal VAC indicator)
 	"124"		"1"		// CheatDetectedHonesty — Launch (internal VAC indicator)
-	"125"		"1"		// Honest Halo — Launch (internal item)
+	"125"		"1"		// Honest Halo
+	"240"		"1"		// Worms Gear — Launch (Worms: Reloaded promotional)
+	"242"		"1"		// Duel Medal Bronze — Launch (Dueling Mini-Game)
+	"243"		"1"		// Duel Medal Silver — Launch (Dueling Mini-Game)
+	"244"		"1"		// Duel Medal Gold — Launch (Dueling Mini-Game)
+	"245"		"1"		// Duel Medal Plat — Launch (Dueling Mini-Game)
+ — Launch (internal item)
 	// --- Era 31: December 2008 patch (promotional items) ---
 	"126"		"31"		// L4D Hat — December 2008 promotional (Left 4 Dead)
 	// --- Era 80: WAR! Update Dec 17 2009 (weapons) ---
@@ -165,6 +180,7 @@
 	"185"		"100"		// Heavy Do-rag — Polycount / Mann-Conomy Sep 2010
 	"189"		"90"		// Parasite Hat
 	// --- Era 121: Mann vs. Machine (MvM upgradeable weapon variants) ---
+	"1184"		"121"		// Gloves of Running Urgently MvM — Mann vs. Machine Aug 2012
 	"190"		"121"		// Upgradeable TF_WEAPON_BAT — Mann vs. Machine Aug 2012
 	"191"		"121"		// Upgradeable TF_WEAPON_BOTTLE — Mann vs. Machine Aug 2012
 	"192"		"121"		// Upgradeable TF_WEAPON_FIREAXE — Mann vs. Machine Aug 2012
@@ -189,8 +205,8 @@
 	"211"		"121"		// Upgradeable TF_WEAPON_MEDIGUN — Mann vs. Machine Aug 2012
 	"212"		"121"		// Upgradeable TF_WEAPON_INVIS — Mann vs. Machine Aug 2012
 	"213"		"90"		// The Attendant
-	"214"		"90"		// The Powerjack
-	"215"		"90"		// The Degreaser
+	"214"		"100"		// The Powerjack — Polycount / Mann-Conomy Sep 2010
+	"215"		"100"		// The Degreaser — Polycount / Mann-Conomy Sep 2010
 	"219"		"100"		// The Milkman — Polycount / Mann-Conomy Sep 2010
 	"220"		"100"		// The Shortstop — Polycount / Mann-Conomy Sep 2010
 	"221"		"100"		// The Holy Mackerel — Polycount / Mann-Conomy Sep 2010
@@ -254,6 +270,19 @@
 	"5040"		"90"		// Paint Can 14
 
 	// --- Era 91: Scream Fortress Oct 27 2010 ---
+	"268"		"91"		// Halloween Mask - Scout — Scream Fortress 2010
+	"269"		"91"		// Halloween Mask - Sniper — Scream Fortress 2010
+	"270"		"91"		// Halloween Mask - Soldier — Scream Fortress 2010
+	"271"		"91"		// Halloween Mask - Demoman — Scream Fortress 2010
+	"272"		"91"		// Halloween Mask - Medic — Scream Fortress 2010
+	"273"		"91"		// Halloween Mask - Heavy — Scream Fortress 2010
+	"274"		"91"		// Halloween Mask - Spy — Scream Fortress 2010
+	"275"		"91"		// Halloween Mask - Engineer — Scream Fortress 2010
+	"276"		"91"		// Halloween Mask - Pyro — Scream Fortress 2010
+	"277"		"91"		// Halloween Mask - Saxton Hale — Scream Fortress 2010
+	"278"		"91"		// Horseless Headless Horsemann's Head — Scream Fortress 2010
+	"279"		"91"		// Ghastly Gibus 2010 — Scream Fortress 2010
+
 	"292"		"91"		// Poker Visor
 	"303"		"91"		// Berliner's Bucket Helm
 	"304"		"91"		// The Amputator
@@ -289,22 +318,31 @@
 	"5050"		"91"		// Backpack Expander
 
 	// --- Era 100: Mannconomy Sep 30 2010 ---
+	"262"		"100"		// Polycount Pin — Mann-Conomy Update Sep 2010
+	"299"		"100"		// Portal 2 Pin — Mann-Conomy Update Sep 2010
+
 	"265"		"115"		// Stickybomb Jumper — July 2013 patch (became equippable)
-	"280"		"100"		// Halloween Noise Maker - Black Cat
-	"281"		"100"		// Halloween Noise Maker - Gremlin
-	"282"		"100"		// Halloween Noise Maker - Werewolf
-	"283"		"100"		// Halloween Noise Maker - Witch
-	"284"		"100"		// Halloween Noise Maker - Banshee
-	"286"		"100"		// Halloween Noise Maker - Crazy Laugh
-	"287"		"100"		// Spine-Chilling Skull
-	"288"		"100"		// Halloween Noise Maker - Stabby
-	"289"		"100"		// Voodoo Juju
-	"290"		"100"		// Cadaver's Cranium
-	"291"		"100"		// Horrific Headsplitter
+	"280"		"91"		// Halloween Noise Maker - Black Cat — Scream Fortress 2010
+	"281"		"91"		// Halloween Noise Maker - Gremlin — Scream Fortress 2010
+	"282"		"91"		// Halloween Noise Maker - Werewolf — Scream Fortress 2010
+	"283"		"91"		// Halloween Noise Maker - Witch — Scream Fortress 2010
+	"284"		"91"		// Halloween Noise Maker - Banshee — Scream Fortress 2010
+	"286"		"91"		// Halloween Noise Maker - Crazy Laugh — Scream Fortress 2010
+	"287"		"91"		// Spine-Chilling Skull — Scream Fortress 2010
+	"288"		"91"		// Halloween Noise Maker - Stabby — Scream Fortress 2010
+	"289"		"91"		// Voodoo Juju — Scream Fortress 2010
+	"290"		"91"		// Cadaver's Cranium — Scream Fortress 2010
+	"291"		"91"		// Horrific Headsplitter — Scream Fortress 2010
 	"5042"		"100"		// Gift Wrap
 	"5044"		"100"		// Description Tag
 
 	// --- Era 103: Australian Christmas Dec 17 2010 ---
+	"332"		"103"		// Treasure Hat 1 — Australian Christmas 2010
+	"333"		"103"		// Treasure Hat 2 — Australian Christmas 2010
+	"334"		"103"		// Treasure Hat 3 — Australian Christmas 2010
+	"335"		"103"		// KF Pyro Mask — Australian Christmas 2010 (Killing Floor promo)
+	"336"		"103"		// KF Pyro Tie — Australian Christmas 2010 (Killing Floor promo)
+
 	"313"		"103"		// Magnificent Mongolian
 	"314"		"103"		// Larrikin Robin
 	"315"		"103"		// Blighted Beak
@@ -334,6 +372,10 @@
 	"2015"		"103"		// Map Token Bundle 2
 
 	// --- Era 104: Community 3 Feb 2011 ---
+	"343"		"104"		// Friendly Item — February 2011
+	"347"		"104"		// MNC Mascot Outfit — February 2011 (Monday Night Combat promo)
+	"360"		"104"		// Hero's Hachimaki — February 2011
+
 	"216"		"104"		// Rimmed Raincatcher
 	"246"		"104"		// Pugilist's Protector
 	"247"		"104"		// Old Guadalajara
@@ -388,7 +430,7 @@
 	"412"		"104"		// The Overdose
 	"413"		"104"		// The Solemn Vow
 	"414"		"104"		// The Liberty Launcher
-	"415"		"104"		// The Reserve Shooter
+	"415"		"105"		// The Reserve Shooter — April 2011 patch
 	"416"		"104"		// The Market Gardener
 	"417"		"104"		// Jumper's Jeepcap
 	"1915"		"104"		// Map Token Frontier
@@ -448,13 +490,38 @@
 	"5065"		"105"		// Paint Can Team Color 7
 
 	// --- Era 110: Uber/F2P Jun 23 2011 ---
+	"420"		"110"		// Potato Hat — Uber Update (Portal 2 ARG potato hat)
+	"422"		"110"		// Resurrection Associate Pin — Uber Update (Portal 2 ARG)
+	"423"		"110"		// Saxxy — Uber Update Jun 2011 (SFM Saxxy awards)
+	"432"		"110"		// SpaceChem Pin — Uber Update era
+	"434"		"110"		// Bucket Hat — Uber Update era community cosmetic
+	"435"		"110"		// Traffic Cone — Uber Update era community cosmetic
+	"436"		"110"		// Polish War Babushka — Uber Update era community cosmetic
+	"437"		"110"		// Janissary Hat — Uber Update era community cosmetic
+	"453"		"110"		// Hero's Tail — Uber Update era community cosmetic
+	"454"		"110"		// Sign of the Wolf's School — Uber Update era community cosmetic
+	"465"		"110"		// Conjurer's Cowl — Uber Update era community cosmetic
+	"467"		"110"		// Medic MtG Hat — Uber Update era (Magic: The Gathering promo)
+	"468"		"110"		// Scout MtG Hat — Uber Update era (Magic: The Gathering promo)
+	"470"		"110"		// Lo-Fi Longwave — Uber Update era community cosmetic
+	"471"		"110"		// Loyalty Reward — Uber Update era
+	"473"		"110"		// Spiral Sallet — Uber Update era (Spiral Knights promo)
+	"486"		"110"		// Summer Shades — Summer 2011
+	"514"		"110"		// Mask of the Shaman — Uber Update era community cosmetic
+	"515"		"110"		// Pilotka — Uber Update era community cosmetic
+	"516"		"110"		// Stahlhelm — Uber Update era community cosmetic
+	"533"		"110"		// Clockwerk's Helm — Uber Update era (Dota 2 promo)
+	"534"		"110"		// Sniper's Snipin' Glass — Uber Update era community cosmetic
+	"535"		"110"		// Storm Spirit's Jolly Hat — Uber Update era (Dota 2 promo)
+	"539"		"110"		// The El Jefe — Uber Update era community cosmetic
+
 	"439"		"110"		// Lord Cockswain's Pith Helmet
 	"440"		"110"		// Lord Cockswain's Novelty Mutton Chops and Pipe
 	"441"		"110"		// The Cow Mangler 5000
 	"442"		"110"		// The Righteous Bison
 	"443"		"110"		// Dr. Grordbort's Crest
 	"457"		"110"		// The Postal Pummeler
-	"474"		"110"		// The Conscientious Objector
+	"474"		"111"		// The Conscientious Objector — August 2011 patch
 	"478"		"110"		// Copper's Hard Top
 	"479"		"110"		// Security Shades
 	"480"		"110"		// Tam O'Shanter
@@ -520,7 +587,47 @@
 	"5026"		"110"		// Customize Texture Tool
 	"5067"		"110"		// Summer Key
 
+	"348"		"110"		// The Sharpened Volcano Fragment — Über Update Jun 2011
+	"349"		"110"		// Sun-on-a-Stick — Über Update Jun 2011
+	"452"		"110"		// Three-Rune Blade — Über Update Jun 2011 (Spiral Knights promo)
+	"466"		"110"		// The Maul — Über Update Jun 2011 (Killing Floor promo)
 	// --- Era 111: Scream Fortress 2011 ---
+	"536"		"111"		// Noise Maker - TF Birthday — TF2 4th Birthday Aug 2011
+	"537"		"111"		// TF Birthday Hat 2011 — TF2 4th Birthday Aug 2011
+	"543"		"111"		// Hair of the Dog — Scream Fortress 2011
+	"544"		"111"		// Scottish Snarl — Scream Fortress 2011
+	"545"		"111"		// Pickled Paws — Scream Fortress 2011
+	"546"		"111"		// Wrap Battler — Scream Fortress 2011
+	"547"		"111"		// B-ankh! — Scream Fortress 2011
+	"548"		"111"		// Futankhamun — Scream Fortress 2011
+	"549"		"111"		// Blazing Bull — Scream Fortress 2011
+	"550"		"111"		// Fallen Angel — Scream Fortress 2011
+	"551"		"111"		// Tail From the Crypt — Scream Fortress 2011
+	"552"		"111"		// Einstein — Scream Fortress 2011
+	"553"		"111"		// Dr. Gogglestache — Scream Fortress 2011
+	"554"		"111"		// Emerald Jarate — Scream Fortress 2011
+	"555"		"111"		// Idiot Box — Scream Fortress 2011
+	"556"		"111"		// Steel Pipes — Scream Fortress 2011
+	"557"		"111"		// Shoestring Budget — Scream Fortress 2011
+	"558"		"111"		// Under Cover — Scream Fortress 2011
+	"559"		"111"		// Griffin's Gog — Scream Fortress 2011
+	"560"		"111"		// Intangible Ascot — Scream Fortress 2011
+	"561"		"111"		// Can Opener — Scream Fortress 2011
+	"562"		"111"		// Soviet Stitch-Up — Scream Fortress 2011
+	"563"		"111"		// Steel-Toed Stompers — Scream Fortress 2011
+	"564"		"111"		// Holy Hunter — Scream Fortress 2011
+	"565"		"111"		// Silver Bullets — Scream Fortress 2011
+	"566"		"111"		// Garlic Flank Stake — Scream Fortress 2011
+	"567"		"111"		// Buzz Killer — Scream Fortress 2011
+	"568"		"111"		// Frontier Flyboy — Scream Fortress 2011
+	"569"		"111"		// Legend of Bugfoot — Scream Fortress 2011
+	"577"		"111"		// Halloween Giveaway Package 2011 (Cauldron) — Scream Fortress 2011
+	"581"		"111"		// MONOCULUS! — Scream Fortress 2011
+	"582"		"111"		// Seal Mask — Scream Fortress 2011
+	"583"		"111"		// Bombinomicon — Scream Fortress 2011
+	"584"		"111"		// Ghastly Gibus 2011 — Scream Fortress 2011
+	"586"		"111"		// Mark of the Saint — Scream Fortress 2011
+
 	"167"		"111"		// High Five Taunt
 	"540"		"111"		// Ball-Kicking Boots
 	"541"		"111"		// Merc's Pride Scarf
@@ -557,6 +664,24 @@
 	"2064"		"111"		// Dr. Grordbort's Moonbrain Double Pack
 
 	// --- Era 112: Atribute Dec 15 2011 (Strange quality) ---
+	"599"		"112"		// Manniversary Giveaway Package — Manniversary Oct 2012
+	"655"		"112"		// Spirit Of Giving — Australian Christmas 2011
+	"726"		"112"		// Tour of Duty Badge Advanced 1 — Mann vs. Machine Aug 2012
+	"756"		"112"		// The Bolt Action Blitzer — 2012 community cosmetic
+	"818"		"112"		// Awesomenauts Badge — 2012 promotional
+	"868"		"112"		// The Heroic Companion Badge — 2012 community cosmetic
+	"870"		"112"		// Tour of Duty Badge Intermediate 1 — Mann vs. Machine Aug 2012
+	"871"		"112"		// Tour of Duty Badge Expert 1 — Mann vs. Machine Aug 2012
+	"940"		"112"		// Ghostly Gibus — Scream Fortress 2012
+	"941"		"112"		// The Skull Island Topper — Scream Fortress 2012
+	"975"		"112"		// Tour of Duty Badge Advanced 2 — Mann vs. Machine 2012
+	"994"		"112"		// Mann Co. Online Cap — 2012
+	"1034"		"112"		// The Conspiracy Cap — 2012 community cosmetic
+	"1035"		"112"		// The Public Accessor — 2012 community cosmetic
+	"1066"		"112"		// Tour of Duty Badge Advanced 3 — Mann vs. Machine 2012
+	"1071"		"112"		// Gold Frying Pan — Scream Fortress 2012 / MvM tour reward
+	"1123"		"112"		// Necro Smasher — Scream Fortress 2012
+
 	"538"		"112"		// Killer Exclusive
 	"588"		"112"		// The Pomson 6000
 	"589"		"112"		// The Eureka Effect
@@ -611,15 +736,15 @@
 
 	// --- Era 113: Feb 2012 ---
 	"634"		"113"		// Point and Shoot
-	"635"		"113"		// War Head
-	"642"		"113"		// The Cozy Camper
+	"635"		"112"		// War Head — February 2012 patch
+	"642"		"112"		// The Cozy Camper — March 2012 patch
 	"657"		"113"		// The Nine-Pipe Problem
 	"707"		"113"		// The Boston Boom-Bringer
 	"709"		"113"		// The Snapped Pupil
 	"721"		"113"		// The Conquistador
 	"722"		"113"		// The Fast Learner
-	"727"		"113"		// The Black Rose
-	"734"		"113"		// The Teufort Tooth Kicker
+	"727"		"112"		// The Black Rose — February 2012 patch
+	"734"		"112"		// The Teufort Tooth Kicker — March 2012 patch
 	"753"		"113"		// The Waxy Wayfinder
 	"755"		"113"		// The Texas Half-Pants
 	"757"		"113"		// The Toss-Proof Towel
@@ -636,9 +761,15 @@
 	"771"		"114"		// The Liquor Locker
 
 	// --- Era 115: Jul 2012 ---
+	"729"		"115"		// Store Purchase Promotion Package — 2013
+	"790"		"115"		// Sandvich Promo Package — 2013
+	"791"		"115"		// Companion Square Promo Package — 2013
+	"839"		"115"		// Steam Translation Package — 2013
+	"928"		"115"		// Portal 2 Soundtrack Promo Package — 2013
+
 	"731"		"115"		// The Captain's Cocktails
 	"732"		"115"		// The Helmet Without a Home
-	"745"		"115"		// The Infernal Orchestrina
+	"745"		"112"		// The Infernal Orchestrina — July 2012 patch
 	"746"		"115"		// The Burning Bongos
 	"776"		"115"		// The Bird-Man of Aberdeen
 	"777"		"115"		// The Apparatchik's Apparel
@@ -667,7 +798,9 @@
 	"2079"		"116"		// Map Token Bundle 4
 	"2080"		"116"		// Hero Academy Gold Bundle
 
-	// --- Era 117: Scream Fortress 2012–2013 (Oct 2012 through Nov 2013) ---
+	// --- Era 117: Scream Fortress 2012
+	"1027"		"117"		// Random Droppable Paints Package — 2013
+–2013 (Oct 2012 through Nov 2013) ---
 	"489"		"117"		// Power Up Canteen (MvM)
 	"785"		"117"		// Robot Chicken Hat
 	"821"		"117"		// The Soviet Gentleman
@@ -680,7 +813,7 @@
 	"830"		"117"		// The Bearded Bombardier
 	"853"		"117"		// The Crafty Hair
 	"854"		"117"		// Area 451
-	"855"		"117"		// The Vigilant Pin
+	"855"		"112"		// The Vigilant Pin — November 2012 patch
 	"856"		"117"		// The Pyrotechnic Tote
 	"857"		"117"		// Flunkyware
 	"858"		"117"		// The Hanger-On Hood
@@ -734,14 +867,14 @@
 	"956"		"117"		// Faerie Solitaire Pin
 	"976"		"117"		// The Winter Wonderland Wrap
 	"977"		"117"		// The Cut-Throat Concierge
-	"978"		"117"		// Der Wintermantel
+	"978"		"112"		// Der Wintermantel — January 2013 patch
 	"979"		"117"		// The Cool Breeze
 	"980"		"117"		// Soldier's Slope Scopers
 	"981"		"117"		// The Cold Killer
-	"982"		"117"		// Doc's Holiday
-	"983"		"117"		// The Digit Divulger
+	"982"		"112"		// Doc's Holiday — January 2013 patch
+	"983"		"112"		// The Digit Divulger — January 2013 patch
 	"984"		"117"		// Tough Stuff Muffs
-	"985"		"117"		// Heavy's Hockey Hair
+	"985"		"112"		// Heavy's Hockey Hair — January 2013 patch
 	"986"		"117"		// The Mutton Mann
 	"987"		"117"		// The Merc's Muffler
 	"988"		"117"		// The Barnstormer
@@ -759,7 +892,7 @@
 	"1010"		"117"		// The Last Straw
 	"1011"		"112"		// Tux — January 2013 patch
 	"1012"		"117"		// The Wilson Weave
-	"1013"		"117"		// The Ham Shank
+	"1013"		"112"		// The Ham Shank — May 2013 patch
 	"1014"		"117"		// The Brutal Bouffant
 	"1015"		"117"		// The Shred Alert
 	"1016"		"117"		// Buck Turner All-Stars
@@ -1068,6 +1201,7 @@
 	"30431"		"117"		// Six Pack Abs
 	"30570"		"117"		// Pool Party Taunt
 
+	"1080"		"118"		// Festive Sapper — Australian Christmas 2013
 	// --- Era 120: Pyromania Jun 27 2012 ---
 	"730"		"120"		// The Beggar's Bazooka
 	"738"		"120"		// Pet Balloonicorn
@@ -1090,10 +1224,13 @@
 	"828"		"121"		// Archimedes
 	"852"		"121"		// The Soldier's Stogie
 	"863"		"121"		// The Robo-Sandvich
-	"864"		"121"		// The Friends Forever Companion Square Badge
-	"865"		"121"		// The Triple A Badge
+	"864"		"112"		// The Friends Forever Companion Square Badge — September 2012 patch
+	"865"		"112"		// The Triple A Badge — September 2012 patch
 
 	// --- Era 130: Love and War Jun 18 2014 ---
+	"5075"		"130"		// Something Special For Someone Special (Wearable) — 2014
+	"5606"		"130"		// Damaged Capacitor — 2014 community cosmetic
+
 	"1098"		"130"		// The Classic
 	"1099"		"130"		// The Tide Turner
 	"1100"		"130"		// The Bread Bite
@@ -1196,6 +1333,16 @@
 	"30616"		"133"		// Taunt: The Proletariat Showoff
 
 	// --- Era 140: Gun Mettle Jul 2 2015 ---
+	"1152"		"140"		// TF_WEAPON_GRAPPLINGHOOK — Gun Mettle Update Jul 2015
+	"1158"		"140"		// The Finder's Fee — Gun Mettle Update 2015
+	"5086"		"140"		// Summer Starter Kit — Summer 2015
+	"5087"		"140"		// Summer Adventure Pack — Summer 2015
+	"5607"		"140"		// Pile Of Ash — 2015
+	"5626"		"140"		// Pile Of Curses — 2015
+	"5772"		"140"		// Halloween Giveaway Cauldron 2014 — Halloween 2014
+	"5773"		"140"		// Halloween Giveaway Cauldron 2014 (Achievement) — Halloween 2014
+
+	"587"		"140"		// Apoco-Fists — Gun Mettle / Killing Floor 2 promo Jul 2015
 	"1156"		"140"		// Competitive Matchmaking Beta Pass - Vintage
 	"1162"		"140"		// Taunt: Mannrobics
 	"1922"		"140"		// Map Token Snowplow
@@ -1254,6 +1401,12 @@
 	"30738"		"140"		// Batbelt
 
 	// --- Era 150: Tough Break Dec 17 2015 ---
+	"1164"		"150"		// Civilian Grade JACK Hat — PASS Time / Tough Break 2015
+	"1169"		"150"		// Military Grade JACK Hat — PASS Time / Tough Break 2015
+	"1170"		"150"		// PASS Time Miniature Half JACK — PASS Time 2015
+	"1171"		"150"		// PASS Time Early Participation Pin — PASS Time 2015
+	"5869"		"150"		// Activated Campaign 3 Pass — Tough Break 2015
+
 	"1165"		"150"		// Competitive Matchmaking Beta Pass
 	"1166"		"150"		// Competitive Matchmaking Beta Giftable Invite
 	"1167"		"150"		// Competitive Matchmaking Official
@@ -1294,6 +1447,13 @@
 	"30763"		"150"		// Taunt: The Balloonibouncer
 
 	// --- Era 160: Meet Your Match Jul 7 2016 ---
+	"1037"		"160"		// Pallet of Crates — 2016
+	"1173"		"160"		// Unusual Cap — Meet Your Match 2016
+	"1176"		"160"		// Team Fortress 2 Soundtrack Promo Package — 2016
+	"1195"		"160"		// Halloween Contract Package — 2016
+	"1198"		"160"		// Team Fortress 2 Soundtrack Promo Package Untradable — 2016
+	"1899"		"160"		// World Traveler — 2016 community cosmetic
+
 	"1172"		"160"		// Taunt: The Victory Lap
 	"1174"		"160"		// Taunt: The Table Tantrum
 	"1175"		"160"		// Taunt: The Boiling Point
@@ -1358,6 +1518,18 @@
 	"30845"		"160"		// Taunt: The Jumping Jack
 	"30876"		"160"		// Taunt: The Headcase
 
+	// --- Era 170: Jungle Inferno Oct 20 2017 (Pyro weapons) ---
+	"1185"		"170"		// Saxton Hat — Jungle Inferno 2017
+	"1186"		"170"		// Yeti Park Cap — Jungle Inferno 2017
+	"1191"		"170"		// Mercenary Park Cap — Jungle Inferno 2017
+	"1192"		"170"		// Mannanas Cap — Jungle Inferno 2017
+	"1193"		"170"		// Never Forget Cap — Jungle Inferno 2017
+	"1194"		"170"		// Yeti Park Hardhat — Jungle Inferno 2017
+
+	"1178"		"170"		// The Dragon's Fury — Jungle Inferno Oct 2017
+	"1179"		"170"		// The Thermal Thruster — Jungle Inferno Oct 2017
+	"1180"		"170"		// The Gas Passer — Jungle Inferno Oct 2017
+	"1181"		"170"		// The Hot Hand — Jungle Inferno Oct 2017
 	// --- Era 170: Jungle Inferno Oct 20 2017 ---
 	"5887"		"170"		// Winter 2017 Cosmetic Key
 	"5888"		"170"		// Winter 2017 Cosmetic Case
@@ -1373,6 +1545,8 @@
 	"30922"		"170"		// Taunt: Luxury Lounge
 
 	// --- Era 180: Post-balance-freeze Mar 2018 ---
+	"8938"		"180"		// Glitched Circuit Board — 2018 community cosmetic
+
 	"1196"		"180"		// Taunt: Panzer Pants
 	"1197"		"180"		// Taunt: The Scooty Scoot
 	"1948"		"180"		// Map Token Bagel Event
@@ -1785,7 +1959,6 @@
 	// ================================================================
 
 	// Quality floors
-	"_q_vintage"		"100"	// Vintage — Mannconomy September 30 2010
 	"_q_unusual"		"103"	// Unusual — Australian Christmas Dec 17 2010
 	"_q_strange"		"112"	// Strange — Atribute Dec 15 2011
 	"_q_haunted"		"117"	// Haunted — Scream Fortress 2012
