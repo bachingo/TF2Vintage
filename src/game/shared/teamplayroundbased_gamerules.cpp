@@ -655,7 +655,7 @@ float CTeamplayRoundBasedRules::GetRespawnTimeScalar( int iTeam )
 	{
 		// Scaled respawns to players, where the "standard" is 16 players.
 		// Meant to balance player density at any size.
-		flScale = iNumPlayers * (1/8);
+		flScale = RemapValClamped( iNumPlayers, 1, 128, 0.125, 16.0 );
 		return flScale;
 	}
 	
