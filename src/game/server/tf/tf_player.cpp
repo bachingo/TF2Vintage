@@ -4581,6 +4581,99 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 					}
 				}
 
+// TF2V ERA GATE — runs before bAlreadyHave / m_EquippedLoadoutItemIndices so
+// that pItem is already the correct item to give by the time the duplicate-
+// check and spawn happen. If the gate replaces the item with stock, pItem is
+// rebound to the stock view for the rest of the loop iteration.
+				// strippedView is declared here (outside the era gate) so that if
+				// pItem is rebound to it, the view remains valid through GiveNamedItem.
+				CEconItemView strippedView;
+
+				if ( TFGameRules() && TFGameRules()->IsEraStateLocked() )
+				{
+					const int nActiveEra = TFGameRules()->EraState().nAllowedWeaponEra;
+					CTF2VStripLog stripLog;
+
+					if ( !TF2VStripAnachronisticModifiers( pItem, &strippedView, nActiveEra, &stripLog ) )
+					{
+						// Base item post-dates the active era.
+						const char *pszToken = pItem->GetItemDefinition()
+							? pItem->GetItemDefinition()->GetItemBaseName() : "#TF_UNKNOWN";
+
+						if ( IsWearableSlot( i ) && !pItem->GetItemDefinition()->IsActingAsAWeapon() )
+						{
+							// Cosmetic — no stock fallback. Skip this slot entirely.
+							DevMsg( "[TF2V] Cosmetic '%s' post-dates era %d -- not given.\n",
+									pszToken, nActiveEra );
+							// ClientPrint: pass the localization token as the substitution
+							// argument to a TF2V format key, not as a format string itself.
+							ClientPrint( this, HUD_PRINTTALK,
+								"#TF2V_Cosmetic_Era_Blocked", pszToken );
+							continue;
+						}
+
+						// Weapon slot — look up and use the stock item for this slot.
+						CEconItemView *pStockItem = TFInventoryManager()->GetBaseItemForClass( iClass, i );
+						if ( !pStockItem || !pStockItem->IsValid() )
+						{
+							DevWarning( "[TF2V] No stock item for slot %d (class %d) -- skipping.\n",
+									i, iClass );
+							continue;
+						}
+
+						DevMsg( "[TF2V] '%s' post-dates era %d -- giving stock.\n",
+								pszToken, nActiveEra );
+						ClientPrint( this, HUD_PRINTTALK,
+							"#TF2V_Weapon_Era_Replaced", pszToken );
+
+						// Rebind pItem to the stock view. All downstream code
+						// (m_EquippedLoadoutItemIndices, bAlreadyHave, GiveNamedItem)
+						// will now operate on the stock item as if it were the loadout choice.
+						pItem = pStockItem;
+					}
+					else if ( stripLog.nEntries > 0 )
+					{
+						// Modifiers were stripped. strippedView holds the sanitised item.
+						// We store it on the stack and rebind pItem to it so the rest of
+						// the loop operates on the stripped copy.
+						// IMPORTANT: strippedView must outlive GiveNamedItem below.
+						// It is declared in this scope and the rebind stays within it.
+						char szStrippedList[256];
+						szStrippedList[0] = '\0';
+						const char *pszToken2 = pItem->GetItemDefinition()
+							? pItem->GetItemDefinition()->GetItemBaseName() : "#TF_UNKNOWN";
+						for ( int s = 0; s < stripLog.nEntries; s++ )
+						{
+							DevMsg( "[TF2V] Stripped '%s' from '%s' "
+									"(introduced %s, %s; era %d).\n",
+									stripLog.entries[s].szWhat,
+									pszToken2,
+									stripLog.entries[s].szDate,
+									stripLog.entries[s].szUpdate,
+									nActiveEra );
+							if ( s > 0 )
+								V_strncat( szStrippedList, ", ", sizeof(szStrippedList) );
+							V_strncat( szStrippedList, stripLog.entries[s].szWhat,
+									sizeof(szStrippedList) );
+						}
+						// Single chat line: "[TF2V] Your <item> was downgraded (removed: x, y)"
+						// Compose the full string server-side — no localization substitution
+						// because szStrippedList is a plain English list, not a token.
+						// The item name token IS resolved by ClientPrint when it appears as
+						// the 4th argument to a key with a %s1 slot; we just want the raw
+						// token here so the localization system handles it on the client.
+						// szStrippedList is plain English, not a token — compose directly.
+						char szPlain[384];
+						V_snprintf( szPlain, sizeof(szPlain),
+							"[TF2V] Item downgraded for this era (removed: %s).",
+							szStrippedList );
+						ClientPrint( this, HUD_PRINTTALK, szPlain );
+
+						pItem = &strippedView;
+					}
+					// else: item is already era-clean; pItem unchanged.
+				}
+
 				m_EquippedLoadoutItemIndices[i] = pItem->GetItemID();
 
 				Assert( pItem->GetStaticData()->GetItemClass() );
@@ -4629,117 +4722,8 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 
 				if ( !bAlreadyHave && pItem->GetStaticData()->GetItemClass() )
 				{
-					// TF2V era enforcement: produce a stripped copy of the item if needed.
-					// pItemToSpawn is what actually gets given to the player.
-					// The player's real inventory item (pItem) is never modified.
-					CEconItemView  strippedView;
-					CEconItemView *pItemToSpawn = const_cast<CEconItemView*>( pItem );
-					bool bForcedStock = false;	// true when base item post-dates active era
-
-					// Use the era-state locked weapon era rather than reading convars directly.
-					// nAllowedWeaponEra is set by LockEraState() and encodes the right gate for
-					// every enforcement level:
-					//   enforcement 0 (manual)  -> tf2v_allowed_weapon_era  (server cfg, default TF2V_ERA_MAX)
-					//   enforcement 1 (balance) -> tf2v_allowed_weapon_era  (same)
-					//   enforcement 2/3 (gated) -> tf2v_era                 (era-locked)
-					// At enforcement 0 with default settings nAllowedWeaponEra == TF2V_ERA_MAX,
-					// so nothing is stripped unless the operator explicitly configured it.
-					if ( TFGameRules() && TFGameRules()->IsEraStateLocked() )
-					{
-						const int nActiveEra = TFGameRules()->EraState().nAllowedWeaponEra;
-						CTF2VStripLog stripLog;
-
-						if ( !TF2VStripAnachronisticModifiers( pItem, &strippedView,
-															   nActiveEra, &stripLog ) )
-						{
-							// Base item post-dates the active era.
-							// For weapon slots: give the stock item instead.
-							// For wearable-only slots (cosmetics): skip the slot entirely —
-							// cosmetics have no stock fallback, so we just don't give one.
-							const char *pszItemName = pItem->GetItemDefinition()
-								? pItem->GetItemDefinition()->GetItemBaseName() : "item";
-
-							if ( IsWearableSlot( i ) && !pItem->GetItemDefinition()->IsActingAsAWeapon() )
-							{
-								// Cosmetic slot — simply skip, no stock fallback exists.
-								DevMsg( "[TF2V] Cosmetic '%s' post-dates era %d -- not given.\n",
-										pszItemName, nActiveEra );
-								// Compose the message into a buffer first — ClientPrint does not
-								// accept printf-style format args; it treats the string as a
-								// localization token and crashes on bare %s.
-								char szMsg[256];
-								V_snprintf( szMsg, sizeof(szMsg),
-									"[TF2V] %s is not available in this era and was not given.",
-									pszItemName );
-								ClientPrint( this, HUD_PRINTTALK, szMsg );
-								continue;
-							}
-
-							// Weapon slot — give the stock item for this loadout position.
-							CEconItemView *pStockItem = TFInventoryManager()->GetBaseItemForClass( iClass, i );
-							if ( !pStockItem || !pStockItem->IsValid() )
-							{
-								// No stock item found for this slot — skip it.
-								// This should not happen for any normal weapon slot.
-								DevWarning( "[TF2V] No stock item for slot %d (class %d) — skipping.\n", i, iClass );
-								continue;
-							}
-							pItemToSpawn = pStockItem;
-							bForcedStock = true;
-
-							DevMsg( "[TF2V] '%s' post-dates era %d -- replaced with stock.\n",
-									pszItemName, nActiveEra );
-							char szMsg[256];
-							V_snprintf( szMsg, sizeof(szMsg),
-								"[TF2V] %s is not available in this era and has been replaced with the stock weapon.",
-								pszItemName );
-							ClientPrint( this, HUD_PRINTTALK, szMsg );
-						}
-
-						if ( stripLog.nEntries > 0 && !bForcedStock )
-						{
-							// Anachronistic modifiers were stripped; spawn the sanitised copy.
-							pItemToSpawn = &strippedView;
-
-							// Build a comma-separated stripped-modifier list for the single
-							// client message, then compose it into a buffer.
-							// ClientPrint does NOT accept printf-style format args — it treats
-							// the string as a localization token and crashes on bare %s.
-							char szStrippedList[256];
-							szStrippedList[0] = '\0';
-							for ( int s = 0; s < stripLog.nEntries; s++ )
-							{
-								DevMsg( "[TF2V] Stripped '%s' from '%s' "
-										"(introduced %s, %s; server era %d).\n",
-										stripLog.entries[s].szWhat,
-										pItem->GetItemDefinition()
-											? pItem->GetItemDefinition()->GetItemBaseName()
-											: "unknown",
-										stripLog.entries[s].szDate,
-										stripLog.entries[s].szUpdate,
-										nActiveEra );
-								if ( s > 0 )
-									V_strncat( szStrippedList, ", ", sizeof(szStrippedList) );
-								V_strncat( szStrippedList, stripLog.entries[s].szWhat, sizeof(szStrippedList) );
-							}
-
-							const char *pszItemName2 = pItem->GetItemDefinition()
-								? pItem->GetItemDefinition()->GetItemBaseName() : "item";
-							char szMsg[256];
-							V_snprintf( szMsg, sizeof(szMsg),
-								"[TF2V] Your %s has been downgraded for this era (removed: %s).",
-								pszItemName2, szStrippedList );
-							ClientPrint( this, HUD_PRINTTALK, szMsg );
-						}
-						// else: item is era-clean as-is; pItemToSpawn stays as pItem.
-					}
-
-					// Use pItemToSpawn (not the original pItem) for the entity class string.
-					// When we fell back to stock, pItemToSpawn points to the stock item view
-					// whose GetItemClass() may differ from the original (e.g. different slot).
 					CEconEntity *pNewItem = dynamic_cast<CEconEntity*>(
-						GiveNamedItem( pItemToSpawn->GetStaticData()->GetItemClass(),
-								   0, pItemToSpawn ));
+						GiveNamedItem( pItem->GetStaticData()->GetItemClass(), 0, pItem ));
 
 					Assert( pNewItem );
 					if ( pNewItem )
