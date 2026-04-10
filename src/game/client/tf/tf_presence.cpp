@@ -726,7 +726,7 @@ bool CTFDiscordPresence::InitPresence( void )
 	g_pDiscord->UserManager().OnCurrentUserUpdate.Connect( &OnReady );
 
 	char command[512];
-	V_snprintf( command, sizeof( command ), "%s -game \"%s\" -novid -steam", CommandLine()->GetParm( 0 ), CommandLine()->ParmValue( "-game" ) );
+	V_snprintf( command, sizeof( command ), "\"%s\" -game \"%s\" -novid -insecure -steam", CommandLine()->GetParm( 0 ), CommandLine()->ParmValue( "-game" ) );
 	g_pDiscord->ActivityManager().RegisterCommand( command );
 	g_pDiscord->ActivityManager().RegisterSteam( engine->GetAppID() );
 
