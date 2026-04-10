@@ -150,7 +150,7 @@ static void RebuildItemCache( KeyValues *pPlayerKV )
     static const char *s_szSlotNames[] =
     {
         "primary",  "secondary", "melee",   "pda",    "pda2",
-        "building", "head",      "misc",    "misc2",  "misc3",
+        "building", "head",      "misc",    "misc2",
         "action",   "taunt",     "taunt2",  "taunt3", "taunt4",
         "taunt5",   "taunt6",    "taunt7",  "taunt8",
     };
@@ -280,7 +280,7 @@ void TF2VOfflineInventory_EquipItem( int iClass, int iSlot,
     static const char *s_szSlotNames[] =
     {
         "primary", "secondary", "melee", "pda", "pda2",
-        "building", "head", "misc", "misc2", "misc3",
+        "building", "head", "misc", "misc2",
         "action", "taunt", "taunt2", "taunt3", "taunt4",
         "taunt5", "taunt6", "taunt7", "taunt8",
     };
