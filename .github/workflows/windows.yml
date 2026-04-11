@@ -52,11 +52,13 @@ jobs:
 
       - name: Configure ccache
         run: |
+          # Get the absolute path to the real cl.exe
+          $realCl = (where.exe cl.exe | Select-Object -First 1)
           ccache --set-config="cache_dir=${{ env.CCACHE_DIR }}"
           ccache --set-config="max_size=4.0G"
           ccache --set-config="compiler_check=mtime"
-          # Tell ccache to wrap cl.exe so MSBuild picks it up automatically.
-          ccache --set-config="compiler=cl"
+          # Point ccache specifically to the absolute path of the real compiler
+          ccache --set-config="compiler=$realCl"
           ccache --zero-stats
 
       - name: Create project
