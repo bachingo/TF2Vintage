@@ -310,32 +310,14 @@ jobs:
           # go mod tidy below generates go.sum before any build step runs.
           cache: false
 
-      # MinGW is stable — cache the downloaded .deb files in a runner-writable
-      # directory. Caching /var/cache/apt/archives directly fails because that
-      # directory contains root-owned "lock" and "partial/" entries that tar
-      # cannot read as the runner user, causing Permission denied on cache save.
-      - name: Cache MinGW apt package
-        id: mingw-cache
-        uses: actions/cache@v4
-        with:
-          path: ~/apt-debs-mingw
-          key: apt-mingw-ubuntu-22.04-v1
-
+      # apt caching removed for the same reason as linux.yml: apt writes
+      # lock/partial as root regardless of the target directory, causing the
+      # post-job cache-save tar to fail with Permission denied. MinGW installs
+      # in ~20s; it is not worth the complexity of working around apt's root writes.
       - name: Install MinGW
         run: |
-          # apt requires a "partial/" subdirectory inside any custom
-          # Dir::Cache::archives directory before it will download into it.
-          mkdir -p ~/apt-debs-mingw/partial
-
-          if [ "${{ steps.mingw-cache.outputs.cache-hit }}" != "true" ]; then
-            sudo apt-get update
-            sudo apt-get install -y --no-install-recommends \
-              --download-only -o Dir::Cache::archives="$HOME/apt-debs-mingw" \
-              gcc-mingw-w64-x86-64
-          fi
-          sudo apt-get install -y --no-install-recommends \
-            -o Dir::Cache::archives="$HOME/apt-debs-mingw" \
-            gcc-mingw-w64-x86-64
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gcc-mingw-w64-x86-64
 
       # go.sum is not committed to the repo. go mod tidy generates it from
       # go.mod and the module proxy, resolving all transitive dependencies
