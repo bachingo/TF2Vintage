@@ -35,6 +35,8 @@ jobs:
           $url = "https://github.com/ccache/ccache/releases/download/v${version}/ccache-${version}-windows-x86_64.zip"
           Invoke-WebRequest $url -OutFile ccache.zip
           Expand-Archive ccache.zip -DestinationPath "$env:LOCALAPPDATA\ccache-bin"
+          $ccacheExe = (Get-ChildItem "$env:LOCALAPPDATA\ccache-bin" -Filter ccache.exe -Recurse).FullName
+          echo "CCACHE_BINARY_PATH=$ccacheExe" | Out-File -Append -FilePath $env:GITHUB_ENV
           $ccacheDir = (Get-ChildItem "$env:LOCALAPPDATA\ccache-bin" -Directory | Select-Object -First 1).FullName
           echo "$ccacheDir" | Out-File -Append -FilePath $env:GITHUB_PATH
 
@@ -73,7 +75,7 @@ jobs:
           MSBuild.exe TF2vintage.sln `
             /p:Configuration=${{ inputs.build_config }} `
             /p:Platform="win64" `
-            /p:CLToolExe=ccache `
+            /p:CLToolExe="${{ env.CCACHE_BINARY_PATH }}" `
             /p:UseSharedCompilation=false `
             /p:TrackFileAccess=false `
             /m /v:m
