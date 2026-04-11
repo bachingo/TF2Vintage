@@ -517,8 +517,6 @@ int CHudChat::GetFilterFlags( void )
 //      body segment is re-emitted with a COLOR_HEXCODE prefix so it renders in
 //      m_colorGreenText or m_colorQuoteText respectively.
 //
-//   2. (Server-side only) word censoring is handled in Host_Say via
-//      CBannedWordList, so nothing extra is needed here on the client.
 //-----------------------------------------------------------------------------
 void CHudChat::ChatPrintf( int iPlayerIndex, int iFilter, const char *fmt, ... )
 {

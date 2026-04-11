@@ -46,8 +46,7 @@
 #include "weapon_physcannon.h"
 #endif
 
-// TF2V: plain-text word censor and typing-bubble UserMessage helper
-#include "bannedwords_list.h"
+// TF2V: typing-bubble UserMessage helper
 #include "usermessages.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -163,19 +162,6 @@ char * CheckChatText( CBasePlayer *pPlayer, char *text )
 	// cut off after 127 chars
 	if ( length > 127 )
 		text[127] = 0;
-
-	// TF2V: censor words listed in cfg/bannedlist.txt.
-	// We initialise the dictionary lazily (once) on the first chat message.
-	// The file lives under MOD/cfg/bannedlist.txt and is a plain line-per-phrase
-	// text file (see our CBannedWordList implementation in bannedwords.cpp).
-	static bool s_bTriedInit = false;
-	if ( !s_bTriedInit )
-	{
-		s_bTriedInit = true;
-		g_BannedWordList.InitFromFile( "cfg/bannedlist.txt" );
-	}
-	if ( g_BannedWordList.BInitialized() )
-		g_BannedWordList.CensorBannedWordsInplace( p );
 
 	GameRules()->CheckChatText( pPlayer, p );
 

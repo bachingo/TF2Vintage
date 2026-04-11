@@ -127,7 +127,6 @@
 #include "sourcevr/isourcevirtualreality.h"
 #include "client_virtualreality.h"
 #include "mumble.h"
-#include "bannedwords.h"
 #include "steamshare.h"
 #include "vgui_controls/BuildGroup.h"
 
@@ -1151,9 +1150,6 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	{
 		RegisterSecureLaunchProcessFunc( pfnUnsafeCmdLineProcessor );
 	}
-	
-	// Swear list.
-	g_BannedWords.InitFromFile( "bannedwords.txt" );
 
 
 	return true;
