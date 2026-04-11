@@ -95,6 +95,17 @@ jobs:
           cd src
           .\createtf2vintage.bat
 
+      # The launcher_main .vcxproj post-build event copies the built .exe to
+      # ..\..\game\tf2vintage_win64.exe — two levels up from src\launcher_main\,
+      # landing at the repo root (D:\a\TF2Vintage\TF2Vintage\game\).
+      # Other projects copy their outputs into game\tf2vintage\bin\x64\.
+      # With only src/ sparse-checked out none of these directories exist, so
+      # every post-build copy fails with MSB3073. Pre-create the full tree.
+      - name: Create game output directories
+        run: |
+          New-Item -ItemType Directory -Force -Path game | Out-Null
+          New-Item -ItemType Directory -Force -Path game\tf2vintage\bin\x64 | Out-Null
+
       # No CLToolExe needed — the cl.bat shim on PATH handles ccache wrapping.
       # /p:UseSharedCompilation=false — disables the Roslyn shared daemon which
       #   conflicts with ccache's process-level interception.
@@ -117,7 +128,7 @@ jobs:
       - name: Collect binaries into bin/x64
         shell: cmd
         run: |
-          mkdir game\tf2vintage\bin\x64 2>nul || true
+          mkdir game\tf2vintage\bin\x64 2>nul
 
           set CFG=${{ inputs.build_config }}
 
@@ -133,8 +144,9 @@ jobs:
           copy /Y src\thirdparty\crash_handler\%CFG%tf2vintage\x64\crash_handler.dll game\tf2vintage\bin\x64\
           copy /Y src\thirdparty\crash_handler\%CFG%tf2vintage\x64\crash_handler.pdb game\tf2vintage\bin\x64\ 2>nul
 
-          :: launcher_main — goes to the mod root, not bin/x64
-          copy /Y src\launcher_main\%CFG%_tf2vintage_win64\tf2vintage_win64.exe game\tf2vintage\
+          :: launcher_main post-build copies the .exe to game\ (repo root).
+          :: Move it into game\tf2vintage\ where the upload step expects it.
+          move /Y game\tf2vintage_win64.exe game\tf2vintage\tf2vintage_win64.exe
           copy /Y src\launcher_main\%CFG%_tf2vintage_win64\tf2vintage_win64.pdb game\tf2vintage\bin\x64\ 2>nul
 
       - name: Upload binaries

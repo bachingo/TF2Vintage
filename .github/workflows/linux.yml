@@ -23,40 +23,15 @@ jobs:
             src/
           sparse-checkout-cone-mode: false
 
-      # Cache the downloaded .deb files only — NOT the whole archives directory.
-      # Caching /var/cache/apt/archives directly includes the root-owned "lock"
-      # file and "partial/" directory, which tar cannot read as the runner user,
-      # causing the post-job cache-save step to fail with Permission denied.
-      # Narrowing to a dedicated debs/ directory avoids that entirely.
-      - name: Cache apt packages
-        id: apt-cache
-        uses: actions/cache@v4
-        with:
-          path: ~/apt-debs
-          # Include runner image in key so a cache built on ubuntu-24.04 is never
-          # restored on a ubuntu-22.04 runner (different package versions).
-          key: apt-linux-build-ubuntu-24.04-v1
-
+      # Most of these packages are pre-installed on ubuntu-24.04 runners.
+      # apt caching was removed: apt always writes lock/partial as root so any
+      # cached directory fails the post-job tar with Permission denied regardless
+      # of where it is pointed. The install itself takes ~2s; the real time
+      # saving comes from the ccache step below, not from caching apt.
       - name: Configure Dependencies
         run: |
-          # apt requires a "partial/" subdirectory to exist inside any custom
-          # Dir::Cache::archives directory before it will download into it.
-          # Without this mkdir the download step fails immediately with:
-          # "Archives directory .../apt-debs/partial is missing."
-          mkdir -p ~/apt-debs/partial
-
-          if [ "${{ steps.apt-cache.outputs.cache-hit }}" != "true" ]; then
-            sudo apt-get update
-            # Download packages to our cache directory without installing yet.
-            sudo apt-get install -y --no-install-recommends \
-              --download-only -o Dir::Cache::archives="$HOME/apt-debs" \
-              zip build-essential gcc-multilib g++-multilib ccache binutils
-          fi
-          # Install from cached .deb files. apt-get resolves dependencies
-          # correctly; dpkg -i alone does not and will silently break on packages
-          # with deep dep chains such as gcc-multilib.
+          sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            -o Dir::Cache::archives="$HOME/apt-debs" \
             zip build-essential gcc-multilib g++-multilib ccache binutils
 
       # ccache key is scoped to the build config so Release and Debug builds
@@ -110,16 +85,14 @@ jobs:
         run: |
           mkdir -p game/tf2vintage/bin/linux64
 
-          # client.so / server.so — build outputs these to game/mod_tf/bin/linux64/
+          # client.so / server.so live in game/mod_tf/bin/linux64/ after the build
           find game/mod_tf/bin/linux64/ -maxdepth 1 -name "*.so" \
             -exec cp {} game/tf2vintage/bin/linux64/ \;
 
-          # launcher_tf2vintage (main executable) — goes to the mod root, not bin/linux64
-          find game/tf2vintage/ -maxdepth 1 -name "launcher_tf2vintage" \
-            -exec cp {} game/tf2vintage/ \; || true
-          # Also check mod_tf in case the build places it there
-          find game/mod_tf/ -maxdepth 1 -name "launcher_tf2vintage" \
-            -exec cp {} game/tf2vintage/ \; 2>/dev/null || true
+          # launcher_tf2vintage is built into game/mod_tf/ (mod root), not bin/.
+          # The previous logic had a self-copy from game/tf2vintage/ to itself
+          # which was always a no-op. Copy from mod_tf/ where it actually lands.
+          cp game/mod_tf/launcher_tf2vintage game/tf2vintage/launcher_tf2vintage
 
       - name: Split debug symbols from binaries
         run: |
