@@ -36,19 +36,20 @@ jobs:
           Invoke-WebRequest $url -OutFile ccache.zip
           Expand-Archive ccache.zip -DestinationPath "$env:LOCALAPPDATA\ccache-bin"
           $ccacheExe = (Get-ChildItem "$env:LOCALAPPDATA\ccache-bin" -Filter ccache.exe -Recurse | Select-Object -First 1).FullName
+            
+          # This makes ${{ env.CCACHE_EXE_PATH }} available in all following steps
           echo "CCACHE_EXE_PATH=$ccacheExe" | Out-File -Append -FilePath $env:GITHUB_ENV
 
       # ccache key is scoped to build config — Release and Debug never share a cache.
       - name: Configure ccache
         run: |
-          # Find the real MSVC compiler path
           $realCl = (where.exe cl.exe | Select-Object -First 1)
-          ccache --set-config="cache_dir=${{ env.CCACHE_DIR }}"
-          ccache --set-config="max_size=4.0G"
-          ccache --set-config="compiler_check=mtime"
-          # FORCE ccache to use the absolute path of the real cl.exe
-          ccache --set-config="compiler=$realCl"
-          ccache --zero-stats
+          # Use the variable instead of 'ccache'
+          & "${{ env.CCACHE_EXE_PATH }}" --set-config="cache_dir=${{ env.CCACHE_DIR }}"
+          & "${{ env.CCACHE_EXE_PATH }}" --set-config="max_size=4.0G"
+          & "${{ env.CCACHE_EXE_PATH }}" --set-config="compiler_check=mtime"
+          & "${{ env.CCACHE_EXE_PATH }}" --set-config="compiler=$realCl"
+          & "${{ env.CCACHE_EXE_PATH }}" --zero-stats
 
       - name: Configure ccache
         run: |
@@ -61,6 +62,10 @@ jobs:
           ccache --set-config="compiler=$realCl"
           ccache --zero-stats
 
+      - name: Print ccache stats
+        if: always()
+        run: & "${{ env.CCACHE_EXE_PATH }}" --show-stats
+  
       - name: Create project
         run: |
           cd src
@@ -81,10 +86,6 @@ jobs:
             /p:UseSharedCompilation=false `
             /p:TrackFileAccess=false `
             /m /v:m
-
-      - name: Print ccache stats
-        if: always()
-        run: ccache --show-stats
 
       - name: Collect binaries into bin/x64
         shell: cmd
