@@ -39,14 +39,16 @@ jobs:
           echo "CCACHE_EXE_PATH=$ccacheExe" | Out-File -Append -FilePath $env:GITHUB_ENV
 
       # ccache key is scoped to build config — Release and Debug never share a cache.
-      - name: Cache ccache
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.CCACHE_DIR }}
-          key: ${{ runner.os }}-ccache-${{ inputs.build_config }}-${{ hashFiles('src/**/*.cpp', 'src/**/*.h') }}
-          restore-keys: |
-            ${{ runner.os }}-ccache-${{ inputs.build_config }}-
-            ${{ runner.os }}-ccache-
+      - name: Configure ccache
+        run: |
+          # Find the real MSVC compiler path
+          $realCl = (where.exe cl.exe | Select-Object -First 1)
+          ccache --set-config="cache_dir=${{ env.CCACHE_DIR }}"
+          ccache --set-config="max_size=4.0G"
+          ccache --set-config="compiler_check=mtime"
+          # FORCE ccache to use the absolute path of the real cl.exe
+          ccache --set-config="compiler=$realCl"
+          ccache --zero-stats
 
       - name: Configure ccache
         run: |
@@ -75,7 +77,7 @@ jobs:
           MSBuild.exe TF2vintage.sln `
             /p:Configuration=${{ inputs.build_config }} `
             /p:Platform="win64" `
-            /p:CLToolExe="${{ env.CCACHE_BINARY_PATH }}" `
+            /p:CLToolExe="${{ env.CCACHE_EXE_PATH }}" `
             /p:UseSharedCompilation=false `
             /p:TrackFileAccess=false `
             /m /v:m
