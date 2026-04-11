@@ -85,14 +85,13 @@ jobs:
         run: |
           mkdir -p game/tf2vintage/bin/linux64
 
-          # client.so / server.so live in game/mod_tf/bin/linux64/ after the build
-          find game/mod_tf/bin/linux64/ -maxdepth 1 -name "*.so" \
-            -exec cp {} game/tf2vintage/bin/linux64/ \;
+          # client.so / server.so — build copies these to game/mod_tf/bin/linux64/
+          find game/mod_tf/bin/linux64/ -maxdepth 1 -name "*.so"             -exec cp {} game/tf2vintage/bin/linux64/ \;
 
-          # launcher_tf2vintage is built into game/mod_tf/ (mod root), not bin/.
-          # The previous logic had a self-copy from game/tf2vintage/ to itself
-          # which was always a no-op. Copy from mod_tf/ where it actually lands.
-          cp game/mod_tf/launcher_tf2vintage game/tf2vintage/launcher_tf2vintage
+          # The launcher links to ../game/tf2vintage_linux64 (relative to src/),
+          # so it lands at the repo root as game/tf2vintage_linux64 — not inside
+          # game/tf2vintage/ and not named launcher_tf2vintage.
+          cp game/tf2vintage_linux64 game/tf2vintage/launcher_tf2vintage
 
       - name: Split debug symbols from binaries
         run: |
