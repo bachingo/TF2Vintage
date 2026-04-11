@@ -53,18 +53,9 @@ jobs:
 
       - name: Configure ccache
         run: |
-          # Resolve the absolute path to ccache.exe — MSBuild's TrackerExecuteTool
-          # requires a fully-rooted compiler path and throws MSB0001 on a bare name.
-          $ccacheExe = (Get-Command ccache).Source
-          echo "CCACHE_EXE=$ccacheExe" | Out-File -Append -FilePath $env:GITHUB_ENV
-
-          # Resolve the absolute path to cl.exe from the MSVC environment and
-          # export it as CCACHE_COMPILER. When MSBuild invokes ccache as CLToolExe
-          # it passes a response-file (@...rsp) on the command line; ccache then
-          # execs the real compiler itself. Without CCACHE_COMPILER set, ccache
-          # searches its own PATH which does not fully inherit the VS developer
-          # shell, so cl.exe is not found and every translation unit fails with
-          # "execute_noreturn ... failed: No such file or directory".
+          # Resolve the real cl.exe path from the VS developer environment so we
+          # can point CCACHE_COMPILER at it explicitly — ccache needs to know the
+          # full path to the real compiler it is wrapping.
           $clExe = (Get-Command cl.exe).Source
           echo "CCACHE_COMPILER=$clExe" | Out-File -Append -FilePath $env:GITHUB_ENV
 
@@ -74,13 +65,37 @@ jobs:
           ccache --set-config="compiler_check=mtime"
           ccache --zero-stats
 
+      # MSBuild passes all compiler arguments via a response file (@file.rsp).
+      # CLToolExe=ccache therefore calls "ccache @file.rsp", but ccache on
+      # Windows does not expand response files — it passes the bare @rsp token
+      # to cl.exe, which receives an empty command line, prints its usage banner,
+      # and emits no .obj files, causing LNK1181 for every translation unit.
+      #
+      # The reliable solution is a shim: a real cl.bat placed earlier on PATH
+      # than the genuine cl.exe. MSBuild finds cl.bat, calls it normally (with
+      # the fully-expanded rsp arguments), and the shim forwards everything to
+      # ccache, which then invokes the real cl.exe via CCACHE_COMPILER.
+      # This way response-file expansion happens in cmd.exe before ccache ever
+      # sees the arguments, so ccache receives a normal compiler invocation.
+      - name: Install cl.exe ccache shim
+        run: |
+          $shimDir = "$env:USERPROFILE\ccache-shim"
+          New-Item -ItemType Directory -Force -Path $shimDir | Out-Null
+
+          # The shim receives the already-expanded arguments from MSBuild and
+          # forwards them verbatim to ccache, which wraps the real cl.exe.
+          $ccacheExe = (Get-Command ccache).Source
+          Set-Content -Path "$shimDir\cl.bat" -Value "@echo off`r`n""$ccacheExe"" %*"
+
+          # Prepend the shim directory so it shadows the real cl.exe on PATH.
+          echo "$shimDir" | Out-File -Append -FilePath $env:GITHUB_PATH
+
       - name: Create project
         run: |
           cd src
           .\createtf2vintage.bat
 
-      # /p:CLToolExe — wraps cl.exe with ccache for all compilations.
-      #   Must be an absolute (rooted) path; bare "ccache" causes MSB0001.
+      # No CLToolExe needed — the cl.bat shim on PATH handles ccache wrapping.
       # /p:UseSharedCompilation=false — disables the Roslyn shared daemon which
       #   conflicts with ccache's process-level interception.
       # /p:TrackFileAccess=false — disables MSBuild's file tracker (tlog files)
@@ -91,7 +106,6 @@ jobs:
           MSBuild.exe TF2vintage.sln `
             /p:Configuration=${{ inputs.build_config }} `
             /p:Platform="win64" `
-            /p:CLToolExe="${{ env.CCACHE_EXE }}" `
             /p:UseSharedCompilation=false `
             /p:TrackFileAccess=false `
             /m /v:m
