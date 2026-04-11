@@ -39,6 +39,12 @@ jobs:
 
       - name: Configure Dependencies
         run: |
+          # apt requires a "partial/" subdirectory to exist inside any custom
+          # Dir::Cache::archives directory before it will download into it.
+          # Without this mkdir the download step fails immediately with:
+          # "Archives directory .../apt-debs/partial is missing."
+          mkdir -p ~/apt-debs/partial
+
           if [ "${{ steps.apt-cache.outputs.cache-hit }}" != "true" ]; then
             sudo apt-get update
             # Download packages to our cache directory without installing yet.

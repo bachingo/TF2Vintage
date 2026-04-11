@@ -323,6 +323,10 @@ jobs:
 
       - name: Install MinGW
         run: |
+          # apt requires a "partial/" subdirectory inside any custom
+          # Dir::Cache::archives directory before it will download into it.
+          mkdir -p ~/apt-debs-mingw/partial
+
           if [ "${{ steps.mingw-cache.outputs.cache-hit }}" != "true" ]; then
             sudo apt-get update
             sudo apt-get install -y --no-install-recommends \

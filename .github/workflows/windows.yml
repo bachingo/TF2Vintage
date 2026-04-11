@@ -53,12 +53,20 @@ jobs:
 
       - name: Configure ccache
         run: |
-          # Resolve the absolute path to ccache.exe so we can pass it as a
-          # rooted path to MSBuild's CLToolExe. MSBuild's TrackerExecuteTool
-          # requires a fully-rooted compiler path and will throw MSB0001 if it
-          # receives a bare filename.
+          # Resolve the absolute path to ccache.exe — MSBuild's TrackerExecuteTool
+          # requires a fully-rooted compiler path and throws MSB0001 on a bare name.
           $ccacheExe = (Get-Command ccache).Source
           echo "CCACHE_EXE=$ccacheExe" | Out-File -Append -FilePath $env:GITHUB_ENV
+
+          # Resolve the absolute path to cl.exe from the MSVC environment and
+          # export it as CCACHE_COMPILER. When MSBuild invokes ccache as CLToolExe
+          # it passes a response-file (@...rsp) on the command line; ccache then
+          # execs the real compiler itself. Without CCACHE_COMPILER set, ccache
+          # searches its own PATH which does not fully inherit the VS developer
+          # shell, so cl.exe is not found and every translation unit fails with
+          # "execute_noreturn ... failed: No such file or directory".
+          $clExe = (Get-Command cl.exe).Source
+          echo "CCACHE_COMPILER=$clExe" | Out-File -Append -FilePath $env:GITHUB_ENV
 
           ccache --set-config="cache_dir=${{ env.CCACHE_DIR }}"
           ccache --set-config="max_size=4.0G"
