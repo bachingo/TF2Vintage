@@ -305,10 +305,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
-          # go.sum is not committed to the repo; disable the built-in module
-          # cache so the action doesn't error trying to read a missing file.
-          # go mod tidy below generates go.sum before any build step runs.
-          cache: false
+          cache: true
 
       # apt caching removed for the same reason as linux.yml: apt writes
       # lock/partial as root regardless of the target directory, causing the
@@ -325,7 +322,6 @@ jobs:
       - name: Tidy and download Go modules
         run: |
           cd tools/updater
-          go mod tidy
           go mod download
 
       - name: Compile Windows resource file (icon + version info)
