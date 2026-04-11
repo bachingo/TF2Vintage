@@ -61,8 +61,14 @@ jobs:
 
           ccache --set-config="cache_dir=${{ env.CCACHE_DIR }}"
           ccache --set-config="max_size=4.0G"
-          # mtime is faster than content-hash for compiler validation on MSVC.
-          ccache --set-config="compiler_check=mtime"
+          # none is safe on ephemeral CI runners — the compiler never changes
+          # within a run, so there is nothing to verify. mtime was causing
+          # ccache to reject all invocations on fresh runners.
+          ccache --set-config="compiler_check=none"
+          # MSVC runs the preprocessor and compiler as separate passes by default.
+          # cpp2=true tells ccache to hash the preprocessed output rather than
+          # the source file, which is required for correct caching with cl.exe.
+          ccache --set-config="run_second_cpp=true"
           ccache --zero-stats
 
       # MSBuild passes all compiler arguments via a response file (@file.rsp).

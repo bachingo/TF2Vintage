@@ -51,12 +51,24 @@ jobs:
         run: |
           mkdir -p game/tf2vintage/bin/linux64
           ccache --set-config=cache_dir=${{ env.CCACHE_DIR }}
-          # 4G gives the full Source SDK build room to cache without eviction churn.
-          # 2G was too tight and caused partial cache hits that slowed rebuilds.
           ccache --set-config=max_size=4.0G
-          # mtime is faster than the default content hash for compiler validation.
-          ccache --set-config=compiler_check=mtime
+          # none is safe on ephemeral CI runners — the compiler never changes
+          # within a run, so there is nothing to verify.
+          ccache --set-config=compiler_check=none
           ccache --zero-stats
+
+          # Inject ccache into the build by prepending a directory of compiler
+          # symlinks to PATH. The ninja build invokes gcc/g++ directly and has
+          # no ccache hook of its own, so without this ccache is never called
+          # and the cache stays empty. Each symlink resolves to the ccache binary
+          # at exec time; ccache then calls the real compiler via $PATH remainder.
+          mkdir -p "$HOME/ccache-wrappers"
+          for compiler in gcc g++ cc c++ gcc-13 g++-13 x86_64-linux-gnu-gcc x86_64-linux-gnu-g++; do
+            if command -v "$compiler" &>/dev/null; then
+              ln -sf "$(which ccache)" "$HOME/ccache-wrappers/$compiler"
+            fi
+          done
+          echo "$HOME/ccache-wrappers" >> $GITHUB_PATH
 
       - name: Make createtf2vintage executable
         run: chmod +x src/createtf2vintage
