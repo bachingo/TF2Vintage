@@ -46,6 +46,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-ccache-${{ inputs.build_config }}-
             ${{ runner.os }}-ccache-
+          # Always save even on a primary-key hit so new objects compiled since
+          # the last run are persisted. Without this, a key match on the first
+          # run causes every subsequent run to skip saving and the cache never
+          # grows beyond what was stored on the very first cold build.
+          save-always: true
 
       - name: Setup ccache
         run: |

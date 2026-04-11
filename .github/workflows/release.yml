@@ -97,7 +97,7 @@ jobs:
             fi
 
           # ── 84 Day (12 week) scheduled release ─────────────────────────────────────
-          # Always publishes both tf2vintage-full.zip and tf2vintage-diff.zip.
+          # Always publishes tf2vintage-full.zip and base-manifest.json.
           # The diff contains all files changed since the previous full release;
           # applying it to a previous full is equivalent to a new full install.
             if [ "$DAYS_SINCE" -ge 84 ]; then
@@ -242,30 +242,26 @@ jobs:
           print(f"{'Changes detected' if has_changes else 'No base changes'}: {len(changed)} modified, {len(removed)} removed")
           PYEOF
 
-      - name: Generate base-patch.zip (changed files only — diff payload)
-        # Only built when there is a previous manifest to diff against.
-        # On first-ever release there is no prev, so only the full zip is published.
+      - name: Generate base-patch.zip (changed files only)
+        # Only built when a previous manifest exists to diff against.
+        # On first-ever release has_prev=false so only the full zip is published.
         if: |
           steps.prev_manifest.outputs.has_prev == 'true' &&
           steps.base_changes.outputs.has_changes == 'true'
         run: |
-          python3 - << 'PYEOF'
+          python3 - << 'INNEREOF'
           import os, json, zipfile
-
           prev  = json.load(open("prev-manifest.json"))
           curr  = json.load(open("base-manifest.json"))
           base  = "game/tf2vintage"
-          # Changed OR newly added files; deletions are handled by manifest on install
           changed = [f for f, md5 in curr["files"].items() if prev["files"].get(f) != md5]
-
           print(f"Diff payload: {len(changed)} changed/added file(s):")
           with zipfile.ZipFile("base-patch.zip", "w", zipfile.ZIP_DEFLATED) as zf:
               for rel in sorted(changed):
                   full = os.path.join(base, rel.replace("/", os.sep))
-                  # Preserve the tf2vintage/ prefix so extractZipRouted can route correctly
                   zf.write(full, arcname=os.path.join("tf2vintage", rel))
                   print(f"  + {rel}")
-          PYEOF
+          INNEREOF
 
       - name: Pack base-full.zip (full game-asset tree, no bin)
         run: |
@@ -281,13 +277,13 @@ jobs:
             base-full.zip
             base-manifest.json
 
-      - name: Upload base-patch artifact (optional — absent on first release or no asset changes)
+
+      - name: Upload base-patch artifact (absent on first release or no asset changes)
         uses: actions/upload-artifact@v4
         with:
           name: tf2vintage-base-patch
           if-no-files-found: warn
           path: base-patch.zip
-
 
   # ── Windows bin: build updater + stage DLLs ─────────────────────────────────
   package-windows:
@@ -305,7 +301,9 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
-          cache: true
+          # go.sum is not committed to the repo; disable the built-in module
+          # cache so the action doesn't error trying to read a missing file.
+          cache: false
 
       # apt caching removed for the same reason as linux.yml: apt writes
       # lock/partial as root regardless of the target directory, causing the
@@ -316,10 +314,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends gcc-mingw-w64-x86-64
 
-      # go.sum is not committed to the repo. go mod tidy generates it from
-      # go.mod and the module proxy, resolving all transitive dependencies
-      # (including golang.org/x/sys/unix) before the build steps run.
-      - name: Tidy and download Go modules
+      - name: Download Go modules
         run: |
           cd tools/updater
           go mod download
@@ -404,16 +399,11 @@ jobs:
           go-version: '1.22'
           # go.sum is not committed to the repo; disable the built-in module
           # cache so the action doesn't error trying to read a missing file.
-          # go mod tidy below generates go.sum before any build step runs.
           cache: false
 
-      # go.sum is not committed to the repo. go mod tidy generates it from
-      # go.mod and the module proxy, resolving all transitive dependencies
-      # (including golang.org/x/sys/unix) before the build steps run.
-      - name: Tidy and download Go modules
+      - name: Download Go modules
         run: |
           cd tools/updater
-          go mod tidy
           go mod download
 
       - name: Build updater (Linux)
@@ -580,7 +570,6 @@ jobs:
   #     tf2vintage/bin/linux64/**      ← Linux binaries
   #     tf2vintage/base-manifest.json  ← version record
   #
-  #   tf2vintage-diff.zip      (absent on the very first release)
   #     tf2vintage/**                  ← ONLY files changed since the previous full release
   #     tf2vintage/bin/x64/**          ← Windows binaries (always fully replaced)
   #     tf2vintage/bin/linux64/**      ← Linux binaries
@@ -589,9 +578,6 @@ jobs:
   # Everything lives under the tf2vintage/ wrapper so that extractZipRouted can
   # strip it uniformly: bin/ subtree → stagingRoot, everything else → modDir.
   #
-  # Applying tf2vintage-diff.zip on top of ANY previous tf2vintage-full install
-  # yields a result identical to installing tf2vintage-full.zip fresh.
-  # The diff never touches nightly binaries — it diffs against the last full only.
   #
   # For nightly, produces:
   #   tf2vintage-nightly.zip
@@ -628,7 +614,7 @@ jobs:
         with:
           name: tf2vintage-base-patch
           path: base-artifacts/
-        continue-on-error: true   # absent on first release or when no base files changed
+        continue-on-error: true   # absent on first release or when no asset changes
 
       - name: Download nightly-version file
         if: needs.classify.outputs.is_nightly == 'true'
@@ -662,26 +648,21 @@ jobs:
           echo "=== tf2vintage-full.zip (first 30 entries) ==="
           unzip -l ../../tf2vintage-full.zip | head -35
 
-      # ── tf2vintage-diff.zip ────────────────────────────────────────────────
-      # Same layout: everything under tf2vintage/ — only the game-asset tree is
-      # partial (changed files only); bin and manifest are always fully replaced.
-      # Absent on first-ever release (no base-patch.zip exists yet).
+      # ── tf2vintage-diff.zip ──────────────────────────────────────────────────────────────────────
+      # Changed game assets only; bin trees and manifest always fully replaced.
+      # Absent on first-ever release (no base-patch.zip was produced).
       - name: Assemble tf2vintage-diff.zip
         id: assemble_diff
         if: needs.classify.outputs.is_nightly != 'true'
         run: |
           if [ ! -f base-artifacts/base-patch.zip ]; then
-            echo "No base-patch.zip present — skipping diff zip (first release or no asset changes)."
+            echo "No base-patch.zip — skipping diff zip (first release or no asset changes)."
             echo "diff_built=false" >> $GITHUB_OUTPUT
             exit 0
           fi
           mkdir -p combined/diff/tf2vintage
-          # base-patch.zip entries are already tf2vintage/** (written that way by
-          # Generate base-patch.zip), so unzip straight into combined/diff/
           unzip -q base-artifacts/base-patch.zip -d combined/diff/
-          # Bin and manifest go inside tf2vintage/ just like the full zip
           cp -r bin-staging/bin combined/diff/tf2vintage/
-          # Launcher and updater at mod root
           find bin-staging/ -maxdepth 1 \( -name "*.exe" -o -name "tf2vintage-updater" -o -name "launcher_tf2vintage" \) \
             -exec cp {} combined/diff/tf2vintage/ \;
           cp base-artifacts/base-manifest.json combined/diff/tf2vintage/
@@ -751,13 +732,24 @@ jobs:
           name: tf2vintage-full
           path: dist/
 
+      - name: Download base manifest
+        if: needs.classify.outputs.is_nightly != 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: tf2vintage-base
+          path: dist-manifest/
+
+      - name: Stage base-manifest.json for release
+        if: needs.classify.outputs.is_nightly != 'true'
+        run: cp dist-manifest/base-manifest.json dist/base-manifest.json
+
       - name: Download diff zip
         if: needs.classify.outputs.is_nightly != 'true'
         uses: actions/download-artifact@v4
         with:
           name: tf2vintage-diff
           path: dist/
-        continue-on-error: true   # absent on first-ever release — that is expected
+        continue-on-error: true   # absent on first-ever release
 
       - name: Download nightly zip
         if: needs.classify.outputs.is_nightly == 'true'
@@ -788,6 +780,7 @@ jobs:
                    tf2vintage-full.zip \
                    tf2vintage-diff.zip \
                    tf2vintage-nightly.zip \
+                   base-manifest.json \
                    tf2vintage-symbols.zip; do
             [ -f "$f" ] && sha256sum "$f"
           done > checksums.sha256
@@ -829,7 +822,8 @@ jobs:
               echo "| File | When to use |"
               echo "|------|-------------|"
               echo "| \`tf2vintage-full.zip\` | Fresh install or repair — complete game + binaries |"
-              echo "| \`tf2vintage-diff.zip\` | Update from any previous full release — changed files + binaries |"
+              echo "| \`tf2vintage-diff.zip\` | Update from a previous install — changed assets + fresh binaries |"
+              echo "| \`base-manifest.json\` | Version record read by the updater to check installed state |"
               echo ""
               echo "The updater selects the correct file automatically."
             fi
@@ -886,5 +880,6 @@ jobs:
             dist/tf2vintage-updater
             dist/tf2vintage-full.zip
             dist/tf2vintage-diff.zip
+            dist/base-manifest.json
             dist/tf2vintage-symbols.zip
             dist/checksums.sha256
