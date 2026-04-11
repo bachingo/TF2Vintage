@@ -584,7 +584,7 @@ CTFDiscordPresence::CTFDiscordPresence()
 	: m_szHostName(""), m_szServerInfo(""), m_szSteamID(""), m_szTeamPref(""), m_nSourceTVPort(27020)
 {
 	VCRHook_Time( &m_iCreationTimestamp );
-	m_flLastPlayerJoinTime = 0;
+	m_flLastPlayerJoinTime = -1.0f;
 
 	rpc = this;
 }
@@ -725,8 +725,18 @@ bool CTFDiscordPresence::InitPresence( void )
 	Q_memset( &m_CurrentUser, 0, sizeof( discord::User ) );
 	g_pDiscord->UserManager().OnCurrentUserUpdate.Connect( &OnReady );
 
+	// ParmValue("-game") can return NULL when the mod directory is passed as a
+	// positional argument rather than an explicit -game flag.  Fall back to the
+	// engine's own game-directory accessor which is always populated correctly.
+	const char *pGameDir = CommandLine()->ParmValue( "-game" );
+	char szGameDir[MAX_PATH];
+	if ( !pGameDir || pGameDir[0] == '\0' )
+	{
+		engine->GetGameDir( szGameDir, sizeof( szGameDir ) );
+		pGameDir = szGameDir;
+	}
 	char command[512];
-	V_snprintf( command, sizeof( command ), "\"%s\" -game \"%s\" -novid -insecure -steam", CommandLine()->GetParm( 0 ), CommandLine()->ParmValue( "-game" ) );
+	V_snprintf( command, sizeof( command ), "\"%s\" -game \"%s\" -novid -insecure -steam", CommandLine()->GetParm( 0 ), pGameDir );
 	g_pDiscord->ActivityManager().RegisterCommand( command );
 	g_pDiscord->ActivityManager().RegisterSteam( engine->GetAppID() );
 
@@ -1095,21 +1105,16 @@ char const *CTFDiscordPresence::GetMatchSecret( void ) const
 	int nBlockSize = ice.blockSize();
 
 	int nLength = V_strlen( m_szSteamID );
-	unsigned char *cypher = (unsigned char *)_alloca( PAD_NUMBER( nLength, nBlockSize ) );
-	unsigned char *temp = (unsigned char *)m_szSteamID;
+	Q_memset( m_szMatchSecret, 0, sizeof( m_szMatchSecret ) );
+	unsigned char *pOut = (unsigned char *)m_szMatchSecret;
+	unsigned char *pIn  = (unsigned char *)m_szSteamID;
 
 	int nBytesLeft = nLength;
-	for( ; nBytesLeft >= nBlockSize; nBytesLeft -= nBlockSize )
-	{
-		ice.encrypt( temp, cypher );
+	for ( ; nBytesLeft >= nBlockSize; nBytesLeft -= nBlockSize, pIn += nBlockSize, pOut += nBlockSize )
+		ice.encrypt( pIn, pOut );
 
-		cypher += nBlockSize;
-		temp += nBlockSize;
-	}
-	
-	Q_memcpy( cypher, temp, nLength - nBytesLeft );
-	cypher -= nLength - nBytesLeft;
-	return (char *)cypher;
+	Q_memcpy( pOut, pIn, nBytesLeft );
+	return m_szMatchSecret;
 }
 
 //-----------------------------------------------------------------------------
@@ -1126,21 +1131,16 @@ char const *CTFDiscordPresence::GetJoinSecret( void ) const
 	BuildJoinPayload( szPayload, sizeof( szPayload ) );
 
 	int nLength = V_strlen( szPayload );
-	unsigned char *cypher = (unsigned char *)_alloca( PAD_NUMBER( nLength, nBlockSize ) );
-	unsigned char *temp = (unsigned char *)szPayload;
+	Q_memset( m_szJoinSecret, 0, sizeof( m_szJoinSecret ) );
+	unsigned char *pOut = (unsigned char *)m_szJoinSecret;
+	unsigned char *pIn  = (unsigned char *)szPayload;
 
 	int nBytesLeft = nLength;
-	for ( ; nBytesLeft >= nBlockSize; nBytesLeft -= nBlockSize )
-	{
-		ice.encrypt( temp, cypher );
+	for ( ; nBytesLeft >= nBlockSize; nBytesLeft -= nBlockSize, pIn += nBlockSize, pOut += nBlockSize )
+		ice.encrypt( pIn, pOut );
 
-		cypher += nBlockSize;
-		temp += nBlockSize;
-	}
-
-	Q_memcpy( cypher, temp, nLength - nBytesLeft );
-	cypher -= nLength - nBytesLeft;
-	return (char *)cypher;
+	Q_memcpy( pOut, pIn, nBytesLeft );
+	return m_szJoinSecret;
 }
 
 //-----------------------------------------------------------------------------
@@ -1165,21 +1165,16 @@ char const *CTFDiscordPresence::GetSpectateSecret( void ) const
 	V_snprintf( szPayload, sizeof( szPayload ), "%s:%d", szBase, m_nSourceTVPort );
 
 	int nLength = V_strlen( szPayload );
-	unsigned char *cypher = (unsigned char *)_alloca( PAD_NUMBER( nLength, nBlockSize ) );
-	unsigned char *temp = (unsigned char *)szPayload;
+	Q_memset( m_szSpectateSecret, 0, sizeof( m_szSpectateSecret ) );
+	unsigned char *pOut = (unsigned char *)m_szSpectateSecret;
+	unsigned char *pIn  = (unsigned char *)szPayload;
 
 	int nBytesLeft = nLength;
-	for ( ; nBytesLeft >= nBlockSize; nBytesLeft -= nBlockSize )
-	{
-		ice.encrypt( temp, cypher );
+	for ( ; nBytesLeft >= nBlockSize; nBytesLeft -= nBlockSize, pIn += nBlockSize, pOut += nBlockSize )
+		ice.encrypt( pIn, pOut );
 
-		cypher += nBlockSize;
-		temp += nBlockSize;
-	}
-
-	Q_memcpy( cypher, temp, nLength - nBytesLeft );
-	cypher -= nLength - nBytesLeft;
-	return (char *)cypher;
+	Q_memcpy( pOut, pIn, nBytesLeft );
+	return m_szSpectateSecret;
 }
 
 //-----------------------------------------------------------------------------

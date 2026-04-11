@@ -83,6 +83,11 @@ private:
 	char m_szTeamPref[ 16 ];						// "red", "blue", "" — updated on team change
 	int  m_nSourceTVPort;							// read from server_spawn tvport field (default 27020)
 
+	// Persistent buffers for secret getters — avoids returning dangling _alloca pointers.
+	mutable char m_szMatchSecret[ DISCORD_FIELD_MAXLEN ];
+	mutable char m_szJoinSecret[ DISCORD_FIELD_MAXLEN ];
+	mutable char m_szSpectateSecret[ DISCORD_FIELD_MAXLEN ];
+
 	long m_iCreationTimestamp;
 	float m_flLastPlayerJoinTime;
 	int m_nPlayerCount;
