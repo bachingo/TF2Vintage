@@ -728,12 +728,11 @@ bool CTFDiscordPresence::InitPresence( void )
 	// ParmValue("-game") can return NULL when the mod directory is passed as a
 	// positional argument rather than an explicit -game flag.  Fall back to the
 	// engine's own game-directory accessor which is always populated correctly.
-	const char *pGameDir = CommandLine()->ParmValue( "-game" );
-	char szGameDir[MAX_PATH];
-	if ( !pGameDir || pGameDir[0] == '\0' )
+	const char *pGameDir = CommandLine()->ParmValue("-game");
+
+	if (!pGameDir || !pGameDir[0])
 	{
-		engine->GetGameDir( szGameDir, sizeof( szGameDir ) );
-		pGameDir = szGameDir;
+		pGameDir = "tf2vintage";
 	}
 	char command[512];
 	V_snprintf( command, sizeof( command ), "\"%s\" -game \"%s\" -novid -insecure -steam", CommandLine()->GetParm( 0 ), pGameDir );
