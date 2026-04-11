@@ -42,7 +42,7 @@
 			// as the first "mod" search path (after any user customizations).  This is also the one
 			// that's used when writing to the "mod" path.
 			game+mod+vgui		|gameinfo_path|base
-			game+mod+vgui		|gameinfo_path|assets
+			game+mod+vgui		|gameinfo_path|tf2v_assets
 			mod+mod_write		|gameinfo_path|.
 			game+game_write		|gameinfo_path|.
 			vgui				|gameinfo_path|.

@@ -1,0 +1,8 @@
+"Patch"
+{
+	include "materials\vgui\replay\thumbnails\models/weapons/c_models/c_flaregun/c_xms_flaregun_festives.vmt"
+	insert
+	{
+		"$baseTexture" "models/weapons/c_items/c_xms_flaregun_festives_blue"
+	}
+}

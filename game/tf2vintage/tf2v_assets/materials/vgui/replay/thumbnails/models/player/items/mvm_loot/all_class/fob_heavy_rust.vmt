@@ -1,0 +1,43 @@
+"VertexLitGeneric"
+{
+	"$basetexture"	"models/player/items/mvm_loot/all_class/fob_heavy_rust"
+//	"$bumpmap" "models/player/items/mvm_loot/all_class/fob_heavy_normal"
+	"$basemapalphaphongmask" "1"
+	"$halflambert" "1"
+
+	"$nocull" "1"
+
+	"$phong" "1"
+	"$phongexponent" "25"
+	"$phongboost" "0.8"	
+	"$lightwarptexture" "vgui/replay/thumbnails/models/lightwarps/robot_lightwarp"
+	"$phongfresnelranges"	"[1 1 1]"
+
+	"$tempvar" "0"
+
+	"$glowcolor" "1"
+	
+	"$rimlight" "1"						
+	"$rimlightexponent" "12"				
+	"$rimlightboost" "1"								// Boost for ambient cube component of rim lighting
+	
+	// Cloaking
+	"$cloakPassEnabled" "1"
+	"$yellow" "0"
+
+	"Proxies"
+	{
+		"invis"
+		{
+		}
+		"YellowLevel"
+		{
+			"resultVar" "$yellow"
+		}
+		"Equals"
+		{
+			"srcVar1" "$yellow"
+			"resultVar" "$color2"
+		}
+	}
+}

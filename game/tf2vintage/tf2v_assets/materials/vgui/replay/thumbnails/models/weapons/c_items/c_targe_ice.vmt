@@ -1,0 +1,59 @@
+"VertexlitGeneric"
+{
+	"$baseTexture" "vgui\replay\thumbnails\models\weapons\c_items/c_targe_ice"
+     "$bumpmap" "vgui/replay/thumbnails/models/workshop/weapons/c_models/c_xms_cold_shoulder/c_xms_cold_shoulder_normal"
+	"$translucent" 1
+
+	"$envmap" "env_cubemap"
+	"$envmaptint" "[.3 .3 .2]"
+		
+	"$phong" "1"
+	"$phongexponent" "15"
+	"$phongboost" "5"		
+	"$phongfresnelranges"	"[.3 .5 3]"
+	              
+	"$tempvar" "0"
+	"$lightwarptexture" "vgui\replay\thumbnails\models\props_forest/icicle_lightwarp"
+
+	"$rimlight" "1"						
+	"$rimlightexponent" "20"				
+	"$rimlightboost" "100"
+
+	"$glowcolor" "0"
+
+	// Cloaking
+	"$cloakPassEnabled" "1"
+	"$yellow" "0"
+
+	"Proxies"
+	{
+		"AnimatedWeaponSheen"
+		{
+			"animatedtexturevar" 		"$sheenmapmask"
+			"animatedtextureframenumvar" 	"$sheenmapmaskframe"
+			"animatedtextureframerate" 		"40"
+		}
+		"invis"
+		{
+		}
+		"ModelGlowColor"
+		{
+			"resultVar" "$glowcolor"
+		}
+		"Equals"
+		{
+			"srcVar1"  "$glowcolor"
+			"resultVar" "$color2"
+		}
+		"YellowLevel"
+		{
+			"resultVar" "$yellow"
+		}
+		"Multiply"
+		{
+			"srcVar1" "$color2"
+			"srcVar2" "$yellow"
+			"resultVar" "$color2"
+		}
+	}
+}

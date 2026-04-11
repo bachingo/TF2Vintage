@@ -1,0 +1,40 @@
+"VertexLitGeneric"
+{
+	"$basetexture"	"models/player/items/mvm_loot/medic/chain_medic"
+	"$halflambert" "1"
+	"$nocull" "1"
+
+	"$basemapalphaphongmask" "1"
+
+	"$phong" "1"
+	"$phongexponent" "25"
+	"$phongboost" "2.5"	
+	"$lightwarptexture" "models/lightwarps/softened_weapon_lightwarp"
+	"$phongfresnelranges"	"[.25 .25 .25]"
+
+	"$tempvar" "0"
+	
+	"$rimlight" "1"						
+	"$rimlightexponent" "15"				
+	"$rimlightboost" ".85"								// Boost for ambient cube component of rim lighting
+	
+	// Cloaking
+	"$cloakPassEnabled" "1"
+	"$yellow" "0"
+
+	"Proxies"
+	{
+		"invis"
+		{
+		}
+		"YellowLevel"
+		{
+			"resultVar" "$yellow"
+		}
+		"Equals"
+		{
+			"srcVar1" "$yellow"
+			"resultVar" "$color2"
+		}
+	}
+}

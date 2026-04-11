@@ -1,0 +1,8 @@
+"Patch"
+{
+	include "materials\vgui\replay\thumbnails\models/weapons/c_items/c_xms_urinejar.vmt"
+	insert
+	{
+		"$baseTexture" "models/weapons/c_items/c_xms_urinejar_blue"
+	}
+}

@@ -1,0 +1,62 @@
+"VertexLitGeneric"
+{
+	$baseTexture "models/workshop/weapons/c_models/c_acr_hookblade/c_acr_hookblade"
+	$bumpmap "models/workshop/weapons/c_models/c_acr_hookblade/c_acr_hookblade_normal"
+	
+	"$phong" "1"
+	"$phongexponent" "5"
+	"$phongboost" "10"	
+	"$phongfresnelranges"	"[.25 .5 1]"
+	"$phongwarptexture" "vgui/replay/thumbnails/models/weapons/c_models/c_ambassador/c_ambassador_phongwarp"
+	"$lightwarptexture" "models\lightwarps\weapon_lightwarp"
+
+	"$rimlight" "1"
+	"$rimlightexponent" "20"	
+	"$rimlightboost" ".25"
+
+	"$glowcolor" "1"
+
+	// Cloaking
+	"$cloakPassEnabled" "1"
+	"$sheenPassEnabled" "1"
+
+	"$sheenmap" 		"cubemaps/cubemap_sheen001"
+	"$sheenmapmask" 		"Effects/AnimatedSheen/animatedsheen0"
+	"$sheenmaptint" 		"[ 1 1 1 ]"
+	"$sheenmapmaskframe" 	"0"
+	"$sheenindex" 		"0"
+
+	"$yellow" "0"
+
+	"Proxies"
+	{
+		"invis"
+		{
+		}
+		"AnimatedWeaponSheen"
+		{
+			"animatedtexturevar" 		"$sheenmapmask"
+			"animatedtextureframenumvar" 	"$sheenmapmaskframe"
+			"animatedtextureframerate" 		"40"
+		}
+		"ModelGlowColor"
+		{
+			"resultVar" "$glowcolor"
+		}
+		"Equals"
+		{
+			"srcVar1"  "$glowcolor"
+			"resultVar" "$color2"
+		}
+		"YellowLevel"
+		{
+			"resultVar" "$yellow"
+		}
+		"Multiply"
+		{
+			"srcVar1" "$color2"
+			"srcVar2" "$yellow"
+			"resultVar" "$color2"
+		}
+	}
+}
