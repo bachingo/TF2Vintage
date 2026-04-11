@@ -3,10 +3,8 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"os"
-	"strings"
 )
 
 func startInstallUI(install func(func(InstallState), func() string)) {
@@ -34,25 +32,7 @@ func startInstallUI(install func(func(InstallState), func() string)) {
 	}
 
 	askAltPath := func() string {
-		fmt.Println("Install location:")
-		fmt.Println("  TF2 Vintage will be installed to your Steam Sourcemods folder by default.")
-		fmt.Println("  To install game files on a different drive, enter the path now.")
-		fmt.Println("  Leave blank and press Enter to use the default location.")
-		fmt.Println()
-		fmt.Print("  Alternate path (or Enter for default): ")
-
-		scanner := bufio.NewScanner(os.Stdin)
-		scanner.Scan()
-		path := strings.TrimSpace(scanner.Text())
-
-		if path == "" {
-			fmt.Println("  Using default Sourcemods location.")
-		} else {
-			fmt.Printf("  Installing to: %s\n", path)
-			fmt.Println("  A symlink will be created from Sourcemods/tf2vintage to that location.")
-		}
-		fmt.Println()
-		return path
+		return ""
 	}
 
 	go install(report, askAltPath)

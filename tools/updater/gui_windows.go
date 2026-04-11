@@ -82,38 +82,9 @@ func startInstallUI(install func(func(InstallState), func() string)) {
 		})
 	}
 
-	// askAltPath shows a dialog asking whether to install to a different drive.
-	// Blocks the install goroutine via a channel until the user responds.
+	// askAltPath always returns the default location — no prompt shown.
 	askAltPath := func() string {
-		ch := make(chan string, 1)
-
-		mw.Synchronize(func() {
-			result := walk.MsgBox(mw,
-				"Install Location",
-				"TF2 Vintage will be installed to your Steam Sourcemods folder by default.\n\n"+
-					"Would you like to install the game files to a different drive instead?\n"+
-					"(A junction will be created so Steam can still find it.)",
-				walk.MsgBoxIconQuestion|walk.MsgBoxYesNo)
-
-			if result == walk.DlgCmdNo {
-				ch <- ""
-				return
-			}
-
-			// Open a folder picker
-			dlg := new(walk.FileDialog)
-			dlg.Title = "Choose Install Location"
-			dlg.FilePath = `C:\`
-
-			accepted, err := dlg.ShowBrowseFolder(mw)
-			if err != nil || !accepted {
-				ch <- ""
-				return
-			}
-			ch <- dlg.FilePath
-		})
-
-		return <-ch
+		return ""
 	}
 
 	go install(report, askAltPath)

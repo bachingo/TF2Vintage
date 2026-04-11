@@ -10,11 +10,11 @@ func newCmd(name string, args ...string) *exec.Cmd {
 	return exec.Command(name, args...)
 }
 
-// swapBinDir replaces liveBinDir with stagingBinDir.
-// On Linux/macOS the running exe is unlocked at the filesystem level — the
-// directory can be renamed freely even while the process is running — so a
-// plain atomic swap is sufficient.
-func swapBinDir(liveBinDir, stagingBinDir string) error {
-	return atomicSwapDir(liveBinDir, stagingBinDir)
+// swapBinDir atomically replaces liveDir with stagingDir.
+// On Linux/macOS the running exe is not locked at the filesystem level, so a
+// plain atomicSwapDir (renaming two siblings) is sufficient. Both liveDir and
+// stagingDir must be siblings (same parent directory) for the rename to succeed.
+func swapBinDir(liveDir, stagingDir string) error {
+	return atomicSwapDir(liveDir, stagingDir)
 }
 

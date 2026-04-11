@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 )
 
@@ -19,11 +20,13 @@ func runUpdateMode(exe string) {
 	modDir := modDirFromExe(exe)
 	liveBinDir := platformBinDir(modDir)
 
-	// Staging root: sits next to the mod dir so it's on the same filesystem,
-	// which is required for os.Rename to work atomically.
+	// Staging root sits next to the mod dir (same filesystem parent), mirroring
+	// modDir's layout exactly: bin/<platform>/ for binaries, everything else for
+	// game assets. atomicSwapDir(modDir, stagingRoot) then renames two siblings,
+	// which is always valid because they share the same parent directory.
 	stagingRoot := modDir + ".staging"
 	stagingBinDir := filepath.Join(stagingRoot, "bin", binDirName())
-	stagingModDir := filepath.Join(stagingRoot, "mod")
+	stagingModDir := stagingRoot // assets go at root of staging, not in a subdir
 
 	// ── Handle config flags ───────────────────────────────────────────────────
 	// These read/write config from the live bin dir and exit immediately —
@@ -88,14 +91,12 @@ func runUpdateMode(exe string) {
 	}
 	defer release()
 
-	// ── Set up staging directory (after lock, so only one instance uses it) ──
+	// Set up staging directory (after lock, so only one instance uses it)
 	os.RemoveAll(stagingRoot)
 	if err := os.MkdirAll(stagingBinDir, 0755); err != nil {
 		termFatal("Could not create staging directory: %v", err)
 	}
-	if err := os.MkdirAll(stagingModDir, 0755); err != nil {
-		termFatal("Could not create staging directory: %v", err)
-	}
+	// stagingModDir == stagingRoot, already created above via MkdirAll(stagingBinDir)
 
 	// ── Load user config from live location ──────────────────────────────────
 	cfg := loadConfig(liveBinDir)
@@ -174,21 +175,15 @@ func runUpdateMode(exe string) {
 	}
 
 	// ── Atomic swap: move staging into place ──────────────────────────────────
-	// Swap each subtree only if it was actually populated. A nightly-only run
-	// sets binUpdated but NOT baseUpdated — swapping an empty stagingModDir
-	// would wipe the entire game asset tree.
-	if binUpdated {
-		fmt.Println("Applying update...")
-		if err := swapBinDir(liveBinDir, stagingBinDir); err != nil {
-			termFatal("Bin swap failed: %v", err)
-		}
-	}
-	if baseUpdated {
-		if err := atomicSwapDir(modDir, stagingModDir); err != nil {
-			termFatal("Base swap failed: %v", err)
-		}
-	}
+	// stagingRoot mirrors modDir's full layout (bin/<platform>/ + game assets),
+	// so a single atomicSwapDir replaces everything atomically. On Windows,
+	// swapBinDir handles the running-exe copy trick before delegating to
+	// atomicSwapDir on the full staging root.
 	if binUpdated || baseUpdated {
+		fmt.Println("Applying update...")
+		if err := swapBinDir(modDir, stagingRoot); err != nil {
+			termFatal("Swap failed: %v", err)
+		}
 		fmt.Println("Update applied.")
 	}
 
@@ -263,7 +258,8 @@ func updateNightly(liveBinDir, stagingBinDir string, nightly *ghRelease) error {
 
 	// Move root-level executables (launcher, updater) from stagingRoot into modDir.
 	// They are not part of the bin swap — they go directly into the mod root.
-	modDir := filepath.Dir(filepath.Dir(stagingRoot)) // stagingRoot is modDir + ".staging"
+	// stagingRoot == modDir + ".staging", so strip the suffix to get modDir.
+	modDir := strings.TrimSuffix(stagingRoot, ".staging")
 	rootExes := []string{"tf2vintage_win64.exe", "launcher_tf2vintage", "tf2vintage-updater.exe", "tf2vintage-updater"}
 	for _, name := range rootExes {
 		src := filepath.Join(stagingRoot, name)

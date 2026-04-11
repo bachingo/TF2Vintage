@@ -113,14 +113,13 @@ func doInstall(report func(InstallState), askAltPath func() string) {
 		}
 		binDir := platformBinDir(installDir)
 		existingCfg := loadConfig(binDir)
-		// For an already-installed copy, use a staging dir beside the install
-		// so updates can be swapped in atomically.
+		// Staging root sits beside installDir (same parent = same filesystem),
+		// mirroring installDir's layout. atomicSwapDir can then rename two siblings.
 		stagingRoot := installDir + ".staging"
 		stagingBinDir := filepath.Join(stagingRoot, "bin", binDirName())
-		stagingModDir := filepath.Join(stagingRoot, "mod")
+		stagingModDir := stagingRoot // assets at root of staging, not in a subdir
 		os.RemoveAll(stagingRoot)
-		os.MkdirAll(stagingBinDir, 0755)
-		os.MkdirAll(stagingModDir, 0755)
+		os.MkdirAll(stagingBinDir, 0755) // MkdirAll creates stagingRoot implicitly
 
 		binUpdated := false
 		baseUpdated := false
@@ -146,22 +145,15 @@ func doInstall(report func(InstallState), askAltPath func() string) {
 				termWarn("Symbol update failed: %v", err)
 			}
 		}
-		if binUpdated {
-			if err := swapBinDir(binDir, stagingBinDir); err != nil {
-				report(InstallState{Err: fmt.Errorf("Bin swap failed: %v", err)})
-				os.RemoveAll(stagingRoot)
-				return
-			}
-		}
-		if baseUpdated {
-			if err := atomicSwapDir(installDir, stagingModDir); err != nil {
-				report(InstallState{Err: fmt.Errorf("Base swap failed: %v", err)})
+		if binUpdated || baseUpdated {
+			if err := swapBinDir(installDir, stagingRoot); err != nil {
+				report(InstallState{Err: fmt.Errorf("Swap failed: %v", err)})
 				os.RemoveAll(stagingRoot)
 				return
 			}
 		}
 		os.RemoveAll(stagingRoot)
-		finalize(report, steamPath, filepath.Join(binDir, updaterName()), false)
+		finalize(report, steamPath, filepath.Join(installDir, updaterName()), false)
 		return
 	}
 
@@ -187,10 +179,9 @@ func doInstall(report func(InstallState), askAltPath func() string) {
 	report(InstallState{Status: "Downloading full package — this may take a while...", Progress: 0.20})
 	repairStagingRoot := installDir + ".staging"
 	repairStagingBinDir := filepath.Join(repairStagingRoot, "bin", binDirName())
-	repairStagingModDir := filepath.Join(repairStagingRoot, "mod")
+	repairStagingModDir := repairStagingRoot // assets at root of staging, not in a subdir
 	os.RemoveAll(repairStagingRoot)
-	os.MkdirAll(repairStagingBinDir, 0755)
-	os.MkdirAll(repairStagingModDir, 0755)
+	os.MkdirAll(repairStagingBinDir, 0755) // MkdirAll creates repairStagingRoot implicitly
 
 	// Force a full download by temporarily clearing the local manifest so
 	// updateInstall treats this as a fresh install (case 1).
@@ -213,15 +204,9 @@ func doInstall(report func(InstallState), askAltPath func() string) {
 	}
 
 	report(InstallState{Status: "Applying repair...", Progress: 0.85})
-	repairBinDir := platformBinDir(installDir)
-	if err := swapBinDir(repairBinDir, repairStagingBinDir); err != nil {
+	if err := swapBinDir(installDir, repairStagingRoot); err != nil {
 		os.RemoveAll(repairStagingRoot)
-		report(InstallState{Err: fmt.Errorf("Bin repair swap failed: %v", err)})
-		return
-	}
-	if err := atomicSwapDir(installDir, repairStagingModDir); err != nil {
-		os.RemoveAll(repairStagingRoot)
-		report(InstallState{Err: fmt.Errorf("Base repair swap failed: %v", err)})
+		report(InstallState{Err: fmt.Errorf("Repair swap failed: %v", err)})
 		return
 	}
 	os.RemoveAll(repairStagingRoot)

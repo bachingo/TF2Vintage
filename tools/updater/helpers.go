@@ -177,8 +177,11 @@ func extractZipRaw(src, destDir string) error {
 //
 //	tf2vintage/bin/x64/**         → stagingRoot/bin/x64/  (strip "tf2vintage/")
 //	tf2vintage/bin/linux64/**     → stagingRoot/bin/linux64/
-//	tf2vintage/base-manifest.json → modDir/base-manifest.json
-//	tf2vintage/<everything else>  → modDir/<rel>  (strip "tf2vintage/")
+//	tf2vintage/base-manifest.json → stagingRoot/base-manifest.json
+//	tf2vintage/<everything else>  → stagingRoot/<rel>  (strip "tf2vintage/")
+//
+// modDir and stagingRoot are both the staging root directory (they are the same
+// value). The parameter is kept for clarity when reading the routing logic.
 //
 // This mirrors how package-combined assembles those zips in CI.
 func extractZipRouted(src, modDir, stagingRoot string) error {
