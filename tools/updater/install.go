@@ -112,7 +112,7 @@ func doInstall(report func(InstallState), askAltPath func() string) {
 			return
 		}
 		binDir := platformBinDir(installDir)
-		existingCfg := loadConfig(binDir)
+		existingCfg := loadConfig(installDir) // config lives in mod root
 		// Staging root sits beside installDir (same parent = same filesystem),
 		// mirroring installDir's layout. atomicSwapDir can then rename two siblings.
 		stagingRoot := installDir + ".staging"
@@ -230,9 +230,8 @@ func doInstall(report func(InstallState), askAltPath func() string) {
 		os.Chmod(updaterDest, 0755)
 	}
 
-	// Save config so the updater remembers symbol preference on future runs
-	// Config is keyed to binDir (platform-specific) as before.
-	if err := saveConfig(binDir, cfg); err != nil {
+	// Save config to mod root (shared single path for both platforms)
+	if err := saveConfig(installDir, cfg); err != nil {
 		termWarn("Could not save updater config: %v", err)
 	}
 

@@ -8,23 +8,25 @@ import (
 	"strings"
 )
 
-// UpdaterConfig holds persistent user preferences stored in bin/<platform>/updater.cfg
+// UpdaterConfig holds persistent user preferences stored in tf2vintage/updater.cfg.
+// The file lives in the mod root so both platforms share a single path and it
+// is never overwritten by a bin-only update.
 type UpdaterConfig struct {
 	DownloadSymbols bool
 	CheckNightly    bool
 }
 
-func configPath(binDir string) string {
-	return filepath.Join(binDir, "updater.cfg")
+func configPath(modDir string) string {
+	return filepath.Join(modDir, "updater.cfg")
 }
 
-func loadConfig(binDir string) UpdaterConfig {
+func loadConfig(modDir string) UpdaterConfig {
 	cfg := UpdaterConfig{
 		DownloadSymbols: false, // default off
 		CheckNightly:    false, // default off
 	}
 
-	b, err := os.ReadFile(configPath(binDir))
+	b, err := os.ReadFile(configPath(modDir))
 	if err != nil {
 		return cfg
 	}
@@ -51,7 +53,7 @@ func loadConfig(binDir string) UpdaterConfig {
 	return cfg
 }
 
-func saveConfig(binDir string, cfg UpdaterConfig) error {
+func saveConfig(modDir string, cfg UpdaterConfig) error {
 	content := fmt.Sprintf(
 		"# TF2 Vintage updater configuration\n"+
 			"# Edit this file to change updater behaviour.\n"+
@@ -70,5 +72,5 @@ func saveConfig(binDir string, cfg UpdaterConfig) error {
 		cfg.DownloadSymbols,
 		cfg.CheckNightly,
 	)
-	return os.WriteFile(configPath(binDir), []byte(content), 0644)
+	return os.WriteFile(configPath(modDir), []byte(content), 0644)
 }

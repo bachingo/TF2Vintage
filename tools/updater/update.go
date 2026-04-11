@@ -16,7 +16,6 @@ import (
 var errUpToDate = errors.New("already up to date")
 
 func runUpdateMode(exe string) {
-	// bin/<platform> → bin → tf2vintage
 	modDir := modDirFromExe(exe)
 	liveBinDir := platformBinDir(modDir)
 
@@ -29,14 +28,13 @@ func runUpdateMode(exe string) {
 	stagingModDir := stagingRoot // assets go at root of staging, not in a subdir
 
 	// ── Handle config flags ───────────────────────────────────────────────────
-	// These read/write config from the live bin dir and exit immediately —
-	// they don't participate in the update flow at all and don't need a lock.
+	// These read/write config from the mod root and exit immediately.
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "--enable-symbols":
-			cfg := loadConfig(liveBinDir)
+			cfg := loadConfig(modDir)
 			cfg.DownloadSymbols = true
-			if err := saveConfig(liveBinDir, cfg); err != nil {
+			if err := saveConfig(modDir, cfg); err != nil {
 				termFatal("Could not save config: %v", err)
 			}
 			fmt.Println("Symbol downloads enabled.")
@@ -45,18 +43,18 @@ func runUpdateMode(exe string) {
 			termPause()
 			os.Exit(0)
 		case "--disable-symbols":
-			cfg := loadConfig(liveBinDir)
+			cfg := loadConfig(modDir)
 			cfg.DownloadSymbols = false
-			if err := saveConfig(liveBinDir, cfg); err != nil {
+			if err := saveConfig(modDir, cfg); err != nil {
 				termFatal("Could not save config: %v", err)
 			}
 			fmt.Println("Symbol downloads disabled.")
 			termPause()
 			os.Exit(0)
 		case "--enable-nightly":
-			cfg := loadConfig(liveBinDir)
+			cfg := loadConfig(modDir)
 			cfg.CheckNightly = true
-			if err := saveConfig(liveBinDir, cfg); err != nil {
+			if err := saveConfig(modDir, cfg); err != nil {
 				termFatal("Could not save config: %v", err)
 			}
 			fmt.Println("Nightly updates enabled.")
@@ -66,9 +64,9 @@ func runUpdateMode(exe string) {
 			termPause()
 			os.Exit(0)
 		case "--disable-nightly":
-			cfg := loadConfig(liveBinDir)
+			cfg := loadConfig(modDir)
 			cfg.CheckNightly = false
-			if err := saveConfig(liveBinDir, cfg); err != nil {
+			if err := saveConfig(modDir, cfg); err != nil {
 				termFatal("Could not save config: %v", err)
 			}
 			fmt.Println("Nightly updates disabled.")
@@ -79,7 +77,6 @@ func runUpdateMode(exe string) {
 	}
 
 	originalArgs := os.Args[1:]
-	gameLaunchArgs := prepareGameLaunchArgs(liveBinDir, originalArgs)
 	standaloneMode := len(originalArgs) == 0
 
 	termPrintBanner()
@@ -98,8 +95,8 @@ func runUpdateMode(exe string) {
 	}
 	// stagingModDir == stagingRoot, already created above via MkdirAll(stagingBinDir)
 
-	// ── Load user config from live location ──────────────────────────────────
-	cfg := loadConfig(liveBinDir)
+	// ── Load user config from mod root ───────────────────────────────────────
+	cfg := loadConfig(modDir)
 
 	// ── Check disk space (staging is beside modDir, same drive) ──────────────
 	if err := checkDiskSpace(modDir, minFreeBytesForBins+minFreeBytesForBase); err != nil {
@@ -110,9 +107,9 @@ func runUpdateMode(exe string) {
 	termPrint("Checking for updates...")
 	latest, err := fetchLatestRelease()
 	if err != nil {
-		termWarn("Could not check for updates (%v) — launching with current version.", err)
+		termWarn("Could not check for updates (%v) — launching game.", err)
 		os.RemoveAll(stagingRoot)
-		launchIfNotStandalone(standaloneMode, liveBinDir, originalArgs)
+		launchGame(gameExePath(modDir))
 		return
 	}
 
@@ -122,12 +119,9 @@ func runUpdateMode(exe string) {
 	}
 
 	// ── Optionally fetch the nightly pre-release (silent check) ──────────────
-	// When enabled, the nightly bin is applied silently if it is newer than the
-	// currently installed build. Base assets are never touched by a nightly.
 	var nightlyRelease *ghRelease
 	if cfg.CheckNightly {
 		if n, err := fetchNightlyRelease(); err != nil {
-			// Nightly fetch failure is not fatal — fall through to stable.
 			termWarn("Could not check for nightly (%v) — using stable release.", err)
 		} else {
 			nightlyRelease = n
@@ -135,26 +129,22 @@ func runUpdateMode(exe string) {
 	}
 
 	// ── Download updates into staging ────────────────────────────────────────
-	binUpdated  := false
+	binUpdated := false
 	baseUpdated := false
 
-	// Nightly bin check is intentionally silent — opt-in for advanced users.
 	if nightlyRelease != nil {
 		switch err := updateNightly(liveBinDir, stagingBinDir, nightlyRelease); {
 		case err == nil:
 			binUpdated = true
 		case errors.Is(err, errUpToDate):
-			// already current — fall through to stable install check below
 		default:
 			termWarn("Nightly update failed: %v — falling back to stable.", err)
 		}
 	}
 
-	// Full install update (base + bin in one zip).
-	// updateInstall populates BOTH stagingBinDir and stagingModDir.
 	switch err := updateInstall(modDir, stagingRoot, stagingBinDir, stagingModDir, latest); {
 	case err == nil:
-		binUpdated  = true
+		binUpdated = true
 		baseUpdated = true
 	case errors.Is(err, errUpToDate):
 		// nothing staged — do not swap
@@ -163,22 +153,16 @@ func runUpdateMode(exe string) {
 	}
 
 	if cfg.DownloadSymbols {
-		// liveBinDir for version check (persists across runs), stagingBinDir for extraction
 		switch err := updateSymbols(liveBinDir, stagingBinDir, latest); {
 		case err == nil:
 			binUpdated = true
 		case errors.Is(err, errUpToDate):
-			// nothing staged — do not swap
 		default:
 			termWarn("Symbol update failed: %v", err)
 		}
 	}
 
 	// ── Atomic swap: move staging into place ──────────────────────────────────
-	// stagingRoot mirrors modDir's full layout (bin/<platform>/ + game assets),
-	// so a single atomicSwapDir replaces everything atomically. On Windows,
-	// swapBinDir handles the running-exe copy trick before delegating to
-	// atomicSwapDir on the full staging root.
 	if binUpdated || baseUpdated {
 		fmt.Println("Applying update...")
 		if err := swapBinDir(modDir, stagingRoot); err != nil {
@@ -187,17 +171,21 @@ func runUpdateMode(exe string) {
 		fmt.Println("Update applied.")
 	}
 
-	// Clean up staging root (now empty after swaps)
+	// Clean up staging root
 	os.RemoveAll(stagingRoot)
 
 	fmt.Println()
 	if standaloneMode {
-		termPause()
+		// Launched directly (not via game launcher) — autostart the game.
+		fmt.Println("Launching TF2 Vintage...")
+		time.Sleep(2 * time.Second)
+		launchGame(gameExePath(modDir))
 		return
 	}
-	fmt.Println("Launching TF2 Vintage in 5 seconds...")
-	time.Sleep(5 * time.Second)
-	launchGame(gameLaunchArgs)
+	// Launched with args — pass them along to the game (e.g. Steam launch args).
+	fmt.Println("Launching TF2 Vintage...")
+	time.Sleep(2 * time.Second)
+	launchGame(append(gameExePath(modDir), originalArgs...))
 }
 
 // ── Nightly bin update ────────────────────────────────────────────────────────
@@ -303,8 +291,9 @@ func updateInstall(modDir, stagingRoot, stagingBinDir, stagingModDir string, lat
 	// Fetch the remote manifest (small JSON) to check the release tag cheaply.
 	manifestURL := assetURL(latest, "base-manifest.json")
 	if manifestURL == "" {
-		// Release has no base assets (nightly-only scenario) — nothing to do.
-		return errUpToDate
+		// No base-manifest.json in this release — either a nightly-only release
+		// or the release assets haven't been published yet.
+		return fmt.Errorf("release %s has no base-manifest.json asset — the release may not be fully published yet", latest.TagName)
 	}
 
 	remoteManifest, err := fetchManifest(manifestURL)

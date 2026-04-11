@@ -370,34 +370,16 @@ func launchGame(gameArgs []string) {
 	cmd.Run()
 }
 
-// prepareGameLaunchArgs constructs the full command line for launching the game.
-// The launcher executable lives in the mod root (tf2vintage/), not in bin/.
-func prepareGameLaunchArgs(liveBinDir string, originalArgs []string) []string {
-	// modDir is tf2vintage/ — one level up from bin/<platform>/
-	modDir := filepath.Dir(filepath.Dir(liveBinDir))
-
-	var gameExeName string
+// gameExePath returns the platform game executable path as a single-element
+// slice ready to pass to launchGame (with optional extra args appended by caller).
+func gameExePath(modDir string) []string {
+	var name string
 	if runtime.GOOS == "windows" {
-		gameExeName = "tf2vintage_win64.exe"
+		name = "tf2vintage_win64.exe"
 	} else {
-		gameExeName = "launcher_tf2vintage"
+		name = "launcher_tf2vintage"
 	}
-
-	gamePath := filepath.Join(modDir, gameExeName)
-
-	var finalArgs []string
-	finalArgs = append(finalArgs, gamePath)
-	finalArgs = append(finalArgs, originalArgs...)
-	return finalArgs
-}
-
-func launchIfNotStandalone(standalone bool, liveBinDir string, originalArgs []string) {
-	if standalone {
-		termPause()
-	} else {
-		gameLaunchArgs := prepareGameLaunchArgs(liveBinDir, originalArgs)
-		launchGame(gameLaunchArgs)
-	}
+	return []string{filepath.Join(modDir, name)}
 }
 
 func termPrintBanner() {
