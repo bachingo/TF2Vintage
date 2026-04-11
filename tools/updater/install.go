@@ -147,7 +147,7 @@ func doInstall(report func(InstallState), askAltPath func() string) {
 			}
 		}
 		if binUpdated {
-			if err := atomicSwapDir(binDir, stagingBinDir); err != nil {
+			if err := swapBinDir(binDir, stagingBinDir); err != nil {
 				report(InstallState{Err: fmt.Errorf("Bin swap failed: %v", err)})
 				os.RemoveAll(stagingRoot)
 				return
@@ -214,7 +214,7 @@ func doInstall(report func(InstallState), askAltPath func() string) {
 
 	report(InstallState{Status: "Applying repair...", Progress: 0.85})
 	repairBinDir := platformBinDir(installDir)
-	if err := atomicSwapDir(repairBinDir, repairStagingBinDir); err != nil {
+	if err := swapBinDir(repairBinDir, repairStagingBinDir); err != nil {
 		os.RemoveAll(repairStagingRoot)
 		report(InstallState{Err: fmt.Errorf("Bin repair swap failed: %v", err)})
 		return
@@ -232,7 +232,8 @@ func doInstall(report func(InstallState), askAltPath func() string) {
 	report(InstallState{Status: "Installing updater...", Progress: 0.88})
 	exe, _ := os.Executable()
 	binDir := platformBinDir(installDir)
-	updaterDest := filepath.Join(binDir, updaterName())
+	// Updater now lives in the mod root (tf2vintage/), not in bin/<platform>/
+	updaterDest := filepath.Join(installDir, updaterName())
 
 	if err := copyFile(exe, updaterDest); err != nil {
 		report(InstallState{Err: fmt.Errorf(
@@ -245,6 +246,7 @@ func doInstall(report func(InstallState), askAltPath func() string) {
 	}
 
 	// Save config so the updater remembers symbol preference on future runs
+	// Config is keyed to binDir (platform-specific) as before.
 	if err := saveConfig(binDir, cfg); err != nil {
 		termWarn("Could not save updater config: %v", err)
 	}

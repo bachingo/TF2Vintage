@@ -252,13 +252,30 @@ func updateNightly(liveBinDir, stagingBinDir string, nightly *ghRelease) error {
 		}
 	}
 
-	// tf2vintage-nightly.zip contains bin/x64/** and bin/linux64/** verbatim.
+	// tf2vintage-nightly.zip contains bin/x64/** and bin/linux64/** verbatim,
+	// plus the launcher and updater at the root level.
 	stagingRoot := filepath.Dir(filepath.Dir(stagingBinDir))
 	if err := extractZipRaw(tmp, stagingRoot); err != nil {
 		os.Remove(tmp)
 		return fmt.Errorf("nightly extraction failed: %v", err)
 	}
 	os.Remove(tmp)
+
+	// Move root-level executables (launcher, updater) from stagingRoot into modDir.
+	// They are not part of the bin swap — they go directly into the mod root.
+	modDir := filepath.Dir(filepath.Dir(stagingRoot)) // stagingRoot is modDir + ".staging"
+	rootExes := []string{"tf2vintage_win64.exe", "launcher_tf2vintage", "tf2vintage-updater.exe", "tf2vintage-updater"}
+	for _, name := range rootExes {
+		src := filepath.Join(stagingRoot, name)
+		if _, err := os.Stat(src); err == nil {
+			dst := filepath.Join(modDir, name)
+			if rerr := os.Rename(src, dst); rerr != nil {
+				// Non-fatal: updater self-update on Windows requires special handling;
+				// leave it for swapBinDir in the next full update.
+				termWarn("Could not place %s into mod root: %v", name, rerr)
+			}
+		}
+	}
 
 	if runtime.GOOS != "windows" {
 		chmodSo(stagingBinDir)

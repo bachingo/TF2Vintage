@@ -46,6 +46,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          sparse-checkout: .github/
+          sparse-checkout-cone-mode: true
 
       - name: Classify run
         id: classify
@@ -153,6 +155,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          sparse-checkout: game/tf2vintage/
+          sparse-checkout-cone-mode: true
 
       - name: Write base version.txt
         run: |
@@ -268,7 +272,7 @@ jobs:
           cd game
           zip -r ../base-full.zip tf2vintage --exclude 'tf2vintage/bin/*'
 
-      - name: Upload base artifacts
+      - name: Upload base artifacts (required)
         uses: actions/upload-artifact@v4
         with:
           name: tf2vintage-base
@@ -276,7 +280,13 @@ jobs:
           path: |
             base-full.zip
             base-manifest.json
-            base-patch.zip
+
+      - name: Upload base-patch artifact (optional — absent on first release or no asset changes)
+        uses: actions/upload-artifact@v4
+        with:
+          name: tf2vintage-base-patch
+          if-no-files-found: warn
+          path: base-patch.zip
 
 
   # ── Windows bin: build updater + stage DLLs ─────────────────────────────────
@@ -287,21 +297,37 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-          sparse-checkout: |
-            game/tf2vintage/bin/x64/
-            tools/updater/
+          fetch-depth: 1
+          sparse-checkout: tools/updater/
+          sparse-checkout-cone-mode: true
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
-          cache: false
+          cache: true
+          cache-dependency-path: tools/updater/go.sum
+
+      # MinGW is stable — cache the downloaded .deb so apt-get update+install
+      # is skipped on subsequent runs (saves ~30s per packaging job).
+      - name: Cache MinGW apt package
+        id: mingw-cache
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives/gcc-mingw-w64-x86-64*.deb
+          key: apt-mingw-${{ runner.os }}-v1
 
       - name: Install MinGW
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-mingw-w64-x86-64
+          if [ "${{ steps.mingw-cache.outputs.cache-hit }}" != "true" ]; then
+            sudo apt-get update
+          fi
+          sudo apt-get install -y --no-install-recommends gcc-mingw-w64-x86-64
+
+      - name: Download Go modules
+        run: |
+          cd tools/updater
+          go mod download
 
       - name: Compile Windows resource file (icon + version info)
         run: |
@@ -311,21 +337,24 @@ jobs:
       - name: Build updater (Windows)
         run: |
           cd tools/updater
-          go mod tidy
-          GOOS=windows GOARCH=amd64 go build -o ../../game/tf2vintage/bin/x64/tf2vintage-updater.exe .
+          GOOS=windows GOARCH=amd64 go build -o ../../game/tf2vintage/tf2vintage-updater.exe .
 
       - name: Download Windows binary
         uses: actions/download-artifact@v4
         with:
           name: tf2vintage-windows
-          path: game/tf2vintage/bin/x64/
+          path: game/tf2vintage/
 
       - name: Stage Windows bin files
         run: |
           mkdir -p staging/bin/x64
-          find game/tf2vintage/bin/x64/ \( -name "*.dll" -o -name "*.exe" \) -exec cp {} staging/bin/x64/ \;
+          # DLLs go into bin/x64 as before
+          find game/tf2vintage/bin/x64/ -name "*.dll" -exec cp {} staging/bin/x64/ \;
+          # Launcher and updater go into the mod root (staging root mirrors tf2vintage/)
+          cp game/tf2vintage/tf2vintage_win64.exe staging/
+          cp game/tf2vintage/tf2vintage-updater.exe staging/
           mkdir -p standalone-updater-windows
-          cp game/tf2vintage/bin/x64/tf2vintage-updater.exe standalone-updater-windows/tf2vintage-updater.exe
+          cp game/tf2vintage/tf2vintage-updater.exe standalone-updater-windows/tf2vintage-updater.exe
 
       - name: Upload Windows staging artifact
         uses: actions/upload-artifact@v4
@@ -370,35 +399,43 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-          sparse-checkout: |
-            game/tf2vintage/bin/linux64/
-            tools/updater/
+          fetch-depth: 1
+          sparse-checkout: tools/updater/
+          sparse-checkout-cone-mode: true
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
-          cache: false
+          cache: true
+          cache-dependency-path: tools/updater/go.sum
+
+      - name: Download Go modules
+        run: |
+          cd tools/updater
+          go mod download
 
       - name: Build updater (Linux)
         run: |
           cd tools/updater
-          go mod tidy
-          GOOS=linux GOARCH=amd64 go build -o ../../game/tf2vintage/bin/linux64/tf2vintage-updater .
+          GOOS=linux GOARCH=amd64 go build -o ../../game/tf2vintage/tf2vintage-updater .
 
       - name: Download Linux binary
         uses: actions/download-artifact@v4
         with:
           name: tf2vintage-linux
-          path: game/tf2vintage/bin/linux64/
+          path: game/tf2vintage/
 
       - name: Stage Linux bin files
         run: |
           mkdir -p staging/bin/linux64
-          find game/tf2vintage/bin/linux64/ \( -name "*.so" -o -name "tf2vintage-updater" -o -name "launcher_tf2vintage" \) -exec cp {} staging/bin/linux64/ \;
+          # .so files go into bin/linux64
+          find game/tf2vintage/bin/linux64/ -name "*.so" -exec cp {} staging/bin/linux64/ \;
+          # Launcher and updater go into the mod root (staging root)
+          cp game/tf2vintage/launcher_tf2vintage staging/
+          cp game/tf2vintage/tf2vintage-updater staging/
           mkdir -p standalone-updater-linux
-          cp game/tf2vintage/bin/linux64/tf2vintage-updater standalone-updater-linux/tf2vintage-updater
+          cp game/tf2vintage/tf2vintage-updater standalone-updater-linux/tf2vintage-updater
 
       - name: Download Linux debug symbols
         uses: actions/download-artifact@v4
@@ -475,8 +512,11 @@ jobs:
 
       - name: Generate per-platform checksums
         run: |
-          find staging/bin/x64/     -name "*.dll" -o -name "*.exe" 2>/dev/null | sort | xargs md5sum > staging/bin/x64/checksums.md5     || true
-          find staging/bin/linux64/ -name "*.so"                   2>/dev/null | sort | xargs md5sum > staging/bin/linux64/checksums.md5 || true
+          find staging/bin/x64/     -name "*.dll"               2>/dev/null | sort | xargs md5sum > staging/bin/x64/checksums.md5     || true
+          find staging/bin/linux64/ -name "*.so"                2>/dev/null | sort | xargs md5sum > staging/bin/linux64/checksums.md5 || true
+          # Launcher and updater live at the staging root (mod root in the final zip)
+          find staging/ -maxdepth 1 \( -name "*.exe" -o -name "tf2vintage-updater" -o -name "launcher_tf2vintage" \) \
+            2>/dev/null | sort | xargs md5sum >> staging/bin/x64/checksums.md5 || true
 
       - name: Upload bin staging artifact
         uses: actions/upload-artifact@v4
@@ -557,10 +597,15 @@ jobs:
   #     bin/x64/**             ← Windows Debug binaries
   #     bin/linux64/**         ← Linux Debug binaries
   #     nightly-version.txt    ← lightweight version stamp for the updater
+
   package-combined:
     needs: [classify, package-bin, package-base]
     runs-on: ubuntu-22.04
-    if: needs.classify.outputs.should_publish == 'true'
+    # package-base is skipped on nightly runs — treat skipped as success so
+    # package-combined still runs. A genuine failure still propagates.
+    if: |
+      needs.classify.outputs.should_publish == 'true' &&
+      (needs.package-base.result == 'success' || needs.package-base.result == 'skipped')
     steps:
       - name: Download bin staging
         uses: actions/download-artifact@v4
@@ -575,6 +620,14 @@ jobs:
           name: tf2vintage-base
           path: base-artifacts/
         continue-on-error: false
+
+      - name: Download base-patch artifact (optional)
+        if: needs.classify.outputs.is_nightly != 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: tf2vintage-base-patch
+          path: base-artifacts/
+        continue-on-error: true   # absent on first release or when no base files changed
 
       - name: Download nightly-version file
         if: needs.classify.outputs.is_nightly == 'true'
@@ -598,6 +651,9 @@ jobs:
           unzip -q base-artifacts/base-full.zip -d combined/full/
           # Graft both platform bin trees under tf2vintage/bin/
           cp -r bin-staging/bin combined/full/tf2vintage/
+          # Launcher and updater live at the mod root (staged at bin-staging/ root level)
+          find bin-staging/ -maxdepth 1 \( -name "*.exe" -o -name "tf2vintage-updater" -o -name "launcher_tf2vintage" \) \
+            -exec cp {} combined/full/tf2vintage/ \;
           # Manifest inside tf2vintage/ — updater reads it as modDir/base-manifest.json
           cp base-artifacts/base-manifest.json combined/full/tf2vintage/
           cd combined/full
@@ -610,10 +666,12 @@ jobs:
       # partial (changed files only); bin and manifest are always fully replaced.
       # Absent on first-ever release (no base-patch.zip exists yet).
       - name: Assemble tf2vintage-diff.zip
+        id: assemble_diff
         if: needs.classify.outputs.is_nightly != 'true'
         run: |
           if [ ! -f base-artifacts/base-patch.zip ]; then
             echo "No base-patch.zip present — skipping diff zip (first release or no asset changes)."
+            echo "diff_built=false" >> $GITHUB_OUTPUT
             exit 0
           fi
           mkdir -p combined/diff/tf2vintage
@@ -622,11 +680,15 @@ jobs:
           unzip -q base-artifacts/base-patch.zip -d combined/diff/
           # Bin and manifest go inside tf2vintage/ just like the full zip
           cp -r bin-staging/bin combined/diff/tf2vintage/
+          # Launcher and updater at mod root
+          find bin-staging/ -maxdepth 1 \( -name "*.exe" -o -name "tf2vintage-updater" -o -name "launcher_tf2vintage" \) \
+            -exec cp {} combined/diff/tf2vintage/ \;
           cp base-artifacts/base-manifest.json combined/diff/tf2vintage/
           cd combined/diff
           zip -r ../../tf2vintage-diff.zip .
           echo "=== tf2vintage-diff.zip (first 30 entries) ==="
           unzip -l ../../tf2vintage-diff.zip | head -35
+          echo "diff_built=true" >> $GITHUB_OUTPUT
 
       # ── tf2vintage-nightly.zip ────────────────────────────────────────────
       - name: Assemble tf2vintage-nightly.zip
@@ -634,6 +696,9 @@ jobs:
         run: |
           mkdir -p combined/nightly
           cp -r bin-staging/bin combined/nightly/
+          # Launcher and updater at mod root even in nightly
+          find bin-staging/ -maxdepth 1 \( -name "*.exe" -o -name "tf2vintage-updater" -o -name "launcher_tf2vintage" \) \
+            -exec cp {} combined/nightly/ \;
           cp nightly-extra/nightly-version.txt combined/nightly/
           cd combined/nightly
           zip -r ../../tf2vintage-nightly.zip .
@@ -647,12 +712,15 @@ jobs:
           path: tf2vintage-full.zip
 
       - name: Upload tf2vintage-diff artifact
-        if: needs.classify.outputs.is_nightly != 'true'
+        if: |
+          needs.classify.outputs.is_nightly != 'true' &&
+          steps.assemble_diff.outputs.diff_built == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: tf2vintage-diff
-          if-no-files-found: warn   # absent on first release — that is expected
+          if-no-files-found: error
           path: tf2vintage-diff.zip
+
 
       - name: Upload tf2vintage-nightly artifact
         if: needs.classify.outputs.is_nightly == 'true'

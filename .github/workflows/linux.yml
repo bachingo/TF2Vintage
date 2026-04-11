@@ -8,35 +8,67 @@ on:
         default: 'Release'
 
 env:
-  CCACHE_VERSION: 4.0
   CCACHE_DIR: ${{ github.workspace }}/.ccache
 
 jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
-      - name: Checkout
+      - name: Checkout source
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          fetch-depth: 1
+          sparse-checkout: |
+            src/
+          sparse-checkout-cone-mode: false
 
+      # apt packages are stable — cache the downloaded .deb files so
+      # apt-get update + install is skipped entirely on a cache hit.
+      - name: Cache apt packages
+        id: apt-cache
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: apt-linux-build-${{ runner.os }}-v1
+
+      - name: Configure Dependencies
+        if: steps.apt-cache.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            zip build-essential gcc-multilib g++-multilib ccache binutils
+
+      - name: Install cached apt packages
+        if: steps.apt-cache.outputs.cache-hit == 'true'
+        run: |
+          sudo dpkg -i /var/cache/apt/archives/*.deb 2>/dev/null || \
+            sudo apt-get install -y --no-install-recommends \
+              zip build-essential gcc-multilib g++-multilib ccache binutils
+
+      # ccache key is scoped to the build config so Release and Debug builds
+      # never poison each other's cache. The restore-keys fallback lets a new
+      # Release build still reuse objects from a previous Release run even when
+      # source files have changed — ccache handles per-object staleness itself.
       - name: Cache ccache
         uses: actions/cache@v4
         with:
           path: ${{ env.CCACHE_DIR }}
-          key: ${{ runner.os }}-ccache-${{ hashFiles('src/**/*.cpp', 'src/**/*.h') }}
-          restore-keys: ${{ runner.os }}-ccache-
-
-      - name: Configure Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y zip build-essential gcc-multilib g++-multilib ccache binutils
+          key: ${{ runner.os }}-ccache-${{ inputs.build_config }}-${{ hashFiles('src/**/*.cpp', 'src/**/*.h') }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-${{ inputs.build_config }}-
+            ${{ runner.os }}-ccache-
 
       - name: Setup ccache
         run: |
           mkdir -p game/tf2vintage/bin/linux64
           ccache --set-config=cache_dir=${{ env.CCACHE_DIR }}
-          ccache --set-config=max_size=2.0G
+          # 4G gives the full Source SDK build room to cache without eviction churn.
+          # 2G was too tight and caused partial cache hits that slowed rebuilds.
+          ccache --set-config=max_size=4.0G
+          # mtime is faster than the default content hash for compiler validation.
+          ccache --set-config=compiler_check=mtime
+          ccache --zero-stats
 
       - name: Make createtf2vintage executable
         run: chmod +x src/createtf2vintage
@@ -49,53 +81,61 @@ jobs:
 
       - name: Clear stale ninja solution
         run: rm -f src/_vpc_/ninja/sdk_everything_release.ninja src/_vpc_/ninja/sdk_everything_debug.ninja
-        
+
       - name: Build
         env:
           BUILD_TYPE: ${{ inputs.build_config }}
         run: |
           cd src
           bash createtf2vintage
-      
+
+      - name: Print ccache stats
+        if: always()
+        run: ccache --show-stats
+
       - name: Collect binaries into bin/linux64
         run: |
           mkdir -p game/tf2vintage/bin/linux64
 
-          # client.so / server.so — MSBuild outputs these to game/mod_tf/bin/linux64/
+          # client.so / server.so — build outputs these to game/mod_tf/bin/linux64/
           find game/mod_tf/bin/linux64/ -maxdepth 1 -name "*.so" \
             -exec cp {} game/tf2vintage/bin/linux64/ \;
 
-          # crash_handler.so and other tf2vintage-specific libs already land
-          # directly in game/tf2vintage/bin/linux64/ — nothing to move there.
-
-          # launcher_tf2vintage (main executable) — lands in the mod root if present
-          find game/tf2vintage/ -maxdepth 1 -name "launcher_tf2vintage*" \
-            -exec mv {} game/tf2vintage/bin/linux64/ \;
+          # launcher_tf2vintage (main executable) — goes to the mod root, not bin/linux64
+          find game/tf2vintage/ -maxdepth 1 -name "launcher_tf2vintage" \
+            -exec cp {} game/tf2vintage/ \; || true
+          # Also check mod_tf in case the build places it there
+          find game/mod_tf/ -maxdepth 1 -name "launcher_tf2vintage" \
+            -exec cp {} game/tf2vintage/ \; 2>/dev/null || true
 
       - name: Split debug symbols from binaries
         run: |
           mkdir -p debug-symbols
-          # Process all .so files AND the launcher executable
-          find game/tf2vintage/bin/linux64/ \( -name "*.so" -o -name "launcher_tf2vintage" \) | while read lib; do
+          # Process only .so files in bin/linux64 — launcher_tf2vintage is in the mod root
+          find game/tf2vintage/bin/linux64/ -name "*.so" | while read lib; do
             base=$(basename "$lib")
             dbg="debug-symbols/${base}.debug"
-
-            # 1. Extract DWARF into a sidecar .debug file
             objcopy --only-keep-debug "$lib" "$dbg"
-
-            # 2. Strip all debug sections from the shipped binary
             objcopy --strip-debug "$lib"
-
-            # 3. Embed a GNU debug link so debuggers can locate the sidecar
-            #    automatically (addr2line, gdb, crash handler map lookup)
             objcopy --add-gnu-debuglink="$dbg" "$lib"
           done
+
+          # Also strip the launcher in the mod root and extract its symbols
+          launcher="game/tf2vintage/launcher_tf2vintage"
+          if [ -f "$launcher" ]; then
+            dbg="debug-symbols/launcher_tf2vintage.debug"
+            objcopy --only-keep-debug "$launcher" "$dbg"
+            objcopy --strip-debug "$launcher"
+            objcopy --add-gnu-debuglink="$dbg" "$launcher"
+          fi
 
       - name: Upload product
         uses: actions/upload-artifact@v4
         with:
           name: tf2vintage-linux
-          path: game/tf2vintage/bin/linux64/
+          path: |
+            game/tf2vintage/bin/linux64/
+            game/tf2vintage/launcher_tf2vintage
 
       - name: Upload debug symbols
         uses: actions/upload-artifact@v4

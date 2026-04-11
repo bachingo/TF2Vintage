@@ -68,9 +68,15 @@ func findExistingInstall() string {
 	}
 
 	for _, modDir := range candidates {
-		candidate := filepath.Join(modDir, "bin", binDirName(), updaterExe)
+		// New layout: updater lives in mod root
+		candidate := filepath.Join(modDir, updaterExe)
 		if _, err := os.Stat(candidate); err == nil {
 			return candidate
+		}
+		// Legacy layout: updater in bin/<platform>/
+		legacy := filepath.Join(modDir, "bin", binDirName(), updaterExe)
+		if _, err := os.Stat(legacy); err == nil {
+			return legacy
 		}
 	}
 
@@ -89,13 +95,17 @@ func binDirName() string {
 }
 
 // isInstalledPath returns true when the exe is running from inside a
-// tf2vintage/bin/x64 (Windows) or tf2vintage/bin/linux64 (Linux) directory,
-// which means we are in update mode rather than fresh-install mode.
+// tf2vintage/ directory (the mod root), which means we are in update mode
+// rather than fresh-install mode.
 func isInstalledPath(dir string) bool {
 	lower := strings.ToLower(filepath.ToSlash(dir))
-	suffix := "tf2vintage/bin/" + strings.ToLower(binDirName())
-	return strings.HasSuffix(lower, suffix) ||
-		strings.Contains(lower, suffix+"/")
+	// Accept both the new root location (tf2vintage/) and the legacy
+	// bin/<platform>/ location for backwards compatibility.
+	legacySuffix := "tf2vintage/bin/" + strings.ToLower(binDirName())
+	return strings.HasSuffix(lower, "tf2vintage") ||
+		strings.Contains(lower, "tf2vintage/") ||
+		strings.HasSuffix(lower, legacySuffix) ||
+		strings.Contains(lower, legacySuffix+"/")
 }
 
 // platformBinDir returns the full path to the platform-specific bin subdir.
@@ -103,9 +113,18 @@ func platformBinDir(modDir string) string {
 	return filepath.Join(modDir, "bin", binDirName())
 }
 
-// modDirFromExe walks three levels up from the exe to the mod root:
-//
-//	modDir/bin/<binDirName>/tf2vintage-updater[.exe]
+// modDirFromExe returns the mod root directory from the updater executable path.
+// The updater now lives directly in the mod root (tf2vintage/tf2vintage-updater[.exe]),
+// so the mod dir is simply the directory containing the exe.
+// For backwards compatibility, if the exe appears to be inside bin/<platform>/,
+// walk three levels up as before.
 func modDirFromExe(exe string) string {
-	return filepath.Dir(filepath.Dir(filepath.Dir(exe)))
+	exeDir := filepath.ToSlash(filepath.Dir(exe))
+	lower := strings.ToLower(exeDir)
+	legacySuffix := "tf2vintage/bin/" + strings.ToLower(binDirName())
+	if strings.HasSuffix(lower, legacySuffix) || strings.Contains(lower, legacySuffix+"/") {
+		return filepath.Dir(filepath.Dir(filepath.Dir(exe)))
+	}
+	// New layout: updater is in mod root
+	return filepath.Dir(exe)
 }

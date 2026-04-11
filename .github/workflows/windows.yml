@@ -7,58 +7,103 @@ on:
         type: string
         default: 'Release'
 
+env:
+  CCACHE_DIR: ${{ github.workspace }}\.ccache
+
 jobs:
   build:
     runs-on: windows-2022
     steps:
-      - name: Checkout
+      - name: Checkout source
         uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-depth: 1
+          sparse-checkout: |
+            src/
+          sparse-checkout-cone-mode: false
 
       - name: Configure MSVC
         uses: ilammy/msvc-dev-cmd@v1
+
+      # ccache 4.x supports MSVC (cl.exe) natively via the --cl-launcher flag.
+      # We download a pre-built Windows binary, add it to PATH, and configure
+      # cl.exe to run through it so MSBuild picks up the wrapper transparently.
+      - name: Install ccache
+        run: |
+          $version = "4.10.2"
+          $url = "https://github.com/ccache/ccache/releases/download/v${version}/ccache-${version}-windows-x86_64.zip"
+          Invoke-WebRequest $url -OutFile ccache.zip
+          Expand-Archive ccache.zip -DestinationPath "$env:LOCALAPPDATA\ccache-bin"
+          $ccacheDir = (Get-ChildItem "$env:LOCALAPPDATA\ccache-bin" -Directory | Select-Object -First 1).FullName
+          echo "$ccacheDir" | Out-File -Append -FilePath $env:GITHUB_PATH
+
+      # ccache key is scoped to build config — Release and Debug never share a cache.
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ${{ runner.os }}-ccache-${{ inputs.build_config }}-${{ hashFiles('src/**/*.cpp', 'src/**/*.h') }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-${{ inputs.build_config }}-
+            ${{ runner.os }}-ccache-
+
+      - name: Configure ccache
+        run: |
+          ccache --set-config="cache_dir=${{ env.CCACHE_DIR }}"
+          ccache --set-config="max_size=4.0G"
+          ccache --set-config="compiler_check=mtime"
+          # Tell ccache to wrap cl.exe so MSBuild picks it up automatically.
+          ccache --set-config="compiler=cl"
+          ccache --zero-stats
 
       - name: Create project
         run: |
           cd src
           .\createtf2vintage.bat
 
+      # /p:CLToolExe=ccache — wraps cl.exe with ccache for all compilations.
+      # /p:UseSharedCompilation=false — disables the Roslyn shared daemon which
+      #   conflicts with ccache's process-level interception.
+      # /p:TrackFileAccess=false — disables MSBuild's file tracker (tlog files)
+      #   which adds overhead and is redundant when ccache handles caching.
       - name: Build project
         run: |
           cd src
-          MSBuild.exe TF2vintage.sln /p:Configuration=${{ inputs.build_config }} /p:Platform="win64" /m /v:m
+          MSBuild.exe TF2vintage.sln `
+            /p:Configuration=${{ inputs.build_config }} `
+            /p:Platform="win64" `
+            /p:CLToolExe=ccache `
+            /p:UseSharedCompilation=false `
+            /p:TrackFileAccess=false `
+            /m /v:m
+
+      - name: Print ccache stats
+        if: always()
+        run: ccache --show-stats
 
       - name: Collect binaries into bin/x64
         shell: cmd
         run: |
           mkdir game\tf2vintage\bin\x64 2>nul || true
 
-          :: MSBuild places outputs under <Config>_mod_tf\ or <Config>tf2vintage\ depending on the project.
-          :: We copy each known output explicitly so nothing is missed.
           set CFG=${{ inputs.build_config }}
 
-          :: client.dll — src\game\client\<Config>_mod_tf\
+          :: client.dll
           copy /Y src\game\client\%CFG%_mod_tf\client.dll game\tf2vintage\bin\x64\
           copy /Y src\game\client\%CFG%_mod_tf\client.pdb game\tf2vintage\bin\x64\ 2>nul
 
-          :: server.dll — src\game\server\<Config>_mod_tf\
+          :: server.dll
           copy /Y src\game\server\%CFG%_mod_tf\server.dll game\tf2vintage\bin\x64\
           copy /Y src\game\server\%CFG%_mod_tf\server.pdb game\tf2vintage\bin\x64\ 2>nul
 
-          :: crash_handler.dll — src\thirdparty\crash_handler\<Config>tf2vintage\x64\
+          :: crash_handler.dll
           copy /Y src\thirdparty\crash_handler\%CFG%tf2vintage\x64\crash_handler.dll game\tf2vintage\bin\x64\
           copy /Y src\thirdparty\crash_handler\%CFG%tf2vintage\x64\crash_handler.pdb game\tf2vintage\bin\x64\ 2>nul
 
-          :: launcher_main (tf2vintage_win64.exe) — src\launcher_main\<Config>_tf2vintage_win64\
-          copy /Y src\launcher_main\%CFG%_tf2vintage_win64\tf2vintage_win64.exe game\tf2vintage\bin\x64\
+          :: launcher_main — goes to the mod root, not bin/x64
+          copy /Y src\launcher_main\%CFG%_tf2vintage_win64\tf2vintage_win64.exe game\tf2vintage\
           copy /Y src\launcher_main\%CFG%_tf2vintage_win64\tf2vintage_win64.pdb game\tf2vintage\bin\x64\ 2>nul
-
-          :: legacy launcher_tf2vintage — copy from mod root if present
-          if exist game\tf2vintage\launcher_tf2vintage.exe (
-            copy /Y game\tf2vintage\launcher_tf2vintage.exe game\tf2vintage\bin\x64\
-          )
 
       - name: Upload binaries
         uses: actions/upload-artifact@v4
@@ -66,7 +111,7 @@ jobs:
           name: tf2vintage-windows
           path: |
             game/tf2vintage/bin/x64/*.dll
-            game/tf2vintage/bin/x64/*.exe
+            game/tf2vintage/tf2vintage_win64.exe
 
       - name: Upload debug symbols
         uses: actions/upload-artifact@v4

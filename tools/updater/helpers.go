@@ -204,7 +204,18 @@ func extractZipRouted(src, modDir, stagingRoot string) error {
 		case strings.HasPrefix(rel, "bin/"):
 			// Bin subtree → stagingRoot so atomicSwapDir can move it into place
 			// without touching the live modDir during the update.
-			target = filepath.Join(stagingRoot, filepath.FromSlash(rel))
+			// Exception: launcher executables (tf2vintage_win64.exe, launcher_tf2vintage)
+			// live in the mod root, not in bin/, so they are routed to modDir directly.
+			name := strings.TrimPrefix(rel, "bin/")
+			// Strip any platform subdirectory (x64/ or linux64/) to get the bare filename
+			if parts := strings.SplitN(name, "/", 2); len(parts) == 2 {
+				name = parts[1]
+			}
+			if name == "tf2vintage_win64.exe" || name == "launcher_tf2vintage" {
+				target = filepath.Join(modDir, name)
+			} else {
+				target = filepath.Join(stagingRoot, filepath.FromSlash(rel))
+			}
 		default:
 			// Game assets and base-manifest.json → modDir
 			target = filepath.Join(modDir, filepath.FromSlash(rel))
@@ -281,7 +292,8 @@ func copyIO(r io.Reader, w io.Writer) (int64, error) {
 	return io.Copy(w, r)
 }
 
-// chmodSo restores execute permissions on .so files after zip extraction.
+// chmodSo restores execute permissions on .so files after zip extraction,
+// and also marks the launcher_tf2vintage executable in the mod root.
 func chmodSo(dir string) {
 	filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
@@ -292,6 +304,13 @@ func chmodSo(dir string) {
 		}
 		return nil
 	})
+	// The launcher lives in the mod root (two levels above the bin/<platform> dir).
+	// dir is bin/<platform>/, so modDir is filepath.Dir(filepath.Dir(dir)).
+	modDir := filepath.Dir(filepath.Dir(dir))
+	launcherPath := filepath.Join(modDir, "launcher_tf2vintage")
+	if _, err := os.Stat(launcherPath); err == nil {
+		os.Chmod(launcherPath, 0755)
+	}
 }
 
 // ── Asset name constants ──────────────────────────────────────────────────────
@@ -348,20 +367,23 @@ func launchGame(gameArgs []string) {
 }
 
 // prepareGameLaunchArgs constructs the full command line for launching the game.
-// It ensures that tf2vintage_win64.exe is the executable and appends any original arguments.
+// The launcher executable lives in the mod root (tf2vintage/), not in bin/.
 func prepareGameLaunchArgs(liveBinDir string, originalArgs []string) []string {
-	gameExeName := "tf2vintage_win64.exe" // Default for Windows
+	// modDir is tf2vintage/ — one level up from bin/<platform>/
+	modDir := filepath.Dir(filepath.Dir(liveBinDir))
 
-	// Note: If cross-platform game builds are supported, this logic would need to
-	// dynamically determine the executable name based on runtime.GOOS.
-	// For now, focusing on the user's explicit mention of tf2vintage_win64.exe.
+	var gameExeName string
+	if runtime.GOOS == "windows" {
+		gameExeName = "tf2vintage_win64.exe"
+	} else {
+		gameExeName = "launcher_tf2vintage"
+	}
 
-	gamePath := filepath.Join(liveBinDir, gameExeName)
+	gamePath := filepath.Join(modDir, gameExeName)
 
 	var finalArgs []string
 	finalArgs = append(finalArgs, gamePath)
-	finalArgs = append(finalArgs, originalArgs...) // Append all original arguments
-
+	finalArgs = append(finalArgs, originalArgs...)
 	return finalArgs
 }
 
