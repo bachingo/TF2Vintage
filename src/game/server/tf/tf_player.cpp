@@ -20578,7 +20578,7 @@ bool CTFPlayer::SetPowerplayEnabled( bool bOn )
 	{
 		m_bInPowerPlay = true;
 		m_Shared.RecalculateChargeEffects();
-		m_Shared.Burn( this );
+		m_Shared.Burn( this, GetActiveTFWeapon(), 999999 );
 		m_Shared.AddCond( TF_COND_INVULNERABLE );
 		m_Shared.AddCond( TF_COND_CRITBOOSTED );
 		m_Shared.AddCond( TF_COND_MEGAHEAL );
@@ -20666,7 +20666,7 @@ void CTFPlayer::PowerplayThink( void )
 			}
 		}
 		if ( !m_Shared.InCond( TF_COND_BURNING ) )
-			m_Shared.Burn( this );
+			m_Shared.Burn( this, GetActiveTFWeapon(), 999999 );
 		if ( !m_Shared.InCond( TF_COND_INVULNERABLE ) )
 			m_Shared.AddCond( TF_COND_INVULNERABLE );
 		if ( !m_Shared.InCond( TF_COND_CRITBOOSTED ) )
