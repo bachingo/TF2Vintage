@@ -7,8 +7,10 @@ on:
         type: string
         default: 'Release'
 
+# Use forward slashes — they work on Windows runners and avoid YAML
+# interpolation issues that backslash paths can cause in env blocks.
 env:
-  CCACHE_DIR: ${{ github.workspace }}\.ccache
+  CCACHE_DIR: ${{ github.workspace }}/.ccache
 
 jobs:
   build:
@@ -26,9 +28,10 @@ jobs:
       - name: Configure MSVC
         uses: ilammy/msvc-dev-cmd@v1
 
-      # ccache 4.x supports MSVC (cl.exe) natively via the --cl-launcher flag.
-      # We download a pre-built Windows binary, add it to PATH, and configure
-      # cl.exe to run through it so MSBuild picks up the wrapper transparently.
+      # ccache 4.x supports MSVC (cl.exe) natively.
+      # We download a pre-built Windows binary, add it to PATH, and record the
+      # absolute path so MSBuild's CLToolExe gets a rooted path (required by the
+      # file tracker — a bare "ccache" name causes MSB0001).
       - name: Install ccache
         run: |
           $version = "4.10.2"
@@ -50,11 +53,17 @@ jobs:
 
       - name: Configure ccache
         run: |
+          # Resolve the absolute path to ccache.exe so we can pass it as a
+          # rooted path to MSBuild's CLToolExe. MSBuild's TrackerExecuteTool
+          # requires a fully-rooted compiler path and will throw MSB0001 if it
+          # receives a bare filename.
+          $ccacheExe = (Get-Command ccache).Source
+          echo "CCACHE_EXE=$ccacheExe" | Out-File -Append -FilePath $env:GITHUB_ENV
+
           ccache --set-config="cache_dir=${{ env.CCACHE_DIR }}"
           ccache --set-config="max_size=4.0G"
+          # mtime is faster than content-hash for compiler validation on MSVC.
           ccache --set-config="compiler_check=mtime"
-          # Tell ccache to wrap cl.exe so MSBuild picks it up automatically.
-          ccache --set-config="compiler=cl"
           ccache --zero-stats
 
       - name: Create project
@@ -62,7 +71,8 @@ jobs:
           cd src
           .\createtf2vintage.bat
 
-      # /p:CLToolExe=ccache — wraps cl.exe with ccache for all compilations.
+      # /p:CLToolExe — wraps cl.exe with ccache for all compilations.
+      #   Must be an absolute (rooted) path; bare "ccache" causes MSB0001.
       # /p:UseSharedCompilation=false — disables the Roslyn shared daemon which
       #   conflicts with ccache's process-level interception.
       # /p:TrackFileAccess=false — disables MSBuild's file tracker (tlog files)
@@ -73,7 +83,7 @@ jobs:
           MSBuild.exe TF2vintage.sln `
             /p:Configuration=${{ inputs.build_config }} `
             /p:Platform="win64" `
-            /p:CLToolExe=ccache `
+            /p:CLToolExe="${{ env.CCACHE_EXE }}" `
             /p:UseSharedCompilation=false `
             /p:TrackFileAccess=false `
             /m /v:m

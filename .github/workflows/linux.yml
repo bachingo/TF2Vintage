@@ -23,28 +23,35 @@ jobs:
             src/
           sparse-checkout-cone-mode: false
 
-      # apt packages are stable — cache the downloaded .deb files so
-      # apt-get update + install is skipped entirely on a cache hit.
+      # Cache the downloaded .deb files only — NOT the whole archives directory.
+      # Caching /var/cache/apt/archives directly includes the root-owned "lock"
+      # file and "partial/" directory, which tar cannot read as the runner user,
+      # causing the post-job cache-save step to fail with Permission denied.
+      # Narrowing to a dedicated debs/ directory avoids that entirely.
       - name: Cache apt packages
         id: apt-cache
         uses: actions/cache@v4
         with:
-          path: /var/cache/apt/archives
-          key: apt-linux-build-${{ runner.os }}-v1
+          path: ~/apt-debs
+          # Include runner image in key so a cache built on ubuntu-24.04 is never
+          # restored on a ubuntu-22.04 runner (different package versions).
+          key: apt-linux-build-ubuntu-24.04-v1
 
       - name: Configure Dependencies
-        if: steps.apt-cache.outputs.cache-hit != 'true'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            zip build-essential gcc-multilib g++-multilib ccache binutils
-
-      - name: Install cached apt packages
-        if: steps.apt-cache.outputs.cache-hit == 'true'
-        run: |
-          sudo dpkg -i /var/cache/apt/archives/*.deb 2>/dev/null || \
+          if [ "${{ steps.apt-cache.outputs.cache-hit }}" != "true" ]; then
+            sudo apt-get update
+            # Download packages to our cache directory without installing yet.
             sudo apt-get install -y --no-install-recommends \
+              --download-only -o Dir::Cache::archives="$HOME/apt-debs" \
               zip build-essential gcc-multilib g++-multilib ccache binutils
+          fi
+          # Install from cached .deb files. apt-get resolves dependencies
+          # correctly; dpkg -i alone does not and will silently break on packages
+          # with deep dep chains such as gcc-multilib.
+          sudo apt-get install -y --no-install-recommends \
+            -o Dir::Cache::archives="$HOME/apt-debs" \
+            zip build-essential gcc-multilib g++-multilib ccache binutils
 
       # ccache key is scoped to the build config so Release and Debug builds
       # never poison each other's cache. The restore-keys fallback lets a new

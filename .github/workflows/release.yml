@@ -305,28 +305,41 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
-          cache: true
-          cache-dependency-path: tools/updater/go.sum
+          # go.sum is not committed to the repo; disable the built-in module
+          # cache so the action doesn't error trying to read a missing file.
+          # go mod tidy below generates go.sum before any build step runs.
+          cache: false
 
-      # MinGW is stable — cache the downloaded .deb so apt-get update+install
-      # is skipped on subsequent runs (saves ~30s per packaging job).
+      # MinGW is stable — cache the downloaded .deb files in a runner-writable
+      # directory. Caching /var/cache/apt/archives directly fails because that
+      # directory contains root-owned "lock" and "partial/" entries that tar
+      # cannot read as the runner user, causing Permission denied on cache save.
       - name: Cache MinGW apt package
         id: mingw-cache
         uses: actions/cache@v4
         with:
-          path: /var/cache/apt/archives/gcc-mingw-w64-x86-64*.deb
-          key: apt-mingw-${{ runner.os }}-v1
+          path: ~/apt-debs-mingw
+          key: apt-mingw-ubuntu-22.04-v1
 
       - name: Install MinGW
         run: |
           if [ "${{ steps.mingw-cache.outputs.cache-hit }}" != "true" ]; then
             sudo apt-get update
+            sudo apt-get install -y --no-install-recommends \
+              --download-only -o Dir::Cache::archives="$HOME/apt-debs-mingw" \
+              gcc-mingw-w64-x86-64
           fi
-          sudo apt-get install -y --no-install-recommends gcc-mingw-w64-x86-64
+          sudo apt-get install -y --no-install-recommends \
+            -o Dir::Cache::archives="$HOME/apt-debs-mingw" \
+            gcc-mingw-w64-x86-64
 
-      - name: Download Go modules
+      # go.sum is not committed to the repo. go mod tidy generates it from
+      # go.mod and the module proxy, resolving all transitive dependencies
+      # (including golang.org/x/sys/unix) before the build steps run.
+      - name: Tidy and download Go modules
         run: |
           cd tools/updater
+          go mod tidy
           go mod download
 
       - name: Compile Windows resource file (icon + version info)
@@ -407,12 +420,18 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
-          cache: true
-          cache-dependency-path: tools/updater/go.sum
+          # go.sum is not committed to the repo; disable the built-in module
+          # cache so the action doesn't error trying to read a missing file.
+          # go mod tidy below generates go.sum before any build step runs.
+          cache: false
 
-      - name: Download Go modules
+      # go.sum is not committed to the repo. go mod tidy generates it from
+      # go.mod and the module proxy, resolving all transitive dependencies
+      # (including golang.org/x/sys/unix) before the build steps run.
+      - name: Tidy and download Go modules
         run: |
           cd tools/updater
+          go mod tidy
           go mod download
 
       - name: Build updater (Linux)
