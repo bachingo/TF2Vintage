@@ -891,17 +891,6 @@ bool CServerGameDLL::GameInit( void )
 	engine->ServerCommand( "exec game.cfg\n" );
 	engine->ServerExecute( );
 	
-	// Always enable SourceTV so the Discord "Spectate" button has a valid
-	// relay to connect to.  Admins can override tv_port, tv_name, etc. in
-	// their server.cfg; we only guarantee that the slot exists.
-	// tv_enable must be set before the level loads so the engine allocates
-	// the HLTV client slot during map init.
-	engine->ServerCommand( "tv_enable 1\n" );
-	engine->ServerExecute();
-	
-	engine->ServerCommand( "replay_enable 1\n" );
-	engine->ServerExecute();
-	
 	CBaseEntity::sm_bAccurateTriggerBboxChecks = true;
 
 	IGameEvent *event = gameeventmanager->CreateEvent( "game_init" );
