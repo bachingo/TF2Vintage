@@ -21,6 +21,7 @@ jobs:
           fetch-depth: 1
           sparse-checkout: |
             src/
+            game/tf2vintage/bin/linux64/
           sparse-checkout-cone-mode: false
 
       # Most of these packages are pre-installed on ubuntu-24.04 runners.

@@ -23,6 +23,7 @@ jobs:
           fetch-depth: 1
           sparse-checkout: |
             src/
+            game/tf2vintage/bin/x64/
           sparse-checkout-cone-mode: false
 
       - name: Configure MSVC
