@@ -1,0 +1,51 @@
+"VertexlitGeneric"
+{
+	"$baseTexture" "models/player/items/pyro/drg_pyro_bubbleHelmet"
+	"$basemapalphaphongmask" "1"	
+
+	"$phong" "1"
+	"$phongexponent" "10"
+	"$phongboost" "10"	
+	"$lightwarptexture" "models/player/pyro/pyro_lightwarp"
+	"$phongfresnelranges"	"[.25 .5 1]"
+	"$halflambert" "1"
+
+	"$detail" "effects/tiledfire/fireLayeredSlowTiled512.vtf"	
+	"$detailscale" "5"
+	"$detailblendfactor" .01
+	"$detailblendmode" 6
+
+	"$yellow" "0"
+
+	"$rimlight" "1"
+	"$rimlightexponent" "2"	
+	"$rimlightboost" "0.65"
+
+	// Cloaking
+	"$cloakPassEnabled" "1"
+	"Proxies"
+	{
+		"invis"
+		{
+		}
+		"AnimatedTexture"
+		{
+			"animatedtexturevar" "$detail"
+			"animatedtextureframenumvar" "$detailframe"
+			"animatedtextureframerate" 30
+		}
+		"BurnLevel"
+		{
+			"resultVar" "$detailblendfactor"
+		}
+		"YellowLevel"
+		{
+			"resultVar" "$yellow"
+		}
+		"Equals"
+		{
+			"srcVar1" "$yellow"
+			"resultVar" "$color2"
+		}
+	}
+}

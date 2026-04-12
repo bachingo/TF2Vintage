@@ -1,0 +1,9 @@
+UnlitGeneric
+{
+	"$basetexture"	"effects/glowdrip_hires_hialpha"
+	"$surfaceprop"	"default"
+	"$translucent"	1
+	"$vertexcolor" 	1
+	"$vertexalpha"	1
+	"$additive"	1
+}

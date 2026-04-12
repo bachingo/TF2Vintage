@@ -1,0 +1,73 @@
+"VertexlitGeneric"
+{
+	"$baseTexture" "models/player/items/soldier/soldier_jeepcap"
+	"$bumpmap" "models/player/items/soldier/soldier_jeepcap_normal"
+
+	"$detail" "effects/tiledfire/fireLayeredSlowTiled512"	
+	"$detailscale" "5"
+	"$detailblendfactor" ".01"
+	"$detailblendmode" "6"
+
+	"$yellow" "0"
+
+	"$blendtintbybasealpha" "1" 
+	"$blendtintcoloroverbase" "0"   // between 0-1 determines how much blended by tinting vs. replacing the color
+
+	// Goggles colour
+	"$colortint_base" "{77 50 78}"
+	"$colortint_tmp" "[0 0 0]"
+
+	//$envmap" "env_cubemap"
+	//$envmaptint" "[.6 .6 .6]"
+
+	"$phong" "1"
+	"$phongexponent" "10"
+	"$phongboost" "5"
+	"$lightwarptexture" "models/player/pyro/pyro_lightwarp"
+	"$phongfresnelranges" "[.25 .5 4]"
+	"$halflambert" "1"
+
+	// Rim lighting parameters
+	"$rimlight" "1"
+	"$rimlightexponent" "2"
+	"$rimlightboost" ".65"
+
+	// Cloaking
+	"$cloakPassEnabled" "1"
+	"Proxies"
+	{
+		"invis"
+		{
+		}
+		"AnimatedTexture"
+		{
+			"animatedtexturevar" "$detail"
+			"animatedtextureframenumvar" "$detailframe"
+			"animatedtextureframerate" 30
+		}
+		"BurnLevel"
+		{
+			"resultVar" "$detailblendfactor"
+		}
+		"ItemTintColor"
+		{
+			"resultVar" "$colortint_tmp"
+		}
+		"SelectFirstIfNonZero"
+		{
+			"srcVar1"	"$colortint_tmp"
+			"srcVar2"	"$colortint_base"
+			"resultVar" "$color2"
+		}
+		"YellowLevel"
+		{
+			"resultVar" "$yellow"
+		}
+		"Multiply"
+		{
+			"srcVar1" "$color2"
+			"srcVar2" "$yellow"
+			"resultVar" "$color2"
+		}
+	}
+}

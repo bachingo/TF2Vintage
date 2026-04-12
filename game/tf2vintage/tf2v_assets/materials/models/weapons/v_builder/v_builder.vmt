@@ -1,0 +1,52 @@
+"VertexLitGeneric"
+{
+	"$baseTexture" "models\weapons\v_builder/v_builder"
+
+	"$phong" "1"
+	"$phongexponenttexture" "models/weapons/albedo_tint"
+	"$phongexponentfactor" "65"
+	"$phongboost" "75"
+	"$phongalbedotint"	"1"
+
+	"$lightwarptexture" "models\lightwarps\weapon_lightwarp"
+	"$phongfresnelranges" "[0.25 0.5 1]"
+	"$basemapalphaphongmask" "1"
+
+	"$rimlight" "1"
+	"$rimlightexponent" "4"	
+	"$rimlightboost" "2"
+
+	// Cloaking
+	"$cloakPassEnabled" "1"
+	"$sheenPassEnabled" "1"
+
+	"$sheenmap" 		"cubemaps\cubemap_sheen001"
+	"$sheenmapmask" 		"Effects\AnimatedSheen\animatedsheen0"
+	"$sheenmaptint" 		"[ 1 1 1 ]"
+	"$sheenmapmaskframe" 	"0"
+	"$sheenindex" 		"0"
+
+	"$yellow" "0"
+
+	"Proxies"
+	{
+		"AnimatedWeaponSheen"
+		{
+			"animatedtexturevar" 		"$sheenmapmask"
+			"animatedtextureframenumvar" 	"$sheenmapmaskframe"
+			"animatedtextureframerate" 		"40"
+		}
+		"invis"
+		{
+		}
+		"YellowLevel"
+		{
+			"resultVar" "$yellow"
+		}
+		"Equals"
+		{
+			"srcVar1"  "$yellow"
+			"resultVar" "$color2"
+		}
+	}
+}

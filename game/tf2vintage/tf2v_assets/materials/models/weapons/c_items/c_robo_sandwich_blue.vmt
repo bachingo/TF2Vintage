@@ -1,0 +1,65 @@
+"VertexlitGeneric"
+{
+	"$baseTexture" "models\weapons\c_items/c_robo_sandwich_blue"
+	"$basemapalphaphongmask" 1
+	"$lightwarptexture" "models/player/pyro/pyro_lightwarp"
+	
+	//phong properties
+	"$phong"	"1"
+	"$phongexponenttexture" "models/weapons/albedo_tint"
+	"$phongboost"	"55"
+	"$phongexponent"	"55"
+	"$phongalbedotint" "1"
+
+	"$phongfresnelranges"	"[1 2 2.5]"
+	"$rimlight"	"1"
+	"$rimlightexponent"	"35"
+
+	"$envmap" "env_cubemap"
+	"$envmaptint" "[.5 .5 .5]"
+	"$baseAlphaEnvMapMask" "1" 
+
+
+	"$glowcolor" "1"
+
+	// Cloaking
+	"$cloakPassEnabled" "1"
+	"$yellow" "0"
+
+	"Proxies"
+	{
+		"AnimatedWeaponSheen"
+		{
+			"animatedtexturevar" 		"$sheenmapmask"
+			"animatedtextureframenumvar" 	"$sheenmapmaskframe"
+			"animatedtextureframerate" 		"40"
+		}
+		"invis"
+		{
+		}
+		"ModelGlowColor"
+		{
+			"resultVar" "$glowcolor"
+		}
+		"Equals"
+		{
+			"srcVar1"  "$glowcolor"
+			"resultVar" "$selfillumtint"
+		}
+		"Equals"
+		{
+			"srcVar1"  "$glowcolor"
+			"resultVar" "$color2"
+		}
+		"YellowLevel"
+		{
+			"resultVar" "$yellow"
+		}
+		"Multiply"
+		{
+			"srcVar1" "$color2"
+			"srcVar2" "$yellow"
+			"resultVar" "$color2"
+		}
+	}
+}
