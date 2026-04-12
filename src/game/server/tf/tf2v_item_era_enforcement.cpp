@@ -88,8 +88,8 @@ static const TF2VEraInfo_t s_EraInfoTable[] =
     { 112, "December 15, 2011",      "Australian Christmas 2011" },
     { 115, "July 10, 2013",          "July 2013 patch"           },
     { 117, "October–November 2013",  "Scream Fortress 2013"      },
-    { 120, "June 27, 2012",          "Pyromania Update"          },
-    { 121, "August 15, 2012",        "Mann vs. Machine"          },
+    { 118, "June 27, 2012",          "Pyromania Update"          },
+    { 119, "August 15, 2012",        "Mann vs. Machine"          },
     { 130, "June 18, 2014",          "Love & War Update"         },
     { 133, "December 22, 2014",      "Smissmas 2014"             },
     { 140, "July 2, 2015",           "Gun Mettle Update"         },
@@ -113,10 +113,6 @@ static const TF2VEraInfo_t s_EraInfoTable[] =
     { 201, "July 24, 2025",          "Summer 2025"               },
 };
 
-// NOTE: The table above contains some out-of-order era numbers (e.g. 120/121
-// appear after 117 but are chronologically earlier). We do a full linear scan
-// instead of breaking early so the correct best-fit entry is always found
-// regardless of insertion order.
 static const TF2VEraInfo_t *TF2VGetEraInfo( int nEra )
 {
     const TF2VEraInfo_t *pBest = &s_EraInfoTable[0];
@@ -124,7 +120,7 @@ static const TF2VEraInfo_t *TF2VGetEraInfo( int nEra )
     {
         if ( s_EraInfoTable[i].nEra <= nEra )
             pBest = &s_EraInfoTable[i];
-        // No early break — table has non-monotone entries.
+        // Linear scan to find best-fit era <= nEra.
     }
     return pBest;
 }
