@@ -249,7 +249,6 @@ enum CastVote
 //You might be wondering why these aren't multiple of 2. Well the reason is that if servers decide to have HLTV or Replay enabled we need the extra slot.
 //This is ok since MAX_PLAYERS is used for code specific things like arrays and loops, but it doesn't really means that this is the max number of players allowed
 //Since this is decided by the gamerules (and it can be whatever number as long as its less than MAX_PLAYERS).
-/*
 #if defined( CSTRIKE_DLL )
 	#define MAX_PLAYERS				65  // Absolute max players supported
 #elif defined( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined( HL2MP )
@@ -257,8 +256,6 @@ enum CastVote
 #else
 	#define MAX_PLAYERS				33  // Absolute max players supported
 #endif
-*/
-#define MAX_PLAYERS				33 // 17: TF2 limit, console. 25: TF2 limit, 2007-2008. 33: TF2 limit, 2008-2023. 101: TF2 limit, 2023-present.
 
 // Josh: Accounts for code that may index this array by an entindex
 // of player rather than the player index... :s
@@ -274,11 +271,7 @@ inline bool IsIndexIntoPlayerArrayValid( int iIndex )
 
 #define MAX_PLACE_NAME_LENGTH		18
 
-#if defined( TF_VINTAGE ) || defined( TF_VINTAGE_CLIENT )
-#define MAX_FOV						100
-#else
 #define MAX_FOV						90
-#endif
 
 //===================================================================================================================
 // Team Defines
