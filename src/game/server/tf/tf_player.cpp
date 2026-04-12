@@ -135,7 +135,6 @@
 // TF2 Vintage
 #include "tf2v_item_era_enforcement.h"
 #include "tf2v_era_attributes.h"
-#include "tf2v_offline_inventory.h"
 #include "tf_gamerules_convars.h"
 
 // NVNT haptic utils
