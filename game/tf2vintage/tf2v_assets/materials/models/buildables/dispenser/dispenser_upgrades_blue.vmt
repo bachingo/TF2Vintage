@@ -5,7 +5,7 @@
 	"$selfillummask" 	"models\buildables\dispenser\dispenser_upgrades_selfillum"
 
 	"$phong" "1"
-	"$phongboost" "10"
+	"$phongboost" "2"
 	"$phongexponent" "25"
 	"$lightwarptexture" "models\buildables\sentry1\Sentry1_lightwarp"
 	"$phongfresnelranges"	"[.5 1.5 10]"

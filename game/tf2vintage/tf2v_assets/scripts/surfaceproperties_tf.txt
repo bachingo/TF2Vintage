@@ -1,0 +1,98 @@
+// pyro napalm grenade
+"grenade_napalm"
+{
+	"base"		"grenade"
+	"friction"		"0.05"
+	"elasticity"	"2"
+
+//	"audiohardnessfactor" "1.0"
+//	"audioroughnessfactor" "0.4"
+
+//	"bulletimpact"	"Grenade.ImpactHard"
+//	"scraperough"	"Grenade.ScrapeRough"
+//	"scrapesmooth"	"Grenade.ScrapeSmooth"
+//	"impacthard"	"Grenade.ImpactHard"
+//	"impactsoft"	"Grenade.ImpactSoft"
+//	"roll"		"Grenade.Roll"
+}
+
+"wrecking_ball"
+{
+	"base"			"metal"
+	
+	"friction"		"0"
+	"elasticity"	"0"
+}
+
+"demoman_grenade"
+{
+	"base"		"metal"
+
+	"bulletimpact"	"Grenade.ImpactHard"
+	"scraperough"	"Grenade.ScrapeRough"
+	"scrapesmooth"	"Grenade.ScrapeSmooth"
+	"impacthard"	"Grenade.ImpactHard"
+	"impactsoft"	"Grenade.ImpactSoft"
+	"rolling"	"Grenade.Roll"
+}
+
+"scout_baseball"
+{
+	"base"		"rubber"
+
+	"bulletimpact"	"Weapon_Baseball.HitWorld"
+	"scraperough"	"Grenade.ScrapeRough"
+	"scrapesmooth"	"Grenade.ScrapeSmooth"
+	"impacthard"	"Weapon_Baseball.HitWorld"
+	"impactsoft"	"Weapon_Baseball.HitWorld"
+	"rolling"	"Grenade.Roll"
+}
+
+"scout_ornament"
+{
+	"base"		"glass"
+
+	"bulletimpact"	"BallBuster.Ball_HitWorld"
+	"impacthard"	"BallBuster.Ball_HitWorld"
+	"impactsoft"	"BallBuster.Ball_HitWorld"
+}
+
+"snow"
+{
+	"base"		"dirt"
+	"density"	"800"
+	"friction"	"0.8"
+
+	"audiohardnessfactor" "0.25"
+//	"gamematerial"	"91"			// When enabled, allows for snow footprint decals & footstep particle effects.
+										// However, also creates a bug where snow will use concrete decals (looks bad; probs not intended?) and won't produce any impact particle effect (almost definitely not intended).
+										// If cl_new_impact_effects is set to 1, the following error will also be printed to the console: "Attempted to create unknown particle system type "effects/splash1"!"
+										// Removing this line makes snow inherit the decal/particle properties of dirt (as dirt is the "base" as defined a few lines above). Also, the above error message won't occur.
+									// Due to the above, it seems impossible (to my knowledge) to have snow both A) have working bullet decals/particles, and B) have the special snow footprint decals & particles.
+										// Maybe there's some hacky workaround I haven't figured out yet. Or maybe gamematerial 91 simply has to be "fixed" within the game's code, and thus there's not much we can do.
+										// For now, you must pick your poison: broken impact effects, or broken footprints.
+									// — Skeleton Hotel
+}
+
+"ball_bouncy"
+{
+	"base"		"rubber"
+	
+	"friction"	".3"
+	"elasticity"	"3"
+	"density"	"500"
+}
+
+"passtime_ball"
+{
+	"base"	"rubber"
+	"elasticity" "1"
+	"friction" "1"
+
+	"bulletimpact"	"Grenade.ImpactHard"
+	"scraperough"	"Grenade.ScrapeRough"
+	"scrapesmooth"	"Grenade.ScrapeSmooth"
+	"impacthard"	"Grenade.ImpactHard"
+	"impactsoft"	"Grenade.ImpactSoft"
+	"rolling"	"Grenade.Roll"
+}

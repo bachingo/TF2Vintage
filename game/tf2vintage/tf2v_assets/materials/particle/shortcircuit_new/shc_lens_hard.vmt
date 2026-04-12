@@ -1,0 +1,15 @@
+SpriteCard
+{
+//	$basetexture		"effects/eyeglow/eyeglow"	// Old directory
+	$basetexture		"effects/workshop/eyeglow/eyeglow"
+	$vertexcolor		1
+	$vertexalpha		1
+	$additive			1
+
+	$depthblend		0
+
+	$maxsize			0.075
+//	$minsize			0.0250
+//	$maxdistance		3000
+//	$farfadeinterval		1000
+}

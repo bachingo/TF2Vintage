@@ -1,0 +1,11 @@
+SpriteCard
+{
+	// Was going to be used for the Sandman ball afterimage particle.
+	// Decided to not use for now, since the Wrap Assassin shares the same trail particle as the Sandman, and it'd look weird if the bauble left behind baseball images.
+	$basetexture		"particle/projectile_trails_01/sandman/baseball_add"
+	$vertexcolor		1
+	$vertexalpha		1
+	$additive			1
+
+	$depthblend		0
+}

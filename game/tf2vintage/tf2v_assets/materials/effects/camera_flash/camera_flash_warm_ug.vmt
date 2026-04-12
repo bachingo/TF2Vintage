@@ -1,0 +1,12 @@
+UnlitGeneric
+{
+	$basetexture		"effects/camera_flash/camera_flash_warm"
+	$vertexcolor		1
+	$vertexalpha		1
+	$additive			1
+
+	$nofog			1
+	$nocull			1
+
+	$depthblend		0
+}

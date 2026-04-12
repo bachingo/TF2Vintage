@@ -1,0 +1,13 @@
+SpriteCard
+{
+	$basetexture		"effects/softglow"
+	$vertexcolor		1
+	$vertexalpha		1
+	$additive			1
+
+	$depthblend		0
+//	$depthblendscale		25
+//	$startfadesize		0.375
+//	$endfadesize		0.75
+	$maxsize			0.375	// to make less blinding when standing very close to a burning player.
+}

@@ -1,0 +1,11 @@
+SpriteCard
+{
+	$basetexture		"effects/smokelit3/smoke3lit"
+	$vertexcolor		1
+	$vertexalpha		1
+	$translucent		1
+
+	$blendframes		1
+	$depthblend		1
+	$depthblendscale		75
+}

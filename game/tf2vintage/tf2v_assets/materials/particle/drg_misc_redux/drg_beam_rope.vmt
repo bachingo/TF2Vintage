@@ -1,0 +1,11 @@
+UnlitGeneric
+{
+//	$basetexture		"effects/baseballtrail"
+	$basetexture		"effects/beam_generic_2"
+	$vertexalpha		1
+	$vertexcolor		1
+	$additive			1
+//	$spriterendermode		5
+
+//	$nocull			1
+}

@@ -1,0 +1,14 @@
+SpriteCard
+{
+	$basetexture		"effects/yellowflare"
+	$vertexcolor		1
+	$vertexalpha		1
+	$additive			1
+
+	$depthblend		0
+	$overbrightfactor		4
+
+	$maxsize			0.150
+	$maxdistance		2048
+	$farfadeinterval		512
+}

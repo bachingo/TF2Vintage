@@ -1,0 +1,15 @@
+SpriteCard
+{
+	$basetexture		"effects/smoke/smokelit"
+	$vertexcolor		1
+	$vertexalpha		1
+	$translucent		1
+
+	$blendframes		1
+	$depthblend		0
+	$overbrightfactor		8
+
+	// These below used so the rocket smoke fades to transparency as it gets closer/larger on your screen, helping a bit with visibility.
+	$startfadesize		0.125	// Start fading out when sprite takes up this much space on the screen.
+	$endfadesize		0.25	// Fully fade out when sprite takes up this much space on the screen.
+}

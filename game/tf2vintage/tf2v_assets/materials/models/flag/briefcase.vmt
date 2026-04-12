@@ -1,0 +1,22 @@
+"VertexLitGeneric"
+{
+	"$baseTexture" "models\flag/briefcase"
+                "$bumpmap" "models\flag/briefcase_normal"
+
+     	"$phong" "1"
+	"$phongexponent" "50"
+	"$phongboost" "1"	
+	"$phongfresnelranges"	"[.25 .5 1]"
+	"$basemapalphaphongmask" "1"
+
+	"$rimlight" "1"
+	"$rimlightexponent" "4"	
+	"$rimlightboost" "1"
+
+	"$detail" "models\flag/briefcase_light_red"
+	"$detailscale" "1"
+	"$detailblendfactor" .9
+	"$detailblendmode" 6
+
+
+}
