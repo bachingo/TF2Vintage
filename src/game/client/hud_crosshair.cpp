@@ -196,7 +196,7 @@ void CHudCrosshair::GetDrawPosition ( float *pX, float *pY, bool *pbBehindCamera
 #endif
 
 #ifdef TF_VINTAGE_CLIENT
-		if ( g_ThirdPersonManager.WantToUseGameThirdPerson() || !g_ThirdPersonManager.WantToUseGameThirdPerson() )
+		if ( g_ThirdPersonManager.WantToUseGameThirdPerson() )
 		{
 			vecStart = pPlayer->Weapon_ShootPosition();
 			Vector vecDir;
