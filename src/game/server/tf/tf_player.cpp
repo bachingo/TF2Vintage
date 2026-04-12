@@ -4556,9 +4556,22 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 				m_EquippedLoadoutItemIndices[i] = LOADOUT_SLOT_USE_BASE_ITEM;
 
 				// use base items in training mode
+				// Fetch the raw inventory item first so we can detect if GetLoadoutItem
+				// substituted a stock item due to era gating (for the player notification).
+				CEconItemView *pRawItem = m_Inventory.GetItemInLoadout( iClass, i );
 				CEconItemView *pItem = GetLoadoutItem( iClass, i, true );
 				if ( !pItem || !pItem->IsValid() )
 					continue;
+
+				// If GetLoadoutItem returned a different item than what is in the inventory,
+				// the era gate substituted stock. Notify the player once per slot.
+				if ( pRawItem && pRawItem->IsValid() && pRawItem != pItem &&
+				     pRawItem->GetItemID() != pItem->GetItemID() )
+				{
+					const char *pszToken = pRawItem->GetItemDefinition()
+						? pRawItem->GetItemDefinition()->GetItemBaseName() : "#TF_UNKNOWN";
+					ClientPrint( this, HUD_PRINTTALK, "#TF2V_Weapon_Era_Replaced", pszToken );
+				}
 
 				if ( !ItemIsAllowed( pItem ) )
 					continue;
@@ -4580,12 +4593,10 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 					}
 				}
 
-// TF2V ERA GATE — runs before bAlreadyHave / m_EquippedLoadoutItemIndices so
-// that pItem is already the correct item to give by the time the duplicate-
-// check and spawn happen. If the gate replaces the item with stock, pItem is
-// rebound to the stock view for the rest of the loop iteration.
-				// strippedView is declared here (outside the era gate) so that if
-				// pItem is rebound to it, the view remains valid through GiveNamedItem.
+				// TF2V: strippedView is declared here (outside the era gate block) so
+				// that if pItem is rebound to it, the view remains valid through GiveNamedItem.
+				// Base-item era gating (stock substitution / cosmetic skip) was already
+				// handled by GetLoadoutItem above. This block handles modifier stripping only.
 				CEconItemView strippedView;
 
 				if ( TFGameRules() && TFGameRules()->IsEraStateLocked() )
@@ -4686,7 +4697,12 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 						CEconItemView *pWearableView = pWearable->GetAttributeContainer()->GetItem();
 						if ( ItemsMatch( pData, pWearableView, pItem ) )
 						{
-							bAlreadyHave = true;
+							// ItemsMatch checks item ID but not quality. If stripping changed
+							// the quality (e.g. Strange->Unique), the live wearable and pItem
+							// share an ID but differ in quality. We must replace it, so only
+							// set bAlreadyHave if the quality also matches.
+							if ( pWearableView->GetItemQuality() == pItem->GetItemQuality() )
+								bAlreadyHave = true;
 							break;
 						}
 					}
@@ -4995,16 +5011,27 @@ CEconItemView *CTFPlayer::GetLoadoutItem( int iClass, int iSlot, bool bReportWhi
 			const int nBaseEra   = TF2VGetBaseItemEra( pDef );
 			if ( nBaseEra > nActiveEra )
 			{
-				// Base item post-dates the active era. For weapon slots, fall back to
-				// stock so ValidateWeapons keeps the stock weapon instead of removing it.
-				// For wearable-only (cosmetic) slots there is no stock fallback; return
-				// nullptr so the caller skips this slot cleanly.
+				// Base item post-dates the active era.
+				const char *pszToken = pItem->GetItemDefinition()
+					? pItem->GetItemDefinition()->GetItemBaseName() : "#TF_UNKNOWN";
+
 				if ( IsWearableSlot( iSlot ) )
 				{
 					const CEconItemDefinition *pSlotDef = pItem->GetItemDefinition();
 					if ( !pSlotDef || !pSlotDef->IsActingAsAWeapon() )
+					{
+						// Cosmetic slot — no stock fallback, return nullptr to skip.
+						// bReportWhitelistFails gates the notification so it fires once
+						// (from ManageRegularWeapons) and not from ValidateWearables.
+						if ( bReportWhitelistFails )
+							ClientPrint( this, HUD_PRINTTALK, "#TF2V_Cosmetic_Era_Blocked", pszToken );
 						return nullptr;
+					}
 				}
+
+				// Weapon slot — substitute stock.
+				// Notification fires via the pRawItem comparison in ManageRegularWeapons,
+				// not here, to avoid double-printing from ValidateWeapons.
 				pItem = TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
 			}
 		}
@@ -5275,6 +5302,16 @@ void CTFPlayer::ValidateWeapons( TFPlayerClassData_t *pData, bool bResetWeapons 
 		// See if gamerules says this item isn't allowed right now
 		bool bForceRemoved = bOverrideRemoval || !ItemIsAllowed( pItem );
 
+		// TF2V: if the live weapon has anachronistic modifiers (quality or attributes
+		// that post-date the active era), force removal so ManageRegularWeapons can
+		// give the stripped copy. ItemsMatch only compares IDs, not quality.
+		if ( !bForceRemoved && TFGameRules() && TFGameRules()->IsEraStateLocked() )
+		{
+			const int nActiveEra = TFGameRules()->EraState().nAllowedWeaponEra;
+			if ( TF2VGetItemEra( pWeapon->GetAttributeContainer()->GetItem() ) > nActiveEra )
+				bForceRemoved = true;
+		}
+
 		if ( bForceRemoved || !ItemsMatch( pData, pWeapon->GetAttributeContainer()->GetItem(), pItem, pWeapon ) )
 		{
 			// we can't hold this weapon anymore, switch to the next best weapon before removing it
@@ -5388,36 +5425,51 @@ void CTFPlayer::ValidateWearables( TFPlayerClassData_t *pData )
 			CTFWeaponBase *pWeapon = assert_cast< CTFWeaponBase* >( pTFWearable->GetWeaponAssociatedWith() );
 
 			int iLoadoutSlot = pWeapon->GetAttributeContainer()->GetItem()->GetStaticData()->GetLoadoutSlot( GetPlayerClass()->GetClassIndex() );
-			if (iLoadoutSlot >= 0 )
+			if ( iLoadoutSlot >= 0 )
 			{
-				CEconItemView *pItem = TFInventoryManager()->GetItemInLoadoutForClass( GetPlayerClass()->GetClassIndex(), iLoadoutSlot, &steamIDForPlayer );
+				// Use GetLoadoutItem so the era gate applies.
+				CEconItemView *pItem = GetLoadoutItem( GetPlayerClass()->GetClassIndex(), iLoadoutSlot );
 				itemMatch |= ItemsMatch( pData, pWeapon->GetAttributeContainer()->GetItem(), pItem );
 			}
 		}
 		else
 		{
-			// Regular Wearable
+			// Regular Wearable.
+			// Use GetLoadoutItem so the era gate applies. For cosmetics that post-date
+			// the active era, GetLoadoutItem returns nullptr, ItemsMatch returns false,
+			// and the wearable is removed by the block below.
 			int iLoadoutSlot = pWearable->GetAttributeContainer()->GetItem()->GetStaticData()->GetLoadoutSlot( GetPlayerClass()->GetClassIndex() );
 			if ( iLoadoutSlot >= 0 )
 			{
-				CEconItemView *pItem = TFInventoryManager()->GetItemInLoadoutForClass( GetPlayerClass()->GetClassIndex(), iLoadoutSlot, &steamIDForPlayer );
+				CEconItemView *pItem = GetLoadoutItem( GetPlayerClass()->GetClassIndex(), iLoadoutSlot );
 				itemMatch |= ItemsMatch( pData, pWearable->GetAttributeContainer()->GetItem(), pItem );
 
-				// Item says what slot it wants to be in, but Misc's and Taunts can be in multiple places, check against all
+				// Misc/Taunt slots can occupy multiple positions — check all of them.
 				bool bLoadoutMisc = iLoadoutSlot == LOADOUT_POSITION_MISC;
 				bool bLoadoutTaunt = iLoadoutSlot == LOADOUT_POSITION_TAUNT;
-				if ( bLoadoutMisc || bLoadoutTaunt ) 
+				if ( bLoadoutMisc || bLoadoutTaunt )
 				{
 					for ( int i = LOADOUT_POSITION_INVALID + 1; i < CLASS_LOADOUT_POSITION_COUNT; i++ )
 					{
 						if ( ( bLoadoutMisc && IsMiscSlot( i ) ) || ( bLoadoutTaunt && IsTauntSlot( i ) ) )
 						{
-							pItem = TFInventoryManager()->GetItemInLoadoutForClass( GetPlayerClass()->GetClassIndex(), i, &steamIDForPlayer );
+							pItem = GetLoadoutItem( GetPlayerClass()->GetClassIndex(), i );
 							itemMatch |= ItemsMatch( pData, pWearable->GetAttributeContainer()->GetItem(), pItem );
 						}
 					}
 				}
 			}
+		}
+
+		// TF2V: If the wearable passed the loadout match but its era (accounting for
+		// quality and attributes) exceeds the active era, it has anachronistic modifiers
+		// that need to be stripped. Force removal so ManageRegularWeapons can give the
+		// stripped copy. Only runs when era state is locked (i.e. during a live round).
+		if ( itemMatch && TFGameRules() && TFGameRules()->IsEraStateLocked() )
+		{
+			const int nActiveEra = TFGameRules()->EraState().nAllowedWeaponEra;
+			if ( TF2VGetItemEra( pWearable->GetAttributeContainer()->GetItem() ) > nActiveEra )
+				itemMatch = false;
 		}
 
 		if ( !itemMatch || pWearable->GetTeamNumber() != GetTeamNumber() || m_bForceItemRemovalOnRespawn || m_bSwitchedClass )
@@ -20577,7 +20629,7 @@ bool CTFPlayer::SetPowerplayEnabled( bool bOn )
 	{
 		m_bInPowerPlay = true;
 		m_Shared.RecalculateChargeEffects();
-		m_Shared.Burn( this, GetActiveTFWeapon(), 999999 );
+		m_Shared.Burn( this, GetActiveTFWeapon() );
 		m_Shared.AddCond( TF_COND_INVULNERABLE );
 		m_Shared.AddCond( TF_COND_CRITBOOSTED );
 		m_Shared.AddCond( TF_COND_MEGAHEAL );
