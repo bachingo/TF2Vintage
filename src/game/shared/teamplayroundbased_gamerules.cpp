@@ -648,15 +648,12 @@ void CTeamplayRoundBasedRules::LevelInitPostEntity( void )
 float CTeamplayRoundBasedRules::GetRespawnTimeScalar( int iTeam )
 {
 	// For long respawn times, scale the time as the number of players drops
-	/*
-	int iOptimalPlayers = 8;	// 16 players total, 8 per team
+	//int iOptimalPlayers = 8;	// 16 players total, 8 per team
 
 	int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
 
-	float flScale = RemapValClamped( iNumPlayers, 1, iOptimalPlayers, 0.25, 1.0 );
-	*/
-	int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
-	float flScale = RemapValClamped( iNumPlayers, 2, 16, 0.25, 2.0 );
+	// float flScale = RemapValClamped( iNumPlayers, 1, iOptimalPlayers, 0.25, 1.0 );
+	float flScale = RemapValClamped( iNumPlayers, 1, 64, 0.125, 8.0 );
 	return flScale;
 }
 
