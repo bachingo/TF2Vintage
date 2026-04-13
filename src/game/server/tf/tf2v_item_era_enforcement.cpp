@@ -339,7 +339,7 @@ bool TF2VIsItemEraAllowed( CEconItemView *pItem, CTF2VEraViolation *pViolation )
     const CEconItemDefinition *pDef = pItem ? pItem->GetItemDefinition() : NULL;
     if ( !pDef ) return true;
 
-    int nActiveEra = tf2v_era.GetInt();
+    int nActiveEra = TFGameRules()->EraState().nCurrentEra;
 
     int nBaseEra = TF2VGetBaseItemEra( pDef );
     const char *pszQualName = NULL;

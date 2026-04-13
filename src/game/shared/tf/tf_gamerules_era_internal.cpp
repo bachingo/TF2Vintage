@@ -222,7 +222,7 @@ static bool TF2VCheckMapGamemode( const char **pFail = NULL )
 
 	if ( !TFGameRules() ) return true;
 
-	int nEra = tf2v_era.GetInt();
+	int nEra = TFGameRules()->EraState().nCurrentEra;
 
 
 	// Build list of active gamemode convars
@@ -281,10 +281,10 @@ static void TF2VApplyMapcycle()
 	if ( !engine ) return;
 	if ( !TF2V_MapcycleManaged() ) return;  // enforcement < 3 — server controls mapcyclefile
 
-	const char *pszFile = TF2V_GetEraMapcycleFile( tf2v_era.GetInt() );
+	const char *pszFile = TF2V_GetEraMapcycleFile( TFGameRules()->EraState().nCurrentEra );
 	if ( !pszFile )
 	{
-		Msg( "[TF2V] No era-accurate mapcycle for era %d.\n", tf2v_era.GetInt() );
+		Msg( "[TF2V] No era-accurate mapcycle for era %d.\n", TFGameRules()->EraState().nCurrentEra );
 		return;
 	}
 
@@ -541,6 +541,8 @@ void CTFGameRules::LockEraState()
 		// Weapon gate from tf2v_allowed_weapon_era (server config authority).
 		s.nAllowedWeaponEra = tf2v_allowed_weapon_era.GetInt();
 	}
+	
+	s.nCurrentEra 				= tf2v_era.GetInt();
 
 	// All other fields read from convars regardless of mode —
 	// in managed mode ApplyEra() set them, in manual mode the
@@ -850,7 +852,7 @@ static bool TF2VCheckCertifiedBase( CUtlString *pFail )
 	if ( tf2v_enforcement.GetInt() < 2 )
 	{ if(pFail)*pFail="tf2v_enforcement < 2"; return false; }
 
-	int nEra = tf2v_era.GetInt();
+	int nEra = TFGameRules()->EraState().nCurrentEra;
 	if ( nEra < TF2V_ERA_MIN || nEra > TF2V_ERA_MAX )
 	{ if(pFail)*pFail="tf2v_era out of range"; return false; }
 
@@ -891,7 +893,7 @@ static bool TF2VCheckCertified( CUtlString *pFail )
 	if ( tf2v_enforcement.GetInt() < 3 )
 	{ if(pFail)*pFail="tf2v_enforcement < 3 (no mapcycle gate)"; return false; }
 
-	const char *pszExpected = TF2V_GetEraMapcycleFile( tf2v_era.GetInt() );
+	const char *pszExpected = TF2V_GetEraMapcycleFile( TFGameRules()->EraState().nCurrentEra );
 	ConVarRef mapcyclefile( "mapcyclefile" );
 	if ( pszExpected && mapcyclefile.IsValid() &&
 	     V_strcmp( mapcyclefile.GetString(), pszExpected ) != 0 )
