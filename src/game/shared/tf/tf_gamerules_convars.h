@@ -1,21 +1,23 @@
 //=============================================================================
 // tf_gamerules_convars.h
 //
-// Extern declarations for all TF2V gameplay convars defined in
+// Extern declarations for TF2V gameplay convars defined in
 // tf_gamerules_convars.cpp.
 //
-// Any file that needs to read a tf2v_* convar should include this header
-// instead of writing its own extern ConVar declaration.
+// PUBLIC-FACING CONVARS (visible to server operators):
+//   tf2v_era              — active era as a day-since-epoch integer
+//                           (Sep 17 2007 = Day 1).  FCVAR_NOTIFY | FCVAR_ARCHIVE.
+//   tf2v_use_era_mapcycle — 1 = auto-set mapcyclefile from the era table.
+//                           FCVAR_NOTIFY | FCVAR_ARCHIVE.
 //
-// Usage:
-//   #include "tf_gamerules_convars.h"
-//   if ( tf2v_airblast.GetInt() >= 1 ) { ... }
+// ALL OTHER CONVARS ARE HIDDEN (FCVAR_HIDDEN).
+// They are set exclusively by ApplyEra() and must never be set by hand.
+// Gameplay code running during a live round must read them through
+// TFGameRules()->EraState() to respect the era lock, not directly.
 //
-// NOTE: Gameplay code running during a live round should NEVER read these
-//       convars directly. Use TFGameRules()->EraState().fieldName instead.
-//       Direct reads bypass the era lock and allow mid-round exploits.
-//       The extern declarations here are for ApplyEra(), LockEraState(),
-//       snapshot functions, and server-side setup code only.
+// The extern declarations for hidden convars are still listed here so that
+// ApplyEra(), LockEraState(), and snapshot code can reference them cleanly
+// without scattering extern declarations across multiple files.
 //=============================================================================
 #ifndef TF_GAMERULES_CONVARS_H
 #define TF_GAMERULES_CONVARS_H
@@ -23,20 +25,22 @@
 #pragma once
 #endif
 
-
 #include "convar.h"
 
 // =========================================================================
-// ERA MANAGEMENT
+// PUBLIC: ERA MANAGEMENT (two convars — the only ones operators should use)
 // =========================================================================
+
+// Active era expressed as days since September 17 2007 (beta launch = Day 1).
+// Changing this drives all hidden sub-convars via ApplyEra().
 extern ConVar tf2v_era;
-extern ConVar tf2v_enforcement;
-extern ConVar tf2v_allowed_weapon_era;
-extern ConVar tf2v_quickplay_profile;
-extern ConVar tf2v_server_type;
+
+// When 1, the mapcyclefile convar is automatically set to the era-accurate
+// map list.  Replaces tf2v_enforcement level 3.
+extern ConVar tf2v_use_era_mapcycle;
 
 // =========================================================================
-// CERTIFICATION / COMPLIANCE TAGS (read-only, set by compliance checker)
+// HIDDEN: CERTIFICATION / COMPLIANCE TAGS (set by compliance checker only)
 // =========================================================================
 extern ConVar tf2v_certified;
 extern ConVar tf2v_certified_partial;
@@ -46,10 +50,12 @@ extern ConVar tf2v_certified_ps3;
 extern ConVar tf2v_certified_xbox;
 extern ConVar tf2v_quickplay_casual;
 extern ConVar tf2v_quickplay_competitive;
+extern ConVar tf2v_quickplay_profile;
+extern ConVar tf2v_server_type;
 
 // =========================================================================
-// PERMANENT SERVER OPTIONS
-// Not era-gated. Set once from server.cfg.
+// HIDDEN: PERMANENT SERVER OPTIONS
+// Not era-gated.  Set once from server.cfg.  Never touched by ApplyEra().
 // =========================================================================
 extern ConVar tf2v_ctf_capcrits;
 extern ConVar tf2v_critchance;
@@ -60,8 +66,8 @@ extern ConVar tf2v_allcrit;
 extern ConVar tf2v_randomizer;
 
 // =========================================================================
-// ERA SUB-CONVARS
-// Managed by ApplyEra(). Read via EraState() during a round.
+// HIDDEN: ERA SUB-CONVARS
+// Managed exclusively by ApplyEra(). Read via EraState() during a round.
 // =========================================================================
 
 // ---- Damage system ----
@@ -90,6 +96,9 @@ extern ConVar tf2v_use_new_honorbound;
 
 // ---- Ammo pools ----
 extern ConVar tf2v_ammo_era;
+
+// ---- Weapon gate (hidden; always mirrors tf2v_era via ApplyEra) ----
+extern ConVar tf2v_allowed_weapon_era;
 
 // ---- Soldier ----
 extern ConVar tf2v_soldier_self_damage_reduction;
