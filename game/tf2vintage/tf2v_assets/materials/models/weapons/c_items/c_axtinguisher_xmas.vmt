@@ -11,10 +11,8 @@
 	"$one" "1"
 
 	"$phong" "1"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongexponentfactor" "25"
-	"$phongboost" "15"	
-	"$phongalbedotint" "1"
+	"$phongexponent" "20"
+	"$phongboost" ".05"	
 	"$lightwarptexture" "models/player/pyro/pyro_lightwarp"
 	"$phongfresnelranges"	"[.3 1 8]"
 	"$halflambert" "0"
@@ -28,7 +26,7 @@
 
 	"$rimlight" "1"												// To enable rim lighting (requires phong)
 	"$rimlightexponent" "4"										// Exponent for phong component of rim lighting	
-	"$rimlightboost" "2"										// Boost for ambient cube component of rim lighting
+	"$rimlightboost" ".5"										// Boost for ambient cube component of rim lighting
 
 	// Cloaking
 	"$cloakPassEnabled" "1"
@@ -64,6 +62,15 @@
 		{
 			"resultVar" "$detailblendfactor"
 		}
+		"YellowLevel"
+		{
+			"resultVar" "$yellow"
+		}
+		"Equals"
+		{
+			"srcVar1"  "$yellow"
+			"resultVar" "$color2"
+		}
 		"ItemTintColor"
 		{
 			"resultVar" "$colortint_tmp"
@@ -74,15 +81,6 @@
 			"srcVar2"	"$colortint_base"
 			"resultVar" "$color2"
 		}
-		"YellowLevel"
-		{
-			"resultVar" "$yellow"
-		}
-		"Multiply"
-		{
-			"srcVar1" "$color2"
-			"srcVar2" "$yellow"
-			"resultVar" "$color2"
-		}
+
 	}
 }

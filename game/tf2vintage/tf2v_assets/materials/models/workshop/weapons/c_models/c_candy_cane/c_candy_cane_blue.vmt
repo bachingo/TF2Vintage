@@ -3,17 +3,15 @@
 	"$baseTexture" "models/workshop/weapons/c_models/c_candy_cane/c_candy_cane_blue"
 
 	"$phong" "1"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongboost" "2"
-	"$phongexponentfactor" "10"
-	"$phongalbedotint" "1"	
+	"$phongexponent" "10"
+	"$phongboost" ".2"	
 	"$lightwarptexture" "models/lightwarps/weapon_lightwarp"
-	"$phongfresnelranges"	"4 2 5"
+	"$phongfresnelranges"	"1 2 1"
 	"$basemapalphaphongmask" "1"
 
 	"$rimlight" "1"
-	"$rimlightexponent" "5"	
-	"$rimlightboost" "3"
+	"$rimlightexponent" "10"	
+	"$rimlightboost" "7"
 
 	"$glowcolor" "1"
 

@@ -1,12 +1,15 @@
 "VertexLitGeneric"
 {
 	"$basetexture" "models/workshop_partner/weapons/c_models/c_shogun_warpack/c_shogun_warpack_blu"
+	"$detail" "effects/tiledfire/fireLayeredSlowTiled512.vtf"	
+	"$detailscale" "5"
+	"$detailblendfactor" .01
+	"$detailblendmode" 6
+
 
 	"$phong" "1"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongalbedotint" "1"
-	"$phongboost" "133"
-	"$phongexponentfactor" "66"	
+	"$phongexponent" "25"
+	"$phongboost" "5"	
 	"$lightwarptexture" "models/lightwarps/weapon_lightwarp"
 	"$phongfresnelranges"	"[.25 .5 1]"
 	"$basemapalphaphongmask" "1"
@@ -56,6 +59,10 @@
 		{
 			"srcVar1"  "$glowcolor"
 			"resultVar" "$color2"
+		}
+		"BurnLevel"
+		{
+			"resultVar" "$detailblendfactor"
 		}
 		"YellowLevel"
 		{

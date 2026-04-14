@@ -6,10 +6,8 @@
 	
 	//phong properties
 	"$phong"	"1"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongboost"	"55"
+	"$phongboost"	"5"
 	"$phongexponent"	"55"
-	"$phongalbedotint" "1"
 	"$phongfresnelranges"	"[1 2 2.5]"
 	"$rimlight"	"1"
 	"$rimlightexponent"	"35"
@@ -30,8 +28,6 @@
 	"$sheenmaptint" 		"[ 1 1 1 ]"
 	"$sheenmapmaskframe" 	"0"
 	"$sheenindex" 		"0"
-
-	"$yellow" "0"
 
 	"Proxies"
 	{
@@ -56,16 +52,6 @@
 		"Equals"
 		{
 			"srcVar1"  "$glowcolor"
-			"resultVar" "$color2"
-		}
-		"YellowLevel"
-		{
-			"resultVar" "$yellow"
-		}
-		"Multiply"
-		{
-			"srcVar1" "$color2"
-			"srcVar2" "$yellow"
 			"resultVar" "$color2"
 		}
 	}

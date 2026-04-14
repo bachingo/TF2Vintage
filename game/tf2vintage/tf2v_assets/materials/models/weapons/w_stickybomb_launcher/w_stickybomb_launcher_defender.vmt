@@ -1,25 +1,24 @@
 "VertexlitGeneric"
 {
-	"$baseTexture" "models\weapons\w_stickybomb_launcher/w_stickybomb_launcher_defender"
-	"$yellow" "0"
-	"$basemapalphaphongmask" "1"
+	"$baseTexture" "models/weapons/w_stickybomb_launcher/w_stickybomb_launcher_defender"
 
 	"$phong" "1"
-	"$phongboost" "2"	
-	"$phongexponentfactor"  "8"
+	"$phongexponent" "10"
+	"$phongboost" ".75"	
+	"$lightwarptexture" "models/lightwarps/weapon_lightwarp"
+	"$phongfresnelranges"	"[.25 .5 1]"
 	"$basemapalphaphongmask" "1"
-	"$phongalbedotint" "1"
-	"$phongexponenttexture"	"models/weapons/albedo_tint"
+	"$glowcolor" "1"
 
-	"$phongfresnelranges"	"[1.5 .5 3]"
+	"$basephongexponent" "20"
+	"$basephongboost" ".75"
 
-	"$detail" 	"models/weapons/c_models/c_stickybomb_launcher/p_stickybomb_launcher_albedo"
-	"$detailscale" "1"
-	"$detailblendfactor" "1"
-	"$detailblendmode" "0"
+	"$rimlight" "1"
+	"$rimlightexponent" "25"	
+	"$rimlightboost" ".125"
 
+	// Cloaking
 	"$cloakPassEnabled" "1"
-
 	"$sheenPassEnabled" "1"
 
 	"$sheenmap" 		"cubemaps\cubemap_sheen001"
@@ -28,7 +27,7 @@
 	"$sheenmapmaskframe" 	"0"
 	"$sheenindex" 		"0"
 
-	"$glowcolor" "1"
+	"$yellow" "0"
 
 	"Proxies"
 	{
@@ -40,16 +39,6 @@
 		}
 		"invis"
 		{
-		}
-		"AnimatedTexture"
-		{
-			"animatedtexturevar" "$detail"
-			"animatedtextureframenumvar" "$detailframe"
-			"animatedtextureframerate" 30
-		}
-		"BurnLevel"
-		{
-			"resultVar" "$detailblendfactor"
 		}
 		"ModelGlowColor"
 		{

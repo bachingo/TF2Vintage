@@ -2,14 +2,12 @@
 {
 	"$baseTexture" "models/workshop/weapons/c_models/c_buffalo_steak/c_buffalo_steak"
 	"$basemapalphaphongmask" 1
-	"$lightwarptexture" "models/lightwarps/weapon_lightwarp"
+	"$lightwarptexture" "models\lightwarps\softened_weapon_lightwarp"
 	
 	//phong properties
 	"$phong"	"1"
-	"$phongboost"	"5"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongexponentfactor" "20"
-	"$phongalbedotint" "1"
+	"$phongboost"	"1"
+	"$phongexponent"	"80"
 	"$phongfresnelranges"	"[1 2 2.5]"
 	"$rimlight"	"1"
 	"$rimlightexponent"	"1"

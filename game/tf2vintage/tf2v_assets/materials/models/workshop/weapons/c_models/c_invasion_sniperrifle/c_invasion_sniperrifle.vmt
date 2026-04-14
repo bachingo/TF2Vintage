@@ -4,18 +4,16 @@
 	"$bumpmap" "models/workshop/weapons/c_models/c_invasion_sniperrifle/c_invasion_sniperrifle_spec"
 	"$normalmapalphaphongmask" "1"
 	
-	"$lightwarptexture" "models/lightwarps/softened_weapon_lightwarp"
+	"$lightwarptexture" "models\lightwarps\weapon_lightwarp"
 
 	"$selfillum" "1"
 	
 	"$phong" "1"
-	"$phongboost"	"25"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongexponentfactor" "20"
-	"$phongalbedotint" "1"
+	"$phongexponent" "12"
+	"$phongboost" "3"	
 	"$phongfresnelranges"	"[.25 .5 1]"
 
-	"$tempvar" "0"
+	
 
 	"$basephongexponent" "25"
 	"$basephongboost" "5"

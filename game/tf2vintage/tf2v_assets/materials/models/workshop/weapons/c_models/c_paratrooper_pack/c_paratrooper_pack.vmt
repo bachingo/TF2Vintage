@@ -5,13 +5,12 @@
 
     // Wearables usually use this lightwarp: "models/player/pyro/pyro_lightwarp"
     // Weapons usually use this lightwarp: "models/lightwarps/weapon_lightwarp"
-    // Weapons are the more custom case, so we'll default to a good wearable lightwarp
-    "$lightwarptexture"     "models/player/pyro/pyro_lightwarp"
+    // Weapons are the more custom case, but for consistency and readability we'll default to a good weapon lightwarp
+    "$lightwarptexture" "models\lightwarps\softened_weapon_lightwarp"
     "$phong"                "1"
-    "$phongexponenttexture" "models/weapons/albedo_tint"
-    "$phongexponentfactor" "10"
-    "$phongalbedotint" "1"
-    "$phongboost" "10"    "$phongfresnelranges"   "[.25 .5 1]"
+    "$phongexponent"        "5"
+    "$phongboost"           "0.75"
+    "$phongfresnelranges"   "[.25 .5 1]"
     "$phongtint" "[1 1 .8]"
 
     "$rimlight"             "1"     // To enable rim lighting (requires phong)

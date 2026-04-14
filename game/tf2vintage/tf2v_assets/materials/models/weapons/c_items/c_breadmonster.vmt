@@ -2,23 +2,23 @@
 {
 	"$basetexture"	"models/weapons/c_items/c_breadmonster"
 	"$bumpmap" "models/weapons/c_items/c_breadmonster_normal"
-	"$envmap" "env_cubemap"
-	"$envmaptint" "[.5 .5 .5]"
+	"$envmap" "cubemaps\cubemap_sheen001"
+	"$envmaptint" "[.2 .8 .3]"
 	
 	"$selfillum" 1
-	//"$basemapalphaphongmask" 1
-	
-	//"$lightwarptexture" "models\player\pyro\pyro_lightwarp"
+	"$basemapalphaphongmask" "0"
 	
 	//phong properties
 	"$phong"	"1"
-	"$phongboost"	"2"
-	"$lightwarptexture" "models/lightwarps/weapon_lightwarp"
+	"$phongboost"	".05"
+	"$phongexponent" "30"
+	"$lightwarptexture" "models\lightwarps\hand_lightwarp"
 	"$phongexponenttexture"	"models/weapons/c_items/c_breadmonster_exp"
 	"$phongfresnelranges"	"[2 1 4]"
 	
-	"$rimlight" 1
-	//"$rimlightboost" ".5"
+	"$rimlight" "1"
+	"$rimlightexponent" "20"
+	"$rimlightboost" "2"
 	"$rimmask" "1"
 	
 	//"$ambientocclusion" 1
@@ -71,6 +71,13 @@
 			"srcVar1" "$color2"
 			"srcVar2" "$yellow"
 			"resultVar" "$color2"
+		}
+		Sine
+		{
+			"resultVar"	"$selfillumtint" 
+		          	"sineperiod"	2
+			"sinemin"       	0.3
+			"sinemax"	1
 		}
 	}
 }

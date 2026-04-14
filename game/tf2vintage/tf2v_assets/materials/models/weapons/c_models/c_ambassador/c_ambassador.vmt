@@ -1,27 +1,23 @@
-"VertexlitGeneric"
+"VertexLitGeneric"
 {
 	"$baseTexture" "models/weapons/c_models/c_ambassador/c_ambassador"
-
-
+	"$bumpmap" "models/weapons/c_models/c_ambassador/c_ambassador_normal"
+	
 	"$phong" "1"
-	"$phongboost" "15"	
-	"$phongexponentfactor"  "5"
-	"$basemapalphaphongmask" "1"
-	"$phongalbedotint" "1"
-	"$phongexponenttexture"	"models/weapons/albedo_tint"
-	"$phongwarptexture"  "models/player/items/all_class\qc_lightwarp"
+	"$phongexponent" "5"
+	"$phongboost" "10"	
+	"$lightwarptexture" "models/weapons/c_models/c_ambassador/c_ambassador_lightwarp"
+	"$phongfresnelranges"	"[.25 .5 1]"
+	"$phongwarptexture"  "models/weapons/c_models/c_ambassador/c_ambassador_phongwarp"
 
-	"$phongfresnelranges"	"[1.5 .5 3]"
+	"$rimlight" "1"
+	"$rimlightexponent" "20"	
+	"$rimlightboost" ".25"
+
+	"360?$color2" "[ 0.9 0.8 0.8 ]"
+
+
 	"$glowcolor" "1"
-
-	"$lightwarptexture" "models/lightwarps/weapon_lightwarp"	
-
-	"$tempvar" "0"
-	
-	"$rimlight" "1"						
-	"$rimlightexponent" "7"				
-	"$rimlightboost" "0.5"
-	
 
 	// Cloaking
 	"$cloakPassEnabled" "1"
@@ -70,9 +66,8 @@
 			"srcVar2" "$yellow"
 			"resultVar" "$color2"
 		}
-	
-	
-		"WeaponSkin" {
+		"WeaponSkin"
+		{
 		}
 	}
 }

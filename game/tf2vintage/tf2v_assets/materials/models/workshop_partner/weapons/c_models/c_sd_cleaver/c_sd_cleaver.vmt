@@ -3,20 +3,17 @@
 	"$baseTexture" "models/workshop_partner/weapons/c_models/c_sd_cleaver/c_sd_cleaver"
 
 	"$commweapon"		"0"
-	"$tempvar" "0"
+	
+	"$normalmapalphaenvmapmask" "1"
+	"$envmap" "cubemaps/cubemap_specular001"
+	"$envmaptint" "[.1 .1 .1]"
 
 	"$phong"	"1"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongexponentfactor" "25"	
-	"$phongboost" "33"	
-	"$phongalbedotint" "1"
-	"$lightwarptexture" "models/player/pyro/pyro_lightwarp"
+	"$phongboost"	"3"
+	"$phongexponent"	"25"
+	"$lightwarptexture" "models\lightwarps\weapon_lightwarp"
 	"$phongfresnelranges"	"[.5 3 2]"
 	"$basemapalphaphongmask" "1"
-
-	"$normalmapalphaenvmapmask" 1
-	"$envmap" "env_cubemap"
-	"$envmaptint" "[.35 .35 .35]"
 
 	"$basephongexponent" "45"
 	"$basephongboost" "10"

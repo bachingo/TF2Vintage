@@ -3,30 +3,22 @@
 	"$baseTexture" "models/workshop/weapons/c_models/c_invasion_pistol/c_invasion_pistol"
 	"$bumpmap" "models/workshop/weapons/c_models/c_invasion_pistol/c_invasion_pistol_spec"
 	"$normalmapalphaphongmask" "1"
-	
-	"$normalmapalphaenvmapmask" 1
-	"$envmap" "env_cubemap"
-	"$envmaptint" "[.3 .2 .2]"
-	
+		
 	"$lightwarptexture" "models/lightwarps/weapon_lightwarp"
 
 	"$selfillum" "1"
 	
 	"$phong" "1"
-	"$phongboost"	"100"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongexponentfactor" "20"
-	"$phongalbedotint" "1"
+	"$phongexponent" "25"
+	"$phongboost" "4"	
 	"$phongfresnelranges"	"[.25 .5 1]"
-
-	"$tempvar" "0"
 
 	"$basephongexponent" "25"
 	"$basephongboost" "5"
 
-	"$commadd_phongexponent" "40"
-	"$commadd_phongboost" 	"22.5"
-	"$commweapon"		"0"
+	"$rimlight" "1"
+	"$rimlightexponent" "20"
+	"$rimlightboost" "0.5"
 
 	"$glowcolor" "1"
 	// Cloaking

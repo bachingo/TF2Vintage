@@ -4,16 +4,14 @@
 	"$bumpmap" "models/workshop/weapons/c_models/c_drg_cowmangler/c_drg_cowmangler_normal"
 	
 	"$phong" "1"
-	"$phongboost" "66"	
-	"$phongexponentfactor"  "30"
-	"$phongalbedotint" "1"
-	"$phongexponenttexture"	"models/weapons/albedo_tint"
+	"$phongexponent" "15"
+	"$phongboost" "10"	
 	"$lightwarptexture" "models/lightwarps/weapon_lightwarp"
 	"$phongfresnelranges"	"[.3 .5 3]"
-	"$halflambert" "1"
+	
 	"$glowcolor" "1"
 
-	"$tempvar" "0"
+	"$tempvar" "{256 256 256}"
 
 	"$basephongexponent" "15"
 	"$basephongboost" "3"
@@ -27,6 +25,8 @@
 
 	"$colortint_base" "{89 89 159}"  
 	"$colortint_tmp" "[0 0 0]" 
+
+	"$colortint" "[0 0 0]"
 
 	"$rimlight" "1"						
 	"$rimlightexponent" "20"				
@@ -61,12 +61,29 @@
   		{
    			"resultVar" "$colortint_tmp"
   		}
+		 "ModelGlowColor"
+        	{
+         	   	"resultVar" "$glowcolor"
+        	}
+       	 	"Equals"
+        	{
+			"srcVar1"  "$glowcolor"
+			"resultVar" "$selfillumtint"
+        	}
   		"SelectFirstIfNonZero"
   		{
    			"srcVar1" "$colortint_tmp"
    			"srcVar2" "$colortint_base"
-   			"resultVar" "$color2"
+   			"resultVar" "$colortint"
   		}
+		"LessOrEqual"
+        	{
+               		"LessEqualVar" "$glowcolor"
+               		"greaterVar" "$colortint"
+        	        "srcVar1" "$tempvar"
+       		     	"srcVar2" "$glowcolor"
+       		     	"resultVar" "$color2"
+        	}
 		"YellowLevel"
 		{
 			"resultVar" "$yellow"

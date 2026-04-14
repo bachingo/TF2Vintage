@@ -2,17 +2,11 @@
 {
 	"$basetexture" "models/workshop/weapons/c_models/c_bonk_bat/c_bonk_bat_red"
 
-	"$normalmapalphaenvmapmask" 1
-	"$envmap" "env_cubemap"
-	"$envmaptint" "[.03 .03 .03]"
-
 	"$phong" "1"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongexponentfactor" "1"
-	"$phongalbedotint" "1"
-	"$phongboost" "10"		
-	"$lightwarptexture" "models/lightwarps/weapon_lightwarp"
-	"$phongwarptexture"  "models/weapons/v_bat/v_bat_phongwarp"
+	"$phongexponent" "1"
+	"$phongboost" "2.5"	
+	"$lightwarptexture" "models\lightwarps\weapon_lightwarp"
+	"$phongwarptexture"  "models\weapons\v_bat\v_bat_phongwarp"
 	"$phongfresnelranges"	"[.25 .5 1]"
 	"$basemapalphaphongmask" "1"
 

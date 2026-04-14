@@ -3,11 +3,9 @@
 	"$baseTexture" "models/workshop/weapons/c_models/c_persian_shield/c_persian_shield_spike"
 
 	"$phong" "1"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongexponentfactor" "15"
-	"$phongalbedotint" "1"
-	"$phongboost" "33"	
-	"$lightwarptexture" "models/weapons/c_items/c_ambassador_lightwarp"
+	"$phongexponent" "15"
+	"$phongboost" "5"	
+	"$lightwarptexture" "models/lightwarps/weapon_lightwarp"
 	"$phongfresnelranges"	"[.25 .5 1]"
 	"$basemapalphaphongmask" "1"
 

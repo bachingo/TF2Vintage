@@ -1,28 +1,21 @@
 "VertexLitGeneric"
 {
-	"$baseTexture" "models\workshop\weapons\c_models\c_atom_launcher\c_atom_launcher"
+	"$baseTexture" "models\workshop\weapons\c_models\c_atom_launcher/c_atom_launcher"
 	
 	"$phong" "1"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongboost" "500"
-	"$phongexponentfactor" "5"
-	"$phongalbedotint" "1"
+	"$phongexponent" "25"
+	"$phongtint" "[0.77 0.95 0.76]"
+	"$phongboost" "5"	
 	"$lightwarptexture" "models\lightwarps\weapon_lightwarp"
 	"$phongfresnelranges"	"[.3 .5 3]"
 	"$basemapalphaphongmask" "1"
-
-	"$detail" "models\workshop\weapons\c_models\c_atom_launcher\p_atom_launcher_albedo"
-	"$detailscale" "1"
-	"$detailblendfactor" "0.7"
-	"$detailblendmode" "0"
 	
 	"$rimlight" "1"					
-	"$rimlightexponent" "2"		
-	"$rimlightboost" "1"
+	"$rimlightexponent" "20"		
+	"$rimlightboost" "0.25"
 	"$glowcolor" "1"
 	// Cloaking
 	"$cloakPassEnabled" "1"
-
 	"$sheenPassEnabled" "1"
 
 	"$sheenmap" 		"cubemaps\cubemap_sheen001"

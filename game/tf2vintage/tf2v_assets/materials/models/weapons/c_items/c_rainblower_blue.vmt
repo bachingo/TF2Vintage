@@ -1,29 +1,26 @@
 "VertexLitGeneric"
 {
 	"$basetexture"	"models/weapons/c_items/c_rainblower_blue"
+	"$bumpmap" "models/weapons/c_items/c_rainblower_normal"
 
-	">=DX90"
-	{
-		"$envmap" "effects/saxxy/saxxy_gold"
-		"$envmaptint" "[.15 .15 .15]"
-	}
+	"$envmap" "effects/saxxy/saxxy_gold"
+	"$envmaptint" "[.3 .3 .1]"
 
-	"$basemapalphaphongmask" "1"
+	"$normalmapalphaenvmapmask" "1"
 
 	"$phong" "1"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongexponentfactor" "45"
-	"$phongboost" "25"
-	"$phongalbedotint" "1"	
-	"$lightwarptexture" "models\lightwarps\rainblower_lightwarp"
+	"$phongexponent" "36"
+	"$phongboost" ".8"	
+	"$lightwarptexture" "models\lightwarps\weapon_lightwarp"
 	"$phongfresnelranges"	"[.3 1 8]"
-	"$halflambert" "1"
 	
-	"$detail" "effects/tiledfire/fireLayeredSlowTiled512.vtf"	
-	"$detailscale" "5"
-	"$detailblendfactor" .01
-	"$detailblendmode" 6
+	
+	"$rimlight" "1"						
+	"$rimlightexponent" "10"				
+	"$rimlightboost" "3"
+	
 	"$yellow" "0"
+	"$glowcolor" "1"
 
 	// Cloaking
 	"$cloakPassEnabled" "1"
@@ -46,25 +43,29 @@
 		"invis"
 		{
 		}
-		"AnimatedTexture"
+		"ModelGlowColor"
 		{
-			"animatedtexturevar" "$detail"
-			"animatedtextureframenumvar" "$detailframe"
-			"animatedtextureframerate" 30
+			"resultVar" "$glowcolor"
 		}
-		"BurnLevel"
+		"Equals"
 		{
-			"resultVar" "$detailblendfactor"
+			"srcVar1"  "$glowcolor"
+			"resultVar" "$selfillumtint"
+		}
+		"Equals"
+		{
+			"srcVar1"  "$glowcolor"
+			"resultVar" "$color2"
 		}
 		"YellowLevel"
 		{
 			"resultVar" "$yellow"
 		}
-		"Equals"
+		"Multiply"
 		{
-			"srcVar1"  "$yellow"
+			"srcVar1" "$color2"
+			"srcVar2" "$yellow"
 			"resultVar" "$color2"
 		}
 	}
 }
-

@@ -3,14 +3,12 @@
 	"$baseTexture" "models\workshop\weapons\c_models\c_wheel_shield/c_wheel_shield"
 	"$baseMapAlphaPhongMask" "1"
 	"$bumpmap" "models\effects\flat_normal"
-	//"$lightwarptexture" "models\weapons\c_items/c_ambassador_lightwarp"
+	"$lightwarptexture" "models/lightwarps/weapon_lightwarp"
 	"$phong" "1"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongexponentfactor" "18"
-	"$phongboost" "10"
-	"$phongalbedotint" "1"
+	"$phongexponent" "18"
+	"$phongboost" "1"
 	"$phongfresnelranges"	"[.25.25 1]"
-
+	"$phongtint" "[0.87 0.69 0.46]"
 
 	"$rimlight" "1"
 	"$rimlightexponent" "4"

@@ -1,21 +1,17 @@
 "VertexLitGeneric"
 {
-	"$basetexture"	"models/workshop/weapons/c_models/c_scimitar/c_scimitar"
+	"$baseTexture"	"models/workshop/weapons/c_models/c_scimitar/c_scimitar"
 	"$basemapalphaphongmask" "1"
 	"$phong" "1"
-
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongexponentfactor" "30"
-	"$phongalbedotint" "1"
-	"$phongboost" "100"	
-	"$phongfresnelranges"	"[.25 .5 1]"
+	"$phongexponent" "10"
+	"$phongboost" "5"	
+	"$phongfresnelranges"	"[.6 1 1.5]"
 	
-	"$lightwarptexture" "models/weapons/c_items/c_ambassador_lightwarp"
+	"$lightwarptexture" "models/lightwarps/weapon_lightwarp"
 
-	"$detail" "models/workshop/weapons/c_models/c_scimitar/p_scimitar_albedo"
-	"$detailscale" "1"
-	"$detailblendfactor" "0.5"
-	"$detailblendmode" "0"
+	"$rimlight" "1"
+	"$rimlightexponent" "4"	
+	"$rimlightboost" "1"
 
 	"$glowcolor" "1"
 

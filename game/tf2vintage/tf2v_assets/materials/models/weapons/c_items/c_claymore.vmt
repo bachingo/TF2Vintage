@@ -4,10 +4,8 @@
 
 
 	"$phong" "1"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongexponentfactor" "5"
-	"$phongboost" "100"
-	"$phongalbedotint" "1"	
+	"$phongexponent" "5"
+	"$phongboost" "10"	
 	"$lightwarptexture" "models\weapons\c_items/c_ambassador_lightwarp"
 	"$phongfresnelranges"	"[.25 .5 1]"
 //	"$phongwarptexture"  "models\weapons\c_items/c_ambassador_phongwarp"
@@ -16,7 +14,7 @@
 
 	"$rimlight" "1"
 	"$rimlightexponent" "10"	
-	"$rimlightboost" "1"
+	"$rimlightboost" ".5"
 
 	"360?$color2" "[ 0.9 0.8 0.8 ]"
 
@@ -32,8 +30,6 @@
 	"$sheenmaptint" 		"[ 1 1 1 ]"
 	"$sheenmapmaskframe" 	"0"
 	"$sheenindex" 		"0"
-
-	"$yellow" "0"
 
 	"Proxies"
 	{
@@ -60,15 +56,6 @@
 			"srcVar1"  "$glowcolor"
 			"resultVar" "$color2"
 		}
-		"YellowLevel"
-		{
-			"resultVar" "$yellow"
-		}
-		"Multiply"
-		{
-			"srcVar1" "$color2"
-			"srcVar2" "$yellow"
-			"resultVar" "$color2"
-		}
 	}
 }
+

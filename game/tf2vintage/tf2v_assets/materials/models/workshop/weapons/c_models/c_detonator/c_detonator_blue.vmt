@@ -1,22 +1,19 @@
 "VertexlitGeneric"
 {
 	"$baseTexture" "models/workshop/weapons/c_models/c_detonator/c_detonator_blue"
-	"$BasemapAlphaPhongMask" "1"
+	"$basemapalphaphongmask" 1
 
 	"$phong" "1"
-	"$phongexponenttexture" "models\weapons\albedo_tint"
-	"$phongboost" "33"
-	"$phongexponentfactor" "15"	
-	"$phongalbedotint" "1"
+	"$phongexponent" "30"
+	"$phongboost" "10"	
 	"$lightwarptexture" "models/lightwarps/weapon_lightwarp"
 	"$phongfresnelranges" "[0.45 0.7 1]"
 
-	"$detail" "models/workshop/weapons/c_models/c_detonator/p_detonator_albedo"
-	"$detailscale" "1"
-	"$detailblendfactor" "0.7"
-	"$detailblendmode" "0"
-
 	"$glowcolor" "1"
+
+	"$rimlight" "1"
+	"$rimlightexponent" "20"	
+	"$rimlightboost" "0.25"
 
 	// Cloaking
 	"$cloakPassEnabled" "1"

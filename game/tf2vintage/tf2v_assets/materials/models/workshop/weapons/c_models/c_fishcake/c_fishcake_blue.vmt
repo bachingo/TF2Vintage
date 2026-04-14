@@ -1,17 +1,14 @@
 "VertexlitGeneric"
 {
 	"$baseTexture" "models/workshop/weapons/c_models/c_fishcake/c_fishcake_blue"
-
+	"$lightwarptexture" "models\lightwarps\softened_weapon_lightwarp"
 	$bumpmap "models/workshop/weapons/c_models/c_fishcake/c_fishcake_phong_mask"
 	"$normalmapalphaenvmapmask" 1
 	
 	//phong properties
 	"$phong"	"1"
-	"$phongboost"	"8"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongexponentfactor" "20"
-	"$phongalbedotint" "1"
-
+	"$phongboost"	"1"
+	"$phongexponent"	"10"
 	"$phongfresnelranges"	"[1 2 2.5]"
 	"$rimlight"	"1"
 	"$rimlightexponent"	"1"

@@ -3,19 +3,11 @@
 	"$baseTexture" "models/workshop/weapons/c_models/c_battleaxe/c_battleaxe"
 
 	"$phong" "1"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongboost" "175"
-	"$phongexponentfactor" "8"
-	"$phongalbedotint" "1"
-
-	"$lightwarptexture" "models/weapons/c_items/c_ambassador_lightwarp"
+	"$phongexponent" "5"
+	"$phongboost" "10"	
+	"$lightwarptexture" "models\lightwarps\weapon_lightwarp"
 	"$phongfresnelranges"	"[.25 .5 1]"
 	"$basemapalphaphongmask" "1"
-
-	"$detail" "models/workshop/weapons/c_models/c_battleaxe/p_battleaxe_albedo"
-	"$detailscale" "1"
-	"$detailblendfactor" "0.6"
-	"$detailblendmode" "0"
 
 	"$rimlight" "1"
 	"$rimlightexponent" "10"	

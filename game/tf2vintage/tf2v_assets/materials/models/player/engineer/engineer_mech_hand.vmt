@@ -12,36 +12,20 @@
 	"$one" "1"
 
 	"$phong" "1"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongexponentfactor" "8"
-	"$phongboost" "70"
-	"$phongalbedotint"	"1"
+	"$phongexponent" "20"
+	"$phongboost" ".3"	
 	"$lightwarptexture" "models/player/pyro/pyro_lightwarp"
 	"$phongfresnelranges"	"[.3 1 8]"
 
 	// Rim lighting parameters
 	"$rimlight" "1"												// To enable rim lighting (requires phong)
 	"$rimlightexponent" "4"										// Exponent for phong component of rim lighting	
-	"$rimlightboost" "2"										// Boost for ambient cube component of rim lighting
+	"$rimlightboost" ".5"										// Boost for ambient cube component of rim lighting
 
 	// Cloaking
 	"$cloakPassEnabled" "1"
-
-	"$sheenPassEnabled" "1"
-	"$sheenmap" 		"cubemaps/cubemap_sheen001"
-	"$sheenmapmask" 		"Effects/AnimatedSheen/animatedsheen0"
-	"$sheenmaptint" 		"[ 1 1 1 ]"
-	"$sheenmapmaskframe" 	"0"
-	"$sheenindex" 		"0"
-
 	"Proxies"
 	{
-		"AnimatedWeaponSheen"
-		{
-			"animatedtexturevar" 		"$sheenmapmask"
-			"animatedtextureframenumvar" 	"$sheenmapmaskframe"
-			"animatedtextureframerate" 		"40"
-		}
 		"invis"
 		{
 		}
@@ -61,8 +45,9 @@
 		}
 		"Equals"
 		{
-			"srcVar1" "$yellow"
+			"srcVar1"  "$yellow"
 			"resultVar" "$color2"
 		}
+
 	}
 }

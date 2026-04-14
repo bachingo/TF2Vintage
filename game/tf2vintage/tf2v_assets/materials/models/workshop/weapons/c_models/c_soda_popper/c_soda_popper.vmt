@@ -3,25 +3,20 @@
 	"$baseTexture" "models/workshop/weapons/c_models/c_soda_popper/c_soda_popper"
 
 	"$phong" "1"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongexponentfactor" "15"
-	"$phongboost" "180"
-	"$phongalbedotint" "1"
+	"$phongexponent" "25"
+	"$phongboost" "4"
 	"$lightwarptexture" "models/lightwarps/weapon_lightwarp"
-	"$phongfresnelranges"	"[.25 1.5 20]"
-	"$halflambert" "1"
+	"$phongfresnelranges"	"[.5 .5 3]"
 
-	"$detail" "models/workshop/weapons/c_models/c_shortstop/p_shortstop_albedo"
-	"$detailscale" "1"
-	"$detailblendfactor" "0.6"
-	"$detailblendmode" "0"
-
-	
-	"$tempvar" "0"
+	"$basephongexponent" "15"
+	"$basephongboost" "5"
 
 	"$basemapalphaphongmask" "1"
 
-
+	// Rim lighting parameters
+	"$rimlight" "1"			
+	"$rimlightexponent" "20"	
+	"$rimlightboost" ".25"
 
 	"$glowcolor" "1"
 

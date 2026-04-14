@@ -1,0 +1,59 @@
+"VertexLitGeneric"
+{
+	"$basetexture"	"models\weapons\w_rocketlauncher\w_rocketlauncher01"
+	
+	"$phong" "1"
+	"$phongexponent" "20"
+	"$phongboost" "1"	
+	"$lightwarptexture" "models\lightwarps\weapon_lightwarp"
+	"$phongfresnelranges"	"[2.25 2.5 20]"
+	"$halflambert" "1"
+
+	"$glowcolor" "1"
+
+	"$basemapalphaphongmask" "1"
+	
+	// Rim lighting parameters
+	"$rimlight" "1"					
+	"$rimlightexponent" "4"		
+	"$rimlightboost" ".5"
+
+	"360?$color2" "[ 0.8 0.8 0.8 ]"
+
+	// Cloaking
+	"$cloakPassEnabled" "1"
+	"$sheenPassEnabled" "1"
+
+	"$sheenmap" 		"cubemaps\cubemap_sheen001"
+	"$sheenmapmask" 		"Effects\AnimatedSheen\animatedsheen0"
+	"$sheenmaptint" 		"[ 1 1 1 ]"
+	"$sheenmapmaskframe" 	"0"
+	"$sheenindex" 		"0"
+
+	"Proxies"
+	{
+		"AnimatedWeaponSheen"
+		{
+			"animatedtexturevar" 		"$sheenmapmask"
+			"animatedtextureframenumvar" 	"$sheenmapmaskframe"
+			"animatedtextureframerate" 		"40"
+		}
+		"weapon_invis"
+		{
+		}
+		"ModelGlowColor"
+		{
+			"resultVar" "$glowcolor"
+		}
+		"Equals"
+		{
+			"srcVar1"  "$glowcolor"
+			"resultVar" "$selfillumtint"
+		}
+		"Equals"
+		{
+			"srcVar1"  "$glowcolor"
+			"resultVar" "$color2"
+		}
+	}
+}

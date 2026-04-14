@@ -2,29 +2,18 @@
 {
 	"$baseTexture" "models/workshop/weapons/c_models/c_invasion_wrangler/c_invasion_wrangler_blue"
 
-	"$envmap" "env_cubemap"
-	"$envmaptint" "[.1 .1 .1]"
-	"$basealphaenvmapmask"		"1"
-
 	"$phong" "1"
-	"$phongboost"	"10"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongexponentfactor" "20"
-	"$phongalbedotint" "1"
-	
+	"$phongexponent" "15"
+	"$phongboost" "1.3"	
 	"$lightwarptexture" "models/lightwarps/weapon_lightwarp"
 	"$phongfresnelranges"	"[1.5 .5 3]"
+	"$phongtint" "[0.6588235 0.2627451 0.1568628]"
 
 	"$basemapalphaphongmask" "1"
 	
 	"$rimlight" "1"						
 	"$rimlightexponent" "20"				
 	"$rimlightboost" ".25"
-	"$tempvar" "0"
-
-	"$commadd_phongexponent" "30"
-	"$commadd_phongboost" 	"22.5"
-	"$commweapon"		"0"
 
 	"360?$color2" "[ 0.5 0.5 0.5 ]"
 

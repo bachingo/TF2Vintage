@@ -1,24 +1,30 @@
-"VertexLitGeneric"
+"VertexlitGeneric"
 {
-	"$basetexture"	"models/weapons/c_items/c_drg_pomson_blue"
+	"$basetexture"	"models/workshop/weapons/c_models/c_drg_pomson/c_drg_pomson_blue"
 	
-	"$phong" "1"
-	"$phongboost" "50"	
-	"$phongexponentfactor"  "30"
 	"$basemapalphaphongmask" "1"
-	"$phongalbedotint" "1"
-	"$phongexponenttexture"	"models/weapons/albedo_tint"
+	"$phong" "1"
+	"$phongexponent" "3"
+	"$phongboost" "4"	
+	"$lightwarptexture" "models/lightwarps/weapon_lightwarp"
 	"$phongfresnelranges"	"[.3 .5 3]"
+	"$halflambert" "1"
 	"$glowcolor" "1"
 
-	"$lightwarptexture" "models/lightwarps/weapon_lightwarp"	
-
 	"$tempvar" "0"
-	
+
+	"$basephongexponent" "15"
+	"$basephongboost" "3"
+
+	"$commadd_phongexponent" "30"
+	"$commadd_phongboost" 	"22.5"
+	"$commweapon"		"0"
+
 	"$rimlight" "1"						
-	"$rimlightexponent" "7"				
-	"$rimlightboost" "0.5"
-	
+	"$rimlightexponent" "20"				
+	"$rimlightboost" ".25"
+
+	"360?$color2" "[ 0.7 0.7 0.7 ]"
 
 	// Cloaking
 	"$cloakPassEnabled" "1"
@@ -66,10 +72,6 @@
 			"srcVar1" "$color2"
 			"srcVar2" "$yellow"
 			"resultVar" "$color2"
-		}
-	
-	
-		"WeaponSkin" {
 		}
 	}
 }

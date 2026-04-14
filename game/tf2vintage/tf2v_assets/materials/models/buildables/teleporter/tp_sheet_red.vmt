@@ -3,7 +3,6 @@
 	
 
 	"$basetexture"	"models\buildables\teleporter\tp_sheet_red"
-	"$bumpmap"	"models\buildables\teleporter\tp_sheet_red_normal"
 	"$phong" "1"
 	"$phongboost" "10"
 	"$phongexponent" "25"
@@ -16,7 +15,7 @@
 
 	"$rimlight" "1"		
 	"$rimlightexponent" "4"				
-	"$rimlightboost" "1.5"
+	"$rimlightboost" ".5"
 	
 
 }

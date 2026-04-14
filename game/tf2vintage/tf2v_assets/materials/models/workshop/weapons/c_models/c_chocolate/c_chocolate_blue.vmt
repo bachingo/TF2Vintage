@@ -2,13 +2,11 @@
 {
 	"$baseTexture" "models/workshop/weapons/c_models/c_chocolate/c_chocolate_blue"
 	"$basemapalphaphongmask" 1
-	
+	"$lightwarptexture" "models\lightwarps\softened_weapon_lightwarp"
 	//phong properties
 	"$phong"	"1"
-	"$phongboost"	"5"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongexponentfactor" "10"
-	"$phongalbedotint" "1"
+	"$phongboost"	".1"
+	"$phongexponent"	"50"
 	"$phongfresnelranges"	"[1 2 2.5]"
 	"$rimlight"	"1"
 	"$rimlightexponent"	"1"

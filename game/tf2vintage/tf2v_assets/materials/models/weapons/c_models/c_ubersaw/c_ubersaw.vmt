@@ -4,23 +4,15 @@
 	"$basemapalphaphongmask" "1"
 
 	"$phong" "1"
-	"$phongexponenttexture" "models/weapons/c_models/c_ubersaw/albedo_tint_ubersaw"
-	"$phongexponentfactor" "25"
-	"$phongboost" "5"
-	"$phongalbedotint" "1"
+	"$phongexponent" "17"
+	"$phongboost" "0.3"	
 	"$lightwarptexture" "models/lightwarps/weapon_lightwarp"
 	"$phongfresnelranges"	"[1.5 .5 3]"
 	"$halflambert" "1"
 
-	"$detail" "models/weapons/c_models/c_ubersaw/p_ubersaw_albedo"
-	"$detailscale" "1"
-	"$detailblendfactor" "0.7"
-	"$detailblendmode" "0"
-
-
 	"$rimlight" "1"						
-	"$rimlightexponent" "20"				
-	"$rimlightboost" ".25"
+	"$rimlightexponent" "40"				
+	"$rimlightboost" "1"
 
 	"$selfillum" "1"
 	"$selfillumtint" "[1 .11 .05]"

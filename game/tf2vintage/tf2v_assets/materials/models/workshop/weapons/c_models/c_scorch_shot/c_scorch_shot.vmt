@@ -1,29 +1,26 @@
 "VertexlitGeneric"
 {
-	"$baseTexture" "models\workshop\weapons\c_models\c_scorch_shot\c_scorch_shot"
-	"$basemapalphaphongmask" "1"
+	"$baseTexture" "models/workshop/weapons/c_models/c_scorch_shot/c_scorch_shot"
+	"$basemapalphaphongmask" 1
 
 	"$phong" "1"
-	"$phongexponenttexture" "models\weapons\albedo_tint"
-	"$phongexponentfactor" "10"
-	"$phongboost" "15"	
-	"$lightwarptexture" "models\lightwarps\weapon_lightwarp"
-	"$phongfresnelranges" "[1 2 2.5]"
-	"$phongalbedotint" "1"
-
-	"$detail" "models\workshop\weapons\c_models\c_scorch_shot\p_scorch_shot_albedo"
-	"$detailscale" "1"
-	"$detailblendfactor" "0.5"
-	"$detailblendmode" "0"
+	"$phongexponent" "30"
+	"$phongboost" "10"	
+	"$lightwarptexture" "models/lightwarps/weapon_lightwarp"
+	"$phongfresnelranges" "[0.45 0.7 1]"
 
 	"$glowcolor" "1"
+
+	"$rimlight" "1"
+	"$rimlightexponent" "20"	
+	"$rimlightboost" "0.25"
 
 	// Cloaking
 	"$cloakPassEnabled" "1"
 	"$sheenPassEnabled" "1"
 
-	"$sheenmap" 		"cubemaps\cubemap_sheen001"
-	"$sheenmapmask" 		"Effects\AnimatedSheen\animatedsheen0"
+	"$sheenmap" 		"cubemaps/cubemap_sheen001"
+	"$sheenmapmask" 		"Effects/AnimatedSheen/animatedsheen0"
 	"$sheenmaptint" 		"[ 1 1 1 ]"
 	"$sheenmapmaskframe" 	"0"
 	"$sheenindex" 		"0"
@@ -65,7 +62,8 @@
 			"srcVar2" "$yellow"
 			"resultVar" "$color2"
 		}
-		"WeaponSkin"{
+		"WeaponSkin"
+		{
 		}
 	}
 }

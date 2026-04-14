@@ -6,17 +6,15 @@
 	"$envmaptint" "[.45 .45 .45]"
 
 	"$phong" "1"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongexponentfactor" "60"
-	"$phongboost" "150"
-	"$phongalbedotint" "1"	
+	"$phongexponent" "60"
+	"$phongboost" "20"	
 	"$lightwarptexture" "models\lightwarps\weapon_lightwarp"
 	"$phongfresnelranges" "[0.25 0.5 1]"
 	"$basemapalphaphongmask" "1"
 
 	"$rimlight" "1"
 	"$rimlightexponent" "4"	
-	"$rimlightboost" "2"
+	"$rimlightboost" ".5"
 
 	"$glowcolor" "1"
 
@@ -29,8 +27,6 @@
 	"$sheenmaptint" 		"[ 1 1 1 ]"
 	"$sheenmapmaskframe" 	"0"
 	"$sheenindex" 		"0"
-
-	"$yellow" "0"
 
 	"Proxies"
 	{
@@ -55,16 +51,6 @@
 		"Equals"
 		{
 			"srcVar1"  "$glowcolor"
-			"resultVar" "$color2"
-		}
-		"YellowLevel"
-		{
-			"resultVar" "$yellow"
-		}
-		"Multiply"
-		{
-			"srcVar1" "$color2"
-			"srcVar2" "$yellow"
 			"resultVar" "$color2"
 		}
 	}

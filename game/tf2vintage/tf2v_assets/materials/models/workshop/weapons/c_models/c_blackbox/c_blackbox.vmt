@@ -1,32 +1,20 @@
-"VertexLitGeneric"
+"VertexlitGeneric"
 {
-	"$basetexture"	"models/workshop/weapons/c_models/c_blackbox/c_blackbox"
-
+	"$baseTexture" "models/workshop/weapons/c_models/c_blackbox/c_blackbox"
 
 	"$phong" "1"
-	"$phongboost" "32"	
-	"$phongexponentfactor"  "9"
-	"$basemapalphaphongmask" "1"
-	"$phongalbedotint" "1"
-	"$phongexponenttexture"	"models/weapons/albedo_tint"
-
-	"$detail" "models/workshop/weapons/c_models/c_blackbox/p_blackbox_albedo"
-	"$detailscale" "1"
-	"$detailblendfactor" "0.6"
-	"$detailblendmode" "0"
-
-
+	"$phongexponent" "30"
+	"$phongboost" "0.6"	
+	"$lightwarptexture" "models/lightwarps/weapon_lightwarp"
 	"$phongfresnelranges"	"[1.5 .5 3]"
-	"$glowcolor" "1"
-
-	"$lightwarptexture" "models/lightwarps/weapon_lightwarp"	
-
-	"$tempvar" "0"
+	"$basemapalphaphongmask" "1"
 	
-	"$rimlight" "1"						
-	"$rimlightexponent" "7"				
-	"$rimlightboost" "0.8"
+	"$rimlight" "1"
+	"$rimlightexponent" "20"	
+	"$rimlightboost" "0.25"
 
+
+	"$glowcolor" "1"
 
 	// Cloaking
 	"$cloakPassEnabled" "1"
@@ -75,9 +63,8 @@
 			"srcVar2" "$yellow"
 			"resultVar" "$color2"
 		}
-	
-	
-		"WeaponSkin" {
+		"WeaponSkin"
+		{
 		}
 	}
 }

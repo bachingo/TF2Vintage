@@ -1,31 +1,21 @@
-"VertexLitGeneric"
+"VertexlitGeneric"
 {
-	"$basetexture" "models/workshop/weapons/c_models/c_reserve_shooter/c_reserve_shooter"
-	
-	"$phong" "1"
-	"$phongboost" "100"	
-	"$phongexponentfactor"  "15"
+	"$baseTexture" "models/workshop/weapons/c_models/c_reserve_shooter/c_reserve_shooter"
+
 	"$basemapalphaphongmask" "1"
-	"$phongalbedotint" "1"
-	"$phongexponenttexture"	"models/weapons/albedo_tint"
 
-	"$detail" "models/workshop/weapons/c_models/c_reserve_shooter/p_reserve_shooter_albedo"
-	"$detailscale" "1"
-	"$detailblendfactor" "0.7"
-	"$detailblendmode" "0"
+	"$phong" "1"
+	"$phongexponent" "25"
+	"$phongboost" "8"	
+	"$lightwarptexture" "models/lightwarps/weapon_lightwarp"
+	"$phongfresnelranges"	"[.25 .5 1]"
+
+	"$rimlight" "1"			
+	"$rimlightexponent" "20"	
+	"$rimlightboost" ".25"
 
 
-	"$phongfresnelranges"	"[1.5 .5 3]"
 	"$glowcolor" "1"
-
-	"$lightwarptexture" "models\weapons\w_syringe\w_syringe_lightwarp"
-
-	"$tempvar" "0"
-	
-	"$rimlight" "1"						
-	"$rimlightexponent" "7"				
-	"$rimlightboost" "0.5"
-	
 
 	// Cloaking
 	"$cloakPassEnabled" "1"
@@ -74,9 +64,8 @@
 			"srcVar2" "$yellow"
 			"resultVar" "$color2"
 		}
-	
-	
-		"WeaponSkin" {
+		"WeaponSkin"
+		{
 		}
 	}
 }

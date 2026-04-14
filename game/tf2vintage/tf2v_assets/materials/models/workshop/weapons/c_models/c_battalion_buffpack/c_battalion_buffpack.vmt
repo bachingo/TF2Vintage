@@ -10,11 +10,9 @@
 	"$yellow" "0"
 
 	"$phong" "1"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongboost" "200"
-	"$phongexponentfactor" "10"
-	"$phongalbedotint" "1"
-	"$lightwarptexture" "models/player/pyro/pyro_lightwarp"
+	"$phongexponent" "5"
+	"$phongboost" "5"
+	"$lightwarptexture" "models\lightwarps\weapon_lightwarp"
 	"$phongfresnelranges"	"[.25 1 4]"
 	"$basemapalphaphongmask" "1"
 

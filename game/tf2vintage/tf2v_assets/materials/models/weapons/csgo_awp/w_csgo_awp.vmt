@@ -4,16 +4,17 @@
 	"$bumpmap" "models/weapons/csgo_awp/w_csgo_awp_normal"
 
 	"$phong" "1"
-	"$phongexponenttexture" "models\weapons\albedo_tint"
-	"$phongexponentfactor" "100"
-	"$phongboost" "4000"	
+	"$phongexponent" "20"
+	"$phongboost" "5"	
 	"$lightwarptexture" "models\lightwarps\weapon_lightwarp"
 	"$phongfresnelranges"	"[.125 .25 .25]"
-	"$phongalbedotint" "1"
 	
 	"$normalalphaphongmask" "1"
 
 	"$tempvar" "0"
+
+	"$basephongexponent" "20"
+	"$basephongboost" "6"
 
 	"$commadd_phongexponent" "30"
 	"$commadd_phongboost" 	"2.5"
@@ -21,7 +22,7 @@
 
 	"$rimlight" "1"
 	"$rimlightexponent" "4"	
-	"$rimlightboost" "1"
+	"$rimlightboost" ".5"
 
 
 
@@ -37,8 +38,6 @@
 	"$sheenmapmaskframe" 	"0"
 	"$sheenindex" 		"0"
 
-	"$yellow" "0"
-
 	"Proxies"
 	{
 		"AnimatedWeaponSheen"
@@ -47,7 +46,7 @@
 			"animatedtextureframenumvar" 	"$sheenmapmaskframe"
 			"animatedtextureframerate" 		"40"
 		}
-		"invis"
+		"weapon_invis"
 		{
 		}
 		"ModelGlowColor"
@@ -64,15 +63,34 @@
 			"srcVar1"  "$glowcolor"
 			"resultVar" "$color2"
 		}
-		"YellowLevel"
+		"CommunityWeapon"
 		{
-			"resultVar" "$yellow"
+			"resultVar" "$commweapon"
 		}
 		"Multiply"
 		{
-			"srcVar1" "$color2"
-			"srcVar2" "$yellow"
-			"resultVar" "$color2"
+			"srcVar1"  "$commweapon"
+			"srcVar2"  "$commadd_phongexponent" 
+			"resultVar" "$tempvar" 
 		}
+		"Add"
+		{
+			"srcVar1"  "$tempvar" 
+			"srcVar2"  "$basephongexponent" 
+			"resultVar" "$phongexponent" 
+		}
+		"Multiply"
+		{
+			"srcVar1"  "$commweapon"
+			"srcVar2"  "$commadd_phongboost" 
+			"resultVar" "$tempvar" 
+		}
+		"Add"
+		{
+			"srcVar1"  "$tempvar" 
+			"srcVar2"  "$basephongboost"
+			"resultVar" "$phongboost" 
+		}
+
 	}
 }

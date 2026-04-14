@@ -1,27 +1,25 @@
 "VertexlitGeneric"
 {
 	"$baseTexture" "models/weapons/c_models/c_rocketpack/c_rocketpack_blue"
+
+	"$basemapalphaphongmask" "1"
+
+	"$yellow" "0"
+
+	"$phong" "1"
+	"$phongexponent" "20"
+	"$phongboost" ".25"	
+	"$lightwarptexture" "models\lightwarps\weapon_lightwarp"
+	"$phongfresnelranges"	"[2 1 5]"
+	"$glowcolor" "1"
+
 	"$detail" "effects/tiledfire/fireLayeredSlowTiled512.vtf"	
 	"$detailscale" "5"
 	"$detailblendfactor" .01
 	"$detailblendmode" 6
 
-	"$basemapalphaphongmask" 1
-
-	"$yellow" "0"
-	"$one" "1"
-
-	"$phong" "1"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongexponentfactor" "25"
-	"$phongboost" "15"
-	"$phongalbedotint" "1"
-	"$lightwarptexture" "models/player/pyro/pyro_lightwarp"
-	"$phongfresnelranges"	"[.3 1 8]"
-	"$halflambert" "0"
-
 	"$rimlight" "1"												// To enable rim lighting (requires phong)
-	"$rimlightexponent" "4"										// Exponent for phong component of rim lighting	
+	"$rimlightexponent" "9"										// Exponent for phong component of rim lighting	
 	"$rimlightboost" "2"										// Boost for ambient cube component of rim lighting
 
 	// Cloaking
@@ -32,23 +30,32 @@
 		"invis"
 		{
 		}
-		"AnimatedTexture"
+		"ModelGlowColor"
 		{
-			"animatedtexturevar" "$detail"
-			"animatedtextureframenumvar" "$detailframe"
-			"animatedtextureframerate" 30
+			"resultVar" "$glowcolor"
 		}
-		"BurnLevel"
+		"Equals"
 		{
-			"resultVar" "$detailblendfactor"
+			"srcVar1"  "$glowcolor"
+			"resultVar" "$selfillumtint"
+		}
+		"Equals"
+		{
+			"srcVar1"  "$glowcolor"
+			"resultVar" "$color2"
 		}
 		"YellowLevel"
 		{
 			"resultVar" "$yellow"
 		}
-		"Equals"
+		"BurnLevel"
 		{
-			"srcVar1" "$yellow"
+			"resultVar" "$detailblendfactor"
+		}
+		"Multiply"
+		{
+			"srcVar1" "$color2"
+			"srcVar2" "$yellow"
 			"resultVar" "$color2"
 		}
 	}

@@ -3,19 +3,15 @@
 	"$baseTexture" "models/workshop/weapons/c_models/c_market_gardener/c_market_gardener"
 
 	"$phong" "1"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongexponentfactor" "33"
-	"$phongalbedotint" "1"
-	"$phongboost" "40"	
-	"$lightwarptexture" "models/player/pyro/pyro_lightwarp"
-	"$phongfresnelranges"	"[.7 .5 3]"
-	"halflambert" "1"
+	"$phongexponent" "25"
+	"$phongboost" "3"	
+	"$lightwarptexture" "models/lightwarps/weapon_lightwarp"
+	"$phongfresnelranges"	"[.3 .5 3]"
 	"$basemapalphaphongmask" "1"
 	
 	"$rimlight" "1"
 	"$rimlightexponent" "20"	
-	"$rimlightboost" "0.5"
-
+	"$rimlightboost" ".25"
 
 	"$glowcolor" "1"
 

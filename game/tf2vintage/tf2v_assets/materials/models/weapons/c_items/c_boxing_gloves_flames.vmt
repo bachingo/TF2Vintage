@@ -6,18 +6,16 @@
 
 
 	"$phong" "1"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongexponentfactor" "30"
-	"$phongboost" "40"
-	"$phongalbedotint"	"1"	
+	"$phongexponent" "30"
+	"$phongboost" "4"	
 //	"$lightwarptexture" "models/player/pyro/pyro_lightwarp"
 	"$phongfresnelranges"	"[.25 .55 3]"
 	"$halflambert" "0"
 //	"$basemapalphaphongmask" "1"
 
 	"$rimlight" "1"
-	"$rimlightexponent" "3"
-	"$rimlightboost" ".2"
+	"$rimlightexponent" "4"
+	"$rimlightboost" ".5"
 	"$rimmask" "1"
 
 
@@ -32,8 +30,6 @@
 	"$sheenmaptint" 		"[ 1 1 1 ]"
 	"$sheenmapmaskframe" 	"0"
 	"$sheenindex" 		"0"
-
-	"$yellow" "0"
 
 	"Proxies"
 	{
@@ -58,16 +54,6 @@
 		"Equals"
 		{
 			"srcVar1"  "$glowcolor"
-			"resultVar" "$color2"
-		}
-		"YellowLevel"
-		{
-			"resultVar" "$yellow"
-		}
-		"Multiply"
-		{
-			"srcVar1" "$color2"
-			"srcVar2" "$yellow"
 			"resultVar" "$color2"
 		}
 	}

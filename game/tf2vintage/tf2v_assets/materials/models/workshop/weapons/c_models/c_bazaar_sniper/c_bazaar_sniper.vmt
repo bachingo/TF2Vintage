@@ -1,30 +1,29 @@
 "VertexLitGeneric"
 {
-	"$basetexture"	"models/workshop/weapons/c_models/c_bazaar_sniper/c_bazaar_sniper"
+	$baseTexture "models/workshop/weapons/c_models/c_bazaar_sniper/c_bazaar_sniper"
+	"$basemapalphaphongmask" "1"
 
 	"$phong" "1"
-	"$phongboost" "100"	
-	"$phongexponentfactor"  "30"
-	"$basemapalphaphongmask" "1"
-	"$phongalbedotint" "1"
-	"$phongexponenttexture"	"models/weapons/albedo_tint"
+	"$phongexponent" "10"
+	"$phongboost" "3"	
+	"$lightwarptexture" "models/lightwarps/weapon_lightwarp"
+	"$phongfresnelranges"	"[.25 .5 1]"
 
-	"$phongfresnelranges"	"[1.5 .5 3]"
+	
+
+	"$basephongexponent" "25"
+	"$basephongboost" "5"
+
+	"$commadd_phongexponent" "40"
+	"$commadd_phongboost" 	"22.5"
+	"$commweapon"		"0"
+
 	"$glowcolor" "1"
-
-	"$detail" "models/workshop/weapons/c_models/c_bazaar_sniper/p_bazaar_sniper_albedo"
-	"$detailscale" "1"
-	"$detailblendfactor" "0.3"
-	"$detailblendmode" "0"
-
-	"$lightwarptexture" "models\lightwarps\weapon_lightwarp"
-
-	"$tempvar" "0"
 	
 	"$rimlight" "1"						
-	"$rimlightexponent" "7"				
-	"$rimlightboost" "0.5"	
-
+	"$rimlightexponent" "20"				
+	"$rimlightboost" ".125"								// Boost for ambient cube component of rim lighting
+	
 	// Cloaking
 	"$cloakPassEnabled" "1"
 	"$sheenPassEnabled" "1"
@@ -47,6 +46,16 @@
 		}
 		"invis"
 		{
+		}
+		"AnimatedTexture"
+		{
+			"animatedtexturevar" "$detail"
+			"animatedtextureframenumvar" "$detailframe"
+			"animatedtextureframerate" 30
+		}
+		"BurnLevel"
+		{
+			"resultVar" "$detailblendfactor"
 		}
 		"ModelGlowColor"
 		{
@@ -72,9 +81,8 @@
 			"srcVar2" "$yellow"
 			"resultVar" "$color2"
 		}
-	
-	
-		"WeaponSkin" {
+		"WeaponSkin"
+		{
 		}
 	}
 }

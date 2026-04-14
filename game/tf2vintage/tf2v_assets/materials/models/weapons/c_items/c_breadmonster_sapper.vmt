@@ -2,17 +2,15 @@
 {
 	"$baseTexture" "models\weapons\c_items\c_breadmonster_sapper"
 	"$bumpmap" "models\weapons\c_items\c_breadmonster_sapper_normal"
-	"$envmap" "env_cubemap"
-	"$envmaptint" "[.5 .4 .1]"
 
 	"$phong" "1"
 	"$phongexponent" "15"
 	"$phongboost" "5"
 	"$lightwarptexture" "models\lightwarps\weapon_lightwarp"
 	"$phongfresnelranges"	"[.25 1.5 20]"
-	"$halflambert" "1"
+	
 
-	"$tempvar" "0"
+	
 
 	"$basephongexponent" "15"
 	"$basephongboost" "5"

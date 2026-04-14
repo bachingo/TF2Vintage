@@ -4,30 +4,21 @@
 	"$basemapalphaphongmask" 1
 
 	"$phong" "1"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongexponentfactor" "10"
-	"$phongalbedotint" "1"
-	"$phongboost" "66"	
+	"$phongexponent" "30"
+	"$phongboost" ".3"	
 	"$lightwarptexture" "models/lightwarps/weapon_lightwarp"
-	"$phongfresnelranges"	"[.25 .5 1]"
+	"$phongfresnelranges"	"[2 1 1]"
 
-	"$detail" "models/workshop/weapons/c_models/c_lochnload/p_lochnload_albedo"
-	"$detailscale" "1"
-	"$detailblendfactor" "0.7"
-	"$detailblendmode" "0"
-
-	"$tempvar" "0"
-
-	"$basephongexponent" "15"
-	"$basephongboost" "3"
+	"$basephongexponent" "100"
+	"$basephongboost" "2"
 
 	"$commadd_phongexponent" "30"
 	"$commadd_phongboost" 	"22.5"
 	"$commweapon"		"0"
 
 	"$rimlight" "1"
-	"$rimlightexponent" "4"	
-	"$rimlightboost" "1.5"
+	"$rimlightexponent" "20"	
+	"$rimlightboost" "0.5"
 
 	"$glowcolor" "1"
 

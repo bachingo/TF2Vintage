@@ -1,29 +1,20 @@
 "VertexLitGeneric"
 {
 	"$baseTexture" "models/workshop/weapons/c_models/c_sr3_punch/c_sr3_punch"
-	"$detail" "effects/tiledfire/fireLayeredSlowTiled512.vtf"	
-	"$detailscale" "5"
-	"$detailblendfactor" .01
-	"$detailblendmode" 6
-
 
 	"$yellow" "0"
-	"$one" "1"
 	"$glowcolor" "1"
 
 	"$phong" "1"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongexponentfactor" "11"
-	"$phongboost" "25"	
-	"$phongalbedotint" "1"
+	"$phongexponent" "15"
+	"$phongboost" "2"	
 	"$lightwarptexture" "models/workshop/weapons/c_models/c_sr3_punch/c_sr3_punch_lightwarp"
 	"$phongfresnelranges"	"[.3 1 8]"
-	"$halflambert" "0"
 
 	// Rim lighting parameters
 	"$rimlight" "1"												// To enable rim lighting (requires phong)
-	"$rimlightexponent" "4"										// Exponent for phong component of rim lighting	
-	"$rimlightboost" "2"										// Boost for ambient cube component of rim lighting
+	"$rimlightexponent" "3"										// Exponent for phong component of rim lighting	
+	"$rimlightboost" ".2"										// Boost for ambient cube component of rim lighting
 
 	// Cloaking
 	"$cloakPassEnabled" "1"

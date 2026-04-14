@@ -15,11 +15,17 @@
 	"$phongfresnelranges"	"[.3 1 8]"
 	"$halflambert" "0"
 	
+
+
+ 	//"$blendtintbybasealpha" "1" 
+ 	//"$blendtintcoloroverbase" "0"  
+	//"$colortint_base" "{166 134 103}" 
+	//"$color2" "{69 53 48}" 
 	"$colortint_tmp" "[0 0 0]" 
 
 	"$rimlight" "1"												// To enable rim lighting (requires phong)
 	"$rimlightexponent" "4"										// Exponent for phong component of rim lighting	
-	"$rimlightboost" "2"	
+	"$rimlightboost" ".5"	
 
 	"$cloakPassEnabled" "1"
 
@@ -30,8 +36,6 @@
 	"$sheenmaptint" 		"[ 1 1 1 ]"
 	"$sheenmapmaskframe" 	"0"
 	"$sheenindex" 		"0"
-
-	"$glowcolor" "1"
 
 	"Proxies"
 	{
@@ -44,34 +48,27 @@
 		"invis"
 		{
 		}
+
 		"AnimatedTexture"
 		{
 			"animatedtexturevar" "$detail"
 			"animatedtextureframenumvar" "$detailframe"
 			"animatedtextureframerate" 30
 		}
-		"ModelGlowColor"
+
+		"BurnLevel"
 		{
-			"resultVar" "$glowcolor"
+			"resultVar" "$detailblendfactor"
 		}
-		"Equals"
-		{
-			"srcVar1"  "$glowcolor"
-			"resultVar" "$selfillumtint"
-		}
-		"Equals"
-		{
-			"srcVar1"  "$glowcolor"
-			"resultVar" "$color2"
-		}
+
 		"YellowLevel"
 		{
 			"resultVar" "$yellow"
 		}
-		"Multiply"
+
+		"Equals"
 		{
-			"srcVar1" "$color2"
-			"srcVar2" "$yellow"
+			"srcVar1" "$yellow"
 			"resultVar" "$color2"
 		}
 	}

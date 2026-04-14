@@ -2,23 +2,20 @@
 {
 	"$baseTexture" "models\weapons\c_items/c_gascan"
 //	"$bumpmap" "models\weapons\c_items/c_boxing_gloves_normal"
-	"$basemapalphaphongmask" 1
 
 
 
 	"$phong" "1"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongexponentfactor" "30"
-	"$phongboost" "40"
-	"$phongalbedotint" "1"
-//	"$lightwarptexture" "models/player/pyro/pyro_lightwarp"
+	"$phongexponent" "30"
+	"$phongboost" "4"	
+	"$lightwarptexture" "models\lightwarps\weapon_lightwarp"
 	"$phongfresnelranges"	"[.25 .55 3]"
-	"$halflambert" "0"
-//	"$basemapalphaphongmask" "1"
+	
+	"$basemapalphaphongmask" "1"
 
 	"$rimlight" "1"
-	"$rimlightexponent" "3"
-	"$rimlightboost" ".2"
+	"$rimlightexponent" "20"
+	"$rimlightboost" "2"
 	"$rimmask" "1"
 
 

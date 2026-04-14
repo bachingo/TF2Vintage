@@ -3,18 +3,15 @@
 	"$baseTexture" "models\weapons\v_builder/v_builder"
 
 	"$phong" "1"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongexponentfactor" "65"
-	"$phongboost" "75"
-	"$phongalbedotint"	"1"
-
+	"$phongexponent" "50"
+	"$phongboost" "4"	
 	"$lightwarptexture" "models\lightwarps\weapon_lightwarp"
 	"$phongfresnelranges" "[0.25 0.5 1]"
 	"$basemapalphaphongmask" "1"
 
 	"$rimlight" "1"
 	"$rimlightexponent" "4"	
-	"$rimlightboost" "2"
+	"$rimlightboost" ".5"
 
 	// Cloaking
 	"$cloakPassEnabled" "1"
@@ -26,8 +23,6 @@
 	"$sheenmapmaskframe" 	"0"
 	"$sheenindex" 		"0"
 
-	"$yellow" "0"
-
 	"Proxies"
 	{
 		"AnimatedWeaponSheen"
@@ -38,15 +33,6 @@
 		}
 		"invis"
 		{
-		}
-		"YellowLevel"
-		{
-			"resultVar" "$yellow"
-		}
-		"Equals"
-		{
-			"srcVar1"  "$yellow"
-			"resultVar" "$color2"
 		}
 	}
 }

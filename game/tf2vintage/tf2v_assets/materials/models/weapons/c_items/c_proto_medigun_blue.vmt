@@ -3,10 +3,8 @@
 	"$basetexture"	"models/weapons/c_items/c_proto_medigun_blue"
 	
 	"$phong" "1"
-	"$phongexponenttexture" "models/weapons/albedo_tint"
-	"$phongexponent" "50"
-	"$phongboost" "100"
-	"$phongalbedotint" "1"
+	"$phongexponent" "30"
+	"$phongboost" "1"	
 	"$lightwarptexture" "models\lightwarps\weapon_lightwarp"
 	"$phongfresnelranges"	"[1.5 .5 3]"
 //	"$halflambert" "1"
@@ -28,7 +26,7 @@
 	
 	"$rimlight" "1"						
 	"$rimlightexponent" "4"				
-	"$rimlightboost" "2"
+	"$rimlightboost" ".5"
 
 	"$glowcolor" "1"
 
@@ -41,8 +39,6 @@
 	"$sheenmaptint" 		"[ 1 1 1 ]"
 	"$sheenmapmaskframe" 	"0"
 	"$sheenindex" 		"0"
-
-	"$yellow" "0"
 
 	"Proxies"
 	{
@@ -69,15 +65,6 @@
 			"srcVar1"  "$glowcolor"
 			"resultVar" "$color2"
 		}
-		"YellowLevel"
-		{
-			"resultVar" "$yellow"
-		}
-		"Multiply"
-		{
-			"srcVar1" "$color2"
-			"srcVar2" "$yellow"
-			"resultVar" "$color2"
-		}
+
 	}
 }
