@@ -94,9 +94,6 @@ protected:
 
 	virtual void		PostSOUpdate( const CSteamID & steamIDOwner, GCSDK::ESOCacheEvent eEvent ) OVERRIDE;
 	virtual void		SOCacheSubscribed( const CSteamID & steamIDOwner, GCSDK::ESOCacheEvent eEvent ) OVERRIDE;
-	
-	bool 				LoadOfflineItemCache();
-	void 				SaveOfflineItemCache();
 
 	virtual bool		AddEconItem( CEconItem * pItem, bool bUpdateAckFile, bool bWriteAckFile, bool bCheckForNewItems ) OVERRIDE;
 

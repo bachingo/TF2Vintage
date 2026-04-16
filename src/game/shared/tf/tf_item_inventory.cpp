@@ -1768,8 +1768,6 @@ bool CTFPlayerInventory::UpdateEquipStateForClass( const itemid_t& itemID, equip
 }
 
 #ifdef CLIENT_DLL
-ConVar cl_inventory_autoreload( "cl_inventory_autoreload", "0", FCVAR_USERINFO | FCVAR_ARCHIVE, "When set to 1, reloads the TF2V inventory based off your TF2 inventory." );
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -1785,175 +1783,13 @@ void CTFPlayerInventory::PostSOUpdate( const CSteamID & steamIDOwner, GCSDK::ESO
 //-----------------------------------------------------------------------------
 void CTFPlayerInventory::SOCacheSubscribed( const CSteamID & steamIDOwner, GCSDK::ESOCacheEvent eEvent )
 {
-	if ( cl_inventory_autoreload.GetInt() )
-	{
-		BaseClass::SOCacheSubscribed( steamIDOwner, eEvent );
-		// If the base class got nothing from the GC (offline / no session),
-		// try loading our saved item cache from disk instead.
-		if ( !m_bGotItemsFromSteam )
-		{
-			if ( LoadOfflineItemCache() )
-			{
-				DevMsg( "CTFPlayerInventory: running in offline inventory mode.\n" );
-			}
-			// If that also fails, m_aInventoryItems stays empty and the game
-			// uses base/stock items for every slot — existing behavior.
-		}
-		else
-		{
-			// We got a live GC subscription — snapshot it for next offline session.
-			SaveOfflineItemCache();
-		}		
-	}
-	else
-	{
-		if ( !LoadOfflineItemCache() )
-		{
-			BaseClass::SOCacheSubscribed( steamIDOwner, eEvent );
-			if ( m_bGotItemsFromSteam )
-				SaveOfflineItemCache();
-		}
-	}
+	BaseClass::SOCacheSubscribed( steamIDOwner, eEvent );
 
 	UpdateRealTFLoadoutItems();
 	LoadLocalLoadout();
 
 	VerifyChangedLoadoutsAreValid();
 	UpdateCachedServerLoadoutItems();
-}
-
-#define OFFLINE_ITEM_CACHE_FILE "cfg/local_item_cache.txt"
-
-bool CTFPlayerInventory::LoadOfflineItemCache()
-{
-    if ( InventoryManager()->GetLocalInventory() != this )
-        return false;
-
-    if ( !g_pFullFileSystem->FileExists( OFFLINE_ITEM_CACHE_FILE, "MOD" ) )
-        return false;
-
-    KeyValues *pRootKV = new KeyValues( "local_item_cache" );
-    if ( !pRootKV->LoadFromFile( g_pFullFileSystem, OFFLINE_ITEM_CACHE_FILE, "MOD" ) )
-    {
-        pRootKV->deleteThis();
-        Warning( "Failed to load offline item cache from %s\n", OFFLINE_ITEM_CACHE_FILE );
-        return false;
-    }
-
-    // Clear any existing inventory state, exactly like SOCacheSubscribed does.
-    m_aInventoryItems.Purge();
-    DirtyItemHandles();
-    // NOTE: We intentionally leave m_pSOCache as NULL.
-    // Nothing downstream requires it once items are in m_aInventoryItems.
-
-    int nLoaded = 0;
-    for ( KeyValues *pKV = pRootKV->GetFirstValue(); pKV; pKV = pKV->GetNextValue() )
-    {
-        const char *pszB64 = pKV->GetString();
-        if ( !pszB64 || !pszB64[0] )
-            continue;
-
-        // Decode base64 → raw proto bytes
-        CUtlBuffer bufB64( pszB64, V_strlen(pszB64), CUtlBuffer::READ_ONLY | CUtlBuffer::TEXT_BUFFER );
-        CUtlBuffer bufRaw;
-        if ( !Base64Decode( bufB64, bufRaw ) )
-        {
-            Warning( "local_item_cache: failed to base64-decode item %s\n", pKV->GetName() );
-            continue;
-        }
-
-        // Deserialize proto message
-        CSOEconItem msgItem;
-        if ( !msgItem.ParseFromArray( bufRaw.Base(), bufRaw.TellPut() ) )
-        {
-            Warning( "local_item_cache: failed to parse proto for item %s\n", pKV->GetName() );
-            continue;
-        }
-
-        // Allocate a CEconItem and fill it from the proto.
-        // This is what GCSDK does when it processes CMsgSOCacheSubscribed.
-        CEconItem *pEconItem = new CEconItem();
-        pEconItem->DeserializeFromProtoBufItem( msgItem );
-
-        // AddEconItem takes ownership tracking through the sort vector.
-        // Pass bUpdateAckFile=true, bWriteAckFile=false, bCheckForNewItems=false
-        // (same flags BaseClass::SOCacheSubscribed uses).
-        AddEconItem( pEconItem, true, false, false );
-        ++nLoaded;
-    }
-
-    pRootKV->deleteThis();
-
-    if ( nLoaded == 0 )
-    {
-        Warning( "local_item_cache: file exists but contained no valid items\n" );
-        return false;
-    }
-
-    // Set the flag that gates CleanAckFile and other checks.
-    m_bGotItemsFromSteam = true;
-
-    // Validate positions (same as SOCacheSubscribed does for local inventory)
-    ValidateInventoryPositions();
-
-    // Fire the "inventory connected" event so the UI behaves normally
-    CInventoryManager::SendItemSystemConnectedEvent();
-
-    ResortInventory();
-    InventoryManager()->CleanAckFile();
-    InventoryManager()->SaveAckFile();
-
-    DevMsg( "Offline item cache loaded: %d items from %s\n", nLoaded, OFFLINE_ITEM_CACHE_FILE );
-    return true;
-}
-
-void CTFPlayerInventory::SaveOfflineItemCache()
-{
-    // Only save for the local player's inventory
-    if ( InventoryManager()->GetLocalInventory() != this )
-        return;
-
-    KeyValues *pRootKV = new KeyValues( "local_item_cache" );
-
-    int nCount = GetItemCount();
-    for ( int i = 0; i < nCount; ++i )
-    {
-        CEconItemView *pView = GetItem( i );
-        if ( !pView )
-            continue;
-
-        CEconItem *pEconItem = pView->GetSOCData();
-        if ( !pEconItem )
-            continue;
-
-        // Serialize the full CEconItem state into a proto message.
-        // This captures: id, def_index, quality, level, inventory token,
-        // account_id, flags, origin, style, all dynamic attributes,
-        // equipped_state, custom_name, custom_desc, interior_item.
-        CSOEconItem msgItem;
-        pEconItem->SerializeToProtoBufItem( msgItem );
-
-        std::string sBytes;
-        if ( !msgItem.SerializeToString( &sBytes ) )
-            continue;
-
-        // Key is the decimal item ID so humans can read it.
-        char szKey[32];
-        V_snprintf( szKey, sizeof(szKey), "%llu", pEconItem->GetItemID() );
-
-        // Store as base64 so KeyValues doesn't choke on binary data.
-        // base64 encode sBytes → store as string value.
-        CUtlBuffer bufRaw( sBytes.data(), (int)sBytes.size(), CUtlBuffer::READ_ONLY );
-        CUtlBuffer bufB64;
-        Base64Encode( bufRaw, bufB64 );  // available in tier1
-
-        pRootKV->SetString( szKey, (const char *)bufB64.Base() );
-    }
-
-    pRootKV->SaveToFile( g_pFullFileSystem, OFFLINE_ITEM_CACHE_FILE, "MOD" );
-    pRootKV->deleteThis();
-
-    DevMsg( "Offline item cache saved: %d items → %s\n", nCount, OFFLINE_ITEM_CACHE_FILE );
 }
 
 //-----------------------------------------------------------------------------
