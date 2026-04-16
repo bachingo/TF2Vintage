@@ -15110,15 +15110,6 @@ void CTFGameRules::RoundRespawn( void )
 			ApplyEra( tf2v_era.GetInt() );
 		}
 	}
-	else
-	{
-		RestoreManualEraSnapshot();
-		if ( m_bManualSnapshotStale || !m_bManualSnapshotTaken )
-		{
-			TakeManualEraSnapshot();
-			m_bManualSnapshotStale = false;
-		}
-	}
 
 	// Freeze current convar values into m_EraState for this round
 	LockEraState();
