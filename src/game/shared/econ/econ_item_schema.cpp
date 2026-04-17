@@ -3027,6 +3027,7 @@ bool CEconItemDefinition::BInitFromKV( KeyValues *pKVItem, CUtlVector<CUtlString
     // initializing this one first so that it will be available for all the errors below
     m_pszDefinitionName = m_pKVItem->GetString( "name", NULL );
 
+/*
 #if defined( WITH_STREAMABLE_WEAPONS )
     bool bGotDefault = false;
     m_bLoadOnDemand = m_pKVItem->GetBool( "loadondemand", tf_loadondemand_default.GetBool(), &bGotDefault );
@@ -3040,6 +3041,8 @@ bool CEconItemDefinition::BInitFromKV( KeyValues *pKVItem, CUtlVector<CUtlString
 #else
     // Keep the old behavior, which is that loadondemand is defaulted to false.
     m_bLoadOnDemand = m_pKVItem->GetBool("loadondemand");
+*/
+	m_bLoadOnDemand = true;
 #endif
 
 	m_nDefIndex = Q_atoi( m_pKVItem->GetName() );
