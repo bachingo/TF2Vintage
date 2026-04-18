@@ -120,6 +120,8 @@ game/*/cfg/server.cfg
 game/*/cfg/user.scr
 game/*/cfg/settings.scr
 game/*/settings/admins.txt
+game/*/cfg/offline_item_cache.txt
+game/*/cfg/local_loadout.txt
 ServerConfig.vdf
 
 # logs
