@@ -1,0 +1,304 @@
+// loaner_items.txt
+//
+// Items listed here are given to every player as loaner stand-ins,
+// regardless of whether they own the item in their real TF2 inventory.
+// Players who legitimately own the item already are given their own copy instead.
+//
+// All loaner items are forced to:
+//   quality  = Normal (0)
+//   level    = 1
+//   origin   = kEconItemOrigin_QuestLoanerItem (25)
+//
+// Only "defindex" is read per entry — quality and level are not configurable
+// because uniformity is the point. Think of it like a library:
+// "It's like a library, but for murder accessories!"
+//
+// Format:
+//   "loaner_items"
+//   {
+//       "item" { "defindex" "<number>" }
+//   }
+//
+// To find defindex values, check scripts/items/items_game.txt and search
+// for the item by name, then read its "defindex" field.
+// Alternatively, inspect the item in-game with item_dumpinv.
+//
+
+"loaner_items"
+{
+    // ── Scout ──────────────────────────────────────────────────
+	// ── Primary ────────────────────────────────────────────────
+    "item" { "defindex" "13" }  // Scattergun     (primary)
+    "item" { "defindex" "45" }  // Force-A-Nature     (primary)
+    "item" { "defindex" "220" }  // Shortstop     (primary)
+    "item" { "defindex" "448" }  // Soda Popper     (primary)
+    "item" { "defindex" "772" }  // Baby Face's Blaster     (primary)
+    "item" { "defindex" "1103" }  // Force-A-Nature     (primary)
+	// ── Secondary ──────────────────────────────────────────────
+	"item" { "defindex" "23" }  // Pistol (secondary)
+	"item" { "defindex" "449" }  // Winger (secondary)
+	"item" { "defindex" "773" }  // Pretty Boy's Pocket Pistol (secondary)
+	"item" { "defindex" "812" }  // Flying Guillotine (secondary)
+	"item" { "defindex" "46" }  // Bonk! Atomic Punch (secondary)
+	"item" { "defindex" "163" }  // Crit-a-Cola (secondary)
+	"item" { "defindex" "222" }  // Mad Milk (secondary)
+    "item" { "defindex" "1121" }  // Mutated Milk (secondary)
+	// ── Melee ──────────────────────────────────────────────────
+	"item" { "defindex" "0" }  // Bat            (melee)
+    "item" { "defindex" "221" }  // Holy Mackerel            (melee)
+	"item" { "defindex" "572" }  // Unarmed Combat            (melee)
+    "item" { "defindex" "30667" }  // Batsaber            (melee)
+	"item" { "defindex" "44" }  // Sandman            (melee)
+    "item" { "defindex" "317" }  // Candy Cane            (melee)
+	"item" { "defindex" "325" }  // Boston Basher            (melee)
+    "item" { "defindex" "452" }  // Three-Rune Blade            (melee)
+	"item" { "defindex" "349" }  // Sun-on-a-Stick            (melee)
+    "item" { "defindex" "355" }  // Fan O'War            (melee)
+	"item" { "defindex" "450" }  // Atomizer            (melee)
+    "item" { "defindex" "648" }  // Wrap Assassin            (melee)
+	
+    // ── Soldier ────────────────────────────────────────────────
+	// ── Primary ────────────────────────────────────────────────
+    "item" { "defindex" "18" }  // Rocket Launcher     (primary)
+    "item" { "defindex" "513" }  // Original     (primary)
+    "item" { "defindex" "127" }  // Direct Hit     (primary)
+    "item" { "defindex" "228" }  // Black Box     (primary)
+    "item" { "defindex" "237" }  // Rocket Jumper     (primary)
+    "item" { "defindex" "414" }  // Liberty Launcher    (primary)
+    "item" { "defindex" "441" }  // Cow Mangler 5000    (primary)
+    "item" { "defindex" "730" }  // Beggar's Bazooka    (primary)
+	"item" { "defindex" "1104" }  // Air Strike    (primary)
+	// ── Secondary ──────────────────────────────────────────────
+	"item" { "defindex" "10" }  // Shotgun (secondary)
+	"item" { "defindex" "129" }  // Buff Banner (secondary)
+	"item" { "defindex" "226" }  // Batallion's Backup (secondary)
+	"item" { "defindex" "354" }  // Concheror (secondary)
+	"item" { "defindex" "444" }  // Mantreads (secondary)
+	"item" { "defindex" "442" }  // Righteous Bison (secondary)
+
+	// ── Melee ──────────────────────────────────────────────────
+	"item" { "defindex" "6" }  // Shovel            (melee)
+    "item" { "defindex" "128" }  // Equalizer            (melee)
+	"item" { "defindex" "447" }  // Disciplinary Action            (melee)
+    "item" { "defindex" "416" }  // Market Gardener            (melee)
+	"item" { "defindex" "775" }  // Escape Plan            (melee)
+	
+    // ── Pyro ───────────────────────────────────────────────────
+	// ── Primary ────────────────────────────────────────────────
+    "item" { "defindex" "21" }  // Flame Thrower     (primary)
+    "item" { "defindex" "741" }  // Rainblower     (primary)
+    "item" { "defindex" "30474" }  // Nostromo Napalmer     (primary)
+    "item" { "defindex" "40" }  // Backburner     (primary)
+    "item" { "defindex" "215" }  // Degreaser     (primary)
+    "item" { "defindex" "594" }  // Phlogistinator     (primary)
+    "item" { "defindex" "1178" }  // Dragon's Fury     (primary)
+	// ── Secondary ──────────────────────────────────────────────
+	"item" { "defindex" "12" }  // Shotgun (secondary)
+	"item" { "defindex" "39" }  // Flare Gun (secondary)
+	"item" { "defindex" "351" }  // Detonator (secondary)
+	"item" { "defindex" "595" }  // Manmelter (secondary)
+	"item" { "defindex" "740" }  // Scorch Shot (secondary)
+	"item" { "defindex" "1179" }  // Thermal Thruster (secondary)
+	"item" { "defindex" "1180" }  // Gas Passer (secondary)
+	// ── Melee ──────────────────────────────────────────────────
+	"item" { "defindex" "2" }  // Fire Axe            (melee)
+    "item" { "defindex" "739" }  // Lollichop           (melee)
+	"item" { "defindex" "38" }  // Axtinguisher            (melee)
+    "item" { "defindex" "457" }  // Postal Pummeler            (melee)
+	"item" { "defindex" "153" }  // Homewrecker           (melee)
+    "item" { "defindex" "466" }  // Maul            (melee)
+	"item" { "defindex" "214" }  // Powerjack           (melee)
+    "item" { "defindex" "326" }  // Back Scratcher            (melee)
+	"item" { "defindex" "348" }  // Sharpened Volcano Fragment            (melee)
+    "item" { "defindex" "593" }  // Third Degree           (melee)
+	"item" { "defindex" "813" }  // Neon Annihilator            (melee)
+    "item" { "defindex" "1181" }  // Hot Hand           (melee)
+	
+    // ── Demoman ────────────────────────────────────────────────
+	// ── Primary ────────────────────────────────────────────────
+    "item" { "defindex" "19" }  // Grenade Launcher     (primary)
+    "item" { "defindex" "308" }  // Loch-n-Load     (primary)
+    "item" { "defindex" "405" }  // Ali Baba's Wee Booties     (primary)
+    "item" { "defindex" "608" }  // Bootlegger     (primary)
+    "item" { "defindex" "996" }  // Loose Cannon     (primary)
+    "item" { "defindex" "1151" }  // Iron Bomber     (primary)
+	// ── Secondary ──────────────────────────────────────────────
+	"item" { "defindex" "20" }  // Stickybomb Launcher (secondary)
+	"item" { "defindex" "130" }  // Scottish Resistance (secondary)
+	"item" { "defindex" "131" }  // Chargin' Targe (secondary)
+	"item" { "defindex" "265" }  // Sticky Jumper (secondary)
+	"item" { "defindex" "406" }  // Splendid Screen (secondary)
+	"item" { "defindex" "1099" }  // Tide Turner (secondary)
+	"item" { "defindex" "1150" }  // Quickiebomb Launcher (secondary)
+	// ── Melee ──────────────────────────────────────────────────
+	"item" { "defindex" "1" }  // Bottle            (melee)
+    "item" { "defindex" "609" }  // Scottish Handshake           (melee)
+	"item" { "defindex" "132" }  // Eyelander            (melee)
+    "item" { "defindex" "266" }  // Horseless Headless Horsemann's Headtaker            (melee)
+	"item" { "defindex" "482" }  // Nessie's Nine Iron           (melee)
+    "item" { "defindex" "172" }  // Scotsman's Skullcutter            (melee)
+    "item" { "defindex" "307" }  // Ullapool Caber          (melee)
+	"item" { "defindex" "327" }  // Claidheamh Mor            (melee)
+	"item" { "defindex" "404" }  // Persian Persuader            (melee)
+	
+	
+    // ── Heavy ──────────────────────────────────────────────────
+	// ── Primary ────────────────────────────────────────────────
+    "item" { "defindex" "15" }  // Minigun     (primary)
+    "item" { "defindex" "298" }  // Iron Curtain     (primary)
+    "item" { "defindex" "41" }  // Natascha    (primary)
+    "item" { "defindex" "312" }  // Brass Beast     (primary)
+    "item" { "defindex" "424" }  // Tomislav     (primary)
+    "item" { "defindex" "811" }  // Huo-Long Heater     (primary)
+	// ── Secondary ──────────────────────────────────────────────
+	"item" { "defindex" "11" }  // Shotgun (secondary)
+	"item" { "defindex" "425" }  // Family Business (secondary)
+	"item" { "defindex" "42" }  // Sandvich (secondary)
+	"item" { "defindex" "863" }  // Robo-Sandvich (secondary)
+	"item" { "defindex" "159" }  // Dalokohs Bar (secondary)
+	"item" { "defindex" "433" }  // Fishcake (secondary)
+	"item" { "defindex" "311" }  // Buffalo Steak Sandvich (secondary)
+	"item" { "defindex" "1190" }  // Second Banana (secondary)
+	// ── Melee ──────────────────────────────────────────────────
+	"item" { "defindex" "5" }  // Fists            (melee)
+    "item" { "defindex" "587" }  // Apoco-Fists           (melee)
+	"item" { "defindex" "43" }  // Killing Gloves of Boxing            (melee)
+    "item" { "defindex" "239" }  // Gloves of Running Urgently            (melee)
+	"item" { "defindex" "1100" }  // Bread Bite           (melee)
+    "item" { "defindex" "310" }  // Warrior's Spirit            (melee)
+	"item" { "defindex" "331" }  // Fists of Steel          (melee)
+    "item" { "defindex" "426" }  // Eviction Notice          (melee)
+	"item" { "defindex" "656" }  // Holiday Punch            (melee)
+	
+    // ── Engineer ───────────────────────────────────────────────
+	// ── Primary ────────────────────────────────────────────────
+    "item" { "defindex" "9" }  // Shotgun     (primary)
+    "item" { "defindex" "141" }  // Frontier Justice (primary)
+    "item" { "defindex" "527" }  // Widowmaker    (primary)
+    "item" { "defindex" "588" }  // Pomson 6000     (primary)
+    "item" { "defindex" "997" }  // Rescue Ranger     (primary)
+	// ── Secondary ──────────────────────────────────────────────
+	"item" { "defindex" "22" }  // Pistol (secondary)
+	"item" { "defindex" "140" }  // Wrangler (secondary)
+	"item" { "defindex" "30668" }  // Giger Counter (secondary)
+	"item" { "defindex" "528" }  // Short Circuit (secondary)
+	// ── Melee ──────────────────────────────────────────────────
+	"item" { "defindex" "7" }  // Wrench            (melee)
+    "item" { "defindex" "169" }  // Golden Wrench          (melee)
+	"item" { "defindex" "142" }  // Gunslinger            (melee)
+    "item" { "defindex" "155" }  // Southern Hospitality            (melee)
+	"item" { "defindex" "329" }  // Jag           (melee)
+    "item" { "defindex" "589" }  // Eureka Effect            (melee)
+	// ── PDA (Hidden) ───────────────────────────────────────────
+	"item" { "defindex" "25" }  // Construction PDA            (pda)
+	// ── PDA2 (Hidden) ──────────────────────────────────────────
+	"item" { "defindex" "26" }  // Destruction PDA            (pda2)
+	// ── Building (Hidden) ──────────────────────────────────────
+	"item" { "defindex" "28" }  // Toolbox            (building)
+	
+    // ── Medic ──────────────────────────────────────────────────
+	// ── Primary ────────────────────────────────────────────────
+    "item" { "defindex" "17" }  // Syringe Gun     (primary)
+    "item" { "defindex" "36" }  // Blutsauger     (primary)
+    "item" { "defindex" "305" }  // Crusader's Crossbow    (primary)
+    "item" { "defindex" "412" }  // Overdose     (primary)
+	// ── Secondary ──────────────────────────────────────────────
+	"item" { "defindex" "29" }  // Medigun (secondary)
+	"item" { "defindex" "35" }  // Kritzkrieg (secondary)
+	"item" { "defindex" "411" }  // Quick-Fix (secondary)
+	"item" { "defindex" "998" }  // Vaccinator (secondary)
+	// ── Melee ──────────────────────────────────────────────────
+	"item" { "defindex" "8" }  // Bonesaw            (melee)
+    "item" { "defindex" "37" }  // Ubersaw           (melee)
+	"item" { "defindex" "173" }  // Vita-Saw            (melee)
+    "item" { "defindex" "304" }  // Amputator            (melee)
+	"item" { "defindex" "413" }  // Solemn Vow           (melee)
+
+    // ── Sniper ──────────────────────────────────────────────────
+	// ── Primary ────────────────────────────────────────────────
+    "item" { "defindex" "14" }  // Sniper Rifle     (primary)
+    "item" { "defindex" "851" }  // AWPer Hand     (primary)
+    "item" { "defindex" "56" }  // Huntsman    (primary)
+    "item" { "defindex" "1092" }  // Fortified Compound     (primary)
+    "item" { "defindex" "230" }  // Sydney Sleeper     (primary)
+    "item" { "defindex" "402" }  // Bazaar Bargain     (primary)
+    "item" { "defindex" "526" }  // Machina   (primary)
+    "item" { "defindex" "30665" }  // Shooting Star     (primary)
+    "item" { "defindex" "752" }  // Hitman's Heatmaker     (primary)
+    "item" { "defindex" "1098" }  // Classic     (primary)
+	// ── Secondary ──────────────────────────────────────────────
+	"item" { "defindex" "16" }  // SMG (secondary)
+	"item" { "defindex" "751" }  // Cleaner's Carbine (secondary)
+	"item" { "defindex" "58" }  // Jarate (secondary)
+	"item" { "defindex" "1105" }  // Self-Aware Beauty Mark (secondary)
+	"item" { "defindex" "57" }  // Razorback (secondary)
+	"item" { "defindex" "231" }  // Darwin's Danger Shield (secondary)
+	"item" { "defindex" "642" }  // Cozy Camper (secondary)
+	// ── Melee ──────────────────────────────────────────────────
+	"item" { "defindex" "3" }  // Kukri            (melee)
+    "item" { "defindex" "171" }  // Tribalman's Shiv           (melee)
+	"item" { "defindex" "232" }  // Bushwacka            (melee)
+    "item" { "defindex" "401" }  // Shahanshah            (melee)
+
+    // ── Spy ────────────────────────────────────────────────────
+	// ── Secondary ──────────────────────────────────────────────
+	"item" { "defindex" "24" }  // Revolver (secondary)
+	"item" { "defindex" "161" }  // Big Kill (secondary)
+	"item" { "defindex" "61" }  // Ambassador (secondary)
+	"item" { "defindex" "224" }  // L'Etranger (secondary)
+	"item" { "defindex" "460" }  // Enforcer (secondary)
+	"item" { "defindex" "525" }  // Diamondback (secondary)
+	// ── Melee ──────────────────────────────────────────────────
+	"item" { "defindex" "4" }  // Knife            (melee)
+    "item" { "defindex" "638" }  // Sharp Dresser          (melee)
+	"item" { "defindex" "727" }  // Black Rose            (melee)
+    "item" { "defindex" "225" }  // Your Eternal Reward            (melee)
+    "item" { "defindex" "574" }  // Wanga Prick           (melee)
+    "item" { "defindex" "356" }  // Conniver's Kunai            (melee)
+	"item" { "defindex" "461" }  // Big Earner           (melee)
+    "item" { "defindex" "649" }  // Spy-Cicle           (melee)
+	// ── PDA (Hidden) ──────────────────────────────────────────
+	"item" { "defindex" "27" }  // Disguise Kit            (pda)
+	// ── PDA2 ──────────────────────────────────────────────────
+	"item" { "defindex" "30" }  // Invis Watch            (pda2)
+	"item" { "defindex" "297" }  // Enthusiast's Timepiece            (pda2)
+	"item" { "defindex" "947" }  // Quackenbirdt            (pda2)
+	"item" { "defindex" "60" }  // Cloak and Dagger            (pda2)
+	"item" { "defindex" "59" }  // Dead Ringer            (pda2)
+	// ── Building ──────────────────────────────────────────────────
+	"item" { "defindex" "735" }  // Sapper            (building)
+	"item" { "defindex" "933" }  // Ap-Sap            (building)
+	"item" { "defindex" "1102" }  // Snack Attack            (building)
+	"item" { "defindex" "810" }  // Red-Tape Recorder            (building)
+	
+    // ── Multi-Class ──────────────────────────────────────────────
+	// ── Secondary ───────────────────────────────────────────────
+	"item" { "defindex" "294" }  // Lugermorph (secondary)
+	"item" { "defindex" "30666" }  // C.A.P.P.E.R (secondary)
+	"item" { "defindex" "415" }  // Reserve Shooter (secondary)
+	"item" { "defindex" "1101" }  // B.A.S.E. Jumper (secondary)
+	// ── Melee ──────────────────────────────────────────────────
+	"item" { "defindex" "154" }  // Pain Train           (melee)
+    "item" { "defindex" "357" }  // Half-Zatoichi          (melee)
+	// ── Primary/Secondary ────────────────────
+    "item" { "defindex" "1153" }  // Panic Attack (secondary heavy/soldier/pyro, primary engineer)
+	"item" { "defindex" "133" }  // Gunboats (secondary soldier, primary demoman; TF2V exclusive)
+	
+    // ── All-Class ──────────────────────────────────────────────
+	// ── Melee ───────────────────────────────────────────────
+	"item" { "defindex" "423" }  // Saxxy           (melee)
+    "item" { "defindex" "264" }  // Frying Pan          (melee)
+	"item" { "defindex" "474" }  // Conscientous Objector          (melee)
+    "item" { "defindex" "880" }  // Freedom Staff          (melee)
+	"item" { "defindex" "939" }  // Bat Outta Hell           (melee)
+    "item" { "defindex" "954" }  // Memory Maker          (melee)
+	"item" { "defindex" "1013" }  // Ham Shank          (melee)
+    "item" { "defindex" "1071" }  // Golden Frying Pan          (melee)
+	"item" { "defindex" "1123" }  // Necro Smasher           (melee)
+    "item" { "defindex" "1127" }  // Crossing Guard          (melee)
+	"item" { "defindex" "30758" }  // Prinny Machete          (melee)
+	// ── Action ───────────────────────────────────────────────
+	"item" { "defindex" "1163" }  // Powerup Canteen (MvM)          (action)
+	"item" { "defindex" "1152" }  // Grappling Hook          (action)
+	"item" { "defindex" "1132" }  // Spellbook Magazine         (action)
+}

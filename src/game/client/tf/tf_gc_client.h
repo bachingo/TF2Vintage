@@ -249,6 +249,9 @@ public:
 
 	void ServerRequestEquipment();
 	void LocalInventoryChanged();
+	// Forces a fresh live webapi inventory fetch on the next frame, then saves
+	// the result to the offline cache. Works even when offline mode is active.
+	void RefreshInventoryFromGC();
 
 protected:
 
@@ -265,8 +268,12 @@ private:
 	//
 	// GC data
 	//
-	bool m_bRegisteredSharedObjects = false;
-	bool m_bInittedGC               = false;
+	bool m_bRegisteredSharedObjects   = false;
+	bool m_bInittedGC                 = false;
+	// Set when a live webapi inventory fetch completes during an autoupdate pass.
+	// Prevents repeated live fetches within the same session when tf_offline_inventory_autoupdate is on.
+	// Cleared by inventory_refresh command to force a fresh fetch on demand.
+	bool m_bDidLiveFetchThisSession   = false;
 	GCSDK::CGCClientSharedObjectCache *m_pSOCache = nullptr;
 	CUtlVector< ISharedObjectListener* > m_vecDelayedLocalPlayerSOListenersToAdd;
 

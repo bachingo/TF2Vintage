@@ -49,6 +49,7 @@
 using namespace GCSDK;
 
 #define LOCAL_LOADOUT_FILE		"cfg/local_loadout.txt"
+#define OFFLINE_ITEM_CACHE_FILE	"cfg/offline_item_cache.txt"
 
 #ifdef CLIENT_DLL
 //-----------------------------------------------------------------------------
@@ -217,6 +218,10 @@ CTFInventoryManager::CTFInventoryManager( void )
 CTFInventoryManager::~CTFInventoryManager( void )
 {
 	m_pBaseLoadoutItems.PurgeAndDeleteElements();
+	m_ModItems.PurgeAndDeleteElements();
+	m_ModItemsBacking.PurgeAndDeleteElements();
+	m_LoanerItems.PurgeAndDeleteElements();
+	m_LoanerItemsBacking.PurgeAndDeleteElements();
 }
 
 //-----------------------------------------------------------------------------
@@ -226,7 +231,31 @@ void CTFInventoryManager::PostInit( void )
 {
 	BaseClass::PostInit();
 	GenerateBaseItems();
+	LoadModItems();
+	LoadLoanerItems();
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: Called after CInventoryManager::PostInitGC() runs UpdateLocalInventory()
+//          → RequestInventory() → AddSOCacheListener(). At this point the local
+//          inventory is registered as a listener. If we have a disk cache from a
+//          previous live session, inject it now so the loadout panel is immediately
+//          usable without waiting for the webapi round-trip.
+//-----------------------------------------------------------------------------
+#ifdef CLIENT_DLL
+void CTFInventoryManager::PostInitGC()
+{
+	// Base calls UpdateLocalInventory() → RequestInventory() → AddSOCacheListener().
+	// The inventory is now registered and ready to receive items.
+	BaseClass::PostInitGC();
+
+	CTFPlayerInventory *pLocalInv = GetLocalTFInventory();
+	if ( pLocalInv && !pLocalInv->RetrievedInventoryFromSteam() )
+	{
+		pLocalInv->LoadOfflineItemCache();
+	}
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Generate & store the base item details for each class & loadout slot
@@ -251,6 +280,157 @@ void CTFInventoryManager::GenerateBaseItems( void )
 		m_pBaseLoadoutItems.AddToTail( pItem );
 	}
 }
+
+//-----------------------------------------------------------------------------
+// Base item ID for synthetic mod items. These IDs are above any realistic GC-
+// issued range and are deterministic (defindex-based) so local_loadout.txt
+// slot assignments that reference them remain stable across sessions.
+//-----------------------------------------------------------------------------
+static const itemid_t k_ModItemIDBase    = 0x0000FF0000000000ULL;
+static const itemid_t k_LoanerItemIDBase = 0x0000FE0000000000ULL;
+
+//-----------------------------------------------------------------------------
+// Purpose: Helper — allocate a CEconItem and matching CEconItemView for a flat
+//          synthetic item. Returns the view (owned by the caller) or nullptr on
+//          failure. The backing CEconItem* is stored in vecOwned.
+//-----------------------------------------------------------------------------
+static CEconItemView *CreateSyntheticItem(
+    item_definition_index_t nDef,
+    int nQuality, int nLevel,
+    eEconItemOrigin eOrigin,
+    itemid_t ulID,
+    CUtlVector<CEconItem *> &vecOwned )
+{
+    if ( !GetItemSchema()->GetItemDefinition( nDef ) )
+    {
+        DevWarning( "[SyntheticItems] def_index %d not in schema, skipping\n", (int)nDef );
+        return nullptr;
+    }
+
+    CEconItemView *pView = new CEconItemView;
+    pView->Init( nDef, nQuality, nLevel, 0 /*no account ID*/ );
+    if ( !pView->IsValid() )
+    {
+        delete pView;
+        DevWarning( "[SyntheticItems] Init failed for def_index %d\n", (int)nDef );
+        return nullptr;
+    }
+    pView->SetItemID( ulID );
+
+    // Allocate the backing CEconItem so GetSOCData() works without a live SOCache.
+    CEconItem *pEconItem = new CEconItem();
+    pEconItem->SetItemID( ulID );
+    pEconItem->SetDefinitionIndex( nDef );
+    pEconItem->SetQuality( nQuality );
+    pEconItem->SetItemLevel( static_cast<uint32>( nLevel ) );
+    pEconItem->SetOrigin( eOrigin );
+    pEconItem->SetAccountID( 0 );
+    vecOwned.AddToTail( pEconItem );
+
+    pView->SetNonSOEconItem( pEconItem );
+    return pView;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Loads scripts/items/mod_items.txt and populates m_ModItems.
+//          These are custom items with def_indices only in TF2V's items_game.txt.
+//          Format:
+//            "mod_items" { "item" { "defindex" "40000"  "quality" "6"  "level" "1" } }
+//-----------------------------------------------------------------------------
+void CTFInventoryManager::LoadModItems()
+{
+    // Always purge both together — views hold raw pointers into backing.
+    m_ModItems.PurgeAndDeleteElements();
+    m_ModItemsBacking.PurgeAndDeleteElements();
+
+    KeyValues *pKV = new KeyValues( "mod_items" );
+    if ( !pKV->LoadFromFile( g_pFullFileSystem,
+                             "scripts/items/mod_items.txt", "GAME" ) )
+    {
+        // File absent or malformed — not an error, mod items are optional.
+        pKV->deleteThis();
+        return;
+    }
+
+    // Each synthetic mod item gets a deterministic ID: base + defindex.
+    // IDs are stable across sessions so local_loadout.txt remains valid.
+
+    int nLoaded = 0;
+    for ( KeyValues *pItem = pKV->GetFirstTrueSubKey();
+          pItem; pItem = pItem->GetNextTrueSubKey() )
+    {
+        item_definition_index_t nDef =
+            static_cast<item_definition_index_t>( pItem->GetInt( "defindex", -1 ) );
+        if ( nDef == (item_definition_index_t)-1 )
+            continue;
+
+        int nQuality = pItem->GetInt( "quality", AE_UNIQUE );
+        int nLevel   = pItem->GetInt( "level",   1 );
+        itemid_t ulID = k_ModItemIDBase + static_cast<itemid_t>( nDef );
+
+        CEconItemView *pView = CreateSyntheticItem( nDef, nQuality, nLevel,
+            kEconItemOrigin_Invalid, ulID, m_ModItemsBacking );
+        if ( pView )
+        {
+            m_ModItems.AddToTail( pView );
+            ++nLoaded;
+        }
+    }
+
+    pKV->deleteThis();
+    DevMsg( "[ModItems] Loaded %d mod items\n", nLoaded );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Loads scripts/items/loaner_items.txt and populates m_LoanerItems.
+//          These are real TF2 def_indices issued at normal quality, level 1,
+//          and origin kEconItemOrigin_QuestLoanerItem (value 25) so players and
+//          tools can clearly identify them as mod-provided stand-ins.
+//          Format:
+//            "loaner_items" { "item" { "defindex" "133" } }  // Gunboats = 133
+//-----------------------------------------------------------------------------
+void CTFInventoryManager::LoadLoanerItems()
+{
+    // Always purge both together — views hold raw pointers into backing.
+    m_LoanerItems.PurgeAndDeleteElements();
+    m_LoanerItemsBacking.PurgeAndDeleteElements();
+
+    KeyValues *pKV = new KeyValues( "loaner_items" );
+    if ( !pKV->LoadFromFile( g_pFullFileSystem,
+                             "scripts/items/loaner_items.txt", "GAME" ) )
+    {
+        // File absent or malformed — not an error, loaner items are optional.
+        pKV->deleteThis();
+        return;
+    }
+
+
+    int nLoaded = 0;
+    for ( KeyValues *pItem = pKV->GetFirstTrueSubKey();
+          pItem; pItem = pItem->GetNextTrueSubKey() )
+    {
+        item_definition_index_t nDef =
+            static_cast<item_definition_index_t>( pItem->GetInt( "defindex", -1 ) );
+        if ( nDef == (item_definition_index_t)-1 )
+            continue;
+
+        // Loaner items are always: normal quality, level 1, origin QuestLoanerItem.
+        // Quality and level are not configurable — the whole point is uniformity.
+        itemid_t ulID = k_LoanerItemIDBase + static_cast<itemid_t>( nDef );
+
+        CEconItemView *pView = CreateSyntheticItem( nDef, AE_NORMAL, 1,
+            kEconItemOrigin_QuestLoanerItem, ulID, m_LoanerItemsBacking );
+        if ( pView )
+        {
+            m_LoanerItems.AddToTail( pView );
+            ++nLoaded;
+        }
+    }
+
+    pKV->deleteThis();
+    DevMsg( "[LoanerItems] Loaded %d loaner items\n", nLoaded );
+}
+
 
 #ifdef CLIENT_DLL
 //-----------------------------------------------------------------------------
@@ -872,6 +1052,9 @@ CTFPlayerInventory::~CTFPlayerInventory()
 			m_CachedBaseTextureLowRes[ iTeam ][ i ]->Release();
 		m_CachedBaseTextureLowRes[ iTeam ].RemoveAll();
 	}
+	m_vecOfflineItems.PurgeAndDeleteElements();
+	m_vecModItems.PurgeAndDeleteElements();
+	m_vecLoanerItems.PurgeAndDeleteElements();
 #endif
 }
 
@@ -1489,6 +1672,153 @@ CEconItemView *CTFPlayerInventory::GetCacheServerItemInLoadout( int iClass, int 
 	}
 
 	return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+
+//-----------------------------------------------------------------------------
+// Purpose: Builds a base64-encoded CMsgSOCacheSubscribed blob from the offline
+//          item cache. The server passes this directly to AddLocalSOCache(),
+//          skipping the webapi validation round-trip entirely.
+//          Only valid when IsOfflineCacheActive() is true.
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// Purpose: Merges mod and loaner items from CTFInventoryManager into this
+//          player's inventory. Called at the end of both LoadOfflineItemCache()
+//          and SOCacheSubscribed() after the base inventory is populated.
+//          Safe to call multiple times — skips items already present by ID.
+//          Mod items get a unique ID per defindex (k_ModItemIDBase + defindex).
+//          Loaner items get a unique ID per defindex (k_LoanerItemIDBase + defindex).
+//          Both types use SetNonSOEconItem so GetSOCData() works without a SOCache.
+//-----------------------------------------------------------------------------
+#ifdef CLIENT_DLL
+void CTFPlayerInventory::InjectModAndLoanerItems()
+{
+    // Clear any previously injected backing items before re-injecting.
+    // This handles schema reloads and re-subscriptions cleanly.
+    m_vecModItems.PurgeAndDeleteElements();
+    m_vecLoanerItems.PurgeAndDeleteElements();
+
+    CTFInventoryManager *pMgr = TFInventoryManager();
+
+    // ── Mod items ──
+    for ( int i = 0; i < pMgr->GetModItemCount(); ++i )
+    {
+        CEconItemView *pSrc = pMgr->GetModItem( i );
+        if ( !pSrc ) continue;
+
+        const itemid_t ulID = pSrc->GetItemID();
+
+        // Already in inventory from a previous inject — skip.
+        if ( GetInventoryItemByItemID( ulID ) )
+            continue;
+
+        // Allocate a fresh backing CEconItem owned by this inventory instance.
+        CEconItem *pEconItem = new CEconItem();
+        pEconItem->SetItemID( ulID );
+        pEconItem->SetDefinitionIndex( pSrc->GetItemDefIndex() );
+        pEconItem->SetQuality( pSrc->GetItemQuality() );
+        pEconItem->SetItemLevel( 1 );
+        pEconItem->SetOrigin( kEconItemOrigin_Invalid );
+        pEconItem->SetAccountID( 0 );
+        m_vecModItems.AddToTail( pEconItem );
+
+        if ( AddEconItem( pEconItem, false, false, false ) )
+        {
+            CEconItemView *pView = GetInventoryItemByItemID( ulID );
+            if ( pView )
+                pView->SetNonSOEconItem( pEconItem );
+        }
+    }
+
+    // ── Loaner items ──
+    // Only inject loaner items the player does NOT already own (i.e. no GC item
+    // with the same def_index and a real item ID below k_LoanerItemIDBase).
+    // This respects players who legitimately own the item.
+    for ( int i = 0; i < pMgr->GetLoanerItemCount(); ++i )
+    {
+        CEconItemView *pSrc = pMgr->GetLoanerItem( i );
+        if ( !pSrc ) continue;
+
+        const item_definition_index_t nDef = pSrc->GetItemDefIndex();
+        const itemid_t ulLoanerID = pSrc->GetItemID();
+
+        // If the player already has a real (non-loaner) item of this defindex, skip.
+        bool bPlayerOwnsReal = false;
+        for ( int j = 0; j < GetItemCount(); ++j )
+        {
+            CEconItemView *pOwned = GetItem( j );
+            if ( pOwned && pOwned->GetItemDefIndex() == nDef
+                 && pOwned->GetItemID() < k_LoanerItemIDBase )
+            {
+                bPlayerOwnsReal = true;
+                break;
+            }
+        }
+        if ( bPlayerOwnsReal )
+            continue;
+
+        if ( GetInventoryItemByItemID( ulLoanerID ) )
+            continue;
+
+        CEconItem *pEconItem = new CEconItem();
+        pEconItem->SetItemID( ulLoanerID );
+        pEconItem->SetDefinitionIndex( nDef );
+        pEconItem->SetQuality( AE_NORMAL );
+        pEconItem->SetItemLevel( 1 );
+        pEconItem->SetOrigin( kEconItemOrigin_QuestLoanerItem );
+        pEconItem->SetAccountID( 0 );
+        m_vecLoanerItems.AddToTail( pEconItem );
+
+        if ( AddEconItem( pEconItem, false, false, false ) )
+        {
+            CEconItemView *pView = GetInventoryItemByItemID( ulLoanerID );
+            if ( pView )
+                pView->SetNonSOEconItem( pEconItem );
+        }
+    }
+}
+#endif // CLIENT_DLL
+
+
+bool CTFPlayerInventory::BuildOfflineSOCacheBlob( CUtlMemory<char> &bufOut )
+{
+	if ( m_vecOfflineItems.IsEmpty() )
+		return false;
+
+	// Build a CMsgSOCacheSubscribed exactly as TryLoadOfflineCacheViaSOCache would,
+	// but from the already-deserialized m_vecOfflineItems rather than from disk.
+	CMsgSOCacheSubscribed msgSubscribe;
+	msgSubscribe.set_owner( m_OwnerID.ConvertToUint64() );
+	msgSubscribe.set_version( 1 );
+
+	CMsgSOCacheSubscribed_SubscribedType *pSubType = msgSubscribe.add_objects();
+	pSubType->set_type_id( CEconItem::k_nTypeID );
+
+	FOR_EACH_VEC( m_vecOfflineItems, i )
+	{
+		CEconItem *pEconItem = m_vecOfflineItems[i];
+		if ( !pEconItem )
+			continue;
+
+		CSOEconItem msgItem;
+		pEconItem->SerializeToProtoBufItem( msgItem );
+
+		std::string sBytes;
+		if ( !msgItem.SerializeToString( &sBytes ) )
+			continue;
+
+		pSubType->add_object_data( sBytes );
+	}
+
+	// Serialize the subscribe message
+	std::string sMsgBytes;
+	if ( !msgSubscribe.SerializeToString( &sMsgBytes ) )
+		return false;
+
+	// Base64-encode it — the server calls Base64Decode then AddLocalSOCache
+	return Base64EncodeIntoUTLMemory(
+		reinterpret_cast<const uint8 *>( sMsgBytes.data() ),
+		static_cast<uint32>( sMsgBytes.size() ),
+		bufOut );
+}
 }
 #endif // CLIENT_DLL
 
@@ -1529,10 +1859,18 @@ bool CTFPlayerInventory::CanPurchaseItems( int iItemCount ) const
 	// We're a free trial account, so when we purchase these items, our inventory
 	// will actually expand. We check to make sure that we have room for these
 	// items against what will be our new maximum backpack size, not our current
-	// backpack limit.
+	// backpack limit. Include the synthetic item expansion in the post-purchase max.
+	const int nSyntheticItems = TFInventoryManager()->GetModItemCount()
+	                          + TFInventoryManager()->GetLoanerItemCount();
+	const int kPageSize = 50;
+	const int nExtraSlots = nSyntheticItems > 0
+	    ? ( ( nSyntheticItems + kPageSize - 1 ) / kPageSize ) * kPageSize
+	    : 0;
+
 	int iNewItemCount			   = GetItemCount() + iItemCount,
 		iAfterPurchaseMaxItemCount = DEFAULT_NUM_BACKPACK_SLOTS
-								   + (pGameAccountClient ? pGameAccountClient->Obj().additional_backpack_slots() : 0);
+								   + (pGameAccountClient ? pGameAccountClient->Obj().additional_backpack_slots() : 0)
+								   + nExtraSlots;
 
 	return iNewItemCount <= iAfterPurchaseMaxItemCount;
 }
@@ -1542,6 +1880,8 @@ bool CTFPlayerInventory::CanPurchaseItems( int iItemCount ) const
 //-----------------------------------------------------------------------------
 int	CTFPlayerInventory::GetMaxItemCount( void ) const
 {
+	// Start with the account-based limit (paid base or free-trial base,
+	// plus any GC-granted backpack expansion slots).
 	int iMaxItems = DEFAULT_NUM_BACKPACK_SLOTS;
 	CEconGameAccountClient *pGameAccountClient = GetSOCacheGameAccountClient( m_pSOCache );
 	if ( pGameAccountClient )
@@ -1552,6 +1892,21 @@ int	CTFPlayerInventory::GetMaxItemCount( void ) const
 		}
 		iMaxItems += pGameAccountClient->Obj().additional_backpack_slots();
 	}
+
+	// Always add enough extra slots to hold every synthetic (loaner + mod) item
+	// the inventory manager injects, rounded up to the UI page size (50 slots)
+	// so the backpack panel always shows complete, aligned pages.
+	// This is additive on top of the account limit — a paid account with 300
+	// base slots gets 300+extra, a free account with 50 base slots gets 50+extra.
+	const int nSyntheticItems = TFInventoryManager()->GetModItemCount()
+	                          + TFInventoryManager()->GetLoanerItemCount();
+	if ( nSyntheticItems > 0 )
+	{
+		const int kPageSize = 50;
+		const int nExtraSlots = ( ( nSyntheticItems + kPageSize - 1 ) / kPageSize ) * kPageSize;
+		iMaxItems += nExtraSlots;
+	}
+
 	return MIN( iMaxItems, MAX_NUM_BACKPACK_SLOTS );
 }
 
@@ -1783,13 +2138,34 @@ void CTFPlayerInventory::PostSOUpdate( const CSteamID & steamIDOwner, GCSDK::ESO
 //-----------------------------------------------------------------------------
 void CTFPlayerInventory::SOCacheSubscribed( const CSteamID & steamIDOwner, GCSDK::ESOCacheEvent eEvent )
 {
+#ifdef CLIENT_DLL
+	// Free offline-allocated items before the base class purges m_aInventoryItems.
+	// If we don't do this first, CEconItemView::m_pNonSOEconItem pointers inside
+	// the sort vector become dangling when the base calls m_aInventoryItems.Purge().
+	m_vecOfflineItems.PurgeAndDeleteElements();
+#endif
+
 	BaseClass::SOCacheSubscribed( steamIDOwner, eEvent );
+
+#ifdef CLIENT_DLL
+	// Snapshot to disk only when we got real live data from the webapi.
+	// BIsLocal() is true on caches we injected ourselves — don't re-snapshot those.
+	if ( m_bGotItemsFromSteam && m_pSOCache && !m_pSOCache->BIsLocal() )
+	{
+		SaveOfflineItemCache();
+	}
+#endif
 
 	UpdateRealTFLoadoutItems();
 	LoadLocalLoadout();
 
 	VerifyChangedLoadoutsAreValid();
 	UpdateCachedServerLoadoutItems();
+
+#ifdef CLIENT_DLL
+	// Inject mod and loaner items on top of whatever inventory just arrived.
+	InjectModAndLoanerItems();
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -2120,4 +2496,195 @@ bool CTFPlayerInventory::EquipLocalPreset(equipped_class_t unClass, equipped_pre
 
 	return true;
 }
-#endif
+
+//-----------------------------------------------------------------------------
+// Purpose: Serializes the live inventory to disk so it can be restored when
+//          the webapi is unreachable. Called whenever fresh GC data arrives.
+//-----------------------------------------------------------------------------
+void CTFPlayerInventory::SaveOfflineItemCache()
+{
+	if ( InventoryManager()->GetLocalInventory() != this )
+		return;
+	if ( !g_pFullFileSystem )
+		return;
+
+	KeyValues *pRootKV = new KeyValues( "offline_item_cache" );
+	int nSaved = 0;
+
+	for ( int i = 0; i < GetItemCount(); ++i )
+	{
+		CEconItemView *pView = GetItem( i );
+		if ( !pView )
+			continue;
+
+		CEconItem *pEconItem = pView->GetSOCData();
+		if ( !pEconItem )
+			continue;
+
+		// Serialize full item state to proto bytes via the existing path.
+		// Captures: id, def_index, quality, level, inventory token, account_id,
+		// flags, origin, style, all dynamic attributes, equipped_state,
+		// custom_name, custom_desc, interior_item.
+		CSOEconItem msgItem;
+		pEconItem->SerializeToProtoBufItem( msgItem );
+
+		std::string sBytes;
+		if ( !msgItem.SerializeToString( &sBytes ) )
+			continue;
+
+		// Base64EncodeIntoUTLMemory signature (GCSDK namespace, in scope via using):
+		//   bool Base64EncodeIntoUTLMemory( const uint8*, uint32, CUtlMemory<char>& )
+		CUtlMemory<char> bufEncoded;
+		if ( !Base64EncodeIntoUTLMemory(
+				reinterpret_cast<const uint8 *>( sBytes.data() ),
+				static_cast<uint32>( sBytes.size() ),
+				bufEncoded ) )
+			continue;
+
+		char szKey[32];
+		V_snprintf( szKey, sizeof(szKey), "%llu", pEconItem->GetItemID() );
+		pRootKV->SetString( szKey, bufEncoded.Base() );
+		++nSaved;
+	}
+
+	if ( pRootKV->SaveToFile( g_pFullFileSystem, OFFLINE_ITEM_CACHE_FILE, "MOD" ) )
+		DevMsg( "[OfflineInventory] Saved %d items to %s\n", nSaved, OFFLINE_ITEM_CACHE_FILE );
+	else
+		Warning( "[OfflineInventory] Failed to write %s\n", OFFLINE_ITEM_CACHE_FILE );
+
+	pRootKV->deleteThis();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Loads the disk cache and injects items directly into m_aInventoryItems,
+//          bypassing the SOCache/GC path entirely. Sets m_bGotItemsFromSteam so
+//          all RetrievedInventoryFromSteam() gates pass. Called from PostInitGC
+//          after RequestInventory() has registered the inventory as a listener.
+//-----------------------------------------------------------------------------
+bool CTFPlayerInventory::LoadOfflineItemCache()
+{
+	if ( InventoryManager()->GetLocalInventory() != this )
+		return false;
+	if ( !g_pFullFileSystem )
+		return false;
+	if ( !g_pFullFileSystem->FileExists( OFFLINE_ITEM_CACHE_FILE, "MOD" ) )
+		return false;
+
+	KeyValues *pRootKV = new KeyValues( "offline_item_cache" );
+	if ( !pRootKV->LoadFromFile( g_pFullFileSystem, OFFLINE_ITEM_CACHE_FILE, "MOD" ) )
+	{
+		pRootKV->deleteThis();
+		Warning( "[OfflineInventory] Failed to parse %s\n", OFFLINE_ITEM_CACHE_FILE );
+		return false;
+	}
+
+	// Free any CEconItem* objects from a previous offline load before purging
+	// m_aInventoryItems. The sort vector holds CEconItemView values; each view's
+	// m_pNonSOEconItem points back into m_vecOfflineItems. Purge order matters:
+	// clear the vector first so no live pointers remain before we delete the items.
+	m_vecOfflineItems.PurgeAndDeleteElements();
+	m_aInventoryItems.Purge();
+	DirtyItemHandles();
+	// m_pSOCache intentionally left NULL. No live GC session means no incremental
+	// SOCreated/SOUpdated/SODestroyed events will arrive, so the null guards in
+	// those handlers are never hit. GetSOCDataForItem() returning NULL is harmless
+	// because the only callers that matter (UpdateInventoryPosition, UpdateInventory-
+	// EquippedState) are GC-write paths we don't invoke offline. GetSOCData() on
+	// our views routes through m_pNonSOEconItem instead (set below), so item data
+	// is fully accessible without m_pSOCache.
+
+	int nLoaded = 0;
+	for ( KeyValues *pKV = pRootKV->GetFirstValue(); pKV; pKV = pKV->GetNextValue() )
+	{
+		const char *pszEncoded = pKV->GetString();
+		if ( !pszEncoded || !pszEncoded[0] )
+			continue;
+
+		const uint32 cchEncoded = static_cast<uint32>( V_strlen( pszEncoded ) );
+
+		// Worst-case decoded size: base64 encodes 3 bytes as 4 chars.
+		const uint32 cubMaxDecoded = ( cchEncoded * 3 / 4 ) + 4;
+		CUtlMemory<uint8> bufDecoded;
+		bufDecoded.EnsureCapacity( static_cast<int>( cubMaxDecoded ) );
+
+		// Base64Decode signature (GCSDK namespace, in scope via using):
+		//   bool Base64Decode( const char*, uint32, uint8*, uint32*, bool )
+		uint32 cubActual = cubMaxDecoded;
+		if ( !Base64Decode( pszEncoded, cchEncoded,
+		                    bufDecoded.Base(), &cubActual,
+		                    true /*bIgnoreInvalidCharacters*/ ) )
+		{
+			Warning( "[OfflineInventory] Base64 decode failed for item '%s'\n",
+			         pKV->GetName() );
+			continue;
+		}
+
+		// Parse the CSOEconItem protobuf message from raw bytes.
+		CSOEconItem msgItem;
+		if ( !msgItem.ParseFromArray( bufDecoded.Base(), static_cast<int>( cubActual ) ) )
+		{
+			Warning( "[OfflineInventory] Proto parse failed for item '%s'\n",
+			         pKV->GetName() );
+			continue;
+		}
+
+		// Allocate a CEconItem and populate it via the same deserialize path the
+		// SOCache uses internally during a real GC subscribe message.
+		CEconItem *pEconItem = new CEconItem();
+		pEconItem->DeserializeFromProtoBufItem( msgItem );
+
+		// Track so we can free on live-data-arrives or shutdown.
+		m_vecOfflineItems.AddToTail( pEconItem );
+
+		// AddEconItem calls FilloutItemFromEconItem (Init + SetItemID + SetInventoryPosition)
+		// then ItemHasBeenUpdated → UpdateEquipStateForClass, which populates m_LoadoutItems
+		// from the item's equipped_state. Same flags as the live SOCacheSubscribed bulk load.
+		if ( AddEconItem( pEconItem, /*bUpdateAckFile=*/true,
+		                             /*bWriteAckFile=*/false,
+		                             /*bCheckForNewItems=*/false ) )
+		{
+			// Fix up the CEconItemView so GetSOCData() returns our item directly,
+			// bypassing the m_pSOCache->FindSharedObject() path which needs a live cache.
+			// SetNonSOEconItem stores the pointer in CEconItemView::m_pNonSOEconItem;
+			// GetSOCData() checks that field first before touching m_pSOCache.
+			CEconItemView *pView = GetInventoryItemByItemID( pEconItem->GetItemID() );
+			if ( pView )
+			{
+				pView->SetNonSOEconItem( pEconItem );
+			}
+		}
+		++nLoaded;
+	}
+
+	pRootKV->deleteThis();
+
+	if ( nLoaded == 0 )
+	{
+		m_vecOfflineItems.PurgeAndDeleteElements();
+		Warning( "[OfflineInventory] No valid items found in %s\n", OFFLINE_ITEM_CACHE_FILE );
+		return false;
+	}
+
+	// Mirror the post-population steps from the live CPlayerInventory::SOCacheSubscribed path.
+	m_bGotItemsFromSteam = true;           // satisfies all RetrievedInventoryFromSteam() gates
+	ValidateInventoryPositions();
+	CInventoryManager::SendItemSystemConnectedEvent();  // fires "econ_inventory_connected"
+	ResortInventory();
+	InventoryManager()->CleanAckFile();
+	InventoryManager()->SaveAckFile();
+
+	// Run the TF-specific steps that CTFPlayerInventory::SOCacheSubscribed calls after
+	// the base. We call them directly here since SOCacheSubscribed won't fire for us
+	// (we bypassed the SOCache listener path entirely).
+	UpdateRealTFLoadoutItems();
+	LoadLocalLoadout();           // applies cfg/local_loadout.txt slot assignments
+	VerifyChangedLoadoutsAreValid();
+	UpdateCachedServerLoadoutItems();
+
+	// Inject mod and loaner items on top of the loaded inventory.
+	InjectModAndLoanerItems();
+
+	DevMsg( "[OfflineInventory] Loaded %d items from %s\n", nLoaded, OFFLINE_ITEM_CACHE_FILE );
+	return true;
+}
+#endif // CLIENT_DLL
