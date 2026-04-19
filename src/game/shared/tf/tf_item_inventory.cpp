@@ -1688,14 +1688,13 @@ void CTFPlayerInventory::InjectModAndLoanerItems()
 {
     // ── Step 1: Remove previously injected synthetic views from m_aInventoryItems ──
     // This must happen BEFORE PurgeAndDeleteElements on the backing vectors.
-    // If we purge the CEconItem* objects first, the views in m_aInventoryItems
-    // have dangling m_pNonSOEconItem pointers. On re-injection the
-    // GetInventoryItemByItemID check would then find the stale (dangling) view
-    // and skip re-injection, leaving a broken item in the inventory.
-    // Both synthetic ranges sit well above any real GC-issued item ID:
+    // If we free the CEconItem* objects first, the views in m_aInventoryItems
+    // have dangling m_pNonSOEconItem pointers. The GetInventoryItemByItemID
+    // skip-check would then find the stale view and prevent re-injection,
+    // leaving broken items in the inventory.
+    // All synthetic IDs sit above any real GC-issued item ID:
     //   k_LoanerItemIDBase = 0x0000FE0000000000
     //   k_ModItemIDBase    = 0x0000FF0000000000
-    // Any item ID >= k_LoanerItemIDBase is synthetic and safe to remove.
     for ( int i = m_aInventoryItems.Count() - 1; i >= 0; --i )
     {
         if ( m_aInventoryItems[i].GetItemID() >= k_LoanerItemIDBase )
@@ -1705,19 +1704,11 @@ void CTFPlayerInventory::InjectModAndLoanerItems()
     }
     DirtyItemHandles();
 
-    // ── Step 2: Free the old backing CEconItem objects ──
+    // ── Step 2: Free old backing CEconItem objects ──
     m_vecModItems.PurgeAndDeleteElements();
     m_vecLoanerItems.PurgeAndDeleteElements();
 
     CTFInventoryManager *pMgr = TFInventoryManager();
-
-    // Synthetic items are assigned backpack positions starting just above the
-    // normal maximum, in the extra page range that GetMaxItemCount() already
-    // reserves for them. Position must be non-zero and pass IsUnacknowledged()
-    // so the items land in the backpack rather than the pickup queue.
-    // MakeBackendInventoryPosition wraps a logical 1-based slot into the
-    // backend token format (new-format acknowledged position).
-    int nSyntheticSlot = GetMaxItemCount() - pMgr->GetModItemCount() - pMgr->GetLoanerItemCount() + 1;
 
     // ── Mod items ──
     for ( int i = 0; i < pMgr->GetModItemCount(); ++i )
@@ -1727,7 +1718,6 @@ void CTFPlayerInventory::InjectModAndLoanerItems()
 
         const itemid_t ulID = pSrc->GetItemID();
 
-        // Allocate a fresh backing CEconItem owned by this inventory instance.
         CEconItem *pEconItem = new CEconItem();
         pEconItem->SetItemID( ulID );
         pEconItem->SetDefinitionIndex( pSrc->GetItemDefIndex() );
@@ -1735,23 +1725,25 @@ void CTFPlayerInventory::InjectModAndLoanerItems()
         pEconItem->SetItemLevel( 1 );
         pEconItem->SetOrigin( kEconItemOrigin_Invalid );
         pEconItem->SetAccountID( 0 );
-        // Assign an acknowledged backpack position so the item appears in the
-        // backpack rather than the unacknowledged/pickup queue (position 0).
-        pEconItem->SetInventoryToken( MakeBackendInventoryPosition( nSyntheticSlot++ ) );
         m_vecModItems.AddToTail( pEconItem );
 
         if ( AddEconItem( pEconItem, false, false, false ) )
         {
             CEconItemView *pView = GetInventoryItemByItemID( ulID );
             if ( pView )
+            {
                 pView->SetNonSOEconItem( pEconItem );
+                // Assign an acknowledged backpack position so the item lands in
+                // the normal backpack rather than the unacknowledged pickup queue.
+                // Position 0 (the default) triggers IsUnacknowledged() == true.
+                TFInventoryManager()->SetItemBackpackPosition( pView, 0, false, true );
+            }
         }
     }
 
     // ── Loaner items ──
     // Only inject loaner items the player does NOT already own (i.e. no GC item
     // with the same def_index and a real item ID below k_LoanerItemIDBase).
-    // This respects players who legitimately own the item.
     for ( int i = 0; i < pMgr->GetLoanerItemCount(); ++i )
     {
         CEconItemView *pSrc = pMgr->GetLoanerItem( i );
@@ -1782,15 +1774,16 @@ void CTFPlayerInventory::InjectModAndLoanerItems()
         pEconItem->SetItemLevel( 1 );
         pEconItem->SetOrigin( kEconItemOrigin_QuestLoanerItem );
         pEconItem->SetAccountID( 0 );
-        // Same: assign an acknowledged backpack position.
-        pEconItem->SetInventoryToken( MakeBackendInventoryPosition( nSyntheticSlot++ ) );
         m_vecLoanerItems.AddToTail( pEconItem );
 
         if ( AddEconItem( pEconItem, false, false, false ) )
         {
             CEconItemView *pView = GetInventoryItemByItemID( ulLoanerID );
             if ( pView )
+            {
                 pView->SetNonSOEconItem( pEconItem );
+                TFInventoryManager()->SetItemBackpackPosition( pView, 0, false, true );
+            }
         }
     }
 }
@@ -2592,11 +2585,11 @@ void CTFPlayerInventory::SaveOfflineItemCache()
 	if ( !g_pFullFileSystem || !m_pSOCache )
 		return;
 
-	// Read directly from the SOCache's type cache instead of going through
-	// CEconItemView::GetSOCData(). This avoids the case where views were just
-	// rebuilt by BaseClass::SOCacheSubscribed and their m_pNonSOEconItem pointers
-	// are null (because the old offline items were freed), causing GetSOCData()
-	// to return null for every item and producing an empty save file.
+	// Read directly from the SOCache's type cache rather than through
+	// CEconItemView::GetSOCData(). After BaseClass::SOCacheSubscribed rebuilds
+	// m_aInventoryItems, the views have null m_pNonSOEconItem (old offline items
+	// were freed) and the SOCache lookup may not be ready yet, causing every
+	// GetSOCData() call to return null and producing an empty save file.
 	CGCClientSharedObjectTypeCache *pTypeCache =
 		m_pSOCache->FindTypeCache( CEconItem::k_nTypeID );
 	if ( !pTypeCache )

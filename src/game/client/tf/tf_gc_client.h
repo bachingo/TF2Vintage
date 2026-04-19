@@ -279,8 +279,8 @@ private:
 	// Prevents repeated live fetches within the same session when tf_offline_inventory_autoupdate is on.
 	// Cleared by inventory_refresh command to force a fresh fetch on demand.
 	bool m_bDidLiveFetchThisSession   = false;
-	// Set just before AddLocalSOCache() in OnWebapiInventoryReceived so that the
-	// synchronous SOCacheSubscribed callback knows to save the offline cache file.
+	// Set just before AddLocalSOCache() fires SOCacheSubscribed, so the inventory
+	// knows to snapshot the new data to the offline cache file.
 	bool m_bPendingOfflineCacheSave   = false;
 	GCSDK::CGCClientSharedObjectCache *m_pSOCache = nullptr;
 	CUtlVector< ISharedObjectListener* > m_vecDelayedLocalPlayerSOListenersToAdd;

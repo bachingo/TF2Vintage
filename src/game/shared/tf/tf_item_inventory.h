@@ -94,6 +94,11 @@ public:
 	// base64-encoded, ready to pass directly to AddLocalSOCache on the server.
 	// Returns false if there are no offline items or serialization fails.
 	bool				BuildOfflineSOCacheBlob( CUtlMemory<char> &bufOut );
+
+	// Called by CTFGCClientSystem when a fresh webapi response arrives so the
+	// new inventory is written to disk. Public because CTFGCClientSystem is not
+	// a friend of CTFPlayerInventory.
+	void				SaveOfflineItemCache();
 #endif
 
 	static CEconItemView *GetFirstItemOfItemDef( item_definition_index_t nDefIndex, CPlayerInventory* pInventory = NULL );
@@ -136,7 +141,6 @@ private:
 
 	// Offline inventory cache — saved when live GC data arrives, loaded at startup
 	// when the webapi is not yet available.
-	void				SaveOfflineItemCache();
 	bool				LoadOfflineItemCache();
 
 	// Injects mod and loaner items from CTFInventoryManager into this inventory.
