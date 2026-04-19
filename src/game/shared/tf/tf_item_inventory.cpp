@@ -43,7 +43,6 @@
 #include "tf_gcmessages.h"
 #include "econ_item.h"
 #include "game_item_schema.h"
-#include "gcsdk/gcclient_sharedobjectcache.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -1775,19 +1774,65 @@ void CTFPlayerInventory::InjectModAndLoanerItems()
 
 
 #ifdef CLIENT_DLL
+// ---------------------------------------------------------------------------
+// Hand-rolled protobuf helpers for BuildOfflineSOCacheBlob.
+// CMsgSOCacheSubscribed and CMsgSOCacheSubscribed_SubscribedType are not
+// available as generated classes in this SDK (the .pb.h does not exist).
+// We hand-encode the minimal wire format that AddLocalSOCache expects.
+//
+// CMsgSOCacheSubscribed wire layout:
+//   field 1  (owner,   uint64,  wire 0=varint)
+//   field 7  (version, uint64,  wire 0=varint)
+//   field 2  (objects, message, wire 2=length-delimited)  -- repeated
+//     CMsgSOCacheSubscribed_SubscribedType:
+//       field 1  (type_id,     int32, wire 0=varint)
+//       field 2  (object_data, bytes, wire 2=length-delimited) -- repeated
+// ---------------------------------------------------------------------------
+namespace
+{
+	// Append a protobuf varint to a CUtlBuffer.
+	static void PB_WriteVarint( CUtlBuffer &buf, uint64 v )
+	{
+		do
+		{
+			uint8 b = static_cast<uint8>( v & 0x7F );
+			v >>= 7;
+			if ( v ) b |= 0x80;
+			buf.PutUnsignedChar( b );
+		} while ( v );
+	}
+
+	// Append a tag byte (field_number << 3 | wire_type).
+	static void PB_WriteTag( CUtlBuffer &buf, int fieldNumber, int wireType )
+	{
+		PB_WriteVarint( buf, static_cast<uint64>( ( fieldNumber << 3 ) | wireType ) );
+	}
+
+	// Append a length-delimited field (bytes / embedded message).
+	static void PB_WriteBytes( CUtlBuffer &buf, int fieldNumber, const void *pData, int nLen )
+	{
+		PB_WriteTag( buf, fieldNumber, 2 );
+		PB_WriteVarint( buf, static_cast<uint64>( nLen ) );
+		buf.Put( pData, nLen );
+	}
+} // anonymous namespace
+
 bool CTFPlayerInventory::BuildOfflineSOCacheBlob( CUtlMemory<char> &bufOut )
 {
 	if ( m_vecOfflineItems.IsEmpty() )
 		return false;
 
-	// Build a CMsgSOCacheSubscribed exactly as TryLoadOfflineCacheViaSOCache would,
-	// but from the already-deserialized m_vecOfflineItems rather than from disk.
-	CMsgSOCacheSubscribed msgSubscribe;
-	msgSubscribe.set_owner( m_OwnerID.ConvertToUint64() );
-	msgSubscribe.set_version( 1 );
+	// ------------------------------------------------------------------
+	// Build the inner CMsgSOCacheSubscribed_SubscribedType message.
+	// field 1: type_id  (varint)
+	// field 2: object_data (repeated bytes, one entry per item)
+	// ------------------------------------------------------------------
+	CUtlBuffer bufSubType( 0, 0, 0 );
+	bufSubType.SetBigEndian( false );
 
-	CMsgSOCacheSubscribed_SubscribedType *pSubType = msgSubscribe.add_objects();
-	pSubType->set_type_id( CEconItem::k_nTypeID );
+	// field 1: type_id = CEconItem::k_nTypeID
+	PB_WriteTag( bufSubType, 1, 0 );
+	PB_WriteVarint( bufSubType, static_cast<uint64>( CEconItem::k_nTypeID ) );
 
 	FOR_EACH_VEC( m_vecOfflineItems, i )
 	{
@@ -1802,18 +1847,37 @@ bool CTFPlayerInventory::BuildOfflineSOCacheBlob( CUtlMemory<char> &bufOut )
 		if ( !msgItem.SerializeToString( &sBytes ) )
 			continue;
 
-		pSubType->add_object_data( sBytes );
+		// field 2: object_data (bytes)
+		PB_WriteBytes( bufSubType, 2, sBytes.data(), static_cast<int>( sBytes.size() ) );
 	}
 
-	// Serialize the subscribe message
-	std::string sMsgBytes;
-	if ( !msgSubscribe.SerializeToString( &sMsgBytes ) )
+	if ( bufSubType.TellPut() == 0 )
 		return false;
 
-	// Base64-encode it — the server calls Base64Decode then AddLocalSOCache
+	// ------------------------------------------------------------------
+	// Build the outer CMsgSOCacheSubscribed message.
+	// field 1: owner   (uint64 varint)
+	// field 7: version (uint64 varint)
+	// field 2: objects (embedded message = bufSubType)
+	// ------------------------------------------------------------------
+	CUtlBuffer bufMsg( 0, 0, 0 );
+	bufMsg.SetBigEndian( false );
+
+	// field 1: owner
+	PB_WriteTag( bufMsg, 1, 0 );
+	PB_WriteVarint( bufMsg, m_OwnerID.ConvertToUint64() );
+
+	// field 7: version = 1
+	PB_WriteTag( bufMsg, 7, 0 );
+	PB_WriteVarint( bufMsg, 1ULL );
+
+	// field 2: objects (the SubscribedType sub-message)
+	PB_WriteBytes( bufMsg, 2, bufSubType.Base(), bufSubType.TellPut() );
+
+	// Base64-encode the result — the server calls Base64Decode then AddLocalSOCache
 	return Base64EncodeIntoUTLMemory(
-		reinterpret_cast<const uint8 *>( sMsgBytes.data() ),
-		static_cast<uint32>( sMsgBytes.size() ),
+		reinterpret_cast<const uint8 *>( bufMsg.Base() ),
+		static_cast<uint32>( bufMsg.TellPut() ),
 		bufOut );
 }
 #endif // CLIENT_DLL
