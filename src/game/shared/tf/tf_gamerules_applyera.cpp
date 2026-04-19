@@ -190,7 +190,7 @@ void CTFGameRules::ApplyEra( int nEra )
     //   tf2v_allow_multiclass_weapons
     //   tf2v_allow_mod_weapons
     //   tf2v_allowed_year_cosmetics, tf2v_force_year_cosmetics
-    //   tf2v_legacy_weapons
+    //   tf2v_legacy_items
     //
     // -- Audio options (TF2V additions, no confirmed era dates) --
     //   tf2v_generic_voice_death

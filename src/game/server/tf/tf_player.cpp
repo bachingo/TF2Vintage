@@ -303,6 +303,7 @@ extern ConVar bot_mimic;
 #endif // _DEBUG || STAGING_ONLY 
 
 extern ConVar tf2v_disable_cosmetics;
+extern ConVar tf2v_legacy_items;
 
 extern CBaseEntity *FindPickerEntity( CBasePlayer *pPlayer );
 extern bool CanScatterGunKnockBack( CTFWeaponBase *pWeapon, float flDamage, float flDistanceSq );
@@ -4527,7 +4528,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 		GiveAmmo( GetMaxAmmo(iAmmo), iAmmo, true, kAmmoSource_Resupply );
 	}
 
-	if ( IsX360() )
+	if ( IsX360() || tf2v_legacy_items.GetBool() )
 	{
 		ManageRegularWeaponsLegacy( pData );
 	}
