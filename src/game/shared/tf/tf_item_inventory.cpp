@@ -1686,21 +1686,19 @@ CEconItemView *CTFPlayerInventory::GetCacheServerItemInLoadout( int iClass, int 
 #ifdef CLIENT_DLL
 void CTFPlayerInventory::InjectModAndLoanerItems()
 {
-    // ── Step 1: Remove previously injected synthetic views from m_aInventoryItems ──
-    // This must happen BEFORE PurgeAndDeleteElements on the backing vectors.
+    // ── Step 1: Remove stale synthetic views from m_aInventoryItems FIRST ──
+    // We must do this before PurgeAndDeleteElements on the backing vectors.
     // If we free the CEconItem* objects first, the views in m_aInventoryItems
-    // have dangling m_pNonSOEconItem pointers. The GetInventoryItemByItemID
-    // skip-check would then find the stale view and prevent re-injection,
-    // leaving broken items in the inventory.
-    // All synthetic IDs sit above any real GC-issued item ID:
+    // still hold dangling m_pNonSOEconItem pointers. Then GetInventoryItemByItemID
+    // finds those stale views and skips re-injection entirely, leaving broken items.
+    // Both synthetic ID ranges are safely above any real GC-issued item ID:
     //   k_LoanerItemIDBase = 0x0000FE0000000000
     //   k_ModItemIDBase    = 0x0000FF0000000000
+    // Any item ID >= k_LoanerItemIDBase is synthetic and must be cleared first.
     for ( int i = m_aInventoryItems.Count() - 1; i >= 0; --i )
     {
         if ( m_aInventoryItems[i].GetItemID() >= k_LoanerItemIDBase )
-        {
             m_aInventoryItems.Remove( i );
-        }
     }
     DirtyItemHandles();
 
@@ -1733,32 +1731,31 @@ void CTFPlayerInventory::InjectModAndLoanerItems()
             if ( pView )
             {
                 pView->SetNonSOEconItem( pEconItem );
-                // Assign an acknowledged backpack position so the item lands in
-                // the normal backpack rather than the unacknowledged pickup queue.
-                // Position 0 (the default) triggers IsUnacknowledged() == true.
+                // Assign a real backpack slot so the item is acknowledged and
+                // appears in the normal backpack, not the pickup queue.
+                // Passing slot=0 with bFindOpenSlot=true finds the first free slot.
                 TFInventoryManager()->SetItemBackpackPosition( pView, 0, false, true );
             }
         }
     }
 
     // ── Loaner items ──
-    // Only inject loaner items the player does NOT already own (i.e. no GC item
-    // with the same def_index and a real item ID below k_LoanerItemIDBase).
+    // Only inject loaner items the player does NOT already own a real copy of
+    // (i.e. no GC item with the same def_index and an ID below k_LoanerItemIDBase).
     for ( int i = 0; i < pMgr->GetLoanerItemCount(); ++i )
     {
         CEconItemView *pSrc = pMgr->GetLoanerItem( i );
         if ( !pSrc ) continue;
 
-        const item_definition_index_t nDef = pSrc->GetItemDefIndex();
-        const itemid_t ulLoanerID = pSrc->GetItemID();
+        const item_definition_index_t nDef    = pSrc->GetItemDefIndex();
+        const itemid_t               ulLoanerID = pSrc->GetItemID();
 
-        // If the player already has a real (non-synthetic) item of this defindex, skip.
         bool bPlayerOwnsReal = false;
         for ( int j = 0; j < GetItemCount(); ++j )
         {
             CEconItemView *pOwned = GetItem( j );
             if ( pOwned && pOwned->GetItemDefIndex() == nDef
-                 && pOwned->GetItemID() < k_LoanerItemIDBase )
+                        && pOwned->GetItemID() < k_LoanerItemIDBase )
             {
                 bPlayerOwnsReal = true;
                 break;
@@ -2585,11 +2582,9 @@ void CTFPlayerInventory::SaveOfflineItemCache()
 	if ( !g_pFullFileSystem || !m_pSOCache )
 		return;
 
-	// Read directly from the SOCache's type cache rather than through
-	// CEconItemView::GetSOCData(). After BaseClass::SOCacheSubscribed rebuilds
-	// m_aInventoryItems, the views have null m_pNonSOEconItem (old offline items
-	// were freed) and the SOCache lookup may not be ready yet, causing every
-	// GetSOCData() call to return null and producing an empty save file.
+	// Read directly from the SOCache's type cache. Going through CEconItemView::GetSOCData()
+	// is unreliable here because views may have just been rebuilt by BaseClass::SOCacheSubscribed
+	// with null m_pNonSOEconItem pointers, causing every GetSOCData() to return null.
 	CGCClientSharedObjectTypeCache *pTypeCache =
 		m_pSOCache->FindTypeCache( CEconItem::k_nTypeID );
 	if ( !pTypeCache )
@@ -2598,32 +2593,60 @@ void CTFPlayerInventory::SaveOfflineItemCache()
 		return;
 	}
 
+	// Write a human-readable KeyValues file. Each item is a subkey named by its
+	// item ID, with individual fields for defindex, quality, level, inventory
+	// position, and equipped state. This is easy to inspect and edit by hand.
+	//
+	// Format:
+	//   "offline_item_cache"
+	//   {
+	//     "76561198012345678"   // item ID as key name
+	//     {
+	//       "defindex"   "29"
+	//       "quality"    "6"
+	//       "level"      "10"
+	//       "pos"        "123456789"   // raw backend inventory token
+	//       "equipped"   "3,1 5,1"    // space-separated class,slot pairs (optional)
+	//     }
+	//   }
 	KeyValues *pRootKV = new KeyValues( "offline_item_cache" );
 	int nSaved = 0;
 
 	for ( uint32 i = 0; i < pTypeCache->GetCount(); ++i )
 	{
-		CEconItem *pEconItem = static_cast<CEconItem *>( pTypeCache->GetObject( i ) );
-		if ( !pEconItem )
+		CEconItem *pItem = static_cast<CEconItem *>( pTypeCache->GetObject( i ) );
+		if ( !pItem )
 			continue;
 
-		CSOEconItem msgItem;
-		pEconItem->SerializeToProtoBufItem( msgItem );
+		char szID[32];
+		V_snprintf( szID, sizeof(szID), "%llu", pItem->GetItemID() );
 
-		std::string sBytes;
-		if ( !msgItem.SerializeToString( &sBytes ) )
-			continue;
+		KeyValues *pItemKV = new KeyValues( szID );
+		pItemKV->SetInt(    "defindex", (int)pItem->GetDefinitionIndex() );
+		pItemKV->SetInt(    "quality",  (int)pItem->GetQuality() );
+		pItemKV->SetInt(    "level",    (int)pItem->GetItemLevel() );
+		pItemKV->SetInt(    "origin",   (int)pItem->GetOrigin() );
+		pItemKV->SetString( "pos",      CNumStr( pItem->GetInventoryToken() ) );
 
-		CUtlMemory<char> bufEncoded;
-		if ( !Base64EncodeIntoUTLMemory(
-				reinterpret_cast<const uint8 *>( sBytes.data() ),
-				static_cast<uint32>( sBytes.size() ),
-				bufEncoded ) )
-			continue;
+		// Serialize equipped state as "class,slot" pairs separated by spaces.
+		// We iterate all TF classes and record any slot that is not INVALID.
+		CUtlString strEquipped;
+		for ( equipped_class_t iClass = TF_FIRST_NORMAL_CLASS; iClass < TF_LAST_NORMAL_CLASS; ++iClass )
+		{
+			equipped_slot_t iSlot = pItem->GetEquippedPositionForClass( iClass );
+			if ( iSlot != INVALID_EQUIPPED_SLOT )
+			{
+				if ( !strEquipped.IsEmpty() )
+					strEquipped += " ";
+				char szPair[16];
+				V_snprintf( szPair, sizeof(szPair), "%d,%d", (int)iClass, (int)iSlot );
+				strEquipped += szPair;
+			}
+		}
+		if ( !strEquipped.IsEmpty() )
+			pItemKV->SetString( "equipped", strEquipped.Get() );
 
-		char szKey[32];
-		V_snprintf( szKey, sizeof(szKey), "%llu", pEconItem->GetItemID() );
-		pRootKV->SetString( szKey, bufEncoded.Base() );
+		pRootKV->AddSubKey( pItemKV );
 		++nSaved;
 	}
 
@@ -2658,80 +2681,58 @@ bool CTFPlayerInventory::LoadOfflineItemCache()
 		return false;
 	}
 
-	// Free any CEconItem* objects from a previous offline load before purging
-	// m_aInventoryItems. The sort vector holds CEconItemView values; each view's
-	// m_pNonSOEconItem points back into m_vecOfflineItems. Purge order matters:
-	// clear the vector first so no live pointers remain before we delete the items.
 	m_vecOfflineItems.PurgeAndDeleteElements();
 	m_aInventoryItems.Purge();
 	DirtyItemHandles();
-	// m_pSOCache intentionally left NULL. No live GC session means no incremental
-	// SOCreated/SOUpdated/SODestroyed events will arrive, so the null guards in
-	// those handlers are never hit. GetSOCDataForItem() returning NULL is harmless
-	// because the only callers that matter (UpdateInventoryPosition, UpdateInventory-
-	// EquippedState) are GC-write paths we don't invoke offline. GetSOCData() on
-	// our views routes through m_pNonSOEconItem instead (set below), so item data
-	// is fully accessible without m_pSOCache.
 
 	int nLoaded = 0;
-	for ( KeyValues *pKV = pRootKV->GetFirstValue(); pKV; pKV = pKV->GetNextValue() )
+	FOR_EACH_TRUE_SUBKEY( pRootKV, pItemKV )
 	{
-		const char *pszEncoded = pKV->GetString();
-		if ( !pszEncoded || !pszEncoded[0] )
-			continue;
-
-		const uint32 cchEncoded = static_cast<uint32>( V_strlen( pszEncoded ) );
-
-		// Worst-case decoded size: base64 encodes 3 bytes as 4 chars.
-		const uint32 cubMaxDecoded = ( cchEncoded * 3 / 4 ) + 4;
-		CUtlMemory<uint8> bufDecoded;
-		bufDecoded.EnsureCapacity( static_cast<int>( cubMaxDecoded ) );
-
-		// Base64Decode signature (GCSDK namespace, in scope via using):
-		//   bool Base64Decode( const char*, uint32, uint8*, uint32*, bool )
-		uint32 cubActual = cubMaxDecoded;
-		if ( !Base64Decode( pszEncoded, cchEncoded,
-		                    bufDecoded.Base(), &cubActual,
-		                    true /*bIgnoreInvalidCharacters*/ ) )
+		// Item ID is the subkey name
+		itemid_t nItemID = (itemid_t)V_atoui64( pItemKV->GetName() );
+		if ( nItemID == 0 )
 		{
-			Warning( "[OfflineInventory] Base64 decode failed for item '%s'\n",
-			         pKV->GetName() );
+			Warning( "[OfflineInventory] Skipping item with invalid ID '%s'\n", pItemKV->GetName() );
 			continue;
 		}
 
-		// Parse the CSOEconItem protobuf message from raw bytes.
-		CSOEconItem msgItem;
-		if ( !msgItem.ParseFromArray( bufDecoded.Base(), static_cast<int>( cubActual ) ) )
-		{
-			Warning( "[OfflineInventory] Proto parse failed for item '%s'\n",
-			         pKV->GetName() );
-			continue;
-		}
-
-		// Allocate a CEconItem and populate it via the same deserialize path the
-		// SOCache uses internally during a real GC subscribe message.
 		CEconItem *pEconItem = new CEconItem();
-		pEconItem->DeserializeFromProtoBufItem( msgItem );
+		pEconItem->SetItemID(          nItemID );
+		pEconItem->SetDefinitionIndex( (item_definition_index_t)pItemKV->GetInt( "defindex", 0 ) );
+		pEconItem->SetQuality(         pItemKV->GetInt( "quality", AE_UNIQUE ) );
+		pEconItem->SetItemLevel(       (uint32)pItemKV->GetInt( "level", 1 ) );
+		pEconItem->SetOrigin(          (eEconItemOrigin)pItemKV->GetInt( "origin", kEconItemOrigin_Invalid ) );
+		pEconItem->SetInventoryToken(  (uint32)V_atoui64( pItemKV->GetString( "pos", "0" ) ) );
 
-		// Track so we can free on live-data-arrives or shutdown.
+		// Restore equipped state from "class,slot" pairs
+		const char *pszEquipped = pItemKV->GetString( "equipped", "" );
+		if ( pszEquipped && pszEquipped[0] )
+		{
+			// Parse space-separated "class,slot" pairs
+			char szBuf[256];
+			V_strncpy( szBuf, pszEquipped, sizeof(szBuf) );
+			char *pCtx = nullptr;
+			for ( char *pTok = V_strtok( szBuf, " ", &pCtx );
+			      pTok;
+			      pTok = V_strtok( nullptr, " ", &pCtx ) )
+			{
+				int iClass = 0, iSlot = 0;
+				if ( sscanf( pTok, "%d,%d", &iClass, &iSlot ) == 2 )
+				{
+					pEconItem->Equip( (equipped_class_t)iClass, (equipped_slot_t)iSlot );
+				}
+			}
+		}
+
 		m_vecOfflineItems.AddToTail( pEconItem );
 
-		// AddEconItem calls FilloutItemFromEconItem (Init + SetItemID + SetInventoryPosition)
-		// then ItemHasBeenUpdated → UpdateEquipStateForClass, which populates m_LoadoutItems
-		// from the item's equipped_state. Same flags as the live SOCacheSubscribed bulk load.
 		if ( AddEconItem( pEconItem, /*bUpdateAckFile=*/true,
 		                             /*bWriteAckFile=*/false,
 		                             /*bCheckForNewItems=*/false ) )
 		{
-			// Fix up the CEconItemView so GetSOCData() returns our item directly,
-			// bypassing the m_pSOCache->FindSharedObject() path which needs a live cache.
-			// SetNonSOEconItem stores the pointer in CEconItemView::m_pNonSOEconItem;
-			// GetSOCData() checks that field first before touching m_pSOCache.
-			CEconItemView *pView = GetInventoryItemByItemID( pEconItem->GetItemID() );
+			CEconItemView *pView = GetInventoryItemByItemID( nItemID );
 			if ( pView )
-			{
 				pView->SetNonSOEconItem( pEconItem );
-			}
 		}
 		++nLoaded;
 	}
@@ -2745,23 +2746,18 @@ bool CTFPlayerInventory::LoadOfflineItemCache()
 		return false;
 	}
 
-	// Mirror the post-population steps from the live CPlayerInventory::SOCacheSubscribed path.
-	m_bGotItemsFromSteam = true;           // satisfies all RetrievedInventoryFromSteam() gates
+	m_bGotItemsFromSteam = true;
 	ValidateInventoryPositions();
-	CInventoryManager::SendItemSystemConnectedEvent();  // fires "econ_inventory_connected"
+	CInventoryManager::SendItemSystemConnectedEvent();
 	ResortInventory();
 	InventoryManager()->CleanAckFile();
 	InventoryManager()->SaveAckFile();
 
-	// Run the TF-specific steps that CTFPlayerInventory::SOCacheSubscribed calls after
-	// the base. We call them directly here since SOCacheSubscribed won't fire for us
-	// (we bypassed the SOCache listener path entirely).
 	UpdateRealTFLoadoutItems();
-	LoadLocalLoadout();           // applies cfg/local_loadout.txt slot assignments
+	LoadLocalLoadout();
 	VerifyChangedLoadoutsAreValid();
 	UpdateCachedServerLoadoutItems();
 
-	// Inject mod and loaner items on top of the loaded inventory.
 	InjectModAndLoanerItems();
 
 	DevMsg( "[OfflineInventory] Loaded %d items from %s\n", nLoaded, OFFLINE_ITEM_CACHE_FILE );

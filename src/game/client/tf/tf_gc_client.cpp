@@ -848,9 +848,10 @@ void CTFGCClientSystem::OnWebapiInventoryReceived( HTTPRequestCompleted_t* pInfo
 			return;
 		}
 
-		// Set the save flag BEFORE AddLocalSOCache. AddLocalSOCache fires
-		// SOCacheSubscribed synchronously, which consumes this flag. Setting it
-		// after the call means it is always false when SOCacheSubscribed checks it.
+		// IMPORTANT: set the flag BEFORE AddLocalSOCache. AddLocalSOCache fires
+		// SOCacheSubscribed synchronously on all registered listeners. That callback
+		// calls ConsumePendingOfflineCacheSave() — if the flag is set after the call
+		// it is always false when consumed and the save never happens.
 		m_bPendingOfflineCacheSave = true;
 		CGCClientSharedObjectCache *pSOCache = GetGCClient()->AddLocalSOCache( userSteamID, bufMsgSubscription.Base(), bufMsgSubscription.TellPut() );
 		if ( !pSOCache )
@@ -865,10 +866,10 @@ void CTFGCClientSystem::OnWebapiInventoryReceived( HTTPRequestCompleted_t* pInfo
 	}
 	else
 	{
-		// Version matched — the server sent no new msg blob, so SOCacheSubscribed
-		// will not fire. If a save was pending (e.g. from inventory_refresh),
-		// call it directly from the existing SOCache now.
-		CGCClientSharedObjectCache* pSOCache = GetGCClient()->FindSOCache( userSteamID, false );
+		// Version matched — server sent no new msg blob so AddLocalSOCache is not
+		// called, meaning SOCacheSubscribed never fires and the pending flag would
+		// never be consumed. If inventory_refresh requested a save, do it directly.
+		CGCClientSharedObjectCache *pSOCache = GetGCClient()->FindSOCache( userSteamID, false );
 		Assert( pSOCache );
 		if ( pSOCache && m_bPendingOfflineCacheSave )
 		{
@@ -880,12 +881,11 @@ void CTFGCClientSystem::OnWebapiInventoryReceived( HTTPRequestCompleted_t* pInfo
 		}
 	}
 
-	// We were successful, clear backoff timers.
-	// Also record that a live webapi fetch completed so autoupdate mode (cvar=1)
-	// does not re-fetch on subsequent Init passes within this session.
-	// NOTE: m_bDidLiveFetchThisSession is set here rather than in SOCacheSubscribed
-	// because AddLocalSOCache always produces a local cache (BIsLocal() == true),
-	// so the old BIsLocal() guard in SOCacheSubscribed never fired.
+	// Successful fetch — clear backoff and record that we have fetched live data
+	// this session so autoupdate mode (cvar=1) doesn't fetch again.
+	// NOTE: m_bDidLiveFetchThisSession is set here, not in SOCacheSubscribed,
+	// because AddLocalSOCache always produces a local cache (BIsLocal()==true),
+	// making the old BIsLocal() guard in SOCacheSubscribed permanently dead code.
 	state.RequestSucceeded();
 	state.m_eState = kWebapiInventoryState_InventoryReceived;
 	m_bDidLiveFetchThisSession = true;
@@ -980,8 +980,8 @@ void CTFGCClientSystem::SOCacheSubscribed( const CSteamID & steamIDOwner, GCSDK:
 		Assert( m_pSOCache != NULL );
 
 		// NOTE: m_bDidLiveFetchThisSession is NOT set here. AddLocalSOCache always
-		// produces a local cache so BIsLocal() is always true — the old guard was
-		// dead code. The flag is set at the end of OnWebapiInventoryReceived instead.
+		// creates a local cache so BIsLocal() is always true — the old guard was
+		// permanently dead. The flag is set at the end of OnWebapiInventoryReceived.
 
 		if ( gameeventmanager )
 		{

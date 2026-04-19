@@ -95,9 +95,9 @@ public:
 	// Returns false if there are no offline items or serialization fails.
 	bool				BuildOfflineSOCacheBlob( CUtlMemory<char> &bufOut );
 
-	// Called by CTFGCClientSystem when a fresh webapi response arrives so the
-	// new inventory is written to disk. Public because CTFGCClientSystem is not
-	// a friend of CTFPlayerInventory.
+	// Snapshots the current live inventory to cfg/offline_item_cache.txt.
+	// Public so CTFGCClientSystem can call it directly in the version-match path
+	// (when the webapi says the cache is current and SOCacheSubscribed won't fire).
 	void				SaveOfflineItemCache();
 #endif
 
@@ -139,8 +139,7 @@ private:
 	void				UpdateCachedServerLoadoutItems();
 	void				UpdateRealTFLoadoutItems();
 
-	// Offline inventory cache — saved when live GC data arrives, loaded at startup
-	// when the webapi is not yet available.
+	// Offline inventory cache — loaded at startup when the webapi is not yet available.
 	bool				LoadOfflineItemCache();
 
 	// Injects mod and loaner items from CTFInventoryManager into this inventory.
