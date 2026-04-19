@@ -253,8 +253,11 @@ public:
 	// the result to the offline cache. Works even when offline mode is active.
 	void RefreshInventoryFromGC();
 
-	bool m_bPendingOfflineCacheSave = false;
+	// Consume-and-clear flag set by OnWebapiInventoryReceived to tell
+	// CTFPlayerInventory::SOCacheSubscribed that it should save the offline cache.
+	// Public so CTFPlayerInventory can call it without a friend declaration.
 	bool ConsumePendingOfflineCacheSave() { bool b = m_bPendingOfflineCacheSave; m_bPendingOfflineCacheSave = false; return b; }
+
 protected:
 
 	// CGCClientSystem
@@ -276,6 +279,9 @@ private:
 	// Prevents repeated live fetches within the same session when tf_offline_inventory_autoupdate is on.
 	// Cleared by inventory_refresh command to force a fresh fetch on demand.
 	bool m_bDidLiveFetchThisSession   = false;
+	// Set just before AddLocalSOCache() in OnWebapiInventoryReceived so that the
+	// synchronous SOCacheSubscribed callback knows to save the offline cache file.
+	bool m_bPendingOfflineCacheSave   = false;
 	GCSDK::CGCClientSharedObjectCache *m_pSOCache = nullptr;
 	CUtlVector< ISharedObjectListener* > m_vecDelayedLocalPlayerSOListenersToAdd;
 

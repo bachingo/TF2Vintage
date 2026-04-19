@@ -1686,12 +1686,38 @@ CEconItemView *CTFPlayerInventory::GetCacheServerItemInLoadout( int iClass, int 
 #ifdef CLIENT_DLL
 void CTFPlayerInventory::InjectModAndLoanerItems()
 {
-    // Clear any previously injected backing items before re-injecting.
-    // This handles schema reloads and re-subscriptions cleanly.
+    // ── Step 1: Remove previously injected synthetic views from m_aInventoryItems ──
+    // This must happen BEFORE PurgeAndDeleteElements on the backing vectors.
+    // If we purge the CEconItem* objects first, the views in m_aInventoryItems
+    // have dangling m_pNonSOEconItem pointers. On re-injection the
+    // GetInventoryItemByItemID check would then find the stale (dangling) view
+    // and skip re-injection, leaving a broken item in the inventory.
+    // Both synthetic ranges sit well above any real GC-issued item ID:
+    //   k_LoanerItemIDBase = 0x0000FE0000000000
+    //   k_ModItemIDBase    = 0x0000FF0000000000
+    // Any item ID >= k_LoanerItemIDBase is synthetic and safe to remove.
+    for ( int i = m_aInventoryItems.Count() - 1; i >= 0; --i )
+    {
+        if ( m_aInventoryItems[i].GetItemID() >= k_LoanerItemIDBase )
+        {
+            m_aInventoryItems.Remove( i );
+        }
+    }
+    DirtyItemHandles();
+
+    // ── Step 2: Free the old backing CEconItem objects ──
     m_vecModItems.PurgeAndDeleteElements();
     m_vecLoanerItems.PurgeAndDeleteElements();
 
     CTFInventoryManager *pMgr = TFInventoryManager();
+
+    // Synthetic items are assigned backpack positions starting just above the
+    // normal maximum, in the extra page range that GetMaxItemCount() already
+    // reserves for them. Position must be non-zero and pass IsUnacknowledged()
+    // so the items land in the backpack rather than the pickup queue.
+    // MakeBackendInventoryPosition wraps a logical 1-based slot into the
+    // backend token format (new-format acknowledged position).
+    int nSyntheticSlot = GetMaxItemCount() - pMgr->GetModItemCount() - pMgr->GetLoanerItemCount() + 1;
 
     // ── Mod items ──
     for ( int i = 0; i < pMgr->GetModItemCount(); ++i )
@@ -1701,10 +1727,6 @@ void CTFPlayerInventory::InjectModAndLoanerItems()
 
         const itemid_t ulID = pSrc->GetItemID();
 
-        // Already in inventory from a previous inject — skip.
-        if ( GetInventoryItemByItemID( ulID ) )
-            continue;
-
         // Allocate a fresh backing CEconItem owned by this inventory instance.
         CEconItem *pEconItem = new CEconItem();
         pEconItem->SetItemID( ulID );
@@ -1713,6 +1735,9 @@ void CTFPlayerInventory::InjectModAndLoanerItems()
         pEconItem->SetItemLevel( 1 );
         pEconItem->SetOrigin( kEconItemOrigin_Invalid );
         pEconItem->SetAccountID( 0 );
+        // Assign an acknowledged backpack position so the item appears in the
+        // backpack rather than the unacknowledged/pickup queue (position 0).
+        pEconItem->SetInventoryToken( MakeBackendInventoryPosition( nSyntheticSlot++ ) );
         m_vecModItems.AddToTail( pEconItem );
 
         if ( AddEconItem( pEconItem, false, false, false ) )
@@ -1735,7 +1760,7 @@ void CTFPlayerInventory::InjectModAndLoanerItems()
         const item_definition_index_t nDef = pSrc->GetItemDefIndex();
         const itemid_t ulLoanerID = pSrc->GetItemID();
 
-        // If the player already has a real (non-loaner) item of this defindex, skip.
+        // If the player already has a real (non-synthetic) item of this defindex, skip.
         bool bPlayerOwnsReal = false;
         for ( int j = 0; j < GetItemCount(); ++j )
         {
@@ -1750,9 +1775,6 @@ void CTFPlayerInventory::InjectModAndLoanerItems()
         if ( bPlayerOwnsReal )
             continue;
 
-        if ( GetInventoryItemByItemID( ulLoanerID ) )
-            continue;
-
         CEconItem *pEconItem = new CEconItem();
         pEconItem->SetItemID( ulLoanerID );
         pEconItem->SetDefinitionIndex( nDef );
@@ -1760,6 +1782,8 @@ void CTFPlayerInventory::InjectModAndLoanerItems()
         pEconItem->SetItemLevel( 1 );
         pEconItem->SetOrigin( kEconItemOrigin_QuestLoanerItem );
         pEconItem->SetAccountID( 0 );
+        // Same: assign an acknowledged backpack position.
+        pEconItem->SetInventoryToken( MakeBackendInventoryPosition( nSyntheticSlot++ ) );
         m_vecLoanerItems.AddToTail( pEconItem );
 
         if ( AddEconItem( pEconItem, false, false, false ) )
@@ -2565,26 +2589,31 @@ void CTFPlayerInventory::SaveOfflineItemCache()
 {
 	if ( InventoryManager()->GetLocalInventory() != this )
 		return;
-	if ( !g_pFullFileSystem )
+	if ( !g_pFullFileSystem || !m_pSOCache )
 		return;
+
+	// Read directly from the SOCache's type cache instead of going through
+	// CEconItemView::GetSOCData(). This avoids the case where views were just
+	// rebuilt by BaseClass::SOCacheSubscribed and their m_pNonSOEconItem pointers
+	// are null (because the old offline items were freed), causing GetSOCData()
+	// to return null for every item and producing an empty save file.
+	CGCClientSharedObjectTypeCache *pTypeCache =
+		m_pSOCache->FindTypeCache( CEconItem::k_nTypeID );
+	if ( !pTypeCache )
+	{
+		Warning( "[OfflineInventory] SOCache has no item type cache — nothing to save\n" );
+		return;
+	}
 
 	KeyValues *pRootKV = new KeyValues( "offline_item_cache" );
 	int nSaved = 0;
 
-	for ( int i = 0; i < GetItemCount(); ++i )
+	for ( uint32 i = 0; i < pTypeCache->GetCount(); ++i )
 	{
-		CEconItemView *pView = GetItem( i );
-		if ( !pView )
-			continue;
-
-		CEconItem *pEconItem = pView->GetSOCData();
+		CEconItem *pEconItem = static_cast<CEconItem *>( pTypeCache->GetObject( i ) );
 		if ( !pEconItem )
 			continue;
 
-		// Serialize full item state to proto bytes via the existing path.
-		// Captures: id, def_index, quality, level, inventory token, account_id,
-		// flags, origin, style, all dynamic attributes, equipped_state,
-		// custom_name, custom_desc, interior_item.
 		CSOEconItem msgItem;
 		pEconItem->SerializeToProtoBufItem( msgItem );
 
@@ -2592,8 +2621,6 @@ void CTFPlayerInventory::SaveOfflineItemCache()
 		if ( !msgItem.SerializeToString( &sBytes ) )
 			continue;
 
-		// Base64EncodeIntoUTLMemory signature (GCSDK namespace, in scope via using):
-		//   bool Base64EncodeIntoUTLMemory( const uint8*, uint32, CUtlMemory<char>& )
 		CUtlMemory<char> bufEncoded;
 		if ( !Base64EncodeIntoUTLMemory(
 				reinterpret_cast<const uint8 *>( sBytes.data() ),

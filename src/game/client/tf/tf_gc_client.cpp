@@ -848,31 +848,48 @@ void CTFGCClientSystem::OnWebapiInventoryReceived( HTTPRequestCompleted_t* pInfo
 			return;
 		}
 
+		// Set the flag BEFORE AddLocalSOCache because AddLocalSOCache fires
+		// SOCacheSubscribed synchronously, which consumes the flag. Setting it
+		// after the call means SOCacheSubscribed always sees it as false.
+		m_bPendingOfflineCacheSave = true;
 		CGCClientSharedObjectCache *pSOCache = GetGCClient()->AddLocalSOCache( userSteamID, bufMsgSubscription.Base(), bufMsgSubscription.TellPut() );
 		if ( !pSOCache )
 		{
+			m_bPendingOfflineCacheSave = false; // roll back on failure
 			Warning( "Inventory response failed to create SO cache (probably protobuf didn't parse)\n" );
 			return;
 		}
 
 		// Version should match the one they said we have
 		Assert( pSOCache->GetVersion() == pValues->GetChildUInt64Value( "version" ) );
-		m_bPendingOfflineCacheSave = true;
 	}
 	else
 	{
-		// Cache up to date.  Validate version matches
+		// Version matched — the server sent no new msg blob, so SOCacheSubscribed
+		// will not fire and the flag will never be consumed. If a save was requested
+		// (e.g. inventory_refresh), do it directly from the existing SOCache now.
 		CGCClientSharedObjectCache* pSOCache = GetGCClient()->FindSOCache( userSteamID, false );
 		Assert( pSOCache );
-		if( pSOCache )
+		if ( pSOCache && m_bPendingOfflineCacheSave )
+		{
+			m_bPendingOfflineCacheSave = false;
+			CTFPlayerInventory *pLocalInv =
+				dynamic_cast<CTFPlayerInventory *>( TFInventoryManager()->GetLocalInventory() );
+			if ( pLocalInv )
+				pLocalInv->SaveOfflineItemCache();
+		}
+		else if ( pSOCache )
 		{
 			Assert( pSOCache->GetVersion() == pValues->GetChildUInt64Value( "version" ) );
 		}
 	}
 
-	// We were successful, clear backoff timers
+	// We were successful, clear backoff timers.
+	// Also record that the live fetch completed so autoupdate mode (cvar=1) does
+	// not re-fetch on subsequent Init passes within this session.
 	state.RequestSucceeded();
 	state.m_eState = kWebapiInventoryState_InventoryReceived;
+	m_bDidLiveFetchThisSession = true;
 }
 
 void CTFGCClientSystem::SDK_SelectItemsToSendToServer( CMsgAuthorizeServerItemRetrieval* pMsg, CGCClientSharedObjectCache* pSOCache )
@@ -963,16 +980,12 @@ void CTFGCClientSystem::SOCacheSubscribed( const CSteamID & steamIDOwner, GCSDK:
 		m_pSOCache = GCClientSystem()->GetSOCache( steamIDOwner );
 		Assert( m_pSOCache != NULL );
 
-		// If this is a live (non-local) SOCache, record that the live fetch ran.
-		// This prevents mode-1 autoupdate from fetching again within this session.
-		if ( m_pSOCache && !m_pSOCache->BIsLocal() )
-		{
-			m_bDidLiveFetchThisSession = true;
-		}
+		// m_bDidLiveFetchThisSession is set at the end of OnWebapiInventoryReceived
+		// (not here) because AddLocalSOCache always produces a local cache, meaning
+		// BIsLocal() is always true and the old guard here never fired.
 
 		if ( gameeventmanager )
 		{
-
 			// force a lobby update whenever our SO cache arrives
 			FireGameEventLobbyUpdated();
 		}
