@@ -3041,10 +3041,10 @@ bool CEconItemDefinition::BInitFromKV( KeyValues *pKVItem, CUtlVector<CUtlString
 #else
     // Keep the old behavior, which is that loadondemand is defaulted to false.
     m_bLoadOnDemand = m_pKVItem->GetBool("loadondemand");
+#endif
 */
 	m_bLoadOnDemand = true;
-#endif
-
+	
 	m_nDefIndex = Q_atoi( m_pKVItem->GetName() );
 	m_unMinItemLevel = (uint32)m_pKVItem->GetInt( "min_ilevel", GetItemSchema()->GetMinLevel() );
 	m_unMaxItemLevel = (uint32)m_pKVItem->GetInt( "max_ilevel", GetItemSchema()->GetMaxLevel() );
