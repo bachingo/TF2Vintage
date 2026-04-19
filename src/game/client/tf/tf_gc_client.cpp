@@ -857,7 +857,7 @@ void CTFGCClientSystem::OnWebapiInventoryReceived( HTTPRequestCompleted_t* pInfo
 
 		// Version should match the one they said we have
 		Assert( pSOCache->GetVersion() == pValues->GetChildUInt64Value( "version" ) );
-		m_bPendingOfflineCacheSave = true
+		m_bPendingOfflineCacheSave = true;
 	}
 	else
 	{
