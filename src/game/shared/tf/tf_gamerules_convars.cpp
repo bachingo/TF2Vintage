@@ -95,14 +95,10 @@ ConVar tf2v_certified_competitive( "tf2v_certified_competitive", "0",
     FCVAR_GAMEDLL | FCVAR_REPLICATED | FCVAR_HIDDEN,
     "Read-only. 1 if certified + competitive mode." );
 
-ConVar tf2v_certified_ps3( "tf2v_certified_ps3", "0",
+ConVar tf2v_quiet_server( "tf2v_quiet_server", "0",
     FCVAR_GAMEDLL | FCVAR_REPLICATED | FCVAR_HIDDEN,
-    "Read-only. 1 if certified + casual + era 1 (PS3 internal build) + 16 players." );
-
-ConVar tf2v_certified_xbox( "tf2v_certified_xbox", "0",
-    FCVAR_GAMEDLL | FCVAR_REPLICATED | FCVAR_HIDDEN,
-    "Read-only. 1 if certified + era 24 (Oct 10 2007 retail) + 16 players." );
-
+    "Read-only. 1 if in quiet server mode." );
+	
 ConVar tf2v_quickplay_casual( "tf2v_quickplay_casual", "0",
     FCVAR_GAMEDLL | FCVAR_REPLICATED | FCVAR_HIDDEN,
     "Read-only. 1 if QuickPlay casual compliant (not certified)." );

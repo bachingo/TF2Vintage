@@ -18829,11 +18829,9 @@ convar_tags_t convars_to_check_for_tags[] =
 	{ "tf2v_certified_partial",     "certified_partial",     NULL },
 	{ "tf2v_certified_casual",      "certified_casual",      NULL },
 	{ "tf2v_certified_competitive", "certified_competitive", NULL },
-	{ "tf2v_certified_ps3",         "ps3",                   NULL },
-	{ "tf2v_certified_xbox",        "xbox",                  NULL },
 	{ "tf2v_quickplay_casual",      "quickplay_casual",      NULL },
 	{ "tf2v_quickplay_competitive", "quickplay_competitive", NULL },
-	{ "tf2v_quiet", 				"quiet",				 NULL },
+	{ "tf2v_quiet_server", 			"quiet_server",				 NULL },
 	{ "tf2v_disable_cosmetics", 	"hatless",				 NULL },
 };
 

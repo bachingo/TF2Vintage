@@ -698,27 +698,13 @@ static bool TF2VCheckCertified( CUtlString *pFail )
     return true;
 }
 
-static bool TF2VCheckPS3( CUtlString *pFail )
+static bool TF2VCheckQuietServer( CUtlString *pFail )
 {
-    if ( !TF2VCheckCertified( pFail ) ) return false;
-    if ( !TF2VCheckCasual( pFail ) )    return false;
-    // PS3 internal build: day 1 (Sep 17 2007 beta)
-    if ( tf2v_era.GetInt() != 1 )
-    { if(pFail)*pFail="PS3 requires day 1 (beta)"; return false; }
-    if ( gpGlobals->maxClients != 16 )
-    { if(pFail)*pFail="PS3 requires 16 players"; return false; }
-    return true;
-}
-
-static bool TF2VCheckXbox( CUtlString *pFail )
-{
-    if ( !TF2VCheckCertified( pFail ) ) return false;
-    // Xbox retail launch: day 24 (Oct 10 2007)
-    if ( tf2v_era.GetInt() != TF2V_ERA_DAY_LAUNCH )
-    { if(pFail)*pFail="Xbox requires day 24 (Oct 10 2007 retail)"; return false; }
-    if ( gpGlobals->maxClients != 16 )
-    { if(pFail)*pFail="Xbox requires 16 players"; return false; }
-    return true;
+	// Placeholder. We need to implement disabling voice, text, and sprays on clientside. 
+	// Clients can do this themselves, but the point of quiet servers is to force it closed.
+	// This is to avoid griefing or a high stress experience.
+    *pFail="Implementation for quiet servers not added yet."; 
+	return false;
 }
 
 void CTFGameRules::TF2VUpdateQuickPlayCompliance()
@@ -729,8 +715,7 @@ void CTFGameRules::TF2VUpdateQuickPlayCompliance()
         tf2v_certified_partial.SetValue( 0 );
         tf2v_certified_casual.SetValue( 0 );
         tf2v_certified_competitive.SetValue( 0 );
-        tf2v_certified_ps3.SetValue( 0 );
-        tf2v_certified_xbox.SetValue( 0 );
+        tf2v_quiet_server.SetValue( 0 );
         tf2v_quickplay_casual.SetValue( 0 );
         tf2v_quickplay_competitive.SetValue( 0 );
     };
@@ -747,8 +732,7 @@ void CTFGameRules::TF2VUpdateQuickPlayCompliance()
     bool bCertBase      = TF2VCheckCertifiedBase( &fail );
     bool bCertFull      = TF2VCheckCertified( &fail );
 
-    bool bPS3           = TF2VCheckPS3( nullptr );
-    bool bXboxBase      = TF2VCheckXbox( nullptr );
+    bool bQuietServer   = TF2VCheckQuietServer( nullptr );
 
     bool bFullCasual    = bCertFull && bCasual;
     bool bFullComp      = bCertFull && bComp;
@@ -757,8 +741,6 @@ void CTFGameRules::TF2VUpdateQuickPlayCompliance()
     bool bPartialCasual = !bFullCasual && bCertBase && bCasual;
     bool bPartialComp   = !bFullComp   && bCertBase && bComp;
     bool bPartialCert   = bPartialCasual || bPartialComp;
-
-    bool bXbox          = bXboxBase && ( bCasual || bComp );
 
     bool bQPCasual      = !bFullCasual && !bPartialCasual && bCasual &&
                           ( nProfile == 1 || nProfile == 3 );
@@ -776,8 +758,7 @@ void CTFGameRules::TF2VUpdateQuickPlayCompliance()
     Log( "certified_partial",     tf2v_certified_partial.GetBool(),     bPartialCert );
     Log( "certified_casual",      tf2v_certified_casual.GetBool(),      bFullCasual || bPartialCasual );
     Log( "certified_competitive", tf2v_certified_competitive.GetBool(), bFullComp   || bPartialComp   );
-    Log( "ps3",                   tf2v_certified_ps3.GetBool(),         bPS3         );
-    Log( "xbox",                  tf2v_certified_xbox.GetBool(),        bXbox        );
+    Log( "quiet_server",          tf2v_quiet_server.GetBool(),          bQuietServer         );
     Log( "quickplay_casual",      tf2v_quickplay_casual.GetBool(),      bQPCasual    );
     Log( "quickplay_competitive", tf2v_quickplay_competitive.GetBool(), bQPComp      );
 
@@ -785,8 +766,7 @@ void CTFGameRules::TF2VUpdateQuickPlayCompliance()
     tf2v_certified_partial.SetValue( bPartialCert ? 1 : 0 );
     tf2v_certified_casual.SetValue( ( bFullCasual || bPartialCasual ) ? 1 : 0 );
     tf2v_certified_competitive.SetValue( ( bFullComp || bPartialComp ) ? 1 : 0 );
-    tf2v_certified_ps3.SetValue( bPS3 ? 1 : 0 );
-    tf2v_certified_xbox.SetValue( bXbox ? 1 : 0 );
+    tf2v_quiet_server.SetValue( bQuietServer ? 1 : 0 );
     tf2v_quickplay_casual.SetValue( bQPCasual ? 1 : 0 );
     tf2v_quickplay_competitive.SetValue( bQPComp ? 1 : 0 );
 }
