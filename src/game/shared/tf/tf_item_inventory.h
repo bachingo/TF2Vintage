@@ -84,6 +84,18 @@ public:
 
 	void				OnHasNewQuest();
 
+#ifdef CLIENT_DLL
+	// Returns true if inventory was loaded from the offline disk cache rather
+	// than a live GC/webapi session. Used by the client GC system to decide
+	// whether to skip the webapi fetch and attach an offline_items blob.
+	bool				IsOfflineCacheActive() const { return !m_vecOfflineItems.IsEmpty(); }
+
+	// Serializes the offline item cache into a CMsgSOCacheSubscribed blob,
+	// base64-encoded, ready to pass directly to AddLocalSOCache on the server.
+	// Returns false if there are no offline items or serialization fails.
+	bool				BuildOfflineSOCacheBlob( CUtlMemory<char> &bufOut );
+#endif
+
 	static CEconItemView *GetFirstItemOfItemDef( item_definition_index_t nDefIndex, CPlayerInventory* pInventory = NULL );
 
 protected:
@@ -126,16 +138,6 @@ private:
 	// when the webapi is not yet available.
 	void				SaveOfflineItemCache();
 	bool				LoadOfflineItemCache();
-
-	// Returns true if inventory was loaded from the offline disk cache rather
-	// than a live GC/webapi session. Used by the client GC system to decide
-	// whether to skip the webapi fetch and attach an offline_items blob.
-	bool				IsOfflineCacheActive() const { return !m_vecOfflineItems.IsEmpty(); }
-
-	// Serializes the offline item cache into a CMsgSOCacheSubscribed blob,
-	// base64-encoded, ready to pass directly to AddLocalSOCache on the server.
-	// Returns false if there are no offline items or serialization fails.
-	bool				BuildOfflineSOCacheBlob( CUtlMemory<char> &bufOut );
 
 	// Injects mod and loaner items from CTFInventoryManager into this inventory.
 	// Called at the end of LoadOfflineItemCache() and SOCacheSubscribed().

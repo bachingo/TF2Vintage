@@ -43,6 +43,7 @@
 #include "tf_gcmessages.h"
 #include "econ_item.h"
 #include "game_item_schema.h"
+#include "gcsdk/gcclient_sharedobjectcache.pb.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -337,7 +338,7 @@ void CTFInventoryManager::LoadModItems()
     m_ModItemsBacking.PurgeAndDeleteElements();
 
     KeyValues *pKV = new KeyValues( "mod_items" );
-    if ( !pKV->LoadFromFile( static_cast<IBaseFileSystem *>( g_pFullFileSystem ),
+    if ( !pKV->LoadFromFile( reinterpret_cast<IBaseFileSystem *>( g_pFullFileSystem ),
                              "scripts/items/mod_items.txt", "GAME" ) )
     {
         // File absent or malformed — not an error, mod items are optional.
@@ -389,7 +390,7 @@ void CTFInventoryManager::LoadLoanerItems()
     m_LoanerItemsBacking.PurgeAndDeleteElements();
 
     KeyValues *pKV = new KeyValues( "loaner_items" );
-    if ( !pKV->LoadFromFile( static_cast<IBaseFileSystem *>( g_pFullFileSystem ),
+    if ( !pKV->LoadFromFile( reinterpret_cast<IBaseFileSystem *>( g_pFullFileSystem ),
                              "scripts/items/loaner_items.txt", "GAME" ) )
     {
         // File absent or malformed — not an error, loaner items are optional.
