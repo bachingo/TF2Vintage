@@ -253,6 +253,8 @@ public:
 	// the result to the offline cache. Works even when offline mode is active.
 	void RefreshInventoryFromGC();
 
+	bool m_bPendingOfflineCacheSave = false;
+	bool ConsumePendingOfflineCacheSave() { bool b = m_bPendingOfflineCacheSave; m_bPendingOfflineCacheSave = false; return b; }
 protected:
 
 	// CGCClientSystem
@@ -315,8 +317,6 @@ private:
 	//
 	// SDK inventory
 	//
-	bool m_bPendingOfflineCacheSave = false;
-	bool ConsumePendingOfflineCacheSave() { bool b = m_bPendingOfflineCacheSave; m_bPendingOfflineCacheSave = false; return b; }
 	
 	void WebapiInventoryThink();
 	void OnWebapiInventoryReceived( HTTPRequestCompleted_t* pInfo, bool bIOFailure );
