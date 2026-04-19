@@ -315,6 +315,9 @@ private:
 	//
 	// SDK inventory
 	//
+	bool m_bPendingOfflineCacheSave = false;
+	bool ConsumePendingOfflineCacheSave() { bool b = m_bPendingOfflineCacheSave; m_bPendingOfflineCacheSave = false; return b; }
+	
 	void WebapiInventoryThink();
 	void OnWebapiInventoryReceived( HTTPRequestCompleted_t* pInfo, bool bIOFailure );
 	void OnWebapiAuthTicketReceived( GetTicketForWebApiResponse_t* pInfo );

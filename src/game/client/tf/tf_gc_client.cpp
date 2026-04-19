@@ -335,7 +335,7 @@ bool CTFGCClientSystem::WebapiInventoryState_t::IsBackingOff()
 //     Use inventory_refresh to manually sync when desired.
 static ConVar tf_offline_inventory_autoupdate(
 	"tf_offline_inventory_autoupdate", "0", FCVAR_ARCHIVE,
-	"0=autoupdate offline (sync on startup), 1=fully offline. Use inventory_refresh to force a sync." );
+	"0=fully offline. Use inventory_refresh to force a sync, 1=autoupdate offline (sync on startup)." );
 
 void CTFGCClientSystem::WebapiInventoryThink()
 {
@@ -350,27 +350,27 @@ void CTFGCClientSystem::WebapiInventoryThink()
 	case kWebapiInventoryState_Init:
 	{
 		// tf_offline_inventory_autoupdate controls the inventory source:
-		//   0 = autoupdate: run ONE live webapi fetch per session to refresh the
+		//   0 = fully offline: skip the webapi entirely as long as a cache exists.
+		//       If no cache exists, falls through once to build it.
+		//   1 = autoupdate: run ONE live webapi fetch per session to refresh the
 		//       offline cache, then stay offline. m_bDidLiveFetchThisSession gates
 		//       re-fetching so loadout changes do not trigger another round-trip.
 		//       If no offline cache exists yet, the first fetch builds it.
-		//   1 = fully offline: skip the webapi entirely as long as a cache exists.
-		//       If no cache exists, falls through once to build it.
 		CTFPlayerInventory *pLocalInv =
 			dynamic_cast<CTFPlayerInventory *>( TFInventoryManager()->GetLocalInventory() );
 		const bool bHaveOfflineCache = pLocalInv && pLocalInv->IsOfflineCacheActive();
-		const bool bFullyOffline = tf_offline_inventory_autoupdate.GetBool();
+		const bool bAutoUpdate = tf_offline_inventory_autoupdate.GetBool();
 
-		if ( bFullyOffline && bHaveOfflineCache )
+		if ( !bAutoUpdate && bHaveOfflineCache )
 		{
-			// Mode 1: never touch the webapi.
+			// Mode 0: never touch the webapi.
 			state.m_eState = kWebapiInventoryState_InventoryReceived;
 			break;
 		}
 
-		if ( !bFullyOffline && bHaveOfflineCache && m_bDidLiveFetchThisSession )
+		if ( bAutoUpdate && bHaveOfflineCache && m_bDidLiveFetchThisSession )
 		{
-			// Mode 0: live fetch already ran this session, stay offline until
+			// Mode 1: live fetch already ran this session, stay offline until
 			// inventory_refresh resets m_bDidLiveFetchThisSession.
 			state.m_eState = kWebapiInventoryState_InventoryReceived;
 			break;
@@ -857,6 +857,7 @@ void CTFGCClientSystem::OnWebapiInventoryReceived( HTTPRequestCompleted_t* pInfo
 
 		// Version should match the one they said we have
 		Assert( pSOCache->GetVersion() == pValues->GetChildUInt64Value( "version" ) );
+		m_bPendingOfflineCacheSave = true
 	}
 	else
 	{
@@ -1635,7 +1636,12 @@ void CTFGCClientSystem::RefreshInventoryFromGC()
 {
 	m_bDidLiveFetchThisSession = false;
 	m_WebapiInventory.RequestSucceeded(); // clear any backoff timer
-	m_WebapiInventory.m_eState = kWebapiInventoryState_Init;
+    // Only restart from resting states. Mid-flight fetches complete on their own.
+    if ( m_WebapiInventory.m_eState == kWebapiInventoryState_InventoryReceived
+      || m_WebapiInventory.m_eState == kWebapiInventoryState_SentToServer )
+    {
+        m_WebapiInventory.m_eState = kWebapiInventoryState_Init;
+    }
 	Msg( "[Inventory] Refresh requested — fetching from webapi.\n" );
 }
 

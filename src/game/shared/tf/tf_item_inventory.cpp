@@ -2210,7 +2210,7 @@ void CTFPlayerInventory::SOCacheSubscribed( const CSteamID & steamIDOwner, GCSDK
 #ifdef CLIENT_DLL
 	// Snapshot to disk only when we got real live data from the webapi.
 	// BIsLocal() is true on caches we injected ourselves — don't re-snapshot those.
-	if ( m_bGotItemsFromSteam && m_pSOCache && !m_pSOCache->BIsLocal() )
+	if ( m_bGotItemsFromSteam && m_pSOCache && GTFGCClientSystem()->ConsumePendingOfflineCacheSave() )
 	{
 		SaveOfflineItemCache();
 	}
