@@ -43,7 +43,7 @@
 #include "tf_gcmessages.h"
 #include "econ_item.h"
 #include "game_item_schema.h"
-#include "gcsdk/gcclient_sharedobjectcache.pb.h"
+#include "gcsdk/gcclient_sharedobjectcache.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
