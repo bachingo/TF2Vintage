@@ -302,6 +302,8 @@ extern ConVar mp_developer;
 extern ConVar bot_mimic;
 #endif // _DEBUG || STAGING_ONLY 
 
+extern ConVar tf2v_disable_cosmetics;
+
 extern CBaseEntity *FindPickerEntity( CBasePlayer *pPlayer );
 extern bool CanScatterGunKnockBack( CTFWeaponBase *pWeapon, float flDamage, float flDistanceSq );
 extern bool IsCustomGameMode();
@@ -2291,8 +2293,6 @@ void CTFPlayer::PreThink()
 
 ConVar mp_idledealmethod( "mp_idledealmethod", "1", FCVAR_GAMEDLL, "Deals with Idle Players. 1 = Sends them into Spectator mode then kicks them if they're still idle, 2 = Kicks them out of the game;" );
 ConVar mp_idlemaxtime( "mp_idlemaxtime", "3", FCVAR_GAMEDLL, "Maximum time a player is allowed to be idle (in minutes)" );
-
-extern Convar tf2v_disable_cosmetics;
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -4995,7 +4995,7 @@ CEconItemView *CTFPlayer::GetLoadoutItem( int iClass, int iSlot, bool bReportWhi
 		return pInventoryManager->GetBaseItemForClass( iClass, iSlot );
 	}
 	
-	if ( tf2v_disable_cosmetics.GetInt() && IsWearableSlot( iSlot ) )
+	if ( tf2v_disable_cosmetics.GetBool() && IsWearableSlot( iSlot ) )
 		return nullptr;
 
 	CEconItemView *pItem = m_Inventory.GetItemInLoadout( iClass, iSlot );
