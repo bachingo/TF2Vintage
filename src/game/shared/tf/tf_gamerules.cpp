@@ -1190,6 +1190,8 @@ ConVar tf_powerup_mode_killcount_timer_length( "tf_powerup_mode_killcount_timer_
 
 ConVar tf_skillrating_update_interval( "tf_skillrating_update_interval", "180", FCVAR_ARCHIVE, "How often to update the GC and OGS." );
 
+ConVar tf2v_disable_cosmetics( "tf2v_disable_cosmetics", "0", FCVAR_GAMEDLL, "When enabled, disables the cosmetic system on the server.", true, 0, true, 1 );
+
 extern ConVar mp_teams_unbalance_limit;
 
 static bool g_bRandomMap = false;
@@ -18832,6 +18834,7 @@ convar_tags_t convars_to_check_for_tags[] =
 	{ "tf2v_quickplay_casual",      "quickplay_casual",      NULL },
 	{ "tf2v_quickplay_competitive", "quickplay_competitive", NULL },
 	{ "tf2v_quiet", 				"quiet",				 NULL },
+	{ "tf2v_disable_cosmetics", 	"hatless",				 NULL },
 };
 
 //-----------------------------------------------------------------------------
