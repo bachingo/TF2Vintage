@@ -30,6 +30,7 @@
 #include "materialsystem/itexture.h"
 
 #include "tf_gc_client.h"
+#include "gcsdk/gcsdk_auto.h"
 
 #else
 #include "tf_player.h"
@@ -282,14 +283,6 @@ void CTFInventoryManager::GenerateBaseItems( void )
 }
 
 //-----------------------------------------------------------------------------
-// Base item ID for synthetic mod items. These IDs are above any realistic GC-
-// issued range and are deterministic (defindex-based) so local_loadout.txt
-// slot assignments that reference them remain stable across sessions.
-//-----------------------------------------------------------------------------
-static const itemid_t k_ModItemIDBase    = 0x0000FF0000000000ULL;
-static const itemid_t k_LoanerItemIDBase = 0x0000FE0000000000ULL;
-
-//-----------------------------------------------------------------------------
 // Purpose: Helper — allocate a CEconItem and matching CEconItemView for a flat
 //          synthetic item. Returns the view (owned by the caller) or nullptr on
 //          failure. The backing CEconItem* is stored in vecOwned.
@@ -344,7 +337,7 @@ void CTFInventoryManager::LoadModItems()
     m_ModItemsBacking.PurgeAndDeleteElements();
 
     KeyValues *pKV = new KeyValues( "mod_items" );
-    if ( !pKV->LoadFromFile( g_pFullFileSystem,
+    if ( !pKV->LoadFromFile( static_cast<IBaseFileSystem *>( g_pFullFileSystem ),
                              "scripts/items/mod_items.txt", "GAME" ) )
     {
         // File absent or malformed — not an error, mod items are optional.
@@ -396,7 +389,7 @@ void CTFInventoryManager::LoadLoanerItems()
     m_LoanerItemsBacking.PurgeAndDeleteElements();
 
     KeyValues *pKV = new KeyValues( "loaner_items" );
-    if ( !pKV->LoadFromFile( g_pFullFileSystem,
+    if ( !pKV->LoadFromFile( static_cast<IBaseFileSystem *>( g_pFullFileSystem ),
                              "scripts/items/loaner_items.txt", "GAME" ) )
     {
         // File absent or malformed — not an error, loaner items are optional.
@@ -1672,6 +1665,8 @@ CEconItemView *CTFPlayerInventory::GetCacheServerItemInLoadout( int iClass, int 
 	}
 
 	return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+}
+#endif // CLIENT_DLL
 
 //-----------------------------------------------------------------------------
 // Purpose: Builds a base64-encoded CMsgSOCacheSubscribed blob from the offline
@@ -1778,6 +1773,7 @@ void CTFPlayerInventory::InjectModAndLoanerItems()
 #endif // CLIENT_DLL
 
 
+#ifdef CLIENT_DLL
 bool CTFPlayerInventory::BuildOfflineSOCacheBlob( CUtlMemory<char> &bufOut )
 {
 	if ( m_vecOfflineItems.IsEmpty() )
@@ -1818,7 +1814,6 @@ bool CTFPlayerInventory::BuildOfflineSOCacheBlob( CUtlMemory<char> &bufOut )
 		reinterpret_cast<const uint8 *>( sMsgBytes.data() ),
 		static_cast<uint32>( sMsgBytes.size() ),
 		bufOut );
-}
 }
 #endif // CLIENT_DLL
 

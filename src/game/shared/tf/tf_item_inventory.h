@@ -197,7 +197,7 @@ protected:
 	// Called after the local inventory's AddSOCacheListener() has run, so the
 	// inventory is registered and will receive the SOCacheSubscribed callback
 	// that LoadOfflineItemCache triggers.
-	virtual void		PostInitGC() OVERRIDE;
+	virtual void		PostInitGC();
 #endif // CLIENT_DLL
 
 public:
