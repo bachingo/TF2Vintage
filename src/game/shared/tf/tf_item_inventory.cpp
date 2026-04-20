@@ -2708,19 +2708,21 @@ bool CTFPlayerInventory::LoadOfflineItemCache()
 		const char *pszEquipped = pItemKV->GetString( "equipped", "" );
 		if ( pszEquipped && pszEquipped[0] )
 		{
-			// Parse space-separated "class,slot" pairs
-			char szBuf[256];
-			V_strncpy( szBuf, pszEquipped, sizeof(szBuf) );
-			char *pCtx = nullptr;
-			for ( char *pTok = strtok_s( szBuf, " ", &pCtx );
-			      pTok;
-			      pTok = strtok_s( nullptr, " ", &pCtx ) )
+			// Walk the space-separated "class,slot" pairs without strtok to
+			// avoid the strtok_s (Windows) vs strtok_r (Linux) mismatch.
+			const char *pScan = pszEquipped;
+			while ( *pScan )
 			{
+				// Skip spaces
+				while ( *pScan == ' ' ) ++pScan;
+				if ( !*pScan ) break;
+
 				int iClass = 0, iSlot = 0;
-				if ( sscanf( pTok, "%d,%d", &iClass, &iSlot ) == 2 )
-				{
+				if ( sscanf( pScan, "%d,%d", &iClass, &iSlot ) == 2 )
 					pEconItem->Equip( (equipped_class_t)iClass, (equipped_slot_t)iSlot );
-				}
+
+				// Advance past this token
+				while ( *pScan && *pScan != ' ' ) ++pScan;
 			}
 		}
 
