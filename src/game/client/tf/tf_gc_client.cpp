@@ -360,13 +360,13 @@ void CTFGCClientSystem::WebapiInventoryThink()
 		if ( !bAutoUpdate )
 		{
 			const bool bFileExists = g_pFullFileSystem &&
-				g_pFullFileSystem->FileExists( OFFLINE_ITEM_CACHE_FILE, "MOD" );
+				g_pFullFileSystem->FileExists( "cfg/offline_item_cache.txt", "MOD" );
 			if ( bFileExists )
 			{
 				// File exists — stay offline. If in-memory load failed earlier,
 				// try again now that the schema may be ready.
 				if ( pLocalInv && !pLocalInv->IsOfflineCacheActive() )
-					pLocalInv->LoadOfflineItemCache();
+					pLocalInv->TryLoadOfflineItemCache();
 				state.m_eState = kWebapiInventoryState_InventoryReceived;
 				break;
 			}

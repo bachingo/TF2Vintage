@@ -99,6 +99,12 @@ public:
 	// Public so CTFGCClientSystem can call it directly in the version-match path
 	// (when the webapi says the cache is current and SOCacheSubscribed won't fire).
 	void				SaveOfflineItemCache();
+
+	// Attempts to load cfg/offline_item_cache.txt into memory. Called from
+	// WebapiInventoryThink when the file exists but IsOfflineCacheActive() is false
+	// (e.g. schema wasn't ready on the first load attempt). Public wrapper around
+	// the private LoadOfflineItemCache so CTFGCClientSystem can call it.
+	void				TryLoadOfflineItemCache() { LoadOfflineItemCache(); }
 #endif
 
 	static CEconItemView *GetFirstItemOfItemDef( item_definition_index_t nDefIndex, CPlayerInventory* pInventory = NULL );

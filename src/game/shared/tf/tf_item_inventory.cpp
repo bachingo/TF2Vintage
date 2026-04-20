@@ -2643,7 +2643,7 @@ void CTFPlayerInventory::SaveOfflineItemCache()
 
 	// Save additional backpack slots from the GC account object so GetMaxItemCount()
 	// returns the correct value when running fully offline (m_pSOCache is null).
-	CEconGameAccountClient *pAcct = pSOCache ? pSOCache->GetSingleton<CEconGameAccountClient>() : nullptr;
+	CEconGameAccountClient *pAcct = m_pSOCache->GetSingleton<CEconGameAccountClient>();
 	if ( pAcct )
 		pRootKV->SetInt( "backpack_slots", pAcct->Obj().additional_backpack_slots() );
 
