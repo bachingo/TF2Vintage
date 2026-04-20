@@ -2712,9 +2712,9 @@ bool CTFPlayerInventory::LoadOfflineItemCache()
 			char szBuf[256];
 			V_strncpy( szBuf, pszEquipped, sizeof(szBuf) );
 			char *pCtx = nullptr;
-			for ( char *pTok = V_strtok( szBuf, " ", &pCtx );
+			for ( char *pTok = strtok_s( szBuf, " ", &pCtx );
 			      pTok;
-			      pTok = V_strtok( nullptr, " ", &pCtx ) )
+			      pTok = strtok_s( nullptr, " ", &pCtx ) )
 			{
 				int iClass = 0, iSlot = 0;
 				if ( sscanf( pTok, "%d,%d", &iClass, &iSlot ) == 2 )
