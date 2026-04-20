@@ -1748,7 +1748,13 @@ void CTFPlayerInventory::InjectModAndLoanerItems()
         {
             CEconItemView *pView = GetInventoryItemByItemID( ulID );
             if ( pView )
+            {
                 pView->SetNonSOEconItem( pEconItem );
+                // ItemHasBeenUpdated fired with null GetSOCData() (no m_pSOCache,
+                // m_pNonSOEconItem not yet set), so equipped state was not applied.
+                // Mod items start unequipped — no extra action needed here.
+                // They'll be picked up by LoadLocalLoadout if previously assigned.
+            }
         }
     }
 
@@ -2772,7 +2778,24 @@ bool CTFPlayerInventory::LoadOfflineItemCache()
 		{
 			CEconItemView *pView = GetInventoryItemByItemID( nItemID );
 			if ( pView )
+			{
 				pView->SetNonSOEconItem( pEconItem );
+
+				// ItemHasBeenUpdated fired inside AddEconItem while GetSOCData() was
+				// still null (m_pSOCache is null and m_pNonSOEconItem wasn't set yet).
+				// That means UpdateEquipStateForClass saw INVALID_EQUIPPED_SLOT for
+				// every class and did NOT populate m_LoadoutItems. Fix that now by
+				// reading the equipped state directly from pEconItem and writing it.
+				for ( equipped_class_t iClass = TF_FIRST_NORMAL_CLASS; iClass < TF_LAST_NORMAL_CLASS; iClass++ )
+				{
+					equipped_slot_t iSlot = pEconItem->GetEquippedPositionForClass( iClass );
+					if ( iSlot != INVALID_EQUIPPED_SLOT && iSlot < CLASS_LOADOUT_POSITION_COUNT )
+					{
+						m_LoadoutItems[iClass][iSlot] = nItemID;
+						m_bLoadoutChanged[iClass] = true;
+					}
+				}
+			}
 		}
 		++nLoaded;
 	}
@@ -2793,12 +2816,19 @@ bool CTFPlayerInventory::LoadOfflineItemCache()
 	InventoryManager()->CleanAckFile();
 	InventoryManager()->SaveAckFile();
 
+	// Inject mod/loaner items BEFORE LoadLocalLoadout so that when LoadLocalLoadout
+	// calls GetInventoryItemByItemID(uItemId) for synthetic item IDs stored in
+	// local_loadout.txt, the items are already present and Equip() succeeds.
+	InjectModAndLoanerItems();
+
+	// UpdateRealTFLoadoutItems snapshots m_LoadoutItems (which now includes both
+	// real items restored from the "equipped" fields above, and synthetic items
+	// from InjectModAndLoanerItems). LoadLocalLoadout then applies the user's
+	// preset on top of that baseline.
 	UpdateRealTFLoadoutItems();
 	LoadLocalLoadout();
 	VerifyChangedLoadoutsAreValid();
 	UpdateCachedServerLoadoutItems();
-
-	InjectModAndLoanerItems();
 
 	DevMsg( "[OfflineInventory] Loaded %d items from %s\n", nLoaded, OFFLINE_ITEM_CACHE_FILE );
 	return true;
