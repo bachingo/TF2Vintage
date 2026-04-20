@@ -349,31 +349,38 @@ void CTFGCClientSystem::WebapiInventoryThink()
 	{
 	case kWebapiInventoryState_Init:
 	{
-		// tf_offline_inventory_autoupdate controls the inventory source:
-		//   0 = fully offline: skip the webapi entirely as long as a cache exists.
-		//       If no cache exists, falls through once to build it.
-		//   1 = autoupdate: run ONE live webapi fetch per session to refresh the
-		//       offline cache, then stay offline. m_bDidLiveFetchThisSession gates
-		//       re-fetching so loadout changes do not trigger another round-trip.
-		//       If no offline cache exists yet, the first fetch builds it.
 		CTFPlayerInventory *pLocalInv =
 			dynamic_cast<CTFPlayerInventory *>( TFInventoryManager()->GetLocalInventory() );
-		const bool bHaveOfflineCache = pLocalInv && pLocalInv->IsOfflineCacheActive();
 		const bool bAutoUpdate = tf_offline_inventory_autoupdate.GetBool();
 
-		if ( !bAutoUpdate && bHaveOfflineCache )
+		// For fully offline mode (cvar=0), check the disk file directly rather than
+		// IsOfflineCacheActive(). IsOfflineCacheActive() can be false if the schema
+		// wasn't ready when LoadOfflineItemCache ran and AddEconItem failed silently —
+		// but the file is still on disk and valid, and we should NOT fetch from the webapi.
+		if ( !bAutoUpdate )
 		{
-			// Mode 0: never touch the webapi.
-			state.m_eState = kWebapiInventoryState_InventoryReceived;
-			break;
+			const bool bFileExists = g_pFullFileSystem &&
+				g_pFullFileSystem->FileExists( OFFLINE_ITEM_CACHE_FILE, "MOD" );
+			if ( bFileExists )
+			{
+				// File exists — stay offline. If in-memory load failed earlier,
+				// try again now that the schema may be ready.
+				if ( pLocalInv && !pLocalInv->IsOfflineCacheActive() )
+					pLocalInv->LoadOfflineItemCache();
+				state.m_eState = kWebapiInventoryState_InventoryReceived;
+				break;
+			}
+			// No file — fall through to fetch once to build it.
 		}
-
-		if ( bAutoUpdate && bHaveOfflineCache && m_bDidLiveFetchThisSession )
+		else
 		{
-			// Mode 1: live fetch already ran this session, stay offline until
-			// inventory_refresh resets m_bDidLiveFetchThisSession.
-			state.m_eState = kWebapiInventoryState_InventoryReceived;
-			break;
+			// Autoupdate mode (cvar=1): fetch once per session, then stay offline.
+			const bool bHaveOfflineCache = pLocalInv && pLocalInv->IsOfflineCacheActive();
+			if ( bHaveOfflineCache && m_bDidLiveFetchThisSession )
+			{
+				state.m_eState = kWebapiInventoryState_InventoryReceived;
+				break;
+			}
 		}
 
 		// Falls through to RequestAuthToken to run the live fetch.

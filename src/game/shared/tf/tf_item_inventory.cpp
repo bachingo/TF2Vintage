@@ -1687,14 +1687,9 @@ CEconItemView *CTFPlayerInventory::GetCacheServerItemInLoadout( int iClass, int 
 void CTFPlayerInventory::InjectModAndLoanerItems()
 {
     // ── Step 1: Remove stale synthetic views from m_aInventoryItems FIRST ──
-    // We must do this before PurgeAndDeleteElements on the backing vectors.
-    // If we free the CEconItem* objects first, the views in m_aInventoryItems
-    // still hold dangling m_pNonSOEconItem pointers. Then GetInventoryItemByItemID
-    // finds those stale views and skips re-injection entirely, leaving broken items.
-    // Both synthetic ID ranges are safely above any real GC-issued item ID:
-    //   k_LoanerItemIDBase = 0x0000FE0000000000
-    //   k_ModItemIDBase    = 0x0000FF0000000000
-    // Any item ID >= k_LoanerItemIDBase is synthetic and must be cleared first.
+    // Must happen before PurgeAndDeleteElements — freeing CEconItem* objects first
+    // leaves dangling m_pNonSOEconItem pointers in the views, causing
+    // GetInventoryItemByItemID to find stale views and skip re-injection.
     for ( int i = m_aInventoryItems.Count() - 1; i >= 0; --i )
     {
         if ( m_aInventoryItems[i].GetItemID() >= k_LoanerItemIDBase )
@@ -1705,6 +1700,26 @@ void CTFPlayerInventory::InjectModAndLoanerItems()
     // ── Step 2: Free old backing CEconItem objects ──
     m_vecModItems.PurgeAndDeleteElements();
     m_vecLoanerItems.PurgeAndDeleteElements();
+
+    // ── Step 3: Find the highest occupied backpack slot ──
+    // Synthetic items need new-format acknowledged tokens so ValidateInventoryPositions
+    // doesn't treat them as unacknowledged (pickup queue) or old-format (GC write).
+    // New-format token = slot_number | 0x40000000.
+    // SetItemBackpackPosition requires a live SOCache (GC round-trip), so we assign
+    // tokens directly on the CEconItem before AddEconItem instead.
+    int nNextSlot = 1;
+    for ( int i = 0; i < GetItemCount(); ++i )
+    {
+        CEconItemView *pV = GetItem( i );
+        if ( !pV ) continue;
+        uint32 tok = pV->GetInventoryPosition();
+        if ( !IsUnacknowledged( tok ) )
+        {
+            int nSlot = TFInventoryManager()->GetBackpackPositionFromBackend( tok );
+            if ( nSlot >= nNextSlot )
+                nNextSlot = nSlot + 1;
+        }
+    }
 
     CTFInventoryManager *pMgr = TFInventoryManager();
 
@@ -1723,31 +1738,28 @@ void CTFPlayerInventory::InjectModAndLoanerItems()
         pEconItem->SetItemLevel( 1 );
         pEconItem->SetOrigin( kEconItemOrigin_Invalid );
         pEconItem->SetAccountID( 0 );
+        // Assign a new-format acknowledged token so this item lands in the normal
+        // backpack rather than the unacknowledged pickup queue.
+        pEconItem->SetInventoryToken( (uint32)nNextSlot | 0x40000000u );
+        ++nNextSlot;
         m_vecModItems.AddToTail( pEconItem );
 
         if ( AddEconItem( pEconItem, false, false, false ) )
         {
             CEconItemView *pView = GetInventoryItemByItemID( ulID );
             if ( pView )
-            {
                 pView->SetNonSOEconItem( pEconItem );
-                // Assign a real backpack slot so the item is acknowledged and
-                // appears in the normal backpack, not the pickup queue.
-                // Passing slot=0 with bFindOpenSlot=true finds the first free slot.
-                TFInventoryManager()->SetItemBackpackPosition( pView, 0, false, true );
-            }
         }
     }
 
     // ── Loaner items ──
-    // Only inject loaner items the player does NOT already own a real copy of
-    // (i.e. no GC item with the same def_index and an ID below k_LoanerItemIDBase).
+    // Only inject loaner items the player does NOT already own a real copy of.
     for ( int i = 0; i < pMgr->GetLoanerItemCount(); ++i )
     {
         CEconItemView *pSrc = pMgr->GetLoanerItem( i );
         if ( !pSrc ) continue;
 
-        const item_definition_index_t nDef    = pSrc->GetItemDefIndex();
+        const item_definition_index_t nDef      = pSrc->GetItemDefIndex();
         const itemid_t               ulLoanerID = pSrc->GetItemID();
 
         bool bPlayerOwnsReal = false;
@@ -1771,16 +1783,15 @@ void CTFPlayerInventory::InjectModAndLoanerItems()
         pEconItem->SetItemLevel( 1 );
         pEconItem->SetOrigin( kEconItemOrigin_QuestLoanerItem );
         pEconItem->SetAccountID( 0 );
+        pEconItem->SetInventoryToken( (uint32)nNextSlot | 0x40000000u );
+        ++nNextSlot;
         m_vecLoanerItems.AddToTail( pEconItem );
 
         if ( AddEconItem( pEconItem, false, false, false ) )
         {
             CEconItemView *pView = GetInventoryItemByItemID( ulLoanerID );
             if ( pView )
-            {
                 pView->SetNonSOEconItem( pEconItem );
-                TFInventoryManager()->SetItemBackpackPosition( pView, 0, false, true );
-            }
         }
     }
 }
@@ -1966,12 +1977,18 @@ int	CTFPlayerInventory::GetMaxItemCount( void ) const
 		}
 		iMaxItems += pGameAccountClient->Obj().additional_backpack_slots();
 	}
+#ifdef CLIENT_DLL
+	else
+	{
+		// No live SOCache — running offline. Use the slot count saved to disk by
+		// SaveOfflineItemCache so expanded backpacks still get the right size.
+		iMaxItems += m_nCachedAdditionalBackpackSlots;
+	}
+#endif
 
 	// Always add enough extra slots to hold every synthetic (loaner + mod) item
 	// the inventory manager injects, rounded up to the UI page size (50 slots)
 	// so the backpack panel always shows complete, aligned pages.
-	// This is additive on top of the account limit — a paid account with 300
-	// base slots gets 300+extra, a free account with 50 base slots gets 50+extra.
 	const int nSyntheticItems = TFInventoryManager()->GetModItemCount()
 	                          + TFInventoryManager()->GetLoanerItemCount();
 	if ( nSyntheticItems > 0 )
@@ -2214,19 +2231,32 @@ void CTFPlayerInventory::SOCacheSubscribed( const CSteamID & steamIDOwner, GCSDK
 {
 #ifdef CLIENT_DLL
 	// Free offline-allocated items before the base class purges m_aInventoryItems.
-	// If we don't do this first, CEconItemView::m_pNonSOEconItem pointers inside
-	// the sort vector become dangling when the base calls m_aInventoryItems.Purge().
 	m_vecOfflineItems.PurgeAndDeleteElements();
 #endif
 
 	BaseClass::SOCacheSubscribed( steamIDOwner, eEvent );
 
 #ifdef CLIENT_DLL
-	// Snapshot to disk only when we got real live data from the webapi.
-	// BIsLocal() is true on caches we injected ourselves — don't re-snapshot those.
+	// When fresh webapi data arrives, save it to disk then immediately reload
+	// from the file. This makes offline_item_cache.txt the single source of
+	// truth for in-memory inventory, so the live SOCache is only ever used as
+	// a data source for the file — never as the live inventory itself.
+	// This also ensures inventory_refresh, autoupdate, and manual edits to the
+	// file all behave consistently: the file is always what the player sees.
 	if ( m_bGotItemsFromSteam && m_pSOCache && GTFGCClientSystem()->ConsumePendingOfflineCacheSave() )
 	{
 		SaveOfflineItemCache();
+
+		// Reload from the freshly-written file. This repopulates m_aInventoryItems
+		// from the file (not the live SOCache), which is what we want:
+		//  - Respects any manual edits the user made to the file
+		//  - Ensures mod/loaner injection runs cleanly on a known-good inventory
+		//  - Decouples in-memory state from the live SOCache entirely
+		// Clear m_pSOCache AFTER saving so SaveOfflineItemCache can still read it,
+		// but BEFORE LoadOfflineItemCache so it builds with no live SOCache.
+		m_pSOCache = nullptr;
+		LoadOfflineItemCache();
+		return; // LoadOfflineItemCache runs all post-load steps; skip the ones below
 	}
 #endif
 
@@ -2237,7 +2267,6 @@ void CTFPlayerInventory::SOCacheSubscribed( const CSteamID & steamIDOwner, GCSDK
 	UpdateCachedServerLoadoutItems();
 
 #ifdef CLIENT_DLL
-	// Inject mod and loaner items on top of whatever inventory just arrived.
 	InjectModAndLoanerItems();
 #endif
 }
@@ -2612,6 +2641,12 @@ void CTFPlayerInventory::SaveOfflineItemCache()
 	KeyValues *pRootKV = new KeyValues( "offline_item_cache" );
 	int nSaved = 0;
 
+	// Save additional backpack slots from the GC account object so GetMaxItemCount()
+	// returns the correct value when running fully offline (m_pSOCache is null).
+	CEconGameAccountClient *pAcct = pSOCache ? pSOCache->GetSingleton<CEconGameAccountClient>() : nullptr;
+	if ( pAcct )
+		pRootKV->SetInt( "backpack_slots", pAcct->Obj().additional_backpack_slots() );
+
 	for ( uint32 i = 0; i < pTypeCache->GetCount(); ++i )
 	{
 		CEconItem *pItem = static_cast<CEconItem *>( pTypeCache->GetObject( i ) );
@@ -2684,6 +2719,9 @@ bool CTFPlayerInventory::LoadOfflineItemCache()
 	m_vecOfflineItems.PurgeAndDeleteElements();
 	m_aInventoryItems.Purge();
 	DirtyItemHandles();
+
+	// Restore cached account data that GetMaxItemCount() needs when offline.
+	m_nCachedAdditionalBackpackSlots = pRootKV->GetInt( "backpack_slots", 0 );
 
 	int nLoaded = 0;
 	FOR_EACH_TRUE_SUBKEY( pRootKV, pItemKV )

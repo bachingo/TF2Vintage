@@ -142,6 +142,10 @@ private:
 	// Offline inventory cache — loaded at startup when the webapi is not yet available.
 	bool				LoadOfflineItemCache();
 
+	// Additional backpack slots from the GC account object, cached to disk so
+	// GetMaxItemCount() returns the correct value when running fully offline.
+	int					m_nCachedAdditionalBackpackSlots = 0;
+
 	// Injects mod and loaner items from CTFInventoryManager into this inventory.
 	// Called at the end of LoadOfflineItemCache() and SOCacheSubscribed().
 	void				InjectModAndLoanerItems();
