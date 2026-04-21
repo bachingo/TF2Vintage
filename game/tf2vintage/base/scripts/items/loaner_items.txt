@@ -1,7 +1,6 @@
 // loaner_items.txt
 //
-// Items listed here are given to every player as loaner stand-ins,
-// regardless of whether they own the item in their real TF2 inventory.
+// Items listed here are given to every player as loaner stand-ins.
 // Players who legitimately own the item already are given their own copy instead.
 //
 // All loaner items are forced to:
@@ -9,8 +8,9 @@
 //   level    = 1
 //   origin   = kEconItemOrigin_QuestLoanerItem (25)
 //
-// Only "defindex" is read per entry — quality and level are not configurable
-// because uniformity is the point. Think of it like a library:
+// Only "defindex" is read per entry: quality and level are not configurable
+// because uniformity and for transparency that it's a borrowed item.
+// Think of it like the Tough Break blog post calls the Loaner Program:
 // "It's like a library, but for murder accessories!"
 //
 // Format:
@@ -20,7 +20,7 @@
 //   }
 //
 // To find defindex values, check scripts/items/items_game.txt and search
-// for the item by name, then read its "defindex" field.
+// for the "items" by name, then read the number field.
 // Alternatively, inspect the item in-game with item_dumpinv.
 //
 
