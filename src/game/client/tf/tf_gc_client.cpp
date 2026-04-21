@@ -360,7 +360,7 @@ void CTFGCClientSystem::WebapiInventoryThink()
 		if ( !bAutoUpdate )
 		{
 			const bool bFileExists = g_pFullFileSystem &&
-				g_pFullFileSystem->FileExists( "cfg/offline_item_cache.txt", "MOD" );
+				g_pFullFileSystem->FileExists( "cfg/local_inventory.txt", "MOD" );
 			if ( bFileExists )
 			{
 				// File exists — stay offline. If in-memory load failed earlier,

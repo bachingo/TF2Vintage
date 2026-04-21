@@ -50,7 +50,7 @@
 using namespace GCSDK;
 
 #define LOCAL_LOADOUT_FILE		"cfg/local_loadout.txt"
-#define OFFLINE_ITEM_CACHE_FILE	"cfg/offline_item_cache.txt"
+#define OFFLINE_ITEM_CACHE_FILE	"cfg/local_inventory.txt"
 
 #ifdef CLIENT_DLL
 //-----------------------------------------------------------------------------
@@ -1704,7 +1704,10 @@ void CTFPlayerInventory::InjectModAndLoanerItems()
     // ── Step 3: Find the highest occupied backpack slot ──
     // Synthetic items need new-format acknowledged tokens so ValidateInventoryPositions
     // doesn't treat them as unacknowledged (pickup queue) or old-format (GC write).
-    // New-format token = slot_number | 0x40000000.
+    // From econ_item_constants.h:
+    //   kBackendPosition_NewFormat = 1 << 31 = 0x80000000  (acknowledged, new format)
+    //   kBackendPosition_Unacked   = 1 << 30 = 0x40000000  (NOT acknowledged)
+    // A valid acknowledged new-format token = slot_number | 0x80000000.
     // SetItemBackpackPosition requires a live SOCache (GC round-trip), so we assign
     // tokens directly on the CEconItem before AddEconItem instead.
     int nNextSlot = 1;
@@ -1740,7 +1743,7 @@ void CTFPlayerInventory::InjectModAndLoanerItems()
         pEconItem->SetAccountID( 0 );
         // Assign a new-format acknowledged token so this item lands in the normal
         // backpack rather than the unacknowledged pickup queue.
-        pEconItem->SetInventoryToken( (uint32)nNextSlot | 0x40000000u );
+        pEconItem->SetInventoryToken( (uint32)nNextSlot | 0x80000000u );
         ++nNextSlot;
         m_vecModItems.AddToTail( pEconItem );
 
@@ -1789,7 +1792,7 @@ void CTFPlayerInventory::InjectModAndLoanerItems()
         pEconItem->SetItemLevel( 1 );
         pEconItem->SetOrigin( kEconItemOrigin_QuestLoanerItem );
         pEconItem->SetAccountID( 0 );
-        pEconItem->SetInventoryToken( (uint32)nNextSlot | 0x40000000u );
+        pEconItem->SetInventoryToken( (uint32)nNextSlot | 0x80000000u );
         ++nNextSlot;
         m_vecLoanerItems.AddToTail( pEconItem );
 
@@ -2244,7 +2247,7 @@ void CTFPlayerInventory::SOCacheSubscribed( const CSteamID & steamIDOwner, GCSDK
 
 #ifdef CLIENT_DLL
 	// When fresh webapi data arrives, save it to disk then immediately reload
-	// from the file. This makes offline_item_cache.txt the single source of
+	// from the file. This makes cfg/local_inventory.txt the single source of
 	// truth for in-memory inventory, so the live SOCache is only ever used as
 	// a data source for the file — never as the live inventory itself.
 	// This also ensures inventory_refresh, autoupdate, and manual edits to the
@@ -2566,8 +2569,8 @@ bool CTFInventoryManager::LoadPreset(equipped_class_t unClass, equipped_preset_t
 	if (!IsPresetIndexValid(unPreset))
 		return false;
 
-	if (!GetLocalInventory()->GetSOC())
-		return false;
+	// NOTE: removed GetSOC() check — preset switching is purely local (local_loadout.txt)
+	// and does not require a live GC connection.
 
 	if (!steamapicontext || !steamapicontext->SteamUser())
 		return false;
@@ -2632,19 +2635,20 @@ void CTFPlayerInventory::SaveOfflineItemCache()
 	// item ID, with individual fields for defindex, quality, level, inventory
 	// position, and equipped state. This is easy to inspect and edit by hand.
 	//
-	// Format:
-	//   "offline_item_cache"
+	// Format (cfg/local_inventory.txt):
+	//   "local_inventory"
 	//   {
-	//     "76561198012345678"   // item ID as key name
+	//     "backpack_slots"  "0"       // additional_backpack_slots from GC account
+	//     "76561198012345678"          // item ID as subkey name
 	//     {
 	//       "defindex"   "29"
 	//       "quality"    "6"
 	//       "level"      "10"
-	//       "pos"        "123456789"   // raw backend inventory token
+	//       "pos"        "2147483649"  // slot | kBackendPosition_NewFormat (0x80000000)
 	//       "equipped"   "3,1 5,1"    // space-separated class,slot pairs (optional)
 	//     }
 	//   }
-	KeyValues *pRootKV = new KeyValues( "offline_item_cache" );
+	KeyValues *pRootKV = new KeyValues( "local_inventory" );
 	int nSaved = 0;
 
 	// Save additional backpack slots from the GC account object so GetMaxItemCount()
@@ -2714,7 +2718,7 @@ bool CTFPlayerInventory::LoadOfflineItemCache()
 	if ( !g_pFullFileSystem->FileExists( OFFLINE_ITEM_CACHE_FILE, "MOD" ) )
 		return false;
 
-	KeyValues *pRootKV = new KeyValues( "offline_item_cache" );
+	KeyValues *pRootKV = new KeyValues( "local_inventory" );
 	if ( !pRootKV->LoadFromFile( g_pFullFileSystem, OFFLINE_ITEM_CACHE_FILE, "MOD" ) )
 	{
 		pRootKV->deleteThis();
