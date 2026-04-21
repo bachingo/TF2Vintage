@@ -232,8 +232,11 @@ void CTFInventoryManager::PostInit( void )
 {
 	BaseClass::PostInit();
 	GenerateBaseItems();
-	LoadModItems();
-	LoadLoanerItems();
+	// NOTE: LoadModItems and LoadLoanerItems are intentionally NOT called here.
+	// PostInit runs before the item schema is guaranteed to be fully loaded, so
+	// GetItemDefinition() returns null for every defindex and every synthetic item
+	// gets silently skipped. They are loaded in PostInitGC instead, where the
+	// schema is ready.
 }
 
 //-----------------------------------------------------------------------------
@@ -248,7 +251,12 @@ void CTFInventoryManager::PostInitGC()
 {
 	// Base calls UpdateLocalInventory() → RequestInventory() → AddSOCacheListener().
 	// The inventory is now registered and ready to receive items.
+	// The item schema is also guaranteed to be fully loaded at this point,
+	// so LoadModItems/LoadLoanerItems can safely call GetItemDefinition().
 	BaseClass::PostInitGC();
+
+	LoadModItems();
+	LoadLoanerItems();
 
 	CTFPlayerInventory *pLocalInv = GetLocalTFInventory();
 	if ( pLocalInv && !pLocalInv->RetrievedInventoryFromSteam() )
@@ -2814,7 +2822,6 @@ bool CTFPlayerInventory::LoadOfflineItemCache()
 	}
 
 	m_bGotItemsFromSteam = true;
-	ValidateInventoryPositions();
 	CInventoryManager::SendItemSystemConnectedEvent();
 	ResortInventory();
 	InventoryManager()->CleanAckFile();
@@ -2831,6 +2838,12 @@ bool CTFPlayerInventory::LoadOfflineItemCache()
 	// preset on top of that baseline.
 	UpdateRealTFLoadoutItems();
 	LoadLocalLoadout();
+
+	// Run ValidateInventoryPositions AFTER the full load sequence. Running it
+	// before means it iterates items whose equipped state is only partially
+	// established, and its UpdateInventoryEquippedState calls can write
+	// INVALID_ITEM_ID into m_LoadoutItems for legitimate entries, breaking presets.
+	ValidateInventoryPositions();
 	VerifyChangedLoadoutsAreValid();
 	UpdateCachedServerLoadoutItems();
 
