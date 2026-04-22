@@ -1190,8 +1190,8 @@ ConVar tf_powerup_mode_killcount_timer_length( "tf_powerup_mode_killcount_timer_
 
 ConVar tf_skillrating_update_interval( "tf_skillrating_update_interval", "180", FCVAR_ARCHIVE, "How often to update the GC and OGS." );
 
-ConVar tf2v_disable_cosmetics( "tf2v_disable_cosmetics", "0", FCVAR_ARCHIVE, "When enabled, disables the cosmetic system on the server.", true, 0, true, 1 );
-ConVar tf2v_legacy_items( "tf2v_legacy_items", "0", FCVAR_ARCHIVE, "When enabled, disables the item system on the server entirely and reverts to the weapon.txt files.", true, 0, true, 1 );
+ConVar tf2v_disable_cosmetics( "tf2v_disable_cosmetics", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_ARCHIVE, "When enabled, disables the cosmetic system on the server.", true, 0, true, 1 );
+ConVar tf2v_legacy_items( "tf2v_legacy_items", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_ARCHIVE, "When enabled, disables the item system on the server entirely and reverts to the weapon.txt files.", true, 0, true, 1 );
 
 extern ConVar mp_teams_unbalance_limit;
 
