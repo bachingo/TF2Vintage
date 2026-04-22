@@ -4995,9 +4995,6 @@ CEconItemView *CTFPlayer::GetLoadoutItem( int iClass, int iSlot, bool bReportWhi
 		CTFInventoryManager *pInventoryManager = TFInventoryManager();
 		return pInventoryManager->GetBaseItemForClass( iClass, iSlot );
 	}
-	
-	if ( tf2v_disable_cosmetics.GetBool() && IsWearableSlot( iSlot ) )
-		return nullptr;
 
 	CEconItemView *pItem = m_Inventory.GetItemInLoadout( iClass, iSlot );
 
@@ -5026,11 +5023,16 @@ CEconItemView *CTFPlayer::GetLoadoutItem( int iClass, int iSlot, bool bReportWhi
 					const CEconItemDefinition *pSlotDef = pItem->GetItemDefinition();
 					if ( !pSlotDef || !pSlotDef->IsActingAsAWeapon() )
 					{
+						if ( tf2v_disable_cosmetics.GetBool() )
+						{
+							ClientPrint( this, HUD_PRINTNOTIFY, "#TF2V_Hatless_Server" );
+							return nullptr;
+						}
 						// Cosmetic slot — no stock fallback, return nullptr to skip.
 						// bReportWhitelistFails gates the notification so it fires once
 						// (from ManageRegularWeapons) and not from ValidateWearables.
 						if ( bReportWhitelistFails )
-							ClientPrint( this, HUD_PRINTTALK, "#TF2V_Cosmetic_Era_Blocked", pszToken );
+							ClientPrint( this, HUD_PRINTNOTIFY, "#TF2V_Cosmetic_Era_Blocked", pszToken );
 						return nullptr;
 					}
 				}
