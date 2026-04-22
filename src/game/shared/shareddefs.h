@@ -258,7 +258,7 @@ enum CastVote
 	#define MAX_PLAYERS				33  // Absolute max players supported
 #endif
 */
-#define MAX_PLAYERS				33  // Absolute max players supported
+#define MAX_PLAYERS				25  // Absolute max players supported
 
 // Josh: Accounts for code that may index this array by an entindex
 // of player rather than the player index... :s
