@@ -17,8 +17,6 @@ $Group "gamedlls"
 
 $Group "game"
 {
-	"crash_handler"
-	"launcher_main"
 	"client"
 	"crash_handler"
 	"launcher_main"
