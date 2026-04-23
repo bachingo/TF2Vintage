@@ -703,11 +703,6 @@ private:
 	float			m_flCurrentTauntMoveSpeed;
 	float			m_flVehicleReverseTime;
 
-	// HL1-style voice chat mouth animation — smoothed envelope value.
-	// Written each frame in UpdateClientSideAnimation, read by ControlMouth
-	// via GetMouth()->mouthopen. Not networked — purely client-side cosmetic.
-	float			m_flCurrentMouthOpen;	// smoothed current value [0..64]
-
 	int				m_nTauntSequence;
 	float			m_flTauntStartTime;
 	float			m_flTauntDuration;

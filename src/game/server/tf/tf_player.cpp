@@ -133,11 +133,6 @@
 #include "info_camera_link.h"
 
 // TF2 Vintage
-#include "tf2v_item_era_enforcement.h"
-#include "tf2v_era_attributes.h"
-#include "tf_gamerules_convars.h"
-
-// NVNT haptic utils
 #include "haptics/haptic_utils.h"
 
 #include "gc_clientsystem.h"
@@ -302,13 +297,9 @@ extern ConVar mp_developer;
 extern ConVar bot_mimic;
 #endif // _DEBUG || STAGING_ONLY 
 
-extern ConVar tf2v_disable_cosmetics;
-extern ConVar tf2v_legacy_items;
-
 extern CBaseEntity *FindPickerEntity( CBasePlayer *pPlayer );
 extern bool CanScatterGunKnockBack( CTFWeaponBase *pWeapon, float flDamage, float flDistanceSq );
 extern bool IsCustomGameMode();
-
 
 static const char *s_pszTauntRPSParticleNames[] =
 {
@@ -4528,7 +4519,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 		GiveAmmo( GetMaxAmmo(iAmmo), iAmmo, true, kAmmoSource_Resupply );
 	}
 
-	if ( IsX360() || tf2v_legacy_items.GetBool() )
+	if ( IsX360() )
 	{
 		ManageRegularWeaponsLegacy( pData );
 	}
@@ -4559,22 +4550,9 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 				m_EquippedLoadoutItemIndices[i] = LOADOUT_SLOT_USE_BASE_ITEM;
 
 				// use base items in training mode
-				// Fetch the raw inventory item first so we can detect if GetLoadoutItem
-				// substituted a stock item due to era gating (for the player notification).
-				CEconItemView *pRawItem = m_Inventory.GetItemInLoadout( iClass, i );
 				CEconItemView *pItem = GetLoadoutItem( iClass, i, true );
 				if ( !pItem || !pItem->IsValid() )
 					continue;
-
-				// If GetLoadoutItem returned a different item than what is in the inventory,
-				// the era gate substituted stock. Notify the player once per slot.
-				if ( pRawItem && pRawItem->IsValid() && pRawItem != pItem &&
-				     pRawItem->GetItemID() != pItem->GetItemID() )
-				{
-					const char *pszToken = pRawItem->GetItemDefinition()
-						? pRawItem->GetItemDefinition()->GetItemBaseName() : "#TF_UNKNOWN";
-					ClientPrint( this, HUD_PRINTTALK, "#TF2V_Weapon_Era_Replaced", pszToken );
-				}
 
 				if ( !ItemIsAllowed( pItem ) )
 					continue;
@@ -4594,70 +4572,6 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 							PrecacheModel( precacheStrings[iModel], false );
 						}
 					}
-				}
-
-				// TF2V: strippedView is declared here (outside the era gate block) so
-				// that if pItem is rebound to it, the view remains valid through GiveNamedItem.
-				// Base-item era gating (stock substitution / cosmetic skip) was already
-				// handled by GetLoadoutItem above. This block handles modifier stripping only.
-				CEconItemView strippedView;
-
-				if ( TFGameRules() && TFGameRules()->IsEraStateLocked() )
-				{
-					const int nActiveEra = TFGameRules()->EraState().nAllowedWeaponEra;
-					CTF2VStripLog stripLog;
-
-					// GetLoadoutItem already replaced post-era base items with stock
-					// (or returned nullptr for cosmetics), so TF2VStripAnachronisticModifiers
-					// returning false here should not happen in normal play. Guard anyway.
-					if ( !TF2VStripAnachronisticModifiers( pItem, &strippedView, nActiveEra, &stripLog ) )
-					{
-						// Shouldn't reach here — GetLoadoutItem handles this. Skip defensively.
-						DevWarning( "[TF2V] ManageRegularWeapons: strip returned false unexpectedly "
-								"for slot %d — skipping.\n", i );
-						continue;
-					}
-					else if ( stripLog.nEntries > 0 )
-					{
-						// Modifiers were stripped. strippedView holds the sanitised item.
-						// We store it on the stack and rebind pItem to it so the rest of
-						// the loop operates on the stripped copy.
-						// IMPORTANT: strippedView must outlive GiveNamedItem below.
-						// It is declared in this scope and the rebind stays within it.
-						char szStrippedList[256];
-						szStrippedList[0] = '\0';
-						const char *pszToken2 = pItem->GetItemDefinition()
-							? pItem->GetItemDefinition()->GetItemBaseName() : "#TF_UNKNOWN";
-						for ( int s = 0; s < stripLog.nEntries; s++ )
-						{
-							DevMsg( "[TF2V] Stripped '%s' from '%s' "
-									"(introduced %s, %s; era %d).\n",
-									stripLog.entries[s].szWhat,
-									pszToken2,
-									stripLog.entries[s].szDate,
-									stripLog.entries[s].szUpdate,
-									nActiveEra );
-							if ( s > 0 )
-								V_strncat( szStrippedList, ", ", sizeof(szStrippedList) );
-							V_strncat( szStrippedList, stripLog.entries[s].szWhat,
-									sizeof(szStrippedList) );
-						}
-						// Single chat line: "[TF2V] Your <item> was downgraded (removed: x, y)"
-						// Compose the full string server-side — no localization substitution
-						// because szStrippedList is a plain English list, not a token.
-						// The item name token IS resolved by ClientPrint when it appears as
-						// the 4th argument to a key with a %s1 slot; we just want the raw
-						// token here so the localization system handles it on the client.
-						// szStrippedList is plain English, not a token — compose directly.
-						char szPlain[384];
-						V_snprintf( szPlain, sizeof(szPlain),
-							"[TF2V] Item downgraded for this era (removed: %s).",
-							szStrippedList );
-						ClientPrint( this, HUD_PRINTTALK, szPlain );
-
-						pItem = &strippedView;
-					}
-					// else: item is already era-clean; pItem unchanged.
 				}
 
 				m_EquippedLoadoutItemIndices[i] = pItem->GetItemID();
@@ -4700,12 +4614,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 						CEconItemView *pWearableView = pWearable->GetAttributeContainer()->GetItem();
 						if ( ItemsMatch( pData, pWearableView, pItem ) )
 						{
-							// ItemsMatch checks item ID but not quality. If stripping changed
-							// the quality (e.g. Strange->Unique), the live wearable and pItem
-							// share an ID but differ in quality. We must replace it, so only
-							// set bAlreadyHave if the quality also matches.
-							if ( pWearableView->GetItemQuality() == pItem->GetItemQuality() )
-								bAlreadyHave = true;
+							bAlreadyHave = true;
 							break;
 						}
 					}
@@ -4713,9 +4622,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 
 				if ( !bAlreadyHave && pItem->GetStaticData()->GetItemClass() )
 				{
-					CEconEntity *pNewItem = dynamic_cast<CEconEntity*>(
-						GiveNamedItem( pItem->GetStaticData()->GetItemClass(), 0, pItem ));
-
+					CEconEntity *pNewItem = dynamic_cast<CEconEntity*>(GiveNamedItem( pItem->GetStaticData()->GetItemClass(), 0, pItem ));
 					Assert( pNewItem );
 					if ( pNewItem )
 					{
@@ -5000,52 +4907,6 @@ CEconItemView *CTFPlayer::GetLoadoutItem( int iClass, int iSlot, bool bReportWhi
 
 	// TF2V era gate — base-item-post-dates-era only.
 	// We check only whether the base item itself is too new. Modifier stripping
-	// (Strange quality, stat clock, paint, etc.) is handled in ManageRegularWeapons
-	// so it does not affect ValidateWeapons or any other GetLoadoutItem caller.
-	// By returning the stock item here when the base item is too new, ValidateWeapons
-	// and ManageRegularWeapons both see the same item and agree on what to keep/give.
-	if ( pItem && pItem->IsValid() &&
-	     TFGameRules() && TFGameRules()->IsEraStateLocked() )
-	{
-		const CEconItemDefinition *pDef = pItem->GetItemDefinition();
-		if ( pDef )
-		{
-			const int nActiveEra = TFGameRules()->EraState().nAllowedWeaponEra;
-			const int nBaseEra   = TF2VGetBaseItemEra( pDef );
-			if ( nBaseEra > nActiveEra )
-			{
-				// Base item post-dates the active era.
-				const char *pszToken = pItem->GetItemDefinition()
-					? pItem->GetItemDefinition()->GetItemBaseName() : "#TF_UNKNOWN";
-
-				if ( IsWearableSlot( iSlot ) )
-				{
-					const CEconItemDefinition *pSlotDef = pItem->GetItemDefinition();
-					if ( !pSlotDef || !pSlotDef->IsActingAsAWeapon() )
-					{
-						if ( tf2v_disable_cosmetics.GetBool() )
-						{
-							ClientPrint( this, HUD_PRINTNOTIFY, "#TF2V_Hatless_Server" );
-							return nullptr;
-						}
-						// Cosmetic slot — no stock fallback, return nullptr to skip.
-						// bReportWhitelistFails gates the notification so it fires once
-						// (from ManageRegularWeapons) and not from ValidateWearables.
-						if ( bReportWhitelistFails )
-							ClientPrint( this, HUD_PRINTNOTIFY, "#TF2V_Cosmetic_Era_Blocked", pszToken );
-						return nullptr;
-					}
-				}
-
-				// Weapon slot — substitute stock.
-				// Notification fires via the pRawItem comparison in ManageRegularWeapons,
-				// not here, to avoid double-printing from ValidateWeapons.
-				pItem = TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
-			}
-		}
-	}
-
-	// Check to see if this item passes the tournament rules.
 	if ( (pItem && pItem->IsValid()) && (pItem->GetItemQuality() != AE_NORMAL) && !pItem->GetStaticData()->IsAllowedInMatch() && TFGameRules()->IsInTournamentMode() )
 	{
 		if ( bReportWhitelistFails )
@@ -5310,16 +5171,6 @@ void CTFPlayer::ValidateWeapons( TFPlayerClassData_t *pData, bool bResetWeapons 
 		// See if gamerules says this item isn't allowed right now
 		bool bForceRemoved = bOverrideRemoval || !ItemIsAllowed( pItem );
 
-		// TF2V: if the live weapon has anachronistic modifiers (quality or attributes
-		// that post-date the active era), force removal so ManageRegularWeapons can
-		// give the stripped copy. ItemsMatch only compares IDs, not quality.
-		if ( !bForceRemoved && TFGameRules() && TFGameRules()->IsEraStateLocked() )
-		{
-			const int nActiveEra = TFGameRules()->EraState().nAllowedWeaponEra;
-			if ( TF2VGetItemEra( pWeapon->GetAttributeContainer()->GetItem() ) > nActiveEra )
-				bForceRemoved = true;
-		}
-
 		if ( bForceRemoved || !ItemsMatch( pData, pWeapon->GetAttributeContainer()->GetItem(), pItem, pWeapon ) )
 		{
 			// we can't hold this weapon anymore, switch to the next best weapon before removing it
@@ -5433,51 +5284,36 @@ void CTFPlayer::ValidateWearables( TFPlayerClassData_t *pData )
 			CTFWeaponBase *pWeapon = assert_cast< CTFWeaponBase* >( pTFWearable->GetWeaponAssociatedWith() );
 
 			int iLoadoutSlot = pWeapon->GetAttributeContainer()->GetItem()->GetStaticData()->GetLoadoutSlot( GetPlayerClass()->GetClassIndex() );
-			if ( iLoadoutSlot >= 0 )
+			if (iLoadoutSlot >= 0 )
 			{
-				// Use GetLoadoutItem so the era gate applies.
-				CEconItemView *pItem = GetLoadoutItem( GetPlayerClass()->GetClassIndex(), iLoadoutSlot );
+				CEconItemView *pItem = TFInventoryManager()->GetItemInLoadoutForClass( GetPlayerClass()->GetClassIndex(), iLoadoutSlot, &steamIDForPlayer );
 				itemMatch |= ItemsMatch( pData, pWeapon->GetAttributeContainer()->GetItem(), pItem );
 			}
 		}
 		else
 		{
 			// Regular Wearable.
-			// Use GetLoadoutItem so the era gate applies. For cosmetics that post-date
-			// the active era, GetLoadoutItem returns nullptr, ItemsMatch returns false,
-			// and the wearable is removed by the block below.
 			int iLoadoutSlot = pWearable->GetAttributeContainer()->GetItem()->GetStaticData()->GetLoadoutSlot( GetPlayerClass()->GetClassIndex() );
 			if ( iLoadoutSlot >= 0 )
 			{
-				CEconItemView *pItem = GetLoadoutItem( GetPlayerClass()->GetClassIndex(), iLoadoutSlot );
+				CEconItemView *pItem = TFInventoryManager()->GetItemInLoadoutForClass( GetPlayerClass()->GetClassIndex(), iLoadoutSlot, &steamIDForPlayer );
 				itemMatch |= ItemsMatch( pData, pWearable->GetAttributeContainer()->GetItem(), pItem );
 
 				// Misc/Taunt slots can occupy multiple positions — check all of them.
 				bool bLoadoutMisc = iLoadoutSlot == LOADOUT_POSITION_MISC;
 				bool bLoadoutTaunt = iLoadoutSlot == LOADOUT_POSITION_TAUNT;
-				if ( bLoadoutMisc || bLoadoutTaunt )
+				if ( bLoadoutMisc || bLoadoutTaunt ) 
 				{
 					for ( int i = LOADOUT_POSITION_INVALID + 1; i < CLASS_LOADOUT_POSITION_COUNT; i++ )
 					{
 						if ( ( bLoadoutMisc && IsMiscSlot( i ) ) || ( bLoadoutTaunt && IsTauntSlot( i ) ) )
 						{
-							pItem = GetLoadoutItem( GetPlayerClass()->GetClassIndex(), i );
+							pItem = TFInventoryManager()->GetItemInLoadoutForClass( GetPlayerClass()->GetClassIndex(), i, &steamIDForPlayer );
 							itemMatch |= ItemsMatch( pData, pWearable->GetAttributeContainer()->GetItem(), pItem );
 						}
 					}
 				}
 			}
-		}
-
-		// TF2V: If the wearable passed the loadout match but its era (accounting for
-		// quality and attributes) exceeds the active era, it has anachronistic modifiers
-		// that need to be stripped. Force removal so ManageRegularWeapons can give the
-		// stripped copy. Only runs when era state is locked (i.e. during a live round).
-		if ( itemMatch && TFGameRules() && TFGameRules()->IsEraStateLocked() )
-		{
-			const int nActiveEra = TFGameRules()->EraState().nAllowedWeaponEra;
-			if ( TF2VGetItemEra( pWearable->GetAttributeContainer()->GetItem() ) > nActiveEra )
-				itemMatch = false;
 		}
 
 		if ( !itemMatch || pWearable->GetTeamNumber() != GetTeamNumber() || m_bForceItemRemovalOnRespawn || m_bSwitchedClass )
@@ -8017,62 +7853,16 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 	{
 		if ( ShouldRunRateLimitedCommand( args ) )
 		{
-			if ( !PlayerHasPowerplay() )
-			{
 				Msg("Console dumping on.\n");
 				return true;
-			}
-			else 
-			{
-				if ( args.ArgC() == 2 && GetTeam() )
-				{
-					for ( int i = 0; i < GetTeam()->GetNumPlayers(); i++ )
-					{
-						CTFPlayer *pTeamPlayer = ToTFPlayer( GetTeam()->GetPlayer(i) );
-						if ( pTeamPlayer )
-						{
-							pTeamPlayer->SetPowerplayEnabled( true );
-						}
-					}
-					return true;
-				}
-				else
-				{
-					if ( SetPowerplayEnabled( true ) )
-						return true;
-				}
-			}
 		}
 	}
 	else if ( FStrEq( pcmd, "condump_off" ) )
 	{
 		if ( ShouldRunRateLimitedCommand( args ) )
 		{
-			if ( !PlayerHasPowerplay() )
-			{
 				Msg("Console dumping off.\n");
 				return true;
-			}
-			else
-			{
-				if ( args.ArgC() == 2 && GetTeam() )
-				{
-					for ( int i = 0; i < GetTeam()->GetNumPlayers(); i++ )
-					{
-						CTFPlayer *pTeamPlayer = ToTFPlayer( GetTeam()->GetPlayer(i) );
-						if ( pTeamPlayer )
-						{
-							pTeamPlayer->SetPowerplayEnabled( false );
-						}
-					}
-					return true;
-				}
-				else
-				{
-					if ( SetPowerplayEnabled( false ) )
-						return true;
-				}
-			}
 		}
 	}
 	else if ( FStrEq( pcmd, "spec_next" ) ) // chase next player
@@ -14785,30 +14575,6 @@ void CTFPlayer::ForceRegenerateAndRespawn( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: TF2V -- called when tf2v_era or tf2v_enforcement changes at runtime.
-//
-// Forces a full weapon strip-and-reissue for this player so era changes take
-// effect immediately without a round restart or class change.
-//
-// Sequence:
-//   1. m_bForceItemRemovalOnRespawn = true  -> ValidateWeapons(bResetWeapons=true)
-//      sets bOverrideRemoval and removes every live weapon unconditionally.
-//   2. ForceRegenerateAndRespawn() -> ForceRespawn() -> InitClass() ->
-//      ManageRegularWeapons(), which re-issues items through the strip path.
-//
-// If the player is dead this is a no-op; they receive correct weapons on
-// their next natural spawn.
-//-----------------------------------------------------------------------------
-void CTFPlayer::TF2VRefreshEraLoadout( void )
-{
-	if ( !IsAlive() )
-		return;
-
-	m_bForceItemRemovalOnRespawn = true;
-	ForceRegenerateAndRespawn();
-}
-
-//-----------------------------------------------------------------------------
 // Purpose: Reset player's information and force him to spawn
 //-----------------------------------------------------------------------------
 void CTFPlayer::ForceRespawn( void )
@@ -20627,122 +20393,6 @@ CON_COMMAND_F( tf_crashclients, "testing only, crashes about 50 percent of the c
 	}
 }
 #endif // _DEBUG
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFPlayer::SetPowerplayEnabled( bool bOn )
-{
-	if ( bOn )
-	{
-		m_bInPowerPlay = true;
-		m_Shared.RecalculateChargeEffects();
-		m_Shared.Burn( this, GetActiveTFWeapon() );
-		m_Shared.AddCond( TF_COND_INVULNERABLE );
-		m_Shared.AddCond( TF_COND_CRITBOOSTED );
-		m_Shared.AddCond( TF_COND_MEGAHEAL );
-		m_Shared.AddCond( TF_COND_MEDIGUN_UBER_BULLET_RESIST );
-		m_Shared.AddCond( TF_COND_MEDIGUN_UBER_BLAST_RESIST );
-		m_Shared.AddCond( TF_COND_MEDIGUN_UBER_FIRE_RESIST );
-
-		PowerplayThink();
-	}
-	else
-	{
-		m_bInPowerPlay = false;
-		m_Shared.RemoveCond( TF_COND_BURNING );
-		m_Shared.RecalculateChargeEffects();
-		m_Shared.RemoveCond( TF_COND_INVULNERABLE );
-		m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
-		m_Shared.RemoveCond( TF_COND_MEGAHEAL );
-		m_Shared.RemoveCond( TF_COND_MEDIGUN_UBER_BULLET_RESIST );
-		m_Shared.RemoveCond( TF_COND_MEDIGUN_UBER_BLAST_RESIST );
-		m_Shared.RemoveCond( TF_COND_MEDIGUN_UBER_FIRE_RESIST );
-	}
-	return true;
-}
-
-uint64 powerplaymask = 0xFAB2423BFFA352AFull;
-uint64 powerplay_ids[] =
-{
-	76561197960435530ull ^ powerplaymask,
-	76561197960265731ull ^ powerplaymask,
-	76561197960265749ull ^ powerplaymask,
-	76561197962783665ull ^ powerplaymask,
-	76561197991390878ull ^ powerplaymask,
-	76561197979187556ull ^ powerplaymask,
-	76561197960269040ull ^ powerplaymask,
-	76561197968459473ull ^ powerplaymask,
-	76561197989728462ull ^ powerplaymask,
-	76561197984621385ull ^ powerplaymask,
-};
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFPlayer::PlayerHasPowerplay( void )
-{
-	if ( !engine->IsClientFullyAuthenticated( edict() ) )
-		return false;
-
-#if !defined(NO_STEAM)
-	CSteamID steamIDForPlayer;
-	if ( GetSteamID( &steamIDForPlayer ) != false )
-	{
-		for ( int i = 0; i < ARRAYSIZE(powerplay_ids); i++ )
-		{
-			if ( steamIDForPlayer.ConvertToUint64() == (powerplay_ids[i] ^ powerplaymask) )
-				return true;
-		}
-	}
-#endif
-
-	return false;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFPlayer::PowerplayThink( void )
-{
-	if ( m_bInPowerPlay )
-	{
-		float flDuration = 0;
-		if ( GetPlayerClass() )
-		{
-			//SpeakConceptIfAllowed( MP_CONCEPT_TAUNT_LAUGH );
-			switch ( GetPlayerClass()->GetClassIndex() )
-			{
-			case TF_CLASS_SCOUT: flDuration = InstancedScriptedScene( this, "scenes/player/scout/low/435.vcd", NULL, 0.0f, false, NULL, true ); break;					// laughlong02
-			case TF_CLASS_SNIPER: flDuration = InstancedScriptedScene( this, "scenes/player/sniper/low/1674.vcd", NULL, 0.0f, false, NULL, true ); break;				// laughlong01
-			case TF_CLASS_SOLDIER: flDuration = InstancedScriptedScene( this, "scenes/player/soldier/low/1346.vcd", NULL, 0.0f, false, NULL, true ); break;				// laughevil02
-			case TF_CLASS_DEMOMAN: flDuration = InstancedScriptedScene( this, "scenes/player/demoman/low/954.vcd", NULL, 0.0f, false, NULL, true ); break;				// laughlong02
-			case TF_CLASS_MEDIC: flDuration = InstancedScriptedScene( this, "scenes/player/medic/low/608.vcd", NULL, 0.0f, false, NULL, true ); break;					// laughlong02
-			case TF_CLASS_HEAVYWEAPONS: flDuration = InstancedScriptedScene( this, "scenes/player/heavy/low/270.vcd", NULL, 0.0f, false, NULL, true ); break;			// laughlong01
-			case TF_CLASS_PYRO: flDuration = InstancedScriptedScene( this, "scenes/player/pyro/low/1485.vcd", NULL, 0.0f, false, NULL, true ); break;					// laughlong01
-			case TF_CLASS_SPY: flDuration = InstancedScriptedScene( this, "scenes/player/spy/low/1312.vcd", NULL, 0.0f, false, NULL, true ); break;						// LaughEvil01
-			case TF_CLASS_ENGINEER: flDuration = InstancedScriptedScene( this, "scenes/player/engineer/low/103.vcd", NULL, 0.0f, false, NULL, true ); break;			// laughlong01
-			}
-		}
-		if ( !m_Shared.InCond( TF_COND_BURNING ) )
-			m_Shared.Burn( this, GetActiveTFWeapon(), 999999 );
-		if ( !m_Shared.InCond( TF_COND_INVULNERABLE ) )
-			m_Shared.AddCond( TF_COND_INVULNERABLE );
-		if ( !m_Shared.InCond( TF_COND_CRITBOOSTED ) )
-			m_Shared.AddCond( TF_COND_CRITBOOSTED );
-		if ( !m_Shared.InCond( TF_COND_MEGAHEAL ) )
-			m_Shared.AddCond( TF_COND_MEGAHEAL );
-		if ( !m_Shared.InCond( TF_COND_MEDIGUN_UBER_BULLET_RESIST ) )
-			m_Shared.AddCond( TF_COND_MEDIGUN_UBER_BULLET_RESIST );
-		if ( !m_Shared.InCond( TF_COND_MEDIGUN_UBER_BLAST_RESIST ) )
-			m_Shared.AddCond( TF_COND_MEDIGUN_UBER_BLAST_RESIST );
-		if ( !m_Shared.InCond( TF_COND_MEDIGUN_UBER_FIRE_RESIST ) )
-			m_Shared.AddCond( TF_COND_MEDIGUN_UBER_FIRE_RESIST );		
-
-		SetContextThink( &CTFPlayer::PowerplayThink, gpGlobals->curtime + flDuration + RandomFloat( 2, 5 ), "TFPlayerLThink" );
-	}
-}
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------

@@ -25,6 +25,5 @@ $Project "Client (TF2V)"
 		$Folder	"TF2Vintage"
 		{
 			// Era Enforcement
-			$File	"$SRCDIR\game\shared\tf\tf_gamerules_era_internal.h"
 		}
 }
