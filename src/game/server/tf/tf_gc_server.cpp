@@ -13,7 +13,6 @@
 #include "eiface.h"
 #include "cdll_int.h"
 #include "econ_item_inventory.h"
-#include "tf_item_constants.h"
 #include "gameinterface.h"
 #include "client.h"
 #include "tier1/convar.h"
@@ -66,7 +65,6 @@ const int k_InvalidState_Timeout_With_Match    = 60 * 2;
 const int k_InvalidState_Timeout_Without_Match = 5;
 
 #ifdef ENABLE_GC_MATCHMAKING
-
 
 /***********************************************************************************************************************
 ////////////////////////////////////////////////////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -4123,44 +4121,6 @@ void CTFGCServerSystem::WebapiEquipmentThinkRequest( CSteamID steamID, WebapiEqu
 		Assert( state.m_pKVCurrentRequest != nullptr );
 		KeyValues* pKV = state.m_pKVCurrentRequest;
 
-		// --- Offline inventory bypass ---
-		// If the server has opted out of webapi validation and the client sent a
-		// serialized offline item cache blob, inject it directly as a local SOCache.
-		// Clients with a live GC inventory do not send this field, so they continue
-		// through the normal webapi validation path regardless.
-		const char *pszOfflineItems = pKV->GetString( "offline_items", nullptr );
-		if ( pszOfflineItems && pszOfflineItems[0] )
-		{
-			uint32 cchEncoded = static_cast<uint32>( V_strlen( pszOfflineItems ) );
-			uint32 cubDecoded = ( cchEncoded * 3 / 4 ) + 4;
-			CUtlMemory<uint8> bufDecoded;
-			bufDecoded.EnsureCapacity( static_cast<int>( cubDecoded ) );
-			uint32 cubActual = cubDecoded;
-
-			if ( Base64Decode( pszOfflineItems, cchEncoded,
-			                   bufDecoded.Base(), &cubActual, true ) )
-			{
-				CGCClientSharedObjectCache *pSOCache = GetGCClient()->AddLocalSOCache(
-					steamID, bufDecoded.Base(), cubActual );
-				if ( pSOCache )
-				{
-					SDK_ApplyInventoryInfo( pSOCache, pKV );
-					state.RequestSucceeded();
-					state.m_eState = kWebapiEquipmentState_InventoryReceived;
-					break;
-				}
-				else
-				{
-					Warning( "[NoGC] AddLocalSOCache failed for %s\n", steamID.Render() );
-				}
-			}
-			else
-			{
-				Warning( "[NoGC] Base64Decode failed for offline_items from %s\n", steamID.Render() );
-			}
-		}
-		// --- End offline bypass ---
-
 		if ( !SteamHTTP() )
 			return;
 
@@ -4433,19 +4393,10 @@ void CTFGCServerSystem::SDK_ApplyLocalLoadout(CGCClientSharedObjectCache* pCache
 			soIndex.SetItemID(uItemId);
 
 			CEconItem* pItem = (CEconItem*) pItemCache->FindSharedObject(soIndex);
-			if (pItem)
-			{
+			if (pItem) {
 				pTFInventory->EquipLocal(uItemId, iClass, iSlot);
 			}
-			else if ( uItemId >= k_ModItemIDBase || uItemId >= k_LoanerItemIDBase )
-			{
-				// Synthetic item (mod or loaner) — not in the SOCache because the server
-				// never fetched it from the webapi. Trust the client's loadout assignment;
-				// the def_index was validated against items_game.txt on the client side.
-				pTFInventory->EquipLocal(uItemId, iClass, iSlot);
-			}
-			else
-			{
+			else {
 				Warning("Failed to find item %llu in shared object, but client says it should be equipped by [%i] in slot [%i].\n", uItemId, iClass, iSlot);
 			}
 		}
