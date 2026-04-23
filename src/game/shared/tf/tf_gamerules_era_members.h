@@ -214,29 +214,25 @@ public:
 	// Return 0 if uninitialized, or the max day to prevent logic issues.
 	int GetCurrentEra()
 	{ 
-		if ( !TFGameRules() )
+		if ( EraState() )
 			return 0;
-		if ( !TFGameRules()->EraState() )
-			return 0;
-		if ( TFGameRules()->EraState().nCurrentEra )
-			return TFGameRules()->EraState().nCurrentEra; 
+		if ( EraState().nCurrentEra )
+			return EraState().nCurrentEra; 
 			
-		return TF2V_ERA_MAX; 
+		return 0; 
 	}
 	
 	// Ditto, but for weapons. Prefers the weapon era first, then the normal era.
 	int GetWeaponEra()
 	{ 
-		if ( !TFGameRules() )
+		if ( !EraState() )
 			return 0;
-		if ( !TFGameRules()->EraState() )
-			return 0;
-		if ( TFGameRules()->EraState().nAllowedWeaponEra )
-			return TFGameRules()->EraState().nAllowedWeaponEra; 
-		else if ( TFGameRules()->EraState().nCurrentEra )
-			return TFGameRules()->EraState().nCurrentEra; 
+		if ( EraState().nAllowedWeaponEra )
+			return EraState().nAllowedWeaponEra; 
+		else if ( EraState().nCurrentEra )
+			return EraState().nCurrentEra; 
 			
-		return TF2V_ERA_MAX; 
+		return 04; 
 	}
 	
     // Primary era management entry points.
