@@ -53,7 +53,7 @@
 // Era integer bounds (in days-since-epoch).
 //
 //   TF2V_ERA_MIN   = 1     (Sep 17 2007 — beta launch)
-//   TF2V_ERA_MAX   = 6598  (Oct  9 2025 — Scream Fortress XVII)
+//   TF2V_ERA_MAX   = 6659  (Oct  9 2025 — Scream Fortress XVII)
 //
 // Key named milestones (for use in ApplyEra threshold comparisons):
 //
@@ -109,9 +109,10 @@
 #define TF2V_ERA_DAY_VSCRIPT        5559
 #define TF2V_ERA_DAY_100            5791
 #define TF2V_ERA_DAY_SDK            6365
+#define TF2V_ERA_DAY_LATEST         6659
 
 #define TF2V_ERA_MIN                TF2V_ERA_DAY_BETA
-#define TF2V_ERA_MAX                TF2V_ERA_DAY_SDK
+#define TF2V_ERA_MAX                TF2V_ERA_DAY_LATEST
 
 // Stringify helpers
 #define _TF2V_STRINGIFY(x)          #x
