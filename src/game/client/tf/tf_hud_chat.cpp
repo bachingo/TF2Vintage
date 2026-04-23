@@ -164,7 +164,11 @@ void CHudChatInputLine::ApplySchemeSettings(vgui::IScheme *pScheme)
 	BaseClass::ApplySchemeSettings(pScheme);
 }
 
-
+static CHudChat *g_pTFChatHud = NULL;
+CHudChat *GetTFChatHud( void )
+{
+	return g_pTFChatHud;
+}
 
 //=====================
 //CHudChat
@@ -176,6 +180,7 @@ CHudChat::CHudChat( const char *pElementName ) : BaseClass( pElementName )
 #if defined ( _X360 )
 	RegisterForRenderGroup( "mid" );
 #endif
+	g_pTFChatHud = this;
 }
 
 void CHudChat::ApplySchemeSettings( vgui::IScheme *pScheme )
@@ -184,6 +189,10 @@ void CHudChat::ApplySchemeSettings( vgui::IScheme *pScheme )
 
 	m_colorPartyEvent = pScheme->GetColor( "Green", Color( 255, 255, 255, 255 ) );
 	m_colorPartyMessage = pScheme->GetColor( "Green", Color( 255, 255, 255, 255 ) );
+
+	// TF2V arrow-prefix colors.  Fall back to sensible defaults if not in scheme.
+	m_colorGreenText = pScheme->GetColor( "TFColors.ChatGreenText",  Color( 100, 220,  80, 255 ) );
+	m_colorQuoteText = pScheme->GetColor( "TFColors.ChatQuoteText",  Color( 180, 180, 180, 255 ) );
 }
 
 void CHudChat::CreateChatInputLine( void )
@@ -276,6 +285,56 @@ void CHudChat::Reset( void )
 //-----------------------------------------------------------------------------
 // Purpose: Checks whether the visible chat body (after the "Name: " prefix)
 // starts with ">" or "<" and returns the appropriate color override.
+// pszText is the full assembled ansi chat string (may begin with a color code).
+// Returns false when no override is needed.
+//-----------------------------------------------------------------------------
+// static
+bool CHudChat::GetArrowChatColor( const char *pszText, Color &colorOut )
+{
+	CHudChat *pChat = dynamic_cast<CHudChat *>( gHUD.FindElement( "HudChat" ) );
+	if ( !pChat )
+		return false;
+
+	if ( !pszText || !*pszText )
+		return false;
+
+	// The assembled string looks like:
+	//   \x03PlayerName: \x01message body
+	// We want to inspect the text that comes *after* the colon+space.
+	// Walk past color codes and find the ": " separator.
+	const char *p = pszText;
+
+	// Skip optional leading color code byte
+	if ( *p > 0 && *p < 32 )
+		p++;
+
+	// Skip until we find ": " — the name/body separator
+	const char *pColon = Q_strstr( p, ": " );
+	if ( !pColon )
+		return false;
+
+	const char *pBody = pColon + 2; // first character of the message body
+	// Skip color code that may precede the body
+	if ( *pBody > 0 && *pBody < 32 )
+		pBody++;
+
+	if ( *pBody == '>' )
+	{
+		colorOut = pChat->m_colorGreenText;
+		return true;
+	}
+	if ( *pBody == '<' )
+	{
+		colorOut = pChat->m_colorQuoteText;
+		return true;
+	}
+	return false;
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 int CHudChat::GetChatInputOffset( void )
 {
 	if ( m_pChatInput->IsVisible() )
@@ -448,4 +507,65 @@ int CHudChat::GetFilterFlags( void )
 	}
 	
 	return iFlags;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Intercepts assembled chat messages to apply two TF2V-specific
+// transforms before they reach the base rendering path:
+//
+//   1. Arrow coloring — if the message body starts with ">" or "<" the entire
+//      body segment is re-emitted with a COLOR_HEXCODE prefix so it renders in
+//      m_colorGreenText or m_colorQuoteText respectively.
+//
+//-----------------------------------------------------------------------------
+void CHudChat::ChatPrintf( int iPlayerIndex, int iFilter, const char *fmt, ... )
+{
+	char msg[ 4096 ];
+	va_list marker;
+	va_start( marker, fmt );
+	Q_vsnprintf( msg, sizeof( msg ), fmt, marker );
+	va_end( marker );
+
+	// Check whether the message body starts with ">" or "<" and, if so, wrap
+	// just the body portion in a hex-color code.
+	// The body starts after the ": " separator that follows the player name.
+	Color arrowColor;
+	if ( GetArrowChatColor( msg, arrowColor ) )
+	{
+		// Find the ": " boundary.
+		const char *p = msg;
+		if ( *p > 0 && *p < 32 ) p++; // skip leading color code
+
+		const char *pColon = Q_strstr( p, ": " );
+		if ( pColon )
+		{
+			const char *pBody = pColon + 2;
+
+			// Build a new message: everything up to the body boundary, then
+			// inject a COLOR_HEXCODE (7) followed by 6 hex digits, then the body.
+			char rebuilt[ 4096 ];
+			int nPrefixLen = (int)( pBody - msg );
+
+			// Build hex color string from arrowColor
+			char szHex[ 8 ];
+			Q_snprintf( szHex, sizeof( szHex ), "%02X%02X%02X",
+				arrowColor.r(), arrowColor.g(), arrowColor.b() );
+
+			// Copy prefix exactly (includes color codes + "Name: ")
+			V_strncpy( rebuilt, msg, nPrefixLen + 1 ); // +1 for NUL
+			rebuilt[ nPrefixLen ] = '\0';
+
+			// Append the hex-color escape + body
+			char szColoredBody[ 4096 ];
+			Q_snprintf( szColoredBody, sizeof( szColoredBody ),
+				"%c%s%s", (char)COLOR_HEXCODE, szHex, pBody );
+
+			V_strncat( rebuilt, szColoredBody, sizeof( rebuilt ) );
+
+			BaseClass::ChatPrintf( iPlayerIndex, iFilter, "%s", rebuilt );
+			return;
+		}
+	}
+
+	BaseClass::ChatPrintf( iPlayerIndex, iFilter, "%s", msg );
 }

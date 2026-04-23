@@ -3751,6 +3751,7 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFPlayer, DT_TFPlayer, CTFPlayer )
 	RecvPropBool( RECVINFO( m_bIsReadyToHighFive ) ),
 	RecvPropEHandle( RECVINFO( m_hHighFivePartner ) ),
 	RecvPropInt( RECVINFO( m_nForceTauntCam ) ),
+	RecvPropBool( RECVINFO( m_bTyping ) ),
 	RecvPropFloat( RECVINFO( m_flTauntYaw ) ),
 	RecvPropInt( RECVINFO( m_nActiveTauntSlot ) ),
 	RecvPropInt( RECVINFO( m_iTauntItemDefIndex ) ),
@@ -3857,6 +3858,7 @@ C_TFPlayer::C_TFPlayer() :
 	m_flBurnEffectStartTime = 0;
 	m_pDisguisingEffect = NULL;
 	m_pSaveMeEffect = NULL;
+	m_pTypingEffect = NULL;
 	m_pTauntWithMeEffect = NULL;
 	m_hOldObserverTarget = NULL;
 	m_iOldObserverMode = OBS_MODE_NONE;
@@ -3902,6 +3904,8 @@ C_TFPlayer::C_TFPlayer() :
 	m_bWaterExitEffectActive = false;
 
 	m_bUpdateObjectHudState = false;
+	
+	m_bTyping = false;
 
 	m_flSaveMeExpireTime = 0;
 
@@ -6640,6 +6644,12 @@ bool C_TFPlayer::CreateMove( float flInputSampleTime, CUserCmd *pCmd )
 		VectorCopy( pCmd->viewangles, angMoveAngle );
 	}
 
+	// HACK: We're using an unused bit in buttons var to set the typing status based on whether player's chat panel is open.
+	if ( GetTFChatHud() && GetTFChatHud()->GetMessageMode() != MM_NONE )
+	{
+		pCmd->buttons |= IN_TYPING;
+	}
+	
 	BaseClass::CreateMove( flInputSampleTime, pCmd );
 
 	// Don't avoid players if in the middle of a high five. This prevents high-fivers from becoming separated.
@@ -9654,6 +9664,32 @@ static ConCommand tf_crashclient( "tf_crashclient", cc_tf_crashclient, "Crashes 
 void C_TFPlayer::ForceUpdateObjectHudState( void )
 {
 	m_bUpdateObjectHudState = true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void C_TFPlayer::UpdateTypingBubble( void )
+{
+	// Don't show the bubble for local player.
+	if ( IsLocalPlayer() )
+		return;
+
+	if ( m_bTyping && IsAlive() && ( !m_Shared.IsStealthed() || !IsEnemyPlayer() ) )
+	{
+		if ( !m_pTypingEffect )
+		{
+			m_pTypingEffect = ParticleProp()->Create( "speech_typing", PATTACH_POINT_FOLLOW, "head" );
+		}
+	}
+	else
+	{
+		if ( m_pTypingEffect )
+		{
+			ParticleProp()->StopEmissionAndDestroyImmediately( m_pTypingEffect );
+			m_pTypingEffect = NULL;
+		}
+	}
 }
 
 #include "c_obj_sentrygun.h"
