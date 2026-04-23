@@ -210,6 +210,35 @@ public:
     }
     inline bool IsEraStateLocked() const { return m_bEraStateLocked; }
 
+	// Easier way to call current era. 
+	// Return 0 if uninitialized, or the max day to prevent logic issues.
+	int GetCurrentEra()
+	{ 
+		if ( !TFGameRules() )
+			return 0;
+		if ( !TFGameRules()->EraState() )
+			return 0;
+		if ( TFGameRules()->EraState().nCurrentEra )
+			return TFGameRules()->EraState().nCurrentEra; 
+			
+		return TF2V_ERA_MAX; 
+	}
+	
+	// Ditto, but for weapons. Prefers the weapon era first, then the normal era.
+	int GetWeaponEra()
+	{ 
+		if ( !TFGameRules() )
+			return 0;
+		if ( !TFGameRules()->EraState() )
+			return 0;
+		if ( TFGameRules()->EraState().nAllowedWeaponEra )
+			return TFGameRules()->EraState().nAllowedWeaponEra; 
+		else if ( TFGameRules()->EraState().nCurrentEra )
+			return TFGameRules()->EraState().nCurrentEra; 
+			
+		return TF2V_ERA_MAX; 
+	}
+	
     // Primary era management entry points.
     // Called by era callbacks and RoundRespawn().
     void    ApplyEra( int nDay );

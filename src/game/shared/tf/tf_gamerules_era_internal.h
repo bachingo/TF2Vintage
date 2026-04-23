@@ -80,11 +80,10 @@
 //   TF2V_ERA_DAY_JI           = 3687  (Oct 20 2017)
 //   TF2V_ERA_DAY_FREEZE       = 3846  (Mar 28 2018 — post-balance freeze)
 //   TF2V_ERA_DAY_VSCRIPT      = 5559  (Dec  5 2022 — VScript; ASYM floor)
-//   TF2V_ERA_DAY_MAX          = 6598  (Oct  9 2025 — Scream Fortress XVII)
+//   TF2V_ERA_DAY_100          = 5791  (Jul 25 2023)
+//   TF2V_ERA_DAY_SDK          = 6365  (Feb 18 2025)
 // -------------------------------------------------------------------------
-#define TF2V_ERA_MIN                1
-#define TF2V_ERA_MAX                6598
-
+#define TF2V_ERA_DAY_BETA        	1
 #define TF2V_ERA_DAY_LAUNCH         24
 #define TF2V_ERA_DAY_GOLDRUSH       226
 #define TF2V_ERA_DAY_PYRO           277
@@ -108,13 +107,17 @@
 #define TF2V_ERA_DAY_JI             3687
 #define TF2V_ERA_DAY_FREEZE         3846
 #define TF2V_ERA_DAY_VSCRIPT        5559
-#define TF2V_ERA_DAY_MAX            TF2V_ERA_MAX
+#define TF2V_ERA_DAY_100            5791
+#define TF2V_ERA_DAY_SDK            6365
+
+#define TF2V_ERA_MIN                TF2V_ERA_DAY_BETA
+#define TF2V_ERA_MAX                TF2V_ERA_DAY_SDK
 
 // Stringify helpers
 #define _TF2V_STRINGIFY(x)          #x
 #define TF2V_STRINGIFY(x)           _TF2V_STRINGIFY(x)
 #define TF2V_ERA_MIN_STR            TF2V_STRINGIFY(TF2V_ERA_MIN)    // "1"
-#define TF2V_ERA_MAX_STR            TF2V_STRINGIFY(TF2V_ERA_MAX)    // "6598"
+#define TF2V_ERA_MAX_STR            TF2V_STRINGIFY(TF2V_ERA_MAX)    // "6365"
 
 // -------------------------------------------------------------------------
 // Server-type era floors (day integers).

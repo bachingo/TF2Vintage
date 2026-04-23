@@ -61,7 +61,7 @@ struct TF2VEraInfo_t
 static const TF2VEraInfo_t s_EraInfoTable[] =
 {
     {    1, "September 17, 2007",  "Beta Launch"                },
-    {   24, "October 10, 2007",   "PC / Xbox Retail Launch"    },
+    {   24, "October 10, 2007",   "Orange Box Release"    },
     {   39, "October 25, 2007",   "October 2007 patch"         },
     {   95, "December 20, 2007",  "December 2007 patch"        },
     {  131, "January 25, 2008",   "January 2008 patch"         },
