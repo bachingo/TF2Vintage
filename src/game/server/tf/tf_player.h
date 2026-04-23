@@ -878,7 +878,6 @@ private:
 	CNetworkVar( bool, m_bIsReadyToHighFive );
 	CNetworkHandle( CTFPlayer, m_hHighFivePartner );
 	CNetworkVar( int, m_nForceTauntCam );
-	CNetworkVar( bool, m_bTyping );
 	CNetworkVar( float, m_flTauntYaw );
 	CNetworkVar( int, m_nActiveTauntSlot );
 	CNetworkVar( item_definition_index_t, m_iTauntItemDefIndex );

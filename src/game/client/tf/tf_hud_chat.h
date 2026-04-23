@@ -82,14 +82,6 @@ public:
 
 	virtual int				GetFilterFlags( void );
 
-
-	// TF2V: colorize lines starting with ">" or "<" in the chat body.
-	// Called from ChatPrintf after the message text is assembled.
-	static bool		GetArrowChatColor( const char *pszText, Color &colorOut );
-
-	// Override ChatPrintf to apply arrow coloring before handing off to base.
-	virtual void	ChatPrintf( int iPlayerIndex, int iFilter, PRINTF_FORMAT_STRING const char *fmt, ... ) OVERRIDE FMTFUNCTION( 4, 5 );
-
 #if defined( _X360 )
 	// hide behind other panels ( stats , build menu ) in 360
 	virtual int		GetRenderGroupPriority( void ) { return 35; }	// less than statpanel
@@ -97,13 +89,6 @@ public:
 
 	Color m_colorPartyEvent;
 	Color m_colorPartyMessage;
-
-	// TF2V: colors for ">" and "<" prefixed chat lines.
-	Color m_colorGreenText;   // lines starting with ">"
-	Color m_colorQuoteText;   // lines starting with "<"
-	
 };
 
-CHudChat *GetTFChatHud( void );
-	
 #endif	//CS_HUD_CHAT_H

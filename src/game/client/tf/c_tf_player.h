@@ -486,8 +486,6 @@ public:
 	bool ShouldShowNemesisIcon();
 
 	virtual	IMaterial *GetHeadLabelMaterial( void );
-	
-	void UpdateTypingBubble( void );
 
 	// Spy Cigarette
 	bool CanLightCigarette( void );
@@ -602,7 +600,6 @@ private:
 
 	// Medic callout particle effect
 	CNewParticleEffect	*m_pSaveMeEffect;
-	CNewParticleEffect	*m_pTypingEffect;
 	CNewParticleEffect	*m_pTauntWithMeEffect;
 
 	bool m_bUpdateObjectHudState;
@@ -819,8 +816,6 @@ public:
 
 	int GetNumActivePipebombs( void );
 
-	bool			m_bTyping;
-	
 	int				m_iSpyMaskBodygroup;
 	Vector			m_vecCustomModelOrigin;
 
@@ -1139,7 +1134,6 @@ private:
 	CUtlVector< CHandle< CEconWearable > > m_hClientWearables;	// wearables on the ragdoll that are "following" it
 
 	bool  m_bCreatedWhilePlaybackSkipping;
-	
 };
 
 #endif // C_TF_PLAYER_H

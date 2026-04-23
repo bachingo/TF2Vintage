@@ -10,7 +10,6 @@
 
 $Group "gamedlls"
 {
-	"crash_handler"
 	"client"
 	"server"
 }
@@ -18,8 +17,6 @@ $Group "gamedlls"
 $Group "game"
 {
 	"client"
-	"crash_handler"
-	"launcher_main"
 	"mathlib"
 	"matsys_controls"
 	"raytrace"

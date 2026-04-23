@@ -807,7 +807,6 @@ IMPLEMENT_SERVERCLASS_ST( CTFPlayer, DT_TFPlayer )
 	SendPropBool( SENDINFO( m_bIsReadyToHighFive ) ),
 	SendPropEHandle( SENDINFO( m_hHighFivePartner ) ),
 	SendPropInt( SENDINFO( m_nForceTauntCam ), 2, SPROP_UNSIGNED ),
-	SendPropBool( SENDINFO( m_bTyping ) ),
 	SendPropFloat( SENDINFO( m_flTauntYaw ), 0, SPROP_NOSCALE ),
 	SendPropInt( SENDINFO( m_nActiveTauntSlot ) ),
 	SendPropInt( SENDINFO( m_iTauntItemDefIndex ) ),
@@ -2752,9 +2751,6 @@ void CTFPlayer::PostThink()
 	}
 
 	UpdateHalloween();
-	
-	// Check if player is typing.
-	m_bTyping = ( m_nButtons & IN_TYPING ) != 0;
 }
 
 //-----------------------------------------------------------------------------

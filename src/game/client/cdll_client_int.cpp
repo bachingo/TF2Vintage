@@ -873,32 +873,6 @@ ISourceVirtualReality *g_pSourceVR = NULL;
 //-----------------------------------------------------------------------------
 int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physicsFactory, CGlobalVarsBase *pGlobals )
 {
-#ifdef _DEBUG
-	// Load the crash handler as early as possible — before tier libraries,
-	// before any other system — so it catches failures in this very init sequence.
-	// Sys_LoadModule searches the game bin folder (bin/x64/) where the DLL lives.
-	// DllMain (Windows) / __attribute__((constructor)) (Linux) installs the handler.
-	// If the module is absent the call returns null and we continue silently.
-	Sys_LoadModule( "crash_handler" );
-	// Always append logging. That way, we have a clean sequence if failure occurs.
-	if ( !CommandLine()->FindParm( "-console" ) )
-	{
-		CommandLine()->AppendParm( "-console", nullptr );
-	}
-	if ( !CommandLine()->FindParm( "-dev" ) )
-	{
-		CommandLine()->AppendParm( "-dev", nullptr );
-	}
-	if ( !CommandLine()->FindParm( "-condebug" ) )
-	{
-		CommandLine()->AppendParm( "-condebug", nullptr );
-	}
-	if ( !CommandLine()->FindParm( "-log_verbose_enable" ) )
-	{
-		CommandLine()->AppendParm( "-log_verbose_enable", "1" );
-	}
-#endif
-
 	// Append -insecure unconditionally so the engine
 	// never attempts a VAC-secured session, regardless of launch options.
 	if ( !CommandLine()->FindParm( "-insecure" ) )

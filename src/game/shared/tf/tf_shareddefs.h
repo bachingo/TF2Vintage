@@ -2830,7 +2830,5 @@ enum AttributeMeter_Type_t
 #define TF_GRENADE_PROJECTILE_MINS	Vector( -2.0f, -2.0f, -2.0f )
 #define TF_GRENADE_PROJECTILE_MAXS	Vector( 2.0f, 2.0f, 2.0f )
 
-#define IN_TYPING ( 1 << 31 )
-
 #endif // TF_SHAREDDEFS_H
   
