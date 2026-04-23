@@ -44,14 +44,10 @@
 // Defaults to TF2V_ERA_MAX (current day maximum).
 ConVar tf2v_era(
     "tf2v_era",
-    TF2V_ERA_MAX_STR,
+   (float)TF2V_ERA_MAX,
     FCVAR_NOTIFY | FCVAR_ARCHIVE | FCVAR_REPLICATED,
-    "Active era: days since the TF2 beta launch (September 17 2007 = Day 1). "
-    "Day 24 = retail launch, Day 1110 = Mann-Conomy, Day 3687 = Jungle Inferno, "
-    "Day " TF2V_ERA_MAX_STR " = current maximum (Scream Fortress XVII). "
-    "Setting this automatically drives all balance flags and the weapon gate. "
-    "Use the era table (tf2v_list_eras) for named update milestones.",
-    true, (float)TF2V_ERA_MIN,
+    "Active era: days since the TF2 beta launch (September 17 2007 = Day 1).",
+    true, 1,
     true, (float)TF2V_ERA_MAX
 #ifdef GAME_DLL
     , TF2VEraChanged
