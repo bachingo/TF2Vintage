@@ -193,7 +193,7 @@ static int TF2VGetGamemodeMinEra( const char *pszGamemodeConvar )
 //-----------------------------------------------------------------------------
 static bool TF2VCheckMapGamemode( const char **pFail = NULL )
 {
-    if ( !TFGameRules() ) return true;
+    if ( !TFGameRules()->EraState().nCurrentEra || !TFGameRules() ) return true;
 
     int nDay = TFGameRules()->EraState().nCurrentEra;
 
@@ -234,6 +234,7 @@ static void TF2VApplyMapcycle()
 {
     if ( !engine ) return;
     if ( !TF2V_MapcycleManaged() ) return;
+	if ( !TFGameRules()->EraState().nCurrentEra ) return;
 
     const char *pszFile = TF2V_GetEraMapcycleFile( TFGameRules()->EraState().nCurrentEra );
     if ( !pszFile )
@@ -576,8 +577,7 @@ void CTFGameRules::LockEraState()
 
     m_bEraStateLocked = true;
 
-    DevMsg( "[TF2V] LockEraState: day=%d mapcycle_managed=%d\n",
-            s.nCurrentEra, tf2v_use_era_mapcycle.GetBool() ? 1 : 0 );
+    DevMsg( "[TF2V] LockEraState: day=%d", tf2v_era.GetInt() );
 }
 
 
@@ -652,7 +652,7 @@ static bool TF2VCheckCompetitive( CUtlString *pFail )
 // This now covers what was enforcement >= 2 (balance + weapon gate always on).
 static bool TF2VCheckCertifiedBase( CUtlString *pFail )
 {
-    if ( !TF2VCheckQuickPlayBase( pFail ) ) return false;
+    if ( !TFGameRules()->EraState().nCurrentEra || !TF2VCheckQuickPlayBase( pFail ) ) return false;
 
     int nDay = TFGameRules()->EraState().nCurrentEra;
     if ( nDay < TF2V_ERA_MIN || nDay > TF2V_ERA_MAX )
@@ -683,7 +683,7 @@ static bool TF2VCheckCertifiedBase( CUtlString *pFail )
 // "Full certified" — certified base + mapcycle managed.
 static bool TF2VCheckCertified( CUtlString *pFail )
 {
-    if ( !TF2VCheckCertifiedBase( pFail ) ) return false;
+    if ( !TFGameRules()->EraState().nCurrentEra || !TF2VCheckCertifiedBase( pFail ) ) return false;
 
     if ( !tf2v_use_era_mapcycle.GetBool() )
     { if(pFail)*pFail="tf2v_use_era_mapcycle is 0 (no mapcycle gate)"; return false; }
