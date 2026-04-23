@@ -1093,6 +1093,9 @@ void CTFPlayerInventory::UpdateRealTFLoadoutItems()
 
 void CTFPlayerInventory::LoadLocalLoadout()
 {
+	if ( !steamapicontext || !steamapicontext->SteamUser() )
+		return;
+
 	if (GetOwner() != steamapicontext->SteamUser()->GetSteamID())
 		return;
 
@@ -1166,6 +1169,9 @@ void CTFPlayerInventory::LoadLocalLoadout()
 //-----------------------------------------------------------------------------
 void CTFPlayerInventory::SaveLocalLoadout( bool bReset, bool bDefaultToGC )
 {
+	if ( !steamapicontext || !steamapicontext->SteamUser() )
+		return;
+
 	if (GetOwner() != steamapicontext->SteamUser()->GetSteamID())
 		return;
 
@@ -2873,10 +2879,16 @@ bool CTFPlayerInventory::LoadOfflineItemCache()
 
 	// m_OwnerID is normally set by BaseClass::SOCacheSubscribed, which we bypass
 	// in the offline path. Without it, LoadLocalLoadout and SaveLocalLoadout check
-	// GetOwner() != SteamUser()->GetSteamID() and return immediately — meaning
-	// no preset data is ever read or written. Set it explicitly here.
-	if ( steamapicontext && steamapicontext->SteamUser() )
-		m_OwnerID = steamapicontext->SteamUser()->GetSteamID();
+	// GetOwner() != SteamUser()->GetSteamID() and return immediately.
+	// SteamUser() may be null when fully offline (Steam servers disconnected), so
+	// we use GetLocalPlayerSteamID() from ClientSteamContext which caches it
+	// from the last known good login and works without a live Steam connection.
+	if ( m_OwnerID.IsValid() == false )
+	{
+		CSteamID cachedID = ClientSteamContext().GetLocalPlayerSteamID();
+		if ( cachedID.IsValid() )
+			m_OwnerID = cachedID;
+	}
 
 	// Mod and loaner items are now written directly into local_inventory.txt by
 	// SaveOfflineItemCache, so they load as regular items above. No separate
