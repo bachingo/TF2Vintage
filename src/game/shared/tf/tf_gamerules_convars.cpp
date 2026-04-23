@@ -43,11 +43,11 @@
 // tf2v_era — active era as days since Sep 17 2007 (Day 1).
 // Defaults to TF2V_ERA_MAX (current day maximum).
 ConVar tf2v_era(
-    "tf2v_era", 6365,
+    "tf2v_era",
+    "6365",
     FCVAR_NOTIFY | FCVAR_ARCHIVE | FCVAR_REPLICATED,
     "Active era: days since the TF2 beta launch (September 17 2007 = Day 1).",
-    true, 1,
-    true, 6365
+    true, 0, true, 6365
 #ifdef GAME_DLL
     , TF2VEraChanged
 #endif
