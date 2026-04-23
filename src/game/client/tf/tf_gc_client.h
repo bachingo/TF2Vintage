@@ -249,7 +249,14 @@ public:
 
 	void ServerRequestEquipment();
 	void LocalInventoryChanged();
+	// Forces a fresh live webapi inventory fetch on the next frame, then saves
+	// the result to the offline cache. Works even when offline mode is active.
+	void RefreshInventoryFromGC();
 
+	// Called by CTFPlayerInventory::SOCacheSubscribed to check whether this
+	// SOCacheSubscribed was triggered by a fresh webapi response (and therefore
+	// the inventory should be saved to disk). Consume-and-clear so it fires once.
+	bool ConsumePendingOfflineCacheSave() { bool b = m_bPendingOfflineCacheSave; m_bPendingOfflineCacheSave = false; return b; }
 protected:
 
 	// CGCClientSystem
@@ -265,8 +272,15 @@ private:
 	//
 	// GC data
 	//
-	bool m_bRegisteredSharedObjects = false;
-	bool m_bInittedGC               = false;
+	bool m_bRegisteredSharedObjects   = false;
+	bool m_bInittedGC                 = false;
+	// Set at the end of OnWebapiInventoryReceived on success. Prevents autoupdate
+	// mode (cvar=1) from re-fetching on subsequent Init passes this session.
+	// Cleared by inventory_refresh to force a fresh fetch.
+	bool m_bDidLiveFetchThisSession   = false;
+	// Set just BEFORE AddLocalSOCache() so the synchronous SOCacheSubscribed
+	// callback sees it as true and knows to save the offline cache to disk.
+	bool m_bPendingOfflineCacheSave   = false;
 	GCSDK::CGCClientSharedObjectCache *m_pSOCache = nullptr;
 	CUtlVector< ISharedObjectListener* > m_vecDelayedLocalPlayerSOListenersToAdd;
 
@@ -308,6 +322,7 @@ private:
 	//
 	// SDK inventory
 	//
+	
 	void WebapiInventoryThink();
 	void OnWebapiInventoryReceived( HTTPRequestCompleted_t* pInfo, bool bIOFailure );
 	void OnWebapiAuthTicketReceived( GetTicketForWebApiResponse_t* pInfo );

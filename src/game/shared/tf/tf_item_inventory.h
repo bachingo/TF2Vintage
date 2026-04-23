@@ -84,6 +84,29 @@ public:
 
 	void				OnHasNewQuest();
 
+#ifdef CLIENT_DLL
+	// Returns true if inventory was loaded from the offline disk cache rather
+	// than a live GC/webapi session. Used by the client GC system to decide
+	// whether to skip the webapi fetch and attach an offline_items blob.
+	bool				IsOfflineCacheActive() const { return !m_vecOfflineItems.IsEmpty(); }
+
+	// Serializes the offline item cache into a CMsgSOCacheSubscribed blob,
+	// base64-encoded, ready to pass directly to AddLocalSOCache on the server.
+	// Returns false if there are no offline items or serialization fails.
+	bool				BuildOfflineSOCacheBlob( CUtlMemory<char> &bufOut );
+
+	// Snapshots the current live inventory to cfg/offline_item_cache.txt.
+	// Public so CTFGCClientSystem can call it directly in the version-match path
+	// (when the webapi says the cache is current and SOCacheSubscribed won't fire).
+	void				SaveOfflineItemCache();
+
+	// Attempts to load cfg/offline_item_cache.txt into memory. Called from
+	// WebapiInventoryThink when the file exists but IsOfflineCacheActive() is false
+	// (e.g. schema wasn't ready on the first load attempt). Public wrapper around
+	// the private LoadOfflineItemCache so CTFGCClientSystem can call it.
+	void				TryLoadOfflineItemCache() { LoadOfflineItemCache(); }
+#endif
+
 	static CEconItemView *GetFirstItemOfItemDef( item_definition_index_t nDefIndex, CPlayerInventory* pInventory = NULL );
 
 protected:
@@ -121,6 +144,25 @@ private:
 	void				CheckSaxtonMaskAchievement( const CEconItem *pEconItem );
 	void				UpdateCachedServerLoadoutItems();
 	void				UpdateRealTFLoadoutItems();
+
+	// Offline inventory cache — loaded at startup when the webapi is not yet available.
+	bool				LoadOfflineItemCache();
+
+	// Additional backpack slots from the GC account object, cached to disk so
+	// GetMaxItemCount() returns the correct value when running fully offline.
+	int					m_nCachedAdditionalBackpackSlots = 0;
+
+	// Injects mod and loaner items from CTFInventoryManager into this inventory.
+	// Called at the end of LoadOfflineItemCache() and SOCacheSubscribed().
+	void				InjectModAndLoanerItems();
+
+	// Owns CEconItem* objects allocated for mod and loaner injection.
+	CUtlVector<CEconItem *> m_vecModItems;
+	CUtlVector<CEconItem *> m_vecLoanerItems;
+
+	// Owns CEconItem* objects allocated during offline loading.
+	// These are NOT in any SOCache; we free them before live data overwrites the inventory.
+	CUtlVector<CEconItem *> m_vecOfflineItems;
 #endif // CLIENT_DLL
 
 protected:
@@ -164,6 +206,16 @@ public:
 	~CTFInventoryManager();
 
 	virtual void		PostInit( void );
+
+#ifdef CLIENT_DLL
+protected:
+	// Called after the local inventory's AddSOCacheListener() has run, so the
+	// inventory is registered and will receive the SOCacheSubscribed callback
+	// that LoadOfflineItemCache triggers.
+	virtual void		PostInitGC();
+#endif // CLIENT_DLL
+
+public:
 
 #ifdef CLIENT_DLL
 	virtual CPlayerInventory *GeneratePlayerInventoryObject() const { return new CTFPlayerInventory; }
@@ -216,10 +268,32 @@ public:
 	int					GetBaseItemCount( )			{ return m_pBaseLoadoutItems.Count(); }
 	CEconItemView*		GetBaseItem( int iIndex )	{ return m_pBaseLoadoutItems[iIndex]; }
 
+	// Mod-defined items (scripts/items/mod_items.txt).
+	// Custom items with def_indices not in the base TF2 schema, shipped with the mod.
+	// Added to every player inventory automatically.
+	void				LoadModItems();
+	int					GetModItemCount() const	{ return m_ModItems.Count(); }
+	CEconItemView*		GetModItem( int i )		{ return m_ModItems[i]; }
+
+	// Loaner items (scripts/items/loaner_items.txt).
+	// Real TF2 item def_indices given to every player at normal quality, level 1,
+	// origin kEconItemOrigin_QuestLoanerItem. Transparent stand-ins for stock weapons.
+	void				LoadLoanerItems();
+	int					GetLoanerItemCount() const	{ return m_LoanerItems.Count(); }
+	CEconItemView*		GetLoanerItem( int i )		{ return m_LoanerItems[i]; }
+
 private:
 	// Base items, returned for slots that the player doesn't have anything in
 	CEconItemView				*m_pDefaultItem;
 	CUtlVector<CEconItemView*>	m_pBaseLoadoutItems;
+
+	// Synthetic mod items loaded from scripts/items/mod_items.txt
+	CUtlVector<CEconItemView*>	m_ModItems;
+	CUtlVector<CEconItem*>		m_ModItemsBacking;
+
+	// Loaner items loaded from scripts/items/loaner_items.txt
+	CUtlVector<CEconItemView*>	m_LoanerItems;
+	CUtlVector<CEconItem*>		m_LoanerItemsBacking;
 
 #ifdef CLIENT_DLL
 	// On the client, we have a single inventory for the local player. Stored here, instead of in the

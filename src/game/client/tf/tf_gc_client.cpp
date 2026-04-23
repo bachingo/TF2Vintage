@@ -327,6 +327,16 @@ bool CTFGCClientSystem::WebapiInventoryState_t::IsBackingOff()
 	return m_rtNextRequest != 0 && CRTime::RTime32TimeCur() <= m_rtNextRequest;
 }
 
+// Controls offline inventory behaviour.
+// 0 = autoupdate: fetch a fresh copy from the live TF2 webapi once per session
+//     on startup to keep the offline cache current, then stay offline.
+//     Use inventory_refresh to pull a fresh copy at any time within the session.
+// 1 = fully offline: never contact the webapi. Requires the cache to exist.
+//     Use inventory_refresh to manually sync when desired.
+static ConVar tf_offline_inventory_autoupdate(
+	"tf_offline_inventory_autoupdate", "0", FCVAR_ARCHIVE,
+	"0=fully offline. Use inventory_refresh to force a sync, 1=autoupdate offline (sync on startup)." );
+
 void CTFGCClientSystem::WebapiInventoryThink()
 {
 	WebapiInventoryState_t &state = m_WebapiInventory;
@@ -338,8 +348,45 @@ void CTFGCClientSystem::WebapiInventoryThink()
 	switch ( state.m_eState )
 	{
 	case kWebapiInventoryState_Init:
+	{
+		CTFPlayerInventory *pLocalInv =
+			dynamic_cast<CTFPlayerInventory *>( TFInventoryManager()->GetLocalInventory() );
+		const bool bAutoUpdate = tf_offline_inventory_autoupdate.GetBool();
+
+		// For fully offline mode (cvar=0), check the disk file directly rather than
+		// IsOfflineCacheActive(). IsOfflineCacheActive() can be false if the schema
+		// wasn't ready when LoadOfflineItemCache ran and AddEconItem failed silently —
+		// but the file is still on disk and valid, and we should NOT fetch from the webapi.
+		if ( !bAutoUpdate )
+		{
+			const bool bFileExists = g_pFullFileSystem &&
+				g_pFullFileSystem->FileExists( "cfg/local_inventory.txt", "MOD" );
+			if ( bFileExists )
+			{
+				// File exists — stay offline. If in-memory load failed earlier,
+				// try again now that the schema may be ready.
+				if ( pLocalInv && !pLocalInv->IsOfflineCacheActive() )
+					pLocalInv->TryLoadOfflineItemCache();
+				state.m_eState = kWebapiInventoryState_InventoryReceived;
+				break;
+			}
+			// No file — fall through to fetch once to build it.
+		}
+		else
+		{
+			// Autoupdate mode (cvar=1): fetch once per session, then stay offline.
+			const bool bHaveOfflineCache = pLocalInv && pLocalInv->IsOfflineCacheActive();
+			if ( bHaveOfflineCache && m_bDidLiveFetchThisSession )
+			{
+				state.m_eState = kWebapiInventoryState_InventoryReceived;
+				break;
+			}
+		}
+
+		// Falls through to RequestAuthToken to run the live fetch.
 		state.m_eState = kWebapiInventoryState_RequestAuthToken;
 		// fallthrough
+	}
 	case kWebapiInventoryState_RequestAuthToken:
 		if ( !SteamUser() )
 			return;
@@ -467,9 +514,20 @@ void CTFGCClientSystem::WebapiInventoryThink()
 
 		CGCClientSharedObjectCache* pSOCache = GetSOCache( SteamUser()->GetSteamID() );
 		if ( !pSOCache )
-			return;
+		{
+			// In offline mode there is no live SOCache. Allow the build to proceed
+			// only if we have an offline cache loaded; the server receives full item
+			// data from the offline_items blob we attach to the sdk_inventory message.
+			CTFPlayerInventory *pLocalInvCheck =
+				dynamic_cast<CTFPlayerInventory *>( TFInventoryManager()->GetLocalInventory() );
+			if ( !pLocalInvCheck || !pLocalInvCheck->IsOfflineCacheActive() )
+				return;
+		}
 
-		// Build message to send server listing equipped items
+		// Build message to send server listing equipped items.
+		// In offline mode pSOCache is null; SDK_SelectItemsToSendToServer handles
+		// that gracefully (returns an empty list). The server uses the offline_items
+		// blob attached below instead of this item-ID list for its SOCache.
 		CMsgAuthorizeServerItemRetrieval msgItems;
 		SDK_SelectItemsToSendToServer( &msgItems, pSOCache );
 
@@ -550,19 +608,38 @@ void CTFGCClientSystem::WebapiInventoryThink()
 		if ( !engine->IsInGame() )
 			return;
 
-		// hex-encode the auth token for sending across the wire
+		// In offline mode we skipped the auth ticket steps so m_bufServerAuthToken
+		// is empty. Use an empty string for ticket in that case; the server will
+		// recognize this is an offline-items request and skip ticket validation.
 		CUtlMemory<char> strHexToken;
-		int nBufSize = 2 * state.m_bufServerAuthToken.Count();
-		strHexToken.EnsureCapacity( nBufSize + 1 );
-		V_binarytohex( state.m_bufServerAuthToken.Base(), state.m_bufServerAuthToken.Count(), strHexToken.Base(), strHexToken.Count() ); // TODO: Fix V_binarytohex; it's O(n^2) due to repeated uses of strncat.
+		if ( state.m_bufServerAuthToken.Count() > 0 )
+		{
+			int nBufSize = 2 * state.m_bufServerAuthToken.Count();
+			strHexToken.EnsureCapacity( nBufSize + 1 );
+			V_binarytohex( state.m_bufServerAuthToken.Base(), state.m_bufServerAuthToken.Count(), strHexToken.Base(), strHexToken.Count() ); // TODO: Fix V_binarytohex; it's O(n^2) due to repeated uses of strncat.
+		}
 
 		// Build KV and send to server
 		KeyValues *kv = new KeyValues( "sdk_inventory" );
 		kv->SetString( "msg", state.m_strMsgItems.Base() );
-		kv->SetString( "ticket", strHexToken.Base() );
+		kv->SetString( "ticket", strHexToken.Count() > 0 ? strHexToken.Base() : "" );
 
 		// Add any server-specific fields so it knows what to do with the given inventory items (per-mod loadout may not match the user's real tf2 loadout)
 		SDK_AddServerInventoryInfo( kv, GetSOCache( SteamUser()->GetSteamID() ) );
+
+		// Always attach the offline cache blob when available. The server uses it
+		// to rebuild the player SOCache without a webapi round-trip. Clients with
+		// a live GC inventory will have IsOfflineCacheActive() == false and skip this.
+		{
+			CTFPlayerInventory *pLocalInv =
+				dynamic_cast<CTFPlayerInventory *>( TFInventoryManager()->GetLocalInventory() );
+			if ( pLocalInv && pLocalInv->IsOfflineCacheActive() )
+			{
+				CUtlMemory<char> bufBlob;
+				if ( pLocalInv->BuildOfflineSOCacheBlob( bufBlob ) )
+					kv->SetString( "offline_items", bufBlob.Base() );
+			}
+		}
 
 		// Send to the server
 		engine->ServerCmdKeyValues( kv );
@@ -778,9 +855,15 @@ void CTFGCClientSystem::OnWebapiInventoryReceived( HTTPRequestCompleted_t* pInfo
 			return;
 		}
 
+		// IMPORTANT: set the flag BEFORE AddLocalSOCache. AddLocalSOCache fires
+		// SOCacheSubscribed synchronously on all registered listeners. That callback
+		// calls ConsumePendingOfflineCacheSave() — if the flag is set after the call
+		// it is always false when consumed and the save never happens.
+		m_bPendingOfflineCacheSave = true;
 		CGCClientSharedObjectCache *pSOCache = GetGCClient()->AddLocalSOCache( userSteamID, bufMsgSubscription.Base(), bufMsgSubscription.TellPut() );
 		if ( !pSOCache )
 		{
+			m_bPendingOfflineCacheSave = false; // roll back on failure
 			Warning( "Inventory response failed to create SO cache (probably protobuf didn't parse)\n" );
 			return;
 		}
@@ -790,18 +873,29 @@ void CTFGCClientSystem::OnWebapiInventoryReceived( HTTPRequestCompleted_t* pInfo
 	}
 	else
 	{
-		// Cache up to date.  Validate version matches
-		CGCClientSharedObjectCache* pSOCache = GetGCClient()->FindSOCache( userSteamID, false );
+		// Version matched — server sent no new msg blob so AddLocalSOCache is not
+		// called, meaning SOCacheSubscribed never fires and the pending flag would
+		// never be consumed. If inventory_refresh requested a save, do it directly.
+		CGCClientSharedObjectCache *pSOCache = GetGCClient()->FindSOCache( userSteamID, false );
 		Assert( pSOCache );
-		if( pSOCache )
+		if ( pSOCache && m_bPendingOfflineCacheSave )
 		{
-			Assert( pSOCache->GetVersion() == pValues->GetChildUInt64Value( "version" ) );
+			m_bPendingOfflineCacheSave = false;
+			CTFPlayerInventory *pLocalInv =
+				dynamic_cast<CTFPlayerInventory *>( TFInventoryManager()->GetLocalInventory() );
+			if ( pLocalInv )
+				pLocalInv->SaveOfflineItemCache();
 		}
 	}
 
-	// We were successful, clear backoff timers
+	// Successful fetch — clear backoff and record that we have fetched live data
+	// this session so autoupdate mode (cvar=1) doesn't fetch again.
+	// NOTE: m_bDidLiveFetchThisSession is set here, not in SOCacheSubscribed,
+	// because AddLocalSOCache always produces a local cache (BIsLocal()==true),
+	// making the old BIsLocal() guard in SOCacheSubscribed permanently dead code.
 	state.RequestSucceeded();
 	state.m_eState = kWebapiInventoryState_InventoryReceived;
+	m_bDidLiveFetchThisSession = true;
 }
 
 void CTFGCClientSystem::SDK_SelectItemsToSendToServer( CMsgAuthorizeServerItemRetrieval* pMsg, CGCClientSharedObjectCache* pSOCache )
@@ -892,9 +986,12 @@ void CTFGCClientSystem::SOCacheSubscribed( const CSteamID & steamIDOwner, GCSDK:
 		m_pSOCache = GCClientSystem()->GetSOCache( steamIDOwner );
 		Assert( m_pSOCache != NULL );
 
+		// NOTE: m_bDidLiveFetchThisSession is NOT set here. AddLocalSOCache always
+		// creates a local cache so BIsLocal() is always true — the old guard was
+		// permanently dead. The flag is set at the end of OnWebapiInventoryReceived.
+
 		if ( gameeventmanager )
 		{
-
 			// force a lobby update whenever our SO cache arrives
 			FireGameEventLobbyUpdated();
 		}
@@ -1549,5 +1646,30 @@ bool CTFGCClientSystem::BHasCompetitiveAccess( void )
 {
 	return false;
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: Forces a fresh live webapi fetch on the next frame and saves the
+//          result to the offline cache. Works in both autoupdate modes.
+//-----------------------------------------------------------------------------
+void CTFGCClientSystem::RefreshInventoryFromGC()
+{
+	m_bDidLiveFetchThisSession = false;
+	m_WebapiInventory.RequestSucceeded(); // clear any backoff timer
+    // Only restart from resting states. Mid-flight fetches complete on their own.
+    if ( m_WebapiInventory.m_eState == kWebapiInventoryState_InventoryReceived
+      || m_WebapiInventory.m_eState == kWebapiInventoryState_SentToServer )
+    {
+        m_WebapiInventory.m_eState = kWebapiInventoryState_Init;
+    }
+	Msg( "[Inventory] Refresh requested — fetching from webapi.\n" );
+}
+
+CON_COMMAND( inventory_refresh,
+	"Fetch a fresh copy of your TF2 inventory from the webapi and save it to the offline cache. "
+	"Works regardless of tf_offline_inventory_autoupdate setting." )
+{
+	GTFGCClientSystem()->RefreshInventoryFromGC();
+}
+
 
 
