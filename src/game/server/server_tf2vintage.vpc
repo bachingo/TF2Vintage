@@ -24,5 +24,15 @@ $Project "Server (TF2V)"
 		$Folder	"TF2Vintage"
 		{
 			// Era Enforcement
+			$File	"$SRCDIR\game\shared\tf\tf_gamerules_applyera.cpp"
+			$File	"$SRCDIR\game\shared\tf\tf_gamerules_convars.cpp"
+			$File	"$SRCDIR\game\shared\tf\tf_gamerules_convars.h"
+			$File	"tf\tf2v_item_era_enforcement.cpp"
+			$File	"tf\tf2v_item_era_enforcement.h"
+			$File	"tf\tf2v_era_attributes.cpp"
+			$File	"tf\tf2v_era_attributes.h"
+			$File	"$SRCDIR\game\shared\tf\tf_gamerules_era_internal.cpp"
+			$File	"$SRCDIR\game\shared\tf\tf_gamerules_era_internal.h"
+			$File	"$SRCDIR\game\shared\tf\tf_gamerules_era_members.h"
 		}
 }

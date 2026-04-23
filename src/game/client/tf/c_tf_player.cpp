@@ -3856,6 +3856,7 @@ C_TFPlayer::C_TFPlayer() :
 	m_pSoldierNoHealingDamageBuffEffect = NULL;
 	m_pCritBoostEffect = NULL;
 	m_flBurnEffectStartTime = 0;
+	m_flCurrentMouthOpen = 0.0f;
 	m_pDisguisingEffect = NULL;
 	m_pSaveMeEffect = NULL;
 	m_pTypingEffect = NULL;
@@ -4258,6 +4259,51 @@ void C_TFPlayer::UpdateClientSideAnimation()
 		{
 			pWeapon->UpdateAllViewmodelAddons();
 		}
+	}
+	
+	// HL1-style voice chat mouth animation.
+	//
+	// ControlMouth() (called by BaseClass below) drives the "mouth" pose
+	// parameter from GetMouth()->mouthopen (0-255 byte).  ControlMouth divides
+	// by 64 and clamps to [0,1] before mapping through the pose range, so the
+	// effective input range is 0-64 — values above 64 are wasted.
+	//
+	// The engine writes mouthopen automatically for sounds played on CHAN_VOICE
+	// from pre-authored audio, but NOT for the live voice codec stream.  We
+	// drive it manually here using the voice manager's speaking flag, then
+	// smooth the value each frame so the jaw opens and closes naturally instead
+	// of snapping.
+	//
+	// Target values are kept within a natural speech band:
+	//   Closed (silent):   0
+	//   Talking target:   ~40  (about 62% open — avoids the wide-open look)
+	// Open/close rates are asymmetric: jaw opens faster than it closes,
+	// which matches how human speech actually sounds.
+	if ( MouthInfo().NeedsEnvelope() )
+	{
+		bool bSpeaking = GetClientVoiceMgr() &&
+		                 GetClientVoiceMgr()->IsPlayerSpeaking( entindex() );
+
+		// Natural speech target — slightly below full open to avoid
+		// the "screaming" look. A small amount of random wobble could
+		// be added later by sampling a noise function here.
+		const float flSpeakTarget   = 40.0f;
+		const float flSilentTarget  = 0.0f;
+
+		// Max change per second.  Open faster (300/s) than close (120/s)
+		// so the jaw snaps open on a word but drifts closed between words.
+		const float flOpenRate  = 300.0f;
+		const float flCloseRate = 120.0f;
+
+		float flTarget = bSpeaking ? flSpeakTarget : flSilentTarget;
+		float flMaxDelta = ( flTarget > m_flCurrentMouthOpen ? flOpenRate : flCloseRate )
+		                   * gpGlobals->frametime;
+
+		float flDelta = flTarget - m_flCurrentMouthOpen;
+		flDelta = clamp( flDelta, -flMaxDelta, flMaxDelta );
+		m_flCurrentMouthOpen = clamp( m_flCurrentMouthOpen + flDelta, 0.0f, 64.0f );
+
+		GetMouth()->mouthopen = (byte)m_flCurrentMouthOpen;
 	}
 
 	BaseClass::UpdateClientSideAnimation();

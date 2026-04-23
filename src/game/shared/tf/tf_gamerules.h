@@ -347,6 +347,15 @@ public:
 
 #ifdef GAME_DLL
 public:
+	// =========================================================================
+	// TF2V ERA SYSTEM
+	// Class members (TF2VEraState_t, method declarations, private data) are
+	// declared in tf_gamerules_era_members.h and injected here. Implementations
+	// live in tf_gamerules_era_internal.cpp and tf_gamerules_applyera.cpp.
+	// =========================================================================
+	#include "tf_gamerules_era_members.h"
+public:
+	
 	virtual void	Precache( void );
 
 	// Override this to prevent removal of game specific entities that need to persist
@@ -1422,6 +1431,8 @@ public:
 
 	void ForceEnableUpgrades( int nState ) { m_nForceUpgrades = nState; }
 	void ForceEscortPushLogic( int nState ) { m_nForceEscortPushLogic = nState; }
+	
+	void ForceMapCycleNeedsUpdate( void ) { m_bMapCycleNeedsUpdate = true; } // Used for era management
 
 private:
 	CUtlVector< CHandle< CGhost > > m_ghostVector;
