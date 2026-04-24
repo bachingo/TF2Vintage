@@ -486,8 +486,6 @@ public:
 	bool ShouldShowNemesisIcon();
 
 	virtual	IMaterial *GetHeadLabelMaterial( void );
-	
-	void UpdateTypingBubble( void );
 
 	// Spy Cigarette
 	bool CanLightCigarette( void );
@@ -602,7 +600,6 @@ private:
 
 	// Medic callout particle effect
 	CNewParticleEffect	*m_pSaveMeEffect;
-	CNewParticleEffect	*m_pTypingEffect;
 	CNewParticleEffect	*m_pTauntWithMeEffect;
 
 	bool m_bUpdateObjectHudState;
@@ -702,11 +699,6 @@ private:
 	item_definition_index_t m_iPrevTauntItemDefIndex;
 	float			m_flCurrentTauntMoveSpeed;
 	float			m_flVehicleReverseTime;
-
-	// HL1-style voice chat mouth animation — smoothed envelope value.
-	// Written each frame in UpdateClientSideAnimation, read by ControlMouth
-	// via GetMouth()->mouthopen. Not networked — purely client-side cosmetic.
-	float			m_flCurrentMouthOpen;	// smoothed current value [0..64]
 
 	int				m_nTauntSequence;
 	float			m_flTauntStartTime;
@@ -824,8 +816,6 @@ public:
 
 	int GetNumActivePipebombs( void );
 
-	bool			m_bTyping;
-	
 	int				m_iSpyMaskBodygroup;
 	Vector			m_vecCustomModelOrigin;
 
@@ -1144,7 +1134,6 @@ private:
 	CUtlVector< CHandle< CEconWearable > > m_hClientWearables;	// wearables on the ragdoll that are "following" it
 
 	bool  m_bCreatedWhilePlaybackSkipping;
-	
 };
 
 #endif // C_TF_PLAYER_H

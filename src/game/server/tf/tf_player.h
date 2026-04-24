@@ -142,7 +142,6 @@ public:
 
 	virtual void		SetupVisibility( CBaseEntity *pViewEntity, unsigned char *pvs, int pvssize );
 	virtual void		Spawn();
-	void 				TF2VRefreshEraLoadout( void );
 	virtual void		ForceRespawn();
 	void				ForceRegenerateAndRespawn( void );
 	virtual CBaseEntity	*EntSelectSpawnPoint( void );
@@ -879,7 +878,6 @@ private:
 	CNetworkVar( bool, m_bIsReadyToHighFive );
 	CNetworkHandle( CTFPlayer, m_hHighFivePartner );
 	CNetworkVar( int, m_nForceTauntCam );
-	CNetworkVar( bool, m_bTyping );
 	CNetworkVar( float, m_flTauntYaw );
 	CNetworkVar( int, m_nActiveTauntSlot );
 	CNetworkVar( item_definition_index_t, m_iTauntItemDefIndex );
@@ -1205,7 +1203,10 @@ private:
 
 	int						m_iTeamChanges;
 	int						m_iClassChanges;
-
+	
+	// Typing
+	CNetworkVar( bool, m_bTyping );
+	
 	// Ragdolls.
 	Vector					m_vecTotalBulletForce;
 
@@ -1275,12 +1276,6 @@ private:
 	int					m_nPrevRoundTeamNum;
 
 public:
-	// Powerplay cheats
-	bool				SetPowerplayEnabled( bool bOn );
-	bool				PlayerHasPowerplay( void );
-	void				PowerplayThink( void );
-	CNetworkVar( bool, m_bInPowerPlay );
-	
 	bool				IsGoingFeignDeath( void ) { return m_bGoingFeignDeath; }
 
 	void					SetDeployingBombState( BombDeployingState_t nDeployingBombState ) { m_nDeployingBombState = nDeployingBombState; }

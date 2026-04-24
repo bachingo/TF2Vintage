@@ -35,7 +35,6 @@
 #include "datacache/imdlcache.h"
 #include "basemultiplayerplayer.h"
 #include "voice_gamemgr.h"
-#include "fmtstr.h"
 
 #ifdef TF_DLL
 #include "tf_player.h"
@@ -47,9 +46,6 @@
 #endif
 
 // TF2V: typing-bubble UserMessage helper
-#include "usermessages.h"
-
-// memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 extern int giPrecacheGrunt;

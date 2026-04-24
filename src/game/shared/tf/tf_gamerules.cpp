@@ -147,13 +147,6 @@
 
 #include "passtime_convars.h"
 
-//TF2V additions
-#include "tf_gamerules_era_internal.h"
-#ifdef GAME_DLL
-#include "tf_gamerules_convars.h"
-// #include "tf_gamerules_era_members.h" // Included in tf_gamerules.h instead.
-#endif
-
 #include "tier3/tier3.h"
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -1110,6 +1103,8 @@ ConVar tf_gamemode_misc ( "tf_gamemode_misc", "0", FCVAR_REPLICATED | FCVAR_NOTI
 
 ConVar tf_bot_count( "tf_bot_count", "0", FCVAR_NOTIFY | FCVAR_DEVELOPMENTONLY );
 
+ConVar tf2v_era ( "tf2v_era", "6559", FCVAR_REPLICATED | FCVAR_NOTIFY , "TF2V's Master Convar used to control the date of TF2V. Applies to server on round restarts.", true, 1, true, 6559 );
+
 #ifdef _DEBUG
 ConVar tf_debug_ammo_and_health( "tf_debug_ammo_and_health", "0", FCVAR_CHEAT );
 #endif // _DEBUG
@@ -1183,9 +1178,6 @@ ConVar tf_powerup_mode_dominant_multiplier( "tf_powerup_mode_dominant_multiplier
 ConVar tf_powerup_mode_killcount_timer_length( "tf_powerup_mode_killcount_timer_length", "300", FCVAR_REPLICATED, "How long to wait between kill count tests that determine if a player is dominating" ); //should be a multiple of 60 because we use this to calculate an integer
 
 ConVar tf_skillrating_update_interval( "tf_skillrating_update_interval", "180", FCVAR_ARCHIVE, "How often to update the GC and OGS." );
-
-ConVar tf2v_disable_cosmetics( "tf2v_disable_cosmetics", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_ARCHIVE, "When enabled, disables the cosmetic system on the server.", true, 0, true, 1 );
-ConVar tf2v_legacy_items( "tf2v_legacy_items", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_ARCHIVE, "When enabled, disables the item system on the server entirely and reverts to the weapon.txt files.", true, 0, true, 1 );
 
 extern ConVar mp_teams_unbalance_limit;
 
@@ -1489,6 +1481,8 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 
 	RecvPropInt( RECVINFO( m_nForceUpgrades ) ),
 	RecvPropInt( RECVINFO( m_nForceEscortPushLogic ) ),
+	
+	RecvPropInt( RECVINFO( m_nTF2VEra ) ),
 
 	RecvPropBool( RECVINFO( m_bRopesHolidayLightsAllowed ) ),
 #else
@@ -1558,6 +1552,9 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 
 	SendPropInt( SENDINFO( m_nForceUpgrades ) ),
 	SendPropInt( SENDINFO( m_nForceEscortPushLogic ) ),
+	
+	SendPropInt( SENDINFO( m_nTF2VEra ) ),
+	
 
 	SendPropBool( SENDINFO( m_bRopesHolidayLightsAllowed ) ),
 #endif
@@ -1918,7 +1915,6 @@ void CTFGameRulesProxy::Activate()
 	ListenForGameEvent( "teamplay_round_win" );
 
 	BaseClass::Activate();
-
 }
 
 //-----------------------------------------------------------------------------
@@ -4271,12 +4267,7 @@ void CTFGameRules::Activate()
 	m_nForceUpgrades = 0;
 	m_nForceEscortPushLogic = 0;
 	
-#ifdef GAME_DLL
-	// First boot: grab our info of tf2v_era. Validate.
-	tf2v_era.SetValue(tf2v_era.GetInt());
-	m_bApplyingEra = false;
-	ApplyEra( tf2v_era.GetInt() );
-#endif
+	m_nTF2VEra = tf2v_era.GetInt();
 
 	m_CPTimerEnts.RemoveAll();
 
@@ -15085,14 +15076,7 @@ void CTFGameRules::RoundRespawn( void )
 	// reset player per-round stats
 	CTF_GameStats.ResetRoundStats();
 
-#ifdef GAME_DLL
-	// ── TF2V ERA BOUNDARY ────────────────────────────────────────────────────
-	// Runs before BaseClass::RoundRespawn() so the era state is locked
-	// before any per-player respawn logic reads it.
-	tf2v_era.SetValue(tf2v_era.GetInt());
-	ApplyEra( tf2v_era.GetInt() );
-	Msg( "[TF2V] Pending era %d applied.\n", tf2v_era.GetInt() );
-#endif
+	m_nTF2VEra = tf2v_era.GetInt();
 
 	BaseClass::RoundRespawn();
 
@@ -15125,10 +15109,6 @@ void CTFGameRules::RoundRespawn( void )
 		m_bVoteCalled = true;
 		m_bServerVoteOnReset = false;
 	}
-#ifdef GAME_DLL
-	// Revalidate QuickPlay/Certified compliance after era change
-		TF2VUpdateQuickPlayCompliance();
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -17647,7 +17627,24 @@ bool CTFGameRules::ShouldShowPreRoundDoors() const
 //-----------------------------------------------------------------------------
 int CTFGameRules::GetClassLimit( int iClass )
 {
-	if ( IsInHighlanderMode() )
+	if ( IsInTournamentMode() || IsPasstimeMode() )
+	{
+		switch ( iClass )
+		{
+		case TF_CLASS_SCOUT: return tf_tournament_classlimit_scout.GetInt(); break;
+		case TF_CLASS_SNIPER: return tf_tournament_classlimit_sniper.GetInt(); break;
+		case TF_CLASS_SOLDIER: return tf_tournament_classlimit_soldier.GetInt(); break;
+		case TF_CLASS_DEMOMAN: return tf_tournament_classlimit_demoman.GetInt(); break;
+		case TF_CLASS_MEDIC: return tf_tournament_classlimit_medic.GetInt(); break;
+		case TF_CLASS_HEAVYWEAPONS: return tf_tournament_classlimit_heavy.GetInt(); break;
+		case TF_CLASS_PYRO: return tf_tournament_classlimit_pyro.GetInt(); break;
+		case TF_CLASS_SPY: return tf_tournament_classlimit_spy.GetInt(); break;
+		case TF_CLASS_ENGINEER: return tf_tournament_classlimit_engineer.GetInt(); break;
+		default:
+			break;
+		}
+	}
+	else if ( IsInHighlanderMode() )
 	{
 		return 1;
 	}
@@ -17655,26 +17652,7 @@ int CTFGameRules::GetClassLimit( int iClass )
 	{
 		return tf_classlimit.GetInt();
 	}
-	else
-	{
-		int nClassLimit = NO_CLASS_LIMIT;
-		switch ( iClass )
-		{
-		case TF_CLASS_SCOUT: nClassLimit = tf_tournament_classlimit_scout.GetInt(); break;
-		case TF_CLASS_SNIPER: nClassLimit = tf_tournament_classlimit_sniper.GetInt(); break;
-		case TF_CLASS_SOLDIER: nClassLimit = tf_tournament_classlimit_soldier.GetInt(); break;
-		case TF_CLASS_DEMOMAN: nClassLimit = tf_tournament_classlimit_demoman.GetInt(); break;
-		case TF_CLASS_MEDIC: nClassLimit = tf_tournament_classlimit_medic.GetInt(); break;
-		case TF_CLASS_HEAVYWEAPONS: nClassLimit = tf_tournament_classlimit_heavy.GetInt(); break;
-		case TF_CLASS_PYRO: nClassLimit = tf_tournament_classlimit_pyro.GetInt(); break;
-		case TF_CLASS_SPY: nClassLimit = tf_tournament_classlimit_spy.GetInt(); break;
-		case TF_CLASS_ENGINEER: nClassLimit = tf_tournament_classlimit_engineer.GetInt(); break;
-		default:
-			break;
-		}
-		if (nClassLimit != NO_CLASS_LIMIT)
-			return nClassLimit;
-	}
+
 	return NO_CLASS_LIMIT;
 }
 
@@ -18799,17 +18777,6 @@ convar_tags_t convars_to_check_for_tags[] =
 	{ "tf_powerup_mode", "powerup", NULL },
 	{ "tf_gamemode_passtime", "passtime", NULL },
 	{ "tf_gamemode_misc", "misc", NULL }, // catch-all for matchmaking to identify sd, tc, and pd servers via sv_tags
-
-	// TF2V Certification / QuickPlay tier tags
-	{ "tf2v_certified",             "certified",             NULL },
-	{ "tf2v_certified_partial",     "certified_partial",     NULL },
-	{ "tf2v_certified_casual",      "certified_casual",      NULL },
-	{ "tf2v_certified_competitive", "certified_competitive", NULL },
-	{ "tf2v_quickplay_casual",      "quickplay_casual",      NULL },
-	{ "tf2v_quickplay_competitive", "quickplay_competitive", NULL },
-	{ "tf2v_quiet_server", 			"quiet_server",				 NULL },
-	{ "tf2v_disable_cosmetics", 	"hatless",				 NULL },
-	{ "tf2v_legacy_items", 			"legacy_items",				 NULL },
 };
 
 //-----------------------------------------------------------------------------

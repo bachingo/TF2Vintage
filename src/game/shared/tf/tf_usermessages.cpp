@@ -17,8 +17,7 @@ void RegisterUserMessages()
 	usermessages->Register( "Geiger", 1 );		// geiger info data
 	usermessages->Register( "Train", 1 );		// train control data
 	usermessages->Register( "HudText", -1 );	
-	usermessages->Register( "SayText", -1 );
-	usermessages->Register( "PlayerTyping", 2 );	// TF2V: entindex(1), bIsTyping(1)	
+	usermessages->Register( "SayText", -1 );	
 	usermessages->Register( "SayText2", -1 );
 	usermessages->Register( "TextMsg", -1 );
 	usermessages->Register( "ResetHUD", 1 );	// called every respawn
