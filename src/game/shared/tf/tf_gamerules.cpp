@@ -1481,10 +1481,10 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 
 	RecvPropInt( RECVINFO( m_nForceUpgrades ) ),
 	RecvPropInt( RECVINFO( m_nForceEscortPushLogic ) ),
-	
-	RecvPropInt( RECVINFO( m_nTF2VEra ) ),
 
 	RecvPropBool( RECVINFO( m_bRopesHolidayLightsAllowed ) ),
+	
+	RecvPropInt( RECVINFO( m_nTF2VEra ) ),
 #else
 
 	SendPropInt( SENDINFO( m_nGameType ), 4, SPROP_UNSIGNED ),
@@ -1552,11 +1552,10 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 
 	SendPropInt( SENDINFO( m_nForceUpgrades ) ),
 	SendPropInt( SENDINFO( m_nForceEscortPushLogic ) ),
-	
-	SendPropInt( SENDINFO( m_nTF2VEra ) ),
-	
 
 	SendPropBool( SENDINFO( m_bRopesHolidayLightsAllowed ) ),
+
+	SendPropInt( SENDINFO( m_nTF2VEra ) ),
 #endif
 END_NETWORK_TABLE()
 
