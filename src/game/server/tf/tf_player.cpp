@@ -23169,6 +23169,8 @@ bool CTFPlayer::ItemQualityIsAllowedTimePeriod( int iQuality )
 			
 		case AE_COMMUNITY:
 		case AE_SELFMADE:
+		case AE_DEVELOPER:
+		case AE_VALVE:
 			return iCurrentEra >= TF2V_ERA_DAY_WAR; // Community items
 			
 		case AE_VINTAGE:
@@ -23200,10 +23202,6 @@ bool CTFPlayer::ItemQualityIsAllowedTimePeriod( int iQuality )
 		case AE_RARITY_LEGENDARY:
 		case AE_RARITY_ANCIENT:
 			return iCurrentEra >= TF2V_ERA_DAY_GUNMETTLE; // Wrapped items
-			
-		case AE_DEVELOPER:
-		case AE_VALVE:
-			return true; // Valve items always allowed
 			
 		default:
 			return false; // Unknown qualities blocked by default
