@@ -15088,7 +15088,6 @@ void CTFGameRules::RoundRespawn( void )
 	ApplyEra( m_nPendingEra );
 	tf2v_era.SetValue( m_nPendingEra );
 	Msg( "[TF2V] Pending era %d applied.\n", m_nPendingEra );
-	}
 #endif
 
 	BaseClass::RoundRespawn();

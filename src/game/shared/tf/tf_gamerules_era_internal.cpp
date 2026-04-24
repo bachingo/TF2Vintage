@@ -711,7 +711,7 @@ void CTFGameRules::TF2VUpdateQuickPlayCompliance()
     bool bCasual        = TF2VCheckCasual();
     bool bComp          = TF2VCheckCompetitive();
 
-    bool bQuietServer   = TF2VCheckQuietServer( nullptr );
+    bool bQuietServer   = TF2VCheckQuietServer();
 
     bool bFullCasual    = bCasual;
     bool bFullComp      = bComp;
