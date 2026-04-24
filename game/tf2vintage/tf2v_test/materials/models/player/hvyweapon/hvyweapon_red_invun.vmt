@@ -1,0 +1,9 @@
+Patch
+{
+	include	"materials/models/player/shared/invuln/invuln_red_body.vmt"
+	insert
+	{
+		$basetexture		"models/player/hvyweapon/hvyweapon_red"
+		$bumpmap		"models/player/hvyweapon/hvyweapon_normal"
+	}
+}

@@ -1,0 +1,9 @@
+SpriteCard
+{
+	$basetexture		"particle/shortcircuit_new/shc_flare_red"
+	$vertexcolor		1
+	$vertexalpha		1
+	$additive			1
+
+	$depthblend		0
+}

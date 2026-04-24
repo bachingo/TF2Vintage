@@ -1,0 +1,29 @@
+Refract
+{
+	$normalmap	"particle/flat_warp_gradient"
+//	$normalmap2	"effects/hl2_ep2_ported/aftershock-normal"
+	$normalmap2	"water/tfwater001_normal"
+	$translucent		1
+	$vertexalpha		1
+	$vertexcolor		1
+
+//	$refractamount		2.0
+	$refractamount		1.0
+	$bumpframe		0
+	$bumpframe2		0
+
+ 	$bluramount		2
+	$vertexcolormodulate	1
+
+	$nocull			1
+
+	Proxies
+	{
+		AnimatedTexture
+		{
+			"animatedtexturevar"		"$normalmap2"
+			"animatedtextureframenumvar"	"$bumpframe2"
+			"animatedtextureframerate"		144
+		}
+	}
+}

@@ -1,0 +1,13 @@
+SpriteCard
+{
+	$basetexture	"effects/splinter/debris_splinter_grainy"
+//	$alphatest	1	// Not sure if this works with SpriteCard??? Would be nice if it did since it should be cheaper/faster to render than $translucent.
+	$translucent	1
+
+	$vertexcolor 	1
+	$vertexalpha	1
+
+//	$overbrightfactor	1.5
+	$overbrightfactor	1.75
+	$depthblend	0
+}

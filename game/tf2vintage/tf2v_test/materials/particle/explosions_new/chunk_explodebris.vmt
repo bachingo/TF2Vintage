@@ -1,0 +1,11 @@
+SpriteCard
+{
+	$basetexture	"effects/debris/shaded_chunks/shaded_chunks_noise"
+	$translucent	1
+
+	$vertexcolor 	1
+	$vertexalpha	1
+
+	$overbrightfactor	6.0
+	$depthblend	0
+}

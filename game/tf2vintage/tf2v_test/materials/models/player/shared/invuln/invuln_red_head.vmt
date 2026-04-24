@@ -1,0 +1,404 @@
+VertexLitGeneric
+{
+	// Inheriting materials must specify $basetexture and $bumpmap
+	// They must also specify any $emissiveblend-related parameters if that material should use them (e.g., Engie's head inulnerability materials)
+
+	$envmap			"effects/invun_red"
+	$envmaptint		"[0.5 0.0125 0.0125]"
+	$surfaceprop		"metal"
+	$nodecal			1
+	$halflambert		1
+
+	$color2			"[1.5 0.75 0.75]"
+	
+	$detail			"effects/invuln_sfm/invuln_anim_small"
+	$detailscale		1
+	$detailblendmode		5
+	$detailblendfactor		0.0
+
+	$selfillum			1
+	$selfIllumFresnel		1
+	$selfIllumFresnelMinMaxExp	"[0.0 0.25 24.0]"	// 0.0 1.0 1.0 is the default
+	$selfillumtint		"[0.50 0.25 0.25]"
+
+	"$invulnlevel" "0.0"
+//	"$invulnscale" "0"		// Was present in original player invuln VMT, but didn't seem to actually be used for anything.
+	"$half" "0.5"
+
+	$phong			1
+	$phongtint		"[0.30 0.03 0.015]"
+	$phongexponent		40
+//	$phongwarptexture		"models/phongwarps/invuln_red_phongwarp"
+	$phongboost		4.0	
+	$lightwarptexture		"models/player/pyro/pyro_lightwarp"
+	$phongfresnelranges	"[11 1 8]"
+	
+	// Rim lighting parameters
+	"$rimlight" "1"		
+	"$rimlightexponent" "11"
+	"$rimlightboost" "5"
+
+
+	// New proxy variables
+
+	$timeOld			"0.0"
+	$timeCurrent		"0.0"
+	$timeDiff			"0.0"
+
+	$gradualFade		"1.0"	// 0 is fully faded in, 1 is fully faded out		// Must be float, or Clamp proxy won't save the value properly!
+	$gradualFadeInverse	"0.0"	// Inverse of above				// Must be float, or Clamp proxy won't save the value properly!
+
+	$fadeIncreasePerSec	"4.800"		// Rade at which Uber fades OUT	// Head materials have slightly slower fade-in and slightly faster fade-out
+	$fadeDecreasePerSec	"1.600"		// Rate at which Uber fades IN
+
+	$SIFExp			"24.0"	// Variable that is eventually passed to $selfillumfresnelminmaxexp[2] (Self-Illumination Fresnel Exponent)
+	$SIFExpMult		"36.0"	// Multiply $gradualFade by this to de-normalize
+	$SIFExpOffset		"12.0"	// Then subtract by this!
+					// End result: range from -12 to 24
+
+	$DBFMult			"2.0"	// multiply blah bladh blahd blahdf blah
+					// End result: inverted range from 0 to 3
+
+	$envtintMain		"0.1"	// Variable that is eventually passed to $envmaptint[0]
+	$envtintMainMult		"0.75"	// Multiply $gradualFade by this to de-normalize
+	$envtintMainOffset		"0.25"	// Then add this
+	$envtintMainEndPulseMinIfTrue	"0.125"
+	$envtintMainEndPulseMaxIfTrue	"3.00"	// If invuln is fading out, multiply by a number between these two values, as determined by a sine function
+		$envtintMainEndPulseMin	"1.0"	// Dummy
+		$envtintMainEndPulseMax	"1.0"	// Dummy
+		$envtintMainEndPulse	"1.0"	// Dummy
+					// End result: inverted range from 0.25 to 1.00 (possibly then multiplied by the sine pulse)
+	
+	$envtintOther		"0.1"	// Variable that is eventually passed to both of the other $envmaptint indices
+	$envtintOtherMult		"0.12"	// Multiply $gradualFade by this to de-normalize
+	$envtintOtherOffset		"0.04"	// Then add this
+	$envtintOtherEndPulseMinIfTrue	"0.125"
+	$envtintOtherEndPulseMaxIfTrue	"3.00"	// If invuln is fading out, multiply by a number between these two values, as determined by a sine function
+		$envtintOtherEndPulseMin	"1.0"	// Dummy
+		$envtintOtherEndPulseMax	"1.0"	// Dummy
+		$envtintOtherEndPulse	"1.0"		// Dummy
+					// End result: inverted range from ??? to ??? (possibly then multiplied by the sine pulse)
+					
+	$color2Main			"1.50"	// Base value for main; this variable should NEVER be directly changed!!
+	$color2Other		"0.75"	// Base value for other; this variable should NEVER be directly changed!!
+	//
+	$color2Mult			"0.75"	// Multiply $gradualFade by this to de-normalize
+	$color2Offset		"0.25"	// Then add this
+	$color2Percent		"1.00"	// Changes based on $gradualFade; used to determine final $color2 values
+		// End result: inverted range from ??? to ???
+
+	$phongboostMult		"3.00"	// Multiply $gradualFade by this to de-normalize
+	$phongboostOffset		"1.00"	// Then add this
+					// End result: inverted range from 1.0 to 4.0
+
+	$addBy			"0.0"
+	$subtractBy		"0.0"
+
+	$zero			"0.0"
+	$one			"1.0"
+	
+	"Proxies"
+	{
+		"AnimatedTexture"
+		{
+			"animatedtexturevar" "$detail"
+			"animatedtextureframenumvar" "$detailframe"
+			"animatedtextureframerate" 30
+		}
+		"TextureScroll"
+		{
+			"texturescrollvar" "$detailtexturetransform"
+			"texturescrollrate" "0.25"
+			"texturescrollangle" "45"
+		}
+
+		InvulnLevel					// NOTE: Not sure, but it seems like this proxy doesn't return a valid float while Uber is neither active nor in the process of fading out.
+								// Thus, any other proxies that assume $invulnlevel contains a float might behave weirdly during that time.
+								// In most cases, they'll probs just be stuck with the last valid float that $invulnlevel passed.
+								// Biggest potential consequence of this issue is that it can make the timing of $gradualFade inconsistent if it didn't reach its minimum or maximum value before InvulnLevel stopped.
+								// So try to make sure $gradualFade grows and shrinks fast enough for that to not happen, I guess??
+		{
+			"resultVar" "$invulnlevel"
+		}
+
+		// Determine time passed, and scale increase/decrease rates accordingly
+		
+			LinearRamp	// Get current time				// (Bug described below has now been "fixed" but keeping these comments here for documentation purposes)
+										// CURRENT HYPOTHESIS for what's going wrong
+										// When this material isn't active, some (all?) proxies fall asleep in the meantime.
+										// When the material is next used some seconds later, proxies wake up.
+										// $timeCurrent is then updated to match the new current time, but $timeOld is still "in the past" when time $timeDiff is calculated.
+										// Thus, when handling $gradualfade, everything immediately progresses as if all that elapsed time happened at once, causing the material to start already partly/fully faded-in.
+			{
+				rate		"1.0"
+				initialvalue	"0.0"
+				resultVar		"$timeCurrent"
+			}
+			Subtract		// Determine time difference
+			{
+				srcVar1		"$timeCurrent"
+				srcVar2		"$timeOld"
+				resultVar		"$timeDiff"
+			}
+			Clamp					// IMPORTANT
+								// Makes sure $timeDiff never exceeds ~1/20th of a second
+								// Hacky workaround for an issue where, while this material is unused, its proxies fall asleep.
+								// Thus, if some time passes before the material is used again, $timeOld will be "in the past" but $timeCurrent will be updated to the proper current time.
+								// This makes $timeDiff be much larger than it should be, and $gradualFade instantaneously progresses as if all that elapsed time happened at once, causing the material to start already partly/fully faded-in.
+			{
+				srcvar1		"$timeDiff"
+				min		"0.0"
+				max		"0.05"
+				resultvar		"$timeDiff"
+			}
+			Equals	// Update old time
+			{
+				srcVar1		"$timeCurrent"
+				resultVar		"$timeOld"
+			}
+
+		// Increase or Decrease $gradualFade progress
+
+			LessOrEqual	// Do this only if invuln IS fading out
+			{
+				srcVar1		"$invulnlevel"
+				srcVar2		"$half"
+				lessEqualVar	"$fadeIncreasePerSec"
+				greaterVar	"$zero"	// Then DECREASE fade progress!
+				resultVar		"$addBy"
+			}
+			LessOrEqual	// Do this only if invuln is NOT fading out
+			{
+				srcVar1		"$invulnlevel"
+				srcVar2		"$half"
+				lessEqualVar	"$zero"
+				greaterVar	"$fadeDecreasePerSec"	// Then DECREASE fade progress!
+				resultVar		"$subtractBy"
+			}
+			Multiply
+			{
+				srcVar1		"$timeDiff"
+				srcVar2		"$addBy"
+				resultVar		"$addBy"
+			}
+			Multiply
+			{
+				srcVar1		"$timeDiff"
+				srcVar2		"$subtractBy"
+				resultVar		"$subtractBy"
+			}
+
+			Add	// Actually enact increase (if any)!
+			{
+				srcVar1		"$gradualFade"
+				srcVar2		"$addBy"
+				resultVar		"$gradualFade"
+			}
+			Subtract	// Actually enact decrease (if any)!
+			{
+				srcVar1		"$gradualFade"
+				srcVar2		"$subtractBy"
+				resultVar		"$gradualFade"
+			}
+			Clamp		// Clamp $gradualFade within a range of 0.0 to 1.0
+			{
+				srcvar1		"$gradualFade"
+				min		"0.0"
+				max		"1.0"
+				resultvar		"$gradualFade"
+			}
+
+		// Inverse of $gradualfade
+			Subtract
+			{
+				srcVar1		"$gradualFade"
+				srcVar2		"$one"
+				resultVar		"$gradualFadeInverse"
+			}
+			Abs
+			{
+				srcVar1		"$gradualFadeInverse"
+				resultVar		"$gradualFadeInverse"
+			}
+
+		// Derive special variables from $gradualFade, then pass them on
+
+			// Self-Illumination Fresnel Exponent (SIFExp)
+			Multiply
+			{
+				srcVar1		"$gradualFade"
+				srcVar2		"$SIFExpMult"
+				resultVar		"$SIFExp"
+			}
+			Subtract
+			{
+				srcVar1		"$SIFExp"
+				srcVar2		"$SIFExpOffset"
+				resultVar		"$SIFExp"
+			}
+			Equals
+			{
+				srcVar1		"$SIFExp"
+				resultVar		"$selfillumfresnelminmaxexp[2]"
+			}
+
+			// $detailblendfactor
+			Multiply
+			{
+				srcVar1		"$gradualFadeInverse"
+				srcVar2		"$DBFMult"
+				resultVar		"$detailblendfactor"
+			}
+
+			// $envmaptint Blue
+			Multiply
+			{
+				srcVar1		"$gradualFadeInverse"
+				srcVar2		"$envtintMainMult"
+				resultVar		"$envtintMain"
+			}
+			Add
+			{
+				srcVar1		"$envtintMain"
+				srcVar2		"$envtintMainOffset"
+				resultVar		"$envtintMain"
+			}
+				// End pulse multiplier for $envmaptint Blue
+				LessOrEqual	// Is invuln fading out?
+				{
+					srcVar1		"$invulnlevel"
+					srcVar2		"$half"
+					lessEqualVar	"$envtintMainEndPulseMinIfTrue" // Then set sine min to this
+					greaterVar	"$one"			// Else, set sine min to 1.0 (effectively, do nothing)
+					resultVar		"$envtintMainEndPulseMin"
+				}
+				LessOrEqual	// Is invuln fading out? (yes... we ask again...)
+				{
+					srcVar1		"$invulnlevel"
+					srcVar2		"$half"
+					lessEqualVar	"$envtintMainEndPulseMaxIfTrue" // Then set sine max to this
+					greaterVar	"$one"			// Else, set sine max to 1.0 (effectively, do nothing)
+					resultVar		"$envtintMainEndPulseMax"
+				}
+				Sine
+				{
+					sineperiod	"0.25"
+					timeoffset		"0.0"
+					sinemin		"$envtintMainEndPulseMin"
+					sinemax		"$envtintMainEndPulseMax"
+					resultVar		"$envtintMainEndPulse"
+				}
+				Multiply
+				{
+					srcVar1		"$envtintMain"
+					srcVar2		"$envtintMainEndPulse"
+					resultVar		"$envtintMain"
+				}
+			Equals
+			{
+				srcVar1		"$envtintMain"
+				resultVar		"$envmaptint[0]"
+			}
+			
+			// $envmaptint Other
+			Multiply
+			{
+				srcVar1		"$gradualFadeInverse"
+				srcVar2		"$envtintOtherMult"
+				resultVar		"$envtintOther"
+			}
+			Add
+			{
+				srcVar1		"$envtintOther"
+				srcVar2		"$envtintOtherOffset"
+				resultVar		"$envtintOther"
+			}
+				// End pulse multiplier for $envmaptint Other
+				LessOrEqual	// Is invuln fading out?
+				{
+					srcVar1		"$invulnlevel"
+					srcVar2		"$half"
+					lessEqualVar	"$envtintOtherEndPulseMinIfTrue" // Then set sine min to this
+					greaterVar	"$one"			// Else, set sine min to 1.0 (effectively, do nothing)
+					resultVar		"$envtintOtherEndPulseMin"
+				}
+				LessOrEqual	// Is invuln fading out? (yes... we ask again...)
+				{
+					srcVar1		"$invulnlevel"
+					srcVar2		"$half"
+					lessEqualVar	"$envtintOtherEndPulseMaxIfTrue" // Then set sine max to this
+					greaterVar	"$one"			// Else, set sine max to 1.0 (effectively, do nothing)
+					resultVar		"$envtintOtherEndPulseMax"
+				}
+				Sine
+				{
+					sineperiod	"0.25"
+					timeoffset		"0.0"
+					sinemin		"$envtintOtherEndPulseMin"
+					sinemax		"$envtintOtherEndPulseMax"
+					resultVar		"$envtintOtherEndPulse"
+				}
+				Multiply
+				{
+					srcVar1		"$envtintOther"
+					srcVar2		"$envtintOtherEndPulse"
+					resultVar		"$envtintOther"
+				}
+			Equals
+			{
+				srcVar1		"$envtintOther"
+				resultVar		"$envmaptint[1]"
+			}
+			Equals
+			{
+				srcVar1		"$envtintOther"
+				resultVar		"$envmaptint[2]"
+			}
+			
+			// $color2
+			Multiply
+			{
+				srcVar1		"$gradualFadeInverse"
+				srcVar2		"$color2Mult"
+				resultVar		"$color2Percent"
+			}
+			Add
+			{
+				srcVar1		"$color2Percent"
+				srcVar2		"$color2Offset"
+				resultVar		"$color2Percent"
+			}
+			Multiply
+			{
+				srcVar1		"$color2Main"
+				srcVar2		"$color2Percent"
+				resultVar		"$color2[0]"
+			}
+			Multiply
+			{
+				srcVar1		"$color2Other"
+				srcVar2		"$color2Percent"
+				resultVar		"$color2[1]"
+			}
+			Multiply
+			{
+				srcVar1		"$color2Other"
+				srcVar2		"$color2Percent"
+				resultVar		"$color2[2]"
+			}
+
+			// $phongboost
+			Multiply
+			{
+				srcVar1		"$gradualFadeInverse"
+				srcVar2		"$phongboostMult"
+				resultVar		"$phongboost"
+			}
+			Add
+			{
+				srcVar1		"$phongboost"
+				srcVar2		"$phongboostOffset"
+				resultVar		"$phongboost"
+			}
+	}
+}

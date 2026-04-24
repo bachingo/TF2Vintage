@@ -1,0 +1,9 @@
+Patch
+{
+	include	"materials/models/player/shared/invuln/invuln_red_head.vmt"
+	insert
+	{
+		$basetexture		"models/player/hvyweapon/heavy_head"
+		$bumpmap		"models/player/hvyweapon/hwm/heavy_head_phongmask"
+	}
+}

@@ -1,0 +1,6 @@
+VertexLitGeneric
+{
+	$basetexture	"models/player/sniper/sniper_lens_invuln"
+	$additive		1
+	$selfillum		1
+}

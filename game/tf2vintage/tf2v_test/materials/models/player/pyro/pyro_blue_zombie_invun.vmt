@@ -1,0 +1,9 @@
+Patch
+{
+	include	"materials/models/player/shared/invuln/invuln_zombie_blue_body.vmt"
+	insert
+	{
+		$basetexture		"models/player/pyro/pyro_blue_zombie"
+		$bumpmap		"models/player/pyro/pyro_normal"
+	}
+}

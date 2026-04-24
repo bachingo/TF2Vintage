@@ -1,0 +1,21 @@
+UnlitGeneric
+{
+//	$basetexture		"particle/particle_smokegrenade"
+	$basetexture		"particle/smoothsmoke/smoothsmoke"
+	$vertexcolor		1
+	$vertexalpha		1
+	$translucent		1
+	
+	$nocull			1
+	$nofog			1
+
+//	$depthblend		0	// Probably not necessary for this shader?
+
+	// Some notes about using this material for the "initial" particles in my impact fx (the flat sprites that appear right at the point of impact, parallel to the originating surface):
+		// In the renderer, you need to set "orientation_type" to 3, as well as set "orientation control point" to 0 (as that control point's orientation matches the direction of the impact effect)
+		// Make sure you're using a material with the UnlitGeneric shader (SpriteCard won't work!)
+		// Add a "rotation yaw random" initializer to adjust the particles' yaw angle, facing them in the direction you desire.
+
+	// COOL NOTE: Normally, UnlitGeneric particles are unaffected by yaw-related properties (that's why you usually need to use SpriteCard instead if you want to do yaw stuff).
+		// HOWEVER, orientation_type 3 DOES allow UnlitGeneric to have its yaw changed!
+}

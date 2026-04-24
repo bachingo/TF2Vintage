@@ -1,0 +1,10 @@
+SpriteCard
+{
+	$basetexture		"effects/brightglow_y"
+	$vertexcolor		1
+	$vertexalpha		1
+	$additive			1
+
+	$depthblend		0
+	$maxsize			0.025
+}

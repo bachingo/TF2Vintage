@@ -1,0 +1,20 @@
+Patch
+{
+	include	"materials/models/player/shared/invuln/invuln_blue_body.vmt"
+	insert
+	{
+		$basetexture		"models/player/pyro/pyro_blue"
+		$bumpmap		"models/player/pyro/pyro_normal"
+		
+		// Emissive Blend
+		// This is used to provide illumination for the eyes, independent from the $selfillum used by the rest of the head/body.
+		// So glad this exists, b/c otherwise I think making the eyes glow a separate color from the rest of the body would be impossible!
+		$emissiveblendenabled	1
+		$emissiveblendstrength	1.0				// Must be float, or Clamp proxy won't save the value properly!
+		$emissiveBlendTexture	"dev/null"			// Dummy texture
+		$emissiveBlendBaseTexture	"models/player/pyro/pyro_invun_emissiveblend"
+		$emissiveBlendFlowTexture	"dev/null"			// Dummy texture
+		$emissiveBlendTint		"[1.0 1.0 0.0]"
+		$emissiveBlendScrollVector	"[0 0]"				// We're not actually scrolling anything, so [0 0]!
+	}
+}

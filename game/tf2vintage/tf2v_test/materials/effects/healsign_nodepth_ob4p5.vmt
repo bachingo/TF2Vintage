@@ -1,0 +1,12 @@
+SpriteCard
+{
+	$basetexture	"effects/healsign"
+	$surfaceprop	"no_decal"
+	$additive		1
+	$vertexcolor 	1
+	$vertexalpha	1
+
+	$overbrightfactor	4.5
+
+	$depthblend	0
+}

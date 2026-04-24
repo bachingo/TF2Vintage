@@ -1,0 +1,7 @@
+VertexLitGeneric
+{
+	$basetexture	"decals/metal/shot5"
+	$translucent	1
+	// Edit $decalscale through respective subrect VMT
+	$decal		1
+}

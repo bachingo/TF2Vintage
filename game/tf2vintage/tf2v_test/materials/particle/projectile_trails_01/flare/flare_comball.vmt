@@ -1,0 +1,20 @@
+SpriteCard
+{
+	$basetexture		"effects/comball_d/comball_d_gray"
+	$vertexcolor		1
+	$vertexalpha		1
+	$additive			1
+
+	$depthblend		0
+	$overbrightfactor		2.5
+
+	Proxies
+	{
+		AnimatedOffsetTexture
+		{
+			animatedtexturevar			$basetexture
+			animatedtextureframenumvar		$frame
+			animatedtextureframerate		45.0
+		}
+	}
+}

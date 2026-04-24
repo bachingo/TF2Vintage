@@ -1,0 +1,11 @@
+UnlitGeneric
+{
+	$basetexture		"effects/softglow"
+//	$basetexture		"effects/tp_floorglow"
+	$vertexcolor		1
+	$vertexalpha		1
+	$additive			1
+
+//	$depthblend		0	// Probably not necessary for this shader?
+	$nocull			1
+}

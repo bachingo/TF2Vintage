@@ -1,0 +1,7 @@
+UnlitGeneric
+{
+	$basetexture		"effects/circle3"
+	$vertexcolor		1
+	$vertexalpha		1
+	$additive			1
+}

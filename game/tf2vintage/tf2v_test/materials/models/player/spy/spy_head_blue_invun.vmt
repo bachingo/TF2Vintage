@@ -1,0 +1,9 @@
+Patch
+{
+	include	"materials/models/player/shared/invuln/invuln_blue_head.vmt"
+	insert
+	{
+		$basetexture		"models/player/spy/spy_head_blue"
+		$bumpmap		"models/player/spy/hwm/spy_head_phongmask"
+	}
+}

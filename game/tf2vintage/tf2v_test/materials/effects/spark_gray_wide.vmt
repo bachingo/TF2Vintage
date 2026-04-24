@@ -1,0 +1,9 @@
+// NOTE: Because of the way this material stretches the texture with $basetexturetransform, it is important that the VTF used has the "Clamp S" and "Clamp T" flags checked. Otherwise, there will be visible bleedover at the edges of the material.
+UnlitGeneric
+{
+	$basetexture		"effects/spark_gray"
+	$basetexturetransform	"center .5 .5 scale 0.375 1.25 rotate 0 translate 0 0"
+	$vertexcolor		1
+	$vertexalpha		1
+	$additive			1
+}

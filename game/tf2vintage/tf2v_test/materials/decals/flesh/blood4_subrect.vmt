@@ -1,0 +1,22 @@
+"Subrect"
+{
+	"$Material"	"decals/flesh/blood4World"
+	"$Pos"		"0 0"
+	"$Size"		"256 256"
+//	"$Pos"		"512 0"
+//	"$Size"		"64 64"
+	"$decalscale" 	0.030
+
+	Proxies
+	{
+		UniformNoise			// Each tick, this proxy passes randomized value to $decalscale. This effectively gives the decals a random size.
+						// Note: seems to work less consistently for model decals(???)
+		{
+			minVal			"00.02"
+			maxVal			"00.04"
+			resultvar			$decalscale
+		}
+	}
+
+	"$modelmaterial" "decals/flesh/blood4"
+}

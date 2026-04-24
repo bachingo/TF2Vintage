@@ -1,0 +1,19 @@
+Subrect
+{
+	$material	"decals/concrete/world/shot5"
+	$pos		"0 0"
+	$size		"256 256"
+	$decalscale 	00.10
+	$modelmaterial "decals/concrete/shot5"
+
+	Proxies
+	{
+		UniformNoise			// Each tick, this proxy passes randomized value to $decalscale. This effectively gives the decals a random size.
+						// Note: seems to work less consistently for model decals(???)
+		{
+			minVal			"00.067"
+			maxVal			"00.133"
+			resultvar			$decalscale
+		}
+	}
+}

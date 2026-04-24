@@ -1,0 +1,9 @@
+Patch
+{
+	include	"materials/models/player/shared/invuln/invuln_red_head.vmt"
+	insert
+	{
+		$basetexture		"models/player/soldier/soldier_head"
+		$bumpmap		"models/player/soldier/hwm/soldier_head_phongmask"
+	}
+}

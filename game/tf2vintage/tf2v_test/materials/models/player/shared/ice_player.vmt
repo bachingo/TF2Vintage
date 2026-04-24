@@ -1,0 +1,65 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "models/player/shared/ice_player"
+	"$bumpmap" "models/weapons/c_items/c_xms_cold_shoulder_normal"
+
+	"$detail" "effects/tiledfire/fireLayeredSlowTiled512.vtf"	
+//	"$detailscale" 5								// Old value
+	"$detailscale" 3
+//	"$detailblendfactor" .01						// Old value
+	"$detailblendfactor" 0.00						// New value, though I don't think this change is of much significance
+//	"$detailblendmode" 6							// Old value
+	"$detailblendmode" 5
+	"$yellow" "0"
+
+	"$phong" "1"
+	"$phongexponent" "200"
+	"$phongboost" "100"
+	"$phongfresnelranges"	"[.25 1 4]"
+	"$basemapalphaphongmask" "1"
+	"$phongwarptexture" "models/player/shared/ice_player_warp"
+	"$lightwarptexture" "models/player/shared/ice_player_lightwarp"
+
+	"$envmap" "Effects/cubemapper"
+	"$envmaptint" "[.2 .2 .2]" 
+
+
+	// Rim lighting parameters
+	"$rimlight" "1"												// To enable rim lighting (requires phong)
+	"$rimlightexponent" "50"									// Exponent for phong component of rim lighting	
+	"$rimlightboost" "15"										// Boost for ambient cube component of rim lighting
+
+	// Cloaking
+	"$cloakPassEnabled" "1"
+	"Proxies"
+	{
+		"invis"
+		{
+		}
+		"AnimatedTexture"
+		{
+			"animatedtexturevar" "$detail"
+			"animatedtextureframenumvar" "$detailframe"
+			"animatedtextureframerate" 30
+		}
+		"TextureScroll"							// Newly added proxy; makes the fire texture continually scroll
+		{
+			"texturescrollvar" "$detailtexturetransform"
+			"texturescrollrate" "0.15"
+			"texturescrollangle" "90"
+		}
+		"BurnLevel"
+		{
+			"resultVar" "$detailblendfactor"
+		}
+		"YellowLevel"
+		{
+			"resultVar" "$yellow"
+		}
+		"Equals"
+		{
+			"srcVar1" "$yellow"
+			"resultVar" "$color2"
+		}
+	}
+}
