@@ -1424,7 +1424,7 @@ public:
 	void ForceEscortPushLogic( int nState ) { m_nForceEscortPushLogic = nState; }
 	
 	int GetTF2VEra( void ) { return m_nTF2VEra; }
-	void SetTF2VEra( int nEra ) { m_nTF2VEra = clamp(nEra, TF2V_ERA_DAY_BETA, TF2V_ERA_DAY_LATEST); }
+	void SetTF2VEra( int nEra ) { m_nTF2VEra = clamp(nEra, TF2V_ERA_DAY_MIN, TF2V_ERA_DAY_MAX); }
 
 private:
 	CUtlVector< CHandle< CGhost > > m_ghostVector;

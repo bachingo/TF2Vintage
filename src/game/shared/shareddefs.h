@@ -1015,10 +1015,11 @@ struct collidelist_t
 #define TF2V_ERA_DAY_SNIPSPY        613
 #define TF2V_ERA_DAY_CLASSLESS      697
 #define TF2V_ERA_DAY_WAR            823
+#define TF2V_ERA_DAY_FIRSTCONT      914		// Mar 18 2010
 #define TF2V_ERA_DAY_ENGINEER       1026
 #define TF2V_ERA_DAY_MANNCONOMY     1110
 #define TF2V_ERA_DAY_AUSSIE2010     1188
-#define TF2V_ERA_DAY_RIFTPROMO     1236
+#define TF2V_ERA_DAY_RIFTPROMO      1236
 #define TF2V_ERA_DAY_UBER_F2P       1376
 #define TF2V_ERA_DAY_HALLOWEEN_2011 1502	// Oct 27 2011
 #define TF2V_ERA_DAY_AUSSIE2011     1551
@@ -1036,5 +1037,9 @@ struct collidelist_t
 #define TF2V_ERA_DAY_100            5791
 #define TF2V_ERA_DAY_SDK            6365
 #define TF2V_ERA_DAY_LATEST         6659
+
+
+#define TF2V_ERA_DAY_MIN			TF2V_ERA_DAY_BETA
+#define TF2V_ERA_DAY_MAX			TF2V_ERA_DAY_LATEST
 
 #endif // SHAREDDEFS_H
