@@ -1103,6 +1103,7 @@ ConVar tf_gamemode_misc ( "tf_gamemode_misc", "0", FCVAR_REPLICATED | FCVAR_NOTI
 
 ConVar tf_bot_count( "tf_bot_count", "0", FCVAR_NOTIFY | FCVAR_DEVELOPMENTONLY );
 
+// Update TF2V_ERA_DAY_LATEST when needed. Current value: 6559.
 ConVar tf2v_era ( "tf2v_era", "6559", FCVAR_REPLICATED | FCVAR_NOTIFY , "TF2V's Master Convar used to control the date of TF2V. Applies to server on round restarts.", true, 1, true, 6559 );
 
 #ifdef _DEBUG
