@@ -191,13 +191,4 @@ inline bool BEconCountryAllowDecodableContainers( char const *szCC )
 	return true;
 }
 
-//-----------------------------------------------------------------------------
-// Synthetic item ID bases for mod-generated items.
-// These ranges are far above any realistic GC-issued item ID and are
-// deterministic (base + defindex) so loadout files remain stable.
-// Shared by client inventory code and server SDK_ApplyLocalLoadout.
-//-----------------------------------------------------------------------------
-static const itemid_t k_ModItemIDBase    = 0x0000FF0000000000ULL; // custom mod items
-static const itemid_t k_LoanerItemIDBase = 0x0000FE0000000000ULL; // loaner real-TF2 items
-
 #endif // TFITEMCONSTANTS_H

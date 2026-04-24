@@ -13,7 +13,6 @@
 #include "eiface.h"
 #include "cdll_int.h"
 #include "econ_item_inventory.h"
-#include "tf_item_constants.h"
 #include "gameinterface.h"
 #include "client.h"
 #include "tier1/convar.h"
@@ -66,7 +65,6 @@ const int k_InvalidState_Timeout_With_Match    = 60 * 2;
 const int k_InvalidState_Timeout_Without_Match = 5;
 
 #ifdef ENABLE_GC_MATCHMAKING
-
 
 /***********************************************************************************************************************
 ////////////////////////////////////////////////////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -259,19 +257,7 @@ extern ConVar tf_mm_strict;
 //      by time any message that needs it gets sent. (a previous message in queue should be requesting it)
 static uint64 ReliableMsgCheckUpdateMatchID( uint64 nMsgMatchID )
 {
-	CMatchInfo *pMatch = GTFGCClientSystem()->GetMatch();
-	if ( !pMatch )
-	{
-		// Match was torn down before this queued message could send.
-		// This happens during level transitions when a reliable message
-		// was queued before changelevel and OnPrepare() fires in the new
-		// level's init while m_pMatchInfo has already been cleared.
-		// Abort — the match is gone so there's nothing to reconcile.
-		GTFGCClientSystem()->AbortInvalidMatchState();
-		return 0;
-	}
-
-	uint64 nCurrentMatchID = pMatch->m_nMatchID;
+	uint64 nCurrentMatchID = GTFGCClientSystem()->GetMatch()->m_nMatchID;
 	Assert( !nMsgMatchID || nMsgMatchID == nCurrentMatchID );
 
 	// If we were queued for a match we didn't know the ID of yet, we can now glom it
@@ -1350,38 +1336,6 @@ void CTFGCServerSystem::PostInitGC()
 void CTFGCServerSystem::LevelShutdownPostEntity()
 {
 	BaseClass::LevelShutdownPostEntity();
-
-	// Force all equipment state machines to Init to properly cancel
-	// any in-flight HTTP callbacks before we delete the state objects.
-	// Without this, Steam can fire callbacks into freed memory.
-	FOR_EACH_MAP( m_mapEquipmentRequests, i )
-	{
-		WebapiEquipmentState_t *pState = m_mapEquipmentRequests[i];
-		if ( pState && pState->m_eState != kWebapiEquipmentState_Init )
-		{
-			pState->m_eState = kWebapiEquipmentState_Init;
-			// Run the Init case cleanup manually (same as WebapiEquipmentThinkRequest does)
-			if ( pState->m_pKVCurrentRequest )
-			{
-				pState->m_pKVCurrentRequest->deleteThis();
-				pState->m_pKVCurrentRequest = nullptr;
-			}
-			pState->m_EquipmentRequestCompleted.Cancel();
-			if ( pState->m_hEquipmentRequest != INVALID_HTTPREQUEST_HANDLE )
-			{
-				SteamHTTP()->ReleaseHTTPRequest( pState->m_hEquipmentRequest );
-				pState->m_hEquipmentRequest = INVALID_HTTPREQUEST_HANDLE;
-			}
-			if ( pState->m_pKVNextRequest )
-			{
-				pState->m_pKVNextRequest->deleteThis();
-				pState->m_pKVNextRequest = nullptr;
-			}
-		}
-	}
-
-	// Now it's safe to delete the state objects
-	m_mapEquipmentRequests.PurgeAndDeleteElements();
 }
 
 
@@ -2866,11 +2820,7 @@ void CTFGCServerSystem::UpdateConnectedPlayersAndServerInfo( CMsgGameServerMatch
 		bool bActive = false;
 		if ( engine->GetPlayerInfo( i, &sPlayerInfo ) )
 		{
-#if defined( REPLAY_ENABLED )
 			if ( sPlayerInfo.ishltv || sPlayerInfo.isreplay )
-#else
-			if ( sPlayerInfo.ishltv )
-#endif
 			{
 				++nAdminSlots;
 				continue;
@@ -3733,7 +3683,7 @@ void CTFGCServerSystem::SendRejectLobby()
 	if ( GetLobby() )
 	{
 		msg.set_lobby_id( GetLobby()->GetGroupID() );
-		msg.set_match_id( GetLobby()->GetMatchID() );  // was incorrectly set_lobby_id
+		msg.set_lobby_id( GetLobby()->GetMatchID() );
 	}
 
 	ReliableMsgQueue().Enqueue( pReliable );
@@ -4167,44 +4117,6 @@ void CTFGCServerSystem::WebapiEquipmentThinkRequest( CSteamID steamID, WebapiEqu
 		Assert( state.m_pKVCurrentRequest != nullptr );
 		KeyValues* pKV = state.m_pKVCurrentRequest;
 
-		// --- Offline inventory bypass ---
-		// If the server has opted out of webapi validation and the client sent a
-		// serialized offline item cache blob, inject it directly as a local SOCache.
-		// Clients with a live GC inventory do not send this field, so they continue
-		// through the normal webapi validation path regardless.
-		const char *pszOfflineItems = pKV->GetString( "offline_items", nullptr );
-		if ( pszOfflineItems && pszOfflineItems[0] )
-		{
-			uint32 cchEncoded = static_cast<uint32>( V_strlen( pszOfflineItems ) );
-			uint32 cubDecoded = ( cchEncoded * 3 / 4 ) + 4;
-			CUtlMemory<uint8> bufDecoded;
-			bufDecoded.EnsureCapacity( static_cast<int>( cubDecoded ) );
-			uint32 cubActual = cubDecoded;
-
-			if ( Base64Decode( pszOfflineItems, cchEncoded,
-			                   bufDecoded.Base(), &cubActual, true ) )
-			{
-				CGCClientSharedObjectCache *pSOCache = GetGCClient()->AddLocalSOCache(
-					steamID, bufDecoded.Base(), cubActual );
-				if ( pSOCache )
-				{
-					SDK_ApplyInventoryInfo( pSOCache, pKV );
-					state.RequestSucceeded();
-					state.m_eState = kWebapiEquipmentState_InventoryReceived;
-					break;
-				}
-				else
-				{
-					Warning( "[NoGC] AddLocalSOCache failed for %s\n", steamID.Render() );
-				}
-			}
-			else
-			{
-				Warning( "[NoGC] Base64Decode failed for offline_items from %s\n", steamID.Render() );
-			}
-		}
-		// --- End offline bypass ---
-
 		if ( !SteamHTTP() )
 			return;
 
@@ -4477,23 +4389,10 @@ void CTFGCServerSystem::SDK_ApplyLocalLoadout(CGCClientSharedObjectCache* pCache
 			soIndex.SetItemID(uItemId);
 
 			CEconItem* pItem = (CEconItem*) pItemCache->FindSharedObject(soIndex);
-			if (pItem)
-			{
+			if (pItem) {
 				pTFInventory->EquipLocal(uItemId, iClass, iSlot);
 			}
-			else if ( ( uItemId >= k_ModItemIDBase ) ||
-			          ( uItemId >= k_LoanerItemIDBase && uItemId < k_ModItemIDBase ) )
-			{
-				// Synthetic item (mod or loaner) — not in the SOCache because the server
-				// never fetched it from the webapi. Trust the client's loadout assignment;
-				// the def_index was validated against items_game.txt on the client side.
-				// Fixed: was `uItemId >= k_ModItemIDBase || uItemId >= k_LoanerItemIDBase`
-				// which collapsed to `uItemId >= min(bases)` and bypassed validation for
-				// all real-but-missing items above the smaller of the two ID ranges.
-				pTFInventory->EquipLocal(uItemId, iClass, iSlot);
-			}
-			else
-			{
+			else {
 				Warning("Failed to find item %llu in shared object, but client says it should be equipped by [%i] in slot [%i].\n", uItemId, iClass, iSlot);
 			}
 		}
