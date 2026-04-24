@@ -37,10 +37,17 @@ extern ConVar hide_server;
 //-----------------------------------------------------------------------------
 static const char *TF2V_GetEraMapcycleFile( int nDay )
 {
-    int nType = tf2v_server_type.GetInt();
-
+	ConVarRef tf_gamemode_arena( "tf_gamemode_arena" );
+	ConVarRef tf_gamemode_cp( "tf_gamemode_cp" );
+	ConVarRef tf_gamemode_ctf( "tf_gamemode_ctf" );
+	ConVarRef tf_gamemode_sd( "tf_gamemode_sd" );
+	ConVarRef tf_gamemode_payload( "tf_gamemode_payload" );
+	ConVarRef tf_gamemode_mvm( "tf_gamemode_mvm" );
+	ConVarRef tf_powerup_mode( "tf_powerup_mode" );
+	ConVarRef tf_gamemode_passtime( "tf_gamemode_passtime" );
+	
     // PVE — MVM-only rotation, day 1795+
-    if ( nType == 1 )
+    if ( tf_gamemode_mvm.GetBool() )
     {
         if ( nDay < TF2V_ERA_MVM_MIN )
         {
@@ -61,83 +68,83 @@ static const char *TF2V_GetEraMapcycleFile( int nDay )
         }
     }
 
-    // ASYM — VSH/ZI rotation, day 5559+
-    if ( nType == 2 )
+    if ( tf_gamemode_arena.GetBool() || tf_gamemode_cp.GetBool() || tf_gamemode_ctf.GetBool() || tf_gamemode_sd.GetBool() || tf_gamemode_payload.GetBool() || tf_powerup_mode.GetBool() || tf_gamemode_passtime.GetBool() )
     {
-        if ( nDay < TF2V_ERA_ASYM_MIN )
-        {
-            DevWarning( "[TF2V] ASYM mapcycle requested for day %d "
-                        "but VSH/ZI require VScript (day %d+). "
-                        "Using PVP mapcycle instead.\n", nDay, TF2V_ERA_ASYM_MIN );
-            // fall through to PVP
-        }
-        else
-        {
-            if ( nDay <= 5778 ) return "maps/mapcycle_day5559_asym.txt"; // VScript
-            if ( nDay <= 5867 ) return "maps/mapcycle_day5778_asym.txt"; // VSH official
-            if ( nDay <= 5926 ) return "maps/mapcycle_day5867_asym.txt"; // ZI official
-            if ( nDay <= 6234 ) return "maps/mapcycle_day5926_asym.txt";
-            static const char *s_pszTermASYM = "maps/mapcycle_day" TF2V_ERA_MAX_STR "_asym.txt";
-            return s_pszTermASYM;
-        }
-    }
+		// PVP — standard rotation, cumulative pool grows at each content update.
+		// Boundaries are day integers; the corresponding real dates are shown
+		// in comments for reference.
+		if ( nDay <=   24 ) return "maps/mapcycle_day1_pvp.txt";     // Sep 17 2007 beta
+		if ( nDay <=   39 ) return "maps/mapcycle_day24_pvp.txt";    // Oct 10 2007 launch (6 maps)
+		if ( nDay <=  131 ) return "maps/mapcycle_day39_pvp.txt";    // Oct 25 2007
+		if ( nDay <=  151 ) return "maps/mapcycle_day131_pvp.txt";   // Jan 25 2008 +ctf_well (7)
+		if ( nDay <=  226 ) return "maps/mapcycle_day151_pvp.txt";   // Feb 14 2008 +cp_badlands (8)
+		if ( nDay <=  277 ) return "maps/mapcycle_day226_pvp.txt";   // Apr 29 2008 Gold Rush (9)
+		if ( nDay <=  338 ) return "maps/mapcycle_day277_pvp.txt";   // Jun 19 2008 Pyro (11)
+		if ( nDay <=  452 ) return "maps/mapcycle_day338_pvp.txt";   // Aug 19 2008 Heavy (17)
+		if ( nDay <=  527 ) return "maps/mapcycle_day452_pvp.txt";   // Dec 11 2008 +cp_steel (18)
+		if ( nDay <=  537 ) return "maps/mapcycle_day527_pvp.txt";   // Feb 24 2009 Scout (19)
+		if ( nDay <=  613 ) return "maps/mapcycle_day537_pvp.txt";   // Mar  6 2009
+		if ( nDay <=  697 ) return "maps/mapcycle_day613_pvp.txt";   // May 21 2009 Sniper/Spy (20)
+		if ( nDay <=  730 ) return "maps/mapcycle_day697_pvp.txt";   // Aug 13 2009 Classless/KOTH (32)
+		if ( nDay <=  823 ) return "maps/mapcycle_day730_pvp.txt";   // Sep 15 2009 +egypt/junction (34)
+		if ( nDay <=  956 ) return "maps/mapcycle_day823_pvp.txt";   // Dec 17 2009 WAR! (35)
+		if ( nDay <= 1026 ) return "maps/mapcycle_day956_pvp.txt";   // Apr 28 2010 +freight/upward (37)
+		if ( nDay <= 1110 ) return "maps/mapcycle_day1026_pvp.txt";  // Jul  8 2010 Engineer (39)
+		if ( nDay <= 1137 ) return "maps/mapcycle_day1110_pvp.txt";  // Sep 30 2010 Mann-Conomy (42)
+		if ( nDay <= 1188 ) return "maps/mapcycle_day1137_pvp.txt";  // Oct 27 2010 +Scream Fortress
+		if ( nDay <= 1376 ) return "maps/mapcycle_day1188_pvp.txt";  // Dec 17 2010 Aus Christmas (44)
+		if ( nDay <= 1445 ) return "maps/mapcycle_day1376_pvp.txt";  // Jun 23 2011 F2P/Uber (51)
+		if ( nDay <= 1551 ) return "maps/mapcycle_day1445_pvp.txt";  // Aug 31 2011 +viaduct_event (52)
+		if ( nDay <= 1746 ) return "maps/mapcycle_day1551_pvp.txt";  // Dec 15 2011 +foundry (53)
+		if ( nDay <= 1795 ) return "maps/mapcycle_day1746_pvp.txt";  // Jun 27 2012 Pyromania (59)
+		if ( nDay <= 1867 ) return "maps/mapcycle_day1795_pvp.txt";  // Aug 15 2012 MvM (60)
+		if ( nDay <= 2124 ) return "maps/mapcycle_day1867_pvp.txt";  // Oct 26 2012 +snakewater/helltower
+		if ( nDay <= 2467 ) return "maps/mapcycle_day2124_pvp.txt";  // Jul 2013 +process/standin
+		if ( nDay <= 2654 ) return "maps/mapcycle_day2467_pvp.txt";  // Jun 2014 Love & War (65)
+		if ( nDay <= 2846 ) return "maps/mapcycle_day2654_pvp.txt";  // Dec 2014 Mannpower (same pool)
+		if ( nDay <= 3014 ) return "maps/mapcycle_day2846_pvp.txt";  // Jul 2015 Gun Mettle (69)
+		if ( nDay <= 3217 ) return "maps/mapcycle_day3014_pvp.txt";  // Dec 2015 Tough Break (73)
+		if ( nDay <= 3687 ) return "maps/mapcycle_day3217_pvp.txt";  // Jul 2016 MYM (88)
+		if ( nDay <= 3846 ) return "maps/mapcycle_day3687_pvp.txt";  // Oct 2017 Jungle Inferno (97)
 
-    // PVP — standard rotation, cumulative pool grows at each content update.
-    // Boundaries are day integers; the corresponding real dates are shown
-    // in comments for reference.
-    if ( nDay <=   24 ) return "maps/mapcycle_day1_pvp.txt";     // Sep 17 2007 beta
-    if ( nDay <=   39 ) return "maps/mapcycle_day24_pvp.txt";    // Oct 10 2007 launch (6 maps)
-    if ( nDay <=  131 ) return "maps/mapcycle_day39_pvp.txt";    // Oct 25 2007
-    if ( nDay <=  151 ) return "maps/mapcycle_day131_pvp.txt";   // Jan 25 2008 +ctf_well (7)
-    if ( nDay <=  226 ) return "maps/mapcycle_day151_pvp.txt";   // Feb 14 2008 +cp_badlands (8)
-    if ( nDay <=  277 ) return "maps/mapcycle_day226_pvp.txt";   // Apr 29 2008 Gold Rush (9)
-    if ( nDay <=  338 ) return "maps/mapcycle_day277_pvp.txt";   // Jun 19 2008 Pyro (11)
-    if ( nDay <=  452 ) return "maps/mapcycle_day338_pvp.txt";   // Aug 19 2008 Heavy (17)
-    if ( nDay <=  527 ) return "maps/mapcycle_day452_pvp.txt";   // Dec 11 2008 +cp_steel (18)
-    if ( nDay <=  537 ) return "maps/mapcycle_day527_pvp.txt";   // Feb 24 2009 Scout (19)
-    if ( nDay <=  613 ) return "maps/mapcycle_day537_pvp.txt";   // Mar  6 2009
-    if ( nDay <=  697 ) return "maps/mapcycle_day613_pvp.txt";   // May 21 2009 Sniper/Spy (20)
-    if ( nDay <=  730 ) return "maps/mapcycle_day697_pvp.txt";   // Aug 13 2009 Classless/KOTH (32)
-    if ( nDay <=  823 ) return "maps/mapcycle_day730_pvp.txt";   // Sep 15 2009 +egypt/junction (34)
-    if ( nDay <=  956 ) return "maps/mapcycle_day823_pvp.txt";   // Dec 17 2009 WAR! (35)
-    if ( nDay <= 1026 ) return "maps/mapcycle_day956_pvp.txt";   // Apr 28 2010 +freight/upward (37)
-    if ( nDay <= 1110 ) return "maps/mapcycle_day1026_pvp.txt";  // Jul  8 2010 Engineer (39)
-    if ( nDay <= 1137 ) return "maps/mapcycle_day1110_pvp.txt";  // Sep 30 2010 Mann-Conomy (42)
-    if ( nDay <= 1188 ) return "maps/mapcycle_day1137_pvp.txt";  // Oct 27 2010 +Scream Fortress
-    if ( nDay <= 1376 ) return "maps/mapcycle_day1188_pvp.txt";  // Dec 17 2010 Aus Christmas (44)
-    if ( nDay <= 1445 ) return "maps/mapcycle_day1376_pvp.txt";  // Jun 23 2011 F2P/Uber (51)
-    if ( nDay <= 1551 ) return "maps/mapcycle_day1445_pvp.txt";  // Aug 31 2011 +viaduct_event (52)
-    if ( nDay <= 1746 ) return "maps/mapcycle_day1551_pvp.txt";  // Dec 15 2011 +foundry (53)
-    if ( nDay <= 1795 ) return "maps/mapcycle_day1746_pvp.txt";  // Jun 27 2012 Pyromania (59)
-    if ( nDay <= 1867 ) return "maps/mapcycle_day1795_pvp.txt";  // Aug 15 2012 MvM (60)
-    if ( nDay <= 2124 ) return "maps/mapcycle_day1867_pvp.txt";  // Oct 26 2012 +snakewater/helltower
-    if ( nDay <= 2467 ) return "maps/mapcycle_day2124_pvp.txt";  // Jul 2013 +process/standin
-    if ( nDay <= 2654 ) return "maps/mapcycle_day2467_pvp.txt";  // Jun 2014 Love & War (65)
-    if ( nDay <= 2846 ) return "maps/mapcycle_day2654_pvp.txt";  // Dec 2014 Mannpower (same pool)
-    if ( nDay <= 3014 ) return "maps/mapcycle_day2846_pvp.txt";  // Jul 2015 Gun Mettle (69)
-    if ( nDay <= 3217 ) return "maps/mapcycle_day3014_pvp.txt";  // Dec 2015 Tough Break (73)
-    if ( nDay <= 3687 ) return "maps/mapcycle_day3217_pvp.txt";  // Jul 2016 MYM (88)
-    if ( nDay <= 3846 ) return "maps/mapcycle_day3687_pvp.txt";  // Oct 2017 Jungle Inferno (97)
-
-    // Post-balance-freeze: map pool grows each holiday, balance unchanged.
-    if ( nDay <= 4051 ) return "maps/mapcycle_day3846_pvp.txt";  // Mar 2018 freeze
-    if ( nDay <= 4407 ) return "maps/mapcycle_day4051_pvp.txt";  // SF X  Oct 2018  (+5)
-    if ( nDay <= 4764 ) return "maps/mapcycle_day4407_pvp.txt";  // SF XI Oct 2019  (+2)
-    if ( nDay <= 4827 ) return "maps/mapcycle_day4764_pvp.txt";  // SF XII Oct 2020 (+4)
-    if ( nDay <= 5133 ) return "maps/mapcycle_day4827_pvp.txt";  // Smissmas 2020 Dec (+4)
-    if ( nDay <= 5191 ) return "maps/mapcycle_day5133_pvp.txt";  // SF XIII Oct 2021 (+6)
-    if ( nDay <= 5498 ) return "maps/mapcycle_day5191_pvp.txt";  // Smissmas 2021 Dec (+6)
-    if ( nDay <= 5559 ) return "maps/mapcycle_day5498_pvp.txt";  // SF XIV Oct 2022 (+5)
-    if ( nDay <= 5778 ) return "maps/mapcycle_day5559_pvp.txt";  // VScript+Smissmas 2022 (+5)
-    if ( nDay <= 5867 ) return "maps/mapcycle_day5778_pvp.txt";  // SF XV Oct 2023  (+12)
-    if ( nDay <= 5926 ) return "maps/mapcycle_day5867_pvp.txt";  // Smissmas 2023 Dec (+8)
-    if ( nDay <= 6234 ) return "maps/mapcycle_day5926_pvp.txt";  // Summer+SF XVI 2024 (+7)
-    if ( nDay <= 6296 ) return "maps/mapcycle_day6234_pvp.txt";  // Smissmas 2024 Dec (+5)
-    if ( nDay <= 6365 ) return "maps/mapcycle_day6296_pvp.txt";  // TF2 SDK Feb 2025
-    if ( nDay <= 6521 ) return "maps/mapcycle_day6365_pvp.txt";  // Summer 2025 (+9)
-    if ( nDay <= 6598 ) return "maps/mapcycle_day6521_pvp.txt";  // SF XVII Oct 2025
-    static const char *s_pszTermPVP = "maps/mapcycle_day" TF2V_ERA_MAX_STR "_pvp.txt";
-    return s_pszTermPVP;
+		// Post-balance-freeze: map pool grows each holiday, balance unchanged.
+		if ( nDay <= 4051 ) return "maps/mapcycle_day3846_pvp.txt";  // Mar 2018 freeze
+		if ( nDay <= 4407 ) return "maps/mapcycle_day4051_pvp.txt";  // SF X  Oct 2018  (+5)
+		if ( nDay <= 4764 ) return "maps/mapcycle_day4407_pvp.txt";  // SF XI Oct 2019  (+2)
+		if ( nDay <= 4827 ) return "maps/mapcycle_day4764_pvp.txt";  // SF XII Oct 2020 (+4)
+		if ( nDay <= 5133 ) return "maps/mapcycle_day4827_pvp.txt";  // Smissmas 2020 Dec (+4)
+		if ( nDay <= 5191 ) return "maps/mapcycle_day5133_pvp.txt";  // SF XIII Oct 2021 (+6)
+		if ( nDay <= 5498 ) return "maps/mapcycle_day5191_pvp.txt";  // Smissmas 2021 Dec (+6)
+		if ( nDay <= 5559 ) return "maps/mapcycle_day5498_pvp.txt";  // SF XIV Oct 2022 (+5)
+		if ( nDay <= 5778 ) return "maps/mapcycle_day5559_pvp.txt";  // VScript+Smissmas 2022 (+5)
+		if ( nDay <= 5867 ) return "maps/mapcycle_day5778_pvp.txt";  // SF XV Oct 2023  (+12)
+		if ( nDay <= 5926 ) return "maps/mapcycle_day5867_pvp.txt";  // Smissmas 2023 Dec (+8)
+		if ( nDay <= 6234 ) return "maps/mapcycle_day5926_pvp.txt";  // Summer+SF XVI 2024 (+7)
+		if ( nDay <= 6296 ) return "maps/mapcycle_day6234_pvp.txt";  // Smissmas 2024 Dec (+5)
+		if ( nDay <= 6365 ) return "maps/mapcycle_day6296_pvp.txt";  // TF2 SDK Feb 2025
+		if ( nDay <= 6521 ) return "maps/mapcycle_day6365_pvp.txt";  // Summer 2025 (+9)
+		if ( nDay <= 6598 ) return "maps/mapcycle_day6521_pvp.txt";  // SF XVII Oct 2025
+		static const char *s_pszTermPVP = "maps/mapcycle_day" TF2V_ERA_MAX_STR "_pvp.txt";
+		return s_pszTermPVP;
+	}
+	
+	 // ASYM — VSH/ZI rotation, day 5559+
+     if ( nDay < TF2V_ERA_ASYM_MIN )
+     {
+         DevWarning( "[TF2V] ASYM mapcycle requested for day %d "
+                     "but VSH/ZI require VScript (day %d+). "
+                     "Using PVP mapcycle instead.\n", nDay, TF2V_ERA_ASYM_MIN );
+         // fall through to PVP
+     }
+     else
+     {
+         if ( nDay <= 5778 ) return "maps/mapcycle_day5559_asym.txt"; // VScript
+         if ( nDay <= 5867 ) return "maps/mapcycle_day5778_asym.txt"; // VSH official
+         if ( nDay <= 5926 ) return "maps/mapcycle_day5867_asym.txt"; // ZI official
+         if ( nDay <= 6234 ) return "maps/mapcycle_day5926_asym.txt";
+         static const char *s_pszTermASYM = "maps/mapcycle_day" TF2V_ERA_MAX_STR "_asym.txt";
+         return s_pszTermASYM;
+     }
 }
 
 
