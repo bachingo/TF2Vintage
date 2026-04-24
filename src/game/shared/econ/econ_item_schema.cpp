@@ -3181,6 +3181,9 @@ bool CEconItemDefinition::BInitFromKV( KeyValues *pKVItem, CUtlVector<CUtlString
 	m_pszItemIconClassname = m_pKVItem->GetString( "item_iconname", NULL );
 	m_pszDatabaseAuditTable = m_pKVItem->GetString( "database_audit_table", NULL );
 	m_bImported = m_pKVItem->FindKey( "import_from" ) != NULL;
+	
+	// TF2V KV for when an item was added
+	m_iDayIntroduced = m_pKVItem->GetInt( "introduced", 7759 );
 
 	// Tool data
 	m_pTool = NULL;

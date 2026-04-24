@@ -4490,6 +4490,28 @@ bool CTFPlayer::ItemIsAllowed( CEconItemView *pItem )
 	return true;
 }
 
+
+//-----------------------------------------------------------------------------
+// Purpose: TF2V: Flat check to see if the base item fits the time period.
+//-----------------------------------------------------------------------------
+bool CTFPlayer::ItemIsAllowedTimePeriod( CEconItemView *pItem )
+{
+	if ( !pItem || !pItem->GetStaticData() || !TFGameRules() )
+		return false;
+
+	// Passtime hack to allow passtime gun
+	if ( V_stristr( pItem->GetItemDefinition()->GetDefinitionName(), "passtime" ) )
+	{
+		return TFGameRules() && TFGameRules()->IsPasstimeMode();
+	}
+
+	CEconItemDefinition* pData = pItem->GetStaticData();
+	if ( pData && pData->GetIntroductionDate() )
+		return TFGameRules()->GetTF2VEra() >= pData->GetIntroductionDate();
+	
+	return false;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -4903,6 +4925,13 @@ CEconItemView *CTFPlayer::GetLoadoutItem( int iClass, int iSlot, bool bReportWhi
 
 	// TF2V era gate — base-item-post-dates-era only.
 	// We check only whether the base item itself is too new. Modifier stripping
+	if (pItem && pItem->IsValid() && !ItemIsAllowedTimePeriod( pItem ) )
+	{
+		ClientPrint( this, HUD_PRINTNOTIFY, "#Item_Anachronistic", pItem->GetStaticData()->GetItemBaseName() );
+		
+		pItem = TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+	}
+	
 	if ( (pItem && pItem->IsValid()) && (pItem->GetItemQuality() != AE_NORMAL) && !pItem->GetStaticData()->IsAllowedInMatch() && TFGameRules()->IsInTournamentMode() )
 	{
 		if ( bReportWhitelistFails )
