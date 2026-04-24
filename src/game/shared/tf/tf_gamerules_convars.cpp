@@ -58,7 +58,7 @@ ConVar tf2v_era(
 // and weapon gating are always active when tf2v_era is set).
 ConVar tf2v_use_era_mapcycle(
     "tf2v_use_era_mapcycle",
-    "1",
+    "0",
     FCVAR_NOTIFY | FCVAR_ARCHIVE | FCVAR_REPLICATED,
     "1 = automatically set mapcyclefile to the era-accurate map list at each "
     "round boundary.  0 = server operator controls mapcyclefile manually.",

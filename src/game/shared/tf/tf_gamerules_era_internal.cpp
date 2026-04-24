@@ -423,7 +423,6 @@ void TF2VAnySubConvarChanged( IConVar *pConVar, const char *pOldString, float fl
         var.SetValue( pOldString );
         TFGameRules()->m_bApplyingEra = false;
 
-        TFGameRules()->m_bEraDirty = true;
         Msg( "[TF2V] %s is a hidden era sub-convar — "
              "change tf2v_era instead; takes effect next round.\n",
              var.GetName() );

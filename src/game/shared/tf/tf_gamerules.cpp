@@ -1918,6 +1918,7 @@ void CTFGameRulesProxy::Activate()
 	ListenForGameEvent( "teamplay_round_win" );
 
 	BaseClass::Activate();
+
 }
 
 //-----------------------------------------------------------------------------
@@ -4269,6 +4270,9 @@ void CTFGameRules::Activate()
 	m_zombiesLeftToSpawn = 0;
 	m_nForceUpgrades = 0;
 	m_nForceEscortPushLogic = 0;
+	
+	// First boot: grab our info of tf2v_era.
+	m_nPendingEra = tf2v_era.GetInt();
 
 	m_CPTimerEnts.RemoveAll();
 
@@ -15081,24 +15085,10 @@ void CTFGameRules::RoundRespawn( void )
 	// ── TF2V ERA BOUNDARY ────────────────────────────────────────────────────
 	// Runs before BaseClass::RoundRespawn() so the era state is locked
 	// before any per-player respawn logic reads it.
-	if ( m_bHasPendingEra )
-	{
-		m_bApplyingEra = true;
-		tf2v_era.SetValue( m_nPendingEra );
-		m_bApplyingEra = false;
-		ApplyEra( m_nPendingEra );
-		m_bHasPendingEra = false;
-		Msg( "[TF2V] Pending era %d applied at round boundary.\n", m_nPendingEra );
+	ApplyEra( m_nPendingEra );
+	tf2v_era.SetValue( m_nPendingEra );
+	Msg( "[TF2V] Pending era %d applied.\n", m_nPendingEra );
 	}
-	else if ( m_bEraDirty )
-	{
-		ApplyEra( tf2v_era.GetInt() );
-	}
-
-	// Freeze current convar values into m_EraState for this round
-	LockEraState();
-
-
 #endif
 
 	BaseClass::RoundRespawn();

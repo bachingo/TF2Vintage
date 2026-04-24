@@ -255,12 +255,8 @@ private:
     // Guards against callback re-entrancy while ApplyEra() is writing convars.
     bool            m_bApplyingEra;
 
-    // Set when a sub-convar changes outside a safe window.
-    bool            m_bEraDirty;
-
     // Pending era change deferred from a live round.
     int             m_nPendingEra;
-    bool            m_bHasPendingEra;
 
     // Throttle timer for QuickPlay compliance re-evaluation.
     float           m_flNextQuickPlayCheck;

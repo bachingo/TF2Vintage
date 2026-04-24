@@ -7,7 +7,6 @@
 // Called by:
 //   - TF2VEraChanged() callback when tf2v_era is set
 //   - TF2VEraManagedChanged() when tf2v_era_managed flips to 1
-//   - RoundRespawn() when m_bEraDirty is true
 //
 // INTEGER ERA MAPPING (major balance eras = round tens):
 //   0   = ps3_internal       (~Aug 2007)
@@ -1066,7 +1065,6 @@ void CTFGameRules::ApplyEra( int nEra )
     // =========================================================================
 */
     m_bApplyingEra = false;
-    m_bEraDirty    = false;
 
     // Refresh live player loadouts so weapon era gating takes effect immediately.
     // TF2VRefreshEraLoadout() is a no-op for dead players (they get correct
