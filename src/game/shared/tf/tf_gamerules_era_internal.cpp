@@ -191,7 +191,7 @@ static int TF2VGetGamemodeMinEra( const char *pszGamemodeConvar )
 //-----------------------------------------------------------------------------
 // TF2VCheckMapGamemode — validates current map's gamemode against active era.
 //-----------------------------------------------------------------------------
-static bool TF2VCheckMapGamemode( const char **pFail = NULL )
+static bool TF2VCheckMapGamemode( void )
 {
     if ( !TFGameRules() ) return true;
 	if ( !TFGameRules()->GetCurrentEra() ) return true;
@@ -215,13 +215,7 @@ static bool TF2VCheckMapGamemode( const char **pFail = NULL )
 
         int nMinDay = TF2VGetGamemodeMinEra( s_GamemodeConvars[i] );
         if ( nDay < nMinDay )
-        {
-            if ( pFail )
-                *pFail = "map gamemode not introduced until a later era";
-            DevWarning( "[TF2V] Gamemode %s requires day >= %d (current day %d)\n",
-                        s_GamemodeConvars[i], nMinDay, nDay );
-            return false;
-        }
+			return false;
     }
     return true;
 }
@@ -279,8 +273,6 @@ void TF2VMapcycleToggleChanged( IConVar *pConVar, const char *pOldString, float 
         Msg( "[TF2V] Era mapcycle DISABLED — server controls mapcyclefile manually.\n" );
     }
 
-    if ( tf2v_quickplay_profile.GetInt() > 0 )
-        TFGameRules()->TF2VUpdateQuickPlayCompliance();
 }
 
 
@@ -337,8 +329,6 @@ void TF2VServerTypeChanged( IConVar *pConVar, const char *pOldString, float flOl
         TF2VApplyMapcycle();
     }
 
-    if ( tf2v_quickplay_profile.GetInt() > 0 )
-        TFGameRules()->TF2VUpdateQuickPlayCompliance();
 }
 
 
@@ -588,7 +578,7 @@ void CTFGameRules::LockEraState()
 // "Full"    = era-managed with mapcycle management (tf2v_use_era_mapcycle=1).
 //-----------------------------------------------------------------------------
 
-static bool TF2VCheckQuickPlayBase( CUtlString *pFail )
+static bool TF2VCheckQuickPlayBase( void )
 {
     ConVarRef sv_cheats( "sv_cheats" );
     ConVarRef sv_lan( "sv_lan" );
@@ -597,38 +587,38 @@ static bool TF2VCheckQuickPlayBase( CUtlString *pFail )
     ConVarRef sv_password( "sv_password" );
 
     if ( sv_cheats.IsValid()       && sv_cheats.GetBool() )
-    { if(pFail)*pFail="sv_cheats 1";        return false; }
+		return false;
     if ( sv_lan.IsValid()          && sv_lan.GetBool() )
-    { if(pFail)*pFail="sv_lan 1";           return false; }
+		return false;
     if ( mp_friendlyfire.IsValid() && mp_friendlyfire.GetBool() )
-    { if(pFail)*pFail="mp_friendlyfire 1";  return false; }
+		return false;
     if ( mp_highlander.IsValid()   && mp_highlander.GetBool() )
-    { if(pFail)*pFail="mp_highlander 1";    return false; }
+		return false;
     if ( sv_password.IsValid()     && sv_password.GetString()[0] != '\0' )
-    { if(pFail)*pFail="server has password";return false; }
+		return false;
     if ( hide_server.GetBool() )
-    { if(pFail)*pFail="hide_server 1";      return false; }
+		return false;
     if ( tf2v_allcrit.GetBool() )
-    { if(pFail)*pFail="tf2v_allcrit 1";     return false; }
+		return false;
     if ( tf2v_randomizer.GetBool() )
-    { if(pFail)*pFail="randomizer on";      return false; }
+		return false;
     if ( gpGlobals->maxClients > 32 )
-    { if(pFail)*pFail="maxplayers > 32";    return false; }
+		return false;
     return true;
 }
 
-static bool TF2VCheckCasual( CUtlString *pFail )
+static bool TF2VCheckCasual( void )
 {
-    if ( !TF2VCheckQuickPlayBase( pFail ) ) return false;
+    if ( !TF2VCheckQuickPlayBase() ) return false;
     ConVarRef tf_weapon_criticals( "tf_weapon_criticals" );
     if ( tf_weapon_criticals.IsValid() && !tf_weapon_criticals.GetBool() )
-    { if(pFail)*pFail="crits off (use competitive)"; return false; }
+		return false;
     return true;
 }
 
-static bool TF2VCheckCompetitive( CUtlString *pFail )
+static bool TF2VCheckCompetitive( void )
 {
-    if ( !TF2VCheckQuickPlayBase( pFail ) ) return false;
+    if ( !TF2VCheckQuickPlayBase() ) return false;
     ConVarRef tf_weapon_criticals( "tf_weapon_criticals" );
     ConVarRef tf_damage_disablespread( "tf_damage_disablespread" );
     ConVarRef tf_use_fixed_weaponspreads( "tf_use_fixed_weaponspreads" );
@@ -636,75 +626,74 @@ static bool TF2VCheckCompetitive( CUtlString *pFail )
     ConVarRef mp_decals( "mp_decals" );
 
     if ( tf_weapon_criticals.IsValid() && tf_weapon_criticals.GetBool() )
-    { if(pFail)*pFail="crits on";            return false; }
+		return false;
     if ( !( ( tf_damage_disablespread.IsValid() && tf_damage_disablespread.GetBool() ) ||
             ( tf_use_fixed_weaponspreads.IsValid() && tf_use_fixed_weaponspreads.GetBool() ) ) )
-    { if(pFail)*pFail="spread not disabled"; return false; }
+		return false;
     if ( sv_pure.IsValid() && sv_pure.GetInt() < 1 )
-    { if(pFail)*pFail="sv_pure < 1";         return false; }
+		return false;
     if ( mp_decals.IsValid() && mp_decals.GetInt() > 0 )
-    { if(pFail)*pFail="sprays enabled";      return false; }
+		return false;
     if ( gpGlobals->maxClients != 12 )
-    { if(pFail)*pFail="maxplayers not 12";   return false; }
+		return false;
     return true;
 }
 
 // "Certified base" — era state locked, valid day range.
 // This now covers what was enforcement >= 2 (balance + weapon gate always on).
-static bool TF2VCheckCertifiedBase( CUtlString *pFail )
+static bool TF2VCheckCertifiedBase( void )
 {
-    if ( !TFGameRules()->GetCurrentEra() || !TF2VCheckQuickPlayBase( pFail ) ) return false;
+    if ( !TFGameRules()->GetCurrentEra() || !TF2VCheckQuickPlayBase() ) return false;
 
     int nDay = TFGameRules()->GetCurrentEra();
     if ( nDay < TF2V_ERA_MIN || nDay > TF2V_ERA_MAX )
-    { if(pFail)*pFail="tf2v_era out of range"; return false; }
+		return false;
 
     if ( !TFGameRules()->IsEraStateLocked() )
-    { if(pFail)*pFail="era state not locked"; return false; }
+		return false;
 
     // Weapon era must mirror tf2v_era (always true in new model).
     if ( TFGameRules()->EraState().nAllowedWeaponEra != nDay )
-    { if(pFail)*pFail="weapon era != tf2v_era"; return false; }
+		return false;
 
     if ( tf2v_server_type.GetInt() == 1 )
     {
         if ( nDay < TF2V_ERA_MVM_MIN )
-        { if(pFail)*pFail="PVE requires day >= 1795 (MvM)"; return false; }
+			return false;
         ConVarRef defenders( "tf_mvm_defenders_team_size" );
         if ( defenders.IsValid() && defenders.GetInt() > 6 )
-        { if(pFail)*pFail="PVE certified requires tf_mvm_defenders_team_size <= 6"; return false; }
+			return false;
     }
 
     if ( tf2v_server_type.GetInt() == 2 && nDay < TF2V_ERA_ASYM_MIN )
-    { if(pFail)*pFail="ASYM requires day >= 5559 (VScript/VSH/ZI)"; return false; }
+		return false;
 
     return true;
 }
 
 // "Full certified" — certified base + mapcycle managed.
-static bool TF2VCheckCertified( CUtlString *pFail )
+static bool TF2VCheckCertified( void )
 {
-    if ( !TFGameRules()->GetCurrentEra() || !TF2VCheckCertifiedBase( pFail ) ) return false;
+    if ( !TFGameRules()->GetCurrentEra() || !TF2VCheckCertifiedBase() ) return false;
 
     if ( !tf2v_use_era_mapcycle.GetBool() )
-    { if(pFail)*pFail="tf2v_use_era_mapcycle is 0 (no mapcycle gate)"; return false; }
+		return false;
 
     const char *pszExpected = TF2V_GetEraMapcycleFile(
         TFGameRules()->GetCurrentEra() );
     ConVarRef mapcyclefile( "mapcyclefile" );
     if ( pszExpected && mapcyclefile.IsValid() &&
          V_strcmp( mapcyclefile.GetString(), pszExpected ) != 0 )
-    { if(pFail)*pFail="mapcyclefile does not match era"; return false; }
+		return false;
 
     return true;
 }
 
-static bool TF2VCheckQuietServer( CUtlString *pFail )
+static bool TF2VCheckQuietServer( void )
 {
 	// Placeholder. We need to implement disabling voice, text, and sprays on clientside. 
 	// Clients can do this themselves, but the point of quiet servers is to force it closed.
 	// This is to avoid griefing or a high stress experience.
-    *pFail="Implementation for quiet servers not added yet."; 
 	return false;
 }
 
@@ -721,38 +710,26 @@ void CTFGameRules::TF2VUpdateQuickPlayCompliance()
         tf2v_quickplay_competitive.SetValue( 0 );
     };
 
-    if ( tf2v_quickplay_profile.GetInt() == 0 )
-    { ClearAll(); return; }
-
-    CUtlString fail;
-    int nProfile = tf2v_quickplay_profile.GetInt();
-
-    bool bCasual        = TF2VCheckCasual( &fail );
-    bool bComp          = TF2VCheckCompetitive( &fail );
-
-    bool bCertBase      = TF2VCheckCertifiedBase( &fail );
-    bool bCertFull      = TF2VCheckCertified( &fail );
+    bool bCasual        = TF2VCheckCasual();
+    bool bComp          = TF2VCheckCompetitive();
 
     bool bQuietServer   = TF2VCheckQuietServer( nullptr );
 
-    bool bFullCasual    = bCertFull && bCasual;
-    bool bFullComp      = bCertFull && bComp;
+    bool bFullCasual    = bCasual;
+    bool bFullComp      = bComp;
     bool bFullCert      = bFullCasual || bFullComp;
 
-    bool bPartialCasual = !bFullCasual && bCertBase && bCasual;
-    bool bPartialComp   = !bFullComp   && bCertBase && bComp;
+    bool bPartialCasual = !bFullCasual && bCasual;
+    bool bPartialComp   = !bFullComp   && bComp;
     bool bPartialCert   = bPartialCasual || bPartialComp;
 
-    bool bQPCasual      = !bFullCasual && !bPartialCasual && bCasual &&
-                          ( nProfile == 1 || nProfile == 3 );
-    bool bQPComp        = !bFullComp   && !bPartialComp   && bComp  &&
-                          ( nProfile == 2 || nProfile == 3 );
+    bool bQPCasual      = !bFullCasual && !bPartialCasual && bCasual ;
+    bool bQPComp        = !bFullComp   && !bPartialComp   && bComp ;
 
     auto Log = [&]( const char *tag, bool bOld, bool bNew )
     {
         if ( bOld == bNew ) return;
         if ( bNew ) Msg( "[TF2V] Tag '%s' ACTIVE.\n", tag );
-        else        Msg( "[TF2V] Tag '%s' lost: %s\n", tag, fail.Get() );
     };
 
     Log( "certified",             tf2v_certified.GetBool(),             bFullCert    );

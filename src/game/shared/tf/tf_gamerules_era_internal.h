@@ -151,14 +151,6 @@ void TF2VAnySubConvarChanged( IConVar *pConVar, const char *pOldString, float fl
 extern ConVar tf2v_era;
 extern ConVar tf2v_use_era_mapcycle;
 
-// Era management is unconditional in the new model — tf2v_era always drives
-// the sub-convars. This helper exists for call-site readability only.
-inline bool TF2V_EraManaged()      { return true; }
-
-// Weapon gating is always on in the new model (hidden tf2v_allowed_weapon_era
-// is driven automatically by ApplyEra, not settable by operators).
-inline bool TF2V_WeaponGated()     { return true; }
-
 // Mapcycle is managed only when the visible toggle is on.
 inline bool TF2V_MapcycleManaged() { return tf2v_use_era_mapcycle.GetBool(); }
 

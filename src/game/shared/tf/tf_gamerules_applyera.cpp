@@ -140,8 +140,6 @@
 #include "tf_gamerules_era_internal.h"
 #include "tf_player.h"
 
-extern ConVar tf2v_quickplay_profile;
-
 
 void CTFGameRules::ApplyEra( int nEra )
 {
@@ -219,9 +217,6 @@ void CTFGameRules::ApplyEra( int nEra )
     //   tf_preround_push_from_damage_enable (launch bug, server-managed)
     //   tf2v_backburner_health_buff    (brief era 20 only, server-opt)
     //
-    // -- QuickPlay / platform (separate systems) --
-    //   tf2v_quickplay_profile
-    //   tf2v_platform
 
 
 
@@ -1073,9 +1068,6 @@ void CTFGameRules::ApplyEra( int nEra )
     m_bApplyingEra = false;
     m_bEraDirty    = false;
 
-    if ( tf2v_quickplay_profile.GetInt() > 0 )
-        TF2VUpdateQuickPlayCompliance();
-
     // Refresh live player loadouts so weapon era gating takes effect immediately.
     // TF2VRefreshEraLoadout() is a no-op for dead players (they get correct
     // weapons on their next natural spawn). For alive players it sets
@@ -1086,15 +1078,12 @@ void CTFGameRules::ApplyEra( int nEra )
     // ApplyEra() is never called during an active round (TF2VEraChanged defers
     // mid-round changes to the next round boundary), so this never interrupts
     // a live game.
-    if ( TF2V_WeaponGated() )
-    {
-        for ( int i = 1; i <= gpGlobals->maxClients; i++ )
-        {
-            CTFPlayer *pPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
-            if ( pPlayer )
-                pPlayer->TF2VRefreshEraLoadout();
-        }
-    }
+      for ( int i = 1; i <= gpGlobals->maxClients; i++ )
+      {
+          CTFPlayer *pPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
+          if ( pPlayer )
+              pPlayer->TF2VRefreshEraLoadout();
+      }
 
     DevMsg( "[TF2V] ApplyEra( %d ) complete.\n", nEra );
 }

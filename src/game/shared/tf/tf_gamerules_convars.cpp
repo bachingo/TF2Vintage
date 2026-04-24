@@ -102,10 +102,6 @@ ConVar tf2v_quickplay_competitive( "tf2v_quickplay_competitive", "0",
     FCVAR_GAMEDLL | FCVAR_REPLICATED | FCVAR_HIDDEN,
     "Read-only. 1 if QuickPlay competitive compliant (not certified)." );
 
-ConVar tf2v_quickplay_profile( "tf2v_quickplay_profile", "1",
-    FCVAR_GAMEDLL | FCVAR_HIDDEN,
-    "QuickPlay/Certified opt-in. 0=off, 1=casual, 2=competitive, 3=either." );
-
 ConVar tf2v_server_type( "tf2v_server_type", "0",
     FCVAR_REPLICATED | FCVAR_HIDDEN,
     "Server type for mapcycle. 0=PVP, 1=PVE (MvM), 2=ASYM (VSH/ZI, era 5559+).",

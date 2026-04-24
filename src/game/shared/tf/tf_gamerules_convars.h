@@ -49,7 +49,6 @@ extern ConVar tf2v_certified_competitive;
 extern ConVar tf2v_quiet_server;
 extern ConVar tf2v_quickplay_casual;
 extern ConVar tf2v_quickplay_competitive;
-extern ConVar tf2v_quickplay_profile;
 extern ConVar tf2v_server_type;
 
 // =========================================================================

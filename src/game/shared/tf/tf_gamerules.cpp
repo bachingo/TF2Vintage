@@ -937,12 +937,6 @@ extern ConVar tf_flag_return_on_touch;
 extern ConVar tf_flag_return_time_credit_factor;
 ConVar tf_grapplinghook_enable( "tf_grapplinghook_enable", "0", FCVAR_REPLICATED );
 
-
-// TF2V ConVar calls (Should always be serverside)
-#ifdef GAME_DLL
-extern ConVar tf2v_quickplay_profile;
-#endif
-
 #ifdef GAME_DLL
 CUtlString s_strNextMvMPopFile;
 CON_COMMAND_F( tf_mvm_popfile, "Change to a target popfile for MvM", FCVAR_GAMEDLL )
@@ -8059,16 +8053,6 @@ void CTFGameRules::Think()
 		LoadMapCycleFile();
 	}
 
-#ifdef GAME_DLL
-	// TF2V: periodic QuickPlay/Certified compliance recheck (every 30s)
-	if ( tf2v_quickplay_profile.GetInt() > 0 &&
-	     gpGlobals->curtime >= m_flNextQuickPlayCheck )
-	{
-		m_flNextQuickPlayCheck = gpGlobals->curtime + 30.0f;
-		TF2VUpdateQuickPlayCompliance();
-	}
-#endif
-
 	if ( g_fGameOver )
 	{
 		if ( IsCompetitiveMode() && !IsMannVsMachineMode() )
@@ -15097,30 +15081,24 @@ void CTFGameRules::RoundRespawn( void )
 	// ── TF2V ERA BOUNDARY ────────────────────────────────────────────────────
 	// Runs before BaseClass::RoundRespawn() so the era state is locked
 	// before any per-player respawn logic reads it.
-	if ( TF2V_EraManaged() )
+	if ( m_bHasPendingEra )
 	{
-		if ( m_bHasPendingEra )
-		{
-			m_bApplyingEra = true;
-			tf2v_era.SetValue( m_nPendingEra );
-			m_bApplyingEra = false;
-			ApplyEra( m_nPendingEra );
-			m_bHasPendingEra = false;
-			Msg( "[TF2V] Pending era %d applied at round boundary.\n", m_nPendingEra );
-		}
-		else if ( m_bEraDirty )
-		{
-			ApplyEra( tf2v_era.GetInt() );
-		}
+		m_bApplyingEra = true;
+		tf2v_era.SetValue( m_nPendingEra );
+		m_bApplyingEra = false;
+		ApplyEra( m_nPendingEra );
+		m_bHasPendingEra = false;
+		Msg( "[TF2V] Pending era %d applied at round boundary.\n", m_nPendingEra );
+	}
+	else if ( m_bEraDirty )
+	{
+		ApplyEra( tf2v_era.GetInt() );
 	}
 
 	// Freeze current convar values into m_EraState for this round
 	LockEraState();
 
-	// Revalidate QuickPlay/Certified compliance after era change
-	if ( tf2v_quickplay_profile.GetInt() > 0 )
-		TF2VUpdateQuickPlayCompliance();
-	// ── END TF2V ERA BOUNDARY ─────────────────────────────────────────────────
+
 #endif
 
 	BaseClass::RoundRespawn();
@@ -15154,6 +15132,10 @@ void CTFGameRules::RoundRespawn( void )
 		m_bVoteCalled = true;
 		m_bServerVoteOnReset = false;
 	}
+#ifdef GAME_DLL
+	// Revalidate QuickPlay/Certified compliance after era change
+		TF2VUpdateQuickPlayCompliance();
+#endif
 }
 
 //-----------------------------------------------------------------------------
