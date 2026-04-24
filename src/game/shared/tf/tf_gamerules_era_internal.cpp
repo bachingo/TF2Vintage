@@ -389,7 +389,6 @@ void TF2VEraChanged( IConVar *pConVar, const char *pOldString, float flOldValue 
 
     if ( CTFGameRules::TF2V_IsRoundActive() )
     {
-        TFGameRules()->m_nPendingEra    = nNew;
 
         TFGameRules()->m_bApplyingEra = true;
         var.SetValue( nOld );

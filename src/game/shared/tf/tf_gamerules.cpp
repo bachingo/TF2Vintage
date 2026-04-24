@@ -4271,8 +4271,12 @@ void CTFGameRules::Activate()
 	m_nForceUpgrades = 0;
 	m_nForceEscortPushLogic = 0;
 	
-	// First boot: grab our info of tf2v_era.
-	m_nPendingEra = tf2v_era.GetInt();
+#ifdef GAME_DLL
+	// First boot: grab our info of tf2v_era. Validate.
+	tf2v_era.SetValue(tf2v_era.GetInt());
+	m_bApplyingEra = false;
+	ApplyEra( tf2v_era.GetInt() );
+#endif
 
 	m_CPTimerEnts.RemoveAll();
 
@@ -15085,9 +15089,9 @@ void CTFGameRules::RoundRespawn( void )
 	// ── TF2V ERA BOUNDARY ────────────────────────────────────────────────────
 	// Runs before BaseClass::RoundRespawn() so the era state is locked
 	// before any per-player respawn logic reads it.
-	ApplyEra( m_nPendingEra );
-	tf2v_era.SetValue( m_nPendingEra );
-	Msg( "[TF2V] Pending era %d applied.\n", m_nPendingEra );
+	tf2v_era.SetValue(tf2v_era.GetInt());
+	ApplyEra( tf2v_era.GetInt() );
+	Msg( "[TF2V] Pending era %d applied.\n", tf2v_era.GetInt() );
 #endif
 
 	BaseClass::RoundRespawn();

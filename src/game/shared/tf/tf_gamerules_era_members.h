@@ -255,8 +255,5 @@ private:
     // Guards against callback re-entrancy while ApplyEra() is writing convars.
     bool            m_bApplyingEra;
 
-    // Pending era change deferred from a live round.
-    int             m_nPendingEra;
-
     // Throttle timer for QuickPlay compliance re-evaluation.
     float           m_flNextQuickPlayCheck;

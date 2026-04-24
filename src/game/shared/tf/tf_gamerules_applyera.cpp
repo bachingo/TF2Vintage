@@ -1082,6 +1082,8 @@ void CTFGameRules::ApplyEra( int nEra )
           if ( pPlayer )
               pPlayer->TF2VRefreshEraLoadout();
       }
+	 
+	 LockEraState();
 
     DevMsg( "[TF2V] ApplyEra( %d ) complete.\n", nEra );
 }
