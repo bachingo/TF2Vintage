@@ -1000,4 +1000,41 @@ struct collidelist_t
 	Vector			origin;
 	QAngle			angles;
 };
+
+
+// TF2V Era classification:
+// Epoch number is based on 09/17/2007 (the PC beta release) as Day 1.
+// Quicker to save as a precalculated integer than strings.
+// Calculate this by "September 16 2007 to <date>."
+#define TF2V_ERA_DAY_BETA        	1		// Sep 17 2007
+#define TF2V_ERA_DAY_LAUNCH         24		// Oct 10 2007
+#define TF2V_ERA_DAY_GOLDRUSH       226		// Apr 29 2008
+#define TF2V_ERA_DAY_PYRO           277
+#define TF2V_ERA_DAY_HEAVY          338
+#define TF2V_ERA_DAY_SCOUT          527
+#define TF2V_ERA_DAY_SNIPSPY        613
+#define TF2V_ERA_DAY_CLASSLESS      697
+#define TF2V_ERA_DAY_WAR            823
+#define TF2V_ERA_DAY_ENGINEER       1026
+#define TF2V_ERA_DAY_MANNCONOMY     1110
+#define TF2V_ERA_DAY_AUSSIE2010     1188
+#define TF2V_ERA_DAY_RIFTPROMO     1236
+#define TF2V_ERA_DAY_UBER_F2P       1376
+#define TF2V_ERA_DAY_HALLOWEEN_2011 1502	// Oct 27 2011
+#define TF2V_ERA_DAY_AUSSIE2011     1551
+#define TF2V_ERA_DAY_PYROMANIA      1746
+#define TF2V_ERA_DAY_MVM            1795
+#define TF2V_ERA_DAY_TWOCITIES      2258
+#define TF2V_ERA_DAY_LOVEANDWAR     2467
+#define TF2V_ERA_DAY_SMISSMAS2014   2654
+#define TF2V_ERA_DAY_GUNMETTLE      2846
+#define TF2V_ERA_DAY_TOUGHBREAK     3014
+#define TF2V_ERA_DAY_MYM            3217
+#define TF2V_ERA_DAY_JI             3687
+#define TF2V_ERA_DAY_BLUEMOON       3846
+#define TF2V_ERA_DAY_VSCRIPT        5559
+#define TF2V_ERA_DAY_100            5791
+#define TF2V_ERA_DAY_SDK            6365
+#define TF2V_ERA_DAY_LATEST         6659
+
 #endif // SHAREDDEFS_H

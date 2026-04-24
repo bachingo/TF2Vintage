@@ -4490,28 +4490,6 @@ bool CTFPlayer::ItemIsAllowed( CEconItemView *pItem )
 	return true;
 }
 
-
-//-----------------------------------------------------------------------------
-// Purpose: TF2V: Flat check to see if the base item fits the time period.
-//-----------------------------------------------------------------------------
-bool CTFPlayer::ItemIsAllowedTimePeriod( CEconItemView *pItem )
-{
-	if ( !pItem || !pItem->GetStaticData() || !TFGameRules() )
-		return false;
-
-	// Passtime hack to allow passtime gun
-	if ( V_stristr( pItem->GetItemDefinition()->GetDefinitionName(), "passtime" ) )
-	{
-		return TFGameRules() && TFGameRules()->IsPasstimeMode();
-	}
-
-	CEconItemDefinition* pData = pItem->GetStaticData();
-	if ( pData && pData->GetIntroductionDate() )
-		return TFGameRules()->GetTF2VEra() >= pData->GetIntroductionDate();
-	
-	return false;
-}
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -4923,20 +4901,22 @@ CEconItemView *CTFPlayer::GetLoadoutItem( int iClass, int iSlot, bool bReportWhi
 
 	CEconItemView *pItem = m_Inventory.GetItemInLoadout( iClass, iSlot );
 
-	// TF2V era gate — base-item-post-dates-era only.
-	// We check only whether the base item itself is too new. Modifier stripping
-	if (pItem && pItem->IsValid() && !ItemIsAllowedTimePeriod( pItem ) )
+	// TF2V era gate with attribute stripping
+	if ( pItem && pItem->IsValid() )
 	{
-		ClientPrint( this, HUD_PRINTNOTIFY, "#Item_Anachronistic", pItem->GetStaticData()->GetItemBaseName() );
-		
-		pItem = TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+		pItem = GetTimePeriodCompliantItem( pItem, iClass, iSlot );
 	}
 	
-	if ( (pItem && pItem->IsValid()) && (pItem->GetItemQuality() != AE_NORMAL) && !pItem->GetStaticData()->IsAllowedInMatch() && TFGameRules()->IsInTournamentMode() )
+	// Tournament mode whitelist check
+	if ( (pItem && pItem->IsValid()) && 
+		 (pItem->GetItemQuality() != AE_NORMAL) && 
+		 !pItem->GetStaticData()->IsAllowedInMatch() && 
+		 TFGameRules()->IsInTournamentMode() )
 	{
 		if ( bReportWhitelistFails )
 		{
-			ClientPrint( this, HUD_PRINTNOTIFY, "#Item_BlacklistedInMatch", pItem->GetStaticData()->GetItemBaseName() );
+			ClientPrint( this, HUD_PRINTNOTIFY, "#Item_BlacklistedInMatch", 
+						 pItem->GetStaticData()->GetItemBaseName() );
 		}
 
 		pItem = TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
@@ -4944,6 +4924,7 @@ CEconItemView *CTFPlayer::GetLoadoutItem( int iClass, int iSlot, bool bReportWhi
 
 	return pItem;
 }
+
 
 //-----------------------------------------------------------------------------
 // Purpose: Handles pressing the use action slot item key.
@@ -23157,4 +23138,321 @@ void CTFPlayer::ScriptEquipWearableViewModel( HSCRIPT hWearableViewModel )
 void CTFPlayer::ScriptStunPlayer( float flTime, float flReductionAmount, int iStunFlags /* = TF_STUN_MOVEMENT */, HSCRIPT hAttacker /* = NULL */ )
 {
 	m_Shared.StunPlayer( flTime, flReductionAmount, iStunFlags, ScriptToEntClass< CTFPlayer >( hAttacker ) );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: TF2V: Simplified time period filtering
+// Strips: Paint, Stat Tracking, Killstreaks, Quality (if too new)
+// Only replaces entire item if base item is anachronistic
+// Defined in sharreddefs.h
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// Check if item quality is allowed in current era
+//-----------------------------------------------------------------------------
+bool CTFPlayer::ItemQualityIsAllowedTimePeriod( int iQuality )
+{
+	if ( !TFGameRules() )
+		return false;
+
+	int iCurrentEra = TFGameRules()->GetTF2VEra();
+	
+	// Map qualities to their introduction eras
+	// Adjust these dates to match your mod's timeline
+	switch ( iQuality )
+	{
+		case AE_NORMAL:
+			return true; // Always available
+			
+		case AE_UNIQUE:
+			return iCurrentEra >= TF2V_ERA_DAY_GOLDRUSH; // Regular items
+			
+		case AE_COMMUNITY:
+		case AE_SELFMADE:
+			return iCurrentEra >= TF2V_ERA_DAY_WAR; // Community items
+			
+		case AE_VINTAGE:
+			return iCurrentEra >= TF2V_ERA_DAY_MANNCONOMY; // Mann-Conomy Update (Our namesake)
+
+		case AE_UNUSUAL:
+		case AE_RARITY4:
+			return iCurrentEra >= TF2V_ERA_DAY_MANNCONOMY; // Unusual hats			
+			
+		case AE_GENUINE:
+		case AE_RARITY1:
+			return iCurrentEra >= TF2V_ERA_DAY_RIFTPROMO; // Promotional items
+			
+		case AE_STRANGE:
+			return iCurrentEra >= TF2V_ERA_DAY_UBER_F2P; // Strange weapons
+			
+		case AE_HAUNTED:
+			return iCurrentEra >= TF2V_ERA_DAY_HALLOWEEN_2011; // Halloween items
+			
+		case AE_COLLECTORS:
+			return iCurrentEra >= 2249; // 9 days before TF2V_ERA_DAY_TWOCITIES
+
+		case AE_PAINTKITWEAPON:
+		case AE_RARITY_DEFAULT:
+		case AE_RARITY_COMMON:
+		case AE_RARITY_UNCOMMON:
+		case AE_RARITY_RARE:
+		case AE_RARITY_MYTHICAL:
+		case AE_RARITY_LEGENDARY:
+		case AE_RARITY_ANCIENT:
+			return iCurrentEra >= TF2V_ERA_DAY_GUNMETTLE; // Wrapped items
+			
+		case AE_DEVELOPER:
+		case AE_VALVE:
+			return true; // Valve items always allowed
+			
+		default:
+			return false; // Unknown qualities blocked by default
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Strip time-inappropriate attributes from item
+// Returns: true if any attributes were removed
+//-----------------------------------------------------------------------------
+bool CTFPlayer::StripAnachronisticAttributes( CEconItemView *pItem )
+{
+	if ( !pItem || !pItem->IsValid() || !TFGameRules() )
+		return false;
+
+	CAttributeList *pAttribList = pItem->GetAttributeList();
+	if ( !pAttribList )
+		return false;
+
+	bool bModified = false;
+	int iCurrentEra = TFGameRules()->GetTF2VEra();
+	
+	// Iterate backwards so we can safely remove attributes
+	for ( int i = pAttribList->GetNumAttributes() - 1; i >= 0; i-- )
+	{
+		const CEconItemAttribute *pAttrib = pAttribList->GetAttribute( i );
+		if ( !pAttrib )
+			continue;
+
+		const CEconItemAttributeDefinition *pAttrDef = pAttrib->GetStaticData();
+		if ( !pAttrDef )
+			continue;
+
+		const char *pszAttrName = pAttrDef->GetDefinitionName();
+		bool bShouldRemove = false;
+
+		// Paint attributes - introduced with Mann-Conomy (or earlier if you prefer)
+		if ( V_stristr( pszAttrName, "paint" ) || 
+			 V_stristr( pszAttrName, "set item tint" ) ||
+			 V_stristr( pszAttrName, "item_tint_rgb" ) )
+		{
+			if ( iCurrentEra < TF2V_ERA_PAINT )
+			{
+				bShouldRemove = true;
+			}
+		}
+		
+		// Stat tracking (Strange counters) - introduced with Mann-Conomy
+		else if ( V_stristr( pszAttrName, "kill eater" ) ||
+				  V_stristr( pszAttrName, "stat_" ) )
+		{
+			if ( iCurrentEra < TF2V_ERA_STRANGE )
+			{
+				bShouldRemove = true;
+			}
+		}
+		
+		// Killstreak effects - introduced with Two Cities
+		else if ( V_stristr( pszAttrName, "killstreak" ) ||
+				  V_stristr( pszAttrName, "kill streak" ) )
+		{
+			if ( iCurrentEra < TF2V_ERA_KILLSTREAK )
+			{
+				bShouldRemove = true;
+			}
+		}
+		
+		// Unusual effects - introduced with Mann-Conomy
+		else if ( V_stristr( pszAttrName, "attach particle effect" ) ||
+				  V_stristr( pszAttrName, "unusual_effect" ) )
+		{
+			if ( iCurrentEra < TF2V_ERA_UNUSUAL )
+			{
+				bShouldRemove = true;
+			}
+		}
+		
+		// Australium - introduced with Two Cities
+		else if ( V_stristr( pszAttrName, "australium" ) )
+		{
+			if ( iCurrentEra < TF2V_ERA_AUSTRALIUM )
+			{
+				bShouldRemove = true;
+			}
+		}
+		
+		// Halloween/Haunted effects
+		else if ( V_stristr( pszAttrName, "halloween" ) ||
+				  V_stristr( pszAttrName, "haunted" ) )
+		{
+			if ( iCurrentEra < TF2V_ERA_HALLOWEEN )
+			{
+				bShouldRemove = true;
+			}
+		}
+		
+		// Festive effects - introduced with Australian Christmas
+		else if ( V_stristr( pszAttrName, "festive" ) )
+		{
+			if ( iCurrentEra < TF2V_ERA_FESTIVE )
+			{
+				bShouldRemove = true;
+			}
+		}
+
+		if ( bShouldRemove )
+		{
+			pAttribList->RemoveAttributeByIndex( i );
+			bModified = true;
+		}
+	}
+
+	return bModified;
+}
+
+//-----------------------------------------------------------------------------
+// Get time-period compliant version of item
+// Returns: Modified item, base item if too new, or original if compliant
+//-----------------------------------------------------------------------------
+CEconItemView *CTFPlayer::GetTimePeriodCompliantItem( CEconItemView *pOriginalItem, int iClass, int iSlot )
+{
+	if ( !pOriginalItem || !pOriginalItem->IsValid() )
+		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+
+	// STEP 1: Check if base item is allowed at all
+	if ( !ItemIsAllowedTimePeriod( pOriginalItem ) )
+	{
+		// Base item is too new - replace entirely with stock
+		ClientPrint( this, HUD_PRINTNOTIFY, "#Item_Anachronistic", 
+					 pOriginalItem->GetStaticData()->GetItemBaseName() );
+		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+	}
+
+	// Base item is allowed, now check for modifications needed
+	bool bNeedsModification = false;
+	
+	// STEP 2: Check quality
+	int iOriginalQuality = pOriginalItem->GetItemQuality();
+	bool bQualityTooNew = !ItemQualityIsAllowedTimePeriod( iOriginalQuality );
+	if ( bQualityTooNew )
+	{
+		bNeedsModification = true;
+	}
+
+	// STEP 3: Check if any attributes need stripping
+	// We'll check this on the copy to avoid modifying original
+	
+	if ( !bNeedsModification && !HasAnachronisticAttributes( pOriginalItem ) )
+	{
+		// Item is completely compliant - return as-is
+		return pOriginalItem;
+	}
+
+	// STEP 4: Create a modified copy
+	// Note: You may want to cache this instead of creating new every time
+	CEconItemView *pModifiedItem = new CEconItemView( *pOriginalItem );
+	
+	// STEP 5: Downgrade quality if needed
+	if ( bQualityTooNew )
+	{
+		pModifiedItem->SetItemQuality( AE_UNIQUE );
+		ClientPrint( this, HUD_PRINTNOTIFY, "#Item_QualityDowngraded", 
+					 pModifiedItem->GetStaticData()->GetItemBaseName() );
+	}
+
+	// STEP 6: Strip anachronistic attributes
+	if ( StripAnachronisticAttributes( pModifiedItem ) )
+	{
+		ClientPrint( this, HUD_PRINTNOTIFY, "#Item_AttributesStripped", 
+					 pModifiedItem->GetStaticData()->GetItemBaseName() );
+	}
+
+	return pModifiedItem;
+}
+
+//-----------------------------------------------------------------------------
+// Quick check if item has attributes that would be stripped
+// Used to avoid unnecessary copying
+//-----------------------------------------------------------------------------
+bool CTFPlayer::HasAnachronisticAttributes( CEconItemView *pItem )
+{
+	if ( !pItem || !pItem->IsValid() || !TFGameRules() )
+		return false;
+
+	CAttributeList *pAttribList = pItem->GetAttributeList();
+	if ( !pAttribList )
+		return false;
+
+	int iCurrentEra = TFGameRules()->GetTF2VEra();
+	
+	for ( int i = 0; i < pAttribList->GetNumAttributes(); i++ )
+	{
+		const CEconItemAttribute *pAttrib = pAttribList->GetAttribute( i );
+		if ( !pAttrib )
+			continue;
+
+		const CEconItemAttributeDefinition *pAttrDef = pAttrib->GetStaticData();
+		if ( !pAttrDef )
+			continue;
+
+		const char *pszAttrName = pAttrDef->GetDefinitionName();
+
+		// Check each category
+		if ( V_stristr( pszAttrName, "paint" ) || V_stristr( pszAttrName, "set item tint" ) )
+		{
+			if ( iCurrentEra < TF2V_ERA_PAINT )
+				return true;
+		}
+		else if ( V_stristr( pszAttrName, "kill eater" ) || V_stristr( pszAttrName, "stat_" ) )
+		{
+			if ( iCurrentEra < TF2V_ERA_STRANGE )
+				return true;
+		}
+		else if ( V_stristr( pszAttrName, "killstreak" ) || V_stristr( pszAttrName, "kill streak" ) )
+		{
+			if ( iCurrentEra < TF2V_ERA_KILLSTREAK )
+				return true;
+		}
+		else if ( V_stristr( pszAttrName, "australium" ) )
+		{
+			if ( iCurrentEra < TF2V_ERA_AUSTRALIUM )
+				return true;
+		}
+		else if ( V_stristr( pszAttrName, "festive" ) )
+		{
+			if ( iCurrentEra < TF2V_ERA_FESTIVE )
+				return true;
+		}
+	}
+
+	return false;
+}
+//-----------------------------------------------------------------------------
+// Checks to see if item passes base item check
+//-----------------------------------------------------------------------------
+bool CTFPlayer::ItemIsAllowedTimePeriod( CEconItemView *pItem )
+{
+	if ( !pItem || !pItem->GetStaticData() || !TFGameRules() )
+		return false;
+
+	// Passtime hack to allow passtime gun
+	if ( V_stristr( pItem->GetItemDefinition()->GetDefinitionName(), "passtime" ) )
+	{
+		return TFGameRules() && TFGameRules()->IsPasstimeMode();
+	}
+
+	CEconItemDefinition* pData = pItem->GetStaticData();
+	if ( pData && pData->GetIntroductionDate() )
+		return TFGameRules()->GetTF2VEra() >= pData->GetIntroductionDate();
+	
+	return false;
 }

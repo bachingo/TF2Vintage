@@ -703,7 +703,14 @@ public:
 	virtual CBaseEntity	*GiveNamedItem( const char *szName, int iSubType = 0, const CEconItemView *pScriptItem = NULL, bool bForce = false );
 	void				PostInventoryApplication( void );
 	bool				ItemIsAllowed( CEconItemView *pItem );
-	bool				ItemIsAllowedTimePeriod( CEconItemView *pItem );
+	
+	// TF2V Item checks
+	bool 				ItemQualityIsAllowedTimePeriod( int iQuality ):
+	bool 				StripAnachronisticAttributes( CEconItemView *pItem ):
+	CEconItemView 		*GetTimePeriodCompliantItem( CEconItemView *pOriginalItem, int iClass, int iSlot ):
+	bool 				HasAnachronisticAttributes( CEconItemView *pItem ):
+	bool 				ItemIsAllowedTimePeriod( CEconItemView *pItem ):
+	
 	void				RemovePlayerAttributes( bool bSetBonuses );
 	void				ApplySetBonuses( void );
 	void				GetActiveSets( CUtlVector<const CEconItemSetDefinition *> *pItemSets );
