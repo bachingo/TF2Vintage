@@ -4515,7 +4515,8 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 		GiveAmmo( GetMaxAmmo(iAmmo), iAmmo, true, kAmmoSource_Resupply );
 	}
 
-	if ( IsX360() )
+	// TF2V edge case: Use the original loadout system prior to Gold Rush when everything was stock with v/w models
+	if ( IsX360() || ( TFGameRules && ( TFGameRules()->GetTF2VEra() <= TF2V_ERA_DAY_GOLDRUSH ) ) )
 	{
 		ManageRegularWeaponsLegacy( pData );
 	}
@@ -23158,7 +23159,6 @@ bool CTFPlayer::ItemQualityIsAllowedTimePeriod( int iQuality )
 	int iCurrentEra = TFGameRules()->GetTF2VEra();
 	
 	// Map qualities to their introduction eras
-	// Adjust these dates to match your mod's timeline
 	switch ( iQuality )
 	{
 		case AE_NORMAL:
@@ -23168,17 +23168,22 @@ bool CTFPlayer::ItemQualityIsAllowedTimePeriod( int iQuality )
 			return iCurrentEra >= TF2V_ERA_DAY_GOLDRUSH; // Regular items
 			
 		case AE_COMMUNITY:
-		case AE_SELFMADE:
-		case AE_DEVELOPER:
-		case AE_VALVE:
 			return iCurrentEra >= TF2V_ERA_DAY_WAR; // Community items
 			
+		case AE_SELFMADE:
+			return iCurrentEra >= TF2V_ERA_DAY_FIRSTCONT; // Self Made
+
+		// Technically below could all be lumped into one, but it's easier to read this way.
 		case AE_VINTAGE:
 			return iCurrentEra >= TF2V_ERA_DAY_MANNCONOMY; // Mann-Conomy Update (Our namesake)
+			
+		case AE_DEVELOPER:
+		case AE_VALVE:
+			return iCurrentEra >= TF2V_ERA_DAY_MANNCONOMY; // Valve quality
 
 		case AE_UNUSUAL:
 		case AE_RARITY4:
-			return iCurrentEra >= TF2V_ERA_DAY_MANNCONOMY; // Unusual hats			
+			return iCurrentEra >= TF2V_ERA_DAY_MANNCONOMY; // Unusuals			
 			
 		case AE_GENUINE:
 		case AE_RARITY1:
@@ -23201,7 +23206,7 @@ bool CTFPlayer::ItemQualityIsAllowedTimePeriod( int iQuality )
 		case AE_RARITY_MYTHICAL:
 		case AE_RARITY_LEGENDARY:
 		case AE_RARITY_ANCIENT:
-			return iCurrentEra >= TF2V_ERA_DAY_GUNMETTLE; // Wrapped items
+			return iCurrentEra >= TF2V_ERA_DAY_GUNMETTLE; // Warpaint items
 			
 		default:
 			return false; // Unknown qualities blocked by default
@@ -23223,6 +23228,7 @@ bool CTFPlayer::StripAnachronisticAttributes( CEconItemView *pItem )
 
 	bool bModified = false;
 	int iCurrentEra = TFGameRules()->GetTF2VEra();
+
 	
 	// Iterate backwards so we can safely remove attributes
 	for ( int i = pAttribList->GetNumAttributes() - 1; i >= 0; i-- )
@@ -23238,32 +23244,12 @@ bool CTFPlayer::StripAnachronisticAttributes( CEconItemView *pItem )
 		const char *pszAttrName = pAttrDef->GetDefinitionName();
 		bool bShouldRemove = false;
 
-		// Paint attributes - introduced with Mann-Conomy (or earlier if you prefer)
+		// Paint attributes - introduced with Mann-Conomy
 		if ( V_stristr( pszAttrName, "paint" ) || 
 			 V_stristr( pszAttrName, "set item tint" ) ||
 			 V_stristr( pszAttrName, "item_tint_rgb" ) )
 		{
-			if ( iCurrentEra < TF2V_ERA_PAINT )
-			{
-				bShouldRemove = true;
-			}
-		}
-		
-		// Stat tracking (Strange counters) - introduced with Mann-Conomy
-		else if ( V_stristr( pszAttrName, "kill eater" ) ||
-				  V_stristr( pszAttrName, "stat_" ) )
-		{
-			if ( iCurrentEra < TF2V_ERA_STRANGE )
-			{
-				bShouldRemove = true;
-			}
-		}
-		
-		// Killstreak effects - introduced with Two Cities
-		else if ( V_stristr( pszAttrName, "killstreak" ) ||
-				  V_stristr( pszAttrName, "kill streak" ) )
-		{
-			if ( iCurrentEra < TF2V_ERA_KILLSTREAK )
+			if ( iCurrentEra < TF2V_ERA_DAY_MANNCONOMY )
 			{
 				bShouldRemove = true;
 			}
@@ -23273,16 +23259,16 @@ bool CTFPlayer::StripAnachronisticAttributes( CEconItemView *pItem )
 		else if ( V_stristr( pszAttrName, "attach particle effect" ) ||
 				  V_stristr( pszAttrName, "unusual_effect" ) )
 		{
-			if ( iCurrentEra < TF2V_ERA_UNUSUAL )
+			if ( iCurrentEra < TF2V_ERA_DAY_MANNCONOMY )
 			{
 				bShouldRemove = true;
 			}
 		}
 		
-		// Australium - introduced with Two Cities
-		else if ( V_stristr( pszAttrName, "australium" ) )
+		// Stat tracking (Strange counters) - introduced with Mann-Conomy
+		else if ( V_stristr( pszAttrName, "kill eater" ) )
 		{
-			if ( iCurrentEra < TF2V_ERA_AUSTRALIUM )
+			if ( iCurrentEra < TF2V_ERA_DAY_UBER_F2P )
 			{
 				bShouldRemove = true;
 			}
@@ -23292,20 +23278,49 @@ bool CTFPlayer::StripAnachronisticAttributes( CEconItemView *pItem )
 		else if ( V_stristr( pszAttrName, "halloween" ) ||
 				  V_stristr( pszAttrName, "haunted" ) )
 		{
-			if ( iCurrentEra < TF2V_ERA_HALLOWEEN )
+			if ( iCurrentEra < TF2V_ERA_DAY_HALLOWEEN_2011 )
 			{
 				bShouldRemove = true;
 			}
 		}
 		
-		// Festive effects - introduced with Australian Christmas
+		// Festive effects - introduced with Australian Christmas 2011
 		else if ( V_stristr( pszAttrName, "festive" ) )
 		{
-			if ( iCurrentEra < TF2V_ERA_FESTIVE )
+			if ( iCurrentEra < TF2V_ERA_DAY_AUSSIE2011 )
 			{
 				bShouldRemove = true;
 			}
 		}
+		
+		// Killstreak effects - introduced with Two Cities
+		else if ( V_stristr( pszAttrName, "killstreak" ) ||
+				  V_stristr( pszAttrName, "kill streak" ) )
+		{
+			if ( iCurrentEra < TF2V_ERA_DAY_TWOCITIES )
+			{
+				bShouldRemove = true;
+			}
+		}
+		
+		// Australium - introduced with Two Cities
+		else if ( V_stristr( pszAttrName, "australium" ) )
+		{
+			if ( iCurrentEra < TF2V_ERA_DAY_TWOCITIES )
+			{
+				bShouldRemove = true;
+			}
+		}
+		
+		// Stat clock: February 29 2016 (post Tough Break)
+		else if ( V_stristr( pszAttrName, "stat_" ) )
+		{
+			if ( iCurrentEra < 3088 ) 
+			{
+				bShouldRemove = true;
+			}
+		}
+		
 
 		if ( bShouldRemove )
 		{
@@ -23405,29 +23420,42 @@ bool CTFPlayer::HasAnachronisticAttributes( CEconItemView *pItem )
 		const char *pszAttrName = pAttrDef->GetDefinitionName();
 
 		// Check each category
-		if ( V_stristr( pszAttrName, "paint" ) || V_stristr( pszAttrName, "set item tint" ) )
+		if ( V_stristr( pszAttrName, "paint" ) || 
+			 V_stristr( pszAttrName, "set item tint" ) ||
+			 V_stristr( pszAttrName, "item_tint_rgb" ) )
 		{
-			if ( iCurrentEra < TF2V_ERA_PAINT )
+			if ( iCurrentEra < TF2V_ERA_DAY_MANNCONOMY )
 				return true;
 		}
-		else if ( V_stristr( pszAttrName, "kill eater" ) || V_stristr( pszAttrName, "stat_" ) )
+		else if ( V_stristr( pszAttrName, "kill eater" ) )
 		{
-			if ( iCurrentEra < TF2V_ERA_STRANGE )
+			if ( iCurrentEra < TF2V_ERA_DAY_UBER_F2P )
 				return true;
 		}
-		else if ( V_stristr( pszAttrName, "killstreak" ) || V_stristr( pszAttrName, "kill streak" ) )
+		else if ( V_stristr( pszAttrName, "halloween" ) ||
+				  V_stristr( pszAttrName, "haunted" ) )
 		{
-			if ( iCurrentEra < TF2V_ERA_KILLSTREAK )
-				return true;
-		}
-		else if ( V_stristr( pszAttrName, "australium" ) )
-		{
-			if ( iCurrentEra < TF2V_ERA_AUSTRALIUM )
+			if ( iCurrentEra < TF2V_ERA_DAY_HALLOWEEN_2011 )
 				return true;
 		}
 		else if ( V_stristr( pszAttrName, "festive" ) )
 		{
-			if ( iCurrentEra < TF2V_ERA_FESTIVE )
+			if ( iCurrentEra < TF2V_ERA_DAY_AUSSIE2011 )
+				return true;
+		}
+		else if ( V_stristr( pszAttrName, "killstreak" ) || V_stristr( pszAttrName, "kill streak" ) )
+		{
+			if ( iCurrentEra < TF2V_ERA_DAY_TWOCITIES )
+				return true;
+		}
+		else if ( V_stristr( pszAttrName, "australium" ) )
+		{
+			if ( iCurrentEra < TF2V_ERA_DAY_TWOCITIES )
+				return true;
+		}
+		else if ( V_stristr( pszAttrName, "stat_" ) )
+		{
+			if ( iCurrentEra < 3088 )
 				return true;
 		}
 	}
