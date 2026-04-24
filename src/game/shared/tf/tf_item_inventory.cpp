@@ -251,12 +251,12 @@ void CTFInventoryManager::PostInitGC()
 {
 	// Base calls UpdateLocalInventory() → RequestInventory() → AddSOCacheListener().
 	// The inventory is now registered and ready to receive items.
-	// The item schema is also guaranteed to be fully loaded at this point,
-	// so LoadModItems/LoadLoanerItems can safely call GetItemDefinition().
 	BaseClass::PostInitGC();
 
-	LoadModItems();
-	LoadLoanerItems();
+	// Don't call LoadModItems/LoadLoanerItems here.
+	// GetItemDefinition() may not be ready this early even in PostInitGC.
+	// WebapiInventoryThink will retry via TryLoadSyntheticItems() once
+	// the schema is confirmed ready (non-null definition lookup).
 
 	CTFPlayerInventory *pLocalInv = GetLocalTFInventory();
 	if ( pLocalInv && !pLocalInv->RetrievedInventoryFromSteam() )
@@ -330,6 +330,29 @@ static CEconItemView *CreateSyntheticItem(
 
     pView->SetNonSOEconItem( pEconItem );
     return pView;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Deferred schema-ready check and load of synthetic items.
+//          Called repeatedly from WebapiInventoryThink until schema is ready.
+//          Uses a known defindex (Scattergun = 13) as a canary to test whether
+//          GetItemDefinition() is working yet. Once it returns non-null, the
+//          schema's defindex->definition map is populated and we can safely
+//          call LoadModItems/LoadLoanerItems which depend on it.
+//-----------------------------------------------------------------------------
+void CTFInventoryManager::TryLoadSyntheticItems()
+{
+	if ( m_bLoadedSyntheticItems )
+		return;
+
+	// Use a known def from the base game (e.g. Scattergun = 13) as a canary.
+	// If GetItemDefinition returns non-null, the lookup map is ready.
+	if ( !GetItemSchema()->GetItemDefinition( 13 ) )
+		return; // schema not ready yet, try again next frame
+
+	LoadModItems();
+	LoadLoanerItems();
+	m_bLoadedSyntheticItems = true;
 }
 
 //-----------------------------------------------------------------------------
@@ -1886,6 +1909,13 @@ bool CTFPlayerInventory::BuildOfflineSOCacheBlob( CUtlMemory<char> &bufOut )
 	{
 		CEconItem *pEconItem = m_vecOfflineItems[i];
 		if ( !pEconItem )
+			continue;
+
+		// Skip synthetic items — mod and loaner IDs are above k_ModItemIDBase.
+		// The server injects these independently; including them here wastes
+		// blob space and causes the reliable stream buffer to overflow with
+		// large inventories (700+ real items + 200+ loaners > 4000 bytes).
+		if ( pEconItem->GetItemID() >= k_ModItemIDBase )
 			continue;
 
 		CSOEconItem msgItem;

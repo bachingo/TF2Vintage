@@ -349,6 +349,9 @@ void CTFGCClientSystem::WebapiInventoryThink()
 	{
 	case kWebapiInventoryState_Init:
 	{
+		// Ensure synthetic items are loaded before any inventory work.
+		TFInventoryManager()->TryLoadSyntheticItems();
+
 		CTFPlayerInventory *pLocalInv =
 			dynamic_cast<CTFPlayerInventory *>( TFInventoryManager()->GetLocalInventory() );
 		const bool bAutoUpdate = tf_offline_inventory_autoupdate.GetBool();

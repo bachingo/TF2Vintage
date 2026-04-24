@@ -259,7 +259,19 @@ extern ConVar tf_mm_strict;
 //      by time any message that needs it gets sent. (a previous message in queue should be requesting it)
 static uint64 ReliableMsgCheckUpdateMatchID( uint64 nMsgMatchID )
 {
-	uint64 nCurrentMatchID = GTFGCClientSystem()->GetMatch()->m_nMatchID;
+	CMatchInfo *pMatch = GTFGCClientSystem()->GetMatch();
+	if ( !pMatch )
+	{
+		// Match was torn down before this queued message could send.
+		// This happens during level transitions when a reliable message
+		// was queued before changelevel and OnPrepare() fires in the new
+		// level's init while m_pMatchInfo has already been cleared.
+		// Abort — the match is gone so there's nothing to reconcile.
+		GTFGCClientSystem()->AbortInvalidMatchState();
+		return 0;
+	}
+
+	uint64 nCurrentMatchID = pMatch->m_nMatchID;
 	Assert( !nMsgMatchID || nMsgMatchID == nCurrentMatchID );
 
 	// If we were queued for a match we didn't know the ID of yet, we can now glom it
@@ -1338,6 +1350,38 @@ void CTFGCServerSystem::PostInitGC()
 void CTFGCServerSystem::LevelShutdownPostEntity()
 {
 	BaseClass::LevelShutdownPostEntity();
+
+	// Force all equipment state machines to Init to properly cancel
+	// any in-flight HTTP callbacks before we delete the state objects.
+	// Without this, Steam can fire callbacks into freed memory.
+	FOR_EACH_MAP( m_mapEquipmentRequests, i )
+	{
+		WebapiEquipmentState_t *pState = m_mapEquipmentRequests[i];
+		if ( pState && pState->m_eState != kWebapiEquipmentState_Init )
+		{
+			pState->m_eState = kWebapiEquipmentState_Init;
+			// Run the Init case cleanup manually (same as WebapiEquipmentThinkRequest does)
+			if ( pState->m_pKVCurrentRequest )
+			{
+				pState->m_pKVCurrentRequest->deleteThis();
+				pState->m_pKVCurrentRequest = nullptr;
+			}
+			pState->m_EquipmentRequestCompleted.Cancel();
+			if ( pState->m_hEquipmentRequest != INVALID_HTTPREQUEST_HANDLE )
+			{
+				SteamHTTP()->ReleaseHTTPRequest( pState->m_hEquipmentRequest );
+				pState->m_hEquipmentRequest = INVALID_HTTPREQUEST_HANDLE;
+			}
+			if ( pState->m_pKVNextRequest )
+			{
+				pState->m_pKVNextRequest->deleteThis();
+				pState->m_pKVNextRequest = nullptr;
+			}
+		}
+	}
+
+	// Now it's safe to delete the state objects
+	m_mapEquipmentRequests.PurgeAndDeleteElements();
 }
 
 
@@ -3689,7 +3733,7 @@ void CTFGCServerSystem::SendRejectLobby()
 	if ( GetLobby() )
 	{
 		msg.set_lobby_id( GetLobby()->GetGroupID() );
-		msg.set_lobby_id( GetLobby()->GetMatchID() );
+		msg.set_match_id( GetLobby()->GetMatchID() );  // was incorrectly set_lobby_id
 	}
 
 	ReliableMsgQueue().Enqueue( pReliable );
@@ -4437,11 +4481,15 @@ void CTFGCServerSystem::SDK_ApplyLocalLoadout(CGCClientSharedObjectCache* pCache
 			{
 				pTFInventory->EquipLocal(uItemId, iClass, iSlot);
 			}
-			else if ( uItemId >= k_ModItemIDBase || uItemId >= k_LoanerItemIDBase )
+			else if ( ( uItemId >= k_ModItemIDBase ) ||
+			          ( uItemId >= k_LoanerItemIDBase && uItemId < k_ModItemIDBase ) )
 			{
 				// Synthetic item (mod or loaner) — not in the SOCache because the server
 				// never fetched it from the webapi. Trust the client's loadout assignment;
 				// the def_index was validated against items_game.txt on the client side.
+				// Fixed: was `uItemId >= k_ModItemIDBase || uItemId >= k_LoanerItemIDBase`
+				// which collapsed to `uItemId >= min(bases)` and bypassed validation for
+				// all real-but-missing items above the smaller of the two ID ranges.
 				pTFInventory->EquipLocal(uItemId, iClass, iSlot);
 			}
 			else

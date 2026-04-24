@@ -271,6 +271,8 @@ public:
 	// Mod-defined items (scripts/items/mod_items.txt).
 	// Custom items with def_indices not in the base TF2 schema, shipped with the mod.
 	// Added to every player inventory automatically.
+	bool 				m_bLoadedSyntheticItems = false;
+	void 				TryLoadSyntheticItems();
 	void				LoadModItems();
 	int					GetModItemCount() const	{ return m_ModItems.Count(); }
 	CEconItemView*		GetModItem( int i )		{ return m_ModItems[i]; }
