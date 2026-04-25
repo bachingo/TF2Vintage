@@ -1374,7 +1374,7 @@ public:
 	uint32		RollItemLevel( void ) const;
 
 	const char *GetFirstSaleDate( void ) const;
-	int			GetIntroductionDate( void ) const				{ return m_iDayIntroduced; }
+	const int			GetIntroductionDate( void ) const;
 
 	void		IterateAttributes( class IEconItemAttributeIterator *pIterator ) const;
 
