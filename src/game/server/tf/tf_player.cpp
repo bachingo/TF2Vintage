@@ -23247,11 +23247,21 @@ bool CTFPlayer::StripAnachronisticAttributes( CEconItemView *pItem )
 		// Paint attributes - introduced with Mann-Conomy
 		if ( V_stristr( pszAttrName, "paint" ) || 
 			 V_stristr( pszAttrName, "set item tint" ) ||
-			 V_stristr( pszAttrName, "item_tint_rgb" ) )
+			 V_stristr( pszAttrName, "item_tint_rgb" ) ||
+			 V_stristr( pszAttrName, "item_tint_rgb_2" ) )
 		{
 			if ( iCurrentEra < TF2V_ERA_DAY_MANNCONOMY )
 			{
 				bShouldRemove = true;
+			}
+			else
+			{
+				// Investigate the permutation further.
+				attribute_data_union_t value;
+				pAttrib->GetValue( &value );
+				int iRGB = (int)value.asFloat;
+				if ( iCurrentEra < GetPaintIntroductionDate( iRGB ) )
+					bShouldRemove = true;
 			}
 		}
 		
@@ -23262,6 +23272,15 @@ bool CTFPlayer::StripAnachronisticAttributes( CEconItemView *pItem )
 			if ( iCurrentEra < TF2V_ERA_DAY_MANNCONOMY )
 			{
 				bShouldRemove = true;
+			}
+			else
+			{
+				// Investigate the permutation further.
+				attribute_data_union_t value;
+				pAttrib->GetValue( &value );
+				int iEffectIndex = (int)value.asFloat;
+				if ( iCurrentEra < GetUnusualEffectIntroductionDate( iEffectIndex ) )
+					bShouldRemove = true;
 			}
 		}
 		
@@ -23309,6 +23328,28 @@ bool CTFPlayer::StripAnachronisticAttributes( CEconItemView *pItem )
 			if ( iCurrentEra < TF2V_ERA_DAY_TWOCITIES )
 			{
 				bShouldRemove = true;
+			}
+		}
+		
+		else if ( V_stristr( pszAttrName, "paintkit_proto_def_index" ) ||
+				  V_stristr( pszAttrName, "paint_kit_proto_def_index" ) )
+		{
+			if ( iCurrentEra < TF2V_ERA_DAY_GUNMETTLE )
+			{
+				bShouldRemove = true;
+			}
+			else
+			{
+				attribute_data_union_t value;
+				pAttrib->GetValue( &value );
+			
+				int iProtoDefIndex = (int)value.asFloat;
+				int iWarPaintIntroDate = GetWarPaintIntroductionDate( iProtoDefIndex );
+			
+				if ( iCurrentEra < iWarPaintIntroDate >  )
+				{
+					bShouldRemove = true;
+				}
 			}
 		}
 		
@@ -23422,10 +23463,37 @@ bool CTFPlayer::HasAnachronisticAttributes( CEconItemView *pItem )
 		// Check each category
 		if ( V_stristr( pszAttrName, "paint" ) || 
 			 V_stristr( pszAttrName, "set item tint" ) ||
-			 V_stristr( pszAttrName, "item_tint_rgb" ) )
+			 V_stristr( pszAttrName, "item_tint_rgb" ) ||
+			 V_stristr( pszAttrName, "item_tint_rgb_2" ) )
 		{
 			if ( iCurrentEra < TF2V_ERA_DAY_MANNCONOMY )
 				return true;
+			else
+			{
+				// Investigate the permutation further.
+				attribute_data_union_t value;
+				pAttrib->GetValue( &value );
+				int iRGB = (int)value.asFloat;
+				if ( iCurrentEra < GetPaintIntroductionDate( iRGB ) )
+					return true;
+			}
+		}
+		else if ( V_stristr( pszAttrName, "attach particle effect" ) ||
+				  V_stristr( pszAttrName, "unusual_effect" ) )
+		{
+			if ( iCurrentEra < TF2V_ERA_DAY_MANNCONOMY )
+			{
+				return true;
+			}
+			else
+			{
+				// Investigate the permutation further.
+				attribute_data_union_t value;
+				pAttrib->GetValue( &value );
+				int iEffectIndex = (int)value.asFloat;
+				if ( iCurrentEra < GetUnusualEffectIntroductionDate( iEffectIndex ) )
+					return true;
+			}
 		}
 		else if ( V_stristr( pszAttrName, "kill eater" ) )
 		{
@@ -23452,6 +23520,27 @@ bool CTFPlayer::HasAnachronisticAttributes( CEconItemView *pItem )
 		{
 			if ( iCurrentEra < TF2V_ERA_DAY_TWOCITIES )
 				return true;
+		}
+		else if ( V_stristr( pszAttrName, "paintkit_proto_def_index" ) ||
+				  V_stristr( pszAttrName, "paint_kit_proto_def_index" ) )
+		{
+			if ( iCurrentEra < TF2V_ERA_DAY_GUNMETTLE )
+			{
+				return true;
+			}
+			else
+			{
+				attribute_data_union_t value;
+				pAttrib->GetValue( &value );
+			
+				int iProtoDefIndex = (int)value.asFloat;
+				int iWarPaintIntroDate = GetWarPaintIntroductionDate( iProtoDefIndex );
+			
+				if ( iCurrentEra < iWarPaintIntroDate )
+				{
+					return true;
+				}
+			}
 		}
 		else if ( V_stristr( pszAttrName, "stat_" ) )
 		{
@@ -23481,4 +23570,398 @@ bool CTFPlayer::ItemIsAllowedTimePeriod( CEconItemView *pItem )
 		return TFGameRules()->GetTF2VEra() >= pData->GetIntroductionDate();
 	
 	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: TF2V: Fine-grained attribute value filtering
+// Handle specific paint colors, unusual effects, etc. by their individual dates
+//-----------------------------------------------------------------------------
+ 
+//-----------------------------------------------------------------------------
+// Paint color introduction dates
+// RGB value -> introduction date mapping
+//-----------------------------------------------------------------------------
+struct PaintIntroDate_t
+{
+	int iRGB;				// RGB value (or paint index)
+	int iIntroductionDate;	// YYYYMMDD format
+	const char *pszName;	// For debugging
+};
+
+static PaintIntroDate_t g_PaintIntroductionDates[] = 
+{
+	// September 2010 - Mann-Conomy Update (first paints)
+	{ 0x7D4071, 20100930, "A Deep Commitment to Purple" },
+	{ 0x141414, 20100930, "A Distinctive Lack of Hue" },
+	{ 0x216E4E, 20100930, "A Mann's Mint" },
+	{ 0xE6E6E6, 20100930, "An Extraordinary Abundance of Tinge" },
+	{ 0xE7B53B, 20100930, "Australium Gold" },
+	{ 0x2D2D24, 20100930, "Color No. 216-190-216" },
+	{ 0xBCDDB3, 20100930, "Indubitably Green" },
+	{ 0x7E7E7E, 20100930, "Mann Co. Orange" },
+	{ 0xCF7336, 20100930, "Mann Co. Orange" },
+	{ 0x803020, 20100930, "Muskelmannbraun" },
+	{ 0x51384A, 20100930, "Noble Hatter's Violet" },
+	{ 0xC36C2D, 20100930, "Radigan Conagher Brown" },
+	{ 0xD8BED8, 20100930, "The Color of a Gentlemann's Business Pants" },
+	{ 0xF0E68C, 20100930, "The Bitter Taste of Defeat and Lime" },
+	{ 0x654740, 20100930, "Ye Olde Rustic Colour" },
+	{ 0xA89A8C, 20100930, "Aged Moustache Grey" },
+	
+	// December 2010 - Australian Christmas
+	{ 0x424F3B, 20101221, "Zepheniah's Greed" },
+	{ 0x32CD32, 20101221, "Zepheniah's Greed" }, // Alternate value
+	
+	// May 2011 - Replay Update
+	{ 0x5E4580, 20110505, "An Air of Debonair" },
+	{ 0x803020, 20110505, "Balaclavas Are Forever" },
+	{ 0x28394D, 20110505, "Cream Spirit" },
+	{ 0xC5AF91, 20110505, "Cream Spirit" },
+	{ 0x7C6C57, 20110505, "Operator's Overalls" },
+	{ 0x483838, 20110505, "The Value of Teamwork" },
+	{ 0xA57545, 20110505, "The Value of Teamwork" },
+	{ 0x3B1F23, 20110505, "Waterlogged Lab Coat" },
+	
+	// June 2011 - Über Update
+	{ 0x729E42, 20110623, "The Bitter Taste of Defeat and Lime" },
+	{ 0x32CD32, 20110623, "The Bitter Taste of Defeat and Lime" },
+	
+	// October 2011 - Very Scary Halloween Special
+	{ 0x7C6C57, 20111027, "A Color Similar to Slate" },
+	{ 0x2F4F4F, 20111027, "A Color Similar to Slate" },
+	{ 0x5885A2, 20111027, "Drably Olive" },
+	{ 0x729E42, 20111027, "Drably Olive" },
+	
+	// December 2011 - Australian Christmas 2011
+	{ 0x483838, 20111215, "Dark Salmon Injustice" },
+	{ 0xE9967A, 20111215, "Dark Salmon Injustice" },
+	
+	// April 2012 - Pyromania teaser
+	{ 0xE9967A, 20120627, "Peculiarly Drab Tincture" },
+	{ 0x729E42, 20120627, "Peculiarly Drab Tincture" },
+	
+	// July 2012 - Pyromania Update
+	{ 0xFF69B4, 20120627, "Pink as Hell" },
+	
+	// October 2012 - Spectral Halloween Special  
+	{ 0x3B1F23, 20121026, "After Eight" },
+	{ 0x2D2D24, 20121026, "After Eight" },
+	
+	// December 2012 - Mecha Update
+	{ 0x7D4071, 20121220, "Violet" },
+	{ 0x8B008B, 20121220, "Violet" },
+};
+
+//-----------------------------------------------------------------------------
+// Unusual particle effect introduction dates
+// Effect index -> introduction date mapping
+//-----------------------------------------------------------------------------
+struct UnusualEffectIntroDate_t
+{
+	int iEffectIndex;		// Particle effect index
+	int iIntroductionDate;	// YYYYMMDD format
+	const char *pszName;	// Effect name for debugging
+};
+ 
+// Unusual effects timeline
+// Based on TF2 wiki: https://wiki.teamfortress.com/wiki/Unusual
+static UnusualEffectIntroDate_t g_UnusualEffectIntroductionDates[] = 
+{
+	// September 2010 - Mann-Conomy Update (first unusuals)
+	{ 1,  20100930, "Particle 1 (Green Confetti)" },
+	{ 2,  20100930, "Particle 2 (Purple Confetti)" },
+	{ 3,  20100930, "Particle 3 (Haunted Ghosts)" },
+	{ 4,  20100930, "Particle 4 (Green Energy)" },
+	{ 5,  20100930, "Particle 5 (Purple Energy)" },
+	{ 6,  20100930, "Particle 6 (Circling TF Logo)" },
+	{ 7,  20100930, "Particle 7 (Massed Flies)" },
+	{ 8,  20100930, "Particle 8 (Burning Flames)" },
+	{ 9,  20100930, "Particle 9 (Scorching Flames)" },
+	{ 10, 20100930, "Particle 10 (Searing Plasma)" },
+	{ 11, 20100930, "Particle 11 (Vivid Plasma)" },
+	{ 12, 20100930, "Particle 12 (Sunbeams)" },
+	{ 13, 20100930, "Particle 13 (Circling Peace Sign)" },
+	{ 14, 20100930, "Particle 14 (Circling Heart)" },
+	
+	// October 2011 - Very Scary Halloween Special
+	{ 15, 20111027, "Particle 15 (Map Stamps)" },
+	{ 16, 20111027, "Particle 16 (?)" },
+	{ 17, 20111027, "Particle 17 (Holy Glow)" },
+	{ 18, 20111027, "Particle 18 (Green Confetti)" },
+	{ 19, 20111027, "Particle 19 (Purple Confetti)" },
+	
+	// July 2012 - Pyromania Update
+	{ 20, 20120627, "Particle 20 (Flies)" },
+	{ 21, 20120627, "Particle 21 (Bubbling)" },
+	{ 22, 20120627, "Particle 22 (Smoking)" },
+	{ 23, 20120627, "Particle 23 (Steaming)" },
+	
+	// October 2012 - Halloween 2012
+	{ 24, 20121026, "Particle 24 (Flaming Lantern)" },
+	{ 25, 20121026, "Particle 25 (Cloudy Moon)" },
+	{ 26, 20121026, "Particle 26 (Cauldron Bubbles)" },
+	{ 27, 20121026, "Particle 27 (Eerie Orbiting Fire)" },
+	
+	// December 2012 - Mecha Update
+	{ 28, 20121220, "Particle 28 (Knifestorm)" },
+	{ 29, 20121220, "Particle 29 (Misty Skull)" },
+	{ 30, 20121220, "Particle 30 (Harvest Moon)" },
+	
+	// Add more as needed for later effects (2013, 2014, etc.)
+	{ 31, 20130101, "Particle 31 (Energy Orb)" },
+	// ... continue with your specific unusual effect dates
+	
+	// Example: Gun Mettle unusuals (2015)
+	{ 70, 20150701, "Particle 70 (Showstopper)" },
+	{ 71, 20150701, "Particle 71 (Holy Grail)" },
+	
+	// Example: Jungle Inferno unusuals (2017)
+	{ 80, 20171020, "Particle 80 (Frostbite)" },
+	
+	// Example: Scream Fortress 2020
+	{ 141, 20201001, "Particle 141 (Neutron Star)" },
+	
+	// Example: Scream Fortress 2021
+	{ 169, 20211005, "Particle 169 (Eldritch Flame)" },
+};
+ 
+//-----------------------------------------------------------------------------
+// Get introduction date for a specific paint color
+//-----------------------------------------------------------------------------
+int GetPaintIntroductionDate( int iRGB )
+{
+	for ( int i = 0; i < ARRAYSIZE( g_PaintIntroductionDates ); i++ )
+	{
+		if ( g_PaintIntroductionDates[i].iRGB == iRGB )
+		{
+			return g_PaintIntroductionDates[i].iIntroductionDate;
+		}
+	}
+	
+	// Unknown paint - assume it's from a later update we haven't catalogued
+	// Default to blocking it
+	return 1;
+}
+
+//-----------------------------------------------------------------------------
+// Get introduction date for a specific unusual effect
+//-----------------------------------------------------------------------------
+int GetUnusualEffectIntroductionDate( int iEffectIndex )
+{
+	for ( int i = 0; i < ARRAYSIZE( g_UnusualEffectIntroductionDates ); i++ )
+	{
+		if ( g_UnusualEffectIntroductionDates[i].iEffectIndex == iEffectIndex )
+		{
+			return g_UnusualEffectIntroductionDates[i].iIntroductionDate;
+		}
+	}
+	
+	// Unknown effect - assume it's new, block by default
+	return 1;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: TF2V: War Paint value-specific filtering
+// War Paints were introduced in Gun Mettle (July 2015) and continued through
+// subsequent updates with new collections
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// War Paint introduction dates
+// Proto def index -> introduction date mapping
+//-----------------------------------------------------------------------------
+struct WarPaintIntroDate_t
+{
+	int iProtoDefIndex;		// War paint proto_def_index
+	int iIntroductionDate;	// YYYYMMDD format
+	const char *pszName;	// War paint name for debugging
+	const char *pszCollection; // Which collection it came from
+};
+
+// War Paint timeline
+// Based on TF2 wiki: https://wiki.teamfortress.com/wiki/War_Paint
+static WarPaintIntroDate_t g_WarPaintIntroductionDates[] = 
+{
+	//-------------------------------------------------------------------------
+	// Gun Mettle Update - July 2, 2015
+	//-------------------------------------------------------------------------
+	{ 1,  20150702, "Alien Tech", "Craftsmann Collection" },
+	{ 2,  20150702, "Anodized Aloha", "Concealed Killer Collection" },
+	{ 3,  20150702, "Bamboo Brushed", "Teufort Collection" },
+	{ 4,  20150702, "Barn Burner", "Powerhouse Collection" },
+	{ 5,  20150702, "Blue Mew", "Concealed Killer Collection" },
+	{ 6,  20150702, "Brain Candy", "Craftsmann Collection" },
+	{ 7,  20150702, "Brick House", "Powerhouse Collection" },
+	{ 8,  20150702, "Cardboard Boxed", "Teufort Collection" },
+	{ 9,  20150702, "Citizen Pain", "Craftsmann Collection" },
+	{ 10, 20150702, "Cold Blooded", "Concealed Killer Collection" },
+	{ 11, 20150702, "Coffin Nail", "Concealed Killer Collection" },
+	{ 12, 20150702, "Craftsmann", "Craftsmann Collection" },
+	{ 13, 20150702, "Damascus & Mahogany", "Powerhouse Collection" },
+	{ 14, 20150702, "Flash Fryer", "Powerhouse Collection" },
+	{ 15, 20150702, "Flower Power", "Craftsmann Collection" },
+	{ 16, 20150702, "Gentlemanne's Service Medal", "Teufort Collection" },
+	{ 17, 20150702, "Hana", "Concealed Killer Collection" },
+	{ 18, 20150702, "Kill Covered", "Concealed Killer Collection" },
+	{ 19, 20150702, "Lightning Rod", "Powerhouse Collection" },
+	{ 20, 20150702, "Lumbered", "Teufort Collection" },
+	{ 21, 20150702, "Macabre Web", "Craftsmann Collection" },
+	{ 22, 20150702, "Masked Mender", "Concealed Killer Collection" },
+	{ 23, 20150702, "Mayor", "Teufort Collection" },
+	{ 24, 20150702, "Merc Stained", "Teufort Collection" },
+	{ 25, 20150702, "Night Owl", "Craftsmann Collection" },
+	{ 26, 20150702, "Nutcracker", "Craftsmann Collection" },
+	{ 27, 20150702, "Old Country", "Teufort Collection" },
+	{ 28, 20150702, "Plaid Potshotter", "Teufort Collection" },
+	{ 29, 20150702, "Rooftop Wrangler", "Powerhouse Collection" },
+	{ 30, 20150702, "Rustic Ruiner", "Teufort Collection" },
+	{ 31, 20150702, "Shot to Hell", "Craftsmann Collection" },
+	{ 32, 20150702, "Spark of Life", "Powerhouse Collection" },
+	{ 33, 20150702, "Star Crossed", "Craftsmann Collection" },
+	{ 34, 20150702, "Tartan Torpedo", "Teufort Collection" },
+	{ 35, 20150702, "Thermal Tracker", "Powerhouse Collection" },
+	{ 36, 20150702, "Thunderbolt", "Powerhouse Collection" },
+	{ 37, 20150702, "Torqued to Hell", "Craftsmann Collection" },
+	{ 38, 20150702, "Totally Boned", "Craftsmann Collection" },
+	{ 39, 20150702, "Warhawk", "Concealed Killer Collection" },
+	{ 40, 20150702, "Warbird", "Concealed Killer Collection" },
+	{ 41, 20150702, "Wrapped Reviver", "Concealed Killer Collection" },
+	
+	//-------------------------------------------------------------------------
+	// Tough Break Update - December 17, 2015
+	//-------------------------------------------------------------------------
+	{ 100, 20151217, "Antique Annihilator", "Gentlemanne's Collection" },
+	{ 101, 20151217, "Bank Rolled", "Gentlemanne's Collection" },
+	{ 102, 20151217, "Blitzkrieg", "Mercenary Grade Collection" },
+	{ 103, 20151217, "Bomber Soul", "Pyroland Collection" },
+	{ 104, 20151217, "Civic Duty", "Gentlemanne's Collection" },
+	{ 105, 20151217, "Civil Servant", "Gentlemanne's Collection" },
+	{ 106, 20151217, "Cookie Fortress", "Pyroland Collection" },
+	{ 107, 20151217, "Dressed to Kill", "Gentlemanne's Collection" },
+	{ 108, 20151217, "Freedom Wrapped", "Mercenary Grade Collection" },
+	{ 109, 20151217, "Gator Skin", "Mercenary Grade Collection" },
+	{ 110, 20151217, "Gift Wrapped", "Pyroland Collection" },
+	{ 111, 20151217, "Glacial Glazed", "Pyroland Collection" },
+	{ 112, 20151217, "High Roller's", "Gentlemanne's Collection" },
+	{ 113, 20151217, "Lollipop", "Pyroland Collection" },
+	{ 114, 20151217, "Merc Wrapped", "Mercenary Grade Collection" },
+	{ 115, 20151217, "Mister Cuddles", "Pyroland Collection" },
+	{ 116, 20151217, "Nut n' Bolt", "Mercenary Grade Collection" },
+	{ 117, 20151217, "Pumpkin Patch", "Pyroland Collection" },
+	{ 118, 20151217, "Rainbow", "Pyroland Collection" },
+	{ 119, 20151217, "Sleighin' Style", "Pyroland Collection" },
+	{ 120, 20151217, "Smalltown Bringdown", "Gentlemanne's Collection" },
+	{ 121, 20151217, "Star Spangled", "Mercenary Grade Collection" },
+	{ 122, 20151217, "Sudden Flurry", "Pyroland Collection" },
+	{ 123, 20151217, "Sweet Dreams", "Pyroland Collection" },
+	{ 124, 20151217, "Tumble Tech", "Mercenary Grade Collection" },
+	
+	//-------------------------------------------------------------------------
+	// Mayflower Update - April 21, 2016
+	//-------------------------------------------------------------------------
+	{ 200, 20160421, "Boneyard", "Harvest Collection" },
+	{ 201, 20160421, "Macabre Web II", "Harvest Collection" },
+	{ 202, 20160421, "Pumpkin Patch II", "Harvest Collection" },
+	{ 203, 20160421, "Spectral Shimmered", "Harvest Collection" },
+	
+	//-------------------------------------------------------------------------
+	// Jungle Inferno Update - October 20, 2017
+	//-------------------------------------------------------------------------
+	{ 300, 20171020, "Dragon Slayer", "Jungle Jackpot Collection" },
+	{ 301, 20171020, "Forest Fire", "Infernal Reward Collection" },
+	{ 302, 20171020, "Liquid Asset", "Infernal Reward Collection" },
+	{ 303, 20171020, "Mannana Peeled", "Jungle Jackpot Collection" },
+	{ 304, 20171020, "Mossy Coating", "Jungle Jackpot Collection" },
+	{ 305, 20171020, "Night Terror", "Infernal Reward Collection" },
+	{ 306, 20171020, "Piña Polished", "Jungle Jackpot Collection" },
+	{ 307, 20171020, "Sax Waxed", "Jungle Jackpot Collection" },
+	{ 308, 20171020, "Skull Study", "Infernal Reward Collection" },
+	{ 309, 20171020, "Smissmas Sweater", "Infernal Reward Collection" },
+	{ 310, 20171020, "Speed Demon", "Jungle Jackpot Collection" },
+	{ 311, 20171020, "Tiger Buffed", "Jungle Jackpot Collection" },
+	{ 312, 20171020, "Totally Boned II", "Infernal Reward Collection" },
+	{ 313, 20171020, "Uranium", "Infernal Reward Collection" },
+	
+	//-------------------------------------------------------------------------
+	// Blue Moon Update - October 5, 2018
+	//-------------------------------------------------------------------------
+	{ 400, 20181005, "Bonk Varnish", "Spooky Spoils Collection" },
+	{ 401, 20181005, "Macabre Web III", "Spooky Spoils Collection" },
+	{ 402, 20181005, "Cosmic Calamity", "Spooky Spoils Collection" },
+	{ 403, 20181005, "Haunted Phantasm Jr.", "Spooky Spoils Collection" },
+	
+	//-------------------------------------------------------------------------
+	// Scream Fortress 2019 - October 10, 2019
+	//-------------------------------------------------------------------------
+	{ 500, 20191010, "Spectral Shimmered II", "Scream Fortress XI Collection" },
+	{ 501, 20191010, "Haunted Ghosts Jr.", "Scream Fortress XI Collection" },
+	
+	//-------------------------------------------------------------------------
+	// Scream Fortress 2020 - October 1, 2020
+	//-------------------------------------------------------------------------
+	{ 600, 20201001, "Spectral Shimmered III", "Scream Fortress XII Collection" },
+	{ 601, 20201001, "Bonk Varnish II", "Scream Fortress XII Collection" },
+	
+	//-------------------------------------------------------------------------
+	// Scream Fortress 2021 - October 5, 2021
+	//-------------------------------------------------------------------------
+	{ 700, 20211005, "Woodland Warrior", "Scream Fortress XIII Collection" },
+	{ 701, 20211005, "Wrapped Reviver II", "Scream Fortress XIII Collection" },
+	
+	// Add more as needed for later collections
+};
+
+//-----------------------------------------------------------------------------
+// Get introduction date for a specific war paint
+//-----------------------------------------------------------------------------
+int GetWarPaintIntroductionDate( int iProtoDefIndex )
+{
+	for ( int i = 0; i < ARRAYSIZE( g_WarPaintIntroductionDates ); i++ )
+	{
+		if ( g_WarPaintIntroductionDates[i].iProtoDefIndex == iProtoDefIndex )
+		{
+			return g_WarPaintIntroductionDates[i].iIntroductionDate;
+		}
+	}
+	
+	// Unknown war paint - assume it's new, block by default
+	return 99999999;
+}
+
+//-----------------------------------------------------------------------------
+// Check if a war paint attribute value is allowed
+//-----------------------------------------------------------------------------
+bool CTFPlayer::WarPaintValueIsAllowedTimePeriod( const CEconItemAttribute *pAttrib )
+{
+	if ( !pAttrib || !TFGameRules() )
+		return false;
+
+	const CEconItemAttributeDefinition *pAttrDef = pAttrib->GetStaticData();
+	if ( !pAttrDef )
+		return false;
+
+	const char *pszAttrName = pAttrDef->GetDefinitionName();
+	int iCurrentEra = TFGameRules()->GetTF2VEra();
+	
+	// Check war paint proto_def_index
+	if ( V_stristr( pszAttrName, "paintkit_proto_def_index" ) ||
+		 V_stristr( pszAttrName, "paint_kit_proto_def_index" ) )
+	{
+		// Get the proto_def_index from the attribute
+		attribute_data_union_t value;
+		pAttrib->GetValue( &value );
+		
+		// War paint index is typically stored as an integer
+		int iProtoDefIndex = (int)value.asFloat; // Or value.m_Int
+		
+		int iWarPaintIntroDate = GetWarPaintIntroductionDate( iProtoDefIndex );
+		
+		if ( iWarPaintIntroDate > iCurrentEra )
+		{
+			// This specific war paint is too new
+			return false;
+		}
+	}
+	
+	return true; // Value is allowed
 }
