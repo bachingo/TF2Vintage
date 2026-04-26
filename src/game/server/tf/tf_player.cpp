@@ -4487,11 +4487,7 @@ bool CTFPlayer::ItemIsAllowed( CEconItemView *pItem )
 		}
 	}
 	
-	// TF2V redundancy: Is this the same item we are proposing?
-	// This is in case we swap eras (especially to a later one) or an item sneaks by.
-	CEconItemView *pModifiedItem = new CEconItemView( *pItem );
-	pModifiedItem = GetTimePeriodCompliantItem(pItem, iClass, iSlot);
-	return pItem == pModifiedItem;
+	return true;
 }
 
 //-----------------------------------------------------------------------------
