@@ -23164,10 +23164,10 @@ bool CTFPlayer::ItemQualityIsAllowedTimePeriod( int iQuality )
 	switch ( iQuality )
 	{
 		case AE_NORMAL:
-			return true; // Always available
+			return true; // Stock items (Always available)
 			
 		case AE_UNIQUE:
-			return iCurrentEra >= TF2V_ERA_DAY_GOLDRUSH; // Regular items
+			return iCurrentEra >= TF2V_ERA_DAY_GOLDRUSH; // Regular items (If this errors, we have a problem)
 			
 		case AE_COMMUNITY:
 			return iCurrentEra >= TF2V_ERA_DAY_WAR; // Community items
@@ -23175,7 +23175,7 @@ bool CTFPlayer::ItemQualityIsAllowedTimePeriod( int iQuality )
 		case AE_SELFMADE:
 			return iCurrentEra >= TF2V_ERA_DAY_FIRSTCONT; // Self Made
 
-		// Technically below could all be lumped into one, but it's easier to read this way.
+		// Technically the next few cases could all be lumped into one, but it's easier to read this way.
 		case AE_VINTAGE:
 			return iCurrentEra >= TF2V_ERA_DAY_MANNCONOMY; // Mann-Conomy Update (Our namesake)
 			
@@ -23386,19 +23386,55 @@ CEconItemView *CTFPlayer::GetTimePeriodCompliantItem( CEconItemView *pOriginalIt
 	
 	int iCurrentEra = TFGameRules()->GetTF2VEra();
 	
-	// Return null for any cosmetics prior to Sniper vs. Spy
+	// Check if this item is in a slot that doesn't exist yet.
+	
+	// Cosmetics as a whole did not exist before Sniper vs. Spy
 	if ( ( iCurrentEra < TF2V_ERA_DAY_SNIPSPY ) && IsWearableSlot(iSlot) )
-		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot ); // We let m_pDefaultItem handle this.
-
-	// Return null for any taunts prior to Replay Update
+	{
+		ClientPrint( this, HUD_PRINTNOTIFY, "#Item_AnachronisticCosmeticSlot", 
+					 pOriginalItem->GetStaticData()->GetItemBaseName() );
+		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+	}
+	
+	// Misc slots did not exist prior to Classless
+	if ( ( iCurrentEra < TF2V_ERA_DAY_CLASSLESS ) && ( IiSlot == LOADOUT_POSITION_MISC ) )
+	{
+		ClientPrint( this, HUD_PRINTNOTIFY, "#Item_AnachronisticMiscSlots", 
+					 pOriginalItem->GetStaticData()->GetItemBaseName() );
+		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+	}
+	
+	// Misc2 did not exist prior to Engineer Update
+	if ( ( iCurrentEra < TF2V_ERA_DAY_ENGINEER ) && ( iSlot == LOADOUT_POSITION_MISC2 ) )
+	{
+		ClientPrint( this, HUD_PRINTNOTIFY, "#Item_AnachronisticMisc2Slot", 
+					 pOriginalItem->GetStaticData()->GetItemBaseName() );
+		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+	}
+	
+	// Action slots were not used prior to Mannconomy
+	if ( ( iCurrentEra < TF2V_ERA_DAY_MANNCONOMY ) && ( iSlot == LOADOUT_POSITION_ACTION ) )
+	{
+		ClientPrint( this, HUD_PRINTNOTIFY, "#Item_AnachronisticActionSlot", 
+					 pOriginalItem->GetStaticData()->GetItemBaseName() );
+		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+	}
+	
+	// Taunts were not an item slot prior to the Replay Update
 	if ( ( iCurrentEra < TF2V_ERA_DAY_REPLAY ) && IsTauntSlot(iSlot) )
-		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot ); // We let m_pDefaultItem handle this.
+	{
+		ClientPrint( this, HUD_PRINTNOTIFY, "#Item_AnachronisticTauntSlot", 
+					 pOriginalItem->GetStaticData()->GetItemBaseName() );
+		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+	}
 
-	// STEP 1: Check if base item is allowed at all
+	
+	// Passes the slot check. Now we have to look into the item's details.
+	// STEP 1: Check if base item is allowed at all by comparing the release date to the ingame date
 	if ( !ItemIsAllowedTimePeriod( pOriginalItem ) )
 	{
 		// Base item is too new - replace entirely with stock
-		ClientPrint( this, HUD_PRINTNOTIFY, "#Item_Anachronistic", 
+		ClientPrint( this, HUD_PRINTNOTIFY, "#Item_AnachronisticItem", 
 					 pOriginalItem->GetStaticData()->GetItemBaseName() );
 		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
 	}
