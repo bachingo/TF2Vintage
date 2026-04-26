@@ -4486,8 +4486,12 @@ bool CTFPlayer::ItemIsAllowed( CEconItemView *pItem )
 			}
 		}
 	}
-
-	return true;
+	
+	// TF2V redundancy: Is this the same item we are proposing?
+	// This is in case we swap eras (especially to a later one) or an item sneaks by.
+	CEconItemView *pModifiedItem = new CEconItemView( *pItem );
+	pModifiedItem = GetTimePeriodCompliantItem(pItem, iClass, iSlot);
+	return pItem == pModifiedItem;
 }
 
 //-----------------------------------------------------------------------------
@@ -4516,7 +4520,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 	}
 
 	// TF2V edge case: Use the original loadout system prior to Gold Rush when everything was stock with v/w models
-	if ( IsX360() || ( TFGameRules && ( TFGameRules()->GetTF2VEra() <= TF2V_ERA_DAY_GOLDRUSH ) ) )
+	if ( IsX360() || ( TFGameRules() && ( TFGameRules()->GetTF2VEra() < TF2V_ERA_DAY_GOLDRUSH ) ) )
 	{
 		ManageRegularWeaponsLegacy( pData );
 	}
@@ -4547,6 +4551,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 				m_EquippedLoadoutItemIndices[i] = LOADOUT_SLOT_USE_BASE_ITEM;
 
 				// use base items in training mode
+				// TF2V: We do the check during GetLoadoutItem BEFORE ItemIsAllowed so we actually give them an item.
 				CEconItemView *pItem = GetLoadoutItem( iClass, i, true );
 				if ( !pItem || !pItem->IsValid() )
 					continue;
@@ -4902,7 +4907,8 @@ CEconItemView *CTFPlayer::GetLoadoutItem( int iClass, int iSlot, bool bReportWhi
 
 	CEconItemView *pItem = m_Inventory.GetItemInLoadout( iClass, iSlot );
 
-	// TF2V era gate with attribute stripping
+	// TF2V: This is where our era gate should kick in.
+	// Items failing the time period get downgraded or replaced.
 	if ( pItem && pItem->IsValid() )
 	{
 		pItem = GetTimePeriodCompliantItem( pItem, iClass, iSlot );
@@ -23381,6 +23387,16 @@ CEconItemView *CTFPlayer::GetTimePeriodCompliantItem( CEconItemView *pOriginalIt
 {
 	if ( !pOriginalItem || !pOriginalItem->IsValid() )
 		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+	
+	int iCurrentEra = TFGameRules()->GetTF2VEra();
+	
+	// Return null for any cosmetics prior to Sniper vs. Spy
+	if ( ( iCurrentEra < TF2V_ERA_DAY_SNIPSPY ) && IsWearableSlot(iSlot) )
+		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot ); // We let m_pDefaultItem handle this.
+
+	// Return null for any taunts prior to Replay Update
+	if ( ( iCurrentEra < TF2V_ERA_DAY_REPLAY ) && IsTauntSlot(iSlot) )
+		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot ); // We let m_pDefaultItem handle this.
 
 	// STEP 1: Check if base item is allowed at all
 	if ( !ItemIsAllowedTimePeriod( pOriginalItem ) )
@@ -23559,15 +23575,9 @@ bool CTFPlayer::ItemIsAllowedTimePeriod( CEconItemView *pItem )
 	if ( !pItem || !pItem->GetStaticData() || !TFGameRules() )
 		return false;
 
-	// Passtime hack to allow passtime gun
-	if ( V_stristr( pItem->GetItemDefinition()->GetDefinitionName(), "passtime" ) )
-	{
-		return TFGameRules() && TFGameRules()->IsPasstimeMode();
-	}
-
 	CEconItemDefinition* pData = pItem->GetStaticData();
 	if ( pData && pData->GetIntroductionDate() )
-		return TFGameRules()->GetTF2VEra() >= pData->GetIntroductionDate();
+		return pData->GetIntroductionDate() < TFGameRules()->GetTF2VEra();
 	
 	return false;
 }
