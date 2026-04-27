@@ -4860,6 +4860,8 @@ void CTFGameRules::SetupOnRoundStart( void )
 
 	m_hRedKothTimer.Set( NULL );
 	m_hBlueKothTimer.Set( NULL );
+	
+	SetTF2VEra(tf2v_era.GetInt());
 
 	// Let all entities know that a new round is starting
 	CBaseEntity *pEnt = gEntList.FirstEnt();
