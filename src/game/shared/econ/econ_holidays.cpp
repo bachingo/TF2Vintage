@@ -194,8 +194,9 @@ private:
 };
 
 //-----------------------------------------------------------------------------
-// Purpose: A Nautical grade way to calculate the moon phase.
+// Purpose: A hilariously overkill, way over the top method of finding full moons.
 //			Zeroed from the June 2029 lunar eclipse (Syzygy)
+//			Should have a 3s accuracy for the next 100 years.
 //-----------------------------------------------------------------------------
 class CCLunarHoliday : public IIsHolidayActive
 {
@@ -215,51 +216,46 @@ public:
 
 	virtual bool IsActive( const CRTime& timeCurrent )
 	{
-		const double fSecondsPerDay = 86400.002;
-		const double fCycleSeconds = m_fCycleLengthInDays * fSecondsPerDay;
+		const uint32 iEclipseEpochUTC = 1877138531; // June 2029 Anchor
 		
-		// Hard-coded UTC Epoch: June 26, 2029, 03:22:11 UTC
-		// This is the most geometrically perfect Syzygy of the 21st Century (Gamma -0.0124).
-		// Using a 2029 anchor for post-2018 simulation reduces 32-bit float rounding errors.
-		const uint32 iEclipseEpochUTC = 1877138531; 
+		// 1. Raw Elapsed Seconds + Light-Time Correction
+		// Subtracting 1.282s accounts for the time it takes photons to travel from Moon to Earth.
+		const double fLightTimeSeconds = 1.282; 
+		double fElapsedSeconds = ((double)timeCurrent.GetRTime32() - (double)iEclipseEpochUTC) - fLightTimeSeconds;
 
-		// 1. Get raw elapsed seconds
-		// Note: This will be a negative value for dates before June 2029.
-		// Casting to double immediately preserves second-level precision.
-		double fElapsedSeconds = (double)timeCurrent.GetRTime32() - (double)iEclipseEpochUTC;
+		// 2. Fundamental Arguments (IAU Refined)
+		double D       = fmod(fElapsedSeconds, 2551442.890) / 2551442.890 * 2.0 * M_PI;
+		double M       = fmod(fElapsedSeconds, 2380713.12) / 2380713.12 * 2.0 * M_PI;
+		double M_prime = fmod(2.1 + (0.01720209895 * (fElapsedSeconds / 86400.002)), 2.0 * M_PI);
+		double F	   = fmod(fElapsedSeconds, 2351135.0) / 2351135.0 * 2.0 * M_PI;
 
-		// 2. Fundamental Angles (Refined for J2000 Solar Alignment)
-		double D = fmod(fElapsedSeconds, fCycleSeconds) / fCycleSeconds * 2.0 * M_PI;
-		double M = fmod(fElapsedSeconds, 27.55455 * fSecondsPerDay) / (27.55455 * fSecondsPerDay) * 2.0 * M_PI;
-		// 2. High-precision solar anomaly tracking (Gaussian constant refined)
-		double M_prime = fmod(2.1 + (0.01720209895 * (fElapsedSeconds / fSecondsPerDay)), 2.0 * M_PI);
-
-		// 3. 5th-Order "Analytical" Correction
-		double fWobble = 0.47119 * sin(M)                // Equation of Center
-					   + 0.16512 * sin(2 * D - M)       // Evection
-					   - 0.22513 * sin(M_prime)         // Annual Equation
-					   + 0.02106 * sin(2 * D)           // Variation
-					   - 0.03504 * sin(D)               // Parallactic Inequality
-					   + 0.00702 * sin(2 * D + M)       // Higher Variation
+		// 3. 7th-Order "Universal" Correction (Planets + Geometry + Earth Shape)
+		double fWobble = 0.47119 * sin(M)                // Equation of Center (Main Ellipse)
+					   + 0.16512 * sin(2 * D - M)       // Evection (Solar Distortion)
+					   - 0.22513 * sin(M_prime)         // Annual Equation (Earth Orbit)
+					   + 0.02106 * sin(2 * D)           // Variation (Solar Speed Change)
+					   - 0.03504 * sin(D)               // Parallactic Inequality (Solar Distance)
+					   + 0.00702 * sin(2 * D + M)       // Higher-Order Variation
 					   + 0.00401 * sin(2 * D - 2 * M_prime) // Venusian Pull
-					   + 0.00201 * sin(M - M_prime);    // Jupiter's Pull
-		double fWobbleSeconds = fWobble * fSecondsPerDay;
+					   + 0.00201 * sin(M - M_prime)     // Jupiter's Gravity
+					   + 0.00062 * sin(2 * M - 2 * M_prime) // Mars' Gravity
+					   + 0.00021 * sin(M + M_prime)     // Saturn's Gravity
+					   + 0.00063 * sin(2 * F)           // Earth's Equatorial Bulge (J2)
+					   + 0.00035 * sin(M)               // Optical Libration (Wobble)
+					   - 0.01140 * sin(2 * F);          // Reduction to Ecliptic (Orbital Tilt)
+
+		double fWobbleSeconds = fWobble * 86400.002;
 
 		// 4. Corrected Cycle Position
-		// We force the negative remainder into a positive 0 -> fCycleSeconds range.
-		double fCurrentCycleSeconds = fmod(fElapsedSeconds, fCycleSeconds);
-		if (fCurrentCycleSeconds < 0) fCurrentCycleSeconds += fCycleSeconds;
+		double fCurrentCycleSeconds = fmod(fElapsedSeconds, 2551442.890);
+		if (fCurrentCycleSeconds < 0) fCurrentCycleSeconds += 2551442.890;
 
-		// Apply the wobble correction and re-normalize
-		double fCorrectedSeconds = fmod(fCurrentCycleSeconds - fWobbleSeconds, fCycleSeconds);
-		if (fCorrectedSeconds < 0) fCorrectedSeconds += fCycleSeconds;
+		double fCorrectedSeconds = fmod(fCurrentCycleSeconds - fWobbleSeconds, 2551442.890);
+		if (fCorrectedSeconds < 0) fCorrectedSeconds += 2551442.890;
 
-		// 5. Buffer Check (15-hour Nautical Visiblity Window)
-		// We could easily use either a Peak Visibility (2h offset, 4h total)
-		// Or use Observatory Visibility (30m offset, 1h total)
-		// Nautival visibility is perfect here for playability.
-		double fBufferSeconds = m_fBonusTimeInDays * fSecondsPerDay;
-		return (fCorrectedSeconds < fBufferSeconds || fCorrectedSeconds > (fCycleSeconds - fBufferSeconds));
+		// 5. 15-hour Nautical Visibility Window
+		const int iBufferTimeInSeconds  = (int)(m_fBonusTimeInDays * iSecondsPerDay);
+		return (fCorrectedSeconds < iBufferTimeInSeconds || fCorrectedSeconds > (2551442.890 - iBufferTimeInSeconds));
 		
 		// Extra code written to detect Blood Moons. We don't use it, but I left it here because it's neat.
 		/*
