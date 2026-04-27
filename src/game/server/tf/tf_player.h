@@ -711,6 +711,15 @@ public:
 	bool 				HasAnachronisticAttributes( CEconItemView *pItem ):
 	bool 				ItemIsAllowedTimePeriod( CEconItemView *pItem ):
 	
+	// Attribute checks
+	int 				GetPaintIntroductionDate( int iRGB );
+	int 				GetUnusualEffectIntroductionDate( int iEffectIndex );
+	int 				GetWarPaintIntroductionDate( int iProtoDefIndex );
+	
+	// Era to date conversions.
+	int 				TF2VGetEraIntFromStr(const char* dateStr) ;
+	const char* 		TF2VGetStrFromEraInt(int dayOffset);
+	
 	void				RemovePlayerAttributes( bool bSetBonuses );
 	void				ApplySetBonuses( void );
 	void				GetActiveSets( CUtlVector<const CEconItemSetDefinition *> *pItemSets );

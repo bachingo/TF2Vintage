@@ -24007,3 +24007,67 @@ bool CTFPlayer::WarPaintValueIsAllowedTimePeriod( const CEconItemAttribute *pAtt
 	
 	return true; // Value is allowed
 }
+
+//-----------------------------------------------------------------------------
+// Translates the YYYY/MM/DD string into a usable form for TF2VEra.
+//-----------------------------------------------------------------------------
+int TF2VGetEraIntFromStr(const char* dateStr) 
+{
+    int y, m, d;
+    
+    // Parse the input string
+    if (sscanf(dateStr, "%d/%d/%d", &y, &m, &d) != 3) {
+        return -1; // Return error if format is wrong
+    }
+
+    // Adjustment: Treat Jan/Feb as months 13/14 of the previous year
+    // This allows the leap year math to remain consistent.
+    if (m <= 2) {
+        m += 12;
+        y -= 1;
+    }
+
+    // 1. Calculate days contributed by years (including leap days)
+    long yearDays = (365L * y) + (y / 4) - (y / 100) + (y / 400);
+
+    // 2. Calculate days contributed by months
+    // 153/5 is the magic ratio for month lengths (31, 30, 31, 30, 31...)
+    long monthDays = (153 * m + 8) / 5;
+
+    // 3. Total fixed days
+    long totalDays = yearDays + monthDays + d;
+
+    // 4. Subtract the Sept 16, 2007 baseline (733300)
+    return totalDays - 733300;
+}
+
+//-----------------------------------------------------------------------------
+// Translates the TF2V era integer value into a YYYY/MM/DD string.
+//-----------------------------------------------------------------------------
+const char* TF2VGetStrFromEraInt(int dayOffset) 
+{
+    // Static buffer persists in memory for the life of the program
+    static char buffer[11]; 
+    
+    // 1. Restore the absolute day count (Sept 16, 2007 baseline)
+    long z = (long)dayOffset + 733300;
+    
+    // 2. Algorithm to convert fixed days to Gregorian Y/M/D
+    z -= 428; 
+    long y = (10000L * z + 14780) / 3652425;
+    long ddp = z - (365 * y + y / 4 - y / 100 + y / 400);
+    if (ddp < 0) {
+        y--;
+        ddp = z - (365 * y + y / 4 - y / 100 + y / 400);
+    }
+    
+    long mi = (100 * ddp + 52) / 3060;
+    int month = (mi + 2) % 12 + 1;
+    int year = (int)(y + (mi + 2) / 12);
+    int day = (int)(ddp - (mi * 306 + 5) / 10 + 1);
+
+    // 3. Format into the buffer
+    sprintf(buffer, "%04d/%02d/%02d", year, month, day);
+    
+    return buffer; 
+}
