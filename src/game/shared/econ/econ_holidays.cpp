@@ -215,7 +215,7 @@ public:
 
 	virtual bool IsActive( const CRTime& timeCurrent )
 	{
-		const double fSecondsPerDay = 86400.0;
+		const double fSecondsPerDay = 86400.002;
 		const double fCycleSeconds = m_fCycleLengthInDays * fSecondsPerDay;
 		
 		// Hard-coded UTC Epoch: June 26, 2029, 03:22:11 UTC
@@ -231,12 +231,18 @@ public:
 		// 2. Fundamental Angles (Refined for J2000 Solar Alignment)
 		double D = fmod(fElapsedSeconds, fCycleSeconds) / fCycleSeconds * 2.0 * M_PI;
 		double M = fmod(fElapsedSeconds, 27.55455 * fSecondsPerDay) / (27.55455 * fSecondsPerDay) * 2.0 * M_PI;
-		// High-precision solar anomaly tracking
-		double M_prime = fmod(2.1 + (0.017202 * (fElapsedSeconds / fSecondsPerDay)), 2.0 * M_PI);
+		// 2. High-precision solar anomaly tracking (Gaussian constant refined)
+		double M_prime = fmod(2.1 + (0.01720209895 * (fElapsedSeconds / fSecondsPerDay)), 2.0 * M_PI);
 
-		// 3. Triple Correction + Annual Equation (The "Quad" Correction)
-		// This captures: Equation of Center, Evection, Variation, AND the Annual Equation.
-		double fWobble = 0.471 * sin(M) + 0.165 * sin(2 * D - M) - 0.225 * sin(M_prime) + 0.021 * sin(2 * D);
+		// 3. 5th-Order "Analytical" Correction
+		double fWobble = 0.47119 * sin(M)                // Equation of Center
+					   + 0.16512 * sin(2 * D - M)       // Evection
+					   - 0.22513 * sin(M_prime)         // Annual Equation
+					   + 0.02106 * sin(2 * D)           // Variation
+					   - 0.03504 * sin(D)               // Parallactic Inequality
+					   + 0.00702 * sin(2 * D + M)       // Higher Variation
+					   + 0.00401 * sin(2 * D - 2 * M_prime) // Venusian Pull
+					   + 0.00201 * sin(M - M_prime);    // Jupiter's Pull
 		double fWobbleSeconds = fWobble * fSecondsPerDay;
 
 		// 4. Corrected Cycle Position
