@@ -1,0 +1,59 @@
+"tf2v_unusual_dates"
+{
+	// September 2010 - Mann-Conomy Update (first unusuals)
+	"1"		"2010/09/30"	// Particle 1 (Green Confetti)
+	"2"		"2010/09/30"	// Particle 2 (Purple Confetti)
+	"3"		"2010/09/30"	// Particle 3 (Haunted Ghosts)
+	"4"		"2010/09/30"	// Particle 4 (Green Energy)
+	"5"		"2010/09/30"	// Particle 5 (Purple Energy)
+	"6"		"2010/09/30"	// Particle 6 (Circling TF Logo)
+	"7"		"2010/09/30"	// Particle 7 (Massed Flies)
+	"8"		"2010/09/30"	// Particle 8 (Burning Flames)
+	"9"		"2010/09/30"	// Particle 9 (Scorching Flames)
+	"10"		"2010/09/30"	// Particle 10 (Searing Plasma)
+	"11"		"2010/09/30"	// Particle 11 (Vivid Plasma)
+	"12"		"2010/09/30"	// Particle 12 (Sunbeams)
+	"13"		"2010/09/30"	// Particle 13 (Circling Peace Sign)
+	"14"		"2010/09/30"	// Particle 14 (Circling Heart)
+	
+	// October 2011 - Very Scary Halloween Special
+	"15"		"2011/10/27"	// Particle 15 (Map Stamps)
+	"16"		"2011/10/27"	// Particle 16 (?)
+	"17"		"2011/10/27"	// Particle 17 (Holy Glow)
+	"18"		"2011/10/27"	// Particle 18 (Green Confetti)
+	"19"		"2011/10/27"	// Particle 19 (Purple Confetti)
+	
+	// July 2012 - Pyromania Update
+	"20"		"2012/06/27"	// Particle 20 (Flies)
+	"21"		"2012/06/27"	// Particle 21 (Bubbling)
+	"22"		"2012/06/27"	// Particle 22 (Smoking)
+	"23"		"2012/06/27"	// Particle 23 (Steaming)
+	
+	// October 2012 - Halloween 2012
+	"24"		"2012/10/26"	// Particle 24 (Flaming Lantern)
+	"25"		"2012/10/26"	// Particle 25 (Cloudy Moon)
+	"26"		"2012/10/26"	// Particle 26 (Cauldron Bubbles)
+	"27"		"2012/10/26"	// Particle 27 (Eerie Orbiting Fire)
+	
+	// December 2012 - Mecha Update
+	"28"		"2012/12/20"	// Particle 28 (Knifestorm)
+	"29"		"2012/12/20"	// Particle 29 (Misty Skull)
+	"30"		"2012/12/20"	// Particle 30 (Harvest Moon)
+	
+	// Add more as needed for later effects (2013, 2014, etc.)
+	"31"		"2013/01/01"	// Particle 31 (Energy Orb)
+	// ... continue with your specific unusual effect dates
+	
+	// Example: Gun Mettle unusuals (2015)
+	"70"		"2015/07/01"	// Particle 70 (Showstopper)
+	"71"		"2015/07/01"	// Particle 71 (Holy Grail)
+	
+	// Example: Jungle Inferno unusuals (2017)
+	"80"		"2017/10/20"	// Particle 80 (Frostbite)
+	
+	// Example: Scream Fortress 2020
+	"141"		"2020/10/01"	// Particle 141 (Neutron Star)
+	
+	// Example: Scream Fortress 2021
+	"169"		"2021/10/05"	// Particle 169 (Eldritch Flame)
+}

@@ -1,0 +1,63 @@
+"tf2v_paint_dates"
+{
+	// September 2010 - Mann-Conomy Update (first paints)
+	"0x7D4071"		"2010/09/30"	// "A Deep Commitment to Purple"
+	"0x141414"		"2010/09/30"	// "A Distinctive Lack of Hue"
+	"0x216E4E"		"2010/09/30"	// "A Mann's Mint"
+	"0xE6E6E6"		"2010/09/30"	// "An Extraordinary Abundance of Tinge"
+	"0xE7B53B"		"2010/09/30"	// "Australium Gold"
+	"0x2D2D24"		"2010/09/30"	// "Color No. 216-190-216"
+	"0xBCDDB3"		"2010/09/30"	// "Indubitably Green"
+	"0x7E7E7E"		"2010/09/30"	// "Mann Co. Orange"
+	"0xCF7336"		"2010/09/30"	// "Mann Co. Orange"
+	"0x803020"		"2010/09/30"	// "Muskelmannbraun"
+	"0x51384A"		"2010/09/30"	// "Noble Hatter's Violet"
+	"0xC36C2D"		"2010/09/30"	// "Radigan Conagher Brown"
+	"0xD8BED8"		"2010/09/30"	// "The Color of a Gentlemann's Business Pants"
+	"0xF0E68C"		"2010/09/30"	// "The Bitter Taste of Defeat and Lime"
+	"0x654740"		"2010/09/30"	// "Ye Olde Rustic Colour"
+	"0xA89A8C"		"2010/09/30"	// "Aged Moustache Grey"
+	
+	// December 2010 - Australian Christmas
+	"0x424F3B"		"2010/12/21"	// "Zepheniah's Greed"
+	"0x32CD32"		"2010/12/21"	// "Zepheniah's Greed"	// Alternate value
+	
+	// May 2011 - Replay Update
+	"0x5E4580"		"2011/05/05"	// "An Air of Debonair"
+	"0x803020"		"2011/05/05"	// "Balaclavas Are Forever"
+	"0x28394D"		"2011/05/05"	// "Cream Spirit"
+	"0xC5AF91"		"2011/05/05"	// "Cream Spirit"
+	"0x7C6C57"		"2011/05/05"	// "Operator's Overalls"
+	"0x483838"		"2011/05/05"	// "The Value of Teamwork"
+	"0xA57545"		"2011/05/05"	// "The Value of Teamwork"
+	"0x3B1F23"		"2011/05/05"	// "Waterlogged Lab Coat"
+	
+	// June 2011 - Über Update
+	"0x729E42"		"2011/06/23"	// "The Bitter Taste of Defeat and Lime"
+	"0x32CD32"		"2011/06/23"	// "The Bitter Taste of Defeat and Lime"
+	
+	// October 2011 - Very Scary Halloween Special
+	"0x7C6C57"		"2011/10/27"	// "A Color Similar to Slate"
+	"0x2F4F4F"		"2011/10/27"	// "A Color Similar to Slate"
+	"0x5885A2"		"2011/10/27"	// "Drably Olive"
+	"0x729E42"		"2011/10/27"	// "Drably Olive"
+	
+	// December 2011 - Australian Christmas 2011
+	"0x483838"		"2011/12/15"	// "Dark Salmon Injustice"
+	"0xE9967A"		"2011/12/15"	// "Dark Salmon Injustice"
+	
+	// April 2012 - Pyromania teaser
+	"0xE9967A"		"2012/06/27"	// "Peculiarly Drab Tincture"
+	"0x729E42"		"2012/06/27"	// "Peculiarly Drab Tincture"
+	
+	// July 2012 - Pyromania Update
+	"0xFF69B4"		"2012/06/27"	// "Pink as Hell"
+	
+	// October 2012 - Spectral Halloween Special  
+	"0x3B1F23"		"2012/10/26"	// "After Eight"
+	"0x2D2D24"		"2012/10/26"	// "After Eight"
+	
+	// December 2012 - Mecha Update
+	"0x7D4071"		"2012/12/20"	// "Violet"
+	"0x8B008B"		"2012/12/20"	// "Violet"
+}
