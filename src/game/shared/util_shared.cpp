@@ -38,6 +38,9 @@ bool NPC_CheckBrushExclude( CBaseEntity *pEntity, CBaseEntity *pBrush );
 
 #include "steam/steam_api.h"
 
+#include "tf_gamerules.h"
+ConVar tf2v_override_holiday( "tf2v_override_holiday", "1", FCVAR_REPLICATED | FCVAR_NOTIFY | FCVAR_ARCHIVE, "Determines if we use the system clock or the internal TF2V date for Holiday calculations.", true, 0.f, false, 1.f );
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -1355,9 +1358,38 @@ void UTIL_CalculateHolidays()
 	CRTime::UpdateRealTime();
 	for ( int iHoliday = 0; iHoliday < kHolidayCount; iHoliday++ )
 	{
-		if ( EconHolidays_IsHolidayActive( iHoliday, CRTime::RTime32TimeCur() ) )
+		if ( ( TFGameRules() && TFGameRules()->GetTF2VEra() ) && tf2v_override_holiday.getBool() )
 		{
-			s_HolidaysActive.Set( iHoliday );
+			// Make our own faked current time based off the day TF2V is set as.
+			// Since the Era function is saved as days from 09/16/2007, we simply offset it.
+			uint32_t iTF2VTime;
+			
+			const uint32_t EPOCH_OFFSET = 1189900800; 
+			const uint32_t SECONDS_PER_DAY = 86400;
+			
+			// 2. Get the current system time to extract HH:MM
+			time_t now = time(0);
+			struct tm *now_tm = gmtime(&now);
+
+			// 3. Calculate seconds contributed by today's HH:MM:SS
+			uint32_t secondsToday = (now_tm->tm_hour * 3600) + 
+									(now_tm->tm_min * 60) + 
+									 now_tm->tm_sec;
+
+			// 4. Combine: Offset + (Custom Days * 86400) + Current Time
+			iTF2VTime = EPOCH_OFFSET + (TFGameRules()->GetTF2VEra() * SECONDS_PER_DAY) + secondsToday;
+			
+			if ( EconHolidays_IsHolidayActive( iHoliday, iTF2VTime ) )
+			{
+				s_HolidaysActive.Set( iHoliday );
+			}
+		}
+		else
+		{
+			if ( EconHolidays_IsHolidayActive( iHoliday, CRTime::RTime32TimeCur() ) )
+			{
+				s_HolidaysActive.Set( iHoliday );
+			}
 		}
 	}
 
