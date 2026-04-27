@@ -144,7 +144,7 @@ private:
 
 //-----------------------------------------------------------------------------
 // Purpose: A holiday that repeats on a certain time interval, like "every N days"
-//			or "once every two months" or, uh, "any time there's a full moon".
+//			or "once every two months".
 //-----------------------------------------------------------------------------
 class CCyclicalHoliday : public IIsHolidayActive
 {
@@ -184,6 +184,114 @@ public:
 
 		// Alas, normal mode for us.
 		return false;
+	}
+
+private:
+	time_t m_timeInitial ;
+
+	float m_fCycleLengthInDays;
+	float m_fBonusTimeInDays;
+};
+
+//-----------------------------------------------------------------------------
+// Purpose: A Nautical grade way to calculate the moon phase.
+//			Zeroed from the June 2029 lunar eclipse (Syzygy)
+//-----------------------------------------------------------------------------
+class CCLunarHoliday : public IIsHolidayActive
+{
+public:
+	CCLunarHoliday( const char *pszName, int iMonth, int iDay, int iYear, float fCycleLengthInDays, float fBonusTimeInDays )
+		: IIsHolidayActive( pszName )
+		, m_fCycleLengthInDays( fCycleLengthInDays )
+		, m_fBonusTimeInDays( fBonusTimeInDays )
+	{
+		// When is our initial interval?
+		tm holiday_tm = { };
+		holiday_tm.tm_mday = iDay;
+		holiday_tm.tm_mon  = iMonth - 1;
+		holiday_tm.tm_year = iYear - 1900; // convert to years since 1900
+		m_timeInitial = mktime( &holiday_tm );
+	}
+
+	virtual bool IsActive( const CRTime& timeCurrent )
+	{
+		const double fSecondsPerDay = 86400.0;
+		const double fCycleSeconds = m_fCycleLengthInDays * fSecondsPerDay;
+		
+		// Hard-coded UTC Epoch: June 26, 2029, 03:22:11 UTC
+		// This is the most geometrically perfect Syzygy of the 21st Century (Gamma -0.0124).
+		// Using a 2029 anchor for post-2018 simulation reduces 32-bit float rounding errors.
+		const uint32 iEclipseEpochUTC = 1877138531; 
+
+		// 1. Get raw elapsed seconds
+		// Note: This will be a negative value for dates before June 2029.
+		// Casting to double immediately preserves second-level precision.
+		double fElapsedSeconds = (double)timeCurrent.GetRTime32() - (double)iEclipseEpochUTC;
+
+		// 2. Fundamental Angles (Refined for J2000 Solar Alignment)
+		double D = fmod(fElapsedSeconds, fCycleSeconds) / fCycleSeconds * 2.0 * M_PI;
+		double M = fmod(fElapsedSeconds, 27.55455 * fSecondsPerDay) / (27.55455 * fSecondsPerDay) * 2.0 * M_PI;
+		// High-precision solar anomaly tracking
+		double M_prime = fmod(2.1 + (0.017202 * (fElapsedSeconds / fSecondsPerDay)), 2.0 * M_PI);
+
+		// 3. Triple Correction + Annual Equation (The "Quad" Correction)
+		// This captures: Equation of Center, Evection, Variation, AND the Annual Equation.
+		double fWobble = 0.471 * sin(M) + 0.165 * sin(2 * D - M) - 0.225 * sin(M_prime) + 0.021 * sin(2 * D);
+		double fWobbleSeconds = fWobble * fSecondsPerDay;
+
+		// 4. Corrected Cycle Position
+		// We force the negative remainder into a positive 0 -> fCycleSeconds range.
+		double fCurrentCycleSeconds = fmod(fElapsedSeconds, fCycleSeconds);
+		if (fCurrentCycleSeconds < 0) fCurrentCycleSeconds += fCycleSeconds;
+
+		// Apply the wobble correction and re-normalize
+		double fCorrectedSeconds = fmod(fCurrentCycleSeconds - fWobbleSeconds, fCycleSeconds);
+		if (fCorrectedSeconds < 0) fCorrectedSeconds += fCycleSeconds;
+
+		// 5. Buffer Check (15-hour Nautical Visiblity Window)
+		// We could easily use either a Peak Visibility (2h offset, 4h total)
+		// Or use Observatory Visibility (30m offset, 1h total)
+		// Nautival visibility is perfect here for playability.
+		double fBufferSeconds = m_fBonusTimeInDays * fSecondsPerDay;
+		return (fCorrectedSeconds < fBufferSeconds || fCorrectedSeconds > (fCycleSeconds - fBufferSeconds));
+		
+		// Extra code written to detect Blood Moons. We don't use it, but I left it here because it's neat.
+		/*
+		const double fDraconicMonth = 27.21222 * fSecondsPerDay;
+		bool bBloodMoon = false;
+
+		// Calculate distance from the nearest Node (0.0 to 1.0)
+		double fNodePhase = fmod(fElapsedSeconds, fDraconicMonth) / fDraconicMonth;
+
+		// If fNodePhase is near 0.0 or 0.5, the Moon is crossing the Earth's plane.
+		bool bAtNode = (fNodePhase < 0.04 || fNodePhase > 0.96 || (fNodePhase > 0.46 && fNodePhase < 0.54));
+
+		if (bAtNode && bIsFullMoon)
+			bBloodMoon = true;
+		*/
+		
+		// Extra code for Supermoons and Micromoons. Again, not used, but still neat to have.
+		/*
+		// 27.55455 days = Time between closest approaches (Perigee)
+		const float fAnomalisticMonth = 27.55455f * fSecondsPerDay;
+		bool bSuperMoon = false;
+		bool bMicroMoon = false;
+
+		// Calculate how far the moon is into its elliptical orbit (0.0 to 1.0)
+		// 0.0 = Perigee (Closest), 0.5 = Apogee (Farthest)
+		double fAnomalisticPhase = fmod(fElapsedSeconds, fAnomalisticMonth) / fAnomalisticMonth;
+
+		// A Supermoon is usually defined as being within ~1-2 days of perigee
+		bool bNearPerigee = (fAnomalisticPhase < 0.07 || fAnomalisticPhase > 0.93);
+		
+		// A Micromoon is usually defined as being within ~1-2 days of apogee
+		bool bNearApogee = (fAnomalisticPhase < 0.57 && fAnomalisticPhase > 0.43);
+
+		if (bIsFullMoon && bNearPerigee)
+			bSuperMoon = true;
+		if (bIsFullMoon && bNearApogee)
+			bMicroMoon = true;
+		*/
 	}
 
 private:
@@ -316,7 +424,7 @@ static CDateBasedHolidayNoSpecificYear	g_Holiday_ValentinesDay	( "valentines",	"
 
 static CDateBasedHoliday	g_Holiday_MeetThePyro				( "meet_the_pyro",	"2012-06-26", "2012-07-05" );
 														   /*					starting date		cycle length in days	bonus time in days on both sides */
-static CCyclicalHoliday		g_Holiday_FullMoon					( "fullmoon",		08, 28, 2007,		29.530589f,					1.0f );
+static CCLunarHoliday		g_Holiday_FullMoon					( "fullmoon",		08, 28, 2007,		29.53058885f,				0.625f );
 																								 // TF2V: This is set for the first full moon before TF2's beta release, using the proper synodical moon calculation. Fun fact: This was a lunar eclipse!
 static COrHoliday			g_Holiday_HalloweenOrFullMoon		( "halloween_or_fullmoon",	&g_Holiday_Halloween,	&g_Holiday_FullMoon );
 
@@ -431,6 +539,14 @@ bool EconHolidays_IsHolidayActive( int iHolidayIndex, const CRTime& timeCurrent 
         (timeHolidayTest >= 1477008000 && timeHolidayTest <= 1479340799) || // 2016
         (timeHolidayTest >= 1508976000 && timeHolidayTest <= 1510185599) || // 2017
         (timeHolidayTest >= 1539907200 && timeHolidayTest <= 1542239999) )  // 2018
+		{
+			return true;
+		}
+	}
+	else if ( iHolidayIndex = kHoliday_FullMoon ) 
+	{
+		// Strange instance where Full Moon was active for a week straight in September 2014.
+		if (timeHolidayTest >= 1410912000 && timeHolidayTest <= 1411516800)
 		{
 			return true;
 		}
