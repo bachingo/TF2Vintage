@@ -354,6 +354,8 @@ static IIsHolidayActive *s_HolidayChecks[] =
 
 COMPILE_TIME_ASSERT( ARRAYSIZE( s_HolidayChecks ) == kHolidayCount );
 
+#include "tf_gamerules.h"
+ConVar tf2v_override_holiday( "tf2v_override_holiday", "1", FCVAR_REPLICATED | FCVAR_NOTIFY | FCVAR_ARCHIVE, "Determines if we use the system clock or the internal TF2V date for Holiday calculations.", true, 0.f, false, 1.f );
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -365,8 +367,88 @@ bool EconHolidays_IsHolidayActive( int iHolidayIndex, const CRTime& timeCurrent 
 	Assert( s_HolidayChecks[iHolidayIndex] );
 	if ( !s_HolidayChecks[iHolidayIndex] )
 		return false;
+	
+	uint32_t timeHolidayTest;
+	
+	if ( ( TFGameRules() && TFGameRules()->GetTF2VEra() ) && tf2v_override_holiday.getBool() )
+	{
+		// Make our own faked current time based off the day TF2V is set as.
+		// Since the Era function is saved as days from 09/16/2007, we simply offset it.
+		
+		const uint32_t EPOCH_OFFSET = 1189900800; 
+		const uint32_t SECONDS_PER_DAY = 86400;
+			
+		// 2. Get the current system time to extract HH:MM
+		time_t now = time(0);
+		struct tm *now_tm = gmtime(&now);
 
-	return s_HolidayChecks[iHolidayIndex]->IsActive( timeCurrent );
+			// 3. Calculate seconds contributed by today's HH:MM:SS
+		uint32_t secondsToday = (now_tm->tm_hour * 3600) + 
+								(now_tm->tm_min * 60) + 
+								 now_tm->tm_sec;
+									 
+		// 4. Combine: Offset + (Custom Days * 86400) + Current Time
+		timeHolidayTest = EPOCH_OFFSET + (TFGameRules()->GetTF2VEra() * SECONDS_PER_DAY) + secondsToday;
+	}
+	else
+		timeHolidayTest = timeCurrent;
+	
+	// TF2V: Prevent cyclic holidays firing off earlier than they were added.
+	// Kind of gross because we use harcoded seconds here for the comparison.
+	if (iHolidayIndex = kHoliday_TFBirthday && timeHolidayTest < 1250985600) // Birthday wasn't introduced until 2009
+		return false;
+	if (iHolidayIndex = kHoliday_Halloween && timeHolidayTest < 1256774400) // Halloween wasn't introduced until 2009
+		return false;
+	if (iHolidayIndex = kHoliday_Christmas && timeHolidayTest < 1292544000) // Christmas wasn't introduced until 2010
+		return false;
+	if (iHolidayIndex = kHoliday_FullMoon && timeHolidayTest < 1319673600)  // Full Moon wasn't introduced until 2011
+		return false;
+	if (iHolidayIndex = kHoliday_Valentines && timeHolidayTest < 1329091200)  // Valentine's wasn't introduced until 2012
+		return false;
+	if (iHolidayIndex = kHoliday_MeetThePyro && timeHolidayTest < 1340668800)  // Pyromania is explicitly 2012
+		return false;
+	if (iHolidayIndex = kHoliday_AprilFools && timeHolidayTest < 1396310400) // April Fool's wasn't introduced until 2014
+		return false;
+	if (iHolidayIndex = kHoliday_EOTL && timeHolidayTest < 1417564800) 		// End of the Line is explicitly 2014
+		return false;
+	if (iHolidayIndex = kHoliday_Soldier && timeHolidayTest < 1586649600) // Rick May's still alive! (Before April 2020, at least.)
+		return false;
+	if (iHolidayIndex = kHoliday_Summer && timeHolidayTest < 1689120000) // Summer wasn't introduced until 2023
+		return false;
+		
+	// We're officially going from "Kind of gross" to "Extremely gross" now.
+	if ( iHolidayIndex = kHoliday_Halloween )
+	{
+		// Manually check the dates for Halloween by year prior to the hardcoding in 2019.
+		if ( 
+		(timeHolidayTest >= 1256774400 && timeHolidayTest <= 1257811199) || // 2009
+        (timeHolidayTest >= 1288137600 && timeHolidayTest <= 1289260799) || // 2010
+        (timeHolidayTest >= 1319673600 && timeHolidayTest <= 1320623999) || // 2011
+        (timeHolidayTest >= 1351209600 && timeHolidayTest <= 1352419199) || // 2012
+        (timeHolidayTest >= 1383004800 && timeHolidayTest <= 1384214399) || // 2013
+        (timeHolidayTest >= 1414540800 && timeHolidayTest <= 1415836799) || // 2014
+        (timeHolidayTest >= 1445990400 && timeHolidayTest <= 1447372799) || // 2015
+        (timeHolidayTest >= 1477008000 && timeHolidayTest <= 1479340799) || // 2016
+        (timeHolidayTest >= 1508976000 && timeHolidayTest <= 1510185599) || // 2017
+        (timeHolidayTest >= 1539907200 && timeHolidayTest <= 1542239999) )  // 2018
+		{
+			return true;
+		}
+	}
+	else if ( iHolidayIndex = kHoliday_Summer )
+	{
+		// Do the same thing for summer. As it ends September 15 constantly, hopefully they'll lock this logic.
+		if (
+		(timeHolidayTest >= 1689120000 && timeHolidayTest <= 1694822399) || // 2023
+        (timeHolidayTest >= 1721260800 && timeHolidayTest <= 1726444799) || // 2024
+        (timeHolidayTest >= 1753315200 && timeHolidayTest <= 1757980799) )  // 2025
+		{
+			return true;
+		}
+	}
+	
+
+	return s_HolidayChecks[iHolidayIndex]->IsActive( timeHolidayTest );
 }
 
 //-----------------------------------------------------------------------------
