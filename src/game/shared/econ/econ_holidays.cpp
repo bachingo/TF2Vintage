@@ -316,8 +316,8 @@ static CDateBasedHolidayNoSpecificYear	g_Holiday_ValentinesDay	( "valentines",	"
 
 static CDateBasedHoliday	g_Holiday_MeetThePyro				( "meet_the_pyro",	"2012-06-26", "2012-07-05" );
 														   /*					starting date		cycle length in days	bonus time in days on both sides */
-static CCyclicalHoliday		g_Holiday_FullMoon					( "fullmoon",		10, 06, 2025,		29.53f,					1.0f );
-																								 // note: the cycle length is 29.5 instead of 29.53 so that the time calculations always start at noon based on the way CCyclicalHoliday works
+static CCyclicalHoliday		g_Holiday_FullMoon					( "fullmoon",		08, 28, 2007,		29.530589f,					1.0f );
+																								 // TF2V: This is set for the first full moon before TF2's beta release, using the proper synodical moon calculation. Fun fact: This was a lunar eclipse!
 static COrHoliday			g_Holiday_HalloweenOrFullMoon		( "halloween_or_fullmoon",	&g_Holiday_Halloween,	&g_Holiday_FullMoon );
 
 static COrHoliday			g_Holiday_HalloweenOrFullMoonOrValentines	( "halloween_or_fullmoon_or_valentines",	&g_Holiday_HalloweenOrFullMoon,	&g_Holiday_ValentinesDay );
