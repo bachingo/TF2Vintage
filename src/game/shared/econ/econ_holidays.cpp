@@ -256,6 +256,7 @@ public:
 		// 5. 15-hour Nautical Visibility Window
 		const int iBufferTimeInSeconds  = (int)(m_fBonusTimeInDays * iSecondsPerDay);
 		return (fCorrectedSeconds < iBufferTimeInSeconds || fCorrectedSeconds > (2551442.890 - iBufferTimeInSeconds));
+	}
 		
 		// Extra code written to detect Blood Moons. We don't use it, but I left it here because it's neat.
 		/*
@@ -294,7 +295,6 @@ public:
 		if (bIsFullMoon && bNearApogee)
 			bMicroMoon = true;
 		*/
-	}
 
 private:
 	time_t m_timeInitial ;
@@ -426,7 +426,7 @@ static CDateBasedHolidayNoSpecificYear	g_Holiday_ValentinesDay	( "valentines",	"
 
 static CDateBasedHoliday	g_Holiday_MeetThePyro				( "meet_the_pyro",	"2012-06-26", "2012-07-05" );
 														   /*					starting date		cycle length in days	bonus time in days on both sides */
-static CCLunarHoliday		g_Holiday_FullMoon					( "fullmoon",		08, 28, 2007,		29.53058885f,				0.625f );
+static CCLunarHoliday		g_Holiday_FullMoon					( "fullmoon",		08, 28, 2007,		29.53058885f,				0.575f );
 																								 // TF2V: This is set for the first full moon before TF2's beta release, using the proper synodical moon calculation. Fun fact: This was a lunar eclipse!
 static COrHoliday			g_Holiday_HalloweenOrFullMoon		( "halloween_or_fullmoon",	&g_Holiday_Halloween,	&g_Holiday_FullMoon );
 
