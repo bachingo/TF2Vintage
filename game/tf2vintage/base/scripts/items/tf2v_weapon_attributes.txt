@@ -1,98 +1,527 @@
 "tf2v_weapon_attributes"
 {
-		"773" // "Pretty Boy's Pocket Pistol"
-		{
-			"06/27/2012" // Pyromania
-			 {
-				"maxhealth nonplayer bonus"
-				{
-					"attribute_class"	"add_maxhealth"
-					"value"	"15"
-				}
-				"cancel fall damage"
-				{
-					"attribute_class"	"set_cancel_fall_damage"
-					"value"	"1"
-				}
-				"fire rate penalty"
-				{
-					"attribute_class"	"mult_postfiredelay"
-					"value" "1.25"
-				}
-				"dmg taken from fire increased"
-				{
-					"attribute_class"	"mult_dmg_take_fire"
-					"value" "1.5"
-				}
+    // ── Scout ──────────────────────────────────────────────────
+	// ── Primary ────────────────────────────────────────────────
+    "13"  // Scattergun     (primary)
+    "45"  // Force-A-Nature     (primary)
+    "220"  // Shortstop     (primary)
+    "448"  // Soda Popper     (primary)
+    "772"  // Baby Face's Blaster     (primary)
+    "1103"  // Force-A-Nature     (primary)
+	// ── Secondary ──────────────────────────────────────────────
+	"23"  // Pistol (secondary)
+	
+	"449"  // Winger (secondary)
+	
+	"773"  // Pretty Boy's Pocket Pistol (secondary)
+	{
+		"2012/06/27" // Pyromania
+		 {
+			"maxhealth nonplayer bonus"
+			{
+				"attribute_class"	"add_maxhealth"
+				"value"	"15"
 			}
-			"07/02/2015" // Gun Mettle
+			"cancel fall damage"
 			{
-				"provide on active"
-				{
-					"attribute_class"	"provide_on_active"
-					"value" "1"
-				}
-				"heal on hit for rapidfire"
-				{
-					"attribute_class"	"add_onhit_addhealth"
-					"value"	"3"
-				}
-				"dmg taken increased"
-				{
-					"attribute_class"	"mult_dmg_receive"
-					"value" "1.2"
-				}
-				"cancel fall damage"
-				{
-					"attribute_class"	"set_cancel_fall_damage"
-					"value"	"1"
-				}
+				"attribute_class"	"set_cancel_fall_damage"
+				"value"	"1"
 			}
-			"12/17/2015" // Tough Break
+			"fire rate penalty"
 			{
-				"provide on active"
-				{
-					"attribute_class"	"provide_on_active"
-					"value" "1"
-				}
-				"heal on hit for rapidfire"
-				{
-					"attribute_class"	"add_onhit_addhealth"
-					"value"	"5"
-				}
-				"dmg taken increased"
-				{
-					"attribute_class"	"mult_dmg_receive"
-					"value" "1.2"
-				}
-				"cancel fall damage"
-				{
-					"attribute_class"	"set_cancel_fall_damage"
-					"value"	"1"
-				}
-			}			
-			"10/20/2017" // Jungle Inferno
+				"attribute_class"	"mult_postfiredelay"
+				"value" "1.25"
+			}
+			"dmg taken from fire increased"
 			{
-				"provide on active"
-				{
-					"attribute_class"	"provide_on_active"
-					"value" "1"
-				}
-				"heal on hit for rapidfire"
-				{
-					"attribute_class"	"add_onhit_addhealth"
-					"value"	"3"
-				}
-				"fire rate bonus"
-				{
-					"attribute_class"	"mult_postfiredelay"
-					"value" "0.85"
-				}
-				"clip size penalty"
-				{
-					"attribute_class"	"mult_clipsize"
-					"value" "0.75"
-				}
+				"attribute_class"	"mult_dmg_take_fire"
+				"value" "1.5"
 			}
 		}
+		"2015/07/02" // Gun Mettle
+		{
+			"provide on active"
+			{
+				"attribute_class"	"provide_on_active"
+				"value" "1"
+			}
+			"heal on hit for rapidfire"
+			{
+				"attribute_class"	"add_onhit_addhealth"
+				"value"	"3"
+			}
+			"dmg taken increased"
+			{
+				"attribute_class"	"mult_dmg_receive"
+				"value" "1.2"
+			}
+			"cancel fall damage"
+			{
+				"attribute_class"	"set_cancel_fall_damage"
+				"value"	"1"
+			}
+		}
+		"2015/12/17" // Tough Break
+		{
+			"provide on active"
+			{
+				"attribute_class"	"provide_on_active"
+				"value" "1"
+			}
+			"heal on hit for rapidfire"
+			{
+				"attribute_class"	"add_onhit_addhealth"
+				"value"	"5"
+			}
+			"dmg taken increased"
+			{
+				"attribute_class"	"mult_dmg_receive"
+				"value" "1.2"
+			}
+			"cancel fall damage"
+			{
+				"attribute_class"	"set_cancel_fall_damage"
+				"value"	"1"
+			}
+		}			
+		"2017/10/20" // Jungle Inferno
+		{
+			"provide on active"
+			{
+				"attribute_class"	"provide_on_active"
+				"value" "1"
+			}
+			"heal on hit for rapidfire"
+			{
+				"attribute_class"	"add_onhit_addhealth"
+				"value"	"3"
+			}
+			"fire rate bonus"
+			{
+				"attribute_class"	"mult_postfiredelay"
+				"value" "0.85"
+			}
+			"clip size penalty"
+			{
+				"attribute_class"	"mult_clipsize"
+				"value" "0.75"
+			}
+		}
+	}
+	"812"  // Flying Guillotine (secondary)
+	"46"  // Bonk! Atomic Punch (secondary)
+	"163"  // Crit-a-Cola (secondary)
+	"222"  // Mad Milk (secondary)
+    "1121"  // Mutated Milk (secondary)
+	// ── Melee ──────────────────────────────────────────────────
+	"0"  // Bat            (melee)
+    "221"  // Holy Mackerel            (melee)
+	"572"  // Unarmed Combat            (melee)
+    "30667"  // Batsaber            (melee)
+	"44"  // Sandman            (melee)
+    "317"  // Candy Cane            (melee)
+	"325"  // Boston Basher            (melee)
+    "452"  // Three-Rune Blade            (melee)
+	"349"  // Sun-on-a-Stick            (melee)
+    "355"  // Fan O'War            (melee)
+	"450"  // Atomizer            (melee)
+    "648"  // Wrap Assassin            (melee)
+	
+    // ── Soldier ────────────────────────────────────────────────
+	// ── Primary ────────────────────────────────────────────────
+    "18"  // Rocket Launcher     (primary)
+    "513"  // Original     (primary)
+    "127"  // Direct Hit     (primary)
+    "228"  // Black Box     (primary)
+    "237"  // Rocket Jumper     (primary)
+    "414"  // Liberty Launcher    (primary)
+    "441"  // Cow Mangler 5000    (primary)
+    "730"  // Beggar's Bazooka    (primary)
+	"1104"  // Air Strike    (primary)
+	// ── Secondary ──────────────────────────────────────────────
+	"10"  // Shotgun (secondary)
+	"129"  // Buff Banner (secondary)
+	"226"  // Batallion's Backup (secondary)
+	"354"  // Concheror (secondary)
+	"444"  // Mantreads (secondary)
+	"442"  // Righteous Bison (secondary)
+
+	// ── Melee ──────────────────────────────────────────────────
+	"6"  // Shovel            (melee)
+    "128"  // Equalizer            (melee)
+	"447"  // Disciplinary Action            (melee)
+    "416"  // Market Gardener            (melee)
+	"775"  // Escape Plan            (melee)
+	
+    // ── Pyro ───────────────────────────────────────────────────
+	// ── Primary ────────────────────────────────────────────────
+    "21"  // Flame Thrower     (primary)
+    "741"  // Rainblower     (primary)
+    "30474"  // Nostromo Napalmer     (primary)
+    "40"  // Backburner     (primary)
+    "215"  // Degreaser     (primary)
+    "594"  // Phlogistinator     (primary)
+    "1178"  // Dragon's Fury     (primary)
+	// ── Secondary ──────────────────────────────────────────────
+	"12"  // Shotgun (secondary)
+	"39"  // Flare Gun (secondary)
+	"351"  // Detonator (secondary)
+	"595"  // Manmelter (secondary)
+	"740"  // Scorch Shot (secondary)
+	"1179"  // Thermal Thruster (secondary)
+	"1180"  // Gas Passer (secondary)
+	// ── Melee ──────────────────────────────────────────────────
+	"2"  // Fire Axe            (melee)
+    "739"  // Lollichop           (melee)
+	"38"  // Axtinguisher            (melee)
+    "457"  // Postal Pummeler            (melee)
+	"153"  // Homewrecker           (melee)
+    "466"  // Maul            (melee)
+	"214"  // Powerjack           (melee)
+    "326"  // Back Scratcher            (melee)
+	"348"  // Sharpened Volcano Fragment            (melee)
+    "593"  // Third Degree           (melee)
+	"813"  // Neon Annihilator            (melee)
+    "1181"  // Hot Hand           (melee)
+	
+    // ── Demoman ────────────────────────────────────────────────
+	// ── Primary ────────────────────────────────────────────────
+    "19"  // Grenade Launcher     (primary)
+    "308"  // Loch-n-Load     (primary)
+    "405"  // Ali Baba's Wee Booties     (primary)
+    "608"  // Bootlegger     (primary)
+    "996"  // Loose Cannon     (primary)
+    "1151"  // Iron Bomber     (primary)
+	// ── Secondary ──────────────────────────────────────────────
+	"20"  // Stickybomb Launcher (secondary)
+	"130"  // Scottish Resistance (secondary)
+	"131"  // Chargin' Targe (secondary)
+	"265"  // Sticky Jumper (secondary)
+	"406"  // Splendid Screen (secondary)
+	"1099"  // Tide Turner (secondary)
+	"1150"  // Quickiebomb Launcher (secondary)
+	// ── Melee ──────────────────────────────────────────────────
+	"1"  // Bottle            (melee)
+    "609"  // Scottish Handshake           (melee)
+	"132"  // Eyelander            (melee)
+    "266"  // Horseless Headless Horsemann's Headtaker            (melee)
+	"482"  // Nessie's Nine Iron           (melee)
+    "172"  // Scotsman's Skullcutter            (melee)
+    "307"  // Ullapool Caber          (melee)
+	"327"  // Claidheamh Mor            (melee)
+	"404"  // Persian Persuader            (melee)
+	
+	
+    // ── Heavy ──────────────────────────────────────────────────
+	// ── Primary ────────────────────────────────────────────────
+    "15"  // Minigun     (primary)
+    "298"  // Iron Curtain     (primary)
+    "41"  // Natascha    (primary)
+    "312"  // Brass Beast     (primary)
+    "424"  // Tomislav     (primary)
+    "811"  // Huo-Long Heater     (primary)
+	// ── Secondary ──────────────────────────────────────────────
+	"11"  // Shotgun (secondary)
+	"425"  // Family Business (secondary)
+	"42"  // Sandvich (secondary)
+	"863"  // Robo-Sandvich (secondary)
+	"159"  // Dalokohs Bar (secondary)
+	"433"  // Fishcake (secondary)
+	"311"  // Buffalo Steak Sandvich (secondary)
+	"1190"  // Second Banana (secondary)
+	// ── Melee ──────────────────────────────────────────────────
+	"5"  // Fists            (melee)
+    "587"  // Apoco-Fists           (melee)
+	"43"  // Killing Gloves of Boxing            (melee)
+    "239"  // Gloves of Running Urgently            (melee)
+	"1100"  // Bread Bite           (melee)
+    "310"  // Warrior's Spirit            (melee)
+	"331"  // Fists of Steel          (melee)
+    "426"  // Eviction Notice          (melee)
+	"656"  // Holiday Punch            (melee)
+	
+    // ── Engineer ───────────────────────────────────────────────
+	// ── Primary ────────────────────────────────────────────────
+    "9"  // Shotgun     (primary)
+    "141"  // Frontier Justice (primary)
+    "527"  // Widowmaker    (primary)
+    "588"  // Pomson 6000     (primary)
+    "997"  // Rescue Ranger     (primary)
+	// ── Secondary ──────────────────────────────────────────────
+	"22"  // Pistol (secondary)
+	"140"  // Wrangler (secondary)
+	"30668"  // Giger Counter (secondary)
+	"528"  // Short Circuit (secondary)
+	// ── Melee ──────────────────────────────────────────────────
+	"7"  // Wrench            (melee)
+    "169"  // Golden Wrench          (melee)
+	"142"  // Gunslinger            (melee)
+    "155"  // Southern Hospitality            (melee)
+	"329"  // Jag           (melee)
+    "589"  // Eureka Effect            (melee)
+	// ── PDA (Hidden) ───────────────────────────────────────────
+	"25"  // Construction PDA            (pda)
+	// ── PDA2 (Hidden) ──────────────────────────────────────────
+	"26"  // Destruction PDA            (pda2)
+	// ── Building (Hidden) ──────────────────────────────────────
+	"28"  // Toolbox            (building)
+	
+    // ── Medic ──────────────────────────────────────────────────
+	// ── Primary ────────────────────────────────────────────────
+    "17"  // Syringe Gun     (primary)
+    "36"  // Blutsauger     (primary)
+    "305"  // Crusader's Crossbow    (primary)
+    "412"  // Overdose     (primary)
+	// ── Secondary ──────────────────────────────────────────────
+	"29"  // Medigun (secondary)
+	"35"  // Kritzkrieg (secondary)
+	"411"  // Quick-Fix (secondary)
+	"998"  // Vaccinator (secondary)
+	// ── Melee ──────────────────────────────────────────────────
+	"8"  // Bonesaw            (melee)
+    "37"  // Ubersaw           (melee)
+	"173"  // Vita-Saw            (melee)
+    "304"  // Amputator            (melee)
+	"413"  // Solemn Vow           (melee)
+
+    // ── Sniper ──────────────────────────────────────────────────
+	// ── Primary ────────────────────────────────────────────────
+    "14"  // Sniper Rifle     (primary)
+    "851"  // AWPer Hand     (primary)
+    "56"  // Huntsman    (primary)
+    "1092"  // Fortified Compound     (primary)
+    "230"  // Sydney Sleeper     (primary)
+    "402"  // Bazaar Bargain     (primary)
+    "526"  // Machina   (primary)
+    "30665"  // Shooting Star     (primary)
+    "752"  // Hitman's Heatmaker     (primary)
+    "1098"  // Classic     (primary)
+	// ── Secondary ──────────────────────────────────────────────
+	"16"  // SMG (secondary)
+	"751"  // Cleaner's Carbine (secondary)
+	"58"  // Jarate (secondary)
+	"1105"  // Self-Aware Beauty Mark (secondary)
+	"57"  // Razorback (secondary)
+	"231"  // Darwin's Danger Shield (secondary)
+	"642"  // Cozy Camper (secondary)
+	// ── Melee ──────────────────────────────────────────────────
+	"3"  // Kukri            (melee)
+    "171"  // Tribalman's Shiv           (melee)
+	"232"  // Bushwacka            (melee)
+    "401"  // Shahanshah            (melee)
+
+    // ── Spy ────────────────────────────────────────────────────
+	// ── Secondary ──────────────────────────────────────────────
+	"24"  // Revolver (secondary)
+	"161"  // Big Kill (secondary)
+	"61"  // Ambassador (secondary)
+	"224"  // L'Etranger (secondary)
+	"460"  // Enforcer (secondary)
+	"525"  // Diamondback (secondary)
+	// ── Melee ──────────────────────────────────────────────────
+	"4"  // Knife            (melee)
+    "638"  // Sharp Dresser          (melee)
+	"727"  // Black Rose            (melee)
+    "225"  // Your Eternal Reward            (melee)
+    "574"  // Wanga Prick           (melee)
+    "356"  // Conniver's Kunai            (melee)
+	"461"  // Big Earner           (melee)
+    "649"  // Spy-Cicle           (melee)
+	// ── PDA (Hidden) ──────────────────────────────────────────
+	"27"  // Disguise Kit            (pda)
+	// ── PDA2 ──────────────────────────────────────────────────
+	"30"  // Invis Watch            (pda2)
+	"297"  // Enthusiast's Timepiece            (pda2)
+	"947"  // Quackenbirdt            (pda2)
+	"60"  // Cloak and Dagger            (pda2)
+	"59"  // Dead Ringer            (pda2)
+	// ── Building ──────────────────────────────────────────────────
+	"735"  // Sapper            (building)
+	"933"  // Ap-Sap            (building)
+	"1102"  // Snack Attack            (building)
+	"810"  // Red-Tape Recorder            (building)
+	
+    // ── Multi-Class ──────────────────────────────────────────────
+	// ── Secondary ───────────────────────────────────────────────
+	"294"  // Lugermorph (secondary)
+	"30666"  // C.A.P.P.E.R (secondary)
+	"415"  // Reserve Shooter (secondary)
+	"1101"  // B.A.S.E. Jumper (secondary)
+	// ── Melee ──────────────────────────────────────────────────
+	"154"  // Pain Train           (melee)
+    "357"  // Half-Zatoichi          (melee)
+	// ── Primary/Secondary ────────────────────
+    "1153"  // Panic Attack (secondary heavy/soldier/pyro, primary engineer)
+	{
+		"2014/12/22"	// Smissmass 2014
+		{
+			"fire rate bonus hidden"
+			{
+				"attribute_class"	"mult_postfiredelay"
+				"value"	"0.66"
+			}
+			"clip size penalty"
+			{
+				"attribute_class"	"mult_clipsize"
+				"value"	"0.0"
+			}
+			"panic attack load mechanic"
+			{
+				"attribute_class"	"set_weapon_mode"
+				"value"	"1"
+			}
+			"fire rate bonus with health"
+			{
+				"attribute_class"	"mult_postfiredelay_with_health"
+				"value"	"1.0"
+			}
+		}
+		"2015/07/02"	// Gun Mettle
+		{
+			"fire rate bonus hidden"
+			{
+				"attribute_class"	"mult_postfiredelay"
+				"value"	"0.7"
+			}
+			"switch on speed bonus"
+			{
+				"attribute_class"	"mult_weapon_switch_speed"
+				"value"	"1.5"
+			}
+			"panic attack load mechanic"
+			{
+				"attribute_class"	"set_weapon_mode"
+				"value"	"1"
+			}
+		}
+		"2015/12/17"	// Tough Break
+		{
+			"fire rate bonus hidden"
+			{
+				"attribute_class"	"mult_postfiredelay"
+				"value"	"0.7"
+			}
+			"switch on speed bonus"
+			{
+				"attribute_class"	"mult_weapon_switch_speed"
+				"value"	"1.5"
+			}
+			"reload rate bonus with health"
+			{
+				"attribute_class"	"mult_reload_time_with_health"
+				"value"	"1.0"
+			}
+			"panic attack load mechanic"
+			{
+				"attribute_class"	"set_weapon_mode"
+				"value"	"1"
+			}
+		}
+		"2017/10/20" // Jungle Inferno
+		{
+			"damage penalty"
+			{
+				"attribute_class"	"mult_dmg"
+				"value"	"0.8"
+			}
+			"single wep deploy time decreased"
+			{
+				"attribute_class"	"mult_single_wep_deploy_time"
+				"value"	"0.5"
+			}
+			"mult_spread_scales_consecutive"
+			{
+				"attribute_class" 	"mult_spread_scales_consecutive"
+				"value" "1"
+			}
+			"bullets per shot bonus"
+			{
+				"attribute_class" 	"mult_bullets_per_shot"
+				"value" "1.5"
+			}
+			"fixed_shot_pattern"
+			{
+				"attribute_class" 	"fixed_shot_pattern"
+				"value" "1"
+			}
+		}
+		"2018/03/28" // Blue Moon
+		{
+			"damage penalty"
+			{
+				"attribute_class"	"mult_dmg"
+				"value"	"0.8"
+			}
+			"single wep deploy time decreased"
+			{
+				"attribute_class"	"mult_single_wep_deploy_time"
+				"value"	"0.5"
+			}
+			"mult_spread_scales_consecutive"
+			{
+				"attribute_class" 	"mult_spread_scales_consecutive"
+				"value" "1"
+			}
+			"bullets per shot bonus"
+			{
+				"attribute_class" 	"mult_bullets_per_shot"
+				"value" "1.5"
+			}
+			"fixed_shot_pattern"
+			{
+				"attribute_class" 	"fixed_shot_pattern"
+				"value" "1"
+			}
+		}
+	}
+	"133"  // Gunboats (secondary soldier, primary demoman; TF2V exclusive)
+	{
+		"2009/12/17"	// WAR!
+		{
+			"rocket jump damage reduction"
+			{
+				"attribute_class"	"rocket_jump_dmg_reduction"
+				"value" "0.25"
+			}
+		}
+		"2010/07/08"	// Engineer Update
+		{
+			"rocket jump damage reduction"
+			{
+				"attribute_class"	"rocket_jump_dmg_reduction"
+				"value" "0.4"
+			}
+		}
+		"2014/04/01"
+		{
+			"rocket jump damage reduction"
+			{
+				"attribute_class"	"rocket_jump_dmg_reduction"
+				"value" "0.4"
+			}
+			"allowed in medieval mode"
+			{
+				"attribute_class"	"allowed_in_medieval_mode"
+				"value"	"1"
+			}
+		}
+	}
+	
+    // ── All-Class ──────────────────────────────────────────────
+	// ── Melee ───────────────────────────────────────────────
+	"423"  // Saxxy           (melee)
+    "264"  // Frying Pan          (melee)
+	"474"  // Conscientous Objector          (melee)
+    "880"  // Freedom Staff          (melee)
+	"939"  // Bat Outta Hell           (melee)
+    "954"  // Memory Maker          (melee)
+	"1013"  // Ham Shank          (melee)
+    "1071"  // Golden Frying Pan          (melee)
+	"1123"  // Necro Smasher           (melee)
+    "1127"  // Crossing Guard          (melee)
+	"30758"  // Prinny Machete          (melee)
+	// ── Action ───────────────────────────────────────────────
+	"1163"  // Powerup Canteen (MvM)          (action)
+	"1152"  // Grappling Hook          (action)
+	"1132"  // Spellbook Magazine         (action)
 }
