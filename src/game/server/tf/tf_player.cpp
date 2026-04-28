@@ -15845,6 +15845,10 @@ void CTFPlayer::CreateFeignDeathRagdoll( const CTakeDamageInfo& info, bool bGib,
 			{
 				 CALL_ATTRIB_HOOK_INT_ON_OTHER( info.GetWeapon(), iGoldRagdoll, set_turn_to_gold );
 			}
+			if ( !iGoldRagdoll && info.GetWeapon() ) // Second chance for Australiums
+			{
+				CALL_ATTRIB_HOOK_INT_ON_OTHER( info.GetWeapon(), iIsAustralium, is_australium_item );
+			}
 			pRagdoll->m_bGoldRagdoll = iGoldRagdoll != 0;
 
 			int iIceRagdoll = 0;
