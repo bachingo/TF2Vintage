@@ -253,7 +253,7 @@ ConVar mp_match_end_at_timelimit( "mp_match_end_at_timelimit", "0", FCVAR_NOTIFY
 
 ConVar mp_holiday_nogifts( "mp_holiday_nogifts", "0", FCVAR_NOTIFY, "Set to 1 to prevent holiday gifts from spawning when players are killed." );
 
-ConVar tf2v_modified_respawn_waves( "tf2v_modified_respawn_waves", "1", FCVAR_NOTIFY, "When active, uses TF2V's algorithm to slightly increase respawn times above 8v8 to improve match flow. Identical curve to TF2 at 8v8 and lower. Disable for the familiar 12v12 Casual mode chaos.", true, 0, true, 1 );
+ConVar tf2v_modified_respawn_waves( "tf2v_modified_respawn_waves", "1", FCVAR_NOTIFY, "When active, uses TF2V's algorithm to alter respawn times based on a 8v8 baseline. Disable for the familiar 12v12 Casual mode chaos.", true, 0, true, 1 );
 
 const char *m_pszRoundStateStrings[] = 
 {
