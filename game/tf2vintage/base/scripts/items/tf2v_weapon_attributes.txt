@@ -1,0 +1,98 @@
+"tf2v_weapon_attributes"
+{
+		"773" // "Pretty Boy's Pocket Pistol"
+		{
+			"06/27/2012" // Pyromania
+			 {
+				"maxhealth nonplayer bonus"
+				{
+					"attribute_class"	"add_maxhealth"
+					"value"	"15"
+				}
+				"cancel fall damage"
+				{
+					"attribute_class"	"set_cancel_fall_damage"
+					"value"	"1"
+				}
+				"fire rate penalty"
+				{
+					"attribute_class"	"mult_postfiredelay"
+					"value" "1.25"
+				}
+				"dmg taken from fire increased"
+				{
+					"attribute_class"	"mult_dmg_take_fire"
+					"value" "1.5"
+				}
+			}
+			"07/02/2015" // Gun Mettle
+			{
+				"provide on active"
+				{
+					"attribute_class"	"provide_on_active"
+					"value" "1"
+				}
+				"heal on hit for rapidfire"
+				{
+					"attribute_class"	"add_onhit_addhealth"
+					"value"	"3"
+				}
+				"dmg taken increased"
+				{
+					"attribute_class"	"mult_dmg_receive"
+					"value" "1.2"
+				}
+				"cancel fall damage"
+				{
+					"attribute_class"	"set_cancel_fall_damage"
+					"value"	"1"
+				}
+			}
+			"12/17/2015" // Tough Break
+			{
+				"provide on active"
+				{
+					"attribute_class"	"provide_on_active"
+					"value" "1"
+				}
+				"heal on hit for rapidfire"
+				{
+					"attribute_class"	"add_onhit_addhealth"
+					"value"	"5"
+				}
+				"dmg taken increased"
+				{
+					"attribute_class"	"mult_dmg_receive"
+					"value" "1.2"
+				}
+				"cancel fall damage"
+				{
+					"attribute_class"	"set_cancel_fall_damage"
+					"value"	"1"
+				}
+			}			
+			"10/20/2017" // Jungle Inferno
+			{
+				"provide on active"
+				{
+					"attribute_class"	"provide_on_active"
+					"value" "1"
+				}
+				"heal on hit for rapidfire"
+				{
+					"attribute_class"	"add_onhit_addhealth"
+					"value"	"3"
+				}
+				"fire rate bonus"
+				{
+					"attribute_class"	"mult_postfiredelay"
+					"value" "0.85"
+				}
+				"clip size penalty"
+				{
+					"attribute_class"	"mult_clipsize"
+					"value" "0.75"
+				}
+			}
+		}
+}
