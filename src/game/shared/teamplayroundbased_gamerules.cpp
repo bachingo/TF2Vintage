@@ -656,7 +656,7 @@ float CTeamplayRoundBasedRules::GetRespawnTimeScalar( int iTeam )
 
 	float flScale;
 	if ( tf2v_modified_respawn_waves.GetBool() )
-		flScale = RemapVal( iNumPlayers, 1, iOptimalPlayers, 0.25, 1.0 ); // New formula. Allows us to extend past the original 8 limit. Much more balanced.
+		flScale = RemapVal( iNumPlayers, 1, iOptimalPlayers, 0.125, 1.0 ); // New formula. Allows us to extend past the original 8 limit. Much more balanced.
 	else
 		flScale = RemapValClamped( iNumPlayers, 1, iOptimalPlayers, 0.25, 1.0 ); // Old clamp formula. Problem is it caps at 8, and 12 players is treated the same as 8. Gets chaotic.
 	return flScale;
