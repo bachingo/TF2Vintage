@@ -1,11 +1,14 @@
 "VertexLitGeneric"
 {
-	"$basetexture"	"models\player\medic\medic_backpack_red"
+	"$basetexture"	"models/player/medic/medic_backpack_red"
 		"$basemapalphaphongmask" "1"
 		"$detail" "effects/tiledfire/fireLayeredSlowTiled512.vtf"	
-	"$detailscale" "2"
-	"$detailblendfactor" .01
-	"$detailblendmode" 6
+//	"$detailscale" 2	// Old value
+	"$detailscale" 1.5
+//	"$detailblendfactor" .01						// Old value
+	"$detailblendfactor" 0.00						// New value, though I don't think this change is of much significance
+//	"$detailblendmode" 6							// Old value
+	"$detailblendmode" 5
 
 
 // 	"$bbqamount" "1"	
@@ -26,10 +29,12 @@
 	// Rim lighting parameters
 	"$rimlight" "1"												// To enable rim lighting (requires phong)
 	"$rimlightexponent" "4"										// Exponent for phong component of rim lighting	
-	"$rimlightboost" "0.5"										// Boost for ambient cube component of rim lighting
+	"$rimlightboost" "2"										// Boost for ambient cube component of rim lighting
 
 	// Cloaking
 	"$cloakPassEnabled" "1"
+
+	"$yellow" "0"
 
 	"Proxies"
 	{
@@ -42,9 +47,24 @@
 			"animatedtextureframenumvar" "$detailframe"
 			"animatedtextureframerate" 30
 		}
+		"TextureScroll"							// Newly added proxy; makes the fire texture continually scroll
+		{
+			"texturescrollvar" "$detailtexturetransform"
+			"texturescrollrate" "0.300"
+			"texturescrollangle" "90"
+		}
 		"BurnLevel"
 		{
 			"resultVar" "$detailblendfactor"
+		}
+		"YellowLevel"
+		{
+			"resultVar" "$yellow"
+		}
+		"Equals"
+		{
+			"srcVar1" "$yellow"
+			"resultVar" "$color2"
 		}
 	}
 }

@@ -1,8 +1,0 @@
-"VertexLitGeneric"
-{
-	"$basetexture" "Decals/Blood1"
-	"$decal" 1
-	"$translucent" 1
-
-	// Edit $decalscale through the respective Subrect VMT
-}

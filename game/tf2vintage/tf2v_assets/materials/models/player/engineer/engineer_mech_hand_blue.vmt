@@ -4,8 +4,10 @@
 	"$bumpmap"     "models/player/engineer/engineer_mech_hand_phongmask"
 	"$detail" "effects/tiledfire/fireLayeredSlowTiled512.vtf"	
 	"$detailscale" "1"
-	"$detailblendfactor" .01
-	"$detailblendmode" 6
+//	"$detailblendfactor" .01						// Old value
+	"$detailblendfactor" 0.00						// New value, though I don't think this change is of much significance
+//	"$detailblendmode" 6							// Old value
+	"$detailblendmode" 5
 
 
 	"$yellow" "0"
@@ -20,12 +22,26 @@
 	// Rim lighting parameters
 	"$rimlight" "1"												// To enable rim lighting (requires phong)
 	"$rimlightexponent" "4"										// Exponent for phong component of rim lighting	
-	"$rimlightboost" ".5"										// Boost for ambient cube component of rim lighting
+	"$rimlightboost" "2"										// Boost for ambient cube component of rim lighting
 
 	// Cloaking
 	"$cloakPassEnabled" "1"
+	"$sheenPassEnabled" "1"
+
+	"$sheenmap" 		"cubemaps/cubemap_sheen001"
+	"$sheenmapmask" 		"Effects/AnimatedSheen/animatedsheen0"
+	"$sheenmaptint" 		"[ 1 1 1 ]"
+	"$sheenmapmaskframe" 	"0"
+	"$sheenindex" 		"0"
+
 	"Proxies"
 	{
+		"AnimatedWeaponSheen"
+		{
+			"animatedtexturevar" 		"$sheenmapmask"
+			"animatedtextureframenumvar" 	"$sheenmapmaskframe"
+			"animatedtextureframerate" 		"40"
+		}
 		"invis"
 		{
 		}
@@ -34,6 +50,12 @@
 			"animatedtexturevar" "$detail"
 			"animatedtextureframenumvar" "$detailframe"
 			"animatedtextureframerate" 30
+		}
+		"TextureScroll"							// Newly added proxy; makes the fire texture continually scroll
+		{
+			"texturescrollvar" "$detailtexturetransform"
+			"texturescrollrate" "0.15"
+			"texturescrollangle" "90"
 		}
 		"BurnLevel"
 		{
@@ -45,9 +67,8 @@
 		}
 		"Equals"
 		{
-			"srcVar1"  "$yellow"
+			"srcVar1" "$yellow"
 			"resultVar" "$color2"
 		}
-
 	}
 }

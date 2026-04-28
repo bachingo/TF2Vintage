@@ -3,9 +3,12 @@
 	"$basetexture" "models/player/pyro/pyro_red_zombie"
 	"$bumpmap" "models/player/pyro/pyro_normal"
 	"$detail" "effects/tiledfire/fireLayeredSlowTiled512.vtf"	
-	"$detailscale" "5"
-	"$detailblendfactor" 0.0
-	"$detailblendmode" 6
+//	"$detailscale" 5								// Old value
+	"$detailscale" 3
+//	"$detailblendfactor" .01						// Old value
+	"$detailblendfactor" 0.00						// New value, though I don't think this change is of much significance
+//	"$detailblendmode" 6							// Old value
+	"$detailblendmode" 5
 
 	"$alphatest" "0"
 
@@ -13,25 +16,22 @@
 	"$one" "1"
 
 	"$phong" "1"
-	"$phongexponent" "15"
-	"$phongboost" "1"
+	"$phongexponent" "20"
+	"$phongboost" "0"	
 	"$lightwarptexture" "models/player/pyro/pyro_lightwarp"
-	"$phongfresnelranges"	"[2 1 5]"
-	"$halflambert" "1"
+	"$phongfresnelranges"	"[.3 1 8]"
+	"$halflambert" "0"
 
-	"$rimlight" "1"
-	"$rimlightexponent" "4"
-	"$rimlightboost" "2"
+	// Rim lighting parameters
+	"$rimlight" "1"												// To enable rim lighting (requires phong)
+	"$rimlightexponent" "15"										// Exponent for phong component of rim lighting	
+	"$rimlightboost" ".25"										// Boost for ambient cube component of rim lighting
 
-	"360?$color2" "[ 0.75 0.75 0.7 ]"
-
+	// Cloaking
 	"$cloakPassEnabled" "1"
 	"Proxies"
 	{
-		"spy_invis" //wmodel and team color cloak support
-		{
-		}
-		"invis" //vmodel cloak support
+		"spy_invis"
 		{
 		}
 		"AnimatedTexture"
@@ -39,6 +39,12 @@
 			"animatedtexturevar" "$detail"
 			"animatedtextureframenumvar" "$detailframe"
 			"animatedtextureframerate" 30
+		}
+		"TextureScroll"							// Newly added proxy; makes the fire texture continually scroll
+		{
+			"texturescrollvar" "$detailtexturetransform"
+			"texturescrollrate" "0.15"
+			"texturescrollangle" "90"
 		}
 		"BurnLevel"
 		{

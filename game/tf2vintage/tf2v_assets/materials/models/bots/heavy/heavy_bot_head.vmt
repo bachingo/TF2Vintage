@@ -23,15 +23,19 @@
 
 	
 	"$rimlight" "1"						
-	"$rimlightexponent" "4"				
-	"$rimlightboost" ".5"
+	"$rimlightexponent" "1"				
+	"$rimlightboost" "2"
 	"$rimmask" "1"
 
 
 	"$detail" "effects/tiledfire/fireLayeredSlowTiled512.vtf"	
-	"$detailscale" "5"
-	"$detailblendfactor" .01
-	"$detailblendmode" 6
+//	"$detailscale" "5"	// Old value
+	"$detailscale" 1
+//	"$detailblendfactor" .01	// Old value
+	"$detailblendfactor" 0.00
+//	"$detailblendmode" 6	// Old value
+	"$detailblendmode" 5
+
 
 	"$yellow" "0"
 	"$one" "1"
@@ -49,6 +53,12 @@
 			"animatedtexturevar" "$detail"
 			"animatedtextureframenumvar" "$detailframe"
 			"animatedtextureframerate" 30
+		}
+		"TextureScroll"							// Newly added proxy; makes the fire texture continually scroll
+		{
+			"texturescrollvar" "$detailtexturetransform"
+			"texturescrollrate" "0.45"
+			"texturescrollangle" "90"
 		}
 		"BurnLevel"
 		{

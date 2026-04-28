@@ -2,23 +2,26 @@
 {
 	"$basetexture" "models/player/pyro/pyro_red"
 	"$bumpmap" "models/player/pyro/pyro_normal"
-
-//	"$envmap" "env_cubemap"
-//	"$envmapcontrast" "0"
-//	"$envmaptint" " [.6 .55 .45]"
-//	"$envmapmask" "models/player/pyro/pyro_envmask"
-
-	"$detail" "effects/tiledfire/fireLayeredSlowTiled512.vtf"	
-	"$detailscale" "5"
-	"$detailblendfactor" 0.0
-	"$detailblendmode" 6
+	"$detail" "effects/tiledfire/fireLayeredSlowTiled512.vtf"
+//	"$detailscale" 5	// Old value
+	"$detailscale" 3
+//	"$detailblendfactor" .01						// Old value
+	"$detailblendfactor" 0.00						// New value, though I don't think this change is of much significance
+//	"$detailblendmode" 6	//Old value
+	"$detailblendmode" 5
 
 	"$yellow" "0"
 	"$one" "1"
 
+
 	"$phong" "1"
-	"$phongexponent" "15"
-	"$phongboost" "0.4"	
+
+	// Below: disabled constant phong exponent & old phong boost. Replaced with exponent texture, plus new phong boost based on SFM version of this material
+//	"$phongexponent" "15"
+//	"$phongboost" "1"
+	"$phongexponenttexture" "models/player/pyro/pyro_exponent"
+	"$phongboost" "[.6]"
+
 	"$lightwarptexture" "models/player/pyro/pyro_lightwarp"
 	"$phongfresnelranges"	"[2 1 5]"
 	"$halflambert" "1"
@@ -26,7 +29,7 @@
 	// Rim lighting parameters
 	"$rimlight" "1"												// To enable rim lighting (requires phong)
 	"$rimlightexponent" "4"										// Exponent for phong component of rim lighting	
-	"$rimlightboost" "0.5"										// Boost for ambient cube component of rim lighting
+	"$rimlightboost" "2"										// Boost for ambient cube component of rim lighting
 
 	// Cloaking
 	"$cloakPassEnabled" "1"
@@ -42,6 +45,12 @@
 			"animatedtextureframenumvar" "$detailframe"
 			"animatedtextureframerate" 30
 		}
+		"TextureScroll"							// Newly added proxy; makes the fire texture continually scroll
+		{
+			"texturescrollvar" "$detailtexturetransform"
+			"texturescrollrate" "0.15"
+			"texturescrollangle" "90"
+		}
 		"BurnLevel"
 		{
 			"resultVar" "$detailblendfactor"
@@ -52,9 +61,8 @@
 		}
 		"Equals"
 		{
-			"srcVar1"  "$yellow"
+			"srcVar1" "$yellow"
 			"resultVar" "$color2"
 		}
-
 	}
 }

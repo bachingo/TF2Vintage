@@ -1,9 +1,0 @@
-Patch
-{
-	include	"materials/models/player/shared/invuln/invuln_red_body.vmt"
-	insert
-	{
-		$basetexture		"models/player/scout/scout_red"
-		$bumpmap		"models/player/scout/scout_normal"
-	}
-}
