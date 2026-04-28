@@ -12,6 +12,39 @@
 	"23"  // Pistol (secondary)
 	
 	"449"  // Winger (secondary)
+	{
+		"2011/06/23"
+		{
+			"damage bonus"
+			{
+				"attribute_class"	"mult_dmg"
+					"value" "1.15"
+			}
+			"clip size penalty"
+			{
+				"attribute_class"	"mult_clipsize"
+				"value" "0.4"
+			}
+		}
+		"2013/07/10"
+		{
+			"damage bonus"
+			{
+				"attribute_class"	"mult_dmg"
+				"value" "1.15"
+			}
+			"clip size penalty"
+			{
+				"attribute_class"	"mult_clipsize"
+				"value" "0.4"
+			}
+			"increased jump height from weapon"
+			{
+				"attribute_class"	"mod_jump_height_from_weapon"
+				"value" "1.25"
+			}
+		}
+	}
 	
 	"773"  // Pretty Boy's Pocket Pistol (secondary)
 	{
@@ -346,10 +379,177 @@
 	"294"  // Lugermorph (secondary)
 	"30666"  // C.A.P.P.E.R (secondary)
 	"415"  // Reserve Shooter (secondary)
+	{
+		"2011/06/23"	// Uber Update
+		{
+			"clip size penalty"
+			{
+				"attribute_class"	"mult_clipsize"
+				"value" "0.5"
+			}
+			"mod mini-crit airborne deploy"
+			{
+				"attribute_class"	"mini_crit_airborne_deploy"
+				"value" "3"
+			}
+			"single wep deploy time decreased"
+			{
+				"attribute_class"	"mult_single_wep_deploy_time"
+				"value"	"0.85"
+			}
+			"single wep holster time decreased"
+			{
+				"attribute_class"	"mult_switch_from_wep_deploy_time"
+				"value"				"0.85"
+			}
+			"special taunt"
+			{
+				"attribute_class"	"special_taunt"
+				"value" "1"
+			}
+		}
+		"2014/02/07"	// Strongbox
+		{
+			"mult_clipsize"
+			{
+				"attribute_class"	"mult_clipsize"
+				"value"	"0.66"
+			}
+			"mod mini-crit airborne deploy"
+			{
+				"attribute_class"	"mini_crit_airborne_deploy"
+				"value" "5"
+			}
+			"single wep deploy time decreased"
+			{
+				"attribute_class"	"mult_single_wep_deploy_time"
+				"value"	"0.85"
+			}
+			"single wep holster time decreased"
+			{
+				"attribute_class"	"mult_switch_from_wep_deploy_time"
+				"value"				"0.85"
+			}
+		}
+		"2015/12/17"	// Tough Break
+		{
+			"clip size penalty"
+			{
+				"attribute_class"	"mult_clipsize"
+				"value" "0.66"
+			}
+			"mod mini-crit airborne"
+			{
+				"attribute_class"	"mini_crit_airborne"
+				"value" "1"
+			}
+			"single wep deploy time decreased"
+			{
+				"attribute_class"	"mult_single_wep_deploy_time"
+				"value"	"0.80"
+			}
+			"special taunt"
+			{
+				"attribute_class"	"special_taunt"
+				"value" "1"
+			}
+		}
+		"2017/10/20" // Jungle Inferno
+		{
+			"clip size penalty"
+			{
+				"attribute_class"	"mult_clipsize"
+				"value" "0.66"
+			}
+			"mod mini-crit airborne"
+			{
+				"attribute_class"	"mini_crit_airborne"
+				"value" "1"
+			}
+			"single wep deploy time decreased"
+			{
+				"attribute_class"	"mult_single_wep_deploy_time"
+				"value"	"0.80"
+			}
+			"special taunt"
+			{
+				"attribute_class"	"special_taunt"
+				"value" "1"
+			}
+		}	
+	}
 	"1101"  // B.A.S.E. Jumper (secondary)
 	// ── Melee ──────────────────────────────────────────────────
 	"154"  // Pain Train           (melee)
+	{
+		"2010/03/18"	// First Community Update
+		{
+			"increase player capture value"
+			{
+				"attribute_class"	"add_player_capturevalue"
+				"value"	"1"
+			}
+			"dmg taken from bullets increased"
+			{
+				"attribute_class"	"mult_dmgtaken_from_bullets"
+				"value"	"1.1"
+			}
+		}
+	}
     "357"  // Half-Zatoichi          (melee)
+	{
+		"2011/03/10"	// Shogun Pack
+		{
+			"honorbound"
+			{
+				"attribute_class"	"set_weapon_mode"
+				"value"	"2"
+			}
+			"health_on_kill"
+			{
+				"attribute_class"	"add_onkill_addhealth"
+				"value"	"1000"
+			}
+			"item_can_be_crit"
+			{
+				"attribute_class"	"set_item_can_be_crit"
+				"value"	"1"
+			}
+		}
+		"2015/12/17"	// Tough Break
+		{
+			"is_a_sword"
+			{
+				"attribute_class"	"is_a_sword"
+				"value"				"72"
+			}
+			"decapitate type"
+			{
+				"attribute_class"	"decapitate_type"
+				"value"	"1"
+			}
+			"restore health on kill"
+			{
+				"attribute_class"	"restore_health_on_kill"
+				"value"	"50"
+			}
+			"crit mod disabled"
+			{
+				"attribute_class"	"mult_crit_chance"
+				"value"	"0"
+			}
+			"honorbound"
+			{
+				"attribute_class"	"honorbound"
+				"value"	"1"
+			}
+			"special taunt"
+			{
+				"attribute_class"	"special_taunt"
+				"value" "1"
+			}
+		}
+	}
 	// ── Primary/Secondary ────────────────────
     "1153"  // Panic Attack (secondary heavy/soldier/pyro, primary engineer)
 	{
