@@ -3480,9 +3480,14 @@ float CTeamplayRoundBasedRules::GetRespawnWaveMaxLength( int iTeam, bool bScaleW
 	float flTime = ( ( m_TeamRespawnWaveTimes[iTeam] >= 0 ) ? m_TeamRespawnWaveTimes[iTeam] : mp_respawnwavetime.GetFloat() );
 
 	// For long respawn times, scale the time as the number of players drops
-	if ( bScaleWithNumPlayers && flTime > 5 )
+	float flRespawnFloor;
+	if ( tf2v_modified_respawn_waves.GetBool() ) 
+		flRespawnFloor = 1.25;	// Lower respawn time for less players. Benefits smaller lobbies.
+	else
+		flRespawnFloor = 5;	// Stock length.
+	if ( bScaleWithNumPlayers && flTime > flRespawnFloor )
 	{
-		flTime = MAX( 5, flTime * GetRespawnTimeScalar(iTeam) );
+		flTime = MAX( flRespawnFloor, flTime * GetRespawnTimeScalar(iTeam) );
 	}
 
 	return flTime;
