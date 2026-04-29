@@ -20,6 +20,7 @@
 #include "tf_hud_notification_panel.h"
 #include "tf_hud_freezepanel.h"
 #include <filesystem.h>
+#include "tf_gamerules.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -101,7 +102,7 @@ void CHudNotificationPanel::MsgFunc_HudNotify( bf_read &msg )
 	// Ignore notifications in minmode
 	if ( !bForceShow )
 	{
-		ConVarRef cl_hud_minmode( "cl_hud_minmode", true );
+		static ConVarRef cl_hud_minmode( "cl_hud_minmode", true );
 		if ( cl_hud_minmode.IsValid() && cl_hud_minmode.GetBool() )
 			return;
 	}
@@ -140,7 +141,7 @@ void CHudNotificationPanel::MsgFunc_HudNotify( bf_read &msg )
 void CHudNotificationPanel::MsgFunc_HudNotifyCustom( bf_read &msg )
 {
 	// Ignore notifications in minmode
-	ConVarRef cl_hud_minmode( "cl_hud_minmode", true );
+	static ConVarRef cl_hud_minmode( "cl_hud_minmode", true );
 	if ( cl_hud_minmode.IsValid() && cl_hud_minmode.GetBool() )
 		return;
 
@@ -231,6 +232,53 @@ void CHudNotificationPanel::SetupNotifyCustom( const wchar_t *pszText, HudNotifi
 
 	// set up the fade time
 	m_flFadeTime = gpGlobals->curtime + ( overrideDuration > 0.f ? overrideDuration : flDuration );
+
+	InvalidateLayout();
+}
+
+void CHudNotificationPanel::SetupNotifyCustom( const HudNotificationParams_t& params )
+{
+	// Ignore notifications in minmode
+	if ( !params.bForce )
+	{
+		static ConVarRef cl_hud_minmode( "cl_hud_minmode", true );
+		if ( cl_hud_minmode.IsValid() && cl_hud_minmode.GetBool() )
+			return;
+	}
+
+	if ( params.pszIcon && params.pszIcon[0] != '\0' )
+	{
+		m_pIcon->SetIcon( params.pszIcon );
+	}
+
+	float flDuration = tf_hud_notification_duration.GetFloat();
+	if ( params.type == NUM_STOCK_NOTIFICATIONS )
+	{
+		// Reload the base
+		LoadControlSettings( "resource/UI/notifications/base_notification.res" );
+	}
+	else
+	{
+		LoadControlSettings( GetNotificationByType( params.type, flDuration ) );
+	}
+
+	if ( params.iBackgroundTeam == TF_TEAM_RED )
+	{
+		m_pBackground->SetImage( "../hud/score_panel_red_bg" );
+	}
+	else if ( params.iBackgroundTeam == TF_TEAM_BLUE )
+	{
+		m_pBackground->SetImage( "../hud/score_panel_blue_bg" );
+	}
+	else
+	{
+		m_pBackground->SetImage( "../hud/notification_black" );
+	}
+
+	m_pText->SetText( params.pszText );
+
+	// set up the fade time
+	m_flFadeTime = gpGlobals->curtime + ( params.flOverrideDuration > 0.0f ? params.flOverrideDuration : flDuration );
 
 	InvalidateLayout();
 }
@@ -579,3 +627,232 @@ bool CHudNotificationPanel::LoadManifest( void )
 	manifest->deleteThis();
 	return true;
 }
+
+DECLARE_HUDELEMENT( CStrandedSpawnPanel );
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CStrandedSpawnPanel::CStrandedSpawnPanel(const char* pElementName) : CHudElement(pElementName), BaseClass(NULL, "StrandedSpawnPanel")
+{
+	Panel *pParent = g_pClientMode->GetViewport();
+	SetParent( pParent );
+
+	SetHiddenBits( HIDEHUD_MISCSTATUS );
+
+	vgui::ivgui()->AddTickSignal( GetVPanel() );
+
+	m_pText = new Label( this, "Notification_Label", "" );
+	m_pBackground = new ImagePanel( this, "Notification_Background" );
+
+	m_iTeam = 0;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CStrandedSpawnPanel::ApplySchemeSettings( IScheme *pScheme )
+{
+	// load control settings...
+	LoadControlSettings( "resource/UI/strandedspawnnotification.res" );
+
+	BaseClass::ApplySchemeSettings( pScheme );
+
+	m_iTeam = 0;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CStrandedSpawnPanel::ShouldDraw( void )
+{
+	if ( IsTakingAFreezecamScreenshot() )
+		return false;
+
+	if ( !TFGameRules() )
+		return false;
+
+	if ( !TFGameRules()->IsCompetitiveGame() )
+		return false;
+
+	C_TFPlayer* pTFPlayer = C_TFPlayer::GetLocalTFPlayer();
+
+	if ( !pTFPlayer )
+		return false;
+
+	// earlier check for spawn touch count. this helps for cases where we're spawning not in a respawn room.
+	if ( pTFPlayer->m_Shared.GetRespawnTouchCount() < 1 )
+		return false;
+
+	if ( pTFPlayer->m_Shared.IsInStrandedSpawn() < STRANDED_SPAWN_SWITCHABLE )
+		return false;
+
+	return CHudElement::ShouldDraw();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CStrandedSpawnPanel::OnTick(void)
+{
+	if ( !ShouldDraw() )
+		return;
+
+	C_TFPlayer* pTFPlayer = C_TFPlayer::GetLocalTFPlayer();
+
+	wchar_t szNotification[1024] = L"";
+	wchar_t wKeyBind[80] = L"";
+	const wchar_t* wpszFormat = g_pVGuiLocalize->Find("#Hint_switch_stranded_spawn");
+	if (wpszFormat)
+	{
+		const char* key = engine->Key_LookupBinding("+inspect");
+		if (!key || FStrEq(key, "(null)"))
+		{
+			key = "< not bound >";
+		}
+
+		wchar_t wszSecsLeft[16];
+		_snwprintf(wszSecsLeft, ARRAYSIZE(wszSecsLeft), L"%.2f", Max( pTFPlayer->m_flStrandedSpawnAnchorTime - gpGlobals->curtime, 0.0f ) );
+
+		g_pVGuiLocalize->ConvertANSIToUnicode(key, wKeyBind, sizeof(wKeyBind));
+		g_pVGuiLocalize->ConstructString_safe(szNotification, wpszFormat, 2, wKeyBind, wszSecsLeft);
+
+		int iTeam = pTFPlayer->GetTeamNumber();
+		if ( m_iTeam != iTeam )
+		{
+			m_iTeam = iTeam;
+			if ( iTeam == TF_TEAM_RED )
+			{
+				m_pBackground->SetImage( "../hud/score_panel_red_bg" );
+			}
+			else if ( iTeam == TF_TEAM_BLUE )
+			{
+				m_pBackground->SetImage( "../hud/score_panel_blue_bg" );
+			}
+		}
+
+		m_pText->SetText(szNotification);
+	}
+}
+
+DECLARE_HUDELEMENT( CGamePausePanel );
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+CGamePausePanel::CGamePausePanel( const char* pElementName ) : CHudElement( pElementName ), BaseClass( NULL, "GamePausePanel" )
+{
+	Panel* pParent = g_pClientMode->GetViewport();
+	SetParent( pParent );
+
+	SetHiddenBits( HIDEHUD_MISCSTATUS );
+
+	vgui::ivgui()->AddTickSignal( GetVPanel() );
+
+	m_pTitle = new Label( this, "Paused_Title", "" );
+	m_pMessage = new Label( this, "Paused_Message", "" );
+	m_pCountdown = new Label( this, "Paused_Countdown", "" );
+	m_pBackground = new ImagePanel( this, "Paused_Background" );
+
+	m_iTeam = 0;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CGamePausePanel::ApplySchemeSettings( IScheme* pScheme )
+{
+	// load control settings...
+	LoadControlSettings( "resource/UI/gamepausepanel.res" );
+
+	BaseClass::ApplySchemeSettings( pScheme );
+
+	m_iTeam = 0;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CGamePausePanel::ShouldDraw( void )
+{
+	if ( IsTakingAFreezecamScreenshot() )
+		return false;
+
+	if ( engine->IsPaused() )
+		return false;
+
+	if ( !TFGameRules() )
+		return false;
+
+	if ( !TFGameRules()->IsGamePaused() )
+		return false;
+
+	C_TFPlayer* pTFPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( !pTFPlayer )
+		return false;
+
+	return CHudElement::ShouldDraw();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CGamePausePanel::OnTick( void )
+{
+	if ( !ShouldDraw() )
+		return;
+
+	C_TFPlayer* pTFPlayer = C_TFPlayer::GetLocalTFPlayer();
+	
+	const float flUnpauseTime = TFGameRules()->GetGameUnpauseTime();
+
+	wchar_t        szTitle[1024] = L"";
+	const wchar_t* wpszTitleFormat;
+	wchar_t        szMessage[1024] = L"";
+	const wchar_t* wpszMessageFormat;
+	if ( flUnpauseTime > 0 )
+	{
+		wpszTitleFormat = g_pVGuiLocalize->Find( "#TF_Notification_Unpaused_Title" );
+		wpszMessageFormat = g_pVGuiLocalize->Find( "#TF_Notification_Unpaused_Message" );
+	}
+	else
+	{
+		wpszTitleFormat = g_pVGuiLocalize->Find( "#TF_Notification_Paused_Title" );
+		wpszMessageFormat = g_pVGuiLocalize->Find( "#TF_Notification_Paused_Message" );
+	}
+	if ( wpszTitleFormat && wpszMessageFormat )
+	{
+		g_pVGuiLocalize->ConstructString_safe( szTitle, wpszTitleFormat, 0 );
+		g_pVGuiLocalize->ConstructString_safe( szMessage, wpszMessageFormat, 0 );
+
+		int iTeam = pTFPlayer->GetTeamNumber();
+		if ( m_iTeam != iTeam )
+		{
+			m_iTeam = iTeam;
+			if ( iTeam == TF_TEAM_BLUE )
+			{
+				m_pBackground->SetImage( "../hud/score_panel_blue_bg" );
+			}
+			else
+			{
+				m_pBackground->SetImage( "../hud/score_panel_red_bg" );
+			}
+		}
+
+		m_pTitle->SetText( szTitle );
+		m_pMessage->SetText( szMessage );
+		const bool bShouldDrawCountdown = flUnpauseTime > 0 ;
+		if ( bShouldDrawCountdown != m_pCountdown->IsVisible() )
+		{
+			m_pCountdown->SetVisible( bShouldDrawCountdown );
+		}
+		if ( bShouldDrawCountdown )
+		{
+			wchar_t wszSecsLeft[16];
+			_snwprintf( wszSecsLeft, ARRAYSIZE( wszSecsLeft ), L"%d", Max( Ceil2Int( TFGameRules()->GetGameUnpauseTime() - gpGlobals->curtime ), 0 ) );
+
+			m_pCountdown->SetText( wszSecsLeft );
+		}
+	}
+}
+

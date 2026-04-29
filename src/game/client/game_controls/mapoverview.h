@@ -58,7 +58,7 @@ public:
 		MAP_MODE_RADAR		// In game radar, extra functionality
 	};
 
-	CMapOverview( const char *pElementName );
+	CMapOverview( const char* pElementName, vgui::Panel* pParent = NULL );
 	virtual ~CMapOverview();
 
 	virtual bool ShouldDraw( void );
@@ -144,6 +144,7 @@ public:
 	virtual int GetMode( void );
 	virtual float GetFullZoom( void ){ return m_fFullZoom; }
 	virtual float GetMapScale( void ){ return m_fMapScale; }
+	virtual Vector2D MapToPanel( const Vector2D &mappos );
 
 	// Player settings:
 	virtual void ShowPlayerNames(bool state);
@@ -160,7 +161,9 @@ public:
 	virtual void SetFollowEntity(int entindex); // 0 = off
 	virtual void SetCenter( const Vector2D &mappos); 
 	virtual void SetAngle( float angle);
+	virtual void SetRunAnimations( bool bRunAnimations ) { m_bRunAnimations = bRunAnimations; }
 	virtual Vector2D WorldToMap( const Vector &worldpos );
+	void SetIgnoreSpectatorBounds( bool bIgnore ) { m_bIgnoreSpectatorBounds = bIgnore; }
 
 	// Object settings
 	virtual int		AddObject( const char *icon, int entity, float timeToLive ); // returns object ID, 0 = no entity, -1 = forever
@@ -196,12 +199,11 @@ protected:
 	virtual void	ResetRound();
 	virtual void	InitTeamColorsAndIcons();
 	virtual void	UpdateSizeAndPosition();
-	virtual bool	RunHudAnimations(){ return true; }
+	virtual bool	RunHudAnimations(){ return m_bRunAnimations; }
 
 	bool			IsInPanel(Vector2D &pos);
 	MapPlayer_t*	GetPlayerByUserID( int userID );
 	int				AddIconTexture(const char *filename);
-	Vector2D		MapToPanel( const Vector2D &mappos );
 	int				GetPixelOffset( float height );
 	void			UpdateFollowEntity();
 	virtual void	UpdatePlayers();
@@ -241,6 +243,7 @@ protected:
 	int		m_ObjectCounterID;
 	vgui::HFont	m_hIconFont;
 
+	bool m_bRunAnimations;
 
 	bool m_bShowNames;
 	bool m_bShowTrails;
@@ -267,7 +270,7 @@ protected:
 	float	m_fTrailUpdateInterval; // if -1 don't show trails
 	bool	m_bFollowAngle;	// if true, map rotates with view angle
 
-
+	bool	m_bIgnoreSpectatorBounds;
 };
 
 extern IMapOverviewPanel *g_pMapOverview;

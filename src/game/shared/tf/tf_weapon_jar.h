@@ -50,13 +50,15 @@ public:
 	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_JAR; }
 	virtual float		GetProjectileSpeed( void );
 	virtual void		PrimaryAttack( void );
+	virtual void		SecondaryAttack(void);
 
 	float				GetProgress( void ) { return GetEffectBarProgress(); }
 
 	virtual CBaseEntity *FireJar( CTFPlayer *pPlayer );
 	virtual void		TossJarThink( void );
+	bool				CanCreateJar( CTFPlayer* pPlayer, trace_t& trace );
 
-	virtual float		InternalGetEffectBarRechargeTime( void ) { return 20.1; }
+	virtual float		InternalGetEffectBarRechargeTime( void ) { return 20.1f; }
 
 	virtual const char*			GetEffectLabelText( void ) { return "#TF_JAR"; }
 
@@ -67,6 +69,8 @@ public:
 	virtual Vector GetVelocityVector( const Vector &vecForward, const Vector &vecRight, const Vector &vecUp );
 
 	virtual bool		ShouldSpeakWhenFiring( void ){ return true; }
+
+	virtual bool			CanBounceOff() const { return false; }
 
 //	virtual bool		SendWeaponAnim( int iActivity );
 
@@ -160,6 +164,9 @@ public:
 	virtual int			GetWeaponID( void ) const OVERRIDE			{ return TF_WEAPON_GRENADE_JAR; }
 	virtual float		GetDamage()									{ return 0.f; }
 	virtual bool		ExplodesOnHit()								{ return true; }
+	virtual float		GetDetonationTime(void) { return 10.0f; }
+
+	virtual bool CanCollideWithTeammates() const OVERRIDE { return false; }
 
 	virtual void		Precache() OVERRIDE;
 	virtual void		SetCustomPipebombModel() OVERRIDE;
@@ -229,6 +236,7 @@ public:
 #ifdef GAME_DLL
 	static CTFProjectile_Cleaver *Create( const Vector &position, const QAngle &angles, const Vector &velocity, 
 		const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, int nSkin );
+	virtual bool CanCollideWithTeammates() const OVERRIDE { return false; }
 #endif
 
 	CTFProjectile_Cleaver();

@@ -934,8 +934,8 @@ void CSimpleRenderExecutor::AddView( CRendering3dView *pView )
 CViewRender::CViewRender()
 	: m_SimpleExecutor( this )
 {
-	m_flCheapWaterStartDistance = 0.0f;
-	m_flCheapWaterEndDistance = 0.1f;
+	m_flCheapWaterStartDistance = 8192.0f;
+	m_flCheapWaterEndDistance = 8192.1f;
 	m_BaseDrawFlags = 0;
 	m_pActiveRenderer = NULL;
 	m_pCurrentlyDrawingEntity = NULL;
@@ -2035,21 +2035,18 @@ void CViewRender::RenderView( const CViewSetup &viewRender, int nClearFlags, int
 	VPROF( "CViewRender::RenderView" );
 	tmZone( TELEMETRY_LEVEL0, TMZF_NONE, "%s", __FUNCTION__ );
 
-	// Don't want TF2 running less than DX 8
-	if ( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() < 80 )
+	// Don't want TF2 running less than DX9.0c
+	if ( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() < 95 )
 	{
-		// We know they were running at least 8.0 when the game started...we check the 
+		// We know they were running at least 9.0c when the game started...we check the 
 		// value in ClientDLL_Init()...so they must be messing with their DirectX settings.
-		if ( ( Q_stricmp( COM_GetModDirectory(), "tf" ) == 0 ) || ( Q_stricmp( COM_GetModDirectory(), "tf_beta" ) == 0 ) )
+		static bool bFirstTime = true;
+		if ( bFirstTime )
 		{
-			static bool bFirstTime = true;
-			if ( bFirstTime )
-			{
-				bFirstTime = false;
-				Msg( "This game has a minimum requirement of DirectX 8.0 to run properly.\n" );
-			}
-			return;
+			bFirstTime = false;
+			Error( "This game has a minimum requirement of DirectX 9.0c to run properly.\n" );
 		}
+		return;
 	}
 
 	CMatRenderContextPtr pRenderContext( materials );
@@ -2481,6 +2478,7 @@ void CViewRender::Render2DEffectsPostHUD( const CViewSetup &viewRender )
 //
 //-----------------------------------------------------------------------------
 
+ConVar r_waterforcecheap("r_waterforcecheap", "0", FCVAR_ARCHIVE);
 
 //-----------------------------------------------------------------------------
 // Determines what kind of water we're going to use
@@ -2512,6 +2510,19 @@ void CViewRender::DetermineWaterRenderInfo( const VisibleFogVolumeInfo_t &fogVol
 		return;
 	}
 
+	// Determine if the water surface is opaque or not
+	info.m_bOpaqueWater = !pWaterMaterial->IsTranslucent();
+
+	// DX level 70 can't handle anything but cheap water
+	if ( engine->GetDXSupportLevel() < 80 )
+		return;
+
+#ifdef _X360
+	bool bForceCheap = false;
+#else
+	bool bForceCheap = r_waterforcecheap.GetBool();
+#endif
+
 #ifdef _X360
 	bool bForceExpensive = false;
 #else
@@ -2523,7 +2534,7 @@ void CViewRender::DetermineWaterRenderInfo( const VisibleFogVolumeInfo_t &fogVol
 	switch( g_pPortalRender->ShouldForceCheaperWaterLevel() )
 	{
 	case 0: //force cheap water
-		info.m_bCheapWater = true;
+		bForceCheap = true;
 		return;
 
 	case 1: //downgrade level to "simple reflection"
@@ -2537,25 +2548,16 @@ void CViewRender::DetermineWaterRenderInfo( const VisibleFogVolumeInfo_t &fogVol
 	};
 #endif
 
-	// Determine if the water surface is opaque or not
-	info.m_bOpaqueWater = !pWaterMaterial->IsTranslucent();
-
-	// DX level 70 can't handle anything but cheap water
-	if (engine->GetDXSupportLevel() < 80)
-		return;
-
-	bool bForceCheap = false;
-
 	// The material can override the default settings though
 	IMaterialVar *pForceCheapVar = pWaterMaterial->FindVar( "$forcecheap", NULL, false );
 	IMaterialVar *pForceExpensiveVar = pWaterMaterial->FindVar( "$forceexpensive", NULL, false );
 	if ( pForceCheapVar && pForceCheapVar->IsDefined() )
 	{
 		bForceCheap = ( pForceCheapVar->GetIntValueFast() != 0 );
-		if ( bForceCheap )
-		{
-			bForceExpensive = false;
-		}
+	}
+	if ( bForceCheap )
+	{
+		bForceExpensive = false;
 	}
 	if ( !bForceCheap && pForceExpensiveVar && pForceExpensiveVar->IsDefined() )
 	{
@@ -2586,6 +2588,10 @@ void CViewRender::DetermineWaterRenderInfo( const VisibleFogVolumeInfo_t &fogVol
 		bLocalReflection = pReflectTextureVar && (pReflectTextureVar->GetType() == MATERIAL_VAR_TYPE_TEXTURE);
 	}
 
+	// Check if the water is out of the cheap water LOD range; if so, use cheap water
+	bool bCheapWater = fogVolumeInfo.m_flDistanceToWater >= m_flCheapWaterEndDistance;
+	// Gary says: I'm reverting this change so that water LOD works on dx9 for ep2.
+#if 0 //defined(_X360)
 	// Brian says FIXME: I disabled cheap water LOD when local specular is specified.
 	// There are very few places that appear to actually
 	// take advantage of it (places where water is in the PVS, but outside of LOD range).
@@ -2593,19 +2599,13 @@ void CViewRender::DetermineWaterRenderInfo( const VisibleFogVolumeInfo_t &fogVol
 	// by making cheap water lod actually work (the water LOD wasn't actually rendering!!!)
 	// or to just always render the reflection + refraction if there's a local specular specified.
 	// Note that water LOD *does* work with refract-only water
-
-	// Gary says: I'm reverting this change so that water LOD works on dx9 for ep2.
-
-	// Check if the water is out of the cheap water LOD range; if so, use cheap water
-#ifdef _X360
-	if ( !bForceExpensive && ( bForceCheap || ( fogVolumeInfo.m_flDistanceToWater >= m_flCheapWaterEndDistance ) ) )
+	bCheapWater = bCheapWater && !bLocalReflection;
+#endif
+	// if we force cheap water, ignore the material's request to force expensive.
+	if ( bForceCheap || ( !bForceExpensive || bCheapWater ) )
 	{
 		return;
 	}
-#else
-	if ( ( (fogVolumeInfo.m_flDistanceToWater >= m_flCheapWaterEndDistance) && !bLocalReflection ) || bForceCheap )
- 		return;
-#endif
 	// Get the material that is for the water surface that is visible and check to see
 	// what render targets need to be rendered, if any.
 	if ( !r_WaterDrawRefraction.GetBool() )
@@ -4164,7 +4164,7 @@ void CRendering3dView::DrawOpaqueRenderables( ERenderDepthMode DepthMode )
 					arrBoneSetupNpcsLast[ numOpaqueEnts - numNpcs ] = pba;
 					
 					itEntity->m_pRenderable = NULL;		// We will render NPCs separately
-					itEntity->m_RenderHandle = NULL;
+					itEntity->m_RenderHandle = INVALID_CLIENT_RENDER_HANDLE;
 					
 					continue;
 				}

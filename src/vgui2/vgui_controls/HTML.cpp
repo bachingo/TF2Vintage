@@ -210,6 +210,11 @@ void HTML::OnBrowserReady( HTML_BrowserReady_t *pBrowserReady, bool bIOFailure )
 		PostURL( m_sPendingURLLoad, m_sPendingPostData, false );
 		m_sPendingURLLoad.Clear();
 	}
+
+	if ( m_SteamAPIContext.SteamHTMLSurface() )
+	{
+		m_SteamAPIContext.SteamHTMLSurface()->SetBackgroundMode( m_unBrowserHandle, !IsVisible() );
+	}
 }
 
 
@@ -639,6 +644,19 @@ void HTML::OnCursorMoved(int x,int y)
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: toggle background mode when visibility changes
+//-----------------------------------------------------------------------------
+void HTML::SetVisible( bool state )
+{
+	BaseClass::SetVisible( state );
+
+	if ( m_unBrowserHandle != INVALID_HTMLBROWSER && m_SteamAPIContext.SteamHTMLSurface() )
+	{
+		m_SteamAPIContext.SteamHTMLSurface()->SetBackgroundMode( m_unBrowserHandle, !state );
+	}
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: passes double click events to the browser
@@ -758,10 +776,17 @@ bool HTML::FindDialogVisible()
 //-----------------------------------------------------------------------------
 void HTML::OnKeyCodeTyped(KeyCode code)
 {
+	// TODO(mcoms): disable input controls?
+	const bool bDisableInputs = true;
 	switch( code )
 	{
 	case KEY_PAGEDOWN:
 		{
+			if ( bDisableInputs )
+			{
+				BaseClass::OnKeyTyped( code );
+				return;
+			}
 		int val = _vbar->GetValue();
 		val += 200;
 		_vbar->SetValue(val);
@@ -769,18 +794,32 @@ void HTML::OnKeyCodeTyped(KeyCode code)
 		}
 	case KEY_PAGEUP:
 		{
-		int val = _vbar->GetValue();
-		val -= 200;
-		_vbar->SetValue(val);
-		break;	
+			if ( bDisableInputs )
+			{
+				BaseClass::OnKeyTyped( code );
+				return;
+			}
+			int val = _vbar->GetValue();
+			val -= 200;
+			_vbar->SetValue(val);
+			break;	
 		}
 	case KEY_F5:
 		{
-		Refresh();
-		break;
+			if ( bDisableInputs )
+			{
+				BaseClass::OnKeyTyped( code );
+				return;
+			}
+			Refresh();
+			break;
 		}
 	case KEY_F:
 		{
+			if ( bDisableInputs )
+			{
+				break;
+			}
 			if ( (input()->IsKeyDown(KEY_LCONTROL) || input()->IsKeyDown(KEY_RCONTROL) )
 				|| ( IsOSX() && ( input()->IsKeyDown(KEY_LWIN) || input()->IsKeyDown(KEY_RWIN) ) ) )
 			{
@@ -797,6 +836,10 @@ void HTML::OnKeyCodeTyped(KeyCode code)
 		}
 	case KEY_ESCAPE:
 		{
+			if ( bDisableInputs )
+			{
+				break;
+			}
 			if ( FindDialogVisible() )
 			{
 				HideFindDialog();
@@ -805,6 +848,10 @@ void HTML::OnKeyCodeTyped(KeyCode code)
 		}
 	case KEY_TAB:
 		{
+			if ( bDisableInputs )
+			{
+				break;
+			}
 			if ( input()->IsKeyDown(KEY_LCONTROL) || input()->IsKeyDown(KEY_RCONTROL) )
 			{
 				// pass control-tab to parent (through baseclass)
@@ -893,6 +940,11 @@ void HTML::BrowserResize()
 		{
 			if (m_SteamAPIContext.SteamHTMLSurface())
 				m_SteamAPIContext.SteamHTMLSurface()->SetSize( m_unBrowserHandle, m_iWideLastHTMLSize, m_iTalLastHTMLSize );
+		}
+
+		{
+			if (m_SteamAPIContext.SteamHTMLSurface())
+				m_SteamAPIContext.SteamHTMLSurface()->SetPageScaleFactor(m_unBrowserHandle, m_flZoom, 0, 0);
 		}
 
 	
@@ -1232,6 +1284,9 @@ void HTML::CHTMLFindBar::OnCommand( const char *pchCmd )
 //-----------------------------------------------------------------------------
 void HTML::BrowserNeedsPaint( HTML_NeedsPaint_t *pCallback )
 {
+	if ( !IsVisible() )
+		return;
+
 	int tw = 0, tt = 0;
 	if ( m_iHTMLTextureID != 0 )
 	{
@@ -1246,7 +1301,7 @@ void HTML::BrowserNeedsPaint( HTML_NeedsPaint_t *pCallback )
 	}
 
 	// update the vgui texture
-	if ( m_bNeedsFullTextureUpload || m_iHTMLTextureID == 0  || tw != (int)pCallback->unWide || tt != (int)pCallback->unTall )
+	if ( m_iHTMLTextureID == 0 || tw != (int)pCallback->unWide || tt != (int)pCallback->unTall )
 	{
 		m_bNeedsFullTextureUpload = false;
 		if ( m_iHTMLTextureID != 0 )
@@ -1259,14 +1314,14 @@ void HTML::BrowserNeedsPaint( HTML_NeedsPaint_t *pCallback )
 		m_allocedTextureWidth = pCallback->unWide;
 		m_allocedTextureHeight = pCallback->unTall;
 	}
-	else if ( (int)pCallback->unUpdateWide > 0 && (int)pCallback->unUpdateTall > 0 )
+	else if ( !m_bNeedsFullTextureUpload && (int)pCallback->unUpdateWide > 0 && (int)pCallback->unUpdateTall > 0 )
 	{
-		// same size texture, just bits changing in it, lets twiddle
 		surface()->DrawUpdateRegionTextureRGBA( m_iHTMLTextureID, pCallback->unUpdateX, pCallback->unUpdateY, (const unsigned char *)pCallback->pBGRA, pCallback->unUpdateWide, pCallback->unUpdateTall, IMAGE_FORMAT_BGRA8888 );
 	}
 	else
 	{
-		surface()->DrawSetTextureRGBAEx( m_iHTMLTextureID, (const unsigned char *)pCallback->pBGRA,pCallback->unWide, pCallback->unTall, IMAGE_FORMAT_BGRA8888 );
+		m_bNeedsFullTextureUpload = false;
+		surface()->DrawSetTextureRGBAEx( m_iHTMLTextureID, (const unsigned char *)pCallback->pBGRA, pCallback->unWide, pCallback->unTall, IMAGE_FORMAT_BGRA8888 );
 	}
 
 	// need a paint next time
@@ -1668,7 +1723,8 @@ void HTML::BrowserHorizontalScrollBarSizeResponse( HTML_HorizontalScroll_t *pCmd
 	{
 		m_scrollHorizontal = scrollHorizontal;
 		UpdateSizeAndScrollBars();
-		m_bNeedsFullTextureUpload = true;
+		// TODO(mcoms): skip texture update if scroll bar changes?
+		//m_bNeedsFullTextureUpload = true;
 	}
 	else
 		m_scrollHorizontal = scrollHorizontal;
@@ -1690,7 +1746,8 @@ void HTML::BrowserVerticalScrollBarSizeResponse( HTML_VerticalScroll_t *pCmd )
 	{
 		m_scrollVertical = scrollVertical;
 		UpdateSizeAndScrollBars();
-		m_bNeedsFullTextureUpload = true;
+		// TODO(mcoms): skip texture update if scroll bar changes?
+		//m_bNeedsFullTextureUpload = true;
 	}
 	else
 		m_scrollVertical = scrollVertical;

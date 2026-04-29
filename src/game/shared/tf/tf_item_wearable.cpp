@@ -303,7 +303,24 @@ int	CTFWearable::InternalDrawModel( int flags )
 		modelrender->ForcedMaterialOverride( *pOwner->GetInvulnMaterialRef() );
 	}
 
+	CMatRenderContextPtr pRenderContext( materials );
+
+	if ( IsViewModelWearable() )
+	{
+		CTFWeaponBase *pWeapon = assert_cast< CTFWeaponBase* >( GetWeaponAssociatedWith() );
+
+		if ( pWeapon )
+		{
+			if ( pWeapon->IsViewModelFlipped() )
+			{
+				pRenderContext->CullMode( MATERIAL_CULLMODE_CW );
+			}
+		}
+	}
+
 	int ret = BaseClass::InternalDrawModel( flags );
+
+	pRenderContext->CullMode( MATERIAL_CULLMODE_CCW );
 
 	if ( bUseInvulnMaterial && (flags & STUDIO_RENDER) )
 	{
@@ -336,7 +353,7 @@ bool CTFWearable::ShouldDraw()
 		}
 
 		// don't draw cosmetic while sniper is zoom
-		if ( pOwner == C_TFPlayer::GetLocalTFPlayer() && pOwner->m_Shared.InCond( TF_COND_ZOOMED ) )
+		if ( pOwner == C_TFPlayer::GetLocalTFPlayer() && pOwner->m_Shared.InCond( TF_COND_ZOOMED ) && !engine->IsPlayingDemo() )
 			return false;
 	}
 
@@ -420,7 +437,7 @@ bool CTFWearable::ShouldDrawParticleSystems( void )
 		return false;
 
 	C_TFPlayer *pPlayer = ToTFPlayer( GetOwnerEntity() );
-	bool bStealthed = pPlayer->m_Shared.IsStealthed();
+	bool bStealthed = pPlayer->m_Shared.IsStealthed() || !pPlayer->GetCompetitiveVisibility();
 
 	// If we're disguised, this ought to only be getting called on disguise wearables,
 	// otherwise we could get two particles showing at once (disguise wearable + real wearable).

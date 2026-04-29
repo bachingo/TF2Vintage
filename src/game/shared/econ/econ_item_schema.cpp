@@ -3538,25 +3538,6 @@ const char *CEconItemDefinition::GetFirstSaleDate() const
 	return GetDefinitionString( "first_sale_date", "1960/00/00" );
 }
 
-const int *CEconItemDefinition::GetIntroductionDate() const
-{
-	char* cDate= GetDefinitionString( "first_sale_date", "1960/00/00" );
-	int y, m, d;
-		if (sscanf(cDate, "%d/%d/%d", &y, &m, &d) != 3) return 0;
-
-		// Treat Jan/Feb as months 13/14 of previous year
-		if (m <= 2) {
-			m += 12;
-			y -= 1;
-		}
-
-		// Calculate fixed day for the input date
-		long targetDays = (365L * y) + (y / 4) - (y / 100) + (y / 400) + ((153 * m + 8) / 5) + d;
-
-		// 733300 is the pre-calculated fixed day for 2007/09/16
-		return targetDays - 733300;
-}
-
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -4312,6 +4293,7 @@ void CEconItemSchema::Reset( void )
 	m_vecAttributeTypes.Purge();
 	m_mapItems.PurgeAndDeleteElements();
 	m_mapItems.Purge();
+	m_mapItemsName.Purge();
 	m_mapRarities.Purge();
 	m_mapQualities.Purge();
 	m_mapItemsSorted.Purge();
@@ -4521,7 +4503,7 @@ bool CEconItemSchema::MaybeInitFromBuffer( IDelayedSchemaData *pDelayedSchemaDat
 //-----------------------------------------------------------------------------
 // We're in a safe place to change the contents of the schema, so do so and clean
 // up whatever memory we were using.
-//
+//-----------------------------------------------------------------------------
 bool CEconItemSchema::BInitFromDelayedBuffer()
 {
 	if ( !m_pDelayedSchemaData )
@@ -4635,6 +4617,24 @@ EEquipType_t CEconItemSchema::GetEquipTypeFromClassIndex( int iClass ) const
 }
 
 //-----------------------------------------------------------------------------
+// Purpose:	Applies a game mod-specific patch to the schema.
+// Input:	pKVRawDefinition - The raw KeyValues representation of the schema
+//-----------------------------------------------------------------------------
+void ApplyGameModSchema( KeyValues *pKVRawDefinition ) {
+	CUtlBuffer bufModRawData;
+	bool bReadFileOK = g_pFullFileSystem->ReadFile( "scripts/items/items_mod.txt", "MOD", bufModRawData );
+	if ( bReadFileOK )
+	{
+		CUtlBuffer bufText( bufModRawData.Base(), bufModRawData.TellPut(), CUtlBuffer::READ_ONLY | CUtlBuffer::TEXT_BUFFER );
+		KeyValues *pKVRawModDefinition = new KeyValues( "CEconItemSchema" );
+		pKVRawModDefinition->LoadFromBuffer( NULL, bufText );
+		RecursiveInheritKeyValues(pKVRawDefinition, pKVRawModDefinition);
+		//KeyValuesDumpAsDevMsg(pKVRawDefinition, 2);
+		pKVRawModDefinition->deleteThis();
+	}
+}
+
+//-----------------------------------------------------------------------------
 // Purpose:	Initializes the schema
 // Input:	pKVRawDefinition - The raw KeyValues representation of the schema
 //			pVecErrors - An optional vector that will contain error messages if 
@@ -4650,8 +4650,8 @@ bool CEconItemSchema::BInitSchema( KeyValues *pKVRawDefinition, CUtlVector<CUtlS
 
 	m_unVersion = CalculateKeyValuesVersion( pKVRawDefinition );
 
-
-
+	// this is applied after version calculation to ensure there aren't any mismatches later
+	ApplyGameModSchema( pKVRawDefinition );
 
 	// Parse the prefabs block first so the prefabs will be populated in case anything else wants
 	// to use them later.
@@ -4674,7 +4674,7 @@ bool CEconItemSchema::BInitSchema( KeyValues *pKVRawDefinition, CUtlVector<CUtlS
 	// still makes sense to initialize it at this point.
 	SCHEMA_INIT_SUBSTEP( BInitAttributeTypes( pVecErrors ) );
 
-	// Initialize the item series block -- this is an optional block
+	// Initialize the item series block
 	KeyValues *pKVItemSeries = pKVRawDefinition->FindKey( "item_series_types" );
 	SCHEMA_INIT_CHECK( NULL != pKVItemSeries, "Required key \"item_series_types\" missing.\n" );
 	if ( NULL != pKVItemSeries )
@@ -4682,7 +4682,7 @@ bool CEconItemSchema::BInitSchema( KeyValues *pKVRawDefinition, CUtlVector<CUtlS
 		SCHEMA_INIT_SUBSTEP( BInitItemSeries( pKVItemSeries, pVecErrors ) );
 	}
 
-	// Initialize the rarity block -- this is an optional block
+	// Initialize the rarity block
 	KeyValues *pKVRarities = pKVRawDefinition->FindKey( "rarities" );
 	KeyValues *pKVRarityWeights = pKVRawDefinition->FindKey( "rarities_lootlist_weights" );
 	SCHEMA_INIT_CHECK( NULL != pKVRarities, "Required key \"rarities\" missing.\n" );
@@ -5289,6 +5289,7 @@ bool CEconItemSchema::BInitItems( KeyValues *pKVItems, CUtlVector<CUtlString> *p
 {
 	m_mapItems.PurgeAndDeleteElements();
 	m_mapItemsSorted.Purge();
+	m_mapItemsName.Purge();
 	m_mapToolsItems.Purge();
 	m_mapPaintKitTools.Purge();
 	m_mapBaseItems.Purge();
@@ -5338,6 +5339,7 @@ bool CEconItemSchema::BInitItems( KeyValues *pKVItems, CUtlVector<CUtlString> *p
 				nMapIndex = m_mapItems.Insert( nItemIndex, pItemDef );
 				m_mapItemsSorted.Insert( nItemIndex, pItemDef );
 				SCHEMA_INIT_SUBSTEP( m_mapItems[nMapIndex]->BInitFromKV( pKVItem, pVecErrors ) );
+				m_mapItemsName.Insert( pItemDef->GetDefinitionName(), pItemDef );
 
 				// Cache off Tools references
 				if ( pItemDef->IsTool() )
@@ -5465,6 +5467,7 @@ bool CEconItemSchema::DeleteItemDefinition( int iDefIndex )
 		CEconItemDefinition* pItemDef = m_mapItems[nMapIndex];
 		if ( pItemDef )
 		{
+			m_mapItemsName.Remove( pItemDef->GetDefinitionName() );
 			m_mapItems.RemoveAt( nMapIndex );
 			delete pItemDef;
 			return true;
@@ -6430,8 +6433,10 @@ void CEconItemSchema::ItemTesting_CreateTestDefinition( int iCloneFromItemDef, i
 	int nMapIndex = m_mapItems.Find( iNewDef );
 	if ( !m_mapItems.IsValidIndex( nMapIndex ) )
 	{
-		nMapIndex = m_mapItems.Insert( iNewDef, CreateEconItemDefinition() );
+		CEconItemDefinition* pItemDef = CreateEconItemDefinition() ;
+		nMapIndex = m_mapItems.Insert( iNewDef, pItemDef );
 		m_mapItemsSorted.Insert( iNewDef, m_mapItems[nMapIndex] );
+		m_mapItemsName.Insert( pItemDef->GetDefinitionName(), pItemDef );
 	}
 
 	// Find & copy the clone item def's data in
@@ -6449,7 +6454,12 @@ void CEconItemSchema::ItemTesting_CreateTestDefinition( int iCloneFromItemDef, i
 //-----------------------------------------------------------------------------
 void CEconItemSchema::ItemTesting_DiscardTestDefinition( int iDef )
 {
-	m_mapItems.Remove( iDef );
+	int nIndex = m_mapItems.Find( iDef );
+	if ( nIndex != m_mapItems.InvalidIndex() )
+	{
+		m_mapItemsName.Remove( m_mapItems[nIndex]->GetDefinitionName() );
+		m_mapItems.RemoveAt( nIndex );
+	}
 	m_mapItemsSorted.Remove( iDef );
 }
 
@@ -6737,16 +6747,9 @@ const CEconItemDefinition *CEconItemSchema::GetItemDefinition( int iItemIndex ) 
 //-----------------------------------------------------------------------------
 CEconItemDefinition *CEconItemSchema::GetItemDefinitionByName( const char *pszDefName )
 {
-	// This shouldn't happen, but let's not crash if it ever does.
-	Assert( pszDefName != NULL );
-	if ( pszDefName == NULL )
-		return NULL;
-
-	FOR_EACH_MAP_FAST( m_mapItems, i )
-	{
-		if ( V_stricmp( pszDefName, m_mapItems[i]->GetDefinitionName()) == 0 )
-			return m_mapItems[i]; 
-	}
+	int nIndex = m_mapItemsName.Find( pszDefName );
+	if ( nIndex != m_mapItemsName.InvalidIndex() )
+		return m_mapItemsName[nIndex];
 	return NULL;
 }
 
@@ -6904,13 +6907,18 @@ const CEconOperationDefinition* CEconItemSchema::GetOperationByName( const char*
 #if defined(CLIENT_DLL) || defined(GAME_DLL)
 bool CEconItemSchema::SetupPreviewItemDefinition( KeyValues *pKV )
 {
+	CEconItemDefinition* pItemDef;
 	int nMapIndex = m_mapItems.Find( PREVIEW_ITEM_DEFINITION_INDEX );
 	if ( !m_mapItems.IsValidIndex( nMapIndex ) )
 	{
-		nMapIndex = m_mapItems.Insert( PREVIEW_ITEM_DEFINITION_INDEX, CreateEconItemDefinition() );
+		pItemDef = CreateEconItemDefinition();
+		nMapIndex = m_mapItems.Insert( PREVIEW_ITEM_DEFINITION_INDEX, pItemDef );
+		m_mapItemsName.Insert( pItemDef->GetDefinitionName(), pItemDef );
 	}
-
-	CEconItemDefinition *pItemDef = m_mapItems[ nMapIndex ];
+	else
+	{
+		pItemDef = m_mapItems[ nMapIndex ];
+	}
 	return pItemDef->BInitFromKV( pKV );
 }
 #endif // defined(CLIENT_DLL) || defined(GAME_DLL)

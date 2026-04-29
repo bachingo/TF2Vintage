@@ -50,10 +50,11 @@ public:
 	virtual bool		Deploy( void ) OVERRIDE;
 	void				BackstabVMThink( void );
 
+	CTFPlayer*			TraceBackstab(CTFPlayer* pOwner);
+
 	bool				SendWeaponAnim( int iActivity );
 
-	bool				CanPerformBackstabAgainstTarget( CTFPlayer *pTarget );		// "backstab" sometimes means "frontstab"
-	bool				IsBehindAndFacingTarget( CTFPlayer *pTarget );
+	bool				CanPerformBackstabAgainstTarget( CTFPlayer *pTarget, bool bInAttack = false );		// "backstab" sometimes means "frontstab"
 	bool				IsBackstab( void ) { return (m_hBackstabVictim.Get() != NULL); }
 	void				BackstabBlocked( void );
 	bool				ShouldDisguiseOnBackstab( void );

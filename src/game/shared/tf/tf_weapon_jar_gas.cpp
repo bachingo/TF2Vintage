@@ -9,6 +9,7 @@
 #include "decals.h"
 #include "debugoverlay_shared.h"
 #include "tf_weaponbase_gun.h"
+#include "tf_gamerules.h"
 
 #ifdef CLIENT_DLL
 #include "c_tf_player.h"
@@ -23,7 +24,6 @@
 #include "tf_fx.h"
 #include "tf_team.h"
 #include "tf_gamestats.h"
-#include "tf_gamerules.h"
 #include "particle_parse.h"
 #include "bone_setup.h"
 #include "tf_flame.h"
@@ -106,6 +106,16 @@ void CTFJarGas::OnResourceMeterFilled()
 		return;
 
 	pOwner->GiveAmmo( 1, m_iPrimaryAmmoType, false, kAmmoSource_ResourceMeter );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CTFJarGas::GetDefaultItemChargeMeterValue() const
+{
+	if (TFGameRules()->IsBetaActive())
+		return BaseClass::GetDefaultItemChargeMeterValue();
+	return 0.0f;
 }
 #endif // GAME_DLL
 
@@ -294,11 +304,24 @@ bool CTFJarGas::CanAttack()
 // -----------------------------------------------------------------------------
 bool CTFJarGas::ShouldUpdateMeter() const
 {
+	if (TFGameRules()->IsBetaActive())
+		return BaseClass::ShouldUpdateMeter();
+
 	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
 	if ( pOwner )
 		return pOwner->IsAlive();
 
 	return true;
+}
+
+// -----------------------------------------------------------------------------
+// Purpose:
+// -----------------------------------------------------------------------------
+float CTFJarGas::InternalGetEffectBarRechargeTime()
+{
+	if (TFGameRules()->IsBetaActive())
+		return BaseClass::InternalGetEffectBarRechargeTime();
+	return 0.0f;
 }
 
 //-----------------------------------------------------------------------------
@@ -385,6 +408,7 @@ void CTFGasManager::OnCollide( CBaseEntity *pEnt, int iPointIndex )
 	if ( !pTFPlayer->m_Shared.IsInvulnerable() && !pTFPlayer->m_Shared.InCond( TF_COND_PHASE ) && !pTFPlayer->m_Shared.InCond( TF_COND_PASSTIME_INTERCEPTION ) && pTFPlayer->CanGetWet() )
 	{
 		pTFPlayer->m_Shared.AddCond( TF_COND_GAS, 10.f, GetOwnerEntity() );
+		pTFPlayer->m_Shared.AddCond( TF_COND_GAS_DRIP, 10.f, GetOwnerEntity() );
 	}
 
 	m_Touched.AddToTail( pTFPlayer );

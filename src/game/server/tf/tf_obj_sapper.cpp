@@ -647,11 +647,13 @@ void CObjectSapper::Killed( const CTakeDamageInfo &info )
 		}
 	}
 
+#ifndef TF2_OG
 	CBaseObject *pParent = GetParentObject();
 	if ( pParent )
 	{
 		pParent->SetPlasmaDisabled( SAPPER_REMOVE_DISABLE_TIME );
 	}
+#endif
 
 	BaseClass::Killed( info );
 }
@@ -659,7 +661,11 @@ void CObjectSapper::Killed( const CTakeDamageInfo &info )
 int CObjectSapper::GetBaseHealth( void )
 {
 	float flSapperHealth = SAPPER_MAX_HEALTH;
-	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetBuilder(), flSapperHealth, mult_sapper_health );
+
+	if ( GetBuilder() )
+	{
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetBuilder(), flSapperHealth, mult_sapper_health );
+	}
 
 	return flSapperHealth;
 }
@@ -759,7 +765,7 @@ bool CObjectSapper::IsValidRoboSapperTarget( CTFPlayer *pTarget )
 	if ( !pTarget->IsAlive() )
 		return false;
 
-	if ( GetBuilder() && GetBuilder()->GetTeamNumber() == pTarget->GetTeam()->GetTeamNumber() )
+	if ( GetBuilder() && GetBuilder()->GetTeamNumber() == pTarget->GetTeamNumber() )
 		return false;
 
 	if ( pTarget->m_Shared.IsInvulnerable() )

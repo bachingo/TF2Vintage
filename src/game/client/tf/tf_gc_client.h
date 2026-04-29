@@ -13,7 +13,7 @@
 #include "gcsdk/gcclientsdk.h"
 //#include "dota_gamerules.h"
 #include "tf_gcmessages.pb.h"
-#include "../clientsteamcontext.h"
+#include "clientsteamcontext.h"
 #include "gc_clientsystem.h"
 #include "GameEventListener.h"
 #include "tf_quickplay_shared.h"
@@ -250,6 +250,8 @@ public:
 	void ServerRequestEquipment();
 	void LocalInventoryChanged();
 
+	void AcknowledgeInventoryReceive();
+
 protected:
 
 	// CGCClientSystem
@@ -352,8 +354,12 @@ private:
 		CUtlVector<uint8> m_bufServerAuthToken;
 		CUtlString m_strServerIdentity; // hex-encoded SHA256 of m_bufMsgItems
 
+		int m_iPart = 0;
+		float m_flNextPartTime = -1.0f;
+
 		// Did we make any changes that we need to communicate to a server?
 		bool m_bLocalChangesApplied = false;
+		bool m_bDidApplyLocalChanges = false;
 
 		// Backoff
 		RTime32 m_rtNextRequest = 0;
@@ -379,7 +385,7 @@ private:
 
 	// SDK expansion points
 	void SDK_SelectItemsToSendToServer( CMsgAuthorizeServerItemRetrieval* /*out*/ pMsg, CGCClientSharedObjectCache* pSOCache );
-	void SDK_AddServerInventoryInfo( KeyValues* /*out*/ pKV, CGCClientSharedObjectCache* pSOCache );
+	void SDK_AddServerInventoryInfo( KeyValues* /*out*/ pKV, CGCClientSharedObjectCache* pSOCache, int32 iPart );
 
 	//
 	// Match logic

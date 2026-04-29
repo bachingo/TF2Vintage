@@ -1255,7 +1255,10 @@ void CHudControlPointIcons::ShutdownIcons( void )
 {
 	for ( int i = 0; i < m_Icons.Count(); i++ )
 	{
-		m_Icons[i]->MarkForDeletion();
+		if ( m_Icons[i] )
+		{
+			m_Icons[i]->MarkForDeletion();
+		}
 	}
 	m_Icons.RemoveAll();
 
@@ -1842,6 +1845,7 @@ void CControlPointCountdown::OnTick( void )
 
 	if ( TeamplayRoundBasedRules() ) 
 	{
+		// TODO(mcoms): does this need IsInPlay?
 		if ( TeamplayRoundBasedRules()->IsInWaitingForPlayers() || TeamplayRoundBasedRules()->State_Get() != GR_STATE_RND_RUNNING )
 		{
 			return;

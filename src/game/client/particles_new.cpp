@@ -363,8 +363,8 @@ bool CNewParticleEffect::RecalculateBoundingBox()
 
 void CNewParticleEffect::GetRenderBounds( Vector& mins, Vector& maxs )
 {
-	VectorSubtract( m_MinBounds, GetRenderOrigin(), mins );
-	VectorSubtract( m_MaxBounds, GetRenderOrigin(), maxs );
+	VectorSubtract(m_LastMin, GetRenderOrigin(), mins);
+	VectorSubtract(m_LastMax, GetRenderOrigin(), maxs);
 }
 
 void CNewParticleEffect::DetectChanges()
@@ -394,8 +394,15 @@ void CNewParticleEffect::DetectChanges()
 		 m_MaxBounds.z < (m_LastMax.z - flExtraBuffer)
 		 )
 	{
-		// call leafsystem to updated this guy
-		ClientLeafSystem()->RenderableChanged( m_hRenderHandle );
+		if (m_MinBounds != m_LastMin || m_MaxBounds != m_LastMax)
+		{
+			// call leafsystem to update this guy
+			ClientLeafSystem()->RenderableChanged(m_hRenderHandle);
+
+			// remember last parameters
+			m_LastMin = m_MinBounds;
+			m_LastMax = m_MaxBounds;
+		}
 
 		// remember last parameters
 		// Add some padding in here so we don't reinsert it into the leaf system if it just changes a tiny amount.
@@ -527,10 +534,12 @@ int CNewParticleEffect::DrawModel( int flags )
 	pRenderContext->GetWorldSpaceCameraPosition( &vecCamera );
 	if ( CalcSqrDistanceToAABB( m_MinBounds, m_MaxBounds, vecCamera ) > ( m_pDef->m_flMaxDrawDistance * m_pDef->m_flMaxDrawDistance ) )
 	{
+#ifdef DEV_BUILD
 		if ( !IsRetail() && ( g_cl_particle_show_bbox || ( g_cl_particle_show_bbox_cost != 0 ) ) )
 		{
 			DebugDrawBbox ( true );
 		}
+#endif
 
 		// Still need to make sure we set this or they won't follow their attachemnt points.
 		m_flNextSleepTime = Max ( m_flNextSleepTime, ( g_pParticleSystemMgr->GetLastSimulationTime() + m_pDef->m_flNoDrawTimeToGoToSleep ));
@@ -583,6 +592,7 @@ int CNewParticleEffect::DrawModel( int flags )
 		g_pParticleSystemMgr->AddToRenderCache( this );
 	}
 
+#ifdef DEV_BUILD
 	if ( !IsRetail() )
 	{
 		CParticleMgr *pMgr = ParticleMgr();
@@ -596,6 +606,7 @@ int CNewParticleEffect::DrawModel( int flags )
 			DebugDrawBbox ( false );
 		}
 	}
+#endif
 
 	return 1;
 }

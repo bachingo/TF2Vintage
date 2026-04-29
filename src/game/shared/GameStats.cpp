@@ -12,7 +12,7 @@
 #include "tier1/utlbuffer.h"
 #include "fmtstr.h"
 
-#ifndef SWDS
+#ifdef WIN32
 #include "iregistry.h"
 #endif
 
@@ -245,7 +245,7 @@ void CBaseGameStats::Event_Init( void )
 	SetHL2UnlockedChapterStatistic();
 	SetSteamStatistic( filesystem->IsSteam() );
 	SetCyberCafeStatistic( gamestatsuploader->IsCyberCafeUser() );
-	ConVarRef pDXLevel( "mat_dxlevel" );
+	static ConVarRef pDXLevel( "mat_dxlevel" );
 	if( pDXLevel.IsValid() )
 	{
 		SetDXLevelStatistic( pDXLevel.GetInt() );
@@ -542,7 +542,7 @@ bool CBaseGameStats::UploadStatsFileNOW( void )
 	CBGSDriver.m_tLastUpload = curtime;
 
 	// Update the registry
-#ifndef SWDS
+#ifdef WIN32
 	IRegistry *reg = InstanceRegistry( "Steam" );
 	Assert( reg );
 	reg->WriteInt( GetStatUploadRegistryKeyName(), CBGSDriver.m_tLastUpload );
@@ -673,9 +673,11 @@ void CBaseGameStats::SendData()
 
 #endif // GAME_DLL
 
+extern const char* COM_GetModDirectory();
+
 bool CBaseGameStats_Driver::Init()
 {
-	const char *pGameDir = CommandLine()->ParmValue( "-game", "hl2" );
+	const char *pGameDir = COM_GetModDirectory();
 
 	//standardizing is a good thing
 	char szLoweredGameDir[256];
@@ -709,7 +711,7 @@ bool CBaseGameStats_Driver::Init()
 	if ( StatsTrackingIsFullyEnabled() )
 	{
 		// FIXME: Load m_tLastUpload from registry and save it back out, too
-#ifndef SWDS
+#ifdef WIN32
 		IRegistry *reg = InstanceRegistry( "Steam" );
 		Assert( reg );
 		m_tLastUpload = reg->ReadInt( gamestats->GetStatUploadRegistryKeyName(), 0 );

@@ -438,7 +438,7 @@ void CBreakable::Precache( void )
 		break;
 #endif
 
-#if HL2_EPISODIC 
+#if (defined(HL2_EPISODIC) || !defined(HL2_DLL)) && !defined(PORTAL)
 	case matNone:
 		pGibName = "";
 		break;
@@ -1055,7 +1055,7 @@ void CBreakable::Die( void )
 		iCount = func_break_max_pieces.GetInt();
 	}
 
-	ConVarRef breakable_disable_gib_limit( "breakable_disable_gib_limit" );
+	static ConVarRef breakable_disable_gib_limit( "breakable_disable_gib_limit" );
 	if ( !breakable_disable_gib_limit.GetBool() && iCount )
 	{
 		if ( m_PerformanceMode == PM_NO_GIBS )

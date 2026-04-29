@@ -8,11 +8,14 @@
 #include "tf_weaponbase_gun.h"
 #include "tf_fx_shared.h"
 #include "effect_dispatch_data.h"
+#include "in_buttons.h"
 #include "takedamageinfo.h"
+#include "tf_gamerules.h"
 #include "tf_projectile_nail.h"
 #include "tf_weapon_jar.h"
 #include "tf_weapon_flaregun.h"
 #include "tf_projectile_energy_ring.h"
+#include "tf_weapon_medigun.h"
 
 #if !defined( CLIENT_DLL )	// Server specific.
 
@@ -57,6 +60,10 @@ DEFINE_THINKFUNC( ZoomIn ),
 END_DATADESC()
 #endif
 
+#ifdef GAME_DLL
+ConVar tf_pipebomb_disable_random_launch("tf_pipebomb_disable_random_launch", "0", FCVAR_HIDDEN, "Disable random velocity and spin when launching grenades and stickybombs.");
+#endif
+
 //=============================================================================
 //
 // TFWeaponBase Gun functions.
@@ -68,7 +75,6 @@ END_DATADESC()
 CTFWeaponBaseGun::CTFWeaponBaseGun()
 {
 	m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
-	m_iAmmoToAdd = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -97,7 +103,10 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 		return;
 
 	if ( !CanAttack() )
+	{
+		m_flNextPrimaryAttack = MAX(m_flNextPrimaryAttack, gpGlobals->curtime);
 		return;
+	}
 
 	float flFireDelay = ApplyFireDelay( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay );
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flFireDelay, hwn_mult_postfiredelay );
@@ -125,7 +134,7 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 		if ( GetOwner() && GetAmmoPerShot() > GetOwner()->GetAmmoCount( m_iPrimaryAmmoType ) )
 		{
 			WeaponSound( EMPTY );
-			m_flNextPrimaryAttack = gpGlobals->curtime + flFireDelay;
+			m_flNextPrimaryAttack += flFireDelay;
 			return;
 		}
 	}
@@ -159,8 +168,29 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 
 	pPlayer->SetAnimation( PLAYER_ATTACK1 );
 
-	CBaseEntity* pProj = FireProjectile( pPlayer );
-	ModifyProjectile( pProj );
+	int32 fireTimes = flFireDelay > 0.0f ? Max( Ceil2Int( ( gpGlobals->curtime - m_flNextPrimaryAttack ) / flFireDelay ), 1 ) : 1;
+	const int32 iFireTimes = fireTimes;
+	if (fireTimes == 1)
+	{
+		CBaseEntity* pProj = FireProjectile(pPlayer);
+		ModifyProjectile(pProj);
+	}
+	else
+	{
+		while (fireTimes-- > 0)
+		{
+			if ( ( UsesClipsForAmmo1() && m_iClip1 <= 0 ) || ( !UsesClipsForAmmo1() && pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) <= 0 ) )
+			{
+				HandleFireOnEmpty();
+				break;
+			}
+			else
+			{
+				CBaseEntity *pProj = FireProjectile( pPlayer );
+				ModifyProjectile( pProj );
+			}
+		}
+	}
 
 	if ( !UsesClipsForAmmo1() )
 	{
@@ -181,7 +211,7 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 	}
 
 	// Set next attack times.
-	m_flNextPrimaryAttack = gpGlobals->curtime + flFireDelay;
+	m_flNextPrimaryAttack += iFireTimes * flFireDelay;
 
 	// Don't push out secondary attack, because our secondary fire
 	// systems are all separate from primary fire (sniper zooming, demoman pipebomb detonating, etc)
@@ -242,10 +272,11 @@ void CTFWeaponBaseGun::SecondaryAttack( void )
 	if ( !pPlayer )
 		return;
 
-	pPlayer->DoClassSpecialSkill();
-
-	m_bInAttack2 = true;
-
+	if ( pPlayer->DoClassSpecialSkill() )
+	{
+		// require a repress if we did something.
+		m_bInAttack2 = true;
+	}
 
 	m_flNextSecondaryAttack = gpGlobals->curtime + 0.5;
 }
@@ -375,8 +406,7 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseGun::RemoveProjectileAmmo( CTFPlayer *pPlayer )
 {
-
-	if ( m_iClip1 != -1 )
+	if ( m_iClip1 != WEAPON_NOCLIP )
 	{
 		m_iClip1 -= GetAmmoPerShot();
 	}
@@ -385,31 +415,15 @@ void CTFWeaponBaseGun::RemoveProjectileAmmo( CTFPlayer *pPlayer )
 		if ( m_iWeaponMode == TF_WEAPON_PRIMARY_MODE )
 		{
 			pPlayer->RemoveAmmo( GetAmmoPerShot(), m_iPrimaryAmmoType );
-
-#ifndef CLIENT_DLL
-			// delayed ammo adding for the onhit attribute
-			if ( m_iAmmoToAdd > 0 )
-			{
-				pPlayer->GiveAmmo( m_iAmmoToAdd, m_iPrimaryAmmoType );
-				m_iAmmoToAdd = 0;
-			}
-#endif
 		}
 		else
 		{
 			pPlayer->RemoveAmmo( GetAmmoPerShot(), m_iSecondaryAmmoType );
 
-#ifndef CLIENT_DLL
-			// delayed ammo adding for the onhit attribute
-			if ( m_iAmmoToAdd > 0 )
-			{
-				pPlayer->GiveAmmo( m_iAmmoToAdd, m_iSecondaryAmmoType );
-				m_iAmmoToAdd = 0;
-			}
-#endif
 		}
 	}
 }
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -497,7 +511,7 @@ void CTFWeaponBaseGun::FireBullet( CTFPlayer *pPlayer )
 		this,
 		pPlayer->entindex(),
 		pPlayer->Weapon_ShootPosition(),
-		pPlayer->EyeAngles() + pPlayer->GetPunchAngle(),
+		pPlayer->EyeAngles() + pPlayer->Weapon_PunchAngle(),
 		GetWeaponID(),
 		m_iWeaponMode,
 		CBaseEntity::GetPredictionRandomSeed( UseServerRandomSeed() ) & 255,
@@ -682,16 +696,21 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, int iPipeBombTy
 	if ( trace.startsolid )
 		return NULL;
 
+	const bool bFixedGrenades = tf_pipebomb_disable_random_launch.GetBool() || TFGameRules()->IsCompetitiveGame();
+
 	float flLaunchSpeed = GetProjectileSpeed();
 	CALL_ATTRIB_HOOK_FLOAT( flLaunchSpeed, mult_projectile_range );
-	Vector vecVelocity = ( vecForward * flLaunchSpeed ) + ( vecUp * 200.0f ) + ( random->RandomFloat( -10.0f, 10.0f ) * vecRight ) +		
-		( random->RandomFloat( -10.0f, 10.0f ) * vecUp );
+	Vector vecVelocity = ( vecForward * flLaunchSpeed ) + ( vecUp * 200.0f );
+	if ( !bFixedGrenades )
+	{
+		vecVelocity += ( random->RandomFloat( -10.0f, 10.0f ) * vecRight ) + ( random->RandomFloat( -10.0f, 10.0f ) * vecUp );
+	}
 
 	float flMultDmg = 1.f;
 	CALL_ATTRIB_HOOK_FLOAT( flMultDmg, mult_dmg );
 	
 	// no spin for loch-n-load
-	Vector angImpulse = AngularImpulse( 600, random->RandomInt( -1200, 1200 ), 0 );
+	Vector angImpulse = bFixedGrenades ? AngularImpulse( 600, -1125.89f, 0 ) : AngularImpulse( 600, random->RandomInt( -1200, 1200 ), 0 );
 	int iNoSpin = 0;
 	CALL_ATTRIB_HOOK_INT( iNoSpin, grenade_no_spin );
 	if ( iNoSpin )
@@ -954,6 +973,23 @@ float CTFWeaponBaseGun::GetProjectileDamage( void )
 		}
 	}
 
+#if defined(MCOMS_BALANCE_PACK)
+	// Medic Uber
+	if (GetWeaponID() == TF_WEAPON_SYRINGEGUN_MEDIC && pPlayer)
+	{
+		int iModHealthOnHit = 0;
+		CALL_ATTRIB_HOOK_INT(iModHealthOnHit, add_onhit_addhealth);
+		if (iModHealthOnHit)
+		{
+			CWeaponMedigun* pMedigun = dynamic_cast<CWeaponMedigun*>(pPlayer->Weapon_OwnsThisID(TF_WEAPON_MEDIGUN));
+			if (pMedigun)
+			{
+				flDamage *= RemapValClamped(pMedigun->GetChargeLevel(), 0.f, 1.f, 1.f, 1.7f);
+			}
+		}
+	}
+#endif
+
 	if ( GetWeaponProjectileType() == TF_PROJECTILE_BULLET )
 	{
 		float flScaleDamage = 1.f;
@@ -1112,4 +1148,44 @@ bool CTFWeaponBaseGun::HasLastShotCritical( void )
 		}
 	}
 	return false;
+}
+
+void CTFWeaponBaseGun::ItemPostFrame()
+{
+	CTFPlayer* pOwner = ToTFPlayer(GetOwner());
+	if (!pOwner)
+	{
+		return;
+	}
+
+	// mcoms: if we're not in a busy frame or secondary attack (which both already handle this), then try a special skill.
+	if ( pOwner && gpGlobals->curtime >= pOwner->m_flNextAttack && m_flNextSecondaryAttack < gpGlobals->curtime )
+	{
+		// Since there's no precedent for a non-SecondaryAttack special skill, replicate those conditions here
+		// We likely have some busy frame logic keeping us safe otherwise.
+		bool bCanAttack = true;
+		if ( pOwner->GetPlayerClass()->GetClassIndex() == TF_CLASS_DEMOMAN )
+		{
+			if ( !CanAttack(TF_CAN_ATTACK_FLAG_PIPEBOMBLAUNCHER_SECONDARY) )
+				bCanAttack = false;
+		}
+		else
+		{
+			if ( !CanAttack() )
+				bCanAttack = false;
+		}
+
+		if ( ( pOwner->m_nButtons & IN_ATTACK2 ) && !m_bInAttack2 && bCanAttack && m_flNextBusyCheck <= gpGlobals->curtime )
+		{
+			if ( pOwner->DoClassSpecialSkill() )
+			{
+				// require a repress if we did something.
+				m_bInAttack2 = true;
+			}
+			// try again soon
+			m_flNextBusyCheck = gpGlobals->curtime + 0.1f;
+		}
+	}
+
+	BaseClass::ItemPostFrame();
 }

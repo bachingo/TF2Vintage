@@ -19,6 +19,7 @@
 #include <vgui_controls/EditablePanel.h>
 #include <vgui_controls/ProgressBar.h>
 #include <vgui_controls/Label.h>
+#include "tf_controls.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -94,6 +95,17 @@ void CHudDemomanPipes::ApplySchemeSettings( IScheme *pScheme )
 	LoadControlSettings( "resource/UI/HudDemomanPipes.res" );
 
 	BaseClass::ApplySchemeSettings( pScheme );
+
+	int xOffset;
+	int yOffset;
+	if ( ConstrainAspect( xOffset, yOffset ) )
+	{
+		int x, y;
+		GetPos( x, y );
+		int xNew, yNew;
+		OffsetAspect( x, y, xOffset, yOffset, xNew, yNew );
+		SetPos( xNew, yNew );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -171,7 +183,10 @@ void CHudDemomanPipes::OnTick( void )
 			m_pChargeMeter->SetProgress( flProgress );
 			if ( pPlayer->m_Shared.InCond( TF_COND_SHIELD_CHARGE ) )
 			{
-				if ( flProgress <= 0.33f )
+				// Keying on TideTurner
+				int iDemoChargeDamagePenalty = 0;
+				CALL_ATTRIB_HOOK_INT_ON_OTHER( pPlayer, iDemoChargeDamagePenalty, lose_demo_charge_on_damage_when_charging );
+				if ( !iDemoChargeDamagePenalty && flProgress <= 0.4f )
 				{
 					m_pChargeMeter->SetFgColor( Color( 255, 0, 0, 255 ) );
 				}

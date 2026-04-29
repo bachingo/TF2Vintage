@@ -21,7 +21,6 @@ $Games
 	"PORTAL"
 	"SDK"
 	"TF"
-	"TF2VINTAGE"
 }
 
 $Include "vpc_scripts\projects.vgc"

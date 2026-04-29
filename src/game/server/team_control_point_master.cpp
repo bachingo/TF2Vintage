@@ -8,10 +8,13 @@
 #include "cbase.h"
 #include "team_objectiveresource.h"
 #include "team_control_point_master.h"
+#include "teamplay_round_timer.h"
 #include "teamplayroundbased_gamerules.h"
 
 #if defined ( TF_DLL )
 #include "tf_gamerules.h"
+#include "filesystem.h"
+#include "tf_team.h"
 #endif
 
 BEGIN_DATADESC( CTeamControlPointMaster )
@@ -55,7 +58,8 @@ END_DATADESC()
 
 LINK_ENTITY_TO_CLASS( team_control_point_master, CTeamControlPointMaster );
 
-ConVar mp_time_between_capscoring( "mp_time_between_capscoring", "30", FCVAR_GAMEDLL, "Delay between scoring of owned capture points.", true, 1, false, 0 );
+// TODO(mcoms): what is this?
+//ConVar mp_time_between_capscoring( "mp_time_between_capscoring", "30", FCVAR_GAMEDLL, "Delay between scoring of owned capture points.", true, 1, false, 0 );
 
 // sort function for the list of control_point_rounds (we're sorting them by priority...highest first)
 int ControlPointRoundSort( CTeamControlPointRound* const *p1, CTeamControlPointRound* const *p2 )
@@ -93,6 +97,8 @@ void CTeamControlPointMaster::Spawn( void )
 	m_iCurrentRoundIndex = -1;
   	m_bFirstRoundAfterRestart = true;
 	m_flLastOwnershipChangeTime = -1;
+	m_hBaseDefenseTimer = NULL;
+	memset( m_bInBaseDefense, 0, sizeof( m_bInBaseDefense ) );
 
 	BaseClass::Spawn();
 
@@ -163,6 +169,194 @@ void CTeamControlPointMaster::Activate( void )
 	FindControlPointRounds();
 
 	SetBaseControlPoints();
+
+#if defined ( TF_DLL )
+	// Experimental territorial control 2 mode: clear mini-round structure so all points are active from start.
+	extern ConVar tf_tc2_mode;
+	if ( tf_tc2_mode.GetBool() )
+	{
+		char szOverrideFile[MAX_PATH];
+		Q_snprintf( szOverrideFile, sizeof(szOverrideFile), "scripts/tc2overrides/%s.txt", STRING( gpGlobals->mapname ) );
+
+		KeyValues *pKV = new KeyValues( "TC2Overrides" );
+		if ( pKV->LoadFromFile( filesystem, szOverrideFile, "GAME" ) )
+		{
+			for ( KeyValues *pSub = pKV->GetFirstSubKey(); pSub != NULL; pSub = pSub->GetNextKey() )
+			{
+				const char *pszKey = pSub->GetName();
+				const char *pszInput = pSub->GetString();
+
+				if ( pszKey && pszKey[0] && pszInput && pszInput[0] )
+				{
+					// Optional syntax: "classname|targetname" for collision filtering e.g. "trigger_multiple|round_A2B_disablebrush"
+					const char *pszTargetName = pszKey;
+					const char *pszClassName = NULL;
+					
+					char szParsedClass[128];
+					const char *pPipe = V_strchr( pszKey, '|' );
+					if ( pPipe )
+					{
+						int nClassLen = pPipe - pszKey;
+						Q_strncpy( szParsedClass, pszKey, MIN( sizeof(szParsedClass), nClassLen + 1 ) );
+						pszClassName = szParsedClass;
+						pszTargetName = pPipe + 1;
+					}
+
+					CBaseEntity *pEnt = gEntList.FindEntityByName( NULL, pszTargetName );
+					while ( pEnt )
+					{
+						bool bMatch = true;
+						if ( pszClassName && !FClassnameIs( pEnt, pszClassName ) )
+						{
+							bMatch = false;
+						}
+						
+						if ( bMatch )
+						{
+							pEnt->AcceptInput( pszInput, this, this, variant_t(), 0 );
+						}
+						
+						pEnt = gEntList.FindEntityByName( pEnt, pszTargetName );
+					}
+				}
+			}
+		}
+		pKV->deleteThis();
+
+		if ( m_ControlPointRounds.Count() > 0 )
+		{
+			m_ControlPointRounds.RemoveAll();
+			if ( g_pObjectiveResource )
+			{
+				g_pObjectiveResource->SetPlayingMiniRounds( false );
+				
+				int iRedBase = GetBaseControlPoint( TF_TEAM_RED );
+				int iBluBase = GetBaseControlPoint( TF_TEAM_BLUE );
+
+				CUtlVector<int> vecRedMiddle;
+				CUtlVector<int> vecBluMiddle;
+
+				// Mark all points as "in use" so HUD shows them. Compile middle points logic.
+				for ( unsigned int i = 0; i < m_ControlPoints.Count(); ++i )
+				{
+					CTeamControlPoint *pPoint = m_ControlPoints[i];
+					if ( pPoint )
+					{
+						int iIndex = pPoint->GetPointIndex();
+						g_pObjectiveResource->SetInMiniRound( iIndex, true );
+						
+						if ( iIndex != iRedBase && iIndex != iBluBase )
+						{
+							if ( pPoint->GetDefaultOwner() == TF_TEAM_RED )
+							{
+								vecRedMiddle.AddToTail( iIndex );
+							}
+							else if ( pPoint->GetDefaultOwner() == TF_TEAM_BLUE )
+							{
+								vecBluMiddle.AddToTail( iIndex );
+							}
+						}
+					}
+				}
+				
+				// Helper lambda to get name string from index
+				auto GetPointName = [&]( int index ) -> string_t
+				{
+					for ( unsigned int i = 0; i < m_ControlPoints.Count(); ++i )
+					{
+						if ( m_ControlPoints[i] && m_ControlPoints[i]->GetPointIndex() == index )
+						{
+							return AllocPooledString( m_ControlPoints[i]->GetEntityName().ToCStr() );
+						}
+					}
+					return NULL_STRING;
+				};
+
+				// We must set the previous points locally on the CTeamControlPoint entity, and ObjectiveResource (for HUD)
+				for ( unsigned int i = 0; i < m_ControlPoints.Count(); ++i )
+				{
+					CTeamControlPoint *pPoint = m_ControlPoints[i];
+					if ( !pPoint ) continue;
+
+					int iIndex = pPoint->GetPointIndex();
+
+					pPoint->SetWarnOnCap( CP_WARN_NORMAL );
+					g_pObjectiveResource->SetWarnOnCap( iIndex, CP_WARN_NORMAL );
+
+					// Dependencies for RED team (targets are BLU points)
+					if ( iIndex == iBluBase || pPoint->GetDefaultOwner() == TF_TEAM_BLUE )
+					{
+						int iPrevCount = 0;
+						
+						// RED must own ALL RED middle points to capture ANY BLU territory
+						for ( int j = 0; j < vecRedMiddle.Count() && iPrevCount < MAX_PREVIOUS_POINTS; ++j )
+						{
+							g_pObjectiveResource->SetPreviousPoint( iIndex, TF_TEAM_RED, iPrevCount, vecRedMiddle[j] );
+							
+							char szKey[128];
+							char szVal[128];
+							Q_snprintf( szKey, sizeof(szKey), "team_previouspoint_%d_%d", TF_TEAM_RED, iPrevCount );
+							Q_strncpy( szVal, STRING(GetPointName( vecRedMiddle[j] )), sizeof(szVal) );
+							pPoint->KeyValue( szKey, szVal );
+							iPrevCount++;
+						}
+						
+						// IF it's the BLU base, RED must ALSO own ALL BLU middle points
+						if ( iIndex == iBluBase )
+						{
+							for ( int j = 0; j < vecBluMiddle.Count() && iPrevCount < MAX_PREVIOUS_POINTS; ++j )
+							{
+								g_pObjectiveResource->SetPreviousPoint( iIndex, TF_TEAM_RED, iPrevCount, vecBluMiddle[j] );
+								
+								char szKey[128];
+								char szVal[128];
+								Q_snprintf( szKey, sizeof(szKey), "team_previouspoint_%d_%d", TF_TEAM_RED, iPrevCount );
+								Q_strncpy( szVal, STRING(GetPointName( vecBluMiddle[j] )), sizeof(szVal) );
+								pPoint->KeyValue( szKey, szVal );
+								iPrevCount++;
+							}
+						}
+					}
+
+					// Dependencies for BLU team (targets are RED points)
+					if ( iIndex == iRedBase || pPoint->GetDefaultOwner() == TF_TEAM_RED )
+					{
+						int iPrevCount = 0;
+						
+						// BLU must own ALL BLU middle points to capture ANY RED territory
+						for ( int j = 0; j < vecBluMiddle.Count() && iPrevCount < MAX_PREVIOUS_POINTS; ++j )
+						{
+							g_pObjectiveResource->SetPreviousPoint( iIndex, TF_TEAM_BLUE, iPrevCount, vecBluMiddle[j] );
+							
+							char szKey[128];
+							char szVal[128];
+							Q_snprintf( szKey, sizeof(szKey), "team_previouspoint_%d_%d", TF_TEAM_BLUE, iPrevCount );
+							Q_strncpy( szVal, STRING(GetPointName( vecBluMiddle[j] )), sizeof(szVal) );
+							pPoint->KeyValue( szKey, szVal );
+							iPrevCount++;
+						}
+						
+						// IF it's the RED base, BLU must ALSO own ALL RED middle points
+						if ( iIndex == iRedBase )
+						{
+							for ( int j = 0; j < vecRedMiddle.Count() && iPrevCount < MAX_PREVIOUS_POINTS; ++j )
+							{
+								g_pObjectiveResource->SetPreviousPoint( iIndex, TF_TEAM_BLUE, iPrevCount, vecRedMiddle[j] );
+								
+								char szKey[128];
+								char szVal[128];
+								Q_snprintf( szKey, sizeof(szKey), "team_previouspoint_%d_%d", TF_TEAM_BLUE, iPrevCount );
+								Q_strncpy( szVal, STRING(GetPointName( vecRedMiddle[j] )), sizeof(szVal) );
+								pPoint->KeyValue( szKey, szVal );
+								iPrevCount++;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -337,6 +531,7 @@ bool CTeamControlPointMaster::FindControlPointRounds( void )
 		g_pObjectiveResource->SetPlayingMiniRounds( bFoundRounds );
 		g_pObjectiveResource->SetCapLayoutInHUD( STRING(m_iszCapLayoutInHUD) );
 		g_pObjectiveResource->SetCapLayoutCustomPosition( m_flCustomPositionX, m_flCustomPositionY );
+		g_pObjectiveResource->SetScorePerCap( m_bScorePerCapture );
 	}
 
 	return bFoundRounds;
@@ -628,6 +823,9 @@ void CTeamControlPointMaster::CPMThink( void )
 	// trigger a win. but we'll leave it here just in case.
 	CheckWinConditions();
 
+	// Check if any team is pushed to base defense
+	UpdateBaseDefenseTimer();
+
 	// the next time we 'think'
 	SetContextThink( &CTeamControlPointMaster::CPMThink, gpGlobals->curtime + 0.2, CPM_THINK );
 }
@@ -640,7 +838,12 @@ void CTeamControlPointMaster::CheckWinConditions( void )
 	if ( m_bDisabled )
 		return;
 
+#if defined ( TF_DLL )
+	extern ConVar tf_tc2_mode;
+	if ( m_ControlPointRounds.Count() > 0 && !tf_tc2_mode.GetBool() )
+#else
 	if ( m_ControlPointRounds.Count() > 0 )
+#endif
 	{
 		if ( m_iCurrentRoundIndex != -1 )
 		{
@@ -756,13 +959,20 @@ void CTeamControlPointMaster::InternalSetWinner( int iTeam )
 	}
 	else
 	{
+		int iWinReason = WINREASON_ALL_POINTS_CAPTURED;
+		if ( GetGlobalTFTeam( iTeam ) && GetGlobalTFTeam( iTeam )->GetRole() == TEAM_ROLE_DEFENDERS )
+		{
+			// TODO(mcoms): also handle stopwatch case
+			iWinReason = WINREASON_DEFEND_UNTIL_TIME_LIMIT;
+		}
+
 		if ( !bForceMapReset )
 		{
-			TeamplayGameRules()->SetWinningTeam( iTeam, WINREASON_ALL_POINTS_CAPTURED, bForceMapReset );
+			TeamplayGameRules()->SetWinningTeam( iTeam, iWinReason, bForceMapReset );
 		}
 		else
 		{
-			TeamplayGameRules()->SetWinningTeam( iTeam, WINREASON_ALL_POINTS_CAPTURED, bForceMapReset, m_bSwitchTeamsOnWin );
+			TeamplayGameRules()->SetWinningTeam( iTeam, iWinReason, bForceMapReset, m_bSwitchTeamsOnWin );
 		}
 
 		FireTeamWinOutput( iTeam );
@@ -850,6 +1060,15 @@ void CTeamControlPointMaster::InputRoundSpawn( inputdata_t &input )
 //-----------------------------------------------------------------------------
 void CTeamControlPointMaster::InputRoundActivate( inputdata_t &input )
 {
+	// In TC2 mode we bypass mini-round activation logic entirely.
+#if defined ( TF_DLL )
+	extern ConVar tf_tc2_mode;
+	if ( tf_tc2_mode.GetBool() )
+	{
+		TFGameRules()->SetupSpawnPointsForRound();
+		return;
+	}
+#endif
 	// if we're using mini-rounds and haven't picked one yet, find one to play
 	if ( PlayingMiniRounds() && GetCurrentRound() == NULL )
 	{
@@ -1041,6 +1260,11 @@ int CTeamControlPointMaster::TeamOwnsAllPoints( CTeamControlPoint *pOverridePoin
 //-----------------------------------------------------------------------------
 bool CTeamControlPointMaster::WouldNewCPOwnerWinGame( CTeamControlPoint *pPoint, int iNewOwner )
 {
+	if ( m_iInvalidCapWinner == 1 || m_iInvalidCapWinner == iNewOwner )
+	{
+		return false;
+	}
+
 	return ( TeamOwnsAllPoints( pPoint, iNewOwner ) == iNewOwner );
 }
 
@@ -1261,6 +1485,96 @@ int CTeamControlPointMaster::CalcNumRoundsRemaining( int iTeam )
 float CTeamControlPointMaster::GetPartialCapturePointRate( void )
 {
 	return m_flPartialCapturePointsRate;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Called to update our timers for the base defense mechanic
+//-----------------------------------------------------------------------------
+void CTeamControlPointMaster::UpdateBaseDefenseTimer( void )
+{
+#if defined( TF_DLL )
+	extern ConVar tf_tc2_mode;
+	if ( !tf_tc2_mode.GetBool() )
+		return;
+
+	int iTeamInDefense = TEAM_UNASSIGNED;
+
+	for ( int iTeam = FIRST_GAME_TEAM; iTeam < GetNumberOfTeams(); iTeam++ )
+	{
+		int iNumPointsOwned = GetNumPointsOwnedByTeam( iTeam );
+		if ( iNumPointsOwned == 1 )
+		{
+			// Find the point they own
+			for ( unsigned int i = 0; i < m_ControlPoints.Count(); i++ )
+			{
+				if ( m_ControlPoints[i]->GetOwner() == iTeam && IsBaseControlPoint( m_ControlPoints[i]->GetPointIndex() ) )
+				{
+					iTeamInDefense = iTeam;
+					break;
+				}
+			}
+		}
+	}
+
+	// if no team is pushed back or multiple somehow, kill timer
+	if ( iTeamInDefense == TEAM_UNASSIGNED )
+	{
+		if ( m_hBaseDefenseTimer )
+		{
+			m_hBaseDefenseTimer->AcceptInput( "Kill", NULL, NULL, variant_t(), 0 );
+			m_hBaseDefenseTimer = NULL;
+		}
+		for ( int i = 0; i < MAX_TEAMS; i++ )
+			m_bInBaseDefense[i] = false;
+		return;
+	}
+
+	if ( !m_bInBaseDefense[iTeamInDefense] )
+	{
+		// They just got pushed back, spawn the timer
+		if ( !m_hBaseDefenseTimer )
+		{
+			m_hBaseDefenseTimer = ( CTeamRoundTimer* )CBaseEntity::Create( "team_round_timer", vec3_origin, vec3_angle );
+			if ( m_hBaseDefenseTimer )
+			{
+				m_hBaseDefenseTimer->SetName( MAKE_STRING( "zz_base_defense_timer" ) );
+				m_hBaseDefenseTimer->SetShowInHud( true );
+
+				variant_t sVariant;
+				sVariant.SetInt( 360 ); // 6 minutes
+				m_hBaseDefenseTimer->AcceptInput( "SetTime", NULL, NULL, sVariant, 0 );
+				m_hBaseDefenseTimer->AcceptInput( "Resume", NULL, NULL, variant_t(), 0 );
+
+				if ( ObjectiveResource() )
+				{
+					ObjectiveResource()->SetTimerInHUD( m_hBaseDefenseTimer );
+				}
+			}
+		}
+
+		m_bInBaseDefense[iTeamInDefense] = true;
+	}
+
+	// Wait for the timer to expire
+	if ( m_hBaseDefenseTimer && m_hBaseDefenseTimer->GetTimeRemaining() <= 0.0f )
+	{
+		// They survived! Time to award them the two middle points
+		m_hBaseDefenseTimer->AcceptInput( "Kill", NULL, NULL, variant_t(), 0 );
+		m_hBaseDefenseTimer = NULL;
+		m_bInBaseDefense[iTeamInDefense] = false;
+
+		// Find the two middle points belonging to the enemy team and set their owner to the defending team
+		int iEnemyTeam = ( iTeamInDefense == TF_TEAM_RED ) ? TF_TEAM_BLUE : TF_TEAM_RED;
+
+		for ( unsigned int i = 0; i < m_ControlPoints.Count(); i++ )
+		{
+			if ( !IsBaseControlPoint( m_ControlPoints[i]->GetPointIndex() ) && m_ControlPoints[i]->GetOwner() == iEnemyTeam && m_ControlPoints[i]->GetDefaultOwner() == iTeamInDefense )
+			{
+				m_ControlPoints[i]->ForceOwner( iTeamInDefense );
+			}
+		}
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------

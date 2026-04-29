@@ -16,6 +16,7 @@
 #include "materialsystem/imaterialsystem.h"
 #include "VGuiMatSurface/IMatSystemSurface.h"
 #include "client_virtualreality.h"
+#include "tf_gamerules.h"
 #include "sourcevr/isourcevirtualreality.h"
 
 #ifdef SIXENSE
@@ -98,6 +99,11 @@ bool CHudCrosshair::ShouldDraw( void )
 	if ( portalPlayer && portalPlayer->IsSuppressingCrosshair() )
 		return false;
 #endif // PORTAL
+
+	if ( pPlayer->IsGamePausedForMe() )
+	{
+		return false;
+	}
 
 	/* disabled to avoid assuming it's an HL2 player.
 	// suppress crosshair in zoom.
@@ -275,7 +281,7 @@ void CHudCrosshair::Paint( void )
 	m_pCrosshair->DrawSelfCropped (
 		iX-(iWidth/2), iY-(iHeight/2),
 		0, 0,
-		iTextureW, iTextureH,
+		iTextureW + 1, iTextureH + 1,
 		iWidth, iHeight,
 		clr );
 }

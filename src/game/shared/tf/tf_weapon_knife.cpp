@@ -170,6 +170,33 @@ bool CTFKnife::DecreaseRegenerationTime( float value, bool bForce )
 #endif
 
 
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CTFPlayer* CTFKnife::TraceBackstab(CTFPlayer* pOwner)
+{
+	trace_t trace;
+	if ( DoSwingTrace(trace) )
+	{
+		// we will hit something with the attack
+		if ( trace.m_pEnt && trace.m_pEnt->IsPlayer() )
+		{
+			CTFPlayer* pTarget = ToTFPlayer( trace.m_pEnt );
+
+			if ( pTarget && pTarget->GetTeamNumber() != pOwner->GetTeamNumber() )
+			{
+				// Deal extra damage to players when stabbing them from behind
+				if ( CanPerformBackstabAgainstTarget( pTarget ) )
+				{
+					return pTarget;
+				}
+			}
+		}
+	}
+	return nullptr;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: Set stealth attack bool
 //-----------------------------------------------------------------------------
@@ -178,7 +205,10 @@ void CTFKnife::PrimaryAttack( void )
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
 
 	if ( !CanAttack() )
+	{
+		m_flNextPrimaryAttack = MAX(m_flNextPrimaryAttack, gpGlobals->curtime);
 		return;
+	}
 
 	// Set the weapon usage mode - primary, secondary.
 	m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
@@ -221,7 +251,10 @@ void CTFKnife::PrimaryAttack( void )
 #endif
 
 #ifndef CLIENT_DLL
-	pPlayer->RemoveInvisibility();
+	if ( ShouldRemoveInvisibilityOnPrimaryAttack() )
+	{
+		pPlayer->RemoveInvisibility();
+	}
 	lagcompensation->FinishLagCompensation( pPlayer );
 #endif
 
@@ -255,7 +288,7 @@ void CTFKnife::PrimaryAttack( void )
 		}
 
 		// We should very quickly disguise as our victim.
-		const float flDelay = ( bDropDisguise ) ? 1.5f : 0.2f;
+		const float flDelay = 0.2f;
 		SetContextThink( &CTFKnife::DisguiseOnKill, gpGlobals->curtime + flDelay, "DisguiseOnKill" );
 	}
 	else
@@ -301,12 +334,17 @@ void CTFKnife::SecondaryAttack( void )
 	if ( !pOwner )
 		return;
 
-	pOwner->DoClassSpecialSkill();
+	if ( pOwner->DoClassSpecialSkill() )
+	{
+		// require a repress if we did something.
+		m_bInAttack2 = true;
+	}
 
-	m_bInAttack2 = true;
-
-
-	m_flNextSecondaryAttack = gpGlobals->curtime + GetNextSecondaryAttackDelay();
+#if 1
+	m_flNextSecondaryAttack = gpGlobals->curtime + GetNextSecondaryAttackDelay(); // default: 0.1f
+#else
+	m_flNextSecondaryAttack = gpGlobals->curtime + 0.1f; 
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -396,7 +434,7 @@ float CTFKnife::GetMeleeDamage( CBaseEntity *pTarget, int* piDamageType, int* pi
 //-----------------------------------------------------------------------------
 // Purpose: Are we in a backstab position?
 //-----------------------------------------------------------------------------
-bool CTFKnife::CanPerformBackstabAgainstTarget( CTFPlayer *pTarget )
+bool CTFKnife::CanPerformBackstabAgainstTarget( CTFPlayer *pTarget, bool bInAttack )
 {
 	if ( !pTarget )
 		return false;
@@ -425,7 +463,7 @@ bool CTFKnife::CanPerformBackstabAgainstTarget( CTFPlayer *pTarget )
 	}
 	
 	// Behind and facing target's back?
-	if ( IsBehindAndFacingTarget( pTarget ) )
+	if ( IsBehindAndFacingTarget( pTarget, bInAttack ) )
 		return true;
 
 	// Is target (bot) disabled via a sapper?
@@ -439,46 +477,6 @@ bool CTFKnife::CanPerformBackstabAgainstTarget( CTFPlayer *pTarget )
 	}
 
 	return false;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Determine if we are reasonably facing our target.
-//-----------------------------------------------------------------------------
-bool CTFKnife::IsBehindAndFacingTarget( CTFPlayer *pTarget )
-{
-	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
-	if ( !pOwner )
-		return false;
-
-	// Get a vector from owner origin to target origin
-	Vector vecToTarget;
-	vecToTarget = pTarget->WorldSpaceCenter() - pOwner->WorldSpaceCenter();
-	vecToTarget.z = 0.0f;
-	vecToTarget.NormalizeInPlace();
-
-	// Get owner forward view vector
-	Vector vecOwnerForward;
-	AngleVectors( pOwner->EyeAngles(), &vecOwnerForward, NULL, NULL );
-	vecOwnerForward.z = 0.0f;
-	vecOwnerForward.NormalizeInPlace();
-
-	// Get target forward view vector
-	Vector vecTargetForward;
-	AngleVectors( pTarget->EyeAngles(), &vecTargetForward, NULL, NULL );
-	vecTargetForward.z = 0.0f;
-	vecTargetForward.NormalizeInPlace();
-
-	// Make sure owner is behind, facing and aiming at target's back
-	float flPosVsTargetViewDot = DotProduct( vecToTarget, vecTargetForward );	// Behind?
-	float flPosVsOwnerViewDot = DotProduct( vecToTarget, vecOwnerForward );		// Facing?
-	float flViewAnglesDot = DotProduct( vecTargetForward, vecOwnerForward );	// Facestab?
-
-	// Debug
-	// 	NDebugOverlay::HorzArrow( pTarget->WorldSpaceCenter(), pTarget->WorldSpaceCenter() + 50.0f * vecTargetForward, 5.0f, 0, 255, 0, 255, true, NDEBUG_PERSIST_TILL_NEXT_SERVER );
-	// 	NDebugOverlay::HorzArrow( pOwner->WorldSpaceCenter(), pOwner->WorldSpaceCenter() + 50.0f * vecOwnerForward, 5.0f, 0, 255, 0, 255, true, NDEBUG_PERSIST_TILL_NEXT_SERVER );
-	// 	DevMsg( "PosDot: %3.2f FacingDot: %3.2f AnglesDot: %3.2f\n", flPosVsTargetViewDot, flPosVsOwnerViewDot, flViewAnglesDot );
-
-	return ( flPosVsTargetViewDot > 0.f && flPosVsOwnerViewDot > 0.5 && flViewAnglesDot > -0.3f );
 }
 
 //-----------------------------------------------------------------------------
@@ -598,6 +596,7 @@ void CTFKnife::ItemPostFrame( void )
 //-----------------------------------------------------------------------------
 void CTFKnife::ItemBusyFrame( void )
 {
+	BackstabVMThink();
 	BaseClass::ItemBusyFrame();
 	ProcessDisguiseImpulse();
 }
@@ -607,6 +606,7 @@ void CTFKnife::ItemBusyFrame( void )
 //-----------------------------------------------------------------------------
 void CTFKnife::ItemHolsterFrame( void )
 {
+	BackstabVMThink();
 	BaseClass::ItemHolsterFrame();
 	ProcessDisguiseImpulse();
 }
@@ -653,41 +653,24 @@ void CTFKnife::BackstabVMThink( void )
 		 (iActivity != ACT_ITEM2_VM_IDLE) && (iActivity != ACT_ITEM2_BACKSTAB_VM_IDLE) )
 		return;
 
-
 	// Are we in backstab range and not cloaked?
-	trace_t trace;
-	if ( DoSwingTrace( trace ) == true && CanAttack() )
+	bool bBackstab = false;
+	if ( CanAttack() && TraceBackstab(pPlayer) )
 	{
-		// We will hit something if we attack.
-		if( trace.m_pEnt && trace.m_pEnt->IsPlayer() )
-		{
-			CTFPlayer *pTarget = ToTFPlayer( trace.m_pEnt );
-
-			if ( pTarget && pTarget->GetTeamNumber() != pPlayer->GetTeamNumber() )
-			{
-				if ( CanPerformBackstabAgainstTarget( pTarget ) )
-				{
-					if ( !m_bReadyToBackstab )
-					{
-						SendWeaponAnim( ACT_BACKSTAB_VM_UP );
-
-						m_bReadyToBackstab = true;
-					}
-				}
-				else if ( m_bReadyToBackstab )
-				{
-
-					SendWeaponAnim( ACT_BACKSTAB_VM_DOWN );
-
-					m_bReadyToBackstab = false;
-				}
-			}
-		} 
+		bBackstab = true;
 	}
-	else if ( m_bReadyToBackstab )
+
+	if ( m_bReadyToBackstab != bBackstab )
 	{
-		SendWeaponAnim( ACT_BACKSTAB_VM_DOWN );
-		m_bReadyToBackstab = false;
+		if (bBackstab)
+		{
+			SendWeaponAnim(ACT_BACKSTAB_VM_UP);
+		}
+		else
+		{
+			SendWeaponAnim(ACT_BACKSTAB_VM_DOWN);
+		}
+		m_bReadyToBackstab = bBackstab;
 	}
 }
 

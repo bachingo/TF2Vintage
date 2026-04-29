@@ -86,7 +86,9 @@ static void *Launcher_GetProcAddress( void *pHandle, const char *pszName )
 #define MessageBox( x, text, title, y) SDL_ShowSimpleMessageBox( SDL_MESSAGEBOX_ERROR, title, text, NULL )
 #endif
 
+static const AppId_t k_unTF2AppId = 440;
 static const AppId_t k_unSDK2013MPAppId = 243750;
+static const AppId_t k_unSDK2013DSAppId = 244310;
 
 #ifdef MOD_LAUNCHER
 static const AppId_t k_unMyModAppid = MOD_APPID;
@@ -149,7 +151,7 @@ static bool LoadSteam( const char *pRootDir )
 	#define STEAM_API_DLL_PATH	"%s/" PLATFORM_BIN_DIR "/libsteam_api.so"
 #endif
 
-	char szBuffer[4096];
+	char szBuffer[8192];
 	// Assemble the full path to our "steam_api.dll"
 	_snprintf( szBuffer, sizeof( szBuffer ), STEAM_API_DLL_PATH, pRootDir );
 	szBuffer[sizeof( szBuffer ) - 1] = '\0';
@@ -188,7 +190,7 @@ static bool LoadSteam( const char *pRootDir )
 	return true;
 }
 
-static bool GetGameInstallDir( const char *pRootDir, char *pszBuf, int nBufSize )
+static bool GetGameInstallDir( const char *pRootDir, char *pszBuf, int nBufSize, bool bDedicated )
 {
 	if ( !LoadSteam( pRootDir ) )
 	{
@@ -217,16 +219,51 @@ static bool GetGameInstallDir( const char *pRootDir, char *pszBuf, int nBufSize 
 	}
 
 	uint32_t unLength = 0;
-	if ( pSteamApps->BIsAppInstalled( k_unSDK2013MPAppId ) )
+	// if we're running dedicated, first check for dedicated app ID
+	if ( bDedicated )
 	{
-		unLength = pSteamApps->GetAppInstallDir( k_unSDK2013MPAppId, pszBuf, nBufSize );
+		if ( pSteamApps->BIsAppInstalled( k_unSDK2013DSAppId ) )
+		{
+			unLength = pSteamApps->GetAppInstallDir( k_unSDK2013DSAppId, pszBuf, nBufSize );
+		}
+#ifdef _WIN32
+		// on Windows, also allow MP to be used for dedicated
+		if ( unLength == 0 && pSteamApps->BIsAppInstalled( k_unSDK2013MPAppId ) )
+		{
+			unLength = pSteamApps->GetAppInstallDir( k_unSDK2013MPAppId, pszBuf, nBufSize );
+		}
+#endif
+	}
+#ifdef POSIX
+	// dedicated is required on posix servers
+	else if ( pSteamApps->BIsAppInstalled( k_unTF2AppId ) )
+#else
+	// only search for MP if we didn't find dedicated (or we weren't looking)
+	if ( unLength == 0 && pSteamApps->BIsAppInstalled( k_unTF2AppId ) )
+#endif
+	{
+		unLength = pSteamApps->GetAppInstallDir( k_unTF2AppId, pszBuf, nBufSize );
 	}
 
-	UnloadSteam();
+	if ( !bDedicated )
+	{
+		UnloadSteam();
+	}
 
 	if ( unLength == 0 )
 	{
-		MessageBox( 0, "Source SDK 2013 Multiplayer (243750) must be installed to launch this mod.", "Launcher Error", MB_OK );
+		if ( bDedicated )
+		{
+			MessageBox( 0, "Source SDK 2013 Dedicated Server (244310) must be installed to launch this mod.", "Launcher Error", MB_OK );
+		}
+		else
+		{
+			MessageBox( 0, "Source SDK 2013 Multiplayer (243750) must be installed to launch this mod.", "Launcher Error", MB_OK );
+		}
+		if ( bDedicated )
+		{
+			UnloadSteam();
+		}
 		return false;
 	}
 
@@ -241,9 +278,8 @@ static bool GetGameInstallDir( const char *pRootDir, char *pszBuf, int nBufSize 
 //-----------------------------------------------------------------------------
 #if !defined( _X360 )
 
-static char *GetBaseDir( const char *pszBuffer )
+void GetBaseDir( const char *pszBuffer, char *basedir )
 {
-	static char	basedir[ MAX_PATH ];
 	char szBuffer[ MAX_PATH ];
 	size_t j;
 	char *pBuffer = NULL;
@@ -271,8 +307,6 @@ static char *GetBaseDir( const char *pszBuffer )
 			basedir[ j-1 ] = 0;
 		}
 	}
-
-	return basedir;
 }
 
 #ifdef WIN32
@@ -445,20 +479,61 @@ int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 		return 0;
 	}
 
-	// Get the root directory the .exe is in
-	char* pRootDir = GetBaseDir( moduleName );
-	const char *pBinaryGameDir = pRootDir;
-	char szGameInstallDir[4096];
-	if ( !GetGameInstallDir( pRootDir, szGameInstallDir, 4096 ) )
+	int nArgs = 0;
+	LPWSTR* pBaseArgs = CommandLineToArgvW(GetCommandLineW(), &nArgs);
+
+	std::vector<std::wstring> pArgs;
+	for (int i = 0; i < nArgs; i++)
+	{
+		pArgs.push_back(pBaseArgs[i]);
+	}
+
+	bool bLaunchDedicated = false;
+	bool bForceNoSteamClient = false;
+	bool bHasPriorityArg = false;
+	for (std::wstring& arg : pArgs)
+	{
+		if (arg == L"-dedicated")
+		{
+			bLaunchDedicated = true;
+			// we don't use our priority wrapper hack on dedicated.
+			bHasPriorityArg = true;
+		}
+		else if (arg == L"-nosteamclient")
+		{
+			bForceNoSteamClient = true;
+		}
+		else if ( !bHasPriorityArg && ( arg == L"-high" || arg == L"-normal" || arg == L"-low" ) )
+		{
+			bHasPriorityArg = true;
+		}
+	}
+
+	// cannot use dedicated launch options on non-dedicated
+	if ( !bLaunchDedicated && bForceNoSteamClient )
 	{
 		return 1;
 	}
 
-	pBinaryGameDir = szGameInstallDir;
+	// Get the root directory the .exe is in
+	char pRootDir[MAX_PATH];
+	GetBaseDir( moduleName, pRootDir );
+	const char *pBinaryGameDir = pRootDir;
+	char szGameInstallDir[4096];
+	if ( !bForceNoSteamClient )
+	{
+		if ( !bForceNoSteamClient && !GetGameInstallDir( pRootDir, szGameInstallDir, 4096, bLaunchDedicated ) )
+		{
+			return 1;
+		}
 
-	SetEnvironmentVariableA( "SDK_EXEC_DIR", szGameInstallDir );
+		pBinaryGameDir = szGameInstallDir;
+	}
+
+	SetEnvironmentVariableA( "SDK_EXEC_DIR", pBinaryGameDir );
 
 #define LAUNCHER_DLL_PATH	"%s\\" PLATFORM_BIN_DIR "\\launcher.dll"
+#define DEDICATED_DLL_PATH	"%s\\" PLATFORM_BIN_DIR "\\dedicated.dll"
 #define LAUNCHER_PATH		"%s\\" PLATFORM_BIN_DIR
 
 	_snprintf( szBuffer, sizeof( szBuffer ), "PATH=" LAUNCHER_PATH ";%s", pBinaryGameDir, pPath );
@@ -466,7 +541,14 @@ int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 	_putenv( szBuffer );
 
 	// Assemble the full path to our "launcher.dll"
-	_snprintf( szBuffer, sizeof( szBuffer ), LAUNCHER_DLL_PATH, pBinaryGameDir );
+	if (bLaunchDedicated)
+	{
+		_snprintf(szBuffer, sizeof(szBuffer), DEDICATED_DLL_PATH, pBinaryGameDir);
+	}
+	else
+	{
+		_snprintf(szBuffer, sizeof(szBuffer), LAUNCHER_DLL_PATH, pBinaryGameDir);
+	}
 	szBuffer[sizeof( szBuffer ) - 1] = '\0';
 
 	// STEAM OK ... filesystem not mounted yet
@@ -486,7 +568,12 @@ int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 		return 0;
 	}
 
-	LauncherMain_t main = (LauncherMain_t)GetProcAddress( launcher, "LauncherMain" );
+	if ( !bHasPriorityArg )
+	{
+		SetPriorityClass( GetCurrentProcess(), ABOVE_NORMAL_PRIORITY_CLASS );
+	}
+
+	LauncherMain_t main = (LauncherMain_t)GetProcAddress(launcher, bLaunchDedicated ? "DedicatedMain" : "LauncherMain");
 	return main( hInstance, hPrevInstance, lpCmdLine, nCmdShow );
 }
 
@@ -570,7 +657,7 @@ static void WaitForDebuggerConnect( int argc, char *argv[], int time )
 
 static const char *GetExecutableModName( char *pszExePath )
 {
-	static char s_szFinalFilename[ MAX_PATH + 1 ] = "hl2";
+	static char s_szFinalFilename[ MAX_PATH + 1 ] = "tc2";
 
 	char szExePath[ MAX_PATH + 1 ];
 	strncpy( szExePath, pszExePath, sizeof( szExePath ) );
@@ -609,6 +696,19 @@ static const char *GetExecutableModName( char *pszExePath )
 	return s_szFinalFilename;
 }
 
+void var_snprintf(std::string& dst, const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    int required_len = std::vsnprintf(nullptr, 0, format, args);
+    va_end(args);
+    std::vector<char> buffer(required_len + 1);
+    va_start(args, format);
+    std::vsnprintf(buffer.data(), buffer.size(), format, args);
+    va_end(args);
+
+	dst.assign(buffer.data());
+}
+
 int main( int argc, char *argv[] )
 {
 	char moduleName[MAX_PATH];
@@ -617,22 +717,125 @@ int main( int argc, char *argv[] )
 		return 1;
 	}
 
-	char* pRootDir = GetBaseDir( moduleName );
+	bool bLaunchDedicated = false;
+	bool bGatherDedicated = false;
+	bool bForceNoSteamClient = false;
+	for (int i = 1; i < argc; i++)
+	{
+		if ( !strcmp(argv[i], "-dedicated") )
+		{
+			bLaunchDedicated = true;
+		}
+		else if ( !strcmp(argv[i], "-gatherdedi") || !strcmp(argv[i], "-gathermod") )
+		{
+			bGatherDedicated = true;
+		}
+		else if ( !strcmp(argv[i], "-nosteamclient") )
+		{
+			bForceNoSteamClient = true;
+		}
+	}
 
-	const char *pBinaryGameDir = pRootDir;
-
-	char szGameInstallDir[4096];
-	if ( !GetGameInstallDir( pRootDir, szGameInstallDir, 4096 ) )
+	// cannot use dedicated launch options on non-dedicated
+	if ( !bLaunchDedicated && bForceNoSteamClient )
 	{
 		return 1;
 	}
 
+	char pRootDir[MAX_PATH];
+	GetBaseDir( moduleName, pRootDir );
+
+	char *pBinaryGameDir = pRootDir;
+
+	std::string strGameInstallDir;
+	char szGameInstallDir[4096];
+	if ( !bForceNoSteamClient )
+	{
+		if ( !GetGameInstallDir( pRootDir, szGameInstallDir, 4096, bLaunchDedicated ) )
+		{
+			return 1;
+		}
+
+		pBinaryGameDir = szGameInstallDir;
+	}
+	else if ( bLaunchDedicated )
+	{
+		// get ../tf2ds hard coded path... this is used for gameinfo_server.txt
+		char pTempDir[MAX_PATH];
+		GetBaseDir( pRootDir, pTempDir );
+		var_snprintf(strGameInstallDir, "%s/tf2ds", pTempDir);
+		// i promise to be very very good with this string.
+		pBinaryGameDir = (char*) strGameInstallDir.c_str();
+	}
+
+	// if we don't need to gather anymore, we just run
+	if ( !bGatherDedicated )
+	{
+		LauncherMain_t entryFunc;
+		if (bLaunchDedicated)
+		{
+			#define DEDICATED_DLL_PATH	"%s/" PLATFORM_BIN_DIR "/dedicated_srv.so"
+			char szExecutable[8192];
+			snprintf(szExecutable, sizeof(szExecutable), DEDICATED_DLL_PATH, pBinaryGameDir );
+
+			void* launcher = Launcher_LoadModule(szExecutable);
+			if (!launcher)
+			{
+				fprintf(stderr, "Failed to load the launcher: %s\n", szExecutable);
+				return 0;
+			}
+
+			entryFunc = (LauncherMain_t)Launcher_GetProcAddress(launcher, "DedicatedMain");
+			if (!entryFunc)
+			{
+				fprintf(stderr, "Failed to load the launcher entry proc\n");
+				return 0;
+			}
+		}
+		else
+		{
+			#define LAUNCHER_DLL_PATH	"%s/" PLATFORM_BIN_DIR "/launcher.so"
+			char szExecutable[8192];
+			snprintf(szExecutable, sizeof(szExecutable), LAUNCHER_DLL_PATH, pBinaryGameDir );
+
+			void* launcher = Launcher_LoadModule(szExecutable);
+			if (!launcher)
+			{
+				fprintf(stderr, "Failed to load the launcher: %s\n", szExecutable);
+				return 0;
+			}
+
+			entryFunc = (LauncherMain_t)Launcher_GetProcAddress(launcher, "LauncherMain");
+			if (!entryFunc)
+			{
+				fprintf(stderr, "Failed to load the launcher entry proc\n");
+				return 0;
+			}
+
+			WaitForDebuggerConnect( argc, argv, 30 );
+		}
+
+		return entryFunc( argc, argv );
+	}
+	
 	char szExecutable[8192];
-	snprintf(szExecutable, sizeof(szExecutable), "%s/hl2.sh", szGameInstallDir );
+	if ( bLaunchDedicated )
+	{
+		snprintf( szExecutable, sizeof(szExecutable), "%s/srcds_run_64", pRootDir );
+	}
+	else
+	{
+		snprintf( szExecutable, sizeof(szExecutable), "%s/hl2.sh", pRootDir );
+	}
 
 	std::vector<char *> new_argv;
 
 	new_argv.push_back( szExecutable );
+
+	if ( !bLaunchDedicated )
+	{
+		new_argv.push_back( pBinaryGameDir );
+	}
 
 	bool bHasGame = false;
 	for ( int i = 1; i < argc; i++ )
@@ -642,10 +845,15 @@ int main( int argc, char *argv[] )
 			bHasGame = true;
 		}
 
+		if ( !strcmp( argv[i], "-gatherdedi" ) || !strcmp( argv[i], "-gathermod" ) )
+		{
+			continue;
+		}
+
 		new_argv.push_back(argv[i]);
 	}
 
-	char szGamePath[8192];
+	char szGamePath[8193];
 	if ( !bHasGame )
 	{
 		new_argv.push_back("-game");
@@ -656,6 +864,14 @@ int main( int argc, char *argv[] )
 		printf( "[Source Mod Launcher] Launching default game: %s\n", pModName );
 
 		new_argv.push_back(szGamePath);
+	}
+
+	if ( bLaunchDedicated )
+	{
+		new_argv.push_back("-binary");
+		new_argv.push_back(moduleName);
+		new_argv.push_back("-dsdir");
+		new_argv.push_back(pBinaryGameDir);
 	}
 
 	new_argv.push_back(NULL);

@@ -257,7 +257,7 @@ static void SetImpactControlPoint( CNewParticleEffect *pEffect, int nPoint, cons
 	pEffect->SetControlPointEntity( nPoint, pEntity );
 }
 
-static void PerformNewCustomEffects( const Vector &vecOrigin, trace_t &tr, const Vector &shotDir, int iMaterial, int iScale, int nFlags )
+static bool PerformNewCustomEffects( const Vector &vecOrigin, trace_t &tr, const Vector &shotDir, int iMaterial, int iScale, int nFlags )
 {
 	bool bNoFlecks = !r_drawflecks.GetBool();
 	if ( !bNoFlecks )
@@ -265,19 +265,39 @@ static void PerformNewCustomEffects( const Vector &vecOrigin, trace_t &tr, const
 		bNoFlecks = ( ( nFlags & FLAGS_CUSTIOM_EFFECTS_NOFLECKS ) != 0  );
 	}
 
+	const int iEffectIdx = iMaterial - 'A';
+	if ( iEffectIdx < 0 || iEffectIdx >= ARRAYSIZE( s_pImpactEffect ) )
+	{
+		return false;
+	}
+
 	// Compute the impact effect name
-	const ImpactEffect_t &effect = s_pImpactEffect[ iMaterial - 'A' ];
+	const ImpactEffect_t &effect = s_pImpactEffect[ iEffectIdx ];
 	const char *pImpactName = effect.m_pName;
 	if ( bNoFlecks && effect.m_pNameNoFlecks )
 	{
 		pImpactName = effect.m_pNameNoFlecks;
 	}
 	if ( !pImpactName )
-		return;
+		return false;
 
 	CSmartPtr<CNewParticleEffect> pEffect = CNewParticleEffect::Create( NULL, pImpactName );
 	if ( !pEffect->IsValid() )
-		return;
+	{
+		// if no flecks version doesn't exist, try the base version
+		if ( bNoFlecks )
+		{
+			pEffect = CNewParticleEffect::Create( NULL, effect.m_pName );
+			if ( !pEffect->IsValid() )
+			{
+				return false;
+			}
+		}
+		else
+		{
+			return false;
+		}
+	}
 
 	Vector	vecReflect;
 	float	flDot = DotProduct( shotDir, tr.plane.normal );
@@ -287,7 +307,9 @@ static void PerformNewCustomEffects( const Vector &vecOrigin, trace_t &tr, const
 	VectorMultiply( shotDir, -1.0f, vecShotBackward );
 
 	Vector vecImpactPoint = ( tr.fraction != 1.0f ) ? tr.endpos : vecOrigin;
+#if _DEBUG
 	Assert( VectorsAreEqual( vecOrigin, tr.endpos, 1e-1 ) );
+#endif
 
 	SetImpactControlPoint( pEffect.GetObject(), 0, vecImpactPoint, tr.plane.normal, tr.m_pEnt ); 
 	SetImpactControlPoint( pEffect.GetObject(), 1, vecImpactPoint, vecReflect,		tr.m_pEnt ); 
@@ -299,6 +321,8 @@ static void PerformNewCustomEffects( const Vector &vecOrigin, trace_t &tr, const
 		GetColorForSurface( &tr, &vecColor );
 		pEffect->SetControlPoint( 4, vecColor );
 	}
+
+	return true;
 }
 
 void PerformCustomEffects( const Vector &vecOrigin, trace_t &tr, const Vector &shotDir, int iMaterial, int iScale, int nFlags )
@@ -309,8 +333,8 @@ void PerformCustomEffects( const Vector &vecOrigin, trace_t &tr, const Vector &s
 
 	if ( cl_new_impact_effects.GetInt() )
 	{
-		PerformNewCustomEffects( vecOrigin, tr, shotDir, iMaterial, iScale, nFlags );
-		return;
+		if ( PerformNewCustomEffects( vecOrigin, tr, shotDir, iMaterial, iScale, nFlags ) )
+			return;
 	}
 
 	bool bNoFlecks = !r_drawflecks.GetBool();

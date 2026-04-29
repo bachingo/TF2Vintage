@@ -60,6 +60,7 @@ public:
 	virtual void OnSetHTMLTitle( const char *pchTitle ) {}
 	virtual void OnLinkAtPosition( const char *pchURL ) {}
 	virtual void OnURLChanged( const char *url, const char *pchPostData, bool bIsRedirect ) {}
+	virtual void SetVisible(bool state) OVERRIDE;
 
 	virtual bool OnOpenNewTab( const char *pchURL, bool bForeground ) { return false; }
 
@@ -71,6 +72,8 @@ public:
 
 	bool IsScrolledToBottom();
 	bool IsScrollbarVisible();
+
+	void ForceFullTextureUpload() { m_bNeedsFullTextureUpload = true; }
 
 	// url handlers, lets you have web page links fire vgui events
 	// use to have custom web page links, eg. "steam://open/subscriptionpage"
@@ -136,6 +139,8 @@ public:
 
 	void GetLinkAtPosition( int x, int y );
 
+	void SetZoomLevel(float flZoom) { m_flZoom = flZoom; }
+
 	void HidePopup();
 
 #ifdef DBGFLAG_VALIDATE
@@ -156,8 +161,6 @@ public:
 
 protected:
 	virtual void ApplySchemeSettings( IScheme *pScheme );
-
-	vgui::Menu *m_pContextMenu;
 
 private:
 	STEAM_CALLBACK( HTML, BrowserNeedsPaint, HTML_NeedsPaint_t, m_NeedsPaint );
@@ -194,6 +197,7 @@ private:
 	MESSAGE_FUNC_PTR( OnEditNewLine, "TextNewLine", panel );
 	MESSAGE_FUNC_INT( DismissJSDialog, "DismissJSDialog", result );
 
+	vgui::Menu *m_pContextMenu;
 	vgui::Panel *m_pInteriorPanel;
 	vgui::ScrollBar *_hbar,*_vbar;
 	vgui::DHANDLE<vgui::FileOpenDialog> m_hFileOpenDialog;

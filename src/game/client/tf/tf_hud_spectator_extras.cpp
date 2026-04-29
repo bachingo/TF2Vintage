@@ -66,10 +66,7 @@ void CTFHudSpectatorExtras::Reset( void )
 		if ( !pEnt )
 			continue;
 
-		if ( pEnt->IsClientSideGlowEnabled() )
-		{
-			pEnt->SetClientSideGlowEnabled( false );
-		}
+		pEnt->SetClientSideGlowEnabled( false, CLIENTSIDE_GLOW_SPECTATOR );
 	}
 
 	m_vecEntitiesToDraw.Purge();
@@ -131,6 +128,8 @@ void CTFHudSpectatorExtras::OnTick()
 		}
 	}
 
+	// TODO(mcoms): add helpme and auto caller xray
+
 	if ( bIsHLTV || 
 		( tf_spec_xray.GetBool() && ( ( nLocalPlayerTeam == TEAM_SPECTATOR ) || ( pLocalPlayer->GetObserverMode() > OBS_MODE_FREEZECAM ) || ( pLocalPlayer->m_Shared.InCond( TF_COND_TEAM_GLOWS ) && tf_enable_glows_after_respawn.GetBool() ) ) ) )
 	{
@@ -161,14 +160,9 @@ void CTFHudSpectatorExtras::OnTick()
 				( nPlayerTeamNumber < FIRST_GAME_TEAM ) ||
 				( !pPlayer->IsAlive() ) ||
 				( pPlayer->m_Shared.IsStealthed() && ( nLocalPlayerTeam >= FIRST_GAME_TEAM ) && ( nPlayerTeamNumber != nLocalPlayerTeam ) ) ||
-				( !bShowEveryone && !pPlayer->IsPlayerClass( TF_CLASS_SPY ) && ( nPlayerTeamNumber != nLocalPlayerTeam ) ) ||
-				( !bShowEveryone && pPlayer->IsPlayerClass( TF_CLASS_SPY ) && !pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) && ( nPlayerTeamNumber != nLocalPlayerTeam ) ) ||
-				( !bShowEveryone && pPlayer->IsPlayerClass( TF_CLASS_SPY ) && pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) && ( nPlayerTeamNumber != nLocalPlayerTeam ) && ( pPlayer->m_Shared.GetDisguiseTeam() != nLocalPlayerTeam ) ) )
+				( !bShowEveryone && !pPlayer->CanShowTeamGlowOutline() ) )
 			{
-				if ( pPlayer->IsClientSideGlowEnabled() )
-				{
-					pPlayer->SetClientSideGlowEnabled( false );
-				}
+				pPlayer->SetClientSideGlowEnabled( false, CLIENTSIDE_GLOW_SPECTATOR );
 				RemoveEntity( i );
 				continue;
 			}
@@ -203,10 +197,7 @@ void CTFHudSpectatorExtras::OnTick()
 					// if we're in chase mode, just remove them entirely
 					if ( pLocalPlayer->GetObserverMode() == OBS_MODE_CHASE )
 					{
-						if ( pPlayer->IsClientSideGlowEnabled() )
-						{
-							pPlayer->SetClientSideGlowEnabled( false );
-						}
+						pPlayer->SetClientSideGlowEnabled( false, CLIENTSIDE_GLOW_SPECTATOR );
 						RemoveEntity( i );
 						continue;
 					}
@@ -220,6 +211,7 @@ void CTFHudSpectatorExtras::OnTick()
 				if ( pPlayer->IsPlayerClass( TF_CLASS_SPY ) && pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) && ( nPlayerTeamNumber != nLocalPlayerTeam ) )
 				{
 					pDisguiseTarget = pPlayer->m_Shared.GetDisguiseTarget();
+					nPlayerTeamNumber = pPlayer->m_Shared.GetDisguiseTeam();
 				}
 			}
 
@@ -250,13 +242,10 @@ void CTFHudSpectatorExtras::OnTick()
 
  			// what color should we use?
 			float r, g, b;
-			pPlayer->GetGlowEffectColor( &r, &g, &b );
-			m_vecEntitiesToDraw[nVecIndex].m_clrGlowColor = Color( r * 255, g * 255, b * 255, 255 );
+			TFGameRules()->GetTeamGlowColor( nPlayerTeamNumber, r, g, b );
+			m_vecEntitiesToDraw[nVecIndex].m_clrGlowColor = Floats2Color(r, g, b);
 
-			if ( !pPlayer->IsClientSideGlowEnabled() )
-			{
-				pPlayer->SetClientSideGlowEnabled( true );
-			}
+			pPlayer->SetClientSideGlowEnabled( true, CLIENTSIDE_GLOW_SPECTATOR );
 		}
 
 		// loop through the buildings
@@ -264,7 +253,7 @@ void CTFHudSpectatorExtras::OnTick()
 		{
 			bool bDraw = false;
 			C_BaseObject *pObject = static_cast<C_BaseObject*>( IBaseObjectAutoList::AutoList()[nCount] );
-			if ( !pObject->IsDormant() && !pObject->IsMapPlaced() && !pObject->IsEffectActive( EF_NODRAW ) )
+			if ( !pObject->IsDormant() && !pObject->IsMapPlaced() && !pObject->IsEffectActive( EF_NODRAW ) && pObject->GetBuilder() )
 			{
 				if ( bShowEveryone || ( ( nLocalPlayerTeam >= FIRST_GAME_TEAM ) && ( nLocalPlayerTeam == pObject->GetTeamNumber() ) ) )
 				{
@@ -308,7 +297,7 @@ void CTFHudSpectatorExtras::OnTick()
 				}
 				else
 				{
-					switch ( pObject->GetUpgradeLevel() )
+					switch ( MIN(pObject->GetUpgradeLevel(), 3) )
 					{
 					case 1:
 						m_vecEntitiesToDraw[nVecIndex].m_nOffset = 50;
@@ -326,8 +315,7 @@ void CTFHudSpectatorExtras::OnTick()
 				pObject->GetTargetIDString( m_vecEntitiesToDraw[nVecIndex].m_wszName, sizeof( m_vecEntitiesToDraw[nVecIndex].m_wszName ), true );
 				m_vecEntitiesToDraw[nVecIndex].m_nNameWidth = UTIL_ComputeStringWidth( m_hNameFont, m_vecEntitiesToDraw[nVecIndex].m_wszName );
 
-				float flHealth = 1.0f;
-				flHealth = (float)( pObject->GetHealth() ) / (float)( pObject->GetMaxHealth() );
+				float flHealth = (float)( pObject->GetHealth() ) / (float)( pObject->GetMaxHealth() );
 				if ( flHealth > 1.0f )
 				{
 					flHealth = 1.0f;
@@ -336,20 +324,14 @@ void CTFHudSpectatorExtras::OnTick()
 
 				// what color should we use?
 				float r, g, b;
-				pObject->GetGlowEffectColor( &r, &g, &b );
-				m_vecEntitiesToDraw[nVecIndex].m_clrGlowColor = Color( r * 255, g * 255, b * 255, 255 );
+				TFGameRules()->GetTeamGlowColor( pObject->GetTeamNumber(), r, g, b );
+				m_vecEntitiesToDraw[nVecIndex].m_clrGlowColor = Floats2Color( r, g, b );
 
-				if ( !pObject->IsClientSideGlowEnabled() )
-				{
-					pObject->SetClientSideGlowEnabled( true );
-				}
+				pObject->SetClientSideGlowEnabled( true, CLIENTSIDE_GLOW_SPECTATOR );
 			}
 			else
 			{
-				if ( pObject->IsClientSideGlowEnabled() )
-				{
-					pObject->SetClientSideGlowEnabled( false );
-				}
+				pObject->SetClientSideGlowEnabled( false, CLIENTSIDE_GLOW_SPECTATOR );
 				RemoveEntity( pObject->entindex() );
 			}
 		}

@@ -148,7 +148,10 @@
 
 #if defined( TF_CLIENT_DLL )
 #include "econ/tool_items/custom_texture_cache.h"
+#endif
 
+#ifdef WORKSHOP_IMPORT_ENABLED
+#include "fbxsystem/fbxsystem.h"
 #endif
 
 
@@ -173,6 +176,10 @@ extern vgui::IInputInternal *g_InputInternal;
 #ifdef SIXENSE
 #include "sixense/in_sixense.h"
 #endif
+
+#if defined( GAMEPADUI )
+#include "../gamepadui/igamepadui.h"
+#endif // GAMEPADUI
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -219,6 +226,10 @@ IEngineReplay *g_pEngineReplay = NULL;
 IEngineClientReplay *g_pEngineClientReplay = NULL;
 IReplaySystem *g_pReplay = NULL;
 #endif
+
+#if defined(GAMEPADUI)
+IGamepadUI* g_pGamepadUI = nullptr;
+#endif // GAMEPADUI
 
 IHaptics* haptics = NULL;// NVNT haptics system interface singleton
 
@@ -346,8 +357,19 @@ ConVar r_lightmap_bicubic_set( "r_lightmap_bicubic_set", "0", FCVAR_ARCHIVE | FC
 bool g_bLevelInitialized;
 bool g_bTextMode = false;
 
-
 static ConVar *g_pcv_ThreadMode = NULL;
+
+// GAMEPADUI TODO - put this somewhere better. (Madi)
+#if defined( GAMEPADUI )
+const bool IsGamepadUI()
+{
+	if ( CommandLine()->FindParm( "-nogamepadui" ) )
+		return false;
+
+	return true;
+}
+#endif
+
 
 //-----------------------------------------------------------------------------
 // Purpose: interface for gameui to modify voice bans
@@ -997,6 +1019,13 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	if (!g_pMatSystemSurface)
 		return false;
 
+#ifdef WORKSHOP_IMPORT_ENABLED
+	if ( !ConnectDataModel( appSystemFactory ) )
+		return false;
+	if ( InitDataModel() != INIT_OK )
+		return false;
+	InitFbx();
+#endif
 
 	// it's ok if this is NULL. That just means the sourcevr.dll wasn't found
 	if ( CommandLine()->CheckParm( "-vr" ) )
@@ -1227,6 +1256,43 @@ void CHLClient::PostInit()
 		r_lightmap_bicubic.SetValue( info.m_nMaxDXSupportLevel >= 95 || ( info.m_nMaxDXSupportLevel >= 90 && IsLinux() ) );
 		r_lightmap_bicubic_set.SetValue( true );
 	}
+
+#if defined(GAMEPADUI)
+	if ( IsGamepadUI() )
+	{
+		CSysModule* pGamepadUIModule = g_pFullFileSystem->LoadModule( "gamepadui", "GAMEBIN", false );
+		if ( pGamepadUIModule != nullptr )
+		{
+			GamepadUI_Log( "Loaded gamepadui module.\n" );
+
+			CreateInterfaceFn gamepaduiFactory = Sys_GetFactory( pGamepadUIModule );
+			if ( gamepaduiFactory != nullptr )
+			{
+				g_pGamepadUI = (IGamepadUI*) gamepaduiFactory( GAMEPADUI_INTERFACE_VERSION, NULL );
+				if ( g_pGamepadUI != nullptr )
+				{
+					GamepadUI_Log( "Initializing IGamepadUI interface...\n" );
+
+					factorylist_t factories;
+					FactoryList_Retrieve( factories );
+					g_pGamepadUI->Initialize( factories.appSystemFactory );
+				}
+				else
+				{
+					GamepadUI_Log( "Unable to pull IGamepadUI interface.\n" );
+				}
+			}
+			else
+			{
+				GamepadUI_Log( "Unable to get gamepadui factory.\n" );
+			}
+		}
+		else
+		{
+			GamepadUI_Log( "Unable to load gamepadui module\n" );
+		}
+	}
+#endif // GAMEPADUI
 }
 
 //-----------------------------------------------------------------------------
@@ -1267,18 +1333,28 @@ void CHLClient::Shutdown( void )
 	UncacheAllMaterials();
 
 	IGameSystem::ShutdownAllSystems();
+
+#if defined(GAMEPADUI)
+	if (g_pGamepadUI != nullptr)
+		g_pGamepadUI->Shutdown();
+#endif // GAMEPADUI
 	
 	gHUD.Shutdown();
 	VGui_Shutdown();
 	
 	ParticleMgr()->Term();
-	
+
 	vgui::BuildGroup::ClearResFileCache();
 
 #ifndef NO_STEAM
 	ClientSteamContext().Shutdown();
 #endif
 
+#ifdef WORKSHOP_IMPORT_ENABLED
+	ShutdownDataModel();
+	DisconnectDataModel();
+	ShutdownFbx();
+#endif
 	
 	// This call disconnects the VGui libraries which we rely on later in the shutdown path, so don't do it
 //	DisconnectTier3Libraries( );
@@ -1304,10 +1380,14 @@ void CHLClient::Shutdown( void )
 //-----------------------------------------------------------------------------
 int CHLClient::HudVidInit( void )
 {
-	
 	gHUD.VidInit();
 
 	GetClientVoiceMgr()->VidInit();
+
+#if defined(GAMEPADUI)
+	if (g_pGamepadUI != nullptr)
+		g_pGamepadUI->VidInit();
+#endif // GAMEPADUI
 
 	return 1;
 }
@@ -1359,6 +1439,11 @@ void CHLClient::HudUpdate( bool bActive )
 		g_pSixenseInput->SixenseFrame( 0, NULL ); 
 	}
 #endif
+
+#if defined(GAMEPADUI)
+	if (g_pGamepadUI != nullptr)
+		g_pGamepadUI->OnUpdate( frametime );
+#endif // GAMEPADUI
 }
 
 //-----------------------------------------------------------------------------
@@ -1511,11 +1596,17 @@ void CHLClient::IN_SetSampleTime( float frametime )
 //-----------------------------------------------------------------------------
 void CHLClient::CreateMove ( int sequence_number, float input_sample_frametime, bool active )
 {
-
 	Assert( C_BaseEntity::IsAbsRecomputationsEnabled() );
 	Assert( C_BaseEntity::IsAbsQueriesValid() );
 
 	C_BaseAnimating::AutoAllowBoneAccess boneaccess( true, false ); 
+
+#ifdef TF_CLIENT_DLL
+	if ( active && TFGameRules() && TFGameRules()->IsGamePaused() )
+	{
+		active = false;
+	}
+#endif
 
 	MDLCACHE_CRITICAL_SECTION();
 	input->CreateMove( sequence_number, input_sample_frametime, active );
@@ -1712,6 +1803,11 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 		CReplayRagdollRecorder::Instance().Init();
 	}
 #endif
+
+#if defined(GAMEPADUI)
+	if (g_pGamepadUI != nullptr)
+		g_pGamepadUI->OnLevelInitializePreEntity();
+#endif // GAMEPADUI
 }
 
 
@@ -1723,6 +1819,11 @@ void CHLClient::LevelInitPostEntity( )
 	IGameSystem::LevelInitPostEntityAllSystems();
 	C_PhysPropClientside::RecreateAll();
 	internalCenterPrint->Clear();
+
+#if defined(GAMEPADUI)
+	if (g_pGamepadUI != nullptr)
+		g_pGamepadUI->OnLevelInitializePostEntity();
+#endif // GAMEPADUI
 }
 
 //-----------------------------------------------------------------------------
@@ -1742,6 +1843,17 @@ void CHLClient::ResetStringTablePointers()
 	g_pStringTableServerPopFiles = NULL;
 	g_pStringTableServerMapCycleMvM = NULL;
 #endif
+}
+
+static void ClearClientDynamicModelList()
+{
+	// engine bugfix: clear out client dynamic model list for listen servers
+	// TODO remove this when the engine is updated
+	struct CModelInfo : IVModelInfoClient
+	{
+		CUtlVector< model_t* > m_vecDynamicModels;
+	};
+	static_cast<CModelInfo*>( modelinfo )->m_vecDynamicModels.Purge();
 }
 
 //-----------------------------------------------------------------------------
@@ -1789,11 +1901,18 @@ void CHLClient::LevelShutdown( void )
 	
 	StopAllRumbleEffects();
 
+#if defined(GAMEPADUI)
+	if (g_pGamepadUI != nullptr)
+		g_pGamepadUI->OnLevelShutdown();
+#endif // GAMEPADUI
+
 	gHUD.LevelShutdown();
 
 	internalCenterPrint->Clear();
 
 	messagechars->Clear();
+
+	ClearClientDynamicModelList();
 
 #ifndef TF_CLIENT_DLL
 	// don't want to do this for TF2 because we have particle systems in our
@@ -2007,10 +2126,7 @@ void CHLClient::PrecacheMaterial( const char *pMaterialName )
 	}
 	else
 	{
-		if (IsOSX())
-		{
-			printf("\n ##### CHLClient::PrecacheMaterial could not find material %s (%s)", pMaterialName, pTempBuf );
-		}
+		DevWarning("##### CHLClient::PrecacheMaterial could not find material %s (%s)\n", pMaterialName, pTempBuf );
 	}
 }
 
@@ -2291,11 +2407,17 @@ void OnRenderStart()
 
 	// Finally, link all the entities into the leaf system right before rendering.
 	C_BaseEntity::AddVisibleEntities();
+
+	g_pClientLeafSystem->DisableLeafReinsertion(true);
+	g_pClientLeafSystem->ComputeAllBounds();
+	g_pClientLeafSystem->RecomputeRenderableLeaves();
 }
 
 
 void OnRenderEnd()
 {
+	g_pClientLeafSystem->DisableLeafReinsertion(false);
+
 	// Disallow access to bones (access is enabled in CViewRender::SetUpView).
 	C_BaseAnimating::PopBoneAccess( "CViewRender::SetUpView->OnRenderEnd" );
 
@@ -2584,7 +2706,13 @@ void ReloadSoundEntriesInList( IFileList *pFilesToReload );
 //-----------------------------------------------------------------------------
 void CHLClient::ReloadFilesInList( IFileList *pFilesToReload )
 {
-	ReloadSoundEntriesInList( pFilesToReload );
+	// Reload ALL sound scripts. Sound system handles the list of them.
+	FileListAll *pResult = new FileListAll;
+	ReloadSoundEntriesInList( pResult );
+	pResult->Release();
+	// also need to re-init sound system to make sure things get read from the reloaded files
+	// bit of a hack, this should be in engine.
+	engine->ClientCmd("snd_restart");
 }
 
 bool CHLClient::HandleUiToggle()

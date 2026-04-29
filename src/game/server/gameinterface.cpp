@@ -202,7 +202,6 @@ class IStudioRender;
 static ConVar s_UseNetworkVars( "UseNetworkVars", "1", FCVAR_CHEAT, "For profiling, toggle network vars." );
 #endif
 
-extern ConVar sv_noclipduringpause;
 ConVar sv_massreport( "sv_massreport", "0" );
 ConVar sv_force_transmit_ents( "sv_force_transmit_ents", "0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Will transmit all entities to client, regardless of PVS conditions (will still skip based on transmit flags, however)." );
 
@@ -226,6 +225,8 @@ INetworkStringTable *g_pStringTableServerPopFiles = NULL;
 INetworkStringTable *g_pStringTableServerMapCycleMvM = NULL;
 #endif
 
+INetworkStringTable* g_pStringTableDynamicModels = NULL;
+
 CStringTableSaveRestoreOps g_VguiScreenStringOps;
 
 // Holds global variables shared between engine and game.
@@ -236,7 +237,7 @@ static int		g_nCommandClientIndex = 0;
 // The chapter number of the current
 static int		g_nCurrentChapterIndex = -1;
 
-#ifdef _DEBUG
+#if defined(_DEBUG) || 1
 static ConVar sv_showhitboxes( "sv_showhitboxes", "-1", FCVAR_CHEAT, "Send server-side hitboxes for specified entity to client (NOTE:  this uses lots of bandwidth, use on listen server only)." );
 #endif
 
@@ -301,32 +302,6 @@ CBasePlayer *UTIL_GetCommandClient( void )
 
 	// HLDS console issued command
 	return NULL;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Retrieves the MOD directory for the active game (ie. "hl2")
-//-----------------------------------------------------------------------------
-
-bool UTIL_GetModDir( char *lpszTextOut, unsigned int nSize )
-{
-	// Must pass in a buffer at least large enough to hold the desired string
-	const char *pGameDir = CommandLine()->ParmValue( "-game", "hl2" );
-	Assert( strlen(pGameDir) <= nSize );
-	if ( strlen(pGameDir) > nSize )
-		return false;
-
-	Q_strncpy( lpszTextOut, pGameDir, nSize );
-	if ( Q_strnchr( lpszTextOut, '/', nSize ) || Q_strnchr( lpszTextOut, '\\', nSize ) )
-	{
-		// Strip the last directory off (which will be our game dir)
-		Q_StripLastDir( lpszTextOut, nSize );
-		
-		// Find the difference in string lengths and take that difference from the original string as the mod dir
-		int dirlen = Q_strlen( lpszTextOut );
-		Q_strncpy( lpszTextOut, pGameDir + dirlen, Q_strlen( pGameDir ) - dirlen + 1 );
-	}
-
-	return true;
 }
 
 extern void InitializeCvars( void );
@@ -861,25 +836,30 @@ bool CServerGameDLL::ReplayInit( CreateInterfaceFn fnReplayFactory )
 //-----------------------------------------------------------------------------
 float CServerGameDLL::GetTickInterval( void ) const
 {
+	// TODO(mcoms): fix movement tick interval bugs
+#if defined(TF_DLL)
 	float tickinterval = DEFAULT_TICK_INTERVAL;
+#else
+	float tickinterval = OLD_TICK_INTERVAL;
+#endif
 
-//=============================================================================
-// HPE_BEGIN:
-// [Forrest] For Counter-Strike, set default tick rate of 66 and removed -tickrate command line parameter.
-//=============================================================================
-// Ignoring this for now, server ops are abusing it
-#if !defined( TF_DLL ) && !defined( CSTRIKE_DLL ) && !defined( DOD_DLL )
-//=============================================================================
-// HPE_END
-//=============================================================================
 	// override if tick rate specified in command line
 	if ( CommandLine()->CheckParm( "-tickrate" ) )
 	{
 		float tickrate = CommandLine()->ParmValue( "-tickrate", 0 );
-		if ( tickrate > 10 )
-			tickinterval = 1.0f / tickrate;
+		if ( tickrate > 10 && tickrate <= 100 )
+		{
+			if (66.0f <= tickrate && tickrate < 66.67f)
+			{
+				// handling for the exact legacy tick rate
+				tickinterval = OLD_TICK_INTERVAL;
+			}
+			else
+			{
+				tickinterval = 1.0f / tickrate;
+			}
+		}
 	}
-#endif
 
 	return tickinterval;
 }
@@ -1281,6 +1261,13 @@ void CServerGameDLL::GameFrame( bool simulating )
 	UpdateQueryCache();
 	g_pServerBenchmark->UpdateBenchmark();
 
+#ifdef TF_DLL
+	if ( simulating && TFGameRules() && TFGameRules()->IsGamePaused() )
+	{
+		simulating = false;
+	}
+#endif
+
 	Physics_RunThinkFunctions( simulating );
 	
 	IGameSystem::FrameUpdatePostEntityThinkAllSystems();
@@ -1346,7 +1333,7 @@ void CServerGameDLL::PreClientUpdate( bool simulating )
 	
 	IGameSystem::PreClientUpdateAllSystems();
 
-#ifdef _DEBUG
+#if defined(_DEBUG) || 1
 	if ( sv_showhitboxes.GetInt() == -1 )
 		return;
 
@@ -1485,6 +1472,8 @@ void CServerGameDLL::CreateNetworkStringTables( void )
 	g_pStringTableServerPopFiles = networkstringtable->CreateStringTable( "ServerPopFiles", 128 );
 	g_pStringTableServerMapCycleMvM = networkstringtable->CreateStringTable( "ServerMapCycleMvM", 128 );
 #endif
+
+	g_pStringTableDynamicModels = networkstringtable->FindTable( "DynamicModels" );
 
 	bool bPopFilesValid = true;
 	(void)bPopFilesValid; // Avoid unreferenced variable warning
@@ -1955,6 +1944,9 @@ const char *CServerGameDLL::GetServerBrowserMapOverride()
 
 const char *CServerGameDLL::GetServerBrowserGameData()
 {
+	// this is called when the steam server wants an update, so apply the update.
+	GTFGCClientSystem()->UpdateServerDataAndRefresh();
+
 	CUtlString sResult;
 
 #ifdef TF_DLL
@@ -2156,6 +2148,8 @@ void CServerGameDLL::LoadSpecificMOTDMsg( const ConVar &convar, const char *pszS
 // keeps track of which chapters the user has unlocked
 ConVar sv_unlockedchapters( "sv_unlockedchapters", "1", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX );
 
+extern const char* COM_GetModDirectory();
+
 //-----------------------------------------------------------------------------
 // Purpose: Updates which chapters are unlocked
 //-----------------------------------------------------------------------------
@@ -2190,9 +2184,7 @@ void UpdateChapterRestrictions( const char *mapname )
 	strlwr( chapterTitle );
 	
 	// Get our active mod directory name
-	char modDir[MAX_PATH];
-	if ( UTIL_GetModDir( modDir, sizeof(modDir) ) == false )
-		return;
+	const char* modDir = COM_GetModDirectory();
 
 	char chapterNumberPrefix[64];
 	Q_snprintf(chapterNumberPrefix, sizeof(chapterNumberPrefix), "#%s_chapter", modDir);
@@ -2260,9 +2252,7 @@ void UpdateRichPresence ( void )
 	Assert ( g_nCurrentChapterIndex >= 0 );
 
 	// Get our active mod directory name
-	char modDir[MAX_PATH];
-	if ( UTIL_GetModDir( modDir, sizeof(modDir) ) == false )
-		return;
+	const char* modDir = COM_GetModDirectory();
 
 	// Get presence data based on the game we're playing
 	uint iGameID, iChapterIndex, iChapterID, iGamePresenceID;
@@ -3066,6 +3056,13 @@ static ConVar sv_max_usercmd_move_magnitude( "sv_max_usercmd_move_magnitude", "1
 float CServerGameClients::ProcessUsercmds( edict_t *player, bf_read *buf, int numcmds, int totalcmds,
 	int dropped_packets, bool ignore, bool paused )
 {
+#ifdef TF_DLL
+	if ( !paused && TFGameRules() && TFGameRules()->IsGamePaused() )
+	{
+		paused = true;
+	}
+#endif
+
 	int				i;
 	CUserCmd		*from, *to;
 
@@ -3468,8 +3465,17 @@ class CServerDLLSharedAppSystems : public IServerDLLSharedAppSystems
 public:
 	CServerDLLSharedAppSystems()
 	{
-		AddAppSystem( "soundemittersystem" DLL_EXT_STRING, SOUNDEMITTERSYSTEM_INTERFACE_VERSION );
-		AddAppSystem( "scenefilecache" DLL_EXT_STRING, SCENE_FILE_CACHE_INTERFACE_VERSION );
+#if LINUX && defined(SOURCESDK)
+		// kind of a hack to check the parm instead of something else
+		const bool bDedicated = CommandLine()->HasParm("-dedicated");
+		const char* soundemittersystem_dll = bDedicated ? "soundemittersystem_srv" DLL_EXT_STRING : "soundemittersystem" DLL_EXT_STRING;
+		const char* scenefilecache_dll = bDedicated ? "scenefilecache_srv" DLL_EXT_STRING : "scenefilecache" DLL_EXT_STRING;
+#else
+		const char* soundemittersystem_dll = "soundemittersystem" DLL_EXT_STRING;
+		const char* scenefilecache_dll = "scenefilecache" DLL_EXT_STRING;
+#endif
+		AddAppSystem( soundemittersystem_dll, SOUNDEMITTERSYSTEM_INTERFACE_VERSION );
+		AddAppSystem( scenefilecache_dll, SCENE_FILE_CACHE_INTERFACE_VERSION );
 	}
 
 	virtual int	Count()

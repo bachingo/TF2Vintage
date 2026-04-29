@@ -5,15 +5,12 @@
 //==================================================================================================
 
 //  DYNAMIC: "COMPRESSED_VERTS"			"0..1"
-//	DYNAMIC: "DOWATERFOG"				"0..1"
 //	DYNAMIC: "SKINNING"					"0..1"
 //  DYNAMIC: "LIGHTING_PREVIEW"			"0..1"
-//  DYNAMIC: "NUM_LIGHTS"				"0..4"
 
 #include "common_vs_fxc.h"
 
 static const bool g_bSkinning		= SKINNING ? true : false;
-static const int g_FogType			= DOWATERFOG;
 
 const float4 cBaseTexCoordTransform[2]		: register( SHADER_SPECIFIC_CONST_0 );
 
@@ -33,8 +30,7 @@ struct VS_INPUT
 struct VS_OUTPUT
 {
 	// Stuff that isn't seen by the pixel shader
-	float4 projPosSetup	: POSITION;	
-	float  fog			: FOG;
+	float4 projPosSetup	: POSITION;
 	// Stuff that is seen by the pixel shader
 	float2 baseTexCoord	: TEXCOORD0;
 	float4 lightAtten	: TEXCOORD1;
@@ -62,26 +58,16 @@ VS_OUTPUT main( const VS_INPUT v )
 	vProjPos.z = dot( float4( worldPos, 1  ), cViewProjZ );
 
 	o.projPos = vProjPos.xyz;
-	o.fog = CalcFog( worldPos, vProjPos.xyz, g_FogType );
 
 	// Needed for water fog alpha and diffuse lighting 
 	o.worldPos = worldPos;
 	o.worldNormal = normalize( worldNormal );
 
 	// Scalar attenuations for four lights
-	o.lightAtten.xyz = float4(0,0,0,0);
-	#if ( NUM_LIGHTS > 0 )
-		o.lightAtten.x = GetVertexAttenForLight( worldPos, 0, false );
-	#endif
-	#if ( NUM_LIGHTS > 1 )
-		o.lightAtten.y = GetVertexAttenForLight( worldPos, 1, false );
-	#endif
-	#if ( NUM_LIGHTS > 2 )
-		o.lightAtten.z = GetVertexAttenForLight( worldPos, 2, false );
-	#endif
-	#if ( NUM_LIGHTS > 3 )
-		o.lightAtten.w = GetVertexAttenForLight( worldPos, 3, false );
-	#endif
+	o.lightAtten.x = GetVertexAttenForLight( worldPos, 0 );
+	o.lightAtten.y = GetVertexAttenForLight( worldPos, 1 );
+	o.lightAtten.z = GetVertexAttenForLight( worldPos, 2 );
+	o.lightAtten.w = GetVertexAttenForLight( worldPos, 3 );
 
 	// Base texture coordinate transform
 	o.baseTexCoord.x = dot( v.vTexCoord0, cBaseTexCoordTransform[0] );

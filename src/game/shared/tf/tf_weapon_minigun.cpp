@@ -32,8 +32,23 @@
 #endif
 
 #define MAX_BARREL_SPIN_VELOCITY	20
-#define TF_MINIGUN_SPINUP_TIME 0.75f
-#define TF_MINIGUN_PENALTY_PERIOD 1.f
+
+#if defined(MCOMS_BALANCE_PACK)
+#define DEFAULT_TF_MINIGUN_SPINUP_TIME "0.9f"
+#else
+#define DEFAULT_TF_MINIGUN_SPINUP_TIME "0.75f"
+#endif
+ConVar tf_minigun_spinup_time("tf_minigun_spinup_time", DEFAULT_TF_MINIGUN_SPINUP_TIME, FCVAR_REPLICATED | FCVAR_HIDDEN);
+
+#define TF_MINIGUN_SPINUP_TIME tf_minigun_spinup_time.GetFloat()
+
+#if defined(MCOMS_BALANCE_PACK)
+#define DEFAULT_TF_MINIGUN_PENALTY_TIME "0"
+#else
+#define DEFAULT_TF_MINIGUN_PENALTY_TIME "1"
+#endif
+ConVar tf_minigun_penalty_time("tf_minigun_penalty_time", DEFAULT_TF_MINIGUN_PENALTY_TIME, FCVAR_REPLICATED | FCVAR_HIDDEN);
+#define TF_MINIGUN_PENALTY_PERIOD tf_minigun_penalty_time.GetFloat()
 
 //=============================================================================
 //
@@ -231,6 +246,7 @@ void CTFMinigun::SharedAttack()
 
 	if ( !CanAttack() )
 	{
+		m_flNextPrimaryAttack = MAX(m_flNextPrimaryAttack, gpGlobals->curtime);
 		WeaponIdle();
 		return;
 	}
@@ -242,6 +258,11 @@ void CTFMinigun::SharedAttack()
 	if ( pPlayer->m_nButtons & IN_ATTACK )
 	{
 		m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
+		if ( TFGameRules() && TFGameRules()->IsInMedievalMode() )
+		{
+			// medieval mode hackish, can't fire bullets
+			m_iWeaponMode = TF_WEAPON_SECONDARY_MODE;
+		}
 	}
 	else if ( pPlayer->m_nButtons & IN_ATTACK2 )
 	{
@@ -433,6 +454,12 @@ void CTFMinigun::SharedAttack()
 			SendWeaponAnim( ACT_VM_SECONDARYATTACK );
 			break;
 		}
+	}
+
+	if ( m_iWeaponState == AC_STATE_FIRING || m_iWeaponState == AC_STATE_SPINNING )
+	{
+		// make sure both primary and secondary fire will spin down at identical times
+		SetWeaponIdleTime( gpGlobals->curtime + 0.01 );
 	}
 
 	if ( pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) > 0 )
@@ -689,7 +716,11 @@ float CTFMinigun::GetInitialAfterburnDuration() const
 	CALL_ATTRIB_HOOK_INT( nRingOfFireWhileAiming, ring_of_fire_while_aiming );
 	if ( nRingOfFireWhileAiming != 0 )
 	{
+#ifdef TF2_OG
+		return TF_AFTERBURN_BASE_DURATION;
+#else
 		return 8.f;
+#endif
 	}
 
 	return BaseClass::GetInitialAfterburnDuration();
@@ -1445,7 +1476,7 @@ void CTFMinigun::WeaponSoundUpdate()
 
 	if ( m_bRageDraining )
 	{
-		flPitch /= 1.65;
+		flPitch /= 1.65f;
 	}
 
 	CSoundEnvelopeController &controller = CSoundEnvelopeController::GetController();

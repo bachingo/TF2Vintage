@@ -96,26 +96,24 @@ static ConVar	spec_track		( "spec_track", "0", 0, "Tracks an entity in spec mode
 static ConVar	cl_smooth		( "cl_smooth", "1", 0, "Smooth view/eye origin after prediction errors" );
 static ConVar	cl_smoothtime	( 
 	"cl_smoothtime", 
-	"0.1", 
+	"0.07", 
 	0, 
 	"Smooth client's view after prediction error over this many seconds",
-	true, 0.01,	// min/max is 0.01/2.0
-	true, 2.0
+	true, 0.01f,	// min/max is 0.01/0.1
+	true, 0.1f
 	 );
 
 #ifdef CSTRIKE_DLL
 ConVar	spec_freeze_time( "spec_freeze_time", "5.0", FCVAR_CHEAT | FCVAR_REPLICATED, "Time spend frozen in observer freeze cam." );
-ConVar	spec_freeze_traveltime( "spec_freeze_traveltime", "0.7", FCVAR_CHEAT | FCVAR_REPLICATED, "Time taken to zoom in to frame a target in observer freeze cam.", true, 0.01, false, 0 );
+ConVar	spec_freeze_traveltime( "spec_freeze_traveltime", "0.7", FCVAR_CHEAT | FCVAR_REPLICATED, "Time taken to zoom in to frame a target in observer freeze cam.", true, 0.01f, false, 0 );
 ConVar	spec_freeze_distance_min( "spec_freeze_distance_min", "80", FCVAR_CHEAT, "Minimum random distance from the target to stop when framing them in observer freeze cam." );
 ConVar	spec_freeze_distance_max( "spec_freeze_distance_max", "90", FCVAR_CHEAT, "Maximum random distance from the target to stop when framing them in observer freeze cam." );
 #else
 ConVar	spec_freeze_time( "spec_freeze_time", "4.0", FCVAR_CHEAT | FCVAR_REPLICATED, "Time spend frozen in observer freeze cam." );
-ConVar	spec_freeze_traveltime( "spec_freeze_traveltime", "0.4", FCVAR_CHEAT | FCVAR_REPLICATED, "Time taken to zoom in to frame a target in observer freeze cam.", true, 0.01, false, 0 );
+ConVar	spec_freeze_traveltime( "spec_freeze_traveltime", "0.4", FCVAR_CHEAT | FCVAR_REPLICATED, "Time taken to zoom in to frame a target in observer freeze cam.", true, 0.01f, false, 0 );
 ConVar	spec_freeze_distance_min( "spec_freeze_distance_min", "96", FCVAR_CHEAT, "Minimum random distance from the target to stop when framing them in observer freeze cam." );
 ConVar	spec_freeze_distance_max( "spec_freeze_distance_max", "200", FCVAR_CHEAT, "Maximum random distance from the target to stop when framing them in observer freeze cam." );
 #endif
-
-ConVar tf2v_modified_respawn_waves( "tf2v_modified_respawn_waves", "1", FCVAR_REPLICATED, "When active, uses TF2V's algorithm to alter respawn times based on a 8v8 baseline. Disable for the familiar 12v12 Casual mode chaos.", true, 0, true, 1 );
 
 static ConVar	cl_first_person_uses_world_model ( "cl_first_person_uses_world_model", "0", FCVAR_NONE, "Causes the third person model to be drawn instead of the view model" );
 
@@ -423,7 +421,7 @@ C_BasePlayer::C_BasePlayer() : m_iv_vecViewOffset( "C_BasePlayer::m_iv_vecViewOf
 
 	AddVar( &m_Local.m_vecPunchAngle, &m_Local.m_iv_vecPunchAngle, LATCH_SIMULATION_VAR );
 	AddVar( &m_Local.m_vecPunchAngleVel, &m_Local.m_iv_vecPunchAngleVel, LATCH_SIMULATION_VAR );
-	
+
 #ifdef _DEBUG																
 	m_vecLadderNormal.Init();
 	m_vecOldViewAngles.Init();
@@ -637,6 +635,14 @@ void C_BasePlayer::SetObserverMode ( int iNewMode )
 			// On a change of viewing mode or target, we may want to reset both head and torso to point at the new target.
 			g_ClientVirtualReality.AlignTorsoAndViewToWeapon();
 		}
+
+#ifdef TF_CLIENT_DLL
+		CTFPlayer* pTFPlayer = ToTFPlayer( this );
+		if ( pTFPlayer )
+			pTFPlayer->FlushAllPlayerVisibilityState();
+#else
+		UpdateVisibility();
+#endif
 	}
 }
 
@@ -1216,6 +1222,8 @@ bool C_BasePlayer::CreateMove( float flInputSampleTime, CUserCmd *pCmd )
 		}
 	}
 
+	pCmd->lerp_time = m_flInterpolationTime;
+
 	// If the frozen flag is set, prevent view movement (server prevents the rest of the movement)
 	if ( GetFlags() & FL_FROZEN )
 	{
@@ -1662,19 +1670,20 @@ void C_BasePlayer::CalcFreezeCamView( Vector& eyeOrigin, QAngle& eyeAngles, floa
 
 	// Zoom towards our target
 	float flCurTime = (gpGlobals->curtime - m_flFreezeFrameStartTime);
-	
-	float fltraveltime = spec_freeze_traveltime.GetFloat();
-	if ( tf2v_modified_respawn_waves.GetBool() )
+
+	const int iRespawnTimeMode = TeamplayRoundBasedRules() ? TeamplayRoundBasedRules()->GetRespawnTimeMode() : 0;
+	float flTravelTime = spec_freeze_traveltime.GetFloat();
+	if ( iRespawnTimeMode > 2 )
 	{
-		// Use the same player scaling to the freezecam to keep tempo up on low pop.
-		// Likewise, gives us breathing room on high pop.
-		int iTeam = GetTeamNumber();
-		int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
-		float flRespawnSpeedMod = (iNumPlayers / 8); // Optimal players
-		fltraveltime =* flRespawnSpeedMod;
+		flTravelTime = 0.1f;
 	}
-	
-	float flBlendPerc = clamp( flCurTime / fltraveltime, 0.f, 1.f );
+	else if ( iRespawnTimeMode == 2 )
+	{
+		flTravelTime = 0.01f;
+	}
+	const float flFreezeTime = iRespawnTimeMode == 2 ? 0.0f : spec_freeze_time.GetFloat();
+
+	float flBlendPerc = clamp( flCurTime / flTravelTime, 0.f, 1.f );
 	flBlendPerc = SimpleSpline( flBlendPerc );
 
 	Vector vecCamDesired = pTarget->GetObserverCamOrigin();	// Returns ragdoll origin if they're ragdolled
@@ -1730,7 +1739,7 @@ void C_BasePlayer::CalcFreezeCamView( Vector& eyeOrigin, QAngle& eyeAngles, floa
 	
 	VectorLerp( m_vecFreezeFrameStart, vecTargetPos, flBlendPerc, eyeOrigin );
 
-	if ( flCurTime >= fltraveltime && !m_bSentFreezeFrame )
+	if ( flCurTime >= flTravelTime && !m_bSentFreezeFrame )
 	{
 		IGameEvent *pEvent = gameeventmanager->CreateEvent( "freezecam_started" );
 		if ( pEvent )
@@ -1739,18 +1748,7 @@ void C_BasePlayer::CalcFreezeCamView( Vector& eyeOrigin, QAngle& eyeAngles, floa
 		}
 
 		m_bSentFreezeFrame = true;
-		
-		float flFreezetime = spec_freeze_time.GetFloat();
-			if ( tf2v_modified_respawn_waves.GetBool() )
-		{
-			// Use the same player scaling to the freezecam to keep tempo up on low pop.
-			// Likewise, gives us breathing room on high pop.
-			int iTeam = GetTeamNumber();
-			int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
-			float flRespawnSpeedMod = (iNumPlayers / 8); // Optimal players
-			flFreezetime =* flRespawnSpeedMod;
-		}
-		view->FreezeFrame( flFreezetime );
+		view->FreezeFrame( flFreezeTime );
 	}
 }
 
@@ -1773,11 +1771,22 @@ void C_BasePlayer::CalcInEyeCamView(Vector& eyeOrigin, QAngle& eyeAngles, float&
 		return;
 	}
 
-	fov = GetFOV();	// TODO use tragets FOV
+	fov = GetFOV();	// TODO use targets FOV
 
 	m_flObserverChaseDistance = 0.0;
 
-	eyeAngles = target->EyeAngles();
+#ifdef TF_CLIENT_DLL
+	if ( target->IsPlayer() )
+	{
+		C_TFPlayer* pTFTarget = ToTFPlayer( target );
+		eyeAngles = pTFTarget->GetNetworkEyeAngles();
+	}
+	else
+#endif
+	{
+		eyeAngles = target->EyeAngles();
+	}
+
 	eyeOrigin = target->GetAbsOrigin();
 
 	// Apply punch angle
@@ -1886,7 +1895,7 @@ C_BaseCombatWeapon *C_BasePlayer::GetActiveWeaponForSelection( void )
 C_BaseAnimating* C_BasePlayer::GetRenderedWeaponModel()
 {
 	// Attach to either their weapon model or their view model.
-	if ( ShouldDrawLocalPlayer() || !IsLocalPlayer() )
+	if ( ShouldDrawLocalPlayer() || !IsLocalPlayer() && !InFirstPersonView() )
 	{
 		return GetActiveWeapon();
 	}
@@ -1955,7 +1964,7 @@ void C_BasePlayer::ThirdPersonSwitch( bool bThirdperson )
 	}
 
 #ifdef TF_CLIENT_DLL
-	if ( TFGameRules() && TFGameRules()->IsCompetitiveMode() && TFGameRules()->PlayersAreOnMatchSummaryStage() )
+	if ( TFGameRules() && TFGameRules()->PlayersAreOnMatchSummaryStage() )
 	{
 		return false;
 	}
@@ -2035,6 +2044,37 @@ bool C_BasePlayer::ShouldDrawThisPlayer()
 	return false;
 }
 
+bool C_BasePlayer::IsPersonalPerspective( bool bRequireSpectator, bool bRequireFirstPerson, bool bAlwaysForLocalPlayer )
+{
+	if ( IsLocalPlayer() )
+	{
+		return bAlwaysForLocalPlayer || !bRequireFirstPerson || InFirstPersonView();
+	}
+
+	if ( bRequireSpectator && GetTeamNumber() != TEAM_SPECTATOR )
+	{
+		return false;
+	}
+
+	C_BasePlayer* pLocalPlayer = C_BasePlayer::GetLocalPlayer();
+	if ( pLocalPlayer == NULL )
+	{
+		return false;
+	}
+
+	bool bInView = pLocalPlayer->GetObserverMode() == OBS_MODE_IN_EYE;
+	if ( !bRequireFirstPerson && !bInView )
+	{
+		bInView = pLocalPlayer->GetObserverMode() == OBS_MODE_CHASE;
+	}
+	
+	if ( bInView && pLocalPlayer->GetObserverTarget() == ToBasePlayer( this ) )
+	{
+		return true;
+	}
+
+	return false;
+}
 
 
 //-----------------------------------------------------------------------------
@@ -2077,6 +2117,10 @@ void C_BasePlayer::UpdateClientData( void )
 void C_BasePlayer::PreThink( void )
 {
 #if !defined( NO_ENTITY_PREDICTION )
+
+	if ( IsGamePausedForMe() )
+		return;
+	
 	ItemPreFrame();
 
 	UpdateClientData();
@@ -2104,7 +2148,10 @@ void C_BasePlayer::PostThink( void )
 #if !defined( NO_ENTITY_PREDICTION )
 	MDLCACHE_CRITICAL_SECTION();
 
-	if ( IsAlive())
+	if ( IsGamePausedForMe() )
+		return;
+
+	if ( IsAlive() )
 	{
 		// Need to do this on the client to avoid prediction errors
 		if ( GetFlags() & FL_DUCKING )
@@ -2416,12 +2463,41 @@ const QAngle& C_BasePlayer::GetPunchAngle()
 	return m_Local.m_vecPunchAngle.Get();
 }
 
+const QAngle& C_BasePlayer::Weapon_PunchAngle()
+{
+	QAngle vecCurPunch = GetPunchAngle();
+
+	if ( !IsInPostThink() || m_flInterpolationTime >= 1.0f )
+	{
+		return vecCurPunch;
+	}
+
+	static QAngle vecReturnPunch;
+	vecReturnPunch.x = m_Local.m_vecPreTickPunchAngle.x + AngleDiff( vecCurPunch.x, m_Local.m_vecPreTickPunchAngle.x ) * m_flInterpolationTime;
+	vecReturnPunch.y = m_Local.m_vecPreTickPunchAngle.y + AngleDiff( vecCurPunch.y, m_Local.m_vecPreTickPunchAngle.y ) * m_flInterpolationTime;
+	vecReturnPunch.z = m_Local.m_vecPreTickPunchAngle.z + AngleDiff( vecCurPunch.z, m_Local.m_vecPreTickPunchAngle.z ) * m_flInterpolationTime;
+	return vecReturnPunch;
+}
 
 void C_BasePlayer::SetPunchAngle( const QAngle &angle )
 {
 	m_Local.m_vecPunchAngle = angle;
 }
 
+const QAngle& C_BasePlayer::Weapon_EyeAngles()
+{
+	if ( !IsInPostThink() || m_flInterpolationTime >= 1.0f )
+	{
+		return EyeAngles();
+	}
+
+	static QAngle vecReturn;
+	QAngle current = EyeAngles();
+	vecReturn.x = m_Local.m_vecPreTickEyeAngles.x + AngleDiff( current.x, m_Local.m_vecPreTickEyeAngles.x ) * m_flInterpolationTime;
+	vecReturn.y = m_Local.m_vecPreTickEyeAngles.y + AngleDiff( current.y, m_Local.m_vecPreTickEyeAngles.y ) * m_flInterpolationTime;
+	vecReturn.z = m_Local.m_vecPreTickEyeAngles.z + AngleDiff( current.z, m_Local.m_vecPreTickEyeAngles.z ) * m_flInterpolationTime;
+	return vecReturn;
+}
 
 float C_BasePlayer::GetWaterJumpTime() const
 {
@@ -2452,6 +2528,7 @@ bool C_BasePlayer::IsUseableEntity( CBaseEntity *pEntity, unsigned int requiredC
 	return false;
 }
 
+ConVar cl_spec_use_target_fov( "cl_spec_use_target_fov", "1", FCVAR_ARCHIVE );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -2469,7 +2546,7 @@ float C_BasePlayer::GetFOV( void )
 		return clamp( demo_fov_override.GetFloat(), 10.0f, 90.0f );
 	}
 
-	if ( GetObserverMode() == OBS_MODE_IN_EYE )
+	if ( cl_spec_use_target_fov.GetBool() && GetObserverMode() == OBS_MODE_IN_EYE )
 	{
 		C_BasePlayer *pTargetPlayer = dynamic_cast<C_BasePlayer*>( GetObserverTarget() );
 
@@ -2644,6 +2721,24 @@ void C_BasePlayer::LeaveVehicle( void )
 #endif
 }
 
+bool C_BasePlayer::IsGamePausedForMe()
+{
+	if ( engine->IsPaused() )
+	{
+		static ConVarRef sv_noclipduringpause( "sv_noclipduringpause" );
+		if ( sv_noclipduringpause.GetBool() && GetMoveType() == MOVETYPE_NOCLIP )
+		{
+			return false;
+		}
+		return true;
+	}
+	return false;
+}
+
+Vector C_BasePlayer::EyePositionOld()
+{
+	return m_vecPreviouslyPredictedOrigin + GetViewOffset();
+}
 
 float C_BasePlayer::GetMinFOV()	const
 {
@@ -2741,6 +2836,12 @@ void C_BasePlayer::GetPredictionErrorSmoothingVector( Vector &vOffset )
 {
 #if !defined( NO_ENTITY_PREDICTION )
 	if ( engine->IsPlayingDemo() || !cl_smooth.GetInt() || !cl_predict->GetInt() || engine->IsPaused() )
+	{
+		vOffset.Init();
+		return;
+	}
+
+	if ( IsGamePausedForMe() )
 	{
 		vOffset.Init();
 		return;

@@ -171,12 +171,14 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFWeaponBase, DT_LocalTFWeaponData )
 	RecvPropTime( RECVINFO( m_flLastCritCheckTime ) ),
 	RecvPropTime( RECVINFO( m_flReloadPriorNextFire ) ),
 	RecvPropTime( RECVINFO( m_flLastFireTime ) ),
+	RecvPropTime( RECVINFO( m_flLastAccurateFireTime ) ),
 	RecvPropTime( RECVINFO( m_flEffectBarRegenTime ) ),
 	RecvPropFloat( RECVINFO( m_flObservedCritChance ) ),
 #else
 	SendPropTime( SENDINFO( m_flLastCritCheckTime ) ),
 	SendPropTime( SENDINFO( m_flReloadPriorNextFire ) ),
 	SendPropTime( SENDINFO( m_flLastFireTime ) ),
+	SendPropTime( SENDINFO( m_flLastAccurateFireTime ) ),
 	SendPropTime( SENDINFO( m_flEffectBarRegenTime ) ),
 	SendPropFloat( SENDINFO( m_flObservedCritChance ), 16, SPROP_NOSCALE, 0.0, 100.0 ),
 #endif
@@ -239,6 +241,7 @@ BEGIN_PREDICTION_DATA( CTFWeaponBase )
 	DEFINE_PRED_FIELD_TOL( m_flLastCritCheckTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE, TD_MSECTOLERANCE ),	
 	DEFINE_PRED_FIELD_TOL( m_flReloadPriorNextFire, FIELD_FLOAT, FTYPEDESC_INSENDTABLE, TD_MSECTOLERANCE ),	
 	DEFINE_PRED_FIELD_TOL( m_flLastFireTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE, TD_MSECTOLERANCE ),	
+	DEFINE_PRED_FIELD_TOL( m_flLastAccurateFireTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE, TD_MSECTOLERANCE ),	
 	DEFINE_PRED_FIELD( m_bCurrentAttackIsCrit, FIELD_BOOLEAN, 0 ),
 	DEFINE_PRED_FIELD( m_iCurrentSeed, FIELD_INTEGER, 0 ),
 	DEFINE_PRED_FIELD( m_flEnergy, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
@@ -267,7 +270,6 @@ END_DATADESC()
 ConVar cl_crosshaircolor( "cl_crosshaircolor", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE );
 ConVar cl_dynamiccrosshair( "cl_dynamiccrosshair", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE );
 ConVar cl_scalecrosshair( "cl_scalecrosshair", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE );
-ConVar cl_crosshairalpha( "cl_crosshairalpha", "200", FCVAR_CLIENTDLL | FCVAR_ARCHIVE );
 
 int g_iScopeTextureID = 0;
 int g_iScopeDustTextureID = 0;
@@ -302,12 +304,14 @@ CTFWeaponBase::CTFWeaponBase()
 	m_iAltFireHint = 0;
 	m_bInAttack = false;
 	m_bInAttack2 = false;
+	m_flNextBusyCheck = 0.0f;
 	m_flCritTime = 0;
 	m_flLastCritCheckTime = 0;
 	m_flLastRapidFireCritCheckTime = 0;
 	m_iLastCritCheckFrame = 0;
 	m_flObservedCritChance = 0.f;
 	m_flLastFireTime = 0;
+	m_flLastAccurateFireTime = 0;
 	m_flEffectBarRegenTime = 0;
 	m_bCurrentAttackIsCrit = false;
 	m_bCurrentCritIsRandom = false;
@@ -315,14 +319,16 @@ CTFWeaponBase::CTFWeaponBase()
 	m_iCurrentSeed = -1;
 	m_flReloadPriorNextFire = 0;
 	m_flLastDeployTime = 0;
+	m_flLastReadyTime = 0;
+	m_flLastSwitchMult = 1.0f;
 
 	m_bDisguiseWeapon = false;
 
 	m_flEnergy = Energy_GetMaxEnergy();
 
-	m_iAmmoToAdd = 0;
-
 #ifdef GAME_DLL
+	m_iClipToAdd = 0;
+	m_iAmmoToAdd = 0;
 	m_iHitsInTime = 0;
 	m_iProjectilesFiredInTime = 0;
 	m_iConsecutiveKills = 0;
@@ -358,6 +364,36 @@ CTFWeaponBase::~CTFWeaponBase()
 	RemoveWorldmodelStatTrak();
 	RemoveViewmodelStatTrak();
 #endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTraceFilterIgnoreTeammates::ShouldHitEntity(IHandleEntity* pServerEntity, int contentsMask)
+{
+	CBaseEntity* pEntity = EntityFromEntityHandle(pServerEntity);
+
+	if ( ( pEntity->IsPlayer() || pEntity->IsCombatItem() ) )
+	{
+		if ( ( pEntity->GetTeamNumber() == m_iIgnoreTeam || m_iIgnoreTeam == TEAM_ANY ) )
+		{
+			return false;
+		}
+		if ( m_bIncludeDisguises )
+		{
+			CTFPlayer *pPlayer = dynamic_cast<CTFPlayer*>( pEntity );
+			if ( pPlayer )
+			{
+				if ( pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) && pPlayer->m_Shared.GetDisguiseTeam() == m_iIgnoreTeam )
+					return false;
+
+				if ( pPlayer->m_Shared.IsStealthed() )
+					return false;
+			}
+		}
+	}
+
+	return BaseClass::ShouldHitEntity(pServerEntity, contentsMask);
 }
 
 // -----------------------------------------------------------------------------
@@ -438,6 +474,94 @@ void CTFWeaponBase::GiveDefaultAmmo( void )
 		m_flEnergy = Energy_GetMaxEnergy();
 	}
 }
+
+#if GAME_DLL
+void CTFWeaponBase::RestockWeaponAfterShot()
+{
+	// DANGER!!! this function is only meant to provide utility for a "replenish after kill" effect.
+	// thus, it will NOT work as intended if you call it outside of shooting logic: on kill/hit effects, but before projectile removal.
+	// is this a bit contrived? yes. is our shooting / consumption code a bit contrived too? also yes.
+	
+	// primary -- provide them with clip / ammo after the shot.
+	int iClipToGive = 0;
+	int iAmmoToGive = 0;
+	if ( IsEnergyWeapon() )
+	{
+		// refill the energy weapon: 100%
+		iClipToGive = 100;
+	}
+	else if ( UsesClipsForAmmo1() )
+	{
+		if ( AutoFiresFullClip() )
+		{
+			// since our clip should be empty, just give us a full load into ammo.
+			iAmmoToGive = GetMaxClip1();
+		}
+		else
+		{
+			// give us the default clip back.
+			iClipToGive = GetDefaultClip1();
+		}
+	}
+	else
+	{
+		// we don't use clips, so just give our ammo directly.
+		iAmmoToGive = Ceil2Int( GetTFPlayerOwner()->GetMaxAmmo( m_iPrimaryAmmoType ) * 0.5f );
+	}
+	AwardAmmo( iClipToGive, iAmmoToGive );
+	
+	// secondary -- just give them the default secondary. this probably won't work well after shooting secondary mode but it's rare.
+	if ( UsesClipsForAmmo2() )
+	{
+		m_iClip2 = GetDefaultClip2();
+	}
+	else
+	{
+		m_iClip2 = WEAPON_NOCLIP;
+		iAmmoToGive = Ceil2Int( GetTFPlayerOwner()->GetMaxAmmo( m_iSecondaryAmmoType ) * 0.5f );
+	}
+}
+
+void CTFWeaponBase::UpdateAmmoToAdd( CTFPlayer* pPlayer )
+{
+	int iClipToAdd = m_iClipToAdd;
+	int iAmmoToAdd = m_iAmmoToAdd;
+	if ( IsEnergyWeapon() )
+	{
+		const float flEnergyToAdd = m_iClipToAdd + m_iAmmoToAdd;
+		if ( flEnergyToAdd > 0.0f )
+		{
+			const float flEnergyPct = flEnergyToAdd / 100.0f;
+			const float flMaxEnergy = Energy_GetMaxEnergy();
+			const float flEnergy = flEnergyPct * flMaxEnergy;
+			m_flEnergy += flEnergy;
+			if ( m_flEnergy > flMaxEnergy )
+			{
+				m_flEnergy = flMaxEnergy;
+			}
+			m_iClipToAdd = 0;
+			m_iAmmoToAdd = 0;
+		}
+	}
+	else
+	{
+		if ( m_iClip1 != WEAPON_NOCLIP && iClipToAdd > 0 && !AutoFiresFullClip() )
+		{
+			int iLeft = Min( iClipToAdd, GetMaxClip1() - m_iClip1 );
+			iClipToAdd -= iLeft;
+			m_iClip1 += iLeft;
+			m_iClipToAdd = 0;
+		}
+		iAmmoToAdd += iClipToAdd;
+		// delayed ammo adding for the onhit attribute
+		if ( iAmmoToAdd > 0 )
+		{
+			pPlayer->GiveAmmo( iAmmoToAdd, m_iWeaponMode == TF_WEAPON_PRIMARY_MODE ? m_iPrimaryAmmoType.Get() : m_iSecondaryAmmoType.Get() );
+			m_iAmmoToAdd = 0;
+		}
+	}
+}
+#endif
 
 // -----------------------------------------------------------------------------
 // Purpose:
@@ -1207,6 +1331,8 @@ bool CTFWeaponBase::Holster( CBaseCombatWeapon *pSwitchingTo )
 	return BaseClass::Holster( pSwitchingTo );
 }
 
+ConVar tf_weapon_base_switch_speed("tf_weapon_base_switch_speed", "0.5", FCVAR_REPLICATED);
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -1236,29 +1362,14 @@ bool CTFWeaponBase::Deploy( void )
 		if ( !pPlayer )
 			return false;
 
-		float flWeaponSwitchTime = 0.5f;
+		float flWeaponSwitchTime = tf_weapon_base_switch_speed.GetFloat();
 
 		// Overrides the anim length for calculating ready time.
 		float flDeployTimeMultiplier = 1.0f;
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flDeployTimeMultiplier, mult_deploy_time );
 		CALL_ATTRIB_HOOK_FLOAT( flDeployTimeMultiplier, mult_single_wep_deploy_time );
 
-		// don't apply mult_switch_from_wep_deploy_time attribute if the last weapon hasn't been deployed for more than 0.67 second to match to weapon script switch time
-		// unless the player latched to a hook target, then allow switching right away
 		CTFWeaponBase *pLastWeapon = dynamic_cast< CTFWeaponBase* >( pPlayer->GetLastWeapon() );
-		bool bPowerupModeKnife = TFGameRules() && TFGameRules()->IsPowerupMode() && ( GetWeaponID() == TF_WEAPON_KNIFE );
-		if ( pPlayer->GetGrapplingHookTarget() != NULL || ( pLastWeapon && gpGlobals->curtime - pLastWeapon->m_flLastDeployTime > flWeaponSwitchTime ) )
-		{
-			if ( !bPowerupModeKnife )
-			{
-				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pLastWeapon, flDeployTimeMultiplier, mult_switch_from_wep_deploy_time );
-			}
-		}
-		
-		if ( pPlayer->m_Shared.InCond( TF_COND_BLASTJUMPING ) )
-		{
-			CALL_ATTRIB_HOOK_FLOAT( flDeployTimeMultiplier, mult_rocketjump_deploy_time );
-		}
 
 		int iIsSword = 0;
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pLastWeapon, iIsSword, is_a_sword );
@@ -1269,7 +1380,12 @@ bool CTFWeaponBase::Deploy( void )
 			flDeployTimeMultiplier *= 1.75f;
 		}
 
+		if ( pPlayer->m_Shared.InCond( TF_COND_BLASTJUMPING ) )
+		{
+			CALL_ATTRIB_HOOK_FLOAT( flDeployTimeMultiplier, mult_rocketjump_deploy_time );
+		}
 
+		const bool bPowerupModeKnife = TFGameRules() && TFGameRules()->IsPowerupMode() && ( GetWeaponID() == TF_WEAPON_KNIFE );
 		if ( pPlayer->m_Shared.GetCarryingRuneType() == RUNE_AGILITY && !bPowerupModeKnife )
 		{
 			flDeployTimeMultiplier /= 5.0f;
@@ -1280,6 +1396,26 @@ bool CTFWeaponBase::Deploy( void )
 		{
 			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flDeployTimeMultiplier, mod_medic_healed_deploy_time );
 		}
+
+		// don't apply mult_switch_from_wep_deploy_time attribute if the last weapon hasn't past its ready time
+		// unless the player latched to a hook target, then allow switching right away
+		const bool bApplyDeployTimeMult = pLastWeapon && gpGlobals->curtime >= pLastWeapon->m_flLastReadyTime;
+		if ( pPlayer->GetGrapplingHookTarget() != NULL || bApplyDeployTimeMult )
+		{
+			// If the last weapon deployed, then set the switch multiplier.
+			m_flLastSwitchMult = 1.0f;
+			if ( !bPowerupModeKnife )
+			{
+				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pLastWeapon, m_flLastSwitchMult, mult_switch_from_wep_deploy_time );
+			}
+		}
+		else if ( pLastWeapon && !bApplyDeployTimeMult )
+		{
+			// If the last weapon was not fully deployed, then inherit its switch from multiplier.
+			m_flLastSwitchMult = pLastWeapon->m_flLastSwitchMult;
+			pLastWeapon->m_flLastSwitchMult = 1.0f;
+		}
+		flDeployTimeMultiplier *= m_flLastSwitchMult;
 		
 		flDeployTimeMultiplier = MAX( flDeployTimeMultiplier, 0.00001f );
 		float flDeployTime = flWeaponSwitchTime * flDeployTimeMultiplier;
@@ -1300,7 +1436,18 @@ bool CTFWeaponBase::Deploy( void )
 
 		pPlayer->SetNextAttack( m_flNextPrimaryAttack );
 
+#ifdef CLIENT_DLL
+		if ( GetOwner() == C_BasePlayer::GetLocalPlayer() && prediction->IsFirstTimePredicted() )
+		{
+			// weapon specific config
+			char szCmd[256];
+			Q_snprintf( szCmd, sizeof( szCmd ), "exec %s.cfg", GetClassname() );
+			engine->ExecuteClientCmd( szCmd );
+		}
+#endif
+
 		m_flLastDeployTime = gpGlobals->curtime;
+		m_flLastReadyTime = gpGlobals->curtime + flDeployTime;
 
 #ifdef GAME_DLL
 		// Reset our deploy-lifetime kill counter.
@@ -1363,7 +1510,7 @@ void CTFWeaponBase::OnActiveStateChanged( int iOldState )
 
 	// Check for a speed mod change.
 	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
-	if ( pPlayer )
+	if ( pPlayer && pPlayer->IsAlive() )
 	{
 		pPlayer->TeamFortress_SetSpeed();
 	}
@@ -1474,7 +1621,10 @@ void CTFWeaponBase::PrimaryAttack( void )
 	m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
 
 	if ( !CanAttack() )
+	{
+		m_flNextPrimaryAttack = MAX(m_flNextPrimaryAttack, gpGlobals->curtime);
 		return;
+	}
 
 	BaseClass::PrimaryAttack();
 
@@ -1596,7 +1746,7 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 		return false;
 
 	float flCritChance = 0.f;
-	float flPlayerCritMult = pPlayer->GetCritMult();
+	float flPlayerCritMult = pPlayer->GetCritMult(false);
 
 	if ( !CanFireCriticalShot() )
 		return false;
@@ -1876,6 +2026,21 @@ bool CTFWeaponBase::CanOverload( void ) const
 	return ( nCanOverload != 0 );
 }
 
+bool CTFWeaponBase::CanDeploy( void )
+{
+	if ( TFGameRules() && TFGameRules()->IsInMedievalMode() )
+	{
+		int iMedievalAllow = 0;
+		CALL_ATTRIB_HOOK_INT( iMedievalAllow, allowed_in_medieval_mode );
+		if ( iMedievalAllow == 2 )
+		{
+			return false;
+		}
+	}
+
+	return BaseClass::CanDeploy();
+}
+
 float CTFWeaponBase::ApplyFireDelay( float flDelay ) const
 {
 	float flDelayMult = 1.0f;
@@ -1961,7 +2126,14 @@ bool CTFWeaponBase::ReloadSingly( void )
 			// Play weapon and player animations.
 			if ( SendWeaponAnim( ACT_RELOAD_START ) )
 			{
-				SetReloadTimer( SequenceDuration() );
+				float SeqDuration = SequenceDuration();
+#if defined(MCOMS_BALANCE_PACK)
+				if ( GetWeaponID() == TF_WEAPON_PARTICLE_CANNON )
+				{
+					SeqDuration *= 1.15f;
+				}
+#endif
+				SetReloadTimer( SeqDuration );
 			}
 			else
 			{
@@ -2063,11 +2235,15 @@ bool CTFWeaponBase::ReloadSingly( void )
 		{
 			if ( SendWeaponAnim( ACT_RELOAD_FINISH ) )
 			{
+				// TODO(mcoms)
 				// We're done, allow primary attack as soon as we like unless we're an energy weapon.
-//				if ( IsEnergyWeapon() )
-//				{
-//					SetReloadTimer( SequenceDuration() );
-//				}
+#if 0
+				// This was commented out, but we're bringing it back for the Cow Mangler charge shot.
+				if ( IsEnergyWeapon() && GetWeaponID() == TF_WEAPON_PARTICLE_CANNON )
+				{
+					SetReloadTimer( SequenceDuration() - 0.2f );
+				}
+#endif
 			}
 
 			pPlayer->DoAnimationEvent( PLAYERANIMEVENT_RELOAD_END );
@@ -2089,12 +2265,17 @@ void CTFWeaponBase::IncrementAmmo( void )
 		{
 			Energy_Recharge();
 		}
-		else if ( !CheckReloadMisfire() ) 
+		else
 		{
-			if ( pPlayer && pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) > 0 && ( m_iClip1 < GetMaxClip1() ) )
+			const bool bMisfired = CheckReloadMisfire();
+			const bool bReloadClip = TFGameRules()->IsBetaActive() || !bMisfired;
+			if ( bReloadClip && pPlayer && pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) > 0 )
 			{
-				m_iClip1++;
-				pPlayer->RemoveAmmo( 1, m_iPrimaryAmmoType );
+				if ( m_iClip1 < GetMaxClip1() || bMisfired )
+				{
+					m_iClip1 = MIN( ( m_iClip1 + 1 ), GetMaxClip1() );
+					pPlayer->RemoveAmmo( 1, m_iPrimaryAmmoType );
+				}				
 			}
 		}
 	}
@@ -2207,7 +2388,7 @@ bool CTFWeaponBase::DefaultReload( int iClipSize1, int iClipSize2, int iActivity
 	if ( SendWeaponAnim( iActivity ) )
 	{
 		// We consider the reload finished 0.2 sec before the anim is, so that players don't keep accidentally aborting their reloads
-		flReloadTime = SequenceDuration() - 0.2;
+		flReloadTime = SequenceDuration() - 0.2f;
 	}
 	else
 	{
@@ -2247,13 +2428,11 @@ void CTFWeaponBase::UpdateReloadTimers( bool bStart )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFWeaponBase::SetReloadTimer( float flReloadTime )
+float CTFWeaponBase::GetReloadTimer( float flReloadTime )
 {
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
 	if ( !pPlayer )
-		return;
-
-	float flBaseReloadTime = flReloadTime;
+		return flReloadTime;
 
 	CALL_ATTRIB_HOOK_FLOAT( flReloadTime, mult_reload_time );
 	CALL_ATTRIB_HOOK_FLOAT( flReloadTime, mult_reload_time_hidden );
@@ -2295,12 +2474,29 @@ void CTFWeaponBase::SetReloadTimer( float flReloadTime )
 
 
 	int numHealers = pPlayer->m_Shared.GetNumHealers();
-	if ( numHealers == 1 )
+	if ( numHealers >= 1 )
 	{
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flReloadTime, mult_reload_time_while_healed );
 	}
 
 	flReloadTime = MAX( flReloadTime, 0.00001f );
+
+	return flReloadTime;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFWeaponBase::SetReloadTimer( float flReloadTime )
+{
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( !pPlayer )
+		return;
+
+	float flBaseReloadTime = flReloadTime;
+
+	flReloadTime = GetReloadTimer( flReloadTime );
+
 	if ( pPlayer->GetViewModel(0) )
 	{
 		pPlayer->GetViewModel(0)->SetPlaybackRate( flBaseReloadTime / flReloadTime );
@@ -2369,14 +2565,20 @@ void CTFWeaponBase::ItemBusyFrame( void )
 		return;
 	}
 
-	if ( ( pOwner->m_nButtons & IN_ATTACK2 ) && /*m_bInReload == false &&*/ m_bInAttack2 == false )
+	if ( ( pOwner->m_nButtons & IN_ATTACK2 ) && /*m_bInReload == false &&*/ m_bInAttack2 == false && m_flNextBusyCheck <= gpGlobals->curtime )
 	{
-		pOwner->DoClassSpecialSkill();
-		m_bInAttack2 = true;
+		if ( pOwner->DoClassSpecialSkill() )
+		{
+			// require a repress if we did something.
+			m_bInAttack2 = true;
+		}
+		// try again soon
+		m_flNextBusyCheck = gpGlobals->curtime + 0.1f;
 	}
 	else if ( !(pOwner->m_nButtons & IN_ATTACK2) && m_bInAttack2 )
 	{
 		m_bInAttack2 = false;
+		m_flNextBusyCheck = 0.0f;
 	}
 
 	// Interrupt a reload on reload singly weapons.
@@ -2411,11 +2613,13 @@ void CTFWeaponBase::ItemBusyFrame( void )
 	}
 
 #ifdef GAME_DLL
-
 	// If we have an active-weapon-only regen, we accumulate regen time while active, so that
 	// they can't avoid the regen/degen by weapon switching rapidly.
 	ApplyItemRegen();
+#endif
 
+#ifdef GAME_DLL
+	UpdateAmmoToAdd( pOwner );
 #endif
 
 	CheckEffectBarRegen();
@@ -2435,7 +2639,8 @@ void CTFWeaponBase::ItemPostFrame( void )
 	bool bNeedsReload = NeedsReloadForAmmo1( GetMaxClip1() ) || ( IsEnergyWeapon() && !Energy_FullyCharged() );
 
 	// If we're not shooting, and we want to autoreload, press our reload key
-	if ( !AutoFiresFullClip() && pOwner->ShouldAutoReload() && UsesClipsForAmmo1() && !(pOwner->m_nButtons & (IN_ATTACK|IN_ATTACK2)) && bNeedsReload )
+	// also check for frozen since this theory blocks our buttons
+	if ( !AutoFiresFullClip() && pOwner->ShouldAutoReload() && UsesClipsForAmmo1() && !(pOwner->m_nButtons & (IN_ATTACK|IN_ATTACK2)) && bNeedsReload && ( pOwner->GetFlags() & FL_FROZEN ) == 0 )
 	{
 		pOwner->m_nButtons |= IN_RELOAD;
 	}
@@ -2449,6 +2654,7 @@ void CTFWeaponBase::ItemPostFrame( void )
 	if ( m_bInAttack2 && !( pOwner->m_nButtons & IN_ATTACK2 ) )
 	{
 		m_bInAttack2 = false;
+		m_flNextBusyCheck = 0.0f;
 	}
 
 #ifdef GAME_DLL
@@ -2478,6 +2684,10 @@ void CTFWeaponBase::ItemPostFrame( void )
 	{
 		FireFullClipAtOnce();
 	}
+
+#ifdef GAME_DLL
+	UpdateAmmoToAdd( pOwner );
+#endif
 }
 
 
@@ -2613,6 +2823,8 @@ void CTFWeaponBase::HandleInspect()
 //-----------------------------------------------------------------------------
 float CTFWeaponBase::GetNextSecondaryAttackDelay( void )
 {
+	// UNDONE: since this is used for the special skill, make it more responsive.
+#if 0
 	// This is a little gross.  The demo needs fast-cycle secondary
 	// attacks while holding down +attack2 and switching weapons
 	// in order to properly handle timely sticky detonation.
@@ -2623,6 +2835,9 @@ float CTFWeaponBase::GetNextSecondaryAttackDelay( void )
 	}
 
 	return BaseClass::GetNextSecondaryAttackDelay();
+#else
+	return 0.1f;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -4569,10 +4784,15 @@ ShadowType_t CTFWeaponBase::ShadowCastType( void )
 // -----------------------------------------------------------------------------
 bool CTFWeaponBase::CanAttack()
 {
-	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	return CanAttack(GetCanAttackFlags());
+}
 
-	if ( pPlayer )
-		return pPlayer->CanAttack( GetCanAttackFlags() );
+bool CTFWeaponBase::CanAttack(int iFlags)
+{
+	CTFPlayer* pPlayer = GetTFPlayerOwner();
+
+	if (pPlayer)
+		return pPlayer->CanAttack(iFlags);
 
 	return false;
 }
@@ -5089,7 +5309,7 @@ void CTFWeaponBase::ApplyOnHitAttributes( CBaseEntity *pVictimBaseEntity, CTFPla
 			CALL_ATTRIB_HOOK_INT( iRevealCloakedSpyOnHit, reveal_cloaked_victim_on_hit );
 			if ( iRevealCloakedSpyOnHit > 0 )
 			{
-				pVictim->RemoveInvisibility();
+				pVictim->RemoveInvisibility(false);
 				bIsSpyRevealed = true;
 			}
 		}
@@ -5826,6 +6046,22 @@ QAngle CTFWeaponBase::GetSpreadAngles( void )
 		angEyes += angSpread;
 	}
 
+#if defined(MCOMS_BALANCE_PACK)
+	// Airstrike gets accuracy penalty while in air
+	if ( pOwner && pOwner->m_Shared.InCond(TF_COND_BLASTJUMPING) )
+	{
+		// Using this attr to key in the AirStrike
+		float flRocketJumpAttackBonus = 1.0f;
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pOwner, flRocketJumpAttackBonus, rocketjump_attackrate_bonus );
+		if ( flRocketJumpAttackBonus != 1.0f )
+		{
+			QAngle angSpread = RandomAngle( -4.0f, 4.0f );
+			angSpread.z = 0.0f;
+			angEyes += angSpread;
+		}
+	}
+#endif
+
 	return angEyes;
 }
 
@@ -5854,8 +6090,14 @@ bool CTFWeaponBase::AreRandomCritsEnabled( void )
 			return false;
 
 		const IMatchGroupDescription *pMatchDesc = GetMatchGroupDescription( TFGameRules()->GetCurrentMatchGroup() );
-		if ( pMatchDesc )
-			return pMatchDesc->BUsesRandomCrits();
+		if ( pMatchDesc && !pMatchDesc->BUsesRandomCrits() )
+			return false;
+
+		if ( TFGameRules()->IsEmulatingMatch() == 2 )
+			return false;
+
+		if ( TFGameRules()->IsCompetitiveGame() )
+			return false;
 	}
 
 	return tf_weapon_criticals.GetBool();
@@ -5986,6 +6228,9 @@ public:
 			return false;
 
 		if ( pEntity->IsBaseObject() )
+			return false;
+
+		if ( pEntity->IsBaseProjectile() )
 			return false;
 
 		if ( pEntity->IsCombatItem() )
@@ -6434,11 +6679,11 @@ void CTFWeaponBase::FinishReload( void )
 		{
 			if ( m_iClip1 == 1 )
 			{
-				pPlayer->m_Shared.AddCond( TF_COND_CRITBOOSTED );
+				pPlayer->m_Shared.AddCond( TF_COND_CRITBOOSTED_SELF );
 			}
 			else
 			{
-				pPlayer->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
+				pPlayer->m_Shared.RemoveCond( TF_COND_CRITBOOSTED_SELF );
 			}
 		}
 	}
@@ -6630,10 +6875,12 @@ bool CTFWeaponBase::CanBeCritBoosted( void )
 
 bool CTFWeaponBase::CanHaveRevengeCrits( void )
 {
+#if !defined(MCOMS_BALANCE_PACK)
 	int iSapperCrits = 0;
 	CALL_ATTRIB_HOOK_INT( iSapperCrits, sapper_kills_collect_crits );
 	if ( iSapperCrits != 0 )
 		return true;
+#endif
 
 	int iExtinguishCrits = 0;
 	CALL_ATTRIB_HOOK_INT( iExtinguishCrits, extinguish_revenge );

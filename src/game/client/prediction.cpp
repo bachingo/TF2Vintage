@@ -25,6 +25,10 @@
 #include "c_basehlplayer.h"
 #endif
 
+#ifdef TF_CLIENT_DLL
+#include "tf_gamerules.h"
+#endif
+
 #include "tier0/vprof.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -43,7 +47,7 @@ static ConVar	cl_predictionlist	( "cl_predictionlist", "0", FCVAR_CHEAT, "Show w
 
 static ConVar	cl_predictionentitydump( "cl_pdump", "-1", FCVAR_CHEAT, "Dump info about this entity to screen." );
 static ConVar	cl_predictionentitydumpbyclass( "cl_pclass", "", FCVAR_CHEAT, "Dump entity by prediction classname." );
-static ConVar	cl_pred_optimize( "cl_pred_optimize", "2", 0, "Optimize for not copying data if didn't receive a network update (1), and also for not repredicting if there were no errors (2)." );
+static ConVar	cl_pred_optimize( "cl_pred_optimize", "1", 0, "Optimize for not copying data if didn't receive a network update (1), and also for not repredicting if there were no errors (2)." );
 
 static ConVar	cl_pred_doresetlatch( "cl_pred_doresetlatch", "1", 0 );
 
@@ -831,7 +835,9 @@ void CPrediction::RunPostThink( C_BasePlayer *player )
 	VPROF( "CPrediction::RunPostThink" );
 
 	// Run post-think
+	player->SetInPostThink( true );
 	player->PostThink();
+	player->SetInPostThink( false );
 #endif
 }
 
@@ -889,6 +895,9 @@ void CPrediction::RunCommand( C_BasePlayer *player, CUserCmd *ucmd, IMoveHelper 
 	PREDICTION_TRACKVALUECHANGESCOPE( sz );
 #endif
 	StartCommand( player, ucmd );
+
+	float flSavedInterpolationTime = player->m_flInterpolationTime;
+	player->m_flInterpolationTime = ucmd->lerp_time;
 
 	// Set globals appropriately
 	gpGlobals->curtime		= player->m_nTickBase * TICK_INTERVAL;
@@ -950,6 +959,11 @@ void CPrediction::RunCommand( C_BasePlayer *player, CUserCmd *ucmd, IMoveHelper 
 	}
 
 	// RUN MOVEMENT
+
+	// Store pre-tick angles to lerp for subtick
+	player->m_Local.m_vecPreTickPunchAngle = player->GetPunchAngle();
+	player->m_Local.m_vecPreTickEyeAngles = player->EyeAngles();
+
 	if ( !pVehicle )
 	{
 		Assert( g_pGameMovement );
@@ -976,6 +990,8 @@ void CPrediction::RunCommand( C_BasePlayer *player, CUserCmd *ucmd, IMoveHelper 
 	{
 		player->m_nTickBase++;
 	}
+
+	player->m_flInterpolationTime = flSavedInterpolationTime;
 #endif
 }
 
@@ -1712,6 +1728,11 @@ void CPrediction::Update( int startframe, bool validframe,
 	VPROF_BUDGET( "CPrediction::Update", VPROF_BUDGETGROUP_PREDICTION );
 
 	m_bEnginePaused = engine->IsPaused();
+	C_BasePlayer* pPlayer = C_BasePlayer::GetLocalPlayer();
+	if ( pPlayer )
+	{
+		m_bEnginePaused = pPlayer->IsGamePausedForMe();
+	}
 
 	bool received_new_world_update = true;
 
@@ -1793,8 +1814,11 @@ void CPrediction::_Update( bool received_new_world_update, bool validframe,
 	// This allows us to sample the world when it may not be ready to be sampled
 	Assert( C_BaseEntity::IsAbsQueriesValid() );
 	
+	// UNDONE: Where is this ever used?
+#if 0
 	// FIXME: What about hierarchy here?!?
 	SetIdealPitch( localPlayer, localPlayer->GetLocalOrigin(), localPlayer->GetLocalAngles(), localPlayer->m_vecViewOffset );
+#endif
 #endif
 }
 

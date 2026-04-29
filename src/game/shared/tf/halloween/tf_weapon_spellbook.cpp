@@ -419,7 +419,7 @@ void CHudSpellMenu::UpdateSpellText( int iSpellIndex, int iChargeCount )
 		if ( m_iNextRollTime > gpGlobals->curtime )
 			return;
 		m_iNextRollTime = gpGlobals->curtime + m_flRollTickGap;
-		m_flRollTickGap += 0.015f;
+		m_flRollTickGap += TICK_INTERVAL;
 		static int s_iRandSpell = 0;
 		s_iRandSpell = ( s_iRandSpell + 1 ) % GetTotalSpellCount( pLocalPlayer );
 		const spell_data_t *pSpellData = GetSpellData( s_iRandSpell );
@@ -512,8 +512,13 @@ void CEquipSpellbookNotification::Accept()
 	}
 
 	TFInventoryManager()->EquipItemInLoadout( pLocalPlayer->GetPlayerClass()->GetClassIndex(), LOADOUT_POSITION_ACTION, iItemId );
-	
+#ifdef INVENTORY_VIA_WEBAPI
+	TFInventoryManager()->QueueGCInventoryChangeNotification();
+#else
 	// Tell the GC to tell server that we should respawn if we're in a respawn room
+	GCSDK::CGCMsg< ::MsgGCEmpty_t > msg(k_EMsgGCRespawnPostLoadoutChange);
+	GCClientSystem()->BSendMessage(msg);
+#endif
 
 	MarkForDeletion();
 }

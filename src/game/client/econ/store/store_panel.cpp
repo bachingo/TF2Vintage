@@ -207,9 +207,9 @@ private:
 //-----------------------------------------------------------------------------
 static void ContactSupportConfirm( bool bConfirmed, void *pContext )
 {
-	if ( bConfirmed && steamapicontext && steamapicontext->SteamFriends() )
+	if ( bConfirmed )
 	{
-		steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( "https://support.steampowered.com/" );
+		UTIL_OpenWebPage( "https://support.steampowered.com/" );
 	}
 }
 
@@ -361,23 +361,6 @@ CStorePage *CStorePanel::CreateStorePage( const CEconStoreCategoryManager::Store
 //-----------------------------------------------------------------------------
 bool CStorePanel::ShouldShowDx8PurchaseWarning() const
 {
-	static ConVarRef mat_dxlevel( "mat_dxlevel" );
-	if ( mat_dxlevel.GetInt() >= 90 )
-		return false;
-
-	// List of operations that have features that are not compatible with DX8.
-	const char* cpDX8WarningItems[] = {
-		"Unused Summer 2015 Operation Pass",
-		"Unused Operation Tough Break Pass",
-		NULL
-	};
-
-	for ( int i = 0; cpDX8WarningItems[ i ] != NULL; ++i )
-	{
-		if ( m_Cart.ContainsItemDefinition( ItemSystem()->GetStaticDataForItemByName( cpDX8WarningItems[ i ] )->GetDefinitionIndex() ) )
-			return true;
-	}
-
 	return false;
 }
 
@@ -949,15 +932,6 @@ void CStorePanel::InitiateCheckout( bool bSkipUpsell, bool bSkipDecoderWarning /
 	if ( m_Cart.ContainsHolidayRestrictedItems() )
 	{
 		CTFGenericConfirmDialog *pDialog = ShowConfirmDialog( "#Store_ConfirmHolidayRestrictionCheckoutTitle",  "#Store_ConfirmHolidayRestrictionCheckoutText", "#Store_OK", "#TF_Back", &ConfirmCheckout );
-		if ( pDialog )
-		{
-			pDialog->SetContext( this );
-		}
-		return;
-	}
-	else if ( ShouldShowDx8PurchaseWarning( ) )
-	{
-		CTFGenericConfirmDialog *pDialog = ShowConfirmDialog( "#Store_ConfirmDx8Summer2015OpPassTitle", "#Store_ConfirmDx8Summer2015OpPassText", "#Store_BuyAnyway", "#Store_NoThanks", &ConfirmCheckout );
 		if ( pDialog )
 		{
 			pDialog->SetContext( this );
@@ -1630,7 +1604,7 @@ void CStoreCart::AddToCart( const econ_store_entry_t *pEntry, const char* pszPag
 		if ( !CBaseAdPanel::CheckForRequiredSteamComponents( "#StoreUpdate_SteamRequired", "#MMenu_OverlayRequired" ) )
 			return;
 
-		if ( pItemDef && steamapicontext && steamapicontext->SteamFriends() )
+		if ( pItemDef )
 		{
 			const char *pszPrefix = "";
 			if ( GetUniverse() == k_EUniverseBeta )
@@ -1642,8 +1616,8 @@ void CStoreCart::AddToCart( const econ_store_entry_t *pEntry, const char* pszPag
 			g_pVGuiLocalize->ConvertUnicodeToANSI( g_pVGuiLocalize->Find( pItemDef->GetItemBaseName() ), pszItemName, sizeof( pszItemName ) );
 
 			char szURL[512];
-			V_sprintf_safe( szURL, "http://%ssteamcommunity.com/market/listings/%d/%s", pszPrefix, engine->GetAppID(), pszItemName );
-			steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( szURL );
+			V_sprintf_safe( szURL, "https://%ssteamcommunity.com/market/listings/%d/%s", pszPrefix, UTIL_GetEmulatedAppID(), pszItemName );
+			UTIL_OpenWebPage( szURL );
 		}
 		return;
 	}

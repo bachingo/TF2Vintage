@@ -379,13 +379,14 @@ bool CObjectDispenser::ShouldBeMiniBuilding( CTFPlayer* pPlayer )
 	return false;
 }
 
+ConVar tf_obj_dispenser_max_level("tf_obj_dispenser_max_level", V_STRINGIFY(OBJ_MAX_UPGRADE_LEVEL), FCVAR_REPLICATED);
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-int CObjectDispenser::GetMaxUpgradeLevel()
+int CObjectDispenser::GetMaxUpgradeLevel() const
 {
-
-	return BaseClass::GetMaxUpgradeLevel();
+	return Clamp( tf_obj_dispenser_max_level.GetInt(), 1, BaseClass::GetMaxUpgradeLevel() );
 }
 
 //-----------------------------------------------------------------------------
@@ -525,6 +526,11 @@ bool CObjectDispenser::DispenseAmmo( CTFPlayer *pPlayer )
 
 	int nNoPrimaryAmmoFromDispensersWhileActive = 0;
 	CALL_ATTRIB_HOOK_INT_ON_OTHER( pPlayer->GetActiveWeapon(), nNoPrimaryAmmoFromDispensersWhileActive, no_primary_ammo_from_dispensers );
+#ifdef MCOMS_BALANCE_PACK
+	// moving away from this stat:
+	// all items can receive ammo now, we'll balance the items for this
+	nNoPrimaryAmmoFromDispensersWhileActive = 0;
+#endif
 
 	float flAmmoRate = g_flDispenserAmmoRates[GetUpgradeLevel()];
 
@@ -544,6 +550,11 @@ bool CObjectDispenser::DispenseAmmo( CTFPlayer *pPlayer )
 	// metal
 	int iNoMetalFromDispenserWhileActive = 0;
 	CALL_ATTRIB_HOOK_INT_ON_OTHER( pPlayer->GetActiveWeapon(), iNoMetalFromDispenserWhileActive, no_metal_from_dispensers_while_active );
+#ifdef MCOMS_BALANCE_PACK
+	// moving away from this stat:
+	// all items can receive metal now, we'll balance the items for this
+	iNoMetalFromDispenserWhileActive = 0;
+#endif
 	if ( iNoMetalFromDispenserWhileActive == 0 )
 	{
 		iTotalPickedUp += DispenseMetal( pPlayer );
@@ -593,7 +604,7 @@ int CObjectDispenser::DispenseMetal( CTFPlayer *pPlayer )
 //-----------------------------------------------------------------------------
 void CObjectDispenser::RefillThink( void )
 {
-	if ( IsCarried() )
+	if ( IsCarried() && !ShouldBeActiveWhileCarried() )
 		return;
 
 	SetContextThink( &CObjectDispenser::RefillThink, gpGlobals->curtime + 6, REFILL_CONTEXT );
@@ -625,7 +636,7 @@ void CObjectDispenser::RefillThink( void )
 //-----------------------------------------------------------------------------
 void CObjectDispenser::DispenseThink( void )
 {
-	if ( IsCarried() )
+	if ( IsCarried() && !ShouldBeActiveWhileCarried() )
 		return;
 
 	if ( IsDisabled() )
@@ -643,6 +654,7 @@ void CObjectDispenser::DispenseThink( void )
 		float flRadius = GetDispenserRadius();
 		if ( ( flRadius != m_flPrevRadius ) && m_hTouchTrigger.Get() )
 		{
+			m_hTouchTrigger->SetParent(this);
 			m_hTouchTrigger->SetAbsOrigin( WorldSpaceCenter() );
 			UTIL_SetSize( m_hTouchTrigger.Get(), Vector( -flRadius, -flRadius, -flRadius ), Vector( flRadius, flRadius, flRadius ) );
 			m_flPrevRadius = flRadius;
@@ -806,8 +818,13 @@ void CObjectDispenser::EndTouch( CBaseEntity *pOther )
 	EHANDLE hOther = pOther;
 	m_hTouchingEntities.FindAndRemove( hOther );
 
-	// remove from healing list
-	StopHealing( pOther );
+	// check if we should stop healing
+	// if pOther is touching both the dispenser and its trigger, it will be in m_hTouchingEntities twice
+	// if it's still present after one removal, it's still touching the trigger, so don't stop healing
+	if ( !m_hTouchingEntities.HasElement( hOther ) )
+	{
+		StopHealing( pOther );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -845,7 +862,7 @@ float CObjectDispenser::GetHealRate() const
 //-----------------------------------------------------------------------------
 void CObjectDispenser::StartHealing( CBaseEntity *pOther )
 {
-	if ( IsCarried() )
+	if ( IsCarried() && !ShouldBeActiveWhileCarried() )
 		return;
 
 	AddHealingTarget( pOther );
@@ -1025,16 +1042,19 @@ int CObjectDispenser::DrawDebugTextOverlays(void)
 //-----------------------------------------------------------------------------
 void CObjectDispenser::MakeCarriedObject( CTFPlayer *pCarrier )
 {
-	if ( m_hTouchTrigger.Get() )
+	if (!ShouldBeActiveWhileCarried())
 	{
-		UTIL_Remove( m_hTouchTrigger );
+		if (m_hTouchTrigger.Get())
+		{
+			UTIL_Remove(m_hTouchTrigger);
+		}
+
+		ResetHealingTargets();
+
+		m_hTouchingEntities.Purge();
+
+		StopSound("Building_Dispenser.Idle");
 	}
-
-	ResetHealingTargets();
-
-	m_hTouchingEntities.Purge();
-
-	StopSound( "Building_Dispenser.Idle" );
 
 	BaseClass::MakeCarriedObject( pCarrier );
 }
@@ -1073,6 +1093,9 @@ void CObjectCartDispenser::Spawn( void )
 	m_fObjectFlags |= (int)OF_DOESNT_HAVE_A_MODEL;
 	m_takedamage = DAMAGE_NO;
 	m_iUpgradeLevel = 1;
+
+	// TODO(mcoms)
+	//InitializeMapPlacedObject();
 
 	TFGameRules()->OnDispenserBuilt( this );
 }

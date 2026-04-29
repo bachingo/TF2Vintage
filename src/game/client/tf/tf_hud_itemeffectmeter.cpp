@@ -35,6 +35,7 @@
 #include "tf_weapon_rocketpack.h"
 #include "tf_weapon_bonesaw.h"
 #include "tf_weapon_slap.h"
+#include "tf_controls.h"
 
 #include <vgui_controls/ImagePanel.h>
 
@@ -388,6 +389,21 @@ void CHudItemEffectMeter::ApplySchemeSettings( IScheme *pScheme )
 
 	BaseClass::ApplySchemeSettings( pScheme );
 
+	int x, y;
+	GetPos( x, y );
+
+	int xOffset;
+	int yOffset;
+	if ( ConstrainAspect( xOffset, yOffset ) )
+	{
+		OffsetAspect( x, y, xOffset, yOffset, m_nBaseX, m_nBaseY );
+	}
+	else
+	{
+		m_nBaseX = x;
+		m_nBaseY = y;
+	}
+
 	SetLabelText();
 
 	m_pItemEffectIcon = dynamic_cast< CTFImagePanel* >( FindChildByName( "ItemEffectIcon" ) );
@@ -446,11 +462,12 @@ void CHudItemEffectMeter::PerformLayout()
 
 		if ( g_ItemEffectMeterManager.GetNumEnabled() + iOffset > 1 )
 		{
-			int xPos = 0, yPos = 0;
-			GetPos( xPos, yPos );
-			SetPos( xPos - m_iXOffset, yPos );
+			SetPos( m_nBaseX - m_iXOffset, m_nBaseY );
+			return;
 		}
 	}
+
+	SetPos( m_nBaseX, m_nBaseY );
 }
 
 //-----------------------------------------------------------------------------

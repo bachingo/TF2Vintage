@@ -628,18 +628,31 @@ void CTFClassMenu::ShowPanel( bool bShow )
 {
 	if ( bShow )
 	{
+		int iLocalTeam = GetLocalPlayerTeam();
+		int iPanelTeam = GetTeamNumber();
+
+		// if we're already on a game team, we can't show the other one.
+		if ( iLocalTeam >= FIRST_GAME_TEAM )
+		{
+			if ( iLocalTeam != iPanelTeam )
+			{
+				SetVisible( false );
+				return;
+			}
+		}
+
 		// Hide the other class menu
 		if ( gViewPortInterface )
 		{
-			gViewPortInterface->ShowPanel( GetTeamNumber() == TF_TEAM_BLUE ? PANEL_CLASS_RED : PANEL_CLASS_BLUE, false );
+			gViewPortInterface->ShowPanel( iPanelTeam == TF_TEAM_BLUE ? PANEL_CLASS_RED : PANEL_CLASS_BLUE, false );
 		}
 
 		// can't change class if you're on the losing team during the "bonus time" after a team has won the round
 		if ( ( TFGameRules()->State_Get() == GR_STATE_TEAM_WIN && 
 			 C_TFPlayer::GetLocalTFPlayer() && 
-			 C_TFPlayer::GetLocalTFPlayer()->GetTeamNumber() != TFGameRules()->GetWinningTeam()
-			 && C_TFPlayer::GetLocalTFPlayer()->GetTeamNumber() != TEAM_SPECTATOR 
-			 && C_TFPlayer::GetLocalTFPlayer()->GetTeamNumber() != TEAM_UNASSIGNED
+			 iLocalTeam != TFGameRules()->GetWinningTeam()
+			 && iLocalTeam != TEAM_SPECTATOR
+			 && iLocalTeam != TEAM_UNASSIGNED
 			 && GetSpectatorMode() == OBS_MODE_NONE ) ||
 			 TFGameRules()->State_Get() == GR_STATE_GAME_OVER ||
 			( TFGameRules()->IsInTraining() && C_TFPlayer::GetLocalTFPlayer() &&
@@ -1056,7 +1069,8 @@ void CTFClassMenu::Update()
 #else
 		SetCancelButtonVisible( true );
 
-		if ( TFGameRules() && TFGameRules()->IsInHighlanderMode() )
+		// mcoms: now doing this for all, not just comp
+		if ( true || TFGameRules() && ( TFGameRules()->IsInHighlanderMode() || TFGameRules()->IsCompetitiveGame() ) )
 		{
 			SetVisibleButton( "ResetButton", true );
 		}
@@ -1179,6 +1193,10 @@ void CTFClassMenu::SetVisible( bool state )
 
 	if ( state )
 	{
+		if (m_pTFPlayerModelPanel)
+		{
+			m_pTFPlayerModelPanel->SetVisible( true );
+		}
 		engine->ServerCmd( "menuopen" );			// to the server
 		engine->ClientCmd( "_cl_classmenuopen 1" );	// for other panels
 		CBroadcastRecipientFilter filter;
@@ -1198,6 +1216,11 @@ void CTFClassMenu::SetVisible( bool state )
 	{
 		engine->ServerCmd( "menuclosed" );	
 		engine->ClientCmd( "_cl_classmenuopen 0" );
+
+		if (m_pTFPlayerModelPanel)
+		{
+			m_pTFPlayerModelPanel->SetVisible( false );
+		}
 		
 		if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() )
 		{
@@ -1221,7 +1244,10 @@ void CTFClassMenu::Go()
 
 	// Check class limits
 	if ( TFGameRules() && !TFGameRules()->CanPlayerChooseClass( C_TFPlayer::GetLocalTFPlayer(), iClass ) )
+	{
+		BaseClass::OnCommand( CFmtStr( "requestclass %s", g_aRawPlayerClassNames[iClass] ).Access() );
 		return;
+	}
 
 #if defined( REPLAY_ENABLED )
 	// Display replay recording message if appropriate
@@ -1299,7 +1325,8 @@ void CTFClassMenu::OnCommand( const char *command )
 	}
 	else if ( !V_strnicmp( command, "resetclass", 10 ) )
 	{
-		if ( TFGameRules() && !TFGameRules()->IsInHighlanderMode() )
+		// mcoms: now doing this for all, not just comp
+		if ( false && TFGameRules() && !(TFGameRules()->IsInHighlanderMode() || TFGameRules()->IsCompetitiveGame() ) )
 			return;
 
 		engine->ClientCmd( const_cast<char *>( command ) );
@@ -1452,7 +1479,7 @@ void CTFClassMenu::UpdateNumClassLabels( int iTeam )
 		int classCount = g_TF_PR->GetCountForPlayerClass( iTeam, g_ClassDefinesRemap[i], false );
 		int iClassLimit = TFGameRules()->GetClassLimit( g_ClassDefinesRemap[i] );
 
-		if ( iClassLimit != NO_CLASS_LIMIT )
+		if ( iClassLimit > NO_CLASS_LIMIT )
 		{
 			if ( classCount >= iClassLimit )
 			{

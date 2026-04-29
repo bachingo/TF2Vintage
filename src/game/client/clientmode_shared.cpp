@@ -83,6 +83,28 @@ ConVar hud_takesshots( "hud_takesshots", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "
 ConVar hud_freezecamhide( "hud_freezecamhide", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Hide the HUD during freeze-cam" );
 ConVar cl_show_num_particle_systems( "cl_show_num_particle_systems", "0", FCVAR_CLIENTDLL, "Display the number of active particle systems." );
 
+void CC_SG_Changed( IConVar* var, const char* pOld, float flOldValue )
+{
+	const ConVarRef sg_var( var );
+	const int iVal = sg_var.GetInt();
+	if ( iVal < 0 )
+	{
+		return;
+	}
+	char szCmd[270];
+	Q_snprintf( szCmd, sizeof(szCmd), "exec this_is_a_namespace/sg/%s/%d.cfg", var->GetName(), iVal );
+	engine->ExecuteClientCmd( szCmd );
+}
+ConVar sg_preset("sg_preset", "-1", FCVAR_ARCHIVE, "", CC_SG_Changed);
+ConVar sg_net("sg_net", "-1", FCVAR_ARCHIVE, "", CC_SG_Changed);
+ConVar sg_shadows("sg_shadows", "-1", FCVAR_ARCHIVE, "", CC_SG_Changed);
+ConVar sg_shaders("sg_shaders", "-1", FCVAR_ARCHIVE, "", CC_SG_Changed);
+ConVar sg_effects("sg_effects", "-1", FCVAR_ARCHIVE, "", CC_SG_Changed);
+ConVar sg_models("sg_models", "-1", FCVAR_ARCHIVE, "", CC_SG_Changed);
+ConVar sg_reflections("sg_reflections", "-1", FCVAR_ARCHIVE, "", CC_SG_Changed);
+ConVar sg_postprocess("sg_postprocess", "-1", FCVAR_ARCHIVE, "", CC_SG_Changed);
+ConVar sg_sound("sg_sound", "-1", FCVAR_ARCHIVE, "", CC_SG_Changed);
+
 extern ConVar v_viewmodel_fov;
 extern ConVar voice_modenable;
 extern ConVar cl_enable_text_chat;
@@ -181,7 +203,7 @@ CON_COMMAND_F( crash, "Crash the client. Optional parameter -- type of crash:\n 
 			break;
 	}
 }
-#endif // _DEBUG
+#endif
 
 static void __MsgFunc_Rumble( bf_read &msg )
 {
@@ -237,9 +259,9 @@ static void __MsgFunc_VGUIMenu( bf_read &msg )
 			&& keys->GetInt( "type", 0 ) == 2 // URL message type
 		) {
 			const char *pszURL = keys->GetString( "msg", "" );
-			if ( Q_strncmp( pszURL, "http://", 7 ) != 0 && Q_strncmp( pszURL, "https://", 8 ) != 0 && Q_stricmp( pszURL, "about:blank" ) != 0 )
+			if ( Q_strncmp( pszURL, "https://", 8 ) != 0 && Q_stricmp( pszURL, "about:blank" ) != 0 )
 			{
-				Warning( "Blocking MOTD URL '%s'; must begin with 'http://' or 'https://' or be about:blank\n", pszURL );
+				Warning( "Blocking MOTD URL '%s'; must begin with 'https://' or be about:blank\n", pszURL );
 				keys->deleteThis();
 				return;
 			}
@@ -251,7 +273,7 @@ static void __MsgFunc_VGUIMenu( bf_read &msg )
 	}
 
 	// is the server telling us to show the scoreboard (at the end of a map)?
-	if ( Q_stricmp( panelname, "scores" ) == 0 )
+	if ( Q_stricmp( panelname, PANEL_SCOREBOARD ) == 0 )
 	{
 		if ( hud_takesshots.GetBool() == true )
 		{
@@ -384,6 +406,21 @@ void ClientModeShared::Init()
 	ReplayCamera()->Init();
 #endif
 #endif
+
+	if ( sg_preset.GetInt() < 0 )
+	{
+		engine->ClientCmd_Unrestricted( "sg_preset 2" );
+	}
+
+	if ( sg_net.GetInt() < 0 )
+	{
+		engine->ClientCmd_Unrestricted( "sg_net 2" );
+	}
+
+	if ( sg_sound.GetInt() < 0 )
+	{
+		engine->ClientCmd_Unrestricted("sg_sound 2");
+	}
 
 	m_CursorNone = vgui::dc_none;
 
@@ -738,6 +775,20 @@ int	ClientModeShared::KeyInput( int down, ButtonCode_t keynum, const char *pszCu
 //-----------------------------------------------------------------------------
 int ClientModeShared::HandleSpectatorKeyInput( int down, ButtonCode_t keynum, const char *pszCurrentBinding )
 {
+#ifdef TF_CLIENT_DLL
+	static ConVarRef tf_scoreboard_mouse_mode("tf_scoreboard_mouse_mode");
+	// if scoreboard mouse mode is on, and this is a valid mouse key input,
+	if ( tf_scoreboard_mouse_mode.IsValid() && tf_scoreboard_mouse_mode.GetBool() && down && pszCurrentBinding && ( keynum == MOUSE_LEFT || keynum == MOUSE_RIGHT ) )
+	{
+		// and the scoreboard is open
+		IViewPortPanel* pScoreboard = gViewPortInterface->FindPanelByName( PANEL_SCOREBOARD );
+		if ( pScoreboard && pScoreboard->IsVisible() )
+		{
+			// ignore the spectator input
+			return 1;
+		}
+	}
+#endif
 	// we are in spectator mode, open spectator menu
 	if ( down && pszCurrentBinding && Q_strcmp( pszCurrentBinding, "+duck" ) == 0 )
 	{
@@ -1557,6 +1608,12 @@ void ClientModeShared::DisplayReplayReminder()
 		}
 	}
 #endif
+}
+
+void ClientModeShared::OnDemoRecordStop()
+{
+	// tell the server we stopped recording a demo
+	engine->ServerCmd( "demostop" );
 }
 
 

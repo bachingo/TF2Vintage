@@ -27,6 +27,8 @@
 #include "basemodelpanel.h"
 #include "tf_teammenu.h"
 #include <convar.h>
+
+#include "c_playerresource.h"
 #include "IGameUIFuncs.h" // for key bindings
 #include "hud.h" // for gEngfuncs
 #include "c_tf_player.h"
@@ -811,24 +813,72 @@ void CTFTeamMenu::OnTick()
 	
 	int iCurrentTeam = pLocalPlayer->GetTeamNumber();
 
+	int iRedSizeRestriction = pRules->GetTeamSize(TF_TEAM_RED);
+	int iBluSizeRestriction = pRules->GetTeamSize(TF_TEAM_BLUE);
+	const bool bEitherTeamSizeRestricted = iRedSizeRestriction > 0 || iBluSizeRestriction > 0;
+
+	bool bRedHasBots = iRedSizeRestriction == 0;
+	bool bBluHasBots = iBluSizeRestriction == 0;
+	// TODO(mcoms): see how GetAutoTeam handles bot counts
+	if ( bEitherTeamSizeRestricted && !pRules->IsMannVsMachineMode() && iCurrentTeam <= LAST_SHARED_TEAM )
+	{
+		for (int playerIndex = 1; playerIndex <= MAX_PLAYERS; playerIndex++)
+		{
+			if ( !g_PR->IsConnected(playerIndex) || !g_PR->IsValid(playerIndex) )
+			{
+				continue;
+			}
+
+			int nTeam = g_PR->GetTeam(playerIndex);
+			if (nTeam <= LAST_SHARED_TEAM)
+			{
+				continue;
+			}
+
+			if (!g_PR->IsFakePlayer(playerIndex))
+			{
+				continue;
+			}
+
+			switch (nTeam)
+			{
+			case TF_TEAM_RED:
+			{
+				bRedHasBots = true;
+				break;
+			}
+			case TF_TEAM_BLUE:
+			{
+				bBluHasBots = true;
+				break;
+			}
+			}
+
+			// we don't need to check further
+			if (bRedHasBots && bBluHasBots)
+			{
+				break;
+			}
+		}
+	}
+
 	if ( ( bUnbalanced && iHeavyTeam == TF_TEAM_RED ) || 
 		 ( pRules->WouldChangeUnbalanceTeams( TF_TEAM_RED, iCurrentTeam ) ) ||
-		 ( bHighlander && GetGlobalTeam( TF_TEAM_RED )->GetNumPlayers() >= TF_LAST_NORMAL_CLASS - 1 ) ||
-		 ( pRules->IsMannVsMachineMode() && ( GetGlobalTeam( TF_TEAM_RED )->GetNumPlayers() >= tf_mvm_defenders_team_size.GetInt() ) )	 )
+		 ( iRedSizeRestriction > 0 && GetGlobalTeam( TF_TEAM_RED )->GetNumPlayers() >= iRedSizeRestriction && !bRedHasBots && iCurrentTeam != TF_TEAM_RED ) )
 	{
 		m_bRedDisabled = true;
 	}
 
 	if ( ( bUnbalanced && iHeavyTeam == TF_TEAM_BLUE ) || 
 		 ( pRules->WouldChangeUnbalanceTeams( TF_TEAM_BLUE, iCurrentTeam ) ) ||
-		 ( bHighlander && GetGlobalTeam( TF_TEAM_BLUE )->GetNumPlayers() >= TF_LAST_NORMAL_CLASS - 1 ) ||
+		 ( iBluSizeRestriction > 0 && GetGlobalTeam( TF_TEAM_BLUE )->GetNumPlayers() >= iBluSizeRestriction && !bBluHasBots && iCurrentTeam != TF_TEAM_BLUE ) ||
 		 ( pRules->IsMannVsMachineMode() ) )
 	{
 		m_bBlueDisabled = true;
 	}
 
 	bool bTeamsFull = m_bRedDisabled && m_bBlueDisabled;
-	SetHighlanderTeamsFullPanels( bHighlander && bTeamsFull );
+	SetHighlanderTeamsFullPanels( bTeamsFull );
 
 	if ( m_pSpecTeamButton && m_pSpecLabel && m_pAutoTeamButton )
 	{
@@ -854,21 +904,19 @@ void CTFTeamMenu::OnTick()
 					m_pSpecLabel->SetVisible( false );
 				}
 
-				if ( bHighlander )
+				// no spectator team, and both teams are full. don't show auto team.
+				if ( bTeamsFull )
 				{
-					if ( bTeamsFull )
+					if ( m_pAutoTeamButton->IsVisible() )
 					{
-						if ( m_pAutoTeamButton->IsVisible() )
-						{
-							m_pAutoTeamButton->SetVisible( false );
-						}
+						m_pAutoTeamButton->SetVisible( false );
 					}
-					else
+				}
+				else
+				{
+					if ( !m_pAutoTeamButton->IsVisible() )
 					{
-						if ( !m_pAutoTeamButton->IsVisible() )
-						{
-							m_pAutoTeamButton->SetVisible( true );
-						}
+						m_pAutoTeamButton->SetVisible( true );
 					}
 				}
 			}

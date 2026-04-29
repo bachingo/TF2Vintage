@@ -446,7 +446,7 @@ void CTFGameStats::ResetRoundStats()
 //-----------------------------------------------------------------------------
 void CTFGameStats::IncrementStat( CTFPlayer *pPlayer, TFStatType_t statType, int iValue )
 {
-	if ( TFGameRules() && TFGameRules()->IsCompetitiveMode() && TFGameRules()->State_Get() != GR_STATE_RND_RUNNING )
+	if ( TFGameRules() && ( TFGameRules()->IsCompetitiveMode() || TFGameRules()->IsEmulatingMatch() || TFGameRules()->IsCompetitiveGame() ) && TFGameRules()->State_Get() != GR_STATE_RND_RUNNING )
 		return;
 
 	PlayerStats_t &stats = m_aPlayerStats[pPlayer->entindex()];
@@ -1135,7 +1135,7 @@ void CTFGameStats::Event_PlayerDamage( CBasePlayer *pBasePlayer, const CTakeDama
 
 	if ( !pSentry )
 	{
-		pSentry = dynamic_cast< CObjectSentrygun * >( pInflictor );
+		pSentry = TFGameRules()->GetSentryGunInflictor( pInflictor );
 	}
 
 	if ( pSentry != NULL )
@@ -1177,6 +1177,7 @@ void CTFGameStats::Event_PlayerDamage( CBasePlayer *pBasePlayer, const CTakeDama
 			TF_Gamestats_WeaponStats_t *pWeaponStats = &m_reportedStats.m_pCurrentGame->m_aWeaponStats[damage.iWeapon];
 			pWeaponStats->iHits++;
 			pWeaponStats->iTotalDamage += iDamageTaken;
+			IncrementStat( pAttacker, TFSTAT_SHOTS_HIT, 1 );
 
 			// Try and figure out where the damage is coming from
 			Vector vecDamageOrigin = info.GetReportedPosition();
@@ -1501,8 +1502,8 @@ void CTFGameStats::Event_PlayerDefendedPoint( CTFPlayer *pPlayer )
 {
 	IncrementStat( pPlayer, TFSTAT_DEFENSES, 1 );
 
-	ConVarRef tf_gamemode_cp( "tf_gamemode_cp" );
-	ConVarRef tf_gamemode_payload( "tf_gamemode_payload" );
+	static ConVarRef tf_gamemode_cp( "tf_gamemode_cp" );
+	static ConVarRef tf_gamemode_payload( "tf_gamemode_payload" );
 	if ( tf_gamemode_cp.GetInt() == 1 )
 	{
 		SW_GameEvent( pPlayer, "point_blocked", 1 );
@@ -1566,7 +1567,7 @@ void CTFGameStats::Event_PlayerKilled( CBasePlayer *pPlayer, const CTakeDamageIn
 	CBaseEntity *pKiller = info.GetAttacker();
 	CTFPlayer *pScorer = ToTFPlayer( TFGameRules()->GetDeathScorer( pKiller, pInflictor, pPlayer ) );
 
-	if ( pInflictor && pInflictor->IsBaseObject() && dynamic_cast< CObjectSentrygun * >( pInflictor ) != NULL )
+	if ( TFGameRules()->GetSentryGunInflictor( pInflictor ) )
 	{
 		killerOrg = pInflictor->GetAbsOrigin();
 	}
@@ -2746,6 +2747,12 @@ void CTFGameStats::SW_GameStats_WriteKill( CTFPlayer* pKiller, CTFPlayer* pVicti
 		pKVData->SetInt( "IsKillerInvulnerable", bTest );
 	}
 
+	bTest = pKiller->m_Shared.InCond( TF_COND_CRITBOOSTED_SELF );
+	if ( bTest )
+	{
+		pKVData->SetInt( "IsKillerSelfCritBoosted", bTest );
+	}
+
 	int16 victim_health = clamp( pVictim->GetHealthBefore(), 32767, -32767 );
 	pKVData->SetInt( "VictimHealth", victim_health );
 
@@ -3130,7 +3137,7 @@ void CTFGameStats::SW_WriteHostsRow()
 	{
 		pKVData->SetInt( "TimeLimit", mp_timelimit.GetInt() );
 	}
-	ConVarRef tf_flag_caps_per_round( "tf_flag_caps_per_round" );
+	static ConVarRef tf_flag_caps_per_round( "tf_flag_caps_per_round" );
 	if ( tf_flag_caps_per_round.GetInt() )
 	{
 		pKVData->SetInt( "FlagCapsPerRound", tf_flag_caps_per_round.GetInt() );
@@ -3143,7 +3150,7 @@ void CTFGameStats::SW_WriteHostsRow()
 	{
 		pKVData->SetInt( "WinLimit", mp_winlimit.GetInt() );
 	}
-	ConVarRef mp_disable_respawn_times( "mp_disable_respawn_times" );
+	static ConVarRef mp_disable_respawn_times( "mp_disable_respawn_times" );
 	if ( mp_disable_respawn_times.GetInt() )
 	{
 		pKVData->SetInt( "DisableRespawnTimes", mp_disable_respawn_times.GetInt() );

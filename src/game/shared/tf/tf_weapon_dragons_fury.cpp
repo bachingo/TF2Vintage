@@ -96,7 +96,10 @@ void CTFWeaponFlameBall::PrimaryAttack( void )
 		return;
 
 	if ( !CanAttack() )
+	{
+		m_flNextPrimaryAttack = MAX(m_flNextPrimaryAttack, gpGlobals->curtime);
 		return;
+	}
 
 #ifndef CLIENT_DLL
 	if ( pPlayer->m_Shared.IsStealthed() && ShouldRemoveInvisibilityOnPrimaryAttack() )
@@ -149,7 +152,12 @@ CBaseEntity* CTFWeaponFlameBall::FireProjectile( CTFPlayer *pPlayer )
 	Vector vecForward, vecRight, vecUp;
 	AngleVectors( angForward, &vecForward, &vecRight, &vecUp );
 
+	// UNDONE: it's a bit awkward for this class to shoot at an offset.
+#if 0
 	float fRight = 7.0f;
+#else
+	float fRight = 0.f;
+#endif
 	if ( IsViewModelFlipped() )
 	{
 		fRight *= -1;

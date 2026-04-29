@@ -25,6 +25,21 @@
 #define GAMEMOVEMENT_TIME_TO_UNDUCK			( TIME_TO_UNDUCK * 1000.0f )		// ms
 #define GAMEMOVEMENT_TIME_TO_UNDUCK_INV		( GAMEMOVEMENT_DUCK_TIME - GAMEMOVEMENT_TIME_TO_UNDUCK )
 
+#define GAMEMOVEMENT_NONSUB_FRAMETIME gpGlobals->frametime
+#define GAMEMOVEMENT_NONSUB_CURTIME gpGlobals->curtime
+
+#if defined(TF_DLL) || defined(TF_CLIENT_DLL)
+#define GAMEMOVEMENT_FRAMETIME m_flSubTime
+#else
+#define GAMEMOVEMENT_FRAMETIME gpGlobals->frametime
+#endif
+
+#if defined(TF_DLL) || defined(TF_CLIENT_DLL)
+#define GAMEMOVEMENT_CURTIME m_flSubCurTime
+#else
+#define GAMEMOVEMENT_CURTIME gpGlobals->curtime
+#endif
+
 enum
 {
 	SPEED_CROPPED_RESET = 0,
@@ -76,6 +91,12 @@ protected:
 	Vector			m_vecRight;
 	Vector			m_vecUp;
 
+	float			m_flSubTime;
+	float 			m_flSubCurTime;
+	int				m_iJumpPeaks;
+
+	bool		m_bIsCrouchTapping;
+	float		m_flCrouchTapEndTime;
 
 	// Does most of the player movement logic.
 	// Returns with origin, angles, and velocity modified in place.
@@ -143,6 +164,8 @@ protected:
 	// Decompoosed gravity
 	void			StartGravity( void );
 	void			FinishGravity( void );
+	void			JumpGravity( void );
+	void			ApplyGravity( bool bFinish );
 
 	// Apply normal ( undecomposed ) gravity
 	void			AddGravity( void );
@@ -221,6 +244,7 @@ protected:
 	virtual void	FinishUnDuck( void );
 	virtual void	FinishDuck( void );
 	virtual bool	CanUnduck();
+	Vector			GetAirDuckOffset( bool bUnduck = false );
 	void			UpdateDuckJumpEyeOffset( void );
 	bool			CanUnDuckJump( trace_t &trace );
 	void			StartUnDuckJump( void );

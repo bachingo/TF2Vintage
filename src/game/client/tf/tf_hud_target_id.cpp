@@ -70,9 +70,10 @@ void DisableFloatingHealthCallback( IConVar *var, const char *oldString, float o
 	}
 }
 ConVar tf_hud_target_id_disable_floating_health( "tf_hud_target_id_disable_floating_health", "0", FCVAR_ARCHIVE, "Set to disable floating health bar", DisableFloatingHealthCallback );
+ConVar tf_hud_target_id_disable_health_icon("tf_hud_target_id_disable_health_icon", "0", FCVAR_ARCHIVE, "Set to disable floating health bar", DisableFloatingHealthCallback);
 ConVar tf_hud_target_id_alpha( "tf_hud_target_id_alpha", "100", FCVAR_ARCHIVE, "Alpha value of target id background, default 100" );
 ConVar tf_hud_target_id_offset( "tf_hud_target_id_offset", "0", FCVAR_ARCHIVE, "RES file Y offset for target id" );
-ConVar tf_hud_target_id_show_avatars( "tf_hud_target_id_show_avatars", "2", FCVAR_ARCHIVE, "Display Steam avatars on TargetID when using floating health icons.  1 = everyone, 2 = friends only." );
+ConVar tf_hud_target_id_show_avatars( "tf_hud_target_id_show_avatars", "1", FCVAR_ARCHIVE, "Display Steam avatars on TargetID when using floating health icons.  1 = everyone, 2 = friends only." );
 
 
 bool ShouldHealthBarBeVisible( CBaseEntity *pTarget, CTFPlayer *pLocalPlayer )
@@ -80,11 +81,18 @@ bool ShouldHealthBarBeVisible( CBaseEntity *pTarget, CTFPlayer *pLocalPlayer )
 	if ( !pTarget || !pLocalPlayer )
 		return false;
 
-	if ( tf_hud_target_id_disable_floating_health.GetBool() )
+	const int iDisableFloatingHealth = tf_hud_target_id_disable_floating_health.GetInt();
+
+	// always disable
+	if ( iDisableFloatingHealth == 2 )
 		return false;
 
 	if ( pTarget->IsHealthBarVisible() )
 		return true;
+
+	// only disable if HealthBar not visible
+	if ( iDisableFloatingHealth == 1 )
+		return false;
 
 	if ( !pTarget->IsPlayer() )
 		return false;
@@ -208,7 +216,7 @@ bool CTargetID::DrawHealthIcon()
 	if ( pEnt && pEnt->IsBaseObject() )
 		return true;
 
-	if ( tf_hud_target_id_disable_floating_health.GetBool() )
+	if ( !tf_hud_target_id_disable_health_icon.GetBool() )
 		return true;
 
 	return false;
@@ -229,9 +237,12 @@ C_TFPlayer *CTargetID::GetTargetForSteamAvatar( C_TFPlayer *pTFPlayer )
 	if ( !pTFLocalPlayer )
 		return NULL;
 
+	// TODO(mcoms): fix busy-ness in the HUD
+#if 0
 	// Health icon inside the panel (too busy - figure this out later)
 	if ( DrawHealthIcon() )
 		return NULL;
+#endif
 
 	// Save room when healing or being healed
 	if ( pTFLocalPlayer->IsPlayerClass( TF_CLASS_MEDIC ) && pTFLocalPlayer->MedicGetHealTarget() == pTFPlayer )
@@ -411,7 +422,7 @@ bool CTargetID::IsValidIDTarget( int nEntIndex, float flOldTargetRetainFOV, floa
 
 			if ( pPlayer )
 			{
-				if ( pPlayer->m_Shared.IsStealthed() )
+				if ( pPlayer->m_Shared.IsStealthed() || !pPlayer->GetCompetitiveVisibility() )
 				{
 					bStealthed = true;
 					bHealthBarVisible = false;
@@ -475,7 +486,7 @@ bool CTargetID::IsValidIDTarget( int nEntIndex, float flOldTargetRetainFOV, floa
 
 				//Recreate the floating health icon if there isn't one, we're not a spectator, and 
 				// we're not a spy or this was a robot from Robot Destruction-Mode
-				if ( !m_pFloatingHealthIcon && !bSpectator && ( !bSpy || bHealthBarVisible ) && !DrawHealthIcon() )
+				if ( !m_pFloatingHealthIcon && !bSpectator && ( !bSpy || bHealthBarVisible ) && DrawFloatingHealth() )
 				{
 					m_pFloatingHealthIcon = CFloatingHealthIcon::AddFloatingHealthIcon( pEnt );
 				}
@@ -670,9 +681,23 @@ void CTargetID::PerformLayout( void )
 
 			int x,y;
 			m_pMoveableKeyLabel->GetPos( x, y );
-			m_pMoveableSymbolIcon->SetPos( (iMoveWide - m_pMoveableSymbolIcon->GetWide()) * 0.5, y - m_pMoveableSymbolIcon->GetTall() );
-			m_pMoveableSymbolIcon->GetPos( x, y );
-			m_pMoveableIcon->SetPos( (iMoveWide - m_pMoveableIcon->GetWide()) * 0.5, y - m_pMoveableIcon->GetTall() );
+			int iIconWide;
+			int iIconTall;
+			if ( m_pMoveableSymbolIcon->IsVisible() )
+			{
+				m_pMoveableSymbolIcon->SetPos( (iMoveWide - m_pMoveableSymbolIcon->GetWide()) * 0.5, y - m_pMoveableSymbolIcon->GetTall() );
+				m_pMoveableSymbolIcon->GetPos( x, y );
+				iIconWide = XRES( 14 );
+				iIconTall = YRES( 14 );
+			}
+			else
+			{
+				iIconWide = XRES( 14.1 );
+				iIconTall = GetTall() - m_pMoveableKeyLabel->GetTall();
+			}
+
+			m_pMoveableIcon->SetSize( iIconWide, iIconTall );
+			m_pMoveableIcon->SetPos( ( iMoveWide - iIconWide ) * 0.5f, y - iIconTall );
 			m_pMoveableIconBG->SetSize( m_pMoveableSubPanel->GetWide(), m_pMoveableSubPanel->GetTall() );
 		}
 	}
@@ -813,7 +838,26 @@ void CTargetID::UpdateID( void )
 				// We're looking at an enemy who killed us.
 				printFormatString = "#TF_playerid_diffteam";
 				bShowHealth = true;
-			}			
+			}
+
+			// if we can heal, show action.
+			CSecondaryTargetID *pSecondaryID = GET_HUDELEMENT( CSecondaryTargetID );
+			if ( pSecondaryID != this && bMedic && bInSameTeam && pLocalTFPlayer->IsAlive() && pLocalTFPlayer->GetActiveTFWeapon() && pLocalTFPlayer->GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_MEDIGUN )
+			{
+				CWeaponMedigun* pMedigun = static_cast<CWeaponMedigun*>( pLocalTFPlayer->GetActiveTFWeapon() );
+				const float flRange = pMedigun->GetTargetRange() + pEnt->WorldAlignSize().x * 0.5f;
+				const float flRangeSq = flRange * flRange;
+				if ( pLocalTFPlayer->EyePosition().DistToSqr( pEnt->WorldSpaceCenter() ) < flRangeSq )
+				{
+					pszActionCommand = "+attack";
+					pszActionIcon = "health_icon";
+
+					if ( m_pMoveableSymbolIcon )
+					{
+						m_pMoveableSymbolIcon->SetVisible( false );
+					}
+				}
+			}
 
 			if ( bShowHealth )
 			{
@@ -894,6 +938,10 @@ void CTargetID::UpdateID( void )
 							pszActionCommand = "+attack2";
 						}
 
+						if ( m_pMoveableSymbolIcon )
+						{
+							m_pMoveableSymbolIcon->SetVisible( true );
+						}
 						
 						switch ( iObj )
 						{
@@ -944,17 +992,20 @@ void CTargetID::UpdateID( void )
 							pszActionCommand = "+use_action_slot_item";
 						}
 	
+						uint32 unPaintKitIndexNum = 0;
+						bool hasPaintKitIndex = GetPaintKitDefIndex( pDroppedEconItem, &unPaintKitIndexNum );
+
 						if ( FStrEq( pDroppedEconItem->GetStaticData()->GetItemClass(), "tf_weapon_medigun" ) )
 						{
 							wchar_t wszChargeLevel[10];
 							_snwprintf( wszChargeLevel, ARRAYSIZE( wszChargeLevel ) - 1, L"%.0f", pDroppedWeapon->GetChargeLevel() * 100 );
 							wszChargeLevel[ARRAYSIZE( wszChargeLevel ) - 1] = '\0';
 
-							g_pVGuiLocalize->ConstructString_safe( sIDString, L"%s1 (%s2%)", 2, CEconItemLocalizedFullNameGenerator( GLocalizationProvider(), pDroppedEconItem->GetItemDefinition(), pDroppedEconItem->GetItemQuality() ).GetFullName(), wszChargeLevel );
+							g_pVGuiLocalize->ConstructString_safe( sIDString, L"%s1 (%s2%)", 2, CEconItemLocalizedFullNameGenerator( GLocalizationProvider(), pDroppedEconItem->GetItemDefinition(), true, pDroppedEconItem->GetItemQuality(), ( hasPaintKitIndex ? unPaintKitIndexNum : 0 ) ).GetFullName(), wszChargeLevel );
 						}
 						else
 						{
-							g_pVGuiLocalize->ConstructString_safe( sIDString, L"%s1", 1, CEconItemLocalizedFullNameGenerator( GLocalizationProvider(), pDroppedEconItem->GetItemDefinition(), pDroppedEconItem->GetItemQuality() ).GetFullName() );
+							g_pVGuiLocalize->ConstructString_safe( sIDString, L"%s1", 1, CEconItemLocalizedFullNameGenerator( GLocalizationProvider(), pDroppedEconItem->GetItemDefinition(), true, pDroppedEconItem->GetItemQuality(), ( hasPaintKitIndex ? unPaintKitIndexNum : 0 ) ).GetFullName() );
 						}
 
 						locchar_t wszPlayerName [128];
@@ -969,7 +1020,12 @@ void CTargetID::UpdateID( void )
 							vgui::IScheme *pScheme = vgui::scheme()->GetIScheme( GetScheme() );
 							if ( pScheme )
 							{
-								const char* pszColorName = GetItemSchema()->GetRarityColor( pDroppedEconItem->GetItemDefinition()->GetRarity() );
+								const char* pszColorName = GetItemSchema()->GetRarityColor(pDroppedEconItem->GetRarity());
+								// Addition for consistency with other economy UI
+								if (pDroppedEconItem->GetItemQuality() == AE_SELFMADE)
+								{
+									pszColorName = EconQuality_GetColorString(AE_SELFMADE);
+								}
 								pszColorName = pszColorName ? pszColorName : "TanLight";
 								colorName = pScheme->GetColor( pszColorName, Color( 255, 255, 255, 255 ) );
 							}
@@ -1468,7 +1524,7 @@ void CFloatingHealthIcon::OnTick( void )
 	}
 
 	C_TFPlayer *pTargetPlayer = ToTFPlayer( m_hEntity );
-	if ( pTargetPlayer && pTargetPlayer->m_Shared.IsStealthed() )
+	if ( pTargetPlayer && ( pTargetPlayer->m_Shared.IsStealthed() || !pTargetPlayer->GetCompetitiveVisibility() ) )
 	{
 		SetVisible( false );
 		return;

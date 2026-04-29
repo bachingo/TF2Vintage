@@ -436,34 +436,14 @@ inline vec_t RoundInt (vec_t in)
 
 int Q_log2(int val);
 
-#define SIN_TABLE_SIZE	256
-#define FTOIBIAS		12582912.f
-extern float SinCosTable[SIN_TABLE_SIZE];
-
 inline float TableCos( float theta )
 {
-	union
-	{
-		int i;
-		float f;
-	} ftmp;
-
-	// ideally, the following should compile down to: theta * constant + constant, changing any of these constants from defines sometimes fubars this.
-	ftmp.f = theta * ( float )( SIN_TABLE_SIZE / ( 2.0f * M_PI ) ) + ( FTOIBIAS + ( SIN_TABLE_SIZE / 4 ) );
-	return SinCosTable[ ftmp.i & ( SIN_TABLE_SIZE - 1 ) ];
+	return FastCos( theta );
 }
 
 inline float TableSin( float theta )
 {
-	union
-	{
-		int i;
-		float f;
-	} ftmp;
-
-	// ideally, the following should compile down to: theta * constant + constant
-	ftmp.f = theta * ( float )( SIN_TABLE_SIZE / ( 2.0f * M_PI ) ) + FTOIBIAS;
-	return SinCosTable[ ftmp.i & ( SIN_TABLE_SIZE - 1 ) ];
+	return sinf( theta );
 }
 
 template<class T>
@@ -974,7 +954,7 @@ void BuildGammaTable( float gamma, float texGamma, float brightness, int overbri
 // convert texture to linear 0..1 value
 inline float TexLightToLinear( int c, int exponent )
 {
-	extern float power2_n[256]; 
+	extern ALIGN128 float power2_n[256]; 
 	Assert( exponent >= -128 && exponent <= 127 );
 	return ( float )c * power2_n[exponent+128];
 }
@@ -1192,6 +1172,26 @@ FORCEINLINE int RoundFloatToInt(float f)
 #endif
 }
 
+// RoundFloatToInt rounds .5 to nearest even. this function rounds up on .5.
+FORCEINLINE int RoundFloatToNearestInt(float f)
+{
+#if defined( __i386__ ) || defined( _M_IX86 ) || defined( PLATFORM_WINDOWS_PC64 ) || defined( __x86_64__ )
+	return _mm_cvt_ss2si(_mm_set_ss(f + f + 0.5f)) >> 1;
+#elif defined( _X360 )
+#ifdef Assert
+	Assert( IsFPUControlWordSet() );
+#endif
+	union {
+		double flResult;
+		int    pResult[2];
+	};
+	flResult = __fctiw( f );
+	return pResult[1];
+#else
+#error Unknown architecture
+#endif
+}
+
 FORCEINLINE unsigned char RoundFloatToByte(float f)
 {
 	int nResult = RoundFloatToInt(f);
@@ -1257,7 +1257,7 @@ FORCEINLINE unsigned long RoundFloatToUnsignedLong(float f)
 
 FORCEINLINE bool IsIntegralValue( float flValue, float flTolerance = 0.001f )
 {
-	return fabs( RoundFloatToInt( flValue ) - flValue ) < flTolerance;
+	return fabsf( RoundFloatToInt( flValue ) - flValue ) < flTolerance;
 }
 
 // Fast, accurate ftol:
@@ -1282,11 +1282,16 @@ inline int Floor2Int( float a )
 {
 	int RetVal;
 #if defined( PLATFORM_INTEL )
+	// Valve original
+#if 0
 	// Convert to int and back, compare, subtract one if too big
 	__m128 a128 = _mm_set_ss(a);
 	RetVal = _mm_cvtss_si32(a128);
     __m128 rounded128 = _mm_cvt_si2ss(_mm_setzero_ps(), RetVal);
 	RetVal -= _mm_comigt_ss( rounded128, a128 );
+#else
+	RetVal = _mm_cvt_ss2si(_mm_set_ss(a + a - 0.5f)) >> 1;
+#endif
 #else
 	RetVal = static_cast<int>( floor(a) );
 #endif
@@ -1339,11 +1344,16 @@ inline int Ceil2Int( float a )
 {
    int RetVal;
 #if defined( PLATFORM_INTEL )
+	// Valve original
+#if 0
    // Convert to int and back, compare, add one if too small
    __m128 a128 = _mm_load_ss(&a);
    RetVal = _mm_cvtss_si32(a128);
    __m128 rounded128 = _mm_cvt_si2ss(_mm_setzero_ps(), RetVal);
    RetVal += _mm_comilt_ss( rounded128, a128 );
+#else
+   RetVal = -(_mm_cvt_ss2si(_mm_set_ss(-0.5f - (a + a))) >> 1);
+#endif
 #else
    RetVal = static_cast<int>( ceil(a) );
 #endif
@@ -1426,7 +1436,7 @@ FORCEINLINE float LinearToVertexLight( float f )
 
 	// Gotta clamp before the multiply; could overflow...
 	// assume 0..4 range
-	int i = RoundFloatToInt( f * 1024.f );
+	int i = RoundFloatToNearestInt( f * 1024.f );
 
 	// Presumably the comman case will be not to clamp, so check that first:
 	if( (unsigned)i > 4095 )
@@ -1446,7 +1456,7 @@ FORCEINLINE unsigned char LinearToLightmap( float f )
 	extern unsigned char lineartolightmap[4096];	
 
 	// Gotta clamp before the multiply; could overflow...
-	int i = RoundFloatToInt( f * 1024.f );	// assume 0..4 range
+	int i = RoundFloatToNearestInt( f * 1024.f );	// assume 0..4 range
 
 	// Presumably the comman case will be not to clamp, so check that first:
 	if ( (unsigned)i > 4095 )
@@ -2139,7 +2149,7 @@ inline bool CloseEnough( const Vector &a, const Vector &b, float epsilon = EQUAL
 // Fast compare
 // maxUlps is the maximum error in terms of Units in the Last Place. This 
 // specifies how big an error we are willing to accept in terms of the value
-// of the least significant digit of the floating point number�s 
+// of the least significant digit of the floating point number's 
 // representation. maxUlps can also be interpreted in terms of how many 
 // representable floats we are willing to accept between A and B. 
 // This function will allow maxUlps-1 floats between A and B.

@@ -997,7 +997,7 @@ CON_COMMAND_F( sv_soundemitter_flush, "Flushes the sounds.txt system (server onl
 	S_SoundEmitterSystemFlush( );
 }
 
-#if !defined(_RETAIL)
+#if !defined(_RETAIL) && defined(DEV_BUILD)
 
 #if !defined( CLIENT_DLL ) 
 
@@ -1138,7 +1138,16 @@ void CBaseEntity::EmitSound( const char *soundname, float soundtime /*= 0.0f*/, 
 	params.m_pflSoundDuration = duration;
 	params.m_bWarnOnDirectWaveReference = true;
 
-	EmitSound( filter, entindex(), params );
+	int iEntIndex = entindex();
+#if defined( CLIENT_DLL )
+	if ( iEntIndex == -1 )
+	{
+		// If we're a clientside entity, we need to use the soundsourceindex instead of the entindex
+		iEntIndex = GetSoundSourceIndex();
+	}
+#endif
+
+	EmitSound( filter, iEntIndex, params );
 }
 
 #if !defined ( CLIENT_DLL )
@@ -1177,7 +1186,16 @@ void CBaseEntity::EmitSound( const char *soundname, HSOUNDSCRIPTHANDLE& handle, 
 	params.m_pflSoundDuration = duration;
 	params.m_bWarnOnDirectWaveReference = true;
 
-	EmitSound( filter, entindex(), params, handle );
+	int iEntIndex = entindex();
+#if defined( CLIENT_DLL )
+	if ( iEntIndex == -1 )
+	{
+		// If we're a clientside entity, we need to use the soundsourceindex instead of the entindex
+		iEntIndex = GetSoundSourceIndex();
+	}
+#endif
+
+	EmitSound( filter, iEntIndex, params, handle );
 }
 
 //-----------------------------------------------------------------------------

@@ -53,6 +53,8 @@ ConVar tf_bot_always_full_reload( "tf_bot_always_full_reload", "0", FCVAR_CHEAT 
 ConVar tf_bot_fire_weapon_allowed( "tf_bot_fire_weapon_allowed", "1", FCVAR_CHEAT, "If zero, TFBots will not pull the trigger of their weapons (but will act like they did)" );
 ConVar tf_bot_reevaluate_class_in_spawnroom( "tf_bot_reevaluate_class_in_spawnroom", "1", FCVAR_CHEAT, "If set, bots will opportunisticly switch class while in spawnrooms if their current class is no longer their first choice." );
 
+ConVar tf_bot_random_items( "tf_bot_random_items", "0", FCVAR_NONE, "Bots will equip random loadout" );
+ConVar tf_bot_random_items_dist( "tf_bot_random_items_dist", "1", FCVAR_CHEAT, "Don't force random items. Instead, apply a random distribution to also using stock." );
 
 //---------------------------------------------------------------------------------------------
 Action< CTFBot > *CTFBotMainAction::InitialContainedAction( CTFBot *me )
@@ -89,7 +91,34 @@ ActionResult< CTFBot >	CTFBotMainAction::OnStart( CTFBot *me, Action< CTFBot > *
 	}
 #endif // TF_CREEP_MODE
 
+	if ( tf_bot_random_items.GetBool() && ( !TFGameRules()->IsMannVsMachineMode() || me->GetTeamNumber() != TF_TEAM_PVE_INVADERS ) && ( !tf_bot_random_items_dist.GetBool() || RandomFloat() < 0.9f ) )
+	{
+		if ( !tf_bot_random_items_dist.GetBool() || RandomFloat() < 0.5f )
+		{
+			me->GiveRandomItem( LOADOUT_POSITION_PRIMARY );
+		}
+		if ( !tf_bot_random_items_dist.GetBool() || RandomFloat() < 0.6f )
+		{
+			me->GiveRandomItem( LOADOUT_POSITION_SECONDARY );
+		}
+		if ( !tf_bot_random_items_dist.GetBool() || RandomFloat() < 0.9f )
+		{
+			me->GiveRandomItem( LOADOUT_POSITION_MELEE );
+		}
 
+		if ( !tf_bot_random_items_dist.GetBool() || RandomFloat() < 0.9f )
+		{
+			me->GiveRandomItem( LOADOUT_POSITION_HEAD );
+		}
+		if ( !tf_bot_random_items_dist.GetBool() || RandomFloat() < 0.5f )
+		{
+			me->GiveRandomItem( LOADOUT_POSITION_MISC );
+		}
+		if ( !tf_bot_random_items_dist.GetBool() || RandomFloat() < 0.4f )
+		{
+			me->GiveRandomItem( LOADOUT_POSITION_MISC2 );
+		}
+	}
 
 	return Continue();
 }
@@ -294,7 +323,7 @@ EventDesiredResult< CTFBot > CTFBotMainAction::OnInjured( CTFBot *me, const CTak
 
 	if ( info.GetInflictor() && info.GetInflictor()->GetTeamNumber() != me->GetTeamNumber() )
 	{
-		CObjectSentrygun *sentrygun = dynamic_cast< CObjectSentrygun * >( info.GetInflictor() );
+		CObjectSentrygun *sentrygun = TFGameRules()->GetSentryGunInflictor( info.GetInflictor() );
 
 		if ( sentrygun )
 		{
@@ -571,7 +600,7 @@ EventDesiredResult< CTFBot > CTFBotMainAction::OnOtherKilled( CTFBot *me, CBaseC
 
 		if ( !ToTFPlayer( victim )->IsBot() && me->IsEnemy( victim ) && me->IsSelf( info.GetAttacker() ) )
 		{
-			bool isTaunting = !me->HasTheFlag() && RandomFloat( 0.0f, 100.0f ) <= tf_bot_taunt_victim_chance.GetFloat();
+			bool isTaunting = !me->HasTheFlag() && tf_bot_taunt_victim_chance.GetFloat() > 0.0f && RandomFloat( 0.0f, 100.0f ) <= tf_bot_taunt_victim_chance.GetFloat();
 
 			if ( TFGameRules()->IsMannVsMachineMode() && me->IsMiniBoss() )
 			{
@@ -590,7 +619,7 @@ EventDesiredResult< CTFBot > CTFBotMainAction::OnOtherKilled( CTFBot *me, CBaseC
 	// if we saw a friend killed by a sentry, kill the sentry
 	if ( victim && victim->IsPlayer() && me->IsFriend( victim ) && info.GetInflictor() && me->IsEnemy( info.GetInflictor() ) && me->IsLineOfSightClear( victim->WorldSpaceCenter() ) )
 	{
-		CObjectSentrygun *sentry = dynamic_cast< CObjectSentrygun * >( info.GetInflictor() );
+		CObjectSentrygun *sentry = TFGameRules()->GetSentryGunInflictor( info.GetInflictor() );
 
 		if ( sentry && !me->GetEnemySentry() )
 		{
@@ -1330,8 +1359,11 @@ void CTFBotMainAction::FireWeaponAtEnemy( CTFBot *me )
 
 	if ( TFGameRules()->InSetup() )
 	{
-		// wait until the gates open
-		return;
+		if ( TFGameRules()->IsMannVsMachineMode() || TFGameRules()->State_Get() != GR_STATE_BETWEEN_RNDS )
+		{
+			// wait until the gates open
+			return;
+		}
 	}
 
 	if ( myWeapon->IsMeleeWeapon() )
@@ -1432,7 +1464,14 @@ void CTFBotMainAction::FireWeaponAtEnemy( CTFBot *me )
 
 					float hitRange = trace.fraction * 1.1f * threatRange;
 
-					if ( hitRange < TF_ROCKET_RADIUS )
+					// Accurate enough base damage
+					float flExplosiveDamage = 100.0f;
+					// Don't factor overheal
+					float flCurrentHealth = MIN( me->GetHealth(), me->GetMaxHealth() );
+					// Don't hit ourselves if the explosion will do a noticeable amount of our health
+					bool bTooMuchSelfDamage = flExplosiveDamage > 0.3f * flCurrentHealth;
+
+					if ( bTooMuchSelfDamage && hitRange < TF_ROCKET_RADIUS )
 					{
 						// shot will impact very near us
 						if ( !trace.m_pEnt || ( trace.m_pEnt && !trace.m_pEnt->MyCombatCharacterPointer() ) )

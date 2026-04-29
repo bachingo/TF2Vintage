@@ -397,7 +397,6 @@ void CEconItemDescription::GenerateDescriptionLines( const CLocalizationProvider
 		Generate_DropPeriodDesc( pLocalizationProvider, pEconItem ); 
 
 		Generate_MarketInformation( pLocalizationProvider, pEconItem );
-		Generate_DirectX8Warning( pLocalizationProvider, pEconItem );
 	}
 
 	// Certain information (tradeability, etc.) used to only get displayed if we were the owning player, or
@@ -2817,8 +2816,8 @@ void CEconItemDescription::Generate_CollectionDesc( const CLocalizationProvider 
 	if ( !pItemDef )
 		return;
 
-	// For War Painted items (not War Paints themselves) we want highlight the row of the
-	// War Paint itself in the collection.  Look up our corresponding War Paint's item def
+	// Adding a check for if the collection we are browsing contains cosmetics or decorated weapons.
+	// We can handle decorated weapons the same as cosmetics, since they have proper schema entries
 	bool bIsHatOrDecorated = false;
 
 	// For War Painted items (not War Paints themselves) we want highlight the row of the
@@ -3426,20 +3425,6 @@ void CEconItemDescription::Generate_VisibleAttributes( const CLocalizationProvid
 // --------------------------------------------------------------------------
 void CEconItemDescription::Generate_DirectX8Warning( const CLocalizationProvider *pLocalizationProvider, const IEconItemInterface *pEconItem )
 {
-#ifdef CLIENT_DLL
-	static ConVarRef mat_dxlevel( "mat_dxlevel" );
-	const CEconItemDefinition *pEconItemDefinition = pEconItem->GetItemDefinition();
-	// If less than 90, we�re in DX8 mode. 
-	// Display warning if you are looking at a painthit item or case
-	if ( mat_dxlevel.GetInt() < 90 && pEconItemDefinition && ( pEconItemDefinition->GetItemCollectionDefinition() || pEconItemDefinition->GetCollectionReference() ) )
-	{
-		AddEmptyDescLine();
-		AddDescLine( pLocalizationProvider->Find( "#Attrib_DirectX8Warning" ),
-			ATTRIB_COL_NEGATIVE,
-			kDescLineFlag_Misc );
-	}
-
-#endif
 }
 
 
@@ -3771,9 +3756,10 @@ void CEconItemDescription::LocalizedAddDescLine( const CLocalizationProvider *pL
 class CGameItemDefinition_EconItemInterfaceWrapper : public CMaterialOverrideContainer< IEconItemInterface >
 {
 public:
-	CGameItemDefinition_EconItemInterfaceWrapper( const CEconItemDefinition *pEconItemDefinition, entityquality_t eQuality )
+	CGameItemDefinition_EconItemInterfaceWrapper( const CEconItemDefinition *pEconItemDefinition, entityquality_t eQuality, uint32 nPaintkitDefIndex )
 		: m_pEconItemDefinition( pEconItemDefinition )
 		, m_eQuality( eQuality )
+		, m_nPaintkitDefIndex( nPaintkitDefIndex )
 	{
 		Assert( m_pEconItemDefinition );
 	}
@@ -3792,6 +3778,7 @@ public:
 
 	virtual const char	   *GetCustomName() const { return NULL; }
 	virtual const char	   *GetCustomDesc() const { return NULL; }
+	virtual uint32			GetPaintkitDefIndex() const { return m_nPaintkitDefIndex; }
 
 	// IEconItemInterface attribute iteration interface. This is not meant to be used for
 	// attribute lookup! This is meant for anything that requires iterating over the full
@@ -3801,21 +3788,31 @@ public:
 		Assert( pIterator );
 
 		m_pEconItemDefinition->IterateAttributes( pIterator );
+
+		if ( m_nPaintkitDefIndex != 0 )
+		{
+			static CSchemaAttributeDefHandle pAttrDef_PaintKitProtoDefIndex( "paintkit_proto_def_index" );
+			if ( pAttrDef_PaintKitProtoDefIndex )
+			{
+				pIterator->OnIterateAttributeValue( pAttrDef_PaintKitProtoDefIndex, (attrib_value_t)m_nPaintkitDefIndex );
+			}
+		}
 	}
 
 private:
 	const CEconItemDefinition *m_pEconItemDefinition;
 	entityquality_t m_eQuality;
+	uint32 m_nPaintkitDefIndex;
 };
 
 // --------------------------------------------------------------------------
 // Purpose:
 // --------------------------------------------------------------------------
-CEconItemLocalizedFullNameGenerator::CEconItemLocalizedFullNameGenerator( const CLocalizationProvider *pLocalizationProvider, const CEconItemDefinition *pItemDef, bool bUseProperName, entityquality_t eQuality )
+CEconItemLocalizedFullNameGenerator::CEconItemLocalizedFullNameGenerator( const CLocalizationProvider *pLocalizationProvider, const CEconItemDefinition *pItemDef, bool bUseProperName, entityquality_t eQuality, uint32 nPaintkitDefIndex )
 {
 	Assert( pItemDef );
 
-	CGameItemDefinition_EconItemInterfaceWrapper EconItemDefinitionWrapper( pItemDef, eQuality );
+	CGameItemDefinition_EconItemInterfaceWrapper EconItemDefinitionWrapper( pItemDef, eQuality, nPaintkitDefIndex );
 	GenerateLocalizedFullItemName( m_loc_LocalizedItemName, pLocalizationProvider, &EconItemDefinitionWrapper, k_EGenerateLocalizedFullItemName_Default, bUseProperName );
 }
 

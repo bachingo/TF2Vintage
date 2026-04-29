@@ -371,26 +371,25 @@ void CTFStreamManager::Steam_OnHTTPRequestCompletedStreams( HTTPRequestCompleted
 			GCSDK::CWebAPIValues *pValues = GCSDK::CWebAPIValues::ParseJSON( bufFile );
 			if ( pValues )
 			{
+#if 0 // this is the code to print JSON output as DevMsgs to figure out which element is where in the response
+				DevMsg( "----STREAM----\n" );
+				FOR_EACH_WEBAPI_CHILD( pValues, pTest )
+				{
+					CUtlString sValueText;
+					pTest->GetStringValue( sValueText );
+					DevMsg( "child: %s = (%u) %s\n", pTest->GetName(), pTest->GetUInt32Value(), sValueText.Get() );
+
+					FOR_EACH_WEBAPI_CHILD( pTest, pTest2 )
+					{
+						pTest2->GetStringValue( sValueText );
+						DevMsg( "     child2: %s = (%u) %s\n", pTest2->GetName(), pTest2->GetUInt32Value(), sValueText.Get() );
+					}
+				}
+#endif
 				if ( GCSDK::CWebAPIValues *pvStreams = pValues->FindChild( "data" ) )
 				{
-					for ( GCSDK::CWebAPIValues *pvStream = pvStreams->GetFirstChild(); pvStream; pvStream = pvStream->GetNextChild() )
+					FOR_EACH_WEBAPI_CHILD( pvStreams, pvStream )
 					{
-#if 0	// this is the code to print JSON output as DevMsgs to figure out which element is where in the response
-						DevMsg( "----STREAM----\n" );
-						for ( GCSDK::CWebAPIValues *pTest = pvStream->GetFirstChild(); pTest; pTest = pTest->GetNextChild() )
-						{
-							CUtlString sValueText;
-							pTest->GetStringValue( sValueText );
-							DevMsg( "child: %s = (%u) %s\n", pTest->GetName(), pTest->GetUInt32Value(), sValueText.Get() );
-
-							for ( GCSDK::CWebAPIValues *pTest2 = pTest->GetFirstChild(); pTest2; pTest2 = pTest2->GetNextChild() )
-							{
-								pTest2->GetStringValue( sValueText );
-								DevMsg( "     child2: %s = (%u) %s\n", pTest2->GetName(), pTest2->GetUInt32Value(), sValueText.Get() );
-							}
-						}
-#endif
-
 						CStreamInfo info;
 						info.m_numViewers = pvStream->GetChildUInt32Value( "viewer_count" );
 						pvStream->GetChildStringValue( info.m_sGlobalName, "user_name", "" );
@@ -531,7 +530,7 @@ void CTFStreamManager::UpdateTwitchTvAccounts()
 	//
 	// If we ever end up using this we'll need to update to the most recent API. v3 of the API (which we were using for this)
 	// is being shut down. It's not currently being used so I'm just going to comment it out for now.
-	//m_hHTTPRequestHandleTwitchTv = steamapicontext->SteamHTTP()->CreateHTTPRequest( k_EHTTPMethodGET, CFmtStr( "http://api.twitch.tv/api/steam/%llu", m_pLoadingAccount->m_uiSteamID ) );
+	//m_hHTTPRequestHandleTwitchTv = steamapicontext->SteamHTTP()->CreateHTTPRequest( k_EHTTPMethodGET, CFmtStr( "https://api.twitch.tv/api/steam/%llu", m_pLoadingAccount->m_uiSteamID ) );
 	//steamapicontext->SteamHTTP()->SetHTTPRequestHeaderValue( m_hHTTPRequestHandleTwitchTv, "Accept", cl_streams_request_accept.GetString() );
 	DevMsg( "Requesting twitch.tv account link...\n" );
 

@@ -18,6 +18,7 @@
 #include <vgui/ISurface.h>
 #include "hud.h"
 #include "hudelement.h"
+#include "interactivewebpanel.h"
 #include "tf_shareddefs.h"
 #include "vgui_avatarimage.h"
 #include "tf_imagepanel.h"
@@ -100,6 +101,8 @@ public:
 	void		 RemoveAllMenuEntries( void );
 	virtual void FireGameEvent( IGameEvent *event );
 
+	void PlayMainMenuMusic( void );
+
 	void		 LoadCharacterImageFile( void );
 
 	void		 UpdateNotifications();
@@ -132,6 +135,9 @@ public:
 	void		CheckUnclaimedItems();
 
 	void		OnTick();
+
+	void OnGameUIActivated();
+	void OnGameUIHidden();
 
 	virtual GameActionSet_t GetPreferredActionSet() { return GAME_ACTION_SET_NONE; } // Seems like this should be GAME_ACTION_SET_MENU, but it's not because it's apparently visible *all* *the* *time*
 
@@ -193,8 +199,20 @@ private:
 	int						m_iCurrentMOTD;
 	bool					m_bMOTDShownAtStartup;
 
+	bool					m_bGameStartup;
+	bool					m_bPlayingMusic;
+	float					m_flPlayMusicTime;
+	int32					m_iPlayMusicFrame;
+
+	CInteractiveWebPanel* m_pMainMenuWebUi;
+
+	int						m_MainMenuWebUiZIndex;
+
 	vgui::ImagePanel		*m_pCharacterImagePanel;
 	int						 m_iCharacterImageIdx;
+
+	class CTFPlayerModelPanel* m_pCharacterModelPanel;
+	bool  m_bRequestingInventoryRefresh;
 
 	CExButton				*m_pQuitButton;
 	CExButton				*m_pDisconnectButton;
@@ -212,6 +230,8 @@ private:
 
 	float					m_flCheckTrainingAt;
 	bool					m_bWasInTraining;
+
+	bool					m_bGameUIVisible;
 
 	float					m_flCheckUnclaimedItems;
 
