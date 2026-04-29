@@ -426,7 +426,7 @@ static CDateBasedHolidayNoSpecificYear	g_Holiday_ValentinesDay	( "valentines",	"
 
 static CDateBasedHoliday	g_Holiday_MeetThePyro				( "meet_the_pyro",	"2012-06-26", "2012-07-05" );
 														   /*					starting date		cycle length in days	bonus time in days on both sides */
-static CCLunarHoliday		g_Holiday_FullMoon					( "fullmoon",		08, 28, 2007,		29.53058885f,				0.575f );
+static CCLunarHoliday		g_Holiday_FullMoon					( "fullmoon",		8, 28, 2007,		29.53058885f,				0.575f );
 																								 // TF2V: This is set for the first full moon before TF2's beta release, using the proper synodical moon calculation. Fun fact: This was a lunar eclipse!
 static COrHoliday			g_Holiday_HalloweenOrFullMoon		( "halloween_or_fullmoon",	&g_Holiday_Halloween,	&g_Holiday_FullMoon );
 
@@ -480,7 +480,7 @@ bool EconHolidays_IsHolidayActive( int iHolidayIndex, const CRTime& timeCurrent 
 	
 	uint32_t timeHolidayTest;
 	
-	if ( ( TFGameRules() && TFGameRules()->GetTF2VEra() ) && tf2v_override_holiday.getBool() )
+	if ( ( TFGameRules() && TFGameRules()->GetTF2VEra() ) && tf2v_override_holiday.GetBool() )
 	{
 		// Make our own faked current time based off the day TF2V is set as.
 		// Since the Era function is saved as days from 09/16/2007, we simply offset it.
@@ -501,29 +501,29 @@ bool EconHolidays_IsHolidayActive( int iHolidayIndex, const CRTime& timeCurrent 
 		timeHolidayTest = EPOCH_OFFSET + (TFGameRules()->GetTF2VEra() * SECONDS_PER_DAY) + secondsToday;
 	}
 	else
-		timeHolidayTest = timeCurrent;
+		timeHolidayTest = timeCurrent.GetRTime32();
 	
 	// TF2V: Prevent cyclic holidays firing off earlier than they were added.
 	// Kind of gross because we use harcoded seconds here for the comparison.
-	if (iHolidayIndex = kHoliday_TFBirthday && timeHolidayTest < 1250985600) // Birthday wasn't introduced until 2009
+	if (iHolidayIndex == kHoliday_TFBirthday && timeHolidayTest < 1250985600) // Birthday wasn't introduced until 2009
 		return false;
-	if (iHolidayIndex = kHoliday_Halloween && timeHolidayTest < 1256774400) // Halloween wasn't introduced until 2009
+	if (iHolidayIndex == kHoliday_Halloween && timeHolidayTest < 1256774400) // Halloween wasn't introduced until 2009
 		return false;
-	if (iHolidayIndex = kHoliday_Christmas && timeHolidayTest < 1292544000) // Christmas wasn't introduced until 2010
+	if (iHolidayIndex == kHoliday_Christmas && timeHolidayTest < 1292544000) // Christmas wasn't introduced until 2010
 		return false;
-	if (iHolidayIndex = kHoliday_FullMoon && timeHolidayTest < 1319673600)  // Full Moon wasn't introduced until 2011
+	if (iHolidayIndex == kHoliday_FullMoon && timeHolidayTest < 1319673600)  // Full Moon wasn't introduced until 2011
 		return false;
-	if (iHolidayIndex = kHoliday_Valentines && timeHolidayTest < 1329091200)  // Valentine's wasn't introduced until 2012
+	if (iHolidayIndex == kHoliday_Valentines && timeHolidayTest < 1329091200)  // Valentine's wasn't introduced until 2012
 		return false;
-	if (iHolidayIndex = kHoliday_MeetThePyro && timeHolidayTest < 1340668800)  // Pyromania is explicitly 2012
+	if (iHolidayIndex == kHoliday_MeetThePyro && timeHolidayTest < 1340668800)  // Pyromania is explicitly 2012
 		return false;
-	if (iHolidayIndex = kHoliday_AprilFools && timeHolidayTest < 1396310400) // April Fool's wasn't introduced until 2014
+	if (iHolidayIndex == kHoliday_AprilFools && timeHolidayTest < 1396310400) // April Fool's wasn't introduced until 2014
 		return false;
-	if (iHolidayIndex = kHoliday_EOTL && timeHolidayTest < 1417564800) 		// End of the Line is explicitly 2014
+	if (iHolidayIndex == kHoliday_EOTL && timeHolidayTest < 1417564800) 		// End of the Line is explicitly 2014
 		return false;
-	if (iHolidayIndex = kHoliday_Soldier && timeHolidayTest < 1586649600) // Rick May's still alive! (Before April 2020, at least.)
+	if (iHolidayIndex == kHoliday_Soldier && timeHolidayTest < 1586649600) // Rick May's still alive! (Before April 2020, at least.)
 		return false;
-	if (iHolidayIndex = kHoliday_Summer && timeHolidayTest < 1689120000) // Summer wasn't introduced until 2023
+	if (iHolidayIndex == kHoliday_Summer && timeHolidayTest < 1689120000) // Summer wasn't introduced until 2023
 		return false;
 		
 	// We're officially going from "Kind of gross" to "Extremely gross" now.
