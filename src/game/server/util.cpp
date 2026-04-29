@@ -560,17 +560,18 @@ void UTIL_RemoveImmediate( CBaseEntity *oldObj )
 // Index is 1 based
 CBasePlayer	*UTIL_PlayerByIndex( int playerIndex )
 {
+	CBasePlayer *pPlayer = NULL;
+
 	if ( playerIndex > 0 && playerIndex <= gpGlobals->maxClients )
 	{
-		IHandleEntity *pHandleEntity = gEntList.LookupEntityByNetworkIndex( playerIndex );
-		if ( pHandleEntity )
+		edict_t *pPlayerEdict = INDEXENT( playerIndex );
+		if ( pPlayerEdict && !pPlayerEdict->IsFree() )
 		{
-			CBaseEntity *pEnt = static_cast<IServerUnknown*>( pHandleEntity )->GetBaseEntity();
-			return static_cast<CBasePlayer *>( pEnt );
+			pPlayer = (CBasePlayer*)GetContainingEntity( pPlayerEdict );
 		}
 	}
 	
-	return NULL;
+	return pPlayer;
 }
 
 //
@@ -692,21 +693,17 @@ void UTIL_GetPlayerConnectionInfo( int playerIndex, int& ping, int &packetloss )
 	if ( nci && player && !player->IsBot() )
 	{
 		float latency = nci->GetAvgLatency( FLOW_OUTGOING ); // in seconds
-
-		// UNDONE
-		// that should be the correct latency, we assume that cmdrate is higher 
-		// than updaterate, which is the case for default settings
-		//const char * szCmdRate = engine->GetClientConVarValue( playerIndex, "cl_updaterate" );
 		
-		//int nCmdRate = MAX( 1, Q_atoi( szCmdRate ) );
-		//latency -= (0.5f/nCmdRate) + TICKS_TO_TIME( 1.0f ); // correct latency
+		// that should be the correct latency, we assume that cmdrate is higher 
+		// then updaterate, what is the case for default settings
+		const char * szCmdRate = engine->GetClientConVarValue( playerIndex, "cl_cmdrate" );
+		
+		int nCmdRate = MAX( 1, Q_atoi( szCmdRate ) );
+		latency -= (0.5f/nCmdRate) + TICKS_TO_TIME( 1.0f ); // correct latency
 
 		// in GoldSrc we had a different, not fixed tickrate. so we have to adjust
 		// Source pings by half a tick to match the old GoldSrc pings.
-		//latency -= TICKS_TO_TIME( 0.5f );
-
-		// take into account 1 update tick
-		latency -= TICKS_TO_TIME(1.0f);
+		latency -= TICKS_TO_TIME( 0.5f );
 
 		ping = latency * 1000.0f; // as msecs
 		ping = clamp( ping, 5, 1000 ); // set bounds, dont show pings under 5 msecs

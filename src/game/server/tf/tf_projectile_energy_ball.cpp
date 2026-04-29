@@ -170,10 +170,11 @@ void CTFProjectile_EnergyBall::ImpactSound( const char *pszSoundName, bool bLoud
 
 	if ( bLoudForAttacker )
 	{
+		float soundlen = 0;
 		EmitSound_t params;
 		params.m_flSoundTime = 0;
 		params.m_pSoundName = pszSoundName;
-		params.m_pflSoundDuration = 0;
+		params.m_pflSoundDuration = &soundlen;
 		CPASFilter filter( GetAbsOrigin() );
 		filter.RemoveRecipient( ToTFPlayer(pAttacker) );
 		EmitSound( filter, entindex(), params );
@@ -318,7 +319,7 @@ void CTFProjectile_EnergyBall::Explode( trace_t *pTrace, CBaseEntity *pOther )
 			}
 		}
 
-		CTakeDamageInfo info( this, pAttacker, GetOriginalLauncher(), vec3_origin, vecOrigin, GetDamage(), GetDamageType(), GetDamageCustom() );
+		CTakeDamageInfo info( this, pAttacker, m_hLauncher, vec3_origin, vecOrigin, GetDamage(), GetDamageType(), GetDamageCustom() );
 		CTFRadiusDamageInfo radiusinfo( &info, vecOrigin, flRadius, NULL, m_bChargedShot ? TF_ROCKET_RADIUS_FOR_RJS*1.33 : TF_ROCKET_RADIUS_FOR_RJS );
 		TFGameRules()->RadiusDamage( radiusinfo );
 	}

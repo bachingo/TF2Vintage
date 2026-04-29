@@ -61,11 +61,9 @@ CTFViewModel::~CTFViewModel()
 #ifdef CLIENT_DLL
 void DrawEconEntityAttachedModels( CBaseAnimating *pEnt, CEconEntity *pAttachedModelSource, const ClientModelRenderInfo_t *pInfo, int iMatchDisplayFlags );
 
-// UNDONE: TODO(mcoms): this is probably fixed now. will test.
-// TODO: need per character sway, add spring to this
 // TODO:  Turning this off by setting interp 0.0 instead of 0.1 for now since we have a timing bug to resolve
 ConVar cl_wpn_sway_interp( "cl_wpn_sway_interp", "0.0", FCVAR_CLIENTDLL | FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
-ConVar cl_wpn_sway_scale( "cl_wpn_sway_scale", "1.34", FCVAR_CLIENTDLL | FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
+ConVar cl_wpn_sway_scale( "cl_wpn_sway_scale", "5.0", FCVAR_CLIENTDLL | FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 #endif
 
 //-----------------------------------------------------------------------------
@@ -97,22 +95,6 @@ void CTFViewModel::CalcViewModelLag( Vector& origin, QAngle& angles, QAngle& ori
 		return;
 	}
 
-	// Fill in one entry
-	if ( !m_LagAnglesHistory.IsValidIndex( 0 ) )
-	{
-		// Prime the history with the current angles so we don't start from zero
-		m_vLagAngles = angles;
-		m_LagAnglesHistory.NoteChanged( gpGlobals->curtime, 0.0f, false );
-		return;
-	}
-
-	float flLastTime = 0.0f;
-	m_LagAnglesHistory.GetHistoryValue( 0, flLastTime );
-	if ( gpGlobals->curtime <= flLastTime )
-	{
-		return;
-	}
-
 	// Calculate our drift
 	Vector	forward, right, up;
 	AngleVectors( angles, &forward, &right, &up );
@@ -140,9 +122,9 @@ void CTFViewModel::CalcViewModelLag( Vector& origin, QAngle& angles, QAngle& ori
 ConVar cl_gunlowerangle( "cl_gunlowerangle", "90", FCVAR_CLIENTDLL | FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 ConVar cl_gunlowerspeed( "cl_gunlowerspeed", "2", FCVAR_CLIENTDLL | FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 
-ConVar tf_use_min_viewmodels( "tf_use_min_viewmodels", "1", FCVAR_ARCHIVE, "Use minimized viewmodels." );
+ConVar tf_use_min_viewmodels( "tf_use_min_viewmodels", "0", FCVAR_ARCHIVE, "Use minimized viewmodels." );
 
-ConVar tf_viewmodels_offset_override( "tf_viewmodels_offset_override", "", 0, "If set, this will override the position of all viewmodels. Usage 'x y z'. Restricted to <-20 to 20> <-5 to 5> <-20 to 20> on normal servers." );
+ConVar tf_viewmodels_offset_override( "tf_viewmodels_offset_override", "", FCVAR_CHEAT, "If set, this will override the position of all viewmodels. Usage 'x y z'" );
 #endif
 
 void CTFViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePosition, const QAngle& eyeAngles )
@@ -228,13 +210,6 @@ void CTFViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePosit
 			if ( bForceOverride )
 			{
 				UTIL_StringToVector( viewmodelOffset.Base(), pszVMOffsetOverride );
-				static ConVarRef sv_cheats("sv_cheats");
-				if (!sv_cheats.GetBool())
-				{
-					viewmodelOffset.x = clamp(viewmodelOffset.x, -20.0f, 20.0f);
-					viewmodelOffset.y = clamp(viewmodelOffset.y, -5.0f, 5.0f);
-					viewmodelOffset.z = clamp(viewmodelOffset.z, -20.0f, 20.0f);
-				}
 			}
 			else
 			{
@@ -401,7 +376,6 @@ int CTFViewModel::GetSkin()
 		CEconItemView *pItem = pWeapon->GetAttributeContainer()->GetItem();
 		if ( pItem->IsValid() )
 		{
-			CEconItemViewDataCacher dataCacher(pItem);
 			iItemSkin = pItem->GetSkin( pPlayer->GetTeamNumber(), true );
 		}
 
@@ -541,30 +515,6 @@ public:
 	virtual void OnBind( C_BaseEntity *pC_BaseEntity ) OVERRIDE;
 };
 
-CTFPlayer* GetPlayerFromEnt( CBaseEntity* pEnt )
-{
-	if ( pEnt->IsPlayer() )
-	{
-		return static_cast<CTFPlayer*>(pEnt);
-	}
-
-	// Check if we have a move parent and if it's a player
-	CBaseEntity* pMoveParent = pEnt->GetMoveParent();
-	if ( pMoveParent && pMoveParent->IsPlayer() )
-	{
-		return static_cast<CTFPlayer*>(pMoveParent);
-	}
-
-	// Check if our owner is a player
-	IHasOwner* pOwnerInterface = dynamic_cast<IHasOwner*>( pEnt );
-	if (pOwnerInterface)
-	{
-		return ToTFPlayer( pOwnerInterface->GetOwnerViaInterface() );
-	}
-
-	return nullptr;
-}
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -577,7 +527,6 @@ void CInvisProxy::OnBind( C_BaseEntity *pC_BaseEntity )
 
 	CTFPlayer *pPlayer = NULL;
 
-#if 0
 	// Check if we have a move parent and if it's a player
 	C_BaseEntity *pMoveParent = pEnt->GetMoveParent();
 	if ( pMoveParent && pMoveParent->IsPlayer() )
@@ -601,7 +550,7 @@ void CInvisProxy::OnBind( C_BaseEntity *pC_BaseEntity )
 	{
 		if ( pEnt->IsPlayer() )
 		{
-			pPlayer = static_cast<CTFPlayer*>( pEnt );
+			pPlayer = dynamic_cast<C_TFPlayer*>( pEnt );
 		}
 		else
 		{
@@ -612,9 +561,6 @@ void CInvisProxy::OnBind( C_BaseEntity *pC_BaseEntity )
 			}
 		}
 	}
-#else
-	pPlayer = GetPlayerFromEnt(pEnt);
-#endif
 	
 	if ( !pPlayer )
 	{

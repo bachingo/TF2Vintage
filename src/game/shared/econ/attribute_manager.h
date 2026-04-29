@@ -296,7 +296,7 @@ public:
 	CEconGetAttributeIterator( attrib_definition_index_t nDefIndex, float flDefaultValue )
 		: m_nDefIndex( nDefIndex ), m_flValue( flDefaultValue ) {}
 
-	bool OnIterateAttributeValue( const CEconItemAttributeDefinition *pAttrDef, attrib_value_t value ) OVERRIDE
+	bool OnIterateAttributeValue( const CEconItemAttributeDefinition *pAttrDef, attrib_value_t value ) override
 	{
 		if ( pAttrDef->GetDefinitionIndex() == m_nDefIndex )
 		{

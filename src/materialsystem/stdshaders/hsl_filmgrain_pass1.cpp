@@ -7,8 +7,9 @@
 
 #include "BaseVSShader.h"
 #include "convar.h"
-#include "filmgrain_vs30.inc"
-#include "hsl_filmgrain_pass1_ps30.inc"
+#include "filmgrain_vs20.inc"
+#include "hsl_filmgrain_pass1_ps20.inc"
+#include "hsl_filmgrain_pass1_ps20b.inc"
 
 //
 // First pass converts from RGB to HSL and tweaks with noise similar to After Effects
@@ -59,11 +60,19 @@ BEGIN_VS_SHADER( hsl_filmgrain_pass1, "Help for Film Grain" )
 			int fmt = VERTEX_POSITION;
 			pShaderShadow->VertexShaderVertexFormat( fmt, 1, 0, 0 );
 
-			DECLARE_STATIC_VERTEX_SHADER( filmgrain_vs30 );
-			SET_STATIC_VERTEX_SHADER( filmgrain_vs30 );
+			DECLARE_STATIC_VERTEX_SHADER( filmgrain_vs20 );
+			SET_STATIC_VERTEX_SHADER( filmgrain_vs20 );
 
-			DECLARE_STATIC_PIXEL_SHADER( hsl_filmgrain_pass1_ps30 );
-			SET_STATIC_PIXEL_SHADER( hsl_filmgrain_pass1_ps30 );
+			if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
+			{
+				DECLARE_STATIC_PIXEL_SHADER( hsl_filmgrain_pass1_ps20b );
+				SET_STATIC_PIXEL_SHADER( hsl_filmgrain_pass1_ps20b );
+			}
+			else
+			{
+				DECLARE_STATIC_PIXEL_SHADER( hsl_filmgrain_pass1_ps20 );
+				SET_STATIC_PIXEL_SHADER( hsl_filmgrain_pass1_ps20 );
+			}
 		}
 
 		DYNAMIC_STATE
@@ -75,11 +84,19 @@ BEGIN_VS_SHADER( hsl_filmgrain_pass1, "Help for Film Grain" )
 
 			SetPixelShaderConstant( 0, HSLNOISESCALE );
 
-			DECLARE_DYNAMIC_VERTEX_SHADER( filmgrain_vs30 );
-			SET_DYNAMIC_VERTEX_SHADER( filmgrain_vs30 );
+			DECLARE_DYNAMIC_VERTEX_SHADER( filmgrain_vs20 );
+			SET_DYNAMIC_VERTEX_SHADER( filmgrain_vs20 );
 
-			DECLARE_DYNAMIC_PIXEL_SHADER( hsl_filmgrain_pass1_ps30 );
-			SET_DYNAMIC_PIXEL_SHADER( hsl_filmgrain_pass1_ps30 );
+			if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
+			{
+				DECLARE_DYNAMIC_PIXEL_SHADER( hsl_filmgrain_pass1_ps20b );
+				SET_DYNAMIC_PIXEL_SHADER( hsl_filmgrain_pass1_ps20b );
+			}
+			else
+			{
+				DECLARE_DYNAMIC_PIXEL_SHADER( hsl_filmgrain_pass1_ps20 );
+				SET_DYNAMIC_PIXEL_SHADER( hsl_filmgrain_pass1_ps20 );
+			}
 		}
 		Draw();
 	}

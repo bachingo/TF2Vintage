@@ -417,7 +417,7 @@ bool CBaseFlex::ClearSceneEvent( CSceneEventInfo *info, bool fastKill, bool canc
 			{
 				StopSound( info->m_pEvent->GetParameters() );
 
-#if (defined(HL2_EPISODIC) || !defined(HL2_DLL)) && !defined(PORTAL)
+#ifdef HL2_EPISODIC
 				// If we were holding the semaphore because of this speech, release it
 				CAI_BaseActor *pBaseActor = dynamic_cast<CAI_BaseActor*>(this);
 				if ( pBaseActor )

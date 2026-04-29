@@ -611,7 +611,7 @@ float CTFCompoundBow::GetInitialAfterburnDuration() const
 {
 	// if the bow is lighting someone on fire it must have
 	// been the arrow was lit before it was fired
-	return TF_AFTERBURN_BASE_DURATION;
+	return 7.5f;
 }
 #endif
 

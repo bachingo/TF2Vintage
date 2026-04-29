@@ -1,43 +1,27 @@
-// ALL SKIP STATEMENTS THAT AFFECT THIS SHADER!!!
-// defined $HDRTYPE && defined $HDRENABLED && !$HDRTYPE && $HDRENABLED
-// defined $PIXELFOGTYPE && defined $WRITEWATERFOGTODESTALPHA && ( $PIXELFOGTYPE != 1 ) && $WRITEWATERFOGTODESTALPHA
-// defined $LIGHTING_PREVIEW && defined $HDRTYPE && $LIGHTING_PREVIEW && $HDRTYPE != 0
-// defined $LIGHTING_PREVIEW && defined $FASTPATHENVMAPTINT && $LIGHTING_PREVIEW && $FASTPATHENVMAPTINT
-// defined $LIGHTING_PREVIEW && defined $FASTPATHENVMAPCONTRAST && $LIGHTING_PREVIEW && $FASTPATHENVMAPCONTRAST
-// defined $LIGHTING_PREVIEW && defined $FASTPATH && $LIGHTING_PREVIEW && $FASTPATH
-// ($FLASHLIGHT || $FLASHLIGHTSHADOWS) && $LIGHTING_PREVIEW
-// defined $HDRTYPE && defined $HDRENABLED && !$HDRTYPE && $HDRENABLED
-// defined $PIXELFOGTYPE && defined $WRITEWATERFOGTODESTALPHA && ( $PIXELFOGTYPE != 1 ) && $WRITEWATERFOGTODESTALPHA
-// defined $LIGHTING_PREVIEW && defined $HDRTYPE && $LIGHTING_PREVIEW && $HDRTYPE != 0
-// defined $LIGHTING_PREVIEW && defined $FASTPATHENVMAPTINT && $LIGHTING_PREVIEW && $FASTPATHENVMAPTINT
-// defined $LIGHTING_PREVIEW && defined $FASTPATHENVMAPCONTRAST && $LIGHTING_PREVIEW && $FASTPATHENVMAPCONTRAST
-// defined $LIGHTING_PREVIEW && defined $FASTPATH && $LIGHTING_PREVIEW && $FASTPATH
-// ($FLASHLIGHT || $FLASHLIGHTSHADOWS) && $LIGHTING_PREVIEW
-
-#pragma once
 #include "shaderlib/cshader.h"
 class vr_distort_texture_ps30_Static_Index
 {
 public:
-	vr_distort_texture_ps30_Static_Index(  )
+	vr_distort_texture_ps30_Static_Index( )
 	{
 	}
-
-	int GetIndex() const
+	int GetIndex()
 	{
+		// Asserts to make sure that we aren't using any skipped combinations.
+		// Asserts to make sure that we are setting all of the combination vars.
+#ifdef _DEBUG
+#endif // _DEBUG
 		return 0;
 	}
 };
-
-#define shaderStaticTest_vr_distort_texture_ps30 1
-
-
+#define shaderStaticTest_vr_distort_texture_ps30 0
 class vr_distort_texture_ps30_Dynamic_Index
 {
-	unsigned int m_nCMBO_USERENDERTARGET : 2;
+private:
+	int m_nCMBO_USERENDERTARGET;
 #ifdef _DEBUG
-	bool m_bCMBO_USERENDERTARGET : 1;
-#endif	// _DEBUG
+	bool m_bCMBO_USERENDERTARGET;
+#endif
 public:
 	void SetCMBO_USERENDERTARGET( int i )
 	{
@@ -45,23 +29,32 @@ public:
 		m_nCMBO_USERENDERTARGET = i;
 #ifdef _DEBUG
 		m_bCMBO_USERENDERTARGET = true;
-#endif	// _DEBUG
+#endif
 	}
-
-	vr_distort_texture_ps30_Dynamic_Index(  )
+	void SetCMBO_USERENDERTARGET( bool i )
 	{
-		m_nCMBO_USERENDERTARGET = 0;
+		m_nCMBO_USERENDERTARGET = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bCMBO_USERENDERTARGET = true;
+#endif
+	}
+public:
+	vr_distort_texture_ps30_Dynamic_Index()
+	{
 #ifdef _DEBUG
 		m_bCMBO_USERENDERTARGET = false;
-#endif	// _DEBUG
+#endif // _DEBUG
+		m_nCMBO_USERENDERTARGET = 0;
 	}
-
-	int GetIndex() const
+	int GetIndex()
 	{
-		Assert( m_bCMBO_USERENDERTARGET );
+		// Asserts to make sure that we aren't using any skipped combinations.
+		// Asserts to make sure that we are setting all of the combination vars.
+#ifdef _DEBUG
+		bool bAllDynamicVarsDefined = m_bCMBO_USERENDERTARGET;
+		Assert( bAllDynamicVarsDefined );
+#endif // _DEBUG
 		return ( 1 * m_nCMBO_USERENDERTARGET ) + 0;
 	}
 };
-
-#define shaderDynamicTest_vr_distort_texture_ps30 psh_forgot_to_set_dynamic_CMBO_USERENDERTARGET
-
+#define shaderDynamicTest_vr_distort_texture_ps30 psh_forgot_to_set_dynamic_CMBO_USERENDERTARGET + 0

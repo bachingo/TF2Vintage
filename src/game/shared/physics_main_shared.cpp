@@ -481,6 +481,21 @@ void SpewLinks()
 #endif
 
 //-----------------------------------------------------------------------------
+// Returns the actual gravity
+//-----------------------------------------------------------------------------
+static inline float GetActualGravity( CBaseEntity *pEnt )
+{
+	float ent_gravity = pEnt->GetGravity();
+	if ( ent_gravity == 0.0f )
+	{
+		ent_gravity = 1.0f;
+	}
+
+	return ent_gravity * GetCurrentGravity();
+}
+
+
+//-----------------------------------------------------------------------------
 // Purpose: 
 // Output : inline touchlink_t
 //-----------------------------------------------------------------------------

@@ -38,6 +38,9 @@ using namespace vgui;
 
 ConVar cl_hud_playerclass_use_playermodel( "cl_hud_playerclass_use_playermodel", "1", FCVAR_ARCHIVE, "Use player model in player class HUD." );
 
+
+ConVar cl_hud_playerclass_playermodel_showed_confirm_dialog( "cl_hud_playerclass_playermodel_showed_confirm_dialog", "0", FCVAR_ARCHIVE | FCVAR_HIDDEN );
+
 extern ConVar tf_max_health_boost;
 
 
@@ -80,12 +83,6 @@ enum
 
 DECLARE_BUILD_FACTORY( CTFClassImage );
 
-#ifdef TF2_OG
-#define ShouldUsePlayerModel() false
-#else
-#define ShouldUsePlayerModel() cl_hud_playerclass_use_playermodel.GetBool()
-#endif
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -110,7 +107,7 @@ CTFHudPlayerClass::CTFHudPlayerClass( Panel *parent, const char *name ) : Editab
 	m_flNextThink = 0.0f;
 	m_nKillStreak = 0;
 
-	m_bUsePlayerModel = ShouldUsePlayerModel();
+	m_bUsePlayerModel = cl_hud_playerclass_use_playermodel.GetBool();
 
 	ListenForGameEvent( "localplayer_changedisguise" );
 	ListenForGameEvent( "post_inventory_application" );
@@ -230,9 +227,9 @@ void CTFHudPlayerClass::OnThink()
 	}
 
 	bool bPlayerClassModeChange = false;
-	if ( m_bUsePlayerModel != ShouldUsePlayerModel() )
+	if ( m_bUsePlayerModel != cl_hud_playerclass_use_playermodel.GetBool() )
 	{
-		m_bUsePlayerModel = ShouldUsePlayerModel();
+		m_bUsePlayerModel = cl_hud_playerclass_use_playermodel.GetBool();
 		bPlayerClassModeChange = true;
 	}
 
@@ -317,25 +314,17 @@ void CTFHudPlayerClass::OnThink()
 			{
 				CSteamID playerSteamID;
 				pPlayer->GetSteamID( &playerSteamID );
-
-				uint32 unPaintKitIndexNum = 0;
-				bool hasPaintKitIndex = GetPaintKitDefIndex( pItem, &unPaintKitIndexNum );
-
 				// We're holding a weapon we dont own!
 				if ( playerSteamID.GetAccountID() != pItem->GetAccountID() && m_pCarryingLabel )
 				{
 					locchar_t wszLocString [128];
 
 					// Construct and set the weapon's name
-					g_pVGuiLocalize->ConstructString_safe( wszLocString, L"%s1", 1, CEconItemLocalizedFullNameGenerator( GLocalizationProvider(), pItem->GetItemDefinition(), true, pItem->GetItemQuality(), ( hasPaintKitIndex ? unPaintKitIndexNum : 0 ) ).GetFullName() );
+					g_pVGuiLocalize->ConstructString_safe( wszLocString, L"%s1", 1, CEconItemLocalizedFullNameGenerator( GLocalizationProvider(), pItem->GetItemDefinition(), pItem->GetItemQuality() ).GetFullName() );
 					m_pCarryingWeaponPanel->SetDialogVariable( "carrying", wszLocString );
 
 					// Get and set the rarity color of the weapon
-					const char* pszColorName = GetItemSchema()->GetRarityColor( pItem->GetRarity() );
-					if (pItem->GetItemQuality() == AE_SELFMADE)
-					{
-						pszColorName = EconQuality_GetColorString( AE_SELFMADE );
-					}
+					const char* pszColorName = GetItemSchema()->GetRarityColor( pItem->GetItemDefinition()->GetRarity() );
 					pszColorName = pszColorName ? pszColorName : "TanLight";
 					if ( pszColorName )
 					{
@@ -412,6 +401,11 @@ void CTFHudPlayerClass::OnThink()
 	}
 }
 
+static void HudPlayerClassUsePlayerModelDialogCallback( bool bConfirmed, void *pContext )
+{
+	cl_hud_playerclass_use_playermodel.SetValue( bConfirmed );
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -426,6 +420,17 @@ void CTFHudPlayerClass::UpdateModelPanel()
 	if ( !pPlayer || !pPlayer->IsAlive() )
 	{
 		return;
+	}
+
+	if ( !cl_hud_playerclass_playermodel_showed_confirm_dialog.GetBool() )
+	{
+		// only show this message one time
+		ShowConfirmDialog(	"#GameUI_HudPlayerClassUsePlayerModelDialogTitle",
+			"#GameUI_HudPlayerClassUsePlayerModelDialogMessage",
+			"#GameUI_HudPlayerClassUsePlayerModelDialogConfirm", 
+			"#GameUI_HudPlayerClassUsePlayerModelDialogCancel",
+			&HudPlayerClassUsePlayerModelDialogCallback );
+		cl_hud_playerclass_playermodel_showed_confirm_dialog.SetValue( true );
 	}
 
 	// hide old UI
@@ -474,16 +479,6 @@ void CTFHudPlayerClass::UpdateModelPanel()
 		m_pPlayerModelPanel->ClearCarriedItems();
 		m_pPlayerModelPanel->SetToPlayerClass( nClass );
 		m_pPlayerModelPanel->SetTeam( nTeam );
-		float flInvis = 0.0f;
-		if ( m_nCloakLevel == 2 )
-		{
-			flInvis = 0.8f;
-		}
-		else if ( m_nCloakLevel == 1 )
-		{
-			flInvis = 0.4f;
-		}
-		m_pPlayerModelPanel->SetInvis( flInvis );
 
 		if ( pWeapon )
 		{
@@ -792,9 +787,9 @@ void CTFHudPlayerHealth::SetHealth( int iNewHealth, int iMaxHealth, int	iMaxBuff
 
 				// scale the flashing image based on how much health bonus we currently have
 				float flBoostMaxAmount = ( iMaxBuffedHealth ) - m_nMaxHealth;
-				float flPercent = MIN( ( m_nHealth - m_nMaxHealth ) / flBoostMaxAmount, 1.0f ) / 3;
+				float flPercent = MIN( ( m_nHealth - m_nMaxHealth ) / flBoostMaxAmount, 1.0f );
 
-				int nPosAdj = RoundFloatToNearestInt( flPercent * m_nHealthBonusPosAdj );
+				int nPosAdj = RoundFloatToInt( flPercent * m_nHealthBonusPosAdj );
 				int nSizeAdj = 2 * nPosAdj;
 
 				m_pHealthBonusImage->SetBounds( m_nBonusHealthOrigX - nPosAdj, 
@@ -825,9 +820,9 @@ void CTFHudPlayerHealth::SetHealth( int iNewHealth, int iMaxHealth, int	iMaxBuff
 
 				// scale the flashing image based on how much health bonus we currently have
 				float flBoostMaxAmount = m_nMaxHealth * m_flHealthDeathWarning;
-				float flPercent = (flBoostMaxAmount - m_nHealth) / flBoostMaxAmount / 3;
+				float flPercent = ( flBoostMaxAmount - m_nHealth ) / flBoostMaxAmount;
 
-				int nPosAdj = RoundFloatToNearestInt( flPercent * m_nHealthBonusPosAdj );
+				int nPosAdj = RoundFloatToInt( flPercent * m_nHealthBonusPosAdj );
 				int nSizeAdj = 2 * nPosAdj;
 
 				m_pHealthBonusImage->SetBounds( m_nBonusHealthOrigX - nPosAdj, 
@@ -1005,7 +1000,7 @@ void CTFHudPlayerHealth::OnThink()
 			SetPlayerHealthImagePanelVisibility( pPlayer, TF_COND_MARKEDFORDEATH_SILENT,	m_pMarkedForDeathImageSilent,	nXOffset,	Color( 125 - color_fade, 255 - color_fade, 255 - color_fade, 255 ) );
 			SetPlayerHealthImagePanelVisibility( pPlayer, TF_COND_PASSTIME_PENALTY_DEBUFF,	m_pMarkedForDeathImageSilent,	nXOffset,	Color( 125 - color_fade, 255 - color_fade, 255 - color_fade, 255 ) );
 			SetPlayerHealthImagePanelVisibility( pPlayer, TF_COND_STUNNED,					m_pSlowedImage,					nXOffset,	Color( color_fade, color_fade, 0, 255 ) );
-			SetPlayerHealthImagePanelVisibility( pPlayer, TF_COND_GAS_DRIP,					m_pGasImage,					nXOffset,	Color( color_fade, color_fade, color_fade, 255 ) );
+			SetPlayerHealthImagePanelVisibility( pPlayer, TF_COND_GAS,						m_pGasImage,					nXOffset,	Color( color_fade, color_fade, color_fade, 255 ) );
 			
 			UpdateHalloweenStatus();
 		}
@@ -1077,23 +1072,10 @@ void CTFHudPlayerStatus::ApplySchemeSettings( IScheme *pScheme )
 {
 	BaseClass::ApplySchemeSettings( pScheme );
 
-	int xOffset;
-	int yOffset;
-	bool bInvalidateLayout = false;
-	if ( ConstrainAspect( xOffset, yOffset ) )
-	{
-		bInvalidateLayout = true;
-		int x, y;
-		GetPos( x, y );
-		int xNew, yNew;
-		OffsetAspect( x, y, xOffset, yOffset, xNew, yNew );
-		SetPos( xNew, yNew );
-	}
-
 	// HACK: Work around the scheme application order failing
 	// to reload the player class hud element's scheme in minmode.
 	static ConVarRef cl_hud_minmode( "cl_hud_minmode", true );
-	if ( bInvalidateLayout || cl_hud_minmode.IsValid() && cl_hud_minmode.GetBool() )
+	if ( cl_hud_minmode.IsValid() && cl_hud_minmode.GetBool() )
 	{
 		m_pHudPlayerClass->InvalidateLayout( false, true );
 	}

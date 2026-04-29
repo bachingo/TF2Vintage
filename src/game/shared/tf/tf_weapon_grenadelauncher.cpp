@@ -16,7 +16,6 @@
 #include "c_tf_player.h"
 #include "c_tf_gamestats.h"
 #include "bone_setup.h"
-#include "prediction.h"
 
 // Server specific.
 #else
@@ -186,7 +185,6 @@ void CTFGrenadeLauncher::PrimaryAttack( void )
 
 	if ( !CanAttack() )
 	{
-		m_flNextPrimaryAttack = MAX(m_flNextPrimaryAttack, gpGlobals->curtime);
 		ResetDetonateTime();
 		return;
 	}
@@ -326,25 +324,7 @@ bool CTFGrenadeLauncher::SendWeaponAnim( int iActivity )
 	{
 		m_iGoalTube = ( m_iCurrentTube + 1 ) % TF_TUBE_COUNT;
 		m_flBarrelRotateBeginTime = gpGlobals->curtime;
-	}
-
-	if ( iActivity == ACT_VM_RELOAD )
-	{
-#if 0
-		if ( m_iCurrentTube == 0 )
-		{
-			m_iGoalTube = TF_TUBE_COUNT - 1;
-		}
-		else
-		{
-			m_iGoalTube = m_iCurrentTube - 1;
-		}
-#else
-		// since demo has two empty tubes, he actually can keep spinning it this way and reload an empty tube.
-		m_iGoalTube = ( m_iCurrentTube + 1 ) % TF_TUBE_COUNT;
-#endif
-		m_flBarrelRotateBeginTime = gpGlobals->curtime;
-	}
+	} 
 
 	// When we start firing, play the startup firing anim first
 	if ( iActivity == ACT_VM_PRIMARYATTACK )
@@ -512,7 +492,7 @@ void CTFGrenadeLauncher::SecondaryAttack( void )
 {
 #ifdef GAME_DLL
 
-	if ( !CanAttack(TF_CAN_ATTACK_FLAG_PIPEBOMBLAUNCHER_SECONDARY) )
+	if ( !CanAttack() )
 		return;
 
 	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
@@ -658,11 +638,6 @@ void CTFGrenadeLauncher::OnDataChanged( DataUpdateType_t type )
 //-----------------------------------------------------------------------------
 void CTFGrenadeLauncher::UpdateBarrelMovement( void )
 {
-	if (!prediction->IsFirstTimePredicted())
-	{
-		return;
-	}
-
 	if ( m_iGoalTube != m_iCurrentTube )
 	{
 		float flPartialRotationDeg = 0.0f;
@@ -693,13 +668,6 @@ void CTFGrenadeLauncher::UpdateBarrelMovement( void )
 			Assert( pFirst && pSecond );
 			float flPartialT = ( tVal - pFirst->x ) / ( pSecond->x - pFirst->x );
 			flPartialRotationDeg = Hermite_Spline( pFirst->y, pSecond->y, pFirst->z, pSecond->z, flPartialT );
-#if 0
-			if ( m_iGoalTube < m_iCurrentTube )
-			{
-				flPartialRotationDeg *= -1.0f;
-			}
-			flPartialRotationDeg *= abs(m_iGoalTube - m_iCurrentTube);
-#endif
 		}
 		else
 		{
@@ -739,37 +707,16 @@ void CTFGrenadeLauncher::ViewModelAttachmentBlending( CStudioHdr *hdr, Vector po
 // Purpose: 
 // won't be called for w_ version of the model, so this isn't getting updated twice
 //-----------------------------------------------------------------------------
-void CTFGrenadeLauncher::UpdateBarrelFrame(void)
+void CTFGrenadeLauncher::ItemPreFrame( void )
 {
 #ifdef CLIENT_DLL
 	UpdateBarrelMovement();
 #endif
 
 #ifdef GAME_DLL
-	if (gpGlobals->curtime > m_flBarrelRotateBeginTime + cProceduralBarrelRotationTime)
+	if ( gpGlobals->curtime > m_flBarrelRotateBeginTime + cProceduralBarrelRotationTime )
 		m_iCurrentTube = m_iGoalTube;
 #endif
 
 	BaseClass::ItemPreFrame();
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CTFGrenadeLauncher::ItemPreFrame( void )
-{
-	UpdateBarrelFrame();
-
-	BaseClass::ItemPreFrame();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CTFGrenadeLauncher::ItemBusyPreFrame(void)
-{
-	UpdateBarrelFrame();
-
-	BaseClass::ItemBusyPreFrame();
 }

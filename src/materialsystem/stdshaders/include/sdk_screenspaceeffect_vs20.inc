@@ -9,7 +9,7 @@ class sdk_screenspaceeffect_vs20_Static_Index
 public:
 	void SetX360APPCHOOSER( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nX360APPCHOOSER = i;
 	}
 

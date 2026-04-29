@@ -682,7 +682,7 @@ void CTextureAllocator::GetTextureRect(TextureHandle_t handle, int& x, int& y, i
 #define SHADOW_CULL_TOLERANCE 0.5f
 
 static ConVar r_shadows( "r_shadows", "1" ); // hook into engine's cvars..
-static ConVar r_shadowmaxrendered("r_shadowmaxrendered", "24");
+static ConVar r_shadowmaxrendered("r_shadowmaxrendered", "32");
 static ConVar r_shadows_gamecontrol( "r_shadows_gamecontrol", "-1", FCVAR_CHEAT );	 // hook into engine's cvars..
 
 //-----------------------------------------------------------------------------
@@ -1288,7 +1288,7 @@ bool CClientShadowMgr::Init()
 	SetShadowDirection(dir);
 	SetShadowDistance( 50 );
 
-	SetShadowBlobbyCutoffArea( 0.005f );
+	SetShadowBlobbyCutoffArea( 0.005 );
 
 	bool bTools = CommandLine()->CheckParm( "-tools" ) != NULL;
 	m_nMaxDepthTextureShadows = bTools ? 4 : 1;	// Just one shadow depth texture in games, more in tools
@@ -2076,7 +2076,7 @@ float CClientShadowMgr::ComputeLocalShadowOrigin( IClientRenderable* pRenderable
 //-----------------------------------------------------------------------------
 static inline void SortAbsVectorComponents( const Vector& src, int* pVecIdx )
 {
-	Vector absVec(fabsf(src[0]), fabsf(src[1]), fabsf(src[2]) );
+	Vector absVec( fabs(src[0]), fabs(src[1]), fabs(src[2]) );
 
 	int maxIdx = (absVec[0] > absVec[1]) ? 0 : 1;
 	if (absVec[2] > absVec[maxIdx])
@@ -2190,31 +2190,6 @@ void CClientShadowMgr::ComputeExtraClipPlanes( IClientRenderable* pRenderable,
 			VectorMA( origin, mins[i], vec[i], origin );
 			dir[i] = -1;
 		}
-	}
-
-	class CTraceFilterShadowReceiversOnly : public CTraceFilter
-	{
-		virtual bool ShouldHitEntity( IHandleEntity *pHandleEntity, int fContentsMask )
-		{
-			if ( !StandardFilterRules( pHandleEntity, fContentsMask ) )
-				return false;
-
-			C_BaseEntity *pEntity = EntityFromEntityHandle( pHandleEntity );
-			if ( pEntity && !pEntity->ShouldReceiveProjectedTextures( SHADOW_FLAGS_SHADOW ) )
-				return false;
-
-			return true;
-		}
-	};
-
-	// Do a trace to the bbox corner origin. If it hits a shadow receiving brush
-	// move the corner to be outside it so shadows won't poke-thru thin walls
-	CTraceFilterShadowReceiversOnly traceFilter;
-	trace_t tr;
-	UTIL_TraceLine( pRenderable->GetRenderOrigin(), origin, MASK_SOLID_BRUSHONLY, &traceFilter, &tr );
-	if ( tr.fraction < 1.f )
-	{
-		VectorAdd( tr.endpos, tr.plane.normal, origin );
 	}
 
 	// Now that we have it, create 3 planes...
@@ -2346,12 +2321,12 @@ void CClientShadowMgr::BuildOrthoShadow( IClientRenderable* pRenderable,
 	// We project the two longest sides into the vectors perpendicular
 	// to the projection direction, then add in the projection of the perp direction
 	Vector2D size( boxSize[vecIdx[0]], boxSize[vecIdx[1]] );
-	size.x *= fabsf( DotProduct( vec[vecIdx[0]], xvec ) );
-	size.y *= fabsf( DotProduct( vec[vecIdx[1]], yvec ) );
+	size.x *= fabs( DotProduct( vec[vecIdx[0]], xvec ) );
+	size.y *= fabs( DotProduct( vec[vecIdx[1]], yvec ) );
 
 	// Add the third component into x and y
-	size.x += boxSize[vecIdx[2]] * fabsf( DotProduct( vec[vecIdx[2]], xvec ) );
-	size.y += boxSize[vecIdx[2]] * fabsf( DotProduct( vec[vecIdx[2]], yvec ) );
+	size.x += boxSize[vecIdx[2]] * fabs( DotProduct( vec[vecIdx[2]], xvec ) );
+	size.y += boxSize[vecIdx[2]] * fabs( DotProduct( vec[vecIdx[2]], yvec ) );
 
 	// Bloat a bit, since the shadow wants to extend outside the model a bit
 	size.x += 10.0f;
@@ -2539,12 +2514,12 @@ void CClientShadowMgr::BuildRenderToTextureShadow( IClientRenderable* pRenderabl
 	// We project the two longest sides into the vectors perpendicular
 	// to the projection direction, then add in the projection of the perp direction
 	Vector2D size;
-	size.x = boxSize.x * fabsf( DotProduct( vec[0], xvec ) ) +
-		boxSize.y * fabsf( DotProduct( vec[1], xvec ) ) +
-		boxSize.z * fabsf( DotProduct( vec[2], xvec ) );
-	size.y = boxSize.x * fabsf( DotProduct( vec[0], yvec ) ) +
-		boxSize.y * fabsf( DotProduct( vec[1], yvec ) ) +
-		boxSize.z * fabsf( DotProduct( vec[2], yvec ) );
+	size.x = boxSize.x * fabs( DotProduct( vec[0], xvec ) ) + 
+		boxSize.y * fabs( DotProduct( vec[1], xvec ) ) + 
+		boxSize.z * fabs( DotProduct( vec[2], xvec ) );
+	size.y = boxSize.x * fabs( DotProduct( vec[0], yvec ) ) + 
+		boxSize.y * fabs( DotProduct( vec[1], yvec ) ) + 
+		boxSize.z * fabs( DotProduct( vec[2], yvec ) );
 
 	size.x += 2.0f * TEXEL_SIZE_PER_CASTER_SIZE;
 	size.y += 2.0f * TEXEL_SIZE_PER_CASTER_SIZE;

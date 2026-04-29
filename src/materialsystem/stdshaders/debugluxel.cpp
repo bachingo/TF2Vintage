@@ -6,10 +6,11 @@
 // $NoKeywords: $
 //===========================================================================//
 
-#include "shaderlib/cshader.h"
+#include "shaderlib/CShader.h"
 
-#include "debugluxel_vs30.inc"
-#include "debugluxel_ps30.inc"
+#include "debugluxel_ps20b.inc"
+#include "debugluxel_ps20.inc"
+#include "debugluxel_vs20.inc"
 
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -43,11 +44,19 @@ BEGIN_SHADER_FLAGS( DebugLuxels, "Help for DebugLuxels", SHADER_NOT_EDITABLE )
 		{
 			pShaderShadow->EnableTexture( SHADER_SAMPLER0, true );
 
-			DECLARE_STATIC_VERTEX_SHADER( debugluxel_vs30 );
-			SET_STATIC_VERTEX_SHADER( debugluxel_vs30 );
+			DECLARE_STATIC_VERTEX_SHADER( debugluxel_vs20 );
+			SET_STATIC_VERTEX_SHADER( debugluxel_vs20 );
 
-			DECLARE_STATIC_PIXEL_SHADER( debugluxel_ps30 );
-			SET_STATIC_PIXEL_SHADER( debugluxel_ps30 );
+			if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
+			{
+				DECLARE_STATIC_PIXEL_SHADER( debugluxel_ps20b );
+				SET_STATIC_PIXEL_SHADER( debugluxel_ps20b );
+			}
+			else
+			{
+				DECLARE_STATIC_PIXEL_SHADER( debugluxel_ps20 );
+				SET_STATIC_PIXEL_SHADER( debugluxel_ps20 );
+			}
 
 			SetDefaultBlendingShadowState( BASETEXTURE );
 			DisableFog();
@@ -63,11 +72,19 @@ BEGIN_SHADER_FLAGS( DebugLuxels, "Help for DebugLuxels", SHADER_NOT_EDITABLE )
 				pShaderAPI->GetLightmapDimensions( &texCoordScaleX, &texCoordScaleY );
 			}
 
-			DECLARE_DYNAMIC_VERTEX_SHADER( debugluxel_vs30 );
-			SET_DYNAMIC_VERTEX_SHADER( debugluxel_vs30 );
+			DECLARE_DYNAMIC_VERTEX_SHADER( debugluxel_vs20 );
+			SET_DYNAMIC_VERTEX_SHADER( debugluxel_vs20 );
 
-			DECLARE_DYNAMIC_PIXEL_SHADER( debugluxel_ps30 );
-			SET_DYNAMIC_PIXEL_SHADER( debugluxel_ps30 );
+			if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
+			{
+				DECLARE_DYNAMIC_PIXEL_SHADER( debugluxel_ps20b );
+				SET_DYNAMIC_PIXEL_SHADER( debugluxel_ps20b );
+			}
+			else
+			{
+				DECLARE_DYNAMIC_PIXEL_SHADER( debugluxel_ps20 );
+				SET_DYNAMIC_PIXEL_SHADER( debugluxel_ps20 );
+			}
 
 			//texture scale transform
 			Vector4D transformation[2];

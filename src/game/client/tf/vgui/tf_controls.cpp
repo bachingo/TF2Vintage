@@ -31,8 +31,6 @@
 #include "filesystem.h"
 #include "hud_controlpointicons.h"
 
-bool g_bUsingCustomHud = false;
-
 using namespace vgui;
 
 wchar_t* LocalizeNumberWithToken( const char* pszLocToken, int nValue )
@@ -345,11 +343,6 @@ void PositionTooltip( const tooltippos_t ePreferredTooltipPosition,
 	
 	// Go with the best we've got
 	pToolTipPanel->SetPos( arResults[ eBestType ].nX, arResults[ eBestType ].nY );
-}
-
-bool IsUsingCustomHud()
-{
-	return g_bUsingCustomHud;
 }
 
 DECLARE_BUILD_FACTORY( CExCheckButton );
@@ -733,17 +726,20 @@ void CTFAdvancedOptionsDialog::OnCommand( const char *command )
 {
 	if ( !stricmp( command, "open_chat_filter_settings" ) )
 	{
-		switch ( GetUniverse() )
+		if ( steamapicontext && steamapicontext->SteamFriends() )
 		{
-		case k_EUniversePublic:
-			UTIL_OpenWebPage( "https://store.steampowered.com/account/preferences#CommunityContentPreferences" );
-			break;
-		case k_EUniverseBeta:
-			UTIL_OpenWebPage( "https://store.beta.steampowered.com/account/preferences#CommunityContentPreferences" );
-			break;
-		case k_EUniverseDev:
-			UTIL_OpenWebPage( "https://localhost/store/account/preferences#CommunityContentPreferences" );
-			break;
+			switch ( GetUniverse() )
+			{
+			case k_EUniversePublic:
+				steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( "https://store.steampowered.com/account/preferences#CommunityContentPreferences" );
+				break;
+			case k_EUniverseBeta:
+				steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( "https://store.beta.steampowered.com/account/preferences#CommunityContentPreferences" );
+				break;
+			case k_EUniverseDev:
+				steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( "https://localhost/store/account/preferences#CommunityContentPreferences" );
+				break;
+			}
 		}
 		return;
 	}
@@ -1320,7 +1316,7 @@ void CL_OpenTFAdvancedOptionsDialog( const CCommand &args )
 }
 
 // the console commands
-static ConCommand opentf2options( "opentf2options", &CL_OpenTFAdvancedOptionsDialog, "Displays the Advanced Options dialog." );
+static ConCommand opentf2options( "opentf2options", &CL_OpenTFAdvancedOptionsDialog, "Displays the TF2 Advanced Options dialog." );
 
 //-----------------------------------------------------------------------------
 // Purpose: A scroll bar that can have specified width
@@ -2475,82 +2471,3 @@ void CreateSwoop( int nX, int nY, int nWide, int nTall, float flDelay, bool bDow
 	pSwoop->MakeReadyForUse();
 	pSwoop->SetBounds( nX, nY, nWide, nTall );
 }
-
-ConVar cl_customhud_switch( "cl_customhud_switch", "0", FCVAR_HIDDEN | FCVAR_ARCHIVE );
-
-void HudAspectChanged( IConVar* var, const char* pOldString, float flOldValue )
-{
-	engine->ClientCmd_Unrestricted("hud_reloadscheme");
-}
-ConVar cl_hud_aspect( "cl_hud_aspect", "1", FCVAR_ARCHIVE, "Force the aspect ratio of the hud. 0 to disable.", HudAspectChanged );
-
-bool ConstrainAspect( int& nXOffset, int& nYOffset )
-{
-	nXOffset = 0;
-	nYOffset = 0;
-
-	int iHudAspect = cl_hud_aspect.GetInt();
-
-	if ( iHudAspect == 0 )
-	{
-		return false;
-	}
-
-	float flDefaultAspect = 4.0f / 3.0f;
-
-	switch ( iHudAspect )
-	{
-		case 2:
-			flDefaultAspect = 1.0f;
-			break;
-		case 3:
-			flDefaultAspect = 16.0f / 9.0f;
-			break;
-		case 4:
-			flDefaultAspect = 16.0f / 10.0f;
-			break;
-	}
-
-	int w, h;
-	vgui::surface()->GetScreenSize(w, h);
-
-	Assert(w != 0 && h != 0);
-
-	float flAspectRatio = ((float)w) / ((float)h);
-
-	if ( flAspectRatio > flDefaultAspect )
-	{
-		if (w > h)
-		{
-			// if width is greater than height, then height is fixed and we base width off of height.
-			nXOffset = RoundFloatToNearestInt((w - (h * flDefaultAspect)) * 0.5f);
-			return true;
-		}
-		else
-		{
-			// TODO(mcoms): support for tall/square monitors?
-		}
-	}
-
-	return false;
-}
-
-void OffsetAspect( int x, int y, int xOffset, int yOffset, int& outX, int& outY )
-{
-	int w, h;
-	vgui::surface()->GetScreenSize(w, h);
-	// TODO(mcoms): a bit of a hack. also needs aspect ratio scaling. but it will do for now.
-	int startOffset = 0;
-	int endOffset = 0;
-	if (x > w / 2)
-	{
-		endOffset = w - x;
-	}
-	else
-	{
-		startOffset = x;
-	}
-	outX = clamp( x, xOffset + startOffset, w - endOffset - xOffset );
-	outY = clamp( y, yOffset, h - yOffset );
-}
-

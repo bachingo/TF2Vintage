@@ -836,7 +836,6 @@ CBaseModelPanel::particle_data_t *CBaseModelPanel::CreateParticleData( const cha
 
 	particle_data_t *pData = new particle_data_t;
 	pData->m_bIsUpdateToDate = false;
-	pData->m_bDataCached = false;
 	pData->m_pParticleSystem = pParticle;
 
 	m_particleList.AddToTail( pData );

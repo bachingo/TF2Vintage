@@ -14,7 +14,7 @@ class sprite_vs20_Static_Index
 public:
 	void SetVERTEXCOLOR( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nVERTEXCOLOR = i;
 #ifdef _DEBUG
 		m_bVERTEXCOLOR = true;
@@ -23,7 +23,7 @@ public:
 
 	void SetSRGB( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nSRGB = i;
 #ifdef _DEBUG
 		m_bSRGB = true;
@@ -42,7 +42,7 @@ public:
 
 	int GetIndex() const
 	{
-		DebugAssert( m_bVERTEXCOLOR && m_bSRGB );
+		Assert( m_bVERTEXCOLOR && m_bSRGB );
 		return ( 2 * m_nVERTEXCOLOR ) + ( 4 * m_nSRGB ) + 0;
 	}
 };
@@ -59,7 +59,7 @@ class sprite_vs20_Dynamic_Index
 public:
 	void SetDOWATERFOG( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nDOWATERFOG = i;
 #ifdef _DEBUG
 		m_bDOWATERFOG = true;
@@ -76,7 +76,7 @@ public:
 
 	int GetIndex() const
 	{
-		DebugAssert( m_bDOWATERFOG );
+		Assert( m_bDOWATERFOG );
 		return ( 1 * m_nDOWATERFOG ) + 0;
 	}
 };

@@ -28,7 +28,7 @@ static const int REVIVE_EASY_LIMIT = 4;
 static const int REVIVE_MEDIUM_LIMIT = 8;
 
 #ifdef GAME_DLL
-extern void HandleRageGain( CTFPlayer *pPlayer, CBaseEntity *pVictim, unsigned int iRequiredBuffFlags, float flDamage, float fInverseRageGainScale );
+extern void HandleRageGain( CTFPlayer *pPlayer, unsigned int iRequiredBuffFlags, float flDamage, float fInverseRageGainScale );
 #else
 extern void AddMedicCaller( C_BaseEntity *pEntity, float flDuration, Vector &vecOffset, bool bAutoCaller = false );
 #endif // GAME_DLL
@@ -112,8 +112,7 @@ void CTFReviveMarker::Spawn( void )
 	SetMoveType( MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_BOUNCE );
 	// SetCollisionBounds( VEC_HULL_MIN, VEC_HULL_MAX );
 	SetBlocksLOS( false );
-	// UNDONE(mcoms): adding shadows
-	//AddEffects( EF_NOSHADOW );
+	AddEffects( EF_NOSHADOW );
 	ResetSequence( LookupSequence( "idle" ) );
 
 #ifdef GAME_DLL
@@ -332,7 +331,7 @@ void CTFReviveMarker::AddMarkerHealth( float flAmount )
 	if ( !GetMaxHealth() )
 		return;
 
-	HandleRageGain( pReviver, pOwner, kRageBuffFlag_OnHeal, flAmount * 2, 1.f );
+	HandleRageGain( pReviver, kRageBuffFlag_OnHeal, flAmount * 2, 1.f );
 
 	m_flHealAccumulator += flAmount;
 	if ( m_flHealAccumulator >= 1.f )
@@ -371,12 +370,8 @@ bool CTFReviveMarker::ReviveOwner( void )
 
 	m_hOwner->ForceRespawn();
 
-	// Don't count revives when the game isn't in active play
-	if ( TFGameRules()->State_Get() != GR_STATE_BETWEEN_RNDS )
-	{
-		// Increment stat
-		CTF_GameStats.Event_PlayerRevived( m_hOwner );
-	}
+	// Increment stat
+	CTF_GameStats.Event_PlayerRevived( m_hOwner );
 
 	// If the medic's gone, or dead, stay in the spawn room
 	if ( !m_pReviver || !m_pReviver->IsAlive() )

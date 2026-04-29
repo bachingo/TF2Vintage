@@ -38,14 +38,14 @@ CItemGeneration::CItemGeneration( void )
 //-----------------------------------------------------------------------------
 // Purpose: Generate a random item matching the specified criteria
 //-----------------------------------------------------------------------------
-CBaseEntity *CItemGeneration::GenerateRandomItem( CItemSelectionCriteria *pCriteria, const Vector &vecOrigin, const QAngle &vecAngles, const char* pszOverrideClassName, int iClass )
+CBaseEntity *CItemGeneration::GenerateRandomItem( CItemSelectionCriteria *pCriteria, const Vector &vecOrigin, const QAngle &vecAngles, const char* pszOverrideClassName )
 {
 	entityquality_t iQuality;
 	int iChosenItem = ItemSystem()->GenerateRandomItem( pCriteria, &iQuality );
 	if ( iChosenItem == INVALID_ITEM_DEF_INDEX )
 		return NULL;
 
-	return SpawnItem( iChosenItem, vecOrigin, vecAngles, pCriteria->GetItemLevel(), iQuality, pszOverrideClassName, iClass );
+	return SpawnItem( iChosenItem, vecOrigin, vecAngles, pCriteria->GetItemLevel(), iQuality, pszOverrideClassName );
 }
 
 //-----------------------------------------------------------------------------
@@ -53,7 +53,7 @@ CBaseEntity *CItemGeneration::GenerateRandomItem( CItemSelectionCriteria *pCrite
 //-----------------------------------------------------------------------------
 CBaseEntity *CItemGeneration::GenerateItemFromDefIndex( int iDefIndex, const Vector &vecOrigin, const QAngle &vecAngles )
 {
-	return SpawnItem( iDefIndex, vecOrigin, vecAngles, 1, AE_UNIQUE, NULL, TF_CLASS_UNDEFINED );
+	return SpawnItem( iDefIndex, vecOrigin, vecAngles, 1, AE_UNIQUE, NULL );
 }
 
 //-----------------------------------------------------------------------------
@@ -73,13 +73,13 @@ CBaseEntity *CItemGeneration::GenerateBaseItem( struct baseitemcriteria_t *pCrit
 	if ( iChosenItem == INVALID_ITEM_DEF_INDEX )
 		return NULL;
 
-	return SpawnItem( iChosenItem, vec3_origin, vec3_angle, 1, AE_NORMAL, NULL, TF_CLASS_UNDEFINED );
+	return SpawnItem( iChosenItem, vec3_origin, vec3_angle, 1, AE_NORMAL, NULL );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: Create a new instance of the chosen item
 //-----------------------------------------------------------------------------
-CBaseEntity *CItemGeneration::SpawnItem( int iChosenItem, const Vector &vecAbsOrigin, const QAngle &vecAbsAngles, int iItemLevel, entityquality_t entityQuality, const char *pszOverrideClassName, int iClass )
+CBaseEntity *CItemGeneration::SpawnItem( int iChosenItem, const Vector &vecAbsOrigin, const QAngle &vecAbsAngles, int iItemLevel, entityquality_t entityQuality, const char *pszOverrideClassName )
 {
 	CEconItemDefinition *pData = ItemSystem()->GetStaticDataForItemByDefIndex( iChosenItem );
 	if ( !pData )
@@ -101,9 +101,6 @@ CBaseEntity *CItemGeneration::SpawnItem( int iChosenItem, const Vector &vecAbsOr
 	if ( !pItem )
 	{
 		pszOverrideClassName = pData->GetItemClass();
-
-		if ( iClass != TF_CLASS_UNDEFINED && pszOverrideClassName )
-			pszOverrideClassName = TranslateWeaponEntForClass( pszOverrideClassName, iClass );
 
 		if ( !pszOverrideClassName )
 			return NULL;

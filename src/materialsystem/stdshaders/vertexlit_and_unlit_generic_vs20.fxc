@@ -1,4 +1,4 @@
-//======= Copyright (c) 1996-2007, Valve Corporation, All rights reserved. ======
+//======= Copyright � 1996-2007, Valve Corporation, All rights reserved. ======
 
 //  STATIC: "VERTEXCOLOR"				"0..1"
 //	STATIC: "CUBEMAP"					"0..1"
@@ -8,16 +8,22 @@
 //  STATIC: "SEAMLESS_DETAIL"       	"0..1"
 //  STATIC: "SEPARATE_DETAIL_UVS"   	"0..1"
 //  STATIC: "DECAL"						"0..1" [vs30]
+//  STATIC: "USE_STATIC_CONTROL_FLOW"	"0..1" [vs20]
 //  STATIC: "DONT_GAMMA_CONVERT_VERTEX_COLOR" "0..1"
 //  STATIC: "TREESWAY"					"0..2" [PC]
 //  DYNAMIC: "COMPRESSED_VERTS"			"0..1"
 //	DYNAMIC: "DYNAMIC_LIGHT"			"0..1"
 //	DYNAMIC: "STATIC_LIGHT_VERTEX"		"0..1"
 //	DYNAMIC: "STATIC_LIGHT_LIGHTMAP"	"0..1"
+//	DYNAMIC: "DOWATERFOG"				"0..1"
 //	DYNAMIC: "SKINNING"					"0..1"
 //  DYNAMIC: "LIGHTING_PREVIEW"			"0..1"	[PC]
+//  DYNAMIC: "LIGHTING_PREVIEW"			"0..0"	[XBOX]
 //  DYNAMIC: "MORPHING"					"0..1"  [vs30]
+//  DYNAMIC: "NUM_LIGHTS"				"0..2"	[vs20]
 
+// If using static control flow on Direct3D, we should use the NUM_LIGHTS=0 combo
+// SKIP: $USE_STATIC_CONTROL_FLOW && ( $NUM_LIGHTS > 0 ) [vs20]
 // SKIP: ($SEPARATE_DETAIL_UVS) && ($SEAMLESS_DETAIL)
 // SKIP: ($DONT_GAMMA_CONVERT_VERTEX_COLOR && ( ! $VERTEXCOLOR ) )
 // SKIP: ($TREESWAY) && ($MORPHING)
@@ -27,11 +33,12 @@
 #include "common_vs_fxc.h"
 
 static const bool g_bSkinning		= SKINNING ? true : false;
+static const int  g_FogType			= DOWATERFOG;
 static const bool g_bVertexColor	= VERTEXCOLOR ? true : false;
 static const bool g_bCubemap		= CUBEMAP ? true : false;
 static const bool g_bFlashlight		= FLASHLIGHT ? true : false;
 static const bool g_bHalfLambert	= HALFLAMBERT ? true : false;
-#if (defined( FAST_VERTEX_TEXTURES ) && MORPHING && DECAL)
+#if (defined( SHADER_MODEL_VS_3_0 ) && MORPHING && DECAL)
 static const bool g_bDecalOffset	= true;
 #else
 static const bool g_bDecalOffset	= false;
@@ -49,7 +56,7 @@ const float4 cDetailTexCoordTransform[2]	:  register( SHADER_SPECIFIC_CONST_4 );
 const float4x4 g_FlashlightWorldToTexture :  register( SHADER_SPECIFIC_CONST_6 ); // 6, 7, 8, 9
 #endif
 
-#ifdef FAST_VERTEX_TEXTURES
+#ifdef SHADER_MODEL_VS_3_0
 // NOTE: cMorphTargetTextureDim.xy = target dimensions,
 //		 cMorphTargetTextureDim.z = 4tuples/morph
 const float3 cMorphTargetTextureDim			: register( SHADER_SPECIFIC_CONST_10 );
@@ -103,7 +110,7 @@ struct VS_INPUT
 	// Position and normal/tangent deltas
 	float3 vPosFlex			: POSITION1;
 	float3 vNormalFlex		: NORMAL1;
-#ifdef FAST_VERTEX_TEXTURES
+#ifdef SHADER_MODEL_VS_3_0
 	float vVertexID			: POSITION2;
 #endif
 };
@@ -111,7 +118,10 @@ struct VS_INPUT
 
 struct VS_OUTPUT
 {
-    float4 projPos					: POSITION;			// Projection-space position
+    float4 projPos					: POSITION;			// Projection-space position	
+#if !defined( _X360 )
+	float  fog						: FOG;
+#endif
 
 #if SEAMLESS_BASE
 	HALF3 SeamlessTexCoord			: TEXCOORD0;		// Base texture x/y/z (indexed by swizzle)
@@ -137,6 +147,7 @@ struct VS_OUTPUT
 
 	float4 vProjPos					: TEXCOORD6;
 	float4 worldPos_ProjPosZ		: TEXCOORD7;
+	float4 fogFactorW				: COLOR1;
 #if SEAMLESS_DETAIL || SEAMLESS_BASE
 	float3 SeamlessWeights          : COLOR0;				// x y z projection weights
 #endif
@@ -167,7 +178,7 @@ VS_OUTPUT main( const VS_INPUT v )
 	o.SeamlessWeights.xyz = NNormal * NNormal;				// sums to 1.
 #endif
 	
-#if !defined( FAST_VERTEX_TEXTURES ) || !MORPHING
+#if !defined( SHADER_MODEL_VS_3_0 ) || !MORPHING
 	ApplyMorph( v.vPosFlex, v.vNormalFlex, vPosition.xyz, vNormal );
 #else
 	ApplyMorph( morphSampler, cMorphTargetTextureDim, cMorphSubrect, 
@@ -193,7 +204,7 @@ VS_OUTPUT main( const VS_INPUT v )
 		worldNormal = normalize( worldNormal );
 	}
 
-#if defined( FAST_VERTEX_TEXTURES ) && MORPHING && DECAL
+#if defined( SHADER_MODEL_VS_3_0 ) && MORPHING && DECAL
 	// Avoid z precision errors
 	worldPos += worldNormal * 0.05f * v.vTexCoord2.z;
 #endif
@@ -206,6 +217,10 @@ VS_OUTPUT main( const VS_INPUT v )
 	vProjPos.z = dot( float4( worldPos, 1 ), cViewProjZ );
 
 	o.vProjPos = vProjPos;
+	o.fogFactorW.w = CalcFog( worldPos, vProjPos, g_FogType );
+#if !defined( _X360 )
+	o.fog = o.fogFactorW.w;
+#endif	
 	o.worldPos_ProjPosZ.xyz = worldPos.xyz;
 	o.worldPos_ProjPosZ.w = vProjPos.z;
 
@@ -225,7 +240,15 @@ VS_OUTPUT main( const VS_INPUT v )
 	}
 	else
 	{
-		o.color.xyz = DoLighting( worldPos, worldNormal, v.vSpecular, bStaticLight, bDynamicLight, g_bHalfLambert );
+		#if ( ( USE_STATIC_CONTROL_FLOW ) ||  defined ( SHADER_MODEL_VS_3_0 ) )
+		{
+			o.color.xyz = DoLighting( worldPos, worldNormal, v.vSpecular, bStaticLight, bDynamicLight, g_bHalfLambert );
+		}
+		#else
+		{
+			o.color.xyz = DoLightingUnrolled( worldPos, worldNormal, v.vSpecular, bStaticLight, bDynamicLight, g_bHalfLambert, NUM_LIGHTS );
+		}
+		#endif
 	}
 #endif
 	

@@ -489,7 +489,7 @@ void CTFHudTimeStatus::SetExtraTimePanels()
 	// Set the Sudden Death panels to be visible
 	if ( m_pSuddenDeathBG && m_pSuddenDeathLabel )
 	{
-		bool bInSD = TFGameRules()->InStalemate() && !TFGameRules()->IsInArenaMode();
+		bool bInSD = TFGameRules()->InStalemate() == true && TFGameRules()->IsInArenaMode() == false;
 
 		if ( bInSD != m_pSuddenDeathLabel->IsVisible() )
 		{
@@ -588,8 +588,6 @@ void CTFHudTimeStatus::SetExtraTimePanels()
 		}
 	}
 
-	// UNDONE: this is done in think
-#if 0
 	if ( m_pServerTimeLabel && m_pServerTimeLabelBG )
 	{
 		// This appears in the same space after SetUp and WaitingForPlayers is gone
@@ -601,9 +599,6 @@ void CTFHudTimeStatus::SetExtraTimePanels()
 		if ( m_pServerTimeLabelBG->IsVisible() != bDisplayServerTimerEnabled )
 			m_pServerTimeLabelBG->SetVisible( bDisplayServerTimerEnabled );
 	}
-#else
-	m_flNextThink = gpGlobals->curtime;
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -611,11 +606,11 @@ void CTFHudTimeStatus::SetExtraTimePanels()
 //-----------------------------------------------------------------------------
 void CTFHudTimeStatus::Reset()
 {
-	m_flNextThink = gpGlobals->curtime;
+	m_flNextThink = gpGlobals->curtime + 0.05f;
 	m_iTimerIndex = 0;
 
 	m_iTimerDeltaHead = 0;
-	for ( int i = 0 ; i < NUM_TIMER_DELTA_ITEMS ; i++ )
+	for( int i = 0 ; i < NUM_TIMER_DELTA_ITEMS ; i++ )
 	{
 		m_TimerDeltaItems[i].m_flDieTime = 0.0f;
 	}
@@ -678,7 +673,7 @@ void CTFHudTimeStatus::ApplySchemeSettings( IScheme *pScheme )
 //-----------------------------------------------------------------------------
 void CTFHudTimeStatus::OnThink()
 {
-	if ( m_flNextThink <= gpGlobals->curtime )
+	if ( m_flNextThink < gpGlobals->curtime )
 	{
 		CTeamRoundTimer *pTimer = dynamic_cast< CTeamRoundTimer* >( ClientEntityList().GetEnt( m_iTimerIndex ) );
 
@@ -752,7 +747,6 @@ void CTFHudTimeStatus::OnThink()
 												  TFGameRules() && 
 												  !TFGameRules()->InSetup() &&
 												  !TFGameRules()->IsInWaitingForPlayers() &&
-												  !TFGameRules()->InOvertime() &&
 												  pTimer->IsRoundMaxTimerSet() &&
 												  nServerTimeLimit;
 				

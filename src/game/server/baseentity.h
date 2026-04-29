@@ -470,8 +470,6 @@ public:
 	// Called by physics to see if we should avoid a collision test....
 	virtual	bool			ShouldCollide( int collisionGroup, int contentsMask ) const;
 
-	virtual bool			ShouldIgnoreTrace(trace_t* pTrace) { return false; }
-
 	// Move type / move collide
 	MoveType_t				GetMoveType() const;
 	MoveCollide_t			GetMoveCollide() const;

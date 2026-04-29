@@ -381,13 +381,6 @@ void CHudTeamGoalTournament::SetupStopWatchLabel( void )
 	int iMinutes = pTimer->GetTimeRemaining() / 60;
 	int iSeconds = ((int)pTimer->GetTimeRemaining()) % 60;
 
-	bool bMultiSeries = false;
-	if ( TFGameRules() )
-	{
-		ETFMatchGroup eMatchGroup = TFGameRules()->GetCurrentMatchGroupWithEmulation();
-		bMultiSeries = GetMatchGroupDescription( eMatchGroup ) && GetMatchGroupDescription( eMatchGroup )->BUsesMultiSeries() && !TFGameRules()->IsCommunityGameMode();
-	}
-
 	if ( iMinutes > 0 )
 	{
 #ifdef WIN32
@@ -429,9 +422,9 @@ void CHudTeamGoalTournament::SetupStopWatchLabel( void )
 	//Attackers capped something last round case
 	if ( iPoints > 0 )
 	{
-		bool bCappedAllPoints = TFGameRules() && TFGameRules()->StopWatchShouldBeTimedWin();
+		bool bCappedAllPoints = ( iPoints == ObjectiveResource()->GetNumControlPoints() );
 
-		g_pVGuiLocalize->ConstructString_safe( wzHelp, g_pVGuiLocalize->Find( CFmtStr( bCappedAllPoints ? "Tournament_StopWatch_GoalTextPointsAndTimeAndClose%s" : "Tournament_StopWatch_GoalTextPointsAndTime%s", bMultiSeries ? "_Series" : "" ) ), 5, wszDefendersName, wszPoints, wszTime, wszAttackersName, wszPoints );
+		g_pVGuiLocalize->ConstructString_safe( wzHelp, g_pVGuiLocalize->Find( bCappedAllPoints ? "Tournament_StopWatch_GoalTextPointsAndTimeAndClose" : "Tournament_StopWatch_GoalTextPointsAndTime" ), 5, wszDefendersName, wszPoints, wszTime, wszAttackersName, wszPoints );
 
 		if ( m_pStopWatchGoalText )
 		{
@@ -484,7 +477,7 @@ void CHudTeamGoalTournament::SetupStopWatchLabel( void )
 
 			iPoints += 1;
 			_snwprintf( wszPoints, ARRAYSIZE( wszPoints ), INT_CHAR_FMT, iPoints, iPoints == 1 ? g_pVGuiLocalize->Find( "Tournament_StopWatch_Point" ) : g_pVGuiLocalize->Find( "Tournament_StopWatch_Points" ) );
-			g_pVGuiLocalize->ConstructString_safe( wzHelp, g_pVGuiLocalize->Find( CFmtStr( "Tournament_StopWatch_GoalTextPointsAndTime2%s", bMultiSeries ? "_Series" : "" ) ), 4, wszAttackersName, wszDefendersName, wszAttackersName, wszPoints );
+			g_pVGuiLocalize->ConstructString_safe( wzHelp, g_pVGuiLocalize->Find( "Tournament_StopWatch_GoalTextPointsAndTime2" ), 4, wszAttackersName, wszDefendersName, wszAttackersName, wszPoints );
 
 			if ( m_pStopWatchGoalText2 )
 			{
@@ -494,7 +487,7 @@ void CHudTeamGoalTournament::SetupStopWatchLabel( void )
 
 		if ( pLocalPlayer->GetTeam() == pAttacker )
 		{
-			g_pVGuiLocalize->ConstructString_safe( wszLabel, g_pVGuiLocalize->Find( CFmtStr( "Tournament_StopWatch_TimeVictory%s", bMultiSeries ? "_Series" : "" ) ), 1, wszDefendersName );
+			g_pVGuiLocalize->ConstructString_safe( wszLabel, g_pVGuiLocalize->Find( "Tournament_StopWatch_TimeVictory" ), 1, wszDefendersName );
 
 			if ( m_pStopWatchGoal )
 			{
@@ -524,7 +517,7 @@ void CHudTeamGoalTournament::SetupStopWatchLabel( void )
 			m_pStopWatchGoalDivider->SetVisible( false );
 		}
 
-		g_pVGuiLocalize->ConstructString_safe( wzHelp, g_pVGuiLocalize->Find( CFmtStr( "Tournament_StopWatch_GoalTextPoints%s", bMultiSeries ? "_Series" : "" ) ), 4, wszDefendersName, wszAttackersName );
+		g_pVGuiLocalize->ConstructString_safe( wzHelp, g_pVGuiLocalize->Find( "Tournament_StopWatch_GoalTextPoints" ), 4, wszDefendersName, wszAttackersName );
 
 
 		if ( m_pStopWatchGoalText )
@@ -534,7 +527,7 @@ void CHudTeamGoalTournament::SetupStopWatchLabel( void )
 
 		if ( pLocalPlayer->GetTeam() == pAttacker )
 		{
-			g_pVGuiLocalize->ConstructString_safe( wszLabel, g_pVGuiLocalize->Find( CFmtStr( "Tournament_StopWatch_AttackerScore%s", bMultiSeries ? "_Series" : "" ) ), 1, wszDefendersName );
+			g_pVGuiLocalize->ConstructString_safe( wszLabel, g_pVGuiLocalize->Find( "Tournament_StopWatch_AttackerScore" ), 1, wszDefendersName );
 
 			if ( m_pStopWatchGoal )
 			{

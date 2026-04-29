@@ -163,8 +163,6 @@ public:
 	virtual void	ItemBusyFrame( void );
 	virtual void	SecondaryAttack( void );
 
-	float GetReloadSpeedScale() const OVERRIDE;
-
 	const char*		GetEffectLabelText( void )			{ return "#TF_HYPE"; }
 	float			GetProgress( void );
 };

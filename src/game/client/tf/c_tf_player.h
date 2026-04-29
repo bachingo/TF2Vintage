@@ -68,10 +68,6 @@ struct BonusEffect_t
 
 extern BonusEffect_t g_BonusEffects[ kBonusEffect_Count ];
 
-#define CLIENTSIDE_GLOW_SPECTATOR	0x02
-#define CLIENTSIDE_GLOW_HEALER 		0x04
-#define CLIENTSIDE_GLOW_SAVEME		0x08
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -130,8 +126,8 @@ public:
 
 	virtual void Simulate( void );
 	virtual void FireEvent( const Vector& origin, const QAngle& angles, int event, const char *options ) OVERRIDE;
-	virtual void UpdateStepSound( surfacedata_t *psurface, const Vector &vecOrigin, const Vector &vecVelocity, float flSubTime = -1.0f ) OVERRIDE;
-	virtual void PlayStepSound( Vector &vecOrigin, surfacedata_t *psurface, float fvol, bool force ) OVERRIDE;
+	virtual void UpdateStepSound( surfacedata_t *psurface, const Vector &vecOrigin, const Vector &vecVelocity ) OVERRIDE;
+	virtual void PlayStepSound( Vector &vecOrigin, surfacedata_t *psurface, float fvol, bool force );
 
 	CNewParticleEffect *SpawnHalloweenSpellFootsteps( ParticleAttachment_t eParticleAttachment, int iHalloweenFootstepType );
 
@@ -156,8 +152,6 @@ public:
 	void	AvoidPlayers( CUserCmd *pCmd );
 
 	bool	IsABot( void );
-
-	virtual bool IsGamePausedForMe() OVERRIDE;
 
 	// Get the ID target entity index. The ID target is the player that is behind our crosshairs, used to
 	// display the player's name.
@@ -221,10 +215,6 @@ public:
 
 	float GetPercentInvisible( void );
 	float GetEffectiveInvisibilityLevel( void );	// takes viewer into account
-	bool IsCompetitiveVisibilityChanging() const { return m_bCompetitiveVisibleChanged; }
-	bool GetCompetitiveVisibility() const { return m_bCompetitiveVisible; }
-	bool TraceCompetitiveVision( const Vector& vecEyes );
-	bool CanShowTeamGlowOutline();
 	virtual bool IsTransparent( void ) OVERRIDE { return GetPercentInvisible() > 0.f; }
 
 	virtual void AddDecal( const Vector& rayStart, const Vector& rayEnd,
@@ -243,7 +233,6 @@ public:
 
 	void CreateSaveMeEffect( MedicCallerType nType = CALLER_TYPE_NORMAL );
 	void StopSaveMeEffect( bool bForceRemoveInstantly = false );
-	void FadeSaveMeEffect();
 
 	void CreateTauntWithMeEffect();
 	void StopTauntWithMeEffect();
@@ -278,8 +267,6 @@ public:
 	
 	void			UpdateSpyStateChange( void );
 
-	bool			UpdateSpyPopIn( void );
-
 	void			UpdateRecentlyTeleportedEffect( void );
 	void			UpdateOverhealEffect( void );
 	void			UpdatedMarkedForDeathEffect( bool bFroceStop = false );
@@ -308,8 +295,7 @@ public:
 	void			ForceUpdateObjectHudState( void );
 
 	bool			GetMedigunAutoHeal( void ){ return tf_medigun_autoheal.GetBool(); }
-	bool			ShouldAutoRezoom( void ){ return GetZoomMode() == 1; }
-	int				GetZoomMode( void ){ return cl_autorezoom.GetInt(); }
+	bool			ShouldAutoRezoom( void ){ return cl_autorezoom.GetBool(); }
 	bool			ShouldAutoReload( void ){ return cl_autoreload.GetBool(); }
 
 	void			GetTargetIDDataString( bool bIsDisguised, OUT_Z_BYTECAP(iMaxLenInBytes) wchar_t *sDataString, int iMaxLenInBytes, bool &bIsAmmoData, bool &bIsKillStreakData );
@@ -339,7 +325,7 @@ public:
 	void			SetTauntCameraTargets( float back, float up );
 
 	// TF-specific color values for GlowEffect
-	virtual void	GetGlowEffectColor( float *r, float *g, float *b, float *a );
+	virtual void	GetGlowEffectColor( float *r, float *g, float *b );
 	void UpdateGlowColor( void );
 
 	virtual const Vector&	GetRenderOrigin( void );
@@ -377,7 +363,7 @@ public:
 	C_TFItem		*GetItem( void ) const;
 	bool			HasTheFlag( ETFFlagType exceptionTypes[] = NULL, int nNumExceptions = 0 ) const;
 	virtual bool	IsAllowedToPickUpFlag( void ) const;
-	float			GetCritMult(const bool bMelee) { return m_Shared.GetCritMult(bMelee); }
+	float			GetCritMult( void ) { return m_Shared.GetCritMult(); }
 
 	virtual void	ItemPostFrame( void );
 
@@ -439,7 +425,7 @@ public:
 	C_CaptureZone *GetClosestCaptureZone( void );
 
 	float			GetMetersRan( void )	{ return m_fMetersRan; }
-	void			SetMetersRan( float fMeters, float flFrame );
+	void			SetMetersRan( float fMeters, int iFrame );
 
 	CEconItemView *GetInspectItem( int *iLastItem );
 
@@ -500,7 +486,6 @@ public:
 	bool ShouldShowNemesisIcon();
 
 	virtual	IMaterial *GetHeadLabelMaterial( void );
-	virtual bool ShouldShowHeadLabel();
 
 	// Spy Cigarette
 	bool CanLightCigarette( void );
@@ -542,10 +527,9 @@ protected:
 	virtual void DestroyGlowEffect( void );
 
 private:
-	bool ComputeCompetitiveVisibility(void);
 
 	bool ShouldShowPowerupGlowEffect();
-	void GetPowerupGlowEffectColor( float *r, float *g, float *b, float *a );
+	void GetPowerupGlowEffectColor( float *r, float *g, float *b );
 
 	void HandleTaunting( void );
 	void TauntCamInterpolation( void );
@@ -577,8 +561,6 @@ private:
 	int					m_iIDEntIndex;
 	int					m_iForcedIDTarget;
 
-	float				m_IDTargetLastUpdateTime;
-
 	CNewParticleEffect	*m_pTeleporterEffect;
 	bool				m_bToolRecordingVisibility;
 
@@ -592,7 +574,7 @@ private:
 	int					m_nOldMaxHealth;
 
 	float				m_fMetersRan;
-	float				m_flLastRanFrame;
+	int					m_iLastRanFrame;
 
 	HPARTICLEFFECT		m_pEyeEffect;
 
@@ -616,14 +598,8 @@ private:
 	// Spy cigarette smoke
 	bool m_bCigaretteSmokeActive;
 
-	bool m_bCompetitiveVisible;
-	bool m_bCompetitiveVisibleChanged;
-
-	bool m_bSpyPoppingIn;
-
 	// Medic callout particle effect
 	CNewParticleEffect	*m_pSaveMeEffect;
-	MedicCallerType m_nMedicCallerType;
 	CNewParticleEffect	*m_pTauntWithMeEffect;
 
 	bool m_bUpdateObjectHudState;
@@ -699,8 +675,6 @@ public:
 	bool			m_bSaveMeParity;
 	bool			m_bOldSaveMeParity;
 	bool			m_bIsCoaching;
-
-	float			m_flStrandedSpawnAnchorTime;
 
 private:
 	void			UpdateTauntItem();
@@ -900,9 +874,6 @@ private:
 	int m_nExperienceLevelProgress;
 	int m_nPrevExperienceLevel;
 
-	// First person taunting -- use world model during taunting
-	bool m_bHasFirstPersonWorldModel;
-
 	// Matchmaking
 	// is this player bound to the match on penalty of abandon. Sync'd via local-player-only DT
 	bool m_bMatchSafeToLeave;
@@ -972,17 +943,8 @@ public:
 
 	int GetSkinOverride() const { return m_iPlayerSkinOverride; }
 
-	// 0 - no restrictions. 1 - restrict class-specific achievements/quests only. 2 - restrict ALL achievements/quests.
-	short GetAchievementRestrictions() const { return m_nRestrictAchievements; }
-	short GetQuestRestrictions() const { return m_nRestrictQuests; }
-
-	virtual void ClientAdjustStartSoundParams( EmitSound_t &params ) OVERRIDE;
-	virtual void ClientAdjustStartSoundParams( StartSoundParams_t& params ) OVERRIDE;
-
-	// TC2 spawn-anywhere system
-	void SetSpawnNodes( const CUtlVector<TCSpawnNode_t> &nodes );
-	const CUtlVector<TCSpawnNode_t>& GetSpawnNodes() const { return m_SpawnNodes; }
-	void ClearSpawnNodes() { m_SpawnNodes.RemoveAll(); }
+	virtual void ClientAdjustStartSoundParams( EmitSound_t &params ) override;
+	virtual void ClientAdjustStartSoundParams( StartSoundParams_t& params ) override;
 
 private:
 	void ClientAdjustVOPitch( int& pitch );
@@ -1010,12 +972,6 @@ private:
 	float m_flTempForceDrawViewModelCycle  = 0.0f;
 
 	CNetworkVar( int, m_iPlayerSkinOverride );
-
-	CNetworkVar( short, m_nRestrictAchievements );
-	CNetworkVar( short, m_nRestrictQuests );
-
-	// TC2 spawn-anywhere: client-side spawn node list
-	CUtlVector<TCSpawnNode_t> m_SpawnNodes;
 };
 
 inline C_TFPlayer* ToTFPlayer( C_BaseEntity *pEntity )
@@ -1104,7 +1060,6 @@ public:
 	int GetDamageCustom() { return m_iDamageCustom; }
 
 	virtual bool GetAttachment( int iAttachment, matrix3x4_t &attachmentToWorld );
-	virtual bool GetAttachmentDeferred( int iAttachment, matrix3x4_t &attachmentToWorld );
 
 	int GetClass() { return m_iClass; }
 
@@ -1171,7 +1126,6 @@ private:
 	float m_flHeadScale;
 	float m_flTorsoScale;
 	float m_flHandScale;
-	int m_iKillerTeam;
 
 	CMaterialReference		m_MaterialOverride;
 

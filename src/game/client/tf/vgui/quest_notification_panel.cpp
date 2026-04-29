@@ -280,7 +280,7 @@ void CQuestNotificationPanel::Reset()
 //-----------------------------------------------------------------------------
 void CQuestNotificationPanel::CheckForAvailableNodeNotification()
 {
-	if ( TFGameRules() && TFGameRules()->IsCompetitiveGame() )
+	if ( TFGameRules() && TFGameRules()->IsCompetitiveMode() )
 		return;
 
 	// If this node is locked, requirements are met then
@@ -345,7 +345,7 @@ bool CQuestNotificationPanel::ShouldDraw()
 	if ( !CHudElement::ShouldDraw() )
 		return false;
 
-	if ( TFGameRules() && TFGameRules()->IsCompetitiveGame() )
+	if ( TFGameRules() && TFGameRules()->IsCompetitiveMode() )
 		return false;
 
 	return true;
@@ -395,7 +395,7 @@ void CQuestNotificationPanel::OnThink()
 bool CQuestNotificationPanel::ShouldPresent()
 {
 	// Suppress making new notifications while in competitive play
-	if ( TFGameRules() && TFGameRules()->IsCompetitiveGame() )
+	if ( TFGameRules() && TFGameRules()->IsCompetitiveMode() )
 		return false;
 
 	if ( !m_timerNotificationCooldown.IsElapsed() )

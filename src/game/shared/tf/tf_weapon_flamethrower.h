@@ -218,7 +218,7 @@ private:
 		CNewParticleEffect *GetEffect() { return m_pFlameEffect; }
 
 	private:
-		HPARTICLEFFECT      m_pFlameEffect;
+		CNewParticleEffect*	m_pFlameEffect;
 		CTFFlameThrower*	m_pFlamethrower;
 		CTFPlayer*			m_pOwner;
 		EHANDLE				m_hEffectWeapon;

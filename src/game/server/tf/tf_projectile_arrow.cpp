@@ -234,7 +234,6 @@ void CTFProjectile_Arrow::Spawn()
 	SetSolid( SOLID_BBOX );	
 
 	SetCollisionGroup( TFCOLLISION_GROUP_ROCKETS );
-	AddEFlags( EFL_NO_WATER_VELOCITY_CHANGE );
 	AddEffects( EF_NOSHADOW );
 	AddFlag( FL_GRENADE );
 
@@ -343,7 +342,7 @@ bool CTFProjectile_Arrow::PositionArrowOnBone( mstudiobbox_t *pBox, CBaseAnimati
 	if ( pBox->bone < 0 || pBox->bone >= pStudioHdr->numbones() )	// Bone index must be valid.
 		return false;
 
-	CBoneCache *pCache = pOtherAnim->GetBoneCache( pStudioHdr );
+	CBoneCache *pCache = pOtherAnim->GetBoneCache();
 	if ( !pCache )
 		return false;
 
@@ -529,7 +528,7 @@ bool CTFProjectile_Arrow::StrikeTarget( mstudiobbox_t *pBox, CBaseEntity *pOther
 					}
 				}
 
-				CTakeDamageInfo info( this, pAttacker, GetOriginalLauncher(), vecVelocity, vecOrigin, GetDamage(), nDamageType, nDamageCustom );
+				CTakeDamageInfo info( this, pAttacker, m_hLauncher, vecVelocity, vecOrigin, GetDamage(), nDamageType, nDamageCustom );
 				pOther->TakeDamage( info );
 
 				// Play an impact sound.
@@ -665,7 +664,7 @@ void CTFProjectile_Arrow::BuildingHealingArrow( CBaseEntity *pOther )
 		return;
 
 	int iArrowHealAmount = 0;
-	CALL_ATTRIB_HOOK_INT_ON_OTHER( GetOriginalLauncher(), iArrowHealAmount, arrow_heals_buildings );
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFAttacker, iArrowHealAmount, arrow_heals_buildings );
 	if ( iArrowHealAmount == 0 )
 		return;
 
@@ -820,14 +819,10 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 		Vector position, start, forward;
 		QAngle angles;
 		float closest_dist = 99999;
-		mstudiobbox_t *aligned_box = NULL;
-		float closest_dir = -1.0f;
-		Vector closest_pos;
-		Vector aligned_pos;
 
 		// Intense, but extremely accurate:
 		AngleVectors( GetAbsAngles(), &forward );
-		start = GetAbsOrigin() - forward*16;
+		start = GetAbsOrigin() + forward*16;
 		for ( int i = 0; i < set->numhitboxes; i++ )
 		{
 			mstudiobbox_t *pbox = set->pHitbox( i );
@@ -837,36 +832,13 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 			Ray_t ray;
 			ray.Init( start, position );
 			trace_t tr;
-			IntersectRayWithOBB( ray, position, angles, pbox->bbmin, pbox->bbmax, 0.f, &tr );
+			IntersectRayWithBox( ray, position+pbox->bbmin, position+pbox->bbmax, 0.f, &tr );
 			float dist = tr.endpos.DistTo( start );
 
 			if ( dist < closest_dist )
 			{
 				closest_dist = dist;
 				closest_box = pbox;
-				closest_pos = position;
-			}
-
-			// we do an abs here. while technically incorrect, we should always be assuming we are entering the bounding box into the model in a positive direction.
-			// this can also help us trace where the arrow "was" and project backwards into the closest hitbox along the path.
-			float dot = fabsf( DotProduct( forward, (tr.endpos - start).Normalized() ) );
-
-			if ( dot > closest_dir )
-			{
-				closest_dir = dot;
-				aligned_box = pbox;
-				aligned_pos = position;
-			}
-		}
-
-		if (aligned_box && aligned_box->group == HITGROUP_HEAD)
-		{
-			// if not a headshot by dist check, we need a direction check as well.
-			const bool bShouldRealign = !closest_box || (aligned_pos - closest_pos).LengthSqr() < 10.0f * 10.0f;
-			if (bShouldRealign)
-			{
-				// only realign if close enough. this should fix cases when aiming up at the feet
-				closest_box = aligned_box;
 			}
 		}
 	}
@@ -968,10 +940,11 @@ void CTFProjectile_Arrow::ImpactSound( const char *pszSoundName, bool bLoudForAt
 
 	if ( bLoudForAttacker )
 	{
+		float soundlen = 0;
 		EmitSound_t params;
 		params.m_flSoundTime = 0;
 		params.m_pSoundName = pszSoundName;
-		params.m_pflSoundDuration = 0;
+		params.m_pflSoundDuration = &soundlen;
 		CPASFilter filter( GetAbsOrigin() );
 		filter.RemoveRecipient( ToTFPlayer(pAttacker) );
 		EmitSound( filter, entindex(), params );
@@ -1168,8 +1141,6 @@ void CTFProjectile_Arrow::IncrementDeflected( void )
 		m_flTrailLife = 1.0f;
 	}
 	CreateTrail();
-
-	m_nSkin = GetArrowSkin();
 }
 
 //-----------------------------------------------------------------------------
@@ -1249,7 +1220,6 @@ void CTFProjectile_HealingBolt::ImpactTeamPlayer( CTFPlayer *pOther )
 
 	// Scale this if needed
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pOther, flHealth, mult_healing_from_medics );
-	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pOther, flHealth, mult_health_fromhealers );
 
 	CTFWeaponBase *pActiveWeapon = pOther->GetActiveTFWeapon();
 	if ( pActiveWeapon )

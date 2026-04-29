@@ -1140,9 +1140,7 @@ bool CMvMVictoryMannUpEntry::AnimateLoot_Internal( CTFParticlePanel *pParticlePa
 
 				if ( m_pBehindItemParticlePanel )
 				{
-					int nXPos, nYPos, nWide, nTall;
-					m_pBehindItemParticlePanel->GetBounds(nXPos, nYPos, nWide, nTall);
-					m_pBehindItemParticlePanel->FireParticleEffect( "mvm_item_godrays_glow", nWide / 2, nTall / 2, 5.f, false );
+					m_pBehindItemParticlePanel->FireParticleEffect( "mvm_item_godrays_glow", x, y, 5.f, false );
 				}
 
 				if ( pLocalPlayer == m_hPlayer )

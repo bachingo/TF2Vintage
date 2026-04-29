@@ -10,12 +10,6 @@
 #pragma once
 #endif
 
-#if defined(TERROR)
-#define SUPPORT_QUERY_CACHE 1
-#else
-#define SUPPORT_QUERY_CACHE 0
-#endif
-
 #include "tier0/platform.h"
 #include "mathlib/vector.h"
 
@@ -29,22 +23,19 @@
 // fully multi-threaded fashion
 
 
-enum EEntityOffsetMode_t
-{
-	EOFFSET_MODE_WORLDSPACE_CENTER,
-	EOFFSET_MODE_EYEPOSITION,
-	EOFFSET_MODE_NONE,										// nop
-};
-
-// Compile out query cache structures if we don't use them
-#if SUPPORT_QUERY_CACHE
-
 enum EQueryType_t
 {
 	EQUERY_INVALID = 0,									// an invalid or unused entry
 	EQUERY_TRACELINE,
 	EQUERY_ENTITY_LOS_CHECK,
 
+};
+
+enum EEntityOffsetMode_t
+{
+	EOFFSET_MODE_WORLDSPACE_CENTER,
+	EOFFSET_MODE_EYEPOSITION,
+	EOFFSET_MODE_NONE,										// nop
 };
 
 
@@ -83,9 +74,9 @@ struct QueryCacheEntry_t
 	void IssueQuery( void );
 
 };
-#endif // SUPPORT_QUERY_CACHE
 
-// Keeping function stubs for compatibility
+
+
 bool IsLineOfSightBetweenTwoEntitiesClear( CBaseEntity *pSrcEntity,
 										   EEntityOffsetMode_t nSrcOffsetMode,
 										   CBaseEntity *pDestEntity,

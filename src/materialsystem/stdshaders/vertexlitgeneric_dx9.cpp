@@ -410,6 +410,15 @@ BEGIN_VS_SHADER( VertexLitGeneric, "Help for VertexLitGeneric" )
 
 	SHADER_FALLBACK
 	{
+		if (g_pHardwareConfig->GetDXSupportLevel() < 70)
+			return "VertexLitGeneric_DX6";
+
+		if (g_pHardwareConfig->GetDXSupportLevel() < 80)
+			return "VertexLitGeneric_DX7";
+
+		if (g_pHardwareConfig->GetDXSupportLevel() < 90)
+			return "VertexLitGeneric_DX8";
+
 		return 0;
 	}
 

@@ -123,6 +123,9 @@ BEGIN_VS_SHADER( WorldVertexTransition_DX9, "Help for WorldVertexTransition" )
 
 	SHADER_FALLBACK
 	{
+		if( g_pHardwareConfig->GetDXSupportLevel() < 90 )
+			return "WorldVertexTransition_DX8";
+
 		return 0;
 	}
 

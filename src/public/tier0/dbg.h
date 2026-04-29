@@ -256,7 +256,7 @@ DBG_INTERFACE struct SDL_Window * GetAssertDialogParent();
 				_executeExp; 												\
 				if ( retAssert == SPEW_DEBUGGER)									\
 				{															\
-					if ( ( !DBGFLAG_RELEASE_NODLG || Plat_IsInDebugSession() ) && ( !ShouldUseNewAssertDialog() || DoNewAssertDialog( __TFILE__, __LINE__, _msg ) ) ) \
+					if ( !ShouldUseNewAssertDialog() || DoNewAssertDialog( __TFILE__, __LINE__, _msg ) ) \
 					{														\
 						DebuggerBreak();									\
 					}														\
@@ -334,12 +334,6 @@ DBG_INTERFACE struct SDL_Window * GetAssertDialogParent();
 // Assert macros
 // Assert is used to detect an important but survivable error.
 // It's only turned on when DBGFLAG_ASSERT is true.
-
-#ifdef _DEBUG
-#define  DebugAssert( _exp )           						_AssertMsg( _exp, _T("Assertion Failed: ") _T(#_exp), ((void)0), false )
-#else
-#define  DebugAssert( _exp )								((void)0)
-#endif
 
 #ifdef DBGFLAG_ASSERT
 

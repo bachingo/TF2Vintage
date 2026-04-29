@@ -37,7 +37,7 @@
 
 const char *g_FriendRelationship[] =
 {
-	"none",
+	"none"
 	"blocked",
 	"request_recipient",
 	"friend",
@@ -570,8 +570,6 @@ void Trading_SendGift( const CSteamID& steamID, const CEconItemView& giftItem )
 		return;
 	}
 
-	// TODO(mcoms): does gifting work at all anymore? how to initiate a trade instead?
-
 #ifdef TF_CLIENT_DLL
 	C_CTF_GameStats.Event_Trading( IE_TRADING_ITEM_GIFTED, steamID.ConvertToUint64(), iGiftsGiven );
 #endif
@@ -579,15 +577,16 @@ void Trading_SendGift( const CSteamID& steamID, const CEconItemView& giftItem )
 	// Build up the steam URL and send it over. 
 	// Should look like this: https://steamcommunity.com/trade/1/sendgift/?appid=&contextid=&assetid=&steamid_target=
 
-	UTIL_OpenWebPage(
+	steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( 
 		CFmtStrMax( "%s/trade/1/sendgift/?appid=%d&contextid=%d&assetid=%llu&steamid_target=%llu",
 					GetCommunityURL(), 
-					UTIL_GetEmulatedAppID(),
+					engine->GetAppID(),
 					2, // k_EEconContextBackpack
 					giftItem.GetItemID(),
 					steamID.ConvertToUint64()
 		)
 	);
+
 }
 
 CON_COMMAND( cl_trade, "Trade with a person by player name" )

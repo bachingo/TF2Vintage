@@ -68,6 +68,8 @@ public:
 
 	bool		  IsCritical( void ) const			{ return m_bCritical; }
 	virtual void  SetCritical( bool bCritical )		{ m_bCritical = bCritical; }
+	
+	CBaseEntity		*GetLauncher( void ) { return m_hLauncher; }
 
 private:
 
@@ -91,6 +93,10 @@ public:
 
 	virtual int		DrawModel( int flags );
 	virtual void	PostDataUpdate( DataUpdateType_t type );
+
+private:
+
+	float	 m_flSpawnTime;
 #else
 
 public:
@@ -117,6 +123,8 @@ public:
 
 	void			SetupInitialTransmittedGrenadeVelocity( const Vector &velocity )	{ m_vInitialVelocity = velocity; }
 
+	virtual void	SetLauncher( CBaseEntity *pLauncher ) OVERRIDE { m_hLauncher = pLauncher; BaseClass::SetLauncher( pLauncher ); }
+
 protected:
 
 	void			FlyThink( void );
@@ -126,6 +134,9 @@ protected:
 	CBaseHandle		m_Scorer;
 
 #endif // ndef CLIENT_DLL
+
+protected:
+	CNetworkHandle( CBaseEntity, m_hLauncher );
 };
 
 #endif	//TF_BASE_PROJECTILE_H

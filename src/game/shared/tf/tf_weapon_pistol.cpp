@@ -73,8 +73,6 @@ PRECACHE_WEAPON_REGISTER( tf_weapon_handgun_scout_primary );
 CTFPistol_ScoutPrimary::CTFPistol_ScoutPrimary()
 {
 	m_flPushTime = -1.f;
-	// TODO(mcoms)
-	m_bReadyToPush = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -105,11 +103,6 @@ void CTFPistol_ScoutPrimary::SecondaryAttack( void )
 	if ( m_flNextSecondaryAttack > gpGlobals->curtime )
 		return;
 
-#if 0
-	if ( m_bReadyToPush )
-		return;
-#endif
-
 	pOwner->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_SECONDARY );
 	SendWeaponAnim( ACT_SECONDARY_VM_ALTATTACK );
 
@@ -118,31 +111,6 @@ void CTFPistol_ScoutPrimary::SecondaryAttack( void )
 	m_flPushTime = gpGlobals->curtime + 0.2f;	// Anim delay
 
 	EmitSound( "Weapon_Hands.Push" );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-Activity CTFPistol_ScoutPrimary::TranslateViewmodelHandActivityInternal(Activity actBase)
-{
-	Activity iActivity = actBase;
-#if 0
-	switch (iActivity)
-	{
-	case ACT_VM_IDLE:
-		if (m_bReadyToPush)
-		{
-			m_bReadyToPush = false;
-			Push();
-			iActivity = ACT_RESET;
-		}
-		break;
-	default:
-		break;
-	}
-#endif
-
-	return BaseClass::TranslateViewmodelHandActivityInternal(iActivity);
 }
 
 //-----------------------------------------------------------------------------
@@ -202,12 +170,7 @@ void CTFPistol_ScoutPrimary::Push( void )
 		{
 			Vector vecToVictim = pVictim->GetAbsOrigin() - pOwner->GetAbsOrigin();
 			VectorNormalize( vecToVictim );
-#if defined(MCOMS_BALANCE_PACK)
-			Vector vecVel = pOwner->GetAbsVelocity();
-			pVictim->ApplyGenericPushbackImpulse( vecToVictim * 400.f + vecVel, pOwner);
-#else
 			pVictim->ApplyGenericPushbackImpulse( vecToVictim * 400.f, pOwner );
-#endif
 			float flDamage = 1.f;
 			CTakeDamageInfo info( pVictim, pOwner, this, flDamage, DMG_MELEE | DMG_NEVERGIB | DMG_CLUB, TF_DMG_CUSTOM_NONE );
 			CalculateMeleeDamageForce( &info, vecForward, GetAbsOrigin() + vecForward * flDist, 1.f / flDamage * 80.f );
@@ -220,7 +183,7 @@ void CTFPistol_ScoutPrimary::Push( void )
 			// Make sure we get credit for the push if the target falls to its death
 			pVictim->m_AchievementData.AddDamagerToHistory( pOwner );
 
-			break;
+			break;			
 		}
 	}
 
@@ -239,22 +202,11 @@ void CTFPistol_ScoutPrimary::Push( void )
 //-----------------------------------------------------------------------------
 void CTFPistol_ScoutPrimary::ItemPostFrame()
 {
+	// Check for smack.
 	if ( m_flPushTime > -1.f && gpGlobals->curtime > m_flPushTime )
 	{
-#if !defined(MCOMS_BALANCE_PACK)
 		Push();
-#endif
 		m_flPushTime = -1.f;
-#if defined(MCOMS_BALANCE_PACK)
-		m_bReadyToPush = true;
-	}
-
-	if (m_bReadyToPush)
-	{
-		// keep delaying
-		m_flNextPrimaryAttack = gpGlobals->curtime + 0.6f;
-		m_flNextSecondaryAttack = gpGlobals->curtime + 1.5f;
-#endif
 	}
 
 	BaseClass::ItemPostFrame();
@@ -266,7 +218,6 @@ void CTFPistol_ScoutPrimary::ItemPostFrame()
 bool CTFPistol_ScoutPrimary::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
 	m_flPushTime = -1.f;
-	m_bReadyToPush = false;
 
 	return BaseClass::Holster( pSwitchingTo );
 }

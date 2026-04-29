@@ -7,10 +7,7 @@
 
 #include "BaseVSShader.h"
 
-#include "screenspaceeffect_vs30.inc"
-
-// NOTE: This has to be the last file included!
-#include "tier0/memdbgon.h"
+#include "screenspaceeffect_vs20.inc"
 
 DEFINE_FALLBACK_SHADER( screenspace_general, screenspace_general_dx9 )
 BEGIN_VS_SHADER_FLAGS( screenspace_general_dx9, "Help for screenspace_general", SHADER_NOT_EDITABLE )
@@ -44,6 +41,7 @@ BEGIN_VS_SHADER_FLAGS( screenspace_general_dx9, "Help for screenspace_general", 
 		SHADER_PARAM( LINEARREAD_TEXTURE2, SHADER_PARAM_TYPE_INTEGER, "0", "" )
 		SHADER_PARAM( LINEARREAD_TEXTURE3, SHADER_PARAM_TYPE_INTEGER, "0", "" )
 		SHADER_PARAM( LINEARWRITE,SHADER_PARAM_TYPE_INTEGER,"0","")
+		SHADER_PARAM( X360APPCHOOSER, SHADER_PARAM_TYPE_INTEGER, "0", "Needed for movies in 360 launcher" )
 		SHADER_PARAM( COPYALPHA, SHADER_PARAM_TYPE_INTEGER, "0", "")
 	END_SHADER_PARAMS
 
@@ -165,10 +163,10 @@ BEGIN_VS_SHADER_FLAGS( screenspace_general_dx9, "Help for screenspace_general", 
 			}				
 			int fmt = VERTEX_POSITION;
 
-			const bool bHasVertexColor = IS_FLAG_SET( MATERIAL_VAR_VERTEXCOLOR );
-			if ( bHasVertexColor )
+			if ( IS_PARAM_DEFINED( X360APPCHOOSER ) && ( params[X360APPCHOOSER]->GetIntValue() ) )
 			{
 				fmt |= VERTEX_COLOR;
+				EnableAlphaBlending( SHADER_BLEND_SRC_ALPHA, SHADER_BLEND_ONE_MINUS_SRC_ALPHA );
 			}
 			pShaderShadow->VertexShaderVertexFormat( fmt, 1, 0, 0 );
 
@@ -179,9 +177,10 @@ BEGIN_VS_SHADER_FLAGS( screenspace_general_dx9, "Help for screenspace_general", 
 			pShaderShadow->EnableSRGBWrite( srgb_write );
 
 			// Pre-cache shaders
-			DECLARE_STATIC_VERTEX_SHADER( screenspaceeffect_vs30 );
-			SET_STATIC_VERTEX_SHADER_COMBO( VERTEXCOLOR, bHasVertexColor );
-			SET_STATIC_VERTEX_SHADER( screenspaceeffect_vs30 );
+			DECLARE_STATIC_VERTEX_SHADER( screenspaceeffect_vs20 );
+			SET_STATIC_VERTEX_SHADER_COMBO( X360APPCHOOSER, IS_PARAM_DEFINED( X360APPCHOOSER ) ? params[X360APPCHOOSER]->GetIntValue() : 0 );
+			vsh_forgot_to_set_static_X360APPCHOOSER = 0; // This is a dirty workaround to the shortcut [= 0] in the fxc
+			SET_STATIC_VERTEX_SHADER( screenspaceeffect_vs20 );
 
 			if (params[DISABLE_COLOR_WRITES]->GetIntValue())
 			{
@@ -192,11 +191,6 @@ BEGIN_VS_SHADER_FLAGS( screenspace_general_dx9, "Help for screenspace_general", 
 				pShaderShadow->EnableAlphaTest(true);
 				pShaderShadow->AlphaFunc(SHADER_ALPHAFUNC_GREATER,0.0);
 			}
-
-			char szBuf[256];
-			RenameShaderToShaderModel30( params[PIXSHADER]->GetStringValue(), szBuf );
-			pShaderShadow->SetPixelShader( szBuf, 0 );
-
 			if ( IS_FLAG_SET(MATERIAL_VAR_ADDITIVE) )
 			{
 				EnableAlphaBlending( SHADER_BLEND_ONE, SHADER_BLEND_ONE );
@@ -216,6 +210,30 @@ BEGIN_VS_SHADER_FLAGS( screenspace_general_dx9, "Help for screenspace_general", 
 			{
 				pShaderShadow->EnableBlending( false );
 				pShaderShadow->AlphaFunc( SHADER_ALPHAFUNC_ALWAYS, 0.0f );
+			}
+
+			if ( g_pHardwareConfig->SupportsPixelShaders_2_b() )
+			{
+				const char *szPixelShader = params[PIXSHADER]->GetStringValue();
+				size_t iLength = Q_strlen( szPixelShader );
+
+				if( (iLength > 5) && (Q_stricmp( &szPixelShader[iLength - 5], "_ps20" ) == 0) ) //detect if it's trying to load a ps20 shader
+				{
+					//replace it with the ps20b shader
+					char *szNewName = (char *)stackalloc( sizeof( char ) * (iLength + 2) );
+					memcpy( szNewName, szPixelShader, sizeof( char ) * iLength );
+					szNewName[iLength] = 'b';
+					szNewName[iLength + 1] = '\0';
+					pShaderShadow->SetPixelShader( szNewName, 0 );
+				}
+				else
+				{
+					pShaderShadow->SetPixelShader( params[PIXSHADER]->GetStringValue(), 0 );
+				}
+			}
+			else
+			{
+				pShaderShadow->SetPixelShader( params[PIXSHADER]->GetStringValue(), 0 );
 			}
 		}
 
@@ -287,8 +305,8 @@ BEGIN_VS_SHADER_FLAGS( screenspace_general_dx9, "Help for screenspace_general", 
 			pShaderAPI->SetVertexShaderIndex( 0 );
 			pShaderAPI->SetPixelShaderIndex( 0 );
 
-			DECLARE_DYNAMIC_VERTEX_SHADER( screenspaceeffect_vs30 );
-			SET_DYNAMIC_VERTEX_SHADER( screenspaceeffect_vs30 );
+			DECLARE_DYNAMIC_VERTEX_SHADER( screenspaceeffect_vs20 );
+			SET_DYNAMIC_VERTEX_SHADER( screenspaceeffect_vs20 );
 		}
 		Draw();
 	}

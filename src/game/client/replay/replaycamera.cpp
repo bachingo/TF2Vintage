@@ -769,7 +769,7 @@ void C_ReplayCamera::SetPrimaryTarget( int nEntity )
 		QAngle aAngles;
 		float flFov;
 
-		CalcChaseCamView( vOrigin,  aAngles, flFov, TICK_INTERVAL );
+		CalcChaseCamView( vOrigin,  aAngles, flFov, 0.015f );
 	}
 	else if ( GetMode() == OBS_MODE_CHASE )
 	{

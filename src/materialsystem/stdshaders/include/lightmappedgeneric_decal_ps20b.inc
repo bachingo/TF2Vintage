@@ -22,7 +22,7 @@ class lightmappedgeneric_decal_ps20b_Static_Index
 public:
 	void SetCONVERT_TO_SRGB( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nCONVERT_TO_SRGB = i;
 	}
 
@@ -49,7 +49,7 @@ class lightmappedgeneric_decal_ps20b_Dynamic_Index
 public:
 	void SetPIXELFOGTYPE( int i )
 	{
-		DebugAssert( i >= 0 && i <= 2 );
+		Assert( i >= 0 && i <= 2 );
 		m_nPIXELFOGTYPE = i;
 #ifdef _DEBUG
 		m_bPIXELFOGTYPE = true;
@@ -66,7 +66,7 @@ public:
 
 	int GetIndex() const
 	{
-		DebugAssert( m_bPIXELFOGTYPE );
+		Assert( m_bPIXELFOGTYPE );
 		return ( 1 * m_nPIXELFOGTYPE ) + 0;
 	}
 };

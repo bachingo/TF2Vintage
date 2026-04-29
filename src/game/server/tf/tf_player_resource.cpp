@@ -258,8 +258,15 @@ void CTFPlayerResource::UpdateConnectedPlayer( int iIndex, CBasePlayer *pPlayer 
 	m_iTotalScore.Set( iIndex, iTotalScore );
 	m_bArenaSpectator.Set( iIndex, pTFPlayer->IsArenaSpectator() );
 
-	float flCharge = pTFPlayer->MedicGetChargeLevel();
-	m_iChargeLevel.Set( iIndex, (int)(flCharge * 100) );
+	if ( TFGameRules()->IsInTournamentMode() )
+	{
+		float flCharge = pTFPlayer->MedicGetChargeLevel();
+		m_iChargeLevel.Set( iIndex, (int)(flCharge * 100) );
+	}
+	else
+	{
+		m_iChargeLevel.Set( iIndex, 0 );
+	}
 
 	float flRespawnTime = pTFPlayer->IsAlive() ? 0 : TFGameRules()->GetNextRespawnWave( pTFPlayer->GetTeamNumber(), pTFPlayer );
 	if ( pTFPlayer->GetRespawnTimeOverride() != -1.f )

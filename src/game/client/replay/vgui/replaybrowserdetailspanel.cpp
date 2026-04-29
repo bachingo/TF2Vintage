@@ -1808,9 +1808,9 @@ void CReplayDetailsPanel::OnCommand( const char *pCommand )
 
 	else if ( FStrEq( pCommand, "viewyoutube" ) )
 	{
-		if ( m_pYouTubeResponseHandler->m_strVideoURL.IsEmpty() == false )
+		if ( steamapicontext && steamapicontext->SteamFriends() && m_pYouTubeResponseHandler->m_strVideoURL.IsEmpty() == false )
 		{
-			UTIL_OpenWebPage( m_pYouTubeResponseHandler->m_strVideoURL.Get() );
+			steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( m_pYouTubeResponseHandler->m_strVideoURL.Get() );
 		}
 	}
 

@@ -411,7 +411,7 @@ bool CBossAlpha::CheckSkillShots( const CTakeDamageInfo &info )
 	}
 	else
 	{
-		CObjectSentrygun *sentry = TFGameRules()->GetSentryGunInflictor( inflictor );
+		CObjectSentrygun *sentry = dynamic_cast< CObjectSentrygun * >( inflictor );
 		if ( sentry )
 		{
 			hitDir = hitSpot - sentry->EyePosition();
@@ -666,7 +666,7 @@ int CBossAlpha::OnTakeDamage_Alive( const CTakeDamageInfo &rawInfo )
 		// sentry guns are first class attackers
 		if ( info.GetInflictor() )
 		{
-			CObjectSentrygun *sentry = TFGameRules()->GetSentryGunInflictor( info.GetInflictor() );
+			CObjectSentrygun *sentry = dynamic_cast< CObjectSentrygun * >( info.GetInflictor() );
 			if ( sentry )
 			{
 				attacker = sentry;

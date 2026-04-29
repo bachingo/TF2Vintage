@@ -190,9 +190,6 @@ void CTFPlayerModelPanel::ApplySettings( KeyValues *inResourceData )
 
 	// always allow particle for this panel
 	m_bUseParticle = true;
-
-	// refresh default lights
-	SetLightProbe(nullptr);
 }
 
 //-----------------------------------------------------------------------------
@@ -253,7 +250,6 @@ void CTFPlayerModelPanel::SetToPlayerClass( int iClass, bool bForceRefresh /*= f
 	SetTeam( TF_TEAM_RED );
 
 	m_nBody = 0;
-	m_flInvis = 0.0f;
 }
 
 //-----------------------------------------------------------------------------
@@ -488,7 +484,6 @@ void CTFPlayerModelPanel::PlayVCD( const char *pszVCD, const char *pszWeaponEnti
 	m_pszWeaponEntityRequired = pszWeaponEntityRequired;
 	m_bLoopVCD = bLoopVCD;
 	m_bVCDFileNameOnly = bFileNameOnly;
-	m_bDisableSpeakEvent = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -514,44 +509,7 @@ void CTFPlayerModelPanel::FireEvent( const char *pszEventName, const char *pszEv
 			m_aMergeMDLs[nWeaponIndex].m_bDisabled = false;
 		}
 	}
-	else if ( V_strcmp(pszEventName, "AE_CL_PLAYSOUND") == 0 )
-	{
-		FireSoundEvent(pszEventOptions);
-	}
-	else if (V_strcmp(pszEventName, "5004") == 0) // CL_EVENT_SOUND
-	{
-		FireSoundEvent(pszEventOptions);
-	}
-	else if (V_strcmp(pszEventName, "6004") == 0) // CL_EVENT_FOOTSTEP_LEFT
-	{
-		FireSoundEvent(pszEventOptions);
-	}
-	else if (V_strcmp(pszEventName, "6005") == 0) // CL_EVENT_FOOTSTEP_RIGHT
-	{
-		FireSoundEvent(pszEventOptions);
-	}
-	else
-	{
-		DevWarning("Unhandled player model panel event: %s with option %s!\n", pszEventName, pszEventOptions);
-	}
 }
-
-void CTFPlayerModelPanel::FireSoundEvent(const char* pszEventOptions)
-{
-	soundlevel_t iSoundlevel = SNDLVL_NONE;
-
-	EmitSound_t es;
-	es.m_nChannel = CHAN_STATIC;
-	es.m_flVolume = 1;
-	es.m_SoundLevel = iSoundlevel;
-	es.m_flSoundTime = gpGlobals->curtime;
-	es.m_bEmitCloseCaption = false;
-	es.m_pSoundName = pszEventOptions;
-
-	C_RecipientFilter filter;
-	C_BaseEntity::EmitSound(filter, SOUND_FROM_UI_PANEL, es);
-}
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1058,7 +1016,6 @@ void CTFPlayerModelPanel::EquipItem( CEconItemView *pItem )
 			if ( iSequence != ACT_INVALID )
 			{
 				SetSequence( iSequence, true );
-				m_flLastTickTime = 0;
 			}
 		}
 	}
@@ -1151,7 +1108,6 @@ void CTFPlayerModelPanel::ClearCarriedItems( void )
 	RemoveAdditionalModels();
 	m_ItemsToCarry.PurgeAndDeleteElements();
 	m_pHeldItem = NULL;
-	m_flInvis = 0.0f;
 }
 
 //-----------------------------------------------------------------------------
@@ -1313,7 +1269,7 @@ void CTFPlayerModelPanel::UpdatePreviewVisuals()
 		SetMDLSkinForTeam( GetMergeMDL( m_MergeMDL ), GetPreviewItem( m_pHeldItem ), m_iTeam );
 	}
 
-	// Set the StatTrack model skin
+	// Set the skin for all other equipped items (wearables, etc).
 	if ( !m_StatTrackModel.m_bDisabled )
 	{
 		int iSkin = 0;
@@ -1388,30 +1344,11 @@ Vector CTFPlayerModelPanel::GetZoomOffset()
 	return m_bZoomedToHead ? -vecOffset : vecOffset;
 }
 
-void CTFPlayerModelPanel::SetMDL(MDLHandle_t handle, void* pProxyData)
-{
-	BaseClass::SetMDL(handle, pProxyData);
-
-	m_flLastTickTime = 0;
-
-	// reset lights
-	SetLightProbe(nullptr);
-}
-
-void CTFPlayerModelPanel::SetMDL(const char* pMDLName, void* pProxyData)
-{
-	BaseClass::SetMDL(pMDLName, pProxyData);
-}
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTFPlayerModelPanel::PrePaint3D( IMatRenderContext *pRenderContext )
 {
-	s_flInvis = m_flInvis;
-	s_iTeam = m_iTeam;
-	s_bIsRendering = true;
-
 	if ( g_PlayerPreviewEffect.GetEffect() == C_TFPlayerPreviewEffect::PREVIEW_EFFECT_UBER )
 	{
 		modelrender->ForcedMaterialOverride( *g_PlayerPreviewEffect.GetInvulnMaterialRef() );
@@ -1465,10 +1402,6 @@ void CTFPlayerModelPanel::PostPaint3D( IMatRenderContext *pRenderContext )
 	}
 
 	BaseClass::PostPaint3D( pRenderContext );
-
-	s_bIsRendering = false;
-	s_flInvis = 0.0f;
-	s_iTeam = TF_TEAM_RED;
 }
 
 //-----------------------------------------------------------------------------
@@ -1489,8 +1422,6 @@ void CTFPlayerModelPanel::RenderingRootModel( IMatRenderContext *pRenderContext,
 	
 	// Taunt Effects
 	UpdateTauntEffects( pRenderContext, pStudioHdr, mdlHandle, pWorldMatrix );
-
-	UpdateHeadLighting(pRenderContext, pStudioHdr, mdlHandle, pWorldMatrix);
 }
 
 CEconItemView *CTFPlayerModelPanel::GetLoadoutItemFromMDLHandle( loadout_positions_t iPosition, MDLHandle_t mdlHandle )
@@ -1508,8 +1439,6 @@ CEconItemView *CTFPlayerModelPanel::GetLoadoutItemFromMDLHandle( loadout_positio
 		if ( ( IsMiscSlot( iLoadoutSlot ) && IsMiscSlot( iPosition ) ) ||
 			 ( IsValidPickupWeaponSlot( iLoadoutSlot ) && iLoadoutSlot == iPosition ) )
 		{
-			// See if we need to cache for our style getters.
-			CEconItemViewDataCacher dataCacher(pItem->GetStaticData()->GetNumStyles() ? pItem : NULL);
 			const char * pDisplayModel = pItem->GetPlayerDisplayModel( m_iCurrentClassIndex, m_iTeam );
 			if ( pDisplayModel )
 			{
@@ -1604,48 +1533,6 @@ IMaterial* CTFPlayerModelPanel::GetOverrideMaterial( MDLHandle_t mdlHandle )
 	return NULL;
 }
 
-void CTFPlayerModelPanel::CreateDefaultLights()
-{
-	Vector vecCenter;
-	float flRadius;
-	if (GetBoundingSphere(vecCenter, flRadius))
-	{
-		for (int i = 0; i < 6; ++i)
-		{
-			m_vecAmbientCube[i].Init(0.4f, 0.4f, 0.4f, 1.0f);
-		}
-
-		// fill light
-		memset(&m_Lights[0].m_Desc, 0, sizeof(LightDesc_t));
-		SetIdentityMatrix(m_Lights[0].m_LightToWorld);
-		m_Lights[0].m_Desc.InitDirectional(Vector(0.664463f, 0.664463f, -0.34202f), Vector(1, 1, 1));
-
-		// head light
-		memset(&m_Lights[1].m_Desc, 0, sizeof(LightDesc_t));
-		SetIdentityMatrix(m_Lights[1].m_LightToWorld);
-		// best effort before update from anim
-		Vector headPos = vecCenter;
-		headPos.z += ClassZoomZ[m_iCurrentClassIndex];
-		Vector pos = headPos;
-		pos -= Vector(1, 0, 0) * (flRadius + 10.0f);
-		m_Lights[1].m_Desc.InitSpot(pos, Vector(0.3f, 0.3f, 0.3f), headPos, 0.035f, 0.6981317f);
-
-		m_bUpdateHeadLighting = true;
-
-		// rim light
-		memset(&m_Lights[2].m_Desc, 0, sizeof(LightDesc_t));
-		SetIdentityMatrix(m_Lights[2].m_LightToWorld);
-		Vector dir(-0.059391f, -0.336824f, -0.939693f);
-		m_Lights[2].m_Desc.InitSpot(vecCenter - dir * (flRadius + 100.0f), Vector(0.1f, 0.1f, 0.1f), vecCenter, 0.035f, 0.6981317f);
-
-		m_nLightCount = 3;
-	}
-	else
-	{
-		BaseClass::CreateDefaultLights();
-	}
-}
-
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -1656,10 +1543,10 @@ bool CTFPlayerModelPanel::RenderStatTrack( CStudioHdr *pStudioHdr, matrix3x4_t *
 	{
 		matrix3x4_t matMergeBoneToWorld[MAXSTUDIOBONES];
 
-		// Get the StatTrak model's studio header from the MDL cache
+		// Get the merge studio header.
 		CStudioHdr* pStatTrackStudioHdr = m_StatTrackModel.m_pStudioHdr;
 
-		// If m_pStudioHdr isn't set, try to get it from the MDL directly
+		// If we have a valid mesh, bonemerge it. If we have an invalid mesh we can't bonemerge because
 		if ( !pStatTrackStudioHdr )
 		{
 			MDLHandle_t hStatTrackMDL = m_StatTrackModel.m_MDL.GetMDL();
@@ -1671,7 +1558,7 @@ bool CTFPlayerModelPanel::RenderStatTrack( CStudioHdr *pStudioHdr, matrix3x4_t *
 
 		matrix3x4_t* pMergeBoneToWorld = &matMergeBoneToWorld[0];
 
-		// If we have a valid mesh, bonemerge it. If we have an invalid mesh we can't bonemerge because
+		// it'll crash trying to pull data from the missing header.
 		// it'll crash trying to pull data from the missing header.
 		if ( pStatTrackStudioHdr != NULL && pStudioHdr != NULL )
 		{
@@ -1705,25 +1592,6 @@ bool CTFPlayerModelPanel::UpdateCosmeticParticles(
 {
 	if ( m_aParticleSystems[ iSystem ] && m_aParticleSystems[ iSystem ]->m_bIsUpdateToDate )
 		return false;
-
-	if ( m_aParticleSystems[ iSystem ] && m_aParticleSystems[ iSystem ]->m_bDataCached )
-	{
-		// TODO(mcoms): check attrib changes
-		const bool bChanged = m_aParticleSystems[iSystem]->m_iDataIdCached != pEconItem->GetID();
-		if (!bChanged)
-		{
-			m_aParticleSystems[iSystem]->UpdateControlPoints(
-				pStudioHdr,
-				pWorldMatrix,
-				m_aParticleSystems[iSystem]->m_vecCachedAttachments,
-				m_aParticleSystems[iSystem]->m_iCachedBone,
-				m_aParticleSystems[iSystem]->m_vecCachedOffset
-			);
-			return true;
-		}
-	}
-
-	CEconItemViewDataCacher dataCacher(pEconItem);
 
 	attachedparticlesystem_t *pParticleSystem = NULL;
 
@@ -1841,15 +1709,10 @@ bool CTFPlayerModelPanel::UpdateCosmeticParticles(
 		vecParticleOffset.z = (float&)iOffset;
 	}
 
-	m_aParticleSystems[iSystem]->m_bDataCached = true;
-	m_aParticleSystems[iSystem]->m_iDataIdCached = pEconItem->GetID();
-	m_aParticleSystems[iSystem]->m_vecCachedAttachments = vecAttachments;
-	m_aParticleSystems[iSystem]->m_iCachedBone = iBone;
-	m_aParticleSystems[iSystem]->m_vecCachedOffset = vecParticleOffset;
-
 	m_aParticleSystems[ iSystem ]->UpdateControlPoints( pStudioHdr, pWorldMatrix, vecAttachments, iBone, vecParticleOffset );
 	return true;
 }
+
 
 //-----------------------------------------------------------------------------
 void CTFPlayerModelPanel::UpdateEyeGlows( 
@@ -1992,43 +1855,6 @@ void CTFPlayerModelPanel::UpdateTauntEffects(
 }
 
 //-----------------------------------------------------------------------------
-void CTFPlayerModelPanel::UpdateHeadLighting(
-	IMatRenderContext* pRenderContext,
-	CStudioHdr* pStudioHdr,
-	MDLHandle_t mdlHandle,
-	matrix3x4_t* pWorldMatrix
-)
-{
-	if (m_nLightCount < 2)
-	{
-		return;
-	}
-
-	int iBone = Studio_BoneIndexByName(pStudioHdr, "bip_head");
-	if (iBone < 0)
-		return;
-
-	matrix3x4_t matAttachToWorld = pWorldMatrix[iBone];
-	Vector vecPosition, vecForward, vecRight, vecUp;
-	MatrixVectors(matAttachToWorld, &vecForward, &vecRight, &vecUp);
-	MatrixPosition(matAttachToWorld, vecPosition);
-
-	// snap to only initial head location so we get some nice angles as the head moves
-	Vector vecCenter;
-	float flRadius;
-	if (m_bUpdateHeadLighting && GetBoundingSphere(vecCenter, flRadius))
-	{
-		m_vHeadLightPos = vecPosition;
-		Vector dir(1, 0, 0);
-		m_vHeadLightPos -= dir * (flRadius + 10.0f);
-		m_bUpdateHeadLighting = false;
-	}
-
-	// follow the head
-	m_Lights[1].m_Desc.InitSpot(m_vHeadLightPos, Vector(1, 1, 1), vecPosition, 0.035f, 0.6981317f);
-}
-
-//-----------------------------------------------------------------------------
 // Called Externally
 //-----------------------------------------------------------------------------
 void CTFPlayerModelPanel::SetEyeGlowEffect( const char *pEffectName, Vector vColor1, Vector vColor2, bool bForceUpdate, bool bPlaySparks )
@@ -2069,23 +1895,6 @@ void CTFPlayerModelPanel::InvalidateParticleEffects()
 			SafeDeleteParticleData( &m_aParticleSystems[i] );
 		}
 	}
-}
-
-bool CTFPlayerModelPanel::s_bIsRendering = false;
-float CTFPlayerModelPanel::s_flInvis = 0.0f;
-int CTFPlayerModelPanel::s_iTeam = TF_TEAM_RED;
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-bool CTFPlayerModelPanel::GetPlayerModelRenderInfo(float& flInvis, int& iTeam)
-{
-	if ( s_bIsRendering )
-	{
-		flInvis = s_flInvis;
-		iTeam = s_iTeam;
-	}
-	return s_bIsRendering;
 }
 
 //-----------------------------------------------------------------------------
@@ -2487,22 +2296,10 @@ void CTFPlayerModelPanel::SetupFlexWeights( void )
 
 	LocalFlexController_t i;
 
-	// a bit hackish, but this will let us know if we're entering a new scene.
-	if ( ( m_pScene && m_flLastTickTime < FLT_EPSILON ) || m_RootMDL.m_MDL.m_flTime < FLT_EPSILON )
+	// Decay to neutral
+	for ( i = LocalFlexController_t(0); i < GetNumFlexControllers(); i++)
 	{
-		// reset flex weights
-		for (i = LocalFlexController_t(0); i < GetNumFlexControllers(); i++)
-		{
-			SetFlexWeight(i, 0.0f);
-		}
-	}
-	else
-	{
-		// Decay to neutral
-		for (i = LocalFlexController_t(0); i < GetNumFlexControllers(); i++)
-		{
-			SetFlexWeight(i, GetFlexWeight(i) * 0.95f);
-		}
+		SetFlexWeight( i, GetFlexWeight( i ) * 0.95 );
 	}
 
 	// Run scene
@@ -2535,15 +2332,11 @@ void CTFPlayerModelPanel::SetupFlexWeights( void )
 		// Advance time
 		if ( m_flLastTickTime < FLT_EPSILON )
 		{
-			m_flLastTickTime = m_RootMDL.m_MDL.m_flTime;
-			// if we have an end time, we can give some time to lerp to idle.
-			if ( m_flSceneEndTime > FLT_EPSILON )
-			{
-				m_flLastTickTime -= SCENE_LERP_TIME;
-			}
+			m_flLastTickTime = m_RootMDL.m_MDL.m_flTime - SCENE_LERP_TIME;
 		}
 
 		m_flSceneTime += (m_RootMDL.m_MDL.m_flTime - m_flLastTickTime);
+		m_flSceneTime = Max( m_flSceneTime, -SCENE_LERP_TIME );
 		m_flLastTickTime = m_RootMDL.m_MDL.m_flTime;
 
 		if ( m_flSceneEndTime > FLT_EPSILON && m_flSceneTime > m_flSceneEndTime )

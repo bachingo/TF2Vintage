@@ -23,7 +23,7 @@ public:
 	CBoundedCvar_Predict() :
 	  ConVar_ServerBounded( "cl_predict", 
 		  "1.0", 
-#if defined(DOD_DLL) || defined(CSTRIKE_DLL) || defined(TF_CLIENT_DLL)
+#if defined(DOD_DLL) || defined(CSTRIKE_DLL)
 		  FCVAR_USERINFO | FCVAR_CHEAT, 
 #else
 		  FCVAR_USERINFO | FCVAR_NOT_CONNECTED, 
@@ -75,14 +75,13 @@ public:
 	  {
 		  static const ConVar *pMin = g_pCVar->FindVar( "sv_client_min_interp_ratio" );
 		  static const ConVar *pMax = g_pCVar->FindVar( "sv_client_max_interp_ratio" );
-		  const float flBaseValue = ceilf(GetBaseFloatValue());
 		  if ( pMin && pMax && pMin->GetFloat() != -1 )
 		  {
-			  return clamp( flBaseValue, pMin->GetFloat(), pMax->GetFloat() );
+			  return clamp( GetBaseFloatValue(), pMin->GetFloat(), pMax->GetFloat() );
 		  }
 		  else
 		  {
-			  return flBaseValue;
+			  return GetBaseFloatValue();
 		  }
 	  }
 };
@@ -92,23 +91,17 @@ ConVar_ServerBounded *cl_interp_ratio = &cl_interp_ratio_var;
 
 
 // ------------------------------------------------------------------------------------------ //
-// cl_interp (DEPRECATED)
+// cl_interp
 // ------------------------------------------------------------------------------------------ //
-
-#define DEFAULT_INTERP 0.03125f
 
 class CBoundedCvar_Interp : public ConVar_ServerBounded
 {
 public:
 	CBoundedCvar_Interp() :
-	  ConVar_ServerBounded( "cl_interp",
-		  "0",
-#if defined(DOD_DLL) || defined(CSTRIKE_DLL) || defined(TF_CLIENT_DLL)
-		  FCVAR_USERINFO | FCVAR_CHEAT,
-#else
-		  FCVAR_USERINFO | FCVAR_NOT_CONNECTED | FCVAR_ARCHIVE,
-#endif
-		  "No longer used. Client interp is based solely upon cl_interp_ratio / cl_updaterate.", true, 0.0f, true, 0.0f )
+	  ConVar_ServerBounded( "cl_interp", 
+		  "0.1", 
+		  FCVAR_USERINFO | FCVAR_NOT_CONNECTED | FCVAR_ARCHIVE, 
+		  "Sets the interpolation amount (bounded on low side by server interp ratio settings).", true, 0.0f, true, 0.5f )
 	  {
 	  }
 
@@ -119,11 +112,11 @@ public:
 		  if ( pUpdateRate && pMin && pMin->GetFloat() != -1 )
 		  {
 			  const ConVar_ServerBounded *pUpdateRateBounded = static_cast<const ConVar_ServerBounded*>( pUpdateRate );
-			  return pMin->GetFloat() / ( pUpdateRateBounded ? pUpdateRateBounded->GetFloat() : pUpdateRate->GetFloat() );
+			  return MAX( GetBaseFloatValue(), pMin->GetFloat() / ( pUpdateRateBounded ? pUpdateRateBounded->GetFloat() : pUpdateRate->GetFloat() ) );
 		  }
 		  else
 		  {
-			  return DEFAULT_INTERP;
+			  return GetBaseFloatValue();
 		  }
 	  }
 };
@@ -133,17 +126,12 @@ ConVar_ServerBounded *cl_interp = &cl_interp_var;
 
 float GetClientInterpAmount()
 {
-	static const ConVar* cl_interpolate = g_pCVar->FindVar("cl_interpolate");
-	if ( cl_interpolate && !cl_interpolate->GetBool() )
-	{
-		return 0.0f;
-	}
-
 	static const ConVar *pUpdateRate = g_pCVar->FindVar( "cl_updaterate" );
 	if ( pUpdateRate )
 	{
+		// #define FIXME_INTERP_RATIO
 		const ConVar_ServerBounded *pUpdateRateBounded = static_cast< const ConVar_ServerBounded* >( pUpdateRate );
-		return cl_interp_ratio->GetFloat() / ( pUpdateRateBounded ? pUpdateRateBounded->GetFloat() : pUpdateRate->GetFloat() );
+		return MAX( cl_interp->GetFloat(), cl_interp_ratio->GetFloat() / ( pUpdateRateBounded ? pUpdateRateBounded->GetFloat() : pUpdateRate->GetFloat() ) );
 	}
 	else
 	{
@@ -152,7 +140,7 @@ float GetClientInterpAmount()
 			AssertMsgOnce( false, "GetInterpolationAmount: can't get cl_updaterate cvar." );
 		}
 	
-		return DEFAULT_INTERP;
+		return 0.1;
 	}
 }
 

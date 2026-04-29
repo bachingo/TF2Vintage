@@ -15,6 +15,7 @@
 //	SKIP: $BASETEXTURE2NOENVMAP && ( !$BASETEXTURE2 || !$CUBEMAP )
 //	SKIP: $BASEALPHAENVMAPMASK && $BUMPMAP
 //  SKIP: $PARALLAXMAP && $DETAILTEXTURE
+//  SKIP: $SEAMLESS && $RELIEF_MAPPING
 //  SKIP: $SEAMLESS && $DETAILTEXTURE
 //  SKIP: $SEAMLESS && $MASKEDBLENDING
 //  SKIP: $BUMPMASK && ( $SEAMLESS || $DETAILTEXTURE || $SELFILLUM || $BASETEXTURENOENVMAP || $BASETEXTURE2 )
@@ -155,10 +156,14 @@ struct PS_INPUT
 {
 #if SEAMLESS
 	float3 SeamlessTexCoord         : TEXCOORD0;            // zy xz
+	float4 detailOrBumpAndEnvmapMaskTexCoord : TEXCOORD1;   // envmap mask
 #else
 	HALF2 baseTexCoord				: TEXCOORD0;
+	// detail textures and bumpmaps are mutually exclusive so that we have enough texcoords.
+#if ( RELIEF_MAPPING == 0 )
+	HALF4 detailOrBumpAndEnvmapMaskTexCoord	: TEXCOORD1;
 #endif
-	float4 detailOrBumpAndEnvmapMaskTexCoord : TEXCOORD1;   // envmap mask
+#endif
 // CENTROID: TEXCOORD2
 	HALF4 lightmapTexCoord1And2		: TEXCOORD2;
 // CENTROID: TEXCOORD3
@@ -236,6 +241,14 @@ HALF4 main( PS_INPUT i ) : COLOR
 	}
 #endif
 
+#if RELIEF_MAPPING
+	// in the parallax case, all texcoords must be the same in order to free
+    // up an iterator for the tangent space view vector
+	HALF2 detailTexCoord = i.baseTexCoord.xy;
+	HALF2 bumpmapTexCoord = i.baseTexCoord.xy;
+	HALF2 envmapMaskTexCoord = i.baseTexCoord.xy;
+#else
+
 	#if ( DETAILTEXTURE == 1 )
 		HALF2 detailTexCoord = i.detailOrBumpAndEnvmapMaskTexCoord.xy;
 		HALF2 bumpmapTexCoord = i.baseTexCoord.xy;
@@ -249,6 +262,7 @@ HALF4 main( PS_INPUT i ) : COLOR
 	#endif
 
 	HALF2 envmapMaskTexCoord = i.detailOrBumpAndEnvmapMaskTexCoord.wz;
+#endif // !RELIEF_MAPPING
 
 	HALF4 detailColor = HALF4( 1.0f, 1.0f, 1.0f, 1.0f );
 #if DETAILTEXTURE

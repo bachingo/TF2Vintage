@@ -45,7 +45,7 @@
 #include "weapon_physcannon.h"
 #endif
 
-// memdbgon must be the last include file in a .cpp file!!!
+// TF2V: typing-bubble UserMessage helper
 #include "tier0/memdbgon.h"
 
 extern int giPrecacheGrunt;
@@ -129,9 +129,6 @@ char * CheckChatText( CBasePlayer *pPlayer, char *text )
 		p[length] = 0;
 	}
 
-	// prevent sending blank text and eating color codes
-	V_StripTrailingWhitespace( p );
-
 	// Josh:
 	// Cheaters can send us whatever data they want through this channel
 	// Let's validate they aren't trying to clear the chat.
@@ -193,7 +190,7 @@ void Host_Say( edict_t *pEdict, const CCommand &args, bool teamonly )
 	{
 		if ( args.ArgC() >= 2 )
 		{
-			V_strcpy_safe( szTemp, args.ArgS() );
+			p = (char *)args.ArgS();
 		}
 		else
 		{
@@ -212,9 +209,8 @@ void Host_Say( edict_t *pEdict, const CCommand &args, bool teamonly )
 			// Just a one word command, use the first word...sigh
 			Q_snprintf( szTemp,sizeof(szTemp), "%s", ( char * )pcmd );
 		}
+		p = szTemp;
 	}
-
-	p = szTemp;
 
 	CBasePlayer *pPlayer = NULL;
 	if ( pEdict )

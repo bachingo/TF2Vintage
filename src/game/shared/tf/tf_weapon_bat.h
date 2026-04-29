@@ -80,16 +80,9 @@ public:
 	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_BAT_WOOD; }
 	virtual bool		BatDeflects() { return false; }
 
-	virtual void		PrimaryAttack(void);
 	virtual void		SecondaryAttack( void );
 	void				SecondaryAttackAnim( CTFPlayer *pPlayer );
 	virtual bool		SendWeaponAnim( int iActivity );
-
-	virtual bool		Holster(CBaseCombatWeapon* pSwitchingTo = NULL);
-	virtual bool		Deploy(void);
-	virtual void		WeaponReset() OVERRIDE;
-
-	virtual void		Smack(void);
 
 	virtual bool		CanCreateBall( CTFPlayer* pPlayer );
 	virtual void		LaunchBall( void );
@@ -99,7 +92,6 @@ public:
 	virtual int			GetEffectBarAmmo( void ) { return TF_AMMO_GRENADES1; }
 
 #ifdef GAME_DLL
-	virtual void		Detach();
 	virtual void		GetBallDynamics( Vector& vecLoc, QAngle& vecAngles, Vector& vecVelocity, AngularImpulse& angImpulse, CTFPlayer* pPlayer );
 #endif
 
@@ -108,13 +100,14 @@ public:
 
 	// Child removal:
 	virtual	void		Drop( const Vector &vecVelocity );
+	virtual void		WeaponReset( void );
 	virtual void		UpdateOnRemove( void );
 	virtual void		OnDataChanged( DataUpdateType_t updateType );
 	void				AddBallChild( void );
 	void				RemoveBallChild( void );
 #endif
 
-	virtual void		PickedUpBall( bool bNextSwingIsCrit = false );
+	virtual void		PickedUpBall( void );
 
 	float				GetProgress( void ) { return GetEffectBarProgress(); }
 	const char*			GetEffectLabelText( void ) { return "#TF_BALL"; }
@@ -126,7 +119,6 @@ public:
 #endif
 
 	int					m_iEnemyBallID;
-	bool				m_bNextSwingIsCrit;
 
 #ifdef CLIENT_DLL
 	EHANDLE				m_hStunBallVM; // View model ball.
@@ -155,16 +147,12 @@ public:
 	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_GRENADE_STUNBALL; }
 	virtual const char *GetBallModelName( void ) const;
 	virtual const char *GetBallViewModelName( void ) const;
-	virtual float		GetDetonationTime(void) { return 10.0f; }
 
 	virtual bool		IsAllowedToExplode( void ) OVERRIDE { return false; }
 	virtual void		Explode( trace_t *pTrace, int bitsDamageType );
 	virtual void		ApplyBallImpactEffectOnVictim( CBaseEntity *pOther );
 	virtual void		PipebombTouch( CBaseEntity *pOther );
 	virtual void		VPhysicsCollision( int index, gamevcollisionevent_t *pEvent );
-	bool				GiveBall(CTFPlayer* pPlayer, bool bNextSwingIsACrit = false );
-
-	virtual bool CanCollideWithTeammates() const OVERRIDE { return false; }
 	
 	virtual float		GetDamage( void );
 	virtual int			GetDamageType( void )				{ return DMG_CLUB; }
@@ -172,10 +160,7 @@ public:
 
 	virtual float		GetShakeAmplitude( void )			{ return 0.0; }
 	virtual float		GetShakeRadius( void )				{ return 0.0; }
-	void 				CreateBallTrail(void);
 	void				RemoveBallTrail( void );
-
-	virtual void		IncrementDeflected(void);
 	
 	virtual bool		IsDestroyable( bool bOrbAttack = false ) OVERRIDE { return ( !bOrbAttack ? false : true ); }
 	virtual bool		ShouldBallTouch( CBaseEntity *pOther );
@@ -235,7 +220,6 @@ public:
 
 	virtual void		Precache( void );
 
-	virtual float		GetDamage(void) { return 15.0f; }
 	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_GRENADE_ORNAMENT_BALL; }
 	virtual const char *GetBallModelName( void ) const;
 	virtual const char *GetBallViewModelName( void ) const;
@@ -249,15 +233,8 @@ public:
 
 	virtual void		ApplyBallImpactEffectOnVictim( CBaseEntity *pOther );
 
-	virtual bool	    IsDeflectable() OVERRIDE { return GetMoveType() != MOVETYPE_NONE; }
-
-	void			FadeOut(float flTime);
-	void			RemoveThink();
-
 protected:
 		Vector		m_vCollisionVelocity;
-#else
-	virtual void		OnDataChanged(DataUpdateType_t updateType);
 #endif
 };
 

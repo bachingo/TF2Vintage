@@ -247,8 +247,6 @@ public:
 
 	bool PassesFilterImpl( CBaseEntity *pCaller, CBaseEntity *pEntity )
 	{
-		if ( pEntity == NULL )
-			return false;
 		// special check for !player as GetEntityName for player won't return "!player" as a name
 		if (FStrEq(STRING(m_iFilterName), "!player"))
 		{
@@ -285,8 +283,6 @@ public:
 
 	bool PassesFilterImpl( CBaseEntity *pCaller, CBaseEntity *pEntity )
 	{
-		if ( pEntity == NULL )
-			return false;
 		return pEntity->ClassMatches( STRING(m_iFilterClass) );
 	}
 };
@@ -314,8 +310,6 @@ public:
 
 	bool PassesFilterImpl( CBaseEntity *pCaller, CBaseEntity *pEntity )
 	{
-		if ( pEntity == NULL )
-			return false;
 	 	return ( pEntity->GetTeamNumber() == m_iFilterTeam );
 	}
 };
@@ -343,8 +337,6 @@ public:
 
 	bool PassesFilterImpl( CBaseEntity *pCaller, CBaseEntity *pEntity )
 	{
-		if ( pEntity == NULL )
-			return false;	
 		if ( pEntity->VPhysicsGetObject() == NULL )
 			return false;
 

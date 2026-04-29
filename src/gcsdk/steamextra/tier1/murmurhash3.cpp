@@ -1,10 +1,10 @@
-//======= Copyright Â© Valve Corporation, All rights reserved. =================
+//======= Copyright © Valve Corporation, All rights reserved. =================
 //
 // Public domain MurmurHash3 by Austin Appleby is a very solid general-purpose
 // hash with a 32-bit output. References:
-// https://github.com/aappleby/smhasher (home of MurmurHash3)
-// https://sites.google.com/site/murmurhash/avalanche https://github.com/aappleby/smhasher/wiki/SMHasher#avalanche-tests
-// https://www.strchr.com/hash_functions 
+// http://code.google.com/p/smhasher/ (home of MurmurHash3)
+// https://sites.google.com/site/murmurhash/avalanche
+// http://www.strchr.com/hash_functions 
 //
 //=============================================================================
 

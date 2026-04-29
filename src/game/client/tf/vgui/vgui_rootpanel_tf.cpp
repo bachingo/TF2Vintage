@@ -11,15 +11,13 @@
 #include "vgui/IVGui.h"
 #include "tier2/fileutils.h"
 #include "icommandline.h"
-#include "tf_controls.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 C_TFRootPanel *g_pRootPanel = NULL;
 
-#define DEFAULT_UI_VERSION "-1"
-static ConVar tf_ui_version( "tf_ui_version", DEFAULT_UI_VERSION, FCVAR_DEVELOPMENTONLY );
+static ConVar tf_ui_version( "tf_ui_version", "3", FCVAR_DEVELOPMENTONLY );
 
 extern const char *COM_GetModDirectory();
 
@@ -42,7 +40,6 @@ void CheckCustomModSearchPaths()
 			// mod must declare this ConVar
 			if ( tf_ui_version.GetInt() == versionKV->GetInt( "ui_version" ) )
 			{
-				g_bUsingCustomHud = true;
 				continue;
 			}
 
@@ -62,8 +59,7 @@ void CheckCustomModSearchPaths()
 	// only allow to load loose files when using insecure mode
 	if ( CommandLine()->FindParm( "-insecure" ) )
 	{
-		// allow loose files in these search paths
-		g_pFullFileSystem->AddSearchPath( "tf2vintage", "vgui" );
+		// allow lose files in these search paths
 		g_pFullFileSystem->AddSearchPath( "tf", "vgui" );
 		g_pFullFileSystem->AddSearchPath( "hl2", "vgui" );
 		g_pFullFileSystem->AddSearchPath( "platform", "vgui" );

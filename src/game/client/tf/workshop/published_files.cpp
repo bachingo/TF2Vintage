@@ -33,14 +33,13 @@
 #define TF2_PREVIEW_IMAGE_HEIGHT 512
 #define TF2_PREVIEW_IMAGE_WIDTH 512
 
-#define COMMUNITY_DEV_HOST "https://localhost/"
+#define COMMUNITY_DEV_HOST "http://localhost/"
 
 extern ConVar publish_file_last_dir;
 
 // milliseconds
-ConVar tf_steam_workshop_query_timeout( "tf_steam_workshop_query_timeout", "1", FCVAR_CLIENTDLL, "Time in seconds to allow communication with the Steam Workshop server." );
+ConVar tf_steam_workshop_query_timeout( "tf_steam_workshop_query_timeout", "10", FCVAR_CLIENTDLL, "Time in seconds to allow communication with the Steam Workshop server." );
 ConVar tf_steam_workshop_page_skip( "tf_steam_workshop_page_skip", "10", FCVAR_ARCHIVE, "Number of pages to skip in the Steam Workshop dialog.", true, 1, true, 100 );
-ConVar itemtest_enabled( "itemtest_enabled", "0", FCVAR_CLIENTDLL, "If itemtesting should be automatically enabled in the itemtest map." );
 
 //-----------------------------------------------------------------------------
 // Purpose: Utility function
@@ -162,7 +161,7 @@ bool CPublishedFiles::EnumerateUserPublishedFiles( uint32 unPage )
 		                                                              k_EUserUGCList_Published,
 		                                                              k_EUGCMatchingUGCType_Items,
 		                                                              k_EUserUGCListSortOrder_CreationOrderDesc,
-		                                                              UTIL_GetEmulatedAppID(), UTIL_GetEmulatedAppID(), unPage );
+		                                                              engine->GetAppID(), engine->GetAppID(), unPage );
 
 		// make sure we get the entire description and not a truncated version
 		pUGC->SetReturnLongDescription( ugcHandle, true );
@@ -207,10 +206,10 @@ void CPublishedFiles::ViewPublishedFile( uint64 nPublishedFileID )
 	switch ( universe )
 	{
 	case k_EUniversePublic:
-		steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStrMax( "https://steamcommunity.com/sharedfiles/filedetails/?id=%llu", nPublishedFileID ) );
+		steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStrMax( "http://steamcommunity.com/sharedfiles/filedetails/?id=%llu", nPublishedFileID ) );
 		break;
 	case k_EUniverseBeta:
-		steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStrMax( "https://beta.steamcommunity.com/sharedfiles/filedetails/?id=%llu", nPublishedFileID ) );
+		steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStrMax( "http://beta.steamcommunity.com/sharedfiles/filedetails/?id=%llu", nPublishedFileID ) );
 		break;
 	case k_EUniverseDev:
 		steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStrMax( COMMUNITY_DEV_HOST "sharedfiles/filedetails/?id=%llu", nPublishedFileID ) );
@@ -409,7 +408,7 @@ public:
 
 		BaseClass::OnFilePrepared( eResult );
 	}
-	virtual AppId_t	GetTargetAppID( void ) { return UTIL_GetEmulatedAppID(); }
+	virtual AppId_t	GetTargetAppID( void ) { return engine->GetAppID(); }
 	virtual unsigned int DesiredPreviewHeight( void ) { return TF2_PREVIEW_IMAGE_HEIGHT; }
 	virtual unsigned int DesiredPreviewWidth( void ) { return TF2_PREVIEW_IMAGE_WIDTH; }
 	virtual bool BForceSquarePreviewImage( void ) { return true; }
@@ -1069,13 +1068,13 @@ public:
 			switch ( m_publishedFiles.m_state )
 			{
 			case CPublishedFiles::kState_PopulatingFileList:
-				ShowWaitingDialog( new CGenericWaitingDialog( this ), "#TF_SteamWorkshop_PopulatingList", true, false, tf_steam_workshop_query_timeout.GetFloat() );
+				ShowWaitingDialog( new CGenericWaitingDialog( this ), "#TF_SteamWorkshop_PopulatingList", true, false, 30.0f );
 				break;
 			case CPublishedFiles::kState_ErrorOccurred:
 				ShowMessageBox( "#TF_SteamWorkshop_Error", "#TF_SteamWorkshop_ErrorText", "#GameUI_OK" );
 				break;
 			case CPublishedFiles::kState_DeletingFile:
-				ShowWaitingDialog( new CGenericWaitingDialog( this ), "#TF_SteamWorkshop_DeletingFile", true, false, tf_steam_workshop_query_timeout.GetFloat() );
+				ShowWaitingDialog( new CGenericWaitingDialog( this ), "#TF_SteamWorkshop_DeletingFile", true, false, 30.0f );
 				break;
 			case CPublishedFiles::kState_ErrorCannotDeleteFile:
 				ShowMessageBox( "#TF_SteamWorkshop_Error", "#TF_SteamWorkshop_CannotDeleteFile", "#GameUI_OK" );
@@ -1164,7 +1163,7 @@ public:
 		}
 		else if ( FStrEq( pCommand, "learn_more" ) )
 		{
-			steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( "https://www.teamfortress.com/contribute/" );
+			steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( "http://www.teamfortress.com/contribute/" );
 		}
 		else if ( FStrEq( pCommand, "view_files" ) )
 		{
@@ -1173,10 +1172,10 @@ public:
 			switch ( universe )
 			{
 			case k_EUniversePublic:
-				steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStrMax( "https://steamcommunity.com/profiles/%llu/mysharedfiles/", ulSteamID ) );
+				steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStrMax( "http://steamcommunity.com/profiles/%llu/mysharedfiles/", ulSteamID ) );
 				break;
 			case k_EUniverseBeta:
-				steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStrMax( "https://beta.steamcommunity.com/profiles/%llu/mysharedfiles/", ulSteamID ) );
+				steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStrMax( "http://beta.steamcommunity.com/profiles/%llu/mysharedfiles/", ulSteamID ) );
 				break;
 			case k_EUniverseDev:
 				steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStrMax( COMMUNITY_DEV_HOST "profiles/%llu/mysharedfiles/", ulSteamID ) );
@@ -1189,13 +1188,13 @@ public:
 			switch ( universe )
 			{
 			case k_EUniversePublic:
-				steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStrMax( "https://steamcommunity.com/workshop/workshoplegalagreement/?appid=%d", UTIL_GetEmulatedAppID() ) );
+				steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStrMax( "http://steamcommunity.com/workshop/workshoplegalagreement/?appid=%d", engine->GetAppID() ) );
 				break;
 			case k_EUniverseBeta:
-				steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStrMax( "https://beta.steamcommunity.com/workshop/workshoplegalagreement/?appid=%d", UTIL_GetEmulatedAppID() ) );
+				steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStrMax( "http://beta.steamcommunity.com/workshop/workshoplegalagreement/?appid=%d", engine->GetAppID() ) );
 				break;
 			case k_EUniverseDev:
-				steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStrMax( COMMUNITY_DEV_HOST "workshop/workshoplegalagreement/?appid=%d", UTIL_GetEmulatedAppID() ) );
+				steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStrMax( COMMUNITY_DEV_HOST "workshop/workshoplegalagreement/?appid=%d", engine->GetAppID() ) );
 				break;
 			}
 		}
@@ -1205,13 +1204,13 @@ public:
 			switch ( universe )
 			{
 			case k_EUniversePublic:
-				steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStrMax( "https://steamcommunity.com/workshop/browse?appid=%d", UTIL_GetEmulatedAppID() ) );
+				steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStrMax( "http://steamcommunity.com/workshop/browse?appid=%d", engine->GetAppID() ) );
 				break;
 			case k_EUniverseBeta:
-				steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStrMax( "https://beta.steamcommunity.com/workshop/browse?appid=%d", UTIL_GetEmulatedAppID() ) );
+				steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStrMax( "http://beta.steamcommunity.com/workshop/browse?appid=%d", engine->GetAppID() ) );
 				break;
 			case k_EUniverseDev:
-				steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStrMax( COMMUNITY_DEV_HOST "workshop/browse?appid=%d", UTIL_GetEmulatedAppID() ) );
+				steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStrMax( COMMUNITY_DEV_HOST "workshop/browse?appid=%d", engine->GetAppID() ) );
 				break;
 			}
 		}
@@ -1462,10 +1461,10 @@ protected:
 		switch ( universe )
 		{
 		case k_EUniversePublic:
-			steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStrMax( "https://steamcommunity.com/sharedfiles/filedetails/?id=%llu", nPublishedFileID ) );
+			steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStrMax( "http://steamcommunity.com/sharedfiles/filedetails/?id=%llu", nPublishedFileID ) );
 			break;
 		case k_EUniverseBeta:
-			steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStrMax( "https://beta.steamcommunity.com/sharedfiles/filedetails/?id=%llu", nPublishedFileID ) );
+			steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStrMax( "http://beta.steamcommunity.com/sharedfiles/filedetails/?id=%llu", nPublishedFileID ) );
 			break;
 		case k_EUniverseDev:
 			steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStrMax( COMMUNITY_DEV_HOST "sharedfiles/filedetails/?id=%llu", nPublishedFileID ) );
@@ -1603,7 +1602,7 @@ public:
 		if ( TFGameRules() && TFGameRules()->IsInItemTestingMode() )
 			return true;
 
-		return itemtest_enabled.GetBool() && FStrEq( engine->GetLevelName(), "maps/itemtest.bsp" );
+		return FStrEq( engine->GetLevelName(), "maps/itemtest.bsp" );
 	}
 
 	virtual void PerformLayout()

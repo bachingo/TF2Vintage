@@ -8,7 +8,7 @@ private:
 public:
 	void SetHALF_LAMBERT( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nHALF_LAMBERT = i;
 #ifdef _DEBUG
 		m_bHALF_LAMBERT = true;
@@ -29,7 +29,7 @@ private:
 public:
 	void SetENVMAP( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nENVMAP = i;
 #ifdef _DEBUG
 		m_bENVMAP = true;
@@ -62,7 +62,7 @@ private:
 public:
 	void SetENVMAPSPHERE( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nENVMAPSPHERE = i;
 #ifdef _DEBUG
 		m_bENVMAPSPHERE = true;
@@ -101,7 +101,7 @@ public:
 		// Asserts to make sure that we are setting all of the combination vars.
 #ifdef _DEBUG
 		bool bAllStaticVarsDefined = m_bHALF_LAMBERT && m_bENVMAP && m_bENVMAPCAMERASPACE && m_bENVMAPSPHERE;
-		DebugAssert( bAllStaticVarsDefined );
+		Assert( bAllStaticVarsDefined );
 #endif // _DEBUG
 		return ( 88 * m_nHALF_LAMBERT ) + ( 176 * m_nENVMAP ) + ( 352 * m_nENVMAPCAMERASPACE ) + ( 352 * m_nENVMAPSPHERE ) + 0;
 	}
@@ -116,7 +116,7 @@ private:
 public:
 	void SetDOWATERFOG( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nDOWATERFOG = i;
 #ifdef _DEBUG
 		m_bDOWATERFOG = true;
@@ -137,7 +137,7 @@ private:
 public:
 	void SetLIGHT_COMBO( int i )
 	{
-		DebugAssert( i >= 0 && i <= 21 );
+		Assert( i >= 0 && i <= 21 );
 		m_nLIGHT_COMBO = i;
 #ifdef _DEBUG
 		m_bLIGHT_COMBO = true;
@@ -158,7 +158,7 @@ private:
 public:
 	void SetSKINNING( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nSKINNING = i;
 #ifdef _DEBUG
 		m_bSKINNING = true;
@@ -193,7 +193,7 @@ public:
 		// Asserts to make sure that we are setting all of the combination vars.
 #ifdef _DEBUG
 		bool bAllDynamicVarsDefined = m_bDOWATERFOG && m_bLIGHT_COMBO && m_bSKINNING;
-		DebugAssert( bAllDynamicVarsDefined );
+		Assert( bAllDynamicVarsDefined );
 #endif // _DEBUG
 		return ( 1 * m_nDOWATERFOG ) + ( 2 * m_nLIGHT_COMBO ) + ( 44 * m_nSKINNING ) + 0;
 	}

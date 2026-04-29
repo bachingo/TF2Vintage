@@ -5,7 +5,7 @@
 // $NoKeywords: $
 //
 //=============================================================================//
- //========= Copyright Â© 1996-2003, Valve LLC, All rights reserved. ============
+ //========= Copyright © 1996-2003, Valve LLC, All rights reserved. ============
 //
 // The copyright to the contents herein is the property of Valve, L.L.C.
 // The contents may be used and/or copied only with the written permission of
@@ -869,8 +869,6 @@ void BuildGroup::PanelAdded(Panel *panel)
 	_panelDar.AddToTail(temp);
 }
 
-extern const char* COM_GetModDirectory();
-
 //-----------------------------------------------------------------------------
 // Purpose: loads the control settings from file
 //-----------------------------------------------------------------------------
@@ -918,8 +916,7 @@ void BuildGroup::LoadControlSettings(const char *controlResourceName, const char
 			bSuccess = rDat->LoadFromFile( g_pFullFileSystem, controlResourceName, "SKIN" );
 		}
 
-		const char* pGameDir = COM_GetModDirectory();
-		if ( !V_stricmp( pGameDir, "tc2" ) )
+		if ( !V_stricmp( CommandLine()->ParmValue( "-game", "hl2" ), "tf" ) )
 		{
 			if ( !bSuccess )
 			{

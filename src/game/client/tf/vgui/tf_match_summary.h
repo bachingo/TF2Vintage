@@ -20,7 +20,6 @@
 #include "tf_particlepanel.h"
 #include "tf_matchmaking_shared.h"
 #include "tf_gamerules.h"
-#include "tf_playermodelpanel.h"
 
 using namespace vgui;
 
@@ -36,8 +35,6 @@ enum matchsummary_displaystate_t
 	MS_STATE_SILVER_MEDALS,
 	MS_STATE_GOLD_MEDALS,
 	MS_STATE_FINAL,
-	MS_STATE_MVP_INTRO,
-	MS_STATE_MVP,
 
 	MS_NUM_STATES
 };
@@ -117,10 +114,6 @@ private:
 	void RecalculateMedalCounts();
 	void UpdateBadgePanels( CUtlVector<CTFBadgePanel*> &pBadgePanels, TFSectionedListPanel *pPlayerList );
 
-	void UpdateMatchTimeRemaining();
-
-	bool SubActionTime(float flSubActionTime);
-
 	void InternalUpdateMedalCountForType( int iTeam, StatMedal_t eMedal );
 	matchsummary_columns_t InternalAddMedalKeyValues( int iIndex, StatMedal_t eMedal, KeyValues *pKeyValues, int nTotalMedals = -1 );
 	void FireMedalEffects( Panel *pPanel, int nPanelXPos, int nPanelYPos, int nPanelWide, int nPanelTall, StatMedal_t eParticleMedal );
@@ -150,12 +143,6 @@ private:
 	CExLabel					*m_pRedTeamScoreDropshadow;
 	EditablePanel				*m_pRedTeamScoreBG;
 	EditablePanel				*m_pRedPlayerListBG;
-	EditablePanel				*m_pBlueTeamSeriesBG;
-	EditablePanel				*m_pRedTeamSeriesBG;
-	CExLabel					*m_pBlueTeamSeries;
-	CExLabel					*m_pRedTeamSeries;
-	CExLabel					*m_pBlueTeamSeriesReason;
-	CExLabel					*m_pRedTeamSeriesReason;
 	EditablePanel				*m_pBlueMedalsPanel;
 	EditablePanel				*m_pRedMedalsPanel;
 	vgui::ImagePanel			*m_pRedTeamImage;
@@ -167,31 +154,12 @@ private:
 	EditablePanel				*m_pStatsLabelPanel;
 	CExLabel					*m_pStatsAndMedals;
 	CExLabel					*m_pStatsAndMedalsShadow;
-	CExLabel					*m_pMatchSeriesLabel;
-	CExLabel					*m_pMatchNextSeriesLabel;
-	CExLabel                    *m_pMatchTimeRemainingTitleLabel;
-	CExLabel					*m_pMatchTimeRemainingLabel;
 	CExLabel					*m_pBlueTeamName;
 	CExLabel					*m_pRedTeamName;
   	CExLabel					*m_pRedTeamWinner;
 	CExLabel					*m_pRedTeamWinnerDropshadow;
 	CExLabel					*m_pBlueTeamWinner;
 	CExLabel					*m_pBlueTeamWinnerDropshadow;
-
-	EditablePanel				*m_pMVPPanel;
-	CTFPlayerModelPanel			*m_pCharacterModelPanel;
-	CExLabel					*m_pMVPLabel;
-	CExLabel					*m_pMVPNameLabel;
-	CExLabel					*m_pMVPScoreTitle;
-	CExLabel					*m_pMVPScoreLabel;
-	CExLabel					*m_pMVPStat1Title;
-	CExLabel					*m_pMVPStat1Label;
-	CExLabel					*m_pMVPStat2Title;
-	CExLabel					*m_pMVPStat2Label;
-	CExLabel					*m_pMVPStat3Title;
-	CExLabel					*m_pMVPStat3Label;
-	CExLabel					*m_pMVPStat4Title;
-	CExLabel					*m_pMVPStat4Label;
 
 	CTFParticlePanel			*m_pParticlePanel;
 
@@ -209,11 +177,6 @@ private:
 	CPanelAnimationVar( Color, m_clrGoldMedal, "GoldMedalText", "214 186 24 255" );
 	CPanelAnimationVar( Color, m_clrSilverMedal, "SilverMedalText", "222 218 222 255" );
 	CPanelAnimationVar( Color, m_clrBronzeMedal, "BronzeMedalText", "214 125 57 255" );
-	
-	CPanelAnimationVarAliasType( int, m_iAnimMatchSeriesLabel, "AnimMatchSeriesLabel", "0", "proportional_width" );
-	CPanelAnimationVarAliasType( int, m_iAnimMatchNextSeriesLabel, "AnimMatchNextSeriesLabel", "0", "proportional_width" );
-	CPanelAnimationVarAliasType( int, m_iAnimMatchTimeRemainingTitleLabel, "AnimMatchTimeRemainingTitleLabel", "0", "proportional_width" );
-	CPanelAnimationVarAliasType( int, m_iAnimMatchTimeRemainingLabel, "AnimMatchTimeRemainingLabel", "0", "proportional_width" );
 
 	CPanelAnimationVarAliasType( int, m_iAnimBluePlayerListParent, "AnimBluePlayerListParent", "0", "proportional_width" );
 	CPanelAnimationVarAliasType( int, m_iAnimBlueTeamScore, "AnimBlueTeamScore", "0", "proportional_width" );
@@ -254,8 +217,6 @@ private:
 	int m_iCurrentState;
 	float m_flNextActionTime;
 
-	bool m_bShortMode;
-
 	int m_nMedalsToAward_Bronze_Blue;
 	int m_nMedalsToAward_Silver_Blue;
 	int m_nMedalsToAward_Gold_Blue;
@@ -275,23 +236,7 @@ private:
 	bool m_bRedBronzeValueRevealed;
 	bool m_bPlayerAbandoned;
 
-	int m_iWinningTeam;
-	int m_bLocalPlayerIsMVP;
-	bool m_bFoundMVP;
-	std::string m_sMVPName;
-	int m_iMVPScore;
-	int m_iMVPCustom1;
-	std::string m_sMVPCustom1;
-	int m_iMVPCustom2;
-	std::string m_sMVPCustom2;
-	int m_iMVPCustom3;
-	std::string m_sMVPCustom3;
-	int m_iMVPCustom4;
-	std::string m_sMVPCustom4;
-
 	float m_flMedalSoundTime;
-
-	float m_flLastSubActionTime;
 
 	CUtlVector< CTFBadgePanel* > m_pBlueBadgePanels;
 	CUtlVector< CTFBadgePanel* > m_pRedBadgePanels;

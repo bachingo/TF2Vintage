@@ -14,7 +14,6 @@
 #ifdef CLIENT_DLL
 	#include "c_tf_player.h"
 	#include "in_buttons.h"
-	#include "prediction.h"
 	#include "tf_hud_menu_eureka_teleport.h"
 	// NVNT haptics system interface
 	#include "haptics/ihaptics.h"
@@ -55,20 +54,17 @@ IMPLEMENT_NETWORKCLASS_ALIASED( TFRobotArm, DT_TFWeaponRobotArm )
 
 BEGIN_NETWORK_TABLE( CTFRobotArm, DT_TFWeaponRobotArm )
 #ifdef GAME_DLL
-	SendPropEHandle( SENDINFO( m_hRobotArm ) ),
-	SendPropInt( SENDINFO( m_iComboCount ), 4, SPROP_UNSIGNED),
-	SendPropFloat( SENDINFO( m_flLastComboHit ), 0, SPROP_NOSCALE),
+SendPropEHandle(SENDINFO(m_hRobotArm)),
 #else
-	RecvPropEHandle( RECVINFO( m_hRobotArm ) ),
-	RecvPropInt( RECVINFO( m_iComboCount ) ),
-	RecvPropFloat( RECVINFO( m_flLastComboHit) ),
+RecvPropEHandle(RECVINFO(m_hRobotArm)),
 #endif
 END_NETWORK_TABLE()
 
 #ifdef CLIENT_DLL
 BEGIN_PREDICTION_DATA( CTFRobotArm )
-DEFINE_PRED_FIELD( m_iComboCount, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
-DEFINE_PRED_FIELD( m_flLastComboHit, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
+// DEFINE_PRED_FIELD( name, fieldtype, flags )
+DEFINE_PRED_FIELD( m_iComboCount, FIELD_INTEGER, 0 ),
+DEFINE_PRED_FIELD( m_flLastComboHit, FIELD_FLOAT, 0 ),
 END_PREDICTION_DATA()
 #endif
 
@@ -108,8 +104,6 @@ void CTFWrench::Spawn()
 #ifdef GAME_DLL
 void CTFWrench::OnFriendlyBuildingHit( CBaseObject *pObject, CTFPlayer *pPlayer, Vector hitLoc )
 {
-	CDisablePredictionFiltering disabler;
-
 	bool bHelpTeammateBuildStructure = pObject->IsBuilding() && pObject->GetOwner() != GetOwner();
 
 	// Did this object hit do any work? repair or upgrade?
@@ -124,6 +118,8 @@ void CTFWrench::OnFriendlyBuildingHit( CBaseObject *pObject, CTFPlayer *pPlayer,
 			pOwner->AwardAchievement( ACHIEVEMENT_TF_ENGINEER_HELP_BUILD_STRUCTURE );
 		}
 	}
+
+	CDisablePredictionFiltering disabler;
 
 	if ( bUsefulHit )
 	{
@@ -221,11 +217,6 @@ void CTFWrench::ItemPostFrame()
 		return;
 	}
 
-	if ( !pOwner->IsLocalPlayer() || !prediction->IsFirstTimePredicted() )
-	{
-		return;
-	}
-
 	// Just pressed reload?
 	if ( pOwner->m_nButtons & IN_RELOAD && !m_bReloadDown )
 	{
@@ -234,21 +225,12 @@ void CTFWrench::ItemPostFrame()
 		CALL_ATTRIB_HOOK_INT( iAltFireTeleportToSpawn, alt_fire_teleport_to_spawn );
 		if ( iAltFireTeleportToSpawn )
 		{
-			if ( gpGlobals->curtime >= GetLastReadyTime() )
+			// Tell the teleport menu to show
+			CHudEurekaEffectTeleportMenu *pTeleportMenu = ( CHudEurekaEffectTeleportMenu * )GET_HUDELEMENT( CHudEurekaEffectTeleportMenu );
+			if ( pTeleportMenu )
 			{
-				// Tell the teleport menu to show
-				CHudEurekaEffectTeleportMenu *pTeleportMenu = ( CHudEurekaEffectTeleportMenu * )GET_HUDELEMENT( CHudEurekaEffectTeleportMenu );
-				if ( pTeleportMenu )
-				{
-					pTeleportMenu->WantsToTeleport();
-				}
+				pTeleportMenu->WantsToTeleport();
 			}
-#ifdef CLIENT_DLL
-			else
-			{
-				pOwner->EmitSound( "Player.DenyWeaponSelection" );
-			}
-#endif
 		}
 	}
 	else if ( !(pOwner->m_nButtons & IN_RELOAD) && m_bReloadDown )
@@ -348,7 +330,7 @@ void CTFWrench::ApplyBuildingHealthUpgrade( void )
 #endif
 
 // STAGING_ENGY
-ConVar tf_construction_build_rate_multiplier( "tf_construction_build_rate_multiplier", "1.5f", FCVAR_REPLICATED | FCVAR_HIDDEN );
+ConVar tf_construction_build_rate_multiplier( "tf_construction_build_rate_multiplier", "1.5f", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 float CTFWrench::GetConstructionValue( void )
 {
 	float flValue = tf_construction_build_rate_multiplier.GetFloat();

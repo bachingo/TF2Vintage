@@ -55,7 +55,6 @@ public:
 	virtual void	DeterminePlaybackRate( void );
 
 	void RecieveTeleportingPlayer( CTFPlayer* pTeleportingPlayer );
-	void TeleporterUpgradeThink(void);
 	void TeleporterThink( void );
 	void TeleporterTouch( CBaseEntity *pOther );
 	virtual void StartTouch( CBaseEntity *pOther );
@@ -109,8 +108,6 @@ public:
 
 	virtual int		GetBaseHealth( void ) { return TELEPORTER_MAX_HEALTH; }
 
-	virtual int		GetMaxUpgradeLevel(void) const OVERRIDE;
-
 	virtual int		GetUpgradeMetalRequired();
 
 	void SetTeleportWhere( const CUtlStringList& teleportWhereName )
@@ -134,9 +131,7 @@ public:
 
 protected:
 	CNetworkVar( int, m_iState );
-	CNetworkVar(int, m_iTeleportCooldownUsers);
-	CNetworkVar( float, m_flTeleportCooldownTime);
-	CNetworkVar(float, m_flRechargeTime);
+	CNetworkVar( float, m_flRechargeTime );
 	CNetworkVar( float, m_flCurrentRechargeDuration );
 	CNetworkVar( int, m_iTimesUsed );
 	CNetworkVar( float, m_flYawToExit );

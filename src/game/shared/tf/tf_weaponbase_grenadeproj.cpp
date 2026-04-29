@@ -10,7 +10,6 @@
 // Client specific.
 #ifdef CLIENT_DLL
 #include "c_tf_player.h"
-#include "cdll_bounded_cvars.h"
 // Server specific.
 #else
 #include "soundent.h"
@@ -138,7 +137,7 @@ void CTFWeaponBaseGrenadeProj::BounceOff( IPhysicsObject *pPhysics )
 float CTFWeaponBaseGrenadeProj::GetDamageRadius() 
 { 
 	float flRadius = m_DmgRadius;
-	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetOriginalLauncher(), flRadius, mult_explosion_radius );
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_hLauncher, flRadius, mult_explosion_radius );
 	return flRadius; 
 }	
 
@@ -168,6 +167,7 @@ void CTFWeaponBaseGrenadeProj::Precache( void )
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseGrenadeProj::Spawn()
 {
+	m_flSpawnTime = gpGlobals->curtime;
 	BaseClass::Spawn();
 
 	AddFlag( FL_GRENADE );
@@ -188,27 +188,13 @@ void CTFWeaponBaseGrenadeProj::OnDataChanged( DataUpdateType_t type )
 		interpolator.ClearHistory();
 		float changeTime = GetLastChangeTime( LATCH_SIMULATION_VAR );
 
-#if 0
 		// Add a sample 1 second back.
 		Vector vCurOrigin = GetLocalOrigin() - m_vInitialVelocity;
-		interpolator.AddToHead( changeTime - 1.0f, &vCurOrigin, false );
+		interpolator.AddToHead( changeTime - 1.0, &vCurOrigin, false );
 
 		// Add the current sample.
 		vCurOrigin = GetLocalOrigin();
 		interpolator.AddToHead( changeTime, &vCurOrigin, false );
-#else
-		// NEW SETUP: slowly transition to the future pos we'll get in the next update,
-		// reflecting our latest data NOW where the client is seeing, so they always can see the latest.
-		// Add a sample 1 second back.
-		const float flLerp = GetClientInterpAmount();
-		Vector vCurOrigin = GetLocalOrigin();
-		interpolator.AddToHead(changeTime - flLerp, &vCurOrigin, false);
-
-		// Add a sample a tick later. This isn't exactly when we'll get our next update, but it's close enough.
-		const float flTick = gpGlobals->interval_per_tick - 0.001f;
-		vCurOrigin += m_vInitialVelocity * flTick;
-		interpolator.AddToHead(changeTime + flTick, &vCurOrigin, false);
-#endif
 	}
 }
 
@@ -283,8 +269,7 @@ void CTFWeaponBaseGrenadeProj::Spawn( void )
 	SetSolidFlags( FSOLID_NOT_STANDABLE );
 	SetSolid( SOLID_BBOX );	
 
-	// UNDONE(mcoms): adding shadows
-	//AddEffects( EF_NOSHADOW );
+	AddEffects( EF_NOSHADOW );
 
 	// Set the grenade size here.
 	UTIL_SetSize( this, TF_GRENADE_PROJECTILE_MINS, TF_GRENADE_PROJECTILE_MAXS );
@@ -306,7 +291,7 @@ void CTFWeaponBaseGrenadeProj::Spawn( void )
 
 	// Setup the think and touch functions (see CBaseEntity).
 	SetThink( &CTFWeaponBaseGrenadeProj::DetonateThink );
-	SetNextThink( gpGlobals->curtime + 0.2f );
+	SetNextThink( gpGlobals->curtime + 0.2 );
 }
 
 //-----------------------------------------------------------------------------
@@ -351,7 +336,7 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType )
 	int iCustomParticleIndex = GetCustomParticleIndex();
 	if ( TF_IsHolidayActive( kHoliday_HalloweenOrFullMoon ) )
 	{
-		CALL_ATTRIB_HOOK_INT_ON_OTHER( GetOriginalLauncher(), iHalloweenSpell, halloween_pumpkin_explosions );
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( m_hLauncher, iHalloweenSpell, halloween_pumpkin_explosions );
 		if ( iHalloweenSpell > 0 )
 		{
 			iCustomParticleIndex = GetParticleSystemIndex( "halloween_explosion" );
@@ -366,7 +351,7 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType )
 	}
 
 	int iLargeExplosion = 0;
-	CALL_ATTRIB_HOOK_INT_ON_OTHER( GetOriginalLauncher(), iLargeExplosion, use_large_smoke_explosion );
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( m_hLauncher, iLargeExplosion, use_large_smoke_explosion );
 	if ( iLargeExplosion > 0 )
 	{
 		DispatchParticleEffect( "explosionTrail_seeds_mvm", GetAbsOrigin(), GetAbsAngles() );
@@ -399,7 +384,7 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType )
 	// Use the thrower's position as the reported position
 	Vector vecReported = GetThrower() ? GetThrower()->GetAbsOrigin() : vec3_origin;
 	int nCustomDamage = GetDamageCustom();
-	CTakeDamageInfo info( this, GetThrower(), GetOriginalLauncher(), GetBlastForce(), GetAbsOrigin(), m_flDamage, bitsDamageType, nCustomDamage, &vecReported );
+	CTakeDamageInfo info( this, GetThrower(), m_hLauncher, GetBlastForce(), GetAbsOrigin(), m_flDamage, bitsDamageType, nCustomDamage, &vecReported );
 
 	float flRadius = GetDamageRadius();
 
@@ -439,7 +424,7 @@ int CTFWeaponBaseGrenadeProj::OnTakeDamage( const CTakeDamageInfo &info )
 	// Reduce explosion damage so that we don't get knocked too far
 	if ( info.GetDamageType() & DMG_BLAST )
 	{
-		info2.ScaleDamageForce( 0.05f );
+		info2.ScaleDamageForce( 0.05 );
 	}
 
 	// We need to skip back to the base entity take damage, because
@@ -466,7 +451,7 @@ void CTFWeaponBaseGrenadeProj::DetonateThink( void )
 	}
 
 
-	SetNextThink( gpGlobals->curtime + 0.2f );
+	SetNextThink( gpGlobals->curtime + 0.2 );
 }
 
 //-----------------------------------------------------------------------------
@@ -480,8 +465,7 @@ void CTFWeaponBaseGrenadeProj::Detonate( void )
 	SetThink( NULL );
 
 	vecSpot = GetAbsOrigin() + Vector ( 0 , 0 , 8 );
-	Vector dir = UseImpactNormal() ? -GetImpactNormal() : Vector(0, 0, -1);
-	UTIL_TraceLine ( vecSpot, vecSpot + dir * 32, MASK_SHOT_HULL, this, COLLISION_GROUP_NONE, & tr);
+	UTIL_TraceLine ( vecSpot, vecSpot + Vector ( 0, 0, -32 ), MASK_SHOT_HULL, this, COLLISION_GROUP_NONE, & tr);
 
 	Explode( &tr, GetDamageType() );
 
@@ -756,19 +740,6 @@ void CTFWeaponBaseGrenadeProj::VPhysicsUpdate( IPhysicsObject *pPhysics )
 	bool bHitEnemy = tr.m_pEnt && tr.m_pEnt->GetTeamNumber() == GetEnemyTeam( GetTeamNumber() );
 	bool bHitFriendly = tr.m_pEnt && tr.m_pEnt->GetTeamNumber() == GetTeamNumber() && CanCollideWithTeammates();
 
-#if defined(MCOMS_BALANCE_PACK_CYLINDERS)
-	// radius bbox filter
-	if ( tr.m_pEnt && tr.m_pEnt->IsPlayer() )
-	{
-		const float flDistSq = ( tr.m_pEnt->WorldSpaceCenter() - tr.endpos ).Length2DSqr();
-		const float flRadius = tr.m_pEnt->WorldAlignSize().x * 0.5f * 1.2f; // not the full box radius
-		if ( flDistSq > flRadius * flRadius )
-		{
-			return;
-		}
-	}
-#endif
-
 	// Combat items are solid to enemy projectiles and bullets
 	if ( bHitEnemy && tr.m_pEnt->IsCombatItem() )
 	{
@@ -789,7 +760,7 @@ void CTFWeaponBaseGrenadeProj::VPhysicsUpdate( IPhysicsObject *pPhysics )
 		{
 			Touch( tr.m_pEnt );
 		}
-		else if ( !m_bInSolid && bHitFriendly && CanBounceOff() )
+		else if ( !m_bInSolid && bHitFriendly )
 		{
 			BounceOff( pPhysics );
 		}
@@ -804,7 +775,7 @@ void CTFWeaponBaseGrenadeProj::VPhysicsUpdate( IPhysicsObject *pPhysics )
 	{
 		Touch( tr.m_pEnt );
 		
-		if ( CanBounceOff() && ( bHitFriendly || bHitEnemy ) )
+		if ( bHitFriendly || bHitEnemy )
 		{
 			// reflect velocity around normal
 			vel = -2.0f * tr.plane.normal * DotProduct(vel,tr.plane.normal) + vel;

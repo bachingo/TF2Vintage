@@ -95,8 +95,8 @@ public:
 private:
 	CNetworkHandle( CTFWearable, m_hRobotArm );
 
-	CNetworkVar( int, m_iComboCount );
-	CNetworkVar( float, m_flLastComboHit );
+	int					m_iComboCount;
+	float				m_flLastComboHit;
 	bool				m_bBigIdle;
 	bool				m_bBigHit;
 };

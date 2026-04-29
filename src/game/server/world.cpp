@@ -580,10 +580,10 @@ void CWorld::Precache( void )
 	g_fGameOver = false;
 	g_pLastSpawn = NULL;
 
-	static ConVarRef stepsize( "sv_stepsize" );
+	ConVarRef stepsize( "sv_stepsize" );
 	stepsize.SetValue( 18 );
 
-	static ConVarRef roomtype( "room_type" );
+	ConVarRef roomtype( "room_type" );
 	roomtype.SetValue( 0 );
 
 	// Set up game rules

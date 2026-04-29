@@ -107,39 +107,11 @@ void C_BaseCombatCharacter::DoMuzzleFlash()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void C_BaseCombatCharacter::GetGlowEffectColor( float *r, float *g, float *b, float *a )
+void C_BaseCombatCharacter::GetGlowEffectColor( float *r, float *g, float *b )
 {
 	*r = 0.76f;
 	*g = 0.76f;
 	*b = 0.76f;
-	*a = 1.0f;
-}
-
-void C_BaseCombatCharacter::SetClientSideGlowEnabled(bool bEnabled, int iSourceFlag)
-{
-	const int iOldSources = m_iClientSideGlowSources;
-	if ( bEnabled )
-	{
-		m_iClientSideGlowSources |= iSourceFlag;
-	}
-	else
-	{
-		m_iClientSideGlowSources &= ~iSourceFlag;
-	}
-	if ( m_iClientSideGlowSources != 0 )
-	{
-		bEnabled = true;
-	}
-	else
-	{
-		bEnabled = false;
-	}
-	const bool bChanged = ( iOldSources != m_iClientSideGlowSources ) || ( m_bClientSideGlowEnabled != bEnabled );
-	if ( bChanged )
-	{
-		m_bClientSideGlowEnabled = bEnabled;
-		UpdateGlowEffect();
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -172,10 +144,10 @@ void C_BaseCombatCharacter::UpdateGlowEffect( void )
 	// create a new effect
 	if ( m_bGlowEnabled || m_bClientSideGlowEnabled )
 	{
-		float r, g, b, a = 1.0f;
-		GetGlowEffectColor( &r, &g, &b, &a );
+		float r, g, b;
+		GetGlowEffectColor( &r, &g, &b );
 
-		m_pGlowEffect = new CGlowObject( this, Vector( r, g, b ), a, true );
+		m_pGlowEffect = new CGlowObject( this, Vector( r, g, b ), 1.0, true );
 	}
 }
 

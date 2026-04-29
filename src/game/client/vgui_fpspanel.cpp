@@ -24,7 +24,7 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-static ConVar cl_showfps( "cl_showfps", "0", FCVAR_ARCHIVE | FCVAR_ALLOWED_IN_COMPETITIVE, "Draw fps meter at top of screen (1 = fps, 2 = smooth fps)" );
+static ConVar cl_showfps( "cl_showfps", "0", FCVAR_ALLOWED_IN_COMPETITIVE, "Draw fps meter at top of screen (1 = fps, 2 = smooth fps)" );
 static ConVar cl_showpos( "cl_showpos", "0", 0, "Draw current position at top of screen" );
 static ConVar cl_showbattery( "cl_showbattery", "0", 0, "Draw current battery level at top of screen when on battery power" );
 
@@ -188,12 +188,12 @@ void GetFPSColor( int nFps, unsigned char ucColor[3] )
 	int nFPSThreshold1 = 20;
 	int nFPSThreshold2 = 15;
 	
-	if ( IsPC() )
+	if ( IsPC() && g_pMaterialSystemHardwareConfig->GetDXSupportLevel() >= 95 )
 	{
 		nFPSThreshold1 = 60;
 		nFPSThreshold2 = 50;
 	}
-	else if ( IsX360() )
+	else if ( IsX360() || g_pMaterialSystemHardwareConfig->GetDXSupportLevel() >= 90 )
 	{
 		nFPSThreshold1 = 30;
 		nFPSThreshold2 = 25;

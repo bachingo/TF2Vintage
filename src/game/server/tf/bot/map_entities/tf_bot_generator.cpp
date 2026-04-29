@@ -401,7 +401,6 @@ void CTFBotGenerator::SpawnBot( void )
 			CTFBot::DifficultyType skill = bot->GetDifficulty();
 			CreateBotName( iTeam, bot->GetPlayerClass()->GetClassIndex(), skill, name, sizeof(name) );
 			engine->SetFakeClientConVarValue( bot->edict(), "name", name );
-			bot->SetPlayerName( name );
 		}
 
 		if ( bot->IsAlive() == false )

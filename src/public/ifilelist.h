@@ -22,12 +22,6 @@ public:
 	virtual void	Release() = 0;
 };
 
-struct FileListAll final : public IFileList
-{
-	virtual bool	IsFileInList( const char *pFilename ) { return true; }
-	virtual void	Release() { delete this; }
-};
-
 
 #endif // IFILELIST_H
 

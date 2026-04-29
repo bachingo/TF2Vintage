@@ -21,15 +21,13 @@
 #include "in_buttons.h"
 #endif // CLIENT_DLL
 
-const float tf_flame_burn_index_drain_rate = 26.666666f; // penalty for missing a flame -- based upon tick rate and burn frequency
-const float tf_flame_burn_index_per_collide = 33.333333f; // bonus for hitting a flame -- based upon tick rate and fire interval
-const float tf_flame_burn_index_per_collide_remap_x = 60.f; // min accuracy floor
-const float tf_flame_burn_index_per_collide_remap_y = 100.f; // 100% accuracy
-const float tf_flame_burn_index_damage_scale_min = 0.5f; // max damage penalty for min accuracy
-const float tf_flame_warmup_ticks = 90; // number of ticks needed to warmup fully
-const float tf_flame_warmup_inc = 1.0f / tf_flame_warmup_ticks; // increment per tick
+const float tf_flame_burn_index_drain_rate = 1.25f;
+const float tf_flame_burn_index_per_collide = 1.f;
+const float tf_flame_burn_index_per_collide_remap_x = 10.f;
+const float tf_flame_burn_index_per_collide_remap_y = 50.f;
+const float tf_flame_burn_index_damage_scale_min = 0.5f;
 
-ConVar tf_flame_dmg_mode_dist( "tf_flame_dmg_mode_dist", "0", FCVAR_REPLICATED | FCVAR_HIDDEN );
+ConVar tf_flame_dmg_mode_dist( "tf_flame_dmg_mode_dist", "0", FCVAR_REPLICATED | FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY | FCVAR_HIDDEN );
 
 #ifdef WATERFALL_FLAMETHROWER_TEST
 ConVar tf_flame_waterfall_speed_override( "tf_flame_waterfall_speed_override", "0", FCVAR_REPLICATED );
@@ -49,24 +47,11 @@ float tf_flame_particle_min_density = 0.01f;
 
 #else // CLIENT_DLL
 
-#ifdef TF2_OG
-const float tf_flame_min_damage_scale = 0.725f;
-#else
 const float tf_flame_min_damage_scale = 0.5f;
-#endif
-#ifdef TF2_OG
-const float tf_flame_maxdamagedist = 125.f;
-#else
 const float tf_flame_maxdamagedist = 150.f;
-#endif
-#ifdef TF2_OG
-const float tf_flame_mindamagedist = 175.f;
-#else
 const float tf_flame_mindamagedist = 300.f;
-#endif
 const float tf_flame_min_damage_scale_time = 0.5f;
-const float tf_flame_min_damage_scale_time_cap = ( tf_flame_mindamagedist / 2450.0f ) / 0.5f; // time it takes for us to reach tf_flame_mindamagedist, as a function of lifetime. longer life does more damage at the same distance.
-const float tf_flame_damage_scale_time_min = tf_flame_maxdamagedist / 2450.0f;                // time it takes to reach tf_flame_maxdamagedist
+const float tf_flame_min_damage_scale_time_cap = 0.5f;
 #endif
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFFlameManager, DT_TFFlameManager );
@@ -362,17 +347,12 @@ void CTFFlameManager::PostEntityThink( void )
 	// remove all entities that are no longer touching the flame
 	FOR_EACH_MAP_FAST( m_mapEntitiesBurnt, i )
 	{
-		CBaseEntity* pEntity = m_mapEntitiesBurnt.Key( i );
-		if ( gpGlobals->curtime - m_mapEntitiesBurnt[i].m_flLastBurnTime > 3.0f || !pEntity || !pEntity->IsAlive() )
+		if ( gpGlobals->curtime - m_mapEntitiesBurnt[i].m_flLastBurnTime > m_flBurnFrequency )
 		{
 			m_mapEntitiesBurnt.RemoveAt( i );
 
 			// go thru the map again to see if we need to remove anything else
 			i = 0;
-		}
-		else if ( gpGlobals->curtime - m_mapEntitiesBurnt[i].m_flLastBurnTime > m_flBurnFrequency )
-		{
-			m_mapEntitiesBurnt[i].m_flHeatIndex = tf_flame_burn_index_per_collide_remap_y;
 		}
 	}
 
@@ -532,46 +512,36 @@ float CTFFlameManager::GetFlameDamageScale( const tf_point_t* pPoint, CTFPlayer 
 	
 	float flDamageScale = 1.f;
 
-	int iFlameDmgMode = tf_flame_dmg_mode_dist.GetInt();
-	if ( iFlameDmgMode >= 0 )
+	// Distance-based calculation is what we shipped with
+	if ( tf_flame_dmg_mode_dist.GetBool() )
 	{
-		// Distance-based calculation is what we shipped with
-		if ( iFlameDmgMode == 1 )
-		{
-			float flDistSqr = pFlame->m_vecPosition.DistToSqr(pFlame->m_vecInitialPos);
-			float flMaxDamageDistSqr = Square(tf_flame_maxdamagedist);
-			float flMinDamageDistSqr = Square(tf_flame_mindamagedist);
-			flDamageScale = RemapValClamped(flDistSqr, flMaxDamageDistSqr, flMinDamageDistSqr, 1.0f, tf_flame_min_damage_scale);
-		}
-		// Lifetime-based
-		else
-		{
-			float flTimeAlive = gpGlobals->curtime - pFlame->m_flSpawnTime;
-			float flLifeMax = pFlame->m_flLifeTime * tf_flame_min_damage_scale_time_cap;
-			flDamageScale = RemapValClamped(flTimeAlive, tf_flame_damage_scale_time_min, flLifeMax, 1.f, tf_flame_min_damage_scale_time);
-		}
+		float flDistSqr = pFlame->m_vecPosition.DistToSqr( pFlame->m_vecInitialPos );
+		float flMaxDamageDistSqr = Square( tf_flame_maxdamagedist );
+		float flMinDamageDistSqr = Square( tf_flame_mindamagedist );
+		flDamageScale = RemapValClamped( flDistSqr, flMaxDamageDistSqr, flMinDamageDistSqr, 1.0f, tf_flame_min_damage_scale );
+	}
+	// Lifetime-based
+	else
+	{
+		float flTimeAlive = gpGlobals->curtime - pFlame->m_flSpawnTime;
+		float flLifeMax = pFlame->m_flLifeTime * tf_flame_min_damage_scale_time_cap;
+		flDamageScale = RemapValClamped( flTimeAlive, 0.f, flLifeMax, 1.f, tf_flame_min_damage_scale_time );
 	}
 
-#if !defined( TF2_OG )
-	if ( pTFTarget )
+	if ( pTFTarget 
+		)
 	{
+		float flIndexMod = 1.f;
 		auto iEntIndex = m_mapEntitiesBurnt.Find( pTFTarget );
-		float flHeat;
-		float flWarmup;
 		if ( iEntIndex != m_mapEntitiesBurnt.InvalidIndex() )
 		{
-			flHeat = m_mapEntitiesBurnt[iEntIndex].m_flHeatIndex;
-			flWarmup = m_mapEntitiesBurnt[iEntIndex].m_flWarmup;
-		}
-		else
-		{
-			flHeat = tf_flame_burn_index_per_collide_remap_y;
-			flWarmup = 0.5f;
+			flIndexMod = RemapValClamped( m_mapEntitiesBurnt[iEntIndex].m_flHeatIndex, 
+										  tf_flame_burn_index_per_collide_remap_x, tf_flame_burn_index_per_collide_remap_y, 
+										  tf_flame_burn_index_damage_scale_min, 1.f );
 		}
 
-		flDamageScale *= RemapValClamped( flHeat, tf_flame_burn_index_per_collide_remap_x, tf_flame_burn_index_per_collide_remap_y, tf_flame_burn_index_damage_scale_min, 1.f ) * flWarmup;
+		flDamageScale *= flIndexMod;
 	}
-#endif
 
 	// should we reduce damage based on reflection?
 	for ( int i = 0; i<pPoint->m_nHitWall; ++i )
@@ -714,17 +684,11 @@ void CTFFlameManager::OnCollide( CBaseEntity *pEnt, int iPointIndex )
 	int iEntIndex = m_mapEntitiesBurnt.Find( pEnt );
 	if ( iEntIndex != m_mapEntitiesBurnt.InvalidIndex() )
 	{
-		float flAmount = tf_flame_burn_index_per_collide;
-
-		// my guess for why this is here: we're looking for how they're aiming their latest flames, so weight it by lifetime to get the full heat amount.
-		// however, this doesn't actually work because this effectively adds a new falloff mechanism!
-#if 0
 		float flTimeAlive = gpGlobals->curtime - pFlame->m_flSpawnTime;
-		flAmount *= RemapValClamped(flTimeAlive, 0.0f, 0.02f, 1.0f, 0.5f);
-#endif
 
-		m_mapEntitiesBurnt[iEntIndex].m_flHeatIndex = Min( m_mapEntitiesBurnt[iEntIndex].m_flHeatIndex + flAmount, tf_flame_burn_index_per_collide_remap_y );
-		m_mapEntitiesBurnt[iEntIndex].m_flWarmup = Min( m_mapEntitiesBurnt[iEntIndex].m_flWarmup + tf_flame_warmup_inc, 1.0f );
+		float flAmount = RemapValClamped( flTimeAlive, 0.f, 0.02f, ( tf_flame_burn_index_per_collide * 2.f ), tf_flame_burn_index_per_collide );
+
+		m_mapEntitiesBurnt[iEntIndex].m_flHeatIndex += flAmount;
 	}
 
 	// if we already burn this entity, check if we can burn it again
@@ -741,11 +705,11 @@ void CTFFlameManager::OnCollide( CBaseEntity *pEnt, int iPointIndex )
 
 		// Does he have the bow?
 		CTFWeaponBase *pWpn = pPlayer->GetActiveTFWeapon();
-		if ( !pWpn || pWpn->GetWeaponID() != TF_WEAPON_COMPOUND_BOW )
-			return;
-
-		CTFCompoundBow *pBow = static_cast<CTFCompoundBow*>( pWpn );
-		pBow->SetArrowAlight( true );
+		if ( pWpn && pWpn->GetWeaponID() == TF_WEAPON_COMPOUND_BOW )
+		{
+			CTFCompoundBow *pBow = static_cast<CTFCompoundBow*>( pWpn );
+			pBow->SetArrowAlight( true );
+		}
 	}
 	else
 	{
@@ -799,9 +763,7 @@ void CTFFlameManager::OnCollide( CBaseEntity *pEnt, int iPointIndex )
 						}
 					}
 
-#ifndef TF2_OG
 					pVictim->m_Shared.AddCond( TF_COND_HEALING_DEBUFF, 2.f, pAttacker );
-#endif
 				}
 			}
 		}
@@ -845,8 +807,7 @@ void CTFFlameManager::OnCollide( CBaseEntity *pEnt, int iPointIndex )
 	}
 	else
 	{
-		// start at one collide of warmup, full accuracy (burn)
-		m_mapEntitiesBurnt.Insert( pEnt, { gpGlobals->curtime, tf_flame_burn_index_per_collide_remap_y, 0.5f } );
+		m_mapEntitiesBurnt.Insert( pEnt, { gpGlobals->curtime, tf_flame_burn_index_per_collide } );
 	}
 }
 

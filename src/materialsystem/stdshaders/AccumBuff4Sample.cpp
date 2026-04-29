@@ -7,8 +7,10 @@
 
 #include "BaseVSShader.h"
 #include "common_hlsl_cpp_consts.h"
-#include "screenspaceeffect_vs30.inc"
-#include "AccumBuff4Sample_ps30.inc"
+#include "screenspaceeffect_vs20.inc"
+#include "accumbuff4sample_ps20.inc"
+#include "accumbuff4sample_ps20b.inc"
+#include "convar.h"
 
 BEGIN_VS_SHADER_FLAGS( accumbuff4sample, "Help for AccumBuff4Sample", SHADER_NOT_EDITABLE )
 	BEGIN_SHADER_PARAMS
@@ -61,18 +63,27 @@ BEGIN_VS_SHADER_FLAGS( accumbuff4sample, "Help for AccumBuff4Sample", SHADER_NOT
 			int fmt = VERTEX_POSITION;
 			pShaderShadow->VertexShaderVertexFormat( fmt, 1, 0, 0 );
 
-			pShaderShadow->EnableSRGBRead( SHADER_SAMPLER0, false );
-			pShaderShadow->EnableSRGBRead( SHADER_SAMPLER1, false );
-			pShaderShadow->EnableSRGBRead( SHADER_SAMPLER2, false );
-			pShaderShadow->EnableSRGBRead( SHADER_SAMPLER3, false );
-			pShaderShadow->EnableSRGBWrite( false );
+			// Render targets are pegged as sRGB on OSX togl, so just force these reads and writes
+			bool bForceSRGBReadAndWrite = IsOSX() && g_pHardwareConfig->CanDoSRGBReadFromRTs();
+			pShaderShadow->EnableSRGBRead( SHADER_SAMPLER0, bForceSRGBReadAndWrite );
+			pShaderShadow->EnableSRGBRead( SHADER_SAMPLER1, bForceSRGBReadAndWrite );
+			pShaderShadow->EnableSRGBRead( SHADER_SAMPLER2, bForceSRGBReadAndWrite );
+			pShaderShadow->EnableSRGBRead( SHADER_SAMPLER3, bForceSRGBReadAndWrite );
+			pShaderShadow->EnableSRGBWrite( bForceSRGBReadAndWrite );
 
-			DECLARE_STATIC_VERTEX_SHADER( screenspaceeffect_vs30 );
-			SET_STATIC_VERTEX_SHADER_COMBO( VERTEXCOLOR, false );
-			SET_STATIC_VERTEX_SHADER( screenspaceeffect_vs30 );
-
-			DECLARE_STATIC_PIXEL_SHADER( accumbuff4sample_ps30 );
-			SET_STATIC_PIXEL_SHADER( accumbuff4sample_ps30 );
+			DECLARE_STATIC_VERTEX_SHADER( screenspaceeffect_vs20 );
+			SET_STATIC_VERTEX_SHADER( screenspaceeffect_vs20 );
+			
+			if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
+			{
+				DECLARE_STATIC_PIXEL_SHADER( accumbuff4sample_ps20b );
+				SET_STATIC_PIXEL_SHADER( accumbuff4sample_ps20b );
+			}
+			else
+			{
+				DECLARE_STATIC_PIXEL_SHADER( accumbuff4sample_ps20 );
+				SET_STATIC_PIXEL_SHADER( accumbuff4sample_ps20 );
+			}
 		}
 
 		DYNAMIC_STATE
@@ -84,11 +95,19 @@ BEGIN_VS_SHADER_FLAGS( accumbuff4sample, "Help for AccumBuff4Sample", SHADER_NOT
 
 			SetPixelShaderConstant( 0, WEIGHTS );
 
-			DECLARE_DYNAMIC_VERTEX_SHADER( screenspaceeffect_vs30 );
-			SET_DYNAMIC_VERTEX_SHADER( screenspaceeffect_vs30 );
+			DECLARE_DYNAMIC_VERTEX_SHADER( screenspaceeffect_vs20 );
+			SET_DYNAMIC_VERTEX_SHADER( screenspaceeffect_vs20 );
 
-			DECLARE_DYNAMIC_PIXEL_SHADER( accumbuff4sample_ps30 );
-			SET_DYNAMIC_PIXEL_SHADER( accumbuff4sample_ps30 );
+			if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
+			{
+				DECLARE_DYNAMIC_PIXEL_SHADER( accumbuff4sample_ps20b );
+				SET_DYNAMIC_PIXEL_SHADER( accumbuff4sample_ps20b );
+			}
+			else
+			{
+				DECLARE_DYNAMIC_PIXEL_SHADER( accumbuff4sample_ps20 );
+				SET_DYNAMIC_PIXEL_SHADER( accumbuff4sample_ps20 );
+			}
 		}
 		Draw();
 	}

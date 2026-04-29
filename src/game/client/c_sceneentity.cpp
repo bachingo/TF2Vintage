@@ -60,8 +60,6 @@ C_SceneEntity::C_SceneEntity( void )
 
 	m_hOwner = NULL;
 	m_bClientOnly = false;
-
-	SetDefLessFunc( m_mapSceneMemCache );
 }
 
 C_SceneEntity::~C_SceneEntity( void )
@@ -82,16 +80,13 @@ char const *C_SceneEntity::GetSceneFileName()
 	return g_pStringTableClientSideChoreoScenes->GetString( m_nSceneStringIndex );
 }
 
-ConVar mp_usehwmvcds( "mp_usehwmvcds", "-1", NULL, "Enable the use of the hw morph vcd(s). (-1 = never, 1 = always, 0 = based upon GPU)" ); // -1 = never, 0 = if hasfastvertextextures, 1 = always
+ConVar mp_usehwmvcds( "mp_usehwmvcds", "1", NULL, "Enable the use of the hw morph vcd(s). (-1 = never, 1 = always, 0 = based upon GPU)" ); // -1 = never, 0 = if hasfastvertextextures, 1 = always
 bool UseHWMorphVCDs()
 {
-#if 0
- 	if ( mp_usehwmvcds.GetInt() == 0 )
- 		return g_pMaterialSystemHardwareConfig->HasFastVertexTextures();
- 	return mp_usehwmvcds.GetInt() > 0;
-#else
+// 	if ( mp_usehwmvcds.GetInt() == 0 )
+// 		return g_pMaterialSystemHardwareConfig->HasFastVertexTextures();
+// 	return mp_usehwmvcds.GetInt() > 0;
 	return false;
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -762,14 +757,6 @@ CChoreoScene *C_SceneEntity::LoadScene( const char *filename )
 	Q_SetExtension( loadfile, ".vcd", sizeof( loadfile ) );
 	Q_FixSlashes( loadfile );
 
-	auto iCacheIdx = m_mapSceneMemCache.Find(loadfile);
-	if ( iCacheIdx != m_mapSceneMemCache.InvalidIndex() )
-	{
-		CChoreoScene* pScene = new CChoreoScene(NULL);
-		*pScene = *m_mapSceneMemCache.Element(iCacheIdx);
-		return pScene;
-	}
-
 	char *pBuffer = NULL;
 	size_t bufsize = scenefilecache->GetSceneBufferSize( loadfile );
 	if ( bufsize <= 0 )
@@ -803,14 +790,6 @@ CChoreoScene *C_SceneEntity::LoadScene( const char *filename )
 	{
 		g_TokenProcessor.SetBuffer( pBuffer );
 		pScene = ChoreoLoadScene( loadfile, this, &g_TokenProcessor, Scene_Printf );
-	}
-
-	CChoreoScene* pCachedScene = new CChoreoScene(NULL);
-	*pCachedScene = *pScene;
-	// TODO(mcoms): LRU but this will stop crashes for now.
-	if (m_mapSceneMemCache.Count() <= 1024)
-	{
-		m_mapSceneMemCache.Insert(loadfile, pCachedScene);
 	}
 
 	delete[] pBuffer;

@@ -6,8 +6,9 @@
 //=============================================================================//
 
 #include "BaseVSShader.h"
-#include "portal_vs30.inc"
-#include "portal_ps30.inc"
+#include "portal_vs20.inc"
+#include "portal_ps20.inc"
+#include "portal_ps20b.inc"
 #include "convar.h"
 #include "cpp_shader_constant_register_map.h"
 
@@ -160,16 +161,26 @@ BEGIN_VS_SHADER( Portal_DX90,
 			if( bStaticBlendTexture && bAlphaMaskTexture )
 				pShaderShadow->EnableTexture( SHADER_SAMPLER2, true );
 			
-			DECLARE_STATIC_VERTEX_SHADER( portal_vs30 );
+			DECLARE_STATIC_VERTEX_SHADER( portal_vs20 );
 			SET_STATIC_VERTEX_SHADER_COMBO( HASALPHAMASK, bAlphaMaskTexture );
 			SET_STATIC_VERTEX_SHADER_COMBO( HASSTATICTEXTURE, bStaticBlendTexture );
 			SET_STATIC_VERTEX_SHADER_COMBO( USEALTERNATEVIEW, (params[USEALTERNATEVIEWMATRIX]->GetIntValue() != 0) );
-			SET_STATIC_VERTEX_SHADER( portal_vs30 );
+			SET_STATIC_VERTEX_SHADER( portal_vs20 );
 
-			DECLARE_STATIC_PIXEL_SHADER( portal_ps30 );
-			SET_STATIC_PIXEL_SHADER_COMBO( HASALPHAMASK, bAlphaMaskTexture );
-			SET_STATIC_PIXEL_SHADER_COMBO( HASSTATICTEXTURE, bStaticBlendTexture );
-			SET_STATIC_PIXEL_SHADER( portal_ps30 );
+			if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
+			{
+				DECLARE_STATIC_PIXEL_SHADER( portal_ps20b );
+				SET_STATIC_PIXEL_SHADER_COMBO( HASALPHAMASK, bAlphaMaskTexture );
+				SET_STATIC_PIXEL_SHADER_COMBO( HASSTATICTEXTURE, bStaticBlendTexture );
+				SET_STATIC_PIXEL_SHADER( portal_ps20b );
+			}
+			else
+			{
+				DECLARE_STATIC_PIXEL_SHADER( portal_ps20 );
+				SET_STATIC_PIXEL_SHADER_COMBO( HASALPHAMASK, bAlphaMaskTexture );
+				SET_STATIC_PIXEL_SHADER_COMBO( HASSTATICTEXTURE, bStaticBlendTexture );
+				SET_STATIC_PIXEL_SHADER( portal_ps20 );
+			}
 
 		}
 		DYNAMIC_STATE
@@ -220,16 +231,27 @@ BEGIN_VS_SHADER( Portal_DX90,
 				pShaderAPI->SetVertexShaderConstant( VERTEX_SHADER_SHADER_SPECIFIC_CONST_0, matFinal.Base(), 4 );
 			}
 
-			DECLARE_DYNAMIC_VERTEX_SHADER( portal_vs30 );
+			DECLARE_DYNAMIC_VERTEX_SHADER( portal_vs20 );
 			SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING, pShaderAPI->GetCurrentNumBones() > 0 );
 			SET_DYNAMIC_VERTEX_SHADER_COMBO( ADDSTATIC, bHasStatic );
-			SET_DYNAMIC_VERTEX_SHADER( portal_vs30 );
+			SET_DYNAMIC_VERTEX_SHADER( portal_vs20 );
 
-			DECLARE_DYNAMIC_PIXEL_SHADER( portal_ps30 );
-			SET_DYNAMIC_PIXEL_SHADER_COMBO( ADDSTATIC, bHasStatic );
-			SET_DYNAMIC_PIXEL_SHADER_COMBO( HDRENABLED, IsHDREnabled() );
-			SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
-			SET_DYNAMIC_PIXEL_SHADER( portal_ps30 );
+			if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
+			{
+				DECLARE_DYNAMIC_PIXEL_SHADER( portal_ps20b );
+				SET_DYNAMIC_PIXEL_SHADER_COMBO( ADDSTATIC, bHasStatic );
+				SET_DYNAMIC_PIXEL_SHADER_COMBO( HDRENABLED, IsHDREnabled() );
+				SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
+				SET_DYNAMIC_PIXEL_SHADER( portal_ps20b );
+			}
+			else
+			{
+				DECLARE_DYNAMIC_PIXEL_SHADER( portal_ps20 );
+				SET_DYNAMIC_PIXEL_SHADER_COMBO( ADDSTATIC, bHasStatic );
+				SET_DYNAMIC_PIXEL_SHADER_COMBO( HDRENABLED, IsHDREnabled() );
+				SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
+				SET_DYNAMIC_PIXEL_SHADER( portal_ps20 );
+			}
 		}
 
 		Draw();		

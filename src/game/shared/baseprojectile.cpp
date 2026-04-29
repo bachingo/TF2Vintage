@@ -18,10 +18,8 @@ IMPLEMENT_NETWORKCLASS_ALIASED( BaseProjectile, DT_BaseProjectile )
 BEGIN_NETWORK_TABLE( CBaseProjectile, DT_BaseProjectile )
 #if !defined( CLIENT_DLL )
 	SendPropEHandle( SENDINFO( m_hOriginalLauncher ) ),
-	SendPropEHandle( SENDINFO( m_hLauncher ) ),
 #else
 	RecvPropEHandle( RECVINFO( m_hOriginalLauncher ) ),
-	RecvPropEHandle( RECVINFO( m_hLauncher ) ),
 #endif // CLIENT_DLL
 END_NETWORK_TABLE()
 
@@ -59,7 +57,7 @@ CBaseProjectile::CBaseProjectile()
 	m_bCanCollideWithTeammates = false;
 #endif
 	m_hOriginalLauncher = NULL;
-	m_flProjectileSpawnTime = 0.0f;
+
 }
 
 
@@ -104,8 +102,6 @@ CBaseProjectile::~CBaseProjectile()
 //-----------------------------------------------------------------------------
 void CBaseProjectile::SetLauncher( CBaseEntity *pLauncher )
 {
-	m_hLauncher = pLauncher;
-
 	if ( m_hOriginalLauncher == NULL )
 	{
 		m_hOriginalLauncher = pLauncher;
@@ -123,8 +119,6 @@ void CBaseProjectile::SetLauncher( CBaseEntity *pLauncher )
 void CBaseProjectile::Spawn()
 {
 	BaseClass::Spawn();
-
-	m_flProjectileSpawnTime = gpGlobals->curtime;
 
 #ifdef GAME_DLL
 	ResetCollideWithTeammates();

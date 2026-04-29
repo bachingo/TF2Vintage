@@ -46,10 +46,6 @@ public:
 	virtual bool	ValidTouch( CBasePlayer *pPlayer );
 	virtual bool	MyTouch( CBasePlayer *pPlayer );
 
-	virtual void	ForceHoliday( /*EHoliday*/ int eHoliday );
-
-	bool			IsHolidayActive( /*EHoliday*/ int eHoliday );
-
 	void			DropSingleInstance( Vector &vecLaunchVel, CBaseCombatCharacter *pThrower, float flThrowerTouchDelay, float flResetTime = 0.1f );
 
 	bool			IsDisabled( void );
@@ -77,7 +73,6 @@ protected:
 	bool			m_bRespawning;
 	bool			m_bThrownSingleInstance;
 	bool			m_bAutoMaterialize;
-	int				m_eForceHoliday;
 
 	string_t		m_iszModel;
 

@@ -211,7 +211,6 @@ bool CTFWeaponInvis::ActivateInvisibilityWatch( void )
 
 	SetCloakRates();
 
-	bool bDidAction = false;
 	bool bDoSkill = false;
 	// If we're in TF_COND_STEALTHED - which means we gave it ourselves - always remove it
 	// If we're in TF_COND_STEALTHED_USER_BUFF and we have Dead Ringer, allow it to be toggled
@@ -219,8 +218,12 @@ bool CTFWeaponInvis::ActivateInvisibilityWatch( void )
 	if ( pOwner->m_Shared.InCond( TF_COND_STEALTHED ) )
 	{
 		// De-cloak.
+		float flDecloakRate = 0.0f;
+		CALL_ATTRIB_HOOK_FLOAT( flDecloakRate, mult_decloak_rate );
+		if ( flDecloakRate <= 0.0f )
+			flDecloakRate = 1.0f;
+
 		pOwner->m_Shared.FadeInvis( 1.0f );
-		bDidAction = true;
 	}
 	else
 	{
@@ -230,13 +233,11 @@ bool CTFWeaponInvis::ActivateInvisibilityWatch( void )
 			{
 				// Turn it off...
 				SetFeignDeathState( false );
-				bDidAction = true;
 			}
 			else if ( pOwner->m_Shared.GetSpyCloakMeter() == 100.f )
 			{
 				// Turn it on...
 				SetFeignDeathState( true );
-				bDidAction = true;
 			}
 		}
 		else if ( pOwner->CanGoInvisible() && ( pOwner->m_Shared.GetSpyCloakMeter() > 8.0f ) )	// must have over 10% cloak to start
@@ -251,15 +252,14 @@ bool CTFWeaponInvis::ActivateInvisibilityWatch( void )
 
 	if ( bDoSkill )
 	{
-		bDidAction = true;
-		pOwner->m_Shared.SetNextStealthTime( gpGlobals->curtime + 0.5f );
+		pOwner->m_Shared.SetNextStealthTime( gpGlobals->curtime + 0.5 );
 	}
 	else
 	{
-		pOwner->m_Shared.SetNextStealthTime( gpGlobals->curtime + 0.1f );
+		pOwner->m_Shared.SetNextStealthTime( gpGlobals->curtime + 0.1 );
 	}
 
-	return bDidAction;
+	return bDoSkill;
 }
 
 //-----------------------------------------------------------------------------
@@ -299,7 +299,7 @@ void CTFWeaponInvis::SetFeignDeathState( bool bEnabled )
 	{
 		pOwner->m_Shared.SetFeignDeathReady( true );
 		pOwner->SetOffHandWeapon( this );
-		pOwner->m_Shared.SetNextStealthTime( gpGlobals->curtime + 0.5f );
+		pOwner->m_Shared.SetNextStealthTime( gpGlobals->curtime + 0.5 );
 	}
 	else
 	{
@@ -309,7 +309,7 @@ void CTFWeaponInvis::SetFeignDeathState( bool bEnabled )
 			pOwner->HolsterOffHandWeapon();
 			if ( pOwner->GetActiveWeapon() )
 			{
-				pOwner->GetActiveWeapon()->m_flNextPrimaryAttack = MAX( pOwner->GetActiveWeapon()->m_flNextPrimaryAttack, gpGlobals->curtime + 0.1f );
+				pOwner->GetActiveWeapon()->m_flNextPrimaryAttack = gpGlobals->curtime + 0.1f;
 			}
 		}
 	}

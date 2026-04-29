@@ -139,7 +139,7 @@ void CTFWinPanel::FireGameEvent( IGameEvent * event )
 		bool bUseMoreOpaqueBorder = false;
 		if ( TFGameRules() && bGameOver )
 		{
-			if ( TFGameRules()->IsMatchTypeCompetitive() || TFGameRules()->IsEmulatingMatch() == 2 )
+			if ( TFGameRules()->IsMatchTypeCompetitive() )
 			{
 				bUseMoreOpaqueBorder = true;
 			}

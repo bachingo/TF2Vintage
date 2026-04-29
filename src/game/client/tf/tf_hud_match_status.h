@@ -123,9 +123,7 @@ private:
 	CAvatarImagePanel			*m_pBlueLeaderAvatarImage;
 	EditablePanel				*m_pBlueLeaderAvatarBG;
 	vgui::ImagePanel			*m_pBlueTeamImage;
-	CExLabel*                    m_pBlueTeamName;
-	
-	CExLabel*                    m_pCountdownLabel;
+	CExLabel					*m_pBlueTeamName;
 
 	CPanelAnimationVar( int, m_iAvatarWidth, "avatar_width", "34" );		// Avatar width doesn't scale with resolution
 	CPanelAnimationVarAliasType( int, m_iSpacerWidth, "spacer", "5", "proportional_int" );
@@ -134,30 +132,7 @@ private:
 
 	vgui::HFont					m_hPlayerListFont;
 
-	int m_iUseMatchHUD;
-
-	float m_flMatchSummaryShowTime;
-};
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-class CTFHudItemDraft : public CHudElement, public EditablePanel
-{
-	DECLARE_CLASS_SIMPLE(CTFHudMatchStatus, EditablePanel);
-public:
-	CTFHudItemDraft(const char* pElementName);
-	virtual ~CTFHudItemDraft(void);
-
-	virtual void ApplySchemeSettings(IScheme* pScheme) OVERRIDE;
-	virtual void FireGameEvent(IGameEvent* event) OVERRIDE;
-	virtual void OnThink() OVERRIDE;
-	virtual void PerformLayout() OVERRIDE;
-
-	virtual bool IsVisible(void) OVERRIDE;
-	virtual bool ShouldDraw(void) OVERRIDE;
-
-	virtual void Reset() OVERRIDE;
+	bool m_bUseMatchHUD;
 };
 
 #endif	// TF_HUD_MATCH_STATUS_H

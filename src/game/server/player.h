@@ -174,7 +174,6 @@ enum PlayerConnectedState
 	PlayerConnected,
 	PlayerDisconnecting,
 	PlayerDisconnected,
-	PlayerConnecting,
 };
 
 extern bool gInitHUD;
@@ -342,7 +341,6 @@ public:
 	int						GetBonusChallenge() const { return m_iBonusChallenge; }
 
 	virtual Vector			EyePosition( );			// position of eyes
-	Vector					EyePositionOld();
 	const QAngle			&EyeAngles( );
 	void					EyePositionAndVectors( Vector *pPosition, Vector *pForward, Vector *pRight, Vector *pUp );
 	virtual const QAngle	&LocalEyeAngles();		// Direction of eyes
@@ -371,8 +369,6 @@ public:
 																			// Spectators should return TRUE for this
 
 	virtual bool			IsFakeClient( void ) const;
-
-	virtual bool			ShouldBePausedDuringPause();
 
 	// Get the client index (entindex-1).
 	int						GetClientIndex()	{ return ENTINDEX( edict() ) - 1; }
@@ -461,7 +457,7 @@ public:
 	virtual bool			IsIlluminatedByFlashlight( CBaseEntity *pEntity, float *flReturnDot ) {return false; }
 	
 	void					UpdatePlayerSound ( void );
-	virtual void			UpdateStepSound( surfacedata_t *psurface, const Vector &vecOrigin, const Vector &vecVelocity, float flSubTime = -1.0f );
+	virtual void			UpdateStepSound( surfacedata_t *psurface, const Vector &vecOrigin, const Vector &vecVelocity );
 	virtual void			PlayStepSound( Vector &vecOrigin, surfacedata_t *psurface, float fvol, bool force );
 	virtual const char	   *GetOverrideStepSound( const char *pszBaseStepSoundName ) { return pszBaseStepSoundName; }
 	virtual void			GetStepSoundVelocities( float *velwalk, float *velrun );
@@ -605,7 +601,7 @@ public:
 	// Run a user command. The default implementation calls ::PlayerRunCommand. In TF, this controls a vehicle if
 	// the player is in one.
 	virtual void			PlayerRunCommand(CUserCmd *ucmd, IMoveHelper *moveHelper);
-	void					RunNullCommand( bool bNeedsHost = true );
+	void					RunNullCommand();
 	CUserCmd *				GetCurrentCommand( void )	{ return m_pCurrentCommand; }
 	float					GetTimeSinceLastUserCommand( void ) { return ( !IsConnected() || IsFakeClient() || IsBot() ) ? 0.f : gpGlobals->curtime - m_flLastUserCommandTime; }
 
@@ -622,10 +618,7 @@ public:
 	virtual void 			ModifyOrAppendPlayerCriteria( AI_CriteriaSet& set );
 
 	const QAngle& GetPunchAngle();
-	const QAngle& Weapon_PunchAngle();
 	void SetPunchAngle( const QAngle &punchAngle );
-
-	const QAngle& Weapon_EyeAngles();
 
 	virtual void DoMuzzleFlash();
 
@@ -830,9 +823,6 @@ public:
 		}
 	}
 
-	void SetInPostThink( bool bInPostThink ) { m_bInPostThink = bInPostThink; };
-	bool IsInPostThink( void ) const { return m_bInPostThink; }
-
 private:
 	// How much of a movement time buffer can we process from this user?
 	int				m_nMovementTicksForUserCmdProcessingRemaining;
@@ -908,7 +898,7 @@ public:
 	bool					m_bPendingClientSettings; // User client settings changed, but we're not importing them
 							                          // until allowed
 	int						m_nUpdateRate;		// user snapshot rate cl_updaterate
-	float					m_fLerpTime;		// users client interp
+	float					m_fLerpTime;		// users cl_interp
 	bool					m_bLagCompensation;	// user wants lag compenstation
 	bool					m_bPredictWeapons; //  user has client side predicted weapons
 	bool					m_bRequestPredict; //  user has client prediction enabled
@@ -1034,9 +1024,6 @@ protected: //used to be private, but need access for portal mod (Dave Kircher)
 
 private:
 
-	float					m_flInterpolationTime = 1.0f;
-	bool					m_bInPostThink = false;
-
 	int						m_iPlayerSound;// the index of the sound list slot reserved for this player
 	int						m_iTargetVolume;// ideal sound volume. 
 	
@@ -1077,7 +1064,7 @@ private:
 	// char					m_szTeamName[TEAM_NAME_LENGTH];
 
 	// Multiplayer handling
-	PlayerConnectedState	m_iConnected = PlayerConnecting;
+	PlayerConnectedState	m_iConnected;
 
 	// from edict_t
 	// CBasePlayer doesn't send this but CCSPlayer does.

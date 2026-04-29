@@ -17,8 +17,6 @@
 #include <time.h>
 #include "blacklisted_server_manager.h"
 
-#include "steam/steam_api.h"
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -115,11 +113,6 @@ blacklisted_server_t *CBlacklistedServerManager::AddServer( gameserveritem_t &se
  	if ( netAdr.IsReservedAdr() )
  		return NULL;
 
-	// TODO: Don't offer for Steam Networking at this time.
-	// is this a hack?
-	if (SteamNetworkingUtils()->IsFakeIPv4(netAdr.GetIPHostByteOrder()))
-		return NULL;
-
 	int iIdx = m_Blacklist.AddToTail();
 	V_strncpy( m_Blacklist[iIdx].m_szServerName, server.GetName(), sizeof( m_Blacklist[iIdx].m_szServerName ) );
 
@@ -143,11 +136,6 @@ blacklisted_server_t *CBlacklistedServerManager::AddServer( const char *serverNa
 	// Don't let them add reserved addresses to their blacklists
  	if ( netAdr.IsReservedAdr() )
  		return NULL;
-
-	// TODO: Don't offer for Steam Networking at this time.
-	// is this a hack?
-	if (SteamNetworkingUtils()->IsFakeIPv4(netAdr.GetIPHostByteOrder()))
-		return NULL;
 
 	int iIdx = m_Blacklist.AddToTail();
 
@@ -173,11 +161,6 @@ blacklisted_server_t *CBlacklistedServerManager::AddServer( const char *serverNa
 
 	// Don't let them add reserved addresses to their blacklists
 	if ( netAdr.IsReservedAdr() )
-		return NULL;
-
-	// TODO: Don't offer for Steam Networking at this time.
-	// is this a hack?
-	if (SteamNetworkingUtils()->IsFakeIPv4(netAdr.GetIPHostByteOrder()))
 		return NULL;
 
 	int iIdx = m_Blacklist.AddToTail();
@@ -238,7 +221,7 @@ bool CBlacklistedServerManager::IsServerBlacklisted( uint32 serverIP, int server
 {
 	netadr_t netAdr( serverIP, serverPort );
 
-	static ConVarRef sb_showblacklists( "sb_showblacklists" );
+	ConVarRef sb_showblacklists( "sb_showblacklists" );
 
 	for ( int i = 0; i < m_Blacklist.Count(); i++ )
 	{
@@ -290,11 +273,6 @@ bool CBlacklistedServerManager::CanServerBeBlacklisted( uint32 serverIP, int ser
 
 	// Don't let them add reserved addresses to their blacklists
 	if ( netAdr.IsReservedAdr() )
-		return false;
-
-	// TODO: Don't offer for Steam Networking at this time.
-	// is this a hack?
-	if (SteamNetworkingUtils()->IsFakeIPv4(netAdr.GetIPHostByteOrder()))
 		return false;
 
 	return true;

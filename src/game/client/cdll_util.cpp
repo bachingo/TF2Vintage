@@ -28,21 +28,20 @@
 #include "view.h"
 #include "ixboxsystem.h"
 #include "inputsystem/iinputsystem.h"
-#include "vgui/ISystem.h"
-#ifdef TF_CLIENT_DLL
-#include "store/store_panel.h"
-#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
-
+																						
 ConVar localplayer_visionflags( "localplayer_visionflags", "0", FCVAR_DEVELOPMENTONLY );
 																						
 //-----------------------------------------------------------------------------
 // ConVars
 //-----------------------------------------------------------------------------
+#ifdef _DEBUG
+
 ConVar r_FadeProps( "r_FadeProps", "1" );
 
+#endif
 bool g_MakingDevShots = false;
 extern ConVar cl_leveloverview;
 
@@ -1103,64 +1102,58 @@ static unsigned char ComputeDistanceFade( C_BaseEntity *pEntity, float flMinDist
 //-----------------------------------------------------------------------------
 unsigned char UTIL_ComputeEntityFade( C_BaseEntity *pEntity, float flMinDist, float flMaxDist, float flFadeScale )
 {
-	// If we're taking devshots, don't fade props at all
-	if ( g_MakingDevShots || cl_leveloverview.GetFloat() > 0 || r_FadeProps.GetBool() )
+	unsigned char nAlpha = 255;
+
+	// Disable fading if we manually disabled it.
+	if ( g_MakingDevShots || cl_leveloverview.GetFloat() > 0 )
 		return 255;
 
-	unsigned char nAlpha = ComputeDistanceFade( pEntity, flMinDist, flMaxDist );
-
-	// only compute if needed
-	if ( flFadeScale > 0.0f )
+#ifdef _DEBUG
+	if ( r_FadeProps.GetBool() )
+#endif
 	{
-		float flScreenFadeMinSize, flScreenFadeMaxSize;
-		view->GetScreenFadeDistances( &flScreenFadeMinSize, &flScreenFadeMaxSize );
-		float flLevelFadeMinSize, flLevelFadeMaxSize;
-		modelinfo->GetLevelScreenFadeRange( &flLevelFadeMinSize, &flLevelFadeMaxSize );
+		nAlpha = ComputeDistanceFade( pEntity, flMinDist, flMaxDist );
 
-		// only compute if needed
-		if ( flScreenFadeMinSize > 0.0f || flLevelFadeMinSize > 0.0f )
+		// NOTE: This computation for the center + radius is invalid!
+		// The center of the sphere is at the center of the OBB, which is not necessarily
+		// at the render origin. But it should be close enough.
+		Vector vecMins, vecMaxs;
+		pEntity->GetRenderBounds( vecMins, vecMaxs );
+		float flRadius = vecMins.DistTo( vecMaxs ) * 0.5f;
+
+		Vector vecAbsCenter;
+		if ( modelinfo->GetModelType( pEntity->GetModel() ) == mod_brush )
 		{
-			// NOTE: This computation for the center + radius is invalid!
-			// The center of the sphere is at the center of the OBB, which is not necessarily
-			// at the render origin. But it should be close enough.
-			Vector vecMins, vecMaxs;
-			pEntity->GetRenderBounds( vecMins, vecMaxs );
-			float flRadius = vecMins.DistTo( vecMaxs ) * 0.5f;
+			Vector vecRenderMins, vecRenderMaxs;
+			pEntity->GetRenderBoundsWorldspace( vecRenderMins, vecRenderMaxs );
+			VectorAdd( vecRenderMins, vecRenderMaxs, vecAbsCenter );
+			vecAbsCenter *= 0.5f;
+		}
+		else
+		{
+			vecAbsCenter = pEntity->GetRenderOrigin();
+		}
 
-			Vector vecAbsCenter;
-			if ( modelinfo->GetModelType( pEntity->GetModel() ) == mod_brush )
-			{
-				Vector vecRenderMins, vecRenderMaxs;
-				pEntity->GetRenderBoundsWorldspace( vecRenderMins, vecRenderMaxs );
-				VectorAdd( vecRenderMins, vecRenderMaxs, vecAbsCenter );
-				vecAbsCenter *= 0.5f;
-			}
-			else
-			{
-				vecAbsCenter = pEntity->GetRenderOrigin();
-			}
+		unsigned char nGlobalAlpha = IsXbox() ? 255 : modelinfo->ComputeLevelScreenFade( vecAbsCenter, flRadius, flFadeScale );
+		unsigned char nDistAlpha;
 
-			unsigned char nGlobalAlpha = IsXbox() ? 255 : modelinfo->ComputeLevelScreenFade( vecAbsCenter, flRadius, flFadeScale );
-			unsigned char nDistAlpha;
+		if ( !engine->IsLevelMainMenuBackground() )
+		{
+			nDistAlpha = modelinfo->ComputeViewScreenFade( vecAbsCenter, flRadius, flFadeScale );
+		}
+		else
+		{
+			nDistAlpha = 255;
+		}
 
-			if ( !engine->IsLevelMainMenuBackground() )
-			{
-				nDistAlpha = modelinfo->ComputeViewScreenFade( vecAbsCenter, flRadius, flFadeScale );
-			}
-			else
-			{
-				nDistAlpha = 255;
-			}
+		if ( nDistAlpha < nGlobalAlpha )
+		{
+			nGlobalAlpha = nDistAlpha;
+		}
 
-			if ( nDistAlpha < nGlobalAlpha )
-			{
-				nGlobalAlpha = nDistAlpha;
-			}
-
-			if ( nGlobalAlpha < nAlpha )
-			{
-				nAlpha = nGlobalAlpha;
-			}
+		if ( nGlobalAlpha < nAlpha )
+		{
+			nAlpha = nGlobalAlpha;
 		}
 	}
 
@@ -1381,27 +1374,4 @@ bool UTIL_BPerformNearMiss( const CBaseEntity* pEntity, const char* pszNearMissS
 	CBaseEntity::EmitSound( localFilter, pLocalPlayer->entindex(), params );
 
 	return true;
-}
-
-void UTIL_OpenWebPage( const char* pchURL, bool bSteamRequired )
-{
-	// XXX ShellExecuting random URLs is questionable at any point, but lets at least make sure it's an expected protocol.
-	if ( Q_strncmp( pchURL, "https://", 8 ) != 0 )
-	{
-		Warning( "Invalid URL '%s'\n", pchURL );
-		return;
-	}
-	if ( steamapicontext && steamapicontext->SteamFriends() && steamapicontext->SteamUtils() && steamapicontext->SteamUtils()->IsOverlayEnabled() )
-	{
-		steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( pchURL );
-		return;
-	}
-	if ( bSteamRequired )
-	{
-#ifdef TF_CLIENT_DLL
-		OpenStoreStatusDialog( NULL, "#MMenu_OverlayRequired", true, false );
-#endif
-		return;
-	}
-	vgui::system()->ShellExecute( "open", pchURL );
 }

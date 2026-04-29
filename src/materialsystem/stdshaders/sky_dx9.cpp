@@ -6,8 +6,9 @@
 // $NoKeywords: $
 //=============================================================================//
 #include "BaseVSShader.h"
-#include "sky_vs30.inc"
-#include "sky_ps30.inc"
+#include "sky_vs20.inc"
+#include "sky_ps20.inc"
+#include "sky_ps20b.inc"
 
 #include "convar.h"
 
@@ -57,11 +58,19 @@ BEGIN_VS_SHADER( Sky_DX9, "Help for Sky_DX9 shader" )
 
 			pShaderShadow->VertexShaderVertexFormat( VERTEX_POSITION, 1, NULL, 0 );
 
-			DECLARE_STATIC_VERTEX_SHADER( sky_vs30 );
-			SET_STATIC_VERTEX_SHADER( sky_vs30 );
+			DECLARE_STATIC_VERTEX_SHADER( sky_vs20 );
+			SET_STATIC_VERTEX_SHADER( sky_vs20 );
 
-			DECLARE_STATIC_PIXEL_SHADER( sky_ps30 );
-			SET_STATIC_PIXEL_SHADER( sky_ps30 );
+			if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
+			{
+				DECLARE_STATIC_PIXEL_SHADER( sky_ps20b );
+				SET_STATIC_PIXEL_SHADER( sky_ps20b );
+			}
+			else
+			{
+				DECLARE_STATIC_PIXEL_SHADER( sky_ps20 );
+				SET_STATIC_PIXEL_SHADER( sky_ps20 );
+			}
 			// we are writing linear values from this shader.
 			pShaderShadow->EnableSRGBWrite( true );
 
@@ -92,15 +101,23 @@ BEGIN_VS_SHADER( Sky_DX9, "Help for Sky_DX9 shader" )
 				c0[2]*=16.0;
 			}
 			pShaderAPI->SetPixelShaderConstant(0,c0,1);
-			DECLARE_DYNAMIC_VERTEX_SHADER( sky_vs30 );
-			SET_DYNAMIC_VERTEX_SHADER( sky_vs30 );
+			DECLARE_DYNAMIC_VERTEX_SHADER( sky_vs20 );
+			SET_DYNAMIC_VERTEX_SHADER( sky_vs20 );
 
 			// Texture coord transform
 			SetVertexShaderTextureTransform( VERTEX_SHADER_SHADER_SPECIFIC_CONST_1, BASETEXTURETRANSFORM );
 
-			DECLARE_DYNAMIC_PIXEL_SHADER( sky_ps30 );
-			SET_DYNAMIC_PIXEL_SHADER_COMBO( WRITE_DEPTH_TO_DESTALPHA, pShaderAPI->ShouldWriteDepthToDestAlpha() );
-			SET_DYNAMIC_PIXEL_SHADER( sky_ps30 );
+			if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
+			{
+				DECLARE_DYNAMIC_PIXEL_SHADER( sky_ps20b );
+				SET_DYNAMIC_PIXEL_SHADER_COMBO( WRITE_DEPTH_TO_DESTALPHA, pShaderAPI->ShouldWriteDepthToDestAlpha() );
+				SET_DYNAMIC_PIXEL_SHADER( sky_ps20b );
+			}
+			else
+			{
+				DECLARE_DYNAMIC_PIXEL_SHADER( sky_ps20 );
+				SET_DYNAMIC_PIXEL_SHADER( sky_ps20 );
+			}
 		}
 		Draw( );
 	}

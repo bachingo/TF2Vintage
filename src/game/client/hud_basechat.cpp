@@ -40,7 +40,6 @@ ConVar cl_chatfilters( "cl_chatfilters", "63", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, 
 ConVar cl_chatfilter_version( "cl_chatfilter_version", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_HIDDEN, "Stores the chat filter version" );
 ConVar cl_mute_all_comms("cl_mute_all_comms", "1", FCVAR_ARCHIVE, "If 1, then all communications from a player will be blocked when that player is muted, including chat messages.");
 ConVar cl_enable_text_chat( "cl_enable_text_chat", "1", FCVAR_ARCHIVE, "Enable text chat in this game" );
-ConVar hud_chat_history_lines( "hud_chat_history_lines", "15", FCVAR_ARCHIVE, "Number of history lines to save for in-game chat." );
 
 const int kChatFilterVersion = 1;
 
@@ -601,14 +600,6 @@ void CHudChatHistory::ApplySchemeSettings( vgui::IScheme *pScheme )
 	SetAlpha( 255 );
 }
 
-void CHudChatHistory::ApplySettings(KeyValues* inResourceData)
-{
-	BaseClass::ApplySettings(inResourceData);
-
-	SetMaximumCharCount( 127 * hud_chat_history_lines.GetInt() );
-}
-
-
 int CBaseHudChat::m_nLineCounter = 1;
 //-----------------------------------------------------------------------------
 // Purpose: Text chat input/output hud element
@@ -662,7 +653,7 @@ void CBaseHudChat::CreateChatInputLine( void )
 
 	if ( GetChatHistory() )
 	{
-		GetChatHistory()->SetMaximumCharCount( 127 * hud_chat_history_lines.GetInt() );
+		GetChatHistory()->SetMaximumCharCount( 127 * 100 );
 		GetChatHistory()->SetVisible( true );
 	}
 #endif
@@ -766,8 +757,6 @@ void CBaseHudChat::Init( void )
 	ListenForGameEvent( "hltv_chat" );
 }
 
-ConVar cl_hud_chat_notification("cl_hud_chat_notification", "0", FCVAR_ARCHIVE);
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : *pszName - 
@@ -800,14 +789,10 @@ void CBaseHudChat::MsgFunc_SayText( bf_read &msg )
 		Printf( CHAT_FILTER_NONE, "%s", hudtextmessage->LookupString( szString ) );
 	}
 
-	if ( cl_hud_chat_notification.GetBool() )
-	{
-		CLocalPlayerFilter filter;
-		C_BaseEntity::EmitSound( filter, SOUND_FROM_LOCAL_PLAYER, "HudChat.Message" );
-	}
+	CLocalPlayerFilter filter;
+	C_BaseEntity::EmitSound( filter, SOUND_FROM_LOCAL_PLAYER, "HudChat.Message" );
 
-	// TERROR: color console echo
-	//Msg( "%s", szString );
+	Msg( "%s", szString );
 }
 
 int CBaseHudChat::GetFilterForString( const char *pString )
@@ -867,14 +852,10 @@ void CBaseHudChat::MsgFunc_SayText2( bf_read &msg )
 		// print raw chat text
 		ChatPrintf( client, iFilter, "%s", ansiString );
 
-		// TERROR: color console echo
-		// Msg( "%s\n", RemoveColorMarkup(ansiString) );
+		Msg( "%s\n", RemoveColorMarkup(ansiString) );
 
-		if ( cl_hud_chat_notification.GetBool() )
-		{
-			CLocalPlayerFilter filter;
-			C_BaseEntity::EmitSound( filter, SOUND_FROM_LOCAL_PLAYER, "HudChat.Message" );
-		}
+		CLocalPlayerFilter filter;
+		C_BaseEntity::EmitSound( filter, SOUND_FROM_LOCAL_PLAYER, "HudChat.Message" );
 	}
 	else
 	{
@@ -958,8 +939,7 @@ void CBaseHudChat::MsgFunc_TextMsg( bf_read &msg )
 			Q_strncat( szString, "\n", sizeof(szString), 1 );
 		}
 		Printf( CHAT_FILTER_NONE, "%s", ConvertCRtoNL( szString ) );
-		// TERROR: color console echo
-		//Msg( "%s", ConvertCRtoNL( szString ) );
+		Msg( "%s", ConvertCRtoNL( szString ) );
 		break;
 
 	case HUD_PRINTCONSOLE:
@@ -1595,9 +1575,6 @@ void CBaseHudChatLine::Colorize( int alpha )
 			InsertColorChange( color );
 			InsertString( wText );
 
-			// TERROR: color console echo
-			ConColorMsg( color, "%ls", wText );
-
 			if ( pChat && pChat->GetChatHistory() )
 			{	
 				pChat->GetChatHistory()->InsertColorChange( color );
@@ -1612,9 +1589,6 @@ void CBaseHudChatLine::Colorize( int alpha )
 
 		}
 	}
-
-	// TERROR: color console echo
-	Msg( "\n" );
 
 	InvalidateLayout( true );
 }

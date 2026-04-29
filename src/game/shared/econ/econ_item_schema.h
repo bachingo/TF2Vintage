@@ -1374,6 +1374,7 @@ public:
 	uint32		RollItemLevel( void ) const;
 
 	const char *GetFirstSaleDate( void ) const;
+	const int			GetIntroductionDate( void ) const;
 
 	void		IterateAttributes( class IEconItemAttributeIterator *pIterator ) const;
 
@@ -1531,6 +1532,9 @@ private:
 	bool			m_bHasBeenLoaded;
 
 	bool			m_bHideBodyGroupsDeployedOnly;
+	
+	//TF2V: Exclusive KV to let us know the day an item was added to the gasme.
+	int				m_iDayIntroduced;
 
 	// The .mdl file used for the world view.
 	// This is inferior to using a c_model, but because the geometry of the sticky bomb launcher's
@@ -2910,9 +2914,6 @@ private:
 
 	// Contains the list of item definitions read in from all data files.
 	ItemDefinitionMap_t									m_mapItems;
-
-	// Contains a mapping from definition name to item definition
-	CUtlDict<CEconItemDefinition*>						m_mapItemsName;
 
 	CUtlMap<int, CQuestObjectiveDefinition*, int >		m_mapQuestObjectives;
 

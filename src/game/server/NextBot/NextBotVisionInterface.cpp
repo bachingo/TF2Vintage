@@ -13,7 +13,7 @@
 #include "NextBotBodyInterface.h"
 #include "NextBotUtil.h"
 
-#if SUPPORT_QUERY_CACHE
+#ifdef TERROR
 #include "querycache.h"
 #endif
 
@@ -710,7 +710,7 @@ bool IVision::IsLineOfSightClear( const Vector &pos ) const
 //------------------------------------------------------------------------------------------
 bool IVision::IsLineOfSightClearToEntity( const CBaseEntity *subject, Vector *visibleSpot ) const
 {
-#if SUPPORT_QUERY_CACHE
+#ifdef TERROR
 	// TODO: Integration querycache & its dependencies
 
 	VPROF_INCREMENT_COUNTER( "IVision::IsLineOfSightClearToEntity", 1 );

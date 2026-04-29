@@ -90,17 +90,6 @@ void CTFHudWeaponAmmo::ApplySchemeSettings( IScheme *pScheme )
 	// load control settings...
 	LoadControlSettings( "resource/UI/HudAmmoWeapons.res" );
 
-	int xOffset;
-	int yOffset;
-	if ( ConstrainAspect( xOffset, yOffset ) )
-	{
-		int x, y;
-		GetPos( x, y );
-		int xNew, yNew;
-		OffsetAspect( x, y, xOffset, yOffset, xNew, yNew );
-		SetPos( xNew, yNew );
-	}
-
 	m_pInClip = dynamic_cast<CExLabel *>( FindChildByName( "AmmoInClip" ) );
 	m_pInClipShadow = dynamic_cast<CExLabel *>( FindChildByName( "AmmoInClipShadow" ) );
 
@@ -230,7 +219,7 @@ void CTFHudWeaponAmmo::SizeLowAmmoIndicator( float flCurrentAmount, float flMaxA
 		float flPercent = ( flMaxAmount - flCurrentAmount ) / flMaxAmount;
 		float nLowAmmoPosAdj = hud_low_ammo_warning_max_pos_adjust.GetFloat();
 
-		int nPosAdj = RoundFloatToNearestInt( flPercent * nLowAmmoPosAdj );
+		int nPosAdj = RoundFloatToInt( flPercent * nLowAmmoPosAdj );
 		int nSizeAdj = 2 * nPosAdj;
 		
 		m_pLowAmmoImage->SetBounds( m_nLowAmmoImageOrigX - nPosAdj, 

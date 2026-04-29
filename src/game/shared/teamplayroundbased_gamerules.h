@@ -100,7 +100,6 @@ enum {
 	WINREASON_STOPWATCH_WATCHING_FINAL_ROUND,
 	WINREASON_STOPWATCH_PLAYING_ROUNDS,
 #endif
-	WINREASON_COUNT,
 };
 
 enum stalemate_reasons_t
@@ -186,14 +185,8 @@ public:
 	virtual void	LevelInitPostEntity( void );
 	virtual float	GetRespawnTimeScalar( int iTeam );
 	virtual float	GetRespawnWaveMaxLength( int iTeam, bool bScaleWithNumPlayers = true );
-	virtual bool    ShouldRespawnQuickly( CBasePlayer* pPlayer )
-	{
-		if ( GetRespawnTimeMode() > 0 )
-			return true;
-		return false;
-	}
+	virtual bool	ShouldRespawnQuickly( CBasePlayer *pPlayer ) { return false; }
 	float	GetMinTimeWhenPlayerMaySpawn( CBasePlayer *pPlayer );
-	virtual int GetRespawnTimeMode();
 
 	// Return false if players aren't allowed to cap points at this time (i.e. in WaitingForPlayers)
 	virtual bool PointsMayBeCaptured( void ) { return ((State_Get() == GR_STATE_RND_RUNNING || State_Get() == GR_STATE_STALEMATE) && !IsInWaitingForPlayers()); }
@@ -210,28 +203,16 @@ public:
 	void SetOvertime( bool bOvertime );
 
 	bool InSetup( void ){ return m_bInSetup; }
-	int GetSetupTime( void ) { return m_iSetupTime; }
 
 #ifdef GAME_DLL
 	virtual void BalanceTeams( bool bRequireSwitcheesToBeDead );
-	virtual bool ClientCommand( CBaseEntity* pEdict, const CCommand& args );
-	void         Pause( CSteamID SteamID );
-	void         Unpause( CSteamID SteamID );
-
-	virtual void PlayerThink(CBasePlayer* pPlayer) OVERRIDE;
 #endif // GAME_DLL
 
-	bool IsGamePaused();
-	bool IsPausingEnabled();
-
 	bool		SwitchedTeamsThisRound( void ) { return m_bSwitchedTeamsThisRound; }
-
-	virtual int			GetTeamSize( int iTeam = 0 );
 
 	virtual bool ShouldBalanceTeams( void );
 	bool		IsInTournamentMode( void );
 	bool		IsInHighlanderMode( void );
-	bool		IsInSixesMode( void );
 	bool		IsInPreMatch( void ) { return (IsInTournamentMode() && IsInWaitingForPlayers()); }
 	bool		IsWaitingForTeams( void ) { return m_bAwaitingReadyRestart; }
 	bool		IsInStopWatch( void ) { return m_bStopWatch; }
@@ -273,9 +254,6 @@ public:
 	virtual void HandleTeamScoreModify( int iTeam, int iScore) {  };
 
 	float GetRoundRestartTime( void ) const { return m_flRestartRoundTime; }
-	float GetRoundRestartStartTime( void ) const { return m_flRestartRoundStartTime; }
-
-	virtual bool IsAllTalkActive() OVERRIDE;
 
 	//Arena Mode
 	virtual bool	IsInArenaMode( void ) const { return false; }
@@ -295,8 +273,6 @@ public:
 	int				GetRoundsPlayed( void ) { return m_nRoundsPlayed; }
 
 	float GetStateTransitionTime( void ){ return m_flStateTransitionTime; }
-
-	virtual bool StopWatchShouldBeTimedWin( bool bSkipForMultiSeries = true ) { return m_bStopWatchShouldBeTimedWin; }
 
 #ifdef CLIENT_DLL
 	virtual void Update( float frametime ) OVERRIDE;
@@ -353,10 +329,6 @@ public:
 	virtual void	PreRound_Start( void ) { return; }
 	virtual void	PreRound_End( void ) { return; }
 
-	/** do extra StartGame logic and return if we should start the game immediately. */
-	virtual bool	StartGame_Start( void ) { return true; }
-	virtual void	StartGame_Think( void ) { return; }
-
 	bool PrevRoundWasWaitingForPlayers() { return m_bPrevRoundWasWaitingForPlayers; }
 
 	virtual bool ShouldScorePerRound( void ){ return true; }
@@ -368,7 +340,6 @@ public:
 	virtual bool IsValveMap( void ){ return false; }
 
 	virtual		void RestartTournament( void );
-	virtual		void FullRestartTournament( void );
 
 	virtual		bool TournamentModeCanEndWithTimelimit( void ){ return true; }
 
@@ -432,6 +403,8 @@ public:
 	virtual bool ShouldWaitToStartRecording( void ){ return IsInWaitingForPlayers(); }
 
 	bool IsGameOver( void ){ return ( CheckTimeLimit( false ) || CheckWinLimit( false ) || CheckMaxRounds( false ) || CheckNextLevelCvar( false ) ); }
+
+	virtual bool	StopWatchShouldBeTimedWin( void ) { return m_bStopWatchShouldBeTimedWin; }
 
 protected:
 	virtual void Think( void );
@@ -499,8 +472,6 @@ protected:
 	// mp_scrambleteams_auto
 	void ResetTeamsRoundWinTracking( void );
 
-	void	CompleteStartGame(void);
-
 protected:
 	virtual void InitTeams( void );
 	virtual bool BHavePlayers( void );
@@ -531,9 +502,6 @@ protected:
 	void CreateTimeLimitTimer( void );
 
 	virtual float GetLastMajorEventTime( void ) OVERRIDE { return m_flLastTeamWin; }
-	
-	bool CanPlayerPause( CSteamID SteamID );
-	bool CanPlayerUnpause( CSteamID SteamID );
 
 protected:
 	CGameRulesRoundStateInfo	*m_pCurStateInfo;			// Per-state data 
@@ -579,6 +547,8 @@ protected:
 
 	float						m_flLastTeamWin;
 
+	bool						m_bStopWatchShouldBeTimedWin;
+
 private:
 
 	CUtlMap < int, int >	m_GameTeams;  // Team index, Score
@@ -608,15 +578,11 @@ public:
 
 	float GetPreroundCountdownTime( void ){ return m_flCountdownTime; }
 
-	float GetGameUnpauseTime( void ) { return m_flUnpauseCurTime; }
-
 protected:
 	CNetworkVar( gamerules_roundstate_t, m_iRoundState );
 	CNetworkVar( bool, m_bInOvertime ); // Are we currently in overtime?
 	CNetworkVar( bool, m_bInSetup ); // Are we currently in setup?
-	CNetworkVar( int, m_iSetupTime ); // The full setup time for this round
 	CNetworkVar( bool, m_bSwitchedTeamsThisRound );
-	CNetworkVar( bool, m_bStopWatchShouldBeTimedWin );
 
 protected:
 	CNetworkVar( int,			m_iWinningTeam );				// Set before entering GR_STATE_TEAM_WIN
@@ -624,7 +590,6 @@ protected:
 	CNetworkVar( bool,			m_bInWaitingForPlayers );
 	CNetworkVar( bool,			m_bAwaitingReadyRestart );
 	CNetworkVar( float,			m_flRestartRoundTime );
-	CNetworkVar( float,			m_flRestartRoundStartTime );
 	CNetworkVar( float,			m_flMapResetTime );						// Time that the map was reset
 	CNetworkArray( float,		m_flNextRespawnWave, MAX_TEAMS_ARRAY_SAFE );		// Minor waste, but cleaner code
 	CNetworkArray( bool,		m_bTeamReady, MAX_TEAMS_ARRAY_SAFE );
@@ -635,12 +600,6 @@ protected:
 	CNetworkVar( int, 			m_nRoundsPlayed );
 	CNetworkVar( float,			m_flCountdownTime );
 	CNetworkVar( float,			m_flStateTransitionTime );	// Timer for round states
-	CNetworkVar( int,			m_nTotalPausedTicks );
-	CNetworkVar( int,			m_nPauseStartTick );
-	CNetworkVar( bool,			m_bGamePaused );
-	CNetworkVar( bool,			m_bPauseEnabled );
-	CNetworkVar( float,			m_flUnpauseCurTime );
-
 public:
 	CNetworkArray( float,		m_TeamRespawnWaveTimes, MAX_TEAMS_ARRAY_SAFE );	// Time between each team's respawn wave
 
@@ -655,18 +614,6 @@ private:
 	int		m_nAutoBalanceQueuePlayerScore;
 
 	int		m_nLastEventFiredTime;
-	
-	typedef CUtlMap<CSteamID, int, int, CDefLess<CSteamID>>   TMapPauseRemaining;
-	typedef CUtlMap<CSteamID, float, int, CDefLess<CSteamID>> TMapPauseTime;
-
-	float              m_flPauseTime;
-	CSteamID           m_pausingPlayerId;
-	CSteamID           m_unpausingPlayerId;
-	float              m_flPauseCurTime;
-	TMapPauseRemaining m_nPausesRemaining;
-	TMapPauseTime      m_nLastPauseTime;
-	bool               m_bForcePause;
-
 protected:
 	bool	m_bAllowBetweenRounds;
 

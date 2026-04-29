@@ -15,7 +15,7 @@ class water_vs20_Static_Index
 public:
 	void SetBASETEXTURE( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nBASETEXTURE = i;
 #ifdef _DEBUG
 		m_bBASETEXTURE = true;
@@ -24,7 +24,7 @@ public:
 
 	void SetMULTITEXTURE( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nMULTITEXTURE = i;
 #ifdef _DEBUG
 		m_bMULTITEXTURE = true;
@@ -43,7 +43,7 @@ public:
 
 	int GetIndex() const
 	{
-		DebugAssert( m_bBASETEXTURE && m_bMULTITEXTURE );
+		Assert( m_bBASETEXTURE && m_bMULTITEXTURE );
 		AssertMsg( !( m_nMULTITEXTURE && m_nBASETEXTURE ), "Invalid combo combination ( MULTITEXTURE && BASETEXTURE )" );
 		return ( 1 * m_nBASETEXTURE ) + ( 2 * m_nMULTITEXTURE ) + 0;
 	}

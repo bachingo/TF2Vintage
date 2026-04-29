@@ -108,8 +108,7 @@ void CTFPointManager::Touch( CBaseEntity *pOther )
 		return;
 
 	// find the first point that collide with this ent
-	// backwards since we wanna see the freshest point first.
-	FOR_EACH_VEC_BACK( m_vecPoints, iPoint )
+	FOR_EACH_VEC( m_vecPoints, iPoint )
 	{
 		tf_point_t *pPoint = m_vecPoints[iPoint];
 

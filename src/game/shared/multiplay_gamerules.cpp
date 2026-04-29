@@ -273,11 +273,6 @@ CMultiplayRules::CMultiplayRules()
 
 	RefreshSkillData( true );
 
-	// Set net_maxpacketdrop to the default for the server side.
-	// This is here so server ops can override it in their server.cfg if they want.
-	static ConVarRef net_maxpacketdrop("net_maxpacketdrop");
-	net_maxpacketdrop.SetValue( 5000 );
-
 	// 11/8/98
 	// Modified by YWB:  Server .cfg file is now a cvar, so that 
 	//  server ops can run multiple game servers, with different server .cfg files,
@@ -316,33 +311,6 @@ CMultiplayRules::CMultiplayRules()
 		}
 	}
 
-	const int iMaxPacketRate = TIME_TO_TICKS( 1 );
-	static ConVarRef sv_mincmdrate( "sv_mincmdrate" );
-	if ( sv_mincmdrate.GetInt() > iMaxPacketRate )
-	{
-		sv_mincmdrate.SetValue( iMaxPacketRate );
-	}
-	static ConVarRef sv_maxcmdrate( "sv_maxcmdrate" );
-	if ( sv_maxcmdrate.GetInt() > iMaxPacketRate )
-	{
-		sv_maxcmdrate.SetValue( iMaxPacketRate );
-	}
-	static ConVarRef sv_minupdaterate( "sv_minupdaterate" );
-	if ( sv_minupdaterate.GetInt() > iMaxPacketRate )
-	{
-		sv_minupdaterate.SetValue( iMaxPacketRate );
-	}
-	static ConVarRef sv_maxupdaterate( "sv_maxupdaterate" );
-	if ( sv_maxupdaterate.GetInt() > iMaxPacketRate )
-	{
-		sv_maxupdaterate.SetValue( iMaxPacketRate );
-	}
-	static ConVarRef tv_snapshotrate( "tv_snapshotrate" );
-	if ( tv_snapshotrate.GetInt() > iMaxPacketRate )
-	{
-		tv_snapshotrate.SetValue( iMaxPacketRate );
-	}
-
 	nextlevel.SetValue( "" );
 	LoadMapCycleFile();
 
@@ -363,15 +331,6 @@ bool CMultiplayRules::Init()
 	return BaseClass::Init();
 }
 
-bool CMultiplayRules::IsAllTalkActive()
-{
-	static ConVar *sv_alltalk = cvar->FindVar("sv_alltalk");
-	if (sv_alltalk && sv_alltalk->GetBool())
-	{
-		return true;
-	}
-	return false;
-}
 
 #ifdef CLIENT_DLL
 
@@ -1184,18 +1143,11 @@ ConVarRef suitcharger( "sk_suitcharger" );
 
 		if ( tv_delaymapchange.GetBool() )
 		{
-			if ( HLTVDirector() && HLTVDirector()->IsActive() )	
+			if ( HLTVDirector()->IsActive() )	
 				flWaitTime = MAX( flWaitTime, HLTVDirector()->GetDelay() );
 		}
 				
 		m_flIntermissionEndTime = gpGlobals->curtime + flWaitTime;
-
-#ifdef TF_DLL
-		if ( TFGameRules() && TFGameRules()->IsEmulatingMatch() )
-		{
-			return;
-		}
-#endif
 
 		for ( int i = 1; i <= MAX_PLAYERS; i++ )
 		{

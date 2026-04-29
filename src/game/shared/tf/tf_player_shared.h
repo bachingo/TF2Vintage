@@ -223,13 +223,6 @@ enum TFCYOAPDAAnimState_t
 	CYOA_PDA_ANIM_OUTRO
 };
 
-enum TFStrandedSpawnState_t
-{
-	STRANDED_SPAWN_DETACHED = 0,
-	STRANDED_SPAWN_ANCHORED,
-	STRANDED_SPAWN_SWITCHABLE,
-};
-
 //=============================================================================
 //
 // Shared player class.
@@ -471,9 +464,7 @@ public:
 	void	NoteLastDamageTime( int nDamage );
 	void	OnSpyTouchedByEnemy( void );
 	float	GetLastStealthExposedTime( void ) { return m_flLastStealthExposeTime; }
-	float   GetNextClassSpecialTime( void ) { return m_flStealthNextChangeTime; }
 	void	SetNextStealthTime( float flTime ) { m_flStealthNextChangeTime = flTime; }
-	void    SetNextClassSpecialTime( float flTime ) { m_flStealthNextChangeTime = flTime; }
 	bool	IsFullyInvisible( void ) { return ( GetPercentInvisible() == 1.f ); }
 
 	bool	IsEnteringOrExitingFullyInvisible( void );
@@ -543,11 +534,6 @@ public:
 	void	SetDemomanChargeMeter( float val )  { m_flChargeMeter = Clamp( val, 0.0f, 100.0f); }
 	void	CalcChargeCrit( bool bForceCrit=false );
 	bool	HasDemoShieldEquipped() const;
-#ifdef CLIENT_DLL
-	class C_TFWearableDemoShield* GetDemoShield();
-#else
-	class CTFWearableDemoShield* GetDemoShield();
-#endif
 
 	bool	IsJumping( void ) const			{ return m_bJumping; }
 	void	SetJumping( bool bJumping );
@@ -674,14 +660,9 @@ public:
 
 	int GetLastDuckStreakIncrement( void ) const	{ return m_nLastDuckStreakIncrement; }
 
-#ifdef GAME_DLL
-	void AddStuckJet(CTFPlayer* pAttacker, CTFWeaponBase* pWeapon, int iCount);
-	int GetStuckJets() const { return m_StuckJets.Count(); }
-#endif
 	void SetRevengeCrits( int iVal );
 	int GetRevengeCrits( void ) const { return m_iRevengeCrits; }
 	void IncrementRevengeCrits( void );
-	bool ConditionConflictsWithRevenge( void );
 
 	int GetSequenceForDeath( CBaseAnimating* pRagdoll, bool bBurning, int nCustomDeath );
 
@@ -690,10 +671,8 @@ public:
 
 	void	Heal_Radius ( bool bActive );
 
-	void IncrementRespawnTouchCount();
+	void IncrementRespawnTouchCount() { ++m_iSpawnRoomTouchCount; }
 	void DecrementRespawnTouchCount() { m_iSpawnRoomTouchCount = Max( m_iSpawnRoomTouchCount - 1, 0 ); }
-	int IsInStrandedSpawn() const;
-	void SetInStrandedSpawn( int iStrandedSpawn ) { m_iStrandedSpawn = iStrandedSpawn; }
 	int GetRespawnTouchCount() const { return m_iSpawnRoomTouchCount; }
 
 #ifdef CLIENT_DLL
@@ -751,10 +730,6 @@ public:
 #ifdef GAME_DLL
 	void SetDefaultItemChargeMeters( void );
 #endif // GAME_DLL
-
-public:
-	bool m_bLoadoutSlotCacheDirty;
-	CBaseHandle m_hItemForLoadoutSlot[CLASS_LOADOUT_POSITION_COUNT];
 
 private:
 	CNetworkVarEmbedded( localplayerscoring_t,	m_ScoreData );
@@ -933,7 +908,7 @@ private:
 	void OnAddHalloweenHellHeal( void );
 	void OnRemoveHalloweenHellHeal( void );
 
-	float GetCritMult( const bool bMelee );
+	float GetCritMult( void );
 
 #ifdef GAME_DLL
 	void  UpdateCritMult( void );
@@ -1001,7 +976,6 @@ private:
 	float m_flCloakStartTime;
 #endif
 
-	float m_fHypeConsumeRate;
 	float m_fEnergyDrinkConsumeRate;
 	float m_fEnergyDrinkRegenRate;
 
@@ -1075,16 +1049,6 @@ private:
 		int						nDmgType;
 	};
 	CUtlVector <bleed_struct_t> m_PlayerBleeds;
-
-	struct microjets_struct_t
-	{
-		CHandle<CTFPlayer>	hAttacker;
-		CHandle<CTFWeaponBase>  hWeapon;
-		int		iExplosionCount;
-		int		iCurrentExplosion;
-		float	m_flJetTime;
-	};
-	CUtlVector<microjets_struct_t> m_StuckJets;
 #endif // GAME_DLL
 
 	CNetworkVar( int, m_iTauntIndex );
@@ -1162,7 +1126,6 @@ private:
 
 
 	CNetworkVar( int, m_iCritMult );
-	CNetworkVar( int, m_iCritMultMelee );
 
 	CNetworkArray( bool, m_bPlayerDominated, MAX_PLAYERS_ARRAY_SAFE );		// array of state per other player whether player is dominating other players
 	CNetworkArray( bool, m_bPlayerDominatingMe, MAX_PLAYERS_ARRAY_SAFE );	// array of state per other player whether other players are dominating this player
@@ -1208,9 +1171,6 @@ private:
 	float m_flChargeEndTime;
 
 	CNetworkVar( int,  m_iDisguiseBody );
-
-	/** stranded spawn level: 1) hasn't left spawn, 2) hasn't left spawn in the last 7 seconds  */
-	CNetworkVar( int, m_iStrandedSpawn );
 
 	CNetworkVar( int,  m_iSpawnRoomTouchCount );
 
@@ -1338,7 +1298,8 @@ private:
 	int m_iIgnoreTeam;
 };
 
-extern ETFCond g_SoldierBuffAttributeIDToConditionMap[k_Num_RageBuffTypes];
+enum { kSoldierBuffCount = 6 };
+extern ETFCond g_SoldierBuffAttributeIDToConditionMap[kSoldierBuffCount + 1];
 
 class CTFPlayerSharedUtils
 {

@@ -6,9 +6,6 @@
 #include "cbase.h"
 #include "tf_weaponbase_rocket.h"
 
-#include "inetchannelinfo.h"
-#include "movevars_shared.h"
-
 // Server specific.
 #ifdef GAME_DLL
 #include "soundent.h"
@@ -26,8 +23,6 @@ extern void SendProxy_Angles( const SendProp *pProp, const void *pStruct, const 
 #ifdef CLIENT_DLL
 #include "props_shared.h"
 #include "usermessages.h"
-#include "cdll_bounded_cvars.h"
-#include "c_tf_player.h"
 #endif
 
 //w_rocket_airstrike\w_rocket_airstrike.mdl
@@ -48,6 +43,7 @@ RecvPropVector( RECVINFO( m_vInitialVelocity ) ),
 RecvPropVector( RECVINFO_NAME( m_vecNetworkOrigin, m_vecOrigin ) ),
 RecvPropQAngles( RECVINFO_NAME( m_angNetworkAngles, m_angRotation ) ),
 RecvPropInt( RECVINFO( m_iDeflected ) ),
+RecvPropEHandle( RECVINFO( m_hLauncher ) ),
 
 // Server specific.
 #else
@@ -59,6 +55,7 @@ SendPropExclude( "DT_BaseEntity", "m_angRotation" ),
 SendPropVector	(SENDINFO(m_vecOrigin), -1,  SPROP_COORD_MP_INTEGRAL|SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
 SendPropQAngles	(SENDINFO(m_angRotation), 6, SPROP_CHANGES_OFTEN, SendProxy_Angles ),
 SendPropInt( SENDINFO( m_iDeflected ), 4, SPROP_UNSIGNED ),
+SendPropEHandle( SENDINFO( m_hLauncher ) ),
 
 #endif
 END_NETWORK_TABLE()
@@ -88,7 +85,8 @@ CTFBaseRocket::CTFBaseRocket()
 	
 // Client specific.
 #ifdef CLIENT_DLL
-	
+
+	m_flSpawnTime = 0.0f;
 	m_iCachedDeflect = false;
 	
 // Server specific.
@@ -143,6 +141,8 @@ void CTFBaseRocket::Spawn( void )
 // Client specific.
 #ifdef CLIENT_DLL
 
+	m_flSpawnTime = gpGlobals->curtime;
+
 // Server specific.
 #else
 
@@ -152,8 +152,7 @@ void CTFBaseRocket::Spawn( void )
 	SetSolid( SOLID_BBOX );
 	SetMoveType( MOVETYPE_FLY, MOVECOLLIDE_FLY_CUSTOM );
 	AddEFlags( EFL_NO_WATER_VELOCITY_CHANGE );
-	// UNDONE(mcoms): adding shadows
-	//AddEffects( EF_NOSHADOW );
+	AddEffects( EF_NOSHADOW );
 
 	SetCollisionGroup( TFCOLLISION_GROUP_ROCKETS );
 
@@ -187,20 +186,6 @@ void CTFBaseRocket::Spawn( void )
 //-----------------------------------------------------------------------------
 void CTFBaseRocket::PostDataUpdate( DataUpdateType_t type )
 {
-	if ( type == DATA_UPDATE_DATATABLE_CHANGED && gpGlobals->curtime - GetProjectileSpawnTime() <= gpGlobals->interval_per_tick * 5.0f && m_bPredicting )
-	{
-		// once our data updates settle into velocity sim, we no longer client predict velocity.
-		if ( (GetNetworkOrigin() - m_vecSpawnLoc).LengthSqr() > 20.0f * 20.0f )
-		{
-			m_bPredicting = false;
-		}
-		else
-		{
-			// hack: override position update for now.
-			SetNetworkOrigin(m_vecPredLoc);
-		}
-	}
-
 	// Pass through to the base class.
 	BaseClass::PostDataUpdate( type );
 
@@ -215,7 +200,6 @@ void CTFBaseRocket::PostDataUpdate( DataUpdateType_t type )
 
 		float flChangeTime = GetLastChangeTime( LATCH_SIMULATION_VAR );
 
-#if 0
 		// Add a sample 1 second back.
 		Vector vCurOrigin = GetLocalOrigin() - m_vInitialVelocity;
 		interpolator.AddToHead( flChangeTime - 1.0f, &vCurOrigin, false );
@@ -227,77 +211,10 @@ void CTFBaseRocket::PostDataUpdate( DataUpdateType_t type )
 		vCurOrigin = GetLocalOrigin();
 		interpolator.AddToHead( flChangeTime, &vCurOrigin, false );
 
-		rotInterpolator.AddToHead( flChangeTime, &vCurAngles, false );
-#else
-#if 1
-		// NEW SETUP: slowly transition to the future pos we'll get in the next update,
-		// reflecting our latest data NOW where the client is seeing, so they always can see the latest.
-		// Add a sample 1 second back.
-		const float flLerp = GetClientInterpAmount();
-		Vector vCurOrigin = GetLocalOrigin();
-		interpolator.AddToHead(flChangeTime - flLerp, &vCurOrigin, false);
-
-		m_vecSpawnLoc = vCurOrigin;
-		m_vecPredLoc = vCurOrigin;
-
-		QAngle vCurAngles = GetLocalAngles();
-		rotInterpolator.AddToHead(flChangeTime - flLerp, &vCurAngles, false);
-
-		// Add a sample a tick later. This isn't exactly when we'll get our next update, but it's close enough.
-		//const float flTick = gpGlobals->interval_per_tick - 0.001f;
-		//vCurOrigin += m_vInitialVelocity * flTick;
-		//interpolator.AddToHead(flChangeTime + flTick, &vCurOrigin, false);
-
-		//rotInterpolator.AddToHead(flChangeTime + flTick, &vCurAngles, false);
-
-		SetNextClientThink(CLIENT_THINK_ALWAYS);
-		m_bPredicting = true;
-#else
-		// Add a sample 1 second back.
-		Vector vCurOrigin = GetLocalOrigin();
-		interpolator.AddToHead(flChangeTime - 1.0f, &vCurOrigin, false);
-
-		QAngle vCurAngles = GetLocalAngles();
-		rotInterpolator.AddToHead(flChangeTime - 1.0f, &vCurAngles, false);
-
-		// Add the current sample.
-		vCurOrigin = GetLocalOrigin();
-		interpolator.AddToHead(flChangeTime, &vCurOrigin, false);
-
-		rotInterpolator.AddToHead(flChangeTime, &vCurAngles, false);
-#endif
-#endif
+		rotInterpolator.AddToHead( flChangeTime - 1.0, &vCurAngles, false );
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFBaseRocket::ClientPredictThink()
-{
-	if ( !m_bPredicting )
-	{
-		return;
-	}
-	if ( gpGlobals->curtime - GetProjectileSpawnTime() > gpGlobals->interval_per_tick * 5.0f && GetGravity() != 0.0f )
-	{
-		m_bPredicting = false;
-		return;
-	}
-
-	// sucky position function for now
-	m_vecPredLoc += m_vInitialVelocity * gpGlobals->interval_per_tick * 3.0f * gpGlobals->frametime;
-	m_vecPredLoc.z -= 0.5f * GetActualGravity( this ) * gpGlobals->frametime * gpGlobals->frametime;
-	SetLocalOrigin( m_vecPredLoc );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFBaseRocket::ClientThink()
-{
-	ClientPredictThink();
-}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -319,25 +236,9 @@ void CTFBaseRocket::OnDataChanged(DataUpdateType_t updateType)
 //-----------------------------------------------------------------------------
 int CTFBaseRocket::DrawModel( int flags )
 {
-	CTFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
-	CTFPlayer *pTFOwner = ToTFPlayer( GetOwnerEntity() );
-	if ( pPlayer == pTFOwner || pPlayer->GetObserverTarget() == GetOwnerEntity() )
-	{
-		// During the first 0.01 seconds of our life, don't draw ourselves.
-		float flBaseTime = 0.01f;
-		INetChannelInfo* nci = engine->GetNetChannelInfo();
-		if ( nci )
-		{
-			// reduce by the latency
-			flBaseTime -= nci->GetAvgLatency( FLOW_INCOMING );
-			if ( flBaseTime < 0.0f )
-			{
-				flBaseTime = 0.0f;
-			}
-		}
-		if ( gpGlobals->curtime - GetProjectileSpawnTime() < flBaseTime )
-			return 0;
-	}
+	// During the first 0.2 seconds of our life, don't draw ourselves.
+	if ( gpGlobals->curtime - m_flSpawnTime < 0.2f )
+		return 0;
 
 	return BaseClass::DrawModel( flags );
 }
@@ -406,24 +307,6 @@ CTFBaseRocket *CTFBaseRocket::Create( CBaseEntity *pLauncher, const char *pszCla
 		{
 			flLaunchSpeed = 3000.f;
 		}
-
-#if defined(MCOMS_BALANCE_PACK)
-		// Airstrike gets launch speed bonus
-		if ( pTFOwner && pTFOwner->m_Shared.InCond( TF_COND_BLASTJUMPING ) )
-		{
-			// Using this attr to key in the AirStrike
-			float flRocketJumpAttackBonus = 1.0f;
-			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pTFOwner, flRocketJumpAttackBonus, rocketjump_attackrate_bonus );
-			if ( flRocketJumpAttackBonus != 1.0f )
-			{
-				flLaunchSpeed *= 2.0f;
-				if ( flLaunchSpeed > 3000.0f )
-				{
-					flLaunchSpeed = 3000.0f;
-				}
-			}
-		}
-#endif
 	}
 
 	Vector vecVelocity = vecForward * flLaunchSpeed;
@@ -465,28 +348,11 @@ void CTFBaseRocket::RocketTouch( CBaseEntity *pOther )
 	Explode( &trace, pOther );
 }
 
-bool CTFBaseRocket::ShouldIgnoreTrace(trace_t* pTrace)
-{
-#if defined(MCOMS_BALANCE_PACK_CYLINDERS)
-	// radius bbox filter
-	if (pTrace->m_pEnt && pTrace->m_pEnt->IsPlayer())
-	{
-		const float flDistSq = (pTrace->m_pEnt->WorldSpaceCenter() - pTrace->endpos).Length2DSqr();
-		const float flRadius = pTrace->m_pEnt->WorldAlignSize().x * 0.5f * 1.2f; // not the full box radius
-		if (flDistSq > flRadius * flRadius)
-		{
-			return true;
-		}
-	}
-#endif
-	return false;
-}
-
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
 unsigned int CTFBaseRocket::PhysicsSolidMaskForEntity( void ) const
-{
+{ 
 	int teamContents = 0;
 
 	if ( !CanCollideWithTeammates() )
@@ -579,7 +445,7 @@ void CTFBaseRocket::Explode( trace_t *pTrace, CBaseEntity *pOther )
 	int iCustomParticleIndex = INVALID_STRING_INDEX;
 	item_definition_index_t ownerWeaponDefIndex = INVALID_ITEM_DEF_INDEX;
 	// if the owner is a Sentry, Check its owner
-	CBaseEntity *pPlayerOwner = GetOriginalLauncher() ? GetOriginalLauncher()->GetOwnerEntity() : nullptr;
+	CBaseEntity *pPlayerOwner = GetOwnerPlayer();
 
 	if ( TF_IsHolidayActive( kHoliday_HalloweenOrFullMoon ) )
 	{
@@ -666,10 +532,7 @@ void CTFBaseRocket::CheckForStunOnImpact( CTFPlayer* pTarget )
 	if ( !m_bStunOnImpact )
 		return;
 
-	if ( !GetOriginalLauncher() )
-		return;
-
-	CTFPlayer *pAttacker = ToTFPlayer( GetOriginalLauncher()->GetOwnerEntity() );
+	CTFPlayer *pAttacker = ToTFPlayer( GetOwnerPlayer() );
 	if ( !pAttacker )
 		return;
 
@@ -700,10 +563,7 @@ void CTFBaseRocket::CheckForStunOnImpact( CTFPlayer* pTarget )
 //-----------------------------------------------------------------------------
 int CTFBaseRocket::GetStunLevel( void )
 {
-	if ( !GetOriginalLauncher() )
-		return 0;
-
-	CTFPlayer *pAttacker = ToTFPlayer( GetOriginalLauncher()->GetOwnerEntity() );
+	CTFPlayer *pAttacker = ToTFPlayer( GetOwnerPlayer() );
 	if ( !pAttacker )
 		return 0;
 
@@ -719,11 +579,9 @@ int CTFBaseRocket::GetStunLevel( void )
 float CTFBaseRocket::GetRadius() 
 { 
 	float flRadius = TF_ROCKET_RADIUS;
-	if ( !GetOriginalLauncher() || GetOriginalLauncher()->IsBaseObject() )
-		return flRadius;
-	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetOriginalLauncher(), flRadius, mult_explosion_radius );
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_hLauncher, flRadius, mult_explosion_radius );
 
-	CBaseEntity *pAttacker = GetOriginalLauncher()->GetOwnerEntity();
+	CBaseEntity *pAttacker = GetOwnerPlayer();
 	if ( pAttacker )
 	{
 		int iRocketSpecialist = 0;
@@ -750,7 +608,7 @@ float CTFBaseRocket::GetRadius()
 			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pAttacker, flRocketJumpAttackBonus, rocketjump_attackrate_bonus );
 			if ( flRocketJumpAttackBonus != 1.0f )
 			{
-				flRadius *= 0.80f;
+				flRadius *= 0.80;
 			}
 		}
 	}
@@ -760,7 +618,7 @@ float CTFBaseRocket::GetRadius()
 
 
 //-----------------------------------------------------------------------------
-// Checks if the owner is a sentry gun, if so returns the sentry guns owner. Not original launcher aware.
+// Checks if the owner is a sentry gun, if so returns the sentry guns owner
 //-----------------------------------------------------------------------------
 CBaseEntity *CTFBaseRocket::GetOwnerPlayer( void ) const
 {

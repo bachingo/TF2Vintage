@@ -74,7 +74,6 @@ public:
 
 	virtual Color	GetTextColorForClient( TextColor colorNum, int clientIndex );
 	virtual Color	GetClientColor( int clientIndex );
-	virtual Color	GetClientEnemyColor( int clientIndex );
 
 	virtual int		GetFilterForString( const char *pString );
 

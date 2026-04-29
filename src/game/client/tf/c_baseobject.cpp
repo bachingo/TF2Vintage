@@ -153,9 +153,9 @@ void C_BaseObject::UpdateOnRemove( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void C_BaseObject::OnPreDataChanged( DataUpdateType_t updateType )
+void C_BaseObject::PreDataUpdate( DataUpdateType_t updateType )
 {
-	BaseClass::OnPreDataChanged( updateType );
+	BaseClass::PreDataUpdate( updateType );
 
 	m_iOldHealth = m_iHealth;
 	m_hOldOwner = GetOwner();
@@ -848,19 +848,17 @@ void C_BaseObject::DisplayHintTo( C_BasePlayer *pPlayer )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void C_BaseObject::GetGlowEffectColor( float *r, float *g, float *b, float *a )
+void C_BaseObject::GetGlowEffectColor( float *r, float *g, float *b )
 {
 	if ( TFGameRules() )
 	{
 		TFGameRules()->GetTeamGlowColor( GetTeamNumber(), *r, *g, *b );
-		*a = 1.0f;
 	}
 	else
 	{
 		*r = 0.76f;
 		*g = 0.76f;
 		*b = 0.76f;
-		*a = 1.0f;
 	}
 }
 
@@ -909,11 +907,11 @@ void C_BaseObject::GetTargetIDString( OUT_Z_BYTECAP( iMaxLenInBytes ) wchar_t *s
 		const wchar_t *wszObjectName = g_pVGuiLocalize->Find( pszStatusName );
 
 		bool bHasMode = false;
-		const char *printFormatString = bSpectator ? "#TF_specid_object" : "#TF_playerid_object";
+		const char *printFormatString = "#TF_playerid_object";
 
 		if ( IsMiniBuilding() && !IsDisposableBuilding() )
 		{
-			printFormatString = bSpectator ? "#TF_specid_object_mini" : "#TF_playerid_object_mini";
+			printFormatString = "#TF_playerid_object_mini";
 		}
 
 		const wchar_t *wszModeName = L"";
@@ -922,7 +920,7 @@ void C_BaseObject::GetTargetIDString( OUT_Z_BYTECAP( iMaxLenInBytes ) wchar_t *s
 		{
 			const char *pszModeName = pObjectInfo->m_AltModes[GetObjectMode()].pszModeName;
 			wszModeName = g_pVGuiLocalize->Find( pszModeName );
-			printFormatString = bSpectator ? "#TF_specid_object_mode" : "TF_playerid_object_mode";
+			printFormatString = "TF_playerid_object_mode";
 			bHasMode = true;
 		}
 
@@ -1012,7 +1010,7 @@ void C_BaseObject::GetTargetIDDataString( OUT_Z_BYTECAP(iMaxLenInBytes) wchar_t 
 	}
 
 	// level 1 and 2 show upgrade progress
-	if ( !IsMiniBuilding() && !IsDisposableBuilding() && GetMaxUpgradeLevel() > 1 )
+	if ( !IsMiniBuilding() && !IsDisposableBuilding() )
 	{
 		_snwprintf( wszUpgradeProgress, ARRAYSIZE(wszUpgradeProgress) - 1, L"%d / %d", m_iUpgradeMetal, GetUpgradeMetalRequired() );
 		wszUpgradeProgress[ ARRAYSIZE(wszUpgradeProgress)-1 ] = '\0';
@@ -1055,12 +1053,7 @@ ConVar cl_obj_fake_alert( "cl_obj_fake_alert", "0", 0, "", true, BUILDING_HUD_AL
 //-----------------------------------------------------------------------------
 BuildingHudAlert_t C_BaseObject::GetBuildingAlertLevel( void )
 {
-	// this used to be 0 upon any damage due to integer division.
-	// our threshold for low health used to be 66%
-	// our threshold for very low health used to be 33%
-	// very low health was the only one that ever triggered.
-	// so we adjusted the thresholds below to adjust for what players are used to now.
-	float flHealthPercent = (float) GetHealth() / (float) GetMaxHealth();
+	float flHealthPercent = GetHealth() / GetMaxHealth();
 
 	BuildingHudAlert_t alertLevel = BUILDING_HUD_ALERT_NONE;
 
@@ -1068,11 +1061,11 @@ BuildingHudAlert_t C_BaseObject::GetBuildingAlertLevel( void )
 	{
 		alertLevel = BUILDING_HUD_ALERT_SAPPER;
 	}
-	else if ( !IsBuilding() && flHealthPercent <= 0.9 )
+	else if ( !IsBuilding() && flHealthPercent < 0.33 )
 	{
 		alertLevel = BUILDING_HUD_ALERT_VERY_LOW_HEALTH;
 	}
-	else if ( !IsBuilding() && flHealthPercent < 1 )
+	else if ( !IsBuilding() && flHealthPercent < 0.66 )
 	{
 		alertLevel = BUILDING_HUD_ALERT_LOW_HEALTH;
 	}

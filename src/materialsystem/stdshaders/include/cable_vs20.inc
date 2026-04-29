@@ -28,7 +28,7 @@ class cable_vs20_Dynamic_Index
 public:
 	void SetDOWATERFOG( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nDOWATERFOG = i;
 #ifdef _DEBUG
 		m_bDOWATERFOG = true;
@@ -45,7 +45,7 @@ public:
 
 	int GetIndex() const
 	{
-		DebugAssert( m_bDOWATERFOG );
+		Assert( m_bDOWATERFOG );
 		return ( 1 * m_nDOWATERFOG ) + 0;
 	}
 };

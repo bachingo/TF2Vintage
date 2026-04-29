@@ -106,8 +106,6 @@ public:
 	virtual void FireEvent( const char *pszEventName, const char *pszEventOptions );
 	void ResetAnimationEventState( MDLAnimEventState_t *pEventState );
 
-	void FireSeqEvent( const mstudioevent_t& seqEvent );
-
 protected:
 
 	virtual void SetupRenderState( int nDisplayWidth, int nDisplayHeight ) OVERRIDE;

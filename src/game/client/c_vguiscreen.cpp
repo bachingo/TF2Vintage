@@ -645,8 +645,7 @@ C_VGuiScreen *CVGuiScreenEnumerator::GetVGuiScreen( int index )
 //-----------------------------------------------------------------------------
 C_BaseEntity *FindNearbyVguiScreen( const Vector &viewPosition, const QAngle &viewAngle, int nTeam )
 {
-	// Feature not used (input on VGUI screens)
-	if ( IsX360() || 1 )
+	if ( IsX360() )
 	{
 		// X360TBD: Turn this on if feature actually used
 		return NULL;

@@ -55,7 +55,7 @@ ConVar tf_matchmaking_debug( "tf_matchmaking_spew_level",
 #endif
 FCVAR_NONE, "Set to 1 for basic console spew of quickplay-related decisions.  4 for maximum verbosity." );
 
-ConVar tf_quickplay_pref_community_servers( "tf_quickplay_pref_community_servers", "1", FCVAR_DEVELOPMENTONLY, "0=Valve only, 1=Community only, 2=Either" );
+ConVar tf_quickplay_pref_community_servers( "tf_quickplay_pref_community_servers", "0", FCVAR_ARCHIVE, "0=Valve only, 1=Community only, 2=Either" );
 
 #define TF_MATCHMAKING_SPEW( lvl, pStrFmt, ...) \
 	if ( tf_matchmaking_debug.GetInt() >= lvl ) \
@@ -63,8 +63,12 @@ ConVar tf_quickplay_pref_community_servers( "tf_quickplay_pref_community_servers
 		Msg( pStrFmt, ##__VA_ARGS__ ); \
 	}
 
+// Hack to force it to search for other app ID's for testing
 static inline int GetTfMatchmakingAppID()
 {
+	// !TEST!
+	// return 440;
+
 	return engine->GetAppID();
 }
 
@@ -112,7 +116,7 @@ static int FindRecentlyMatchedServer( uint32 ip, uint16 port )
 	return result;
 }
 
-ConVar tf_quickplay_pref_increased_maxplayers( "tf_quickplay_pref_increased_maxplayers", "2", FCVAR_ARCHIVE, "0=Default only, 1=Yes, 2=Don't care" );
+ConVar tf_quickplay_pref_increased_maxplayers( "tf_quickplay_pref_increased_maxplayers", "0", FCVAR_ARCHIVE, "0=Default only, 1=Yes, 2=Don't care" );
 ConVar tf_quickplay_pref_disable_random_crits( "tf_quickplay_pref_disable_random_crits", "0", FCVAR_ARCHIVE, "0=Random crits enabled, 1=Random crits disabled, 2=Don't care" );
 ConVar tf_quickplay_pref_enable_damage_spread( "tf_quickplay_pref_enable_damage_spread", "0", FCVAR_ARCHIVE, "0=Damage spread disabled, 1=Damage spread enabled, 2=Don't care" );
 ConVar tf_quickplay_pref_respawn_times( "tf_quickplay_pref_respawn_times", "0", FCVAR_ARCHIVE, "0=Default respawn times only, 1=Instant respawn times ('norespawn' tag), 2=Don't care" );
@@ -134,9 +138,8 @@ static bool BHasTag( const CUtlStringList &TagList, const char *tag )
 
 static void GetQuickplayTags( const QuickplaySearchOptions &opt, CUtlStringList &requiredTags, CUtlStringList &illegalTags )
 {
-	// TODO(mcoms): TODOQUICKPLAY: make this a requirement again
 	// Always required
-	//requiredTags.CopyAndAddToTail( "_registered" );
+	requiredTags.CopyAndAddToTail( "_registered" );
 
 	// Always illegal
 	illegalTags.CopyAndAddToTail( "friendlyfire" );
@@ -579,13 +582,13 @@ void CQuickListPanel::SetImage( const char *pMapName )
 	char map[ 512 ];
 	Q_snprintf( map, sizeof( map ), "maps/%s.bsp", pMapName );
 
-	if ( g_pFullFileSystem->FileExists( map, "GAME" ) == false  )
+	if ( g_pFullFileSystem->FileExists( map, "MOD" ) == false  )
 	{
 		pMapName = "default_download";
 	}
 	else
 	{
-		if ( g_pFullFileSystem->FileExists( path, "GAME" ) == false  )
+		if ( g_pFullFileSystem->FileExists( path, "MOD" ) == false  )
 		{
 			pMapName = "default";
 		}
@@ -753,12 +756,10 @@ public:
 		// Setup search filters
 		CUtlVector<MatchMakingKeyValuePair_t> vecServerFilters;
 		AddFilter( vecServerFilters, "gamedir", COM_GetModDirectory() );
-		AddFilter( vecServerFilters, "version_match", engine->GetProductVersionString() );
 		if ( GetUniverse() == k_EUniversePublic )
 		{
 			AddFilter( vecServerFilters, "secure", "1" );
-			// TODO(mcoms): TODOQUICKPLAY: allow p2p servers to be listed
-			//AddFilter( vecServerFilters, "dedicated", "1" );
+			AddFilter( vecServerFilters, "dedicated", "1" );
 		}
 		AddFilter( vecServerFilters, "full", "1" ); // actually means "not full"
 
@@ -1307,12 +1308,11 @@ protected:
 		// Check if the server is registered
 		item.m_bRegistered = BHasTag( TagList, "_registered" );
 
-		const MapDef_t *pMapInfo = GetItemSchema()->GetMasterMapDefByName( item.server.m_szMap );
+		const SchemaMap_t *pMapInfo = GetItemSchema()->GetMapForName( item.server.m_szMap );
 		if ( pMapInfo != NULL )
 		{
 			item.m_bMapIsQuickPlayOK = true;
-			// TODO(mcoms): TODOQUICKPLAY: we can do better with the tags than this.
-			item.m_bNewUserFriendly = !pMapInfo->IsCommunityMap();
+			item.m_bNewUserFriendly = pMapInfo->eQuickplayType == kQuickplay_AllUsers;
 		}
 		else
 		{
@@ -1338,7 +1338,7 @@ protected:
 			switch ( m_options.m_eSelectedGameType )
 			{
 				case kGameCategory_EventMix:
-					if ( pMapInfo->m_vecAssociatedGameCategories.HasElement( kGameCategory_EventMix ) && pMapInfo->m_vecAssociatedGameCategories.HasElement( kGameCategory_Event247 ) )
+					if ( pMapInfo->eGameCategory != kGameCategory_EventMix && pMapInfo->eGameCategory != kGameCategory_Event247 )
 						failureCodes |= (1<<12);
 					break;
 
@@ -1348,7 +1348,7 @@ protected:
 
 				default:
 					// Must match requested game mode
-					if ( pMapInfo->m_vecAssociatedGameCategories.HasElement( m_options.m_eSelectedGameType ) )
+					if ( pMapInfo->eGameCategory != m_options.m_eSelectedGameType )
 						failureCodes |= (1<<12);
 			}
 		}
@@ -1611,15 +1611,15 @@ protected:
 		CUtlString sMapList;
 		for ( int i = 0 ; i < GetItemSchema()->GetMapCount() ; ++i )
 		{
-			const MapDef_t *pMapDef = GetItemSchema()->GetMasterMapDefByIndex( i );
-			auto& mapType = pMapDef->m_vecAssociatedGameCategories;
-			if ( ( mapType.HasElement( t ) ) || ( ( mapType.HasElement( kGameCategory_Event247 ) ) && ( t == kGameCategory_EventMix ) ) )
+			const SchemaMap_t& map = GetItemSchema()->GetMapForIndex( i );
+			int mapType = map.eGameCategory;
+			if ( ( mapType == t )  || ( ( mapType == kGameCategory_Event247 ) && ( t == kGameCategory_EventMix ) ) )
 			{
 				if ( !sMapList.IsEmpty() )
 				{
 					sMapList.Append( "," );
 				}
-				sMapList.Append( pMapDef->pszMapName );
+				sMapList.Append( map.pszMapName );
 			}
 		}
 		MatchMakingKeyValuePair_t kludge;
@@ -1987,17 +1987,15 @@ protected:
 
 		m_eCurrentStep = k_EStep_GCScore;
 
-		// TODO(mcoms): TODOQUICKPLAY: don't skip gc
-#if 1
 		//// !TEST! Skip scoring
-		CMsgTFQuickplay_ScoreServersResponse emptyMsg;
-		OnReceivedGCScores( emptyMsg );
-#else
+		//CMsgTFQuickplay_ScoreServersResponse emptyMsg;
+		//OnReceivedGCScores( emptyMsg );
+		//return;
+
 		GCClientSystem()->BSendMessage( msg );
 
 		// Give the GC some time to respond.  It usually wil respond very quickly
 		m_timeGCScoreTimeout = Plat_FloatTime() + 10.0f;
-#endif
 	}
 
 	void UserConnectToServer()
@@ -2289,9 +2287,7 @@ void CQuickplayPanelBase::ApplySchemeSettings( vgui::IScheme *pScheme )
 	m_vecItems.RemoveAll();
 	m_vecAllItems.RemoveAll();
 
-	// TODO(mcoms): TODOQUICKPLAY: bring gamemodes back!
 	// listed in the order we want to show them
-#if 0
 	extern bool TF_IsHolidayActive( int eHoliday );
 	bool bHalloween = TF_IsHolidayActive( kHoliday_Halloween );
 	if ( bHalloween )
@@ -2299,9 +2295,6 @@ void CQuickplayPanelBase::ApplySchemeSettings( vgui::IScheme *pScheme )
 		AddItem( kGameCategory_Event247,	"#Gametype_Halloween247",		"#TF_GameModeDesc_Halloween247",		"#TF_GameModeDetail_Halloween247",		"#TF_Quickplay_Complexity1",	m_szEvent247Image,								NULL );
 		AddItem( kGameCategory_EventMix, 	"#Gametype_HalloweenMix", 		"#TF_GameModeDesc_HalloweenMix",		"#TF_GameModeDetail_HalloweenMix", 		"#TF_Quickplay_Complexity1",	"illustrations/gamemode_halloween",				NULL );
 	}
-#endif
-	if ( m_bShowRandomOption )
-		AddItem( kGameCategory_Quickplay, "#Gametype_Quickplay", "#TF_GameModeDesc_Quickplay", "#TF_GameModeDetail_Quickplay", "#TF_Quickplay_Complexity1", "illustrations/quickplay", "illustrations/quickplay_beta" );
 //	AddItem( kGameType_Community_Update,"#GameType_Community_Update",	"#TF_GameModeDesc_Community_Update",	"#TF_GameModeDetail_Community_Update",	"#TF_Quickplay_Complexity1",	m_szCommunityUpdateImage,						NULL );
 //	AddItem( kGameType_Featured,		"#GameType_Featured",			"#TF_GameModeDesc_Featured",			"#TF_GameModeDetail_Featured",			"#TF_Quickplay_Complexity1",	"illustrations/gamemode_operation_tough_break",	NULL );
 	AddItem( kGameCategory_Escort, 			"#Gametype_Escort", 			"#TF_GameModeDesc_Escort",				"#TF_GameModeDetail_Escort", 			"#TF_Quickplay_Complexity1",	"illustrations/gamemode_payload",				"illustrations/gamemode_payload_beta" );
@@ -2314,6 +2307,8 @@ void CQuickplayPanelBase::ApplySchemeSettings( vgui::IScheme *pScheme )
 	AddItem( kGameCategory_Powerup,			"#GameType_Powerup",			"#TF_GameModeDesc_Powerup",				"#TF_GameModeDetail_Powerup",			"#TF_Quickplay_Complexity3",	"illustrations/gamemode_powerup",				"illustrations/gamemode_powerup_beta" ); // Fix beta image once Heather has the image
 	AddItem( kGameCategory_Passtime,		"#GameType_Passtime",			"#TF_GameModeDesc_Passtime",			"#TF_GameModeDetail_Passtime",			"#TF_Quickplay_Complexity2",	"illustrations/gamemode_passtime",				"illustrations/gamemode_passtime_beta" );
 	AddItem( kGameCategory_RobotDestruction,"#Gametype_RobotDestruction",	"#TF_GameModeDesc_RobotDestruction",	"#TF_GameModeDetail_RobotDestruction",	"#TF_Quickplay_Complexity2",	"illustrations/gamemode_sd",					"illustrations/gamemode_robotdestruction_beta" );
+	if ( m_bShowRandomOption )
+		AddItem( kGameCategory_Quickplay, 		"#Gametype_Quickplay", 		"#TF_GameModeDesc_Quickplay",		"#TF_GameModeDetail_Quickplay", 	"#TF_Quickplay_Complexity2", "illustrations/quickplay", "illustrations/quickplay_beta" );
 
 	// AddItem( kQuickplayGameType_Arena, 		"#Gametype_Arena", 			"#TF_GameModeDesc_Arena",			"#TF_GameModeDetail_Arena", "#TF_Quickplay_Complexity3", "maps/menu_photos_cp_granary" );
 	// AddItem( kQuickplayGameType_Specialty, 	"#Gametype_Specialty", 		"#TF_GameModeDesc_Specialty",		"#TF_GameModeDetail_Specialty", "#TF_Quickplay_Complexity3", "maps/menu_photos_cp_granary" );
@@ -2394,8 +2389,7 @@ void CQuickplayPanelBase::SetupMoreOptions()
 	pOpt->m_vecOptionNames.AddToTail( "#TF_Quickplay_RandomCrits_Disabled" ); pOpt->m_vecOptionSummaryNames.AddToTail( "#TF_Quickplay_RandomCrits_Disabled_Summary" );
 	pOpt->m_vecOptionNames.AddToTail( "#TF_Quickplay_RandomCrits_DontCare" ); pOpt->m_vecOptionSummaryNames.AddToTail( "#TF_Quickplay_RandomCrits_DontCare_Summary" );
 	pOpt->m_pConvar = &tf_quickplay_pref_disable_random_crits;
-	
-#if 0
+
 	COMPILE_TIME_ASSERT( kEAdvOption_DamageSpread == 4 );
 	pOpt = &m_vecAdvOptions[ m_vecAdvOptions.AddToTail() ];
 	pOpt->m_pszContainerName = "DamageSpreadOption";
@@ -2403,7 +2397,6 @@ void CQuickplayPanelBase::SetupMoreOptions()
 	pOpt->m_vecOptionNames.AddToTail( "#TF_Quickplay_DamageSpread_Enabled" ); pOpt->m_vecOptionSummaryNames.AddToTail( "#TF_Quickplay_DamageSpread_Enabled_Summary" );
 	pOpt->m_vecOptionNames.AddToTail( "#TF_Quickplay_DamageSpread_DontCare" ); pOpt->m_vecOptionSummaryNames.AddToTail( "#TF_Quickplay_DamageSpread_DontCare_Summary" );
 	pOpt->m_pConvar = &tf_quickplay_pref_enable_damage_spread;
-#endif
 
 	FOR_EACH_VEC( m_vecAdvOptions, idxAdvOpt )
 	{
@@ -2856,17 +2849,17 @@ protected:
 			// Go through each of the modes
 			for ( int j = 0 ; j < GetItemSchema()->GetMapCount(); ++j )
 			{
-				const MapDef_t *pMapDef = GetItemSchema()->GetMasterMapDefByIndex( j );
+				const SchemaMap_t& map = GetItemSchema()->GetMapForIndex( j );
 
 				// Tally up maps for this mode
-				if ( pMapDef->m_vecAssociatedGameCategories.HasElement(m_vecAllItems[i].gameType) )
+				if ( map.eGameCategory == m_vecAllItems[i].gameType )
 				{
 					nNumForThisMode++;
 
 					// Check if any of the tags has "beta" as a tag, and tally that if so
-					for( int k = 0; k < pMapDef->vecTags.Count(); ++k )
+					for( int k = 0; k < map.vecTags.Count(); ++k )
 					{
-						if ( pMapDef->vecTags.HasElement( GetItemSchema()->GetHandleForTag( "beta" ) ) )
+						if ( map.vecTags.HasElement( GetItemSchema()->GetHandleForTag( "beta" ) ) )
 						{
 							nNumWithBetaContent++;
 						}
@@ -2930,8 +2923,8 @@ GC_REG_JOB( GCSDK::CGCClient, CGCTFQuickplay_ScoreServers_Response, "CGCTFQuickp
 //-----------------------------------------------------------------------------
 
 #ifdef ENABLE_GC_MATCHMAKING
-ConVar tf_quickplay_beta_preference( "tf_quickplay_beta_preference", "0", FCVAR_DEVELOPMENTONLY, "Preference to participate in beta quickplay: -1 = no preference, 0 = opt out, 1 = opt in" );
-ConVar tf_quickplay_beta_ask_percentage( "tf_quickplay_beta_ask_percentage", "0", FCVAR_DEVELOPMENTONLY, "Percentage of people who will be prompted to participate in beta quickplay." );
+ConVar tf_quickplay_beta_preference( "tf_quickplay_beta_preference", "-1", FCVAR_NONE, "Preference to participate in beta quickplay: -1 = no preference, 0 = opt out, 1 = opt in" );
+ConVar tf_quickplay_beta_ask_percentage( "tf_quickplay_beta_ask_percentage", "0", FCVAR_NONE, "Percentage of people who will be prompted to participate in beta quickplay." );
 
 
 void QuickplayBetaConfirmCallback( bool bConfirmed, void *pContext )

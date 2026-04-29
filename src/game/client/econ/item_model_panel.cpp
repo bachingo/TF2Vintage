@@ -547,6 +547,10 @@ void CEmbeddedItemModelPanel::LoadAttachedModel( attachedmodel_t *pModel )
 
 bool CEmbeddedItemModelPanel::IsLoadingWeaponSkin( void ) const
 {
+	static ConVarRef mat_dxlevel( "mat_dxlevel" );
+	if ( mat_dxlevel.GetInt() < 90 )
+		return false;
+
 	if ( m_bForceUseModel )
 		return false;
 
@@ -3699,7 +3703,7 @@ void CItemModelPanel::OnCommand( const char *command )
 {
 	if ( FStrEq( command, "sellitem" ) )
 	{
-		if ( HasItem() )
+		if ( HasItem() && steamapicontext && steamapicontext->SteamFriends() && steamapicontext->SteamUtils() )
 		{
 			const char *pszPrefix = "";
 			if ( GetUniverse() == k_EUniverseBeta )
@@ -3708,8 +3712,8 @@ void CItemModelPanel::OnCommand( const char *command )
 			}
 			uint32 nAssetContext = 2; // k_EEconContextBackpack
 			char szURL[512];
-			V_snprintf( szURL, sizeof(szURL), "https://%ssteamcommunity.com/my/inventory/?sellOnLoad=1#%d_%d_%llu", pszPrefix, UTIL_GetEmulatedAppID(), nAssetContext, GetItem()->GetItemID() );
-			UTIL_OpenWebPage( szURL );
+			V_snprintf( szURL, sizeof(szURL), "http://%ssteamcommunity.com/my/inventory/?sellOnLoad=1#%d_%d_%llu", pszPrefix, engine->GetAppID(), nAssetContext, GetItem()->GetItemID() );
+			steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( szURL );
 		}
 	}
 }

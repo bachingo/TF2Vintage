@@ -95,8 +95,8 @@ public:
 	static void PreClientUpdateAllSystems();
 
 	// Accessors for the above function
-	static class CBasePlayer *RunCommandPlayer();
-	static class CUserCmd *RunCommandUserCmd();
+	static CBasePlayer *RunCommandPlayer();
+	static CUserCmd *RunCommandUserCmd();
 #endif
 };
 

@@ -8,7 +8,7 @@ private:
 public:
 	void SetINTRO( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nINTRO = i;
 #ifdef _DEBUG
 		m_bINTRO = true;
@@ -29,7 +29,7 @@ private:
 public:
 	void SetHALF_LAMBERT( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nHALF_LAMBERT = i;
 #ifdef _DEBUG
 		m_bHALF_LAMBERT = true;
@@ -60,7 +60,7 @@ public:
 		// Asserts to make sure that we are setting all of the combination vars.
 #ifdef _DEBUG
 		bool bAllStaticVarsDefined = m_bINTRO && m_bHALF_LAMBERT;
-		DebugAssert( bAllStaticVarsDefined );
+		Assert( bAllStaticVarsDefined );
 #endif // _DEBUG
 		return ( 88 * m_nINTRO ) + ( 176 * m_nHALF_LAMBERT ) + 0;
 	}
@@ -75,7 +75,7 @@ private:
 public:
 	void SetDOWATERFOG( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nDOWATERFOG = i;
 #ifdef _DEBUG
 		m_bDOWATERFOG = true;
@@ -96,7 +96,7 @@ private:
 public:
 	void SetLIGHT_COMBO( int i )
 	{
-		DebugAssert( i >= 0 && i <= 21 );
+		Assert( i >= 0 && i <= 21 );
 		m_nLIGHT_COMBO = i;
 #ifdef _DEBUG
 		m_bLIGHT_COMBO = true;
@@ -117,7 +117,7 @@ private:
 public:
 	void SetSKINNING( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nSKINNING = i;
 #ifdef _DEBUG
 		m_bSKINNING = true;
@@ -152,7 +152,7 @@ public:
 		// Asserts to make sure that we are setting all of the combination vars.
 #ifdef _DEBUG
 		bool bAllDynamicVarsDefined = m_bDOWATERFOG && m_bLIGHT_COMBO && m_bSKINNING;
-		DebugAssert( bAllDynamicVarsDefined );
+		Assert( bAllDynamicVarsDefined );
 #endif // _DEBUG
 		return ( 1 * m_nDOWATERFOG ) + ( 2 * m_nLIGHT_COMBO ) + ( 44 * m_nSKINNING ) + 0;
 	}

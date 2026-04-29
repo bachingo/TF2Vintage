@@ -7,8 +7,11 @@
 #include "BaseVSShader.h"
 #include "cpp_shader_constant_register_map.h"
 
-#include "windowimposter_vs30.inc"
-#include "windowimposter_ps30.inc"
+#include "windowimposter_vs20.inc"
+#include "windowimposter_ps20.inc"
+#include "windowimposter_ps20b.inc"
+
+
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -29,6 +32,9 @@ BEGIN_VS_SHADER( WindowImposter_DX90,
 
 	SHADER_FALLBACK
 	{
+		if ( g_pHardwareConfig->GetDXSupportLevel() < 90)
+			return "WindowImposter_DX80";
+
 		return NULL;
 	}
 
@@ -46,11 +52,19 @@ BEGIN_VS_SHADER( WindowImposter_DX90,
 
 			pShaderShadow->EnableTexture( SHADER_SAMPLER0, true );
 
-			DECLARE_STATIC_VERTEX_SHADER( windowimposter_vs30 );
-			SET_STATIC_VERTEX_SHADER( windowimposter_vs30 );
+			DECLARE_STATIC_VERTEX_SHADER( windowimposter_vs20 );
+			SET_STATIC_VERTEX_SHADER( windowimposter_vs20 );
 
-			DECLARE_STATIC_PIXEL_SHADER( windowimposter_ps30 );
-			SET_STATIC_PIXEL_SHADER( windowimposter_ps30 );
+			if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
+			{
+				DECLARE_STATIC_PIXEL_SHADER( windowimposter_ps20b );
+				SET_STATIC_PIXEL_SHADER( windowimposter_ps20b );
+			}
+			else
+			{
+				DECLARE_STATIC_PIXEL_SHADER( windowimposter_ps20 );
+				SET_STATIC_PIXEL_SHADER( windowimposter_ps20 );
+			}
 
 			pShaderShadow->VertexShaderVertexFormat( VERTEX_POSITION, 1, 0, 0 );
 			pShaderShadow->EnableBlending( true );
@@ -60,12 +74,22 @@ BEGIN_VS_SHADER( WindowImposter_DX90,
 		}
 		DYNAMIC_STATE
 		{
-			DECLARE_DYNAMIC_VERTEX_SHADER( windowimposter_vs30 );
-			SET_DYNAMIC_VERTEX_SHADER( windowimposter_vs30 );
+			DECLARE_DYNAMIC_VERTEX_SHADER( windowimposter_vs20 );
+			SET_DYNAMIC_VERTEX_SHADER_COMBO( DOWATERFOG, pShaderAPI->GetSceneFogMode() == MATERIAL_FOG_LINEAR_BELOW_FOG_Z );
+			SET_DYNAMIC_VERTEX_SHADER( windowimposter_vs20 );
 
-			DECLARE_DYNAMIC_PIXEL_SHADER( windowimposter_ps30 );
-			SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo1( true ) );
-			SET_DYNAMIC_PIXEL_SHADER( windowimposter_ps30 );
+			if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
+			{
+				DECLARE_DYNAMIC_PIXEL_SHADER( windowimposter_ps20b );
+				SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo1( true ) );
+				SET_DYNAMIC_PIXEL_SHADER( windowimposter_ps20b );
+			}
+			else
+			{
+				DECLARE_DYNAMIC_PIXEL_SHADER( windowimposter_ps20 );
+				SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
+				SET_DYNAMIC_PIXEL_SHADER( windowimposter_ps20 );
+			}
 
 			pShaderAPI->SetPixelShaderFogParams( PSREG_FOG_PARAMS );
 

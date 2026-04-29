@@ -6,8 +6,9 @@
 //===========================================================================//
 
 #include "BaseVSShader.h"
-#include "sfm_combine_vs30.inc"
-#include "sfm_integercombine_ps30.inc"
+#include "sfm_combine_vs20.inc"
+#include "sfm_integercombine_ps20.inc"
+#include "sfm_integercombine_ps20b.inc"
 
 BEGIN_VS_SHADER_FLAGS( sfm_integercombine_shader, "Help for SFM integer HDR combine pass", SHADER_NOT_EDITABLE )
 	BEGIN_SHADER_PARAMS
@@ -55,11 +56,19 @@ BEGIN_VS_SHADER_FLAGS( sfm_integercombine_shader, "Help for SFM integer HDR comb
 			int fmt = VERTEX_POSITION;
 			pShaderShadow->VertexShaderVertexFormat( fmt, 2, 0, 0 ); // Two texture coordinates (first for high res, second for low res)
 
-			DECLARE_STATIC_VERTEX_SHADER( sfm_combine_vs30 );
-			SET_STATIC_VERTEX_SHADER( sfm_combine_vs30 );
+			DECLARE_STATIC_VERTEX_SHADER( sfm_combine_vs20 );
+			SET_STATIC_VERTEX_SHADER( sfm_combine_vs20 );
 
-			DECLARE_STATIC_PIXEL_SHADER( sfm_integercombine_ps30 );
-			SET_STATIC_PIXEL_SHADER( sfm_integercombine_ps30 );
+			if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
+			{
+				DECLARE_STATIC_PIXEL_SHADER( sfm_integercombine_ps20b );
+				SET_STATIC_PIXEL_SHADER( sfm_integercombine_ps20b );
+			}
+			else
+			{
+				DECLARE_STATIC_PIXEL_SHADER( sfm_integercombine_ps20 );
+				SET_STATIC_PIXEL_SHADER( sfm_integercombine_ps20 );
+			}
 		}
 
 		DYNAMIC_STATE
@@ -69,11 +78,19 @@ BEGIN_VS_SHADER_FLAGS( sfm_integercombine_shader, "Help for SFM integer HDR comb
 
 			SetPixelShaderConstant( 0, BLOOMAMOUNT );
 
-			DECLARE_DYNAMIC_VERTEX_SHADER( sfm_combine_vs30 );
-			SET_DYNAMIC_VERTEX_SHADER( sfm_combine_vs30 );
+			DECLARE_DYNAMIC_VERTEX_SHADER( sfm_combine_vs20 );
+			SET_DYNAMIC_VERTEX_SHADER( sfm_combine_vs20 );
 
-			DECLARE_DYNAMIC_PIXEL_SHADER( sfm_integercombine_ps30 );
-			SET_DYNAMIC_PIXEL_SHADER( sfm_integercombine_ps30 );
+			if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
+			{
+				DECLARE_DYNAMIC_PIXEL_SHADER( sfm_integercombine_ps20b );
+				SET_DYNAMIC_PIXEL_SHADER( sfm_integercombine_ps20b );
+			}
+			else
+			{
+				DECLARE_DYNAMIC_PIXEL_SHADER( sfm_integercombine_ps20 );
+				SET_DYNAMIC_PIXEL_SHADER( sfm_integercombine_ps20 );
+			}
 		}
 		Draw();
 	}

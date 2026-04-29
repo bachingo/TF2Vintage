@@ -110,7 +110,6 @@ void CAbuseReportDlg::MakeModal()
 	MoveToFront();
 	SetKeyBoardInputEnabled( true );
 	SetMouseInputEnabled( true );
-	SetVisible( true );
 
 	// !KLUDGE! Initially set the dialog to be hidden, so we can take a screenshot!
 	SetEnabled( m_pIncidentData != NULL );

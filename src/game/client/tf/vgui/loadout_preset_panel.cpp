@@ -154,7 +154,7 @@ void CLoadoutPresetPanel::LoadPreset( int iPresetIndex )
 
 	if (m_pClassLoadoutPanel)
 	{
-		m_pClassLoadoutPanel->OnLoadoutUpdate();
+		m_pClassLoadoutPanel->UpdateModelPanels();
 	}
 }
 
@@ -235,10 +235,6 @@ equipped_preset_t CLoadoutPresetPanel::GetSelectedPresetID() const
 void CLoadoutPresetPanel::UpdatePresetButtonStates()
 {
 	equipped_preset_t unEquippedPresetID = GetSelectedPresetID();
-
-	// TODO(mcoms): is there a better way to fix this?
-	if (!steamapicontext->SteamUser())
-		return;
 
 	CSteamID localSteamID = steamapicontext->SteamUser()->GetSteamID();
 	CTFPlayerInventory *pInv = TFInventoryManager()->GetInventoryForPlayer(localSteamID);

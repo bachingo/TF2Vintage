@@ -139,17 +139,6 @@ protected:
 		unsigned short m_iOffset;	// Index into the string pool.
 	};
 
-	// Helper to store search string on the stack for safe thread access
-	class CStringPoolIndexSearch : public CStringPoolIndex
-	{
-	public:
-		CStringPoolIndexSearch( const char* pString ) : CStringPoolIndex( 0xFFFF, 0xFFFF )
-		{
-			m_pUserSearchString = pString;
-		}
-		const char* m_pUserSearchString;
-	};
-
 	class CLess
 	{
 	public:

@@ -1002,7 +1002,8 @@ void CQuestMapPanel::UpdateControls( bool bIgnoreInvalidLayout )
 		return;
 	}
 
-	if ( g_pMaterialSystemHardwareConfig->PreferReducedFillrate() )
+	static ConVarRef mat_dxlevel( "mat_dxlevel" );
+	if ( mat_dxlevel.GetInt() < 90 )
 	{
 		m_pIntroPanel->SetControlVisible( "StaticBG", false );
 		m_pMapAreaPanel->SetControlVisible( "StaticOverlay", false );

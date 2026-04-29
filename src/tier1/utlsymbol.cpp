@@ -142,9 +142,9 @@ bool CUtlSymbolTable::CLess::operator()( const CStringPoolIndex &i1, const CStri
 	// right now at least, because m_LessFunc is the first member of CUtlRBTree, and m_Lookup
 	// is the first member of CUtlSymbolTabke, this == pTable
 	CUtlSymbolTable *pTable = (CUtlSymbolTable *)( (byte *)this - offsetof(CUtlSymbolTable::CTree, m_LessFunc) ) - offsetof(CUtlSymbolTable, m_Lookup );
-	const char* str1 = (i1 == INVALID_STRING_INDEX) ? static_cast< const CUtlSymbolTable::CStringPoolIndexSearch& >( i1 ).m_pUserSearchString :
+	const char* str1 = (i1 == INVALID_STRING_INDEX) ? pTable->m_pUserSearchString :
 													  pTable->StringFromIndex( i1 );
-	const char* str2 = (i2 == INVALID_STRING_INDEX) ? static_cast< const CUtlSymbolTable::CStringPoolIndexSearch& >( i2 ).m_pUserSearchString :
+	const char* str2 = (i2 == INVALID_STRING_INDEX) ? pTable->m_pUserSearchString :
 													  pTable->StringFromIndex( i2 );
 
 	if ( !str1 && str2 )
@@ -181,11 +181,11 @@ CUtlSymbol CUtlSymbolTable::Find( const char* pString ) const
 		return CUtlSymbol();
 	
 	// Store a special context used to help with insertion
-	CStringPoolIndexSearch search( pString );
+	m_pUserSearchString = pString;
 	
 	// Passing this special invalid symbol makes the comparison function
 	// use the string passed in the context
-	UtlSymId_t idx = m_Lookup.Find( search );
+	UtlSymId_t idx = m_Lookup.Find( INVALID_STRING_INDEX );
 
 #ifdef _DEBUG
 	m_pUserSearchString = NULL;

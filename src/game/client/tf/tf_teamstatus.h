@@ -29,13 +29,7 @@ public:
 	virtual void ApplySchemeSettings( vgui::IScheme *pScheme ) OVERRIDE;
 	virtual void UpdateBorder( void ) OVERRIDE;
 	virtual bool Update( void ) OVERRIDE;
-	virtual void Reset() OVERRIDE;
 	int GetPreviousTeam( void ) { return m_iTeam; }
-	int GetPreviousClass(void) { return m_iPrevClass; }
-	void SetHugeClassCount(int iClassCount) { m_iHugeClassCount = iClassCount; }
-	int GetHugeClassCount(void) { return m_iHugeClassCount; }
-
-	bool IsHugeTeam(void);
 
 private:
 
@@ -43,9 +37,7 @@ private:
 	vgui::ContinuousProgressBar *m_pOverhealBar;
 	vgui::Panel *m_pClassImageBG;
 	vgui::ImagePanel *m_pDeathFlag;
-	CExLabel *m_pChargeAmount;
 	int m_iTeam;
-	int m_iHugeClassCount;
 
 	CPanelAnimationVar( Color, m_ColorPortraitBGRedLocalPlayer, "color_portrait_bg_red_local_player", "195 169 168 255" );
 	CPanelAnimationVar( Color, m_ColorPortraitBGBlueLocalPlayer, "color_portrait_bg_blue_local_player", "168 169 195 255" );
@@ -61,8 +53,6 @@ private:
 	CPanelAnimationVar( Color, m_ColorBarHealthLow, "color_bar_health_low", "191 58 58 255" );
 	CPanelAnimationVar( Color, m_ColorPortraitBlendDeadRed, "color_portrait_blend_dead_red", "255 255 255 255" );
 	CPanelAnimationVar( Color, m_ColorPortraitBlendDeadBlue, "color_portrait_blend_dead_blue", "255 255 255 255" );
-	CPanelAnimationVar( Color, m_ColorCharge, "color_charge", "255 255 255 255" );
-	CPanelAnimationVar( Color, m_ColorChargeFull, "color_charge_full", "0 255 0 255" );
 };
 
 //-----------------------------------------------------------------------------
@@ -96,7 +86,6 @@ protected:
 	CTFTeamStatusPlayerPanel *GetOrAddPanel( int iPanelIndex );
 	void RecalculatePlayerPanels( void );
 	void UpdatePlayerPanels( void );
-	bool IsClassOrder( void );
 
 protected:
 

@@ -56,12 +56,6 @@ bool CBaseTFAchievementSimple::LocalPlayerCanEarn( void )
 		}
 	}
 
-	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
-	if ( pLocalPlayer && pLocalPlayer->GetAchievementRestrictions() == 2 )
-	{
-		return false;
-	}
-
 	return BaseClass::LocalPlayerCanEarn();
 }
 
@@ -87,13 +81,6 @@ bool CBaseTFAchievement::LocalPlayerCanEarn( void )
 	{
 		int iClass = floor( (m_iAchievementID - ACHIEVEMENT_START_CLASS_SPECIFIC) / 100.0f ) + 1;
 		if ( !IsLocalTFPlayerClass( iClass ) )
-		{
-			return false;
-		}
-
-		// m_nRestrictAchievements set to 1 prevents from earning class-specific achievements only
-		C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
-		if ( pLocalPlayer && pLocalPlayer->GetAchievementRestrictions() > 0 )
 		{
 			return false;
 		}
@@ -981,7 +968,7 @@ class CAchievementTF_KillBalloonicornOwners : public CBaseTFAchievement
 				CALL_ATTRIB_HOOK_INT_ON_OTHER( pLocalPlayer, nVisionOptInFlags, vision_opt_in_flags );
 
 				// Does the local player have PyroVision on?
-				if ( !TFGameRules()->IsCompetitiveGame() && nVisionOptInFlags & TF_VISION_FILTER_PYRO )
+				if ( nVisionOptInFlags & TF_VISION_FILTER_PYRO )
 				{
 					// Is the victim wearing the Balloonicorn?
 					for ( int i = 0 ; i < pTFVictim->GetNumWearables() ; ++i )
@@ -1083,7 +1070,7 @@ class CAchievementTF_MultipleBFF : public CBaseTFAchievement
 				int nVisionOptInFlags = 0;
 				CALL_ATTRIB_HOOK_INT_ON_OTHER( pLocalPlayer, nVisionOptInFlags, vision_opt_in_flags );
 
-				if ( !TFGameRules()->IsCompetitiveGame() && nVisionOptInFlags & TF_VISION_FILTER_PYRO )
+				if ( nVisionOptInFlags & TF_VISION_FILTER_PYRO )
 				{
 					int index = m_hBFFs.Find( pTFVictim );
 					if ( index == m_hBFFs.InvalidIndex() )
@@ -1134,7 +1121,7 @@ class CAchievementTF_TeamPyrovision : public CBaseTFAchievement
 			int nVisionOptInFlags = 0;
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pLocalPlayer, nVisionOptInFlags, vision_opt_in_flags );
 			
-			if ( !TFGameRules()->IsCompetitiveGame() && nVisionOptInFlags & TF_VISION_FILTER_PYRO )
+			if ( nVisionOptInFlags & TF_VISION_FILTER_PYRO )
 			{
 				int nCount = 0;
 

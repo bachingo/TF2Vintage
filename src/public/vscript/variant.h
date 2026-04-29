@@ -1,4 +1,4 @@
-//========== Copyright (c) 2008, Valve Corporation, All rights reserved. ========
+//========== Copyright � 2008, Valve Corporation, All rights reserved. ========
 //
 // Purpose: Variants
 //

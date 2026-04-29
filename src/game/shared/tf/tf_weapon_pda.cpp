@@ -111,13 +111,11 @@ void CTFWeaponPDA::SecondaryAttack( void )
 	if ( !pPlayer )
 		return;
 
-	if ( pPlayer->DoClassSpecialSkill() )
-	{
-		// require a re-press if we did something.
-		m_bInAttack2 = true;
-	}
+	pPlayer->DoClassSpecialSkill();
 
-	m_flNextSecondaryAttack = gpGlobals->curtime + 0.1f; // since this is used for the special skill, make it more responsive.
+	m_bInAttack2 = true;
+
+	m_flNextSecondaryAttack = gpGlobals->curtime + 0.5;
 }
 
 #if !defined( CLIENT_DLL )

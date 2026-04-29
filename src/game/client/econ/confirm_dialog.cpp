@@ -145,16 +145,12 @@ void CConfirmDialog::OnCommand( const char *command )
 	if ( !Q_strnicmp( command, "cancel", 6 ) )
 	{
 		FinishUp();
-		KeyValues* kv = new KeyValues( "ConfirmDlgResult", "confirmed", 0 );
-		kv->SetString( "name", GetConfirmId() );
-		PostMessage( GetParent(), kv );
+		PostMessage( GetParent(), new KeyValues( "ConfirmDlgResult", "confirmed", 0 ) );
 	}
 	else if ( !Q_strnicmp( command, "confirm", 7 ) )
 	{
 		FinishUp();
-		KeyValues* kv = new KeyValues( "ConfirmDlgResult", "confirmed", 1 );
-		kv->SetString( "name", GetConfirmId() );
-		PostMessage( GetParent(), kv );
+		PostMessage( GetParent(), new KeyValues( "ConfirmDlgResult", "confirmed", 1 ) );
 	}
 	else
 	{

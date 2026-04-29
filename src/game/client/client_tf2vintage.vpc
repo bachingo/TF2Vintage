@@ -1,0 +1,29 @@
+//-----------------------------------------------------------------------------
+//	CLIENT_TF2VINTAGE.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro GAMENAME     "tf2vintage" [$SOURCESDK]
+$Macro GAMENAME     "tf2vintage" [!$SOURCESDK]
+
+$Include "$SRCDIR\game\client\client_tf.vpc"
+//$Include "$SRCDIR\coplay\src\coplay.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE;tf\vgui"
+		$PreprocessorDefinitions			"$BASE;TF_VINTAGE_CLIENT"
+	}
+}
+
+$Project "Client (TF2V)"
+{
+		$Folder	"TF2Vintage"
+		{
+			// Era Enforcement
+		}
+}

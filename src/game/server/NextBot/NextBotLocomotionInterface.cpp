@@ -426,10 +426,6 @@ void ILocomotion::StuckMonitor( void )
 		return;
 	}
 
-#ifdef TF_DLL
-	// TODO(mcoms): add check for frozen / intermission. it's okay to be stuck then
-#endif
-
 // 	if ( !IsOnGround() )
 // 	{
 // 		// can't be stuck when in-air

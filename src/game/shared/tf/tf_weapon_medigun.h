@@ -79,7 +79,6 @@ public:
 	virtual void	WeaponIdle( void );
 	void			DrainCharge( void );
 	virtual void	WeaponReset( void );
-	void			StartRelease( CTFPlayer *pTFPlayerPatient );
 
 	virtual float	GetTargetRange( void );
 	virtual float	GetStickRange( void );
@@ -236,7 +235,6 @@ protected:
 	CSoundPatch			*m_pChargedSound;
 	CSoundPatch			*m_pDisruptSound;
 	CSoundPatch			*m_pHealSound;
-	float				m_flStartModulatingSound;
 	CSoundPatch			*m_pDetachSound;
 
 	CUtlVector< int >	m_iAutoCallers;

@@ -98,7 +98,7 @@ void C_TFProjectile_Flare::CreateTrails( void )
 
 	int nType = 0;
 
-	C_TFFlareGun *pFlareGun = dynamic_cast< C_TFFlareGun* >( GetOriginalLauncher() );
+	C_TFFlareGun *pFlareGun = dynamic_cast< C_TFFlareGun* >( GetLauncher() );
 	if ( pFlareGun )
 	{
 		nType = pFlareGun->GetFlareGunType();

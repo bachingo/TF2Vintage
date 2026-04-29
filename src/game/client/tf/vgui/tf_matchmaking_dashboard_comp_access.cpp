@@ -129,12 +129,18 @@ public:
 		}
 		else if ( FStrEq( command, "addphone" ) )
 		{
-			UTIL_OpenWebPage( "https://support.steampowered.com/kb_article.php?ref=8625-WRAH-9030#addphone" );
+			if ( steamapicontext && steamapicontext->SteamFriends() )
+			{
+				steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( "https://support.steampowered.com/kb_article.php?ref=8625-WRAH-9030#addphone" );
+			}
 			return;
 		}
 		else if ( FStrEq( command, "addpremium" ) )
 		{
-			UTIL_OpenWebPage( "https://steamcommunity.com/sharedfiles/filedetails/?id=143430756" );
+			if ( steamapicontext && steamapicontext->SteamFriends() )
+			{
+				steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( "https://steamcommunity.com/sharedfiles/filedetails/?id=143430756" );
+			}
 			return;
 		}
 		else if ( FStrEq( command, "open_casual" ) )

@@ -381,7 +381,7 @@ int CParticleEffectBinding::DrawModel( int flags )
 		}
 	}
 
-#ifdef DEV_BUILD
+
 	if ( !IsRetail() )
 	{
 		CParticleMgr *pMgr = ParticleMgr();
@@ -479,7 +479,6 @@ int CParticleEffectBinding::DrawModel( int flags )
 			}
 		}
 	}
-#endif
 
 	RenderEnd( mTempModel, mTempView );
 	return 1;
@@ -1274,7 +1273,6 @@ void CParticleMgr::AddEffect( CNewParticleEffect *pEffect )
 
 #if !defined( PARTICLEPROTOTYPE_APP )
 	ClientLeafSystem()->CreateRenderableHandle( pEffect );
-	ClientLeafSystem()->EnableBloatedBounds(pEffect->RenderHandle(), true);
 #endif
 	if ( pEffect->IsValid() && pEffect->m_pDef->IsViewModelEffect() )
 	{
@@ -1301,7 +1299,6 @@ bool CParticleMgr::AddEffect( CParticleEffectBinding *pEffect, IParticleEffect *
 	// Add it to the leaf system.
 #if !defined( PARTICLEPROTOTYPE_APP )
 	ClientLeafSystem()->CreateRenderableHandle( pEffect );
-	ClientLeafSystem()->EnableBloatedBounds(pEffect->RenderHandle(), true);
 #endif
 
 	pEffect->m_ListIndex = m_Effects.AddToTail( pEffect );
@@ -1586,8 +1583,6 @@ static void ProcessPSystem( ParticleSimListEntry_t& pSimListEntry )
 	{
 		pNewEffect->SetRemoveFlag();
 	}
-
-	pNewEffect->DetectChanges();
 }
 
 
@@ -1694,7 +1689,7 @@ bool CParticleMgr::RetireParticleCollections( CParticleSystemDefinition* pDef,
 }
 
 // Next, see if there are new particle systems that need early retirement
-static ConVar cl_particle_retire_cost( "cl_particle_retire_cost", "0" );
+static ConVar cl_particle_retire_cost( "cl_particle_retire_cost", "0", FCVAR_CHEAT | FCVAR_ALLOWED_IN_COMPETITIVE );
 
 bool CParticleMgr::EarlyRetireParticleSystems( int nCount, ParticleSimListEntry_t *ppEffects )
 {
@@ -1901,16 +1896,12 @@ void CParticleMgr::UpdateNewEffects( float flTimeDelta )
 		}
 	}
 
-	// UNDONE: detect changes is now thread safe
-#if 0
-
 	// now, run non-reentrant part for updating changes
 	for( int i=0; i<nCount; i++)
 	{
 		// this one can call into random entity code which may not be thread-safe
 		particlesToSimulate[i].m_pNewParticleEffect->DetectChanges();
 	}
-#endif
 
 	EndSimulateParticles();
 

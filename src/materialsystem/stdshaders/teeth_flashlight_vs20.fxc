@@ -1,13 +1,15 @@
-//======= Copyright (c) 1996-2007, Valve Corporation, All rights reserved. ======
+//======= Copyright � 1996-2007, Valve Corporation, All rights reserved. ======
 
 //	STATIC: "INTRO"					"0..1"
 
 //	DYNAMIC: "COMPRESSED_VERTS"		"0..1"
+//	DYNAMIC: "DOWATERFOG"			"0..1"
 //	DYNAMIC: "SKINNING"				"0..1"
 //  DYNAMIC: "MORPHING"				"0..1" [vs30]
 
 #include "vortwarp_vs20_helper.h"
 
+static const int g_FogType			= DOWATERFOG;
 static const bool g_bSkinning		= SKINNING ? true : false;
 
 const float4 cFlashlightPosition	:  register( SHADER_SPECIFIC_CONST_0 );
@@ -24,7 +26,7 @@ const float4 const4					:  register( SHADER_SPECIFIC_CONST_9 );
 #define modelOrigin const4.xyz
 #endif
 
-#ifdef FAST_VERTEX_TEXTURES
+#ifdef SHADER_MODEL_VS_3_0
 // NOTE: cMorphTargetTextureDim.xy = target dimensions,
 //		 cMorphTargetTextureDim.z = 4tuples/morph
 const float3 cMorphTargetTextureDim	: register( SHADER_SPECIFIC_CONST_6 );
@@ -46,7 +48,7 @@ struct VS_INPUT
 	// Position and normal/tangent deltas
 	float3 vPosFlex			: POSITION1;
 	float3 vNormalFlex		: NORMAL1;
-#ifdef FAST_VERTEX_TEXTURES
+#ifdef SHADER_MODEL_VS_3_0
 	float vVertexID			: POSITION2;
 #endif
 };
@@ -54,6 +56,9 @@ struct VS_INPUT
 struct VS_OUTPUT
 {
     float4 projPos			: POSITION;
+#if !defined( _X360 )    
+	float  fog				: FOG;
+#endif
 	float2 baseTexCoord		: TEXCOORD0;		// Base texture coordinates
 	float4 spotTexCoord		: TEXCOORD1;		// Spotlight texture coordinates
 	float3 vertAtten		: TEXCOORD2;		// Distance/spot attenuation
@@ -77,7 +82,7 @@ VS_OUTPUT main( const VS_INPUT v )
 	float3 vNormal;
 	DecompressVertex_Normal( v.vNormal, vNormal );
 
-#if !defined( FAST_VERTEX_TEXTURES ) || !MORPHING
+#if !defined( SHADER_MODEL_VS_3_0 ) || !MORPHING
 	ApplyMorph( v.vPosFlex, v.vNormalFlex, vPosition.xyz, vNormal );
 #else
 	ApplyMorph( morphSampler, cMorphTargetTextureDim, cMorphSubrect, v.vVertexID, float3( 0, 0, 0 ), vPosition.xyz, vNormal );
@@ -99,6 +104,10 @@ VS_OUTPUT main( const VS_INPUT v )
 	o.projPos = mul( float4( worldPos, 1 ), cViewProj );
 	o.worldPos = worldPos.xyz;
 	o.vProjPos = o.projPos;
+#if !defined( _X360 )
+	// Set fixed-function fog factor
+	o.fog = CalcFog( worldPos, o.projPos, g_FogType );
+#endif
 	// Spotlight texture coordinates
 	o.spotTexCoord.x = dot( cSpotlightProj1, float4(worldPos, 1) );
 	o.spotTexCoord.y = dot( cSpotlightProj2, float4(worldPos, 1) );

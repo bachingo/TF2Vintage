@@ -55,7 +55,6 @@ IMPLEMENT_CLIENTCLASS_DT_NOBASE(C_BaseTeamObjectiveResource, DT_BaseTeamObjectiv
 	RecvPropInt( RECVINFO(m_iNumControlPoints) ),
 	RecvPropBool( RECVINFO(m_bPlayingMiniRounds) ),
 	RecvPropBool( RECVINFO(m_bControlPointsReset) ),
-	RecvPropBool( RECVINFO(m_bScorePerCapture) ),
 	RecvPropInt( RECVINFO(m_iUpdateCapHudParity) ),
 
 	RecvPropArray( RecvPropVector(RECVINFO(m_vCPPositions[0])), m_vCPPositions),
@@ -374,12 +373,6 @@ bool C_BaseTeamObjectiveResource::CapIsBlocked( int index_ )
 void C_BaseTeamObjectiveResource::ClientThink()
 {
 	BaseClass::ClientThink();
-
-	if ( TeamplayRoundBasedRules() && TeamplayRoundBasedRules()->IsGamePaused() )
-	{
-		SetNextClientThink( gpGlobals->curtime + RESOURCE_THINK_TIME );
-		return;
-	}
 
 	for ( int i = 0; i < MAX_CONTROL_POINTS; i++ )
 	{

@@ -77,7 +77,7 @@ private:
 	bool ShouldShowAsSpectator( int iPlayerIndex );
 	bool ShouldShowAsArenaWaitingToPlay( int iPlayerIndex );
 	void GetCameraUnderlayBounds( int *pX, int *pY, int *pWide, int *pTall );
-	bool UseMouseMode( bool bCheckIfActive = true );
+	bool UseMouseMode( void );
 	void InitializeInputScheme( void );
 
 	void AdjustForVisibleScrollbar( void );
@@ -121,13 +121,10 @@ private:
 	CExLabel					*m_pDamageLabel;
 
 	CExLabel					*m_pServerTimeLeftValue;
-	CExLabel					*m_pServerTimeLeftLabel;
 	vgui::HFont					m_pFontTimeLeftNumbers;
 	vgui::HFont					m_pFontTimeLeftString;
 
 	CTFHudMannVsMachineScoreboard *m_pMvMScoreboard;
-
-	bool						m_bServerTimeLeftLabelSeries;
 	
 	int							m_iImageDominated;
 	int							m_iImageDominatedDead;

@@ -395,9 +395,10 @@ void CMerasmus::UpdateOnRemove()
 float MerasmusModifyDamage( const CTakeDamageInfo &info )
 {
 	CTFWeaponBase *pWeapon = dynamic_cast< CTFWeaponBase * >( info.GetWeapon() );
-	CObjectSentrygun *sentry = TFGameRules()->GetSentryGunInflictor( info.GetInflictor() );
+	CObjectSentrygun *sentry = dynamic_cast< CObjectSentrygun * >( info.GetInflictor() );
+	CTFProjectile_SentryRocket *sentryRocket = dynamic_cast< CTFProjectile_SentryRocket * >( info.GetInflictor() );
 
-	if ( sentry )
+	if ( sentry || sentryRocket )
 	{
 		return info.GetDamage() * 0.5f;
 	}

@@ -1449,10 +1449,6 @@ public:
 
 	void TrackAngRotation( bool bTrack );
 
-#ifdef GLOWS_ENABLE
-	virtual bool CanGlow() const { return true; }
-#endif // GLOWS_ENABLE
-
 private:
 	friend void OnRenderStart();
 

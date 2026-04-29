@@ -23,16 +23,9 @@
 #include "viewrender.h"
 #include "tf_gamerules.h"
 #include "tf_hud_training.h"
-#include "hud_basechat.h"
-#include "hud_chat.h"
-#include "voice_status.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
-
-extern ConVar cl_mute_all_comms;
-
-ConVar tf_hud_ping_sound("tf_hud_ping_sound", "1", FCVAR_ARCHIVE, "Play ping sound when player pings");
 
 DECLARE_HUDELEMENT_DEPTH( CTFAnnotationsPanel, 1 );
 
@@ -206,15 +199,6 @@ void CTFAnnotationsPanel::AddAnnotation( IGameEvent * event )
 	location.y = y;
 	location.z = z;
 
-	// mute pings
-	if ( TFGameRules() && !TFGameRules()->IsInTraining() && cl_mute_all_comms.GetBool() && ( id != 0 ) )
-	{
-		if ( GetClientVoiceMgr() && GetClientVoiceMgr()->IsPlayerBlocked( id ) )
-		{
-			return;
-		}
-	}
-
 	m_bShouldBeVisible = true;
 
 	// Try and add the callout
@@ -230,88 +214,9 @@ void CTFAnnotationsPanel::AddAnnotation( IGameEvent * event )
 		pCallout->SetShowDistance( bShowDistance );
 		pCallout->UpdateCallout();
 
-		CBaseHudChat* pHudChat = (CBaseHudChat*)GET_HUDELEMENT(CHudChat);
-		if (pHudChat)
-		{
-			C_TFPlayer* pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
-			C_BasePlayer* pEventPlayer = UTIL_PlayerByIndex(id);
-			if (pLocalPlayer && pEventPlayer && pLocalPlayer->GetTeamNumber() == g_PR->GetTeam(pEventPlayer->entindex()))
-			{
-				wchar_t wszPlayerName[MAX_PLAYER_NAME_LENGTH];
-				g_pVGuiLocalize->ConvertANSIToUnicode(g_PR->GetPlayerName(pEventPlayer->entindex()), wszPlayerName, sizeof(wszPlayerName));
-
-				wchar_t wszLocalized[256];
-				if (!pFollowEntity)
-				{
-					g_pVGuiLocalize->ConstructString_safe(wszLocalized, g_pVGuiLocalize->Find("#TF_Comp_PingWorld"), 1, wszPlayerName);
-				}
-				else if ( pFollowEntity->IsPlayer() )
-				{
-					wchar_t enemyFormat[256];
-					_snwprintf(enemyFormat, ARRAYSIZE(enemyFormat), L"%ls", g_pVGuiLocalize->Find("#TF_Comp_PingEnemy"));
-
-					wchar_t* colorMarker = wcsstr(enemyFormat, L" :");
-
-					if ( colorMarker )
-					{
-						pHudChat->SetCustomColor(pHudChat->GetClientEnemyColor(pLocalPlayer->entindex()));
-						*(colorMarker + 1) = COLOR_CUSTOM;
-					}
-
-					CTFPlayer* pTargetPlayer = ToTFPlayer(pFollowEntity);
-					int nClassID = pTargetPlayer->GetPlayerClass()->GetClassIndex();
-					g_pVGuiLocalize->ConstructString_safe(wszLocalized, enemyFormat, 2, wszPlayerName, g_pVGuiLocalize->Find( g_aPlayerClassNames[ nClassID ] ) );
-				}
-				else if ( pFollowEntity->IsBaseObject() )
-				{
-					wchar_t* wzFollowEntityName = NULL;
-					C_BaseObject* pBuilding = dynamic_cast<C_BaseObject*>(pFollowEntity);
-					if (pBuilding && pBuilding->GetType() < OBJ_LAST)
-					{
-						// Must match resource/tf_objects.txt!!!
-						const char* szLocalizedObjectNames[OBJ_LAST] =
-						{
-							"#TF_Object_Dispenser",
-							"#TF_Object_Tele",
-							"#TF_Object_Sentry",
-							"#TF_object_Sapper"
-						};
-						wzFollowEntityName = g_pVGuiLocalize->Find(szLocalizedObjectNames[pBuilding->GetType()]);
-					}
-					if ( pFollowEntity->GetTeamNumber() == pLocalPlayer->GetTeamNumber() )
-					{
-						g_pVGuiLocalize->ConstructString_safe(wszLocalized, g_pVGuiLocalize->Find("#TF_Comp_PingBuilding"), 2, wszPlayerName, wzFollowEntityName);
-					}
-					else
-					{
-						wchar_t enemyFormat[256];
-						_snwprintf(enemyFormat, ARRAYSIZE(enemyFormat), L"%ls", g_pVGuiLocalize->Find("#TF_Comp_PingEnemy"));
-
-						wchar_t* colorMarker = wcsstr(enemyFormat, L" :");
-
-						if (colorMarker)
-						{
-							pHudChat->SetCustomColor(pHudChat->GetClientEnemyColor(pLocalPlayer->entindex()));
-							*(colorMarker + 1) = COLOR_CUSTOM;
-						}
-						g_pVGuiLocalize->ConstructString_safe(wszLocalized, enemyFormat, 2, wszPlayerName, wzFollowEntityName);
-					}
-				}
-				else
-				{
-					g_pVGuiLocalize->ConstructString_safe(wszLocalized, g_pVGuiLocalize->Find("#TF_Comp_PingObjective"), 1, wszPlayerName);
-				}
-
-				char szLocalized[256];
-				g_pVGuiLocalize->ConvertUnicodeToANSI(wszLocalized, szLocalized, sizeof(szLocalized));
-
-				pHudChat->ChatPrintf(pLocalPlayer->entindex(), CHAT_FILTER_NAMECHANGE, "%s", szLocalized);
-			}
-		}
-
 		if ( pCallout->IsVisible() )
 		{
-			if ( pSound && tf_hud_ping_sound.GetBool() )
+			if ( pSound )
 			{
 				vgui::surface()->PlaySound( pSound );
 			}
@@ -373,11 +278,6 @@ void CTFAnnotationsPanel::RemoveAll()
 //-----------------------------------------------------------------------------
 bool CTFAnnotationsPanel::ShouldDraw( void )
 {
-	// never draw on match summary stage
-	if ( TFGameRules() && TFGameRules()->ShowMatchSummary() )
-		return false;
-	if ( IsInFreezeCam() )
-		return false;
 	return m_bShouldBeVisible;
 }
 
@@ -507,48 +407,25 @@ void CTFAnnotationsPanelCallout::PerformLayout( void )
 	AngleVectors( angPlayerView, &vView, &vRight, &vUp );
 	const float flPerpDot = vDelta.x * vView.y - vDelta.y * vView.x;
 
-	const bool bIsComp = TFGameRules() && TFGameRules()->IsCompetitiveGame();
-
 	// Calculate the alpha - the more the user looks away from the target, the greater the alpha
-	const float flBaseOpacity = (bIsComp) ? 0.86f : 1.0f; // reduce base alpha for comp
 	if ( m_DeathTime > 0.0f && m_DeathTime - LIFE_TIME >= gpGlobals->curtime )
 	{
-		m_flAlpha[0] = m_flAlpha[1] = flBaseOpacity * 255.0f * clamp( ( m_DeathTime - gpGlobals->curtime ) / LIFE_TIME, 0.0f, 1.0f );
+		m_flAlpha[0] = m_flAlpha[1] = 255 * clamp( ( m_DeathTime - gpGlobals->curtime ) / LIFE_TIME, 0.0f, 1.0f );
 	}
 	else
 	{
-		//m_flAlpha[1] = 255.0f;
-		const float flDot = DotProduct( vDelta, vView );	// As the player looks away the target to the target, this will go from -1 to 1
-		m_flAlpha[1] = 255.0f - clamp( 255.0f * flDot, 0.0f, 255.0f );	// Set target.
-		m_flAlpha[1] *= flBaseOpacity;
+		m_flAlpha[1] = 255;
+		// BUGBUG: the following lines don't do anything because of the clamp range
+		//const float flDot = DotProduct( vDelta, vView );	// As the player looks away the target to the target, this will go from -1 to 1
+		//m_flAlpha[1] = clamp( -255 * flDot, 255, 255 );	// Set target.
 		m_flAlpha[0] = Lerp( gpGlobals->frametime, m_flAlpha[0], m_flAlpha[1] );	 // Move towards target
 	}
 
-	const int fade_alpha = RoundFloatToNearestInt(m_flAlpha[0]);
+	const int fade_alpha = m_flAlpha[0];
 
 	SetAlpha( fade_alpha );
 	m_pArrow->SetAlpha( fade_alpha );
 	m_pBackground->SetAlpha( fade_alpha );
-
-	bool bIsEnemy = false;
-	if (m_FollowEntity.Get() &&
-		m_FollowEntity->GetTeamNumber() != TEAM_UNASSIGNED && m_FollowEntity->GetTeamNumber() != TEAM_INVALID &&
-		m_FollowEntity->GetTeamNumber() != pLocalTFPlayer->GetTeamNumber() &&
-		pLocalTFPlayer->GetTeamNumber() != TEAM_SPECTATOR)
-	{
-		bIsEnemy = true;
-	}
-
-	if ( bIsEnemy && m_FollowEntity->IsPlayer() )
-	{
-		CTFPlayer* pTFPlayer = ToTFPlayer(m_FollowEntity);
-		if ( ( pTFPlayer->m_Shared.InCond( TF_COND_DISGUISED ) && pTFPlayer->m_Shared.GetDisguiseTeam() == pLocalTFPlayer->GetTeamNumber() ) || pTFPlayer->m_Shared.IsStealthed() )
-		{
-			// Don't follow spies
-			SetAlpha(0);
-			m_pArrow->SetAlpha(0);
-		}
-	}
 
 	const int halfWidth = m_pBackground->GetWide() / 2;
 	bool bOffscreen = !bOnscreen || iX < halfWidth || iX > ScreenWidth()-halfWidth;
@@ -571,7 +448,10 @@ void CTFAnnotationsPanelCallout::PerformLayout( void )
 		{
 			// Not visible ie obstructed by some objects in the world.
 			// Do *not* show entities that are not the same team
-			if ( bIsEnemy )
+			if ( m_FollowEntity.Get() &&
+				 m_FollowEntity->GetTeamNumber() != TEAM_UNASSIGNED && m_FollowEntity->GetTeamNumber() != TEAM_INVALID &&
+				 m_FollowEntity->GetTeamNumber() != pLocalTFPlayer->GetTeamNumber() && 
+				 pLocalTFPlayer->GetTeamNumber() != TEAM_SPECTATOR )
 			{
 				SetAlpha( 0 );
 				m_pArrow->SetAlpha( 0 );
@@ -600,12 +480,9 @@ void CTFAnnotationsPanelCallout::PerformLayout( void )
 	}
 	SetPos( iX, iY );
 
-	int labelWide, labelTall;
-	m_pAnnotationLabel->GetContentSize( labelWide, labelTall );
-	int wide = labelWide;
-	int tall = labelTall;
+	int wide, tall;
+	m_pAnnotationLabel->GetContentSize( wide, tall );
 
-	int distanceWide, distanceTall;
 	if ( m_bShowDistance )
 	{
 		wchar_t *wzFollowEntityName = NULL;
@@ -626,36 +503,29 @@ void CTFAnnotationsPanelCallout::PerformLayout( void )
 			}
 		}
 		const float kInchesToMeters = 0.0254f;
-		int distance = RoundFloatToNearestInt( flDistance * kInchesToMeters );
+		int distance = RoundFloatToInt( flDistance * kInchesToMeters );
 		wchar_t wzValue[32];
 		_snwprintf( wzValue, ARRAYSIZE( wzValue ), L"%u", distance );
 
 		wchar_t wzText[256];
 		if ( wzFollowEntityName == NULL )
 		{
-			g_pVGuiLocalize->ConstructString_safe( wzText, g_pVGuiLocalize->Find(bIsComp ? "#TC2_Comp_DistanceTo" : "#TC2_TR_DistanceTo" ), 1, wzValue );
+			g_pVGuiLocalize->ConstructString_safe( wzText, g_pVGuiLocalize->Find( "#TR_DistanceTo" ), 1, wzValue );
 		}
 		else
 		{
-			g_pVGuiLocalize->ConstructString_safe( wzText, g_pVGuiLocalize->Find(bIsComp ? "#TC2_Comp_DistanceToObject" : "#TC2_TR_DistanceToObject" ), 2, wzFollowEntityName, wzValue );
+			g_pVGuiLocalize->ConstructString_safe( wzText, g_pVGuiLocalize->Find( "#TR_DistanceToObject" ), 2, wzFollowEntityName, wzValue );
 		}
 
 		m_pDistanceLabel->SetText( wzText );
+		int distanceWide, distanceTall;
 		m_pDistanceLabel->GetContentSize( distanceWide, distanceTall );
 		wide = MAX( distanceWide, wide );
 		tall += distanceTall;
 	}
-	else
-	{
-		distanceWide = 0;
-		distanceTall = 0;
-	}
 
-	wide += (bIsComp ? XRES(8) : XRES(24));
-	if (!bIsComp)
-	{
-		tall += YRES(18);
-	}
+	wide += XRES(24);
+	tall += YRES(18);
 
 	// Set this panel, the label, and the background to contain the text
 	const int aArrowBuffers[2] = { (int)(XRES( 20 ) * 2), (int)YRES( 20 ) };	// Leave enough room for arrows
@@ -665,11 +535,6 @@ void CTFAnnotationsPanelCallout::PerformLayout( void )
 	{
 		// also adjust the background image
 		m_pBackground->SetSize( wide, tall );
-		m_pAnnotationLabel->SetPos(0, m_bShowDistance ? -labelTall / 4 : 0);
-		if (m_bShowDistance)
-		{
-			m_pDistanceLabel->SetPos(0, distanceTall + (bIsComp ? 0 : distanceTall));
-		}
 		m_pAnnotationLabel->SetSize( m_pBackground->GetWide(), m_pBackground->GetTall() );
 		m_pDistanceLabel->SetSize( m_pBackground->GetWide(), m_pDistanceLabel->GetTall() );
 	}

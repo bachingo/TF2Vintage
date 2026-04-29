@@ -57,8 +57,6 @@ public:
 
 	virtual void UpdateDamageEffects( BuildingDamageLevel_t damageLevel );
 
-	virtual int GetMaxUpgradeLevel() const OVERRIDE;
-
 	virtual int		GetUpgradeLevel( void ) { return m_iUpgradeLevel; }
 	int				GetUpgradeMetal( void ) { return m_iUpgradeMetal; }
 	//virtual int		GetUpgradeMetalRequired( void ) { return GetObjectInfo( GetType() )->m_UpgradeCost; }
@@ -70,8 +68,6 @@ private:
 	int m_iState;
 	int m_iOldState;
 	float m_flRechargeTime;
-	int m_iTeleportCooldownUsers;
-	float m_flTeleportCooldownTime;
 	float m_flCurrentRechargeDuration;
 	int m_iTimesUsed;
 	float m_flYawToExit;

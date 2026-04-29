@@ -23,10 +23,6 @@ class C_WeaponCombatShield;
 
 #define BCC_DEFAULT_LOOK_TOWARDS_TOLERANCE 0.9f
 
-#ifdef GLOWS_ENABLE
-#define CLIENTSIDE_GLOW_ANONYMOUS		0x01
-#endif
-
 class C_BaseCombatCharacter : public C_BaseFlex
 {
 	DECLARE_CLASS( C_BaseCombatCharacter, C_BaseFlex );
@@ -100,10 +96,10 @@ public:
 
 #ifdef GLOWS_ENABLE
 	CGlowObject			*GetGlowObject( void ){ return m_pGlowEffect; }
-	virtual void		GetGlowEffectColor( float *r, float *g, float *b, float *a );
+	virtual void		GetGlowEffectColor( float *r, float *g, float *b );
 //	void				EnableGlowEffect( float r, float g, float b );
 
-	void				SetClientSideGlowEnabled( bool bEnabled, int iSourceFlag = CLIENTSIDE_GLOW_ANONYMOUS );
+	void				SetClientSideGlowEnabled( bool bEnabled ){ m_bClientSideGlowEnabled = bEnabled; UpdateGlowEffect(); }
 	bool				IsClientSideGlowEnabled( void ){ return m_bClientSideGlowEnabled; }
 #endif // GLOWS_ENABLE
 
@@ -116,17 +112,9 @@ protected:
 #ifdef GLOWS_ENABLE	
 	virtual void		UpdateGlowEffect( void );
 	virtual void		DestroyGlowEffect( void );
-	int                 GetGlowSources( void ) const { return m_iClientSideGlowSources; }
-	void                SetGlowRenderFlags( bool bRenderWhenOccluded, bool bRenderWhenUnoccluded )
-	{
-		if ( m_pGlowEffect )
-		{
-			m_pGlowEffect->SetRenderFlags( bRenderWhenOccluded, bRenderWhenUnoccluded );
-		}
-	}
 #endif // GLOWS_ENABLE
 
-	int			m_bloodColor;			// color of blood particles
+	int			m_bloodColor;			// color of blood particless
 
 private:
 	bool				ComputeLOS( const Vector &vecEyePosition, const Vector &vecTarget ) const;
@@ -138,7 +126,6 @@ private:
 
 #ifdef GLOWS_ENABLE
 	bool				m_bClientSideGlowEnabled;	// client-side only value used for spectator
-	int					m_iClientSideGlowSources;
 	bool				m_bGlowEnabled;				// networked value
 	bool				m_bOldGlowEnabled;
 	CGlowObject			*m_pGlowEffect;

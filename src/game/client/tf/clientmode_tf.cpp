@@ -78,7 +78,6 @@
 #include "client_virtualreality.h"
 
 #include "econ_gcmessages.h"
-#include "gamestate/gamestate.h"
 
 #if defined( _X360 )
 #include "tf_clientscoreboard.h"
@@ -112,7 +111,7 @@ static Color colorEyeballBossText( 134, 80, 172, 255 );
 static Color colorMerasmusText( 112, 176, 74, 255 );
 
 ConVar default_fov( "default_fov", "75", FCVAR_CHEAT );
-ConVar fov_desired( "fov_desired", "90", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets the base field-of-view.", true, 20.0, true, MAX_FOV );
+ConVar fov_desired( "fov_desired", "75", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets the base field-of-view.", true, 20.0, true, MAX_FOV );
 
 
 #define TF_HIGHFIVE_HINT_MAXDIST		512.0f
@@ -131,8 +130,6 @@ extern ConVar tf_autobalance_xp_bonus;
 extern ConVar cl_notifications_show_ingame;
 
 extern ConVar sc_look_sensitivity_scale;
-
-ConVar ui_fps_max("ui_fps_max", "120", FCVAR_ARCHIVE);
 
 extern bool TournamentHudElementKeyInput( int down, ButtonCode_t keynum, const char *pszCurrentBinding );
 extern bool ArenaClassLayoutKeyInput( int down, ButtonCode_t keynum, const char *pszCurrentBinding );
@@ -330,31 +327,15 @@ void CTFModeManager::Init()
 	EnableSteamScreenshots( true );
 }
 
-ConVar cl_interpolate_disable("cl_interpolate_disable", "0", FCVAR_CHEAT);
-
-ConVar mat_motion_blur_first_init( "mat_motion_blur_first_init", "0", FCVAR_ARCHIVE | FCVAR_HIDDEN );
-ConVar mat_defaults_first_init("mat_defaults_first_init", "0", FCVAR_ARCHIVE | FCVAR_HIDDEN);
-
 void CTFModeManager::LevelInit( const char *newmap )
 {
 	g_pClientMode->LevelInit( newmap );
 
-	static ConVarRef cl_interpolate("cl_interpolate");
-	if (cl_interpolate.IsValid())
-	{
-		cl_interpolate.SetValue(!cl_interpolate_disable.GetBool());
-	}
+	ConVarRef voice_steal( "voice_steal" );
 
-	static ConVarRef cl_allowdownload("cl_allowdownload");
-	if (cl_allowdownload.IsValid())
+	if ( voice_steal.IsValid() )
 	{
-		cl_allowdownload.SetValue(0);
-	}
-
-	static ConVarRef cl_allowupload("cl_allowupload");
-	if (cl_allowupload.IsValid())
-	{
-		cl_allowupload.SetValue(0);
+		voice_steal.SetValue( 1 );
 	}
 }
 
@@ -393,11 +374,6 @@ ClientModeTFNormal::ClientModeTFNormal()
 	m_lastServerConnectTime = 0;
 	m_pTeamGoalTournament = NULL;
 
-	m_bInitializedHudAspect = false;
-
-	m_flLastSlaughterTime = -1.0f;
-	m_flCurMaxFPS = -1.0f;
-
 #if defined( _X360 )
 	m_pScoreboard = NULL;
 #endif
@@ -424,35 +400,6 @@ static CDllDemandLoader g_GameUI( "GameUI" );
 //-----------------------------------------------------------------------------
 void ClientModeTFNormal::Init()
 {
-	if ( !g_pMaterialSystemHardwareConfig->SupportsShaderModel_3_0() )
-	{
-		Error(
-			"Your graphics card falls below our official minimum specs.\n\n"
-			"In previous versions, this spec was recommended for minor graphical\n"
-			"improvements using these hardware capabilities. However,\n"
-			"Team Fortress 2 now relies heavily on graphics features such as \n"
-			"Shader Model 3.0 and so adherence to the prior recommended spec\n"
-			"is now the minimum requirement.\n\n"
-			"Unfortunately this means that Team Fortress 2 will not be able to\n"
-			"run on some graphics cards from 2006 or before.\n"
-		);
-	}
-
-	bool bMultiPlayer = false;
-	KeyValues* modinfo = new KeyValues( "ModInfo" );
-	if ( modinfo->LoadFromFile( g_pFullFileSystem, "gameinfo.txt", "MOD" ) )
-	{
-		if ( FStrEq( modinfo->GetString( "type", "singleplayer_only" ), "multiplayer_only" ) )
-		{
-			bMultiPlayer = true;
-		}
-	}
-	modinfo->deleteThis();
-	if ( !bMultiPlayer )
-	{
-		Error( "File integrity error." );
-	}
-
 	m_pMenuEngyBuild = ( CHudMenuEngyBuild * )GET_HUDELEMENT( CHudMenuEngyBuild );
 	Assert( m_pMenuEngyBuild );
 
@@ -497,8 +444,6 @@ void ClientModeTFNormal::Init()
 
 	m_bInfoPanelShown = false;
 	m_bRestrictInfoPanel = false;
-
-	m_bInitializedHudAspect = false;
 
 	CreateInterfaceFn gameUIFactory = g_GameUI.GetFactory();
 	if ( gameUIFactory )
@@ -572,77 +517,9 @@ void ClientModeTFNormal::Init()
 	extern void Training_Init();
 	Training_Init();
 
-	// restrict commands by default, which is default off for community mods.
-	engine->SetRestrictClientCommands( true );
-	engine->SetRestrictServerCommands( true );
-
 	BaseClass::Init();
 
 	m_bPendingRichPresenceUpdate = true;
-
-	// client defaults for privacy settings (so map command is Friends Only by default)
-	static ConVarRef sv_friends_only( "sv_friends_only" );
-	if ( sv_friends_only.IsValid() )
-	{
-		sv_friends_only.SetValue( true );
-	}
-
-	static ConVarRef sv_allow_server_adverisement_to_master_server( "sv_allow_server_adverisement_to_master_server" );
-	if ( sv_allow_server_adverisement_to_master_server.IsValid() )
-	{
-		sv_allow_server_adverisement_to_master_server.SetValue( false );
-	}
-
-	// Boost texture streaming time
-	static ConVarRef mat_lodin_time( "mat_lodin_time" );
-	if ( mat_lodin_time.IsValid() )
-	{
-		mat_lodin_time.SetValue(0.4f);
-	}
-
-	ConVar* r_radiosity = g_pCVar->FindVar( "r_radiosity" );
-	if ( r_radiosity )
-	{
-		r_radiosity->SetDefault( "2" );
-		r_radiosity->SetValue( 2 );
-	}
-
-	bool bChangedMatSettings = false;
-
-	if ( !mat_motion_blur_first_init.GetBool() )
-	{
-		static ConVarRef mat_motion_blur_enabled( "mat_motion_blur_enabled" );
-		mat_motion_blur_enabled.SetValue( "0" );
-		mat_motion_blur_first_init.SetValue( "1" );
-		bChangedMatSettings = true;
-	}
-
-	if ( !mat_defaults_first_init.GetBool() )
-	{
-		static ConVarRef mat_antialias("mat_antialias");
-		static ConVarRef mat_trilinear("mat_trilinear");
-		static ConVarRef mat_forceaniso("mat_forceaniso");
-		static ConVarRef mat_picmip("mat_picmip");
-
-		mat_antialias.SetValue("4");
-		mat_trilinear.SetValue("1");
-		mat_forceaniso.SetValue("8");
-		mat_picmip.SetValue("0");
-		bChangedMatSettings = true;
-	}
-
-	static ConVarRef mat_dxlevel("mat_dxlevel");
-	const int nDxLevel = mat_dxlevel.GetInt();
-	if ( nDxLevel != 100 )
-	{
-		mat_dxlevel.SetValue("100");
-		bChangedMatSettings = true;
-	}
-
-	if ( bChangedMatSettings )
-	{
-		engine->ClientCmd_Unrestricted("mat_savechanges;host_writeconfig");
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -656,14 +533,6 @@ void ClientModeTFNormal::Shutdown()
 		RemoveFilesInPath( "download/user_custom" );
 		RemoveFilesInPath( "sound/temp" );
 	}
-
-	static ConVarRef cl_customhud_switch("cl_customhud_switch");
-	cl_customhud_switch.SetValue( IsUsingCustomHud() );
-	// TODO(mcoms): there must be a better way to do this. but. no time.
-	// need to find a way to write out that we're using AFTER config.cfg loads but before the main menu loads and before host_writeconfig shutdown.
-	// init is too early, shutdown is too late.
-	// so instead, we do this workaround where we force another writeconfig here at shutdown, and just deal with the fact that cl_customhud_switch will be wrong for the session.
-	engine->ClientCmd_Unrestricted("host_writeconfig");
 
 	DestroyStatsSummaryPanel();
 }
@@ -679,15 +548,7 @@ void ClientModeTFNormal::LevelInit( const char *newmap )
 {
 	BaseClass::LevelInit( newmap );
 
-	static ConVarRef cl_hud_aspect( "cl_hud_aspect" );
-	if ( !m_bInitializedHudAspect && cl_hud_aspect.GetInt() != 0 )
-	{
-		m_bInitializedHudAspect = true;
-		engine->ExecuteClientCmd( "hud_reloadscheme" );
-	}
-
 	m_bInfoPanelShown = false;
-	m_flLastSlaughterTime = -1.0f;
 }
 
 IClientMode *GetClientModeNormal()
@@ -820,21 +681,10 @@ void ClientModeTFNormal::FireGameEvent( IGameEvent *event )
 		{
 			int iClass = pLocalPlayer->GetPlayerClass()->GetClassIndex();
 
-			// execute shared settings before class specific ones, upon class change
-			engine->ExecuteClientCmd("exec classchange.cfg");
-
 			// have the player to exec a <class>.cfg file for the class they have selected
 			char szCmd[128];
 			Q_snprintf( szCmd, sizeof( szCmd ), "exec %s.cfg", GetPlayerClassData( iClass )->m_szClassName );
-			engine->ExecuteClientCmd( szCmd );
-
-			// weapon specific config
-			if ( GetActiveWeapon() )
-			{
-				char szWeaponCmd[256];
-				Q_snprintf( szWeaponCmd, sizeof(szWeaponCmd), "exec %s.cfg", GetActiveWeapon()->GetClassname() );
-				engine->ExecuteClientCmd(szWeaponCmd);
-			}
+			engine->ExecuteClientCmd( szCmd ); 
 		}
 	}
 	
@@ -901,15 +751,16 @@ void ClientModeTFNormal::FireGameEvent( IGameEvent *event )
 		// Make sure they're not doing a dead ringer fake death
 		if ( ( event->GetInt( "death_flags" ) & TF_DEATH_FEIGN_DEATH ) == 0 )
 		{
-			if ( g_TF_PR && TFGameRules() && ( TFGameRules()->IsInPlay() ) && ( TFGameRules()->IsMannVsMachineMode() || TFGameRules()->IsCompetitiveMode() || TFGameRules()->IsInTournamentMode() ) )
+			if ( TFGameRules() && ( TFGameRules()->State_Get() == GR_STATE_RND_RUNNING ) && ( TFGameRules()->IsMannVsMachineMode() || TFGameRules()->IsCompetitiveMode() ) )
 			{
-				int nVictimIndex = event->GetInt( "victim_entindex" );
-				int nVictimTeam = g_TF_PR->GetTeam( nVictimIndex );
 				C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
-				if ( ( nVictimTeam >= FIRST_GAME_TEAM ) && pLocalPlayer )
+				if ( pLocalPlayer )
 				{
+					int nVictimIndex = event->GetInt( "victim_entindex" );
+					int nVictimTeam = g_TF_PR->GetTeam( nVictimIndex );
+
 					// See if there are any other players still alive
-					int iAliveCount = 0;
+					bool bSomeAlive = false;
 					for ( int playerIndex = 1; playerIndex <= MAX_PLAYERS; playerIndex++ )
 					{
 						if ( !g_TF_PR->IsConnected( playerIndex ) )
@@ -924,23 +775,24 @@ void ClientModeTFNormal::FireGameEvent( IGameEvent *event )
 						if ( g_TF_PR->IsAlive( playerIndex ) )
 						{
 							// Found one
-							iAliveCount++;
+							bSomeAlive = true;
+							break;
 						}
 					}
 
-					const char* pszSound = NULL;
-					if ( iAliveCount == 0 )
+					if ( !bSomeAlive )
 					{
 						if ( TFGameRules()->IsMannVsMachineMode() )
 						{
 							if ( nVictimTeam == TF_TEAM_PVE_DEFENDERS )
 							{
 								// Inform the team that everyone is dead
-								pszSound = "Announcer.MVM_All_Dead";
+								pLocalPlayer->EmitSound( "Announcer.MVM_All_Dead" );
 							}
 						}
 						else
 						{
+							const char *pszSound = NULL;
 
 							if ( ( RandomInt( 1, 100 ) <= 20 ) || ( pLocalPlayer->GetTeamNumber() < FIRST_GAME_TEAM ) )
 							{
@@ -954,20 +806,12 @@ void ClientModeTFNormal::FireGameEvent( IGameEvent *event )
 							{
 								pszSound = "Announcer.TheirTeamWiped";
 							}
-						}
-					}
-					else if ( iAliveCount <= 2 && pLocalPlayer->GetTeamNumber() != nVictimTeam )
-					{
-						if ( TFGameRules()->IsCompetitiveGame() && ( m_flLastSlaughterTime < 0.0f || m_flLastSlaughterTime + 120.0f <= gpGlobals->curtime ) )
-						{
-							pszSound = "Announcer.Slaughter";
-							m_flLastSlaughterTime = gpGlobals->curtime;
-						}
-					}
 
-					if ( pszSound )
-					{
-						pLocalPlayer->EmitSound( pszSound );
+							if ( pszSound )
+							{
+								pLocalPlayer->EmitSound( pszSound );
+							}
+						}
 					}
 				}
 			}
@@ -1565,13 +1409,8 @@ void ClientModeTFNormal::FireGameEvent( IGameEvent *event )
 	{
 		m_eConnectState = k_eConnectState_Connecting;
 		m_bPendingRichPresenceUpdate = true;
-		// TODO(mcoms): test out always restricting info panel
-#if 0
 		const char *pchSource = event->GetString( "source" );
 		m_bRestrictInfoPanel = pchSource && ( FStrEq( "matchmaking", pchSource ) || !Q_strncmp( pchSource, "quickplay_", 10 ) );
-#else
-		m_bRestrictInfoPanel = true;
-#endif
 
 		m_bInfoPanelShown = false;
 	}
@@ -1883,11 +1722,6 @@ void ClientModeTFNormal::AskFavoriteOrBlacklist() const
 				if ( !netAdr.IsValid() || netAdr.IsReservedAdr() )
 					return;
 
-				// TODO(steam networking): Don't offer for Steam Networking at this time.
-				// is this a hack?
-				if (SteamNetworkingUtils()->IsFakeIPv4(netAdr.GetIPHostByteOrder()))
-					return;
-
 				// Don't offer this for Valve servers, either
 				if ( GTFGCClientSystem()->BIsIPRecentMatchServer( netAdr ) )
 				{
@@ -2001,12 +1835,6 @@ void ClientModeTFNormal::Update()
 	{
 		m_bPendingRichPresenceUpdate = false;
 		UpdateSteamRichPresence();
-	}
-
-	if ( m_eLastConnectState != m_eConnectState )
-	{
-		OnConnectStateChanged();
-		m_eLastConnectState = m_eConnectState;
 	}
 
 	TFModalStack()->Update();
@@ -2133,20 +1961,6 @@ void ClientModeTFNormal::Update()
 		g_pClientMode->GetViewportAnimationController()->UpdateAnimations( gpGlobals->curtime );
 	}
 
-	// todo(mcoms): we should do this in a dev paused shader
-	static ConVarRef mat_color_projection( "mat_color_projection" );
-	const bool bGamePaused = TFGameRules() && TFGameRules()->IsGamePaused();
-	if ( bGamePaused && m_iLastColorProjection == -1 )
-	{
-		m_iLastColorProjection = mat_color_projection.GetInt();
-		mat_color_projection.SetValue( 4 );
-	}
-	if ( !bGamePaused && m_iLastColorProjection != -1 )
-	{
-		mat_color_projection.SetValue( m_iLastColorProjection );
-		m_iLastColorProjection = -1;
-	}
-
 	if ( !engine->IsConnected() )
 	{
 		if ( m_wasConnectedLastUpdate )
@@ -2239,47 +2053,6 @@ bool ClientModeTFNormal::IsUpgradePanelVisible() const
 bool ClientModeTFNormal::IsTauntSelectPanelVisible() const
 {
 	return m_pMenuTauntSelection && m_pMenuTauntSelection->IsVisible();
-}
-
-//----------------------------------------------------------------------------
-void ClientModeTFNormal::OnConnectStateChanged()
-{
-	static ConVarRef fps_max( "fps_max" );
-	static ConVarRef ui_fps_max( "ui_fps_max" );
-
-	switch ( m_eConnectState )
-	{
-		case k_eConnectState_Connecting:
-		{
-			if ( m_flCurMaxFPS < 0.0f )
-			{
-				m_flCurMaxFPS = fps_max.GetFloat();
-			}
-			// while loading, keep it at our lowest
-			fps_max.SetValue( 30.0f );
-			break;
-		}
-		case k_eConnectState_Connected:
-		{
-			// after loading, restore it.
-			Assert( m_flCurMaxFPS >= 0.0f );
-			fps_max.SetValue( m_flCurMaxFPS >= 0.0f ? m_flCurMaxFPS : 1000.0f );
-			m_flCurMaxFPS = -1.0f;
-			break;
-		}
-		default:
-		{
-			if ( m_flCurMaxFPS < 0.0f )
-			{
-				m_flCurMaxFPS = fps_max.GetFloat();
-			}
-			// if not in game, set fps_max to UI mode.
-			fps_max.SetValue( ui_fps_max.GetFloat() );
-			break;
-		}
-	}
-
-	GetGameStateManager()->QueueEvent( "ingame", m_eConnectState == k_eConnectState_Connected ? "1" : "0" );
 }
 
 //----------------------------------------------------------------------------

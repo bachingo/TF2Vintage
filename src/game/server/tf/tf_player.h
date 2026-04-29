@@ -173,8 +173,6 @@ public:
 	virtual void		CheatImpulseCommands( int iImpulse );
 	virtual void		PlayerRunCommand( CUserCmd *ucmd, IMoveHelper *moveHelper );
 
-	virtual bool		ShouldBePausedDuringPause() OVERRIDE;
-
 	virtual void		CommitSuicide( bool bExplode = false, bool bForce = false );
 
 	// Combats
@@ -227,8 +225,6 @@ public:
 	bool				IsActiveTFWeapon( CEconItemDefinition *weaponHandle ) const;
 	virtual void		RemoveAllWeapons();
 	virtual void		Weapon_Equip( CBaseCombatWeapon *pWeapon ) OVERRIDE;			// Adds weapon to player
-	virtual void		EquipWearable( CEconWearable *pItem ) OVERRIDE;
-	virtual void		RemoveWearable( CEconWearable *pItem ) OVERRIDE;
 
 	void				SaveMe( void );
 
@@ -244,8 +240,6 @@ public:
 	void				SaveLastWeaponSlot( void );
 	void				SetRememberLastWeapon( bool bRememberLastWeapon ) { m_bRememberLastWeapon = bRememberLastWeapon; }
 	void				SetRememberActiveWeapon( bool bRememberActiveWeapon ) { m_bRememberActiveWeapon = bRememberActiveWeapon; }
-	void				SetRespawnOnLoadoutChanges( bool bRespawnOnLoadoutChange ) { m_bRespawnOnLoadoutChange = bRespawnOnLoadoutChange; }
-	bool				GetRespawnOnLoadoutChanges() const { return m_bRespawnOnLoadoutChange; }
 
 	void				Regenerate( bool bRefillHealthAndAmmo = true );
 	float				GetNextRegenTime( void ){ return m_flNextRegenerateTime; }
@@ -269,9 +263,8 @@ public:
 	// Class.
 	CTFPlayerClass		 *GetPlayerClass( void ) 					{ return &m_PlayerClass; }
 	const CTFPlayerClass *GetPlayerClass( void ) const				{ return &m_PlayerClass; }
-	int                   GetDesiredPlayerClassIndex( void ) { return m_Shared.m_iDesiredPlayerClass; }
-	void                  SetDesiredPlayerClassIndex( int iClass ) { m_Shared.m_iDesiredPlayerClass = iClass; }
-	bool                  HasReservedPlayerClass( int iClass ) { return m_iReservedPlayerClass == iClass; }
+	int					GetDesiredPlayerClassIndex( void )			{ return m_Shared.m_iDesiredPlayerClass; }
+	void				SetDesiredPlayerClassIndex( int iClass )	{ m_Shared.m_iDesiredPlayerClass = iClass; }
 
 	// Team.
 	void				ForceChangeTeam( int iTeamNum, bool bFullTeamSwitch = false );
@@ -369,25 +362,7 @@ public:
 	Vector EstimateProjectileImpactPosition( float pitch, float yaw, float initVel );	// estimate where a projectile fired will initially hit (it may bounce on from there)
 	Vector EstimateStickybombProjectileImpactPosition( float pitch, float yaw, float charge );	// Estimate where a stickybomb projectile will hit, using given pitch, yaw, and weapon charge (0-1)
 
-	CTFTeamSpawn *GetSpawnPoint( void ){ return m_pSpawnPoint ? static_cast<CTFTeamSpawn*>( m_pSpawnPoint.Get() ) : NULL; }
-	bool ConsumeSpawnPosOverride(Vector& vecSpawn, QAngle& angSpawn)
-	{
-		if (m_bHasSpawnPosOverride)
-		{
-			vecSpawn = m_vecSpawnPosOverride;
-			angSpawn = m_angSpawnAngOverride;
-			m_bHasSpawnPosOverride = false; // consume override
-			return true;
-		}
-		return false;
-	}
-
-	void SetSpawnPosOverride(const Vector& vecSpawn, const QAngle& angSpawn)
-	{
-		m_vecSpawnPosOverride = vecSpawn;
-		m_angSpawnAngOverride = angSpawn;
-		m_bHasSpawnPosOverride = true;
-	}
+	CTFTeamSpawn *GetSpawnPoint( void ){ return m_pSpawnPoint; }
 		
 	void SetAnimation( PLAYER_ANIM playerAnim );
 
@@ -457,7 +432,7 @@ public:
 
 	// Death & Ragdolls.
 	virtual void CreateRagdollEntity( void );
-	void CreateRagdollEntity( bool bGib, bool bBurning, bool bElectrocuted, bool bOnGround, bool bCloakedCorpse, bool bGoldRagdoll, bool bIceRagdoll, bool bBecomeAsh, int iDamageCustom = 0, bool bCritOnHardHit = false, int iKillerTeam = -1 );
+	void CreateRagdollEntity( bool bGib, bool bBurning, bool bElectrocuted, bool bOnGround, bool bCloakedCorpse, bool bGoldRagdoll, bool bIceRagdoll, bool bBecomeAsh, int iDamageCustom = 0, bool bCritOnHardHit = false );
 	void DestroyRagdoll( void );
 	CNetworkHandle( CBaseEntity, m_hRagdoll );	// networked entity handle 
 	virtual bool ShouldGib( const CTakeDamageInfo &info ) OVERRIDE;
@@ -476,13 +451,13 @@ public:
 	void DropAmmoPack( const CTakeDamageInfo &info, bool bEmpty, bool bDisguisedWeapon );
 	void DropAmmoPackFromProjectile( CBaseEntity *pProjectile );
 	void DropExtraAmmo( const CTakeDamageInfo& info, bool bFromDeath = false );
-	void DropHealthPack( const CTakeDamageInfo &info, bool bEmpty, int eForceHoliday = kHoliday_None );
+	void DropHealthPack( const CTakeDamageInfo &info, bool bEmpty );
 	void DropCurrencyPack( CurrencyRewards_t nSize = TF_CURRENCY_PACK_SMALL, int nAmount = 0, bool bForceDistribute = false, CBasePlayer* pMoneyMaker = NULL );	// Only pass in an amount when nSize = TF_CURRENCY_PACK_CUSTOM
 	
 	bool CanDisguise( void );
 	bool CanDisguise_OnKill( void );
 	bool CanGoInvisible( bool bAllowWhileCarryingFlag = false );
-	void RemoveInvisibility( bool bOnAttack = true );
+	void RemoveInvisibility( void );
 
 	bool CanStartPhase( void );
 
@@ -503,17 +478,14 @@ public:
 	void SetClassMenuOpen( bool bIsOpen );
 	bool IsClassMenuOpen( void );
 
-	float GetCritMult(const bool bMelee) { return m_Shared.GetCritMult(bMelee); }
+	float GetCritMult( void ) { return m_Shared.GetCritMult(); }
 	void  RecordDamageEvent( const CTakeDamageInfo &info, bool bKill, int nVictimPrevHealth ) { m_Shared.RecordDamageEvent(info,bKill,nVictimPrevHealth); }
 
-	bool GetHudClassAutoKill( void ) { return m_bHudClassAutoKill; }
-	void SetHudClassAutoKill( bool bAutoKill ) { m_bHudClassAutoKill = bAutoKill; }
+	bool GetHudClassAutoKill( void ){ return m_bHudClassAutoKill; }
+	void SetHudClassAutoKill( bool bAutoKill ){ m_bHudClassAutoKill = bAutoKill; }
 
-	int GetMedicAutoCallersThreshold( void ) { return m_iAutoCallThreshold; }
-	void SetMedicAutoCallersThreshold( int iAutoCallThreshold ) { m_iAutoCallThreshold = iAutoCallThreshold; }
-
-	bool GetMedigunAutoHeal( void ) { return m_bMedigunAutoHeal; }
-	void SetMedigunAutoHeal( bool bMedigunAutoHeal ) { m_bMedigunAutoHeal = bMedigunAutoHeal; }
+	bool GetMedigunAutoHeal( void ){ return m_bMedigunAutoHeal; }
+	void SetMedigunAutoHeal( bool bMedigunAutoHeal ){ m_bMedigunAutoHeal = bMedigunAutoHeal; }
 	CBaseEntity		*MedicGetHealTarget( void );
 	HSCRIPT ScriptGetHealTarget() { return ToHScript( MedicGetHealTarget() ); }
 	float			MedicGetChargeLevel( CTFWeaponBase **pRetMedigun = NULL );
@@ -521,10 +493,8 @@ public:
 	float GetTimeSinceCalledForMedic( void ) const;
 	void NoteMedicCall( void );
 
-	bool ShouldAutoRezoom( void ) { return m_iZoomMode == 1; }
-	void SetAutoRezoom( bool bAutoRezoom ) { m_iZoomMode = bAutoRezoom ? 1 : 0; }
-	int GetZoomMode( void ) { return m_iZoomMode; }
-	void SetZoomMode( int iZoomMode ) { m_iZoomMode = iZoomMode; }
+	bool ShouldAutoRezoom( void ) { return m_bAutoRezoom; }
+	void SetAutoRezoom( bool bAutoRezoom ) { m_bAutoRezoom = bAutoRezoom; }
 	bool ShouldAutoReload( void ){ return m_bAutoReload; }
 	void SetAutoReload( bool bAutoReload ) { m_bAutoReload = bAutoReload; }
 
@@ -552,8 +522,6 @@ public:
 
 	float m_flNextVoiceCommandTime;
 	int m_iVoiceSpamCounter;
-
-	float m_flNextHurtSpeakTime;
 
 	CRateLimitingTokenBucket<CVoiceCommandBucketSizer> m_RateLimitedVoiceCommandTokenBucket;
 
@@ -664,14 +632,6 @@ public:
 
 	void SetUsingVRHeadset( bool bState ){ m_bUsingVRHeadset = bState; }
 
-	void SetInstantClassSpawn( bool bInstant ) { m_bInstantClassSpawn = bInstant; }
-	void SetStrandedSpawnSwitch( bool bSwitch ) { m_bStrandedSpawnSwitch = bSwitch; }
-	// TC2 spawn-anywhere / redeploy tracking
-	void		SetLastRedeployTime( float t ) { m_flLastRedeployTime = t; }
-	float		GetLastRedeployTime() const { return m_flLastRedeployTime; }
-
-	void StartStrandedSpawnCheck();
-
 	static bool m_bTFPlayerNeedsPrecache;
 
 	// IHasAttributes
@@ -712,8 +672,6 @@ public:
 	int m_flNextTimeCheck;		// Next time the player can execute a "timeleft" command
 
 	CNetworkVar( bool, m_bSaveMeParity );
-
-	float m_flSaveMeExpireTime;
 	
 	CNetworkVar( bool, m_bIsCoaching);
 	CNetworkHandle( CTFPlayer, m_hCoach );
@@ -742,7 +700,7 @@ public:
 	void				ManageRegularWeapons( TFPlayerClassData_t *pData );
 	void				ManageRegularWeaponsLegacy( TFPlayerClassData_t *pData );	// Older, pre-inventory method of managing regular weapons
 	void				ManageBuilderWeapons( TFPlayerClassData_t *pData );
-	virtual CBaseEntity *GiveNamedItem( const char *pszClassName, int iSubType = 0, const CEconItemView* pScriptItem = NULL, bool bForce = false );
+	virtual CBaseEntity	*GiveNamedItem( const char *szName, int iSubType = 0, const CEconItemView *pScriptItem = NULL, bool bForce = false );
 	void				PostInventoryApplication( void );
 	bool				ItemIsAllowed( CEconItemView *pItem );
 	
@@ -1067,9 +1025,6 @@ public:
 
 	void				ForceItemRemovalOnRespawn( void ) { m_bForceItemRemovalOnRespawn = true; }
 
-	void				UpdateClassesPlayed( int nClass );
-	uint32				unClassesPlayed = 0;
-
 	// Item Testing
 public:
 	void				ItemTesting_Start( KeyValues *pKV );
@@ -1177,8 +1132,6 @@ protected:
 	void				TFPlayerThink();
 	void				UpdateTimers( void );
 	void				PostSpawnThink( void );
-	void				StrandedSpawnThink( void );
-	int					CheckStrandedSpawn(void);
 
 	// Regeneration due to being a Medic, or derived from items
 	void				RegenThink();
@@ -1187,9 +1140,6 @@ protected:
 	void				ResetPlayerClass( void );
 
 	virtual void		Internal_HandleMapEvent( inputdata_t &inputdata ) OVERRIDE;
-
-protected:
-	int m_iReservedPlayerClass;
 
 private:
 	float				m_flAccumulatedHealthRegen;	// Regeneration can be in small amounts, so we accumulate it and apply when it's > 1
@@ -1234,8 +1184,6 @@ private:
 
 public:
 	const QAngle& GetNetworkEyeAngles() const { return m_angEyeAngles; }
-	// DO NOT USE!!! only here for player lag compensation.
-	void SetNetworkEyeAngles( const QAngle& vecAngle ) { m_angEyeAngles = vecAngle; }
 
 	// Achievement data storage
 	CAchievementData	m_AchievementData;
@@ -1272,7 +1220,10 @@ private:
 
 	int						m_iTeamChanges;
 	int						m_iClassChanges;
-
+	
+	// Typing
+	CNetworkVar( bool, m_bTyping );
+	
 	// Ragdolls.
 	Vector					m_vecTotalBulletForce;
 
@@ -1280,10 +1231,7 @@ private:
 	CPlayerStateInfo		*m_pStateInfo;
 
 	// Spawn Point
-	EHANDLE					m_pSpawnPoint;
-	Vector					m_vecSpawnPosOverride;
-	QAngle					m_angSpawnAngOverride;
-	bool					m_bHasSpawnPosOverride;
+	CTFTeamSpawn			*m_pSpawnPoint;
 
 	// Networked.
 	CNetworkQAngle( m_angEyeAngles );					// Copied from EyeAngles() so we can send it to the client.
@@ -1305,12 +1253,8 @@ private:
 
 	bool				m_bPlayedFreezeCamSound;
 	bool				m_bSwitchedClass;
-	bool				m_bStrandedSpawnSwitch;
-	bool				m_bInstantClassSpawn; // this marks when we've instant spawned in the respawn room
-	float			m_flLastRedeployTime; // TC2: last successful redeploy selection time
 	bool				m_bRememberLastWeapon;
 	bool				m_bRememberActiveWeapon;
-	bool				m_bRespawnOnLoadoutChange;
 	int					m_iActiveWeaponTypePriorToDeath;
 
 	CHandle< CTFWeaponBuilder > m_hWeaponBuilder;
@@ -1322,11 +1266,9 @@ private:
 	Vector m_vecLastDeathPosition;
 
 	float				m_flSpawnTime;
-	float				m_flRespawnTime;
 
 	float				m_flLastAction;
 	float				m_flTimeInSpawn;
-	float				m_flTimeInUnassigned;
 
 	CUtlVector<EHANDLE>	m_hObservableEntities;
 	CUtlVector<float>	m_aBurnOtherTimes;					// vector of times this player has burned others
@@ -1343,8 +1285,7 @@ private:
 	bool				m_bSpeakingConceptAsDisguisedSpy;
 
 	bool 				m_bMedigunAutoHeal;
-	int					m_iAutoCallThreshold;
-	int					m_iZoomMode;	// 0) toggle zoom 1) does the player want to re-zoom after each shot for sniper rifles 2) hold zoom
+	bool				m_bAutoRezoom;	// does the player want to re-zoom after each shot for sniper rifles
 	bool				m_bAutoReload;
 
 	bool				m_bForceItemRemovalOnRespawn;
@@ -1352,14 +1293,7 @@ private:
 	int					m_nPrevRoundTeamNum;
 
 public:
-	bool				SetPowerplayEnabled( bool bOn );
-	bool				PlayerHasPowerplay( void );
-	void				PowerplayThink( void );
-	CNetworkVar( bool, m_bInPowerPlay );
-
 	bool				IsGoingFeignDeath( void ) { return m_bGoingFeignDeath; }
-
-	bool				HasResetClass( void ) { return m_bHasResetClass; }
 
 	void					SetDeployingBombState( BombDeployingState_t nDeployingBombState ) { m_nDeployingBombState = nDeployingBombState; }
 	BombDeployingState_t	GetDeployingBombState( void ) const { return m_nDeployingBombState; }
@@ -1395,8 +1329,6 @@ private:
 	bool				m_bIsMissionEnemy;
 	bool				m_bIsSupportEnemy;
 	bool				m_bIsLimitedSupportEnemy;
-
-	bool				m_bHasResetClass;
 
 	// In-game currency
 	CNetworkVar( int, m_nCurrency );
@@ -1599,14 +1531,10 @@ public:
 
 	int GetSkinOverride() const { return m_iPlayerSkinOverride; }
 
-	// 0 - no restrictions. 1 - restrict class-specific achievements/quests only. 2 - restrict ALL achievements/quests.
-	short GetAchievementRestrictions() const { return m_nRestrictAchievements; }
-	short GetQuestRestrictions() const { return m_nRestrictQuests; }
-
 	bool ShouldGetBonusPointsForExtinguishEvent( int userID );
 
-	void  SetLastAutobalanceTime( float flTime ) { m_flLastForcedChangeTeamTime = flTime; }
-	float GetLastAutobalanceTime() { return m_flLastForcedChangeTeamTime; }
+	void SetLastAutobalanceTime( float flTime ) { m_flLastAutobalanceTime = flTime; }
+	float GetLastAutobalanceTime() { return m_flLastAutobalanceTime; }
 	bool IsMaxHealthDraining( void ) { return m_nMaxHealthDrainBucket != 0.0; }
 
 private:
@@ -1644,12 +1572,9 @@ private:
 
 	CNetworkVar( int, m_iPlayerSkinOverride );
 
-	CNetworkVar( short, m_nRestrictAchievements );
-	CNetworkVar( short, m_nRestrictQuests );
-
 	CUtlMap<int, float> m_PlayersExtinguished;	// userID and most recent time they were extinguished for bonus points
 
-	CUtlMap<itemid_t, int> m_mapNoiseMakerUses;		// noise maker item index and number of uses
+	float m_flLastAutobalanceTime;
 
 	void ResetMaxHealthDrain( void );
 	int m_nMaxHealthDrainBucket;

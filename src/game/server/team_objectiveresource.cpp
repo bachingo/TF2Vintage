@@ -28,7 +28,6 @@ IMPLEMENT_SERVERCLASS_ST_NOBASE(CBaseTeamObjectiveResource, DT_BaseTeamObjective
 	SendPropInt( SENDINFO(m_iNumControlPoints), 4, SPROP_UNSIGNED ),
 	SendPropBool( SENDINFO(m_bPlayingMiniRounds) ),
 	SendPropBool( SENDINFO(m_bControlPointsReset) ),
-	SendPropBool( SENDINFO( m_bScorePerCapture ) ),
 	SendPropInt( SENDINFO(m_iUpdateCapHudParity), CAPHUD_PARITY_BITS, SPROP_UNSIGNED ),
 
 	// data variables
@@ -57,7 +56,7 @@ IMPLEMENT_SERVERCLASS_ST_NOBASE(CBaseTeamObjectiveResource, DT_BaseTeamObjective
 	SendPropArray3( SENDINFO_ARRAY3(m_flCPTimerTimes), SendPropFloat( SENDINFO_ARRAY(m_flCPTimerTimes) ) ),
 	
 	// state variables
-	SendPropArray3( SENDINFO_ARRAY3(m_iNumTeamMembers), SendPropInt( SENDINFO_ARRAY(m_iNumTeamMembers), 8, SPROP_UNSIGNED ) ),
+	SendPropArray3( SENDINFO_ARRAY3(m_iNumTeamMembers), SendPropInt( SENDINFO_ARRAY(m_iNumTeamMembers), 4, SPROP_UNSIGNED ) ),
 	SendPropArray3( SENDINFO_ARRAY3(m_iCappingTeam), SendPropInt( SENDINFO_ARRAY(m_iCappingTeam), 4, SPROP_UNSIGNED ) ),
 	SendPropArray3( SENDINFO_ARRAY3(m_iTeamInZone), SendPropInt( SENDINFO_ARRAY(m_iTeamInZone), 4, SPROP_UNSIGNED ) ),
 	SendPropArray3( SENDINFO_ARRAY3(m_bBlocked), SendPropInt( SENDINFO_ARRAY(m_bBlocked), 1, SPROP_UNSIGNED ) ),
@@ -75,7 +74,6 @@ BEGIN_DATADESC( CBaseTeamObjectiveResource )
 	DEFINE_FIELD( m_iNumControlPoints, FIELD_INTEGER ),
 	DEFINE_FIELD( m_bPlayingMiniRounds, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_bControlPointsReset, FIELD_BOOLEAN ),
-	DEFINE_FIELD( m_bScorePerCapture, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_iUpdateCapHudParity, FIELD_INTEGER ),
 	DEFINE_FIELD( m_flCustomPositionX, FIELD_FLOAT ),
 	DEFINE_FIELD( m_flCustomPositionY, FIELD_FLOAT ),

@@ -189,25 +189,41 @@ void CCurrencyPack::ComeToRest( void )
 		TFGameRules()->DistributeCurrencyAmount( m_nAmount );
 		m_bTouched = true;
 		UTIL_Remove( this );
+
 		return;
 	}
 
 	// See if we've come to rest in a trigger_hurt
-	if ( IsTakingTriggerHurtDamageAtPoint( GetAbsOrigin() ) )
+	for ( int i = 0; i < ITriggerHurtAutoList::AutoList().Count(); i++ )
 	{
-		TFGameRules()->DistributeCurrencyAmount(m_nAmount);
-		m_bTouched = true;
-		UTIL_Remove(this);
-		return;
+		CTriggerHurt *pTrigger = static_cast<CTriggerHurt*>( ITriggerHurtAutoList::AutoList()[i] );
+		if ( !pTrigger->m_bDisabled )
+		{
+			Vector vecMins, vecMaxs;
+			pTrigger->GetCollideable()->WorldSpaceSurroundingBounds( &vecMins, &vecMaxs );
+			if ( IsPointInBox( GetCollideable()->GetCollisionOrigin(), vecMins, vecMaxs ) )
+			{
+				TFGameRules()->DistributeCurrencyAmount( m_nAmount );
+
+				m_bTouched = true;
+				UTIL_Remove( this );
+			}
+		}
 	}
 
 	// Or a func_respawnroom (robots can drop money in their own spawn)
-	if ( PointInRespawnRoom( NULL, GetAbsOrigin() ) )
+	for ( int i = 0; i < IFuncRespawnRoomAutoList::AutoList().Count(); i++ )
 	{
-		TFGameRules()->DistributeCurrencyAmount(m_nAmount);
-		m_bTouched = true;
-		UTIL_Remove(this);
-		return;
+		CFuncRespawnRoom *pRespawnRoom = static_cast<CFuncRespawnRoom *>( IFuncRespawnRoomAutoList::AutoList()[ i ] );
+		Vector vecMins, vecMaxs;
+		pRespawnRoom->GetCollideable()->WorldSpaceSurroundingBounds( &vecMins, &vecMaxs );
+		if ( IsPointInBox( GetCollideable()->GetCollisionOrigin(), vecMins, vecMaxs ) )
+		{
+			TFGameRules()->DistributeCurrencyAmount( m_nAmount );
+
+			m_bTouched = true;
+			UTIL_Remove( this );
+		}
 	}
 }
 

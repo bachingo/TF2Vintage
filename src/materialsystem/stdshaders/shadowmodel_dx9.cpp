@@ -9,8 +9,10 @@
 //Note: Not upgraded to vs/ps 2.0 fxc's because this shader is unused and there are no test cases to verify against.
 #include "BaseVSShader.h"
 
-#include "shadowmodel_vs30.inc"
-#include "shadowmodel_ps30.inc"
+#if !defined( _X360 )
+#include "shadowmodel_ps20.inc"
+#include "shadowmodel_vs20.inc"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -75,11 +77,11 @@ SHADER_DRAW
 		int fmt = VERTEX_POSITION | VERTEX_NORMAL;
 		pShaderShadow->VertexShaderVertexFormat( fmt, 1, 0, 0 );
 
-		DECLARE_STATIC_VERTEX_SHADER( shadowmodel_vs30 );
-		SET_STATIC_VERTEX_SHADER( shadowmodel_vs30 );
+		DECLARE_STATIC_VERTEX_SHADER( shadowmodel_vs20 );
+		SET_STATIC_VERTEX_SHADER( shadowmodel_vs20 );
 
-		DECLARE_STATIC_PIXEL_SHADER( shadowmodel_ps30 );
-		SET_STATIC_PIXEL_SHADER( shadowmodel_ps30 );
+		DECLARE_STATIC_PIXEL_SHADER( shadowmodel_ps20 );
+		SET_STATIC_PIXEL_SHADER( shadowmodel_ps20 );
 
 		// We need to fog to *white* regardless of overbrighting...
 		FogToWhite();
@@ -103,13 +105,13 @@ SHADER_DRAW
 		// The constant color is the shadow color...
 		SetModulationVertexShaderDynamicState();
 
-		DECLARE_DYNAMIC_VERTEX_SHADER( shadowmodel_vs30 );
+		DECLARE_DYNAMIC_VERTEX_SHADER( shadowmodel_vs20 );
 		SET_DYNAMIC_VERTEX_SHADER_COMBO( DOWATERFOG, pShaderAPI->GetSceneFogMode() == MATERIAL_FOG_LINEAR_BELOW_FOG_Z );
 		SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING, pShaderAPI->GetCurrentNumBones() > 0 );
-		SET_DYNAMIC_VERTEX_SHADER( shadowmodel_vs30 );
+		SET_DYNAMIC_VERTEX_SHADER( shadowmodel_vs20 );
 
-		DECLARE_DYNAMIC_PIXEL_SHADER( shadowmodel_ps30 );
-		SET_DYNAMIC_PIXEL_SHADER( shadowmodel_ps30 );
+		DECLARE_DYNAMIC_PIXEL_SHADER( shadowmodel_ps20 );
+		SET_DYNAMIC_PIXEL_SHADER( shadowmodel_ps20 );
 	}
 	Draw( );
 }

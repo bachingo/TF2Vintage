@@ -9,7 +9,7 @@ private:
 public:
 	void SetBASETEXTURE( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nBASETEXTURE = i;
 #ifdef _DEBUG
 		m_bBASETEXTURE = true;
@@ -30,7 +30,7 @@ private:
 public:
 	void SetMULTITEXTURE( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nMULTITEXTURE = i;
 #ifdef _DEBUG
 		m_bMULTITEXTURE = true;
@@ -51,7 +51,7 @@ private:
 public:
 	void SetREFLECT( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nREFLECT = i;
 #ifdef _DEBUG
 		m_bREFLECT = true;
@@ -72,7 +72,7 @@ private:
 public:
 	void SetREFRACT( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nREFRACT = i;
 #ifdef _DEBUG
 		m_bREFRACT = true;
@@ -93,7 +93,7 @@ private:
 public:
 	void SetABOVEWATER( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nABOVEWATER = i;
 #ifdef _DEBUG
 		m_bABOVEWATER = true;
@@ -114,7 +114,7 @@ private:
 public:
 	void SetNORMAL_DECODE_MODE( int i )
 	{
-		DebugAssert( i >= 0 && i <= 0 );
+		Assert( i >= 0 && i <= 0 );
 		m_nNORMAL_DECODE_MODE = i;
 #ifdef _DEBUG
 		m_bNORMAL_DECODE_MODE = true;
@@ -161,7 +161,7 @@ public:
 		// Asserts to make sure that we are setting all of the combination vars.
 #ifdef _DEBUG
 		bool bAllStaticVarsDefined = m_bBASETEXTURE && m_bMULTITEXTURE && m_bREFLECT && m_bREFRACT && m_bABOVEWATER && m_bNORMAL_DECODE_MODE;
-		DebugAssert( bAllStaticVarsDefined );
+		Assert( bAllStaticVarsDefined );
 #endif // _DEBUG
 		return ( 2 * m_nBASETEXTURE ) + ( 4 * m_nMULTITEXTURE ) + ( 8 * m_nREFLECT ) + ( 16 * m_nREFRACT ) + ( 32 * m_nABOVEWATER ) + ( 64 * m_nNORMAL_DECODE_MODE ) + 0;
 	}
@@ -177,7 +177,7 @@ private:
 public:
 	void SetPIXELFOGTYPE( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nPIXELFOGTYPE = i;
 #ifdef _DEBUG
 		m_bPIXELFOGTYPE = true;
@@ -204,7 +204,7 @@ public:
 		// Asserts to make sure that we are setting all of the combination vars.
 #ifdef _DEBUG
 		bool bAllDynamicVarsDefined = m_bPIXELFOGTYPE;
-		DebugAssert( bAllDynamicVarsDefined );
+		Assert( bAllDynamicVarsDefined );
 #endif // _DEBUG
 		return ( 1 * m_nPIXELFOGTYPE ) + 0;
 	}

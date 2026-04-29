@@ -219,16 +219,6 @@ void C_ObjectSentrygun::OnDataChanged( DataUpdateType_t updateType )
 	}
 }
 
-ConVar tf_obj_sentrygun_max_level("tf_obj_sentrygun_max_level", V_STRINGIFY(OBJ_MAX_UPGRADE_LEVEL), FCVAR_REPLICATED);
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-int C_ObjectSentrygun::GetMaxUpgradeLevel() const
-{
-	return Clamp( tf_obj_sentrygun_max_level.GetInt(), 1, BaseClass::GetMaxUpgradeLevel() );
-}
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------

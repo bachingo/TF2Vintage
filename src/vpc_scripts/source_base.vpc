@@ -8,7 +8,7 @@
 
 $MacroRequired VPC_TRIVIAL_DEPENDENCY_PATH "$SRCDIR/vpc_scripts/vpc_trivial_dependency.txt"
 
-$Macro "DEFAULT_RUN_ARGS" "-dev"
+$Macro "DEFAULT_RUN_ARGS" "-dev -w 1920 -h 1080 -windowed"
 
 $Configuration "Debug"
 {
@@ -20,7 +20,6 @@ $Configuration "Debug"
 		$PreprocessorDefinitions		"$BASE;USE_MEM_DEBUG" [$USE_MEM_DEBUG]
 		$PreprocessorDefinitions		"$BASE;SOURCESDK" [$SOURCESDK]
 		$PreprocessorDefinitions		"$BASE;SOURCE_HAS_FREETYPE"
-		$PreprocessorDefinitions		"$BASE;GAME_SDK2013"
 	}
 }
 
@@ -32,6 +31,5 @@ $Configuration "Release"
 		$PreprocessorDefinitions		"VPC"
 		$PreprocessorDefinitions		"$BASE;SOURCESDK" [$SOURCESDK]
 		$PreprocessorDefinitions		"$BASE;SOURCE_HAS_FREETYPE"
-		$PreprocessorDefinitions		"$BASE;GAME_SDK2013"
 	}
 }

@@ -9,9 +9,6 @@
 #include "c_rumble.h"
 #include "rumble_shared.h"
 #include "inputsystem/iinputsystem.h"
-#ifdef TF_CLIENT_DLL
-#include "tf_gamerules.h"
-#endif
 
 ConVar cl_rumblescale( "cl_rumblescale", "1.0", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX, "Scale sensitivity of rumble effects (0 to 1.0)" ); 
 ConVar cl_debugrumble( "cl_debugrumble", "0", FCVAR_ARCHIVE, "Turn on rumble debugging spew" );
@@ -768,9 +765,7 @@ void CRumbleEffects::UpdateEffects( float curtime )
 	fLeftMotor *= cl_rumblescale.GetFloat();
 	fRightMotor *= cl_rumblescale.GetFloat();
 
-	C_BasePlayer* pPlayer = C_BasePlayer::GetLocalPlayer();
-	const bool bPaused = engine->IsPaused() || ( pPlayer && pPlayer->IsGamePausedForMe() );
-	if ( bPaused )
+	if( engine->IsPaused() )
 	{
 		// Send nothing when paused.
 		fLeftMotor = 0.0f;

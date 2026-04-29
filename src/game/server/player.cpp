@@ -82,10 +82,6 @@
 #include "weapon_physcannon.h"
 #endif
 
-#ifdef TF_DLL
-#include "tf_gamerules.h"
-#endif
-
 ConVar autoaim_max_dist( "autoaim_max_dist", "2160" ); // 2160 = 180 feet
 ConVar autoaim_max_deflect( "autoaim_max_deflect", "0.99" );
 
@@ -97,6 +93,8 @@ ConVar	spec_freeze_time( "spec_freeze_time", "4.0", FCVAR_CHEAT | FCVAR_REPLICAT
 ConVar	spec_freeze_traveltime( "spec_freeze_traveltime", "0.4", FCVAR_CHEAT | FCVAR_REPLICATED, "Time taken to zoom in to frame a target in observer freeze cam.", true, 0.01, false, 0 );
 #endif
 
+ConVar tf2v_modified_respawn_waves( "tf2v_modified_respawn_waves", "1", FCVAR_REPLICATED | FCVAR_ARCHIVE, "When active, uses TF2V's algorithm to alter respawn times based on a 8v8 baseline. Disable for the familiar 12v12 Casual mode chaos.", true, 0, true, 1 );
+
 ConVar sv_bonus_challenge( "sv_bonus_challenge", "0", FCVAR_REPLICATED, "Set to values other than 0 to select a bonus map challenge type." );
 
 ConVar sv_chat_bucket_size_tier1( "sv_chat_bucket_size_tier1", "4", FCVAR_NONE, "The maximum size of the short term chat msg bucket." );
@@ -104,7 +102,7 @@ ConVar sv_chat_seconds_per_msg_tier1( "sv_chat_seconds_per_msg_tier1", "3", FCVA
 ConVar sv_chat_bucket_size_tier2( "sv_chat_bucket_size_tier2", "30", FCVAR_NONE, "The maximum size of the long term chat msg bucket." );
 ConVar sv_chat_seconds_per_msg_tier2( "sv_chat_seconds_per_msg_tier2", "10", FCVAR_NONE, "The number of seconds to accrue an additional long term chat msg." );
 
-static ConVar sv_maxusrcmdprocessticks( "sv_maxusrcmdprocessticks", "16", FCVAR_NOTIFY, "Maximum number of client-issued usrcmd ticks that can be replayed in packet loss conditions, 0 to allow no restrictions" );
+static ConVar sv_maxusrcmdprocessticks( "sv_maxusrcmdprocessticks", "24", FCVAR_NOTIFY, "Maximum number of client-issued usrcmd ticks that can be replayed in packet loss conditions, 0 to allow no restrictions" );
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -122,7 +120,8 @@ ConVar cl_forwardspeed( "cl_forwardspeed", "450", FCVAR_REPLICATED | FCVAR_CHEAT
 ConVar cl_backspeed( "cl_backspeed", "450", FCVAR_REPLICATED | FCVAR_CHEAT );
 #endif // CSTRIKE_DLL
 
-ConVar	sv_noclipduringpause( "sv_noclipduringpause", "1", FCVAR_REPLICATED | FCVAR_CHEAT, "If enabled, then you can noclip with the game paused (for doing screenshots, etc.)." );
+// This is declared in the engine, too
+ConVar	sv_noclipduringpause( "sv_noclipduringpause", "0", FCVAR_REPLICATED | FCVAR_CHEAT, "If cheats are enabled, then you can noclip with the game paused (for doing screenshots, etc.)." );
 
 extern ConVar sv_maxunlag;
 extern ConVar sv_turbophysics;
@@ -479,11 +478,10 @@ edict_t *CBasePlayer::s_PlayerEdict = NULL;
 
 inline bool ShouldRunCommandsInContext( const CCommandContext *ctx )
 {
-	// TODO(mcoms): we're enabling it now
 	// TODO: This should be enabled at some point. If usercmds can run while paused, then
 	// they can create entities which will never die and it will fill up the entity list.
-#if defined( NO_USERCMDS_DURING_PAUSE ) || 1
-	return !ctx->paused;
+#ifdef NO_USERCMDS_DURING_PAUSE
+	return !ctx->paused || sv_noclipduringpause.GetInt();
 #else
 	return true;
 #endif
@@ -606,8 +604,8 @@ CBasePlayer::CBasePlayer( )
 	m_hZoomOwner = NULL;
 
 	m_bPendingClientSettings = false;
-	m_nUpdateRate = 64;  // cl_updaterate defualt
-	m_fLerpTime = 0.03125f; // client interp default
+	m_nUpdateRate = 20;  // cl_updaterate defualt
+	m_fLerpTime = 0.1f; // cl_interp default
 	m_bPredictWeapons = true;
 	m_bRequestPredict = true;
 	m_bLagCompensation = false;
@@ -741,8 +739,8 @@ int CBasePlayer::ShouldTransmit( const CCheckTransmitInfo *pInfo )
 	// Transmit for a short time after death and our death anim finishes so ragdolls can access reliable player data.
 	// Note that if m_flDeathAnimTime is never set, as long as m_lifeState is set to LIFE_DEAD after dying, this
 	// test will act as if the death anim is finished.
-	if ( IsEffectActive( EF_NODRAW ) || ( IsObserver() && ( gpGlobals->curtime - m_flDeathTime > 0.5f ) && 
-		( m_lifeState == LIFE_DEAD ) && ( gpGlobals->curtime - m_flDeathAnimTime > 0.5f ) ) )
+	if ( IsEffectActive( EF_NODRAW ) || ( IsObserver() && ( gpGlobals->curtime - m_flDeathTime > 0.5 ) && 
+		( m_lifeState == LIFE_DEAD ) && ( gpGlobals->curtime - m_flDeathAnimTime > 0.5 ) ) )
 	{
 		return FL_EDICT_DONTSEND;
 	}
@@ -765,8 +763,8 @@ bool CBasePlayer::WantsLagCompensationOnEntity( const CBasePlayer *pPlayer, cons
 	const Vector &vHisOrigin = pPlayer->GetAbsOrigin();
 
 	// get max distance player could have moved within max lag compensation time, 
-	// multiply by 1.5 to avoid "dead zones"  (sqrt(2) would be the exact value)
-	float maxDistance = 1.5f * pPlayer->MaxSpeed() * sv_maxunlag.GetFloat();
+	// multiply by 1.5 to to avoid "dead zones"  (sqrt(2) would be the exact value)
+	float maxDistance = 1.5 * pPlayer->MaxSpeed() * sv_maxunlag.GetFloat();
 
 	// If the player is within this distance, lag compensate them in case they're running past us.
 	if ( vHisOrigin.DistTo( vMyOrigin ) < maxDistance )
@@ -774,7 +772,7 @@ bool CBasePlayer::WantsLagCompensationOnEntity( const CBasePlayer *pPlayer, cons
 
 	// If their origin is not within a 45 degree cone in front of us, no need to lag compensate.
 	Vector vForward;
-	AngleVectors( pCmd ? pCmd->viewangles : pPlayer->pl.v_angle, &vForward );
+	AngleVectors( pCmd->viewangles, &vForward );
 	
 	Vector vDiff = vHisOrigin - vMyOrigin;
 	VectorNormalize( vDiff );
@@ -812,10 +810,6 @@ void CBasePlayer::SnapEyeAngles( const QAngle &viewAngles )
 	pl.fixangle = FIXANGLE_ABSOLUTE;
 }
 
-Vector CBasePlayer::EyePositionOld()
-{
-	return m_oldOrigin + GetViewOffset();
-}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -2655,11 +2649,6 @@ bool CBasePlayer::SetObserverTarget(CBaseEntity *target)
 
 	// reset fov to default
 	SetFOV( this, 0 );	
-	// reset roll
-	QAngle angles = pl.v_angle;
-	angles.z = 0;
-	SetLocalAngles( angles );
-	SnapEyeAngles( angles );
 	
 	if ( m_iObserverMode == OBS_MODE_ROAMING )
 	{
@@ -3117,8 +3106,8 @@ int CBasePlayer::DetermineSimulationTicks( void )
 }
 
 // 2 ticks ahead or behind current clock means we need to fix clock on client
-static ConVar sv_clockcorrection_msecs( "sv_clockcorrection_msecs", "35", 0, "The server tries to keep each player's m_nTickBase withing this many msecs of the server absolute tickcount" );
-static ConVar sv_playerperfhistorycount( "sv_playerperfhistorycount", "0", 0, "Number of samples to maintain in player perf history", true, 0, true, 128.0 );
+static ConVar sv_clockcorrection_msecs( "sv_clockcorrection_msecs", "60", 0, "The server tries to keep each player's m_nTickBase withing this many msecs of the server absolute tickcount" );
+static ConVar sv_playerperfhistorycount( "sv_playerperfhistorycount", "60", 0, "Number of samples to maintain in player perf history", true, 1.0f, true, 128.0 );
 
 //-----------------------------------------------------------------------------
 // Purpose: Based upon amount of time in simulation time, adjust m_nTickBase so that
@@ -3195,7 +3184,7 @@ void CBasePlayer::AdjustPlayerTimeBase( int simulation_ticks )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CBasePlayer::RunNullCommand( bool bNeedsHost )
+void CBasePlayer::RunNullCommand( void )
 {
 	CUserCmd cmd;	// NULL command
 
@@ -3217,10 +3206,7 @@ void CBasePlayer::RunNullCommand( bool bNeedsHost )
 	float flTimeBase = gpGlobals->curtime;
 	SetTimeBase( flTimeBase );
 
-	if ( bNeedsHost )
-	{
-		MoveHelperServer()->SetHost( this );
-	}
+	MoveHelperServer()->SetHost( this );
 	PlayerRunCommand( &cmd, MoveHelperServer() );
 
 	// save off the last good usercmd
@@ -3230,10 +3216,7 @@ void CBasePlayer::RunNullCommand( bool bNeedsHost )
 	gpGlobals->frametime = flOldFrametime;
 	gpGlobals->curtime = flOldCurtime;
 
-	if ( bNeedsHost )
-	{
-		MoveHelperServer()->SetHost( NULL );
-	}
+	MoveHelperServer()->SetHost( NULL );
 }
 
 //-----------------------------------------------------------------------------
@@ -3295,8 +3278,7 @@ void CBasePlayer::PhysicsSimulate( void )
 	{
 		// Get oldest ( newer are added to tail )
 		CCommandContext *ctx = GetCommandContext( context_number );
-		// game must be paused for both command context and player
-		if ( !ShouldRunCommandsInContext( ctx ) && ShouldBePausedDuringPause() )
+		if ( !ShouldRunCommandsInContext( ctx ) )
 			continue;
 
 		if ( !ctx->cmds.Count() )
@@ -3406,7 +3388,7 @@ void CBasePlayer::PhysicsSimulate( void )
 	{
 		// no usercommand from player after some threshold
 		// server should start RunNullCommand as if client sends an empty command so that Think and gamestate related things run properly
-		RunNullCommand(false);
+		RunNullCommand();
 	}
 
 	int nMaxTicks = sv_maxusrcmdprocessticks.GetInt();
@@ -3451,7 +3433,7 @@ void CBasePlayer::PhysicsSimulate( void )
 	MoveHelperServer()->SetHost( NULL );
 
 	// Copy in final origin from simulation
-	CPlayerSimInfo *pi;
+	CPlayerSimInfo *pi = NULL;
 	if ( m_vecPlayerSimInfo.Count() > 0 )
 	{
 		pi = &m_vecPlayerSimInfo[ m_vecPlayerSimInfo.Tail() ];
@@ -3508,29 +3490,26 @@ void CBasePlayer::ClientSettingsChanged()
 		this->m_nUpdateRate = clamp( this->m_nUpdateRate, (int) pMinUpdateRate->GetFloat(), (int) pMaxUpdateRate->GetFloat() );
 
 	bool useInterpolation = Q_atoi( QUICKGETCVARVALUE("cl_interpolate") ) != 0;
-	const bool bNoCheats = sv_cheats && !sv_cheats->GetBool();
-	if ( bNoCheats )
-	{
-		useInterpolation = true;
-	}
 	if ( useInterpolation )
 	{
 		float flLerpRatio = Q_atof( QUICKGETCVARVALUE("cl_interp_ratio") );
-
-		// enforce integer lerp ratio
-		flLerpRatio = ceilf(flLerpRatio);
+		if ( flLerpRatio == 0 )
+			flLerpRatio = 1.0f;
+		float flLerpAmount = Q_atof( QUICKGETCVARVALUE("cl_interp") );
 
 		static const ConVar *pMin = g_pCVar->FindVar( "sv_client_min_interp_ratio" );
 		static const ConVar *pMax = g_pCVar->FindVar( "sv_client_max_interp_ratio" );
 		if ( pMin && pMax && pMin->GetFloat() != -1 )
 		{
-			flLerpRatio = clamp( flLerpRatio, ceilf(pMin->GetFloat()), ceilf(pMax->GetFloat()) );
+			flLerpRatio = clamp( flLerpRatio, pMin->GetFloat(), pMax->GetFloat() );
 		}
 		else
 		{
-			flLerpRatio = clamp(flLerpRatio, 1.0f, 3.0f);
+			if ( flLerpRatio == 0 )
+				flLerpRatio = 1.0f;
 		}
-		this->m_fLerpTime = flLerpRatio / this->m_nUpdateRate;
+		// #define FIXME_INTERP_RATIO
+		this->m_fLerpTime = MAX( flLerpAmount, flLerpRatio / this->m_nUpdateRate );
 	}
 	else
 	{
@@ -3539,10 +3518,7 @@ void CBasePlayer::ClientSettingsChanged()
 
 #if !defined( NO_ENTITY_PREDICTION )
 	bool usePrediction = Q_atoi( QUICKGETCVARVALUE("cl_predict")) != 0;
-	if ( bNoCheats )
-	{
-		usePrediction = true;
-	}
+
 	if ( usePrediction )
 	{
 		this->m_bRequestPredict  = true;
@@ -3579,11 +3555,6 @@ void CBasePlayer::ProcessUsercmds( CUserCmd *cmds, int numcmds, int totalcmds,
 	CCommandContext *ctx = AllocCommandContext();
 	Assert( ctx );
 
-	if ( paused )
-	{
-		paused = ShouldBePausedDuringPause();
-	}
-
 	int i;
 	for ( i = totalcmds - 1; i >= 0; i-- )
 	{
@@ -3618,7 +3589,9 @@ void CBasePlayer::ProcessUsercmds( CUserCmd *cmds, int numcmds, int totalcmds,
 		bool clear_angles = true;
 
 		// If no clipping and cheats enabled and sv_noclipduringpause enabled, then don't zero out movement part of CUserCmd
-		if ( !ShouldBePausedDuringPause() )
+		if ( GetMoveType() == MOVETYPE_NOCLIP &&
+			sv_cheats->GetBool() && 
+			sv_noclipduringpause.GetBool() )
 		{
 			clear_angles = false;
 		}
@@ -3846,11 +3819,7 @@ void CBasePlayer::PlayerRunCommand(CUserCmd *ucmd, IMoveHelper *moveHelper)
 			}
 		}
 	}
-
-	// Store pre-tick angles to lerp for subtick
-	m_Local.m_vecPreTickPunchAngle = m_Local.m_vecPunchAngle;
-	m_Local.m_vecPreTickEyeAngles = EyeAngles();
-
+	
 	PlayerMove()->RunCommand(this, ucmd, moveHelper);
 }
 
@@ -3984,11 +3953,6 @@ void CBasePlayer::PreThink(void)
 {						
 	if ( g_fGameOver || m_iPlayerLocked )
 		return;         // intermission or finale
-
-#ifdef TF_DLL
-	if ( TFGameRules() && TFGameRules()->IsGamePaused() && ShouldBePausedDuringPause() )
-		return;
-#endif
 
 	if ( Hints() )
 	{
@@ -4684,15 +4648,7 @@ void CBasePlayer::PostThink()
 
 	m_vecSmoothedVelocity = m_vecSmoothedVelocity * SMOOTHING_FACTOR + GetAbsVelocity() * ( 1 - SMOOTHING_FACTOR );
 
-	bool bShouldThink = !g_fGameOver && !m_iPlayerLocked;
-#ifdef TF_DLL
-	if ( bShouldThink )
-	{
-		bShouldThink = !TFGameRules() || !TFGameRules()->IsGamePaused() || !ShouldBePausedDuringPause();
-	}
-#endif
-
-	if ( bShouldThink )
+	if ( !g_fGameOver && !m_iPlayerLocked )
 	{
 		if ( IsAlive() )
 		{
@@ -4827,10 +4783,7 @@ void CBasePlayer::PostThinkVPhysics( void )
 {
 	// Check to see if things are initialized!
 	if ( !m_pPhysicsController )
-	{
-		m_oldOrigin = GetAbsOrigin();
 		return;
-	}
 
 	Vector newPosition = GetAbsOrigin();
 	float frametime = gpGlobals->frametime;
@@ -5069,7 +5022,6 @@ void CBasePlayer::InitialSpawn( void )
 {
 	m_iConnected = PlayerConnected;
 	gamestats->Event_PlayerConnected( this );
-	SetViewEntity( NULL );
 }
 
 //-----------------------------------------------------------------------------
@@ -5126,8 +5078,6 @@ void CBasePlayer::Spawn( void )
 	m_bitsHUDDamage		= -1;
 	m_bitsDamageType	= 0;
 	m_afPhysicsFlags	= 0;
-
-	m_flDeathTime = 0.0f;
 
 	m_idrownrestored = m_idrowndmg;
 
@@ -6775,16 +6725,6 @@ bool CBasePlayer::ClientCommand( const CCommand &args )
 	else if ( stricmp( cmd, "playerperf" ) == 0 )
 	{
 		int nRecip = entindex();
-
-		// block this command unless we're on a listen server as the host or cheats are enabled
-		if ( !sv_cheats->GetBool() )
-		{
-			if ( engine->IsDedicatedServer() )
-				return false;
-			if ( nRecip > 0 )
-				return false;
-		}
-
 		if ( args.ArgC() >= 2 )
 		{
 			nRecip = clamp( Q_atoi( args.Arg( 1 ) ), 1, gpGlobals->maxClients );
@@ -6800,11 +6740,6 @@ bool CBasePlayer::ClientCommand( const CCommand &args )
 		{
 			pl->DumpPerfToRecipient( this, nRecords );
 		}
-		return true;
-	}
-	else if ( stricmp(cmd, "demostop") == 0 )
-	{
-		// fake command server operator can use to detect demo recording stops
 		return true;
 	}
 
@@ -6958,7 +6893,7 @@ void CBasePlayer::ShowCrosshair( bool bShow )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Used by vscript to determine if the player is noclipping
 //-----------------------------------------------------------------------------
 QAngle CBasePlayer::BodyAngles()
 {
@@ -8286,7 +8221,7 @@ void CBasePlayer::SetupVPhysicsShadow( const Vector &vecAbsOrigin, const Vector 
 	m_pShadowStand = PhysModelCreateCustom( this, pStandModel, GetLocalOrigin(), GetLocalAngles(), pStandHullName, false, &solid );
 	m_pShadowStand->SetCallbackFlags( CALLBACK_GLOBAL_COLLISION | CALLBACK_SHADOW_COLLISION );
 
-	// create crouching hull
+	// create crouchig hull
 	m_pShadowCrouch = PhysModelCreateCustom( this, pCrouchModel, GetLocalOrigin(), GetLocalAngles(), pCrouchHullName, false, &solid );
 	m_pShadowCrouch->SetCallbackFlags( CALLBACK_GLOBAL_COLLISION | CALLBACK_SHADOW_COLLISION );
 
@@ -8789,22 +8724,6 @@ const QAngle& CBasePlayer::GetPunchAngle()
 	return m_Local.m_vecPunchAngle.Get();
 }
 
-const QAngle& CBasePlayer::Weapon_PunchAngle()
-{
-	QAngle vecCurPunch = GetPunchAngle();
-
-	if ( !IsInPostThink() || m_flInterpolationTime >= 1.0f )
-	{
-		return vecCurPunch;
-	}
-
-	static QAngle vecReturnPunch;
-	vecReturnPunch.x = m_Local.m_vecPreTickPunchAngle.x + AngleDiff( vecCurPunch.x, m_Local.m_vecPreTickPunchAngle.x ) * m_flInterpolationTime;
-	vecReturnPunch.y = m_Local.m_vecPreTickPunchAngle.y + AngleDiff( vecCurPunch.y, m_Local.m_vecPreTickPunchAngle.y ) * m_flInterpolationTime;
-	vecReturnPunch.z = m_Local.m_vecPreTickPunchAngle.z + AngleDiff( vecCurPunch.z, m_Local.m_vecPreTickPunchAngle.z ) * m_flInterpolationTime;
-	return vecReturnPunch;
-}
-
 
 void CBasePlayer::SetPunchAngle( const QAngle &punchAngle )
 {
@@ -8824,21 +8743,6 @@ void CBasePlayer::SetPunchAngle( const QAngle &punchAngle )
 			}
 		}
 	}
-}
-
-const QAngle& CBasePlayer::Weapon_EyeAngles()
-{
-	if ( !IsInPostThink() || m_flInterpolationTime >= 1.0f )
-	{
-		return EyeAngles();
-	}
-
-	static QAngle vecReturn;
-	QAngle current = EyeAngles();
-	vecReturn.x = m_Local.m_vecPreTickEyeAngles.x + AngleDiff( current.x, m_Local.m_vecPreTickEyeAngles.x ) * m_flInterpolationTime;
-	vecReturn.y = m_Local.m_vecPreTickEyeAngles.y + AngleDiff( current.y, m_Local.m_vecPreTickEyeAngles.y ) * m_flInterpolationTime;
-	vecReturn.z = m_Local.m_vecPreTickEyeAngles.z + AngleDiff( current.z, m_Local.m_vecPreTickEyeAngles.z ) * m_flInterpolationTime;
-	return vecReturn;
 }
 
 //-----------------------------------------------------------------------------
@@ -8948,15 +8852,6 @@ bool CBasePlayer::IsBot() const
 bool CBasePlayer::IsFakeClient() const
 {
 	return (GetFlags() & FL_FAKECLIENT) != 0;
-}
-
-bool CBasePlayer::ShouldBePausedDuringPause()
-{
-	if ( sv_noclipduringpause.GetBool() && GetMoveType() == MOVETYPE_NOCLIP )
-	{
-		return false;
-	}
-	return true;
 }
 
 void CBasePlayer::EquipSuit( bool bPlayEffects )
@@ -9671,7 +9566,6 @@ void CPlayerInfo::SetLastUserCommand( const CBotCmd &ucmd )
 		cmd.viewangles = ucmd.viewangles;
 		cmd.weaponselect = ucmd.weaponselect;
 		cmd.weaponsubtype = ucmd.weaponsubtype;
-		cmd.lerp_time = 1.0f;
 
 		m_pParent->SetLastUserCommand(cmd); 
 	}

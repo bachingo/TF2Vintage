@@ -13,7 +13,6 @@
 #include "mathlib/vector.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
-#include "Color.h"
 #include "tier0/memdbgon.h"
 
 //-----------------------------------------------------------------------------
@@ -255,8 +254,8 @@ void BuildGammaTable( float gamma, float texGamma, float brightness, int overbri
 			if (lineartovertex[i] > 1)
 				lineartovertex[i] = 1;
 
-			int nLightmap = Float2Byte( f * overbrightFactor );
-			nLightmap = Clamp( nLightmap, 0, 255 );
+			int nLightmap = RoundFloatToInt( f * 255 * overbrightFactor );
+			nLightmap = clamp( nLightmap, 0, 255 );
 			lineartolightmap[i] = (unsigned char)nLightmap;
 		}
 	}
@@ -288,7 +287,7 @@ float GammaToLinear( float gamma )
 		return 1.0f;
 	}
 
-	int index = Float2Byte( gamma );
+	int index = RoundFloatToInt( gamma * 255.0f );
 	Assert( index >= 0 && index < 256 );
 	return g_Mathlib_GammaToLinear[index];
 }
@@ -307,7 +306,7 @@ float LinearToGamma( float linear )
 		return 1.0f;
 	}
 
-	int index = Float2Byte( linear );
+	int index = RoundFloatToInt( linear * 255.0f );
 	Assert( index >= 0 && index < 256 );
 	return g_Mathlib_LinearToGamma[index];
 }

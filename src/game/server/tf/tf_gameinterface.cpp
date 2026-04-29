@@ -15,10 +15,10 @@
 
 void CServerGameClients::GetPlayerLimits( int& minplayers, int& maxplayers, int &defaultMaxPlayers ) const
 {
-	/// XXX(JohnS): We support up to 33 slots as of now to allow for sourcetv/replay, but previously 'advertised' 32
-	///             slots, which server mods could easily override.  This has caused numerous bugs in the past, and
-	///             servers that want to have the 33rd slot can trivially do so, so just don't clamp it beyond what we
-	///             support.
+	// TF2V: support up to MAX_PLAYERS (128) slots -- 127 human + 1 SourceTV.
+	// The old SDK comment warned against going above 32 without knowing what
+	// you are doing; we handle the perf cost with adaptive entity culling
+	// (CTFPlayer::ShouldTransmit) and extended respawn-wave scaling as 64-bit only.
 	minplayers = 2;  // Force multiplayer.
 #ifdef PLATFORM_64BITS
 	maxplayers = MAX_PLAYERS;
@@ -36,7 +36,7 @@ void CServerGameClients::GetPlayerLimits( int& minplayers, int& maxplayers, int 
 	else
 		maxplayers = 33;
 #endif
-	defaultMaxPlayers = 32;
+	defaultMaxPlayers = 24;
 }
 
 // -------------------------------------------------------------------------------------------- //

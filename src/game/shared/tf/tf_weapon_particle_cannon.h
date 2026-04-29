@@ -54,8 +54,6 @@ public:
 	virtual void	WeaponReset( void );
 	virtual void	ItemPostFrame( void );
 
-	virtual bool	ShouldBlockPrimaryFire() OVERRIDE { return true; }
-
 	virtual void	PrimaryAttack( void );
 	virtual void	SecondaryAttack( void );
 	virtual void	FireChargedShot();

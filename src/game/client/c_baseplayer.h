@@ -158,11 +158,8 @@ public:
 	void ResetObserverMode();
 	bool IsBot( void ) const { return false; }
 
-	virtual bool IsGamePausedForMe();
-
 	// Eye position..
 	virtual Vector		 EyePosition();
-	Vector               EyePositionOld();
 	virtual const QAngle &EyeAngles();		// Direction of eyes
 	void				 EyePositionAndVectors( Vector *pPosition, Vector *pForward, Vector *pRight, Vector *pUp );
 	virtual const QAngle &LocalEyeAngles();		// Direction of eyes
@@ -231,7 +228,6 @@ public:
 	// Specific queries about this player.
 	bool						InFirstPersonView();
 	bool						ShouldDrawThisPlayer();
-	bool						IsPersonalPerspective( bool bRequireSpectator = false, bool bRequireFirstPerson = true, bool bAlwaysForLocalPlayer = false );
 
 	// Called by the view model if its rendering is being overridden.
 	virtual bool				ViewModel_IsTransparent( void );
@@ -328,10 +324,7 @@ public:
 	const CUserCmd *GetCurrentUserCommand() const;
 
 	const QAngle& GetPunchAngle();
-	const QAngle& Weapon_PunchAngle();
 	void SetPunchAngle( const QAngle &angle );
-
-	const QAngle& Weapon_EyeAngles();
 
 	float					GetWaterJumpTime() const;
 	void					SetWaterJumpTime( float flWaterJumpTime );
@@ -343,16 +336,13 @@ public:
 	void		SetPreviouslyPredictedOrigin( const Vector &vecAbsOrigin );
 	const Vector &GetPreviouslyPredictedOrigin() const;
 
-	void SetInPostThink( bool bInPostThink ) { m_bInPostThink = bInPostThink; };
-	bool IsInPostThink( void ) const { return m_bInPostThink; }
-
 	// CS wants to allow small FOVs for zoomed-in AWPs.
 	virtual float GetMinFOV() const;
 
 	virtual void DoMuzzleFlash();
 	virtual void PlayPlayerJingle();
 
-	virtual void UpdateStepSound( surfacedata_t *psurface, const Vector &vecOrigin, const Vector &vecVelocity, float flSubTime = -1.0f );
+	virtual void UpdateStepSound( surfacedata_t *psurface, const Vector &vecOrigin, const Vector &vecVelocity  );
 	virtual void PlayStepSound( Vector &vecOrigin, surfacedata_t *psurface, float fvol, bool force );
 	virtual surfacedata_t * GetFootstepSurface( const Vector &origin, const char *surfaceName );
 	virtual void GetStepSoundVelocities( float *velwalk, float *velrun );
@@ -382,8 +372,7 @@ public:
 	bool 					HintMessage( int hint, bool bForce = false, bool bOnlyIfClear = false ) { return Hints() ? Hints()->HintMessage( hint, bForce, bOnlyIfClear ) : false; }
 	void 					HintMessage( const char *pMessage ) { if (Hints()) Hints()->HintMessage( pMessage ); }
 
-	virtual	IMaterial		*GetHeadLabelMaterial( void );
-	virtual bool			ShouldShowHeadLabel() { return !IsPlayerDead(); }
+	virtual	IMaterial *GetHeadLabelMaterial( void );
 
 	// Fog
 	fogparams_t				*GetFogParams( void ) { return &m_CurrentFog; }
@@ -448,8 +437,6 @@ public:
 	int				m_afButtonReleased;
 
 	int				m_nButtons;
-
-	float			m_flInterpolationTime = 1.0f;
 
 	CUserCmd		*m_pCurrentCommand;
 
@@ -531,8 +518,6 @@ private:
 	Vector			m_vecLadderNormal;
 	
 	QAngle			m_vecOldViewAngles;
-
-	bool			m_bInPostThink = false;
 
 	bool			m_bWasFrozen;
 	int				m_flPhysics;

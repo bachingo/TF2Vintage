@@ -688,21 +688,18 @@ void CAchievementMgr::DownloadUserData()
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: Retrieves the MOD directory for the active game (ie. "hl2")
-//-----------------------------------------------------------------------------
 const char *COM_GetModDirectory()
 {
 	static char modDir[MAX_PATH];
 	if ( Q_strlen( modDir ) == 0 )
 	{
 		const char *gamedir = CommandLine()->ParmValue("-game", CommandLine()->ParmValue( "-defaultgamedir", "hl2" ) );
-		Q_strncpy( modDir, gamedir, sizeof( modDir ) );
+		Q_strncpy( modDir, gamedir, sizeof(modDir) );
 		if ( strchr( modDir, '/' ) || strchr( modDir, '\\' ) )
 		{
-			Q_StripLastDir( modDir, sizeof( modDir ) );
+			Q_StripLastDir( modDir, sizeof(modDir) );
 			int dirlen = Q_strlen( modDir );
-			Q_strncpy( modDir, gamedir + dirlen, sizeof( modDir ) - dirlen );
+			Q_strncpy( modDir, gamedir + dirlen, sizeof(modDir) - dirlen );
 		}
 	}
 
@@ -1090,7 +1087,7 @@ bool CAchievementMgr::CheckAchievementsEnabled()
 		return false;
 	}
 
-	static ConVarRef tf_bot_offline_practice( "tf_bot_offline_practice" );
+	ConVarRef tf_bot_offline_practice( "tf_bot_offline_practice" );
 	// no achievements for offline practice
 	if ( tf_bot_offline_practice.GetInt() != 0 )
 	{
@@ -1540,7 +1537,7 @@ void CAchievementMgr::OnKillEvent( CBaseEntity *pVictim, CBaseEntity *pAttacker,
 	}
 #else
 	C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
-	bVictimIsPlayerEnemy = pLocalPlayer && !pLocalPlayer->InSameTeam( pVictim );
+	bVictimIsPlayerEnemy = !pLocalPlayer->InSameTeam( pVictim );
 	if ( pAttacker == pLocalPlayer )
 	{
 		bAttackerIsPlayer = true;

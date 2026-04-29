@@ -22,7 +22,7 @@ class teeth_ps20b_Static_Index
 public:
 	void SetCONVERT_TO_SRGB( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nCONVERT_TO_SRGB = i;
 	}
 
@@ -51,7 +51,7 @@ class teeth_ps20b_Dynamic_Index
 public:
 	void SetPIXELFOGTYPE( int i )
 	{
-		DebugAssert( i >= 0 && i <= 2 );
+		Assert( i >= 0 && i <= 2 );
 		m_nPIXELFOGTYPE = i;
 #ifdef _DEBUG
 		m_bPIXELFOGTYPE = true;
@@ -60,7 +60,7 @@ public:
 
 	void SetWRITE_DEPTH_TO_DESTALPHA( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nWRITE_DEPTH_TO_DESTALPHA = i;
 #ifdef _DEBUG
 		m_bWRITE_DEPTH_TO_DESTALPHA = true;
@@ -79,7 +79,7 @@ public:
 
 	int GetIndex() const
 	{
-		DebugAssert( m_bPIXELFOGTYPE && m_bWRITE_DEPTH_TO_DESTALPHA );
+		Assert( m_bPIXELFOGTYPE && m_bWRITE_DEPTH_TO_DESTALPHA );
 		return ( 1 * m_nPIXELFOGTYPE ) + ( 3 * m_nWRITE_DEPTH_TO_DESTALPHA ) + 0;
 	}
 };

@@ -73,7 +73,7 @@ static ISteamUGC *GetWorkshopUGC()
 				if ( *szFullPath )
 				{
 					// NOTE we use our own AppID here as the workshop depot id, but this should match the workshopdepotid in our steam config
-					pUGC->BInitWorkshopForGameServer( UTIL_GetEmulatedAppID(), szFullPath );
+					pUGC->BInitWorkshopForGameServer( engine->GetAppID(), szFullPath );
 				}
 				else
 				{

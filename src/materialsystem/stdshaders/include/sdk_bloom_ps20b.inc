@@ -15,7 +15,7 @@ class sdk_bloom_ps20b_Static_Index
 public:
 	void SetCONVERT_TO_SRGB( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nCONVERT_TO_SRGB = i;
 	}
 

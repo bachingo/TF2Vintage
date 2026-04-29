@@ -53,10 +53,9 @@ void FinishClientPutInServer( CTFPlayer *pPlayer )
 {
 	{
 		bool save = engine->LockNetworkStringTables( false );
-
+	
 		pPlayer->InitialSpawn();
 		pPlayer->Spawn();
-		pPlayer->RunNullCommand();
 	
 		engine->LockNetworkStringTables( save );
 	}
@@ -121,7 +120,7 @@ const char *GetGameDescription()
 	if ( g_pGameRules ) // this function may be called before the world has spawned, and the game rules initialized
 		return g_pGameRules->GetGameDescription();
 	else
-		return "Team Fortress 2 Vintage";
+		return "Team Fortress";
 }
 
 
@@ -252,9 +251,6 @@ void GameStartFrame( void )
 		g_pGameRules->Think();
 
 	if ( g_fGameOver )
-		return;
-
-	if ( TFGameRules() && TFGameRules()->IsGamePaused() )
 		return;
 
 	gpGlobals->teamplay = teamplay.GetInt() ? true : false;

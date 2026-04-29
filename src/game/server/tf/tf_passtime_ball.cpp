@@ -667,7 +667,7 @@ void CPasstimeBall::SetStateCarried( CTFPlayer *pCarrier )
 	// FIXME move all of the event handling for ball events into CTFPasstimeLogic
 	//
 	Assert( !pCarrier->m_Shared.HasPasstimeBall() );
-	pCarrier->RemoveInvisibility(false);
+	pCarrier->RemoveInvisibility();
 	pCarrier->RemoveDisguise();
 	pCarrier->EndClassSpecialSkill(); // abort demo charge
 	pCarrier->m_Shared.SetHasPasstimeBall( true );
@@ -1200,9 +1200,7 @@ void CPasstimeBall::BlockDamage( CTFPlayer *pPlayer, const Vector& vecBallVel )
 	if ( flSpeed >= flDamageSpeed )
 	{
 		CTakeDamageInfo di;
-		CBaseEntity *pAttacker = GetThrower();
-		if ( !pAttacker ) pAttacker = GetCarrier();
-		di.SetAttacker( pAttacker ? pAttacker : this );
+		di.SetAttacker( GetThrower() );
 		di.SetDamage( 1 );
 		di.SetDamageType( DMG_CLUB );
 		di.SetInflictor( this );

@@ -99,7 +99,6 @@ protected:
 	int m_iNumNoVotes;
 	int m_iNumPotentialVotes;
 	float m_flNextCallTime;
-	bool m_bServerVote;
 
 	CVoteController *m_pVoteController;
 };

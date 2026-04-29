@@ -352,7 +352,10 @@ public:
 	{
 		if ( !Q_strnicmp( command, "register", 8 ) )
 		{
-			UTIL_OpenWebPage( "https://www.youtube.com/create_account?next=/" );
+			if ( steamapicontext && steamapicontext->SteamFriends() )
+			{
+				steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( "http://www.youtube.com/create_account?next=/" );
+			}
 		}		
 		else if ( !Q_strnicmp( command, "confirm", 7 ) )
 		{
@@ -447,12 +450,6 @@ public:
 	{
 		const char *pGameDir = COM_GetModDirectory();
 
-		// TF2V?
-		if ( FStrEq( pGameDir, "tf2vintage" ) )
-		{
-			*ppShortGameName = "tf2vintage";
-			*ppFullGameName = "Team Fortress 2 Vintage";
-		}
 		// Team Fortress 2?
 		if ( FStrEq( pGameDir, "tf" ) )
 		{
@@ -489,7 +486,10 @@ public:
 	{
 		if ( !Q_strnicmp( command, "termsofservice", 14 ) )
 		{
-			UTIL_OpenWebPage( "https://www.youtube.com/t/terms" );
+			if ( steamapicontext && steamapicontext->SteamFriends() )
+			{
+				steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( "http://www.youtube.com/t/terms" );
+			}
 		}		
 		else if ( !Q_strnicmp( command, "confirm", 7 ) )
 		{
@@ -521,18 +521,18 @@ public:
 			CUtlString description( szDesc );
 			if ( steamapicontext && steamapicontext->SteamUser() )
 			{
-				const char *pchCommunityURL = "https://steamcommunity.com/";
+				const char *pchCommunityURL = "http://steamcommunity.com/";
 				switch ( eSteamUniverse )
 				{
 				case k_EUniverseDev:
-					pchCommunityURL = "https://localhost/community/";
+					pchCommunityURL = "http://localhost/community/";
 					break;
 				case k_EUniverseBeta:
-					pchCommunityURL = "https://beta.steamcommunity.com/";
+					pchCommunityURL = "http://beta.steamcommunity.com/";
 					break;
 				case k_EUniversePublic:
 				default:
-					pchCommunityURL = "https://steamcommunity.com/";
+					pchCommunityURL = "http://steamcommunity.com/";
 				}
 				description.Format( "%s\n\n%sprofiles/%llu", szDesc, pchCommunityURL, steamapicontext->SteamUser()->GetSteamID().ConvertToUint64() );
 			}

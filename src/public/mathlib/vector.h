@@ -2206,26 +2206,49 @@ inline void AngularImpulseToQAngle( const AngularImpulse &impulse, QAngle &angle
 
 FORCEINLINE vec_t InvRSquared( float const *v )
 {
-	// The compiler will make it good
-	return 1.f / ( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] + FLT_EPSILON );
+#if defined( PLATFORM_INTEL )
+	float sqrlen = v[0]*v[0]+v[1]*v[1]+v[2]*v[2] + 1.0e-10f, result;
+	_mm_store_ss(&result, _mm_rcp_ss( _mm_max_ss( _mm_set_ss(1.0f), _mm_load_ss(&sqrlen) ) ));
+	return result;
+#else
+	return 1.f/fpmax(1.f, v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
+#endif
 }
 
 FORCEINLINE vec_t InvRSquared( const Vector &v )
 {
-	// The compiler will make it good
-	return 1.0f / ( v.x * v.x + v.y * v.y + v.z * v.z + FLT_EPSILON );
+	return InvRSquared(&v.x);
 }
+
+#if defined( PLATFORM_INTEL )
+FORCEINLINE void _SSE_RSqrtInline( float a, float* out )
+{
+	__m128  xx = _mm_load_ss( &a );
+	__m128  xr = _mm_rsqrt_ss( xx );
+	__m128  xt;
+	xt = _mm_mul_ss( xr, xr );
+	xt = _mm_mul_ss( xt, xx );
+	xt = _mm_sub_ss( _mm_set_ss(3.f), xt );
+	xt = _mm_mul_ss( xt, _mm_set_ss(0.5f) );
+	xr = _mm_mul_ss( xr, xt );
+	_mm_store_ss( out, xr );
+}
+#endif
 
 // FIXME: Change this back to a #define once we get rid of the vec_t version
 FORCEINLINE float VectorNormalize( Vector& vec )
 {
-	// The compiler will make it good
-	const float len = sqrtf(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z + FLT_EPSILON );
-	const float invlen = 1.0f / len;
+#if defined( PLATFORM_INTEL )
+	float sqrlen = vec.LengthSqr() + 1.0e-10f, invlen;
+	_SSE_RSqrtInline(sqrlen, &invlen);
 	vec.x *= invlen;
 	vec.y *= invlen;
 	vec.z *= invlen;
-	return len;
+	return sqrlen * invlen;
+#else
+	extern float (FASTCALL *pfVectorNormalize)(Vector& v);
+	return (*pfVectorNormalize)(vec);
+#endif
 }
 
 // FIXME: Obsolete version of VectorNormalize, once we remove all the friggin float*s
@@ -2236,11 +2259,7 @@ FORCEINLINE float VectorNormalize( float * v )
 
 FORCEINLINE void VectorNormalizeFast( Vector &vec )
 {
-	// The previous version just called VectorNormalize but it's significant to be able to do a rsqrtss here.
-	const float invlen = 1.0f / sqrtf( vec.x * vec.x + vec.y * vec.y + vec.z * vec.z + FLT_EPSILON );
-	vec.x *= invlen;
-	vec.y *= invlen;
-	vec.z *= invlen;
+	VectorNormalize(vec);
 }
 
 #else

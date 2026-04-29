@@ -230,7 +230,6 @@ bool C_BaseViewModel::ShouldFlipViewModel()
 	{
 		return pWeapon->m_bFlipViewModel != TeamFortress_ShouldFlipClientViewModel();
 	}
-	return cl_flipviewmodels.GetBool(); // Some viewmodels don't have a weapon associated, and are thus default to non-flipped.
 #endif
 
 	return false;

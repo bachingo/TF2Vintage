@@ -14,7 +14,7 @@
 #include "tf_weaponbase_gun.h"
 
 //-----------------------------------------------------------------------------
-// Purpose: Identical to a nail except for model used
+// Purpose: The base Nail projectile
 //-----------------------------------------------------------------------------
 class CTFProjectile_Syringe : public CTFBaseProjectile
 {
@@ -27,9 +27,6 @@ public:
 	virtual unsigned int PhysicsSolidMaskForEntity( void ) const;
 	virtual const char *GetProjectileModelName( void )	{ return "models/weapons/w_models/w_syringe_proj.mdl"; }
 	virtual float GetGravity( void );
-#ifdef GAME_DLL
-	virtual bool CanCollideWithTeammates() const OVERRIDE { return false; }
-#endif
 };
 
 

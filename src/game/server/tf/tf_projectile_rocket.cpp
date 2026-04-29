@@ -7,9 +7,6 @@
 #include "cbase.h"
 #include "tf_weaponbase.h"
 #include "tf_projectile_rocket.h"
-
-#include "tf_gamerules.h"
-#include "tf_obj_sentrygun.h"
 #include "tf_player.h"
 
 //=============================================================================
@@ -157,9 +154,9 @@ void CTFProjectile_Rocket::Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir 
 	SetLauncher( pTFDeflector->GetActiveWeapon() );
 
 	CTFPlayer *pOldOwner = ToTFPlayer( GetOwnerEntity() );
-	if ( !pOldOwner )
+	if ( pOldOwner == nullptr )
 	{
-		CObjectSentrygun *pBaseObject = TFGameRules()->GetSentryGunInflictor( this );
+		CBaseObject *pBaseObject = dynamic_cast< CBaseObject* >( GetOwnerEntity() );
 		if ( pBaseObject && pBaseObject->GetOwner() )
 		{
 			pOldOwner = ToTFPlayer( pBaseObject->GetOwner() );

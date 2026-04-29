@@ -116,17 +116,11 @@ int HudTransform( const Vector& point, Vector& screen )
 
 void UpdateFullScreenDepthTexture( void )
 {
-	CMatRenderContextPtr pRenderContext( materials );
-	// TODO(mcoms): can this be off?
-#if 0
-	if ( g_pMaterialSystemHardwareConfig->PreferReducedFillrate() )
-	{
-		pRenderContext->SetFullScreenDepthTextureValidityFlag( false );
+	if( !g_pMaterialSystemHardwareConfig->SupportsPixelShaders_2_b() )
 		return;
-	}
-#endif
 
 	ITexture *pDepthTex = GetFullFrameDepthTexture();
+	CMatRenderContextPtr pRenderContext( materials );
 
 	if( IsX360() )
 	{	

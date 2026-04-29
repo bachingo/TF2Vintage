@@ -18,11 +18,18 @@
 #include "shaderlib/cshader.h"
 class teeth_flashlight_ps30_Static_Index
 {
+	unsigned int m_nCONVERT_TO_SRGB : 2;
 	unsigned int m_nFLASHLIGHTDEPTHFILTERMODE : 2;
 #ifdef _DEBUG
 	bool m_bFLASHLIGHTDEPTHFILTERMODE : 1;
 #endif	// _DEBUG
 public:
+	void SetCONVERT_TO_SRGB( int i )
+	{
+		Assert( i >= 0 && i <= 1 );
+		m_nCONVERT_TO_SRGB = i;
+	}
+
 	void SetFLASHLIGHTDEPTHFILTERMODE( int i )
 	{
 		Assert( i >= 0 && i <= 2 );
@@ -34,6 +41,7 @@ public:
 
 	teeth_flashlight_ps30_Static_Index(  )
 	{
+		m_nCONVERT_TO_SRGB = g_pHardwareConfig->NeedsShaderSRGBConversion();
 		m_nFLASHLIGHTDEPTHFILTERMODE = 0;
 #ifdef _DEBUG
 		m_bFLASHLIGHTDEPTHFILTERMODE = false;
@@ -43,7 +51,7 @@ public:
 	int GetIndex() const
 	{
 		Assert( m_bFLASHLIGHTDEPTHFILTERMODE );
-		return ( 6 * m_nFLASHLIGHTDEPTHFILTERMODE ) + 0;
+		return ( 6 * m_nCONVERT_TO_SRGB ) + ( 12 * m_nFLASHLIGHTDEPTHFILTERMODE ) + 0;
 	}
 };
 

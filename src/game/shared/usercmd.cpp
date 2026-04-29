@@ -187,16 +187,6 @@ void WriteUsercmd( bf_write *buf, const CUserCmd *to, const CUserCmd *from )
 		buf->WriteOneBit( 0 );
 	}
 #endif
-
-	if (to->lerp_time != from->lerp_time)
-	{
-		buf->WriteOneBit(1);
-		buf->WriteFloat(to->lerp_time);
-	}
-	else
-	{
-		buf->WriteOneBit(0);
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -313,10 +303,4 @@ void ReadUsercmd( bf_read *buf, CUserCmd *move, CUserCmd *from )
 		}
 	}
 #endif
-
-	// Read lerp time
-	if (buf->ReadOneBit())
-	{
-		move->lerp_time = buf->ReadFloat();
-	}
 }

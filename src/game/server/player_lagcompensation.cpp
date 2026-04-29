@@ -12,9 +12,6 @@
 #include "inetchannelinfo.h"
 #include "utllinkedlist.h"
 #include "BaseAnimatingOverlay.h"
-#ifdef TF_DLL
-#include "tf_player.h"
-#endif
 #include "tier0/vprof.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -23,20 +20,18 @@
 #define LC_NONE				0
 #define LC_ALIVE			(1<<0)
 
-#define LC_ORIGIN_CHANGED		(1<<8)
-#define LC_ANGLES_CHANGED		(1<<9)
-#define LC_SIZE_CHANGED			(1<<10)
-#define LC_ANIMATION_CHANGED	(1<<11)
-#define LC_EYES_CHANGED			(1<<12)
+#define LC_ORIGIN_CHANGED	(1<<8)
+#define LC_ANGLES_CHANGED	(1<<9)
+#define LC_SIZE_CHANGED		(1<<10)
+#define LC_ANIMATION_CHANGED (1<<11)
 
-// Max distance we can travel normally is sqrt(3) * sv_maxvelocity * TICK_INTERVAL
-static ConVar sv_lagcompensation_teleport_dist( "sv_lagcompensation_teleport_dist", "95", FCVAR_DEVELOPMENTONLY | FCVAR_CHEAT, "How far a player got moved by game code before we can't lag compensate their position back" );
+static ConVar sv_lagcompensation_teleport_dist( "sv_lagcompensation_teleport_dist", "64", FCVAR_DEVELOPMENTONLY | FCVAR_CHEAT, "How far a player got moved by game code before we can't lag compensate their position back" );
 #define LAG_COMPENSATION_EPS_SQR ( 0.1f * 0.1f )
 // Allow 4 units of error ( about 1 / 8 bbox width )
 #define LAG_COMPENSATION_ERROR_EPS_SQR ( 4.0f * 4.0f )
 
 ConVar sv_unlag( "sv_unlag", "1", FCVAR_DEVELOPMENTONLY, "Enables player lag compensation" );
-ConVar sv_maxunlag( "sv_maxunlag", "0.5", FCVAR_DEVELOPMENTONLY, "Maximum lag compensation in seconds", true, 0.0f, true, 0.85f );
+ConVar sv_maxunlag( "sv_maxunlag", "1.0", FCVAR_DEVELOPMENTONLY, "Maximum lag compensation in seconds", true, 0.0f, true, 1.0f );
 ConVar sv_lagflushbonecache( "sv_lagflushbonecache", "1", FCVAR_DEVELOPMENTONLY, "Flushes entity bone cache on lag compensation" );
 ConVar sv_showlagcompensation( "sv_showlagcompensation", "0", FCVAR_CHEAT, "Show lag compensated hitboxes whenever a player is lag compensated." );
 
@@ -79,7 +74,6 @@ public:
 		m_fFlags = 0;
 		m_vecOrigin.Init();
 		m_vecAngles.Init();
-		m_vecEyeAngles.Init();
 		m_vecMinsPreScaled.Init();
 		m_vecMaxsPreScaled.Init();
 		m_flSimulationTime = -1;
@@ -97,7 +91,6 @@ public:
 		m_fFlags = src.m_fFlags;
 		m_vecOrigin = src.m_vecOrigin;
 		m_vecAngles = src.m_vecAngles;
-		m_vecEyeAngles = src.m_vecEyeAngles;
 		m_vecMinsPreScaled = src.m_vecMinsPreScaled;
 		m_vecMaxsPreScaled = src.m_vecMaxsPreScaled;
 		m_flSimulationTime = src.m_flSimulationTime;
@@ -120,7 +113,6 @@ public:
 	// Player position, orientation and bbox
 	Vector					m_vecOrigin;
 	QAngle					m_vecAngles;
-	QAngle					m_vecEyeAngles;
 	Vector					m_vecMinsPreScaled;
 	Vector					m_vecMaxsPreScaled;
 
@@ -227,7 +219,7 @@ private:
 	}
 
 	// keep a list of lag records for each player
-	CUtlFixedLinkedList64< LagRecord >	m_PlayerTrack[ MAX_PLAYERS ];
+	CUtlFixedLinkedList< LagRecord >	m_PlayerTrack[ MAX_PLAYERS ];
 
 	// Scratchpad for determining what needs to be restored
 	CBitVec<MAX_PLAYERS>	m_RestorePlayer;
@@ -262,22 +254,15 @@ void CLagCompensationManager::FrameUpdatePostEntityThink()
 
 	VPROF_BUDGET( "FrameUpdatePostEntityThink", "CLagCompensationManager" );
 
-	// note: this used to be sv_maxunlag. however
-	// that now only limits latency, and ignores
-	// view interpolation latency, since it's more
-	// intuitive for us to only limit how much
-	// ping can be a factor. we chose 1 second
-	// as it's a historical default for the unlag limit.
-
 	// remove all records before that time:
-	float flDeadtime = gpGlobals->curtime - 1.0f;
+	int flDeadtime = gpGlobals->curtime - sv_maxunlag.GetFloat();
 
 	// Iterate all active players
 	for ( int i = 1; i <= gpGlobals->maxClients; i++ )
 	{
 		CBasePlayer *pPlayer = UTIL_PlayerByIndex( i );
 
-		auto *track = &m_PlayerTrack[i-1];
+		CUtlFixedLinkedList< LagRecord > *track = &m_PlayerTrack[i-1];
 
 		if ( !pPlayer )
 		{
@@ -327,11 +312,6 @@ void CLagCompensationManager::FrameUpdatePostEntityThink()
 
 		record.m_flSimulationTime	= pPlayer->GetSimulationTime();
 		record.m_vecAngles			= pPlayer->GetLocalAngles();
-#ifdef TF_DLL
-		record.m_vecEyeAngles		= ToTFPlayer(pPlayer)->GetNetworkEyeAngles();
-#else
-		record.m_vecEyeAngles		= pPlayer->EyeAngles();
-#endif
 		record.m_vecOrigin			= pPlayer->GetLocalOrigin();
 		record.m_vecMinsPreScaled	= pPlayer->CollisionProp()->OBBMinsPreScaled();
 		record.m_vecMaxsPreScaled	= pPlayer->CollisionProp()->OBBMaxsPreScaled();
@@ -398,7 +378,7 @@ void CLagCompensationManager::StartLagCompensation( CBasePlayer *player, CUserCm
 
 	// Get true latency
 
-	// correct is the amount of time we have to correct game time
+	// correct is the amout of time we have to correct game time
 	float correct = 0.0f;
 
 	INetChannelInfo *nci = engine->GetPlayerNetInfo( player->entindex() ); 
@@ -406,46 +386,29 @@ void CLagCompensationManager::StartLagCompensation( CBasePlayer *player, CUserCm
 	if ( nci )
 	{
 		// add network latency
-		correct += nci->GetLatency( FLOW_OUTGOING );
+		correct+= nci->GetLatency( FLOW_OUTGOING );
 	}
 
-	// check bounds [0,sv_maxunlag]
-	correct = clamp( correct, 0.0f, sv_maxunlag.GetFloat() );
-
-	// calculate view interpolation latency
-	// this used to be bound by sv_maxunlag.
-	// however, lerp is already constrained by server values
-	// so it makes more sense to keep sv_maxunlag as just
-	// a latency limit for gameplay.
-	float flLerpTime = player->m_fLerpTime;
-	if ( cmd )
-	{
-		flLerpTime -= Clamp( cmd->lerp_time, 0.0f, 1.0f ) * TICK_INTERVAL;
-	}
+	// calc number of view interpolation ticks - 1
+	int lerpTicks = TIME_TO_TICKS( player->m_fLerpTime );
 
 	// add view interpolation latency see C_BaseEntity::GetInterpolationAmount()
-	correct += flLerpTime;
+	correct += TICKS_TO_TIME( lerpTicks );
+	
+	// check bouns [0,sv_maxunlag]
+	correct = clamp( correct, 0.0f, sv_maxunlag.GetFloat() );
 
-	bool bForceServer = true;
-	float flTargetTime = 0.0f;
-	float deltaTime = 0.0f;
+	// correct tick send by player 
+	int targettick = cmd->tick_count - lerpTicks;
 
-	if ( cmd )
-	{
-		bForceServer = false;
+	// calc difference between tick send by player and our latency based tick
+	float deltaTime =  correct - TICKS_TO_TIME(gpGlobals->tickcount - targettick);
 
-		// correct tick sent by player
-		flTargetTime = TICKS_TO_TIME( cmd->tick_count ) - flLerpTime;
-
-		// calc difference between tick sent by player and our latency based tick
-		deltaTime = correct - (gpGlobals->curtime - flTargetTime);
-	}
-
-	if ( bForceServer || fabsf( deltaTime ) > 0.2f )
+	if ( fabs( deltaTime ) > 0.2f )
 	{
 		// difference between cmd time and latency is too big > 200ms, use time correction based on latency
 		// DevMsg("StartLagCompensation: delta too big (%.3f)\n", deltaTime );
-		flTargetTime = gpGlobals->curtime - correct;
+		targettick = gpGlobals->tickcount - TIME_TO_TICKS( correct );
 	}
 	
 	// Iterate all active players
@@ -470,7 +433,7 @@ void CLagCompensationManager::StartLagCompensation( CBasePlayer *player, CUserCm
 			continue;
 
 		// Move other player back in time
-		BacktrackPlayer( pPlayer, flTargetTime );
+		BacktrackPlayer( pPlayer, TICKS_TO_TIME( targettick ) );
 	}
 }
 
@@ -480,15 +443,14 @@ void CLagCompensationManager::BacktrackPlayer( CBasePlayer *pPlayer, float flTar
 	Vector minsPreScaled;
 	Vector maxsPreScaled;
 	QAngle ang;
-	QAngle eye;
 
 	VPROF_BUDGET( "BacktrackPlayer", "CLagCompensationManager" );
 	int pl_index = pPlayer->entindex() - 1;
 
 	// get track history of this player
-	auto *track = &m_PlayerTrack[ pl_index ];
+	CUtlFixedLinkedList< LagRecord > *track = &m_PlayerTrack[ pl_index ];
 
-	// check if we have at least one entry
+	// check if we have at leat one entry
 	if ( track->Count() <= 0 )
 		return;
 
@@ -510,7 +472,7 @@ void CLagCompensationManager::BacktrackPlayer( CBasePlayer *pPlayer, float flTar
 
 		if ( !(record->m_fFlags & LC_ALIVE) )
 		{
-			// player must be alive, lost track
+			// player most be alive, lost track
 			return;
 		}
 
@@ -561,7 +523,6 @@ void CLagCompensationManager::BacktrackPlayer( CBasePlayer *pPlayer, float flTar
 		Assert( frac > 0 && frac < 1 ); // should never extrapolate
 
 		ang				= Lerp( frac, record->m_vecAngles, prevRecord->m_vecAngles );
-		eye				= Lerp( frac, record->m_vecEyeAngles, prevRecord->m_vecEyeAngles );
 		org				= Lerp( frac, record->m_vecOrigin, prevRecord->m_vecOrigin );
 		minsPreScaled	= Lerp( frac, record->m_vecMinsPreScaled, prevRecord->m_vecMinsPreScaled );
 		maxsPreScaled	= Lerp( frac, record->m_vecMaxsPreScaled, prevRecord->m_vecMaxsPreScaled );
@@ -572,7 +533,6 @@ void CLagCompensationManager::BacktrackPlayer( CBasePlayer *pPlayer, float flTar
 		// just copy these values since they are the best we have
 		org				= record->m_vecOrigin;
 		ang				= record->m_vecAngles;
-		eye				= record->m_vecEyeAngles;
 		minsPreScaled	= record->m_vecMinsPreScaled;
 		maxsPreScaled	= record->m_vecMaxsPreScaled;
 	}
@@ -642,11 +602,6 @@ void CLagCompensationManager::BacktrackPlayer( CBasePlayer *pPlayer, float flTar
 	LagRecord *change  = &m_ChangeData[ pl_index ];
 
 	QAngle angdiff = pPlayer->GetLocalAngles() - ang;
-#ifdef TF_DLL
-	QAngle eyediff = ToTFPlayer(pPlayer)->GetNetworkEyeAngles() - eye;
-#else
-	QAngle eyediff = pPlayer->EyeAngles() - eye;
-#endif
 	Vector orgdiff = pPlayer->GetLocalOrigin() - org;
 
 	// Always remember the pristine simulation time in case we need to restore it.
@@ -659,18 +614,6 @@ void CLagCompensationManager::BacktrackPlayer( CBasePlayer *pPlayer, float flTar
 		pPlayer->SetLocalAngles( ang );
 		change->m_vecAngles = ang;
 	}
-
-#ifdef TF_DLL
-	// this is cheap, so we just check if changed at all
-	if ( eyediff.LengthSqr() > 0.0f )
-	{
-		flags |= LC_EYES_CHANGED;
-		CTFPlayer* pTFPlayer = ToTFPlayer(pPlayer);
-		restore->m_vecEyeAngles = pTFPlayer->GetNetworkEyeAngles();
-		pTFPlayer->SetNetworkEyeAngles(eye);
-		change->m_vecEyeAngles = eye;
-	}
-#endif
 
 	// Use absolute equality here
 	if ( minsPreScaled != pPlayer->CollisionProp()->OBBMinsPreScaled() || maxsPreScaled != pPlayer->CollisionProp()->OBBMaxsPreScaled() )
@@ -732,12 +675,9 @@ void CLagCompensationManager::BacktrackPlayer( CBasePlayer *pPlayer, float flTar
 
 		for( int i=0; i<MAXSTUDIOPOSEPARAM; i++ )
 		{
-#if 0
 			//don't lerp pose params, just pick the closest
 			pPlayer->SetPoseParameter( i, record->m_flPoseParameters[i] );
-#else
-			pPlayer->SetPoseParameter( i, Lerp( frac, record->m_flPoseParameters[i], prevRecord->m_flPoseParameters[i] ) );
-#endif
+			//pAnimating->SetPoseParameter( i, Lerp( frac, record->m_flPoseParameters[i], prevRecord->m_flPoseParameters[i] ) );
 		}
 	}
 	if( !interpolatedMasters )
@@ -882,20 +822,6 @@ void CLagCompensationManager::FinishLagCompensation( CBasePlayer *player )
 				pPlayer->SetLocalAngles( restore->m_vecAngles );
 			}
 		}
-
-#ifdef TF_DLL
-		if ( restore->m_fFlags & LC_EYES_CHANGED )
-		{
-			restoreSimulationTime = true;
-
-			CTFPlayer* pTFPlayer = ToTFPlayer( pPlayer );
-
-			if ( pTFPlayer->GetNetworkEyeAngles() == change->m_vecEyeAngles )
-			{
-				pTFPlayer->SetNetworkEyeAngles( restore->m_vecEyeAngles );
-			}
-		}
-#endif
 
 		if ( restore->m_fFlags & LC_ORIGIN_CHANGED )
 		{

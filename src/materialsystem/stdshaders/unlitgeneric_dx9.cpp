@@ -168,6 +168,10 @@ BEGIN_VS_SHADER( UnlitGeneric, "Help for UnlitGeneric" )
 
 	SHADER_FALLBACK
 	{
+		if( g_pHardwareConfig->GetDXSupportLevel() < 90 )
+		{
+			return "UnlitGeneric_DX8";
+		}
 		return 0;
 	}
 

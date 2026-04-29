@@ -1092,7 +1092,6 @@ CStudioHdr *C_BaseAnimating::OnNewModel()
 		}
 	}
 	m_BoneAccessor.Init( this, m_CachedBoneData.Base() ); // Always call this in case the studiohdr_t has changed.
-	m_iAccumulatedBoneMask = 0; // Reset the accumulated bone mask.
 
 	// Free any IK data
 	if (m_pIk)
@@ -1604,25 +1603,7 @@ void C_BaseAnimating::BuildTransformations( CStudioHdr *hdr, Vector *pos, Quater
 		}
 	}
 	
-	if ( m_pRagdoll )
-	{
-		C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
-		if ( pPlayer )
-		{
-			// When the local player is spectating a ragdoll, they are copying the root physics bone
-			// Afterwards, physics simulation of ragdolls happens and updates the bones
-			// ... But after that, the ragdoll is drawn with the NEW bones
-			// which leads to the camera and rendering being out of sync with each other and causing visible jittering
-			// The workaround for this problem is to render the ragdoll with the last frame's bone data
-			C_BaseEntity* pObserverTarget = pPlayer->GetObserverTarget();
-			if ( pObserverTarget 
-				&& pObserverTarget->IsPlayer() 
-				&& static_cast< C_BasePlayer* >( pObserverTarget )->GetRepresentativeRagdoll() == m_pRagdoll )
-			{
-				m_pRagdoll->AcquireOrCopyBoneCache( m_CachedBoneData.Base(), m_CachedBoneData.Count() );
-			}
-		}
-	}
+	
 }
 
 //-----------------------------------------------------------------------------
@@ -1838,7 +1819,7 @@ void C_BaseAnimating::MaintainSequenceTransitions( IBoneSetup &boneSetup, float 
 	if ( !boneSetup.GetStudioHdr() )
 		return;
 
-	if ( prediction->InPrediction() || IsAboutToRagdoll() )
+	if ( prediction->InPrediction() )
 	{
 		m_nPrevNewSequenceParity = m_nNewSequenceParity;
 		return;
@@ -2048,24 +2029,18 @@ bool C_BaseAnimating::PutAttachment( int number, const matrix3x4_t &attachmentTo
 		return false;
 
 	CAttachmentData *pAtt = &m_Attachments[number-1];
-	if ( gpGlobals->frametime > 0 && pAtt->m_nLastFramecount > 0 && pAtt->m_nLastFramecount < gpGlobals->framecount )
+	if ( gpGlobals->frametime > 0 && pAtt->m_nLastFramecount > 0 && pAtt->m_nLastFramecount == gpGlobals->framecount - 1 )
 	{
 		Vector vecPreviousOrigin, vecOrigin;
 		MatrixPosition( pAtt->m_AttachmentToWorld, vecPreviousOrigin );
 		MatrixPosition( attachmentToWorld, vecOrigin );
-		// compensate for the fact that the previous origin could have been multiple frames behind
-		pAtt->m_vOriginVelocity = (vecOrigin - vecPreviousOrigin) / (gpGlobals->frametime * (gpGlobals->framecount - pAtt->m_nLastFramecount));
-		// only update the frame count if the position changed, so we don't have to recompute attachments
-		if ( !pAtt->m_vOriginVelocity.IsZero(0.00001f) )
-		{
-			pAtt->m_nLastFramecount = gpGlobals->framecount;
-		}
+		pAtt->m_vOriginVelocity = (vecOrigin - vecPreviousOrigin) / gpGlobals->frametime;
 	}
 	else
 	{
 		pAtt->m_vOriginVelocity.Init();
-		pAtt->m_nLastFramecount = gpGlobals->framecount;
 	}
+	pAtt->m_nLastFramecount = gpGlobals->framecount;
 	pAtt->m_bAnglesComputed = false;
 	pAtt->m_AttachmentToWorld = attachmentToWorld;
 
@@ -2076,20 +2051,6 @@ bool C_BaseAnimating::PutAttachment( int number, const matrix3x4_t &attachmentTo
 	return true;
 }
 
-bool C_BaseAnimating::GetAttachmentDeferred( int number, matrix3x4_t& matrix )
-{
-	if (number < 1 || number > m_Attachments.Count())
-		return false;
-
-	// allow visual effects (eg. particles) to be a frame behind bone setup so that there are not messy dependencies.
-	CAttachmentData* pAtt = &m_Attachments[number - 1];
-	const bool bShouldUpdate = pAtt->m_nLastFramecount < gpGlobals->framecount - 1;
-	if ( bShouldUpdate && !CalcAttachments() )
-		return false;
-
-	matrix = pAtt->m_AttachmentToWorld;
-	return true;
-}
 
 bool C_BaseAnimating::SetupBones_AttachmentHelper( CStudioHdr *hdr )
 {
@@ -2360,7 +2321,7 @@ CBoneCache *C_BaseAnimating::GetBoneCache( CStudioHdr *pStudioHdr )
 	CBoneCache *pcache = Studio_GetBoneCache( m_hitboxBoneCacheHandle );
 	if ( pcache )
 	{
-		if ( pcache->IsValid( gpGlobals->curtime, 0.0 ) && pcache->m_timeValid <= gpGlobals->curtime )
+		if ( pcache->IsValid( gpGlobals->curtime, 0.0 ) )
 		{
 			// in memory and still valid, use it!
 			return pcache;
@@ -2889,20 +2850,6 @@ bool C_BaseAnimating::SetupBones( matrix3x4_t *pBoneToWorldOut, int nMaxBones, i
 		}
 	}
 
-	// If we're setting up LOD N, we have set up all lower LODs also
-	// because lower LODs always use subsets of the bones of higher LODs.
-	int nLOD = 0;
-	int nMask = BONE_USED_BY_VERTEX_LOD0;
-	for( ; nLOD < MAX_NUM_LODS; ++nLOD, nMask <<= 1 )
-	{
-		if ( boneMask & nMask )
-			break;
-	}
-	for( ; nLOD < MAX_NUM_LODS; ++nLOD, nMask <<= 1 )
-	{
-		boneMask |= nMask;
-	}
-
 #ifdef DEBUG_BONE_SETUP_THREADING
 	if ( cl_warn_thread_contested_bone_setup.GetBool() )
 	{
@@ -2935,9 +2882,7 @@ bool C_BaseAnimating::SetupBones( matrix3x4_t *pBoneToWorldOut, int nMaxBones, i
 			m_flLastBoneSetupTime = currentTime;
 		}
 		m_iPrevBoneMask = m_iAccumulatedBoneMask;
-		// Keep record of the fact that we've used attachments. Because of deferred attachments, we can't keep track from the previous frame.
-		//m_iAccumulatedBoneMask = 0;
-		m_iAccumulatedBoneMask = m_iAccumulatedBoneMask & BONE_USED_BY_ATTACHMENT;
+		m_iAccumulatedBoneMask = 0;
 
 #ifdef STUDIO_ENABLE_PERF_COUNTERS
 		CStudioHdr *hdr = GetModelPtr();
@@ -2972,7 +2917,7 @@ bool C_BaseAnimating::SetupBones( matrix3x4_t *pBoneToWorldOut, int nMaxBones, i
 			return false;
 
 		// Setup our transform based on render angles and origin.
-		ALIGN16 matrix3x4_t parentTransform ALIGN16_POST;
+		matrix3x4_t parentTransform;
 		AngleMatrix( GetRenderAngles(), GetRenderOrigin(), parentTransform );
 
 		// Load the boneMask with the total of what was asked for last frame.
@@ -3017,8 +2962,8 @@ bool C_BaseAnimating::SetupBones( matrix3x4_t *pBoneToWorldOut, int nMaxBones, i
 				}
 			}
 
-			Vector				pos[MAXSTUDIOBONES];
-			QuaternionAligned	q[MAXSTUDIOBONES];
+			Vector		pos[MAXSTUDIOBONES];
+			Quaternion	q[MAXSTUDIOBONES];
 #if defined(FP_EXCEPTIONS_ENABLED) || defined(DBGFLAG_ASSERT)
 			// Having these uninitialized means that some bugs are very hard
 			// to reproduce. A memset of 0xFF is a simple way of getting NaNs.

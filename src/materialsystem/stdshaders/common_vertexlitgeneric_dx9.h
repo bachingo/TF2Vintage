@@ -183,7 +183,6 @@ void SpecularAndRimTerms( const float3 vWorldNormal, const float3 vLightDir, con
 	if ( bDoSpecularWarp )
 		specularLighting *= tex2D( specularWarpSampler, float2(specularLighting.x, fFresnel) ); // Sample at { (L.R)^k, fresnel }
 
-	float NdotL = saturate( dot( vWorldNormal, vLightDir ) );
 	specularLighting *= saturate(dot( vWorldNormal, vLightDir ));		// Mask with N.L
 	specularLighting *= color;											// Modulate with light color
 
@@ -193,7 +192,7 @@ void SpecularAndRimTerms( const float3 vWorldNormal, const float3 vLightDir, con
 	if ( bDoRimLighting )												// Optionally do rim lighting
 	{
 		rimLighting  = pow( LdotR, fRimExponent );						// Raise to rim exponent
-		rimLighting *= NdotL;											// Mask with N.L
+		rimLighting *= saturate(dot( vWorldNormal, vLightDir ));		// Mask with N.L
 		rimLighting *= color;											// Modulate with light color
 	}
 }

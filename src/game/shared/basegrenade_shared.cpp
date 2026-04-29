@@ -139,7 +139,7 @@ void CBaseGrenade::Explode( trace_t *pTrace, int bitsDamageType )
 		surfacedata_t *pdata = physprops->GetSurfaceData( pTrace->surface.surfaceProps );	
 		CPASFilter filter( vecAbsOrigin );
 
-		te->Explosion( filter, -1.0, // don't apply client interp delay
+		te->Explosion( filter, -1.0, // don't apply cl_interp delay
 			&vecAbsOrigin,
 			!( contents & MASK_WATER ) ? g_sModelIndexFireball : g_sModelIndexWExplosion,
 			m_DmgRadius * .03, 
@@ -153,7 +153,7 @@ void CBaseGrenade::Explode( trace_t *pTrace, int bitsDamageType )
 	else
 	{
 		CPASFilter filter( vecAbsOrigin );
-		te->Explosion( filter, -1.0, // don't apply client interp delay
+		te->Explosion( filter, -1.0, // don't apply cl_interp delay
 			&vecAbsOrigin, 
 			!( contents & MASK_WATER ) ? g_sModelIndexFireball : g_sModelIndexWExplosion,
 			m_DmgRadius * .03, 
@@ -185,7 +185,7 @@ void CBaseGrenade::Explode( trace_t *pTrace, int bitsDamageType )
 	AddEffects( EF_NODRAW );
 	SetAbsVelocity( vec3_origin );
 
-#if (defined(HL2_EPISODIC) || (!defined(HL2_CLIENT_DLL) && !defined(HL2_DLL))) && !defined(PORTAL)
+#if HL2_EPISODIC
 	// Because the grenade is zipped out of the world instantly, the EXPLOSION sound that it makes for
 	// the AI is also immediately destroyed. For this reason, we now make the grenade entity inert and
 	// throw it away in 1/10th of a second instead of right away. Removing the grenade instantly causes

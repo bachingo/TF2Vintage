@@ -38,8 +38,9 @@
 // the SSE2 registers, which lessens this problem a little.
 
 // permitted only on 360, as we've done careful tuning on its Altivec math:
-// UNDONE: we've enabled SSE2
-#define ALLOW_SIMD_QUATERNION_MATH 1
+#ifdef _X360
+#define ALLOW_SIMD_QUATERNION_MATH 1  // not on PC!
+#endif
 
 
 
@@ -57,7 +58,7 @@ FORCEINLINE fltx4 LoadAlignedSIMD( const QuaternionAligned & pSIMD )
 
 FORCEINLINE fltx4 LoadAlignedSIMD( const QuaternionAligned * RESTRICT pSIMD )
 {
-	fltx4 retval = LoadAlignedSIMD( pSIMD->Base() );
+	fltx4 retval = LoadAlignedSIMD( pSIMD );
 	return retval;
 }
 

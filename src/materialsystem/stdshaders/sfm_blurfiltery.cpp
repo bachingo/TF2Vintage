@@ -6,8 +6,9 @@
 //===========================================================================//
 
 #include "BaseVSShader.h"
-#include "BlurFilter_vs30.inc"
-#include "BlurFilter_ps30.inc"
+#include "BlurFilter_vs20.inc"
+#include "BlurFilter_ps20.inc"
+#include "BlurFilter_ps20b.inc"
 
 
 BEGIN_VS_SHADER_FLAGS( sfm_blurfiltery_shader, "Help for BlurFilterY", SHADER_NOT_EDITABLE )
@@ -45,11 +46,22 @@ BEGIN_VS_SHADER_FLAGS( sfm_blurfiltery_shader, "Help for BlurFilterY", SHADER_NO
 			pShaderShadow->VertexShaderVertexFormat( fmt, 1, 0, 0 );
 
 			// Pre-cache shaders
-			DECLARE_STATIC_VERTEX_SHADER( blurfilter_vs30 );
-			SET_STATIC_VERTEX_SHADER( blurfilter_vs30 );
+			blurfilter_vs20_Static_Index vshIndex;
+			pShaderShadow->SetVertexShader( "BlurFilter_vs20", vshIndex.GetIndex() );
 
-			DECLARE_STATIC_PIXEL_SHADER( blurfilter_ps30 );
-			SET_STATIC_PIXEL_SHADER( blurfilter_ps30 );
+			if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
+			{
+				DECLARE_STATIC_PIXEL_SHADER( blurfilter_ps20b );
+#ifndef _X360
+				SET_STATIC_PIXEL_SHADER_COMBO( APPROX_SRGB_ADAPTER, 0 );
+#endif
+				SET_STATIC_PIXEL_SHADER( blurfilter_ps20b );
+			}
+			else
+			{
+				DECLARE_STATIC_PIXEL_SHADER( blurfilter_ps20 );
+				SET_STATIC_PIXEL_SHADER( blurfilter_ps20 );
+			}
 
 			if ( IS_FLAG_SET( MATERIAL_VAR_ADDITIVE ) )
 				EnableAlphaBlending( SHADER_BLEND_ONE, SHADER_BLEND_ONE );
@@ -94,9 +106,17 @@ BEGIN_VS_SHADER_FLAGS( sfm_blurfiltery_shader, "Help for BlurFilterY", SHADER_NO
 			pShaderAPI->SetPixelShaderConstant( 3, v, 1 );
 
 			pShaderAPI->SetVertexShaderIndex( 0 );
-
-			DECLARE_DYNAMIC_PIXEL_SHADER( blurfilter_ps30 );
-			SET_DYNAMIC_PIXEL_SHADER( blurfilter_ps30 );
+			
+			if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
+			{
+				DECLARE_DYNAMIC_PIXEL_SHADER( blurfilter_ps20b );
+				SET_DYNAMIC_PIXEL_SHADER( blurfilter_ps20b );
+			}
+			else
+			{
+				DECLARE_DYNAMIC_PIXEL_SHADER( blurfilter_ps20 );
+				SET_DYNAMIC_PIXEL_SHADER( blurfilter_ps20 );
+			}
 		}
 		Draw();
 	}

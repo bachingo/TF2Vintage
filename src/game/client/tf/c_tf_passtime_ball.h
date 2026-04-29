@@ -14,7 +14,7 @@
 #include "predictable_entity.h"
 #include "util_shared.h"
 #include "c_baseanimating.h"
-#include "SpriteTrail.h"
+#include "../shared/SpriteTrail.h"
 
 class C_TFPlayer;
 

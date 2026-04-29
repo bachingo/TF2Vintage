@@ -242,7 +242,6 @@ CPotteryWheelPanel::CPotteryWheelPanel( vgui::Panel *pParent, const char *pName 
 	SetIdentityMatrix( m_CameraPivot );
 
 	CreateDefaultLights();
-	FinalizeLights();
 
 	m_nManipStartX = m_nManipStartY = 0;
 
@@ -272,7 +271,6 @@ void CPotteryWheelPanel::ApplySettings( KeyValues *inResourceData )
 	KeyValues *pLights = inResourceData->FindKey( "lights" );
 	if ( pLights )
 	{
-		DestroyLights();
 		ParseLightsFromKV( pLights );
 	}
 }
@@ -333,15 +331,10 @@ void CPotteryWheelPanel::CreateDefaultLights()
 	m_Lights[0].m_Desc.m_Attenuation2 = 0;
 	m_Lights[0].m_Desc.RecalculateDerivedValues();
 	m_nLightCount = 1;
+
+	m_pLightManip = new CPotteryWheelManip( &m_Lights[0].m_LightToWorld );
 }
 
-void CPotteryWheelPanel::FinalizeLights()
-{
-	if (m_nLightCount > 0)
-	{
-		m_pLightManip = new CPotteryWheelManip(&m_Lights[0].m_LightToWorld);
-	}
-}
 
 void CPotteryWheelPanel::DestroyLights()
 {
@@ -401,8 +394,8 @@ void CPotteryWheelPanel::ParseLightsFromKV( KeyValues *pLightsKV )
 	int nLightCount = 0;
 	FOR_EACH_SUBKEY( pLightsKV, pLocalLight )
 	{
-		Assert( nLightCount <= MAX_LIGHT_COUNT );
-		if ( nLightCount > MAX_LIGHT_COUNT )
+		Assert( nLightCount < MAX_LIGHT_COUNT );
+		if ( nLightCount >= MAX_LIGHT_COUNT )
 			break;
 			
 		LightDesc_t *pDesc = &m_Lights[nLightCount].m_Desc;
@@ -464,8 +457,6 @@ void CPotteryWheelPanel::ParseLightsFromKV( KeyValues *pLightsKV )
 	AssertMsg( nLightCount > 0, "Must specify at least one valid light" );
 
 	m_nLightCount = nLightCount;
-
-	FinalizeLights();
 }
 
 
@@ -504,7 +495,6 @@ void CPotteryWheelPanel::SetLightProbe( CDmxElement *pLightProbe )
 	if ( !m_bHasLightProbe )
 	{
 		CreateDefaultLights();
-		FinalizeLights();
 		return;
 	}
 
@@ -590,7 +580,10 @@ void CPotteryWheelPanel::SetLightProbe( CDmxElement *pLightProbe )
 		}
 	}
 
-	FinalizeLights();
+	if ( nLightCount > 0 )
+	{
+		m_pLightManip = new CPotteryWheelManip( &m_Lights[0].m_LightToWorld );
+	}
 }
 
 bool CPotteryWheelPanel::HasLightProbe() const

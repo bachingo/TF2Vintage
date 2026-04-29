@@ -9,8 +9,9 @@
 #include "BaseVSShader.h"
 #include "mathlib/vmatrix.h"
 
-#include "unlitgeneric_vs30.inc"
-#include "shadowbuildtexture_ps30.inc"
+#include "unlitgeneric_vs20.inc"
+#include "shadowbuildtexture_ps20.inc"
+#include "shadowbuildtexture_ps20b.inc"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -31,6 +32,12 @@ BEGIN_VS_SHADER_FLAGS( ShadowBuild_DX9, "Help for ShadowBuild", SHADER_NOT_EDITA
 
 	SHADER_FALLBACK
 	{
+		if ( !g_pHardwareConfig->SupportsVertexAndPixelShaders() )
+			return "ShadowBuild_DX6";
+
+		if ( g_pHardwareConfig->GetDXSupportLevel() < 90 )
+			return "ShadowBuild_DX8";
+
 		return 0;
 	}
 
@@ -65,12 +72,20 @@ BEGIN_VS_SHADER_FLAGS( ShadowBuild_DX9, "Help for ShadowBuild", SHADER_NOT_EDITA
 			unsigned int userDataSize = 0;
 			pShaderShadow->VertexShaderVertexFormat( flags, nTexCoordCount, NULL, userDataSize );
 
-			DECLARE_STATIC_VERTEX_SHADER( unlitgeneric_vs30 );
+			DECLARE_STATIC_VERTEX_SHADER( unlitgeneric_vs20 );
 			SET_STATIC_VERTEX_SHADER_COMBO( VERTEXCOLOR, 0  );
-			SET_STATIC_VERTEX_SHADER( unlitgeneric_vs30 );
+			SET_STATIC_VERTEX_SHADER( unlitgeneric_vs20 );
 
-			DECLARE_STATIC_PIXEL_SHADER( shadowbuildtexture_ps30 );
-			SET_STATIC_PIXEL_SHADER( shadowbuildtexture_ps30 );
+			if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
+			{
+				DECLARE_STATIC_PIXEL_SHADER( shadowbuildtexture_ps20b );
+				SET_STATIC_PIXEL_SHADER( shadowbuildtexture_ps20b );
+			}
+			else
+			{
+				DECLARE_STATIC_PIXEL_SHADER( shadowbuildtexture_ps20 );
+				SET_STATIC_PIXEL_SHADER( shadowbuildtexture_ps20 );
+			}
 		}
 		DYNAMIC_STATE
 		{
@@ -112,13 +127,22 @@ BEGIN_VS_SHADER_FLAGS( ShadowBuild_DX9, "Help for ShadowBuild", SHADER_NOT_EDITA
 			pShaderAPI->SetVertexShaderConstant( VERTEX_SHADER_SHADER_SPECIFIC_CONST_6, vVertexColor, 1 );
 
 			// Compute the vertex shader index.
-			DECLARE_DYNAMIC_VERTEX_SHADER( unlitgeneric_vs30 );
+			DECLARE_DYNAMIC_VERTEX_SHADER( unlitgeneric_vs20 );
+			SET_DYNAMIC_VERTEX_SHADER_COMBO( DOWATERFOG, pShaderAPI->GetSceneFogMode() == MATERIAL_FOG_LINEAR_BELOW_FOG_Z );
 			SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING, pShaderAPI->GetCurrentNumBones() > 0 );
 			SET_DYNAMIC_VERTEX_SHADER_COMBO( COMPRESSED_VERTS, (int)vertexCompression );
-			SET_DYNAMIC_VERTEX_SHADER( unlitgeneric_vs30 );
+			SET_DYNAMIC_VERTEX_SHADER( unlitgeneric_vs20 );
 
-			DECLARE_DYNAMIC_PIXEL_SHADER( shadowbuildtexture_ps30 );
-			SET_DYNAMIC_PIXEL_SHADER( shadowbuildtexture_ps30 );
+			if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
+			{
+				DECLARE_DYNAMIC_PIXEL_SHADER( shadowbuildtexture_ps20b );
+				SET_DYNAMIC_PIXEL_SHADER( shadowbuildtexture_ps20b );
+			}
+			else
+			{
+				DECLARE_DYNAMIC_PIXEL_SHADER( shadowbuildtexture_ps20 );
+				SET_DYNAMIC_PIXEL_SHADER( shadowbuildtexture_ps20 );
+			}
 		}
 		Draw( );
 	}

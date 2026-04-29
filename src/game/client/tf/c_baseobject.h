@@ -56,7 +56,7 @@ public:
 	void			SetObjectSequence( int sequence );
 	virtual void	ResetClientsideFrame( void );
 
-	virtual void	OnPreDataChanged( DataUpdateType_t updateType );
+	virtual void	PreDataUpdate( DataUpdateType_t updateType );
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
 
 	virtual int		GetHealth() const { return m_iHealth; }
@@ -148,13 +148,6 @@ public:
 	virtual void	UpgradeLevelChanged() { return; }
 	int				GetHighestUpgradeLevel( void ) { return m_iHighestUpgradeLevel; }
 
-	virtual int		GetMaxUpgradeLevel( void ) const
-	{
-		if (IsDisposableBuilding() || IsMiniBuilding())
-			return 1;
-		return OBJ_MAX_UPGRADE_LEVEL;
-	}
-
 	int				GetObjectMode( void ) const { return m_iObjectMode; }
 
 	// Shadows
@@ -184,16 +177,7 @@ public:
 	// Build points
 	CUtlVector<BuildPoint_t>	m_BuildPoints;
 
-	bool				ShouldBeActiveWhileCarried() const
-	{
-#ifdef MCOMS_BALANCE_PACK
-		// Dispenser active while carried
-		return m_iObjectType == OBJ_DISPENSER;
-#else
-		return false;
-#endif
-	}
-	bool				IsDisabled( void ) { return m_bDisabled || m_bCarried && !ShouldBeActiveWhileCarried(); }
+	bool				IsDisabled( void ) { return m_bDisabled || m_bCarried; }
 
 	// Shared placement
 	bool 				VerifyCorner( const Vector &vBottomCenter, float xOffset, float yOffset );
@@ -222,14 +206,14 @@ public:
 
 	virtual bool TestHitboxes( const Ray_t &ray, unsigned int fContentsMask, trace_t& tr );
 
-	bool				IsMiniBuilding() const { return m_bMiniBuilding; }
+	bool				IsMiniBuilding() { return m_bMiniBuilding; }
 	bool				IsDisposableBuilding( void ) const { return m_bDisposableBuilding; }
 
 // ITargetIDProvidesHint
 public:
 	virtual void		DisplayHintTo( C_BasePlayer *pPlayer );
 
-	virtual void		GetGlowEffectColor( float *r, float *g, float *b, float *a );
+	virtual void		GetGlowEffectColor( float *r, float *g, float *b );
 
 	bool				IsMapPlaced( void ){ return m_bWasMapPlaced; }
 

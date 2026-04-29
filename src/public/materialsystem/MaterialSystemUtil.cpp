@@ -44,7 +44,10 @@ void CMaterialReference::Init( char const* pMaterialName, const char *pTextureGr
 	IMaterial *pMaterial = materials->FindMaterial( pMaterialName, pTextureGroupName, bComplain);
 	if( IsErrorMaterial( pMaterial ) )
 	{
-		DevWarning("##### CMaterialReference::Init got error material for %s in tex group %s\n", pMaterialName, pTextureGroupName );
+		if (IsOSX())
+		{
+			printf("\n ##### CMaterialReference::Init got error material for %s in tex group %s", pMaterialName, pTextureGroupName );
+		}
 	}
 
 	Assert( pMaterial );

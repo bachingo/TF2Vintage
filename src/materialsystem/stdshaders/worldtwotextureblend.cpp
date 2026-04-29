@@ -10,8 +10,9 @@
 
 #include "convar.h"
 
-#include "lightmappedgeneric_vs30.inc"
-#include "worldtwotextureblend_ps30.inc"
+#include "lightmappedgeneric_vs20.inc"
+#include "WorldTwoTextureBlend_ps20.inc"
+#include "WorldTwoTextureBlend_ps20b.inc"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -41,6 +42,12 @@ END_SHADER_PARAMS
 
 	SHADER_FALLBACK
 	{
+		if( g_pHardwareConfig->GetDXSupportLevel() < 80 )
+			return "WorldTwoTextureBlend_DX6";
+
+		if( g_pHardwareConfig->GetDXSupportLevel() < 90 )
+			return "WorldTwoTextureBlend_DX8";
+
 		return 0;
 	}
 
@@ -173,7 +180,10 @@ END_SHADER_PARAMS
 			pShaderShadow->EnableAlphaTest( bIsAlphaTested );
 			if( hasFlashlight )
 			{
-				nShadowFilterMode = g_pHardwareConfig->GetShadowFilterMode();	// Based upon vendor and device dependent formats
+				if ( g_pHardwareConfig->SupportsPixelShaders_2_b() )
+				{
+					nShadowFilterMode = g_pHardwareConfig->GetShadowFilterMode();	// Based upon vendor and device dependent formats
+				}
 
 				SetAdditiveBlendingShadowState( BASETEXTURE, true );
 				pShaderShadow->EnableDepthWrites( false );
@@ -236,7 +246,7 @@ END_SHADER_PARAMS
 
 			pShaderShadow->EnableSRGBWrite( true );
 
-			DECLARE_STATIC_VERTEX_SHADER( lightmappedgeneric_vs30 );
+			DECLARE_STATIC_VERTEX_SHADER( lightmappedgeneric_vs20 );
 			SET_STATIC_VERTEX_SHADER_COMBO( ENVMAP_MASK,  false );
 			SET_STATIC_VERTEX_SHADER_COMBO( BUMPMASK,  false );
 			SET_STATIC_VERTEX_SHADER_COMBO( TANGENTSPACE,  hasFlashlight );
@@ -244,23 +254,40 @@ END_SHADER_PARAMS
 			SET_STATIC_VERTEX_SHADER_COMBO( DIFFUSEBUMPMAP,  hasDiffuseBumpmap );
 			SET_STATIC_VERTEX_SHADER_COMBO( VERTEXCOLOR,  hasVertexColor );
 			SET_STATIC_VERTEX_SHADER_COMBO( VERTEXALPHATEXBLENDFACTOR, false );
+			SET_STATIC_VERTEX_SHADER_COMBO( RELIEF_MAPPING, 0 ); //( bumpmap_variant == 2 )?1:0);
 			SET_STATIC_VERTEX_SHADER_COMBO( SEAMLESS, bSeamlessMapping ); //( bumpmap_variant == 2 )?1:0);
 #ifdef _X360
 			SET_STATIC_VERTEX_SHADER_COMBO( FLASHLIGHT, hasFlashlight );
 #endif
-			SET_STATIC_VERTEX_SHADER( lightmappedgeneric_vs30 );
+			SET_STATIC_VERTEX_SHADER( lightmappedgeneric_vs20 );
 
-			DECLARE_STATIC_PIXEL_SHADER( worldtwotextureblend_ps30 );
-			SET_STATIC_PIXEL_SHADER_COMBO( DETAILTEXTURE,  hasDetailTexture );
-			SET_STATIC_PIXEL_SHADER_COMBO( BUMPMAP,  hasBump );
-			SET_STATIC_PIXEL_SHADER_COMBO( DIFFUSEBUMPMAP,  hasDiffuseBumpmap );
-			SET_STATIC_PIXEL_SHADER_COMBO( VERTEXCOLOR,  hasVertexColor );
-			SET_STATIC_PIXEL_SHADER_COMBO( SELFILLUM,  hasSelfIllum );
-			SET_STATIC_PIXEL_SHADER_COMBO( DETAIL_ALPHA_MASK_BASE_TEXTURE,  bHasDetailAlpha );
-			SET_STATIC_PIXEL_SHADER_COMBO( FLASHLIGHT,  hasFlashlight );
-			SET_STATIC_PIXEL_SHADER_COMBO( SEAMLESS,  bSeamlessMapping );
-			SET_STATIC_PIXEL_SHADER_COMBO( FLASHLIGHTDEPTHFILTERMODE, nShadowFilterMode );
-			SET_STATIC_PIXEL_SHADER( worldtwotextureblend_ps30 );
+			if ( g_pHardwareConfig->SupportsPixelShaders_2_b() )
+			{
+				DECLARE_STATIC_PIXEL_SHADER( worldtwotextureblend_ps20b );
+				SET_STATIC_PIXEL_SHADER_COMBO( DETAILTEXTURE,  hasDetailTexture );
+				SET_STATIC_PIXEL_SHADER_COMBO( BUMPMAP,  hasBump );
+				SET_STATIC_PIXEL_SHADER_COMBO( DIFFUSEBUMPMAP,  hasDiffuseBumpmap );
+				SET_STATIC_PIXEL_SHADER_COMBO( VERTEXCOLOR,  hasVertexColor );
+				SET_STATIC_PIXEL_SHADER_COMBO( SELFILLUM,  hasSelfIllum );
+				SET_STATIC_PIXEL_SHADER_COMBO( DETAIL_ALPHA_MASK_BASE_TEXTURE,  bHasDetailAlpha );
+				SET_STATIC_PIXEL_SHADER_COMBO( FLASHLIGHT,  hasFlashlight );
+				SET_STATIC_PIXEL_SHADER_COMBO( SEAMLESS,  bSeamlessMapping );
+				SET_STATIC_PIXEL_SHADER_COMBO( FLASHLIGHTDEPTHFILTERMODE, nShadowFilterMode );
+				SET_STATIC_PIXEL_SHADER( worldtwotextureblend_ps20b );
+			}
+			else
+			{
+				DECLARE_STATIC_PIXEL_SHADER( worldtwotextureblend_ps20 );
+				SET_STATIC_PIXEL_SHADER_COMBO( DETAILTEXTURE,  hasDetailTexture );
+				SET_STATIC_PIXEL_SHADER_COMBO( BUMPMAP,  hasBump );
+				SET_STATIC_PIXEL_SHADER_COMBO( DIFFUSEBUMPMAP,  hasDiffuseBumpmap );
+				SET_STATIC_PIXEL_SHADER_COMBO( VERTEXCOLOR,  hasVertexColor );
+				SET_STATIC_PIXEL_SHADER_COMBO( SELFILLUM,  hasSelfIllum );
+				SET_STATIC_PIXEL_SHADER_COMBO( DETAIL_ALPHA_MASK_BASE_TEXTURE,  bHasDetailAlpha );
+				SET_STATIC_PIXEL_SHADER_COMBO( FLASHLIGHT,  hasFlashlight );
+				SET_STATIC_PIXEL_SHADER_COMBO( SEAMLESS,  bSeamlessMapping );
+				SET_STATIC_PIXEL_SHADER( worldtwotextureblend_ps20 );
+			}
 
 			// HACK HACK HACK - enable alpha writes all the time so that we have them for
 			// underwater stuff. 
@@ -360,11 +387,12 @@ END_SHADER_PARAMS
 			}
 
 			MaterialFogMode_t fogType = pShaderAPI->GetSceneFogMode();
-			DECLARE_DYNAMIC_VERTEX_SHADER( lightmappedgeneric_vs30 );
+			DECLARE_DYNAMIC_VERTEX_SHADER( lightmappedgeneric_vs20 );
+			SET_DYNAMIC_VERTEX_SHADER_COMBO( DOWATERFOG,  fogType == MATERIAL_FOG_LINEAR_BELOW_FOG_Z );
 			SET_DYNAMIC_VERTEX_SHADER_COMBO( FASTPATH,  bVertexShaderFastPath );
 			SET_DYNAMIC_VERTEX_SHADER_COMBO(
 				LIGHTING_PREVIEW, pShaderAPI->GetIntRenderingParameter(INT_RENDERPARM_ENABLE_FIXED_LIGHTING)!=0);
-			SET_DYNAMIC_VERTEX_SHADER( lightmappedgeneric_vs30 );
+			SET_DYNAMIC_VERTEX_SHADER( lightmappedgeneric_vs20 );
 
 			bool bWriteDepthToAlpha;
 			bool bWriteWaterFogToAlpha;
@@ -381,14 +409,29 @@ END_SHADER_PARAMS
 				bWriteWaterFogToAlpha = false;
 			}
 
-			DECLARE_DYNAMIC_PIXEL_SHADER( worldtwotextureblend_ps30 );
 
-			// Don't write fog to alpha if we're using translucency
-			SET_DYNAMIC_PIXEL_SHADER_COMBO( WRITEWATERFOGTODESTALPHA, bWriteWaterFogToAlpha );
-			SET_DYNAMIC_PIXEL_SHADER_COMBO( WRITE_DEPTH_TO_DESTALPHA, bWriteDepthToAlpha );
-			SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo1( true ) );
-			SET_DYNAMIC_PIXEL_SHADER_COMBO( FLASHLIGHTSHADOWS, bFlashlightShadows );
-			SET_DYNAMIC_PIXEL_SHADER( worldtwotextureblend_ps30 );
+			if ( g_pHardwareConfig->SupportsPixelShaders_2_b() )
+			{
+				DECLARE_DYNAMIC_PIXEL_SHADER( worldtwotextureblend_ps20b );
+
+				// Don't write fog to alpha if we're using translucency
+				SET_DYNAMIC_PIXEL_SHADER_COMBO( WRITEWATERFOGTODESTALPHA, bWriteWaterFogToAlpha );
+				SET_DYNAMIC_PIXEL_SHADER_COMBO( WRITE_DEPTH_TO_DESTALPHA, bWriteDepthToAlpha );
+				SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo1( true ) );
+				SET_DYNAMIC_PIXEL_SHADER_COMBO( FLASHLIGHTSHADOWS, bFlashlightShadows );
+				SET_DYNAMIC_PIXEL_SHADER( worldtwotextureblend_ps20b );
+			}
+			else
+			{
+				DECLARE_DYNAMIC_PIXEL_SHADER( worldtwotextureblend_ps20 );
+
+				// Don't write fog to alpha if we're using translucency
+				SET_DYNAMIC_PIXEL_SHADER_COMBO( WRITEWATERFOGTODESTALPHA, (fogType == MATERIAL_FOG_LINEAR_BELOW_FOG_Z) && 
+					(nBlendType != BT_BLENDADD) && (nBlendType != BT_BLEND) && !bIsAlphaTested );
+				SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
+				SET_DYNAMIC_PIXEL_SHADER( worldtwotextureblend_ps20 );
+			}
+
 
 			// always set the transform for detail textures since I'm assuming that you'll
 			// always have a detailscale.

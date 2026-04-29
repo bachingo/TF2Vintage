@@ -1424,11 +1424,11 @@ void CClientVirtualReality::Activate()
     vgui::surface()->SetSoftwareCursor( true );
 
 #if defined(POSIX)
-	static ConVarRef m_rawinput( "m_rawinput" );
+	ConVarRef m_rawinput( "m_rawinput" );
     m_bNonVRRawInput = m_rawinput.GetBool();
     m_rawinput.SetValue( 1 );
 
-	static ConVarRef mat_vsync( "mat_vsync" );
+	ConVarRef mat_vsync( "mat_vsync" );
 	mat_vsync.SetValue( 0 );
 #endif
 

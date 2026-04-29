@@ -13,7 +13,7 @@ public:
 
 	C_TFTankBoss();
 
-	virtual void GetGlowEffectColor( float *r, float *g, float *b, float *a );
+	virtual void GetGlowEffectColor( float *r, float *g, float *b );
 
 	// ITFMvMBossProgressUser
 	virtual const char* GetBossProgressImageName() const OVERRIDE { return "tank"; }

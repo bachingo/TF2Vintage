@@ -13,7 +13,7 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-#if (defined(HL2_EPISODIC) || !defined(HL2_CLIENT_DLL)) && !defined(PORTAL)
+#ifdef HL2_EPISODIC
 	#define SMOKESTACK_MAX_MATERIALS 8
 #else
 	#define SMOKESTACK_MAX_MATERIALS 1
@@ -244,7 +244,7 @@ void C_SmokeStack::Start(CParticleMgr *pParticleMgr, IPrototypeArgAccess *pArgs)
 
 	m_MaterialHandle[0] = m_ParticleEffect.FindOrAddMaterial( str );
 
-#if (defined(HL2_EPISODIC) || !defined(HL2_CLIENT_DLL)) && !defined(PORTAL)
+#ifdef HL2_EPISODIC
 	int iCount = 1;
 	char szNames[512];
 
@@ -333,7 +333,7 @@ void C_SmokeStack::Update(float fTimeDelta)
 		{
 			int iRandomFrame = random->RandomInt( 0, m_iMaxFrames );
 
-#if (defined(HL2_EPISODIC) || !defined(HL2_CLIENT_DLL)) && !defined(PORTAL)
+#ifndef HL2_EPISODIC
 			iRandomFrame = 0;
 #endif
 	
@@ -355,7 +355,7 @@ void C_SmokeStack::Update(float fTimeDelta)
 				pParticle->m_Lifetime = 0;
 				pParticle->m_flAngle = 0.0f;
 
-#if (defined(HL2_EPISODIC) || !defined(HL2_CLIENT_DLL)) && !defined(PORTAL)
+#ifdef HL2_EPISODIC
 				pParticle->m_flAngle = RandomFloat( 0, 360 );
 #endif
 				pParticle->m_flRollDelta = random->RandomFloat( -m_flRollSpeed, m_flRollSpeed );
@@ -406,7 +406,7 @@ void C_SmokeStack::RenderParticles( CParticleRenderIterator *pIterator )
 		// makes it get translucent and fade out for a longer time.
 		//float alpha = cosf( -M_PI_F + tLifetime * M_PI_F * 2.f ) * 0.5f + 0.5f;
 		float tLifetime = pParticle->m_Lifetime * m_InvLifetime;
-		float alpha = FastCos( -M_PI_F + tLifetime * M_PI_F * 2.f ) * 0.5f + 0.5f;
+		float alpha = TableCos( -M_PI_F + tLifetime * M_PI_F * 2.f ) * 0.5f + 0.5f;
 		if( tLifetime > 0.5f )
 			alpha *= alpha;
 
@@ -441,7 +441,7 @@ void C_SmokeStack::SimulateParticles( CParticleSimulateIterator *pIterator )
 		bQuickTest = true;
 	}
 
-#if (defined(HL2_EPISODIC) || !defined(HL2_CLIENT_DLL)) && !defined(PORTAL)
+#ifndef HL2_EPISODIC
 	bQuickTest = false;
 	bSortNow = true;
 #endif
@@ -474,7 +474,7 @@ void C_SmokeStack::SimulateParticles( CParticleSimulateIterator *pIterator )
 				pParticle->m_Pos.y = vTwist.x * m_TwistMat[1][0] + vTwist.y * m_TwistMat[1][1] + GetAbsOrigin().y;
 			}
 
-#if (defined(HL2_EPISODIC) || !defined(HL2_CLIENT_DLL)) && !defined(PORTAL)
+#ifndef HL2_EPISODIC
 			pParticle->m_Pos = pParticle->m_Pos + 
 				pParticle->m_Velocity * pIterator->GetTimeDelta() + 
 				pParticle->m_vAccel * (0.5f * pIterator->GetTimeDelta() * pIterator->GetTimeDelta());

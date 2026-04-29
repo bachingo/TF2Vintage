@@ -109,8 +109,6 @@ public:
 		return BaseClass::ShouldDrawHeadLabels();
 	}
 
-	virtual bool IsAllTalkActive();
-
 #ifndef CLIENT_DLL
 	virtual void FrameUpdatePostEntityThink();
 

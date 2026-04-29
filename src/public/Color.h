@@ -12,8 +12,6 @@
 #pragma once
 #endif
 
-#include <float.h>
-
 //-----------------------------------------------------------------------------
 // Purpose: Basic handler for an rgb set of colors
 //			This class is fully inline
@@ -101,23 +99,5 @@ private:
 	unsigned char _color[4];
 };
 
-constexpr float MAXCOLOR = 256.0f - FLT_EPSILON * 128;
-
-// Converts 0..1 to 0..255
-inline int Float2Byte( float flNum )
-{
-	return static_cast<int>( flNum * MAXCOLOR );
-}
-
-// Converts to Color using Float2Byte
-inline Color Floats2Color(float r, float g, float b)
-{
-	return Color(Float2Byte(r), Float2Byte(g), Float2Byte(b), 255);
-}
-
-inline Color Floats2Color(float r, float g, float b, float a)
-{
-	return Color(Float2Byte(r), Float2Byte(g), Float2Byte(b), Float2Byte(a));
-}
 
 #endif // COLOR_H

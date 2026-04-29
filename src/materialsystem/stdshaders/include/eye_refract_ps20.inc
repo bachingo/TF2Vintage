@@ -9,7 +9,7 @@ private:
 public:
 	void SetFLASHLIGHT( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nFLASHLIGHT = i;
 #ifdef _DEBUG
 		m_bFLASHLIGHT = true;
@@ -30,7 +30,7 @@ private:
 public:
 	void SetLIGHTWARPTEXTURE( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nLIGHTWARPTEXTURE = i;
 #ifdef _DEBUG
 		m_bLIGHTWARPTEXTURE = true;
@@ -61,7 +61,7 @@ public:
 		// Asserts to make sure that we are setting all of the combination vars.
 #ifdef _DEBUG
 		bool bAllStaticVarsDefined = m_bFLASHLIGHT && m_bLIGHTWARPTEXTURE;
-		DebugAssert( bAllStaticVarsDefined );
+		Assert( bAllStaticVarsDefined );
 #endif // _DEBUG
 		return ( 3 * m_nFLASHLIGHT ) + ( 6 * m_nLIGHTWARPTEXTURE ) + 0;
 	}
@@ -77,7 +77,7 @@ private:
 public:
 	void SetNUM_LIGHTS( int i )
 	{
-		DebugAssert( i >= 0 && i <= 2 );
+		Assert( i >= 0 && i <= 2 );
 		m_nNUM_LIGHTS = i;
 #ifdef _DEBUG
 		m_bNUM_LIGHTS = true;
@@ -104,7 +104,7 @@ public:
 		// Asserts to make sure that we are setting all of the combination vars.
 #ifdef _DEBUG
 		bool bAllDynamicVarsDefined = m_bNUM_LIGHTS;
-		DebugAssert( bAllDynamicVarsDefined );
+		Assert( bAllDynamicVarsDefined );
 #endif // _DEBUG
 		return ( 1 * m_nNUM_LIGHTS ) + 0;
 	}

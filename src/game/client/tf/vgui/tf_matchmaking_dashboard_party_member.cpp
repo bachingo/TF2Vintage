@@ -22,7 +22,6 @@
 #include "tf_controls.h"
 #include "softline.h"
 #include "hud_controlpointicons.h"
-#include "store/store_panel.h"
 
 using namespace vgui;
 using namespace GCSDK;
@@ -393,7 +392,7 @@ void CDashboardPartyMember::OnCommand( const char *command )
 				{
 					case MEMBER_PRESENT:
 					{
-						// You can always send a message to party members
+						// You can always send a message to party memebers
 						contextMenuBuilder.AddMenuItem( "#TF_Friends_SendMessage", new KeyValues( "Context_SendMessage" ), "party" );
 
 						// If we're the leader, we can kick
@@ -481,14 +480,7 @@ void CDashboardPartyMember::DoSendMessage()
 	Assert( !BIsLocalPlayerSlot() );
 	if ( m_eMemberState == MEMBER_PRESENT && !BIsLocalPlayerSlot() )
 	{
-		if ( steamapicontext && steamapicontext->SteamFriends() && steamapicontext->SteamUtils() && steamapicontext->SteamUtils()->IsOverlayEnabled() )
-		{
-			steamapicontext->SteamFriends()->ActivateGameOverlayToUser( "chat", m_steamIDPartyMember );
-		}
-		else
-		{
-			OpenStoreStatusDialog( NULL, "#MMenu_OverlayRequired", true, false );
-		}
+		steamapicontext->SteamFriends()->ActivateGameOverlayToUser( "chat", m_steamIDPartyMember );
 	}
 }
 

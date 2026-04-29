@@ -706,7 +706,6 @@ public:
 		, m_nSourceItemID( pItem->GetID() )
 	{
 		TFModalStack()->PushModal( this );
-		SetVisible( true );
 		GetMMDashboardParentManager()->AddPanel( this );
 
 		m_pIspectionPanel = new CTFItemInspectionPanel( this, "InspectionPanel" );
@@ -1155,8 +1154,8 @@ static void EndUseActionSlotItem( const CCommand &args )
 		}
 	}
 
-	// UNDONE: we always have to say when we let go, because we could have been doing multiple actions while holding.
 	// tell the game server we let go of the button if this wasn't a GC item
+	if ( !g_bUsedGCItem )
 	{
 		KeyValues *kv = new KeyValues( "-use_action_slot_item_server" );
 		engine->ServerCmdKeyValues( kv );
@@ -1487,10 +1486,15 @@ public:
 	{
 		GCSDK::CGCMsg<MsgGCUsedClaimCodeItem_t> msg( pNetPacket );
 
+		if ( steamapicontext == NULL )
+		{
+			return true;
+		}
+
 		CUtlString url;
 		if ( msg.BReadStr( &url ) )
 		{
-			UTIL_OpenWebPage( url.Get() );
+			steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( url.Get() );
 			IViewPortPanel *pMMOverride = ( gViewPortInterface->FindPanelByName( PANEL_MAINMENUOVERRIDE ) );
 			if ( pMMOverride )
 			{

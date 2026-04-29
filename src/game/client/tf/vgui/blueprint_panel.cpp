@@ -69,14 +69,7 @@ void CBlueprintPanel::SetObjectInfo( const CObjectInfo* pNewInfo )
 	{
 		if ( m_pObjectInfo )
 		{
-			int iCost = m_pObjectInfo->m_Cost;
-#ifdef TF2_OG
-			if (V_strcmp(m_pObjectInfo->m_pClassName, "obj_teleporter"))
-			{
-				iCost = 125;
-			}
-#endif
-			V_snprintf( m_pszCost, sizeof( m_pszCost ), "%i", iCost );
+			V_snprintf( m_pszCost, sizeof( m_pszCost ), "%i", m_pObjectInfo->m_Cost );
 			m_pItemCostLabel->SetText( m_pszCost );
 		}
 		m_pItemCostLabel->SetVisible( bVisible );

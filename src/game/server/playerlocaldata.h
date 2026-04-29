@@ -42,11 +42,7 @@ public:
 	CNetworkVar( float, m_flFOVRate );		// rate at which the FOV changes (defaults to 0)
 		
 	Vector				m_vecOverViewpoint;			// Viewpoint overriding the real player's viewpoint
-
-	// Stored before command to subtick with the latest angles
-	QAngle m_vecPreTickPunchAngle;
-	QAngle m_vecPreTickEyeAngles;
-
+	
 	// Fully ducked
 	CNetworkVar( bool, m_bDucked );
 	// In process of ducking
@@ -80,8 +76,6 @@ public:
 	CNetworkVar( bool, m_bForceLocalPlayerDraw );
 	CNetworkVar( float, m_flStepSize );
 	CNetworkVar( bool, m_bAllowAutoMovement );
-	CNetworkVar( bool, m_bBrakingFrameTolerated );
-	CNetworkVar( float, m_flBrakingTime );
 
 	// 3d skybox
 	CNetworkVarEmbedded( sky3dparams_t, m_skybox3d );

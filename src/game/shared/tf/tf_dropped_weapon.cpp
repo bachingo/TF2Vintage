@@ -24,7 +24,7 @@
 
 
 #ifdef GAME_DLL
-ConVar tf_dropped_weapon_lifetime("tf_dropped_weapon_lifetime", "30", FCVAR_HIDDEN);
+ConVar tf_dropped_weapon_lifetime( "tf_dropped_weapon_lifetime", "30", FCVAR_CHEAT ); 
 
 EXTERN_SEND_TABLE( DT_ScriptCreatedItem );
 
@@ -41,11 +41,9 @@ BEGIN_NETWORK_TABLE( CTFDroppedWeapon, DT_TFDroppedWeapon )
 #if !defined( CLIENT_DLL )
 	SendPropDataTable( SENDINFO_DT(m_Item), &REFERENCE_SEND_TABLE(DT_ScriptCreatedItem) ),
 	SendPropFloat( SENDINFO( m_flChargeLevel ) ),
-	SendPropBool( SENDINFO( m_bChargeRelease ) ),
 #else
 	RecvPropDataTable( RECVINFO_DT(m_Item), 0, &REFERENCE_RECV_TABLE(DT_ScriptCreatedItem) ),
 	RecvPropFloat( RECVINFO( m_flChargeLevel ) ),
-	RecvPropBool( RECVINFO( m_bChargeRelease ) ),
 #endif
 END_NETWORK_TABLE()
 
@@ -72,7 +70,6 @@ CTFDroppedWeapon::CTFDroppedWeapon()
 #endif // CLIENT_DLL
 
 	m_flChargeLevel.Set( 0.f );
-	m_bChargeRelease.Set( false );
 }
 
 //-----------------------------------------------------------------------------
@@ -194,7 +191,7 @@ void CTFDroppedWeapon::OnDataChanged( DataUpdateType_t updateType )
 						pStatTrakEnt->SetModelScale( flScale );
 						pStatTrakEnt->UpdateVisibility();
 
-						pStatTrakEnt->SetBodygroup( 1, 0 );
+						pStatTrakEnt->SetBodygroup( 1, 1 );
 
 						pStatTrakEnt->m_nSkin = m_Item.GetTeamNumber();	// Use the "Sad" skin
 
@@ -403,18 +400,10 @@ void CTFDroppedWeapon::SetupParticleEffect()
 	}
 }
 
-ConVar tf_dropped_weapon_glows("tf_dropped_weapon_glows", "1", FCVAR_ARCHIVE, "True to render weapon glows for dropped weapons.");
-
 //-----------------------------------------------------------------------------
 void CTFDroppedWeapon::ClientThink()
 {
-	// don't do all this extra work if we don't support glows.
-	static ConVarRef glow_outline_effect_enable("glow_outline_effect_enable");
-	if ( !tf_dropped_weapon_glows.GetBool() || !g_pMaterialSystemHardwareConfig->SupportsPixelShaders_2_0() || !glow_outline_effect_enable.IsValid() || !glow_outline_effect_enable.GetBool() )
-		return;
-
 	C_TFPlayer *pTFPlayer = C_TFPlayer::GetLocalTFPlayer();
-	// TODO: optimize IsLineOfSightClear
 	bool bShouldGlowForLocalPlayer = pTFPlayer && pTFPlayer->IsAlive() && pTFPlayer->CanPickupDroppedWeapon( this ) && pTFPlayer->IsLineOfSightClear( this );
 	if ( bShouldGlowForLocalPlayer )
 	{
@@ -453,7 +442,7 @@ void CTFDroppedWeapon::UpdateGlowEffect( void )
 	if ( m_bShouldGlowForLocalPlayer )
 	{
 		Vector color = Vector( 0.745f, 0.773f, 0.157f );
-		m_pGlowEffect = new CGlowObject( this, color, 1.0, true, true );
+		m_pGlowEffect = new CGlowObject( this, color, 1.0, true );
 	}
 }
 
@@ -583,37 +572,19 @@ void CTFDroppedWeapon::InitDroppedWeapon( CTFPlayer *pPlayer, CTFWeaponBase *pWe
 		}
 	}
 
-	CWeaponMedigun *pMedigun = dynamic_cast< CWeaponMedigun* >( pWeapon );
-	if ( pMedigun )
+	if ( bIsSuicide )
 	{
-		// remove medigun hose
-		SetBodygroup(1, 1);
-		if ( bIsSuicide )
+		m_flChargeLevel = 0.f;
+	}
+	else
+	{
+		CWeaponMedigun *pMedigun = dynamic_cast< CWeaponMedigun* >( pWeapon );
+		if ( pMedigun )
 		{
-			m_flChargeLevel = 0.f;
-			m_bChargeRelease = false;
-		}
-		else
-		{
-			m_flChargeLevel.Set(pMedigun->GetChargeLevel());
+			m_flChargeLevel.Set( pMedigun->GetChargeLevel() );
 			if ( m_flChargeLevel > 0.f )
 			{
-				const bool bReleasingCharge = pMedigun->IsReleasingCharge();
-				if ( pMedigun->GetMedigunType() == MEDIGUN_RESIST )
-				{
-					// if we are still on the resist medigun, then we haven't actually removed our chunk yet.
-					// stop players from cancelling out their consumption.
-					if ( bReleasingCharge )
-					{
-						pMedigun->DrainCharge();
-						m_flChargeLevel.Set( pMedigun->GetChargeLevel() );
-					}
-				}
-				else
-				{
-					m_bChargeRelease.Set( bReleasingCharge );
-				}
-				SetContextThink(&CTFDroppedWeapon::ChargeLevelDegradeThink, gpGlobals->curtime + 0.1f, "ChargeLevelDegradeThink");
+				SetContextThink( &CTFDroppedWeapon::ChargeLevelDegradeThink, gpGlobals->curtime + 0.1f, "ChargeLevelDegradeThink" );
 			}
 		}
 	}
@@ -653,10 +624,6 @@ void CTFDroppedWeapon::InitPickedUpWeapon( CTFPlayer *pPlayer, CTFWeaponBase *pW
 	if ( pMedigun )
 	{
 		pMedigun->SetChargeLevel( m_flChargeLevel );
-		if ( m_bChargeRelease )
-		{
-			pMedigun->StartRelease( NULL );
-		}
 	}
 
 	CTFStickBomb *pStickBomb = dynamic_cast< CTFStickBomb* >( pWeapon );
@@ -693,13 +660,11 @@ void CTFDroppedWeapon::InitPickedUpWeapon( CTFPlayer *pPlayer, CTFWeaponBase *pW
 //-----------------------------------------------------------------------------
 void CTFDroppedWeapon::ChargeLevelDegradeThink()
 {
-	const float flChargeLossAmount = m_bChargeRelease ? 0.025f : 0.01f;
-	m_flChargeLevel.Set( m_flChargeLevel - flChargeLossAmount );
+	m_flChargeLevel.Set( m_flChargeLevel - 0.01f );
 
 	if ( m_flChargeLevel < 0.f )
 	{
 		m_flChargeLevel.Set( 0.f );
-		m_bChargeRelease.Set( false );
 		SetContextThink( NULL, 0, "ChargeLevelDegradeThink" );
 		return;
 	}

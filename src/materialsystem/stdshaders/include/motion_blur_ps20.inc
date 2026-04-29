@@ -25,7 +25,7 @@ private:
 public:
 	void SetQUALITY( int i )
 	{
-		DebugAssert( i >= 0 && i <= 3 );
+		Assert( i >= 0 && i <= 3 );
 		m_nQUALITY = i;
 #ifdef _DEBUG
 		m_bQUALITY = true;
@@ -52,7 +52,7 @@ public:
 		// Asserts to make sure that we are setting all of the combination vars.
 #ifdef _DEBUG
 		bool bAllDynamicVarsDefined = m_bQUALITY;
-		DebugAssert( bAllDynamicVarsDefined );
+		Assert( bAllDynamicVarsDefined );
 #endif // _DEBUG
 		return ( 1 * m_nQUALITY ) + 0;
 	}

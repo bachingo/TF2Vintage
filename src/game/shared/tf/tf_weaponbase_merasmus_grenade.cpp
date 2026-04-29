@@ -30,7 +30,7 @@ int CTFWeaponBaseMerasmusGrenade::GetCustomParticleIndex()
 
 int CTFWeaponBaseMerasmusGrenade::DrawModel( int flags )
 {
-	float flAliveTime = gpGlobals->curtime - GetProjectileSpawnTime();
+	float flAliveTime = gpGlobals->curtime - m_flSpawnTime;
 
 	const float flNoDrawTime = 0.1f;
 	const float flScaleTime = 0.1f;

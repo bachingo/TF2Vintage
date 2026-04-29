@@ -671,13 +671,10 @@ void UTIL_TraceEntity( CBaseEntity *pEntity, const Vector &vecAbsStart, const Ve
 	// because one day, rotated collideables will work!
 	Assert( pCollision->GetCollisionAngles() == vec3_angle );
 
-	CTraceFilterEntity traceFilter( pEntity, pCollision->GetCollisionGroup() );
-	CTraceFilterChain filterChain( &traceFilter, pFilter );
-
 #ifdef PORTAL
 	UTIL_Portal_TraceEntity( pEntity, vecAbsStart, vecAbsEnd, mask, pFilter, ptr );
 #else
-	enginetrace->SweepCollideable( pCollision, vecAbsStart, vecAbsEnd, pCollision->GetCollisionAngles(), mask, &filterChain, ptr );
+	enginetrace->SweepCollideable( pCollision, vecAbsStart, vecAbsEnd, pCollision->GetCollisionAngles(), mask, pFilter, ptr );
 #endif
 }
 
@@ -1674,19 +1671,4 @@ const char *GetCleanMapName( const char *pszUnCleanMapName, char (&pszTmp)[256])
 #endif
 
 	return pszUnCleanMapName;
-}
-
-const char* COM_GetModDirectory();
-
-uint32 UTIL_GetEmulatedAppID()
-{
-	const char* pGameDir = COM_GetModDirectory();
-
-	// We emulate 440 for some usages
-	if ( FStrEq( pGameDir, "tf2vintage" ) )
-	{
-		return 440;
-	}
-
-	return engine->GetAppID();
 }

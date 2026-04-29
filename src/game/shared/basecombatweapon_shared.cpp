@@ -31,7 +31,6 @@
 #include "eventqueue.h"
 #include "fmtstr.h"
 #include "gameweaponmanager.h"
-#include "dt_send_hltv.h"
 
 #ifdef HL2MP
 	#include "hl2mp_gamerules.h"
@@ -1387,7 +1386,7 @@ bool CBaseCombatWeapon::ReloadOrSwitchWeapons( void )
 		// weapon isn't useable, switch.
 		if ( ( (GetWeaponFlags() & ITEM_FLAG_NOAUTOSWITCHEMPTY) == false ) && ( g_pGameRules->SwitchToNextBestWeapon( pOwner, this ) ) )
 		{
-			m_flNextPrimaryAttack = MAX( gpGlobals->curtime + 0.3f, m_flNextPrimaryAttack );
+			m_flNextPrimaryAttack = gpGlobals->curtime + 0.3;
 			return true;
 		}
 	}
@@ -1682,13 +1681,6 @@ void CBaseCombatWeapon::ItemPreFrame( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CBaseCombatWeapon::ItemBusyPreFrame(void)
-{
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 bool CBaseCombatWeapon::CanPerformSecondaryAttack() const
 {
 	return m_flNextSecondaryAttack <= gpGlobals->curtime;
@@ -1705,6 +1697,11 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 
 	UpdateAutoFire();
 
+	//Track the duration of the fire
+	//FIXME: Check for IN_ATTACK2 as well?
+	//FIXME: What if we're calling ItemBusyFrame?
+	m_fFireDuration = ( pOwner->m_nButtons & IN_ATTACK ) ? ( m_fFireDuration + gpGlobals->frametime ) : 0.0f;
+
 	if ( UsesClipsForAmmo1() )
 	{
 		CheckReload();
@@ -1720,7 +1717,7 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 			if (m_flNextEmptySoundTime < gpGlobals->curtime)
 			{
 				WeaponSound( EMPTY );
-				m_flNextSecondaryAttack = m_flNextEmptySoundTime = gpGlobals->curtime + 0.5f;
+				m_flNextSecondaryAttack = m_flNextEmptySoundTime = gpGlobals->curtime + 0.5;
 			}
 		}
 		else if ( pOwner->GetWaterLevel() == 3 && !m_bAltFiresUnderwater )
@@ -1757,20 +1754,8 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 			}
 		}
 	}
-
-	//Track the duration of the fire
-	//FIXME: Check for IN_ATTACK2 as well? FIXED
-	//FIXME: What if we're calling ItemBusyFrame? FIXED
-	// If we are starting to fire, we need to check if we would actually fire this frame.
-	// If we already ARE firing, it's totally fair game to track our continuance of wanting to fire.
-	const bool bStartingFire = m_fFireDuration == 0.0f;
-	const bool bIsFiring = bStartingFire ? (m_flNextPrimaryAttack <= gpGlobals->curtime) : true;
-	// 1) if we fired an interrupting secondary, reset our firing time since it interrupted our fire rate
-	// 2) if this is the first frame of us firing, but we cannot fire, then don't increment our firing time. we'll track our fire start when we actually can start firing.
-	// 3) we need to want to fire, so yeah..
-	m_fFireDuration = ( !bFired && bIsFiring && pOwner->m_nButtons & IN_ATTACK ) ? ( m_fFireDuration + gpGlobals->frametime ) : 0.0f;
 	
-	if ( !bFired && (pOwner->m_nButtons & IN_ATTACK) && (m_flNextPrimaryAttack <= gpGlobals->curtime) )
+	if ( !bFired && (pOwner->m_nButtons & IN_ATTACK) && (m_flNextPrimaryAttack <= gpGlobals->curtime))
 	{
 		// Clip empty? Or out of ammo on a no-clip weapon?
 		if ( !IsMeleeWeapon() &&  
@@ -1782,7 +1767,7 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 		{
 			// This weapon doesn't fire underwater
 			WeaponSound(EMPTY);
-			m_flNextPrimaryAttack = gpGlobals->curtime + 0.2f;
+			m_flNextPrimaryAttack = gpGlobals->curtime + 0.2;
 			return;
 		}
 		else
@@ -1794,8 +1779,7 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 			//			first shot.  Right now that's too much of an architecture change -- jdw
 			
 			// If the firing button was just pressed, or the alt-fire just released, reset the firing time
-			// fFireDuration is another way of tracking if we just pressed the firing button.
-			if ( ( pOwner->m_afButtonPressed & IN_ATTACK ) || ( pOwner->m_afButtonReleased & IN_ATTACK2 ) || ( m_fFireDuration <= gpGlobals->frametime ) )
+			if ( ( pOwner->m_afButtonPressed & IN_ATTACK ) || ( pOwner->m_afButtonReleased & IN_ATTACK2 ) )
 			{
 				 m_flNextPrimaryAttack = gpGlobals->curtime;
 			}
@@ -1861,8 +1845,6 @@ void CBaseCombatWeapon::HandleFireOnEmpty()
 void CBaseCombatWeapon::ItemBusyFrame( void )
 {
 	UpdateAutoFire();
-
-	m_fFireDuration = 0.0f;
 }
 
 //-----------------------------------------------------------------------------
@@ -1917,7 +1899,7 @@ float CBaseCombatWeapon::GetFireRate( void )
 // Input  :
 // Output :
 //-----------------------------------------------------------------------------
-void CBaseCombatWeapon::WeaponSound( WeaponSound_t sound_type, float soundtime /* = 0.0f */, bool bForceOwnerOnly /* = false */ )
+void CBaseCombatWeapon::WeaponSound( WeaponSound_t sound_type, float soundtime /* = 0.0f */ )
 {
 #if !defined( CLIENT_DLL )
 	if ( !m_bSoundsEnabled )
@@ -1927,22 +1909,14 @@ void CBaseCombatWeapon::WeaponSound( WeaponSound_t sound_type, float soundtime /
 	// If we have some sounds from the weapon classname.txt file, play a random one of them
 	const char *shootsound = GetShootSound( sound_type );
 	if ( !shootsound || !shootsound[0] )
-	{
-#if _DEBUG
-		DevMsg( "No shoot sound %d for weapon %s\n", sound_type, GetClassname() );
-#endif
 		return;
-	}
-	
+
 	CSoundParameters params;
 	
 	if ( !GetParametersForSound( shootsound, params, NULL ) )
-	{
-		DevMsg( "No parameters for shoot sound %s\n", shootsound );
 		return;
-	}
 
-	if ( params.play_to_owner_only || bForceOwnerOnly )
+	if ( params.play_to_owner_only )
 	{
 		// Am I only to play to my owner?
 		if ( GetOwner() && GetOwner()->IsPlayer() )
@@ -2195,7 +2169,7 @@ void CBaseCombatWeapon::CheckReload( void )
 				Reload();
 				return;
 			}
-			// Clip full, stop reloading
+			// If clip not full reload again, with overload.
 			else
 			{
 				FinishReload();
@@ -2309,7 +2283,7 @@ void CBaseCombatWeapon::UpdateAutoFire( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Primary fire button attack
+// Purpose: Used for calculating if we fire a clip all at once.
 //-----------------------------------------------------------------------------
 void CBaseCombatWeapon::PrimaryAttack( void )
 {
@@ -2342,18 +2316,18 @@ void CBaseCombatWeapon::PrimaryAttack( void )
 
 	// To make the firing framerate independent, we may have to fire more than one bullet here on low-framerate systems, 
 	// especially if the weapon we're firing has a really fast rate of fire.
+	info.m_iShots = 0;
 	float fireRate = GetFireRate();
-	int32 fireTimes = fireRate > 0.0f ? Max( Ceil2Int( ( gpGlobals->curtime - m_flNextPrimaryAttack ) / fireRate ), 1 ) : 1;
 
-	for (info.m_iShots = 1; info.m_iShots <= fireTimes; info.m_iShots++)
+	while ( m_flNextPrimaryAttack <= gpGlobals->curtime )
 	{
 		// MUST call sound before removing a round from the clip of a CMachineGun
 		WeaponSound(SINGLE, m_flNextPrimaryAttack);
 		m_flNextPrimaryAttack = m_flNextPrimaryAttack + fireRate;
 		info.m_iShots++;
+		if ( !fireRate )
+			break;
 	}
-
-	m_flNextPrimaryAttack += info.m_iShots * fireRate;
 
 	// Make sure we don't fire more than the amount in the clip
 	if ( UsesClipsForAmmo1() )
@@ -2751,7 +2725,6 @@ void* SendProxy_SendActiveLocalWeaponDataTable( const SendProp *pProp, const voi
 		if ( pPlayer /*&& pPlayer->GetActiveWeapon() == pWeapon*/ )
 		{
 			pRecipients->SetOnly( pPlayer->GetClientIndex() );
-			SendProxy_AddHLTV( pRecipients );
 			return (void*)pVarData;
 		}
 	}
@@ -2774,7 +2747,6 @@ void* SendProxy_SendLocalWeaponDataTable( const SendProp *pProp, const void *pSt
 		if ( pPlayer )
 		{
 			pRecipients->SetOnly( pPlayer->GetClientIndex() );
-			SendProxy_AddHLTV( pRecipients );
 			return (void*)pVarData;
 		}
 	}

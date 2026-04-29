@@ -145,7 +145,6 @@ bool CAI_LocalNavigator::MoveCalcDirect( AILocalMoveGoal_t *pMoveGoal, bool bOnl
 
 			}
 
-#ifdef DEV_BUILD
 			if ( !IsRetail() && ai_debug_directnavprobe.GetBool() )
 			{
 				if ( !bTraceClear )
@@ -161,7 +160,6 @@ bool CAI_LocalNavigator::MoveCalcDirect( AILocalMoveGoal_t *pMoveGoal, bool bOnl
 					NDebugOverlay::Line( WorldSpaceCenter(), Vector( testPos.x, testPos.y, WorldSpaceCenter().z ), 0, 255, 0, false, 0.1 );
 				}
 			}
-#endif
 
 			pMoveGoal->thinkTrace = pMoveGoal->directTrace;
 		}

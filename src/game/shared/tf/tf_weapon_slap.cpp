@@ -102,10 +102,7 @@ void CTFSlap::Precache()
 void CTFSlap::PrimaryAttack()
 {
 	if ( !CanAttack() )
-	{
-		m_flNextPrimaryAttack = MAX(m_flNextPrimaryAttack, gpGlobals->curtime);
 		return;
-	}
 
 	Slap();
 }

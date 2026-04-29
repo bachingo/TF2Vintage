@@ -10,11 +10,9 @@
 
 // Client specific.
 #ifdef CLIENT_DLL
-#include "c_basedoor.h"
 #include "c_tf_player.h"
 // Server specific.
 #else
-#include "doors.h"
 #include "soundent.h"
 #include "te_effect_dispatch.h"
 #include "tf_player.h"
@@ -123,36 +121,10 @@ void CTFJar::PrimaryAttack( void )
 	if ( iJarCount == 0 )
 		return;
 
-	trace_t trace;
-	if ( !CanCreateJar( pPlayer, trace ) )
+	if ( ( pPlayer->GetWaterLevel() == WL_Eyes ) && !CanThrowUnderWater() )
 		return;
 
 	BaseClass::PrimaryAttack();
-}
-
-void CTFJar::SecondaryAttack(void)
-{
-#if defined(MCOMS_BALANCE_PACK)
-	CTFPlayer* pPlayer = GetTFPlayerOwner();
-	if (!pPlayer)
-		return;
-
-	int iJarCount = pPlayer->GetAmmoCount(m_iPrimaryAmmoType);
-	if (iJarCount == 0)
-		return;
-
-	if ( GetWeaponProjectileType() == TF_PROJECTILE_JAR && pPlayer->IsPlayerClass( TF_CLASS_SNIPER ) )
-	{
-		StartEffectBarRegen();
-#if GAME_DLL
-		pPlayer->SpeakConceptIfAllowed(MP_CONCEPT_JARATE_HIT);
-#endif
-		pPlayer->m_Shared.AddCond(TF_COND_ENERGY_BUFF, 8.0f);
-		RemoveProjectileAmmo(pPlayer);
-	}
-#endif
-
-	BaseClass::SecondaryAttack();
 }
 
 //-----------------------------------------------------------------------------
@@ -186,44 +158,6 @@ Vector CTFJar::GetVelocityVector( const Vector &vecForward, const Vector &vecRig
 #endif
 
 //-----------------------------------------------------------------------------
-// Purpose: Determines if there is space to create a jar.
-//-----------------------------------------------------------------------------
-bool CTFJar::CanCreateJar( CTFPlayer* pPlayer, trace_t& trace )
-{
-	if ( pPlayer->GetWaterLevel() == WL_Eyes && !CanThrowUnderWater() )
-		return false;
-
-	Vector vecForward, vecRight, vecUp;
-	AngleVectors( pPlayer->EyeAngles(), &vecForward, &vecRight, &vecUp );
-
-	float fRight = 8.f;
-	if ( IsViewModelFlipped() )
-	{
-		fRight *= -1;
-	}
-	Vector vecJarStart = pPlayer->Weapon_ShootPosition();
-	vecJarStart        += vecRight * fRight + vecUp * -6.0f;
-	Vector vecJarEnd   = vecJarStart + vecForward * 16.f;
-	
-	// Trace out and see if we hit a wall.
-	CTraceFilterSimple traceFilter( this, COLLISION_GROUP_NONE );
-	UTIL_TraceHull( vecJarStart, vecJarEnd, -Vector(8,8,8), Vector(8,8,8), MASK_SOLID_BRUSHONLY, &traceFilter, &trace );
-	if ( trace.startsolid )
-		return false;
-	else
-	{
-		if ( trace.m_pEnt )
-		{
-			// Don't let the player throw through doors.
-			CBaseDoor *pDoor = dynamic_cast<CBaseDoor*>( trace.m_pEnt );
-			if ( pDoor )
-				return false;
-		}
-		return true;
-	}
-}
-
-//-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
 void CTFJar::TossJarThink( void )
@@ -239,8 +173,21 @@ void CTFJar::TossJarThink( void )
 	Vector vecForward, vecRight, vecUp;
 	AngleVectors( pPlayer->EyeAngles(), &vecForward, &vecRight, &vecUp );
 
-	trace_t trace;
-	if ( !CanCreateJar( pPlayer, trace ) )
+	float fRight = 8.f;
+	if ( IsViewModelFlipped() )
+	{
+		fRight *= -1;
+	}
+	Vector vecSrc = pPlayer->Weapon_ShootPosition();
+	vecSrc +=  vecForward * 16.0f + vecRight * fRight + vecUp * -6.0f;
+
+	trace_t trace;	
+	Vector vecEye = pPlayer->EyePosition();
+	CTraceFilterSimple traceFilter( this, COLLISION_GROUP_NONE );
+	UTIL_TraceHull( vecEye, vecSrc, -Vector(8,8,8), Vector(8,8,8), MASK_SOLID_BRUSHONLY, &traceFilter, &trace );
+
+	// If we started in solid, don't let them fire at all
+	if ( trace.startsolid )
 		return;
 
 	Vector vecVelocity = GetVelocityVector( vecForward, vecRight, vecUp );
@@ -257,6 +204,17 @@ void CTFJar::TossJarThink( void )
 	if ( ShouldSpeakWhenFiring() )
 	{
 		pPlayer->SpeakWeaponFire( MP_CONCEPT_JARATE_LAUNCH );
+	}
+
+	if ( pProjectile->ExplodesOnHit() )
+	{
+		Vector vecEnd = pProjectile->GetAbsOrigin() + ( vecVelocity.Normalized() * 32.0f );
+		UTIL_TraceHull( pProjectile->GetAbsOrigin(), vecEnd, -Vector( 8, 8, 8 ), Vector( 8, 8, 8 ), MASK_SOLID_BRUSHONLY, &traceFilter, &trace );
+
+		if ( trace.fraction < 1.0 )
+		{
+			pProjectile->Explode( &trace, pProjectile->GetDamageType() );
+		}
 	}
 
 #endif
@@ -305,9 +263,9 @@ void CTFProjectile_Jar::SetCustomPipebombModel()
 	// Check for Model Override
 	int iProjectile = 0;
 	CTFPlayer *pThrower = ToTFPlayer( GetThrower() );
-	if ( pThrower && pThrower->Weapon_OwnsThisID( TF_WEAPON_JAR ) )
+	if ( pThrower && pThrower->GetActiveWeapon() )
 	{
-		CALL_ATTRIB_HOOK_INT_ON_OTHER( pThrower->Weapon_OwnsThisID( TF_WEAPON_JAR ), iProjectile, override_projectile_type );
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pThrower->GetActiveWeapon(), iProjectile, override_projectile_type );
 		switch ( iProjectile )
 		{
 		case TF_PROJECTILE_FESTIVE_JAR :
@@ -348,7 +306,6 @@ CTFProjectile_Jar* CTFProjectile_Jar::Create( const Vector &position, const QAng
 		}
 #endif
 		pGrenade->m_flFullDamage = 0;
-		pGrenade->m_bFizzle = true;
 
 		pGrenade->ApplyLocalAngularVelocityImpulse( angVelocity );
 	}
@@ -375,9 +332,6 @@ void JarExplode( int iEntIndex, CTFPlayer *pAttacker, CBaseEntity *pOriginalWeap
 	// Splash pee on everyone nearby.
 	CBaseEntity *pListOfEntities[MAX_PLAYERS_ARRAY_SAFE];
 	int iEntities = UTIL_EntitiesInSphere( pListOfEntities, ARRAYSIZE( pListOfEntities ), vContactPoint, flRadius, FL_CLIENT | FL_NPC );
-
-	const float flCheckRadius = flRadius * 1.2f; // not the full box radius
-
 	for ( int i = 0; i < iEntities; ++i )
 	{
 		CTFPlayer *pPlayer = ToTFPlayer( pListOfEntities[i] );
@@ -385,15 +339,6 @@ void JarExplode( int iEntIndex, CTFPlayer *pAttacker, CBaseEntity *pOriginalWeap
 		{
 			if ( !pPlayer->IsAlive() )
 				continue;
-
-			CCollisionProperty *pCollisionProp = pPlayer->CollisionProp();
-			if ( pCollisionProp )
-			{
-				Vector vecNearest;
-				pCollisionProp->CalcNearestPoint( vContactPoint, &vecNearest );
-				if ( vContactPoint.DistToSqr( vecNearest ) > flCheckRadius * flCheckRadius )
-					continue;
-			}
 
 			// Do a quick trace to see if there's any geometry in the way.
 			// Pee isn't stopped by other entities. Splishy splashy.
@@ -418,10 +363,6 @@ void JarExplode( int iEntIndex, CTFPlayer *pAttacker, CBaseEntity *pOriginalWeap
 					continue;
 
 				pPlayer->m_Shared.AddCond( cond, flDuration, pAttacker );
-				if ( cond == TF_COND_GAS )
-				{
-					pPlayer->m_Shared.AddCond( TF_COND_GAS_DRIP, flDuration, pAttacker );
-				}
 				pPlayer->m_Shared.SetPeeAttacker( pAttacker );
 				pPlayer->SpeakConceptIfAllowed( MP_CONCEPT_JARATE_HIT );
 
@@ -509,11 +450,8 @@ void JarExplode( int iEntIndex, CTFPlayer *pAttacker, CBaseEntity *pOriginalWeap
 					ExtinguishPlayer( dynamic_cast<CEconEntity *>( pWeapon ), pAttacker, pPlayer, "tf_weapon_jar" );
 
 					// Return some percentage of the jar to the thrown weapon if extinguishing an ally
-					auto pLauncher = dynamic_cast<CTFWeaponBase*>(pOriginalWeapon);
-					auto pCurrentLauncher = dynamic_cast< CTFWeaponBase* >( pWeapon );
-					// Only reward the original thrower's self or allies for extinguishing teammates. An enemy extinguishing their enemy allies should not reduce our cooldown.
-					const bool bSniperOnSameTeamAsReflector = pLauncher->GetTeamNumber() == pCurrentLauncher->GetTeamNumber();
-					if ( bSniperOnSameTeamAsReflector && pLauncher && pAttacker != pPlayer && pLauncher->HasEffectBarRegeneration() )
+					auto pLauncher = dynamic_cast< CTFWeaponBase* >( pOriginalWeapon );
+					if ( pLauncher && pAttacker != pPlayer && pLauncher->HasEffectBarRegeneration() )
 					{
 						float fCooldown = 1.0f;
 						CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pLauncher, fCooldown, extinguish_reduces_cooldown );
@@ -581,10 +519,7 @@ void CTFProjectile_Jar::PipebombTouch( CBaseEntity *pOther )
 	{
 		// Exception to this rule - if we're a jar or milk, and our potential victim is on fire, then allow collision after all.
 		// If we're a jar or milk, then still allow collision if our potential victim is on fire.
-		// TODO(mcoms): this could use a virtual function instead
-		if ( m_iProjectileType != TF_PROJECTILE_CLEAVER &&
-			 m_iProjectileType != TF_PROJECTILE_SPELL &&
-			 m_iProjectileType != TF_PROJECTILE_THROWABLE )
+		if (m_iProjectileType == TF_PROJECTILE_JAR || m_iProjectileType == TF_PROJECTILE_JAR_MILK)
 		{
 			auto victim = ToTFPlayer(pOther);
 			if (!victim->m_Shared.InCond(TF_COND_BURNING))
@@ -714,7 +649,7 @@ bool CTFProjectile_Jar::PositionArrowOnBone( mstudiobbox_t *pBox, CBaseAnimating
 	if ( pBox->bone < 0 || pBox->bone >= pStudioHdr->numbones() )	// Bone index must be valid.
 		return false;
 
-	CBoneCache *pCache = pOtherAnim->GetBoneCache( pStudioHdr );
+	CBoneCache *pCache = pOtherAnim->GetBoneCache();
 	if ( !pCache )
 		return false;
 
@@ -903,9 +838,9 @@ void CTFProjectile_JarMilk::SetCustomPipebombModel()
 	// Check for Model Override
 	int iProjectile = 0;
 	CTFPlayer *pThrower = ToTFPlayer( GetThrower() );
-	if ( pThrower && pThrower->Weapon_OwnsThisID( TF_WEAPON_JAR_MILK ) )
+	if ( pThrower && pThrower->GetActiveWeapon() )
 	{
-		CALL_ATTRIB_HOOK_INT_ON_OTHER( pThrower->Weapon_OwnsThisID( TF_WEAPON_JAR_MILK ), iProjectile, override_projectile_type );
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pThrower->GetActiveWeapon(), iProjectile, override_projectile_type );
 		switch ( iProjectile )
 		{
 		case TF_PROJECTILE_BREADMONSTER_JARATE:
@@ -1084,67 +1019,45 @@ void CTFProjectile_Cleaver::OnHit( CBaseEntity *pOther )
 		return;
 	}
 
-	CBaseEntity *pInflictor = GetOriginalLauncher();
+	CBaseEntity *pInflictor = GetLauncher();
 
 	float flLifeTime = gpGlobals->curtime - m_flCreationTime;
-	float flDecrement = 0.0f;
 	if ( flLifeTime >= FLIGHT_TIME_TO_REDUCE_COOLDOWN )
 	{
-		flDecrement = 1.5f;
+		auto pLauncher = dynamic_cast<CTFWeaponBase*>( pInflictor );
+		if ( pLauncher && pOwner != pPlayer && pLauncher->HasEffectBarRegeneration() )
+		{
+			pLauncher->DecrementBarRegenTime( 1.5f );
+		}
 	}
 
 	// just do the bleed effect directly since the bleed
 	// attribute comes from the inflictor, which is the cleaver.
-	pPlayer->m_Shared.MakeBleed( pOwner, (CTFCleaver *)pInflictor, 5.f );
+	pPlayer->m_Shared.MakeBleed( pOwner, (CTFCleaver *)GetLauncher(), 5.f );
 
 	// Give 'em a love tap.
-#if defined(MCOMS_BALANCE_PACK)
-	const int iVictimHealth = pPlayer->GetHealth();
-	const bool bLowHealthCull = iVictimHealth - 10 <= pPlayer->GetMaxHealth() * 0.3f;
-#endif
+	const trace_t *pTrace = &CBaseEntity::GetTouchTrace();
+	trace_t *pNewTrace = const_cast<trace_t*>( pTrace );
+
+	CTakeDamageInfo info;
+	info.SetAttacker( pOwner );
+	info.SetInflictor( pInflictor ); 
+	info.SetWeapon( pInflictor );
+	info.SetDamage( GetDamage() );
+	info.SetDamageCustom( TF_DMG_CUSTOM_CLEAVER );
+	info.SetDamagePosition( GetAbsOrigin() );
+	int iDamageType = GetDamageType();
+	if ( IsCritical() )
 	{
-#if defined(MCOMS_BALANCE_PACK)
-		flDecrement = 10.0f;
-#endif
-
-		const trace_t *pTrace = &CBaseEntity::GetTouchTrace();
-		trace_t *pNewTrace = const_cast<trace_t*>( pTrace );
-
-		CTakeDamageInfo info;
-		info.SetAttacker( pOwner );
-		info.SetInflictor( this ); 
-		info.SetWeapon( pInflictor );
-		float flDamage = GetDamage();
-#if defined(MCOMS_BALANCE_PACK)
-		if ( !bLowHealthCull )
-		{
-			flDamage = 10.0f;
-		}
-		else if ( flDamage < iVictimHealth * 0.5f )
-		{
-			flDamage = iVictimHealth * 0.5f;
-		}
-#endif
-		info.SetDamage( flDamage );
-		info.SetDamageCustom( TF_DMG_CUSTOM_CLEAVER );
-		info.SetDamagePosition( GetAbsOrigin() );
-		int iDamageType = GetDamageType();
-#if defined(MCOMS_BALANCE_PACK)
-		if ( IsCritical() || bLowHealthCull )
-#else
-		if ( IsCritical() )
-#endif
-		{
-			iDamageType |= DMG_CRITICAL;
-		}
-		info.SetDamageType( iDamageType );
-
-		// Hurt 'em.
-		Vector dir;
-		AngleVectors( GetAbsAngles(), &dir );
-		pPlayer->DispatchTraceAttack( info, dir, pNewTrace );
-		ApplyMultiDamage();
+		iDamageType |= DMG_CRITICAL;
 	}
+	info.SetDamageType( iDamageType );
+
+	// Hurt 'em.
+	Vector dir;
+	AngleVectors( GetAbsAngles(), &dir );
+	pPlayer->DispatchTraceAttack( info, dir, pNewTrace );
+	ApplyMultiDamage();
 
 	// sound effects
 	EmitSound_t params;
@@ -1162,15 +1075,6 @@ void CTFProjectile_Cleaver::OnHit( CBaseEntity *pOther )
 	RemoveCleaver();
 
 	m_bHitPlayer = true;
-
-	if ( flDecrement > 0.0f )
-	{
-		auto pLauncher = dynamic_cast<CTFWeaponBase*>(pInflictor);
-		if ( pLauncher && pOwner != pPlayer && pLauncher->HasEffectBarRegeneration() )
-		{
-			pLauncher->DecrementBarRegenTime( flDecrement );
-		}
-	}
 }
 
 //-----------------------------------------------------------------------------

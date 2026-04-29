@@ -64,8 +64,6 @@ ConVar tf_bot_debug_tags( "tf_bot_debug_tags", "0", FCVAR_CHEAT, "ent_text will 
 
 ConVar tf_bot_spawn_use_preset_roster( "tf_bot_spawn_use_preset_roster", "1", FCVAR_CHEAT, "Bot will choose class from a preset class table." );
 
-ConVar tf_bot_random_items_apply_filter( "tf_bot_random_items_apply_filter", "1", FCVAR_CHEAT, "Apply filters to random item equips on bots, for skipping medals and some minor reskins." );
-
 extern ConVar tf_bot_sniper_spot_max_count;
 extern ConVar tf_bot_fire_weapon_min_time;
 extern ConVar tf_bot_sniper_misfire_chance;
@@ -202,6 +200,7 @@ const char *GetRandomBotName( void )
 		"Maggot",
 		"CRITRAWKETS",
 		"Herr Doktor",
+		"Gentlemanne of Leisure",
 		"Companion Cube",
 		"Target Practice",
 		"One-Man Cheeseburger Apocalypse",
@@ -236,37 +235,6 @@ const char *GetRandomBotName( void )
 		"Kill Me",
 		"Glorified Toaster with Legs",
 
-		"No Man",
-		"That Thing",
-		"Freak",
-		"Dreams of Cruelty",
-		
-		"ROBOT!",
-
-		"6th Witness",
-		"Fried Chicken Tramp",
-		"Stink Lines",
-		"Seduce Me!",
-		"I TELEPORTED BREAD!",
-
-		"Please Let There Be Pants",
-		"The Deadliest Animal on Earth",
-		"YETI PUNCH!",
-		"Lunatic",
-
-		"The Bomb",
-
-		"BOT Arnold",
-		"Gabe",
-		"Leroy",
-
-		"Rattletrap",
-		"An Enigma",
-		"Snotty",
-
-		"Abrams",
-		"Ivy",
-
 		NULL
 	};
 	static int nameCount = 0;
@@ -299,7 +267,7 @@ void CreateBotName( int iTeam, int iClassIndex, CTFBot::DifficultyType skill, ch
 	const char *pFriendlyOrEnemyTitle = "";
 
 	// @note (Tom Bui): it is okay to get localized name in training, since we should be on a listen server
-	if ( TFGameRules()->IsInTraining() && g_pVGuiLocalize )
+	if ( TFGameRules()->IsInTraining() )
 	{
 		// get the friendly/enemy title
 		const char *pBotTitle = NULL;
@@ -462,7 +430,6 @@ CON_COMMAND_F( tf_bot_add, "Add a bot.", FCVAR_GAMEDLL )
 			{
 				CreateBotName( pBot->GetTeamNumber(), pBot->GetPlayerClass()->GetClassIndex(), skill, name, sizeof(name) );
 				engine->SetFakeClientConVarValue( pBot->edict(), "name", name );
-				pBot->SetPlayerName( name );
 			}
 
 			++iNumAdded;
@@ -914,7 +881,7 @@ bool CTFBot::GetWeightDesiredClassToSpawn( CUtlVector< ETFClass > &vecClassToSpa
 	// assume offense
 	ClassSelectionInfo *desiredRoster = offenseRoster;
 
-	if ( TFGameRules()->IsMatchTypeCompetitive() || TFGameRules()->IsCompetitiveGame() )
+	if ( TFGameRules()->IsMatchTypeCompetitive() )
 	{
 		desiredRoster = compRoster;
 	}
@@ -1002,18 +969,10 @@ bool CTFBot::GetWeightDesiredClassToSpawn( CUtlVector< ETFClass > &vecClassToSpa
 		}
 
 		int maxLimit = desiredClassInfo->m_maxLimit[ (int)clamp( GetDifficulty(), CTFBot::EASY, CTFBot::EXPERT ) ];
-		if ( maxLimit > NoLimit )
+		if ( maxLimit > NoLimit && currentRoster.m_count[ desiredClassInfo->m_class ] >= maxLimit )
 		{
-			// scale max limits to larger team size
-			if ( currentRoster.m_teamSize > 12 )
-			{
-				maxLimit = maxLimit * RoundFloatToNearestInt( currentRoster.m_teamSize / 12.0f );
-			}
-			if ( currentRoster.m_count[desiredClassInfo->m_class] >= maxLimit )
-			{
-				// at or above limit for this class
-				continue;
-			}
+			// at or above limit for this class
+			continue;
 		}
 
 		if ( desiredClassInfo->m_countPerTeamSize > 0 )
@@ -1123,7 +1082,7 @@ ETFClass CTFBot::GetPresetClassToSpawn() const
 	// assume offense
 	ETFClass *desiredRoster = offenseRoster;
 
-	if ( TFGameRules()->IsMatchTypeCompetitive() || TFGameRules()->IsCompetitiveGame() )
+	if ( TFGameRules()->IsMatchTypeCompetitive() )
 	{
 		desiredRoster = compRoster;
 	}
@@ -1175,7 +1134,7 @@ ETFClass CTFBot::GetPresetClassToSpawn() const
 	{
 		ETFClass iClass = desiredRoster[i];
 
-		if ( currentRoster.m_count[ iClass ] > classCount[ iClass ] || !TFGameRules()->CanBotChooseClass( const_cast< CTFBot * >( this ), iClass ) )
+		if ( currentRoster.m_count[ iClass ] > classCount[ iClass ] )
 		{
 			// if we have enough of this class, skip it
 			classCount[ iClass ]++;
@@ -1186,9 +1145,7 @@ ETFClass CTFBot::GetPresetClassToSpawn() const
 		}
 	}
 
-	// TODO(mcoms): check for team size, for assert
-	// UNDONE: this assert happens when players > 12
-	//AssertMsg( 0, "This return shouldn't happen." );
+	AssertMsg( 0, "This return shouldn't happen." );
 	return TF_CLASS_UNDEFINED;
 }
 
@@ -1222,7 +1179,7 @@ bool CTFBot::CanChangeClass() const
 /**
  * NOTE: Assumes bot's difficulty has been set, and the bot is on a team.
  */
-const char *CTFBot::GetNextSpawnClassname( void )
+const char *CTFBot::GetNextSpawnClassname( void ) const
 {
 	ETFClass iNextClass = TF_CLASS_UNDEFINED;
 
@@ -1231,21 +1188,12 @@ const char *CTFBot::GetNextSpawnClassname( void )
 	{
 		iNextClass = (ETFClass)GetClassIndexFromString( pszForceClass );
 	}
-	if ( !TFGameRules()->CanPlayerChooseClass( const_cast< CTFBot * >( this ), iNextClass ) )
-	{
-		iNextClass = TF_CLASS_UNDEFINED;
-	}
-
-	if ( m_iReservedPlayerClass != TF_CLASS_UNDEFINED )
-	{
-		iNextClass = ( ETFClass )m_iReservedPlayerClass;
-	}
 
 	if ( iNextClass == TF_CLASS_UNDEFINED && tf_bot_spawn_use_preset_roster.GetBool() && ( !TFGameRules() || !TFGameRules()->IsInTraining() ))
 	{
 		iNextClass = GetPresetClassToSpawn();
 	}
-	if ( iNextClass == TF_CLASS_UNDEFINED )
+	else if ( iNextClass == TF_CLASS_UNDEFINED )
 	{
 		CUtlVector< ETFClass > desiredClassVector;
 		GetWeightDesiredClassToSpawn( desiredClassVector );
@@ -1256,12 +1204,7 @@ const char *CTFBot::GetNextSpawnClassname( void )
 			return "auto";
 		}
 
-		// this will introduce a little bit of stability
-		if ( m_iClassSelection < 0 )
-		{
-			m_iClassSelection = RandomInt( 0, TF_LAST_NORMAL_CLASS );
-		}
-		int which = ( m_iClassSelection + 1 ) % desiredClassVector.Count();
+		int which = RandomInt( 0, desiredClassVector.Count() - 1 );
 
 		// if we need to destroy a sentry, pick a class that can do so
 		if ( GetEnemySentry() )
@@ -1314,9 +1257,6 @@ CTFBot::CTFBot()
 	m_locomotor = new CTFBotLocomotion( this );
 	m_vision = new CTFBotVision( this );
 	ALLOCATE_INTENTION_INTERFACE( CTFBot );
-
-	m_iClassSelection = -1;
-	m_bHasEvaluatedClass = false;
 
 	m_spawnArea = NULL;
 	m_weaponRestrictionFlags = 0;
@@ -1392,11 +1332,6 @@ void CTFBot::Spawn()
 {
 	BaseClass::Spawn();
 
-	engine->SetFakeClientConVarValue( this->edict(), "tf_respawn_on_loadoutchanges", "1" );
-	engine->SetFakeClientConVarValue( this->edict(), "hud_medicautocallers", "0" );
-	engine->SetFakeClientConVarValue( this->edict(), "hud_medicautocallersglow", "0" );
-	engine->SetFakeClientConVarValue( this->edict(), "hud_medicautocallersthreshold", "0" );
-
 	m_spawnArea = NULL;
 	m_justLostPointTimer.Invalidate();
 	m_squad = NULL;
@@ -1444,12 +1379,8 @@ void CTFBot::SetMission( MissionType mission, bool resetBehaviorSystem )
 }
 
 //-----------------------------------------------------------------------------------------------------
-bool CTFBot::ShouldReEvaluateCurrentClass( void )
+bool CTFBot::ShouldReEvaluateCurrentClass( void ) const
 {
-	if ( m_bHasEvaluatedClass )
-	{
-		return false;
-	}
 	ETFClass iCurrentClass = ( ETFClass )GetPlayerClass()->GetClassIndex();
 	Assert( iCurrentClass != TF_CLASS_UNDEFINED );
 	TFPlayerClassData_t *classData = GetPlayerClassData( iCurrentClass );
@@ -1462,7 +1393,6 @@ bool CTFBot::ShouldReEvaluateCurrentClass( void )
 //-----------------------------------------------------------------------------------------------------
 void CTFBot::ReEvaluateCurrentClass( void )
 {
-	m_bHasEvaluatedClass = true;
 	// having the bot die will trigger them to
 	// re-evaluate their class in PhysicsSimulate() below
 	CommitSuicide( false, true );
@@ -1504,8 +1434,6 @@ void CTFBot::PhysicsSimulate( void )
 		if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() )
 			return;
 
-		m_iClassSelection = -1;
-
 		HandleCommand_JoinClass( GetNextSpawnClassname() );
 
 		m_didReselectClass = true;
@@ -1546,18 +1474,6 @@ void CTFBot::AvoidPlayers( CUserCmd *pCmd )
 {
 	// Turn off the avoid player code.
 	if ( !tf_avoidteammates.GetBool() || !tf_avoidteammates_pushaway.GetBool() )
-		return;
-
-	// Not available in competitive
-	if ( TFGameRules()->IsCompetitiveGame() )
-		return;
-
-	// Don't test if the player doesn't exist or is dead.
-	if ( IsAlive() == false )
-		return;
-
-	CTFTeam *pTeam = (CTFTeam*)GetTeam();
-	if ( !pTeam )
 		return;
 
 	Vector forward, right;
@@ -1661,9 +1577,6 @@ int CTFBot::ShouldTransmit( const CCheckTransmitInfo *pInfo )
 //-----------------------------------------------------------------------------------------------------
 void CTFBot::ChangeTeam( int iTeamNum, bool bAutoTeam, bool bSilent, bool bAutoBalance /*= false*/  )
 {
-	m_bHasEvaluatedClass = false;
-	m_iClassSelection = -1;
-
 	BaseClass::ChangeTeam( iTeamNum, bAutoTeam, bSilent, bAutoBalance );
 	
 	if ( TFGameRules()->IsMannVsMachineMode() )
@@ -1927,7 +1840,7 @@ void CTFBot::Event_Killed( const CTakeDamageInfo &info )
 
 	if ( info.GetInflictor() && info.GetInflictor()->GetTeamNumber() != GetTeamNumber() )
 	{
-		CObjectSentrygun *sentrygun = TFGameRules()->GetSentryGunInflictor( info.GetInflictor() );
+		CObjectSentrygun *sentrygun = dynamic_cast< CObjectSentrygun * >( info.GetInflictor() );
 
 		if ( sentrygun )
 		{
@@ -2368,17 +2281,9 @@ float CTFBot::GetTimeLeftToCapture( void ) const
 			return TFGameRules()->GetKothTeamTimer( GetEnemyTeam( GetTeamNumber() ) )->GetTimeRemaining();
 		}
 	}
-	else
+	else if ( TFGameRules()->GetActiveRoundTimer() )
 	{
-		// if we aren't in a supported gamemode, we return FLT_MAX to indicate that
-		if ( TFGameRules()->GetGameType() != TF_GAMETYPE_ESCORT && TFGameRules()->GetGameType() != TF_GAMETYPE_CP )
-		{
-			return FLT_MAX;
-		}
-		if ( TFGameRules()->GetActiveRoundTimer() )
-		{
-			return TFGameRules()->GetActiveRoundTimer()->GetTimeRemaining();
-		}
+		return TFGameRules()->GetActiveRoundTimer()->GetTimeRemaining();
 	}
 
 	return 0.0f;
@@ -4181,25 +4086,21 @@ bool CTFBot::ShouldFireCompressionBlast( void )
 			return false;
 		}
 
-		// In MvM, all of our reflects are random chance.
-		if ( TFGameRules()->IsMannVsMachineMode() )
+		if ( IsDifficulty( CTFBot::NORMAL ) )
 		{
-			if ( IsDifficulty( CTFBot::NORMAL ) )
+			// normal bots reflect some of the time
+			if ( TransientlyConsistentRandomValue( 1.0f ) < 0.5f )
 			{
-				// normal bots reflect some of the time
-				if ( TransientlyConsistentRandomValue( 1.0f ) < 0.5f )
-				{
-					return false;
-				}
+				return false;
 			}
+		}
 
-			if ( IsDifficulty( CTFBot::HARD ) )
+		if ( IsDifficulty( CTFBot::HARD ) )
+		{
+			// hard bots reflect most of the time
+			if ( TransientlyConsistentRandomValue( 1.0f ) < 0.1f )
 			{
-				// hard bots reflect most of the time
-				if ( TransientlyConsistentRandomValue( 1.0f ) < 0.1f )
-				{
-					return false;
-				}
+				return false;
 			}
 		}
 	}
@@ -4215,30 +4116,6 @@ bool CTFBot::ShouldFireCompressionBlast( void )
 
 			if ( IsRangeLessThan( pushVictim, tf_bot_pyro_shove_away_range.GetFloat() ) )
 			{
-				if ( !tf_bot_pyro_always_reflect.GetBool() )
-				{
-					// in non-MvM, we still use randomness for pushing players only.
-					if ( !TFGameRules()->IsMannVsMachineMode() )
-					{
-						if ( IsDifficulty( CTFBot::NORMAL ) )
-						{
-							// normal bots reflect some of the time
-							if ( TransientlyConsistentRandomValue( 1.0f ) < 0.5f )
-							{
-								return false;
-							}
-						}
-
-						if ( IsDifficulty( CTFBot::HARD ) )
-						{
-							// hard bots reflect most of the time
-							if ( TransientlyConsistentRandomValue( 1.0f ) < 0.1f )
-							{
-								return false;
-							}
-						}
-					}
-				}
 				// our threat is very close - shove them!
 
 				// always shove ubers
@@ -4297,51 +4174,6 @@ bool CTFBot::ShouldFireCompressionBlast( void )
 		// is this something I want to deflect?
 		if ( !pObject->IsDeflectable() )
 			continue;
-
-		// In non-MvM we act a little bit more like a human with the reflect reaction time.
-		if ( !TFGameRules()->IsMannVsMachineMode() )
-		{
-			float flReactionTime = 0.0f;
-			float flReactionTimeMin = 0.0f;
-			float flReactionTimeLo = 0.0f;
-			float flReactionTimeHi = 0.0f;
-			if ( !tf_bot_pyro_always_reflect.GetBool() )
-			{
-				if ( IsDifficulty( CTFBot::NORMAL ) )
-				{
-					flReactionTimeMin = 0.05f;
-					flReactionTimeLo = 0.3f;
-					flReactionTimeHi = 0.7f;
-				}
-				else if ( IsDifficulty( CTFBot::HARD ) )
-				{
-					flReactionTimeLo = 0.1f;
-					flReactionTimeHi = 0.3f;
-				}
-				else if ( IsDifficulty( CTFBot::EXPERT ) )
-				{
-					flReactionTimeLo = 0.0f;
-					flReactionTimeHi = 0.075f;
-				}
-				flReactionTime = RandomFloat( flReactionTimeLo, flReactionTimeHi );
-			}
-			// if we don't have a reaction time, then skip this.
-			if ( flReactionTime > 0.01f )
-			{
-				CBaseProjectile* pProjectile = dynamic_cast<CBaseProjectile*>( pObject );
-				// TODO(mcoms): we should track when WE saw the projectile, but this is fine for now.
-				const float flProjectileSeenFor = gpGlobals->curtime - pProjectile->GetProjectileSpawnTime();
-				// degrade chance to reflect if we didn't have a good chance to react.
-				if ( flProjectileSeenFor < flReactionTime )
-				{
-					float flThreshold = RemapValClamped( flProjectileSeenFor, flReactionTimeMin, flReactionTime, 0.0f, 1.0f );
-					if ( RandomFloat() >= flThreshold )
-					{
-						continue;
-					}
-				}
-			}
-		}
 
 		if ( FClassnameIs( pObject, "tf_projectile_rocket" ) || FClassnameIs( pObject, "tf_projectile_energy_ball" ) )
 		{
@@ -4542,19 +4374,10 @@ void CTFBot::GiveRandomItem( loadout_positions_t loadoutPosition )
 	{
 		const CTFItemDefinition *pItemDef = dynamic_cast< const CTFItemDefinition * >( mapItemDefs[i] );
 
-		if ( !pItemDef )
-			continue;
-		
-		if ( pItemDef->GetLoadoutSlot( GetPlayerClass()->GetClassIndex() ) != loadoutPosition )
-			continue;
-
-		if ( tf_bot_random_items_apply_filter.GetBool() )
+		if ( pItemDef && pItemDef->GetLoadoutSlot( GetPlayerClass()->GetClassIndex() ) == loadoutPosition )
 		{
-			if ( pItemDef->GetEquipRegionMask() & GetItemSchema()->GetEquipRegionBitMaskByName( "medal" ) )
-				continue;
+			itemVector.AddToTail( pItemDef );
 		}
-		
-		itemVector.AddToTail( pItemDef );
 	}
 
 	if ( itemVector.Count() > 0 )
@@ -4767,18 +4590,8 @@ Action< CTFBot > *CTFBot::OpportunisticallyUseWeaponAbilities( void )
 			CTFLunchBox *lunchbox = (CTFLunchBox *)weapon;
 			if ( lunchbox->HasAmmo() )
 			{
-				bool bCanUse = true;
-				if ( IsPlayerClass(TF_CLASS_SCOUT) )
-				{
-					// scout lunchboxes are also gated by their energy drink meter
-					bCanUse = m_Shared.GetScoutEnergyDrinkMeter() >= 100;
-				}
-				else if ( IsPlayerClass(TF_CLASS_HEAVYWEAPONS) )
-				{
-					int iLunchboxType = lunchbox->GetLunchboxType();
-					bCanUse = GetHealth() < GetMaxHealth() || iLunchboxType == LUNCHBOX_ADDS_MINICRITS || iLunchboxType == LUNCHBOX_CHOCOLATE_BAR || iLunchboxType == LUNCHBOX_FISHCAKE;
-				}
-				if (bCanUse)
+				// scout lunchboxes are also gated by their energy drink meter
+				if ( !IsPlayerClass( TF_CLASS_SCOUT ) || m_Shared.GetScoutEnergyDrinkMeter() >= 100 )
 				{
 					return new CTFBotUseItem( lunchbox );
 				}
@@ -5087,7 +4900,7 @@ void CTFBot::AddItem( const char* pszItemName )
 	criteria.SetQuality( AE_USE_SCRIPT_VALUE );
 	criteria.BAddCondition( "name", k_EOperator_String_EQ, pszItemName, true );
 
-	CBaseEntity *pItem = ItemGeneration()->GenerateRandomItem( &criteria, WorldSpaceCenter(), vec3_angle, NULL, GetPlayerClass()->GetClassIndex() );
+	CBaseEntity *pItem = ItemGeneration()->GenerateRandomItem( &criteria, WorldSpaceCenter(), vec3_angle );
 	if ( pItem )
 	{
 		CEconItemView *pScriptItem = static_cast< CBaseCombatWeapon * >( pItem )->GetAttributeContainer()->GetItem();

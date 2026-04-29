@@ -29,10 +29,9 @@ public:
 		blipcentre.Init( 0, 0 );
 		linkblipcentre.Init( 0, 0 );
 		bLink = false;
-		iColorIndex = -1;
 	}
 
-	Vector worldpos;		// blip in world space
+	Vector2D worldpos;		// blip in world space
 	Vector2D blipcentre;	// blip in map texture space
 	Vector2D linkpos;			// link blip in world space
 	Vector2D linkblipcentre;	// link blip in map texture space
@@ -40,7 +39,6 @@ public:
 	bool bSetBlipCentre;	// have we calculated the blip in map texture space yet?
 	bool bSetLinkBlipCentre;	// have we calculated the link blip in map texture space yet?
 	float created_time;
-	int iColorIndex;
 };
 
 
@@ -52,7 +50,7 @@ public:
 
 	virtual void ApplySettings( KeyValues *inResourceData ) OVERRIDE;
 
-	void SendMapLine( float x, float y, float z, bool bInitial );
+	void SendMapLine( int x, int y, bool bInitial );
 	virtual void OnMouseReleased( vgui::MouseCode code );
 	virtual void OnMousePressed( vgui::MouseCode code );
 	virtual void OnCursorExited();
@@ -62,7 +60,6 @@ public:
 	virtual void SetVisible( bool bState ) OVERRIDE;
 	void ClearLines( int iIndex );
 	void ClearAllLines();
-	void ForceFade();
 	const CUtlVector<MapLine>& GetLines( int iIndex ) const { return m_vecDrawnLines[iIndex]; }
 	void SetType( int iPanelType ){ m_iPanelType = iPanelType; }
 
@@ -82,7 +79,6 @@ private:
 
 	int m_iPanelType;	
 	bool m_bTeamColors;
-	bool m_bFading;
 };
 
 #endif // DRAWING_PANEL_H

@@ -39,7 +39,7 @@ C_PropJeep::C_PropJeep()
 	m_flViewAngleDeltaTime = 0.0f;
 	m_pHeadlight = NULL;
 	
-	static ConVarRef r_JeepFOV( "r_JeepFOV" );
+	ConVarRef r_JeepFOV( "r_JeepFOV" );
 	m_ViewSmoothingData.flFOV = r_JeepFOV.GetFloat();
 }
 

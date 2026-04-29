@@ -62,7 +62,7 @@ ConVar tf_contract_progress_report_item_hold_time( "tf_contract_progress_report_
 
 EContractHUDVisibility GetContractHUDVisibility()
 {
-	if ( TFGameRules() && TFGameRules()->IsCompetitiveGame() )
+	if ( TFGameRules() && TFGameRules()->IsMatchTypeCompetitive() )
 		return (EContractHUDVisibility)tf_contract_competitive_show.GetInt();
 
 	return (EContractHUDVisibility)tf_contract_progress_show.GetInt();
@@ -1476,10 +1476,10 @@ bool CHudItemAttributeTracker::ShouldDraw( void )
 		if ( TFGameRules()->ShowMatchSummary() )
 			return false;
 
-		if ( TFGameRules()->GetRoundRestartTime() > 0.0f )
+		if ( TFGameRules()->GetRoundRestartTime() > -1.f )
 		{
 			float flTime = TFGameRules()->GetRoundRestartTime() - gpGlobals->curtime;
-			if ( flTime <= TOURNAMENT_NOCANCEL_TIME )
+			if ( flTime <= 10.f )
 				return false;
 		}
 	}

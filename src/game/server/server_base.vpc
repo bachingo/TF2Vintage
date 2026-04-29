@@ -15,9 +15,8 @@ $MacroRequired "GAMENAME"
 
 $include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
 $include "$SRCDIR\vpc_scripts\protobuf_builder.vpc"
-$Include "$SRCDIR\vpc_scripts\source_replay.vpc"	[$TF]
+$Include "$SRCDIR\vpc_scripts\source_replay.vpc"
 $Include "$SRCDIR\game\protobuf_include.vpc"
-$Include "$SRCDIR\game\shared\crashreport.vpc"
 
 $Configuration	"Debug"
 {
@@ -44,14 +43,6 @@ $Configuration	"Release"
 	}
 }
 
-$CustomBuildStep "nut"
-{
-	$CommandLine	"python $SRCDIR\devtools\bin\texttoarray.py $(InputPath) g_Script_$(InputName)> $(InputName)_nut.h" [$WINDOWS]
-	$CommandLine	"python $SRCDIR\devtools\bin\texttoarray.py $(InputPath) g_Script_$(InputName)> $(InputName)_nut.h" [$POSIX]
-	$Description	"$(InputFileName) produces $(InputName)_nut.h"
-	$Outputs		"$(InputName)_nut.h"
-}
-
 $Configuration
 {
 	$General
@@ -65,7 +56,7 @@ $Configuration
 		$AdditionalIncludeDirectories	"$BASE;.\;$SRCDIR\game\shared;$SRCDIR\utils\common;$SRCDIR\game\shared\econ;$SRCDIR\game\server\NextBot"
 		$PreprocessorDefinitions		"$BASE;GAME_DLL;VECTOR;VERSION_SAFE_STEAM_API_INTERFACES;PROTECTED_THINGS_ENABLE;sprintf=use_Q_snprintf_instead_of_sprintf;strncpy=use_Q_strncpy_instead;_snprintf=use_Q_snprintf_instead"
 		$PreprocessorDefinitions		"$BASE;INCLUDED_STEAM2_USERID_STRUCTS" 
-		$PreprocessorDefinitions		"$BASE;SWDS" [$DEDICATED]
+		$PreprocessorDefinitions		"$BASE;SWDS" [$POSIX]
 		$PreprocessorDefinitions		"$BASE;fopen=dont_use_fopen" [$WINDOWS||$X360]
 		$Create/UsePrecompiledHeader	"Use Precompiled Header (/Yu)"
 		$Create/UsePCHThroughFile		"cbase.h"
@@ -73,6 +64,8 @@ $Configuration
 		// misyl: We should eliminate these someday.
 		$DisableSpecificWarnings		"$BASE;4267" [$WIN64] // warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
 		$DisableSpecificWarnings		"$BASE;4101" [$WINDOWS] // warning C4101: 'topColor': unreferenced local variable
+		
+		$AdditionalOptions    			"$BASE /FS"
 	}
 
 	$Linker
@@ -660,14 +653,12 @@ $Project
 		$File	"vguiscreen.h"
 		$File	"vscript_server.cpp"
 		$File	"$SRCDIR\game\shared\vscript_shared.cpp"
-		$File	"vscript_server.nut"
 		$file	"point_worldtext.cpp"
 		$file	"point_worldtext.h"
 		$File	"player_voice_listener.h"
 		$File	"player_voice_listener.cpp"
 		$File	"logic_eventlistener.cpp"
 		$File	"logic_eventlistener.h"
-		$File	"spawn_helper.nut"
 		$File	"$SRCDIR\public\mathlib\vmatrix.h"
 		$File	"$SRCDIR\game\shared\voice_common.h"
 		$File	"$SRCDIR\game\shared\voice_gamemgr.cpp"
@@ -693,13 +684,15 @@ $Project
 		$File	"$SRCDIR\public\haptics\haptic_utils.cpp"	[$WINDOWS]
 		$File	"netpropmanager.cpp"
 		$File	"netpropmanager.h"
+		// Precompiled python (April 6th, 2026)
+		$File	"vscript_server_nut.h"		// $File	"vscript_server.nut"
+		$File	"spawn_helper_nut.h"		// $File	"spawn_helper.nut"
 
 		// Not using precompiled header cbase.h
 
 		$File	"$SRCDIR\public\bone_setup.cpp"					\
 				"$SRCDIR\public\collisionutils.cpp"					\
 				"$SRCDIR\public\dt_send.cpp"						\
-				"$SRCDIR\public\dt_send_hltv.cpp"						\
 				"$SRCDIR\public\dt_utlvector_common.cpp"			\
 				"$SRCDIR\public\dt_utlvector_send.cpp"				\
 				"$SRCDIR\public\editor_sendcommand.cpp"				\
@@ -854,7 +847,6 @@ $Project
 		$File	"$SRCDIR\public\dt_common.h"
 		$File	"$SRCDIR\public\dt_recv.h"
 		$File	"$SRCDIR\public\dt_send.h"
-		$File	"$SRCDIR\public\dt_send_hltv.h"
 		$File	"$SRCDIR\public\dt_utlvector_common.h"
 		$File	"$SRCDIR\public\dt_utlvector_send.h"
 		$File	"$SRCDIR\game\shared\effect_dispatch_data.h"

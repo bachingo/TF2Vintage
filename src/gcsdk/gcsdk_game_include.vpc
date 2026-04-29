@@ -14,7 +14,7 @@ $Configuration
 {
 	$General
 	{
-		$AdditionalProjectDependencies			"gcsdk" [!$SOURCESDK]
+		$AdditionalProjectDependencies			"gcsdk"
 	}
 }
 

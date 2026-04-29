@@ -8,7 +8,7 @@ private:
 public:
 	void SetTEETH( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nTEETH = i;
 #ifdef _DEBUG
 		m_bTEETH = true;
@@ -35,7 +35,7 @@ public:
 		// Asserts to make sure that we are setting all of the combination vars.
 #ifdef _DEBUG
 		bool bAllStaticVarsDefined = m_bTEETH;
-		DebugAssert( bAllStaticVarsDefined );
+		Assert( bAllStaticVarsDefined );
 #endif // _DEBUG
 		return ( 4 * m_nTEETH ) + 0;
 	}
@@ -50,7 +50,7 @@ private:
 public:
 	void SetDOWATERFOG( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nDOWATERFOG = i;
 #ifdef _DEBUG
 		m_bDOWATERFOG = true;
@@ -71,7 +71,7 @@ private:
 public:
 	void SetSKINNING( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nSKINNING = i;
 #ifdef _DEBUG
 		m_bSKINNING = true;
@@ -102,7 +102,7 @@ public:
 		// Asserts to make sure that we are setting all of the combination vars.
 #ifdef _DEBUG
 		bool bAllDynamicVarsDefined = m_bDOWATERFOG && m_bSKINNING;
-		DebugAssert( bAllDynamicVarsDefined );
+		Assert( bAllDynamicVarsDefined );
 #endif // _DEBUG
 		return ( 1 * m_nDOWATERFOG ) + ( 2 * m_nSKINNING ) + 0;
 	}

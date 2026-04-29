@@ -388,7 +388,7 @@ private:
 };
 
 #define FOR_EACH_WEBAPI_CHILD( pParentParam, pChildParam ) \
-	for ( GCSDK::CWebAPIValues* pChildParam = pParentParam->GetFirstChild(); pChildParam != NULL; pChildParam = pChildParam->GetNextChild() )
+	for( CWebAPIValues *pChildParam = pParentParam->GetFirstChild(); pChildParam != NULL; pChildParam = pChildParam->GetNextChild() )
 
 }
 

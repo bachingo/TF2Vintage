@@ -17,9 +17,8 @@ C_TFTankBoss::C_TFTankBoss()
 {
 }
 
-void C_TFTankBoss::GetGlowEffectColor( float *r, float *g, float *b, float *a )
+void C_TFTankBoss::GetGlowEffectColor( float *r, float *g, float *b )
 {
 	TeamplayRoundBasedRules()->GetTeamGlowColor( GetTeamNumber(), *r, *g, *b );
-	*a = 1.0f;
 }
 

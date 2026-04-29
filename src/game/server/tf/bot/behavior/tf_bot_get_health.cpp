@@ -24,7 +24,6 @@ public:
 	CHealthFilter( CTFBot *me )
 	{
 		m_me = me;
-		m_healthArea = NULL;
 	}
 
 	bool IsSelected( const CBaseEntity *constCandidate ) const
@@ -34,8 +33,8 @@ public:
 
 		CBaseEntity *candidate = const_cast< CBaseEntity * >( constCandidate );
 
-		m_healthArea = (CTFNavArea *)TheNavMesh->GetNearestNavArea( candidate->WorldSpaceCenter() );
-		if ( !m_healthArea )
+		CTFNavArea *area = (CTFNavArea *)TheNavMesh->GetNearestNavArea( candidate->WorldSpaceCenter() );
+		if ( !area )
 			return false;
 
 		CClosestTFPlayer close( candidate );
@@ -48,7 +47,7 @@ public:
 		// resupply cabinets (not assigned a team)
 		if ( candidate->ClassMatches( "func_regenerate" ) )
 		{
-			if ( !m_healthArea->HasAttributeTF( TF_NAV_SPAWN_ROOM_BLUE | TF_NAV_SPAWN_ROOM_RED ) )
+			if ( !area->HasAttributeTF( TF_NAV_SPAWN_ROOM_BLUE | TF_NAV_SPAWN_ROOM_RED ) )
 			{
 				// Assume any resupply cabinets not in a teamed spawn room are inaccessible.
 				// Ex: pl_upward has forward spawn rooms that neither team can use until 
@@ -56,8 +55,8 @@ public:
 				return false;
 			}
 
-			if ( ( m_me->GetTeamNumber() == TF_TEAM_RED && m_healthArea->HasAttributeTF( TF_NAV_SPAWN_ROOM_RED ) ) ||
-			     ( m_me->GetTeamNumber() == TF_TEAM_BLUE && m_healthArea->HasAttributeTF( TF_NAV_SPAWN_ROOM_BLUE ) ) )
+			if ( ( m_me->GetTeamNumber() == TF_TEAM_RED && area->HasAttributeTF( TF_NAV_SPAWN_ROOM_RED ) ) ||
+				 ( m_me->GetTeamNumber() == TF_TEAM_BLUE && area->HasAttributeTF( TF_NAV_SPAWN_ROOM_BLUE ) ) )
 			{
 				// the supply cabinet is in my spawn room
 				return true;
@@ -90,7 +89,6 @@ public:
 	}
 
 	CTFBot *m_me;
-	mutable CTFNavArea *m_healthArea;
 };
 
 
@@ -125,41 +123,26 @@ bool CTFBotGetHealth::IsPossible( CTFBot *me )
 		return false;
 	}
 
-	float healthRatio = ( float )me->GetHealth() / ( float )me->GetMaxHealth();
-
-	// even if i'm burning, if i'm overhealed then don't be so stingy.
-	if ( healthRatio > 1.0f )
-	{
-		return false;
-	}
+	float healthRatio = (float)me->GetHealth() / (float)me->GetMaxHealth();
 
 	float t = ( healthRatio - tf_bot_health_critical_ratio.GetFloat() ) / ( tf_bot_health_ok_ratio.GetFloat() - tf_bot_health_critical_ratio.GetFloat() );
 	t = clamp( t, 0.0f, 1.0f );
 
-	if ( me->m_Shared.InCond( TF_COND_BURNING ) || me->m_Shared.InCond( TF_COND_BLEEDING ) )
+	if ( me->m_Shared.InCond( TF_COND_BURNING ) )
 	{
-		// taking DoT - get health now
+		// on fire - get health now
 		t = 0.0f;
-	}
-
-	if ( t >= 1.0f - FLT_EPSILON )
-	{
-		return false;
 	}
 
 	// the more we are hurt, the farther we'll travel to get health
 	float searchRange = tf_bot_health_search_far_range.GetFloat() + t * ( tf_bot_health_search_near_range.GetFloat() - tf_bot_health_search_far_range.GetFloat() );
 
-	CUtlVector<CNavArea*> nearbyAreaVector;
-	CollectSurroundingAreas( &nearbyAreaVector, me->GetLastKnownArea(), searchRange, me->GetLocomotionInterface()->GetStepHeight(), me->GetLocomotionInterface()->GetDeathDropHeight() );
-
+	CUtlVector< CHandle< CBaseEntity > > healthVector;
 	CHealthFilter healthFilter( me );
-	
-	const CUtlVector<CHandle<CBaseEntity>>& staticHealthVector = TFGameRules()->GetHealthEntityVector();
-	CBaseEntity* closestHealth = NULL;
-	float closestHealthTravelDistance = FLT_MAX;
 
-	if ( staticHealthVector.Count() == 0 )
+	me->SelectReachableObjects( TFGameRules()->GetHealthEntityVector(), &healthVector, healthFilter, me->GetLastKnownArea(), searchRange );
+
+	if ( healthVector.Count() == 0 )
 	{
 		if ( me->IsDebugging( NEXTBOT_BEHAVIOR ) )
 		{
@@ -168,38 +151,39 @@ bool CTFBotGetHealth::IsPossible( CTFBot *me )
 		return false;
 	}
 
-	for ( int i = 0; i < staticHealthVector.Count(); ++i )
+	// use the first item in the list, since it will be the closest to us (or nearly so)
+	CBaseEntity *health = healthVector[0];
+	for( int i=0; i<healthVector.Count(); ++i )
 	{
-		CBaseEntity* health = staticHealthVector[i];
-		if ( health )
+		if ( healthVector[i]->GetTeamNumber() != GetEnemyTeam( me->GetTeamNumber() ) )
 		{
-			if ( healthFilter.IsSelected( health ) )
-			{
-				if ( healthFilter.m_healthArea && healthFilter.m_healthArea->IsMarked() )
-				{
-					// "cost so far" was computed during the breadth first search within CollectSurroundingAreas()
-					// and is the travel distance from to this area
-					if ( healthFilter.m_healthArea->GetCostSoFar() < closestHealthTravelDistance )
-					{
-						closestHealth = health;
-						closestHealthTravelDistance = healthFilter.m_healthArea->GetCostSoFar();
-					}
-				}
-			}
+			health = healthVector[i];
+			break;
 		}
 	}
 
-	if ( !closestHealth )
+	if ( health == NULL )
 	{
 		if ( me->IsDebugging( NEXTBOT_BEHAVIOR ) )
 		{
-			Warning( "%3.2f: No health nearby\n", gpGlobals->curtime );
+			Warning( "%3.2f: No health available to my team nearby\n", gpGlobals->curtime );
+		}
+		return false;
+	}
+
+	CTFBotPathCost cost( me, FASTEST_ROUTE );
+	PathFollower path;
+	if ( !path.Compute( me, health->WorldSpaceCenter(), cost ) )
+	{
+		if ( me->IsDebugging( NEXTBOT_BEHAVIOR ) )
+		{
+			Warning( "%3.2f: No path to health!\n", gpGlobals->curtime );
 		}
 		return false;
 	}
 
 	s_possibleBot = me;
-	s_possibleHealth = closestHealth;
+	s_possibleHealth = health;
 	s_possibleFrame = gpGlobals->framecount;
 
 	return true;
@@ -279,13 +263,16 @@ ActionResult< CTFBot >	CTFBotGetHealth::Update( CTFBot *me, float interval )
 		return Done( "I've been healed" );
 	}
 
-/* TODO: Rethink this. Currently creates zombie behavior loop.
 	// if the closest player to the item we're after is an enemy, give up
 	CClosestTFPlayer close( m_healthKit );
 	ForEachPlayer( close );
 	if ( close.m_closePlayer && !me->InSameTeam( close.m_closePlayer ) )
 		return Done( "An enemy is closer to it" );
-*/
+
+	// un-zoom
+	CTFWeaponBase *myWeapon = me->m_Shared.GetActiveTFWeapon();
+	if ( myWeapon && myWeapon->IsWeapon( TF_WEAPON_SNIPERRIFLE ) && me->m_Shared.InCond( TF_COND_ZOOMED ) )
+		me->PressAltFireButton();
 
 	if ( !m_path.IsValid() )
 	{
@@ -298,16 +285,11 @@ ActionResult< CTFBot >	CTFBotGetHealth::Update( CTFBot *me, float interval )
 		}
 	}
 
-	// un-zoom
-	CTFWeaponBase *myWeapon = me->m_Shared.GetActiveTFWeapon();
-	if ( myWeapon && myWeapon->IsWeapon( TF_WEAPON_SNIPERRIFLE ) && me->m_Shared.InCond( TF_COND_ZOOMED ) )
-		me->PressAltFireButton();
+	m_path.Update( me );
 
 	// may need to switch weapons (ie: engineer holding toolbox now needs to heal and defend himself)
 	const CKnownEntity *threat = me->GetVisionInterface()->GetPrimaryKnownThreat();
 	me->EquipBestWeaponForThreat( threat );
-
-	m_path.Update( me );
 
 	return Continue();
 }

@@ -1303,24 +1303,6 @@ void cc_bot_kill( const CCommand &args )
 static ConCommand bot_kill( "bot_kill", cc_bot_kill, "Kills a bot. Usage: bot_kill <bot name>", FCVAR_CHEAT );
 
 //------------------------------------------------------------------------------
-// Purpose: Explode the specified bot
-//------------------------------------------------------------------------------
-void cc_bot_explode(const CCommand& args)
-{
-	CUtlVector< CTFPlayer* > botVector;
-	GetBotsFromCommand(args, 2, "Usage: bot_explode <bot name>", &botVector);
-	if (botVector.IsEmpty())
-		return;
-
-	FOR_EACH_VEC(botVector, i)
-	{
-		botVector[i]->CommitSuicide(true);
-	}
-}
-
-static ConCommand bot_explode( "bot_explode", cc_bot_explode, "Explodes a bot. Usage: bot_explode <bot name>", FCVAR_CHEAT );
-
-//------------------------------------------------------------------------------
 // Purpose: Force all bots to swap teams
 //------------------------------------------------------------------------------
 CON_COMMAND_F( bot_changeteams, "Make all bots change teams", FCVAR_CHEAT )
@@ -1411,7 +1393,7 @@ void BotGenerateAndWearItem( CTFPlayer *pBot, const char *itemName )
 	criteria.SetQuality( AE_USE_SCRIPT_VALUE );
 	criteria.BAddCondition( "name", k_EOperator_String_EQ, itemName, true );
 
-	CBaseEntity *pItem = ItemGeneration()->GenerateRandomItem( &criteria, pBot->GetAbsOrigin(), vec3_angle, NULL, pBot->GetPlayerClass()->GetClassIndex() );
+	CBaseEntity *pItem = ItemGeneration()->GenerateRandomItem( &criteria, pBot->GetAbsOrigin(), vec3_angle );
 	if ( pItem )
 	{
 		// If it's a weapon, remove the current one, and give us this one.

@@ -61,12 +61,6 @@ void CTFBotTacticalMonitor::MonitorArmedStickyBombs( CTFBot *me )
 	{
 		m_stickyBombCheckTimer.Start( RandomFloat( 0.3f, 1.0f ) );
 
-		// skip detonating stickies during setup
-		if ( TFGameRules()->InSetup() )
-			return;
-
-		Vector myPosition = me->GetAbsOrigin();
-
 		// are there any enemies on/near my sticky bombs?
 		CTFPipebombLauncher *gun = dynamic_cast< CTFPipebombLauncher * >( me->Weapon_GetSlot( TF_WPN_TYPE_SECONDARY ) );
 		if ( gun )
@@ -106,13 +100,6 @@ void CTFBotTacticalMonitor::MonitorArmedStickyBombs( CTFBot *me )
 						}
 
 						const float closeRange = 150.0f;
-
-						if ( ( myPosition - sticky->GetAbsOrigin() ).IsLengthLessThan( closeRange ) )
-						{
-							// shouldn't detonate a sticky trap next to me!
-							continue;
-						}
-
 						if ( ( knownVector[k].GetLastKnownPosition() - sticky->GetAbsOrigin() ).IsLengthLessThan( closeRange ) )
 						{
 							// they are close - blow it!
@@ -224,7 +211,7 @@ ActionResult< CTFBot >	CTFBotTacticalMonitor::Update( CTFBot *me, float interval
 		return SuspendFor( result, "Opportunistically using buff item" );
 	}
 
-	if ( TFGameRules()->InSetup() && !TFGameRules()->IsCompetitiveGame() )
+	if ( TFGameRules()->InSetup() )
 	{
 		// if a human is staring at us, face them and taunt
 		if ( m_acknowledgeRetryTimer.IsElapsed() )
@@ -410,10 +397,6 @@ EventDesiredResult< CTFBot > CTFBotTacticalMonitor::OnNavAreaChanged( CTFBot *me
 				else if ( prereq->IsTask( CFuncNavPrerequisite::TASK_MOVE_TO_ENTITY ) )
 				{
 					return TrySuspendFor( new CTFBotNavEntMoveTo( prereq ), RESULT_IMPORTANT, "Prerequisite commands me to move to an entity" );
-				}
-				else if ( prereq->IsTask( CFuncNavPrerequisite::TASK_DESTROY_ENTITY ) )
-				{
-					return TrySuspendFor( new CTFBotNavEntDestroyEntity( prereq ), RESULT_IMPORTANT, "Prerequisite commands me to destroy" );
 				}
 			}
 		}

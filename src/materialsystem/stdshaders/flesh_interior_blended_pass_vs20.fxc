@@ -1,16 +1,23 @@
-//========= Copyright (c) 1996-2006, Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2006, Valve Corporation, All rights reserved. ============//
 
 // STATIC: "HALFLAMBERT"				"0..1"
+// STATIC: "USE_STATIC_CONTROL_FLOW"	"0..1" [vs20]
 
 // DYNAMIC: "COMPRESSED_VERTS"			"0..1"
 // DYNAMIC: "SKINNING"					"0..1"
+// DYNAMIC: "DOWATERFOG"				"0..1"
 // DYNAMIC: "DYNAMIC_LIGHT"				"0..1"
 // DYNAMIC: "STATIC_LIGHT"				"0..1"
+// DYNAMIC: "NUM_LIGHTS"				"0..2" [vs20]
+
+// If using static control flow on Direct3D, we should use the NUM_LIGHTS=0 combo
+// SKIP: $USE_STATIC_CONTROL_FLOW && ( $NUM_LIGHTS > 0 ) [vs20]
 
 // Includes
 #include "common_vs_fxc.h"
 
 // Globals
+static const int  g_iFogType		= DOWATERFOG;
 static const bool g_bHalfLambert	= HALFLAMBERT ? true : false;
 static const bool g_bSkinning		= SKINNING ? true : false;
 
@@ -133,7 +140,11 @@ VS_OUTPUT main( const VS_INPUT i )
 	bool bDynamicLight = DYNAMIC_LIGHT ? true : false;
 	bool bStaticLight = STATIC_LIGHT ? true : false;
 
+#if ( USE_STATIC_CONTROL_FLOW ) || defined ( SHADER_MODEL_VS_3_0 ) 
 	o.cVertexLight.rgb = DoLighting( vWorldPosition, vWorldNormal, float3(0.0f, 0.0f, 0.0f), bStaticLight, bDynamicLight, g_bHalfLambert );
+#else
+	o.cVertexLight.rgb = DoLightingUnrolled( vWorldPosition, vWorldNormal, float3(0.0f, 0.0f, 0.0f), bStaticLight, bDynamicLight, g_bHalfLambert, NUM_LIGHTS );
+#endif
 
 	// Tangent space transform
 	o.mTangentSpaceTranspose[0] = float3( vWorldTangent.x, vWorldBinormal.x, vWorldNormal.x );

@@ -297,7 +297,7 @@ void CBaseMultiplayerPlayer::ResetPerLifeCounters( void )
 ConVar tf_escort_score_rate( "tf_escort_score_rate", "1", FCVAR_CHEAT, "Score for escorting the train, in points per second" );
 
 #define ESCORT_SCORE_CONTEXT		"AreaScoreContext"
-#define ESCORT_SCORE_INTERVAL		0.1f
+#define ESCORT_SCORE_INTERVAL		0.1
 
 //-----------------------------------------------------------------------------
 // Purpose: think to accumulate and award points for escorting the train

@@ -573,16 +573,9 @@ void CHudUpgradePanel::SetActive( bool bActive )
 		OnTick();
 
 		m_bAwardMaxSlotAchievement = false;
-
-		if (TFGameRules()->State_Get() == GR_STATE_BETWEEN_RNDS && !m_bInspectMode)
-		{
-			C_TFPlayer::GetLocalTFPlayer()->EmitSound("music.mvm_upgrade_machine");
-		}
 	}
 	else if ( !bActive && IsActive() )
 	{
-		C_TFPlayer::GetLocalTFPlayer()->StopSound("music.mvm_upgrade_machine");
-
 		if ( m_bCancelUpgrades )
 		{
 			CancelUpgrades();
@@ -596,7 +589,7 @@ void CHudUpgradePanel::SetActive( bool bActive )
 			engine->ClientCmd_Unrestricted( "open_charinfo_direct" );
 		}
 
-		// let the server know that we've closed the menu with the number of upgrades
+		// let the server know that we've close the menu with the number of upgrades
 		// so the response rules can do their thing
 		KeyValues *kv = new KeyValues( "MvM_UpgradesDone" );
 		kv->SetInt( "num_upgrades", m_nUpgradeActivity );
@@ -1967,13 +1960,8 @@ bool CHudUpgradePanel::QuickEquipBottle( void )
 	m_hPlayer = NULL;
 
 	TFInventoryManager()->EquipItemInLoadout( nClass, LOADOUT_POSITION_ACTION, iItemId );
-#ifdef INVENTORY_VIA_WEBAPI
-	TFInventoryManager()->QueueGCInventoryChangeNotification();
-#else
+
 	// Tell the GC to tell server that we should respawn if we're in a respawn room
-	GCSDK::CGCMsg< ::MsgGCEmpty_t > msg(k_EMsgGCRespawnPostLoadoutChange);
-	GCClientSystem()->BSendMessage(msg);
-#endif
 
 	return true;
 }

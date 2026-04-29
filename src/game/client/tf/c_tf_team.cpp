@@ -156,7 +156,7 @@ void C_TFTeam::UpdateTeamName( void )
 				}
 			}
 		}
-		else if ( !TFGameRules()->IsEmulatingMatch() )
+		else
 		{
 			const char *pTemp = ( m_iTeamNum == TF_TEAM_BLUE ) ? mp_tournament_blueteamname.GetString() : mp_tournament_redteamname.GetString();
 			if ( pTemp && pTemp[0] )

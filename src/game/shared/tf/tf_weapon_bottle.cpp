@@ -7,7 +7,6 @@
 #include "cbase.h"
 #include "tf_weapon_bottle.h"
 #include "decals.h"
-#include "tf_weapon_grenade_pipebomb.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
@@ -77,18 +76,19 @@ PRECACHE_WEAPON_REGISTER( tf_weapon_breakable_sign );
 //
 IMPLEMENT_NETWORKCLASS_ALIASED( TFStickBomb, DT_TFWeaponStickBomb )
 
+#ifdef CLIENT_DLL
+void RecvProxy_Detonated( const CRecvProxyData *pData, void *pStruct, void *pOut );
+#endif
+
 BEGIN_NETWORK_TABLE( CTFStickBomb, DT_TFWeaponStickBomb )
 #if defined( CLIENT_DLL )
-	RecvPropInt( RECVINFO( m_iDetonated ) )
+	RecvPropInt( RECVINFO( m_iDetonated ), 0, RecvProxy_Detonated )
 #else
 	SendPropInt( SENDINFO( m_iDetonated ), 1, SPROP_UNSIGNED )
 #endif
 END_NETWORK_TABLE()
 
 BEGIN_PREDICTION_DATA( CTFStickBomb )
-#ifdef CLIENT_DLL
-	DEFINE_PRED_FIELD( m_iDetonated, FIELD_INTEGER, FTYPEDESC_INSENDTABLE )
-#endif
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_stickbomb, CTFStickBomb );
@@ -233,8 +233,8 @@ void CTFStickBomb::Smack( void )
 		{
 			Vector vecForward; 
 			AngleVectors( pTFPlayer->EyeAngles(), &vecForward );
-			Vector vecSwingStart = pTFPlayer->WorldSpaceCenter();
-			//Vector vecSwingEnd = vecSwingStart + vecForward * GetSwingRange();
+			Vector vecSwingStart = pTFPlayer->Weapon_ShootPosition();
+			Vector vecSwingEnd = vecSwingStart + vecForward * GetSwingRange();
 
 			Vector explosion = vecSwingStart;
 
@@ -254,72 +254,24 @@ void CTFStickBomb::Smack( void )
 
 			TE_TFExplosion( filter, 0.0f, explosion, Vector(0,0,1), TF_WEAPON_GRENADELAUNCHER, pTFPlayer->entindex(), -1, SPECIAL1, iCustomParticleIndex );
 
-			// TODO(mcoms): use DMG_MELEE? (Fixed the Ullapool Caber's explosion not being counted as melee damage (for kill_refills_meter))
-			int dmgType = TFGameRules()->IsBetaActive() ? (DMG_BLAST | DMG_PREVENT_PHYSICS_FORCE | DMG_HALF_FALLOFF) : DMG_BLAST | DMG_HALF_FALLOFF;
-			const bool bIsCrit = IsCurrentAttackACrit();
-			if (bIsCrit)
+			int dmgType = DMG_BLAST | DMG_USEDISTANCEMOD | DMG_MELEE;
+			if ( IsCurrentAttackACrit() )
 				dmgType |= DMG_CRITICAL;
 
 			float flDamage = 75.0f;
 			CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmg );
-			if ( !bIsCrit && m_bMiniCrit )
-			{
-				flDamage *= 1.35f;
-			}
 
-			CTakeDamageInfo info( pTFPlayer, pTFPlayer, this, vec3_origin, explosion, flDamage, dmgType, TF_DMG_CUSTOM_STICKBOMB_EXPLOSION, &explosion );
-			float flRadius = TFGameRules()->IsBetaActive() ? 146.0f : 100.0f;
+			CTakeDamageInfo info( pTFPlayer, pTFPlayer, this, explosion, explosion, flDamage, dmgType, TF_DMG_CUSTOM_STICKBOMB_EXPLOSION, &explosion );
+
+			float flRadius = 100.f;
 			CALL_ATTRIB_HOOK_FLOAT( flRadius, mult_explosion_radius );
 
 			CTFRadiusDamageInfo radiusinfo( &info, explosion, flRadius );
-
 			TFGameRules()->RadiusDamage( radiusinfo );
-
-			if (TFGameRules()->IsBetaActive())
-			{
-				// at position
-				Vector vel1 = Vector(RandomFloat(-10, 10), RandomFloat(-10, 10), 100);
-				float timer1 = RandomFloat(0.6f, 0.8f);
-				CreateGrenade(pTFPlayer, vecSwingStart, vel1, timer1, 0.25f, bIsCrit);
-				// at swing direction
-				Vector vel2 = Vector(RandomFloat(-10, 10), RandomFloat(-10, 10), 100);
-				vel2 += vecForward * 50.0f;
-				float timer2 = RandomFloat(0.6f, 0.8f);
-				CreateGrenade(pTFPlayer, vecSwingStart, vel2, timer2, 0.25f, bIsCrit);
-				// at velocity
-				Vector vel3 = Vector(RandomFloat(-10, 10), RandomFloat(-10, 10), 100);
-				vel3 += pTFPlayer->GetAbsVelocity();
-				float timer3 = RandomFloat(0.6f, 0.8f);
-				CreateGrenade(pTFPlayer, vecSwingStart, vel3, timer3, 0.25f, bIsCrit);
-				// random
-				Vector vel4 = Vector(RandomFloat(-200, 200), RandomFloat(-200, 200), 100);
-				float timer4 = RandomFloat(0.6f, 0.8f);
-				CreateGrenade(pTFPlayer, vecSwingStart, vel4, timer4, 0.25f, bIsCrit);
-			}
 		}
 #endif
 	}
 }
-
-#ifdef GAME_DLL
-void CTFStickBomb::CreateGrenade(CTFPlayer* pPlayer, const Vector& pos, const Vector& vel, float flTimer, float flDmgMult, bool bIsCrit)
-{
-	Vector angImpulse = AngularImpulse(600, random->RandomInt(-1200, 1200), 0);
-	CTFGrenadePipebombProjectile* pProjectile = CTFGrenadePipebombProjectile::Create(pos, QAngle(180, 0, 0), vel, angImpulse, pPlayer, GetTFWpnData(), -1, flDmgMult);
-	if (pProjectile)
-	{
-		pProjectile->SetLauncher(this);
-		pProjectile->SetCritical(bIsCrit);
-		if (!bIsCrit && m_bMiniCrit)
-		{
-			pProjectile->IncrementDeflected(); // hack for minicrits
-		}
-		pProjectile->SetModel(BaseClass::GetWorldModel());
-		pProjectile->SetDetonateTimerLength(flTimer);
-		UTIL_SetSize(pProjectile, TF_GRENADE_PROJECTILE_MINS, TF_GRENADE_PROJECTILE_MAXS);
-	}
-}
-#endif
 
 void CTFStickBomb::WeaponReset( void )
 {
@@ -369,7 +321,6 @@ const char *CTFStickBomb::GetWorldModel( void ) const
 }
 
 #ifdef CLIENT_DLL
-
 int CTFStickBomb::GetWorldModelIndex( void )
 {
 	if ( !modelinfo )
@@ -386,12 +337,19 @@ int CTFStickBomb::GetWorldModelIndex( void )
 		return m_iWorldModelIndex;
 	}
 }
+#endif
 
-void CTFStickBomb::OnDataChanged( DataUpdateType_t updateType )
+#ifdef CLIENT_DLL
+
+void RecvProxy_Detonated( const CRecvProxyData *pData, void *pStruct, void *pOut )
 {
-	BaseClass::OnDataChanged( updateType );
-	
-	SwitchBodyGroups();
+	C_TFStickBomb* pBomb = (C_TFStickBomb*) pStruct;
+
+	if ( pData->m_Value.m_Int != pBomb->GetDetonated() )
+	{
+		pBomb->SetDetonated( pData->m_Value.m_Int );
+		pBomb->SwitchBodyGroups();
+	}
 }
 
 #endif

@@ -278,6 +278,13 @@ bool CTFRocketLauncher::CheckReloadMisfire( void )
 	return false;
 }
 
+
+//-----------------------------------------------------------------------------
+bool CTFRocketLauncher::ShouldBlockPrimaryFire()
+{
+	return !AutoFiresFullClip();
+}
+
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -672,7 +679,9 @@ bool CTFCrossbow::Holster( CBaseCombatWeapon *pSwitchingTo )
 		float flFireDelay = ApplyFireDelay( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay );
 
 		float flReloadTime = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeReload;
-		flReloadTime = GetReloadTimer( flReloadTime );
+		CALL_ATTRIB_HOOK_FLOAT( flReloadTime, mult_reload_time );
+		CALL_ATTRIB_HOOK_FLOAT( flReloadTime, mult_reload_time_hidden );
+		CALL_ATTRIB_HOOK_FLOAT( flReloadTime, fast_reload );
 
 		float flIdleTime = GetLastPrimaryAttackTime() + flFireDelay + flReloadTime;
 		if ( GetWeaponIdleTime() < flIdleTime )
@@ -699,10 +708,7 @@ void CTFCrossbow::SecondaryAttack( void )
 			return;
 
 		if ( !CanAttack() )
-		{
-			m_flNextPrimaryAttack = MAX(m_flNextPrimaryAttack, gpGlobals->curtime);
 			return;
-		}
 
 		if ( m_flNextPrimaryAttack > gpGlobals->curtime )
 			return;
@@ -712,20 +718,11 @@ void CTFCrossbow::SecondaryAttack( void )
 		{
 			// Call Primary Attack and modify the projectile
 			m_bMilkNextAttack = true;
-			m_flNextPrimaryAttack = gpGlobals->curtime;
 			PrimaryAttack();
 			m_flRegenerateDuration = iMilkBolt;
 			m_flLastUsedTimestamp = gpGlobals->curtime;
 		}
 	}
-}
-
-//-----------------------------------------------------------------------------
-bool CTFCrossbow::ShouldBlockPrimaryFire()
-{
-	int iMilkBolt = 0;
-	CALL_ATTRIB_HOOK_INT( iMilkBolt, fires_milk_bolt );
-	return iMilkBolt != 0;
 }
 
 //-----------------------------------------------------------------------------

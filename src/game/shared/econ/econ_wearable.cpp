@@ -518,7 +518,7 @@ public:
 			if ( pScriptItem && pScriptItem->IsValid() )
 			{
 				const bool bAltColor = pEntity && pEntity->GetTeam() != nullptr
-									 ? pEntity->GetTeamNumber() == TF_TEAM_BLUE
+									 ? pEntity->GetTeam()->GetTeamNumber() == TF_TEAM_BLUE
 									 : pScriptItem->GetFlags() & kEconItemFlagClient_ForceBlueTeam
 									 ? true
 									 : false;

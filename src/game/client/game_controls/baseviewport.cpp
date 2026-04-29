@@ -79,7 +79,7 @@ void hud_autoreloadscript_callback( IConVar *var, const char *pOldValue, float f
 
 static ConVar cl_leveloverviewmarker( "cl_leveloverviewmarker", "0", FCVAR_CHEAT );
 
-CON_COMMAND_F( showpanel, "Shows a viewport panel <name>", FCVAR_CHEAT )
+CON_COMMAND( showpanel, "Shows a viewport panel <name>" )
 {
 	if ( !gViewPortInterface )
 		return;
@@ -90,7 +90,7 @@ CON_COMMAND_F( showpanel, "Shows a viewport panel <name>", FCVAR_CHEAT )
 	 gViewPortInterface->ShowPanel( args[ 1 ], true );
 }
 
-CON_COMMAND_F( hidepanel, "Hides a viewport panel <name>", FCVAR_CHEAT )
+CON_COMMAND( hidepanel, "Hides a viewport panel <name>" )
 {
 	if ( !gViewPortInterface )
 		return;
@@ -269,7 +269,7 @@ bool CBaseViewport::IsAnyPanelVisibleExceptScores()
 	{
 		IViewPortPanel *p = m_Panels[i];
 
-		if ( p->IsVisible() && Q_strcmp( "MainMenuOverride", p->GetName() ) && Q_strcmp( PANEL_SCOREBOARD, p->GetName() ) )
+		if ( p->IsVisible() && Q_strcmp("MainMenuOverride", p->GetName()) && Q_strcmp("scores", p->GetName()) )
 		{
 			return true;
 		}
@@ -504,17 +504,6 @@ void CBaseViewport::RemoveAllPanels( void)
 	for ( int i=0; i < m_Panels.Count(); i++ )
 	{
 		vgui::VPANEL vPanel = m_Panels[i]->GetVPanel();
-		// if we have any hud elements under our control, make sure we recover them before deleting
-		int iChildIdx = ipanel()->GetChildCount( vPanel );
-		while ( iChildIdx-- > 0 )
-		{
-			VPANEL child = ipanel()->GetChild( vPanel, iChildIdx );
-			Panel* childPanel = ipanel()->GetPanel( child, GetControlsModuleName() );
-			if ( dynamic_cast<CHudElement*>(childPanel) )
-			{
-				ipanel()->SetParent( child, GetVPanel() );
-			}
-		}
 		vgui::ipanel()->DeletePanel( vPanel );
 	}
 #ifndef _XBOX

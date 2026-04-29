@@ -5,9 +5,7 @@
 //=============================================================================//
 #include "cbase.h"
 #include "tf_projectile_base.h"
-
 #include "effect_dispatch_data.h"
-#include "inetchannelinfo.h"
 #include "tf_shareddefs.h"
 #include "tf_gamerules.h"
 
@@ -22,7 +20,6 @@
 #include "c_te_effect_dispatch.h"
 #include "input.h"
 #include "c_tf_player.h"
-#include "cdll_bounded_cvars.h"
 #define CRecipientFilter C_RecipientFilter
 #else
 #include "tf_player.h"
@@ -37,8 +34,10 @@ IMPLEMENT_NETWORKCLASS_ALIASED( TFBaseProjectile, DT_TFBaseProjectile )
 BEGIN_NETWORK_TABLE( CTFBaseProjectile, DT_TFBaseProjectile )
 #ifdef CLIENT_DLL
 	RecvPropVector( RECVINFO( m_vInitialVelocity ) ),
+	RecvPropEHandle( RECVINFO( m_hLauncher ) )
 #else
 	SendPropVector( SENDINFO( m_vInitialVelocity ), 20 /*nbits*/, 0 /*flags*/, -3000 /*low value*/, 3000 /*high value*/	),
+	SendPropEHandle( SENDINFO( m_hLauncher ) )
 #endif
 END_NETWORK_TABLE()
 
@@ -63,6 +62,8 @@ CTFBaseProjectile::CTFBaseProjectile()
 
 	// Client specific.
 #ifdef CLIENT_DLL
+
+	m_flSpawnTime = 0.0f;
 
 	// Server specific.
 #else
@@ -97,6 +98,8 @@ void CTFBaseProjectile::Spawn( void )
 {
 	// Client specific.
 #ifdef CLIENT_DLL
+
+	m_flSpawnTime = gpGlobals->curtime;
 
 	BaseClass::Spawn();
 
@@ -267,7 +270,6 @@ void CTFBaseProjectile::PostDataUpdate( DataUpdateType_t type )
 
 		float flChangeTime = GetLastChangeTime( LATCH_SIMULATION_VAR );
 
-#if 0
 		// Add a sample 1 second back.
 		Vector vCurOrigin = GetLocalOrigin() - m_vInitialVelocity;
 		interpolator.AddToHead( flChangeTime - 1.0f, &vCurOrigin, false );
@@ -279,25 +281,7 @@ void CTFBaseProjectile::PostDataUpdate( DataUpdateType_t type )
 		vCurOrigin = GetLocalOrigin();
 		interpolator.AddToHead( flChangeTime, &vCurOrigin, false );
 
-		rotInterpolator.AddToHead( flChangeTime, &vCurAngles, false );
-#else
-		// NEW SETUP: slowly transition to the future pos we'll get in the next update,
-		// reflecting our latest data NOW where the client is seeing, so they always can see the latest.
-		// Add a sample 1 second back.
-		const float flLerp = GetClientInterpAmount();
-		Vector vCurOrigin = GetLocalOrigin();
-		interpolator.AddToHead(flChangeTime - flLerp, &vCurOrigin, false);
-
-		QAngle vCurAngles = GetLocalAngles();
-		rotInterpolator.AddToHead(flChangeTime - flLerp, &vCurAngles, false);
-
-		// Add a sample a tick later. This isn't exactly when we'll get our next update, but it's close enough.
-		const float flTick = gpGlobals->interval_per_tick - 0.001f;
-		vCurOrigin += m_vInitialVelocity * flTick;
-		interpolator.AddToHead(flChangeTime + flTick, &vCurOrigin, false);
-
-		rotInterpolator.AddToHead(flChangeTime + flTick, &vCurAngles, false);
-#endif
+		rotInterpolator.AddToHead( flChangeTime - 1.0, &vCurAngles, false );
 	}
 }
 
@@ -307,25 +291,9 @@ void CTFBaseProjectile::PostDataUpdate( DataUpdateType_t type )
 //-----------------------------------------------------------------------------
 int CTFBaseProjectile::DrawModel( int flags )
 {
-	CTFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
-	CTFPlayer *pTFOwner = ToTFPlayer( GetOwnerEntity() );
-	if ( pPlayer == pTFOwner || pPlayer->GetObserverTarget() == GetOwnerEntity() )
-	{
-		// During the first 0.01 seconds of our life, don't draw ourselves.
-		float flBaseTime = 0.01f;
-		INetChannelInfo* nci = engine->GetNetChannelInfo();
-		if ( nci )
-		{
-			// reduce by the latency
-			flBaseTime -= nci->GetAvgLatency( FLOW_INCOMING );
-			if ( flBaseTime < 0.0f )
-			{
-				flBaseTime = 0.0f;
-			}
-		}
-		if ( gpGlobals->curtime - GetProjectileSpawnTime() < flBaseTime )
-			return 0;
-	}
+	// During the first 0.2 seconds of our life, don't draw ourselves.
+	if ( gpGlobals->curtime - m_flSpawnTime < 0.1f )
+		return 0;
 
 	return BaseClass::DrawModel( flags );
 }

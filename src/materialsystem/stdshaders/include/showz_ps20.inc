@@ -9,7 +9,7 @@ private:
 public:
 	void SetDEPTH_IN_ALPHA( int i )
 	{
-		DebugAssert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 1 );
 		m_nDEPTH_IN_ALPHA = i;
 #ifdef _DEBUG
 		m_bDEPTH_IN_ALPHA = true;
@@ -36,7 +36,7 @@ public:
 		// Asserts to make sure that we are setting all of the combination vars.
 #ifdef _DEBUG
 		bool bAllStaticVarsDefined = m_bDEPTH_IN_ALPHA;
-		DebugAssert( bAllStaticVarsDefined );
+		Assert( bAllStaticVarsDefined );
 #endif // _DEBUG
 		return ( 1 * m_nDEPTH_IN_ALPHA ) + 0;
 	}

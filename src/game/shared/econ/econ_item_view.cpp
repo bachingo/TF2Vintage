@@ -259,7 +259,6 @@ CEconItemView::CEconItemView( void )
 	m_iLastGeneratedTeamSkin = TF_TEAM_RED;
 	m_bWeaponSkinUseHighRes = false;
 	m_bWeaponSkinUseLowRes = false;
-	m_flCachedWear = -1.0f;
 #endif // CLIENT_DLL
 
 	m_iTeamNumber = TF_TEAM_RED;
@@ -434,7 +433,7 @@ bool CEconItemView::operator==( const CEconItemView &other ) const
 GameItemDefinition_t *CEconItemView::GetStaticData( void ) const
 { 
 	CEconItemDefinition	 *pRet		= GetItemSchema()->GetItemDefinition( m_iItemDefinitionIndex );
-	GameItemDefinition_t *pTypedRet = static_cast<GameItemDefinition_t *>( pRet );
+	GameItemDefinition_t *pTypedRet = dynamic_cast<GameItemDefinition_t *>( pRet );
 
 	AssertMsg( pRet == pTypedRet, "Item definition of inappropriate type." );
 
@@ -842,9 +841,6 @@ CEconItem *CEconItemView::GetSOCData( void ) const
 	if ( m_pNonSOEconItem )
 		return m_pNonSOEconItem;
 
-	if (m_pSOCDataCache)
-		return m_pSOCDataCache;
-
 #ifdef CLIENT_DLL
 	// We need to find the inventory that contains this item. If we're not connected 
 	// to a server, and the owner is the same as the local player, use the local inventory.
@@ -1085,7 +1081,7 @@ int CEconItemView::GetQualityParticleType() const
 	if ( !pItem )
 		return 0;
 
-	if( pItem->GetQuality() == AE_SELFMADE || pItem->GetQuality() == AE_COMMUNITY )
+	if( GetSOCData()->GetQuality() == AE_SELFMADE || GetSOCData()->GetQuality() == AE_COMMUNITY )
 		return pSparkleSystem ? pSparkleSystem->nSystemID : 0;
 	else
 		return 0;

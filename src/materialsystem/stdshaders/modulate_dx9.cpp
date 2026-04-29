@@ -6,8 +6,9 @@
 
 #include "BaseVSShader.h"
 
-#include "unlitgeneric_vs30.inc"
-#include "modulate_ps30.inc"
+#include "unlitgeneric_vs20.inc"
+#include "modulate_ps20.inc"
+#include "modulate_ps20b.inc"
 
 #include "cpp_shader_constant_register_map.h"
 
@@ -182,12 +183,20 @@ BEGIN_VS_SHADER( Modulate_DX9,
 
 				pShaderShadow->VertexShaderVertexFormat( flags, numTexCoords, NULL, userDataSize );
 
-				DECLARE_STATIC_VERTEX_SHADER( unlitgeneric_vs30 );
+				DECLARE_STATIC_VERTEX_SHADER( unlitgeneric_vs20 );
 				SET_STATIC_VERTEX_SHADER_COMBO( VERTEXCOLOR, bVertexColorOrAlpha ? 1 : 0  );
-				SET_STATIC_VERTEX_SHADER( unlitgeneric_vs30 );
+				SET_STATIC_VERTEX_SHADER( unlitgeneric_vs20 );
 
-				DECLARE_STATIC_PIXEL_SHADER( modulate_ps30 );
-				SET_STATIC_PIXEL_SHADER( modulate_ps30 );
+				if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
+				{
+					DECLARE_STATIC_PIXEL_SHADER( modulate_ps20b );
+					SET_STATIC_PIXEL_SHADER( modulate_ps20b );
+				}
+				else
+				{
+					DECLARE_STATIC_PIXEL_SHADER( modulate_ps20 );
+					SET_STATIC_PIXEL_SHADER( modulate_ps20 );
+				}
 
 				// We need to fog to *white* regardless of overbrighting...
 				if( bMod2X )
@@ -234,15 +243,25 @@ BEGIN_VS_SHADER( Modulate_DX9,
 				float vVertexColor[4] = { bVertexColorOrAlpha ? 1.0f : 0.0f, 0.0f, 0.0f, 0.0f };
 				pShaderAPI->SetVertexShaderConstant( VERTEX_SHADER_SHADER_SPECIFIC_CONST_6, vVertexColor, 1 );
 
-				DECLARE_DYNAMIC_VERTEX_SHADER( unlitgeneric_vs30 );
+				DECLARE_DYNAMIC_VERTEX_SHADER( unlitgeneric_vs20 );
+				SET_DYNAMIC_VERTEX_SHADER_COMBO( DOWATERFOG, pShaderAPI->GetSceneFogMode() == MATERIAL_FOG_LINEAR_BELOW_FOG_Z );
 				SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING, pShaderAPI->GetCurrentNumBones() > 0 );
 				SET_DYNAMIC_VERTEX_SHADER_COMBO( COMPRESSED_VERTS, (int)vertexCompression );
-				SET_DYNAMIC_VERTEX_SHADER( unlitgeneric_vs30 );
+				SET_DYNAMIC_VERTEX_SHADER( unlitgeneric_vs20 );
 
-				DECLARE_DYNAMIC_PIXEL_SHADER( modulate_ps30 );
-				SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
-				SET_DYNAMIC_PIXEL_SHADER_COMBO( WRITE_DEPTH_TO_DESTALPHA, bWriteZ && bFullyOpaque && pShaderAPI->ShouldWriteDepthToDestAlpha() );
-				SET_DYNAMIC_PIXEL_SHADER( modulate_ps30 );
+				if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
+				{
+					DECLARE_DYNAMIC_PIXEL_SHADER( modulate_ps20b );
+					SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
+					SET_DYNAMIC_PIXEL_SHADER_COMBO( WRITE_DEPTH_TO_DESTALPHA, bWriteZ && bFullyOpaque && pShaderAPI->ShouldWriteDepthToDestAlpha() );
+					SET_DYNAMIC_PIXEL_SHADER( modulate_ps20b );
+				}
+				else
+				{
+					DECLARE_DYNAMIC_PIXEL_SHADER( modulate_ps20 );
+					SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
+					SET_DYNAMIC_PIXEL_SHADER( modulate_ps20 );
+				}
 			}
 			Draw();
 		}

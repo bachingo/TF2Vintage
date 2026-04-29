@@ -280,7 +280,6 @@ ETFCond g_aDebuffConditions[] =
 	TF_COND_BLEEDING,
 	TF_COND_MAD_MILK,
 	TF_COND_GAS,
-	TF_COND_GAS_DRIP,
 	TF_COND_LAST
 };
 
@@ -290,8 +289,7 @@ bool ConditionExpiresFast( ETFCond eCond )
 		|| eCond == TF_COND_URINE
 		|| eCond == TF_COND_BLEEDING
 		|| eCond == TF_COND_MAD_MILK
-		|| eCond == TF_COND_GAS
-		|| eCond == TF_COND_GAS_DRIP;
+		|| eCond == TF_COND_GAS;
 }
 
 static const char *g_aConditionNames[] =
@@ -307,7 +305,7 @@ static const char *g_aConditionNames[] =
 	"TF_COND_INVULNERABLE_WEARINGOFF",          // = 8
 	"TF_COND_STEALTHED_BLINK",                  // = 9
 	"TF_COND_SELECTED_TO_TELEPORT",             // = 10
-	"TF_COND_CRITBOOSTED",                      // = 11 - DO NOT RE-USE THIS -- THIS IS FOR KRITZKRIEG ONLY
+	"TF_COND_CRITBOOSTED",                      // = 11 - DO NOT RE-USE THIS -- THIS IS FOR KRITZKRIEG AND REVENGE CRITS ONLY
 	"TF_COND_TMPDAMAGEBONUS",                   // = 12
 	"TF_COND_FEIGN_DEATH",                      // = 13
 	"TF_COND_PHASE",                            // = 14
@@ -427,9 +425,6 @@ static const char *g_aConditionNames[] =
 	"TF_COND_HALLOWEEN_HELL_HEAL",              // = 128
 	"TF_COND_POWERUPMODE_DOMINANT",             // = 129
 	"TF_COND_IMMUNE_TO_PUSHBACK",				// = 130
-	"TF_COND_CRITBOOSTED_SELF",					// = 131
-	"TF_COND_COLA_BUFF",						// = 132
-	"TF_COND_GAS_DRIP",						// = 133
 
 	//
 	// ADD NEW ITEMS HERE TO AVOID BREAKING DEMOS
@@ -770,11 +765,11 @@ int g_aWeaponDamageTypes[] =
 	DMG_BULLET,		// TF_WEAPON_PDA_SPY,
 	DMG_BULLET,		// TF_WEAPON_BUILDER
 	DMG_BULLET,		// TF_WEAPON_MEDIGUN
-	DMG_BLAST | DMG_HALF_FALLOFF,		// TF_WEAPON_GRENADE_MIRVBOMB
+	DMG_BLAST,		// TF_WEAPON_GRENADE_MIRVBOMB
 	DMG_BLAST | DMG_IGNITE | DMG_RADIUS_MAX,		// TF_WEAPON_FLAMETHROWER_ROCKET
 	DMG_BLAST | DMG_HALF_FALLOFF,					// TF_WEAPON_GRENADE_DEMOMAN
 	DMG_BULLET,	// TF_WEAPON_SENTRY_BULLET
-	DMG_BLAST | DMG_HALF_FALLOFF,	// TF_WEAPON_SENTRY_ROCKET
+	DMG_BLAST,	// TF_WEAPON_SENTRY_ROCKET
 	DMG_GENERIC,	// TF_WEAPON_DISPENSER
 	DMG_GENERIC,	// TF_WEAPON_INVIS
 	DMG_BULLET | DMG_IGNITE,		// TF_WEAPON_FLAREGUN
@@ -971,8 +966,8 @@ const char *g_szProjectileNames[] =
 	"projectile_spellfireball",
 	"projectile_festive_urine",
 	"projectile_festive_healing_bolt",
-	"projectile_breadmonster_jarate",
-	"projectile_breadmonster_madmilk",
+	"projectfile_breadmonster_jarate",
+	"projectfile_breadmonster_madmilk",
 	"projectile_grapplinghook",
 	"projectile_sentry_rocket",
 	"projectile_bread_monster",
@@ -1571,13 +1566,6 @@ int InternalCalculateObjectCost( int iObjectType )
 	}
 
 	int iCost = GetObjectInfo( iObjectType )->m_Cost;
-
-#ifdef TF2_OG
-	if ( iObjectType == OBJ_TELEPORTER )
-	{
-		return 125;
-	}
-#endif
 
 	return iCost;
 }

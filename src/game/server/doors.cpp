@@ -111,21 +111,6 @@ END_SEND_TABLE()
 #define BUTTON_SOUNDWAIT	0.5
 
 
-bool ShouldPlayDoorSounds()
-{
-#ifdef TF_DLL
-	if ( TFGameRules()->IsCompetitiveMode() || TFGameRules()->IsEmulatingMatch() )
-	{
-		// if we just started, we're probably unlocking the doors (OnSpawnRoomDoorsShouldUnlock). don't play a noise in this case.
-		if ( TFGameRules()->GetRoundRestartStartTime() > 0 && gpGlobals->curtime - TFGameRules()->GetRoundRestartStartTime() < 2.5f )
-		{
-			return false;
-		}
-	}
-#endif
-	return true;
-}
-
 //-----------------------------------------------------------------------------
 // Purpose: play door or button locked or unlocked sounds. 
 //			NOTE: this routine is shared by doors and buttons
@@ -150,7 +135,7 @@ void PlayLockSounds(CBaseEntity *pEdict, locksound_t *pls, int flocked, int fbut
 		float	fvol = ( fplaysound && fplaysentence ) ? 0.25f : 1.0f;
 
 		// if there is a locked sound, and we've debounced, play sound
-		if ( fplaysound && ShouldPlayDoorSounds() )
+		if (fplaysound)
 		{
 			// play 'door locked' sound
 			CPASAttenuationFilter filter( pEdict );
@@ -199,7 +184,7 @@ void PlayLockSounds(CBaseEntity *pEdict, locksound_t *pls, int flocked, int fbut
 		fvol = ( fplaysound && fplaysentence ) ? 0.25f : 1.0f;
 
 		// play 'door unlocked' sound if set
-		if ( fplaysound && ShouldPlayDoorSounds() )
+		if (fplaysound)
 		{
 			CPASAttenuationFilter filter( pEdict );
 
@@ -368,11 +353,6 @@ void CBaseDoor::Spawn()
 
 void CBaseDoor::MovingSoundThink( void )
 {
-	if ( !ShouldPlayDoorSounds() )
-	{
-		return;
-	}
-
 	CPASAttenuationFilter filter( this );
 	filter.MakeReliable();
 
@@ -1033,7 +1013,7 @@ void CBaseDoor::DoorGoUp( void )
 //-----------------------------------------------------------------------------
 void CBaseDoor::DoorHitTop( void )
 {
-	if ( !HasSpawnFlags( SF_DOOR_SILENT ) && ShouldPlayDoorSounds() )
+	if ( !HasSpawnFlags( SF_DOOR_SILENT ) )
 	{
 		CPASAttenuationFilter filter( this );
 		filter.MakeReliable();
@@ -1115,7 +1095,7 @@ void CBaseDoor::DoorGoDown( void )
 //-----------------------------------------------------------------------------
 void CBaseDoor::DoorHitBottom( void )
 {
-	if ( !HasSpawnFlags( SF_DOOR_SILENT ) && ShouldPlayDoorSounds() )
+	if ( !HasSpawnFlags( SF_DOOR_SILENT ) )
 	{
 		CPASAttenuationFilter filter( this );
 		filter.MakeReliable();

@@ -156,7 +156,7 @@ ConVar	ai_test_moveprobe_ignoresmall( "ai_test_moveprobe_ignoresmall", "0" );
 extern ConVar ai_vehicle_avoidance;
 #endif // HL2_EPISODIC
 
-#if !defined(_RETAIL) && defined(DEV_BUILD)
+#ifndef _RETAIL
 #define ShouldUseEfficiency()			( ai_use_think_optimizations.GetBool() && ai_use_efficiency.GetBool() )
 #define ShouldUseFrameThinkLimits()		( ai_use_think_optimizations.GetBool() && ai_use_frame_think_limits.GetBool() )
 #define ShouldRebalanceThinks()			( ai_use_think_optimizations.GetBool() && ai_rebalance_thinks.GetBool() )
@@ -168,7 +168,7 @@ extern ConVar ai_vehicle_avoidance;
 #define ShouldDefaultEfficient()		( true )
 #endif
 
-#if !defined(_RETAIL) && defined(DEV_BUILD)
+#ifndef _RETAIL
 #define DbgEnemyMsg if ( !ai_debug_enemies.GetBool() ) ; else DevMsg
 #else
 #define DbgEnemyMsg if ( 0 ) ; else DevMsg
@@ -3155,13 +3155,12 @@ void CAI_BaseNPC::UpdateEfficiency( bool bInPVS )
 	}
 
 	//---------------------------------
-#if !defined(_RETAIL) && defined(DEV_BUILD)
+
 	if ( !IsRetail() && ai_efficiency_override.GetInt() > AIE_NORMAL && ai_efficiency_override.GetInt() <= AIE_DORMANT )
 	{
 		SetEfficiency( (AI_Efficiency_t)ai_efficiency_override.GetInt() );
 		return;
 	}
-#endif
 
 	//---------------------------------
 

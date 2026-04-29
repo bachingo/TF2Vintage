@@ -88,8 +88,7 @@ void CSteamFriendPanel::OnCommand( const char *command )
 		{
 			if ( gameInfo.m_gameID.AppID() == (uint32)engine->GetAppID() )
 			{
-				// TODO(mcoms): figure this out
-				bool bTheyAreInACommunityServer = true;
+				bool bTheyAreInACommunityServer = false;
 				if ( bTheyAreInACommunityServer )
 				{
 					contextMenuBuilder.AddMenuItem( "#TF_Friends_JoinServer", new KeyValues( "Context_JoinServer" ), "server" );
@@ -166,10 +165,8 @@ void CSteamFriendPanel::UpdateControls()
 		FriendGameInfo_t gameInfo;
 		if ( pSteamFriends->GetFriendGamePlayed( m_steamID, &gameInfo ) )
 		{
-			// TODO(mcoms): we can't distinguish between TC2 and other mods at this time...
 			// If the friend is playing TF2, say so.  Other games we'll show as "Playing other game"
-			const bool bPlayingMain = gameInfo.m_gameID.AppID() == UTIL_GetEmulatedAppID();
-			if ( gameInfo.m_gameID.AppID() == (uint32)engine->GetAppID() || bPlayingMain )
+			if ( gameInfo.m_gameID.AppID() == (uint32)engine->GetAppID() )
 			{
 				const char *pszRichState = pSteamFriends->GetFriendRichPresence( m_steamID, "state" );
 				const char *pszRichMatchGroupLoc = pSteamFriends->GetFriendRichPresence( m_steamID, "matchgrouploc" );
@@ -184,7 +181,7 @@ void CSteamFriendPanel::UpdateControls()
 				else
 				{
 					// Show generic
-					pwzStatus = bPlayingMain ? g_pVGuiLocalize->Find( "#TF_Friends_PlayingTF2" ) : g_pVGuiLocalize->Find( "#TC2_Friends_PlayingTC2" );
+					pwzStatus = g_pVGuiLocalize->Find( "#TF_Friends_PlayingTF2" );
 				}
 				m_pStatusLabel->SetFgColor( colorInTF2 );
 				m_pInteractButton->SetVisible( true );
@@ -342,9 +339,9 @@ void CSteamFriendsListPanel::UpdateFriendsList()
 	auto pSteamFriends = steamapicontext->SteamFriends();
 	bool bDone = false;
 	
-	//const double flStart = Plat_FloatTime();
-	int iNumProcessed = 0;
-	while( m_nLastProcessedPotentialFriend < m_mapKnownFriends.Count() )
+	const double flStart = Plat_FloatTime();
+	while( m_nLastProcessedPotentialFriend < m_mapKnownFriends.Count() &&
+		   Plat_FloatTime() - flStart < 0.0016 )
 	{
 		PotentialFriend_t potentialFriend = m_mapKnownFriends[ m_nLastProcessedPotentialFriend ];
 
@@ -355,7 +352,6 @@ void CSteamFriendsListPanel::UpdateFriendsList()
 		}
 
 		++m_nLastProcessedPotentialFriend;
-		++iNumProcessed;
 			
 		CSteamID steamIDFriend = potentialFriend.m_steamID;
 
@@ -522,12 +518,7 @@ void CSteamFriendsListPanel::ProcessFriends()
 
 void CSteamFriendsListPanel::PruneKnownFriends()
 {
-	// TODO(mcoms): optimize this later
-#if 0
 	const uint32 knMaxFriendPanels = 64;
-#else
-	const uint32 knMaxFriendPanels = 24;
-#endif
 
 	// Everyone gets to show, initially
 	FOR_EACH_MAP_FAST( m_mapKnownFriends, i )
@@ -535,26 +526,19 @@ void CSteamFriendsListPanel::PruneKnownFriends()
 		m_mapKnownFriends[ i ].bShow = true;
 	}
 
-	// all showing
-	uint32 iCurrentFriends = m_mapKnownFriends.Count();
-
 	// Some people have A LOT of friends (>1000), but we don't want to have A LOT of panels.
 	// Go through and prune friends who are offline, snooze, away, busy until we've
 	// got a reasonable amount of friends to show.  We always show your online friends.
 	auto lambdaPruneIfState = [ & ]( EPersonaState eState )
 	{
-		if ( iCurrentFriends <= knMaxFriendPanels )
+		if ( m_mapKnownFriends.Count() <= knMaxFriendPanels )
 			return;
 
 		FOR_EACH_MAP_FAST( m_mapKnownFriends, i )
 		{
-			if ( iCurrentFriends <= knMaxFriendPanels )
-				break;
-
 			if ( m_mapKnownFriends[ i ].eState == eState )
 			{
 				m_mapKnownFriends[ i ].bShow = false;
-				iCurrentFriends--; // one less shown
 			}
 		}
 	};
@@ -565,17 +549,13 @@ void CSteamFriendsListPanel::PruneKnownFriends()
 	lambdaPruneIfState( EPersonaState::k_EPersonaStateBusy );
 
 	// STILL too many friends? Prune everyone who isn't playing TF2
-	if ( iCurrentFriends > knMaxFriendPanels )
+	if ( m_mapKnownFriends.Count() > knMaxFriendPanels )
 	{
 		FOR_EACH_MAP_FAST( m_mapKnownFriends, i )
 		{
-			if ( iCurrentFriends <= knMaxFriendPanels )
-				break;
-
 			if ( !BSteamIDIsPlayingTF2( m_mapKnownFriends[ i ].m_steamID ) )
 			{
 				m_mapKnownFriends[ i ].bShow = false;
-				iCurrentFriends--; // one less shown
 			}
 		}
 	}
