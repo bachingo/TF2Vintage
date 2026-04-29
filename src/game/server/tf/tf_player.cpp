@@ -13958,7 +13958,7 @@ void CTFPlayer::StateThinkDYING( void )
 		int iTeam = GetTeamNumber();
 		int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
 		float flRespawnSpeedMod = (iNumPlayers / 8.0f); // Optimal players
-		flTimeInFreeze =* flRespawnSpeedMod;
+		flTimeInFreeze *= flRespawnSpeedMod;
 	}
 	
 	float flFreezeEnd;
@@ -23217,17 +23217,12 @@ bool CTFPlayer::ItemQualityIsAllowedTimePeriod( int iQuality )
 		case AE_SELFMADE:
 			return iCurrentEra >= TF2V_ERA_DAY_FIRSTCONT; // Self Made
 
-		// Technically the next few cases could all be lumped into one, but it's easier to read this way.
 		case AE_VINTAGE:
-			return iCurrentEra >= TF2V_ERA_DAY_MANNCONOMY; // Mann-Conomy Update (Our namesake)
-			
 		case AE_DEVELOPER:
-		case AE_VALVE:
-			return iCurrentEra >= TF2V_ERA_DAY_MANNCONOMY; // Valve quality
-
-		case AE_UNUSUAL:
+		case AE_VALVE: // Valve quality
+		case AE_UNUSUAL: // Unusuals		
 		case AE_RARITY4:
-			return iCurrentEra >= TF2V_ERA_DAY_MANNCONOMY; // Unusuals			
+			return iCurrentEra >= TF2V_ERA_DAY_MANNCONOMY; // Mann-Conomy Update (Our namesake)	
 			
 		case AE_GENUINE:
 		case AE_RARITY1:
