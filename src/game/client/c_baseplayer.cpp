@@ -1669,9 +1669,9 @@ void C_BasePlayer::CalcFreezeCamView( Vector& eyeOrigin, QAngle& eyeAngles, floa
 		// Use the same player scaling to the freezecam to keep tempo up on low pop.
 		// Likewise, gives us breathing room on high pop.
 		int iTeam = GetLocalPlayerTeam();
-		int iNumPlayers = GetGlobalTeam(iTeam)->Get_Number_Players();
+		int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
 		float flRespawnSpeedMod = (iNumPlayers / 8.0f); // Optimal players
-		fltraveltime =* flRespawnSpeedMod;
+		fltraveltime *= flRespawnSpeedMod;
 	}
 	
 	float flBlendPerc = clamp( flCurTime / fltraveltime, 0.f, 1.f );
@@ -1746,9 +1746,9 @@ void C_BasePlayer::CalcFreezeCamView( Vector& eyeOrigin, QAngle& eyeAngles, floa
 			// Use the same player scaling to the freezecam to keep tempo up on low pop.
 			// Likewise, gives us breathing room on high pop.
 			int iTeam = GetLocalPlayerTeam();
-			int iNumPlayers = GetGlobalTeam(iTeam)->Get_Number_Players();
+			int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
 			float flRespawnSpeedMod = (iNumPlayers / 8.0f); // Optimal players
-			flFreezetime =* flRespawnSpeedMod;
+			flFreezetime *= flRespawnSpeedMod;
 		}
 		view->FreezeFrame( flFreezetime );
 	}
