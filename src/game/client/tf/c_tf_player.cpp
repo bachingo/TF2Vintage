@@ -7144,7 +7144,7 @@ void C_TFPlayer::CalcDeathCamView(Vector& eyeOrigin, QAngle& eyeAngles, float& f
 	{
 		int iTeam = GetLocalPlayerTeam();
 		int iNumPlayers = GetGlobalTeam(iTeam)->Get_Number_Players();
-		float flRespawnSpeedMod = (iNumPlayers / 8); // Optimal players
+		float flRespawnSpeedMod = (iNumPlayers / 8.0f); // Optimal players
 		interpolation = ( gpGlobals->curtime - m_flDeathTime ) / (TF_DEATH_ANIMATION_TIME * 0.5 * flRespawnSpeedMod);
 		interpolation = clamp( interpolation, 0.0f, (1.0f * flRespawnSpeedMod) );
 	}

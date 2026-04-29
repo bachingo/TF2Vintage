@@ -13957,7 +13957,7 @@ void CTFPlayer::StateThinkDYING( void )
 	{
 		int iTeam = GetTeamNumber();
 		int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
-		float flRespawnSpeedMod = (iNumPlayers / 8); // Optimal players
+		float flRespawnSpeedMod = (iNumPlayers / 8.0f); // Optimal players
 		flTimeInFreeze =* flRespawnSpeedMod;
 	}
 	
@@ -13972,7 +13972,7 @@ void CTFPlayer::StateThinkDYING( void )
 		{
 			int iTeam = GetTeamNumber();
 			int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
-			float flRespawnSpeedMod = (iNumPlayers / 8); // Optimal players
+			float flRespawnSpeedMod = (iNumPlayers / 8.0f); // Optimal players
 			flFreezeSoundTime = (m_flDeathTime + ( TF_DEATH_ANIMATION_TIME * flRespawnSpeedMod ) ) + ( spec_freeze_traveltime.GetFloat() * flRespawnSpeedMod )  - flFreezeSoundLength;
 			flFreezeEnd = (m_flDeathTime + ( TF_DEATH_ANIMATION_TIME * flRespawnSpeedMod ) + flTimeInFreeze );
 			flDeathTime = (m_flDeathTime + ( TF_DEATH_ANIMATION_TIME * flRespawnSpeedMod ) );
@@ -14063,7 +14063,7 @@ void CTFPlayer::AttemptToExitFreezeCam( void )
 	{
 		int iTeam = GetTeamNumber();
 		int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
-		float flRespawnSpeedMod = (iNumPlayers / 8); // Optimal players
+		float flRespawnSpeedMod = (iNumPlayers / 8.0f); // Optimal players
 		flFreezeTravelTime = (m_flDeathTime + ( TF_DEATH_ANIMATION_TIME * flRespawnSpeedMod ) ) + ( spec_freeze_traveltime.GetFloat() * flRespawnSpeedMod ) + ( 0.5 * flRespawnSpeedMod );
 	}
 	else

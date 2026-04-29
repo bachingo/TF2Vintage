@@ -620,15 +620,15 @@ float CTeamplayRoundBasedRules::GetMinTimeWhenPlayerMaySpawn( CBasePlayer *pPlay
 	// b) death anim length + freeze panel length
 	
 	// TF2V: Adjust the freeze timer based on number of players to keep flow.
-	float flDeathAnimLength = 2.0 + spec_freeze_traveltime.GetFloat()) + spec_freeze_time.GetFloat();
+	float flDeathAnimLength = 2.0 + spec_freeze_traveltime.GetFloat() + spec_freeze_time.GetFloat();
 	if ( tf2v_modified_respawn_waves.GetBool() )
 	{
 		// Use the same player scaling to the freezecam to keep tempo up on low pop.
 		// Likewise, gives us breathing room on high pop.
 		int iTeam = pPlayer->GetTeamNumber();
 		int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
-		float flRespawnSpeedMod = (iNumPlayers / 8); // Optimal players
-		flDeathAnimLength =* flRespawnSpeedMod;
+		float flRespawnSpeedMod = (iNumPlayers / 8.0f); // Optimal players
+		flDeathAnimLength *= flRespawnSpeedMod;
 	}	
 
 	float fMinDelay = flDeathAnimLength;
@@ -3493,8 +3493,8 @@ float CTeamplayRoundBasedRules::GetRespawnWaveMaxLength( int iTeam, bool bScaleW
 	if ( tf2v_modified_respawn_waves.GetBool() ) 
 	{
 		int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
-		float flRespawnSpeedMod = (iNumPlayers / 8);
-		flRespawnFloor =* flRespawnSpeedMod;	// Lower respawn time for less players. Benefits smaller lobbies.
+		float flRespawnSpeedMod = (iNumPlayers / 8.0f);
+		flRespawnFloor *= flRespawnSpeedMod;	// Lower respawn time for less players. Benefits smaller lobbies.
 	}
 
 	if ( bScaleWithNumPlayers && flTime > flRespawnFloor )
