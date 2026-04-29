@@ -3538,25 +3538,6 @@ const char *CEconItemDefinition::GetFirstSaleDate() const
 	return GetDefinitionString( "first_sale_date", "1960/00/00" );
 }
 
-const int *CEconItemDefinition::GetIntroductionDate() const
-{
-	char* cDate= GetDefinitionString( "first_sale_date", "1960/00/00" );
-	int y, m, d;
-		if (sscanf(cDate, "%d/%d/%d", &y, &m, &d) != 3) return 0;
-
-		// Treat Jan/Feb as months 13/14 of previous year
-		if (m <= 2) {
-			m += 12;
-			y -= 1;
-		}
-
-		// Calculate fixed day for the input date
-		long targetDays = (365L * y) + (y / 4) - (y / 100) + (y / 400) + ((153 * m + 8) / 5) + d;
-
-		// 733300 is the pre-calculated fixed day for 2007/09/16
-		return targetDays - 733300;
-}
-
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------

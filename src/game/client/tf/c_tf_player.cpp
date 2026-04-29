@@ -173,6 +173,8 @@ CON_COMMAND_F ( tf_test_bomb, "Test halloween bomb", 0 )
 	pPlayer->CreateBombonomiconHint();
 }
 
+extern ConVar tf2v_modified_respawn_waves;
+
 ConVar test_vision_off( "test_vision_off", "0", FCVAR_NONE, "Force vision modes off!", VisionMode_ChangeCallback );
 ConVar test_pyrovision( "test_pyrovision", "0", FCVAR_NONE, "Force Pyrovision on!", VisionMode_ChangeCallback );
 ConVar test_romevision( "test_romevision", "0", FCVAR_NONE, "Force Romevision on!", VisionMode_ChangeCallback );
@@ -7140,8 +7142,8 @@ void C_TFPlayer::CalcDeathCamView(Vector& eyeOrigin, QAngle& eyeAngles, float& f
 	float interpolation;
 	if ( tf2v_modified_respawn_waves.GetBool() )	// Scales freezecam logic.
 	{
-		int iTeam = GetTeamNumber();
-		int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
+		int iTeam = GetLocalPlayerTeam();
+		int iNumPlayers = GetGlobalTeam(iTeam)->Get_Number_Players();
 		float flRespawnSpeedMod = (iNumPlayers / 8); // Optimal players
 		interpolation = ( gpGlobals->curtime - m_flDeathTime ) / (TF_DEATH_ANIMATION_TIME * 0.5 * flRespawnSpeedMod);
 		interpolation = clamp( interpolation, 0.0f, (1.0f * flRespawnSpeedMod) );

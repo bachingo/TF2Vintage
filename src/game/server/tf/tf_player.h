@@ -705,11 +705,11 @@ public:
 	bool				ItemIsAllowed( CEconItemView *pItem );
 	
 	// TF2V Item checks
-	bool 				ItemQualityIsAllowedTimePeriod( int iQuality ):
-	bool 				StripAnachronisticAttributes( CEconItemView *pItem ):
-	CEconItemView 		*GetTimePeriodCompliantItem( CEconItemView *pOriginalItem, int iClass, int iSlot ):
-	bool 				HasAnachronisticAttributes( CEconItemView *pItem ):
-	bool 				ItemIsAllowedTimePeriod( CEconItemView *pItem ):
+	bool 				ItemQualityIsAllowedTimePeriod( int iQuality );
+	bool 				StripAnachronisticAttributes( CEconItemView *pItem );
+	CEconItemView 		*GetTimePeriodCompliantItem( CEconItemView *pOriginalItem, int iClass, int iSlot );
+	bool 				HasAnachronisticAttributes( CEconItemView *pItem );
+	bool 				ItemIsAllowedTimePeriod( CEconItemView *pItem );
 	
 	// Attribute checks
 	int 				GetPaintIntroductionDate( int iRGB );
