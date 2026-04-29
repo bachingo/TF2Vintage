@@ -15,7 +15,7 @@ $MacroRequired "GAMENAME"
 
 $include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
 $include "$SRCDIR\vpc_scripts\protobuf_builder.vpc"
-$Include "$SRCDIR\vpc_scripts\source_replay.vpc"
+$Include "$SRCDIR\vpc_scripts\source_replay.vpc"	[$TF]
 $Include "$SRCDIR\game\protobuf_include.vpc"
 $Include "$SRCDIR\game\shared\crashreport.vpc"
 
@@ -42,6 +42,14 @@ $Configuration	"Release"
 		$OutputDirectory		".\Release_$GAMENAME_360"	[$X360]
 		$IntermediateDirectory	".\Release_$GAMENAME_360"	[$X360]
 	}
+}
+
+$CustomBuildStep "nut"
+{
+	$CommandLine	"python $SRCDIR\devtools\bin\texttoarray.py $(InputPath) g_Script_$(InputName)> $(InputName)_nut.h" [$WINDOWS]
+	$CommandLine	"python $SRCDIR\devtools\bin\texttoarray.py $(InputPath) g_Script_$(InputName)> $(InputName)_nut.h" [$POSIX]
+	$Description	"$(InputFileName) produces $(InputName)_nut.h"
+	$Outputs		"$(InputName)_nut.h"
 }
 
 $Configuration
@@ -652,14 +660,14 @@ $Project
 		$File	"vguiscreen.h"
 		$File	"vscript_server.cpp"
 		$File	"$SRCDIR\game\shared\vscript_shared.cpp"
-		//$File	"vscript_server.nut"
+		$File	"vscript_server.nut"
 		$file	"point_worldtext.cpp"
 		$file	"point_worldtext.h"
 		$File	"player_voice_listener.h"
 		$File	"player_voice_listener.cpp"
 		$File	"logic_eventlistener.cpp"
 		$File	"logic_eventlistener.h"
-		//$File	"spawn_helper.nut"
+		$File	"spawn_helper.nut"
 		$File	"$SRCDIR\public\mathlib\vmatrix.h"
 		$File	"$SRCDIR\game\shared\voice_common.h"
 		$File	"$SRCDIR\game\shared\voice_gamemgr.cpp"
@@ -685,9 +693,6 @@ $Project
 		$File	"$SRCDIR\public\haptics\haptic_utils.cpp"	[$WINDOWS]
 		$File	"netpropmanager.cpp"
 		$File	"netpropmanager.h"
-		// Precompiled python (April 6th, 2026)
-		$File	"vscript_server_nut.h"		// $File	"vscript_server.nut"
-		$File	"spawn_helper_nut.h"		// $File	"spawn_helper.nut"
 
 		// Not using precompiled header cbase.h
 
