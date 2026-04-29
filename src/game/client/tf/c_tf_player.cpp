@@ -7137,8 +7137,20 @@ void C_TFPlayer::CalcDeathCamView(Vector& eyeOrigin, QAngle& eyeAngles, float& f
 	C_BaseAnimating *pKillerAnimating = killer ? killer->GetBaseAnimating() : NULL;
 
 	// Swing to face our killer within half the death anim time
-	float interpolation = ( gpGlobals->curtime - m_flDeathTime ) / (TF_DEATH_ANIMATION_TIME * 0.5);
-	interpolation = clamp( interpolation, 0.0f, 1.0f );
+	float interpolation;
+	if ( tf2v_modified_respawn_waves.GetBool() )	// Scales freezecam logic.
+	{
+		int iTeam = GetTeamNumber();
+		int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
+		float flRespawnSpeedMod = (iNumPlayers / 8); // Optimal players
+		interpolation = ( gpGlobals->curtime - m_flDeathTime ) / (TF_DEATH_ANIMATION_TIME * 0.5 * flRespawnSpeedMod);
+		interpolation = clamp( interpolation, 0.0f, (1.0f * flRespawnSpeedMod) );
+	}
+	else
+	{
+		interpolation = ( gpGlobals->curtime - m_flDeathTime ) / (TF_DEATH_ANIMATION_TIME * 0.5);
+		interpolation = clamp( interpolation, 0.0f, 1.0f );
+	}
 	interpolation = SimpleSpline( interpolation );
 
 	float flMinChaseDistance = CHASE_CAM_DISTANCE_MIN;

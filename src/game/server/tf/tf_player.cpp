@@ -13952,17 +13952,17 @@ void CTFPlayer::StateThinkDYING( void )
 		RemoveEffects( EF_NODRAW | EF_NOSHADOW );	// still draw player body
 	}
 
-	float flTimeInFreeze;
+	float flTimeInFreeze = spec_freeze_traveltime.GetFloat() + spec_freeze_time.GetFloat();
 	if ( tf2v_modified_respawn_waves.GetBool() )	// Scales freezecam logic.
 	{
 		int iTeam = GetTeamNumber();
 		int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
 		float flRespawnSpeedMod = (iNumPlayers / 8); // Optimal players
-		flTimeInFreeze = ( spec_freeze_traveltime.GetFloat() * flRespawnSpeedMod ) + ( spec_freeze_time.GetFloat() * flRespawnSpeedMod );
+		flTimeInFreeze =* flRespawnSpeedMod;
 	}
-	else
-		flTimeInFreeze = spec_freeze_traveltime.GetFloat() + spec_freeze_time.GetFloat();
-	float flFreezeEnd = (m_flDeathTime + TF_DEATH_ANIMATION_TIME + flTimeInFreeze );
+	
+	float flFreezeEnd;
+	float flDeathTime;
 	if ( !m_bPlayedFreezeCamSound  && GetObserverTarget() && GetObserverTarget() != this )
 	{
 		// Start the sound so that it ends at the freezecam lock on time
@@ -13973,10 +13973,16 @@ void CTFPlayer::StateThinkDYING( void )
 			int iTeam = GetTeamNumber();
 			int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
 			float flRespawnSpeedMod = (iNumPlayers / 8); // Optimal players
-			flFreezeSoundTime = (m_flDeathTime + TF_DEATH_ANIMATION_TIME ) + ( spec_freeze_traveltime.GetFloat() * flRespawnSpeedMod )  - flFreezeSoundLength;
+			flFreezeSoundTime = (m_flDeathTime + ( TF_DEATH_ANIMATION_TIME * flRespawnSpeedMod ) ) + ( spec_freeze_traveltime.GetFloat() * flRespawnSpeedMod )  - flFreezeSoundLength;
+			flFreezeEnd = (m_flDeathTime + ( TF_DEATH_ANIMATION_TIME * flRespawnSpeedMod ) + flTimeInFreeze );
+			flDeathTime = (m_flDeathTime + ( TF_DEATH_ANIMATION_TIME * flRespawnSpeedMod ) );
 		}
 		else
-			flFreezeSoundTime; = (m_flDeathTime + TF_DEATH_ANIMATION_TIME ) + spec_freeze_traveltime.GetFloat() - flFreezeSoundLength;
+		{
+			flFreezeSoundTime = (m_flDeathTime + TF_DEATH_ANIMATION_TIME ) + spec_freeze_traveltime.GetFloat() - flFreezeSoundLength;
+			flFreezeEnd = (m_flDeathTime + TF_DEATH_ANIMATION_TIME + flTimeInFreeze );
+			flDeathTime = (m_flDeathTime + TF_DEATH_ANIMATION_TIME );
+		}
 		if ( gpGlobals->curtime >= flFreezeSoundTime )
 		{
 			CSingleUserRecipientFilter filter( this );
@@ -13989,7 +13995,7 @@ void CTFPlayer::StateThinkDYING( void )
 		}
 	}
 
-	if ( gpGlobals->curtime >= (m_flDeathTime + TF_DEATH_ANIMATION_TIME ) )	// allow x seconds death animation / death cam
+	if ( gpGlobals->curtime >= flDeathTime )	// allow x seconds death animation / death cam
 	{
 		if ( GetObserverTarget() && GetObserverTarget() != this )
 		{
@@ -14058,7 +14064,7 @@ void CTFPlayer::AttemptToExitFreezeCam( void )
 		int iTeam = GetTeamNumber();
 		int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
 		float flRespawnSpeedMod = (iNumPlayers / 8); // Optimal players
-		flFreezeTravelTime = (m_flDeathTime + TF_DEATH_ANIMATION_TIME ) + ( spec_freeze_traveltime.GetFloat() * flRespawnSpeedMod ) + ( 0.5 * flRespawnSpeedMod );
+		flFreezeTravelTime = (m_flDeathTime + ( TF_DEATH_ANIMATION_TIME * flRespawnSpeedMod ) ) + ( spec_freeze_traveltime.GetFloat() * flRespawnSpeedMod ) + ( 0.5 * flRespawnSpeedMod );
 	}
 	else
 		flFreezeTravelTime = (m_flDeathTime + TF_DEATH_ANIMATION_TIME ) + spec_freeze_traveltime.GetFloat() + 0.5;
