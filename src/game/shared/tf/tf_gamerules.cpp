@@ -17629,7 +17629,15 @@ bool CTFGameRules::ShouldShowPreRoundDoors() const
 //-----------------------------------------------------------------------------
 int CTFGameRules::GetClassLimit( int iClass )
 {
-	if ( IsInTournamentMode() || IsPasstimeMode() )
+	if ( IsInHighlanderMode() )
+	{
+		return 1;
+	}
+	else if ( tf_classlimit.GetInt() )
+	{
+		return tf_classlimit.GetInt();
+	}
+	else
 	{
 		switch ( iClass )
 		{
@@ -17645,14 +17653,6 @@ int CTFGameRules::GetClassLimit( int iClass )
 		default:
 			break;
 		}
-	}
-	else if ( IsInHighlanderMode() )
-	{
-		return 1;
-	}
-	else if ( tf_classlimit.GetInt() )
-	{
-		return tf_classlimit.GetInt();
 	}
 
 	return NO_CLASS_LIMIT;
