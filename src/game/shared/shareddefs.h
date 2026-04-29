@@ -1001,6 +1001,35 @@ struct collidelist_t
 	QAngle			angles;
 };
 
+// TF2V: Item qualities.
+// Somehow we never really define them anywhere in the code outside of econ.
+#define AE_UNDEFINED  -1
+
+#define AE_NORMAL            0
+#define AE_RARITY1           1  // Genuine
+#define AE_RARITY2           2  // Customized (unused)
+#define AE_VINTAGE           3  // Vintage has to stay at 3 for backwards compatibility
+#define AE_RARITY3           4  // Artisan
+#define AE_UNUSUAL           5  // Unusual
+#define AE_UNIQUE            6
+#define AE_COMMUNITY         7
+#define AE_DEVELOPER         8
+#define AE_SELFMADE          9
+#define AE_CUSTOMIZED        10 // (unused)
+#define AE_STRANGE           11
+#define AE_COMPLETED         12
+#define AE_HAUNTED           13
+#define AE_COLLECTORS        14
+#define AE_PAINTKITWEAPON    15
+
+#define AE_RARITY_DEFAULT    16
+#define AE_RARITY_COMMON     17
+#define AE_RARITY_UNCOMMON   18
+#define AE_RARITY_RARE       19
+#define AE_RARITY_MYTHICAL   20
+#define AE_RARITY_LEGENDARY  21
+#define AE_RARITY_ANCIENT    22
+
 
 // TF2V Era classification:
 // Epoch number is based on 09/17/2007 (the PC beta release) as Day 1.

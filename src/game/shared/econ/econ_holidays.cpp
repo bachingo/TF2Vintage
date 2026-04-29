@@ -216,46 +216,54 @@ public:
 
 	virtual bool IsActive( const CRTime& timeCurrent )
 	{
-		const uint32 iEclipseEpochUTC = 1877138531; // June 2029 Anchor
+		// --- STATIC CONSTANTS (Calculated once per session) ---
+		static const uint32 iEclipseEpochUTC = 1877138531;
+		static const double fLightTimeSeconds = 1.282;
+		static const float  flSecondsPerDay = 86400.002f;
+		static const double fTwoPi = 2.0 * M_PI;
 		
-		// 1. Raw Elapsed Seconds + Light-Time Correction
-		// Subtracting 1.282s accounts for the time it takes photons to travel from Moon to Earth.
-		const double fLightTimeSeconds = 1.282; 
-		double fElapsedSeconds = ((double)timeCurrent.GetRTime32() - (double)iEclipseEpochUTC) - fLightTimeSeconds;
+		// Orbital Period Constants
+		static const double fSynodicMonth = 2551442.890; // Mean time between full moons
+		static const double fAnomalisticMonth = 2380713.12; 
+		static const double fDraconicMonth = 2351135.0;
 
-		// 2. Fundamental Arguments (IAU Refined)
-		double D       = fmod(fElapsedSeconds, 2551442.890) / 2551442.890 * 2.0 * M_PI;
-		double M       = fmod(fElapsedSeconds, 2380713.12) / 2380713.12 * 2.0 * M_PI;
-		double M_prime = fmod(2.1 + (0.01720209895 * (fElapsedSeconds / 86400.002)), 2.0 * M_PI);
-		double F	   = fmod(fElapsedSeconds, 2351135.0) / 2351135.0 * 2.0 * M_PI;
+		// --- PER-CALL CALCULATIONS ---
+		const double fElapsedSeconds = ((double)timeCurrent.GetRTime32() - (double)iEclipseEpochUTC) - fLightTimeSeconds;
 
-		// 3. 7th-Order "Universal" Correction (Planets + Geometry + Earth Shape)
-		double fWobble = 0.47119 * sin(M)                // Equation of Center (Main Ellipse)
-					   + 0.16512 * sin(2 * D - M)       // Evection (Solar Distortion)
-					   - 0.22513 * sin(M_prime)         // Annual Equation (Earth Orbit)
-					   + 0.02106 * sin(2 * D)           // Variation (Solar Speed Change)
-					   - 0.03504 * sin(D)               // Parallactic Inequality (Solar Distance)
-					   + 0.00702 * sin(2 * D + M)       // Higher-Order Variation
-					   + 0.00401 * sin(2 * D - 2 * M_prime) // Venusian Pull
-					   + 0.00201 * sin(M - M_prime)     // Jupiter's Gravity
-					   + 0.00062 * sin(2 * M - 2 * M_prime) // Mars' Gravity
-					   + 0.00021 * sin(M + M_prime)     // Saturn's Gravity
-					   + 0.00063 * sin(2 * F)           // Earth's Equatorial Bulge (J2)
-					   + 0.00035 * sin(M)               // Optical Libration (Wobble)
-					   - 0.01140 * sin(2 * F);          // Reduction to Ecliptic (Orbital Tilt)
+		// 2. Fundamental Arguments
+		const double D       = fmod(fElapsedSeconds, fSynodicMonth) / fSynodicMonth * fTwoPi;
+		const double M       = fmod(fElapsedSeconds, fAnomalisticMonth) / fAnomalisticMonth * fTwoPi;
+		const double M_prime = fmod(2.1 + (0.01720209895 * (fElapsedSeconds / (double)flSecondsPerDay)), fTwoPi);
+		const double F       = fmod(fElapsedSeconds, fDraconicMonth) / fDraconicMonth * fTwoPi;
 
-		double fWobbleSeconds = fWobble * 86400.002;
+		// 3. 7th-Order Correction (Values here remain const as they are coefficients)
+		const double fWobble = 0.47119 * sin(M) 
+							+ 0.16512 * sin(2 * D - M)
+							- 0.22513 * sin(M_prime)
+							+ 0.02106 * sin(2 * D)
+							- 0.03504 * sin(D)
+							+ 0.00702 * sin(2 * D + M)
+							+ 0.00401 * sin(2 * D - 2 * M_prime)
+							+ 0.00201 * sin(M - M_prime)
+							+ 0.00062 * sin(2 * M - 2 * M_prime)
+							+ 0.00021 * sin(M + M_prime)
+							+ 0.00063 * sin(2 * F)
+							+ 0.00035 * sin(M)
+							- 0.01140 * sin(2 * F);
+
+		const double fWobbleSeconds = fWobble * (double)flSecondsPerDay;
 
 		// 4. Corrected Cycle Position
-		double fCurrentCycleSeconds = fmod(fElapsedSeconds, 2551442.890);
-		if (fCurrentCycleSeconds < 0) fCurrentCycleSeconds += 2551442.890;
+		double fCurrentCycleSeconds = fmod(fElapsedSeconds, fSynodicMonth);
+		if (fCurrentCycleSeconds < 0) fCurrentCycleSeconds += fSynodicMonth;
 
-		double fCorrectedSeconds = fmod(fCurrentCycleSeconds - fWobbleSeconds, 2551442.890);
-		if (fCorrectedSeconds < 0) fCorrectedSeconds += 2551442.890;
+		double fCorrectedSeconds = fmod(fCurrentCycleSeconds - fWobbleSeconds, fSynodicMonth);
+		if (fCorrectedSeconds < 0) fCorrectedSeconds += fSynodicMonth;
 
-		// 5. 15-hour Nautical Visibility Window
-		const int iBufferTimeInSeconds  = (int)(m_fBonusTimeInDays * iSecondsPerDay);
-		return (fCorrectedSeconds < iBufferTimeInSeconds || fCorrectedSeconds > (2551442.890 - iBufferTimeInSeconds));
+		// 5. Visibility Window
+		const int iBufferTimeInSeconds = (int)(m_fBonusTimeInDays * flSecondsPerDay);
+		
+		return (fCorrectedSeconds < iBufferTimeInSeconds || fCorrectedSeconds > (fSynodicMonth - iBufferTimeInSeconds));
 	}
 		
 		// Extra code written to detect Blood Moons. We don't use it, but I left it here because it's neat.
@@ -527,7 +535,7 @@ bool EconHolidays_IsHolidayActive( int iHolidayIndex, const CRTime& timeCurrent 
 		return false;
 		
 	// We're officially going from "Kind of gross" to "Extremely gross" now.
-	if ( iHolidayIndex = kHoliday_Halloween )
+	if ( iHolidayIndex == kHoliday_Halloween )
 	{
 		// Manually check the dates for Halloween by year prior to the hardcoding in 2019.
 		if ( 
@@ -545,7 +553,7 @@ bool EconHolidays_IsHolidayActive( int iHolidayIndex, const CRTime& timeCurrent 
 			return true;
 		}
 	}
-	else if ( iHolidayIndex = kHoliday_FullMoon ) 
+	else if ( iHolidayIndex == kHoliday_FullMoon ) 
 	{
 		// Strange instance where Full Moon was active for a week straight in September 2014.
 		if (timeHolidayTest >= 1410912000 && timeHolidayTest <= 1411516800)
@@ -553,7 +561,7 @@ bool EconHolidays_IsHolidayActive( int iHolidayIndex, const CRTime& timeCurrent 
 			return true;
 		}
 	}
-	else if ( iHolidayIndex = kHoliday_Summer )
+	else if ( iHolidayIndex == kHoliday_Summer )
 	{
 		// Do the same thing for summer. As it ends September 15 constantly, hopefully they'll lock this logic.
 		if (

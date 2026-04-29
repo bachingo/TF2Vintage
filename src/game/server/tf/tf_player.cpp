@@ -23207,7 +23207,7 @@ bool CTFPlayer::ItemQualityIsAllowedTimePeriod( int iQuality )
 	{
 		case AE_NORMAL:
 			return true; // Stock items (Always available)
-			
+		
 		case AE_UNIQUE:
 			return iCurrentEra >= TF2V_ERA_DAY_GOLDRUSH; // Regular items (If this errors, we have a problem)
 			

@@ -1256,6 +1256,10 @@ public:
 
 	bool CanInitiateDuels( void );
 
+	int GetTF2VEra( void ) { return m_nTF2VEra; }
+protected:
+	void SetTF2VEra( int nEra = tf2v_era.GetInt() ) { m_nTF2VEra = clamp(nEra, TF2V_ERA_DAY_MIN, TF2V_ERA_DAY_MAX); }
+public:
 #ifdef GAME_DLL
 
 	// Used on sd_doomsday_event to nag players about picking up the tickets
@@ -1424,11 +1428,6 @@ public:
 
 	void ForceEnableUpgrades( int nState ) { m_nForceUpgrades = nState; }
 	void ForceEscortPushLogic( int nState ) { m_nForceEscortPushLogic = nState; }
-	
-#endif
-	int GetTF2VEra( void ) { return m_nTF2VEra; }
-	void SetTF2VEra( int nEra = tf2v_era.GetInt() ) { m_nTF2VEra = clamp(nEra, TF2V_ERA_DAY_MIN, TF2V_ERA_DAY_MAX); }
-#ifdef GAME_DLL
 
 private:
 	CUtlVector< CHandle< CGhost > > m_ghostVector;
