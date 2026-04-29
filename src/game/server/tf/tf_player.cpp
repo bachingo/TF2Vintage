@@ -281,6 +281,7 @@ extern ConVar tf_voice_command_suspension_mode;
 extern ConVar tf_feign_death_duration;
 extern ConVar spec_freeze_time;
 extern ConVar spec_freeze_traveltime;
+extern ConVar tf2v_modified_respawn_waves;
 extern ConVar sv_maxunlag;
 extern ConVar tf_allow_taunt_switch;
 extern ConVar weapon_medigun_chargerelease_rate;
@@ -13951,13 +13952,31 @@ void CTFPlayer::StateThinkDYING( void )
 		RemoveEffects( EF_NODRAW | EF_NOSHADOW );	// still draw player body
 	}
 
-	float flTimeInFreeze = spec_freeze_traveltime.GetFloat() + spec_freeze_time.GetFloat();
+	float flTimeInFreeze;
+	if ( tf2v_modified_respawn_waves.GetBool() )	// Scales freezecam logic.
+	{
+		int iTeam = GetTeamNumber();
+		int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
+		float flRespawnSpeedMod = (iNumPlayers / 8); // Optimal players
+		flTimeInFreeze = ( spec_freeze_traveltime.GetFloat() * flRespawnSpeedMod ) + ( spec_freeze_time.GetFloat() * flRespawnSpeedMod );
+	}
+	else
+		flTimeInFreeze = spec_freeze_traveltime.GetFloat() + spec_freeze_time.GetFloat();
 	float flFreezeEnd = (m_flDeathTime + TF_DEATH_ANIMATION_TIME + flTimeInFreeze );
 	if ( !m_bPlayedFreezeCamSound  && GetObserverTarget() && GetObserverTarget() != this )
 	{
 		// Start the sound so that it ends at the freezecam lock on time
 		float flFreezeSoundLength = 0.3;
-		float flFreezeSoundTime = (m_flDeathTime + TF_DEATH_ANIMATION_TIME ) + spec_freeze_traveltime.GetFloat() - flFreezeSoundLength;
+		float flFreezeSoundTime;
+		if ( tf2v_modified_respawn_waves.GetBool() )	// Scales freezecam logic.
+		{
+			int iTeam = GetTeamNumber();
+			int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
+			float flRespawnSpeedMod = (iNumPlayers / 8); // Optimal players
+			flFreezeSoundTime = (m_flDeathTime + TF_DEATH_ANIMATION_TIME ) + ( spec_freeze_traveltime.GetFloat() * flRespawnSpeedMod )  - flFreezeSoundLength;
+		}
+		else
+			flFreezeSoundTime; = (m_flDeathTime + TF_DEATH_ANIMATION_TIME ) + spec_freeze_traveltime.GetFloat() - flFreezeSoundLength;
 		if ( gpGlobals->curtime >= flFreezeSoundTime )
 		{
 			CSingleUserRecipientFilter filter( this );
@@ -14033,7 +14052,16 @@ void CTFPlayer::StateThinkDYING( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::AttemptToExitFreezeCam( void )
 {
-	float flFreezeTravelTime = (m_flDeathTime + TF_DEATH_ANIMATION_TIME ) + spec_freeze_traveltime.GetFloat() + 0.5;
+	float flFreezeTravelTime;
+	if ( tf2v_modified_respawn_waves.GetBool() )	// Scales freezecam logic.
+	{
+		int iTeam = GetTeamNumber();
+		int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
+		float flRespawnSpeedMod = (iNumPlayers / 8); // Optimal players
+		flFreezeTravelTime = (m_flDeathTime + TF_DEATH_ANIMATION_TIME ) + ( spec_freeze_traveltime.GetFloat() * flRespawnSpeedMod ) + ( 0.5 * flRespawnSpeedMod );
+	}
+	else
+		flFreezeTravelTime = (m_flDeathTime + TF_DEATH_ANIMATION_TIME ) + spec_freeze_traveltime.GetFloat() + 0.5;
 	if ( gpGlobals->curtime < flFreezeTravelTime )
 		return;
 

@@ -93,6 +93,8 @@ ConVar	spec_freeze_time( "spec_freeze_time", "4.0", FCVAR_CHEAT | FCVAR_REPLICAT
 ConVar	spec_freeze_traveltime( "spec_freeze_traveltime", "0.4", FCVAR_CHEAT | FCVAR_REPLICATED, "Time taken to zoom in to frame a target in observer freeze cam.", true, 0.01, false, 0 );
 #endif
 
+ConVar tf2v_modified_respawn_waves( "tf2v_modified_respawn_waves", "1", FCVAR_REPLICATED | FCVAR_ARCHIVE, "When active, uses TF2V's algorithm to alter respawn times based on a 8v8 baseline. Disable for the familiar 12v12 Casual mode chaos.", true, 0, true, 1 );
+
 ConVar sv_bonus_challenge( "sv_bonus_challenge", "0", FCVAR_REPLICATED, "Set to values other than 0 to select a bonus map challenge type." );
 
 ConVar sv_chat_bucket_size_tier1( "sv_chat_bucket_size_tier1", "4", FCVAR_NONE, "The maximum size of the short term chat msg bucket." );

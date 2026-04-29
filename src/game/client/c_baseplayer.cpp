@@ -115,6 +115,8 @@ ConVar	spec_freeze_distance_min( "spec_freeze_distance_min", "96", FCVAR_CHEAT, 
 ConVar	spec_freeze_distance_max( "spec_freeze_distance_max", "200", FCVAR_CHEAT, "Maximum random distance from the target to stop when framing them in observer freeze cam." );
 #endif
 
+ConVar tf2v_modified_respawn_waves( "tf2v_modified_respawn_waves", "1", FCVAR_REPLICATED, "When active, uses TF2V's algorithm to alter respawn times based on a 8v8 baseline. Disable for the familiar 12v12 Casual mode chaos.", true, 0, true, 1 );
+
 static ConVar	cl_first_person_uses_world_model ( "cl_first_person_uses_world_model", "0", FCVAR_NONE, "Causes the third person model to be drawn instead of the view model" );
 
 ConVar demo_fov_override( "demo_fov_override", "0", FCVAR_CLIENTDLL | FCVAR_DONTRECORD, "If nonzero, this value will be used to override FOV during demo playback." );
@@ -1660,7 +1662,19 @@ void C_BasePlayer::CalcFreezeCamView( Vector& eyeOrigin, QAngle& eyeAngles, floa
 
 	// Zoom towards our target
 	float flCurTime = (gpGlobals->curtime - m_flFreezeFrameStartTime);
-	float flBlendPerc = clamp( flCurTime / spec_freeze_traveltime.GetFloat(), 0.f, 1.f );
+	
+	float fltraveltime = spec_freeze_traveltime.GetFloat();
+	if ( tf2v_modified_respawn_waves.GetBool() )
+	{
+		// Use the same player scaling to the freezecam to keep tempo up on low pop.
+		// Likewise, gives us breathing room on high pop.
+		int iTeam = GetTeamNumber();
+		int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
+		float flRespawnSpeedMod = (iNumPlayers / 8); // Optimal players
+		fltraveltime =* flRespawnSpeedMod;
+	}
+	
+	float flBlendPerc = clamp( flCurTime / fltraveltime, 0.f, 1.f );
 	flBlendPerc = SimpleSpline( flBlendPerc );
 
 	Vector vecCamDesired = pTarget->GetObserverCamOrigin();	// Returns ragdoll origin if they're ragdolled
@@ -1716,7 +1730,7 @@ void C_BasePlayer::CalcFreezeCamView( Vector& eyeOrigin, QAngle& eyeAngles, floa
 	
 	VectorLerp( m_vecFreezeFrameStart, vecTargetPos, flBlendPerc, eyeOrigin );
 
-	if ( flCurTime >= spec_freeze_traveltime.GetFloat() && !m_bSentFreezeFrame )
+	if ( flCurTime >= fltraveltime && !m_bSentFreezeFrame )
 	{
 		IGameEvent *pEvent = gameeventmanager->CreateEvent( "freezecam_started" );
 		if ( pEvent )
@@ -1725,7 +1739,18 @@ void C_BasePlayer::CalcFreezeCamView( Vector& eyeOrigin, QAngle& eyeAngles, floa
 		}
 
 		m_bSentFreezeFrame = true;
-		view->FreezeFrame( spec_freeze_time.GetFloat() );
+		
+		float flFreezetime = spec_freeze_time.GetFloat();
+			if ( tf2v_modified_respawn_waves.GetBool() )
+		{
+			// Use the same player scaling to the freezecam to keep tempo up on low pop.
+			// Likewise, gives us breathing room on high pop.
+			int iTeam = GetTeamNumber();
+			int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
+			float flRespawnSpeedMod = (iNumPlayers / 8); // Optimal players
+			flFreezetime =* flRespawnSpeedMod;
+		}
+		view->FreezeFrame( flFreezetime );
 	}
 }
 

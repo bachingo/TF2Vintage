@@ -60,6 +60,7 @@ extern IReplaySystem *g_pReplay;
 
 extern ConVar spec_freeze_time;
 extern ConVar spec_freeze_traveltime;
+extern ConVar tf2v_modified_respawn_waves;
 
 #ifdef CLIENT_DLL
 void RecvProxy_TeamplayRoundState( const CRecvProxyData *pData, void *pStruct, void *pOut )
@@ -252,8 +253,6 @@ ConVar mp_stalemate_enable( "mp_stalemate_enable", "0", FCVAR_NOTIFY, "Enable/Di
 ConVar mp_match_end_at_timelimit( "mp_match_end_at_timelimit", "0", FCVAR_NOTIFY, "Allow the match to end when mp_timelimit hits instead of waiting for the end of the current round." );
 
 ConVar mp_holiday_nogifts( "mp_holiday_nogifts", "0", FCVAR_NOTIFY, "Set to 1 to prevent holiday gifts from spawning when players are killed." );
-
-ConVar tf2v_modified_respawn_waves( "tf2v_modified_respawn_waves", "1", FCVAR_NOTIFY, "When active, uses TF2V's algorithm to alter respawn times based on a 8v8 baseline. Disable for the familiar 12v12 Casual mode chaos.", true, 0, true, 1 );
 
 const char *m_pszRoundStateStrings[] = 
 {
@@ -619,8 +618,20 @@ float CTeamplayRoundBasedRules::GetMinTimeWhenPlayerMaySpawn( CBasePlayer *pPlay
 	// a) the length of one full *unscaled* respawn wave for their team
 	//		and
 	// b) death anim length + freeze panel length
-
-	float flDeathAnimLength = 2.0 + spec_freeze_traveltime.GetFloat() + spec_freeze_time.GetFloat();
+	
+	// TF2V: Adjust the freeze timer based on number of players to keep flow.
+	float flDeathAnimLength;
+	if ( tf2v_modified_respawn_waves.GetBool() )
+	{
+		// Use the same player scaling to the freezecam to keep tempo up on low pop.
+		// Likewise, gives us breathing room on high pop.
+		int iTeam = pPlayer->GetTeamNumber();
+		int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
+		float flRespawnSpeedMod = (iNumPlayers / 8); // Optimal players
+		flDeathAnimLength = ( 2.0 * flRespawnSpeedMod ) + ( spec_freeze_traveltime.GetFloat() * flRespawnSpeedMod ) + ( spec_freeze_time.GetFloat() * flRespawnSpeedMod );
+	}
+	else	// Original, classic delay. Default is 2 + 4 + 0.4 = 6.4s minimum.
+		flDeathAnimLength = 2.0 + spec_freeze_traveltime.GetFloat()) + spec_freeze_time.GetFloat();
 
 	float fMinDelay = flDeathAnimLength;
 
@@ -3480,11 +3491,14 @@ float CTeamplayRoundBasedRules::GetRespawnWaveMaxLength( int iTeam, bool bScaleW
 	float flTime = ( ( m_TeamRespawnWaveTimes[iTeam] >= 0 ) ? m_TeamRespawnWaveTimes[iTeam] : mp_respawnwavetime.GetFloat() );
 
 	// For long respawn times, scale the time as the number of players drops
-	float flRespawnFloor;
+	float flRespawnFloor = 5;
 	if ( tf2v_modified_respawn_waves.GetBool() ) 
-		flRespawnFloor = 1.25;	// Lower respawn time for less players. Benefits smaller lobbies.
-	else
-		flRespawnFloor = 5;	// Stock length.
+	{
+		int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
+		float flRespawnSpeedMod = (iNumPlayers / 8);
+		flRespawnFloor =* flRespawnSpeedMod;	// Lower respawn time for less players. Benefits smaller lobbies.
+	}
+
 	if ( bScaleWithNumPlayers && flTime > flRespawnFloor )
 	{
 		flTime = MAX( flRespawnFloor, flTime * GetRespawnTimeScalar(iTeam) );
