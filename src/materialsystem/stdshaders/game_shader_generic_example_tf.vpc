@@ -6,7 +6,7 @@
 
 $Macro SRCDIR		"..\.."
 $Macro OUTBINNAME "game_shader_generic_example"
-$Macro GAMENAME "tc2"
+$Macro GAMENAME "tf2vintage"
 $Include "$SRCDIR\materialsystem\stdshaders\game_shader_generic_example_base.vpc"
 
 $Project "Game Shaders (TF)"
