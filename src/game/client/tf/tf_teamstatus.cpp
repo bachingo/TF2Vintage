@@ -379,13 +379,13 @@ bool CTFTeamStatusPlayerPanel::Update( void )
 			bChanged = true;
 		}
 
-		// gamerules state
+		// charge
 		int iCharge = ( iClass == TF_CLASS_MEDIC && bSameTeamAsLocalPlayer && !bIsHugeTeam ) ? g_TF_PR->GetChargeLevel( m_iPlayerIndex ) : -1;
 		if ( iCharge != m_iPrevCharge )
 		{
 			if ( iCharge == 100 && pTFPlayer )
 			{
-				// TODO: Ü
+				// TODO: Ãœ
 				SetDialogVariable( "chargeamount", "U" );
 				m_pChargeAmount->SetFgColor( m_ColorChargeFull );
 			}
@@ -560,7 +560,7 @@ void CTFTeamStatus::PerformLayout( void )
 		int& iMaxExpand		= iTeam == TF_TEAM_BLUE ? m_iTeam1MaxExpand	: m_iTeam2MaxExpand;
 		const int iGap		= RemapValClamped( iTeamCount, 6, 12, m_i6v6Gap, m_i12v12Gap );
 
-		// Local player is always the innermost panel
+		// Local player is always the innermost panel, unless we're using class order
 		int nTeamPanelIndex = iProcessed;
 		if ( !bIsHugeTeam && !bClassOrder )
 		{
