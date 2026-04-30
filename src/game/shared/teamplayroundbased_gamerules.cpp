@@ -728,7 +728,8 @@ float CTeamplayRoundBasedRules::GetRespawnTimeScalar( int iTeam )
 
 	int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
 
-	float flScale = RemapVal( iNumPlayers, 1, iOptimalPlayers, 0.25, 1.0 );
+	// TF2V specific: Remove the Clamped to increase spawn times on >16 player servers.
+	float flScale = RemapVal( iNumPlayers, 2, iOptimalPlayers, 0.25, 1.0 );
 	return flScale;
 }
 
