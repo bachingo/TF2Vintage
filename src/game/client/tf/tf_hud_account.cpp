@@ -22,6 +22,7 @@
 #include "tf_logic_halloween_2014.h"
 #include "tf_weapon_invis.h"
 #include <vgui_controls/AnimationController.h>
+#include "tf_controls.h"
 
 #include "c_tf_objective_resource.h"
 
@@ -56,6 +57,7 @@ typedef struct
 
 	// die time
 	float m_flDieTime;
+	float m_flRealDieTime = -1.0f;
 
 	// position
 	int m_nX;				// X Pos in screen space & world space
@@ -68,6 +70,9 @@ typedef struct
 	int m_nSourceID;		// Can be entindex, etc
 	Color m_color;
 	bool m_bShadows;
+	int m_iEnemyState;
+
+	bool m_bSimulate = false;
 
 	// append a bit of extra text to the end
 	wchar_t m_wzText[8];
@@ -78,26 +83,32 @@ typedef struct
 
 ConVar hud_combattext( "hud_combattext", "1", FCVAR_USERINFO | FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX );
 ConVar hud_combattext_healing( "hud_combattext_healing", "1", FCVAR_USERINFO | FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX, "Shows health restored per-second over heal targets." );
-ConVar hud_combattext_batching( "hud_combattext_batching", "0", FCVAR_USERINFO | FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX, "If set to 1, numbers that are too close together are merged." );
-ConVar hud_combattext_batching_window( "hud_combattext_batching_window", "0.2", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX, "Maximum delay between damage events in order to batch numbers.", true, 0.1, true, 2.0 );
+ConVar hud_combattext_batching( "hud_combattext_batching", "1", FCVAR_USERINFO | FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX, "If set to 2, numbers that are too close together are merged. Setting to 1 will also keep individual numbers." );
+ConVar hud_combattext_batching_window( "hud_combattext_batching_window", "2", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX, "Maximum delay between damage events in order to batch numbers.", true, 0.1, true, 2.0 );
 ConVar hud_combattext_doesnt_block_overhead_text( "hud_combattext_doesnt_block_overhead_text", "1", FCVAR_USERINFO | FCVAR_ARCHIVE, "If set to 1, allow text like \"CRIT\" to still show over a victim's head." );
 ConVar hud_combattext_red( "hud_combattext_red", "255", FCVAR_USERINFO | FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX );
-ConVar hud_combattext_green( "hud_combattext_green", "0", FCVAR_USERINFO | FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX );
-ConVar hud_combattext_blue( "hud_combattext_blue", "0", FCVAR_USERINFO | FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX );
+ConVar hud_combattext_green( "hud_combattext_green", "40", FCVAR_USERINFO | FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX );
+ConVar hud_combattext_blue( "hud_combattext_blue", "25", FCVAR_USERINFO | FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX );
+ConVar hud_combattext_large("hud_combattext_large", "1", FCVAR_ARCHIVE );
 
-ConVar tf_dingalingaling( "tf_dingalingaling", "0", FCVAR_ARCHIVE, "If set to 1, play a sound everytime you injure an enemy. The sound can be customized by replacing the 'tf/sound/ui/hitsound.wav' file." );
+ConVar tf_dingalingaling( "tf_dingalingaling", "1", FCVAR_ARCHIVE, "If set to 1, play a sound everytime you injure an enemy. The sound can be customized by replacing the 'tf/sound/ui/hitsound.wav' file." );
 ConVar tf_dingaling_volume( "tf_dingaling_volume", "0.75", FCVAR_ARCHIVE, "Desired volume of the hit sound.", true, 0.0, true, 1.0 );
-ConVar tf_dingaling_pitchmindmg( "tf_dingaling_pitchmindmg", "100", FCVAR_ARCHIVE, "Desired pitch of the hit sound when a minimal damage hit (<= 10 health) is done.", true, 1, true, 255 );
-ConVar tf_dingaling_pitchmaxdmg( "tf_dingaling_pitchmaxdmg", "100", FCVAR_ARCHIVE, "Desired pitch of the hit sound when a maximum damage hit (>= 150 health) is done.", true, 1, true, 255 );
+ConVar tf_dingaling_pitchmindmg( "tf_dingaling_pitchmindmg", "154.64", FCVAR_ARCHIVE, "Desired pitch of the hit sound when a minimal damage hit (<= 10 health) is done.", true, 1, true, 255 );
+ConVar tf_dingaling_pitchmaxdmg( "tf_dingaling_pitchmaxdmg", "51.4", FCVAR_ARCHIVE, "Desired pitch of the hit sound when a maximum damage hit (>= 150 health) is done.", true, 1, true, 255 );
 ConVar tf_dingaling_pitch_override( "tf_dingaling_pitch_override", "-1", FCVAR_NONE, "If set, pitch for all hit sounds." );
 
-ConVar tf_dingalingaling_lasthit( "tf_dingalingaling_lasthit", "0", FCVAR_ARCHIVE, "If set to 1, play a sound whenever one of your attacks kills an enemy. The sound can be customized by replacing the 'tf/sound/ui/killsound.wav' file." );
-ConVar tf_dingaling_lasthit_volume( "tf_dingaling_lasthit_volume", "0.75", FCVAR_ARCHIVE, "Desired volume of the last hit sound.", true, 0.0, true, 1.0 );
-ConVar tf_dingaling_lasthit_pitchmindmg( "tf_dingaling_lasthit_pitchmindmg", "100", FCVAR_ARCHIVE, "Desired pitch of the last hit sound when a minimal damage hit (<= 10 health) is done.", true, 1, true, 255 );
-ConVar tf_dingaling_lasthit_pitchmaxdmg( "tf_dingaling_lasthit_pitchmaxdmg", "100", FCVAR_ARCHIVE, "Desired pitch of the last hit sound when a maximum damage hit (>= 150 health) is done.", true, 1, true, 255 );
+ConVar tf_dingalingaling_lasthit( "tf_dingalingaling_lasthit", "1", FCVAR_ARCHIVE, "If set to 1, play a sound whenever one of your attacks kills an enemy. The sound can be customized by replacing the 'tf/sound/ui/killsound.wav' file." );
+ConVar tf_dingaling_lasthit_volume( "tf_dingaling_lasthit_volume", "0.82", FCVAR_ARCHIVE, "Desired volume of the last hit sound.", true, 0.0, true, 1.0 );
+ConVar tf_dingaling_lasthit_pitchmindmg( "tf_dingaling_lasthit_pitchmindmg", "153", FCVAR_ARCHIVE, "Desired pitch of the last hit sound when a minimal damage hit (<= 10 health) is done.", true, 1, true, 255 );
+ConVar tf_dingaling_lasthit_pitchmaxdmg( "tf_dingaling_lasthit_pitchmaxdmg", "50.1", FCVAR_ARCHIVE, "Desired pitch of the last hit sound when a maximum damage hit (>= 150 health) is done.", true, 1, true, 255 );
 ConVar tf_dingaling_lasthit_pitch_override( "tf_dingaling_lasthit_pitch_override", "-1", FCVAR_NONE, "If set, pitch for last hit sounds." );
 
 ConVar tf_dingalingaling_repeat_delay( "tf_dingalingaling_repeat_delay", "0.0", FCVAR_ARCHIVE, "Desired repeat delay of the hit sound.  Set to 0 to play a sound for every instance of damage dealt.", true, 0.f, false, 0.f );
+ConVar tf_dingaling_lasthit_repeat_delay( "tf_dingaling_lasthit_repeat_delay", "0.0", FCVAR_ARCHIVE, "Desired repeat delay of the last hit sound.  Set to 0 to play a sound for every last hit.", true, 0.f, false, 0.f );
+
+#define TF_DAMAGEFEEDBACK_VERSION 3
+
+ConVar tf_damagefeedback_version("tf_damagefeedback_version", "0", FCVAR_ARCHIVE | FCVAR_HIDDEN);
 
 ConVar hud_damagemeter( "hud_damagemeter", "0", FCVAR_CHEAT, "Display damage-per-second information in the lower right corner of the screen." );
 ConVar hud_damagemeter_period( "hud_damagemeter_period", "0", FCVAR_NONE, "When set to zero, average damage-per-second across all recent damage events, otherwise average damage across defined period (number of seconds)." );
@@ -170,8 +181,8 @@ static const hitsound_params_t g_LastHitSounds[] =
 	hitsound_params_t( "Player.KillSoundSquasher", 1, 255 ),
 };
 
-ConVar tf_dingalingaling_effect( "tf_dingalingaling_effect", "0", FCVAR_ARCHIVE, "Which Dingalingaling sound is used", true, 0, true, ARRAYSIZE( g_HitSounds )-1 );
-ConVar tf_dingalingaling_last_effect( "tf_dingalingaling_last_effect", "0", FCVAR_ARCHIVE, "Which final hit sound to play when the target expires.", true, 0, true, ARRAYSIZE( g_LastHitSounds )-1 );
+ConVar tf_dingalingaling_effect( "tf_dingalingaling_effect", "6", FCVAR_ARCHIVE, "Which Dingalingaling sound is used", true, 0, true, ARRAYSIZE( g_HitSounds )-1 );
+ConVar tf_dingalingaling_last_effect( "tf_dingalingaling_last_effect", "6", FCVAR_ARCHIVE, "Which final hit sound to play when the target expires.", true, 0, true, ARRAYSIZE( g_LastHitSounds )-1 );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -201,6 +212,7 @@ protected:
 	virtual Color GetColor( const account_delta_t::eAccountDeltaType_t &type, const int iDeltaValue = 0 );
 
 	CUtlVector <account_delta_t> m_AccountDeltaItems;
+	CUtlVector <account_delta_t> m_AccountDeltaItemsSmall;
 
 	int m_nBGTexture;
 	bool m_bNegativeFlipDir;
@@ -277,6 +289,7 @@ public:
 		if ( !pPlayer || !pPlayer->IsAlive() || !pPlayer->IsPlayerClass( TF_CLASS_ENGINEER ) )
 		{
 			m_AccountDeltaItems.RemoveAll();
+			m_AccountDeltaItemsSmall.RemoveAll();
 			return false;
 		}
 
@@ -291,6 +304,28 @@ public:
 			return false;
 
 		return CHudElement::ShouldDraw();
+	}
+
+	void ApplySchemeSettings(IScheme* pScheme) OVERRIDE
+	{
+		BaseClass::ApplySchemeSettings(pScheme);
+
+		// TODO(mcoms): hack: bleh..
+		if ( V_stricmp( "CHudAccountPanel", Panel::GetName() ) && V_stricmp( "CHealthAccountPanel", Panel::GetName() ) )
+		{
+			return;
+		}
+
+		int xOffset;
+		int yOffset;
+		if ( ConstrainAspect( xOffset, yOffset ) )
+		{
+			int x, y;
+			GetPos( x, y );
+			int xNew, yNew;
+			OffsetAspect( x, y, xOffset, yOffset, xNew, yNew );
+			SetPos( xNew, yNew );
+		}
 	}
 };
 
@@ -340,7 +375,7 @@ public:
 							bShouldSpawnRedParticle = ( GetLocalPlayerTeam() == TF_TEAM_RED );
 						}
 
-						const char *pEffectName;
+						const char *pEffectName = nullptr;
 						if ( iAmount < 0 )
 						{
 							pEffectName = bShouldSpawnRedParticle ? "healthlost_red" : "healthlost_blu";
@@ -362,7 +397,10 @@ public:
 							pEffectName = bShouldSpawnRedParticle ? "healthgained_red" : "healthgained_blu";
 						}
 
-						pEventPlayer->ParticleProp()->Create( pEffectName, PATTACH_POINT, "head" );
+						if ( pEffectName && pEffectName[0] )
+						{
+							pEventPlayer->ParticleProp()->Create( pEffectName, PATTACH_POINT, "head" );
+						}
 					}
 				}
 			}
@@ -389,9 +427,10 @@ public:
 	bool ShouldDraw( void )
 	{
 		C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
-		if ( !pPlayer || !pPlayer->IsAlive() )
+		if ( !pPlayer )
 		{
 			m_AccountDeltaItems.RemoveAll();
+			m_AccountDeltaItemsSmall.RemoveAll();
 		}
 
 		if ( !m_AccountDeltaItems.Count() )
@@ -429,7 +468,7 @@ public:
 		if ( Q_strcmp(pszEventName, m_pszEventName) == 0 )
 		{
 			CTFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
-			if ( !pLocalPlayer || !pLocalPlayer->IsAlive() )
+			if ( !pLocalPlayer )
 				return;
 
 			int nTeam = event->GetInt( "team" );
@@ -444,7 +483,7 @@ public:
 			if ( pNewAccount )
 			{
 				pNewAccount->m_bShadows = true;
-				pNewAccount->m_flBatchWindow = pNewAccount->m_flDieTime;
+				pNewAccount->m_flBatchWindow = pNewAccount->m_flDieTime - gpGlobals->curtime;
 				pNewAccount->m_nSourceID = (( nPoints > 0 ) ? 0 : 1 ) + (nTeam * 2);
 
 				if ( ( GetLocalPlayerTeam() == nTeam && nPoints > 0 ) || ( GetLocalPlayerTeam() != nTeam && nPoints < 0 ) )
@@ -522,13 +561,13 @@ public:
 	//-----------------------------------------------------------------------------
 	// Purpose: 
 	//-----------------------------------------------------------------------------
-	void DisplayDamageFeedback( CTFPlayer *pAttacker, CBaseCombatCharacter *pVictim, int iDamage, int iHealth, bool bIsCrit )
+	void DisplayDamageFeedback( CTFPlayer *pAttacker, CBaseCombatCharacter *pVictim, int iDamage, int iHealth, bool bIsCrit, bool bIsBullet = false )
 	{
 		if ( iDamage <= 0 ) // zero value (invuln?)
 			return;
 
 		CTFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
-		if ( !pLocalPlayer || !pLocalPlayer->IsAlive() )
+		if ( !pLocalPlayer )
 			return;
 
 		if ( !pAttacker || !pVictim )
@@ -566,25 +605,27 @@ public:
 				}
 			}
 
-			if ( pAttacker == pLocalPlayer )
+			const bool bIsAttacker = pAttacker == pLocalPlayer;
+			// UNDONE: testing medic with damage sounds
+			//if ( bIsAttacker )
 			{
 				g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "DamagedPlayer" );
 
+#ifdef TF2_OG
+				bool bHitEnabled = false;
+				bool bLastHitEnabled = false;
+#else
 				bool bHitEnabled = ( tf_dingalingaling.GetBool() );
 				bool bLastHitEnabled = ( tf_dingalingaling_lasthit.GetBool() );
+#endif
 				bool bLastHit = ( iHealth <= 0 ) || bDeadRingerSpy;
-				if ( bLastHitEnabled && bLastHit )
-				{
-					// Always allow the last hit sound
-					m_flLastDingTime = 0.f;
-				}
+				const float flDingTime = bLastHit ? m_flLastKillDingTime : m_flLastDingTime;
+				const float flDingDelay = bLastHit ? tf_dingaling_lasthit_repeat_delay.GetFloat() : tf_dingalingaling_repeat_delay.GetFloat();
 				
 				// Play hitbeeps 
 				if ( ( bHitEnabled || bLastHitEnabled ) && 
-					 ( gpGlobals->curtime > ( m_flLastDingTime + tf_dingalingaling_repeat_delay.GetFloat() ) || tf_dingalingaling_repeat_delay.GetFloat() == 0.f ) )
+					 ( gpGlobals->curtime > ( flDingTime + flDingDelay ) || flDingDelay == 0.f ) )
 				{
-					m_flLastDingTime = gpGlobals->curtime;
-
 					CSoundParameters params;
 					CLocalPlayerFilter filter;
 					const char *pszSound = NULL;
@@ -592,56 +633,82 @@ public:
 
 					if ( bLastHit && bLastHitEnabled )
 					{
+						m_flLastKillDingTime = gpGlobals->curtime;
 						pszSound = g_LastHitSounds[tf_dingalingaling_last_effect.GetInt()].m_pszName;
 						pHitSound = &g_LastHitSounds[tf_dingalingaling_last_effect.GetInt()];
 						if ( pszSound && pHitSound && CBaseEntity::GetParametersForSound( pszSound, params, NULL ) )
 						{
 							EmitSound_t es( params );
 							es.m_nPitch = pHitSound->GetPitchFromDamage( iDamage, bLastHit );
-							es.m_flVolume = tf_dingaling_lasthit_volume.GetFloat();
+							es.m_flVolume = tf_dingaling_lasthit_volume.GetFloat() * (bIsAttacker ? 1.0f : 0.5f);
 							pLocalPlayer->EmitSound( filter, pLocalPlayer->entindex(), es );
 						}
 					}
 					else if ( bHitEnabled )
 					{
+						m_flLastDingTime = gpGlobals->curtime;
 						pszSound = g_HitSounds[tf_dingalingaling_effect.GetInt()].m_pszName;
 						pHitSound = &g_HitSounds[tf_dingalingaling_effect.GetInt()];
 						if ( pszSound && pHitSound && CBaseEntity::GetParametersForSound( pszSound, params, NULL ) )
 						{
 							EmitSound_t es( params );
 							es.m_nPitch = pHitSound->GetPitchFromDamage( iDamage, false );
-							es.m_flVolume = tf_dingaling_volume.GetFloat();
+							es.m_flVolume = tf_dingaling_volume.GetFloat() * (bIsAttacker ? 1.0f : 0.5f);
 							pLocalPlayer->EmitSound( filter, pLocalPlayer->entindex(), es );
 						}
 					}
 				}
-			}
 
-			if ( hud_combattext.GetBool() )
-			{
-				// Ignore damage events on targets that we can't see, so it's not a cheat
-				trace_t	tr;
-				UTIL_TraceLine( pVictim->WorldSpaceCenter(), MainViewOrigin(), MASK_SOLID_BRUSHONLY, NULL, COLLISION_GROUP_NONE, &tr );
-				if ( tr.fraction >= 1.f )
+				// TODO(mcoms)
+				// UNDONE: get a better sound
+#if 0
+				// play squasher for bullets, unless we already played it as the hitsound.
+				if ( bIsBullet && tf_dingalingaling_effect.GetInt() != 8 )
 				{
-					account_delta_t *pNewAccount = OnAccountValueChanged( 0, -iDamage, account_delta_t::ACCOUNT_DELTA_DAMAGE );
-					if ( pNewAccount )
+					CSoundParameters params;
+					CLocalPlayerFilter filter;
+					const char* pszSound = g_HitSounds[8].m_pszName;
+					const hitsound_params_t* pHitSound = &g_HitSounds[8];
+					if (pszSound && pHitSound && CBaseEntity::GetParametersForSound(pszSound, params, NULL))
 					{
+						EmitSound_t es(params);
+						es.m_nPitch = 100.0f;
 						Vector vecPos = pVictim->GetAbsOrigin();
 						Vector vecDistance = vecPos - pLocalPlayer->GetAbsOrigin();
-						int nHeightoffset = RemapValClamped( vecDistance.LengthSqr(), 0.0f, (200.0f * 200.0f), 1, 16 );
-						vecPos.z += (VEC_HULL_MAX_SCALED( pVictim ).z + nHeightoffset);
-						pNewAccount->m_nX = vecPos.x;
-						pNewAccount->m_nXEnd = pNewAccount->m_nX;
-						pNewAccount->m_nY = vecPos.y;
-						pNewAccount->m_nHStart = vecPos.z;
-						pNewAccount->m_nHEnd = pNewAccount->m_nHStart + 32;	// How many units to float up
-						pNewAccount->m_bWorldSpace = true;
-						pNewAccount->m_nSourceID = pVictim->entindex();
-						pNewAccount->m_flBatchWindow = hud_combattext_batching.GetBool() ? hud_combattext_batching_window.GetFloat() : 0.f;
-						pNewAccount->m_bLargeFont = bIsCrit;
-						//	V_swprintf_safe( pNewAccount->m_wzText, L" (%d)", m_nQueuedDamageEvents );
+						// fall off with distance
+						es.m_flVolume = RemapValClamped(vecDistance.LengthSqr(), 0.0f, (1024.0f * 1024.0f), tf_dingaling_volume.GetFloat(), tf_dingaling_volume.GetFloat() * 0.15f) * (bIsAttacker ? 1.0f : 0.5f);
+						pLocalPlayer->EmitSound(filter, pLocalPlayer->entindex(), es);
 					}
+				}
+#endif
+			}
+
+#ifdef TF2_OG
+			const bool bCombatText = false;
+#else
+			const bool bCombatText = hud_combattext.GetBool();
+#endif
+
+			if ( bCombatText )
+			{
+				account_delta_t *pNewAccount = OnAccountValueChanged( 0, -iDamage, account_delta_t::ACCOUNT_DELTA_DAMAGE );
+				if ( pNewAccount )
+				{
+					Vector vecPos = pVictim->GetAbsOrigin();
+					Vector vecDistance = vecPos - pLocalPlayer->GetAbsOrigin();
+					int nHeightoffset = RemapValClamped( vecDistance.LengthSqr(), 0.0f, (200.0f * 200.0f), 1.0f, 16.0f );
+					vecPos.z += (VEC_HULL_MAX_SCALED( pVictim ).z + nHeightoffset);
+					pNewAccount->m_nX = vecPos.x;
+					pNewAccount->m_nXEnd = pNewAccount->m_nX + RandomFloat(-32.0f, 32.0f);
+					pNewAccount->m_nY = vecPos.y;
+					pNewAccount->m_nHStart = vecPos.z;
+					pNewAccount->m_nHEnd = pNewAccount->m_nHStart + 32;	// How many units to float up
+					pNewAccount->m_bWorldSpace = true;
+					pNewAccount->m_nSourceID = pVictim->entindex();
+					pNewAccount->m_flBatchWindow = hud_combattext_batching.GetBool() ? hud_combattext_batching_window.GetFloat() : 0.f;
+					pNewAccount->m_bLargeFont = bIsCrit;
+					pNewAccount->m_iEnemyState = 1;
+					//	V_swprintf_safe( pNewAccount->m_wzText, L" (%d)", m_nQueuedDamageEvents );
 				}
 			}
 
@@ -693,7 +760,9 @@ public:
 				bLargeText |= event->GetBool( "minicrit", false );
 			}
 
-			DisplayDamageFeedback( pAttacker, pVictim, iDamage, iHealth, bLargeText );
+			const bool bIsBullet = event->GetBool("bullet");
+
+			DisplayDamageFeedback( pAttacker, pVictim, iDamage, iHealth, bLargeText, bIsBullet );
 		}
 		else if ( FStrEq( event->GetName(), "npc_hurt" ) )
 		{
@@ -709,10 +778,15 @@ public:
 		}
 		else if ( FStrEq( event->GetName(), "player_healed" ) )
 		{
-			if ( hud_combattext.GetBool() && hud_combattext_healing.GetBool() )
+#ifdef TF2_OG
+			const bool bCombatText = false;
+#else
+			const bool bCombatText = hud_combattext.GetBool();
+#endif
+			if ( bCombatText && hud_combattext_healing.GetBool() )
 			{
 				CTFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
-				if ( !pLocalPlayer || !pLocalPlayer->IsAlive() )
+				if ( !pLocalPlayer )
 					return;
 
 				const int iHealer = engine->GetPlayerForUserID( event->GetInt( "healer" ) );
@@ -746,10 +820,15 @@ public:
 		}
 		else if ( FStrEq( event->GetName(), "player_bonuspoints" ) )
 		{
-			if ( hud_combattext.GetBool() )
+#ifdef TF2_OG
+			const bool bCombatText = false;
+#else
+			const bool bCombatText = hud_combattext.GetBool();
+#endif
+			if ( bCombatText )
 			{
 				CTFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
-				if ( !pLocalPlayer || !pLocalPlayer->IsAlive() )
+				if ( !pLocalPlayer )
 					return;
 
 				const int nPoints = ( event->GetInt( "points" ) / 10 );
@@ -784,11 +863,16 @@ public:
 		}
 		else if ( FStrEq( event->GetName(), "building_healed" ) )
 		{
-			if ( !hud_combattext.GetBool() || !hud_combattext_healing.GetBool() )
+#ifdef TF2_OG
+			const bool bCombatText = false;
+#else
+			const bool bCombatText = hud_combattext.GetBool();
+#endif
+			if ( !bCombatText || !hud_combattext_healing.GetBool() )
 				return;
 
 			CTFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
-			if ( !pLocalPlayer || !pLocalPlayer->IsAlive() )
+			if ( !pLocalPlayer )
 				return;
 
 			CBaseEntity *pHealer = ClientEntityList().GetEnt( event->GetInt( "healer" ) );
@@ -825,9 +909,10 @@ public:
 	bool ShouldDraw( void )
 	{
 		C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
-		if ( !pPlayer || !pPlayer->IsAlive() )
+		if ( !pPlayer )
 		{
 			m_AccountDeltaItems.RemoveAll();
+			m_AccountDeltaItemsSmall.RemoveAll();
 		}
 
 		if ( ShouldDrawDPSMeter() )
@@ -844,6 +929,38 @@ public:
 	//-----------------------------------------------------------------------------
 	virtual void LevelInit( void ) OVERRIDE
 	{
+		// hack, this should be in a better place
+		const int iUserVer = tf_damagefeedback_version.GetInt();
+		if (iUserVer != TF_DAMAGEFEEDBACK_VERSION)
+		{
+			tf_damagefeedback_version.SetValue(TF_DAMAGEFEEDBACK_VERSION);
+			if (iUserVer < 1)
+			{
+				hud_combattext_batching.SetValue(hud_combattext_batching.GetDefault());
+				tf_dingalingaling.SetValue(tf_dingalingaling.GetDefault());
+				tf_dingalingaling_lasthit.SetValue(tf_dingalingaling_lasthit.GetDefault());
+				tf_dingaling_pitchmindmg.SetValue(tf_dingaling_pitchmindmg.GetDefault());
+				tf_dingaling_pitchmaxdmg.SetValue(tf_dingaling_pitchmaxdmg.GetDefault());
+				tf_dingaling_lasthit_pitchmindmg.SetValue(tf_dingaling_lasthit_pitchmindmg.GetDefault());
+				tf_dingaling_lasthit_pitchmaxdmg.SetValue(tf_dingaling_lasthit_pitchmaxdmg.GetDefault());
+				tf_dingaling_lasthit_volume.SetValue(tf_dingaling_lasthit_volume.GetDefault());
+				tf_dingalingaling_effect.SetValue(tf_dingalingaling_effect.GetDefault());
+				tf_dingalingaling_last_effect.SetValue(tf_dingalingaling_last_effect.GetDefault());
+			}
+			if (iUserVer < 2)
+			{
+				hud_combattext_batching_window.SetValue(hud_combattext_batching_window.GetDefault());
+				hud_combattext_red.SetValue(hud_combattext_red.GetDefault());
+				hud_combattext_green.SetValue(hud_combattext_green.GetDefault());
+				hud_combattext_blue.SetValue(hud_combattext_blue.GetDefault());
+			}
+			if (iUserVer < 3)
+			{
+				hud_combattext_large.SetValue(hud_combattext_large.GetDefault());
+				hud_combattext_batching.SetValue(hud_combattext_batching.GetDefault());
+			}
+		}
+
 		ResetDamageVars();
 
 		BaseClass::LevelInit();
@@ -861,6 +978,7 @@ private:
 		m_flDamagePerSecond = 0.f;
 		m_flDamageMeterTotal = 0.f;
 		m_flLastDingTime = 0.f;
+		m_flLastKillDingTime = 0.f;
 	}
 
 private:
@@ -879,6 +997,7 @@ private:
 
 	// Dings
 	float				m_flLastDingTime;
+	float 				m_flLastKillDingTime;
 };
 
 //-----------------------------------------------------------------------------
@@ -1013,7 +1132,7 @@ account_delta_t *CAccountPanel::OnAccountValueChanged( int iOldValue, int iNewVa
 	int iDelta = iNewValue - iOldValue;
 
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
-	if ( iDelta != 0 && pPlayer && pPlayer->IsAlive() )
+	if ( iDelta != 0 && pPlayer )
 	{
 		int index = m_AccountDeltaItems.AddToTail();
 		account_delta_t *pNewDeltaItem = &m_AccountDeltaItems[index];
@@ -1032,6 +1151,7 @@ account_delta_t *CAccountPanel::OnAccountValueChanged( int iOldValue, int iNewVa
 		pNewDeltaItem->m_wzText[0] = NULL;
 		pNewDeltaItem->m_color = GetColor( type, iDelta );
 		pNewDeltaItem->m_bShadows = false;
+		pNewDeltaItem->m_iEnemyState = 0;
 		return &m_AccountDeltaItems[index];
 	}
 
@@ -1071,7 +1191,52 @@ void CAccountPanel::Paint( void )
 {
 	BaseClass::Paint();
 
-	FOR_EACH_VEC_BACK( m_AccountDeltaItems, i )
+	const bool bNewDamageStyle = hud_combattext_batching.GetInt() == 1;
+
+	if ( !bNewDamageStyle && IsInFreezeCam() )
+	{
+		return;
+	}
+
+	auto canBeSeen = [&](int i)
+	{
+		if ( m_AccountDeltaItems[i].m_iEnemyState > 0 )
+		{
+			// TODO(mcoms): it's hard to decide what should be the condition to show enemy damage numbers.
+			// if we go with enemy visible, then the player can be alerted to an enemy's presence by seeing damage numbers pop up.
+			// if we go with damage number visible, we get to see a trail of numbers even after enemy goes out of sight.
+			//Vector vecWorldStart(m_AccountDeltaItems[i].m_nX, m_AccountDeltaItems[i].m_nY, m_AccountDeltaItems[i].m_nHStart);
+			C_BaseEntity* pEntity = m_AccountDeltaItems[i].m_nSourceID > 0 ? ClientEntityList().GetEnt( m_AccountDeltaItems[i].m_nSourceID ) : NULL;
+			C_TFPlayer* pEnemyPlayer = pEntity && pEntity->IsPlayer() ? ToTFPlayer( pEntity ) : NULL;
+			if ( pEnemyPlayer )
+			{
+				// check if we can see them
+				if ( pEnemyPlayer->m_Shared.InCond( TF_COND_STEALTHED ) || pEnemyPlayer->m_Shared.InCond( TF_COND_DISGUISED ) )
+				{
+					return false;
+				}
+			}
+			if ( pEntity )
+			{
+				trace_t tr;
+				UTIL_TraceLine( pEntity->WorldSpaceCenter(), MainViewOrigin(), MASK_OPAQUE, NULL, COLLISION_GROUP_NONE, &tr );
+
+				if ( tr.fraction < 1.0f )
+				{
+					// CAN'T see them on the initial, this is a disappearing number.
+					return false;
+				}
+				else
+				{
+					// don't need to check after this.
+					m_AccountDeltaItems[i].m_iEnemyState = 0;
+				}
+			}
+		}
+		return true;
+	};
+
+	FOR_EACH_VEC( m_AccountDeltaItems, i )
 	{
 		// Reduce lifetime when count grows too high
 		float flTimeMod = m_AccountDeltaItems.Count() > NUM_ACCOUNT_DELTA_ITEMS ? RemapValClamped( m_AccountDeltaItems.Count(), 10.f, 15.f, 0.5f, 1.5f ) : 0.f;
@@ -1079,51 +1244,119 @@ void CAccountPanel::Paint( void )
 		// update all the valid delta items
 		if ( ( m_AccountDeltaItems[i].m_flDieTime - flTimeMod ) > gpGlobals->curtime )
 		{
+			if ( !canBeSeen(i) )
+			{
+				continue;
+			}
+
 			// position and alpha are determined from the lifetime
 			Color c = m_AccountDeltaItems[i].m_color;
 
-			float flLifetimePercent = ( m_flDeltaLifetime - ( m_AccountDeltaItems[i].m_flDieTime - gpGlobals->curtime ) ) / m_flDeltaLifetime;
+			float flLifeTime = m_flDeltaLifetime - ( m_AccountDeltaItems[i].m_flDieTime - gpGlobals->curtime );
+			float flLifetimePercent = flLifeTime / m_flDeltaLifetime;
 			// fade out after half our lifetime
-			int nAlpha = flLifetimePercent > 0.5 ? (int)( 255.0f * ( ( 0.5f - flLifetimePercent ) / 0.5f ) ) : 255;
+			int nAlpha = flLifetimePercent > 0.5f ? (int)( 255.0f * ( ( 0.5f - flLifetimePercent ) / 0.5f ) ) : 255;
 			c[3] = nAlpha;
-			
 
+			if ( m_AccountDeltaItems[i].m_flRealDieTime >= 0.0f && false )
+			{
+				flLifeTime = clamp(m_flDeltaLifetime - (m_AccountDeltaItems[i].m_flRealDieTime - gpGlobals->curtime), 0.0f, m_flDeltaLifetime);
+				flLifetimePercent = flLifeTime / m_flDeltaLifetime;
+			}
 
 			// Some items want to be batched together as they're super frequent (i.e. damage events from a flamethrower, or minigun)
-			if ( m_AccountDeltaItems[i].m_flBatchWindow > 0.f && m_AccountDeltaItems[i].m_nSourceID != -1 && m_AccountDeltaItems.IsValidIndex( i - 1 ) )
+			if ( m_AccountDeltaItems[i].m_flBatchWindow > 0.f && m_AccountDeltaItems[i].m_nSourceID != -1 )
 			{
-				// If next item is from the same source and too close, merge
 				float flDelay = m_AccountDeltaItems[i].m_flBatchWindow;
-				if ( m_AccountDeltaItems[i].m_flDieTime - m_AccountDeltaItems[i-1].m_flDieTime <= flDelay &&
-					 m_AccountDeltaItems[i-1].m_nSourceID == m_AccountDeltaItems[i].m_nSourceID )
+				int iNext = i + 1;
+				while (m_AccountDeltaItems.IsValidIndex(iNext))
 				{
-					m_AccountDeltaItems[i].m_iAmount += m_AccountDeltaItems[i-1].m_iAmount;
-					m_AccountDeltaItems.Remove( i - 1 );
-					continue;
+					// If next item is from the same source and too close, merge
+					if ( fabsf( m_AccountDeltaItems[i].m_flDieTime - m_AccountDeltaItems[iNext].m_flDieTime ) <= flDelay &&
+						m_AccountDeltaItems[iNext].m_nSourceID == m_AccountDeltaItems[i].m_nSourceID )
+					{
+						m_AccountDeltaItems[i].m_iAmount += m_AccountDeltaItems[iNext].m_iAmount;
+						if ( m_AccountDeltaItems[iNext].m_bLargeFont )
+						{
+							m_AccountDeltaItems[i].m_bLargeFont = true;
+						}
+						const bool bCanNextBeSeen = canBeSeen(iNext);
+						if ( !IsInFreezeCam() && bCanNextBeSeen )
+						{
+							if ( bNewDamageStyle )
+							{
+								m_AccountDeltaItemsSmall.AddToTail(m_AccountDeltaItems[iNext]);
+							}
+							// update our pos
+							m_AccountDeltaItems[i].m_nHStart = m_AccountDeltaItems[iNext].m_nHStart;
+							m_AccountDeltaItems[i].m_nHEnd = m_AccountDeltaItems[iNext].m_nHEnd;
+							m_AccountDeltaItems[i].m_nX = m_AccountDeltaItems[iNext].m_nX;
+							m_AccountDeltaItems[i].m_nY = m_AccountDeltaItems[iNext].m_nY;
+						}
+						m_AccountDeltaItems.Remove(iNext);
+						if ( bCanNextBeSeen )
+						{
+							if ( bNewDamageStyle )
+							{
+								if (m_AccountDeltaItems[i].m_flRealDieTime < 0.0f)
+								{
+									// keep track of our position progress
+									m_AccountDeltaItems[i].m_flRealDieTime = m_AccountDeltaItems[i].m_flDieTime;
+								}
+							}
+							m_AccountDeltaItems[i].m_flDieTime = gpGlobals->curtime + m_flDeltaLifetime; // refresh
+						}
+					}
+					else
+					{
+						iNext++;
+					}
+				}
+
+				if ( bNewDamageStyle )
+				{
+					if ( hud_combattext_large.GetBool() )
+					{
+						m_AccountDeltaItems[i].m_bLargeFont = true;
+					}
+					m_AccountDeltaItems[i].m_bShadows = true;
 				}
 			}
 
 			float flHeight = m_AccountDeltaItems[i].m_nHEnd - m_AccountDeltaItems[i].m_nHStart;
-			float flWidth = m_AccountDeltaItems[i].m_nXEnd - m_AccountDeltaItems[i].m_nX;
 
 			// We can be told to go the opposite direction if we're negative
 			if ( m_bNegativeFlipDir && m_AccountDeltaItems[i].m_iAmount < 0 )
 			{
 				flHeight = -flHeight;
-				flWidth = -flWidth;
 			}
 
-			float flYPos = m_AccountDeltaItems[i].m_nHStart + ( flLifetimePercent * flHeight );
-			float flXPos = m_AccountDeltaItems[i].m_nX + ( flLifetimePercent * flWidth );
-			if ( m_AccountDeltaItems[i].m_bWorldSpace )
+			float flYOffset = flLifetimePercent * flHeight;
+
+			float flYPos = m_AccountDeltaItems[i].m_nHStart;
+			if (m_AccountDeltaItems[i].m_flRealDieTime >= 0.0f)
 			{
-				Vector vecWorld( m_AccountDeltaItems[i].m_nX, m_AccountDeltaItems[i].m_nY, flYPos );
-				int iX,iY;
-				if ( !GetVectorInHudSpace( vecWorld, iX, iY ) )				// Tested - NOT GetVectorInScreenSpace
+				flYOffset = 16.0f + flYOffset / 4.0f;
+			}
+			else
+			{
+				flYPos += flYOffset;
+			}
+			float flXPos = m_AccountDeltaItems[i].m_nX;
+			if (m_AccountDeltaItems[i].m_bWorldSpace)
+			{
+				Vector vecWorld(flXPos, m_AccountDeltaItems[i].m_nY, flYPos);
+				int iX, iY;
+				if (!GetVectorInHudSpace(vecWorld, iX, iY))				// Tested - NOT GetVectorInScreenSpace
 					continue;
 
 				flXPos = iX;
 				flYPos = iY;
+			}
+
+			if (m_AccountDeltaItems[i].m_flRealDieTime >= 0.0f)
+			{
+				flYPos -= YRES(flYOffset);
 			}
 
 			// If we have a background texture, then draw it!
@@ -1179,6 +1412,125 @@ void CAccountPanel::Paint( void )
 		else
 		{
 			m_AccountDeltaItems.Remove( i );
+		}
+	}
+
+	FOR_EACH_VEC_BACK( m_AccountDeltaItemsSmall, i )
+	{
+		// Reduce lifetime when count grows too high
+		float flTimeMod = m_AccountDeltaItemsSmall.Count() > NUM_ACCOUNT_DELTA_ITEMS ? RemapValClamped( m_AccountDeltaItemsSmall.Count(), 10.f, 15.f, 0.5f, 1.5f ) : 0.f;
+
+		float flMaxLifeTime = m_flDeltaLifetime - flTimeMod;
+
+		// update all the valid delta items
+		if ( ( m_AccountDeltaItemsSmall[i].m_flDieTime - flTimeMod ) > gpGlobals->curtime )
+		{
+			// position and alpha are determined from the lifetime
+			Color c = m_AccountDeltaItemsSmall[i].m_color;
+			Vector rgb( (float)c.r(), (float)c.g(), (float)c.b() );
+			Vector hsv;
+			RGBtoHSV(rgb, hsv);
+			const float flSatMult = m_AccountDeltaItemsSmall[i].m_bLargeFont ? 0.87f : 0.65f;
+			hsv.y *= flSatMult;
+			HSVtoRGB(hsv, rgb);
+			c[0] = RoundFloatToByte(rgb.x);
+			c[1] = RoundFloatToByte(rgb.y);
+			c[2] = RoundFloatToByte(rgb.z);
+
+			float flLifeTime = m_flDeltaLifetime - ( m_AccountDeltaItemsSmall[i].m_flDieTime - gpGlobals->curtime );
+			float flLifetimePercent = flLifeTime / m_flDeltaLifetime;
+			// fade out after half our lifetime
+			float flLifetimePctAlpha = flLifetimePercent;
+			if (flTimeMod > 0.0f)
+			{
+				float flLifeTimeForAlpha = flMaxLifeTime - ( m_AccountDeltaItemsSmall[i].m_flDieTime - flTimeMod - gpGlobals->curtime );
+				flLifetimePctAlpha = flLifeTimeForAlpha / flMaxLifeTime;
+			}
+			const float flBaseAlpha = m_AccountDeltaItemsSmall[i].m_bLargeFont ? 150.0f : 115.0f;
+			unsigned char nAlpha = RoundFloatToByte( flBaseAlpha * ( 1.0f - flLifetimePctAlpha ) );
+			c[3] = nAlpha;
+
+			float flHeight = m_AccountDeltaItemsSmall[i].m_nHEnd - m_AccountDeltaItemsSmall[i].m_nHStart;
+			float flWidth = m_AccountDeltaItemsSmall[i].m_nXEnd - m_AccountDeltaItemsSmall[i].m_nX;
+
+			// We can be told to go the opposite direction if we're negative
+			if ( m_bNegativeFlipDir && m_AccountDeltaItemsSmall[i].m_iAmount < 0 )
+			{
+				flHeight = -flHeight;
+				flWidth = -flWidth;
+			}
+
+			float flYOffset;
+			float flXOffset = flLifetimePercent * flWidth;
+
+			if ( true || m_AccountDeltaItemsSmall[i].m_bSimulate )
+			{
+				flYOffset = flLifetimePercent * flHeight - 0.5f * 64.0f * flLifeTime * flLifeTime;
+			}
+			else
+			{
+				flYOffset = flLifetimePercent * flHeight;
+			}
+
+			float flYPos = m_AccountDeltaItemsSmall[i].m_nHStart + flYOffset;
+			float flXPos = m_AccountDeltaItemsSmall[i].m_nX + flXOffset;
+			float flSidePos = m_AccountDeltaItemsSmall[i].m_nY - flXOffset;
+			if ( m_AccountDeltaItemsSmall[i].m_bWorldSpace )
+			{
+				Vector vecWorld( flXPos, flSidePos, flYPos );
+				int iX,iY;
+				if ( !GetVectorInHudSpace( vecWorld, iX, iY ) )				// Tested - NOT GetVectorInScreenSpace
+					continue;
+
+				flXPos = iX;
+				flYPos = iY;
+			}
+
+			// If we have a background texture, then draw it!
+			if ( m_nBGTexture != -1 )
+			{
+				vgui::surface()->DrawSetColor(255,255,255,nAlpha);
+				vgui::surface()->DrawSetTexture(m_nBGTexture);
+				vgui::surface()->DrawTexturedRect( flXPos + m_flBGImageX, flYPos + m_flBGImageY, flXPos + m_flBGImageX + m_flBGImageWide, flYPos + m_flBGImageY + m_flBGImageTall );
+			}
+
+			wchar_t wBuf[20];
+
+			if ( m_AccountDeltaItemsSmall[i].m_iAmount > 0 )
+			{
+				V_swprintf_safe( wBuf, L"+%d", m_AccountDeltaItemsSmall[i].m_iAmount );
+			}
+			else
+			{
+				V_swprintf_safe( wBuf, L"%d", m_AccountDeltaItemsSmall[i].m_iAmount );
+			}
+
+			// Append?
+			if ( m_AccountDeltaItemsSmall[i].m_wzText[0] )
+			{
+				wchar_t wAppend[8] = { 0 };
+				V_swprintf_safe( wAppend, L"%ls", m_AccountDeltaItemsSmall[i].m_wzText );
+				V_wcscat_safe( wBuf, wAppend );
+			}
+
+			vgui::surface()->DrawSetTextFont( m_hDeltaItemFont );
+
+			// If we're supposed to have shadows, then draw the text as black and offset a bit first.
+			// Things get ugly as we approach 0 alpha, so stop drawing the shadow a bit early.
+			if ( m_AccountDeltaItemsSmall[i].m_bShadows && c[3] > 10 )
+			{
+				vgui::surface()->DrawSetTextPos( (int)flXPos + XRES(1), (int)flYPos + YRES(1) );
+				vgui::surface()->DrawSetTextColor( COLOR_BLACK );
+				vgui::surface()->DrawPrintText( wBuf, wcslen(wBuf), FONT_DRAW_NONADDITIVE );
+			}
+
+			vgui::surface()->DrawSetTextPos( (int)flXPos, (int)flYPos );
+			vgui::surface()->DrawSetTextColor( c );
+			vgui::surface()->DrawPrintText( wBuf, wcslen(wBuf), FONT_DRAW_NONADDITIVE );
+		}
+		else
+		{
+			m_AccountDeltaItemsSmall.Remove( i );
 		}
 	}
 }

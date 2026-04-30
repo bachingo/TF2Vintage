@@ -43,6 +43,7 @@
 #include "econ/econ_trading.h"
 #include "in_buttons.h"
 #include "tf_mapinfo.h"
+#include "store/store_panel.h"
 
 #if defined ( _X360 )
 #include "engine/imatchmaking.h"
@@ -64,7 +65,7 @@ using namespace vgui;
 #define SCOREBOARD_MAX_LIST_ENTRIES 12
 
 ConVar tf_scoreboard_mouse_mode( "tf_scoreboard_mouse_mode", "2", FCVAR_ARCHIVE );
-ConVar sv_vote_issue_kick_allowed( "sv_vote_issue_kick_allowed", "0", FCVAR_REPLICATED, "Can players call votes to kick players from the server?" );
+ConVar sv_vote_issue_kick_allowed( "sv_vote_issue_kick_allowed", "1", FCVAR_REPLICATED, "Can players call votes to kick players from the server?" );
 
 ConVar tf_show_all_scoreboard_elements( "tf_show_all_scoreboard_elements", "0", FCVAR_DEVELOPMENTONLY );
 
@@ -186,6 +187,8 @@ CTFClientScoreBoardDialog::CTFClientScoreBoardDialog( IViewPort *pViewPort ) : C
 	m_pBlueTeamImage = new ImagePanel( this, "BlueTeamImage" );
 
 	m_pServerTimeLeftValue = NULL;
+	m_pServerTimeLeftLabel = NULL;
+	m_bServerTimeLeftLabelSeries = false;
 	m_pFontTimeLeftNumbers = vgui::INVALID_FONT;
 	m_pFontTimeLeftString = vgui::INVALID_FONT;
 
@@ -388,6 +391,8 @@ void CTFClientScoreBoardDialog::ApplySchemeSettings( vgui::IScheme *pScheme )
 	}
 
 	m_pServerTimeLeftValue = dynamic_cast< CExLabel* >( FindChildByName( "ServerTimeLeftValue" ) );
+	m_pServerTimeLeftLabel = dynamic_cast< CExLabel* >( FindChildByName( "ServerTimeLeftLabel" ) );
+	m_bServerTimeLeftLabelSeries = false;
 	m_pFontTimeLeftNumbers = pScheme->GetFont( "ScoreboardMediumSmall", true );
 	m_pFontTimeLeftString = pScheme->GetFont( "ScoreboardVerySmall", true );
 
@@ -403,6 +408,15 @@ void CTFClientScoreBoardDialog::ShowPanel( bool bShow )
 	{
 		if ( TFGameRules() && TFGameRules()->ShowMatchSummary() )
 			return;
+
+		if ( TFGameRules() && ( TFGameRules()->IsCompetitiveMode() || TFGameRules()->IsEmulatingMatch() ) )
+		{
+			float flRestartTime = TFGameRules()->GetRoundRestartTime() - gpGlobals->curtime;
+			if ( flRestartTime > 0.f && flRestartTime <= TOURNAMENT_NOCANCEL_TIME )
+			{
+				return;
+			}
+		}
 	}
 
 	// Catch the case where we call ShowPanel before ApplySchemeSettings, eg when
@@ -542,6 +556,10 @@ void CTFClientScoreBoardDialog::OnCommand( const char *command )
 					{
 						steamapicontext->SteamFriends()->ActivateGameOverlayToUser( "friendadd", steamID );
 					}
+					else
+					{
+						OpenStoreStatusDialog( NULL, "#MMenu_OverlayRequired", true, false );
+					}
 				}
 			}
 		}
@@ -565,7 +583,7 @@ void CTFClientScoreBoardDialog::OnCommand( const char *command )
 					// Prevent large UI popup during a match
 					if ( pTarget->GetTeamNumber() >= FIRST_GAME_TEAM )
 					{
-						if ( TFGameRules() && TFGameRules()->UsePlayerReadyStatusMode() && TFGameRules()->State_Get() == GR_STATE_RND_RUNNING )
+						if ( TFGameRules() && TFGameRules()->IsCompetitiveGame() && TFGameRules()->State_Get() == GR_STATE_RND_RUNNING && !TFGameRules()->IsInWaitingForPlayers() )
 							return;
 					}
 
@@ -727,7 +745,7 @@ void CTFClientScoreBoardDialog::OnScoreBoardMouseRightRelease( void )
 	m_pRightClickMenu->SetFont( scheme()->GetIScheme( GetScheme() )->GetFont( pszContextMenuFont, true ) );
 
 	bool bFakeClient = ( g_TF_PR->IsFakePlayer( playerIndex ) );
-	bool bTournamentGame = ( g_TF_PR->GetTeam( playerIndex ) >= FIRST_GAME_TEAM && TFGameRules() && TFGameRules()->UsePlayerReadyStatusMode() && TFGameRules()->State_Get() == GR_STATE_RND_RUNNING );
+	bool bTournamentGame = ( g_TF_PR->GetTeam( playerIndex ) >= FIRST_GAME_TEAM && TFGameRules() && TFGameRules()->IsCompetitiveGame() && TFGameRules()->State_Get() == GR_STATE_RND_RUNNING && !TFGameRules()->IsInWaitingForPlayers() );
 
 	MenuBuilder contextMenuBuilder( m_pRightClickMenu, this );
 
@@ -814,9 +832,21 @@ void CTFClientScoreBoardDialog::OnScoreBoardMouseRightRelease( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFClientScoreBoardDialog::UseMouseMode( void )
+bool CTFClientScoreBoardDialog::UseMouseMode( bool bCheckIfActive )
 {
-	return tf_scoreboard_mouse_mode.GetInt() == 1 || ( tf_scoreboard_mouse_mode.GetInt() == 2 && m_bMouseActivated );
+	const int iMouseMode = tf_scoreboard_mouse_mode.GetInt();
+	if ( iMouseMode )
+	{
+		if ( bCheckIfActive )
+		{
+			if ( iMouseMode == 2 )
+			{
+				return m_bMouseActivated;
+			}
+		}
+		return true;
+	}
+	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -904,7 +934,9 @@ void CTFClientScoreBoardDialog::InitPlayerList( SectionedListPanel *pPlayerList 
 	}
 	
 	// the player avatar is always a fixed size, so as we change resolutions we need to vary the size of the name column to adjust the total width of all the columns
-	m_nExtraSpace = pPlayerList->GetWide() - m_iMedalColumnWidth - m_iAvatarWidth - m_iSpacerWidth - m_iNameWidth - m_iKillstreakWidth - m_iKillstreakImageWidth - m_iNemesisWidth - m_iNemesisWidth - m_iScoreWidth - m_iClassWidth - m_iPingWidth - m_iSpacerWidth - ( 2 * SectionedListPanel::COLUMN_DATA_INDENT ); // the SectionedListPanel will indent the columns on either end by SectionedListPanel::COLUMN_DATA_INDENT 
+	m_nExtraSpace = pPlayerList->GetWide() - m_iMedalColumnWidth - m_iAvatarWidth - m_iSpacerWidth - m_iNameWidth - m_iKillstreakWidth - m_iKillstreakImageWidth - m_iNemesisWidth - m_iNemesisWidth - m_iScoreWidth - m_iClassWidth - m_iPingWidth - m_iSpacerWidth;
+	m_nExtraSpace -= ( 2 * SectionedListPanel::COLUMN_DATA_INDENT ); // the SectionedListPanel will indent the columns on either end by SectionedListPanel::COLUMN_DATA_INDENT
+	m_nExtraSpace -= ( 10 * SectionedListPanel::COLUMN_DATA_GAP ); // every other column has a gap applied with size SectionedListPanel::COLUMN_DATA_GAP
 
 	pPlayerList->AddColumnToSection( 0, "name", "#TF_Scoreboard_Name", 0, m_iNameWidth + m_nExtraSpace );
 	pPlayerList->AddColumnToSection( 0, "killstreak", "", SectionedListPanel::COLUMN_RIGHT, m_iKillstreakWidth );
@@ -979,6 +1011,13 @@ void CTFClientScoreBoardDialog::Update()
 //-----------------------------------------------------------------------------
 void CTFClientScoreBoardDialog::UpdateTeamInfo()
 {
+	bool bMultiSeries = false;
+	if ( TFGameRules() )
+	{
+		ETFMatchGroup eMatchGroup = TFGameRules()->GetCurrentMatchGroupWithEmulation();
+		bMultiSeries = GetMatchGroupDescription( eMatchGroup ) && GetMatchGroupDescription( eMatchGroup )->BUsesMultiSeries() && !TFGameRules()->IsCommunityGameMode();
+	}
+
 	// update the team sections in the scoreboard
 	for ( int teamIndex = TF_TEAM_RED; teamIndex <= TF_TEAM_BLUE; teamIndex++ )
 	{
@@ -1024,7 +1063,7 @@ void CTFClientScoreBoardDialog::UpdateTeamInfo()
 			SetDialogVariable( pDialogVarTeamPlayerCount, string1 );
 
 			// set team score in dialog
-			SetDialogVariable( pDialogVarTeamScore, team->Get_Score() );
+			SetDialogVariable( pDialogVarTeamScore, bMultiSeries ? TFGameRules()->GetSeriesPoints( TFGameRules()->GetGCTeamForGameTeam( teamIndex ) ) : team->Get_Score() );
 
 			// set the team name
 			SetDialogVariable( pDialogVarTeamName, team->Get_Localized_Name() );
@@ -1430,19 +1469,23 @@ void CTFClientScoreBoardDialog::UpdatePlayerList()
 					}
 					else
 					{
-						int iIndex = PING_VERY_HIGH;
+						int iIndex;
 
-						if ( nPing < 125 )
+						if ( nPing <= 24 )
 						{
 							iIndex = PING_LOW;
 						}
-						else if ( nPing < 200 )
+						else if ( nPing < 50 )
 						{
 							iIndex = PING_MED;
 						}
-						else if ( nPing < 275 )
+						else if ( nPing < 150 )
 						{
 							iIndex = PING_HIGH;
+						}
+						else
+						{
+							iIndex = PING_VERY_HIGH;
 						}
 							
 						pKeyValues->SetInt( "ping", bAlive ? m_iImagePing[iIndex] : m_iImagePingDead[iIndex] );
@@ -1793,6 +1836,12 @@ static void PopulateDuelPanel( CTFClientScoreBoardDialog::duel_panel_t &duelPane
 	duelPanel.m_pPanel->SetDialogVariable( "score", unScore );
 }
 
+#ifdef TF2_OG
+#define ShouldUsePlayerModel() false
+#else
+#define ShouldUsePlayerModel() cl_hud_playerclass_use_playermodel.GetBool()
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: Updates details about a player
 //-----------------------------------------------------------------------------
@@ -1971,17 +2020,17 @@ void CTFClientScoreBoardDialog::UpdatePlayerDetails()
 	m_pImagePanelHorizLine->SetFillColor( clr );
 
 	// update our image if our selected player or mode of display has changed
-	if ( ( m_hSelectedPlayer != pSelectedPlayer ) || ( m_bUsePlayerModel != cl_hud_playerclass_use_playermodel.GetBool() ) )
+	if ( ( m_hSelectedPlayer != pSelectedPlayer ) || ( m_bUsePlayerModel != ShouldUsePlayerModel() ) )
 	{
 		m_hSelectedPlayer = pSelectedPlayer;
-		m_bUsePlayerModel = cl_hud_playerclass_use_playermodel.GetBool();
+		m_bUsePlayerModel = ShouldUsePlayerModel();
 
 		int iClass = pSelectedPlayer->m_Shared.GetDesiredPlayerClassIndex();
 		int iTeam = pSelectedPlayer->GetTeamNumber();
 		if ( ( pLocalPlayer->InSameTeam( pSelectedPlayer ) || pLocalPlayer->GetTeamNumber() < FIRST_GAME_TEAM ) && 
 			 iTeam >= FIRST_GAME_TEAM && iClass >= TF_FIRST_NORMAL_CLASS && iClass <= TF_LAST_NORMAL_CLASS )
 		{
-			if ( cl_hud_playerclass_use_playermodel.GetBool() )
+			if ( ShouldUsePlayerModel() )
 			{
 				if ( !m_pPlayerModelPanel->IsVisible() )
 				{
@@ -2030,6 +2079,13 @@ void CTFClientScoreBoardDialog::UpdatePlayerDetails()
 //-----------------------------------------------------------------------------
 void CTFClientScoreBoardDialog::UpdateServerTimeLeft()
 {
+	bool bMultiSeries = false;
+	if ( TFGameRules() )
+	{
+		ETFMatchGroup eMatchGroup = TFGameRules()->GetCurrentMatchGroupWithEmulation();
+		bMultiSeries = GetMatchGroupDescription( eMatchGroup ) && GetMatchGroupDescription( eMatchGroup )->BUsesMultiSeries() && !TFGameRules()->IsCommunityGameMode();
+	}
+
 	wchar_t wzServerTimeHrsLeft[128];
 	wchar_t wzServerTimeMinLeft[128];
 	wchar_t wzServerTimeSecLeft[128];
@@ -2041,9 +2097,15 @@ void CTFClientScoreBoardDialog::UpdateServerTimeLeft()
 	int iSeconds = 0;
 	int iServerTimeLimit = mp_timelimit.GetInt() * 60;
 
+	if ( m_pServerTimeLeftLabel && bMultiSeries != m_bServerTimeLeftLabelSeries )
+	{
+		m_bServerTimeLeftLabelSeries = bMultiSeries;
+		m_pServerTimeLeftLabel->SetText( CFmtStr( "#Scoreboard_TimeLeftLabel%s", bMultiSeries ? "_Series" : "" ) );
+	}
+
 	if ( iServerTimeLimit == 0 )
 	{ 
-		g_pVGuiLocalize->ConstructString_safe( wzServerTimeLeft, g_pVGuiLocalize->Find( "#Scoreboard_NoTimeLimit" ), 0 );
+		g_pVGuiLocalize->ConstructString_safe( wzServerTimeLeft, g_pVGuiLocalize->Find( CFmtStr( "#Scoreboard_NoTimeLimit%s", bMultiSeries ? "_Series" : "" ) ), 0 );
 		SetDialogVariable( "servertimeleft", wzServerTimeLeft );
 
 		g_pVGuiLocalize->ConstructString_safe( wzServerTimeLeft, g_pVGuiLocalize->Find( "#Scoreboard_NoTimeLimitNew" ), 0 );
@@ -2066,10 +2128,10 @@ void CTFClientScoreBoardDialog::UpdateServerTimeLeft()
 	}
 	if ( iTimeLeft == 0 )
 	{
-		g_pVGuiLocalize->ConstructString_safe( wzServerTimeLeft, g_pVGuiLocalize->Find( "#Scoreboard_ChangeOnRoundEnd" ), 0 );
+		g_pVGuiLocalize->ConstructString_safe( wzServerTimeLeft, g_pVGuiLocalize->Find( CFmtStr( "#Scoreboard_ChangeOnRoundEnd%s", bMultiSeries ? "_Series" : "" ) ), 0 );
 		SetDialogVariable( "servertimeleft", wzServerTimeLeft );
 
-		g_pVGuiLocalize->ConstructString_safe( wzServerTimeLeft, g_pVGuiLocalize->Find( "#Scoreboard_ChangeOnRoundEndNew" ), 0 );
+		g_pVGuiLocalize->ConstructString_safe( wzServerTimeLeft, g_pVGuiLocalize->Find( CFmtStr( "#Scoreboard_ChangeOnRoundEndNew%s", bMultiSeries ? "_Series" : "" ) ), 0 );
 		SetDialogVariable( "servertime", wzServerTimeLeft );
 
 		if ( m_pServerTimeLeftValue && m_pServerTimeLeftValue->IsVisible() && ( m_pFontTimeLeftString != vgui::INVALID_FONT ) )
@@ -2097,7 +2159,7 @@ void CTFClientScoreBoardDialog::UpdateServerTimeLeft()
 
 	if ( iHours == 0 )
 	{
-		g_pVGuiLocalize->ConstructString_safe( wzServerTimeLeft, g_pVGuiLocalize->Find( "#Scoreboard_TimeLeftNoHours" ), 2, wzServerTimeMinLeft, wzServerTimeSecLeft );
+		g_pVGuiLocalize->ConstructString_safe( wzServerTimeLeft, g_pVGuiLocalize->Find( CFmtStr( "#Scoreboard_TimeLeftNoHours%s", bMultiSeries ? "_Series" : "" ) ), 2, wzServerTimeMinLeft, wzServerTimeSecLeft );
 		SetDialogVariable( "servertimeleft", wzServerTimeLeft );
 
 		g_pVGuiLocalize->ConstructString_safe( wzServerTimeLeft, g_pVGuiLocalize->Find( "#Scoreboard_TimeLeftNoHoursNew" ), 2, wzServerTimeMinLeft, wzServerTimeSecLeft );
@@ -2106,7 +2168,7 @@ void CTFClientScoreBoardDialog::UpdateServerTimeLeft()
 		return;
 	}
 	
-	g_pVGuiLocalize->ConstructString_safe( wzServerTimeLeft, g_pVGuiLocalize->Find( "#Scoreboard_TimeLeft" ), 3, wzServerTimeHrsLeft, wzServerTimeMinLeft, wzServerTimeSecLeft );
+	g_pVGuiLocalize->ConstructString_safe( wzServerTimeLeft, g_pVGuiLocalize->Find( CFmtStr( "#Scoreboard_TimeLeft%s", bMultiSeries ? "_Series" : "" ) ), 3, wzServerTimeHrsLeft, wzServerTimeMinLeft, wzServerTimeSecLeft );
 	SetDialogVariable( "servertimeleft", wzServerTimeLeft );
 
 	g_pVGuiLocalize->ConstructString_safe( wzServerTimeLeft, g_pVGuiLocalize->Find( "#Scoreboard_TimeLeftNew" ), 3, wzServerTimeHrsLeft, wzServerTimeMinLeft, wzServerTimeSecLeft );

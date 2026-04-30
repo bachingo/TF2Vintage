@@ -74,8 +74,11 @@ public:
 	virtual void OnShowPanel( bool bVisible, bool bReturningFromArmory );
 	virtual void PostShowPanel( bool bVisible );
 	virtual void OnKeyCodePressed( vgui::KeyCode code ) OVERRIDE;
+	virtual void OnKeyCodeTyped( vgui::KeyCode code ) OVERRIDE;
 	virtual void OnNavigateTo( const char* panelName ) OVERRIDE;
 	virtual void OnNavigateFrom( const char* panelName ) OVERRIDE;
+
+	void OnLoadoutUpdate( void );
 
 	void		 SetClass( int iClass );
 	void		 SetTeam( int iTeam );

@@ -10,6 +10,8 @@
 #include "c_tf_player.h"
 #include "tf_weapon_medigun.h"
 #include "tf_demo_support.h"
+
+#include "c_tf_team.h"
 #include "tf_gamerules.h"
 #include "tf_hud_chat.h"
 #include "vguicenterprint.h"
@@ -19,16 +21,18 @@ static CTFDemoSupport g_DemoSupport;
 
 extern ConVar mp_tournament;
 
-ConVar ds_enable( "ds_enable", "0", FCVAR_CLIENTDLL | FCVAR_DONTRECORD | FCVAR_ARCHIVE, "Demo support - enable automatic .dem file recording and features. 0 - Manual, 1 - Auto-record competitive matches, 2 - Auto-record all matches, 3 - Auto-record tournament (mp_tournament) matches", true, 0, true, 3 ); 
+ConVar ds_enable( "ds_enable", "4", FCVAR_CLIENTDLL | FCVAR_DONTRECORD | FCVAR_ARCHIVE, "Demo support - enable automatic .dem file recording and features. 0 - Manual, 1 - Auto-record matchmaking matches, 2 - Auto-record all matches, 3 - Auto-record tournament (mp_tournament) matches, 4 - Auto-record competitive matches", true, 0, true, 4 ); 
 ConVar ds_dir( "ds_dir", "demos", FCVAR_CLIENTDLL | FCVAR_DONTRECORD | FCVAR_ARCHIVE, "Demo support - will put all files into this folder under the gamedir. 24 characters max." );
 ConVar ds_prefix( "ds_prefix", "", FCVAR_CLIENTDLL | FCVAR_DONTRECORD | FCVAR_ARCHIVE, "Demo support - will prefix files with this string. 24 characters max." );
-ConVar ds_min_streak( "ds_min_streak", "4", FCVAR_CLIENTDLL | FCVAR_DONTRECORD | FCVAR_ARCHIVE, "Demo support - minimum kill streak count before being recorded.", true, 2, false, 0 );
+ConVar ds_min_streak( "ds_min_streak", "4", FCVAR_CLIENTDLL | FCVAR_DONTRECORD | FCVAR_ARCHIVE, "Demo support - minimum kill streak count before being recorded. 0 to disable.", true, 0, false, 0 );
 ConVar ds_kill_delay( "ds_kill_delay", "15", FCVAR_CLIENTDLL | FCVAR_DONTRECORD | FCVAR_ARCHIVE, "Demo support - maximum time between kills for tracking kill streaks.", true, 5, false, 0 );
-ConVar ds_log( "ds_log", "1", FCVAR_CLIENTDLL | FCVAR_DONTRECORD | FCVAR_ARCHIVE, "Demo support - log kill streak and bookmark events to an associated .txt file.", true, 0, true, 1 );
+ConVar ds_log( "ds_log", "1", FCVAR_CLIENTDLL | FCVAR_DONTRECORD | FCVAR_ARCHIVE, "Demo support - log kill streak and bookmark events to associated files.", true, 0, true, 1 );
 ConVar ds_sound( "ds_sound", "1", FCVAR_CLIENTDLL | FCVAR_DONTRECORD | FCVAR_ARCHIVE, "Demo support - play start/stop sound for demo recording.", true, 0, true, 1 ); 
 ConVar ds_notify( "ds_notify", "0", FCVAR_CLIENTDLL | FCVAR_DONTRECORD | FCVAR_ARCHIVE, "Demo support - text output when recording start/stop/bookmark events : 0 - console, 1 - console and chat, 2 - console and HUD.", true, 0, true, 2 ); 
 ConVar ds_screens( "ds_screens", "1", FCVAR_CLIENTDLL | FCVAR_DONTRECORD | FCVAR_ARCHIVE, "Demo support - take screenshot of the scoreboard for non-competitive matches or the match summary stats for competitive matches. For competitive matches, it will not capture the screenshot if you disconnect from the server before the medal awards have completed.", true, 0, true, 1 );
 ConVar ds_autodelete( "ds_autodelete", "0", FCVAR_CLIENTDLL | FCVAR_DONTRECORD | FCVAR_ARCHIVE, "Demo support - automatically delete .dem files with no associated bookmark or kill streak events.", true, 0, true, 1 ); 
+ConVar ds_rounds_only( "ds_rounds_only", "1", FCVAR_CLIENTDLL | FCVAR_DONTRECORD | FCVAR_ARCHIVE, "Demo support - only record during the rounds of a match, no pre or post-game.", true, 0, true, 1 );
+ConVar ds_automark( "ds_automark", "1", FCVAR_CLIENTDLL | FCVAR_DONTRECORD | FCVAR_ARCHIVE, "Auto bookmark competitive matches.", true, 0, true, 1 );
 
 CON_COMMAND_F( ds_mark, "Demo support - bookmark (with optional single-word description) the current tick count for the demo being recorded.", FCVAR_CLIENTDLL | FCVAR_DONTRECORD )
 {
@@ -80,6 +84,7 @@ CTFDemoSupport::CTFDemoSupport() : CAutoGameSystemPerFrame( "CTFDemoSupport" )
 	m_DemoSpecificEventList.Clear();
 	m_DemoSpecificEventList.SetStatusCode( k_EHTTPStatusCode200OK );
 	m_pRoot = NULL;
+	m_pDetailsNode = NULL;
 	m_pChildArray = NULL;
 	m_flScreenshotTime = -1.f;
 	m_bAlreadyAutoRecordedOnce = false;
@@ -99,6 +104,8 @@ bool CTFDemoSupport::Init()
 	ListenForGameEvent( "client_disconnect" );
 	ListenForGameEvent( "ds_screenshot" );
 	ListenForGameEvent( "ds_stop" );
+	ListenForGameEvent( "teamplay_game_over" );
+	ListenForGameEvent( "tf_game_over" );
 	return true;
 }
 
@@ -130,21 +137,46 @@ void CTFDemoSupport::LevelShutdownPostEntity()
 //-----------------------------------------------------------------------------
 void CTFDemoSupport::Update( float frametime )
 {
-	if ( engine->IsPlayingDemo() )
+	if ( engine->IsPlayingDemo() || engine->IsLevelMainMenuBackground() )
 		return;
 
-	if ( ds_enable.GetInt() > 0 )
+	const bool bIsCompetitive = TFGameRules() && TFGameRules()->IsCompetitiveGame();
+	static ConVarRef tf_tournament_force_ds("tf_tournament_force_ds");
+	const bool bForceRecord = bIsCompetitive && tf_tournament_force_ds.IsValid() && tf_tournament_force_ds.GetBool();
+
+	if ( bForceRecord || ds_enable.GetInt() > 0 )
 	{
-		if ( !m_bRecording && !m_bAlreadyAutoRecordedOnce )
+		if ( !m_bRecording && ( bForceRecord || !m_bAlreadyAutoRecordedOnce ) )
 		{
-			if ( ds_enable.GetInt() == 1 )
+			if ( bForceRecord )
 			{
-				if ( TFGameRules() && !TFGameRules()->IsCompetitiveMode() )
+				// no condition
+			}
+			else if ( ds_enable.GetInt() == 1 )
+			{
+				// IsCompetitiveMode got updated to include Casual. So ds_enable 1 just means "if we're in a matchmaking match"
+				if ( TFGameRules() && !TFGameRules()->IsCompetitiveMode() && !TFGameRules()->IsEmulatingMatch() )
 					return;
 			}
 			else if ( ds_enable.GetInt() == 3 )
 			{
 				if ( !mp_tournament.GetBool() )
+					return;
+			}
+			else if ( ds_enable.GetInt() == 4 )
+			{
+				if ( !bIsCompetitive )
+					return;
+			}
+
+			if ( ds_rounds_only.GetBool() )
+			{
+				if ( !TFGameRules() )
+					return;
+
+				const float flRestartTime = TFGameRules()->GetRoundRestartTime();
+				const bool bInCountdown = flRestartTime > 0.0f && flRestartTime - gpGlobals->curtime <= 7.5f;
+				if ( ( !bInCountdown && !TFGameRules()->IsInPlay() ) || TFGameRules()->State_Get() == GR_STATE_GAME_OVER )
 					return;
 			}
 
@@ -180,6 +212,13 @@ void CTFDemoSupport::Update( float frametime )
 		{
 			engine->TakeScreenshot( m_szFilename, m_szFolder );
 			Notify( "(Demo Support) Screenshot saved\n" );
+		}
+
+		if ( ds_rounds_only.GetBool() )
+		{
+			StopRecording( false );
+			// wait a bit before trying to record again.
+			m_flNextRecordStartCheckTime = gpGlobals->curtime + 5.f;
 		}
 	}
 }
@@ -384,7 +423,7 @@ void CTFDemoSupport::FireGameEvent( IGameEvent * event )
 			}
 
 			// if our kill-streak has increased, make an event entry
-			if ( ( nOldKillCount != m_nKillCount ) && ( m_nKillCount > 0 ) && ( m_nKillCount >= ds_min_streak.GetInt() ) )
+			if ( (ds_min_streak.GetInt() > 0) && ( nOldKillCount != m_nKillCount ) && ( m_nKillCount >= 0 ) && ( m_nKillCount >= ds_min_streak.GetInt() ) )
 			{
 				LogEvent( eDemoEvent_Killstreak, m_nKillCount );
 			}
@@ -475,7 +514,7 @@ bool CTFDemoSupport::StartRecording( void )
 		// check folder
 		if ( !IsValidPath( ds_dir.GetString() ) )
 		{
-			Msg( "DemoSupport: invalid folder.\n" );
+			Msg( "(Demo Support) invalid folder.\n" );
 			return false;
 		}
 
@@ -507,12 +546,37 @@ bool CTFDemoSupport::StartRecording( void )
 	m_DemoSpecificEventList.SetStatusCode( k_EHTTPStatusCode200OK );
 	m_pRoot = m_DemoSpecificEventList.CreateRootValue( "summary" );
 	m_DemoSpecificEventList.SetJSONAnonymousRootNode( true );
+	if ( ds_log.GetBool() )
+	{
+		CBasePlayer* pLocalPlayer = CBasePlayer::GetLocalPlayer();
+		if ( pLocalPlayer )
+		{
+			m_pDetailsNode = m_pRoot->CreateChildObject( "details" );
+			char mapname[MAX_MAP_NAME];
+			Q_FileBase( engine->GetLevelName(), mapname, sizeof( mapname ) );
+			m_pDetailsNode->SetChildStringValue( "map_name", mapname );
+			char pGameMode[512];
+			g_pVGuiLocalize->ConvertUnicodeToANSI( g_pVGuiLocalize->Find( GetMapType( mapname ) ), pGameMode, sizeof( pGameMode ) );
+			m_pDetailsNode->SetChildStringValue( "gamemode", pGameMode );
+			if ( TFGameRules()->IsCompetitiveGame() )
+			{
+				char pTeamName[MAX_TEAM_NAME_LENGTH * 3];
+				g_pVGuiLocalize->ConvertUnicodeToANSI( GetGlobalTFTeam( pLocalPlayer->GetTeamNumber() )->Get_Localized_Name(), pTeamName, sizeof( pTeamName ) );
+				m_pDetailsNode->SetChildStringValue( "team", pTeamName );
+				char pEnemyTeamName[MAX_TEAM_NAME_LENGTH * 3];
+				g_pVGuiLocalize->ConvertUnicodeToANSI( GetGlobalTFTeam( pLocalPlayer->GetTeamNumber() == TF_TEAM_BLUE ? TF_TEAM_RED : TF_TEAM_BLUE )->Get_Localized_Name(), pEnemyTeamName, sizeof( pEnemyTeamName ) );
+				m_pDetailsNode->SetChildStringValue( "enemy_team", pEnemyTeamName );
+			}
+		}
+	}
 	m_pChildArray = m_pRoot->CreateChildArray( "events", "event" );
 
 	m_bRecording = true;
 	m_bAlreadyAutoRecordedOnce = true;
 	m_nStartingTickCount = gpGlobals->tickcount;
-	m_bHasAtLeastOneEvent = false;
+	static ConVarRef tf_tournament_force_ds( "tf_tournament_force_ds" );
+	const bool bForceRecord = tf_tournament_force_ds.IsValid() && tf_tournament_force_ds.GetBool();
+	m_bHasAtLeastOneEvent = TFGameRules()->IsCompetitiveGame() && ( bForceRecord || ds_automark.GetBool() );
 
 	if ( ds_sound.GetBool() )
 	{
@@ -582,6 +646,10 @@ void CTFDemoSupport::StopRecording( bool bFromEngine /* = false */ )
 	{
 		if ( ds_log.GetBool() )
 		{
+			// TODO(mcoms): why not use engine->GetDemoRecordingTick()?
+			int nTickCount = gpGlobals->tickcount - m_nStartingTickCount;
+			m_pDetailsNode->SetChildInt32Value( "ticks", nTickCount );
+
 			// write out the associated bookmark and kill-streak data file
 			char szTempFilename[MAX_PATH] = {0};
 			V_sprintf_safe( szTempFilename, "%s.json", m_szFolderAndFilename );
@@ -594,6 +662,7 @@ void CTFDemoSupport::StopRecording( bool bFromEngine /* = false */ )
 
 	m_DemoSpecificEventList.Clear();
 	m_pRoot = NULL;
+	m_pDetailsNode = NULL;
 	m_pChildArray = NULL;
 	m_bHasAtLeastOneEvent = false;
 }

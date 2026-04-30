@@ -183,7 +183,8 @@ public:
 
 	CHudChatHistory( vgui::Panel *pParent, const char *panelName );
 
-	virtual void	ApplySchemeSettings(vgui::IScheme *pScheme);
+	virtual void	ApplySchemeSettings(vgui::IScheme *pScheme) OVERRIDE;
+	virtual void	ApplySettings(KeyValues* inResourceData) OVERRIDE;
 };
 
 class CHudChatFilterButton : public vgui::Button
@@ -288,6 +289,7 @@ public:
 	virtual Color	GetDefaultTextColor( void );
 	virtual Color	GetTextColorForClient( TextColor colorNum, int clientIndex );
 	virtual Color	GetClientColor( int clientIndex );
+	virtual Color	GetClientEnemyColor(int clientIndex) { return GetClientColor(clientIndex); }
 
 	virtual int		GetFilterForString( const char *pString );
 

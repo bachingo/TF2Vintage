@@ -38,6 +38,8 @@
 
 #include <vgui/ILocalize.h>
 #include <vgui/ISurface.h>
+
+#include "tf_hud_match_status.h"
 #include "vgui_avatarimage.h"
 
 using namespace vgui;
@@ -76,7 +78,7 @@ void HUDTournamentSpecChangedCallBack( IConVar *var, const char *pOldString, flo
 		pPanel->InvalidateLayout( true, true );
 	}
 }
-ConVar cl_use_tournament_specgui( "cl_use_tournament_specgui", "0", FCVAR_ARCHIVE, "When in tournament mode, use the advanced tournament spectator UI.", HUDTournamentSpecChangedCallBack );
+ConVar cl_use_tournament_specgui( "cl_use_tournament_specgui", "1", FCVAR_ARCHIVE, "When in tournament mode, use the advanced tournament spectator UI.", HUDTournamentSpecChangedCallBack );
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
@@ -105,6 +107,8 @@ CTFSpectatorGUI::CTFSpectatorGUI(IViewPort *pViewPort) : CSpectatorGUI(pViewPort
 
 	m_pStudentHealth = new CTFSpectatorGUIHealth( this, "StudentGUIHealth" );
 	m_pAvatar = NULL;
+
+	m_pDrawingPanel = new CDrawingPanel( this, "DrawingPanel" );
 
 	m_flNextItemPanelUpdate = 0;
 	m_flNextPlayerPanelUpdate = 0;
@@ -239,6 +243,19 @@ void CTFSpectatorGUI::ApplySchemeSettings( vgui::IScheme *pScheme )
 			m_pBottomBarBlank->SetVisible( false );
 		}
 	}
+	else
+	{
+		if ( m_pTopBar )
+		{
+			const Color col = m_pTopBar->GetBgColor();
+			m_pTopBar->SetBgColor( Color( col.r(), col.g(), col.b(), MIN( col.a(), 100 ) ) );
+		}
+		if ( m_pBottomBarBlank )
+		{
+			const Color col = m_pBottomBarBlank->GetBgColor();
+			m_pBottomBarBlank->SetBgColor( Color( col.r(), col.g(), col.b(), MIN( col.a(), 100 ) ) );
+		}
+	}
 
 	if ( m_bCoaching )
 	{
@@ -251,6 +268,12 @@ void CTFSpectatorGUI::ApplySchemeSettings( vgui::IScheme *pScheme )
 		{
 			m_pClassOrTeamKeyLabel->SetVisible( false );
 		}
+	}
+
+	if ( m_pDrawingPanel )
+	{
+		m_pDrawingPanel->ClearAllLines();
+		m_pDrawingPanel->SetType( DRAWING_PANEL_TYPE_OBSERVER );
 	}
 
 	// Stay the same visibility as before the scheme reload.
@@ -322,11 +345,11 @@ void CTFSpectatorGUI::Update()
 		Vector vecDelta = pLocalPlayer->GetAbsOrigin() - vecTarget;
 		float flDistance = vecDelta.Length();
 		const float kInchesToMeters = 0.0254f;
-		int distance = RoundFloatToInt( flDistance * kInchesToMeters );
+		int distance = RoundFloatToNearestInt( flDistance * kInchesToMeters );
 		wchar_t wzValue[32];
 		_snwprintf( wzValue, ARRAYSIZE( wzValue ), L"%u", distance );
 		wchar_t wzText[256];
-		g_pVGuiLocalize->ConstructString_safe( wzText, g_pVGuiLocalize->Find( "#TR_DistanceToStudent" ), 1, wzValue );
+		g_pVGuiLocalize->ConstructString_safe( wzText, g_pVGuiLocalize->Find( "#TC2_TR_DistanceToStudent" ), 1, wzValue );
 		SetDialogVariable( "student_distance", wzText );
 	}
 
@@ -334,6 +357,14 @@ void CTFSpectatorGUI::Update()
 	{
 		RecalculatePlayerPanels();
 		m_flNextPlayerPanelUpdate = gpGlobals->curtime + 0.1f;
+	}
+
+	static ConVarRef cl_spec_hud_draw_show( "cl_spec_hud_draw_show" );
+	if ( m_pDrawingPanel && cl_spec_hud_draw_show.GetBool() != m_pDrawingPanel->IsVisible() && InTournamentGUI() )
+	{
+		m_pDrawingPanel->SetVisible( cl_spec_hud_draw_show.GetBool() );
+		m_pDrawingPanel->SetKeyBoardInputEnabled( false );
+		m_pDrawingPanel->SetMouseInputEnabled( false );
 	}
 }
 
@@ -911,7 +942,7 @@ void CTFSpectatorGUI::FireGameEvent( IGameEvent *event )
 	{
 		CBaseEntity *pVictim = ClientEntityList().GetEnt( engine->GetPlayerForUserID( event->GetInt("userid") ) );
 		C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
-		if ( pLocalPlayer && ( pVictim == pLocalPlayer->m_hStudent ) )
+		if ( pLocalPlayer && ( pVictim == pLocalPlayer->m_hStudent ) && ( event->GetInt("death_flags") & TF_DEATH_FEIGN_DEATH ) == 0 )
 		{
 			CEconNotification *pNotification = new CEconNotification();
 			pNotification->SetText( "#TF_Coach_StudentHasDied" );
@@ -1065,7 +1096,16 @@ bool CTFSpectatorGUI::InTournamentGUI( void )
 		bOverride = true;
 	}
 
-	return ( TFGameRules()->IsInTournamentMode() && !TFGameRules()->IsCompetitiveMode() && ( cl_use_tournament_specgui.GetBool() || bOverride ) );
+	// don't use specgui if we're using match HUD, or if we're in matchmaking
+	const bool bInTournament = TFGameRules() && TFGameRules()->IsInTournamentMode();
+	const bool bNoConflicts = TFGameRules() && !TFGameRules()->IsCompetitiveMode() && !TFGameRules()->IsEmulatingMatch() && !ShouldUseMatchHUD();
+
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	const bool bIsSpectator = !pPlayer || pPlayer->IsHLTV() || ( pPlayer->GetTeamNumber() != TF_TEAM_RED && pPlayer->GetTeamNumber() != TF_TEAM_BLUE );
+
+	const bool bWantsTournamentGUI = ( cl_use_tournament_specgui.GetBool() || bOverride );
+
+	return ( bInTournament && ( bNoConflicts || bIsSpectator ) && bWantsTournamentGUI );
 }
 
 //-----------------------------------------------------------------------------
@@ -1146,7 +1186,7 @@ void CTFSpectatorGUI::RecalculatePlayerPanels( void )
 
 	for ( int i = iPanel; i < m_PlayerPanels.Count(); i++  )
 	{
-		m_PlayerPanels[i]->SetPlayerIndex( 0 );
+		m_PlayerPanels[i]->SetPlayerIndex( -1 );
 	}
 
 	UpdatePlayerPanels();

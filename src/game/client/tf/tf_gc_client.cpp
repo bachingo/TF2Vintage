@@ -103,6 +103,34 @@ void SubscribeToLocalPlayerSOCache( ISharedObjectListener* pListener )
 	}
 }
 
+bool ForceCompetitiveConvars()
+{
+
+	bool anyFailures = false;
+
+	Assert( ThreadInMainThread() );
+	for ( ConCommandBase *ccb = g_pCVar->GetCommands(); ccb; ccb = ccb->GetNext() )
+	{
+		if ( ccb->IsCommand() )
+			continue;
+
+		ConVar *pVar = ( ConVar * ) ccb;
+
+		if ( !pVar->IsCompetitiveRestricted() )
+			continue;
+
+		// Hack: This var is created by the dxconfig system, but it doesn't actually exist.
+		// Skip it so we have no vars change when running a clean config.
+		if ( V_stricmp( pVar->GetName(), "r_decal_cullsize" ) == 0 )
+			continue;
+		
+		if ( !pVar->SetCompetitiveMode( true ) )
+			anyFailures = true;
+	}
+
+	return !anyFailures;
+}
+
 
 //-----------------------------------------------------------------------------
 // Constructor
@@ -280,7 +308,15 @@ void CTFGCClientSystem::FireGameEvent( IGameEvent *event )
 				break;
 
 			case eConnectState_NonmatchmadeServer:
+			{
+				// Check for matchmaking emulation
+				if ( TFGameRules() && TFGameRules()->IsEmulatingMatch() == 2 && false )
+				{
+					// TODO(mcoms): how to enforce engine defaults properly?
+					ForceCompetitiveConvars();
+				}
 				break;
+			}
 		}
 		m_steamIDCurrentServer.Clear();
 		if ( steamapicontext && steamapicontext->SteamUser() && steamapicontext->SteamUtils() )
@@ -354,6 +390,7 @@ void CTFGCClientSystem::WebapiInventoryThink()
 		state.m_hSteamAuthTicket = SteamUser()->GetAuthTicketForWebApi( "tf2sdk" );
 		if ( state.m_hSteamAuthTicket == k_HAuthTicketInvalid )
 		{
+			DevWarning("Steam auth ticket request invalid.\n");
 			state.Backoff();
 			return;
 		}
@@ -417,6 +454,7 @@ void CTFGCClientSystem::WebapiInventoryThink()
 		SteamAPICall_t callResult;
 		if ( !SteamHTTP()->SendHTTPRequest( state.m_hInventoryRequest, &callResult ) )
 		{
+			DevWarning("Steam inventory request failed.\n");
 			state.Backoff();
 			return;
 		}
@@ -486,7 +524,10 @@ void CTFGCClientSystem::WebapiInventoryThink()
 
 		// We now have encoded the latest state of the SO cache into our message -- if that changes, we need to re-build
 		// our message to the server.
+		state.m_bDidApplyLocalChanges = state.m_bLocalChangesApplied;
 		state.m_bLocalChangesApplied = false;
+		state.m_flNextPartTime = -1.0f;
+		state.m_iPart = 0;
 
 		state.m_eState = kWebapiInventoryState_RequestServerAuthToken;
 		//fallthrough
@@ -550,23 +591,40 @@ void CTFGCClientSystem::WebapiInventoryThink()
 		if ( !engine->IsInGame() )
 			return;
 
+		if ( state.m_flNextPartTime == 0.0f || gpGlobals->curtime < state.m_flNextPartTime )
+			return;
+
 		// hex-encode the auth token for sending across the wire
 		CUtlMemory<char> strHexToken;
 		int nBufSize = 2 * state.m_bufServerAuthToken.Count();
 		strHexToken.EnsureCapacity( nBufSize + 1 );
 		V_binarytohex( state.m_bufServerAuthToken.Base(), state.m_bufServerAuthToken.Count(), strHexToken.Base(), strHexToken.Count() ); // TODO: Fix V_binarytohex; it's O(n^2) due to repeated uses of strncat.
 
-		// Build KV and send to server
-		KeyValues *kv = new KeyValues( "sdk_inventory" );
-		kv->SetString( "msg", state.m_strMsgItems.Base() );
-		kv->SetString( "ticket", strHexToken.Base() );
+		if ( ++state.m_iPart < TF_LAST_NORMAL_CLASS )
+		{
+			int i = state.m_iPart;
+			// Build KV and send to server
+			KeyValues* kv = new KeyValues( "sdk_inventory" );
+			kv->SetString("msg", state.m_strMsgItems.Base());
+			kv->SetString("ticket", strHexToken.Base());
+			kv->SetBool("changed", state.m_bDidApplyLocalChanges);
+			kv->SetInt("part", i);
 
-		// Add any server-specific fields so it knows what to do with the given inventory items (per-mod loadout may not match the user's real tf2 loadout)
-		SDK_AddServerInventoryInfo( kv, GetSOCache( SteamUser()->GetSteamID() ) );
+			// Add any server-specific fields so it knows what to do with the given inventory items (per-mod loadout may not match the user's real tf2 loadout)
+			SDK_AddServerInventoryInfo( kv, GetSOCache( SteamUser()->GetSteamID() ), i );
 
-		// Send to the server
-		engine->ServerCmdKeyValues( kv );
-		state.m_eState = kWebapiInventoryState_SentToServer;
+			// Send to the server
+			engine->ServerCmdKeyValues(kv);
+
+			state.m_flNextPartTime = 0.0f;
+
+			if ( i == TF_LAST_NORMAL_CLASS - 1 )
+			{
+				state.m_iPart = 0;
+				state.m_flNextPartTime = -1.0f;
+				state.m_eState = kWebapiInventoryState_SentToServer;
+			}
+		}
 		break;
 	}
 
@@ -609,6 +667,16 @@ void CTFGCClientSystem::LocalInventoryChanged()
 	m_WebapiInventory.m_bLocalChangesApplied = true;
 }
 
+CON_COMMAND_F(mod_inventory_acknowledge, "Acknowledge reception of SDK inventory part.", FCVAR_SERVER_CAN_EXECUTE | FCVAR_HIDDEN)
+{
+	GTFGCClientSystem()->AcknowledgeInventoryReceive();
+}
+
+void CTFGCClientSystem::AcknowledgeInventoryReceive()
+{
+	m_WebapiInventory.m_flNextPartTime = gpGlobals->curtime + TICK_INTERVAL;
+}
+
 
 void CTFGCClientSystem::OnSteamGetTicketForWebApiResponse( GetTicketForWebApiResponse_t *pInfo )
 {
@@ -631,11 +699,17 @@ void CTFGCClientSystem::OnWebapiAuthTicketReceived( GetTicketForWebApiResponse_t
 
 	// Check that the request succeeded
 	if ( pInfo->m_eResult != k_EResultOK )
+	{
+		DevWarning("Steam auth ticket failed.\n");
 		return;
+	}
 
 	// Validate the token makes sense
 	if ( pInfo->m_cubTicket < 0 || pInfo->m_cubTicket > pInfo->k_nCubTicketMaxLength )
+	{
+		DevWarning("Steam auth ticket invalid.\n");
 		return;
+	}
 
 	// Copy the token
 	state.m_bufAuthToken.SetCount( pInfo->m_cubTicket );
@@ -662,11 +736,17 @@ void CTFGCClientSystem::OnWebapiServerAuthTicketReceived( GetTicketForWebApiResp
 
 	// Check that the request succeeded
 	if ( pInfo->m_eResult != k_EResultOK )
+	{
+		DevWarning("Steam server auth ticket failed.\n");
 		return;
+	}
 
 	// Validate the token makes sense
 	if ( pInfo->m_cubTicket < 0 || pInfo->m_cubTicket > pInfo->k_nCubTicketMaxLength )
+	{
+		DevWarning("Steam server auth ticket invalid.\n");
 		return;
+	}
 
 	// Copy the token
 	state.m_bufServerAuthToken.SetCount( pInfo->m_cubTicket );
@@ -715,6 +795,7 @@ void CTFGCClientSystem::OnWebapiInventoryReceived( HTTPRequestCompleted_t* pInfo
 
 	if ( !pInfo->m_bRequestSuccessful || pInfo->m_eStatusCode != k_EHTTPStatusCode200OK )
 	{
+		DevWarning("Steam inventory request failed.\n");
 		SteamHTTP()->ReleaseHTTPRequest( pInfo->m_hRequest );
 		return;
 	}
@@ -724,8 +805,8 @@ void CTFGCClientSystem::OnWebapiInventoryReceived( HTTPRequestCompleted_t* pInfo
 	Verify( SteamHTTP()->GetHTTPResponseBodySize( pInfo->m_hRequest, &unBytes ) );
 	CUtlBuffer bufInventory;
 	bufInventory.EnsureCapacity( unBytes );
+	Verify( SteamHTTP()->GetHTTPResponseBodyData( pInfo->m_hRequest, ( uint8* )bufInventory.Base(), unBytes ) );
 	bufInventory.SeekPut( CUtlBuffer::SEEK_HEAD, unBytes );
-	Verify( SteamHTTP()->GetHTTPResponseBodyData( pInfo->m_hRequest, (uint8*)bufInventory.Base(), unBytes ) );
 
 	// We're done with the request now
 	SteamHTTP()->ReleaseHTTPRequest( pInfo->m_hRequest );
@@ -745,12 +826,18 @@ void CTFGCClientSystem::OnWebapiInventoryReceived( HTTPRequestCompleted_t* pInfo
 		break;
 
 	case k_EResultFail:
+	{
+		DevWarning("Steam inventory response failed.\n");
 		return; // will retry after backoff timer expires
+	}
 
 	case k_EResultNotLoggedOn:
+	{
 		// re-request authentication after backoff time
+		DevWarning("Steam inventory authentication failed.\n");
 		state.m_eState = kWebapiInventoryState_RequestAuthToken;
 		return;
+	}
 
 	default:
 	{
@@ -825,46 +912,57 @@ void CTFGCClientSystem::SDK_SelectItemsToSendToServer( CMsgAuthorizeServerItemRe
 	}
 }
 
-void CTFGCClientSystem::SDK_AddServerInventoryInfo( KeyValues* pKV, CGCClientSharedObjectCache* pSOCache )
+void CTFGCClientSystem::SDK_AddServerInventoryInfo( KeyValues* pKV, CGCClientSharedObjectCache* pSOCache, int32 iPart )
 {
 	// Here is where we would tell the DS which items we have equipped, along with any other info it needs to correctly update the socache
 
-	CGCClientSharedObjectTypeCache* pItemCache = pSOCache->FindTypeCache(CEconItem::k_nTypeID);
-	if (!pItemCache)
+	CGCClientSharedObjectTypeCache* pItemCache = pSOCache->FindTypeCache( CEconItem::k_nTypeID );
+	if ( !pItemCache )
 		return;
 
-	CTFPlayerInventory *pLocalInv = dynamic_cast<CTFPlayerInventory*>(TFInventoryManager()->GetLocalInventory());
-	if (pLocalInv == NULL)
+	CTFPlayerInventory *pLocalInv = dynamic_cast<CTFPlayerInventory*>( TFInventoryManager()->GetLocalInventory() );
+	if ( pLocalInv == NULL )
 		return;
 
 	// Extract our current loadout information and record it in the key values.
-	KeyValues *pLoadoutKV = new KeyValues("local_loadout");
-	for (int iClass = TF_FIRST_NORMAL_CLASS; iClass < TF_LAST_NORMAL_CLASS; iClass++)
+	KeyValues *pLoadoutKV = new KeyValues("o");
+	for ( int iClass = iPart; iClass <= iPart; iClass++ )
 	{
 		char szClass[256];
-		V_snprintf(szClass, sizeof(szClass), "%i", iClass);
+		V_snprintf( szClass, sizeof(szClass), "%i", iClass );
 
 		KeyValues *pClassKV = new KeyValues(szClass);
-		pLoadoutKV->AddSubKey(pClassKV);
+		pLoadoutKV->AddSubKey( pClassKV );
 
-		for (int iSlot = 0; iSlot < CLASS_LOADOUT_POSITION_COUNT; ++iSlot)
+		for ( int iSlot = 0; iSlot < CLASS_LOADOUT_POSITION_COUNT; ++iSlot )
 		{
-			CEconItemView* pItemView = TFInventoryManager()->GetItemInLoadoutForClass(iClass, iSlot);
-			if (!pItemView)
+			CEconItemView* pItemView = TFInventoryManager()->GetItemInLoadoutForClass( iClass, iSlot );
+			if ( !pItemView )
 				continue;
 
 			// todo: investigate why we get zeroes here...?
-			if (pItemView->GetID() == INVALID_ITEM_ID || pItemView->GetID() == 0)
+			if ( pItemView->GetID() == INVALID_ITEM_ID || pItemView->GetID() == 0 )
 				continue;
 
 			char szSlot[256];
-			V_snprintf(szSlot, sizeof(szSlot), "%i", iSlot);
+			V_snprintf( szSlot, sizeof(szSlot), "%i", iSlot );
 
-			pClassKV->SetUint64(szSlot, pItemView->GetID());
+			KeyValues *pSlotKV = new KeyValues(szSlot);
+			pClassKV->AddSubKey(pSlotKV);
+
+#if 0
+			uint32 iItemIDHigh = pItemView->GetID() >> 32;
+			pSlotKV->SetInt( "h", iItemIDHigh );
+			uint32 iItemIDLow = pItemView->GetID() & 0xFFFFFFFF;
+			pSlotKV->SetInt( "l", iItemIDLow );
+#else
+			CNumStr str;
+			str.SetUint64(pItemView->GetID());
+			pSlotKV->SetString( "s", str );
+#endif
 		}
 	}
-	pKV->AddSubKey(pLoadoutKV);
-
+	pKV->AddSubKey( pLoadoutKV );
 }
 
 //-----------------------------------------------------------------------------
@@ -998,34 +1096,6 @@ CTFGSLobby* CTFGCClientSystem::GetLobby() const
 
 
 //-----------------------------------------------------------------------------
-
-bool ForceCompetitiveConvars()
-{
-
-	bool anyFailures = false;
-
-	Assert( ThreadInMainThread() );
-	for ( ConCommandBase *ccb = g_pCVar->GetCommands(); ccb; ccb = ccb->GetNext() )
-	{
-		if ( ccb->IsCommand() )
-			continue;
-
-		ConVar *pVar = ( ConVar * ) ccb;
-
-		if ( !pVar->IsCompetitiveRestricted() )
-			continue;
-
-		// Hack: This var is created by the dxconfig system, but it doesn't actually exist.
-		// Skip it so we have no vars change when running a clean config.
-		if ( V_stricmp( pVar->GetName(), "r_decal_cullsize" ) == 0 )
-			continue;
-		
-		if ( !pVar->SetCompetitiveMode( true ) )
-			anyFailures = true;
-	}
-
-	return !anyFailures;
-}
 
 void CTFGCClientSystem::ConnectToServer( const char *connect )
 {

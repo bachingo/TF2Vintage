@@ -62,11 +62,16 @@
 #include "econ_paintkit.h"
 #include "ienginevgui.h"
 
+#include "tf_playermodelpanel.h"
+#include "gamestate/gamestate.h"
 
 #include "c_tf_gamestats.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
+
+extern const char* g_pszLegacyClassSelectVCDWeapons[TF_LAST_NORMAL_CLASS];
+extern int g_iLegacyClassSelectWeaponSlots[TF_LAST_NORMAL_CLASS];
 
 CMOTDManager CHudMainMenuOverride::m_MOTDManager;
 
@@ -99,7 +104,7 @@ ConVar tf_find_a_match_hint_viewed( "tf_find_a_match_hint_viewed", "0", FCVAR_AR
 ConVar tf_training_has_prompted_for_training( "tf_training_has_prompted_for_training", "0", FCVAR_ARCHIVE, "Whether the user has been prompted for training" );
 ConVar tf_training_has_prompted_for_offline_practice( "tf_training_has_prompted_for_offline_practice", "0", FCVAR_ARCHIVE, "Whether the user has been prompted to try offline practice." );
 ConVar tf_training_has_prompted_for_forums( "tf_training_has_prompted_for_forums", "0", FCVAR_ARCHIVE, "Whether the user has been prompted to view the new user forums." );
-ConVar tf_training_has_prompted_for_options( "tf_training_has_prompted_for_options", "0", FCVAR_ARCHIVE, "Whether the user has been prompted to view the TF2 advanced options." );
+ConVar tf_training_has_prompted_for_options( "tf_training_has_prompted_for_options", "0", FCVAR_ARCHIVE, "Whether the user has been prompted to view the advanced options." );
 ConVar tf_training_has_prompted_for_loadout( "tf_training_has_prompted_for_loadout", "0", FCVAR_ARCHIVE, "Whether the user has been prompted to equip something in their loadout." );
 ConVar cl_ask_bigpicture_controller_opt_out( "cl_ask_bigpicture_controller_opt_out", "0", FCVAR_ARCHIVE, "Whether the user has opted out of being prompted for controller support in Big Picture." );
 ConVar cl_mainmenu_operation_motd_start( "cl_mainmenu_operation_motd_start", "0", FCVAR_ARCHIVE | FCVAR_HIDDEN );
@@ -107,6 +112,7 @@ ConVar cl_mainmenu_operation_motd_reset( "cl_mainmenu_operation_motd_reset", "0"
 ConVar cl_mainmenu_safemode( "cl_mainmenu_safemode", "0", FCVAR_NONE, "Enable safe mode", cc_tf_safemode_toggle );
 ConVar cl_mainmenu_updateglow( "cl_mainmenu_updateglow", "1", FCVAR_ARCHIVE | FCVAR_HIDDEN );
 ConVar tf_mainmenu_match_panel_type( "tf_mainmenu_match_panel_type", "7", FCVAR_ARCHIVE | FCVAR_HIDDEN, "The match group data to show on the main menu", cc_tf_mainmenu_match_panel_type );
+ConVar tf_mainmenu_class_highlight("tf_mainmenu_class_highlight", "0", FCVAR_ARCHIVE, "The class to display on the main menu. 0: random (default), 1: scout, 2: soldier, 3: pyro, 4: demoman, 5: heavy, 6: engineer, 7: medic, 8: sniper, 9: spy");
 
 void cc_promotional_codes_button_changed( IConVar *pConVar, const char *pOldString, float flOldValue )
 {
@@ -122,7 +128,7 @@ extern bool Training_IsComplete();
 
 void PromptOrFireCommand( const char* pszCommand )
 {
-	if ( engine->IsInGame()  )
+	if ( engine->IsInGame() && !engine->IsLevelMainMenuBackground()  )
 	{
 		CTFDisconnectConfirmDialog *pDialog = BuildDisconnectConfirmDialog();
 		if ( pDialog )
@@ -181,11 +187,20 @@ CHudMainMenuOverride::CHudMainMenuOverride( IViewPort *pViewPort ) : BaseClass( 
 	m_bHaveNewMOTDs = false;
 	m_bMOTDShownAtStartup = false;
 
+	m_bGameStartup = true;
+	m_bPlayingMusic = false;
+	m_flPlayMusicTime = -1.0f;
+	m_iPlayMusicFrame = 0;
+
 	m_iCharacterImageIdx = -1;
 
+	m_pCharacterModelPanel = NULL;
+	m_bRequestingInventoryRefresh = false;
 
 	m_flCheckTrainingAt = 0;
 	m_bWasInTraining = false;
+
+	m_bGameUIVisible = false;
 
 	ScheduleItemCheck();
 
@@ -246,6 +261,10 @@ CHudMainMenuOverride::CHudMainMenuOverride( IViewPort *pViewPort ) : BaseClass( 
 	//m_pWatchStreamsPanel = new CTFStreamListPanel( this, "StreamListPanel" );
 	m_pCharacterImagePanel = new ImagePanel( this, "TFCharacterImage" );
 
+	m_MainMenuWebUiZIndex = -102;
+
+	m_pMainMenuWebUi = new CInteractiveWebPanel( this, "TFMainMenuWebUi", "ui/index.html", true, false );
+
 	vgui::ivgui()->AddTickSignal( GetVPanel(), 50 );
 }
 
@@ -274,6 +293,11 @@ CHudMainMenuOverride::~CHudMainMenuOverride( void )
 	}
 
 	vgui::ivgui()->RemoveTickSignal( GetVPanel() );
+
+	if (m_pMainMenuWebUi)
+	{
+		m_pMainMenuWebUi->DeletePanel();
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -304,6 +328,65 @@ void CHudMainMenuOverride::OnTick()
 		AdjustNotificationsPanelHeight();
 	}
 
+	if ( m_bRequestingInventoryRefresh && TFInventoryManager()->GetLocalTFInventory()->RetrievedInventoryFromSteam() )
+	{
+		m_bRequestingInventoryRefresh = false;
+		CloseWaitingDialog();
+		LoadCharacterImageFile();
+	}
+
+	bool bBackgroundLevel = engine->IsLevelMainMenuBackground();
+	bool bInGame = engine->IsInGame() && !bBackgroundLevel;
+	bool bIsConnected = engine->IsConnected() && !bBackgroundLevel;
+#if defined( REPLAY_ENABLED )
+	bool bInReplay = g_pEngineClientReplay->IsPlayingReplayDemo();
+#else
+	bool bInReplay = false;
+#endif
+
+	const bool bGameUIVisible = ( bInGame && !bBackgroundLevel ) ? enginevgui->IsGameUIVisible() : ( !bIsConnected || bBackgroundLevel );
+	if ( m_bGameUIVisible != bGameUIVisible )
+	{
+		// workaround for game UI activated/hidden events not firing in the engine
+		m_bGameUIVisible = bGameUIVisible;
+		if ( bGameUIVisible )
+		{
+			OnGameUIActivated();
+		}
+		else
+		{
+			OnGameUIHidden();
+		}
+	}
+
+	if ( bInGame || bInReplay || bIsConnected || bBackgroundLevel )
+	{
+		if ( m_pMainMenuWebUi )
+		{
+			if ( GetGameStateManager()->IsReady() )
+			{
+				m_pMainMenuWebUi->LoadInteractivePanel();
+			}
+
+			if ( m_pMainMenuWebUi->IsVisible() != bGameUIVisible )
+			{
+				if ( GetGameStateManager()->IsReady() )
+				{
+					if ( !bGameUIVisible )
+					{
+						GetGameStateManager()->QueueEvent( "closedmenu", "" );
+					}
+					else
+					{
+						GetGameStateManager()->QueueEvent( "openedmenu", "" );
+						m_pMainMenuWebUi->ForceFullTextureUpload();
+					}
+					m_pMainMenuWebUi->SetVisible( bGameUIVisible );
+				}
+			}
+		}
+	}
+
 	static bool s_bRanOnce = false;
 	if ( !s_bRanOnce )
 	{
@@ -314,8 +397,24 @@ void CHudMainMenuOverride::OnTick()
 			engine->ExecuteClientCmd( CFmtStr( "connect %s -%s\n", szConnectAdr, "ConnectStringOnCommandline" ) );
 		}
 	}
+}
 
+void CHudMainMenuOverride::OnGameUIActivated()
+{
+	IGameEvent* event = gameeventmanager->CreateEvent( "gameui_activated" );
+	if ( event )
+	{
+		gameeventmanager->FireEventClientSide( event );
+	}
+}
 
+void CHudMainMenuOverride::OnGameUIHidden()
+{
+	IGameEvent* event = gameeventmanager->CreateEvent( "gameui_hidden" );
+	if ( event )
+	{
+		gameeventmanager->FireEventClientSide( event );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -333,6 +432,8 @@ void CHudMainMenuOverride::AttachToGameUI( void )
 	SetKeyBoardInputEnabled( true );
 	SetMouseInputEnabled( true );
 	SetCursor(dc_arrow);
+	MakePopup();
+	MoveToFront();
 }
 
 //-----------------------------------------------------------------------------
@@ -432,6 +533,10 @@ void CHudMainMenuOverride::FireGameEvent( IGameEvent *event )
 		{
 			NotifyNeedsToChooseMostHelpfulFriend();
 		}
+	}
+	else if ( FStrEq( "inventory_updated", type) )
+	{
+		LoadCharacterImageFile();
 	}
 }
 
@@ -580,7 +685,10 @@ void CHudMainMenuOverride::ApplySchemeSettings( IScheme *scheme )
 
 	// m_pMOTDShowPanel shows that the player has an unread MOTD. Pressing it pops up the MOTD.
 	m_pMOTDShowPanel = dynamic_cast<vgui::EditablePanel*>( FindChildByName("MOTD_ShowButtonPanel") );
-	m_pMOTDShowPanel->SetVisible(false);
+	if (m_pMOTDShowPanel)
+	{
+		m_pMOTDShowPanel->SetVisible( false );
+	}
 
 	vgui::EditablePanel* pHeaderContainer = dynamic_cast<vgui::EditablePanel*>( m_pMOTDPanel->FindChildByName( "MOTD_HeaderContainer" ) );
 	if ( pHeaderContainer )
@@ -613,14 +721,19 @@ void CHudMainMenuOverride::ApplySchemeSettings( IScheme *scheme )
 	m_pNotificationsScroller->GetScrollbar()->GetButton(1)->SetPaintBackgroundEnabled( false );
 
 	// Add tooltips for various buttons
-	auto lambdaAddTooltip = [&]( const char* pszPanelName, const char* pszTooltipText )
+	auto lambdaAddTooltip = [&]( const char* pszPanelName, const char* pszTooltipText, bool bHide = true )
 	{
 		Panel* pPanelToAddTooltipTipTo = FindChildByName( pszPanelName );
 		if ( pPanelToAddTooltipTipTo)
 		{
 			pPanelToAddTooltipTipTo->SetTooltip( m_pToolTip, pszTooltipText );
 
-			pPanelToAddTooltipTipTo->SetVisible(false);
+#ifdef SOURCESDK
+			if ( bHide )
+			{
+				pPanelToAddTooltipTipTo->SetVisible( false );
+			}
+#endif
 		}
 	};
 
@@ -633,7 +746,11 @@ void CHudMainMenuOverride::ApplySchemeSettings( IScheme *scheme )
 	lambdaAddTooltip( "WorkshopButton", "#MMenu_Tooltip_Workshop" );
 	lambdaAddTooltip( "SettingsButton", "#MMenu_Tooltip_Options" );
 	lambdaAddTooltip( "TF2SettingsButton", "#MMenu_Tooltip_AdvOptions" );
-
+#ifdef SOURCESDK
+	lambdaAddTooltip( "ServerBrowserButtonSDK", "#MMenu_BrowseServers", false );
+	lambdaAddTooltip( "SettingsButtonSDK", "#MMenu_Tooltip_Options", false );
+	lambdaAddTooltip( "TF2SettingsButtonSDK", "#MMenu_Tooltip_AdvOptions", false );
+#endif
 
 	LoadCharacterImageFile();
 
@@ -651,6 +768,104 @@ void CHudMainMenuOverride::ApplySchemeSettings( IScheme *scheme )
 	GetCompRanksTooltip();
 }
 
+extern const char* COM_GetModDirectory();
+
+void CHudMainMenuOverride::PlayMainMenuMusic()
+{
+	if (CommandLine()->FindParm("-nostartupsound"))
+		return;
+
+	FileFindHandle_t fh;
+
+	CUtlVector<char*> fileNames;
+	char path[4096];
+
+	bool bHolidayFound = false;
+
+	// only want to run the holiday check for TF2
+	const char* pGameName = COM_GetModDirectory();
+	if ((V_stricmp(pGameName, "tf") == 0) || (V_stricmp(pGameName, "tf_beta") == 0) || (V_stricmp(pGameName, "tc2") == 0))
+	{
+		// check for a holiday sound file
+		const char* pszHoliday = UTIL_GetActiveHolidayString();
+
+		if (pszHoliday && pszHoliday[0])
+		{
+			V_snprintf(path, sizeof(path), "sound/ui/holiday/gamestartup_%s*.mp3", pszHoliday);
+			V_FixSlashes(path);
+
+			char const* fn = g_pFullFileSystem->FindFirstEx(path, "MOD", &fh);
+			{
+				if (fn)
+				{
+					bHolidayFound = true;
+				}
+			}
+		}
+	}
+
+	// only want to do this if we haven't found a holiday file
+	if (!bHolidayFound)
+	{
+		V_snprintf(path, sizeof(path), "sound/ui/gamestartup*.mp3");
+		V_FixSlashes(path);
+	}
+
+	char const* fn = g_pFullFileSystem->FindFirstEx(path, "MOD", &fh);
+	if (fn)
+	{
+		do
+		{
+			char ext[256];
+			V_ExtractFileExtension(fn, ext, sizeof(ext));
+
+			if (!V_stricmp(ext, "mp3"))
+			{
+				char temp[4096];
+				if (bHolidayFound)
+				{
+					V_snprintf(temp, sizeof(temp), "ui/holiday/%s", fn);
+				}
+				else
+				{
+					V_snprintf(temp, sizeof(temp), "ui/%s", fn);
+				}
+
+				char* found = new char[strlen(temp) + 1];
+				V_strncpy(found, temp, strlen(temp) + 1);
+
+				V_FixSlashes(found);
+				fileNames.AddToTail(found);
+			}
+
+			fn = g_pFullFileSystem->FindNext(fh);
+
+		} while (fn);
+
+		g_pFullFileSystem->FindClose(fh);
+	}
+
+	// did we find any?
+	if (fileNames.Count() > 0)
+	{
+		int index = RandomInt(0, fileNames.Count() - 1);
+
+		if (fileNames.IsValidIndex(index) && fileNames[index])
+		{
+			const char* pSoundFile = fileNames[index];
+
+			char found[4096];
+			V_snprintf(found, sizeof(found), "play *#%s", pSoundFile);
+
+			engine->ClientCmd_Unrestricted(found);
+		}
+
+		fileNames.PurgeAndDeleteElements();
+	}
+}
+
+extern int g_ClassDefinesRemap[];
+
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -660,116 +875,335 @@ void CHudMainMenuOverride::LoadCharacterImageFile( void )
 
 	if ( !m_bBackgroundUsesCharacterImages )
 	{
+		if (m_pCharacterModelPanel)
+			m_pCharacterModelPanel->SetVisible(false);
 		return;
 	}
 
 	// If we've got a forced image, use that
 	if ( m_pszForcedCharacterImage && *m_pszForcedCharacterImage )
 	{
+		if (m_pCharacterModelPanel)
+			m_pCharacterModelPanel->SetVisible(false);
 		m_pCharacterImagePanel->SetImage( m_pszForcedCharacterImage );
 		return;
 	}
 
-	KeyValues *pCharacterFile = new KeyValues( "CharacterBackgrounds" );
+	bool bWasNull = m_pCharacterModelPanel == NULL;
 
-	if ( pCharacterFile->LoadFromFile( g_pFullFileSystem, "scripts/CharacterBackgrounds.txt" ) )
+	m_pCharacterModelPanel = dynamic_cast<CTFPlayerModelPanel*>(FindChildByName("TFCharacterModel"));
+	if ( !IsFreeTrialAccount() && m_pCharacterModelPanel )
 	{
-		CUtlVector<KeyValues *> vecUseableCharacters;
-
-		const char* pszActiveWarName = NULL;
-		const WarDefinitionMap_t& mapWars = GetItemSchema()->GetWarDefinitions();
-		FOR_EACH_MAP_FAST( mapWars, i )
+		if (m_pCharacterImagePanel)
 		{
-			const CWarDefinition* pWarDef = mapWars[i];
-			if ( pWarDef->IsActive() )
-			{
-				pszActiveWarName = pWarDef->GetDefName();
-				break;
-			}
+			m_pCharacterImagePanel->SetVisible(false);
+			m_pCharacterImagePanel->SetEnabled(false);
 		}
 
-		bool bActiveOperation = false;
-
-		// Uncomment if another operation happens
-		//FOR_EACH_MAP_FAST( GetItemSchema()->GetOperationDefinitions(), iOperation )
-		//{
-		//	CEconOperationDefinition *pOperation = GetItemSchema()->GetOperationDefinitions()[iOperation];
-		//	if ( !pOperation || !pOperation->IsActive() || !pOperation->IsCampaign() )
-		//		continue;
-
-		//	bActiveOperation = true;
-		//	break;
-		//}
-
-		// Count the number of possible characters.
-		FOR_EACH_SUBKEY( pCharacterFile, pCharacter )
+		m_pCharacterModelPanel->ClearCarriedItems();
+		int iSelectedClass = tf_mainmenu_class_highlight.GetInt();
+		int iClass;
+		if ( iSelectedClass > 0 && iSelectedClass <= TF_LAST_NORMAL_CLASS - 1 )
 		{
-			bool bIsOperationCharacter = bActiveOperation && pCharacter->GetBool( "operation", false );
+			iClass = g_ClassDefinesRemap[iSelectedClass];
+		}
+		else
+		{
+			iClass = RandomInt(TF_FIRST_NORMAL_CLASS, TF_LAST_NORMAL_CLASS - 1);
+		}
+		int iSlot = g_iLegacyClassSelectWeaponSlots[iClass];
+		int iSlotOrig = iSlot;
 
-			EHoliday eHoliday = (EHoliday)UTIL_GetHolidayForString( pCharacter->GetString( "holiday_restriction" ) );
+		bool bCanUseFancyClassSelectAnimation = true;
+		const char* pszVCD = "class_select";
 
+		// TODO(mcoms): robot
+		//bool bIsRobot = RandomInt(1, 100) <= 1;
+		bool bIsRobot = false;
+		int iTeam = bIsRobot || RandomInt(0, 1) ? TF_TEAM_BLUE : TF_TEAM_RED;
+		// SetTeam has to be here so AddCarriedItem has the right team
+		m_pCharacterModelPanel->SetTeam( iTeam );
 
-			const char* pszAssociatedWar = pCharacter->GetString( "war_restriction" );
-
-			int iWeight = pCharacter->GetInt( "weight", 1 );
-
-			// If a War is active, that's all we want to show.  If not, then bias towards holidays
-			if ( pszActiveWarName != NULL )
+		if ( !bIsRobot )
+		{
+			if ( TFInventoryManager()->GetLocalTFInventory()->RetrievedInventoryFromSteam() )
 			{
-				if ( !FStrEq( pszAssociatedWar, pszActiveWarName ) )
+				static CSchemaAttributeDefHandle pAttrDef_PlayerRobot("appear as mvm robot");
+
+				static CSchemaAttributeDefHandle pAttrDef_DisableFancyLoadoutAnim("disable fancy class select anim");
+
+
+				static CSchemaAttributeDefHandle pAttrDef_ClassSelectOverrideVCD("class select override vcd");
+				CAttribute_String attrClassSelectOverrideVCD;
+
+				for (int i = 0; i < CLASS_LOADOUT_POSITION_COUNT; i++)
 				{
-					iWeight = 0;
+					CEconItemView* pItemData = TFInventoryManager()->GetItemInLoadoutForClass(iClass, i);
+
+					if (pItemData && pItemData->IsValid())
+					{
+						m_pCharacterModelPanel->AddCarriedItem(pItemData);
+
+						// Certain items have different shapes and would interfere with our class select animations.
+						bCanUseFancyClassSelectAnimation = bCanUseFancyClassSelectAnimation
+							&& !pItemData->FindAttribute(pAttrDef_DisableFancyLoadoutAnim);
+
+						// Some items want to override the class select VCD
+						if (pItemData->FindAttribute(pAttrDef_ClassSelectOverrideVCD, &attrClassSelectOverrideVCD))
+						{
+							const char* pszClassSelectOverrideVCD = attrClassSelectOverrideVCD.value().c_str();
+							if (pszClassSelectOverrideVCD && *pszClassSelectOverrideVCD)
+							{
+								pszVCD = pszClassSelectOverrideVCD;
+							}
+							else
+							{
+								pszVCD = NULL;
+							}
+						}
+
+						if (i <= LOADOUT_POSITION_PDA2 && pItemData->GetStaticData()->IsAWearable())
+						{
+							iSlot = i + 1;
+						}
+
+						if (FindAttribute(pItemData, pAttrDef_PlayerRobot))
+						{
+							// TODO(mcoms): robot
+							//bIsRobot = true;
+							//break;
+						}
+					}
+
+					if (iSlot >= LOADOUT_POSITION_PDA2)
+					{
+						iSlot = iSlotOrig;
+						iSlotOrig = -1;
+					}
 				}
-			}
-			else if ( eHoliday != kHoliday_None )
-			{
-				iWeight = UTIL_IsHolidayActive( eHoliday ) ? MAX( iWeight, 6 ) : 0;
-			}
-			else if ( bActiveOperation && !bIsOperationCharacter )
-			{
-				iWeight = 0;
 			}
 			else
 			{
-				// special cases for summer, halloween, fullmoon, and christmas...turn off anything not covered above
-				if ( UTIL_IsHolidayActive( kHoliday_Summer ) || UTIL_IsHolidayActive( kHoliday_HalloweenOrFullMoon ) || UTIL_IsHolidayActive( kHoliday_Christmas ) )
+				m_bRequestingInventoryRefresh = true;
+				return;
+			}
+		}
+
+		// SetToPlayerClass has to be here so we're initialized when we start rendering with all items
+		m_pCharacterModelPanel->SetToPlayerClass( iClass, false, bIsRobot ? g_szBotModels[iClass] : NULL );
+		// have to set again since SetToPlayerClass sets to red
+		m_pCharacterModelPanel->SetTeam( iTeam );
+
+		bool bPlayBaseVCD = !bIsRobot && bCanUseFancyClassSelectAnimation && pszVCD && iSlot == iSlotOrig;
+
+		char pszDynamicVCD[128];
+
+		if (bPlayBaseVCD)
+		{
+			m_pCharacterModelPanel->PlayVCD(pszVCD, g_pszLegacyClassSelectVCDWeapons[iClass], false);
+		}
+		else
+		{
+			int iMin = 1;
+			int iMax = 1;
+
+			bool bPad = false;
+			bool bHasAdditional = false;
+			char* pszAdditional = "";
+			switch (iClass)
+			{
+			case TF_CLASS_SCOUT:
+				pszAdditional = "_vocal";
+				bPad = true;
+				bHasAdditional = true;
+				iMax = 3;
+				break;
+			case TF_CLASS_SOLDIER:
+				pszAdditional = "_v";
+				bHasAdditional = true;
+				iMax = 3;
+				break;
+			case TF_CLASS_PYRO:
+				pszAdditional = "_v";
+				bHasAdditional = true;
+				iMax = 3;
+				break;
+			case TF_CLASS_DEMOMAN:
+				break;
+			case TF_CLASS_HEAVYWEAPONS:
+				pszAdditional = "_v";
+				bHasAdditional = true;
+				iMin = 2;
+				iMax = 3;
+				break;
+			case TF_CLASS_ENGINEER:
+				if (bIsRobot)
+				{
+					pszAdditional = "_vocal";
+					bPad = true;
+					iMax = 4;
+				}
+				break;
+			case TF_CLASS_MEDIC:
+				if (bIsRobot)
+				{
+					pszAdditional = "_vocal";
+					bPad = true;
+					iMax = 5;
+				}
+				break;
+			case TF_CLASS_SNIPER:
+				pszAdditional = "_v";
+				bHasAdditional = true;
+				iMax = 5;
+				break;
+			case TF_CLASS_SPY:
+				pszAdditional = "_v";
+				bHasAdditional = true;
+				if (bIsRobot)
+				{
+					iMax = 5;
+				}
+				else
+				{
+					iMax = 2;
+				}
+				break;
+			}
+
+			int iRandomIndex = RandomInt(iMin, iMax);
+
+			char pszSuffix[128];
+			if (bHasAdditional)
+			{
+				V_snprintf(pszSuffix, sizeof(pszSuffix), bPad ? "%s%02d" : "%s%d", pszAdditional, iRandomIndex);
+			}
+			else
+			{
+				V_snprintf(pszSuffix, sizeof(pszSuffix), "%s", "");
+			}
+
+			V_snprintf(pszDynamicVCD, sizeof(pszDynamicVCD), "%s%02d%s", "taunt", bIsRobot ? 1 : iSlot + 1, pszSuffix);
+			m_pCharacterModelPanel->PlayVCD(pszDynamicVCD, NULL, false);
+			m_pCharacterModelPanel->m_bDisableSpeakEvent = true;
+		}
+
+		m_pCharacterModelPanel->HoldItemInSlot(iSlot);
+
+		if ( bWasNull || !m_pCharacterImagePanel->IsVisible() )
+		{
+			m_pCharacterModelPanel->SetVisible(true);
+			m_pCharacterModelPanel->SetEnabled(true);
+		}
+	}
+	else
+	{
+		if ( m_pCharacterModelPanel )
+		{
+			m_pCharacterModelPanel->SetVisible(false);
+		}
+
+		KeyValues* pCharacterFile = new KeyValues("CharacterBackgrounds");
+
+		if (pCharacterFile->LoadFromFile(g_pFullFileSystem, "scripts/CharacterBackgrounds.txt"))
+		{
+			CUtlVector<KeyValues*> vecUseableCharacters;
+
+			const char* pszActiveWarName = NULL;
+			const WarDefinitionMap_t& mapWars = GetItemSchema()->GetWarDefinitions();
+			FOR_EACH_MAP_FAST(mapWars, i)
+			{
+				const CWarDefinition* pWarDef = mapWars[i];
+				if (pWarDef->IsActive())
+				{
+					pszActiveWarName = pWarDef->GetDefName();
+					break;
+				}
+			}
+
+			bool bActiveOperation = false;
+
+			// Uncomment if another operation happens
+			//FOR_EACH_MAP_FAST( GetItemSchema()->GetOperationDefinitions(), iOperation )
+			//{
+			//	CEconOperationDefinition *pOperation = GetItemSchema()->GetOperationDefinitions()[iOperation];
+			//	if ( !pOperation || !pOperation->IsActive() || !pOperation->IsCampaign() )
+			//		continue;
+
+			//	bActiveOperation = true;
+			//	break;
+			//}
+
+			// Count the number of possible characters.
+			FOR_EACH_SUBKEY(pCharacterFile, pCharacter)
+			{
+				bool bIsOperationCharacter = bActiveOperation && pCharacter->GetBool("operation", false);
+
+				EHoliday eHoliday = (EHoliday)UTIL_GetHolidayForString(pCharacter->GetString("holiday_restriction"));
+
+
+				const char* pszAssociatedWar = pCharacter->GetString("war_restriction");
+
+				int iWeight = pCharacter->GetInt("weight", 1);
+
+				// If a War is active, that's all we want to show.  If not, then bias towards holidays
+				if (pszActiveWarName != NULL)
+				{
+					if (!FStrEq(pszAssociatedWar, pszActiveWarName))
+					{
+						iWeight = 0;
+					}
+				}
+				else if (eHoliday != kHoliday_None)
+				{
+					iWeight = UTIL_IsHolidayActive(eHoliday) ? MAX(iWeight, 6) : 0;
+				}
+				else if (bActiveOperation && !bIsOperationCharacter)
 				{
 					iWeight = 0;
 				}
-			}
-
-			for ( int i = 0; i < iWeight; i++ )
-			{
-				vecUseableCharacters.AddToTail( pCharacter );
-			}
-		}
-
-		// Pick a character at random.
-		if ( vecUseableCharacters.Count() > 0 )
-		{
-			m_iCharacterImageIdx = rand() % vecUseableCharacters.Count();
-		}
-
-		// Make sure we found a character we can use.
-		if ( vecUseableCharacters.IsValidIndex( m_iCharacterImageIdx ) )
-		{
-			KeyValues *pCharacter = vecUseableCharacters[m_iCharacterImageIdx];
-
-			if ( IsFreeTrialAccount( ) && GetQuestMapPanel()->IsVisible() )
-			{
-				const char* text = pCharacter->GetString( "store_text" );
-				if ( text )
+				else
 				{
-					StartHighlightAnimation( MMHA_STORE )->SetDialogVariable( "highlighttext", g_pVGuiLocalize->Find( text ) );
+					// special cases for summer, halloween, fullmoon, and christmas...turn off anything not covered above
+					if (UTIL_IsHolidayActive(kHoliday_Summer) || UTIL_IsHolidayActive(kHoliday_HalloweenOrFullMoon) || UTIL_IsHolidayActive(kHoliday_Christmas))
+					{
+						iWeight = 0;
+					}
+				}
+
+				for (int i = 0; i < iWeight; i++)
+				{
+					vecUseableCharacters.AddToTail(pCharacter);
 				}
 			}
 
-			const char* image_name = pCharacter->GetString( "image" );
-			m_pCharacterImagePanel->SetImage( image_name );
-		}
-	}
+			// Pick a character at random.
+			if (vecUseableCharacters.Count() > 0)
+			{
+				m_iCharacterImageIdx = rand() % vecUseableCharacters.Count();
+			}
 
-	pCharacterFile->deleteThis();
+			// Make sure we found a character we can use.
+			if (vecUseableCharacters.IsValidIndex(m_iCharacterImageIdx))
+			{
+				KeyValues* pCharacter = vecUseableCharacters[m_iCharacterImageIdx];
+
+				if (IsFreeTrialAccount() && GetQuestMapPanel()->IsVisible())
+				{
+					const char* text = pCharacter->GetString("store_text");
+					if (text)
+					{
+						StartHighlightAnimation(MMHA_STORE)->SetDialogVariable("highlighttext", g_pVGuiLocalize->Find(text));
+					}
+				}
+
+				const char* image_name = pCharacter->GetString("image");
+				m_pCharacterImagePanel->SetImage(image_name);
+			}
+		}
+
+		pCharacterFile->deleteThis();
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -963,7 +1397,9 @@ void CHudMainMenuOverride::OnUpdateMenu( void )
 	// So try and do the least amount of work if nothing has changed.
 
 	bool bSomethingChanged = false;
-	bool bInGame = engine->IsInGame();
+	bool bBackgroundLevel = engine->IsLevelMainMenuBackground();
+	bool bInGame = engine->IsInGame() && !bBackgroundLevel;
+	bool bIsConnected = engine->IsConnected() && !bBackgroundLevel;
 #if defined( REPLAY_ENABLED )
 	bool bInReplay = g_pEngineClientReplay->IsPlayingReplayDemo();
 #else
@@ -989,18 +1425,65 @@ void CHudMainMenuOverride::OnUpdateMenu( void )
 	}
 
 	// Hide the character if we're in game.
-	if ( bInGame || bInReplay )
+	if ( bInGame || bInReplay || bIsConnected || bBackgroundLevel )
 	{
 		if ( m_pCharacterImagePanel->IsVisible() )
 		{
 			m_pCharacterImagePanel->SetVisible( false );
 		}
+		if ( m_pCharacterModelPanel && m_pCharacterModelPanel->IsVisible() )
+		{
+			m_pCharacterModelPanel->SetVisible(false);
+		}
+		// we're now in game, so no longer in the startup phase.
+		m_bGameStartup = false;
+		if ( m_bPlayingMusic )
+		{
+			m_bPlayingMusic = false;
+			m_flPlayMusicTime = -1.0f;
+			m_iPlayMusicFrame = 0;
+		}
 	}
-	else if ( !bInGame && !bInReplay )
+	else if ( !bInGame && !bInReplay && !bIsConnected && !bBackgroundLevel )
 	{
 		if ( !m_pCharacterImagePanel->IsVisible() )
 		{
 			m_pCharacterImagePanel->SetVisible( m_bBackgroundUsesCharacterImages );
+		}
+		if (m_pCharacterModelPanel && !m_pCharacterModelPanel->IsVisible())
+		{
+			LoadCharacterImageFile();
+			m_pCharacterModelPanel->SetVisible(m_bBackgroundUsesCharacterImages);
+		}
+		// no longer in the startup phase, try playing music!
+		if ( !m_bGameStartup && !m_bPlayingMusic )
+		{
+			m_flPlayMusicTime = gpGlobals->curtime + 0.5f;
+			m_iPlayMusicFrame = 0;
+			m_bPlayingMusic = true;
+		}
+		if ( !m_bGameStartup && m_flPlayMusicTime >= 0.0f )
+		{
+			m_iPlayMusicFrame++;
+		}
+		if ( m_iPlayMusicFrame > 10 && m_flPlayMusicTime >= 0.0f && gpGlobals->curtime >= m_flPlayMusicTime )
+		{
+			m_flPlayMusicTime = -1.0f;
+			m_iPlayMusicFrame = 0;
+			// TODO(mcoms): main menu music not working
+			//PlayMainMenuMusic();
+		}
+		if ( m_pMainMenuWebUi )
+		{
+			if ( GetGameStateManager()->IsReady() )
+			{
+				GetGameStateManager()->MarkUIReady();
+				m_pMainMenuWebUi->LoadInteractivePanel();
+			}
+			if ( !m_pMainMenuWebUi->IsVisible() )
+			{
+				m_pMainMenuWebUi->SetVisible( true );
+			}
 		}
 	}
 
@@ -1084,7 +1567,7 @@ void CHudMainMenuOverride::OnUpdateMenu( void )
 			cl_mainmenu_operation_motd_start.SetValue( sztime );
 		}
 
-		bool bShouldBeVisible = bInGame == false;
+		bool bShouldBeVisible = !bInGame && !bBackgroundLevel;
 		if ( m_pBackground->IsVisible() != bShouldBeVisible )
 		{
 			m_pBackground->SetVisible( bShouldBeVisible );
@@ -1181,7 +1664,7 @@ void CHudMainMenuOverride::CheckUnclaimedItems()
 //-----------------------------------------------------------------------------
 void CHudMainMenuOverride::OnConfirm( KeyValues *pParams )
 {
-	if ( pParams->GetBool( "confirmed" ) )
+	if ( pParams->GetBool( "confirmed" ) && !V_strcmp( pParams->GetString("name"), "ConfirmTrainingDialog" ) )
 	{
 		engine->ClientCmd_Unrestricted( "disconnect" );
 		GetClientModeTFNormal()->GameUI()->SendMainMenuCommand( "engine training_showdlg" );
@@ -1825,20 +2308,14 @@ void CHudMainMenuOverride::OnCommand( const char *command )
 			const char *pszURL = pMOTD->GetURL();
 			if ( pszURL && pszURL[0] )
 			{
-				if ( steamapicontext && steamapicontext->SteamFriends() )
-				{
-					steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( pszURL );
-				}
+				UTIL_OpenWebPage( pszURL );
 			}
 		}
 		return;
 	}
 	else if ( !Q_stricmp( command, "view_newuser_forums" ) )
 	{
-		if ( steamapicontext && steamapicontext->SteamFriends() )
-		{
-			steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( "https://steamcommunity.com/app/440/discussions/" );
-		}
+		UTIL_OpenWebPage( "https://steamcommunity.com/app/440/discussions/" );
 		return;
 	}
 	else if ( !Q_stricmp( command, "opentf2options" ) )
@@ -1931,14 +2408,14 @@ void CHudMainMenuOverride::OnCommand( const char *command )
 	}
 	else if ( !Q_stricmp( command, "showpromocodes" ) )
 	{
-		if ( steamapicontext && steamapicontext->SteamFriends() && steamapicontext->SteamUtils() )
+		if ( steamapicontext && steamapicontext->SteamUtils() )
 		{
 			CSteamID steamID = steamapicontext->SteamUser()->GetSteamID();
 			switch ( GetUniverse() )
 			{
-			case k_EUniversePublic: steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStr1024( "http://steamcommunity.com/profiles/%llu/promocodes/tf2", steamID.ConvertToUint64() ) ); break;
-			case k_EUniverseBeta:	steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStr1024( "http://beta.steamcommunity.com/profiles/%llu/promocodes/tf2", steamID.ConvertToUint64() ) ); break;
-			case k_EUniverseDev:	steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( CFmtStr1024( "http://localhost/community/profiles/%llu/promocodes/tf2", steamID.ConvertToUint64() ) ); break;
+			case k_EUniversePublic: UTIL_OpenWebPage( CFmtStr1024( "https://steamcommunity.com/profiles/%llu/promocodes/tf2", steamID.ConvertToUint64() ) ); break;
+			case k_EUniverseBeta:	UTIL_OpenWebPage( CFmtStr1024( "https://beta.steamcommunity.com/profiles/%llu/promocodes/tf2", steamID.ConvertToUint64() ) ); break;
+			case k_EUniverseDev:	UTIL_OpenWebPage( CFmtStr1024( "https://localhost/community/profiles/%llu/promocodes/tf2", steamID.ConvertToUint64() ) ); break;
 			}
 		}
 	}
@@ -1969,37 +2446,21 @@ void CHudMainMenuOverride::OnCommand( const char *command )
 	{
 		StopUpdateGlow();
 
-		if ( steamapicontext && steamapicontext->SteamFriends() && steamapicontext->SteamUtils() && steamapicontext->SteamUtils()->IsOverlayEnabled() )
+		switch ( GetUniverse() )
 		{
-			CSteamID steamID = steamapicontext->SteamUser()->GetSteamID();
-			switch ( GetUniverse() )
-			{
-			case k_EUniversePublic: steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( "http://www.teamfortress.com/meetyourmatch" ); break;
-			case k_EUniverseBeta:	// Fall through
-			case k_EUniverseDev:	steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( "http://csham.valvesoftware.com/tf.com/meetyourmatch" ); break;
-			}
-		}
-		else
-		{
-			OpenStoreStatusDialog( NULL, "#MMenu_OverlayRequired", true, false );
+		case k_EUniversePublic: UTIL_OpenWebPage( "https://www.teamfortress.com/meetyourmatch" ); break;
+		case k_EUniverseBeta:	// Fall through
+		case k_EUniverseDev:	UTIL_OpenWebPage( "https://csham.valvesoftware.com/tf.com/meetyourmatch" ); break;
 		}
 		return;
 	}
 	else if ( FStrEq( "view_update_comic", command ) )
 	{
-		if ( steamapicontext && steamapicontext->SteamFriends() && steamapicontext->SteamUtils() && steamapicontext->SteamUtils()->IsOverlayEnabled() )
+		switch ( GetUniverse() )
 		{
-			CSteamID steamID = steamapicontext->SteamUser()->GetSteamID();
-			switch ( GetUniverse() )
-			{
-			case k_EUniversePublic: steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( "http://www.teamfortress.com/gargoyles_and_gravel" ); break;
-			case k_EUniverseBeta:	// Fall through
-			case k_EUniverseDev:	steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( "http://www.teamfortress.com/gargoyles_and_gravel" ); break;
-			}
-		}
-		else
-		{
-			OpenStoreStatusDialog( NULL, "#MMenu_OverlayRequired", true, false );
+		case k_EUniversePublic: UTIL_OpenWebPage( "https://www.teamfortress.com/gargoyles_and_gravel" ); break;
+		case k_EUniverseBeta:	// Fall through
+		case k_EUniverseDev:	UTIL_OpenWebPage( "https://csham.valvesoftware.com/tf.com/gargoyles_and_gravel" ); break;
 		}
 		return;
 	}
@@ -2077,6 +2538,48 @@ void CHudMainMenuOverride::OnCommand( const char *command )
 		ETFMatchGroup eMatchGroup = (ETFMatchGroup)atoi( command + 16 );
 		tf_mainmenu_match_panel_type.SetValue( eMatchGroup );
 	}
+	else if ( !V_stricmp( command, "open_chat_filter_settings" ) )
+	{
+		switch ( GetUniverse() )
+		{
+		case k_EUniversePublic:
+			UTIL_OpenWebPage( "https://store.steampowered.com/account/preferences#CommunityContentPreferences" );
+			break;
+		case k_EUniverseBeta:
+			UTIL_OpenWebPage( "https://store.beta.steampowered.com/account/preferences#CommunityContentPreferences" );
+			break;
+		case k_EUniverseDev:
+			UTIL_OpenWebPage( "https://localhost/store/account/preferences#CommunityContentPreferences" );
+			break;
+		}
+		return;
+	}
+	else if ( !V_stricmp( command, "open_interactive_window" ) )
+	{
+		if ( m_pMainMenuWebUi )
+		{
+			m_MainMenuWebUiZIndex = m_pMainMenuWebUi->GetZPos();
+			m_pMainMenuWebUi->SetZPos( 400 );
+		}
+		return;
+	}
+	else if ( !V_stricmp( command, "close_interactive_window" ) )
+	{
+		if ( m_pMainMenuWebUi )
+		{
+			m_pMainMenuWebUi->SetZPos( m_MainMenuWebUiZIndex );
+		}
+		return;
+	}
+	else if ( !V_stricmp( command, "mic_test" ) )
+	{
+		IVoiceTweak_s* pVoiceTweak = engine->GetVoiceTweakAPI();
+		if (pVoiceTweak)
+		{
+			// TODO(mcoms)
+		}
+		return;
+	}
 	else
 	{
 		// Pass it on to GameUI main menu
@@ -2107,6 +2610,8 @@ void CHudMainMenuOverride::OnKeyCodePressed( KeyCode code )
 //-----------------------------------------------------------------------------
 void CHudMainMenuOverride::CheckTrainingStatus( void )
 {
+	// TODO(mcoms): disable training for now, since it doesn't work properly.
+#if 0
 	bool bNeedsTraining = tf_training_has_prompted_for_training.GetInt() <= 0;
 	bool bNeedsPractice = tf_training_has_prompted_for_offline_practice.GetInt() <= 0;
 	bool bShowForum = tf_training_has_prompted_for_forums.GetInt() <= 0;
@@ -2182,6 +2687,7 @@ void CHudMainMenuOverride::CheckTrainingStatus( void )
 		tf_training_has_prompted_for_options.SetValue( 1 );
 		StartHighlightAnimation( MMHA_OPTIONS );
 	}
+#endif
 }
 
 void CHudMainMenuOverride::UpdateRankPanelType()

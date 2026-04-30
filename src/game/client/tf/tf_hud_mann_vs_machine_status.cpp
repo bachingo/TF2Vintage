@@ -45,7 +45,7 @@ extern ConVar cl_hud_minmode;
 #define RATING_SCORE_STR			"ratingscore"
 
 
-ConVar cl_mvm_wave_status_visible_during_wave( "cl_mvm_wave_status_visible_during_wave", "0", FCVAR_ARCHIVE, "Display full wave contents while a wave is active in MvM." );
+ConVar cl_mvm_wave_status_visible_during_wave( "cl_mvm_wave_status_visible_during_wave", "1", FCVAR_ARCHIVE, "Display full wave contents while a wave is active in MvM." );
 
 
 //-----------------------------------------------------------------------------
@@ -957,7 +957,7 @@ void CWaveStatusPanel::UpdateEnemyCounts( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-DECLARE_HUDELEMENT( CCurrencyStatusPanel );
+DECLARE_HUDELEMENT_DEPTH( CCurrencyStatusPanel, 49 );
 
 CCurrencyStatusPanel::CCurrencyStatusPanel( const char *pElementName )
 	: CHudElement( pElementName )
@@ -1617,7 +1617,7 @@ void CMvMBombCarrierProgress::ApplySchemeSettings( IScheme *pScheme )
 //-----------------------------------------------------------------------------
 // CTFHudMannVsMachineStatus 
 //-----------------------------------------------------------------------------
-DECLARE_HUDELEMENT( CTFHudMannVsMachineStatus );
+DECLARE_HUDELEMENT_DEPTH( CTFHudMannVsMachineStatus, 48 );
 
 CTFHudMannVsMachineStatus::CTFHudMannVsMachineStatus( const char *pElementName ) :
 CHudElement( pElementName ), BaseClass( NULL, "HudMannVsMachineStatus" )

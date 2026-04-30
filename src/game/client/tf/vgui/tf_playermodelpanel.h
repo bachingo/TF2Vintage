@@ -35,6 +35,8 @@ public:
 	void	EquipRequiredLoadoutSlot( int iRequiredLoadoutSlot );
 	CEconItemView	*GetHeldItem() { return m_pHeldItem; }
 
+	void SetInvis( float flInvis ) { m_flInvis = flInvis; } 
+
 	int		AddCarriedItem( CEconItemView *pItem );
 	void	ClearCarriedItems( void );
 
@@ -42,6 +44,7 @@ public:
 
 	// Handle animation events
 	virtual void FireEvent( const char *pszEventName, const char *pszEventOptions );
+	void FireSoundEvent(const char *pszEventOptions);
 
 	const CUtlVector<CEconItemView*> &GetCarriedItems() { return m_ItemsToCarry; }
 	int		GetNumCarriedItems() const { return m_ItemsToCarry.Count(); }
@@ -55,6 +58,9 @@ public:
 	int		GetTeam( void ) { return m_iTeam; }
 
 	void	UpdatePreviewVisuals( void );
+
+	virtual void	SetMDL(MDLHandle_t handle, void* pProxyData = NULL) OVERRIDE;
+	virtual void	SetMDL(const char* pMDLName, void* pProxyData = NULL) OVERRIDE;
 
 	// From IChoreoEventCallback
 	virtual void	StartEvent( float currenttime, CChoreoScene *scene, CChoreoEvent *event );
@@ -74,6 +80,10 @@ public:
 
 	void	InvalidateParticleEffects();
 
+	static bool GetPlayerModelRenderInfo( float& flInvis, int& iTeam );
+
+	CPanelAnimationVar(bool, m_bDisableSpeakEvent, "disable_speak_event", "0");
+
 protected:
 	// From CBaseModelPanel
 	virtual void	PrePaint3D( IMatRenderContext *pRenderContext ) OVERRIDE;
@@ -81,6 +91,7 @@ protected:
 	virtual void	RenderingRootModel( IMatRenderContext *pRenderContext, CStudioHdr *pStudioHdr, MDLHandle_t mdlHandle, matrix3x4_t *pWorldMatrix );
 	virtual void	RenderingMergedModel( IMatRenderContext *pRenderContext, CStudioHdr *pStudioHdr, MDLHandle_t mdlHandle, matrix3x4_t *pWorldMatrix );
 	virtual IMaterial* GetOverrideMaterial( MDLHandle_t mdlHandle ) OVERRIDE;
+	virtual void CreateDefaultLights() OVERRIDE;
 
 private:
 
@@ -152,6 +163,7 @@ private:
 	void	UpdateEyeGlows( IMatRenderContext *pRenderContext, CStudioHdr *pStudioHdr, MDLHandle_t mdlHandle, matrix3x4_t *pWorldMatrix, bool bIsRightEye );
 	void	UpdateActionSlotEffects( IMatRenderContext *pRenderContext, CStudioHdr *pStudioHdr, MDLHandle_t mdlHandle, matrix3x4_t *pWorldMatrix );
 	void	UpdateTauntEffects( IMatRenderContext *pRenderContext, CStudioHdr *pStudioHdr, MDLHandle_t mdlHandle, matrix3x4_t *pWorldMatrix );
+	void	UpdateHeadLighting(IMatRenderContext* pRenderContext, CStudioHdr* pStudioHdr, MDLHandle_t mdlHandle, matrix3x4_t* pWorldMatrix);
 
 	int				m_iCurrentClassIndex;
 	int				m_iCurrentSlotIndex;
@@ -199,6 +211,9 @@ private:
 
 	bool m_bUpdateEyeGlows;
 	bool m_bPlaySparks;
+	bool m_bUpdateHeadLighting = false;
+
+	Vector m_vHeadLightPos;
 
 	char m_pszEyeGlowParticleName[MAX_PATH];
 	Vector m_vEyeGlowColor1;
@@ -211,12 +226,16 @@ private:
 
 	CUtlString m_strPlayerModelOverride;
 
-	CPanelAnimationVar( bool, m_bDisableSpeakEvent, "disable_speak_event", "0" );
-
 	CEconItemView			*GetLoadoutItemFromMDLHandle( loadout_positions_t iPosition, MDLHandle_t mdlHandle );
 	bool					RenderStatTrack( CStudioHdr *pStudioHdr, matrix3x4_t *pWorldMatrix );
 	MDLData_t				m_StatTrackModel;
 	float					m_flStatTrackScale;
+
+	float m_flInvis;
+
+	static bool s_bIsRendering;
+	static float s_flInvis;
+	static int s_iTeam;
 };
 
 #endif // TF_PLAYERMODELPANEL_H

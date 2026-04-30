@@ -21,7 +21,9 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include <tier0/memdbgon.h>
 
-extern ConVar tf_respawn_on_loadoutchanges;
+#include "tf_gamerules.h"
+
+//extern ConVar tf_respawn_on_loadoutchanges;
 
 ConVar tf_show_preset_explanation_in_class_loadout( "tf_show_preset_explanation_in_class_loadout", "1", FCVAR_HIDDEN | FCVAR_CLIENTDLL | FCVAR_ARCHIVE );
 ConVar tf_show_taunt_explanation_in_class_loadout( "tf_show_taunt_explanation_in_class_loadout", "1", FCVAR_HIDDEN | FCVAR_CLIENTDLL | FCVAR_ARCHIVE );
@@ -434,6 +436,8 @@ CClassLoadoutPanel::CClassLoadoutPanel( vgui::Panel *parent )
 
 	m_bInTauntLoadoutMode = false;
 
+	m_bLoadoutHasChanged = false;
+
 	g_pClassLoadoutPanel = this;
 
 	m_pItemOptionPanel = new CLoadoutItemOptionsPanel( this, "ItemOptionsPanel" );
@@ -692,6 +696,19 @@ void CClassLoadoutPanel::OnKeyCodePressed( vgui::KeyCode code )
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CClassLoadoutPanel::OnKeyCodeTyped(vgui::KeyCode code)
+{
+	// HACK: we can only escape key out of the menu if we're in game
+	if ( code == KEY_ESCAPE && engine->IsInGame() )
+	{
+		OnClosing();
+	}
+	BaseClass::OnKeyCodeTyped(code);
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -745,7 +762,8 @@ void CClassLoadoutPanel::OnShowPanel( bool bVisible, bool bReturningFromArmory )
 			SetBorderForItem( m_pItemModelPanels[0], false );
 		}
 
-		m_bLoadoutHasChanged = false;
+		// incorrect, because OnClosing handles this
+		//m_bLoadoutHasChanged = false;
 
 		if ( tf_show_preset_explanation_in_class_loadout.GetBool() && m_pPresetsExplanationPopup )
 		{
@@ -913,6 +931,15 @@ void CClassLoadoutPanel::UpdateModelPanels( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+void CClassLoadoutPanel::OnLoadoutUpdate( void )
+{
+	m_bLoadoutHasChanged = true;
+	UpdateModelPanels();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CClassLoadoutPanel::OnItemPanelMouseReleased( vgui::Panel *panel )
 {
 	CItemModelPanel *pItemPanel = dynamic_cast < CItemModelPanel * > ( panel );
@@ -944,9 +971,7 @@ void CClassLoadoutPanel::OnSelectionReturned( KeyValues *data )
 		{
 			TFInventoryManager()->EquipItemInLoadout( m_iCurrentClassIndex, m_iCurrentSlotIndex, ulIndex );
 
-			m_bLoadoutHasChanged = true;
-
-			UpdateModelPanels();
+			OnLoadoutUpdate();
 
 			// Send the preset panel a msg so it can save the change
 			KeyValues *pLoadoutChangedMsg = new KeyValues( "LoadoutChanged" );
@@ -996,12 +1021,17 @@ void CClassLoadoutPanel::OnCancelSelection( void )
 //-----------------------------------------------------------------------------
 void CClassLoadoutPanel::RespawnPlayer()
 {
-	if ( tf_respawn_on_loadoutchanges.GetBool() )
+#ifdef INVENTORY_VIA_WEBAPI
+	TFInventoryManager()->QueueGCInventoryChangeNotification();
+#else
+	// UNDONE: we always do this to notify players of their loadout change. respawn is now checked server-side.
+	//if ( tf_respawn_on_loadoutchanges.GetBool() )
 	{
 		// Tell the GC to tell server that we should respawn if we're in a respawn room
 		GCSDK::CGCMsg< MsgGCEmpty_t > msg( k_EMsgGCRespawnPostLoadoutChange );
 		GCClientSystem()->BSendMessage( msg );
 	}
+#endif
 }
 
 //-----------------------------------------------------------------------------

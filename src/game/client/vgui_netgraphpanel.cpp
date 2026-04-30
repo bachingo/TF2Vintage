@@ -42,7 +42,7 @@ static ConVar	net_graphshowinterp ( "net_graphshowinterp", "1", FCVAR_ARCHIVE, "
 
 void NetgraphFontChangeCallback( IConVar *var, const char *pOldValue, float flOldValue );
 
-static ConVar	net_graph			( "net_graph","0", 0, "Draw the network usage graph, = 2 draws data on payload, = 3 draws payload legend.", NetgraphFontChangeCallback );
+static ConVar	net_graph			( "net_graph","0", FCVAR_ARCHIVE, "Draw the network usage graph, = 2 draws data on payload, = 3 draws payload legend.", NetgraphFontChangeCallback );
 static ConVar	net_graphheight		( "net_graphheight", "64", FCVAR_ARCHIVE, "Height of netgraph panel", NetgraphFontChangeCallback );
 static ConVar	net_graphproportionalfont( "net_graphproportionalfont", "1", FCVAR_ARCHIVE, "Determines whether netgraph font is proportional or not", NetgraphFontChangeCallback );
 
@@ -603,7 +603,7 @@ void CNetGraphPanel::GetFrameData( 	INetChannelInfo *netchannel, int *biggest_me
 
 	if ( cl_updaterate->GetFloat() > 0.001f )
 	{
-		flAdjust = -0.5f / cl_updaterate->GetFloat();
+		//flAdjust = -0.5f / cl_updaterate->GetFloat();
 
 		m_AvgLatency += flAdjust;
 	}
@@ -772,22 +772,19 @@ void CNetGraphPanel::DrawTextFields( int graphvalue, int x, int y, int w, netban
 
 	int interpcolor[ 3 ] = { (int)GRAPH_RED, (int)GRAPH_GREEN, (int)GRAPH_BLUE }; 
 	float flInterp = ROUND_TO_TICKS( GetClientInterpAmount() );
-	if ( flInterp > 0.001f )
+	// Server framerate is lower than interp can possibly deal with
+	if ( flInterp < 0.001f || ( m_flServerFramerate < ( 1.0f / flInterp ) ) )
 	{
-		// Server framerate is lower than interp can possibly deal with
-		if ( m_flServerFramerate < ( 1.0f / flInterp ) )
-		{
-			interpcolor[ 0 ] = 255;
-			interpcolor[ 1 ] = 255;
-			interpcolor[ 2 ] = 31;
-		}
-		// flInterp is below recommended setting!!!
-		else if ( flInterp < ROUND_TO_TICKS( 2.0f / cl_updaterate->GetFloat() ) )
-		{
-			interpcolor[ 0 ] = 255;
-			interpcolor[ 1 ] = 125;
-			interpcolor[ 2 ] = 31;
-		}
+		interpcolor[ 0 ] = 255;
+		interpcolor[ 1 ] = 255;
+		interpcolor[ 2 ] = 31;
+	}
+	// flInterp is below recommended setting!!!
+	else if ( flInterp < ROUND_TO_TICKS( 2.0f / cl_updaterate->GetFloat() ) )
+	{
+		interpcolor[ 0 ] = 255;
+		interpcolor[ 1 ] = 125;
+		interpcolor[ 2 ] = 31;
 	}
 
 	g_pMatSystemSurface->DrawColoredText( font, x + textWidth, y, interpcolor[ 0 ], interpcolor[ 1 ], interpcolor[ 2 ], 255, "%s", sz );

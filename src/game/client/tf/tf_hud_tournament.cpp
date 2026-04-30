@@ -86,12 +86,14 @@ CHudTournament::CHudTournament( const char *pElementName ) : CHudElement( pEleme
 	m_bCompetitiveMode = false;
 	m_bReadyTextBlinking = false;
 	m_bCountDownVisible = false;
+	m_iLocalTeam = 0;
 
 	m_pPlayerPanelKVs = NULL;
 	m_bReapplyPlayerPanelKVs = false;
 
 	m_pScoreboard = NULL;
 
+	// this is the match start timer and in non-match games, it is the round start timer/countdown.
 	m_pCountdownBG = new vgui::ScalableImagePanel( this, "CountdownBG" );
 	m_pCountdownLabel = new CExLabel( this, "CountdownLabel", L"" );
 	m_pCountdownLabelShadow = new CExLabel( this, "CountdownLabelShadow", L"" );
@@ -128,6 +130,8 @@ void CHudTournament::Init( void )
 	SetVisible( false );
 	CHudElement::Init();
 	m_flNextUpdate = gpGlobals->curtime;
+	m_bCountDownVisible = false;
+	m_iLocalTeam = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -140,7 +144,7 @@ void CHudTournament::PlaySounds( int nTime )
 	if ( !pLocalPlayer )
 		return;
 
-	bool bCompetitiveMode = TFGameRules() && TFGameRules()->IsCompetitiveMode();
+	bool bCompetitiveMode = TFGameRules() && ( TFGameRules()->IsCompetitiveMode() || TFGameRules()->IsEmulatingMatch() );
 
 	switch( nTime )
 	{
@@ -271,11 +275,13 @@ void CHudTournament::PreparePanel( void )
 	{
 		bool bCountdownVisible = false;
 		bool bAutoReady = false;
-		const IMatchGroupDescription* pMatchDesc = GetMatchGroupDescription( TFGameRules()->GetCurrentMatchGroup() );
+		const IMatchGroupDescription* pMatchDesc = GetMatchGroupDescription( TFGameRules()->GetCurrentMatchGroupWithEmulation() );
 		if ( pMatchDesc )
 		{
 			bAutoReady = pMatchDesc->BUsesAutoReady();
 		}
+
+		int nTime = -1;
 
 		if ( !bAutoReady && ( TFGameRules()->IsWaitingForTeams() || TFGameRules()->GetRoundRestartTime() < 0 ) )
 		{
@@ -315,7 +321,7 @@ void CHudTournament::PreparePanel( void )
 		else
 		{
 			float flTime = TFGameRules()->GetRoundRestartTime() - gpGlobals->curtime;
-			int nTime = (int)( ceil( flTime ) );
+			nTime = Ceil2Int( flTime );
 			
 			wchar szCountdown[64];
 			wchar_t wzVal[16];
@@ -342,7 +348,7 @@ void CHudTournament::PreparePanel( void )
 				m_pModeImage->SetVisible( false );
 				SetPlayerPanelsVisible( false );
 			}
-			else if ( nTime <= TOURNAMENT_NOCANCEL_TIME )
+			else if ( flTime <= TOURNAMENT_NOCANCEL_TIME )
 			{
 				SetDialogVariable( "readylabel", g_pVGuiLocalize->Find( "" ) );
 			}
@@ -389,19 +395,34 @@ void CHudTournament::PreparePanel( void )
 			}
 		}
 
-		if ( m_bCountDownVisible != bCountdownVisible )
+		C_TFPlayer* pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
+		if ( pLocalPlayer && pLocalPlayer->GetTeamNumber() != m_iLocalTeam )
+		{
+			m_iLocalTeam = pLocalPlayer->GetTeamNumber();
+			// bit of a hack: don't show the countdown while we are changing the image
+			if ( !m_bCountDownVisible )
+			{
+				bCountdownVisible = false;
+			}
+			if ( m_pCountdownBG )
+			{
+				m_pCountdownBG->SetImage( m_iLocalTeam == TF_TEAM_BLUE ? "../hud/color_panel_blu" : "../hud/color_panel_red" );
+			}
+		}
+
+		if ( m_bCountDownVisible != bCountdownVisible && m_iLocalTeam > LAST_SHARED_TEAM && pLocalPlayer->IsAlive() )
 		{
 			m_bCountDownVisible = bCountdownVisible;
 
-			if ( m_bCountDownVisible )
+			if ( m_bCountDownVisible && ( !m_bCompetitiveMode || nTime > 10 ) )
 			{
-				g_pClientMode->GetViewportAnimationController()->StartAnimationSequence(this, m_bCompetitiveMode ? "HudTournament_ShowTimerCompetitive" : "HudTournament_ShowTimerDefault", false);
+				g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( this, TFGameRules() && TFGameRules()->IsMannVsMachineMode() ? "HudTournament_ShowTimerDefault" : "HudTournament_ShowTimerCompetitive", false );
 			}
 			else
 			{
 				g_pClientMode->GetViewportAnimationController()->StartAnimationSequence(this, "HudTournament_HideTimer", false);
 			}
-		}	
+		}
 	}
 	
 #ifdef WIN32
@@ -419,7 +440,7 @@ void CHudTournament::PreparePanel( void )
 	SetDialogVariable( "bluestate", TFGameRules()->IsTeamReady( TF_TEAM_BLUE ) ? g_pVGuiLocalize->Find( "Tournament_TeamReady" ) : g_pVGuiLocalize->Find( "Tournament_TeamNotReady" ) );
 	SetDialogVariable( "redstate", TFGameRules()->IsTeamReady( TF_TEAM_RED ) ? g_pVGuiLocalize->Find( "Tournament_TeamReady" ) : g_pVGuiLocalize->Find( "Tournament_TeamNotReady" ) );
 	
-	if ( m_bTeamReady[TF_TEAM_BLUE] != TFGameRules()->IsTeamReady( TF_TEAM_BLUE ) || m_bTeamReady[TF_TEAM_RED] != TFGameRules()->IsTeamReady( TF_TEAM_RED ) )
+	if ( !m_bReadyStatusMode && ( m_bTeamReady[TF_TEAM_BLUE] != TFGameRules()->IsTeamReady( TF_TEAM_BLUE ) || m_bTeamReady[TF_TEAM_RED] != TFGameRules()->IsTeamReady( TF_TEAM_RED ) ) )
 	{
 		C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
 
@@ -575,22 +596,42 @@ void CHudTournament::OnTick( void )
 	{
 		if ( TFGameRules()->IsInTournamentMode() )
 		{
+			bool bNeedsInvalidate = false;
 			if ( TFGameRules()->IsInWaitingForPlayers() && TFGameRules()->State_Get() != GR_STATE_GAME_OVER )
 			{
-				m_bShouldBeVisible = true;
+				bool bShouldBeVisible = true;
+				bool bShouldInvalidate = true;
 				PreparePanel();
 
 				if ( !TFGameRules()->IsInArenaMode() )
 				{
 					if ( !pLocalPlayer->IsAlive() )
 					{
-						m_bShouldBeVisible = false;
+						bShouldBeVisible = false;
 					}
 				}
+				
+				if ( !m_pScoreboard.Get() && gViewPortInterface )
+				{
+					m_pScoreboard = ( CTFClientScoreBoardDialog* )( gViewPortInterface->FindPanelByName( PANEL_SCOREBOARD ) );
+				}
+
+				if ( m_pScoreboard.Get() && m_pScoreboard->IsVisible() )
+				{
+					bShouldBeVisible = false;
+					bShouldInvalidate = false;
+				}
+
+				if ( m_bShouldBeVisible != bShouldBeVisible )
+				{
+					m_bShouldBeVisible = bShouldBeVisible;
+					bNeedsInvalidate = bShouldInvalidate;
+				}
 			}
-			else
+			else if ( m_bShouldBeVisible )
 			{
 				m_bShouldBeVisible = false;
+				bNeedsInvalidate = true;
 			}
 
 			if ( TFGameRules()->UsePlayerReadyStatusMode() )
@@ -598,26 +639,31 @@ void CHudTournament::OnTick( void )
 				if ( !m_bReadyStatusMode )
 				{
 					m_bReadyStatusMode = true;
-					InvalidateLayout( false, true );
+					bNeedsInvalidate = true;
 				}
 			}
 			else if ( m_bReadyStatusMode )
 			{
 				m_bReadyStatusMode = false;
-				InvalidateLayout( false, true );
+				bNeedsInvalidate = true;
 			}
 
-			if ( TFGameRules()->IsCompetitiveMode() )
+			if ( TFGameRules()->IsCompetitiveMode() || TFGameRules()->IsEmulatingMatch() )
 			{
 				if ( !m_bCompetitiveMode )
 				{
 					m_bCompetitiveMode = true;
-					InvalidateLayout( false, true );
+					bNeedsInvalidate = true;
 				}
 			}
 			else if ( m_bCompetitiveMode )
 			{
 				m_bCompetitiveMode = false;
+				bNeedsInvalidate = true;
+			}
+
+			if ( bNeedsInvalidate )
+			{
 				InvalidateLayout( false, true );
 			}
 		}
@@ -629,7 +675,7 @@ void CHudTournament::OnTick( void )
 		if ( m_bReadyStatusMode )
 		{
 			const IMatchGroupDescription* pMatchDesc = GetMatchGroupDescription( TFGameRules()->GetCurrentMatchGroup() );
-			if ( !pMatchDesc || !pMatchDesc->BUsesAutoReady() )
+			if ( TFGameRules()->IsEmulatingMatch() != 1 && ( !pMatchDesc || !pMatchDesc->BUsesAutoReady() ) )
 			{
 				RecalculatePlayerPanels();
 
@@ -665,6 +711,8 @@ void CHudTournament::OnTick( void )
 void CHudTournament::LevelInit( void )
 {
 	m_bShouldBeVisible = false;
+	m_bCountDownVisible = false;
+	m_iLocalTeam = 0;
 	SetVisible( false );
 	Init();
 }
@@ -700,6 +748,8 @@ void CHudTournament::ApplySchemeSettings( IScheme *pScheme )
 	BaseClass::ApplySchemeSettings( pScheme );
 
 	m_bReapplyPlayerPanelKVs = true;
+	m_bCountDownVisible = false;
+	m_iLocalTeam = 0;
 
 	KeyValues *pConditions = NULL;
 	if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() )
@@ -767,7 +817,7 @@ void CHudTournament::PerformLayout( void )
 		}
 	}
 
-	bool bShowTournamentConditions = !m_bCompetitiveMode && TFGameRules() && !TFGameRules()->IsMannVsMachineMode();
+	bool bShowTournamentConditions = TFGameRules() && TFGameRules()->IsCompetitiveGame();
 
 	// Hide some elements when in competitive mode
 	if ( m_pTournamentConditionLabel )
@@ -893,7 +943,7 @@ void CHudTournament::RecalculatePlayerPanels( void )
 	// Clear out any extra panels
 	for ( int i = iPanel; i < m_PlayerPanels.Count(); i++  )
 	{
-		m_PlayerPanels[i]->SetPlayerIndex( 0 );
+		m_PlayerPanels[i]->SetPlayerIndex( -1 );
 	}
 
 	UpdatePlayerPanels();
@@ -938,12 +988,15 @@ void CHudTournament::UpdatePlayerPanels( void )
 	// Try and always put the local player's team on team1, if he's in a team
 	int iTeam1 = TF_TEAM_BLUE;
 	int iTeam2 = TF_TEAM_RED;
+	// UNDONE: let's just make this consistent across the board
+#if 0
 	int iLocalTeam = g_TF_PR->GetTeam( pPlayer->entindex() );
-	if ( ( iLocalTeam == TF_TEAM_RED || iLocalTeam == TF_TEAM_BLUE ) && !TFGameRules()->IsCompetitiveMode() )	// Blue always on left in comp
+	if ( ( iLocalTeam == TF_TEAM_RED || iLocalTeam == TF_TEAM_BLUE ) && !TFGameRules()->IsCompetitiveGame() )	// Blue always on left in comp
 	{
 		iTeam1 = iLocalTeam;
 		iTeam2 = ( iTeam1 == TF_TEAM_BLUE ) ? TF_TEAM_RED : TF_TEAM_BLUE;
 	}
+#endif
 
 	int iTeamSize = g_TF_PR->GetNumPlayersForTeam( iTeam1, false );
 	CTFGSLobby *pLobby = GTFGCClientSystem()->GetLobby();
@@ -979,7 +1032,7 @@ void CHudTournament::UpdatePlayerPanels( void )
 	{
 		int iTeam = m_PlayerPanels[i]->GetTeam();
 
-		if ( !m_PlayerPanels[i]->GetPlayerIndex() && iTeam == TEAM_INVALID )
+		if ( m_PlayerPanels[i]->GetPlayerIndex() <= 0 && iTeam == TEAM_INVALID )
 			continue;
 
 		int iXPos = ( m_bCompetitiveMode ) ? -XRES( 30 ) : 0;	// Hack to make space for the season image
@@ -1138,7 +1191,7 @@ bool CHudTournamentSetup::ToggleState( ButtonCode_t code )
 				Q_snprintf ( szTeamName, sizeof( szTeamName ), "tournament_teamname %s", szText );
 				engine->ClientCmd_Unrestricted( szTeamName );
 
-				m_flNextThink = gpGlobals->curtime + TOURNAMENT_PANEL_UPDATE_INTERVAL;
+				m_flNextThink = gpGlobals->curtime;
 			}
 
 			DisableInput();
@@ -1411,7 +1464,8 @@ void CHudStopWatch::OnTick( void )
 	bool bInFreezeCam = ( pPlayer && pPlayer->GetObserverMode() == OBS_MODE_FREEZECAM );
 
 	bool bProperMatch = TFGameRules()->IsInTournamentMode() || TFGameRules()->IsCompetitiveMode();
-	if ( !bProperMatch || TFGameRules()->IsInPreMatch() || !TFGameRules()->IsInStopWatch() || bInFreezeCam || TFGameRules()->State_Get() == GR_STATE_GAME_OVER  )
+	// TODO(mcoms): does hiding it suffice for stopwatch states STOPWATCH_DEFENDED and STOPWATCH_FULFILLED?
+	if ( !bProperMatch || TFGameRules()->IsInPreMatch() || !TFGameRules()->IsInStopWatch() || bInFreezeCam || TFGameRules()->State_Get() == GR_STATE_GAME_OVER || TFGameRules()->State_Get() == GR_STATE_BETWEEN_RNDS || TFGameRules()->GetStopWatchState() == STOPWATCH_DEFENDED || TFGameRules()->GetStopWatchState() == STOPWATCH_FULFILLED )
 	{
 		m_bShouldBeVisible = false;
 		return;
@@ -1421,8 +1475,16 @@ void CHudStopWatch::OnTick( void )
 		m_bShouldBeVisible = true;
 	}
 
-	if ( m_pTimePanel && ObjectiveResource() )
+	// TODO(mcoms) if we are in win state, we shouldn't update? because gamerules could swap team scores during it
+	if ( m_pTimePanel && ObjectiveResource() && TFGameRules()->State_Get() != GR_STATE_TEAM_WIN )
 	{
+		bool bMultiSeries = false;
+		if ( TFGameRules() )
+		{
+			ETFMatchGroup eMatchGroup = TFGameRules()->GetCurrentMatchGroupWithEmulation();
+			bMultiSeries = GetMatchGroupDescription( eMatchGroup ) && GetMatchGroupDescription( eMatchGroup )->BUsesMultiSeries() && !TFGameRules()->IsCommunityGameMode();
+		}
+
 		int iActiveTimer = ObjectiveResource()->GetStopWatchTimer();
 		m_pTimePanel->SetTimerIndex( iActiveTimer );
 
@@ -1467,15 +1529,31 @@ void CHudStopWatch::OnTick( void )
 		{
 			m_pTimePanel->SetVisible( true );
 			m_pStopWatchLabel->SetVisible( false );
-			m_pStopWatchScore->SetVisible( true );
-			m_pStopWatchPointsLabel->SetVisible( true );
+
+			// TODO(mcoms): should we hide in the capped all points case?
+#if 0
+			const bool bCappedAllPoints = TFGameRules() && TFGameRules()->StopWatchShouldBeTimedWin();
+#else
+			const bool bCappedAllPoints = false;
+#endif
+			const bool bScorePerRound = !ObjectiveResource()->ShouldScorePerCapture();
+			if ( bCappedAllPoints || bScorePerRound )
+			{
+				m_pStopWatchScore->SetVisible( false );
+				m_pStopWatchPointsLabel->SetVisible( false );
+			}
+			else
+			{
+				m_pStopWatchScore->SetVisible( true );
+				m_pStopWatchPointsLabel->SetVisible( true );
+			}
 
 			m_pStopWatchImage->SetImage( "../hud/ico_time_10" );
 
 			CTeamRoundTimer *pTimer = dynamic_cast< CTeamRoundTimer* >( ClientEntityList().GetEnt( iActiveTimer ) );
 
 			int iPoints = 0;
-		
+
 			if ( pTimer )
 			{
 				if ( pTimer->IsWatchingTimeStamps() )
@@ -1484,13 +1562,21 @@ void CHudStopWatch::OnTick( void )
 				}
 				else
 				{
-					iPoints = pDefender->Get_Score() - pAttacker->Get_Score();
+					int iDefenderScore = pDefender->Get_Score();
+					int iAttackerScore = pAttacker->Get_Score();
+					// if the attackers didn't win a round, adjust the defender score since they got a point
+					if ( !ObjectiveResource()->ShouldScorePerCapture() && iDefenderScore == 0 )
+					{
+						iAttackerScore -= 1;
+					}
+					iPoints = iDefenderScore - iAttackerScore;
 				}
 			}
 
+			iPoints = Max( iPoints, 0 );
+
 			wchar_t wzScoreVal[128];
-			static wchar_t wzScore[128];
-			wchar_t *pszPoints = NULL;
+			wchar_t *pszPoints;
 			_snwprintf( wzScoreVal, ARRAYSIZE( wzScoreVal ), L"%i", iPoints );
 
 			if ( 1 == iPoints ) 
@@ -1509,7 +1595,7 @@ void CHudStopWatch::OnTick( void )
 
 			if ( pPlayer->GetTeam() == pAttacker )
 			{
-				g_pVGuiLocalize->ConstructString_safe( wzHelp, g_pVGuiLocalize->Find( "Tournament_StopWatch_TimeVictory" ), 1, pDefender->Get_Localized_Name() );
+				g_pVGuiLocalize->ConstructString_safe( wzHelp, g_pVGuiLocalize->Find( CFmtStr( "Tournament_StopWatch_TimeVictory%s", bMultiSeries ? "_Series" : "" ) ), 1, pDefender->Get_Localized_Name() );
 			}
 			else
 			{
@@ -1536,31 +1622,50 @@ void CHudStopWatch::OnTick( void )
 			m_pStopWatchScore->SetVisible( false );
 			m_pStopWatchPointsLabel->SetVisible( false );
 
-			m_pStopWatchDescriptionBG->SetVisible( false );
-			m_pStopWatchDescriptionLabel->SetVisible( false );
+			m_pStopWatchDescriptionBG->SetVisible( true );
+			m_pStopWatchDescriptionLabel->SetVisible( true );
 
-			SetDialogVariable( "descriptionlabel", g_pVGuiLocalize->Find( "#Tournament_StopWatch_CapVictory" ) );
+			wchar_t wzHelp[128];
+
+			if ( pPlayer->GetTeam() == pAttacker )
+			{
+				g_pVGuiLocalize->ConstructString_safe( wzHelp, g_pVGuiLocalize->Find( CFmtStr( "Tournament_StopWatch_AttackerScore%s", bMultiSeries ? "_Series" : "" ) ), 1, pDefender->Get_Localized_Name() );
+			}
+			else
+			{
+				g_pVGuiLocalize->ConstructString_safe( wzHelp, g_pVGuiLocalize->Find( "Tournament_StopWatch_LabelDefender" ), 1, pAttacker->Get_Localized_Name() );
+			}
+			SetDialogVariable( "descriptionlabel", wzHelp );
 
 			m_pStopWatchImage->SetImage( "../hud/ico_time_60" );
 
 			wchar_t wzScoreVal[128];
 
-			int iPoints = (pDefender->Get_Score() - pAttacker->Get_Score()) + 1;
+			int iDefenderScore = pDefender->Get_Score();
+			int iAttackerScore = pAttacker->Get_Score();
+			// if the attackers didn't win a round, adjust the defender score since they got a point
+			if ( !ObjectiveResource()->ShouldScorePerCapture() && iDefenderScore == 0 )
+			{
+				iAttackerScore -= 1;
+			}	
+			int iPoints = ( iDefenderScore - iAttackerScore ) + 1;
+			iPoints = Max( iPoints, 0 );
 			wchar_t wzVal[16];
 
-			swprintf( wzVal, ARRAYSIZE( wzVal ), L"%x", iPoints );
+			swprintf( wzVal, ARRAYSIZE( wzVal ), L"%d", iPoints );
 			
+			// TODO(mcoms): what to do for score per round?
 			if ( pPlayer->GetTeam() == pAttacker )
 			{
-				g_pVGuiLocalize->ConstructString_safe( wzScoreVal, g_pVGuiLocalize->Find( "Tournament_StopWatchPointCaptureAttacker" ), 2, wzVal, iPoints == 1 ? g_pVGuiLocalize->Find( "#Tournament_StopWatch_Point" ) : g_pVGuiLocalize->Find( "#Tournament_StopWatch_Points" )  );
+				g_pVGuiLocalize->ConstructString_safe( wzScoreVal, g_pVGuiLocalize->Find( CFmtStr( "Tournament_StopWatchPointCaptureAttacker%s", bMultiSeries ? "_Series" : "" ) ), 2, wzVal, iPoints == 1 ? g_pVGuiLocalize->Find( "#Tournament_StopWatch_Point" ) : g_pVGuiLocalize->Find( "#Tournament_StopWatch_Points" ) );
 			}
 			else if ( pPlayer->GetTeam() == pDefender )
 			{
-				g_pVGuiLocalize->ConstructString_safe( wzScoreVal, g_pVGuiLocalize->Find( "Tournament_StopWatchPointCaptureDefender" ), 2, wzVal, iPoints == 1 ? g_pVGuiLocalize->Find( "#Tournament_StopWatch_Point" ) : g_pVGuiLocalize->Find( "#Tournament_StopWatch_Points" )  );
+				g_pVGuiLocalize->ConstructString_safe( wzScoreVal, g_pVGuiLocalize->Find( CFmtStr( "Tournament_StopWatchPointCaptureDefender%s", bMultiSeries ? "_Series" : "" ) ), 2, wzVal, iPoints == 1 ? g_pVGuiLocalize->Find( "#Tournament_StopWatch_Point" ) : g_pVGuiLocalize->Find( "#Tournament_StopWatch_Points" )  );
 			}
 			else
 			{
-				g_pVGuiLocalize->ConstructString_safe( wzScoreVal, g_pVGuiLocalize->Find( "Tournament_StopWatchPointCaptureSpectator" ), 2, wzVal, iPoints == 1 ? g_pVGuiLocalize->Find( "#Tournament_StopWatch_Point" ) : g_pVGuiLocalize->Find( "#Tournament_StopWatch_Points" )  );
+				g_pVGuiLocalize->ConstructString_safe( wzScoreVal, g_pVGuiLocalize->Find( CFmtStr( "Tournament_StopWatchPointCaptureSpectator%s", bMultiSeries ? "_Series" : "" ) ), 2, wzVal, iPoints == 1 ? g_pVGuiLocalize->Find( "#Tournament_StopWatch_Point" ) : g_pVGuiLocalize->Find( "#Tournament_StopWatch_Points" )  );
 			}
 
 			SetDialogVariable( "stopwatchlabel", wzScoreVal );	

@@ -75,6 +75,11 @@ public:
 			pTitle->SetText( m_pTitle );
 		}
 	}
+
+	virtual const char* GetConfirmId() OVERRIDE
+	{
+		return "ConfirmTrainingDialog";
+	}
 protected:
 	const char *m_pText;
 	const char *m_pTitle;
@@ -94,9 +99,9 @@ Panel* GetBackgroundDimmer()
 			Button::ApplySchemeSettings( pScheme );
 
 			SetCommand( "dimmer_clicked" );
-			SetMouseInputEnabled( true );
+			SetMouseInputEnabled( false );
 			SetKeyBoardInputEnabled( false ); // This can never be true
-			SetVisible( true );
+			SetVisible( false );
 			SetProportional( true );
 			SetBounds( 0, 0, g_pClientMode->GetViewport()->GetWide(), g_pClientMode->GetViewport()->GetTall() - YRES( 59 ) ); // Magically touch the top of the footer
 			SetZPos( 1000 );
@@ -379,16 +384,29 @@ void CTFMatchmakingDashboard::OnCommand( const char *command )
 	}
 	else if ( FStrEq( command, "find_game" ) )
 	{
-		OnPlayCommunity();
-		return;
+#ifdef SOURCESDK
+		OnQuickplay();
+#else
 		PopStack( 100, k_eSideRight ); // All y'all
 		PushSlidePanel( GetDashboardPanel().GetTypedPanel< CMatchMakingDashboardSidePanel >( k_ePlayList ) );
 		CHudMainMenuOverride *pMMOverride = (CHudMainMenuOverride*)( gViewPortInterface->FindPanelByName( PANEL_MAINMENUOVERRIDE ) );
 		pMMOverride->CheckTrainingStatus();
+
+#endif
 	}
+#ifdef SOURCESDK
+	else if ( FStrEq( command, "play_community" ) )
+	{
+		OnPlayCommunity();
+	}
+	else if ( FStrEq( command, "play_training" ) )
+	{
+		OnPlayTraining();
+	}
+#endif
 	else if ( FStrEq( command, "quit" ) )
 	{
-		if ( engine->IsInGame() )
+		if ( engine->IsInGame() && !engine->IsLevelMainMenuBackground() )
 		{
 			PromptOrFireCommand( "disconnect" );
 		}
@@ -913,12 +931,18 @@ void CTFMatchmakingDashboard::OnPlayTraining()
 	}
 }
 
-
 void CTFMatchmakingDashboard::OnPlayCommunity()
 {
 	ClearAllStacks();
 	// Just call the command directly
 	engine->ClientCmd_Unrestricted( "gamemenucommand openserverbrowser" );
+}
+
+void CTFMatchmakingDashboard::OnQuickplay()
+{
+	ClearAllStacks();
+	// Just call the command directly
+	engine->ClientCmd_Unrestricted("OpenQuickplayDialog");
 }
 
 void CTFMatchmakingDashboard::OnCreateServer()
@@ -1289,7 +1313,7 @@ void CTFMatchmakingDashboard::UpdateDisconnectAndResume()
 	Panel* pOffsetPanel = bInGame ? m_pDisconnectButton : m_pQuitButton;
 
 	m_pPlayButton->SetPos( pOffsetPanel->GetXPos() - m_pPlayButton->GetWide() - 1, m_pPlayButton->GetYPos() );
-	m_pResumeButton->SetPos( m_pPlayButton->GetXPos() - m_pResumeButton->GetWide() - 1, m_pResumeButton->GetYPos() );
+	m_pResumeButton->SetPos( m_pPlayButton->GetXPos() - m_pResumeButton->GetWide(), m_pResumeButton->GetYPos() );
 }
 
 bool CTFMatchmakingDashboard::BAnySidePanelsShowing() const
@@ -1323,6 +1347,11 @@ void CTFMatchmakingDashboard::UpdateDimmer()
 	bool bShowDimmer = bAnySlidePanels;
 
 	Panel* pDimmer = GetDashboardPanel().GetPanel( k_eBGDimmer );
+	if ( bShowDimmer && !pDimmer->IsVisible() )
+	{
+		// init visibility
+		pDimmer->SetVisible( true );
+	}
 	int nDimmerAlpha = bShowDimmer ? 230 : 0;
 	g_pClientMode->GetViewportAnimationController()->RunAnimationCommand( pDimmer, "alpha", nDimmerAlpha, 0.0f, 0.4f, vgui::AnimationController::INTERPOLATOR_GAIN, 0.8f, true, false );
 	pDimmer->SetMouseInputEnabled( bShowDimmer );
@@ -1463,5 +1492,17 @@ void CTFMatchmakingDashboard::UpdateJoinPartyLobbyPanel()
 	{
 		// Get outta here
 		g_pClientMode->GetViewportAnimationController()->RunAnimationCommand( m_pJoinPartyLobbyPanel, "ypos", -YRES(50), 0.0f, tf_dashboard_slide_time.GetFloat(), vgui::AnimationController::INTERPOLATOR_GAIN, 0.8f, true, false );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFMatchmakingDashboard::OnConfirm( KeyValues *pParams )
+{
+	if ( pParams->GetBool( "confirmed" ) && !V_strcmp( pParams->GetString("name"), "ConfirmTrainingDialog" ) )
+	{
+		engine->ClientCmd_Unrestricted( "disconnect" );
+		GetClientModeTFNormal()->GameUI()->SendMainMenuCommand( "engine training_showdlg" );
 	}
 }
