@@ -749,7 +749,7 @@ public:
 	// TF2V Item checks
 	// Tournament medals first
 	bool 				IsItemMedal( CEconItemView *pItem );
-	bool 				IsPaintPlayerApplied( CEconItemView *pItem, const CEconItemAttribute *pPaintAttrib )
+	bool 				IsPaintPlayerApplied( CEconItemView *pItem, const CEconItemAttribute *pPaintAttrib );
 	
 	// Anachronistic modifiers
 	bool 				ItemQualityIsAllowedTimePeriod( int iQuality );
