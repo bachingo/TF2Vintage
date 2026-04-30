@@ -23192,6 +23192,70 @@ void CTFPlayer::ScriptStunPlayer( float flTime, float flReductionAmount, int iSt
 // Defined in sharreddefs.h
 //-----------------------------------------------------------------------------
 
+
+//-----------------------------------------------------------------------------
+// Check medals.
+//-----------------------------------------------------------------------------
+bool CTFPlayer::IsItemMedal( CEconItemView *pItem )
+{
+	if ( !pItem || !pItem->IsValid() )
+		return false;
+ 
+	CEconItemDefinition *pItemDef = pItem->GetStaticData();
+	if ( !pItemDef )
+		return false;
+ 
+	// Check if item is in tournament medal range
+	if ( pItemDef->GetEquipRegionMask() & pItemDef->GetItemSchema()->GetEquipRegionBitMaskByName( "medal" ) )
+	{
+		return true;
+	}
+ 
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Solution 2: Distinguish schema tints from player-applied tints
+//-----------------------------------------------------------------------------
+bool CTFPlayer::IsPaintPlayerApplied( CEconItemView *pItem, const CEconItemAttribute *pPaintAttrib )
+{
+	if ( !pItem || !pPaintAttrib )
+		return false;
+ 
+	// If the item has tint in its SCHEMA definition, it's not player-applied
+	CEconItemDefinition *pItemDef = pItem->GetStaticData();
+	if ( !pItemDef )
+		return true; // Assume player-applied if we can't check
+ 
+	// Check if this item definition has tint in its schema
+	const CAttributeList *pSchemaAttribs = pItemDef->GetAttributeList();
+	if ( pSchemaAttribs )
+	{
+		for ( int i = 0; i < pSchemaAttribs->GetNumAttributes(); i++ )
+		{
+			const CEconItemAttribute *pSchemaAttrib = pSchemaAttribs->GetAttribute( i );
+			if ( !pSchemaAttrib )
+				continue;
+ 
+			const CEconItemAttributeDefinition *pSchemaAttrDef = pSchemaAttrib->GetStaticData();
+			if ( !pSchemaAttrDef )
+				continue;
+ 
+			// If schema has tint attribute, this is built-in, not player-applied
+			if ( V_stristr( pSchemaAttrDef->GetDefinitionName(), "paint" ) ||
+			V_stristr( pSchemaAttrDef->GetDefinitionName(), "item" ) ||
+			V_stristr( pSchemaAttrDef->GetDefinitionName(), "set_item_tint_rgb" ) ||
+			V_stristr( pSchemaAttrDef->GetDefinitionName(), "item_tint_rgb_2" ) )
+			{
+				return false; // Schema tint - don't filter!
+			}
+		}
+	}
+ 
+	return true; // No schema tint found - must be player-applied
+}
+
+
 //-----------------------------------------------------------------------------
 // Check if item quality is allowed in current era
 //-----------------------------------------------------------------------------
@@ -23268,6 +23332,8 @@ bool CTFPlayer::StripAnachronisticAttributes( CEconItemView *pItem )
 	bool bModified = false;
 	int iCurrentEra = TFGameRules()->GetTF2VEra();
 
+	// Tournament medal check
+	bool bIsMedal = IsItemMedal( pItem );
 	
 	// Iterate backwards so we can safely remove attributes
 	for ( int i = pAttribList->GetNumAttributes() - 1; i >= 0; i-- )
@@ -23282,7 +23348,7 @@ bool CTFPlayer::StripAnachronisticAttributes( CEconItemView *pItem )
 
 		const char *pszAttrName = pAttrDef->GetDefinitionName();
 		bool bShouldRemove = false;
-
+		
 		// Paint attributes - introduced with Mann-Conomy
 		if ( V_stristr( pszAttrName, "paint" ) || 
 			 V_stristr( pszAttrName, "set item tint" ) ||
@@ -23293,7 +23359,7 @@ bool CTFPlayer::StripAnachronisticAttributes( CEconItemView *pItem )
 			{
 				bShouldRemove = true;
 			}
-			else
+			else if ( !bIsMedal && IsPaintPlayerApplied( pItem, pAttrib ) )
 			{
 				// Investigate the permutation further.
 				attribute_data_union_t value;

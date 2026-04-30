@@ -23,6 +23,8 @@ $Project "Server (TF2V)"
 {
 		$Folder	"TF2Vintage"
 		{
-			// Era Enforcement
+			// Attribute Enforcement
+			$File	"tf\tf2v_attribute_date_loader.cpp"
+			$File	"tf\tf2v_attribute_date_loader.h"
 		}
 }

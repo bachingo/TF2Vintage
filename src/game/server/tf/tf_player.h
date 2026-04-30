@@ -705,6 +705,11 @@ public:
 	bool				ItemIsAllowed( CEconItemView *pItem );
 	
 	// TF2V Item checks
+	// Tournament medals first
+	bool 				IsItemMedal( CEconItemView *pItem );
+	bool 				IsPaintPlayerApplied( CEconItemView *pItem, const CEconItemAttribute *pPaintAttrib )
+	
+	// Anachronistic modifiers
 	bool 				ItemQualityIsAllowedTimePeriod( int iQuality );
 	bool 				StripAnachronisticAttributes( CEconItemView *pItem );
 	CEconItemView 		*GetTimePeriodCompliantItem( CEconItemView *pOriginalItem, int iClass, int iSlot );
