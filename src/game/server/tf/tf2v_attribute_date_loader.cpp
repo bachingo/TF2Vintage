@@ -1,5 +1,6 @@
 //-----------------------------------------------------------------------------
-// Purpose: TF2V: Implementation of attribute date loading from files
+// Purpose: TF2V: Attribute date loader - CORRECTED FOR DAYS SINCE LAUNCH
+// Converts YYYY/MM/DD dates to days since September 16, 2007
 //-----------------------------------------------------------------------------
 
 #include "cbase.h"
@@ -18,7 +19,6 @@ CTF2VAttributeDateManager::CTF2VAttributeDateManager()
 {
 	m_bInitialized = false;
 	
-	// Initialize maps with default less function
 	m_PaintDates.SetLessFunc( DefLessFunc( int ) );
 	m_UnusualEffectDates.SetLessFunc( DefLessFunc( int ) );
 	m_WarPaintDates.SetLessFunc( DefLessFunc( int ) );
@@ -33,7 +33,7 @@ CTF2VAttributeDateManager::~CTF2VAttributeDateManager()
 }
 
 //-----------------------------------------------------------------------------
-// Initialize and load all date files
+// Initialize
 //-----------------------------------------------------------------------------
 void CTF2VAttributeDateManager::Init()
 {
@@ -42,8 +42,6 @@ void CTF2VAttributeDateManager::Init()
 
 	Msg( "[TF2V] Loading attribute introduction dates...\n" );
 
-	// Load each file
-	// These files should be in scripts/items/ alongside items_game.txt
 	bool bPaintSuccess = LoadPaintDates( "scripts/items/tf2v_paint_dates.txt" );
 	bool bUnusualSuccess = LoadUnusualDates( "scripts/items/tf2v_unusual_dates.txt" );
 	bool bWarPaintSuccess = LoadWarPaintDates( "scripts/items/tf2v_warpaint_dates.txt" );
@@ -67,7 +65,7 @@ void CTF2VAttributeDateManager::Init()
 }
 
 //-----------------------------------------------------------------------------
-// Shutdown and clear all data
+// Shutdown
 //-----------------------------------------------------------------------------
 void CTF2VAttributeDateManager::Shutdown()
 {
@@ -78,7 +76,7 @@ void CTF2VAttributeDateManager::Shutdown()
 }
 
 //-----------------------------------------------------------------------------
-// Reload all date files
+// Reload
 //-----------------------------------------------------------------------------
 void CTF2VAttributeDateManager::ReloadAllDates()
 {
@@ -88,152 +86,8 @@ void CTF2VAttributeDateManager::ReloadAllDates()
 }
 
 //-----------------------------------------------------------------------------
-// Load paint dates from file
-// Format:
-// "tf2v_paint_dates"
-// {
-//     "0x7D4071"    "2010/09/30"    // Optional comment
-// }
-//-----------------------------------------------------------------------------
-bool CTF2VAttributeDateManager::LoadPaintDates( const char *pszFilename )
-{
-	KeyValues *pKV = new KeyValues( "tf2v_paint_dates" );
-	if ( !pKV->LoadFromFile( filesystem, pszFilename, "MOD" ) )
-	{
-		Warning( "[TF2V] Failed to load %s\n", pszFilename );
-		pKV->deleteThis();
-		return false;
-	}
-
-	// Clear existing data
-	m_PaintDates.Purge();
-
-	// Parse each paint entry
-	for ( KeyValues *pSub = pKV->GetFirstValue(); pSub; pSub = pSub->GetNextValue() )
-	{
-		const char *pszRGBHex = pSub->GetName();	// e.g. "0x7D4071"
-		const char *pszDate = pSub->GetString();	// e.g. "2010/09/30"
-
-		// Convert hex RGB string to integer
-		int iRGB = 0;
-		if ( V_strnicmp( pszRGBHex, "0x", 2 ) == 0 )
-		{
-			// Parse as hex (skip "0x" prefix)
-			sscanf( pszRGBHex + 2, "%x", &iRGB );
-		}
-		else
-		{
-			// Try parsing as decimal
-			iRGB = atoi( pszRGBHex );
-		}
-
-		// Convert date string to integer
-		int iDate = ParseDateString( pszDate );
-
-		if ( iRGB > 0 && iDate > 0 )
-		{
-			m_PaintDates.Insert( iRGB, iDate );
-		}
-		else
-		{
-			Warning( "[TF2V] Invalid paint entry: %s = %s\n", pszRGBHex, pszDate );
-		}
-	}
-
-	pKV->deleteThis();
-	return true;
-}
-
-//-----------------------------------------------------------------------------
-// Load unusual effect dates from file
-// Format:
-// "tf2v_unusual_dates"
-// {
-//     "1"    "2010/09/30"    // Optional comment
-// }
-//-----------------------------------------------------------------------------
-bool CTF2VAttributeDateManager::LoadUnusualDates( const char *pszFilename )
-{
-	KeyValues *pKV = new KeyValues( "tf2v_unusual_dates" );
-	if ( !pKV->LoadFromFile( filesystem, pszFilename, "MOD" ) )
-	{
-		Warning( "[TF2V] Failed to load %s\n", pszFilename );
-		pKV->deleteThis();
-		return false;
-	}
-
-	// Clear existing data
-	m_UnusualEffectDates.Purge();
-
-	// Parse each unusual effect entry
-	for ( KeyValues *pSub = pKV->GetFirstValue(); pSub; pSub = pSub->GetNextValue() )
-	{
-		const char *pszEffectIndex = pSub->GetName();	// e.g. "1", "13", "70"
-		const char *pszDate = pSub->GetString();		// e.g. "2010/09/30"
-
-		int iEffectIndex = atoi( pszEffectIndex );
-		int iDate = ParseDateString( pszDate );
-
-		if ( iEffectIndex >= 0 && iDate > 0 )
-		{
-			m_UnusualEffectDates.Insert( iEffectIndex, iDate );
-		}
-		else
-		{
-			Warning( "[TF2V] Invalid unusual entry: %s = %s\n", pszEffectIndex, pszDate );
-		}
-	}
-
-	pKV->deleteThis();
-	return true;
-}
-
-//-----------------------------------------------------------------------------
-// Load war paint dates from file
-// Format:
-// "tf2v_warpaint_dates"
-// {
-//     "1"    "2015/07/02"    // Optional comment
-// }
-//-----------------------------------------------------------------------------
-bool CTF2VAttributeDateManager::LoadWarPaintDates( const char *pszFilename )
-{
-	KeyValues *pKV = new KeyValues( "tf2v_warpaint_dates" );
-	if ( !pKV->LoadFromFile( filesystem, pszFilename, "MOD" ) )
-	{
-		Warning( "[TF2V] Failed to load %s\n", pszFilename );
-		pKV->deleteThis();
-		return false;
-	}
-
-	// Clear existing data
-	m_WarPaintDates.Purge();
-
-	// Parse each war paint entry
-	for ( KeyValues *pSub = pKV->GetFirstValue(); pSub; pSub = pSub->GetNextValue() )
-	{
-		const char *pszProtoDefIndex = pSub->GetName();	// e.g. "1", "100", "300"
-		const char *pszDate = pSub->GetString();		// e.g. "2015/07/02"
-
-		int iProtoDefIndex = atoi( pszProtoDefIndex );
-		int iDate = ParseDateString( pszDate );
-
-		if ( iProtoDefIndex >= 0 && iDate > 0 )
-		{
-			m_WarPaintDates.Insert( iProtoDefIndex, iDate );
-		}
-		else
-		{
-			Warning( "[TF2V] Invalid war paint entry: %s = %s\n", pszProtoDefIndex, pszDate );
-		}
-	}
-
-	pKV->deleteThis();
-	return true;
-}
-
-//-----------------------------------------------------------------------------
-// Parse a date string "YYYY/MM/DD" into integer YYYYMMDD
+// Convert date string "YYYY/MM/DD" to days since beta
+// TF2 Beta: September 17, 2007 (Use September 16th so the 17th is Day 1)
 //-----------------------------------------------------------------------------
 int CTF2VAttributeDateManager::ParseDateString( const char *pszDate )
 {
@@ -245,20 +99,20 @@ int CTF2VAttributeDateManager::ParseDateString( const char *pszDate )
 	// Try format: "YYYY/MM/DD"
 	if ( sscanf( pszDate, "%d/%d/%d", &iYear, &iMonth, &iDay ) == 3 )
 	{
-		return ( iYear * 10000 ) + ( iMonth * 100 ) + iDay;
+		return ConvertDateToDaysSinceLaunch( iYear, iMonth, iDay );
 	}
 
 	// Try format: "YYYY-MM-DD"
 	if ( sscanf( pszDate, "%d-%d-%d", &iYear, &iMonth, &iDay ) == 3 )
 	{
-		return ( iYear * 10000 ) + ( iMonth * 100 ) + iDay;
+		return ConvertDateToDaysSinceLaunch( iYear, iMonth, iDay );
 	}
 
-	// Try format: "YYYYMMDD" (already formatted)
-	int iDateInt = atoi( pszDate );
-	if ( iDateInt >= 19700101 && iDateInt <= 99991231 )
+	// Try direct day number
+	int iDays = atoi( pszDate );
+	if ( iDays >= 0 && iDays <= 99999 )
 	{
-		return iDateInt;
+		return iDays;
 	}
 
 	Warning( "[TF2V] Failed to parse date: %s\n", pszDate );
@@ -266,226 +120,241 @@ int CTF2VAttributeDateManager::ParseDateString( const char *pszDate )
 }
 
 //-----------------------------------------------------------------------------
-// Query functions
+// Convert calendar date to days since September 16, 2007
+//-----------------------------------------------------------------------------
+int CTF2VAttributeDateManager::ConvertDateToDaysSinceLaunch( int iYear, int iMonth, int iDay )
+{
+	// TF2 launch date
+	const int kLaunchYear = 2007;
+	const int kLaunchMonth = 9;
+	const int kLaunchDay = 16;
+	
+	static const int daysInMonth[] = { 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+	
+	// Helper: Is leap year?
+	auto isLeapYear = []( int year ) -> bool {
+		return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+	};
+	
+	// Helper: Get total days since epoch
+	auto getDaysSinceEpoch = [&]( int year, int month, int day ) -> int {
+		int totalDays = 0;
+		
+		// Add days for complete years
+		for ( int y = 1; y < year; y++ )
+		{
+			totalDays += 365;
+			if ( isLeapYear( y ) )
+				totalDays++;
+		}
+		
+		// Add days for complete months
+		for ( int m = 1; m < month; m++ )
+		{
+			totalDays += daysInMonth[m];
+			if ( m == 2 && isLeapYear( year ) )
+				totalDays++;
+		}
+		
+		// Add days in current month
+		totalDays += day;
+		
+		return totalDays;
+	};
+	
+	int targetDays = getDaysSinceEpoch( iYear, iMonth, iDay );
+	int launchDays = getDaysSinceEpoch( kLaunchYear, kLaunchMonth, kLaunchDay );
+	
+	return targetDays - launchDays;
+}
+
+//-----------------------------------------------------------------------------
+// Load paint dates
+//-----------------------------------------------------------------------------
+bool CTF2VAttributeDateManager::LoadPaintDates( const char *pszFilename )
+{
+	KeyValues *pKV = new KeyValues( "tf2v_paint_dates" );
+	if ( !pKV->LoadFromFile( filesystem, pszFilename, "MOD" ) )
+	{
+		Warning( "[TF2V] Failed to load %s\n", pszFilename );
+		pKV->deleteThis();
+		return false;
+	}
+
+	m_PaintDates.Purge();
+
+	for ( KeyValues *pSub = pKV->GetFirstValue(); pSub; pSub = pSub->GetNextValue() )
+	{
+		const char *pszRGBKey = pSub->GetName();
+		const char *pszDate = pSub->GetString();
+
+		// Parse RGB (decimal or hex)
+		int iRGB = 0;
+		if ( V_strnicmp( pszRGBKey, "0x", 2 ) == 0 )
+		{
+			sscanf( pszRGBKey + 2, "%x", &iRGB );
+		}
+		else
+		{
+			iRGB = atoi( pszRGBKey );
+		}
+
+		// Convert date to days since launch
+		int iDays = ParseDateString( pszDate );
+
+		if ( iRGB > 0 && iDays >= 0 )
+		{
+			m_PaintDates.Insert( iRGB, iDays );
+		}
+	}
+
+	pKV->deleteThis();
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Load unusual dates
+//-----------------------------------------------------------------------------
+bool CTF2VAttributeDateManager::LoadUnusualDates( const char *pszFilename )
+{
+	KeyValues *pKV = new KeyValues( "tf2v_unusual_dates" );
+	if ( !pKV->LoadFromFile( filesystem, pszFilename, "MOD" ) )
+	{
+		Warning( "[TF2V] Failed to load %s\n", pszFilename );
+		pKV->deleteThis();
+		return false;
+	}
+
+	m_UnusualEffectDates.Purge();
+
+	for ( KeyValues *pSub = pKV->GetFirstValue(); pSub; pSub = pSub->GetNextValue() )
+	{
+		int iEffectIndex = atoi( pSub->GetName() );
+		int iDays = ParseDateString( pSub->GetString() );
+
+		if ( iEffectIndex >= 0 && iDays >= 0 )
+		{
+			m_UnusualEffectDates.Insert( iEffectIndex, iDays );
+		}
+	}
+
+	pKV->deleteThis();
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Load war paint dates
+//-----------------------------------------------------------------------------
+bool CTF2VAttributeDateManager::LoadWarPaintDates( const char *pszFilename )
+{
+	KeyValues *pKV = new KeyValues( "tf2v_warpaint_dates" );
+	if ( !pKV->LoadFromFile( filesystem, pszFilename, "MOD" ) )
+	{
+		Warning( "[TF2V] Failed to load %s\n", pszFilename );
+		pKV->deleteThis();
+		return false;
+	}
+
+	m_WarPaintDates.Purge();
+
+	for ( KeyValues *pSub = pKV->GetFirstValue(); pSub; pSub = pSub->GetNextValue() )
+	{
+		int iProtoDefIndex = atoi( pSub->GetName() );
+		int iDays = ParseDateString( pSub->GetString() );
+
+		if ( iProtoDefIndex >= 0 && iDays >= 0 )
+		{
+			m_WarPaintDates.Insert( iProtoDefIndex, iDays );
+		}
+	}
+
+	pKV->deleteThis();
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Query functions - return DAYS since launch (not YYYYMMDD!)
 //-----------------------------------------------------------------------------
 int CTF2VAttributeDateManager::GetPaintIntroductionDate( int iRGB )
 {
 	if ( !m_bInitialized )
-		return 99999999;
+		return 99999;
 
 	int idx = m_PaintDates.Find( iRGB );
 	if ( m_PaintDates.IsValidIndex( idx ) )
-	{
 		return m_PaintDates[idx];
-	}
 
-	// Not found - return future date (will be blocked)
-	return 99999999;
+	return 99999; // Unknown = blocked
 }
 
 int CTF2VAttributeDateManager::GetUnusualEffectIntroductionDate( int iEffectIndex )
 {
 	if ( !m_bInitialized )
-		return 99999999;
+		return 99999;
 
 	int idx = m_UnusualEffectDates.Find( iEffectIndex );
 	if ( m_UnusualEffectDates.IsValidIndex( idx ) )
-	{
 		return m_UnusualEffectDates[idx];
-	}
 
-	// Not found - return future date (will be blocked)
-	return 99999999;
+	return 99999;
 }
 
 int CTF2VAttributeDateManager::GetWarPaintIntroductionDate( int iProtoDefIndex )
 {
 	if ( !m_bInitialized )
-		return 99999999;
+		return 99999;
 
 	int idx = m_WarPaintDates.Find( iProtoDefIndex );
 	if ( m_WarPaintDates.IsValidIndex( idx ) )
-	{
 		return m_WarPaintDates[idx];
-	}
 
-	// Not found - return future date (will be blocked)
-	return 99999999;
+	return 99999;
 }
 
 //-----------------------------------------------------------------------------
-// Console commands for debugging
+// Console commands
 //-----------------------------------------------------------------------------
 #ifdef GAME_DLL
 
-CON_COMMAND( tf2v_reload_attribute_dates, "Reload all attribute introduction date files" )
+CON_COMMAND( tf2v_reload_attribute_dates, "Reload attribute date files" )
 {
 	if ( !g_pTF2VAttributeDateManager )
 	{
-		Warning( "Attribute date manager not initialized!\n" );
+		Warning( "Manager not initialized!\n" );
 		return;
 	}
 
 	g_pTF2VAttributeDateManager->ReloadAllDates();
-	Msg( "Attribute dates reloaded.\n" );
 }
 
-CON_COMMAND( tf2v_list_paint_dates, "List all loaded paint colors and dates" )
+CON_COMMAND( tf2v_list_paint_dates, "List paint colors" )
 {
 	if ( !g_pTF2VAttributeDateManager )
-	{
-		Warning( "Attribute date manager not initialized!\n" );
 		return;
-	}
 
-	Msg( "=== Loaded Paint Colors (%d total) ===\n", g_pTF2VAttributeDateManager->m_PaintDates.Count() );
+	Msg( "=== Paint Colors (%d) ===\n", g_pTF2VAttributeDateManager->m_PaintDates.Count() );
 	
 	FOR_EACH_MAP_FAST( g_pTF2VAttributeDateManager->m_PaintDates, i )
 	{
 		int iRGB = g_pTF2VAttributeDateManager->m_PaintDates.Key( i );
-		int iDate = g_pTF2VAttributeDateManager->m_PaintDates[i];
+		int iDays = g_pTF2VAttributeDateManager->m_PaintDates[i];
 		
-		Msg( "  0x%06X -> %d\n", iRGB, iDate );
+		Msg( "  %d (0x%06X) -> day %d\n", iRGB, iRGB, iDays );
 	}
-	
-	Msg( "=====================================\n" );
 }
 
-CON_COMMAND( tf2v_list_unusual_dates, "List all loaded unusual effects and dates" )
+CON_COMMAND( tf2v_check_paint, "Check paint date" )
 {
-	if ( !g_pTF2VAttributeDateManager )
-	{
-		Warning( "Attribute date manager not initialized!\n" );
+	if ( args.ArgC() < 2 || !g_pTF2VAttributeDateManager )
 		return;
-	}
 
-	Msg( "=== Loaded Unusual Effects (%d total) ===\n", g_pTF2VAttributeDateManager->m_UnusualEffectDates.Count() );
+	int iRGB = atoi( args[1] );
+	int iDays = g_pTF2VAttributeDateManager->GetPaintIntroductionDate( iRGB );
 	
-	FOR_EACH_MAP_FAST( g_pTF2VAttributeDateManager->m_UnusualEffectDates, i )
-	{
-		int iEffect = g_pTF2VAttributeDateManager->m_UnusualEffectDates.Key( i );
-		int iDate = g_pTF2VAttributeDateManager->m_UnusualEffectDates[i];
-		
-		Msg( "  Effect #%d -> %d\n", iEffect, iDate );
-	}
-	
-	Msg( "=========================================\n" );
-}
-
-CON_COMMAND( tf2v_list_warpaint_dates, "List all loaded war paints and dates" )
-{
-	if ( !g_pTF2VAttributeDateManager )
-	{
-		Warning( "Attribute date manager not initialized!\n" );
-		return;
-	}
-
-	Msg( "=== Loaded War Paints (%d total) ===\n", g_pTF2VAttributeDateManager->m_WarPaintDates.Count() );
-	
-	FOR_EACH_MAP_FAST( g_pTF2VAttributeDateManager->m_WarPaintDates, i )
-	{
-		int iPaint = g_pTF2VAttributeDateManager->m_WarPaintDates.Key( i );
-		int iDate = g_pTF2VAttributeDateManager->m_WarPaintDates[i];
-		
-		Msg( "  War Paint #%d -> %d\n", iPaint, iDate );
-	}
-	
-	Msg( "====================================\n" );
-}
-
-CON_COMMAND( tf2v_check_paint, "Check introduction date for a specific paint RGB" )
-{
-	if ( args.ArgC() < 2 )
-	{
-		Msg( "Usage: tf2v_check_paint <RGB_hex>\n" );
-		Msg( "Example: tf2v_check_paint 0x7D4071\n" );
-		return;
-	}
-
-	if ( !g_pTF2VAttributeDateManager )
-	{
-		Warning( "Attribute date manager not initialized!\n" );
-		return;
-	}
-
-	const char *pszRGB = args[1];
-	int iRGB = 0;
-	
-	if ( V_strnicmp( pszRGB, "0x", 2 ) == 0 )
-	{
-		sscanf( pszRGB + 2, "%x", &iRGB );
-	}
+	if ( iDays == 99999 )
+		Msg( "Paint %d: NOT FOUND\n", iRGB );
 	else
-	{
-		iRGB = atoi( pszRGB );
-	}
-
-	int iDate = g_pTF2VAttributeDateManager->GetPaintIntroductionDate( iRGB );
-	
-	if ( iDate == 99999999 )
-	{
-		Msg( "Paint color 0x%06X: NOT FOUND (will be blocked)\n", iRGB );
-	}
-	else
-	{
-		Msg( "Paint color 0x%06X: Introduced %d\n", iRGB, iDate );
-	}
-}
-
-CON_COMMAND( tf2v_check_unusual, "Check introduction date for a specific unusual effect" )
-{
-	if ( args.ArgC() < 2 )
-	{
-		Msg( "Usage: tf2v_check_unusual <effect_index>\n" );
-		Msg( "Example: tf2v_check_unusual 13\n" );
-		return;
-	}
-
-	if ( !g_pTF2VAttributeDateManager )
-	{
-		Warning( "Attribute date manager not initialized!\n" );
-		return;
-	}
-
-	int iEffect = atoi( args[1] );
-	int iDate = g_pTF2VAttributeDateManager->GetUnusualEffectIntroductionDate( iEffect );
-	
-	if ( iDate == 99999999 )
-	{
-		Msg( "Unusual effect #%d: NOT FOUND (will be blocked)\n", iEffect );
-	}
-	else
-	{
-		Msg( "Unusual effect #%d: Introduced %d\n", iEffect, iDate );
-	}
-}
-
-CON_COMMAND( tf2v_check_warpaint, "Check introduction date for a specific war paint" )
-{
-	if ( args.ArgC() < 2 )
-	{
-		Msg( "Usage: tf2v_check_warpaint <proto_def_index>\n" );
-		Msg( "Example: tf2v_check_warpaint 1\n" );
-		return;
-	}
-
-	if ( !g_pTF2VAttributeDateManager )
-	{
-		Warning( "Attribute date manager not initialized!\n" );
-		return;
-	}
-
-	int iPaint = atoi( args[1] );
-	int iDate = g_pTF2VAttributeDateManager->GetWarPaintIntroductionDate( iPaint );
-	
-	if ( iDate == 99999999 )
-	{
-		Msg( "War paint #%d: NOT FOUND (will be blocked)\n", iPaint );
-	}
-	else
-	{
-		Msg( "War paint #%d: Introduced %d\n", iPaint, iDate );
-	}
+		Msg( "Paint %d: day %d\n", iRGB, iDays );
 }
 
 #endif // GAME_DLL
