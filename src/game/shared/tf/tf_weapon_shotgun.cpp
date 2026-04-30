@@ -74,7 +74,10 @@ CTFShotgun::CTFShotgun()
 void CTFShotgun::PrimaryAttack()
 {
 	if ( !CanAttack() )
+	{
+		m_flNextPrimaryAttack = MAX(m_flNextPrimaryAttack, gpGlobals->curtime);
 		return;
+	}
 
 	// Set the weapon mode.
 	m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
@@ -132,7 +135,10 @@ void CTFShotgun_Revenge::Precache()
 void CTFShotgun_Revenge::PrimaryAttack()
 {
 	if ( !CanAttack() )
+	{
+		m_flNextPrimaryAttack = MAX(m_flNextPrimaryAttack, gpGlobals->curtime);
 		return;
+	}
 
 	BaseClass::PrimaryAttack();
 
@@ -141,7 +147,10 @@ void CTFShotgun_Revenge::PrimaryAttack()
 	if ( pOwner )
 	{
 		int iRevengeCrits = pOwner->m_Shared.GetRevengeCrits();
-		pOwner->m_Shared.SetRevengeCrits( iRevengeCrits-1 );
+		if ( iRevengeCrits > 0 && !pOwner->m_Shared.ConditionConflictsWithRevenge() )
+		{
+			pOwner->m_Shared.SetRevengeCrits(iRevengeCrits - 1);
+		}
 	}
 }
 
@@ -171,7 +180,7 @@ bool CTFShotgun_Revenge::Holster( CBaseCombatWeapon *pSwitchingTo )
 	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
 	if ( pOwner && pOwner->m_Shared.GetRevengeCrits() )
 	{
-		pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
+		pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED_SELF );
 	}
 #endif
 
@@ -187,7 +196,7 @@ bool CTFShotgun_Revenge::Deploy( void )
 	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
 	if ( pOwner && pOwner->m_Shared.GetRevengeCrits() )
 	{
-		pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED );
+		pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED_SELF );
 	}
 #endif
 
@@ -286,7 +295,7 @@ void CTFShotgun_Revenge::Detach( void )
 	if ( pPlayer )
 	{
 		pPlayer->m_Shared.SetRevengeCrits( 0 );
-		pPlayer->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
+		pPlayer->m_Shared.RemoveCond( TF_COND_CRITBOOSTED_SELF );
 	}
 
 	BaseClass::Detach();
@@ -323,16 +332,14 @@ void CTFScatterGun::FireBullet( CTFPlayer *pPlayer )
 		if ( !pOwner )
 			return;
 
-		// No knockback during pre-round freeze.
-		if ( TFGameRules() && (TFGameRules()->State_Get() == GR_STATE_PREROUND) )
-			return;
-
 		// Knock the firer back!
 		if ( !(pOwner->GetFlags() & FL_ONGROUND) && !pPlayer->m_Shared.m_bScattergunJump )
 		{
 			pPlayer->m_Shared.m_bScattergunJump = true;
 
+#ifndef CLIENT_DLL
 			pOwner->m_Shared.StunPlayer( 0.3f, 1.f, TF_STUN_MOVEMENT | TF_STUN_MOVEMENT_FORWARD_ONLY );
+#endif
 
 			float flForce = AirBurstDamageForce( pOwner->WorldAlignSize(), 60, 6.f );
 
@@ -422,8 +429,13 @@ void CTFScatterGun::FinishReload( void )
 		int primary	= MIN( GetMaxClip1() - m_iClip1, pOwner->GetAmmoCount(m_iPrimaryAmmoType));	
 		m_iClip1 += primary;
 
+#if 0
 		// Takes a whole clip worth of ammo to reload, causing us to lose whatever was chambered.
 		pOwner->RemoveAmmo( GetMaxClip1(), m_iPrimaryAmmoType);
+#else
+		// UNDONE: we don't do special reload logic for this gun. auto-reload is the default and this just ends up being frustrating.
+		pOwner->RemoveAmmo( primary, m_iPrimaryAmmoType);
+#endif
 	}
 }
 
@@ -432,6 +444,12 @@ void CTFScatterGun::FinishReload( void )
 //-----------------------------------------------------------------------------
 bool CTFScatterGun::HasKnockback( void )
 {
+	// No knockback during pre-round freeze.
+	if ( TFGameRules() && ( TFGameRules()->State_Get() == GR_STATE_PREROUND ) && !TFGameRules()->IsPreRoundPushEnabled() )
+	{
+		return false;
+	}
+
 	int iWeaponMod = 0;
 	CALL_ATTRIB_HOOK_INT( iWeaponMod, set_scattergun_has_knockback );
 	if ( iWeaponMod == 1 )
@@ -483,6 +501,8 @@ void CTFSodaPopper::ItemBusyFrame( void )
 //-----------------------------------------------------------------------------
 void CTFSodaPopper::SecondaryAttack()
 {
+#if !defined(MCOMS_BALANCE_PACK)
+	// does nothing anymore
 	CTFPlayer *pPlayer = GetTFPlayerOwner( );
 	if ( !pPlayer || pPlayer->m_Shared.IsHypeBuffed() )
 		return;
@@ -491,6 +511,23 @@ void CTFSodaPopper::SecondaryAttack()
 	{
 		pPlayer->m_Shared.AddCond( TF_COND_SODAPOPPER_HYPE );
 	}
+#endif
+}
+
+//-----------------------------------------------------------------------------
+float CTFSodaPopper::GetReloadSpeedScale() const
+{
+#if defined(MCOMS_BALANCE_PACK)
+	// reload upon airdash
+	CTFPlayer* pPlayer = GetTFPlayerOwner();
+	if (!pPlayer)
+		return BaseClass::GetReloadSpeedScale();
+
+	if ( pPlayer->m_Shared.IsAirDashing() && pPlayer->m_Shared.IsHypeBuffed() )
+		return 0.1f;
+#endif
+
+	return BaseClass::GetReloadSpeedScale();
 }
 
 //-----------------------------------------------------------------------------

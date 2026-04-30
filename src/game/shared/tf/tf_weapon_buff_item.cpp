@@ -158,6 +158,7 @@ void CTFBuffItem::Detach( void )
 	if ( pTFPlayer )
 	{
 		pTFPlayer->m_Shared.SetParachuteEquipped( false );
+		pTFPlayer->m_Shared.ResetRageSystem();
 	}
 
 	BaseClass::Detach();
@@ -310,12 +311,16 @@ void CTFBuffItem::CreateBanner()
 		if ( !pBanner )
 			return;
 
-		//Assert( iBuffType > 0 );
-		//Assert( iBuffType <= ARRAYSIZE(BannerModels) );
+		int iBuffType = GetBuffType();
+		Assert( iBuffType > 0 ); // 0 is valid in the array, but an invalid buff model
+		Assert( iBuffType <= ARRAYSIZE( BannerModels ) );
+		if ( iBuffType <= 0 || iBuffType > ARRAYSIZE( BannerModels ) )
+			return;
+
 		pBanner->m_nSkin = 0;
-		pBanner->InitializeAsClientEntity( BannerModels[GetBuffType()-1], RENDER_GROUP_OPAQUE_ENTITY );
+		pBanner->InitializeAsClientEntity( BannerModels[ iBuffType - 1 ], RENDER_GROUP_OPAQUE_ENTITY );
 		pBanner->SetBuffItem( this );
-		pBanner->SetBuffType( GetBuffType() );
+		pBanner->SetBuffType( iBuffType );
 		pBanner->ForceClientSideAnimationOn();
 		SetBanner( pBanner );
 		int iSpine = pPlayer->LookupBone( "bip_spine_3" );
@@ -460,7 +465,7 @@ bool CTFBuffItem::IsFull( void )
 	if ( !pPlayer )
 		return false;
 
-	return ( pPlayer->m_Shared.GetRageMeter() >= 100.0f );
+	return ( pPlayer->m_Shared.GetRageMeter() >= 100.0f && !pPlayer->m_Shared.IsRageDraining() );
 }
 
 //-----------------------------------------------------------------------------

@@ -1,0 +1,49 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+//
+// Purpose: 
+//
+// $NoKeywords: $
+//=============================================================================//
+
+#ifndef INTERACTIVEWEBPANEL_H
+#define INTERACTIVEWEBPANEL_H
+#ifdef _WIN32
+#pragma once
+#endif
+
+#include <vgui_controls/EditablePanel.h>
+#include "vgui_controls/HTML.h"
+#include <string>
+
+using namespace vgui;
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+class CInteractiveWebPanel : public EditablePanel
+{
+    DECLARE_CLASS_SIMPLE(CInteractiveWebPanel, EditablePanel);
+
+    CInteractiveWebPanel(vgui::Panel* parent, const char* name, const char* path, bool bDynamic = false, bool bLoadOnStart = true);
+    virtual ~CInteractiveWebPanel();
+
+    void ApplySchemeSettings(IScheme* pScheme) override;
+    void PerformLayout() override;
+
+    void SetVisible(bool state) override;
+
+    void LoadInteractivePanel();
+
+    void ForceFullTextureUpload() { m_pHTML->ForceFullTextureUpload(); }
+
+private:
+    void LoadInteractivePanel(bool bForceReload);
+
+    bool m_bInited;
+    bool m_bLoadOnStart;
+    std::string m_szPath;
+
+    HTML* m_pHTML;
+};
+
+#endif	// INTERACTIVEWEBPANEL_H

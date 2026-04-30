@@ -180,7 +180,7 @@ BEGIN_PREDICTION_DATA( CWeaponMedigun  )
 	DEFINE_FIELD( m_bCanChangeTarget, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_flHealEffectLifetime, FIELD_FLOAT ),
 
-	DEFINE_PRED_FIELD( m_flChargeLevel, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
+	DEFINE_FIELD( m_flChargeLevel, FIELD_FLOAT ),
 	DEFINE_PRED_FIELD( m_bChargeRelease, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 
 //	DEFINE_PRED_FIELD( m_bPlayingSound, FIELD_BOOLEAN ),
@@ -200,9 +200,10 @@ extern ConVar tf_max_health_boost;
 // Purpose: For HUD auto medic callers
 //-----------------------------------------------------------------------------
 #ifdef CLIENT_DLL
-ConVar hud_medicautocallers( "hud_medicautocallers", "0", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX );
-ConVar hud_medicautocallersthreshold( "hud_medicautocallersthreshold", "75", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX );
-ConVar hud_medichealtargetmarker ( "hud_medichealtargetmarker", "0", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX );
+ConVar hud_medicautocallers( "hud_medicautocallers", "1", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX | FCVAR_USERINFO );
+ConVar hud_medicautocallersglow( "hud_medicautocallersglow", "1", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX | FCVAR_USERINFO );
+ConVar hud_medicautocallersthreshold( "hud_medicautocallersthreshold", "50", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX | FCVAR_USERINFO, "Health threshold to see injured allies", true, 0.0f, true, 75.0f );
+ConVar hud_medichealtargetmarker ( "hud_medichealtargetmarker", "1", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX );
 #endif
 
 const char *g_pszMedigunHealSounds[] =
@@ -330,6 +331,7 @@ void CWeaponMedigun::WeaponReset( void )
 	m_pDisruptSound = NULL;
 	m_flDenySecondary = 0.f;
 	m_pHealSound = NULL;
+	m_flStartModulatingSound = 0.f;
 	m_pDetachSound = NULL;
 #endif
 
@@ -727,12 +729,36 @@ void CWeaponMedigun::FindNewTargetForSlot()
 	pOwner->EyeVectors( &vecAiming );
 
 	// Find a player in range of this player, and make sure they're healable.
-	Vector vecEnd = vecSrc + vecAiming * GetTargetRange();
+	const float flRange = GetTargetRange();
+	Vector vecEnd = vecSrc + vecAiming * flRange;
 	trace_t tr;
 	// for leniency, trace for hull instead of hitboxes first
 	UTIL_TraceLine( vecSrc, vecEnd, (MASK_SHOT & ~CONTENTS_HITBOX), pOwner, COLLISION_GROUP_NONE, &tr );
-
-	if ( tr.fraction != 1.0 && tr.m_pEnt )
+	bool bFound = tr.fraction != 1.0 && tr.m_pEnt;
+	if ( !bFound )
+	{
+		// if we failed to trace at our angle, maybe a flat trace will work?
+		const float flEndZ = vecEnd.z;
+		float flZ = Clamp( flEndZ, pOwner->GetAbsOrigin().z, vecSrc.z );
+		// set up forward flat aim angle.
+		Vector vecForward = vecAiming;
+		vecForward.z = 0.0f;
+		vecForward.NormalizeInPlace();
+		// project a trace outward at that z level, completely flat.
+		vecSrc.z = flZ;
+		vecEnd = vecSrc + vecForward * flRange;
+		UTIL_TraceLine( vecSrc, vecEnd, (MASK_SHOT & ~CONTENTS_HITBOX), pOwner, DMG_GENERIC, &tr );
+		bFound = tr.fraction != 1.0 && tr.m_pEnt;
+		// if we hit something, check if we're aiming at it on Z.
+		if ( bFound )
+		{
+			// our original flEndZ must be above bottom and below top.
+			const float flBaseZ = tr.m_pEnt->GetAbsOrigin().z;
+			bFound = flEndZ >= flBaseZ && flEndZ <= flBaseZ + tr.m_pEnt->WorldAlignSize().z + 0.5f;
+			
+		}
+	}
+	if ( bFound )
 	{
 		CBaseEntity *pTarget = tr.m_pEnt;
 
@@ -1269,7 +1295,7 @@ bool CWeaponMedigun::FindAndHealTargets( void )
 			if ( pTFPlayer && weapon_medigun_charge_rate.GetFloat() )
 			{
 #ifdef GAME_DLL
-				int iBoostMax = floor( pTFPlayer->m_Shared.GetMaxBuffedHealth() * 0.95);
+				float fBoostMax = pTFPlayer->m_Shared.GetMaxBuffedHealth() * 0.95;
 				float flChargeModifier = 1.f;
 
 				bool bTargetOverhealBlocked = false;
@@ -1283,6 +1309,15 @@ bool CWeaponMedigun::FindAndHealTargets( void )
 						bTargetOverhealBlocked = true;
 					}
 				}
+
+				// If we aren't already blocking overheal, take into account patient overheal factors for determining boost pct
+				if (!bTargetOverhealBlocked)
+				{
+					// MIN here to keep the max boost at max health for buffing, but we can go lower if there's a penalty.
+					fBoostMax *= MIN( GetOverHealBonus( pTFPlayer ), 1.f );
+				}
+
+				int iBoostMax = floor( fBoostMax );
 
 				// Reduced charge for healing fully healed guys
 				if ( ( bTargetOverhealBlocked || ( pNewTarget->GetHealth() >= iBoostMax ) ) && ( TFGameRules() && !(TFGameRules()->InSetup() && TFGameRules()->GetActiveRoundTimer() ) ) )
@@ -1346,7 +1381,9 @@ bool CWeaponMedigun::FindAndHealTargets( void )
 					}
 					else if ( TFGameRules()->InSetup() && TFGameRules()->GetActiveRoundTimer() )
 					{
+#ifndef TF2_OG
 						flChargeAmount *= 3.f;
+#endif
 					}
 				}
 #endif
@@ -1872,12 +1909,21 @@ void CWeaponMedigun::SecondaryAttack( void )
 		return;
 	}
 
+	StartRelease( pTFPlayerPatient );
+}
+
+void CWeaponMedigun::StartRelease( CTFPlayer *pTFPlayerPatient )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
+	if ( !pOwner )
+		return;
 
 	// Toggle super charge state
 	m_bChargeRelease = true;
 	m_flReleaseStartedAt = gpGlobals->curtime;
 
 #ifdef GAME_DLL
+	float flChunkSize = GetMinChargeAmount();
 	if( GetMedigunType() == MEDIGUN_RESIST )
 	{
 		// We dont want to give the user a point every time they deploy an uber with the resist medigun.
@@ -2112,12 +2158,18 @@ void CWeaponMedigun::StopChargeEffect( bool bImmediately )
 void CWeaponMedigun::ManageChargeEffect( void )
 {
 	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if (GetSpectatorTarget() != 0 && GetSpectatorMode() == OBS_MODE_IN_EYE)
+	{
+		pLocalPlayer = (C_TFPlayer*)UTIL_PlayerByIndex(GetSpectatorTarget());
+	}
 	C_BaseEntity *pEffectOwner = this;
 
 	if ( pLocalPlayer == NULL )
 		return;
 
-	if ( pLocalPlayer == GetTFPlayerOwner() )
+	C_TFPlayer* pOwner = GetTFPlayerOwner();
+
+	if ( pLocalPlayer == pOwner)
 	{
 		pEffectOwner = pLocalPlayer->GetRenderedWeaponModel();
 		if ( !pEffectOwner )
@@ -2128,14 +2180,21 @@ void CWeaponMedigun::ManageChargeEffect( void )
 
 	bool bOwnerTaunting = false;
 
-	if ( GetTFPlayerOwner() && GetTFPlayerOwner()->m_Shared.InCond( TF_COND_TAUNTING ) == true )
+	if (pOwner && pOwner->m_Shared.InCond( TF_COND_TAUNTING ) == true )
 	{
 		bOwnerTaunting = true;
 	}
 
+	bool bOwnerInvis = false;
+
+	if (pOwner && pLocalPlayer != pOwner && (pOwner->m_Shared.IsStealthed() || !pOwner->GetCompetitiveVisibility()))
+	{
+		bOwnerInvis = true;
+	}
+
 	float flMinChargeToDeploy = GetMinChargeAmount();
 
-	if ( GetTFPlayerOwner() && bOwnerTaunting == false && m_bHolstered == false && ( m_flChargeLevel >= flMinChargeToDeploy || m_bChargeRelease == true ) )
+	if ( pOwner && bOwnerTaunting == false && m_bHolstered == false && ( m_flChargeLevel >= flMinChargeToDeploy || m_bChargeRelease == true ) && !bOwnerInvis )
 	{
 		// Did we switch from 1st to 3rd or 3rd to 1st?  Taunting does this.
 		if( pEffectOwner != m_pChargeEffectOwner )
@@ -2148,7 +2207,7 @@ void CWeaponMedigun::ManageChargeEffect( void )
 		{
 			const char *pszEffectName = NULL;
 
-			switch( GetTFPlayerOwner()->GetTeamNumber() )
+			switch( pOwner->GetTeamNumber() )
 			{
 			case TF_TEAM_BLUE:
 				pszEffectName = "medicgun_invulnstatus_fullcharge_blue";
@@ -2302,9 +2361,10 @@ void CWeaponMedigun::ClientThink()
 		// Setup whether we were last healed by the local player or by someone else (used by replay system)
 		// since GetHealer() gets cleared out every frame before player_death events get fired.  See tf_replay.cpp.
 		C_BaseEntity *pHealingTargetEnt = m_hHealingTarget;
+		C_TFPlayer* pHealingTargetPlayer = NULL;
 		if ( pHealingTargetEnt && pHealingTargetEnt->IsPlayer() )
 		{
-			C_TFPlayer *pHealingTargetPlayer = ToTFPlayer( pHealingTargetEnt );
+			pHealingTargetPlayer = ToTFPlayer( pHealingTargetEnt );
 			pHealingTargetPlayer->SetWasHealedByLocalPlayer( pFiringPlayer == pLocalPlayer );
 		}
 
@@ -2324,7 +2384,49 @@ void CWeaponMedigun::ClientThink()
 
 			StopHealSound( false, false, true );
 			m_pHealSound = controller.SoundCreate( filter, iIndex, GetHealSound() );
+			m_flStartModulatingSound = gpGlobals->curtime + 0.5f;
 			controller.Play( m_pHealSound, 1.f, 100.f );
+		}
+		else if ( pHealingTargetPlayer && pFiringPlayer == pLocalPlayer )
+		{
+			// let the medic know how the beam is doing.
+			const bool bModulate = gpGlobals->curtime >= m_flStartModulatingSound;
+			CSoundEnvelopeController& controller = CSoundEnvelopeController::GetController();
+			float flCurOverheal = (float)pHealingTargetPlayer->GetHealth() / (float)pHealingTargetPlayer->GetMaxHealth();
+			if (flCurOverheal > 1.0f)
+			{
+				float flMaxHealthForBuffing = pHealingTargetPlayer->GetMaxHealthForBuffing();
+				float flBuffableRangeHealth = pHealingTargetPlayer->GetHealth() - (pHealingTargetPlayer->GetMaxHealth() - flMaxHealthForBuffing);
+				flCurOverheal = flBuffableRangeHealth / flMaxHealthForBuffing;
+				if (flCurOverheal >= (1.5f * 0.95f))
+				{
+					if (bModulate)
+					{
+						// if we're past modulation time, then keep at level
+						controller.SoundChangePitch(m_pHealSound, 100.0f, 1.0f);
+					}
+					else if (gpGlobals->curtime >= m_flStartModulatingSound - 0.1f)
+					{
+						// give a little hint that we're full buffed
+						controller.SoundChangePitch(m_pHealSound, 165.0f, 0.1f);
+					}
+					else
+					{
+						// we're at the beginning, so modulate slower
+						controller.SoundChangePitch(m_pHealSound, 165.0f, 0.5f);
+					}
+				}
+				else
+				{
+					float flPitch = RemapValClamped(flCurOverheal, 1.0f, 1.5f, 1.2f, 1.6f) * 100.0f;
+					controller.SoundChangePitch(m_pHealSound, flPitch, bModulate ? 0.1f : 0.5f);
+				}
+			}
+			else
+			{
+				float flPitch = RemapValClamped(flCurOverheal, 0.1f, 0.9f, 0.9f, 1.05f) * 100.0f;
+				controller.SoundChangePitch(m_pHealSound, flPitch, bModulate ? 0.1f : 0.5f);
+			}
 		}
 	}
 
@@ -2340,7 +2442,7 @@ void CWeaponMedigun::ClientThink()
 		ForceHealingTargetUpdate();
 	}
 
-	if ( pFiringPlayer->m_Shared.IsEnteringOrExitingFullyInvisible() )
+	if ( pFiringPlayer->m_Shared.IsEnteringOrExitingFullyInvisible() || pFiringPlayer->IsCompetitiveVisibilityChanging() )
 	{
 		UpdateEffects();
 	}
@@ -2356,10 +2458,14 @@ void CWeaponMedigun::UpdateEffects( void )
 		return;
 
 	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if (GetSpectatorTarget() != 0 && GetSpectatorMode() == OBS_MODE_IN_EYE)
+	{
+		pLocalPlayer = (C_TFPlayer*)UTIL_PlayerByIndex(GetSpectatorTarget());
+	}
 	C_BaseEntity *pEffectOwner = this;
 	if ( pLocalPlayer == pFiringPlayer )
 	{
-		pEffectOwner = pLocalPlayer->GetRenderedWeaponModel();
+		pEffectOwner = pFiringPlayer->GetRenderedWeaponModel();
 	}
 
 	// If we're still healing and our owner changed, then we did something
@@ -2397,7 +2503,7 @@ void CWeaponMedigun::UpdateEffects( void )
 	m_hHealingTargetEffect.pCustomEffect	= NULL;
 
 	// Don't add targets if the medic is dead
-	if ( !pEffectOwner || pFiringPlayer->IsPlayerDead() || !pFiringPlayer->IsPlayerClass( TF_CLASS_MEDIC ) || pFiringPlayer->m_Shared.IsFullyInvisible() )
+	if ( !pEffectOwner || pFiringPlayer->IsPlayerDead() || !pFiringPlayer->IsPlayerClass( TF_CLASS_MEDIC ) || pFiringPlayer->m_Shared.IsFullyInvisible() || !pFiringPlayer->GetCompetitiveVisibility() )
 		return;
 
 	// Add our targets
@@ -2508,21 +2614,26 @@ void CWeaponMedigun::UpdateMedicAutoCallers( void )
 				if ( ( pPlayer->GetTeamNumber() == GetLocalPlayerTeam() ) ||
 					 ( pPlayer->GetPlayerClass() && ( pPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_SPY ) && pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) && ( pPlayer->m_Shared.GetDisguiseTeam() == GetLocalPlayerTeam() ) ) )
 				{
-					if ( m_hHealingTarget != NULL )
-					{
-						// Don't do this for players the medic is healing
-						if ( pPlayer == m_hHealingTarget )
-							continue;
-					}
-
 					if ( pPlayer->IsAlive() )
 					{
-						int iHealth = float( pPlayer->GetHealth() ) / float( pPlayer->GetMaxHealth() ) * 100;
+						int iHealth = float( pPlayer->GetHealth() ) / float( pPlayer->GetMaxHealth() ) * 100.0f;
 						int iHealthThreshold = hud_medicautocallersthreshold.GetInt();
 
 						// If it's a healthy teammate....
-						if ( iHealth > iHealthThreshold )
+						// or dead (IsAlive can be true for a tick or so)...
+						if ( iHealth <= 0 || iHealth > iHealthThreshold )
 						{
+							if ( iHealth <= 0 )
+							{
+								// in the process of dying, so just clear it out, we can't help them anymore.
+								pPlayer->StopSaveMeEffect( true );
+							}
+							else
+							{
+								// we're healed up now! fade out the save me effect (not instantly since we wanna get a little bit of heal action)
+								pPlayer->FadeSaveMeEffect();
+							}
+
 							// Make sure we don't have them in our list if previously hurt
 							if ( m_iAutoCallers.Find( playerIndex ) != m_iAutoCallers.InvalidIndex() )
 							{
@@ -2531,20 +2642,12 @@ void CWeaponMedigun::UpdateMedicAutoCallers( void )
 							}
 						}
 
-						// If it's a hurt teammate....
+						// If it's a hurt teammate (not dead)....
 						if ( iHealth <= iHealthThreshold )
 						{
-
 							// Make sure we're not already tracking this
 							if ( m_iAutoCallers.Find( playerIndex ) != m_iAutoCallers.InvalidIndex() )
 								continue;
-
-							// Distance check
-							float flDistSq = pPlayer->GetAbsOrigin().DistToSqr( pLocalPlayer->GetAbsOrigin() );
-							if ( flDistSq >= 1000000 )
-							{
-								continue;
-							}
 
 							// Now add auto-caller
 							pPlayer->CreateSaveMeEffect( CALLER_TYPE_AUTO );
@@ -2669,7 +2772,6 @@ float CWeaponMedigun::GetOverHealBonus( CTFPlayer *pTFTarget )
 	CALL_ATTRIB_HOOK_FLOAT( flMod, mult_medigun_overheal_amount );
 	// Anything on the patient?
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pTFTarget, flMod, mult_patient_overheal_penalty );
-	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pTFTarget->GetActiveTFWeapon(), flMod, mult_patient_overheal_penalty_active );
 	if ( flMod >= 1.0f )
 	{
 		flOverhealBonus += flMod;

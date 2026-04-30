@@ -12,6 +12,7 @@
 #include "mathlib/vector.h"
 #include "tier0/dbg.h"
 #include "dt_utlvector_common.h"
+#include "dt_send_hltv.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -196,6 +197,7 @@ static void SendProxy_Empty( const SendProp *pProp, const void *pStruct, const v
 void* SendProxy_SendLocalDataTable( const SendProp *pProp, const void *pStruct, const void *pVarData, CSendProxyRecipients *pRecipients, int objectID )
 {
 	pRecipients->SetOnly( objectID - 1 );
+	SendProxy_AddHLTV( pRecipients );
 	return ( void * )pVarData;
 }
 

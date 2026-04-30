@@ -7,7 +7,9 @@
 #include "cbase.h"
 #include "tf_weaponbase_melee.h"
 #include "effect_dispatch_data.h"
+#include "in_buttons.h"
 #include "tf_gamerules.h"
+#include "debugoverlay_shared.h"
 
 // Server specific.
 #if !defined( CLIENT_DLL )
@@ -24,6 +26,7 @@
 #endif
 
 ConVar tf_weapon_criticals_melee( "tf_weapon_criticals_melee", "1", FCVAR_REPLICATED | FCVAR_NOTIFY, "Controls random crits for melee weapons. 0 - Melee weapons do not randomly crit. 1 - Melee weapons can randomly crit only if tf_weapon_criticals is also enabled. 2 - Melee weapons can always randomly crit regardless of the tf_weapon_criticals setting." );
+ConVar tf_melee_enemy_priority( "tf_melee_enemy_priority", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Prevents teammates from blocking melee attacks." );
 
 //=============================================================================
 //
@@ -32,9 +35,17 @@ ConVar tf_weapon_criticals_melee( "tf_weapon_criticals_melee", "1", FCVAR_REPLIC
 IMPLEMENT_NETWORKCLASS_ALIASED( TFWeaponBaseMelee, DT_TFWeaponBaseMelee )
 
 BEGIN_NETWORK_TABLE( CTFWeaponBaseMelee, DT_TFWeaponBaseMelee )
+#ifdef CLIENT_DLL
+	RecvPropFloat( RECVINFO( m_flSmackTime ) ),
+#else
+	SendPropFloat( SENDINFO( m_flSmackTime ), 0, SPROP_NOSCALE ),
+#endif
 END_NETWORK_TABLE()
 
 BEGIN_PREDICTION_DATA( CTFWeaponBaseMelee )
+#ifdef CLIENT_DLL
+	DEFINE_PRED_FIELD( m_flSmackTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
+#endif
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weaponbase_melee, CTFWeaponBaseMelee );
@@ -192,7 +203,10 @@ void CTFWeaponBaseMelee::PrimaryAttack()
 		return;
 
 	if ( !CanAttack() )
+	{
+		m_flNextPrimaryAttack = MAX(m_flNextPrimaryAttack, gpGlobals->curtime);
 		return;
+	}
 
 	// Set the weapon usage mode - primary, secondary.
 	m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
@@ -203,6 +217,7 @@ void CTFWeaponBaseMelee::PrimaryAttack()
 	// Swing the weapon.
 	Swing( pPlayer );
 
+	// TODO(mcoms): this variable is a bit weird..
 	m_bCurrentAttackIsDuringDemoCharge = pPlayer->m_Shared.GetNextMeleeCrit() != MELEE_NOCRIT;
 
 	if ( pPlayer->m_Shared.GetNextMeleeCrit() == MELEE_MINICRIT )
@@ -233,20 +248,33 @@ void CTFWeaponBaseMelee::PrimaryAttack()
 // -----------------------------------------------------------------------------
 void CTFWeaponBaseMelee::SecondaryAttack()
 {
-	if ( !CanAttack() )
-		return;
-
 	// Get the current player.
-	CTFPlayer *pPlayer = GetTFPlayerOwner();
-	if ( !pPlayer )
+	CTFPlayer* pPlayer = GetTFPlayerOwner();
+	if (!pPlayer)
 		return;
 
-	pPlayer->DoClassSpecialSkill();
+	if (pPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_DEMOMAN)
+	{
+		if (!CanAttack(TF_CAN_ATTACK_FLAG_PIPEBOMBLAUNCHER_SECONDARY))
+			return;
+	}
+	else
+	{
+		if ( !CanAttack() )
+			return;
+	}
 
-	m_bInAttack2 = true;
+	if ( pPlayer->DoClassSpecialSkill() )
+	{
+		// require a repress if we did something.
+		m_bInAttack2 = true;
+	}
 
-
-	m_flNextSecondaryAttack = gpGlobals->curtime + GetNextSecondaryAttackDelay(); // default: 0.5f
+#if 1
+	m_flNextSecondaryAttack = gpGlobals->curtime + GetNextSecondaryAttackDelay(); // default: 0.1f
+#else
+	m_flNextSecondaryAttack = gpGlobals->curtime + 0.1f; // since this is used for the special skill, make it more responsive.
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -290,7 +318,10 @@ void CTFWeaponBaseMelee::Swing( CTFPlayer *pPlayer )
 
 	m_flNextPrimaryAttack = gpGlobals->curtime + flFireDelay;
 	m_flNextSecondaryAttack = gpGlobals->curtime + flFireDelay;
-	pPlayer->m_Shared.SetNextStealthTime( m_flNextSecondaryAttack );
+	if ( pPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_SPY )
+	{
+		pPlayer->m_Shared.SetNextStealthTime( m_flNextSecondaryAttack );
+	}
 
 	SetWeaponIdleTime( m_flNextPrimaryAttack + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeIdleEmpty );
 
@@ -373,15 +404,46 @@ void CTFWeaponBaseMelee::ItemPreFrame( void )
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseMelee::ItemPostFrame()
 {
+	CTFPlayer *pOwner = GetTFPlayerOwner();
 	// Check for smack.
 	if ( m_flSmackTime > 0.0f && gpGlobals->curtime > m_flSmackTime )
 	{
 		m_flSmackTime = -1.0f;
 		Smack();
-		CTFPlayer *pPlayer = GetTFPlayerOwner();
-		if ( pPlayer )
+		if ( pOwner )
 		{
-			pPlayer->m_Shared.SetNextMeleeCrit( MELEE_NOCRIT );
+			pOwner->m_Shared.SetNextMeleeCrit( MELEE_NOCRIT );
+		}
+	}
+
+	// mcoms: if we're not in a busy frame and we're in a primary attack, then try a special skill.
+	// additional note: busy frames don't run during melee attacks, since they don't update m_flNextAttack
+	// I'm too scared to make that the case, so this also covers the class special skill during melee attacks
+	if ( pOwner && gpGlobals->curtime >= pOwner->m_flNextAttack && gpGlobals->curtime < m_flNextPrimaryAttack )
+	{
+		// Since there's no precedent for a non-SecondaryAttack special skill, replicate those conditions here
+		// We likely have some busy frame logic keeping us safe otherwise.
+		bool bCanAttack = true;
+		if ( pOwner->GetPlayerClass()->GetClassIndex() == TF_CLASS_DEMOMAN )
+		{
+			if ( !CanAttack(TF_CAN_ATTACK_FLAG_PIPEBOMBLAUNCHER_SECONDARY) )
+				bCanAttack = false;
+		}
+		else
+		{
+			if ( !CanAttack() )
+				bCanAttack = false;
+		}
+
+		if ( ( pOwner->m_nButtons & IN_ATTACK2 ) && !m_bInAttack2 && bCanAttack && m_flNextBusyCheck <= gpGlobals->curtime )
+		{
+			if ( pOwner->DoClassSpecialSkill() )
+			{
+				// require a repress if we did something.
+				m_bInAttack2 = true;
+			}
+			// try again soon
+			m_flNextBusyCheck = gpGlobals->curtime + 0.1f;
 		}
 	}
 
@@ -428,6 +490,7 @@ bool CTFWeaponBaseMelee::DoSwingTraceInternal( trace_t &trace, bool bCleave, CUt
 	// swarm so tightly they hit each other and no-one else
 	bool bDontHitTeammates = pPlayer->GetTeamNumber() == TF_TEAM_PVE_INVADERS && TFGameRules()->IsMannVsMachineMode();
 	CTraceFilterIgnoreTeammates ignoreTeammatesFilter( pPlayer, COLLISION_GROUP_NONE, pPlayer->GetTeamNumber() );
+	bool bEnemyPriority = !friendlyfire.GetBool() && ( tf_melee_enemy_priority.GetBool() || !TFGameRules()->IsMannVsMachineMode() && !TFGameRules()->IsInMedievalMode() );
 
 	if ( bCleave )
 	{
@@ -466,12 +529,12 @@ bool CTFWeaponBaseMelee::DoSwingTraceInternal( trace_t &trace, bool bCleave, CUt
 	}
 	else
 	{
-		bool bSapperHit = false;
-
 		// if this weapon can damage sappers, do that trace first
 		int iDmgSappers = 0;
 		CALL_ATTRIB_HOOK_INT( iDmgSappers, set_dmg_apply_to_sapper );
-		if ( iDmgSappers != 0 )
+		// also repair buildings first
+		const bool bHealBuildings = pPlayer->IsPlayerClass( TF_CLASS_ENGINEER ); // check WeaponID == WRENCH or Class == ENGINEER?
+		if ( iDmgSappers != 0 || bHealBuildings )
 		{
 			CTraceFilterIgnorePlayers ignorePlayersFilter( NULL, COLLISION_GROUP_NONE );
 			UTIL_TraceLine( vecSwingStart, vecSwingEnd, MASK_SOLID, &ignorePlayersFilter, &trace );
@@ -488,55 +551,91 @@ bool CTFWeaponBaseMelee::DoSwingTraceInternal( trace_t &trace, bool bCleave, CUt
 				CBaseObject *pObject = static_cast< CBaseObject* >( trace.m_pEnt );
 				if ( pObject->HasSapper() )
 				{
-					bSapperHit = true;
+					return true;
 				}
-			}
-		}
-
-		if ( !bSapperHit )
-		{
-			// See if we hit anything.
-			if ( bDontHitTeammates )
-			{
-				UTIL_TraceLine( vecSwingStart, vecSwingEnd, MASK_SOLID, &ignoreTeammatesFilter, &trace );
-			}
-			else
-			{
-				CTraceFilterIgnoreFriendlyCombatItems filter( pPlayer, COLLISION_GROUP_NONE, pPlayer->GetTeamNumber() );
-				UTIL_TraceLine( vecSwingStart, vecSwingEnd, MASK_SOLID, &filter, &trace );
-			}
-
-			if ( trace.fraction >= 1.0 )
-			{
-				if ( bDontHitTeammates )
+				
+				if ( bHealBuildings )
 				{
-					UTIL_TraceHull( vecSwingStart, vecSwingEnd, vecSwingMins, vecSwingMaxs, MASK_SOLID, &ignoreTeammatesFilter, &trace );
-				}
-				else
-				{
-					CTraceFilterIgnoreFriendlyCombatItems filter( pPlayer, COLLISION_GROUP_NONE, pPlayer->GetTeamNumber() );
-					UTIL_TraceHull( vecSwingStart, vecSwingEnd, vecSwingMins, vecSwingMaxs, MASK_SOLID, &filter, &trace );
-				}
-
-				if ( trace.fraction < 1.0 )
-				{
-					// Calculate the point of intersection of the line (or hull) and the object we hit
-					// This is and approximation of the "best" intersection
-					CBaseEntity *pHit = trace.m_pEnt;
-					if ( !pHit || pHit->IsBSPModel() )
+#if 0
+					// TODO: client
+#ifdef GAME_DLL
+					// these require metal
+					if ( pPlayer->GetAmmoCount( TF_AMMO_METAL ) > 0 )
 					{
-						// Why duck hull min/max?
-						FindHullIntersection( vecSwingStart, trace, VEC_DUCK_HULL_MIN, VEC_DUCK_HULL_MAX, pPlayer );
-					}
+						// repair the building
+						if ( pObject->CanBeRepaired() )
+						{
+							if ( pObject->GetHealth() < pObject->GetMaxHealthForCurrentLevel() )
+							{
+								return true;
+							}
+						}
 
-					// This is the point on the actual surface (the hull could have hit space)
-					vecSwingEnd = trace.endpos;	
+						// upgrade the building
+						if ( pObject->CanBeUpgraded() )
+						{
+							if ( pObject->GetUpgradeLevel() < pObject->GetMaxUpgradeLevel() )
+							{
+								return true;
+							}
+						}
+					}
+					// todo: sentry ammo
+					// construction boost
+					if ( pObject->IsBuilding() )
+					{
+						return true;
+					}
+#endif
+#else
+					// just always hit the building as an engineer
+					return true;
+#endif
 				}
 			}
 		}
+		
+		if ( bDontHitTeammates )
+		{
+			return DoMeleeTrace( trace, pPlayer, vecSwingStart, vecSwingEnd, vecSwingMins, vecSwingMaxs, &ignoreTeammatesFilter );
+		}
 
-		return ( trace.fraction < 1.0f );
+		if ( bEnemyPriority && DoMeleeTrace( trace, pPlayer, vecSwingStart, vecSwingEnd, vecSwingMins, vecSwingMaxs, &ignoreTeammatesFilter ) )
+		{
+			return true;
+		}
+
+		CTraceFilterIgnoreFriendlyCombatItems filter( pPlayer, COLLISION_GROUP_NONE, pPlayer->GetTeamNumber() );
+		return DoMeleeTrace( trace, pPlayer, vecSwingStart, vecSwingEnd, vecSwingMins, vecSwingMaxs, &filter );
 	}
+}
+
+bool CTFWeaponBaseMelee::DoMeleeTrace( trace_t& trace, CTFPlayer *pPlayer, Vector vecSwingStart, Vector vecSwingEnd, Vector vecSwingMins, Vector vecSwingMaxs, ITraceFilter* filter )
+{
+	// See if we hit anything.
+	UTIL_TraceLine( vecSwingStart, vecSwingEnd, MASK_SOLID, filter, &trace );
+
+	if ( trace.fraction >= 1.0f )
+	{
+		UTIL_TraceHull( vecSwingStart, vecSwingEnd, vecSwingMins, vecSwingMaxs, MASK_SOLID, filter, &trace );
+
+		if (trace.fraction < 1.0)
+		{
+			// Calculate the point of intersection of the line (or hull) and the object we hit
+			// This is and approximation of the "best" intersection
+			CBaseEntity* pHit = trace.m_pEnt;
+			if (!pHit || pHit->IsBSPModel())
+			{
+				// Why duck hull min/max?
+				FindHullIntersection(vecSwingStart, trace, VEC_DUCK_HULL_MIN, VEC_DUCK_HULL_MAX, pPlayer);
+			}
+
+			// This is the point on the actual surface (the hull could have hit space)
+			vecSwingEnd = trace.endpos;
+		}
+	}
+
+	return ( trace.fraction < 1.0f );
 }
 
 
@@ -744,7 +843,7 @@ void CTFWeaponBaseMelee::Smack( void )
 #ifdef GAME_DLL
 		for( int i=0; i<m_potentialVictimVector.Count(); ++i )
 		{
-			if ( m_potentialVictimVector[i] != NULL && m_potentialVictimVector[i]->IsAlive() )
+			if ( m_potentialVictimVector[i] == NULL || !m_potentialVictimVector[i]->IsAlive() )
 			{
 				bIsCleanMiss = false;
 				break;
@@ -820,13 +919,24 @@ void CTFWeaponBaseMelee::DoMeleeDamage( CBaseEntity* ent, trace_t& trace, float 
 	CALL_ATTRIB_HOOK_INT( iCritFromBehind, crit_from_behind );
 	if ( iCritFromBehind > 0 )
 	{
-		Vector entForward; 
-		AngleVectors( ent->EyeAngles(), &entForward );
+		bool bIsBehind;
+		CTFPlayer* pTarget = ToTFPlayer( ent );
+		if ( pTarget )
+		{
+			bIsBehind = IsBehindAndFacingTarget( pTarget, true );
+		}
+		else
+		{
+			Vector entForward;
+			AngleVectors( ent->EyeAngles(), &entForward );
 
-		Vector toEnt = ent->GetAbsOrigin() - pPlayer->GetAbsOrigin();
-		toEnt.NormalizeInPlace();
+			Vector toEnt = ent->GetAbsOrigin() - pPlayer->GetAbsOrigin();
+			toEnt.NormalizeInPlace();
 
-		if ( DotProduct( toEnt, entForward ) > 0.7071f )
+			bIsBehind = DotProduct( toEnt, entForward ) > 0.7071f;
+		}
+
+		if ( bIsBehind )
 		{
 			iDmgType |= DMG_CRITICAL;
 		}
@@ -966,6 +1076,130 @@ void CTFWeaponBaseMelee::DoMeleeDamage( CBaseEntity* ent, trace_t& trace, float 
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Determine if we are reasonably facing our target.
+//-----------------------------------------------------------------------------
+bool CTFWeaponBaseMelee::IsBehindAndFacingTarget( CTFPlayer *pTarget, bool bInAttack )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( !pOwner )
+		return false;
+
+	// Get a vector from owner origin to target origin
+	Vector vecToTarget = pTarget->WorldSpaceCenter() - pOwner->WorldSpaceCenter();
+	vecToTarget.z = 0.0f;
+	vecToTarget.NormalizeInPlace();
+
+	// Get owner forward view vector
+	Vector vecOwnerForward;
+	AngleVectors(pOwner->EyeAngles(), &vecOwnerForward, NULL, NULL);
+	vecOwnerForward.z = 0.0f;
+	vecOwnerForward.NormalizeInPlace();
+
+	// Get target forward view vector, lag compensated for the owner.
+	Vector vecTargetForward;
+#ifdef CLIENT_DLL
+	AngleVectors(pTarget->EyeAngles(), &vecTargetForward, NULL, NULL);
+#else
+	AngleVectors(pTarget->GetNetworkEyeAngles(), &vecTargetForward, NULL, NULL);
+#endif
+	vecTargetForward.z = 0.0f;
+	vecTargetForward.NormalizeInPlace();
+
+	// Make sure owner is behind, facing and aiming at target's back
+	float flPosVsTargetViewDot = DotProduct( vecToTarget, vecTargetForward );	// Behind?
+	float flPosVsOwnerViewDot = DotProduct( vecToTarget, vecOwnerForward );		// Facing?
+	float flViewAnglesDot = DotProduct( vecTargetForward, vecOwnerForward );	// Facestab?
+
+	// Debug
+#if 0
+	NDebugOverlay::HorzArrow( pTarget->WorldSpaceCenter(), pTarget->WorldSpaceCenter() + 50.0f * vecTargetForward, 5.0f, 0, 255, 0, 255, true, NDEBUG_PERSIST_TILL_NEXT_SERVER );
+	NDebugOverlay::HorzArrow( pOwner->WorldSpaceCenter(), pOwner->WorldSpaceCenter() + 50.0f * vecOwnerForward, 5.0f, 0, 255, 0, 255, true, NDEBUG_PERSIST_TILL_NEXT_SERVER );
+	NDebugOverlay::HorzArrow( pOwner->WorldSpaceCenter(), pTarget->WorldSpaceCenter(), 5.0f, 0, 255, 0, 255, true, NDEBUG_PERSIST_TILL_NEXT_SERVER );
+#ifdef GAME_DLL
+	DevMsg( "[server] PosDot: %3.6f FacingDot: %3.6f AnglesDot: %3.6f SightDot: %3.6f\n", flPosVsTargetViewDot, flPosVsOwnerViewDot, flViewAnglesDot );
+#else
+	DevMsg( "[client] PosDot: %3.6f FacingDot: %3.6f AnglesDot: %3.6f\n", flPosVsTargetViewDot, flPosVsOwnerViewDot, flViewAnglesDot );
+#endif
+#endif
+
+	// must get a backstab on the owner's view.
+#if CLIENT_DLL
+	if ( flPosVsTargetViewDot > 0.f && flPosVsOwnerViewDot > 0.5f && flViewAnglesDot > -0.3f )
+#else
+	// corrected for lag comp angle error
+	if ( flPosVsTargetViewDot > -0.001746f && flPosVsOwnerViewDot > 0.498488f && flViewAnglesDot > -0.30237f )
+#endif
+	{
+		return bInAttack ? VerifyBehindPosition( pTarget ) : true;
+	}
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------------
+// Purpose: Verify if owner perspective backstab was reasonably fair for the victim.
+//-----------------------------------------------------------------------------------
+bool CTFWeaponBaseMelee::VerifyBehindPosition( CTFPlayer *pTarget )
+{
+#ifdef GAME_DLL
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( !pOwner )
+		return false;
+
+	// this code essentially checks if the victim was signifying they were
+	// sufficiently aware of the attacker's position. if so, they can't get
+	// backstabbed. 
+
+	// unwind lag comp, lag comp the victim, and then restore prior lag comp.
+	// this isn't great. but this is what we need to do for now. perhaps
+	// lag comp could support forcing recursion. 
+	lagcompensation->FinishLagCompensation( pOwner );
+	// TODO(mcoms): do we need the cmd here? our best guess is probably fine?
+	lagcompensation->StartLagCompensation( pTarget, NULL );
+	// ======================================
+
+	// Get a vector from owner origin to target origin
+	Vector vecToTarget3D = pTarget->WorldSpaceCenter() - pOwner->WorldSpaceCenter();
+	Vector vecToTarget = vecToTarget3D;
+	vecToTarget.z = 0.0f;
+	const float flDist2D = vecToTarget.NormalizeInPlace();
+
+	Vector vecTargetSight;
+	AngleVectors( pTarget->EyeAngles(), &vecTargetSight, NULL, NULL );
+
+	// If the attacker is too close, our 2D angles are not going to be accurate. consider a full 3D check
+	const float flMax = pTarget->WorldAlignSize().x;
+	float flSightAnglesDot;
+	if ( flDist2D < flMax * flMax )
+	{
+		flSightAnglesDot = DotProduct( -vecToTarget3D, vecTargetSight );
+	}
+	else
+	{
+		// make it 2D
+		vecTargetSight.z = 0.0f;
+		vecTargetSight.NormalizeInPlace();
+		flSightAnglesDot = DotProduct( -vecToTarget, vecTargetSight );
+	}
+
+	// ======================================
+	// snap back to reality.
+	lagcompensation->FinishLagCompensation( pTarget );
+	lagcompensation->StartLagCompensation( pOwner, pOwner->GetCurrentCommand() );
+
+	// Looking at attacker?
+#if 0
+	return flSightAnglesDot <= 0.61f;
+#else
+	// corrected for angle error
+	return flSightAnglesDot <= 0.611389f;
+#endif
+#else
+	return true;
+#endif
+}
+
 #ifndef CLIENT_DLL
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -984,7 +1218,23 @@ float CTFWeaponBaseMelee::GetForceScale( void )
 float CTFWeaponBaseMelee::GetMeleeDamage( CBaseEntity *pTarget, int* piDamageType, int* piCustomDamage )
 {
 	float flDamage = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
-	CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmg );
+	if (GetWeaponID() == TF_WEAPON_WRENCH && dynamic_cast<CBaseObject*>(pTarget))
+	{
+		// Don't stack damage mults for buildings if we're using a wrench.
+		// This is so that damage vs sappers and buildings are similar
+		// Sappers use a static value of 65 base damage, modified by the building damage multiplier
+		// However, buildings **are** usually affected by the base multiplier
+		float flDamageBuildingMult = 1.0f;
+		CALL_ATTRIB_HOOK_FLOAT(flDamageBuildingMult, mult_dmg_vs_buildings);
+		if (flDamageBuildingMult == 1.0f)
+		{
+			CALL_ATTRIB_HOOK_FLOAT(flDamage, mult_dmg);
+		}
+	}
+	else
+	{
+		CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmg );
+	}
 
 	int iCritDoesNoDamage = 0;
 	CALL_ATTRIB_HOOK_INT( iCritDoesNoDamage, crit_does_no_damage );
@@ -1084,7 +1334,7 @@ bool CTFWeaponBaseMelee::CalcIsAttackCriticalHelper( void )
 	if ( pPlayer->m_Shared.IsCritBoosted() )
 		return true;
 
-	float flPlayerCritMult = pPlayer->GetCritMult();
+	float flPlayerCritMult = pPlayer->GetCritMult(true);
 	float flCritChance = TF_DAMAGE_CRIT_CHANCE_MELEE * flPlayerCritMult;
 	CALL_ATTRIB_HOOK_FLOAT( flCritChance, mult_crit_chance );
 

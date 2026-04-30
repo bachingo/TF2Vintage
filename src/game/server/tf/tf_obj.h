@@ -31,7 +31,6 @@ class CObjectSapper;
 struct animevent_t;
 
 #define WRENCH_DMG_VS_SAPPER	65
-#define OBJ_MAX_UPGRADE_LEVEL	3
 #define OBJECT_REPAIR_RATE		10			// Health healed per second while repairing
 
 // Construction
@@ -211,7 +210,16 @@ public:
 	virtual void	OnGoInactive( void );
 
 	// Disabling
-	bool			IsDisabled( void ) { return m_bDisabled || m_bCarried; }
+	bool				ShouldBeActiveWhileCarried() const
+	{
+#ifdef MCOMS_BALANCE_PACK
+		// Dispenser active while carried
+		return m_iObjectType == OBJ_DISPENSER;
+#else
+		return false;
+#endif
+	}
+	bool			IsDisabled( void ) { return m_bDisabled || m_bCarried && !ShouldBeActiveWhileCarried(); }
 	virtual void	UpdateDisabledState( void );
 	void			SetDisabled( bool bDisabled );
 	virtual void	OnStartDisabled( void );
@@ -272,7 +280,12 @@ public:
 	float			GetUpgradeDuration( void );
 	void			DoReverseBuild( void );
 	float			GetReversesBuildingConstructionSpeed( void );
-	virtual int		GetMaxUpgradeLevel( void ) { return OBJ_MAX_UPGRADE_LEVEL; }
+	virtual int		GetMaxUpgradeLevel( void ) const
+	{
+		if (IsDisposableBuilding() || IsMiniBuilding())
+			return 1;
+		return OBJ_MAX_UPGRADE_LEVEL;
+	}
 	int				GetUpgradeAmountPerHit( void );
 
 	// Carrying
@@ -346,9 +359,10 @@ public:
 
 	Vector GetBuildOrigin() { return m_vecBuildOrigin; }
 	Vector GetBuildCenterOfMass() { return m_vecBuildCenterOfMass; }
-protected:
 
-	virtual bool CanBeUpgraded() const { return !( IsDisposableBuilding() || IsMiniBuilding() ); }
+	virtual bool CanBeUpgraded() const { return !(IsDisposableBuilding() || IsMiniBuilding() || GetMaxUpgradeLevel() <= 1); }
+
+protected:
 	
 	virtual int  GetUpgradeMetalRequired();
 

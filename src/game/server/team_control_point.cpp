@@ -18,6 +18,7 @@
 #ifdef TF_DLL
 #include "tf_shareddefs.h"
 #include "tf_gamerules.h"
+#include "entity_tfstart.h"
 #endif
 
 #define CONTROL_POINT_UNLOCK_THINK			"UnlockThink"
@@ -303,27 +304,48 @@ void CTeamControlPoint::InputReset( inputdata_t &input )
 //-----------------------------------------------------------------------------
 void CTeamControlPoint::HandleScoring( int iTeam )
 {
-	if ( TeamplayRoundBasedRules() && !TeamplayRoundBasedRules()->ShouldScorePerRound() )
+	// someone reclaiming their point cannot give them score.
+	if ( m_iDefaultOwner == iTeam )
 	{
-		GetGlobalTeam( iTeam )->AddScore( 1 );
-		TeamplayRoundBasedRules()->HandleTeamScoreModify( iTeam, 1 );
-
-		CTeamControlPointMaster *pMaster = g_hControlPointMasters.Count() ? g_hControlPointMasters[0] : NULL;
-		if ( pMaster && !pMaster->WouldNewCPOwnerWinGame( this, iTeam ) )
+		return;
+	}
+	if ( TeamplayRoundBasedRules() )
+	{
+		if ( !TeamplayRoundBasedRules()->ShouldScorePerRound() )
 		{
+			GetGlobalTeam( iTeam )->AddScore( 1 );
+			TeamplayRoundBasedRules()->HandleTeamScoreModify( iTeam, 1 );
+
+			CTeamControlPointMaster *pMaster = g_hControlPointMasters.Count() ? g_hControlPointMasters[0] : NULL;
+			if ( pMaster && !pMaster->WouldNewCPOwnerWinGame( this, iTeam ) )
+			{
 #ifdef TF_DLL
-			if ( TeamplayRoundBasedRules()->GetGameType() == TF_GAMETYPE_ESCORT )
-			{
-				CBroadcastRecipientFilter filter;
-				EmitSound( filter, entindex(), "Hud.EndRoundScored" );
-			}
-			else
+				if ( TeamplayRoundBasedRules()->GetGameType() == TF_GAMETYPE_ESCORT )
+				{
+					CBroadcastRecipientFilter filter;
+					EmitSound( filter, entindex(), "Hud.EndRoundScored" );
+				}
+				else
 #endif
-			{
-				CTeamRecipientFilter filter( iTeam );
-				EmitSound( filter, entindex(), "Hud.EndRoundScored" );
+				{
+					CTeamRecipientFilter filter( iTeam );
+					EmitSound( filter, entindex(), "Hud.EndRoundScored" );
+				}
 			}
 		}
+#ifdef TF_DLL
+		else
+		{
+			// if we score per round, and this wins the round, then mark the stopwatch time.
+			CTeamControlPointMaster* pMaster = g_hControlPointMasters.Count() ? g_hControlPointMasters[0] : NULL;
+			if ( pMaster && pMaster->WouldNewCPOwnerWinGame( this, iTeam ) )
+			{
+				// maybe we should just handle it generically since this will add 1 score.
+				TeamplayRoundBasedRules()->HandleTeamScoreModify( iTeam, 1 );
+				//TFGameRules()->MarkStopWatchTime();
+			}
+		}
+#endif
 	}
 }
 
@@ -477,12 +499,12 @@ void CTeamControlPoint::CaptureStart( int iCapTeam, int iNumCappingPlayers, int 
 		event->SetFloat( "captime", gpGlobals->curtime - flLastOwnershipChangeTime );
 
 		// safety check
-		if ( iNumCappers > 8 )
+		if ( iNumCappers > MAX_AREA_CAPPERS - 1 )
 		{
-			iNumCappers = 8;
+			iNumCappers = MAX_AREA_CAPPERS - 1;
 		}
 
-		char cappers[9];	// pCappingPlayers should be max length 8
+		char cappers[MAX_AREA_CAPPERS];	// pCappingPlayers should be max length 8
 		int i;
 		for( i = 0 ; i < iNumCappers ; i++ )
 		{
@@ -703,6 +725,50 @@ void CTeamControlPoint::InternalSetOwner( int iCapTeam, bool bMakeSound, int iNu
 
 		pEnt = gEntList.FindEntityByClassname( pEnt, GetControlPointMasterName() );
 	}
+
+#if defined ( TF_DLL )
+	extern ConVar tf_tc2_mode;
+	if ( tf_tc2_mode.GetBool() )
+	{
+		// Update team spawns tied to this control point
+		for ( int i=0; i<ITFTeamSpawnAutoList::AutoList().Count(); ++i )
+		{
+			CTFTeamSpawn *pTFSpawn = static_cast< CTFTeamSpawn* >( ITFTeamSpawnAutoList::AutoList()[i] );
+			CHandle<CTeamControlPoint> hControlPoint = pTFSpawn->GetControlPoint();
+
+			if ( hControlPoint == this )
+			{
+				pTFSpawn->ChangeTeam( m_iTeam );
+			}
+		}
+
+		variant_t emptyVariant;
+
+		// update respawnroom for new owner so same team checks pass
+		CBaseEntity *pRoom = NULL;
+		while ( ( pRoom = gEntList.FindEntityByClassname( pRoom, "func_respawnroom" ) ) != NULL )
+		{
+			pRoom->AcceptInput( "RoundActivate", this, this, emptyVariant, 0 );
+		}
+
+		// update respawnroomvisualizer for new owner so we see no entry on correct team
+		CBaseEntity *pVis = NULL;
+		while ( ( pVis = gEntList.FindEntityByClassname( pVis, "func_respawnroomvisualizer" ) ) != NULL )
+		{
+			pVis->AcceptInput( "RoundActivate", this, this, emptyVariant, 0 );
+		}
+
+		// Update tf team filter for new capture point owner, so spawn doors respond to allies
+		CBaseEntity *pFilter = NULL;
+		while ( ( pFilter = gEntList.FindEntityByClassname( pFilter, "filter_activator_tfteam" ) ) != NULL )
+		{
+			pFilter->AcceptInput( "RoundActivate", this, this, emptyVariant, 0 );
+		}
+
+		// update OnRoundStartOwnedByTeam, for resupply skins
+		AcceptInput( "RoundActivate", this, this, emptyVariant, 0 );
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -723,12 +789,12 @@ void CTeamControlPoint::SendCapString( int iCapTeam, int iNumCappingPlayers, int
 		event->SetInt( "team", iCapTeam );
 
 		// safety check
-		if ( iNumCappers > 8 )
+		if ( iNumCappers > MAX_AREA_CAPPERS - 1)
 		{
-			iNumCappers = 8;
+			iNumCappers = MAX_AREA_CAPPERS - 1;
 		}
 
-		char cappers[9];	// pCappingPlayers should be max length 8
+		char cappers[MAX_AREA_CAPPERS];	// pCappingPlayers should be max length 8
 		int i;
 		for( i = 0 ; i < iNumCappers ; i++ )
 		{

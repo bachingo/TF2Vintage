@@ -115,15 +115,6 @@ float (*pfInvRSquared)(const float* v) = _InvRSquared;
 void  (*pfFastSinCos)(float x, float* s, float* c) = SinCos;
 float (*pfFastCos)(float x) = cosf;
 
-float SinCosTable[SIN_TABLE_SIZE];
-void InitSinCosTable()
-{
-	for( int i = 0; i < SIN_TABLE_SIZE; i++ )
-	{
-		SinCosTable[i] = sin(i * 2.0 * M_PI / SIN_TABLE_SIZE);
-	}
-}
-
 qboolean VectorsEqual( const float *v1, const float *v2 )
 {
 	Assert( s_bMathlibInitialized );
@@ -1488,7 +1479,7 @@ float SmoothCurve( float x )
 inline float MovePeak( float x, float flPeakPos )
 {
 	// Todo: make this higher-order?
-	if( x < flPeakPos )
+	if ( (x < flPeakPos || flPeakPos == 1) && flPeakPos != 0 )
 		return x * 0.5f / flPeakPos;
 	else
 		return 0.5 + 0.5 * (x - flPeakPos) / (1 - flPeakPos);
@@ -3330,6 +3321,7 @@ void MathLib_Init( float gamma, float texGamma, float brightness, int overbright
 	pfFastSinCos = SinCos;
 	pfFastCos = cosf;
 
+#if 0
 	if ( bAllowMMX && pi.m_bMMX )
 	{
 		// Select the MMX specific routines if available
@@ -3337,13 +3329,14 @@ void MathLib_Init( float gamma, float texGamma, float brightness, int overbright
 		s_bMMXEnabled = true;
 	}
 	else
+#endif
 	{
 		s_bMMXEnabled = false;
 	}
 
 	// SSE Generally performs better than 3DNow when present, so this is placed 
 	// first to allow SSE to override these settings.
-#if !defined( OSX ) && !defined( PLATFORM_WINDOWS_PC64 ) && !defined(LINUX)
+#if 0 && !defined( OSX ) && !defined( PLATFORM_WINDOWS_PC64 ) && !defined( LINUX )
 	if ( bAllow3DNow && pi.m_b3DNow )
 	{
 		s_b3DNowEnabled = true;
@@ -3366,6 +3359,7 @@ void MathLib_Init( float gamma, float texGamma, float brightness, int overbright
 	{
 		s_bSSEEnabled = true;
 
+#if 0
 #ifndef PLATFORM_WINDOWS_PC64
 		// These are not yet available.
 		// Select the SSE specific routines if available
@@ -3380,6 +3374,7 @@ void MathLib_Init( float gamma, float texGamma, float brightness, int overbright
 		pfFastSinCos = _SSE_SinCos;
 		pfFastCos = _SSE_cos;
 #endif
+#endif
 	}
 	else
 	{
@@ -3389,9 +3384,11 @@ void MathLib_Init( float gamma, float texGamma, float brightness, int overbright
 	if ( bAllowSSE2 && pi.m_bSSE2 )
 	{
 		s_bSSE2Enabled = true;
+#if 0
 #ifdef PLATFORM_WINDOWS_PC32
 		pfFastSinCos = _SSE2_SinCos;
 		pfFastCos = _SSE2_cos;
+#endif
 #endif
 	} 
 	else
@@ -3402,7 +3399,6 @@ void MathLib_Init( float gamma, float texGamma, float brightness, int overbright
 
 	s_bMathlibInitialized = true;
 
-	InitSinCosTable();
 	BuildGammaTable( gamma, texGamma, brightness, overbright );
 }
 

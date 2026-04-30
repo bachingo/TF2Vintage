@@ -25,6 +25,7 @@ enum
 	TF_GL_MODE_REMOTE_DETONATE,
 	TF_GL_MODE_REMOTE_DETONATE_PRACTICE,
 	TF_GL_MODE_CANNONBALL,
+	TF_GL_MODE_STICKBOMB,
 
 	//
 	// ADD NEW ITEMS HERE TO AVOID BREAKING DEMOS
@@ -84,16 +85,16 @@ public:
 	virtual void	Simulate( void );
 	virtual void	CreateTrailParticles( void );
 
-	void			SetHighlight( bool bHighlight ) { if ( m_bPulsed ) m_bHighlight = bHighlight; }
+	void			SetHighlight( bool bHighlight );
 	bool			IsHighlighted( void ) { return m_bHighlight; }
 
-	int		m_iCachedDeflect;
-	CNewParticleEffect	*pEffectTrail;
-	CNewParticleEffect	*pEffectCrit;
-	bool		m_bHighlight;
-	bool		m_bDetonateOnPulse;
+	int				m_iCachedDeflect;
+	HPARTICLEFFECT	pEffectTrail;
+	HPARTICLEFFECT	pEffectCrit;
+	bool			m_bHighlight;
+	bool			m_bDetonateOnPulse;
 
-	CGlowObject			*m_pGlowEffect;
+	CGlowObject		*m_pGlowEffect;
 
 #else
 
@@ -108,8 +109,13 @@ public:
 	// Overrides.
 	virtual void	Spawn();
 	virtual void	Precache();
-	
+
+#ifdef MCOMS_BALANCE_PACK_TEAMMATE_COLLIDE
+	virtual bool CanCollideWithTeammates() const OVERRIDE { return false; }
+#endif
+
 	virtual void	BounceSound( void );
+	virtual float	GetDetonationTime(void);
 	virtual void	Detonate();
 	virtual void	Fizzle();
 	virtual bool	DetonateStickies( void );

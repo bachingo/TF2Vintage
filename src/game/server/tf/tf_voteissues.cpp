@@ -32,6 +32,7 @@ extern ConVar mp_autoteambalance;
 extern ConVar tf_classlimit;
 extern ConVar sv_vote_quorum_ratio;
 extern ConVar tf_mm_strict;
+extern ConVar tf_weapon_criticals;
 
 static bool VotableMap( const char *pszMapName )
 {
@@ -146,7 +147,7 @@ void CRestartGameIssue::ListIssueDetails( CBasePlayer *pForWhom )
 //-----------------------------------------------------------------------------
 // Purpose: Kick Player Issue
 //-----------------------------------------------------------------------------
-ConVar sv_vote_issue_kick_allowed( "sv_vote_issue_kick_allowed", "0", FCVAR_REPLICATED, "Can players call votes to kick players from the server?" );
+ConVar sv_vote_issue_kick_allowed( "sv_vote_issue_kick_allowed", "1", FCVAR_REPLICATED, "Can players call votes to kick players from the server?" );
 ConVar sv_vote_issue_kick_allowed_mvm( "sv_vote_issue_kick_allowed_mvm", "1", FCVAR_NONE, "Can players call votes to kick players from the server in MvM?" );
 ConVar sv_vote_kick_ban_duration( "sv_vote_kick_ban_duration", "20", FCVAR_NONE, "The number of minutes a vote ban should last. (0 = Disabled)" );
 ConVar sv_vote_issue_kick_min_connect_time_mvm( "sv_vote_issue_kick_min_connect_time_mvm", "300", FCVAR_NONE, "How long a player must be connected before they can be kicked (in seconds)." );
@@ -190,7 +191,13 @@ void CKickIssue::ExecuteCommand( void )
 
 	// If we're not in strict mode they might be here as or be able to rejoin as an adhoc player -- ban.
 	// Technically the GC might send them back here for *new* match if they get kicked as ad-hoc, the current match ends, etc.
+	// TODO: this doesn't work
 	engine->ServerCommand( CFmtStr( "banid %d \"%s\"\n", sv_vote_kick_ban_duration.GetInt(), m_steamIDVoteTarget.Render() ) );
+	// also ban by user ID since the steam ID isn't working atm.
+	if ( m_hPlayerTarget )
+	{
+		engine->ServerCommand(CFmtStr("banid %d %d\n", sv_vote_kick_ban_duration.GetInt(), m_hPlayerTarget->GetUserID() ) );
+	}
 
 	// Band-aid: Hacks are able to avoid kick+ban, and we're not yet sure how they're doing it.  This code checks to see
 	//           if they come back.
@@ -297,6 +304,10 @@ bool CKickIssue::RequestCallVote( int iEntIndex, const char *pszDetails, vote_cr
 	}
 
 	// MvM
+	if ( m_hPlayerTarget->IsConnected() && m_hPlayerTarget->GetTeamNumber() == TEAM_UNASSIGNED )
+		return true;
+
+	// MvM
 	if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() )
 	{
 		// Don't allow kicking unless we're between rounds
@@ -307,10 +318,6 @@ bool CKickIssue::RequestCallVote( int iEntIndex, const char *pszDetails, vote_cr
 		}
 
 		// Allow kicking team unassigned
-		if ( m_hPlayerTarget->IsConnected() && m_hPlayerTarget->GetTeamNumber() == TEAM_UNASSIGNED )
-			return true;
-
-		// Don't allow kicking of players connected less than sv_vote_kick_min_connect_time_mvm
 		CTFPlayer *pTFVoteTarget = ToTFPlayer( m_hPlayerTarget );
 		if ( pTFVoteTarget )
 		{
@@ -844,8 +851,8 @@ bool CChangeLevelIssue::IsYesNoVote( void )
 // Purpose: Nextlevel
 //-----------------------------------------------------------------------------
 ConVar sv_vote_issue_nextlevel_allowed( "sv_vote_issue_nextlevel_allowed", "1", FCVAR_NONE, "Can players call votes to set the next level?" );
-ConVar sv_vote_issue_nextlevel_choicesmode( "sv_vote_issue_nextlevel_choicesmode", "0", FCVAR_NONE, "Present players with a list of lowest playtime maps to choose from?" );
-ConVar sv_vote_issue_nextlevel_allowextend( "sv_vote_issue_nextlevel_allowextend", "1", FCVAR_NONE, "Allow players to extend the current map?" );
+ConVar sv_vote_issue_nextlevel_choicesmode( "sv_vote_issue_nextlevel_choicesmode", "1", FCVAR_NONE, "Present players with a list of lowest playtime maps to choose from?" );
+ConVar sv_vote_issue_nextlevel_allowextend( "sv_vote_issue_nextlevel_allowextend", "0", FCVAR_NONE, "Allow players to extend the current map?" );
 ConVar sv_vote_issue_nextlevel_prevent_change( "sv_vote_issue_nextlevel_prevent_change", "1", FCVAR_NONE, "Not allowed to vote for a nextlevel if one has already been set." );
 
 //-----------------------------------------------------------------------------
@@ -937,7 +944,7 @@ bool CNextLevelIssue::RequestCallVote( int iEntIndex, const char *pszDetails, vo
 		return false;
 
 	// TFGameRules created vote
-	if ( sv_vote_issue_nextlevel_choicesmode.GetBool() && iEntIndex == 99 )
+	if ( sv_vote_issue_nextlevel_choicesmode.GetBool() && m_bServerVote )
 	{
 		// Invokes a UI down stream
 		if ( Q_strcmp( pszDetails, "" ) == 0 )
@@ -994,7 +1001,7 @@ const char *CNextLevelIssue::GetDisplayString( void )
 	// If we don't have a map passed in already...
 	if ( Q_strcmp( m_szDetailsString, "" ) == 0 )
 	{
-		if ( sv_vote_issue_nextlevel_choicesmode.GetBool() )
+		if ( sv_vote_issue_nextlevel_choicesmode.GetBool() && m_bServerVote )
 		{
 			return "#TF_vote_nextlevel_choices";
 		}
@@ -1035,7 +1042,7 @@ void CNextLevelIssue::ListIssueDetails( CBasePlayer *pForWhom )
 	if( !sv_vote_issue_nextlevel_allowed.GetBool() )
 		return;
 
-	if ( !sv_vote_issue_nextlevel_choicesmode.GetBool() )
+	if ( !sv_vote_issue_nextlevel_choicesmode.GetBool() || !m_bServerVote )
 	{
 		char szBuffer[MAX_COMMAND_LENGTH];
 		Q_snprintf( szBuffer, MAX_COMMAND_LENGTH, "callvote %s <mapname>\n", GetTypeString() );
@@ -1051,7 +1058,7 @@ bool CNextLevelIssue::IsYesNoVote( void )
 	// If we don't have a map name already, this will trigger a list of choices
 	if ( Q_strcmp( m_szDetailsString, "" ) == 0 )
 	{
-		if ( sv_vote_issue_nextlevel_choicesmode.GetBool() )
+		if ( sv_vote_issue_nextlevel_choicesmode.GetBool() && m_bServerVote )
 			return false;
 	}
 	
@@ -1066,7 +1073,7 @@ int CNextLevelIssue::GetNumberVoteOptions( void )
 	// If we don't have a map name already, this will trigger a list of choices
 	if ( Q_strcmp( m_szDetailsString, "" ) == 0 )
 	{
-		if ( sv_vote_issue_nextlevel_choicesmode.GetBool() )
+		if ( sv_vote_issue_nextlevel_choicesmode.GetBool() && m_bServerVote )
 			return MAX_VOTE_OPTIONS;
 	}
 
@@ -1082,7 +1089,7 @@ float CNextLevelIssue::GetQuorumRatio( void )
 	// We don't really care about a quorum in this case.  If a few
 	// people have a preference on the next level, and no one else
 	// bothers to vote, just let their choice pass.
-	if ( sv_vote_issue_nextlevel_choicesmode.GetBool() )
+	if ( sv_vote_issue_nextlevel_choicesmode.GetBool() && m_bServerVote )
 		return 0.1f;
 
 	// Default
@@ -1092,7 +1099,7 @@ float CNextLevelIssue::GetQuorumRatio( void )
 //-----------------------------------------------------------------------------
 // Purpose: Extend the current level
 //-----------------------------------------------------------------------------
-ConVar sv_vote_issue_extendlevel_allowed( "sv_vote_issue_extendlevel_allowed", "1", FCVAR_NONE, "Can players call votes to set the next level?" );
+ConVar sv_vote_issue_extendlevel_allowed( "sv_vote_issue_extendlevel_allowed", "1", FCVAR_NONE, "Can players call votes to extend the current level?" );
 ConVar sv_vote_issue_extendlevel_quorum( "sv_vote_issue_extendlevel_quorum", "0.6", FCVAR_NONE, "What is the ratio of voters needed to reach quorum?" );
 
 //-----------------------------------------------------------------------------
@@ -1188,7 +1195,7 @@ float CExtendLevelIssue::GetQuorumRatio( void )
 //-----------------------------------------------------------------------------
 // Purpose: Scramble Teams Issue
 //-----------------------------------------------------------------------------
-ConVar sv_vote_issue_scramble_teams_allowed( "sv_vote_issue_scramble_teams_allowed", "1", FCVAR_NONE, "Can players call votes to scramble the teams?" );
+ConVar sv_vote_issue_scramble_teams_allowed( "sv_vote_issue_scramble_teams_allowed", "0", FCVAR_NONE, "Can players call votes to scramble the teams?" );
 ConVar sv_vote_issue_scramble_teams_cooldown( "sv_vote_issue_scramble_teams_cooldown", "1200", FCVAR_NONE, "Minimum time before another scramble vote can occur (in seconds)." );
 
 //-----------------------------------------------------------------------------
@@ -1509,7 +1516,7 @@ void CTeamAutoBalanceIssue::ExecuteCommand( void )
 	// Enable
 	else
 	{
-		engine->ServerCommand( "mp_autoteambalance 1;" );
+		engine->ServerCommand( "mp_autoteambalance 2;" );
 	}
 }
 
@@ -1646,16 +1653,16 @@ bool CClassLimitsIssue::IsEnabled( void )
 {
 	if ( TFGameRules() )
 	{
+		if ( TFGameRules()->IsMannVsMachineMode() )
+			return sv_vote_issue_classlimits_allowed_mvm.GetBool();
+
+		// Manages class limits already
+		if ( TFGameRules()->IsInHighlanderMode() || TFGameRules()->IsInSixesMode() )
+			return false;
+
 		// Manages class limits already
 		if ( TFGameRules()->IsInTournamentMode() )
 			return false;
-
-		// Manages class limits already
-		if ( TFGameRules()->IsInHighlanderMode() )
-			return false;
-
-		if ( TFGameRules()->IsMannVsMachineMode() )
-			return sv_vote_issue_classlimits_allowed_mvm.GetBool();
 	}
 
 	return sv_vote_issue_classlimits_allowed.GetBool();
@@ -1811,5 +1818,138 @@ const char *CPauseGameIssue::GetDetailsString( void )
 {
 	m_sRetString = CFmtStr( "%i", sv_vote_issue_pause_game_timer.GetInt() );
 	return (m_sRetString.String());
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Enable/Disable random crits
+//-----------------------------------------------------------------------------
+ConVar sv_vote_issue_randomcrits_allowed( "sv_vote_issue_randomcrits_allowed", "1", FCVAR_NONE, "Can players call votes to enable or disable random crits?" );
+ConVar sv_vote_issue_randomcrits_allowed_mvm( "sv_vote_issue_randomcrits_allowed_mvm", "0", FCVAR_NONE, "Can players call votes in Mann-Vs-Machine to enable or disable random crits?" );
+ConVar sv_vote_issue_randomcrits_cooldown( "sv_vote_issue_randomcrits_cooldown", "300", FCVAR_NONE, "Minimum time before another randomcrits vote can occur (in seconds)." );
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+const char *CRandomCritsIssue::GetTypeStringLocalized( void )
+{
+	// Disabled
+	if ( !tf_weapon_criticals.GetBool() )
+	{
+		return "#Vote_RandomCrits_Enable";
+	}
+
+	return "#Vote_RandomCrits_Disable";
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CRandomCritsIssue::ExecuteCommand( void )
+{
+	if ( sv_vote_issue_randomcrits_cooldown.GetInt() )
+	{
+		SetIssueCooldownDuration( sv_vote_issue_randomcrits_cooldown.GetFloat() );
+	}
+
+	// Disable
+	if ( tf_weapon_criticals.GetBool() )
+	{
+		engine->ServerCommand( "tf_weapon_criticals 0;" );
+	}
+	// Enable
+	else
+	{
+		engine->ServerCommand( "tf_weapon_criticals 1;" );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CRandomCritsIssue::IsEnabled( void )
+{
+	if ( TFGameRules() )
+	{
+		if ( TFGameRules()->IsMannVsMachineMode() )
+			return sv_vote_issue_randomcrits_allowed_mvm.GetBool();
+
+		// Manages random crits already
+		if ( TFGameRules()->IsCompetitiveGame() )
+			return false;
+	}
+
+	return sv_vote_issue_randomcrits_allowed.GetBool();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CRandomCritsIssue::RequestCallVote( int iEntIndex, const char *pszDetails, vote_create_failed_t &nFailCode, int &nTime )
+{
+	if ( !CBaseTFIssue::RequestCallVote( iEntIndex, pszDetails, nFailCode, nTime ) )
+		return false;
+
+	if ( !IsEnabled() )
+	{
+		nFailCode = VOTE_FAILED_ISSUE_DISABLED;
+		return false;
+	}
+
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+const char *CRandomCritsIssue::GetDisplayString( void )
+{
+	// Disable
+	if ( tf_weapon_criticals.GetInt() )
+		return "#TF_vote_randomcrits_disable";
+
+	// Enable
+	return "#TF_vote_randomcrits_enable";
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+const char *CRandomCritsIssue::GetVotePassedString( void )
+{
+	// Disable
+	if ( tf_weapon_criticals.GetInt() )
+		return "#TF_vote_passed_randomcrits_disable";
+
+	// Enable
+	return "#TF_vote_passed_randomcrits_enable";
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CRandomCritsIssue::ListIssueDetails( CBasePlayer *pForWhom )
+{
+	if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() && !sv_vote_issue_randomcrits_allowed_mvm.GetBool() )
+		return;
+
+	if ( !sv_vote_issue_randomcrits_allowed.GetBool() )
+		return;
+
+	ListStandardNoArgCommand( pForWhom, GetTypeString() );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CRandomCritsIssue::GetQuorumRatio( void )
+{
+	float flRatio = sv_vote_quorum_ratio.GetFloat();
+
+	// Disable
+	if ( tf_weapon_criticals.GetBool() )
+		return flRatio;
+
+	// Enable
+	return Max( 0.1f, flRatio * 0.7f );
 }
 

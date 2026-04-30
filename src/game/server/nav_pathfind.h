@@ -359,7 +359,7 @@ bool NavAreaBuildPath( CNavArea *startArea, CNavArea *goalArea, const Vector *go
 			if ( bHaveMaxPathLength )
 			{
 				// keep track of path length so far
-				float deltaLength = ( newArea->GetCenter() - area->GetCenter() ).Length();
+				float deltaLength = length > 0.0f ? length : ( newArea->GetCenter() - area->GetCenter() ).Length();
 				float newLengthSoFar = area->GetPathLengthSoFar() + deltaLength;
 				if ( newLengthSoFar > maxPathLength )
 					continue;

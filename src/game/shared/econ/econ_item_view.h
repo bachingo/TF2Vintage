@@ -342,6 +342,9 @@ public:
 	inline void					SetWeaponSkinUseHighRes( bool bUseHighRes ) { m_bWeaponSkinUseHighRes = bUseHighRes; }
 	inline void					SetWeaponSkinUseLowRes( bool bUseLowRes ) { m_bWeaponSkinUseLowRes = bUseLowRes; }
 
+	void						SetCachedWear(float flWear) { m_flCachedWear = flWear; }
+	float						GetCachedWear() const { return m_flCachedWear; }
+
 	inline ITexture				*GetWeaponSkinBase() const { return m_pWeaponSkinBase; }
 	inline ITextureCompositor	*GetWeaponSkinBaseCompositor() const { return m_pWeaponSkinBaseCompositor; }
 	inline uint32				GetWeaponSkinBaseCreateFlags() const { return m_unWeaponSkinBaseCreateFlags; }
@@ -355,6 +358,9 @@ public:
 
 	inline int					GetTeamNumber() const { return m_iTeamNumber; }
 	inline void					SetTeamNumber( int iTeamNumber ) { m_iTeamNumber = iTeamNumber; }
+
+	bool						CacheSOCData() { if (!m_pSOCDataCache) { m_pSOCDataCache = GetSOCData(); return true; } return false; }
+	void						UncacheSOCData() { m_pSOCDataCache = NULL; }
 
 protected:
 	// Index of the item definition in the item script file.
@@ -393,6 +399,9 @@ protected:
 	eEconItemOrigin			m_unOverrideOrigin;
 #endif
 
+	// Can set this temporarily while calling several attribute getters to avoid looking up each time
+	CEconItem* m_pSOCDataCache = NULL;
+
 	bool	m_bColorInit;
 	bool	m_bPaintOverrideInit;
 	bool	m_bHasPaintOverride;
@@ -408,6 +417,8 @@ protected:
 	int		m_iLastGeneratedTeamSkin;
 	bool	m_bWeaponSkinUseHighRes;
 	bool	m_bWeaponSkinUseLowRes;
+	//
+	float	m_flCachedWear;
 #endif // CLIENT_DLL
 
 	CNetworkVar( int,		m_iTeamNumber );
@@ -450,5 +461,37 @@ private:
 bool DoesItemPassSearchFilter( const class IEconItemDescription *pDescription, const wchar_t* wszFilter );
 CBasePlayer *GetPlayerByAccountID( uint32 unAccountID );
 #endif // CLIENT_DLL
+
+/** There are some function calls which repeatedly call out to our underlying item, lets cache beforehand. */
+class CEconItemViewDataCacher
+{
+public:
+	CEconItemViewDataCacher(CEconItemView* pItem) : m_pItem(pItem)
+	{
+		if (!m_pItem) return;
+		bRecursive = !m_pItem->CacheSOCData();
+	}
+
+	~CEconItemViewDataCacher()
+	{
+		if (!m_pItem || bRecursive) return;
+		m_pItem->UncacheSOCData();
+	}
+
+	void SetItem(CEconItemView* pItem)
+	{
+		if (pItem == m_pItem) return;
+		if (!pItem) return;
+		if (m_pItem && !bRecursive) m_pItem->UncacheSOCData();
+		m_pItem = pItem;
+		bRecursive = !m_pItem->CacheSOCData();
+	}
+
+private:
+
+	CEconItemView* m_pItem;
+	/** Sometimes the item already has a cache, and we shouldn't mess with it. **/
+	bool bRecursive = false;
+};
 
 #endif // ECON_ITEM_CONSTANTS_H

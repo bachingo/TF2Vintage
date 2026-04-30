@@ -20,7 +20,6 @@
 
 extern IGameMovement *g_pGameMovement;
 extern CMoveData *g_pMoveData;	// This is a global because it is subclassed by each game.
-extern ConVar sv_noclipduringpause;
 
 ConVar sv_maxusrcmdprocessticks_warning( "sv_maxusrcmdprocessticks_warning", "-1", FCVAR_NONE, "Print a warning when user commands get dropped due to insufficient usrcmd ticks allocated, number of seconds to throttle, negative disabled" );
 static ConVar sv_maxusrcmdprocessticks_holdaim( "sv_maxusrcmdprocessticks_holdaim", "1", FCVAR_CHEAT, "Hold client aim for multiple server sim ticks when client-issued usrcmd contains multiple actions (0: off; 1: hold this server tick; 2+: hold multiple ticks)" );
@@ -300,8 +299,12 @@ void CPlayerMove::RunPostThink( CBasePlayer *player )
 {
 	VPROF( "CPlayerMove::RunPostThink" );
 
+	player->SetInPostThink(true);
+
 	// Run post-think
 	player->PostThink();
+
+	player->SetInPostThink(false);
 }
 
 void CommentarySystem_PePlayerRunCommand( CBasePlayer *player, CUserCmd *ucmd );
@@ -315,8 +318,13 @@ void CommentarySystem_PePlayerRunCommand( CBasePlayer *player, CUserCmd *ucmd );
 //-----------------------------------------------------------------------------
 void CPlayerMove::RunCommand ( CBasePlayer *player, CUserCmd *ucmd, IMoveHelper *moveHelper )
 {
-	const int nTicksAllowedForProcessing = player->ConsumeMovementTicksForUserCmdProcessing( 1 );
-	if ( !player->IsBot() && !player->IsHLTV() && ( nTicksAllowedForProcessing < 1 ) )
+	const float playerCurTime = player->m_nTickBase * TICK_INTERVAL;
+	const float playerFrameTime = player->m_bGamePaused ? 0 : TICK_INTERVAL;
+	const int iRemainingTicks = player->m_bGamePaused ? 0 : 1;
+	// consume the tick even if paused, such that we don't accumulate movement ticks while simulating
+	const int iAvailableTicks = player->ConsumeMovementTicksForUserCmdProcessing( iRemainingTicks );
+	const int nTicksAllowedForProcessing = player->m_bGamePaused ? 0 : iAvailableTicks;;
+	if ( !player->IsBot() && !player->IsHLTV() && ( nTicksAllowedForProcessing < iRemainingTicks ) )
 	{
 		// Make sure that the activity in command is erased because player cheated or dropped too many packets
 		double dblWarningFrequencyThrottle = sv_maxusrcmdprocessticks_warning.GetFloat();
@@ -332,9 +340,6 @@ void CPlayerMove::RunCommand ( CBasePlayer *player, CUserCmd *ucmd, IMoveHelper 
 		}
 		return; // Don't process this command
 	}
-
-	const float playerCurTime = player->m_nTickBase * TICK_INTERVAL;
-	const float playerFrameTime = TICK_INTERVAL;
 
 	StartCommand( player, ucmd );
 
@@ -356,9 +361,7 @@ void CPlayerMove::RunCommand ( CBasePlayer *player, CUserCmd *ucmd, IMoveHelper 
 	{
 		// If no clipping and cheats enabled and noclipduring game enabled, then leave
 		//  forwardmove and angles stuff in usercmd
-		if ( player->GetMoveType() == MOVETYPE_NOCLIP &&
-			 sv_cheats->GetBool() && 
-			 sv_noclipduringpause.GetBool() )
+		if ( !player->ShouldBePausedDuringPause() )
 		{
 			gpGlobals->frametime = TICK_INTERVAL;
 		}
@@ -447,7 +450,11 @@ void CPlayerMove::RunCommand ( CBasePlayer *player, CUserCmd *ucmd, IMoveHelper 
 	moveHelper->ProcessImpacts();
 	VPROF_SCOPE_END();
 
+	player->m_flInterpolationTime = ucmd->lerp_time;
+
 	RunPostThink( player );
+
+	player->m_flInterpolationTime = 1.0f;
 
 	g_pGameMovement->FinishTrackPredictionErrors( player );
 

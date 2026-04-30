@@ -59,16 +59,24 @@
 ConVar	tf_debug_flamethrower("tf_debug_flamethrower", "0", FCVAR_CHEAT | FCVAR_REPLICATED, "Visualize the flamethrower damage." );
 ConVar  tf_flamethrower_boxsize("tf_flamethrower_boxsize", "12.0", FCVAR_CHEAT | FCVAR_REPLICATED, "Size of flame damage entities.", true, 1.f, true, 24.f );
 ConVar  tf_flamethrower_new_flame_offset( "tf_flamethrower_new_flame_offset", "40 5 0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Starting position relative to the flamethrower." );
-const float	tf_flamethrower_initial_afterburn_duration = 3.f;
+#ifdef GAME_DLL
+ConVar	tf_flamethrower_initial_afterburn_duration("tf_flamethrower_initial_afterburn_duration", "3", FCVAR_HIDDEN);
+#endif
 const float	tf_flamethrower_airblast_cone_angle = 35.0f;
 
 
 #include "tf_pumpkin_bomb.h"
 
 const float	tf_flamethrower_new_flame_fire_delay = 0.02f;
+#ifdef TF2_OG
+const float	tf_flamethrower_damage_per_tick = 14.f;
+#else
 const float	tf_flamethrower_damage_per_tick = 13.f;
+#endif
 ConVar  tf_flamethrower_burstammo("tf_flamethrower_burstammo", "20", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "How much ammo does the air burst use per shot." );
 ConVar  tf_flamethrower_flametime("tf_flamethrower_flametime", "0.5", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Time to live of flame damage entities." );
+
+ConVar tf_flamethrower_airblast("tf_flamethrower_airblast", "1", FCVAR_REPLICATED);
 
 
 // If we're shipping this it needs to be better hooked with flame manager -- right now we just spawn 5 managers for
@@ -709,6 +717,7 @@ void CTFFlameThrower::PrimaryAttack()
 
 	if ( !CanAttack() )
 	{
+		m_flNextPrimaryAttack = MAX(m_flNextPrimaryAttack, gpGlobals->curtime);
 #if defined ( CLIENT_DLL )
 		StopFlame();
 #endif
@@ -830,7 +839,7 @@ void CTFFlameThrower::PrimaryAttack()
 		// Find eligible entities in a cone in front of us.
 		// Vector vOrigin = pOwner->Weapon_ShootPosition();
 		Vector vForward, vRight, vUp;
-		QAngle vAngles = pOwner->EyeAngles() + pOwner->GetPunchAngle();
+		QAngle vAngles = pOwner->EyeAngles() + pOwner->Weapon_PunchAngle();
 		AngleVectors( vAngles, &vForward, &vRight, &vUp );
 
 		#define NUM_TEST_VECTORS	30
@@ -900,7 +909,7 @@ void CTFFlameThrower::PrimaryAttack()
 		// Pyros can become invis in some game modes.  Hitting fire normally handles this,
 		// but in the case of flamethrowers it's likely that stealth will be applied while
 		// the fire button is down, so we have to call into RemoveInvisibility here, too.
-		if ( pOwner->m_Shared.IsStealthed() )
+		if ( pOwner->m_Shared.IsStealthed() && ShouldRemoveInvisibilityOnPrimaryAttack() )
 		{
 			pOwner->RemoveInvisibility();
 		}
@@ -1151,6 +1160,9 @@ void CTFFlameThrower::UseRage( void )
 //-----------------------------------------------------------------------------
 void CTFFlameThrower::SecondaryAttack()
 {
+	if (!tf_flamethrower_airblast.GetBool())
+		return;
+
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 	if ( !pOwner )
 		return;
@@ -1679,25 +1691,48 @@ bool CTFFlameThrower::DeflectPlayer( CTFPlayer *pTarget, CTFPlayer *pOwner, Vect
 			VectorNormalize( vecToTarget );
 		}
 
-		float flAirblastConeScale = 1.f;
-		CALL_ATTRIB_HOOK_FLOAT( flAirblastConeScale, mult_airblast_cone_scale );
+		bool bIsPointBlankHit = false;
+		Vector vecOwnerPos = pOwner->GetAbsOrigin();
+		Vector vecTargetPos = pTarget->GetAbsOrigin();
+		
+		// Flatten to XY plane
+		Vector vecToTarget2D = vecTargetPos - vecOwnerPos;
+		vecToTarget2D.z = 0.0f; 
+		float flDist2D = VectorNormalize( vecToTarget2D );
 
-		truncatedcone_t testCone;
-		testCone.origin	= pOwner->EyePosition();
-		testCone.normal	= vecForward;
-		testCone.h		= 2.f * GetDeflectionRadius(); // diameter of enum sphere
-		testCone.theta	= flAirblastConeScale * tf_flamethrower_airblast_cone_angle;
+		// Flatten look vector to XY plane
+		Vector vecForward2D = vecForward;
+		vecForward2D.z = 0.0f;
+		VectorNormalize( vecForward2D );
 
-
-		Vector vTargetAbsMins = pTarget->GetAbsOrigin() + pTarget->WorldAlignMins();
-		Vector vTargetAbsMaxs = pTarget->GetAbsOrigin() + pTarget->WorldAlignMaxs();
-
-		// Require our target be in a cone in front of us
-		if ( !physcollision->IsBoxIntersectingCone( vTargetAbsMins, vTargetAbsMaxs, testCone ) )
+		// ~85 units is roughly melee range. 
+		// DotProduct > -0.2f ensures they aren't completely behind the Pyro.
+		float flPointBlankRadius = 85.0f; 
+		if ( flDist2D <= flPointBlankRadius && DotProduct( vecForward2D, vecToTarget2D ) > -0.2f )
 		{
-			return false;
+			bIsPointBlankHit = true;
 		}
 
+		if ( !bIsPointBlankHit )
+		{
+			float flAirblastConeScale = 1.f;
+			CALL_ATTRIB_HOOK_FLOAT( flAirblastConeScale, mult_airblast_cone_scale );
+
+			truncatedcone_t testCone;
+			testCone.origin	= pOwner->EyePosition();
+			testCone.normal	= vecForward;
+			testCone.h		= 2.f * GetDeflectionRadius(); // diameter of enum sphere
+			testCone.theta	= flAirblastConeScale * tf_flamethrower_airblast_cone_angle;
+
+			Vector vTargetAbsMins = pTarget->GetAbsOrigin() + pTarget->WorldAlignMins();
+			Vector vTargetAbsMaxs = pTarget->GetAbsOrigin() + pTarget->WorldAlignMaxs();
+
+			// Require our target be in a cone in front of us
+			if ( !physcollision->IsBoxIntersectingCone( vTargetAbsMins, vTargetAbsMaxs, testCone ) )
+			{
+				return false;
+			}
+		}
 
 		if ( pTarget != pOwner )
 		{
@@ -1870,7 +1905,7 @@ void CTFFlameThrower::PlayDeflectionSound( bool bPlayer )
 //-----------------------------------------------------------------------------
 float CTFFlameThrower::GetInitialAfterburnDuration() const
 {
-	return tf_flamethrower_initial_afterburn_duration;
+	return tf_flamethrower_initial_afterburn_duration.GetFloat();
 }
 
 //-----------------------------------------------------------------------------
@@ -3128,19 +3163,19 @@ void CTFFlameEntity::OnCollideWithTeammate( CTFPlayer *pPlayer )
 	if ( !pPlayer->IsPlayerClass(TF_CLASS_SNIPER) )
 		return;
 
+	// Does he have the bow?
+	CTFWeaponBase *pWpn = pPlayer->GetActiveTFWeapon();
+	if ( !pWpn || pWpn->GetWeaponID() != TF_WEAPON_COMPOUND_BOW )
+		return;
+
+	CTFCompoundBow *pBow = static_cast<CTFCompoundBow*>( pWpn );
+	pBow->SetArrowAlight( true );
+
 	int iIndex = m_hEntitiesBurnt.Find( pPlayer );
 	if ( iIndex != m_hEntitiesBurnt.InvalidIndex() )
 		return;
 
 	m_hEntitiesBurnt.AddToTail( pPlayer );
-
-	// Does he have the bow?
-	CTFWeaponBase *pWpn = pPlayer->GetActiveTFWeapon();
-	if ( pWpn && pWpn->GetWeaponID() == TF_WEAPON_COMPOUND_BOW )
-	{
-		CTFCompoundBow *pBow = static_cast<CTFCompoundBow*>( pWpn );
-		pBow->SetArrowAlight( true );
-	}
 }
 
 //-----------------------------------------------------------------------------

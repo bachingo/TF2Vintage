@@ -62,6 +62,9 @@ public:
 	virtual void	DoMeleeDamage( CBaseEntity* ent, trace_t& trace );
 	virtual void	DoMeleeDamage( CBaseEntity* ent, trace_t& trace, float flDamageMod );
 
+	virtual bool	IsBehindAndFacingTarget( CTFPlayer *pTarget, bool bInAttack = false );
+	virtual bool	VerifyBehindPosition( CTFPlayer *pTarget );
+
 	virtual float	GetMeleeDamage( CBaseEntity *pTarget, int* piDamageType, int* piCustomDamage );
 
 #ifndef CLIENT_DLL
@@ -89,7 +92,7 @@ protected:
 
 protected:
 
-	float	m_flSmackTime;
+	CNetworkVar( float, m_flSmackTime );
 	bool	m_bConnected;
 	bool	m_bMiniCrit;
 
@@ -99,6 +102,7 @@ protected:
 
 private:
 	bool DoSwingTraceInternal( trace_t &trace, bool bCleave, CUtlVector< trace_t >* pTargetTraceVector );
+	bool DoMeleeTrace( trace_t& trace, CTFPlayer *pPlayer, Vector vecSwingStart, Vector vecSwingEnd, Vector vecSwingMins, Vector vecSwingMaxs, ITraceFilter* filter );
 	bool OnSwingHit( trace_t &trace );
 
 	CTFWeaponBaseMelee( const CTFWeaponBaseMelee & ) {}

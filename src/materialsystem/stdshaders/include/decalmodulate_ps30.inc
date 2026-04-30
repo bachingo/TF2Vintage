@@ -18,22 +18,14 @@
 #include "shaderlib/cshader.h"
 class decalmodulate_ps30_Static_Index
 {
-	unsigned int m_nCONVERT_TO_SRGB : 2;
 public:
-	void SetCONVERT_TO_SRGB( int i )
-	{
-		Assert( i >= 0 && i <= 1 );
-		m_nCONVERT_TO_SRGB = i;
-	}
-
 	decalmodulate_ps30_Static_Index(  )
 	{
-		m_nCONVERT_TO_SRGB = g_pHardwareConfig->NeedsShaderSRGBConversion();
 	}
 
 	int GetIndex() const
 	{
-		return ( 3 * m_nCONVERT_TO_SRGB ) + 0;
+		return 0;
 	}
 };
 

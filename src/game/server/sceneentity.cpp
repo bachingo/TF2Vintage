@@ -620,6 +620,8 @@ private:
 
 	CRecipientFilter		*m_pRecipientFilter;
 
+	static CUtlMap<CUtlString, CChoreoScene*> m_mapSceneMemCache;
+
 public:
 	void					SetBackground( bool bIsBackground );
 	bool					IsBackground( void );
@@ -770,6 +772,7 @@ BEGIN_ENT_SCRIPTDESC( CSceneEntity, CBaseEntity, "Choreographed scene which cont
 	DEFINE_SCRIPTFUNC_NAMED( ScriptLoadSceneFromString, "LoadSceneFromString", "given a dummy scene name and a vcd string, load the scene" )
 END_SCRIPTDESC();
 
+CUtlMap<CUtlString, CChoreoScene*> CSceneEntity::m_mapSceneMemCache;
 const ConVar	*CSceneEntity::m_pcvSndMixahead = NULL;
 
 
@@ -809,6 +812,12 @@ CSceneEntity::CSceneEntity( void )
 
 	m_BusyActor			= SCENE_BUSYACTOR_DEFAULT;
 
+	static bool bInitMap = false;
+	if ( !bInitMap )
+	{
+		bInitMap = true;
+		SetDefLessFunc( m_mapSceneMemCache );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -2375,7 +2384,7 @@ bool CSceneEntity::CheckActors()
 			if ( pActor )
 			{
 				bool bShouldWait = false;
-				if ( hl2_episodic.GetBool() )
+#if (defined(HL2_EPISODIC) || !defined(HL2_DLL)) && !defined(PORTAL)
 				{
 					// Episodic waits until the NPC is fully finished with any .vcd with speech in it
 					if ( IsRunningScriptedSceneWithSpeech( pActor ) )
@@ -2395,6 +2404,7 @@ bool CSceneEntity::CheckActors()
 					}
 #endif // HL2_EPISODIC
 				}
+#endif
 
 				if ( pActor->GetExpresser() && pActor->GetExpresser()->IsSpeaking() )
 				{
@@ -2440,7 +2450,7 @@ bool CSceneEntity::CheckActors()
 	return true;
 }
 
-#if !defined( _RETAIL )
+#if !defined( _RETAIL ) && defined(DEV_BUILD)
 static ConVar scene_async_prefetch_spew( "scene_async_prefetch_spew", "0", 0, "Display async .ani file loading info." );
 #endif
 
@@ -2452,7 +2462,7 @@ void CSceneEntity::PrefetchAnimBlocks( CChoreoScene *scene )
 	CUtlMap< CChoreoActor *, CBaseFlex *> actorMap( 0, 0, DefLessFunc( CChoreoActor * ) );
 	
 	int spew = 
-#if !defined( _RETAIL )
+#if !defined( _RETAIL ) && defined(DEV_BUILD)
 		scene_async_prefetch_spew.GetInt();
 #else 
 		0;
@@ -3421,6 +3431,14 @@ CChoreoScene *CSceneEntity::LoadScene( const char *filename, IChoreoEventCallbac
 	Q_SetExtension( loadfile, ".vcd", sizeof( loadfile ) );
 	Q_FixSlashes( loadfile );
 
+	auto iCacheIdx = m_mapSceneMemCache.Find(loadfile);
+	if ( iCacheIdx != m_mapSceneMemCache.InvalidIndex() )
+	{
+		CChoreoScene* pScene = new CChoreoScene(NULL);
+		*pScene = *m_mapSceneMemCache.Element(iCacheIdx);
+		return pScene;
+	}
+
 	// binary compiled vcd
 	void *pBuffer;
 	int fileSize;
@@ -3442,6 +3460,14 @@ CChoreoScene *CSceneEntity::LoadScene( const char *filename, IChoreoEventCallbac
 	{
 		pScene->SetPrintFunc( LocalScene_Printf );
 		pScene->SetEventCallbackInterface( pCallback );
+	}
+
+	CChoreoScene* pCachedScene = new CChoreoScene(NULL);
+	*pCachedScene = *pScene;
+	// TODO(mcoms): LRU but this will stop crashes for now.
+	if ( m_mapSceneMemCache.Count() <= 1024 )
+	{
+		m_mapSceneMemCache.Insert(loadfile, pCachedScene);
 	}
 
 	FreeSceneFileMemory( pBuffer );

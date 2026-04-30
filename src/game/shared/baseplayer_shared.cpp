@@ -88,20 +88,19 @@
 #endif
 
 #ifdef CLIENT_DLL
-ConVar mp_usehwmmodels( "mp_usehwmmodels", "0", NULL, "Enable the use of the hw morph models. (-1 = never, 1 = always, 0 = based upon GPU)" ); // -1 = never, 0 = if hasfastvertextextures, 1 = always
+ConVar mp_usehwmmodels( "mp_usehwmmodels", "-1", NULL, "Enable the use of the hw morph models. (-1 = never, 1 = always, 0 = based upon GPU)" ); // -1 = never, 0 = if hasfastvertextextures, 1 = always
 #endif
 
 bool UseHWMorphModels()
 {
-// #ifdef CLIENT_DLL 
-// 	if ( mp_usehwmmodels.GetInt() == 0 )
-// 		return g_pMaterialSystemHardwareConfig->HasFastVertexTextures();
-// 
-// 	return mp_usehwmmodels.GetInt() > 0;
-// #else
-// 	return false;
-// #endif
-	return false;
+#if 0 && defined( CLIENT_DLL )
+	if ( mp_usehwmmodels.GetInt() == 0 )
+		return g_pMaterialSystemHardwareConfig->HasFastVertexTextures();
+
+	return mp_usehwmmodels.GetInt() > 0;
+#else
+ 	return false;
+#endif
 }
 
 void CopySoundNameWithModifierToken( char *pchDest, const char *pchSource, int nMaxLenInChars, const char *pchToken )
@@ -179,9 +178,6 @@ void CBasePlayer::ItemPreFrame()
 		pWeapon->ItemHolsterFrame();
 	}
 
-    if ( gpGlobals->curtime < m_flNextAttack )
-		return;
-
 	if (!pActive)
 		return;
 
@@ -191,7 +187,14 @@ void CBasePlayer::ItemPreFrame()
 		return;
 #endif
 
-	pActive->ItemPreFrame();
+	if (gpGlobals->curtime < m_flNextAttack)
+	{
+		pActive->ItemBusyPreFrame();
+	}
+	else
+	{
+		pActive->ItemPreFrame();
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -272,7 +275,8 @@ void CBasePlayer::ItemPostFrame()
 			GetActiveWeapon()->ItemBusyFrame();
 		}
 	}
-	else
+
+	if ( gpGlobals->curtime >= m_flNextAttack )
 	{
 		if ( GetActiveWeapon() && (!IsInAVehicle() || UsingStandardWeaponsInVehicle()) )
 		{
@@ -503,7 +507,7 @@ surfacedata_t *CBasePlayer::GetLadderSurface( const Vector &origin )
 #endif
 }
 
-void CBasePlayer::UpdateStepSound( surfacedata_t *psurface, const Vector &vecOrigin, const Vector &vecVelocity )
+void CBasePlayer::UpdateStepSound( surfacedata_t *psurface, const Vector &vecOrigin, const Vector &vecVelocity, float flSubTime )
 {
 	bool bWalking;
 	float fvol;
@@ -517,7 +521,7 @@ void CBasePlayer::UpdateStepSound( surfacedata_t *psurface, const Vector &vecOri
 
 	if ( m_flStepSoundTime > 0 )
 	{
-		m_flStepSoundTime -= 1000.0f * gpGlobals->frametime;
+		m_flStepSoundTime -= 1000.0f * ( flSubTime > 0.0f ? flSubTime : gpGlobals->frametime );
 		if ( m_flStepSoundTime < 0 )
 		{
 			m_flStepSoundTime = 0;
@@ -816,7 +820,18 @@ void CBasePlayer::SetStepSoundTime( stepsoundtimes_t iStepSoundTime, bool bWalki
 
 Vector CBasePlayer::Weapon_ShootPosition( )
 {
-	return EyePosition();
+	Vector vCurPos = EyePosition();
+
+	if ( !IsInPostThink() || m_flInterpolationTime >= 1.0f )
+	{
+		return vCurPos;
+	}
+
+	Vector vOldPos = EyePositionOld();
+
+	Vector vLerpPos = Lerp(m_flInterpolationTime, vOldPos, vCurPos);
+	
+	return vLerpPos;
 }
 
 void CBasePlayer::SetAnimationExtension( const char *pExtension )
@@ -1621,7 +1636,7 @@ void CBasePlayer::CalcPlayerView( Vector& eyeOrigin, QAngle& eyeAngles, float& f
 #if defined( CLIENT_DLL )
 	if ( !prediction->InPrediction() )
 	{
-		// Apply punch angle
+		// Shake it up baby!
 		vieweffects->CalcShake();
 		vieweffects->ApplyShake( eyeOrigin, eyeAngles, 1.0 );
 	}
@@ -1677,7 +1692,7 @@ void CBasePlayer::CalcVehicleView(
 #if defined( CLIENT_DLL )
 	if ( !prediction->InPrediction() )
 	{
-		// Apply punch angle
+		// Shake it up baby!
 		vieweffects->CalcShake();
 		vieweffects->ApplyShake( eyeOrigin, eyeAngles, 1.0 );
 	}
@@ -1831,6 +1846,8 @@ void CBasePlayer::SharedSpawn()
 	m_Local.m_bDrawViewmodel = true;
 	m_Local.m_flStepSize = sv_stepsize.GetFloat();
 	m_Local.m_bAllowAutoMovement = true;
+	m_Local.m_bBrakingFrameTolerated = true;
+	m_Local.m_bBrakingFrameTolerated = 0.5f;
 
 	m_nRenderFX = kRenderFxNone;
 	m_flNextAttack	= gpGlobals->curtime;

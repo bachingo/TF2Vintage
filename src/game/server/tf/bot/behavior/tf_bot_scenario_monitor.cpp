@@ -290,7 +290,7 @@ Action< CTFBot > *CTFBotScenarioMonitor::DesiredScenarioAndClassAction( CTFBot *
 	else
 	{
 		// scenario not implemented yet - just fight
-		return new CTFBotSeekAndDestroy;
+		return new CTFBotSeekAndDestroy( 15.0f );
 	}
 
 	return NULL;

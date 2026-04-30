@@ -38,7 +38,15 @@ void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
 #define TF_WEAPON_SNIPERRIFLE_RELOAD_TIME		1.5f
 #define TF_WEAPON_SNIPERRIFLE_ZOOM_TIME			0.3f
 
-#define TF_WEAPON_SNIPERRIFLE_NO_CRIT_AFTER_ZOOM_TIME	0.2f
+#if defined(MCOMS_BALANCE_PACK)
+#define TF_WEAPON_SNIPERRIFLE_NO_CRIT_AFTER_ZOOM_TIME	0.07f
+#endif
+
+ConVar tf_weapon_sniperrifle_no_crit_after_zoom_time("tf_weapon_sniperrifle_no_crit_after_zoom_time", "0.2", FCVAR_REPLICATED | FCVAR_HIDDEN);
+
+#ifdef GAME_DLL
+ConVar tf_weapon_sniperrifle_disable_jump_delay("tf_weapon_sniperrifle_disable_jump_delay", "0", FCVAR_HIDDEN);
+#endif
 
 #define SNIPER_DOT_SPRITE_RED		"effects/sniperdot_red.vmt"
 #define SNIPER_DOT_SPRITE_BLUE		"effects/sniperdot_blue.vmt"
@@ -46,7 +54,7 @@ void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
 #define SNIPER_CHARGE_BEAM_BLUE		"tfc_sniper_charge_blue"
 
 #ifdef CLIENT_DLL
-ConVar tf_sniper_fullcharge_bell( "tf_sniper_fullcharge_bell", "0", FCVAR_ARCHIVE );
+ConVar tf_sniper_fullcharge_bell( "tf_sniper_fullcharge_bell", "1", FCVAR_ARCHIVE );
 #endif
 
 //=============================================================================
@@ -307,7 +315,26 @@ void CTFSniperRifle::HandleZooms( void )
 		}
 	}
 
-	if ( ( pPlayer->m_nButtons & IN_ATTACK2 ) && ( m_flNextSecondaryAttack <= gpGlobals->curtime ) )
+	bool bShouldZoom = false;
+	if ( m_flNextSecondaryAttack <= gpGlobals->curtime )
+	{
+		if ( pPlayer->m_nButtons & IN_ATTACK2 )
+		{
+			bShouldZoom = true;
+			if ( pPlayer->GetZoomMode() == 2 && pPlayer->GetFOV() < 75 )
+			{
+				// if we're zoomed, don't toggle out when we're in hold mode.
+				bShouldZoom = false;
+			}
+		}
+		else if ( pPlayer->GetZoomMode() == 2 && pPlayer->GetFOV() < 75 )
+		{
+			// when we let go, do the zoom out.
+			bShouldZoom = true;
+		}
+	}
+
+	if ( bShouldZoom )
 	{
 		// If we're in the process of rezooming, just cancel it
 		if ( m_flRezoomTime > 0 || m_flUnzoomTime > 0 )
@@ -426,7 +453,7 @@ void CTFSniperRifle::ItemPostFrame( void )
 		CALL_ATTRIB_HOOK_INT( iBuffType, set_buff_type );
 		if ( iBuffType > 0 )
 		{
-			pPlayer->m_Shared.ActivateRageBuff( pPlayer, iBuffType );
+			pPlayer->m_Shared.ActivateRageBuff( this, iBuffType );
 		}
 	}
 }
@@ -501,19 +528,19 @@ void CTFSniperRifle::ZoomOutIn( void )
 	ZoomOut();
 
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	float flRezoomDelay = 0.9f;
+	if ( !UsesClipsForAmmo1() )
+	{
+		// Since sniper rifles don't actually use clips the fast reload hook also affects unzoom and zoom delays
+		ApplyScopeSpeedModifications( flRezoomDelay );
+	}
 	if ( pPlayer && pPlayer->ShouldAutoRezoom() )
 	{
-		float flRezoomDelay = 0.9f;
-		if ( !UsesClipsForAmmo1() )
-		{
-			// Since sniper rifles don't actually use clips the fast reload hook also affects unzoom and zoom delays
-			ApplyScopeSpeedModifications( flRezoomDelay );
-		}
 		m_flRezoomTime = gpGlobals->curtime + flRezoomDelay;
 	}
 	else
 	{
-		m_flNextSecondaryAttack = gpGlobals->curtime + 1.0f;
+		m_flNextSecondaryAttack = gpGlobals->curtime + flRezoomDelay;
 	}
 }
 
@@ -648,7 +675,7 @@ void CTFSniperRifle::ApplyChargeSpeedModifications( float &flBaseRef )
 	if ( pPlayer )
 	{
 		Vector vForward;
-		AngleVectors( pPlayer->EyeAngles() + pPlayer->GetPunchAngle(), &vForward );
+		AngleVectors( pPlayer->EyeAngles() + pPlayer->Weapon_PunchAngle(), &vForward );
 
 		Vector vShootPos = pPlayer->Weapon_ShootPosition();
 		trace_t tr;
@@ -803,6 +830,8 @@ void CTFSniperRifle::Fire( CTFPlayer *pPlayer )
 	if ( m_flNextPrimaryAttack > gpGlobals->curtime )
 		return;
 
+	m_flNextPrimaryAttack = gpGlobals->curtime;
+
 	// Fire the sniper shot.
 	PrimaryAttack();
 
@@ -822,7 +851,8 @@ void CTFSniperRifle::Fire( CTFPlayer *pPlayer )
 				}
 				SetRezoom( true, flUnzoomDelay );	// zoom out in 0.5 seconds, then rezoom
 #ifdef GAME_DLL
-				SetContextThink( &CTFSniperRifleClassic::EnableJump, gpGlobals->curtime + flUnzoomDelay, "RenableJump" );
+				const float flJumpDelay = tf_weapon_sniperrifle_disable_jump_delay.GetBool() ? 0.07f : flUnzoomDelay;
+				SetContextThink( &CTFSniperRifleClassic::EnableJump, gpGlobals->curtime + flJumpDelay, "RenableJump" );
 #endif
 			}
 		}
@@ -999,7 +1029,7 @@ void CTFSniperRifle::UpdateSniperDot( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Checks if we should be using sniper beams.
+// Purpose:
 //-----------------------------------------------------------------------------
 bool CTFSniperRifle::CanFireCriticalShot( bool bIsHeadshot, CBaseEntity *pTarget /*= NULL*/ )
 {
@@ -1047,7 +1077,7 @@ bool CTFSniperRifle::CanFireCriticalShot( bool bIsHeadshot, CBaseEntity *pTarget
 			}
 
 			// no crits for 0.2 seconds after starting to zoom
-			if ( ( gpGlobals->curtime - pPlayer->GetFOVTime() ) < TF_WEAPON_SNIPERRIFLE_NO_CRIT_AFTER_ZOOM_TIME )
+			if ( ( gpGlobals->curtime - pPlayer->GetFOVTime() ) < tf_weapon_sniperrifle_no_crit_after_zoom_time.GetFloat() )
 			{
 				return false;
 			}
@@ -1185,8 +1215,14 @@ void CTFSniperRifle::ExplosiveHeadShot( CTFPlayer *pAttacker, CTFPlayer *pVictim
 		flStunAmt = pTFPlayer->IsMiniBoss() ? 0.5f : RemapValClamped( iExplosiveShot, 1, 3, 0.5f, 0.8f );
 		pTFPlayer->m_Shared.StunPlayer( flStunDuration, flStunAmt, TF_STUN_MOVEMENT, pAttacker );
 
-		// DoT
-		pTFPlayer->m_Shared.MakeBleed( pAttacker, this, 0.1f, flDmg );
+#if defined(MCOMS_BALANCE_PACK)
+		// Radial damage
+		CTakeDamageInfo info( this, pAttacker, NULL, flDmg, DMG_BULLET );
+		info.SetDamageCustom( TF_DMG_CUSTOM_NONE );
+		pTFPlayer->TakeDamage( info );
+#else
+		pTFPlayer->m_Shared.MakeBleed(pAttacker, this, 0.1f, flDmg);
+#endif
 
 		// Shoot a beam at them
 		CPVSFilter filter( pTFPlayer->WorldSpaceCenter() );
@@ -1541,8 +1577,19 @@ bool CSniperDot::GetRenderingPositions( C_TFPlayer *pPlayer, Vector &vecAttachme
 		{
 			// Take the owning player eye position and direction.
 			vecAttachment = pPlayer->EyePosition();
-			QAngle anglesEye = pPlayer->EyeAngles();
-			AngleVectors( anglesEye, &vecDir );
+			C_TFPlayer* pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
+			if ( pLocalPlayer && pLocalPlayer->GetObserverTarget() == pPlayer )
+			{
+				// TODO(mcoms): can we match up the in eye view better?
+				// match up to the view that the local player is observing.
+				QAngle anglesEye = pPlayer->EyeAngles();
+				AngleVectors( anglesEye, &vecDir );
+			}
+			else
+			{
+				vecDir = GetAbsOrigin() - vecAttachment;
+				VectorNormalize( vecDir );
+			}
 		}
 
 		trace_t tr;
@@ -1849,7 +1896,26 @@ void CTFSniperRifleClassic::HandleZooms( void )
 		}
 	}
 
-	if ( ( pPlayer->m_nButtons & IN_ATTACK2 ) && ( m_flNextSecondaryAttack <= gpGlobals->curtime ) )
+	bool bShouldZoom = false;
+	if ( m_flNextSecondaryAttack <= gpGlobals->curtime )
+	{
+		if ( pPlayer->m_nButtons & IN_ATTACK2 )
+		{
+			bShouldZoom = true;
+			if ( pPlayer->GetZoomMode() == 2 && pPlayer->GetFOV() < 75 )
+			{
+				// if we're zoomed, don't toggle out when we're in hold mode.
+				bShouldZoom = false;
+			}
+		}
+		else if ( pPlayer->GetZoomMode() == 2 && pPlayer->GetFOV() < 75 )
+		{
+			// when we let go, do the zoom out.
+			bShouldZoom = true;
+		}
+	}
+
+	if ( bShouldZoom )
 	{
 		Zoom();
 	}

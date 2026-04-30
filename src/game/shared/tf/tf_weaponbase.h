@@ -126,24 +126,15 @@ public:
 	// It does have a base, but we'll never network anything below here..
 	DECLARE_CLASS( CTraceFilterIgnoreTeammates, CTraceFilterSimple );
 
-	CTraceFilterIgnoreTeammates( const IHandleEntity *passentity, int collisionGroup, int iIgnoreTeam )
-		: CTraceFilterSimple( passentity, collisionGroup ), m_iIgnoreTeam( iIgnoreTeam )
+	CTraceFilterIgnoreTeammates( const IHandleEntity *passentity, int collisionGroup, int iIgnoreTeam, bool bIncludeDisguises = false )
+		: CTraceFilterSimple( passentity, collisionGroup ), m_iIgnoreTeam( iIgnoreTeam ), m_bIncludeDisguises( bIncludeDisguises )
 	{
 	}
 
-	virtual bool ShouldHitEntity( IHandleEntity *pServerEntity, int contentsMask )
-	{
-		CBaseEntity *pEntity = EntityFromEntityHandle( pServerEntity );
-
-		if ( ( pEntity->IsPlayer() || pEntity->IsCombatItem() ) && ( pEntity->GetTeamNumber() == m_iIgnoreTeam || m_iIgnoreTeam == TEAM_ANY ) )
-		{
-			return false;
-		}
-
-		return BaseClass::ShouldHitEntity( pServerEntity, contentsMask );
-	}
+	virtual bool ShouldHitEntity(IHandleEntity* pServerEntity, int contentsMask);
 
 	int m_iIgnoreTeam;
+	bool m_bIncludeDisguises;
 };
 
 class CTraceFilterIgnorePlayers : public CTraceFilterSimple
@@ -287,6 +278,11 @@ class CTFWeaponBase : public CBaseCombatWeapon, public IHasOwner, public IHasGen
 	virtual bool IsPredicted() const			{ return true; }
 	virtual void FallInit( void );
 
+#if GAME_DLL
+	void RestockWeaponAfterShot();
+	void UpdateAmmoToAdd( CTFPlayer* pPlayer );
+#endif
+
 	// Weapon Data.
 	CTFWeaponInfo const	&GetTFWpnData() const;
 	virtual int GetWeaponID( void ) const;
@@ -315,6 +311,7 @@ class CTFWeaponBase : public CBaseCombatWeapon, public IHasOwner, public IHasGen
 	virtual bool SendWeaponAnim( int iActivity ) OVERRIDE;
 
 	virtual CBaseEntity	*GetOwnerViaInterface( void ) { return GetOwner(); }
+	virtual bool HasOwnerInterface(void) const { return true; };
 
 	virtual void Equip( CBaseCombatCharacter *pOwner );
 	virtual void Drop( const Vector &vecVelocity );
@@ -340,6 +337,7 @@ class CTFWeaponBase : public CBaseCombatWeapon, public IHasOwner, public IHasGen
 	virtual bool OwnerCanTaunt( void ) { return true; }
 	virtual bool CanBeCritBoosted( void );
 	bool CanHaveRevengeCrits( void );
+	virtual int GetMaxRevengeCrits(void) { return 35; }
 
 	virtual const CEconItemView *GetTauntItem() const;
 
@@ -379,6 +377,7 @@ class CTFWeaponBase : public CBaseCombatWeapon, public IHasOwner, public IHasGen
 	void SendReloadEvents();
 	virtual bool IsReloading() const;			// is the weapon reloading right now?
 	virtual float GetReloadSpeedScale() const { return 1.f; }
+	float GetReloadTimer( float flReloadTime );
 
 	virtual bool AutoFiresFullClip( void ) const OVERRIDE;
 	bool AutoFiresFullClipAllAtOnce( void ) const;
@@ -387,6 +386,8 @@ class CTFWeaponBase : public CBaseCombatWeapon, public IHasOwner, public IHasGen
 
 	virtual bool CanDrop( void ) { return false; }
 	virtual bool AllowTaunts( void ) { return true; }
+
+	virtual bool CanDeploy() OVERRIDE;
 
 	// Fire Rate
 	virtual float ApplyFireDelay( float flDelay ) const;
@@ -449,6 +450,7 @@ class CTFWeaponBase : public CBaseCombatWeapon, public IHasOwner, public IHasGen
 #endif
 
 	virtual bool	CanAttack();
+	virtual bool	CanAttack(int iFlags);
 	virtual int		GetCanAttackFlags() const { return TF_CAN_ATTACK_FLAG_NONE; }
 
 	// Raising & Lowering for grenade throws
@@ -492,6 +494,7 @@ class CTFWeaponBase : public CBaseCombatWeapon, public IHasOwner, public IHasGen
 	virtual int			GetMaxHealthMod() { return 0; }
 
 	virtual float		GetLastDeployTime( void ) { return m_flLastDeployTime; }
+	virtual float		GetLastReadyTime( void ) { return m_flLastReadyTime; }
 
 	bool				IsPassiveWeapon( void ) const;
 
@@ -649,7 +652,10 @@ class CTFWeaponBase : public CBaseCombatWeapon, public IHasOwner, public IHasGen
 	virtual const Vector&	GetViewmodelOffset() OVERRIDE;
 #endif
 
-	virtual bool ShouldRemoveInvisibilityOnPrimaryAttack() const { return true; }
+	virtual bool ShouldRemoveInvisibilityOnPrimaryAttack() const
+	{
+		return true;
+	}
 
 protected:
 	virtual int		GetEffectBarAmmo( void ) { return m_iPrimaryAmmoType; }
@@ -689,6 +695,7 @@ protected:
 	CTFWeaponInfo	*m_pWeaponInfo;
 	bool			m_bInAttack;
 	bool			m_bInAttack2;
+	float			m_flNextBusyCheck;
 	bool			m_bCurrentAttackIsCrit;
 	bool			m_bCurrentCritIsRandom;
 	bool			m_bCurrentAttackIsDuringDemoCharge;
@@ -709,12 +716,17 @@ protected:
 	float			m_flLastRapidFireCritCheckTime;
 
 	float			m_flLastDeployTime;
+	float 			m_flLastReadyTime;
+	float			m_flLastSwitchMult;
 
 	char			m_szTracerName[MAX_TRACER_NAME];
 
 	CNetworkVar(	bool, m_bResetParity );
 
+#ifdef GAME_DLL
+	int				m_iClipToAdd;
 	int				m_iAmmoToAdd;
+#endif
 	float			m_flLastPrimaryAttackTime;
 
 #ifdef CLIENT_DLL
@@ -754,11 +766,20 @@ public:
 	CNetworkVar(	bool, m_bDisguiseWeapon );
 
 	CNetworkVar(	float, m_flLastFireTime );
+	CNetworkVar(	float, m_flLastAccurateFireTime );
 
 	CNetworkHandle( CTFWearable, m_hExtraWearable );
 	CNetworkHandle( CTFWearable, m_hExtraWearableViewModel );
 
 	CNetworkVar( float, m_flObservedCritChance );
+
+#ifdef GAME_DLL
+	void AwardAmmo( int iClipToAdd, int iAmmoToAdd )
+	{
+		m_iClipToAdd += iClipToAdd;
+		m_iAmmoToAdd += iAmmoToAdd;
+	}
+#endif
 
 	virtual bool CanInspect() const { return true; }
 	void HandleInspect();
@@ -827,6 +848,7 @@ public:
 	bool BIsViewModelAttachment() { return m_bIsViewModelAttachment; }
 	
 	virtual CBaseEntity	*GetOwnerViaInterface( void ) OVERRIDE { return m_hWeaponAssociatedWith.Get() ? m_hWeaponAssociatedWith.Get()->GetOwner() : NULL; }
+	virtual bool HasOwnerInterface(void) const { return true; };
 private:
 
 	bool m_bIsViewModelAttachment;

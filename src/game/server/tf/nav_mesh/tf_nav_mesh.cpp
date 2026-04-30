@@ -48,7 +48,6 @@ extern ConVar tf_bot_debug_select_defense_area;
 extern ConVar tf_nav_in_combat_duration;
 extern ConVar mp_teams_unbalance_limit;
 extern ConVar mp_autoteambalance;
-extern ConVar sv_alltalk;
 extern ConVar mp_timelimit;
 
 
@@ -478,7 +477,14 @@ void CTFNavMesh::Update( void )
 
 	UpdateDebugDisplay();
 
-	if ( TheNextBots().GetNextBotCount() > 0 )
+	int iCurBotCount = TheNextBots().GetNextBotCount();
+	// hack to compute nav mesh on competitive games
+	if ( ( m_priorBotCount == 0 || m_recomputeInternalDataTimer.HasStarted() ) && TFGameRules()->IsCompetitiveGame() )
+	{
+		iCurBotCount = 1;
+	}
+
+	if ( iCurBotCount > 0 )
 	{
 		if ( m_priorBotCount == 0 )
 		{
@@ -500,7 +506,7 @@ void CTFNavMesh::Update( void )
 		}
 	}
 
-	m_priorBotCount = TheNextBots().GetNextBotCount();
+	m_priorBotCount = iCurBotCount;
 }
 
 
@@ -1707,7 +1713,7 @@ public:
 //--------------------------------------------------------------------------------------------------------
 void CTFNavMesh::CollectAndMarkSpawnRoomExits( CTFNavArea *area, CUtlVector< CTFNavArea * > *exitAreaVector )
 {
-	for( int dir=0; dir<NUM_DIRECTIONS; ++dir )
+	for ( int dir=0; dir<NUM_DIRECTIONS; ++dir )
 	{
 		const NavConnectVector *connect = area->GetAdjacentAreas( (NavDirType)dir );
 		if ( connect )
@@ -1718,6 +1724,14 @@ void CTFNavMesh::CollectAndMarkSpawnRoomExits( CTFNavArea *area, CUtlVector< CTF
 
 				if ( !adjArea->HasAttributeTF( TF_NAV_SPAWN_ROOM_BLUE | TF_NAV_SPAWN_ROOM_RED ) )
 				{
+					FOR_EACH_VEC( (*exitAreaVector), exitIt )
+					{
+						// some other area marked this exit
+						if ( exitAreaVector->Element( exitIt ) == area )
+						{
+							return;
+						}
+					}
 					// adjacent area leads out of spawn room - this is an exit
 					area->SetAttributeTF( TF_NAV_SPAWN_ROOM_EXIT );
 					exitAreaVector->AddToTail( area );

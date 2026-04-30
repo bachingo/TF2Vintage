@@ -352,10 +352,7 @@ public:
 	{
 		if ( !Q_strnicmp( command, "register", 8 ) )
 		{
-			if ( steamapicontext && steamapicontext->SteamFriends() )
-			{
-				steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( "http://www.youtube.com/create_account?next=/" );
-			}
+			UTIL_OpenWebPage( "https://www.youtube.com/create_account?next=/" );
 		}		
 		else if ( !Q_strnicmp( command, "confirm", 7 ) )
 		{
@@ -451,6 +448,12 @@ public:
 		const char *pGameDir = COM_GetModDirectory();
 
 		// Team Fortress 2?
+		if ( FStrEq( pGameDir, "tf2vintage" ) )
+		{
+			*ppShortGameName = "TF2V";
+			*ppFullGameName = "Team Fortress 2 Vintage";
+		}
+		// Team Fortress 2?
 		if ( FStrEq( pGameDir, "tf" ) )
 		{
 			*ppShortGameName = "TF2";
@@ -486,10 +489,7 @@ public:
 	{
 		if ( !Q_strnicmp( command, "termsofservice", 14 ) )
 		{
-			if ( steamapicontext && steamapicontext->SteamFriends() )
-			{
-				steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( "http://www.youtube.com/t/terms" );
-			}
+			UTIL_OpenWebPage( "https://www.youtube.com/t/terms" );
 		}		
 		else if ( !Q_strnicmp( command, "confirm", 7 ) )
 		{
@@ -521,18 +521,18 @@ public:
 			CUtlString description( szDesc );
 			if ( steamapicontext && steamapicontext->SteamUser() )
 			{
-				const char *pchCommunityURL = "http://steamcommunity.com/";
+				const char *pchCommunityURL = "https://steamcommunity.com/";
 				switch ( eSteamUniverse )
 				{
 				case k_EUniverseDev:
-					pchCommunityURL = "http://localhost/community/";
+					pchCommunityURL = "https://localhost/community/";
 					break;
 				case k_EUniverseBeta:
-					pchCommunityURL = "http://beta.steamcommunity.com/";
+					pchCommunityURL = "https://beta.steamcommunity.com/";
 					break;
 				case k_EUniversePublic:
 				default:
-					pchCommunityURL = "http://steamcommunity.com/";
+					pchCommunityURL = "https://steamcommunity.com/";
 				}
 				description.Format( "%s\n\n%sprofiles/%llu", szDesc, pchCommunityURL, steamapicontext->SteamUser()->GetSteamID().ConvertToUint64() );
 			}

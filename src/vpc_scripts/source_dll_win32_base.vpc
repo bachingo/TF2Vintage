@@ -34,6 +34,7 @@ $Configuration
 
 	$Compiler
 	{
+		$LanguageStandard					"ISO C++17 Standard (/std:c++17)"
 		$PreprocessorDefinitions			"$BASE;PLATFORM_64BITS;WIN64;_WIN64;COMPILER_MSVC64" [$WIN64]
 		$PreprocessorDefinitions			"$BASE;COMPILER_MSVC32" [$WIN32]		
 		$PreprocessorDefinitions			"$BASE;COMPILER_MSVC;_DLL_EXT=$_DLL_EXT"
@@ -82,7 +83,7 @@ $Configuration
 							":BuildEventOK" "\n" 
 
 		$CommandLine		"$BASE" "\n" \
-							"$SRCDIR\devtools\signservice\signclient.exe $VSIGN_SERVER $OUTBINDIR\$(TargetFileName)" "\n" [$RETAIL && $PUBLISH && !$JOSH]
+							"$SRCDIR\devtools\signservice\signclient.exe $VSIGN_SERVER $OUTBINDIR\$(TargetFileName)" "\n" [$RETAIL && $PUBLISH && !$SOURCESDK && !$JOSH]
 
 		$CommandLine		"$BASE" "\n" \
 							"call $SRCDIR\devtools\bin\vsign.bat -signvalve $OUTBINDIR\$(TargetFileName)" "\n" [!$RETAIL && !$PUBLISH && !$SOURCESDK && !$JOSH]
@@ -105,22 +106,6 @@ $Project
 				{
 					$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
 				}
-			}
-		}
-
-		// Implement __imp__EncodePointer and __imp__DecodePointer so that we can run on XP SP1
-		// when building with VS 2010 and higher.
-		$File	"$SRCDIR\public\tier0\pointeroverride.asm" [$WIN32]
-		{
-			$Configuration
-			{	
-				$CustomBuildStep
-				{
-					// General
-					$CommandLine				"$QUOTE$(VC_ExecutablePath_x64_x86)\ml.exe$QUOTE /safeseh /c /Cp /Zi /Fo$QUOTE$(IntDir)\$(InputName).obj$QUOTE $QUOTE$(InputPath)$QUOTE"
-					$Description				"Compiling pointeroverride.asm"
-					$Outputs					"$(IntDir)\$(InputName).obj"
-				}		
 			}
 		}
 

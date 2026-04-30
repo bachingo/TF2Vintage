@@ -25,8 +25,10 @@
 #include "tf_weapon_knife.h"
 #include "tf_logic_robot_destruction.h"
 #include "tf_target_dummy.h"
+#include <list>
 
 // memdbgon must be the last include file in a .cpp file!!!
+
 #include "tier0/memdbgon.h"
 
 
@@ -51,17 +53,27 @@ extern ConVar tf_nav_in_combat_range;
 #define SENTRYGUN_ADD_SHELLS	40
 #define SENTRYGUN_ADD_ROCKETS	8
 
-#define SENTRY_THINK_DELAY	0.05
+#define SENTRY_THINK_DELAY	0.05f
 
 #define	SENTRYGUN_CONTEXT	"SentrygunContext"
 
 #define SENTRYGUN_RECENTLY_ATTACKED_TIME 2.0
 
+#ifdef TF2_OG
+#define SENTRYGUN_MINIGUN_RESIST_LVL_1		0.0
+#define SENTRYGUN_MINIGUN_RESIST_LVL_2		0.2
+#define SENTRYGUN_MINIGUN_RESIST_LVL_3		0.33
+#else
 #define SENTRYGUN_MINIGUN_RESIST_LVL_1		0.0
 #define SENTRYGUN_MINIGUN_RESIST_LVL_2		0.15
 #define SENTRYGUN_MINIGUN_RESIST_LVL_3		0.20
+#endif
 
+#ifdef TF2_OG
+#define SENTRYGUN_SAPPER_OWNER_DAMAGE_MODIFIER	0.33f
+#else
 #define SENTRYGUN_SAPPER_OWNER_DAMAGE_MODIFIER	0.66f
+#endif
 
 #define SENTRYGUN_MAX_LEVEL_MINI			1
 #define MINI_SENTRY_SCALE			0.75f
@@ -69,6 +81,8 @@ extern ConVar tf_nav_in_combat_range;
 #define SMALL_SENTRY_SCALE			0.80f
 
 #define WRANGLER_DISABLE_TIME		3.0f
+
+#define SENTRYGUN_FIRE_BOOST_DECAY 0.945f
 
 enum
 {	
@@ -159,7 +173,8 @@ CObjectSentrygun::CObjectSentrygun()
 	m_flAutoAimStartTime = 0.f;
 	m_bPlayerControlled = false;
 	m_iLifetimeShieldedDamage = 0;
-	m_flFireRate = 1.f;
+	m_flFireRate = 0.225f;
+	m_flNextAttack = -1.0f;
 	m_flSentryRange = SENTRY_MAX_RANGE;
 	m_nShieldLevel.Set( SHIELD_NONE );
 
@@ -184,6 +199,9 @@ void CObjectSentrygun::Spawn()
 	m_iLeftBound = 315;
 	m_iBaseTurnRate = 6;
 	m_flFieldOfView = VIEW_FIELD_NARROW;
+
+	// Give the Gun some ammo
+	m_flNextAttack = gpGlobals->curtime - gpGlobals->interval_per_tick;
 
 	// Give the Gun some ammo
 	m_iAmmoShells = 0;
@@ -275,13 +293,18 @@ void CObjectSentrygun::SentryThink( void )
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetOwner(), m_flSentryRange, mult_sentry_range );
 	}
 
+	// first calculate fire rate so everything can be aware of our speed.
+	CalcFireRate();
+
 	switch( m_iState )
 	{
 	case SENTRY_STATE_INACTIVE:
 	case SENTRY_STATE_UPGRADING:		// Base class handles this
+		m_flNextAttack = gpGlobals->curtime - gpGlobals->interval_per_tick;
 		break;
 
 	case SENTRY_STATE_SEARCHING:
+		m_flNextAttack = gpGlobals->curtime - gpGlobals->interval_per_tick;
 		SentryRotate();
 		break;
 
@@ -296,6 +319,15 @@ void CObjectSentrygun::SentryThink( void )
 
 	SetContextThink( &CObjectSentrygun::SentryThink, gpGlobals->curtime + SENTRY_THINK_DELAY, SENTRYGUN_CONTEXT );
 
+	if ( TFGameRules()->IsBetaActive() )
+	{
+		// shield after disabling
+		const float flTimeTillFade = m_flShieldFadeTime - gpGlobals->curtime;
+		if ( m_nShieldLevel == 0 && flTimeTillFade > 0.001f && !m_bPlayerControlled && !IsCarried() )
+		{
+			m_nShieldLevel.Set( SHIELD_NORMAL );
+		}
+	}
 	if ( m_nShieldLevel > 0 && (gpGlobals->curtime > m_flShieldFadeTime) )
 	{
 		m_nShieldLevel.Set( SHIELD_NONE );
@@ -379,13 +411,12 @@ void CObjectSentrygun::MakeMiniBuilding( CTFPlayer* pPlayer )
 	SetBuildingSize();
 }
 
-//-----------------------------------------------------------------------------
-int CObjectSentrygun::GetMaxUpgradeLevel( )
-{ 
-	if ( IsDisposableBuilding() || IsMiniBuilding() )
-		return SENTRYGUN_MAX_LEVEL_MINI;
+ConVar tf_obj_sentrygun_max_level("tf_obj_sentrygun_max_level", V_STRINGIFY(OBJ_MAX_UPGRADE_LEVEL), FCVAR_REPLICATED);
 
-	return BaseClass::GetMaxUpgradeLevel(); 
+//-----------------------------------------------------------------------------
+int CObjectSentrygun::GetMaxUpgradeLevel() const
+{
+	return Clamp( tf_obj_sentrygun_max_level.GetInt(), 1, BaseClass::GetMaxUpgradeLevel() );
 }
 
 //-----------------------------------------------------------------------------
@@ -656,7 +687,6 @@ bool CObjectSentrygun::OnWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vect
 
 			// cap the amount we can add
 			int iAmountToAdd = MIN( SENTRYGUN_ADD_SHELLS, iMaxShellsPlayerCanAfford );
-			iAmountToAdd = MIN( ( m_iMaxAmmoShells - m_iAmmoShells ), iAmountToAdd );
 
 			// STAGING_ENGY
 			// Mod Ammo if shielded
@@ -664,6 +694,8 @@ bool CObjectSentrygun::OnWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vect
 			{
 				iAmountToAdd *= SHIELD_NORMAL_VALUE;
 			}
+
+			iAmountToAdd = MIN( ( m_iMaxAmmoShells - m_iAmmoShells ), iAmountToAdd );
 
 			pPlayer->RemoveAmmo( iAmountToAdd * tf_sentrygun_metal_per_shell.GetInt(), TF_AMMO_METAL );
 			m_iAmmoShells += iAmountToAdd;
@@ -682,7 +714,6 @@ bool CObjectSentrygun::OnWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vect
 			int iMaxRocketsPlayerCanAfford = (int)( (float)iPlayerMetal / tf_sentrygun_metal_per_rocket.GetFloat() );
 
 			int iAmountToAdd = MIN( ( SENTRYGUN_ADD_ROCKETS ), iMaxRocketsPlayerCanAfford );
-			iAmountToAdd = MIN( ( m_iMaxAmmoRockets - m_iAmmoRockets ), iAmountToAdd );
 
 			// STAGING_ENGY
 			// Mod Ammo if shielded
@@ -690,6 +721,8 @@ bool CObjectSentrygun::OnWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vect
 			{
 				iAmountToAdd *= SHIELD_NORMAL_VALUE;
 			}
+
+			iAmountToAdd = MIN( ( m_iMaxAmmoRockets - m_iAmmoRockets ), iAmountToAdd );
 
 			pPlayer->RemoveAmmo( iAmountToAdd * tf_sentrygun_metal_per_rocket.GetFloat(), TF_AMMO_METAL );
 			m_iAmmoRockets += iAmountToAdd;
@@ -864,12 +897,20 @@ bool CObjectSentrygun::FindTarget()
 	if ( pBuilder )
 	{
 		// CTFLaserPointer* pPointer = static_cast<CTFLaserPointer*>( pBuilder->Weapon_OwnsThisID( TF_WEAPON_LASER_POINTER ) );
-		// FIX ME:  Temp fix until we find out why the pointer thinks its deployed after spawn
-		CTFLaserPointer* pPointer = dynamic_cast<CTFLaserPointer*>( pBuilder->GetActiveWeapon() );
+		CTFLaserPointer* pPointer = static_cast<CTFLaserPointer*>( pBuilder->Weapon_OwnsThisID( TF_WEAPON_LASER_POINTER ) );
 		if ( pPointer && pPointer->HasLaserDot() && !IsDisposableBuilding() )
 		{
 			m_bPlayerControlled = true;
-			m_nShieldLevel.Set( SHIELD_NORMAL );
+
+			if ( TFGameRules()->IsBetaActive() )
+			{
+				// no shield
+				m_nShieldLevel.Set( SHIELD_NONE );
+			}
+			else
+			{
+				m_nShieldLevel.Set( SHIELD_NORMAL );
+			}
 			m_flShieldFadeTime = gpGlobals->curtime + WRANGLER_DISABLE_TIME;
 
 			// If not target dummy, use laserdot, otherwise targetdummy overrides
@@ -1056,7 +1097,7 @@ bool CObjectSentrygun::FindTarget()
 bool CObjectSentrygun::ValidTargetPlayer( CTFPlayer *pPlayer, const Vector &vecStart, const Vector &vecEnd )
 {
 	// Keep shooting at spies that go invisible after we acquire them as a target.
-	if ( pPlayer->m_Shared.GetPercentInvisible() > 0.5 )
+	if ( pPlayer->m_Shared.GetPercentInvisible() > 0.5f )
 		return false;
 
 	// Keep shooting at spies that disguise after we acquire them as at a target.
@@ -1259,44 +1300,21 @@ void CObjectSentrygun::Attack()
 	MoveTurret();
 
 	// Fire on the target if it's within 10 units of being aimed right at it
-	if ( m_flNextAttack <= gpGlobals->curtime && (m_vecGoalAngles - m_vecCurAngles).Length() <= 10 )
+	if ( m_flNextAttack <= gpGlobals->curtime && ( m_vecGoalAngles - m_vecCurAngles ).Length() <= 10 )
 	{
 		if ( !m_bPlayerControlled || m_bFireNextFrame )
 		{
 			m_bFireNextFrame = false;
 			Fire();
 		}
-
-		m_flFireRate = 1.f;
-		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetOwner(), m_flFireRate, mult_sentry_firerate );
-
-		if ( m_bPlayerControlled )
-		{
-			m_flFireRate *= 0.5f;
-		}
-			
-		if ( IsMiniBuilding() && !IsDisposableBuilding() )
-		{
-			m_flFireRate *= 0.75f;
-		}
-
-		if ( GetBuilder() && GetBuilder()->m_Shared.InCond( TF_COND_CRITBOOSTED_USER_BUFF ) )
-		{
-			m_flFireRate *= 0.4f;
-		}
-
-		if ( m_iUpgradeLevel == 1 )
-		{
-			// Level 1 sentries fire slower
-			m_flNextAttack = gpGlobals->curtime + (0.2*m_flFireRate);
-		}
 		else
 		{
-			m_flNextAttack = gpGlobals->curtime + (0.1*m_flFireRate);
+			m_flNextAttack = max( m_flNextAttack, gpGlobals->curtime );
 		}
 	}
 	else
 	{
+		m_flNextAttack = max( m_flNextAttack, gpGlobals->curtime );
 		// SetSentryAnim( TFTURRET_ANIM_SPIN );
 	}
 
@@ -1359,21 +1377,32 @@ bool CObjectSentrygun::FireRocket()
 		CTFProjectile_SentryRocket *pProjectile = CTFProjectile_SentryRocket::Create( vecSrc, angAimDir, this, GetBuilder() );
 		if ( pProjectile )
 		{
+			pProjectile->SetLauncher( this );
 			int iDamage = 100;
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( GetOwner(), iDamage, mult_engy_sentry_damage );
 			pProjectile->SetDamage( iDamage );
 		}
 
+		float flRocketTime = 3;
 		// Setup next rocket shot
 		if ( m_bPlayerControlled )
 		{
-			AddGesture( ACT_RANGE_ATTACK2, 2.25, true );
-			m_flNextRocketAttack = gpGlobals->curtime + 2.25;
+			float flPlayerRocketTime;
+			if ( TFGameRules()->IsBetaActive() )
+			{
+				flPlayerRocketTime = flRocketTime / 2.0f;
+			}
+			else
+			{
+				flPlayerRocketTime = 2.25f;
+			}
+			AddGesture( ACT_RANGE_ATTACK2, flPlayerRocketTime, true );
+			m_flNextRocketAttack = gpGlobals->curtime + flPlayerRocketTime;
 		}
 		else
 		{
 			AddGesture( ACT_RANGE_ATTACK2 );
-			m_flNextRocketAttack = gpGlobals->curtime + 3;
+			m_flNextRocketAttack = gpGlobals->curtime + flRocketTime;
 		}
 
 		if ( !tf_sentrygun_ammocheat.GetBool() && !HasSpawnFlags( SF_SENTRY_INFINITE_AMMO ) )
@@ -1403,7 +1432,6 @@ int CObjectSentrygun::GetFireAttachment()
 	{
 		iAttachment = m_iAttachments[SENTRYGUN_ATTACHMENT_MUZZLE];
 	}
-	m_iLastMuzzleAttachmentFired = iAttachment;
 
 	return iAttachment;
 }
@@ -1522,7 +1550,8 @@ bool CObjectSentrygun::Fire()
 		info.m_vecSrc = vecSrc;
 		info.m_vecDirShooting = vecAimDir;
 		info.m_iTracerFreq = 1;
-		info.m_iShots = 1;
+		info.m_iShots = m_flFireRate > 0.0f ? (int)((gpGlobals->curtime - m_flNextAttack) / m_flFireRate) + 1 : 1;
+		m_flNextAttack += info.m_iShots * m_flFireRate;
 		info.m_pAttacker = GetBuilder();
 		if ( info.m_pAttacker == NULL )
 		{
@@ -1552,6 +1581,9 @@ bool CObjectSentrygun::Fire()
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetOwner(), info.m_flDamage, mult_engy_sentry_damage );
 
 		FireBullets( info );
+
+		// sentry gun fire 'heats up' the nav mesh around it
+		m_iLastMuzzleAttachmentFired = iAttachment;
 
 		// sentry gun fire 'heats up' the nav mesh around it
 		UpdateNavMeshCombatStatus();
@@ -1636,7 +1668,7 @@ bool CObjectSentrygun::Fire()
 			DetonateObject();
 		}
 
-		m_flNextAttack = gpGlobals->curtime + 0.2;
+		m_flNextAttack = gpGlobals->curtime + 0.2f;
 	}
 
 	// note when we last fired at en enemy (or tried to)
@@ -1685,7 +1717,7 @@ void CObjectSentrygun::MakeTracer( const Vector &vecTracerSrc, const trace_t &tr
 //-----------------------------------------------------------------------------
 int	CObjectSentrygun::GetTracerAttachment( void )
 {
-	return m_iAttachments[SENTRYGUN_ATTACHMENT_MUZZLE];
+	return GetFireAttachment();
 }
 
 //-----------------------------------------------------------------------------
@@ -1803,6 +1835,73 @@ void CObjectSentrygun::OnEndDisabled( void )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
+void CObjectSentrygun::CalcFireRate( void )
+{
+	// ==== BASE FIRE INTERVAL ====
+	m_flFireRate = GetBaseFireRate();
+
+	// ==== FIRING SPEED BOOSTS ====
+	std::list<float> vecFireRateBoosts;
+
+	// Firing speed upgrade
+	float flFireSpeedUpgrade = 1.0f;
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetOwner(), flFireSpeedUpgrade, mult_sentry_firerate );
+
+	// Only calculate it within our firing speed boost stack if it boosts.
+	if ( flFireSpeedUpgrade < 1.0f )
+	{
+		vecFireRateBoosts.push_back(flFireSpeedUpgrade);
+	}
+    else
+	{
+		m_flFireRate *= flFireSpeedUpgrade;
+	}
+
+	// Wrangler "double" firing speed
+	// This is different for each type because of how the boost worked before the firing speed fix.
+	if ( m_bPlayerControlled )
+	{
+		if ( TFGameRules()->IsBetaActive() )
+		{
+			vecFireRateBoosts.push_back( 0.5f );
+		}
+		else
+		{
+			if ( IsMiniBuilding() )
+			{
+				vecFireRateBoosts.push_back( 0.5f );
+			}
+			else if (m_iUpgradeLevel == 1)
+			{
+				vecFireRateBoosts.push_back( 0.6f );
+			}
+			else
+			{
+				vecFireRateBoosts.push_back( 2.0f / 3.0f );
+			}
+		}
+	}
+
+	// Crit canteen 2x boost
+	if ( GetBuilder() && GetBuilder()->m_Shared.InCond( TF_COND_CRITBOOSTED_USER_BUFF ) )
+	{
+		vecFireRateBoosts.push_back( 0.5f );
+	}
+	// ==== END FIRING SPEED BOOSTS ====
+
+	// Diminishing returns on firing speed boost
+	int iStacks = 0;
+	while ( !vecFireRateBoosts.empty() )
+	{
+		m_flFireRate *= ( 1.0f / powf( SENTRYGUN_FIRE_BOOST_DECAY, iStacks ) ) * vecFireRateBoosts.front();
+		iStacks++;
+		vecFireRateBoosts.pop_front();
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 int CObjectSentrygun::GetBaseTurnRate( void )
 {
 	if ( m_bPlayerControlled )
@@ -1818,23 +1917,50 @@ int CObjectSentrygun::GetBaseTurnRate( void )
 //-----------------------------------------------------------------------------
 // 
 //-----------------------------------------------------------------------------
+float CObjectSentrygun::GetBaseFireRate(void)
+{
+	float flFireRate;
+
+	if ( m_iUpgradeLevel == 1 )
+	{
+		// Level 1 sentries fire slower
+		flFireRate = 0.225f;
+	}
+	else
+	{
+		flFireRate = 0.135f;
+	}
+
+	if ( IsMiniBuilding() && !IsDisposableBuilding() )
+	{
+		flFireRate *= 0.8f;
+	}
+
+	return flFireRate;
+}
+
+//-----------------------------------------------------------------------------
+// 
+//-----------------------------------------------------------------------------
 bool CObjectSentrygun::MoveTurret( void )
 {
 	bool bMoved = false;
 
-	int iBaseTurnRate = GetBaseTurnRate();
+	float iBaseTurnRate = GetBaseTurnRate();
 	
 	if ( IsMiniBuilding() )
 	{
 		iBaseTurnRate *= 1.35f;
 	}
 
+	float dt = gpGlobals->curtime - GetLastThink(SENTRYGUN_CONTEXT);
+
 	// any x movement?
 	if ( m_vecCurAngles.x != m_vecGoalAngles.x )
 	{
 		float flDir = m_vecGoalAngles.x > m_vecCurAngles.x ? 1 : -1 ;
 
-		m_vecCurAngles.x += SENTRY_THINK_DELAY * ( iBaseTurnRate * 5 ) * flDir;
+		m_vecCurAngles.x += dt * ( iBaseTurnRate * 5 ) * flDir;
 
 		// if we started below the goal, and now we're past, peg to goal
 		if ( flDir == 1 )
@@ -1894,7 +2020,7 @@ bool CObjectSentrygun::MoveTurret( void )
 			}
 		}
 
-		m_vecCurAngles.y += SENTRY_THINK_DELAY * m_flTurnRate * flDir;
+		m_vecCurAngles.y += dt * m_flTurnRate * flDir;
 
 		// if we passed over the goal, peg right to it now
 		if (flDir == -1)
@@ -1923,7 +2049,7 @@ bool CObjectSentrygun::MoveTurret( void )
 			m_vecCurAngles.y -= 360;
 		}
 
-		if ( flDist < ( SENTRY_THINK_DELAY * 0.5 * iBaseTurnRate ) )
+		if ( flDist < ( dt * 0.5 * iBaseTurnRate ) )
 		{
 			m_vecCurAngles.y = m_vecGoalAngles.y;
 		}
@@ -1952,6 +2078,12 @@ bool CObjectSentrygun::MoveTurret( void )
 //-----------------------------------------------------------------------------
 int CObjectSentrygun::OnTakeDamage( const CTakeDamageInfo &info )
 {
+	CBaseEntity* pAttribWeapon = NULL;
+	if ( info.GetWeapon() && !info.GetWeapon()->IsBaseObject() )
+	{
+		pAttribWeapon = info.GetWeapon();
+	}
+
 	CTakeDamageInfo newInfo = info;
 
 	// As we increase in level, we get more resistant to minigun bullets, to compensate for
@@ -1959,12 +2091,12 @@ int CObjectSentrygun::OnTakeDamage( const CTakeDamageInfo &info )
 	if ( ( info.GetDamageType() & DMG_BULLET ) && ( info.GetDamageCustom() == TF_DMG_CUSTOM_MINIGUN ) )
 	{
 		float flDamage = newInfo.GetDamage();
-		flDamage *= ( 1.0 - m_flHeavyBulletResist );
+		flDamage *= ( 1.0f - m_flHeavyBulletResist );
 		newInfo.SetDamage( flDamage );
 	}
 	
 	int iAttackIgnoresResists = 0;
-	CALL_ATTRIB_HOOK_INT_ON_OTHER( info.GetWeapon(), iAttackIgnoresResists, mod_pierce_resists_absorbs );
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( pAttribWeapon, iAttackIgnoresResists, mod_pierce_resists_absorbs );
 
 	// If we are shielded due to player control, we take less damage.
 	bool bFullyShielded = ( m_nShieldLevel > 0 && !iAttackIgnoresResists ) && !HasSapper() && !IsPlasmaDisabled();
@@ -1976,7 +2108,13 @@ int CObjectSentrygun::OnTakeDamage( const CTakeDamageInfo &info )
 	}
 
 	// Check to see if we are being sapped.
+#if !defined(TF2_OG) || 1
+	// Check to see if we are being sapped.
+#if defined(MCOMS_BALANCE_PACK)
+	if ( !iAttackIgnoresResists && HasSapper() )
+#else
 	if ( HasSapper() )
+#endif
 	{
 		// Get the sapper owner.
 		CBaseObject *pSapper = GetObjectOfTypeOnMe( OBJ_ATTACHMENT_SAPPER );
@@ -1988,6 +2126,7 @@ int CObjectSentrygun::OnTakeDamage( const CTakeDamageInfo &info )
 			newInfo.SetDamage( flDamage );
 		}
 	}
+#endif
 
 	int iDamageTaken = BaseClass::OnTakeDamage( newInfo );
 
@@ -2210,15 +2349,17 @@ void CObjectSentrygun::EmitSentrySound( IRecipientFilter& filter, int iEntIndex,
 	params.m_flSoundTime = 0;
 	params.m_pflSoundDuration = 0;
 	params.m_bWarnOnDirectWaveReference = true;
+
+	const float flRelativeFireRate = m_flFireRate / GetBaseFireRate();
 	
-	if ( IsMiniBuilding() )
+	if ( IsMiniBuilding() || fabsf( 1.0f - flRelativeFireRate ) > FLT_EPSILON )
 	{
 		StopSound( soundname );
-		params.m_nPitch = PITCH_HIGH;
+		params.m_nPitch = IsMiniBuilding() ? PITCH_HIGH : RoundFloatToInt( RemapValClamped( m_flFireRate, 1.0f, 0.5f, 100.f, 120.f ) );
 		params.m_nFlags = SND_CHANGE_PITCH;
 	}
 
-	EmitSound( filter, entindex(), params );
+	EmitSound( filter, iEntIndex, params );
 }
 
 //-----------------------------------------------------------------------------
@@ -2233,11 +2374,13 @@ void CObjectSentrygun::EmitSentrySound( const char* soundname )
 	params.m_flSoundTime = 0;
 	params.m_pflSoundDuration = 0;
 	params.m_bWarnOnDirectWaveReference = true;
+
+	const float flRelativeFireRate = m_flFireRate / GetBaseFireRate();
 	
-	if ( IsMiniBuilding() || m_flFireRate != 1.f )
+	if ( IsMiniBuilding() || fabsf( 1.0f - flRelativeFireRate ) > FLT_EPSILON )
 	{
 		StopSound( soundname );
-		params.m_nPitch = IsMiniBuilding() ? PITCH_HIGH : RemapValClamped( m_flFireRate, 1.0f, 0.5f, 100.f, 120.f );
+		params.m_nPitch = IsMiniBuilding() ? PITCH_HIGH : RoundFloatToInt( RemapValClamped( m_flFireRate, 1.0f, 0.5f, 100.f, 120.f ) );
 		params.m_nFlags = SND_CHANGE_PITCH;
 	}
 
@@ -2327,12 +2470,12 @@ int CObjectSentrygun::GetUpgradeMetalRequired()
 //-------------------------------------------------------------------------------------------------------------------------------
 int CObjectSentrygun::GetMaxHealthForCurrentLevel( void )
 {
-	int iHealth = BaseClass::GetMaxHealthForCurrentLevel();
+	float iHealth = BaseClass::GetMaxHealthForCurrentLevel();
 	if ( IsScaledSentry() )
 	{
-		iHealth *= 0.66f;
+		iHealth *= 2.0f / 3.0f;
 	}
-	return iHealth;
+	return Ceil2Int(iHealth);
 }
 //-------------------------------------------------------------------------------------------------------------------------------
 void CObjectSentrygun::MakeScaledBuilding( CTFPlayer *pPlayer )

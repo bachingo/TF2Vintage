@@ -17,6 +17,7 @@ enum autobalance_state_t
 {
 	AB_STATE_INACTIVE = 0,
 	AB_STATE_MONITOR,
+	AB_STATE_WAIT,
 	AB_STATE_FORCE_DEAD_CANDIDATES,
 	AB_STATE_FORCE_CANDIDATES_SETUP,
 	AB_STATE_FORCE_CANDIDATES_EXECUTION,
@@ -43,6 +44,8 @@ public:
 
 	// called after entities think
 	virtual void FrameUpdatePostEntityThink();
+	
+	double       GetPlayerAutoBalanceScore( CTFPlayer* pTFPlayer ) const;
 
 private:
 	void Reset();
@@ -54,7 +57,6 @@ private:
 
 	bool IsAlreadyCandidate( CTFPlayer *pTFPlayer ) const;
 	double GetTeamAutoBalanceScore( int nTeam ) const;
-	double GetPlayerAutoBalanceScore( CTFPlayer *pTFPlayer ) const;
 	CTFPlayer *FindNextCandidate();
 	bool FindCandidates();
 	bool ValidateCandidates();
@@ -69,6 +71,8 @@ private:
 	int m_iHeaviestTeam;
 	int m_nNeeded;
 	float m_flNextStateChange;
+
+	bool m_bRanOnPreRound;
 
 	CUtlVector< candidate_info_s > m_vecCandidates;
 };

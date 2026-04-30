@@ -74,7 +74,7 @@ extern ConVar	tf_arena_change_limit;
 extern ConVar	tf_ctf_bonus_time;
 extern ConVar	tf_mvm_respec_enabled;
 extern ConVar	tf_spawn_glows_duration;
-
+extern ConVar	tf_tc2_mode;
 extern ConVar 	tf2v_era;
 
 #ifdef GAME_DLL
@@ -144,7 +144,49 @@ enum {
 	STOPWATCH_CAPTURE_TIME_NOT_SET = 0,
 	STOPWATCH_RUNNING,
 	STOPWATCH_OVERTIME,
+	STOPWATCH_FULFILLED,
+	STOPWATCH_DEFENDED,
 };
+
+enum class EDraftPhase : uint8
+{
+	INTRO_PHASE = 0,
+	CAPTAINPICK_PHASE,
+	PLANNING_PHASE,
+	SELECT_PHASE,
+	STRATEGY_PHASE,
+	MEET_TEAM0,
+	MEET_TEAM1,
+	// add new draft phase here
+};
+
+enum class EDraftSelectState : uint8
+{
+	BAN1_TEAM0 = 0,
+	BAN2_TEAM0,
+	BAN3_TEAM0,
+	BAN4_TEAM0,
+	BAN5_TEAM0,
+	BAN6_TEAM0,
+	BAN1_TEAM1,
+	BAN2_TEAM1,
+	BAN3_TEAM1,
+	BAN4_TEAM1,
+	BAN5_TEAM1,
+	BAN6_TEAM1,
+	PICK1_TEAM0,
+	PICK2_TEAM0,
+	PICK1_TEAM1,
+	PICK2_TEAM1,
+	// add new select state here
+};
+
+extern int DraftSelectStateToTeam[];
+
+extern EDraftSelectState NextDraftSelectState[];
+
+#define FIRST_DRAFT_SELECT_STATE EDraftSelectState::BAN1_TEAM0
+#define LAST_DRAFT_SELECT_STATE EDraftSelectState::PICK2_TEAM1
 
 class CTFGameRulesProxy : public CTeamplayRoundBasedRulesProxy, public CGameEventListener
 {
@@ -314,6 +356,10 @@ public:
 	virtual void	LevelInitPostEntity( void );
 	virtual float	GetRespawnTimeScalar( int iTeam );
 	virtual float	GetRespawnWaveMaxLength( int iTeam, bool bScaleWithNumPlayers = true );
+	virtual int     GetRespawnTimeMode() override;
+
+	bool			IsInPlay();
+	bool			IsInPreMatchTournamentWarmup();
 
 	// Damage Queries.
 	virtual bool	Damage_IsTimeBased( int iDmgType );			// Damage types that are time-based.
@@ -341,6 +387,8 @@ public:
 	int				GetClassLimit( int iClass );
 	bool			CanPlayerChooseClass( CBasePlayer *pPlayer, int iClass );
 
+	virtual int		GetTeamSize( int iTeam = 0 ) OVERRIDE;
+
 	virtual bool	ShouldBalanceTeams( void );
 
 	virtual int		GetBonusRoundTime( bool bGameOver = false ) OVERRIDE;
@@ -359,6 +407,8 @@ public:
 	virtual void	FrameUpdatePostEntityThink();
 
 	virtual void	RespawnPlayers( bool bForceRespawn, bool bTeam = false, int iTeam = TEAM_UNASSIGNED ) OVERRIDE;
+
+	void			SpawnMatchBots();
 
 	// Called when a new round is being initialized
 	virtual void	SetupOnRoundStart( void );
@@ -391,6 +441,7 @@ public:
 	int				GetAssignedHumanTeam( void );
 	virtual void	HandleSwitchTeams( void );
 	virtual void	HandleScrambleTeams( void );
+	virtual void	HandleTeamShuffle( void );
 	bool			CanChangeClassInStalemate( void );
 	bool			CanChangeTeam( int iCurrentTeam ) const;
 
@@ -505,13 +556,16 @@ public:
 
 	void			CreateSoldierStatue();
 
-	virtual void	BroadcastSound( int iTeam, const char *sound, int iAdditionalSoundFlags = 0, CBasePlayer *pPlayer = NULL ) override;
+	virtual void	BroadcastSound( int iTeam, const char *sound, int iAdditionalSoundFlags = 0, CBasePlayer *pPlayer = NULL ) OVERRIDE;
 
-	void			RegisterScriptFunctions() override;
+	void			RegisterScriptFunctions() OVERRIDE;
 
 	int				GetRoundState() { return (int)State_Get(); }
 
 	bool			InMatchStartCountdown() { return BInMatchStartCountdown(); }
+
+	bool			IsStrictSpectatorRules();
+	bool			AllowSpectatorModeChange();
 
 protected:
 
@@ -528,7 +582,8 @@ protected:
 	virtual void	RespawnTeam( int iTeam );
 
 	virtual void	InternalHandleTeamWin( int iWinningTeam );
-	
+
+	static int		PlayerTotalScoreSortFunc( const PlayerRoundScore_t* pRoundScore1, const PlayerRoundScore_t* pRoundScore2 );
 	static int		PlayerRoundScoreSortFunc( const PlayerRoundScore_t *pRoundScore1, const PlayerRoundScore_t *pRoundScore2 );
 	static int		PlayerArenaRoundScoreSortFunc( const PlayerArenaRoundScore_t *pRoundScore1, const PlayerArenaRoundScore_t *pRoundScore2 );
 
@@ -540,6 +595,19 @@ protected:
 	virtual void RestoreActiveTimer( void );
 
 	void BroadcastDrawLine( CTFPlayer *pTFPlayer, KeyValues *pKeyValues );
+
+	void StartItemDraft();
+	CTeamRoundTimer* CreateItemDraftTimer( const char* pszTimerName, int iTimeSeconds );
+	void StartDraftTimer(int iTeam);
+	void ResetDraftTimer(int iTeam);
+	void UseReserveTime();
+	void AdvanceDraftPhase();
+	void AdvanceSelect();
+
+	int GetCurrentDraftTeam();
+
+	CTeamRoundTimer* GetActiveDraftTimer(bool bForceNoReserve, bool& bWasReserve);
+	bool InReserveTime() { return false; }
 
 #endif // GAME_DLL
 
@@ -559,6 +627,10 @@ public:
 	virtual void	BetweenRounds_Think( void );
 	virtual void	PreRound_Start( void ) OVERRIDE;
 	virtual void	PreRound_End( void ) OVERRIDE;
+
+	// Start game handling
+	virtual bool StartGame_Start() OVERRIDE;
+	virtual void StartGame_Think() OVERRIDE;
 #endif
 
 public:
@@ -589,6 +661,9 @@ public:
 	const char *GetTeamGoalString( int iTeam );
 
 	int		GetStopWatchState( void ) { return m_nStopWatchState; }
+
+	EDraftPhase	GetDraftPhase( void ) { return static_cast<EDraftPhase>( m_nDraftPhase.Get() ); }
+	EDraftSelectState GetDraftSelectState( void ) { return static_cast<EDraftSelectState>( m_nDraftSelectState.Get() ); }
 	
 	// Game Modes
 	virtual bool IsInArenaMode( void ) const OVERRIDE;
@@ -634,10 +709,15 @@ bool IsCreepWaveMode( void ) const;
 	bool IsCompetitiveMode( void ) const;			// means we're using competitive/casual matchmaking
 	bool IsMatchTypeCasual( void ) const;
 	bool IsMatchTypeCompetitive( void ) const;
+	bool IsCompetitiveGame( void );			// is this a game played competitively: competitive MM or community competitive
+	bool IsHighSkillCompetitive( void );
+	int IsEmulatingMatch(void) const;
 	// Are we showing the match-start-countdown doors right now
 	bool BInMatchStartCountdown() const;
+	bool InMatchStartFreeze( bool bAllMovement = true );
 #ifdef GAME_DLL
 	void SyncMatchSettings();
+	void ResetManagedMatch();
 	// ! Check return
 	bool StartManagedMatch();
 	void SetCompetitiveMode( bool bValue );
@@ -651,13 +731,17 @@ bool IsCreepWaveMode( void ) const;
 	bool IsAttackDefenseMode( void );
 
 	ETFMatchGroup GetCurrentMatchGroup() const;
+	ETFMatchGroup GetCurrentMatchGroupWithEmulation() const;
 	bool IsManagedMatchEnded() const;
+
+	virtual bool StopWatchShouldBeTimedWin( bool bSkipForMultiSeries = true ) OVERRIDE;
 
 	bool UsePlayerReadyStatusMode( void );
 	bool PlayerReadyStatus_HaveMinPlayersToEnable( void );
 #ifdef GAME_DLL
 	bool PlayerReadyStatus_ArePlayersOnTeamReady( int iTeam );
 	bool PlayerReadyStatus_ShouldStartCountdown( void );
+	void PlayerReadyStatus_UpdateTeamStatus( void );
 	void PlayerReadyStatus_ResetState( void );
 	void PlayerReadyStatus_UpdatePlayerState( CTFPlayer *pTFPlayer, bool bState );
 #endif // GAME_DLL
@@ -672,6 +756,10 @@ bool IsCreepWaveMode( void ) const;
 	bool IsPVEModeActive( void ) const;						// return true if we are playing a PvE mode
 	bool IsPVEModeControlled( CBaseEntity *who ) const;		// return true for PvE opponents (ie: enemy bot team)
 	const char*		GetCustomUpgradesFile() { return m_pszCustomUpgradesFile.Get(); }
+
+	bool IsBetaActive() const;
+
+	bool IsPreRoundPushEnabled();
 
 //=============================================================================
 // HPE_BEGIN:
@@ -740,6 +828,10 @@ bool IsCreepWaveMode( void ) const;
 
 	bool MapHasMatchSummaryStage( void ){ return m_bMapHasMatchSummaryStage; }
 	bool PlayersAreOnMatchSummaryStage( void ){ return m_bPlayersAreOnMatchSummaryStage; }
+
+#ifdef GAME_DLL
+	bool ShouldDoMatchSummaryTeleport(void) { return (m_flMatchSummaryTeleportTime > 0) && (gpGlobals->curtime > m_flMatchSummaryTeleportTime); }
+#endif
 
 	bool ShowMatchSummary( void ){ return m_bShowMatchSummary; }
 
@@ -853,9 +945,14 @@ bool IsCreepWaveMode( void ) const;
 
 	virtual bool FPlayerCanTakeDamage( CBasePlayer *pPlayer, CBaseEntity *pAttacker, const CTakeDamageInfo &info );
 
-	// Spawing rules.
+	// Spawning rules.
 	CBaseEntity *GetPlayerSpawnSpot( CBasePlayer *pPlayer );
 	bool IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, bool bIgnorePlayers, PlayerTeamSpawnMode_t nSpawndMode = PlayerTeamSpawnMode_Normal );
+
+#ifdef GAME_DLL
+	void CollectSpawnNodesForPlayer( CTFPlayer *pPlayer, CUtlVector<TCSpawnNode_t> &spawnNodes );
+	void SendSpawnNodesToClient( CTFPlayer *pPlayer );
+#endif // GAME_DLL
 
 	virtual int ItemShouldRespawn( CItem *pItem );
 	virtual float FlItemRespawnTime( CItem *pItem );
@@ -875,10 +972,14 @@ bool IsCreepWaveMode( void ) const;
 	void SetSetup( bool bSetup );
 	void ManageStopwatchTimer( bool bInSetup );
 	virtual void HandleTeamScoreModify( int iTeam, int iScore);
+	void MarkStopWatchTime( void );
 
 	bool CanHaveAmmo( CBaseCombatCharacter *pPlayer, int iAmmoIndex );
 
-	virtual const char *GetGameDescription( void ){ return "Team Fortress"; }
+	virtual const char *GetGameDescription( void )
+	{
+		return "Team Comtress";
+	}
 
 	virtual void Status( void (*print) (PRINTF_FORMAT_STRING const char *fmt, ...) );
 
@@ -896,6 +997,7 @@ bool IsCreepWaveMode( void ) const;
 	const char *GetKillingWeaponName( const CTakeDamageInfo &info, CTFPlayer *pVictim, int *iWeaponID );
 	CBasePlayer *GetAssister( CBasePlayer *pVictim, CBasePlayer *pScorer, CBaseEntity *pInflictor );
 	CTFPlayer *GetRecentDamager( CTFPlayer *pVictim, int iDamager, float flMaxElapsed );
+	CObjectSentrygun* GetSentryGunInflictor( CBaseEntity *pInflictor );
 
 	virtual void ClientDisconnected( edict_t *pClient );
 
@@ -926,6 +1028,7 @@ bool IsCreepWaveMode( void ) const;
 	void	StopWatchModeThink( void );
 
 	virtual		void RestartTournament( void );
+	virtual		void FullRestartTournament( void );
 
 	bool	TFVoiceManager( CBasePlayer *pListener, CBasePlayer *pTalker );
 
@@ -965,16 +1068,16 @@ bool IsCreepWaveMode( void ) const;
 	int		CalculateCurrencyAmount_ByType( CurrencyRewards_t nType );									// How much to give players for specific items and events, i.e. cash collection bonus, small packs
 	int		DistributeCurrencyAmount( int nAmount, CTFPlayer *pTFPlayer = NULL, bool bShared = true, bool bCountAsDropped = false, bool bIsBonus = false );	// Distributes nAmount to a specific player or team
 
-	virtual bool StopWatchShouldBeTimedWin( void ) OVERRIDE;
-
 public:
 	void SetPlayerNextMapVote( int nIndex, EUserNextMapVote eState ) { m_ePlayerWantsRematch.Set( nIndex, eState ); }
 
 	CTrainingModeLogic *GetTrainingModeLogic() { return m_hTrainingModeLogic; }
 	CTFHolidayEntity *GetHolidayLogic() const { return m_hHolidayLogic; }
 
+	CTeamRoundTimer* GetStopWatchTimer( void ) { return m_hStopWatchTimer.Get(); }
+
 	void	HandleCTFCaptureBonus( int nTeam );
-	bool	TournamentModeCanEndWithTimelimit( void ){ return ( GetStopWatchTimer() == NULL ); }
+	bool	TournamentModeCanEndWithTimelimit( void );
 
 	CTeamRoundTimer *GetKothTeamTimer( int iTeam )
 	{
@@ -1077,9 +1180,12 @@ private:
 	int m_iCurrentMiniRoundMask;
 
 	CHandle<CTeamRoundTimer>	m_hStopWatchTimer;
-	
 
-	CTeamRoundTimer* GetStopWatchTimer( void ) { return (CTeamRoundTimer*)m_hStopWatchTimer.Get(); }
+	CHandle<CTeamRoundTimer>	m_hItemDraftTimer;
+	CHandle<CTeamRoundTimer>	m_hBluReserveTimer;
+	CHandle<CTeamRoundTimer>	m_hRedReserveTimer;
+	CHandle<CTeamRoundTimer>	m_hBluDraftTimer;
+	CHandle<CTeamRoundTimer>	m_hRedDraftTimer;
 
 	EHANDLE m_hRequiredObserverTarget;
 	EHANDLE m_hObjectiveObserverTarget;
@@ -1150,6 +1256,8 @@ private:
 
 	CNetworkVar( ETFGameType, m_nGameType ); // Type of game this map is (CTF, CP)
 	CNetworkVar( int, m_nStopWatchState );
+	CNetworkVar( int, m_nDraftPhase );
+	CNetworkVar( int, m_nDraftSelectState );
 	CNetworkString( m_pszTeamGoalStringRed, MAX_TEAMGOAL_STRING );
 	CNetworkString( m_pszTeamGoalStringBlue, MAX_TEAMGOAL_STRING );
 	CNetworkVar( float, m_flCapturePointEnableTime );
@@ -1231,16 +1339,60 @@ private:
 	CNetworkArray( EUserNextMapVote, m_ePlayerWantsRematch, MAX_PLAYERS_ARRAY_SAFE );
 	CNetworkVar( ENextMapVotingState, m_eRematchState );
 	CNetworkArray( MapDefIndex_t, m_nNextMapVoteOptions, 3 );
+	
+	CNetworkArray( int, m_nPrevSeriesScore, TF_TEAM_COUNT );
+	CNetworkVar( int, m_nSeriesNum );
+
+	CNetworkArray( int, m_nSeriesPoints, TF_TEAM_COUNT );
+	CNetworkVar( bool, m_bPlayingMultiSeriesIntermission );
+	bool m_bMatchIsPlayingOut;
+	bool m_bStartMatchRoundImmediately;
 
 	float		m_flCTFCaptureBonusTime;
 public:
+
+	int GetSeriesPoints( int nTeam ) const
+	{
+		Assert( nTeam >= 0 && nTeam < TF_TEAM_COUNT );
+		return m_nSeriesPoints[ nTeam ];
+	}
+
+	int GetPrevSeriesScore( int nTeam ) const
+	{
+		Assert( nTeam >= 0 && nTeam < TF_TEAM_COUNT );
+		return m_nPrevSeriesScore[ nTeam ];
+	}
+
+	int GetSeriesCount() const
+	{
+		return m_nSeriesNum;
+	}
+
+#ifdef GAME_DLL
+	void AddSeriesPoint( int nTeam )
+	{
+		Assert( nTeam >= 0 && nTeam < TF_TEAM_COUNT );
+		m_nSeriesPoints.Set( nTeam, m_nSeriesPoints[ nTeam ] + 1 );
+	}
+	void IncrementSeriesCount()
+	{
+		m_nSeriesNum.Set( m_nSeriesNum + 1 );
+	}
+	void SnapshotSeriesScore()
+	{
+		for ( int i = 0; i < TF_TEAM_COUNT; i++ )
+		{
+			m_nPrevSeriesScore.Set( i, m_nSeriesPoints[ i ] );
+		}
+	}
+#endif
 
 	bool m_bControlSpawnsPerTeam[ MAX_TEAMS ][ MAX_CONTROL_POINTS ];
 	int	 m_iPreviousRoundWinners;
 
 	float	GetCapturePointTime( void ) { return m_flCapturePointEnableTime; }
 
-	virtual bool ShouldDrawHeadLabels() override;
+	virtual bool ShouldDrawHeadLabels() OVERRIDE;
 
 	enum HalloweenScenarioType
 	{
@@ -1256,10 +1408,14 @@ public:
 
 	bool CanInitiateDuels( void );
 
+	bool IsPlayingMultiSeriesIntermission() { return m_bPlayingMultiSeriesIntermission; }
+	bool IsMatchPlayingOut() { return m_bMatchIsPlayingOut; }
+	bool ShouldStartMatchRoundImmediately() { return m_bStartMatchRoundImmediately; }
+	void SetStartMatchRoundImmediately( bool bStartImmediate ) { m_bStartMatchRoundImmediately = bStartImmediate; }
+
 	int GetTF2VEra( void ) { return m_nTF2VEra; }
-protected:
 	void SetTF2VEra( int nEra = tf2v_era.GetInt() ) { m_nTF2VEra = clamp(nEra, TF2V_ERA_DAY_MIN, TF2V_ERA_DAY_MAX); }
-public:
+	
 #ifdef GAME_DLL
 
 	// Used on sd_doomsday_event to nag players about picking up the tickets
@@ -1268,6 +1424,16 @@ public:
 	bool DoomsdayTicketTimerElapsed( void ) const { return m_doomsdayTicketsTimer.HasStarted() && m_doomsdayTicketsTimer.IsElapsed(); }
 
 	int GetBossCount() const { return m_activeBosses.Count(); }
+
+	void SetMultiSeriesIntermission( bool bIntermission ) 
+	{ 
+		if ( bIntermission && !m_bPlayingMultiSeriesIntermission )
+			IncrementSeriesCount();
+		else if ( !bIntermission && m_bPlayingMultiSeriesIntermission )
+			SnapshotSeriesScore();
+
+		m_bPlayingMultiSeriesIntermission = bIntermission; 
+	}
 
 	CBaseCombatCharacter *GetActiveBoss( int iBoss = 0 )
 	{

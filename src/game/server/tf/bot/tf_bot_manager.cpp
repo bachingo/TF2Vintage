@@ -24,69 +24,14 @@ static CTFBotManager sTFBotManager;
 
 ConVar tf_bot_difficulty( "tf_bot_difficulty", "1", FCVAR_NONE, "Defines the skill of bots joining the game.  Values are: 0=easy, 1=normal, 2=hard, 3=expert." );
 ConVar tf_bot_quota( "tf_bot_quota", "0", FCVAR_NONE, "Determines the total number of tf bots in the game." );
-ConVar tf_bot_quota_mode( "tf_bot_quota_mode", "normal", FCVAR_NONE, "Determines the type of quota.\nAllowed values: 'normal', 'fill', and 'match'.\nIf 'fill', the server will adjust bots to keep N players in the game, where N is bot_quota.\nIf 'match', the server will maintain a 1:N ratio of humans to bots, where N is bot_quota." );
+ConVar tf_bot_quota_mode( "tf_bot_quota_mode", "fill", FCVAR_NONE, "Determines the type of quota.\nAllowed values: 'normal', 'fill', and 'match'.\nIf 'fill', the server will adjust bots to keep N players in the game, where N is bot_quota.\nIf 'match', the server will maintain a 1:N ratio of humans to bots, where N is bot_quota." );
 ConVar tf_bot_join_after_player( "tf_bot_join_after_player", "1", FCVAR_NONE, "If nonzero, bots wait until a player joins before entering the game." );
-ConVar tf_bot_auto_vacate( "tf_bot_auto_vacate", "1", FCVAR_NONE, "If nonzero, bots will automatically leave to make room for human players." );
+ConVar tf_bot_auto_vacate( "tf_bot_auto_vacate", "0", FCVAR_NONE, "If nonzero, bots will automatically leave to make room for human players." );
 ConVar tf_bot_offline_practice( "tf_bot_offline_practice", "0", FCVAR_NONE, "Tells the server that it is in offline practice mode." );
 ConVar tf_bot_melee_only( "tf_bot_melee_only", "0", FCVAR_GAMEDLL, "If nonzero, TFBots will only use melee weapons" );
 
 extern const char *GetRandomBotName( void );
 extern void CreateBotName( int iTeam, int iClassIndex, CTFBot::DifficultyType skill, char* pBuffer, int iBufferSize );
-
-static bool UTIL_KickBotFromTeam( int kickTeam )
-{
-	int i;
-
-	// try to kick a dead bot first
-	for ( i = 1; i <= gpGlobals->maxClients; ++i )
-	{
-		CTFPlayer *pPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
-		CTFBot* pBot = dynamic_cast<CTFBot*>(pPlayer);
-
-		if (pBot == NULL)
-			continue;
-
-		if ( pBot->HasAttribute( CTFBot::QUOTA_MANANGED ) == false )
-			continue;
-
-		if ( ( pPlayer->GetFlags() & FL_FAKECLIENT ) == 0 )
-			continue;
-
-		if ( !pPlayer->IsAlive() && pPlayer->GetTeamNumber() == kickTeam )
-		{
-			// its a bot on the right team - kick it
-			engine->ServerCommand( UTIL_VarArgs( "kickid %d\n", pPlayer->GetUserID() ) );
-
-			return true;
-		}
-	}
-
-	// no dead bots, kick any bot on the given team
-	for ( i = 1; i <= gpGlobals->maxClients; ++i )
-	{
-		CTFPlayer *pPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
-		CTFBot* pBot = dynamic_cast<CTFBot*>(pPlayer);
-
-		if (pBot == NULL)
-			continue;
-
-		if ( pBot->HasAttribute( CTFBot::QUOTA_MANANGED ) == false )
-			continue;
-
-		if ( ( pPlayer->GetFlags() & FL_FAKECLIENT ) == 0 )
-			continue;
-
-		if (pPlayer->GetTeamNumber() == kickTeam)
-		{
-			// its a bot on the right team - kick it
-			engine->ServerCommand( UTIL_VarArgs( "kickid %d\n", pPlayer->GetUserID() ) );
-
-			return true;
-		}
-	}
-
-	return false;
-}
 
 //----------------------------------------------------------------------------------------------------------------
 
@@ -280,7 +225,7 @@ void CTFBotManager::OnCreepKilled( CTFPlayer *killer )
 //----------------------------------------------------------------------------------------------------------------
 bool CTFBotManager::RemoveBotFromTeamAndKick( int nTeam )
 {
-	CUtlVector< CTFPlayer* > vecCandidates;
+	CUtlVector< CTFBot* > vecCandidates;
 
 	// Gather potential candidates
 	for ( int i = 1; i <= gpGlobals->maxClients; ++i )
@@ -301,7 +246,7 @@ bool CTFBotManager::RemoveBotFromTeamAndKick( int nTeam )
 		{
 			if ( pBot->GetTeamNumber() == nTeam )
 			{
-				vecCandidates.AddToTail( pPlayer );
+				vecCandidates.AddToTail( pBot );
 			}
 		}
 	}
@@ -310,14 +255,37 @@ bool CTFBotManager::RemoveBotFromTeamAndKick( int nTeam )
 	if ( vecCandidates.Count() > 0 )
 	{
 		// first look for bots that are currently dead
-		FOR_EACH_VEC( vecCandidates, i )
+		if ( nTeam > LAST_SHARED_TEAM )
 		{
-			CTFPlayer *pPlayer = vecCandidates[i];
-			if ( pPlayer && !pPlayer->IsAlive() )
+			// first look for bots that are currently dead
+			if ( !pVictim )
 			{
-				pVictim = pPlayer;
-				break;
+				FOR_EACH_VEC( vecCandidates, i )
+				{
+					CTFBot *pPlayer = vecCandidates[i];
+					if ( pPlayer && !pPlayer->IsAlive() )
+					{
+						pVictim = pPlayer;
+						break;
+					}
+				}
 			}
+			
+			// look for a bot which can change class: indicates flexibility
+			if ( !pVictim )
+			{
+				FOR_EACH_VEC( vecCandidates, i )
+				{
+					CTFBot *pPlayer = vecCandidates[i];
+					if ( pPlayer && pPlayer->CanChangeClass() )
+					{
+						pVictim = pPlayer;
+						break;
+					}
+				}
+			}
+
+			// TODO(mcoms): look for a bot on the low priority of our current roster
 		}
 
 		// if we didn't fine one, try to kick anyone on the team
@@ -325,7 +293,7 @@ bool CTFBotManager::RemoveBotFromTeamAndKick( int nTeam )
 		{
 			FOR_EACH_VEC( vecCandidates, i )
 			{
-				CTFPlayer *pPlayer = vecCandidates[i];
+				CTFBot *pPlayer = vecCandidates[i];
 				if ( pPlayer )
 				{
 					pVictim = pPlayer;
@@ -342,7 +310,7 @@ bool CTFBotManager::RemoveBotFromTeamAndKick( int nTeam )
 			pVictim->CommitSuicide();
 		}
 		pVictim->ForceChangeTeam( TEAM_UNASSIGNED ); // skipping TEAM_SPECTATOR because some servers don't allow spectators
-		UTIL_KickBotFromTeam( TEAM_UNASSIGNED );
+		engine->ServerCommand( UTIL_VarArgs( "kickid %d\n", pVictim->GetUserID() ) );
 		return true;
 	}
 
@@ -364,6 +332,9 @@ void CTFBotManager::MaintainBotQuota()
 
 	// training mode controls the bots
 	if ( TFGameRules()->IsInTraining() )
+		return;
+
+	if ( TFGameRules()->IsGamePaused() )
 		return;
 
 	// if it is not time to do anything...
@@ -447,6 +418,7 @@ void CTFBotManager::MaintainBotQuota()
 	}
 
 	// if bots will auto-vacate, we need to keep one slot open to allow players to join
+	// if bots will auto-vacate, we need to keep one slot open to allow players to join
 	if ( tf_bot_auto_vacate.GetBool() )
 	{
 		desiredBotCount = MIN( desiredBotCount, gpGlobals->maxClients - nTotalNonTFBots - 1 );
@@ -482,6 +454,7 @@ void CTFBotManager::MaintainBotQuota()
 				CTFBot::DifficultyType skill = pBot->GetDifficulty();
 				CreateBotName( pBot->GetTeamNumber(), pBot->GetPlayerClass()->GetClassIndex(), skill, name, sizeof( name ) );
 				engine->SetFakeClientConVarValue( pBot->edict(), "name", name );
+				pBot->SetPlayerName( name );
 
 				// Keep track of any bots we add during a match
 				CMatchInfo *pMatchInfo = GTFGCClientSystem()->GetMatch();
@@ -497,7 +470,7 @@ void CTFBotManager::MaintainBotQuota()
 		// kick a bot to maintain quota
 		
 		// first remove any unassigned bots
-		if ( UTIL_KickBotFromTeam( TEAM_UNASSIGNED ) )
+		if ( RemoveBotFromTeamAndKick( TEAM_UNASSIGNED ) )
 			return;
 
 		int kickTeam;
@@ -530,11 +503,11 @@ void CTFBotManager::MaintainBotQuota()
 		}
 
 		// attempt to kick a bot from the given team
-		if ( UTIL_KickBotFromTeam( kickTeam ) )
+		if ( RemoveBotFromTeamAndKick( kickTeam ) )
 			return;
 
 		// if there were no bots on the team, kick a bot from the other team
-		UTIL_KickBotFromTeam( kickTeam == TF_TEAM_BLUE ? TF_TEAM_RED : TF_TEAM_BLUE );
+		RemoveBotFromTeamAndKick( kickTeam == TF_TEAM_BLUE ? TF_TEAM_RED : TF_TEAM_BLUE );
 	}
 }
 
@@ -645,6 +618,11 @@ CTFBot* CTFBotManager::GetAvailableBotFromPool()
 //----------------------------------------------------------------------------------------------------------------
 void CTFBotManager::OnForceAddedBots( int iNumAdded )
 {
+	// if our bot quota is 0, and we're in fill mode, and there's already a player prior to us joining, we need to bump up our quota to meet the necessary count.
+	if ( tf_bot_quota.GetInt() == 0 && FStrEq( tf_bot_quota_mode.GetString(), "fill" ) && tf_bot_join_after_player.GetBool() )
+	{
+		iNumAdded++;
+	}
 	tf_bot_quota.SetValue( tf_bot_quota.GetInt() + iNumAdded );
 	m_flNextPeriodicThink = gpGlobals->curtime + 1.0f;
 }

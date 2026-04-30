@@ -210,8 +210,10 @@ CTFInventoryManager *TFInventoryManager( void )
 // Purpose: 
 //-----------------------------------------------------------------------------
 CTFInventoryManager::CTFInventoryManager( void )
-
 {
+#ifdef CLIENT_DLL
+	m_flQueuedGCNotificationTime = 0.0f;
+#endif
 }
 
 CTFInventoryManager::~CTFInventoryManager( void )
@@ -226,6 +228,7 @@ void CTFInventoryManager::PostInit( void )
 {
 	BaseClass::PostInit();
 	GenerateBaseItems();
+	GenerateDefaultEquippedRegionMask();
 }
 
 //-----------------------------------------------------------------------------
@@ -250,6 +253,53 @@ void CTFInventoryManager::GenerateBaseItems( void )
 		pItem->Init( mapItems[it]->GetDefinitionIndex(), AE_USE_SCRIPT_VALUE, AE_USE_SCRIPT_VALUE, false );
 		m_pBaseLoadoutItems.AddToTail( pItem );
 	}
+}
+
+void CTFInventoryManager::GenerateDefaultEquippedRegionMask(void)
+{
+	m_iDefaultRegionMask = 0;
+#ifdef TF2_OG
+	CUtlVector<const char*> vecRegionNames;
+	vecRegionNames.AddToTail("pants");
+	vecRegionNames.AddToTail("shirt");
+	vecRegionNames.AddToTail("arms");
+	vecRegionNames.AddToTail("back");
+	vecRegionNames.AddToTail("feet");
+	vecRegionNames.AddToTail("left_shoulder");
+	vecRegionNames.AddToTail("disconnected_floating_item");
+	vecRegionNames.AddToTail("zombie_body");
+	vecRegionNames.AddToTail("sleeves");
+	vecRegionNames.AddToTail("right_shoulder");
+	//vecRegionNames.AddToTail("scout_bandages");
+	//vecRegionNames.AddToTail("scout_backpack");
+	vecRegionNames.AddToTail("soldier_coat");
+	vecRegionNames.AddToTail("sniper_legs");
+	vecRegionNames.AddToTail("pyro_head_replacement");
+	//vecRegionNames.AddToTail("scout_pants");
+	vecRegionNames.AddToTail("spy_coat");
+	for (auto& sRegionName : vecRegionNames)
+	{
+		// TODO mask or bit mask? seems looser to only restrict by exact region
+		m_iDefaultRegionMask |= GetItemSchema()->GetEquipRegionBitMaskByName(sRegionName);
+	}
+#endif
+}
+
+bool CheckExtraEquipRules(int iClass, int iSlot, CEconItemView* pItem)
+{
+#ifdef TF2_OG
+	if (!IsWearableSlot(iSlot))
+	{
+		return false;
+	}
+
+	if (TFInventoryManager()->GetDefaultEquippedRegionMask() & pItem->GetItemDefinition()->GetEquipRegionMask())
+	{
+		return false;
+	}
+#endif
+
+	return true;
 }
 
 #ifdef CLIENT_DLL
@@ -277,6 +327,11 @@ bool CTFInventoryManager::EquipItemInLoadout( int iClass, int iSlot, itemid_t iI
 	}
 
 	if ( !pItem->GetStaticData()->CanBeUsedByClass( iClass ) )
+	{
+		return false;
+	}
+
+	if ( !CheckExtraEquipRules(iClass, iSlot, pItem) )
 	{
 		return false;
 	}
@@ -419,9 +474,9 @@ int CTFInventoryManager::GetNumItemPickedUpItems( void )
 //-----------------------------------------------------------------------------
 bool CTFInventoryManager::ShowItemsPickedUp( bool bForce, bool bReturnToGame, bool bNoPanel )
 {
-	// don't show new items in training, unless forced to do so
+	// don't show new items, unless forced to do so
 	// i.e. purchased something or traded...
-	if ( bForce == false && TFGameRules() && ( TFGameRules()->IsInTraining() || TFGameRules()->IsCompetitiveMode() ) )
+	if ( !bForce )
 	{
 		return false;
 	}
@@ -530,7 +585,26 @@ void CTFInventoryManager::Update( float frametime )
 	TM_ZONE_DEFAULT( TELEMETRY_LEVEL0 );
 	m_LocalInventory.UpdateWeaponSkinRequest();
 
+	if ( m_flQueuedGCNotificationTime > 0.0f && m_flQueuedGCNotificationTime <= gpGlobals->realtime )
+	{
+		GTFGCClientSystem()->LocalInventoryChanged();
+		m_flQueuedGCNotificationTime = 0.0f;
+	}
+
 	BaseClass::Update( frametime );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFInventoryManager::QueueGCInventoryChangeNotification()
+{
+	// don't mark any "changes" when we haven't initialized our inventory to the server yet.
+	if ( !engine->IsConnected() || !engine->IsInGame() )
+		return;
+
+	// queue an inventory change notification after 0.5 seconds, to prevent some systems from spamming it over a few frames
+	m_flQueuedGCNotificationTime = gpGlobals->realtime + 0.5f;
 }
 
 //-----------------------------------------------------------------------------
@@ -958,15 +1032,30 @@ void CTFPlayerInventory::LoadLocalLoadout()
 				const int iSlot = V_atoi(pLoadoutEntry->GetName());
 				const itemid_t uItemId = pLoadoutEntry->GetUint64();
 
-				m_PresetItems[iPreset][iClass][iSlot] = uItemId;
+				CEconItemView* pItem = GetInventoryItemByItemID(uItemId);
 
-				if (iPreset == m_ActivePreset[iClass]) {
-					m_LoadoutItems[iClass][iSlot] = uItemId;
+				bool bPassed = iPreset != m_ActivePreset[iClass];
+				if ( pItem )
+				{
+					if ( CheckExtraEquipRules(iClass, iSlot, pItem) )
+					{
+						m_PresetItems[iPreset][iClass][iSlot] = uItemId;
 
-					CEconItemView *pItem = GetInventoryItemByItemID(uItemId);
-					if (pItem) {
-						pItem->GetSOCData()->Equip(iClass, iSlot);
+						if (iPreset == m_ActivePreset[iClass]) {
+							m_LoadoutItems[iClass][iSlot] = uItemId;
+
+							if (pItem) {
+								pItem->GetSOCData()->Equip(iClass, iSlot);
+							}
+						}
+						bPassed = true;
 					}
+				}
+
+				if ( !bPassed )
+				{
+					EquipLocal(INVALID_ITEM_ID, iClass, iSlot);
+					m_LoadoutItems[iClass][iSlot] = LOADOUT_SLOT_USE_BASE_ITEM;
 				}
 			}
 		}
@@ -974,7 +1063,8 @@ void CTFPlayerInventory::LoadLocalLoadout()
 
 	pLoadoutKV->deleteThis();
 
-	GTFGCClientSystem()->LocalInventoryChanged();
+	//GTFGCClientSystem()->LocalInventoryChanged();
+	TFInventoryManager()->QueueGCInventoryChangeNotification();
 }
 
 //-----------------------------------------------------------------------------
@@ -1021,8 +1111,24 @@ void CTFPlayerInventory::SaveLocalLoadout( bool bReset, bool bDefaultToGC )
 
 				itemid_t uItemId = m_PresetItems[iPreset][iClass][iSlot];
 				//itemid_t uItemId = m_LoadoutItems[iClass][iSlot];
-				if (bReset) {
-					uItemId = ( bDefaultToGC && iPreset == 0 ) ? m_RealTFLoadoutItems[iClass][iSlot] : 0;
+				if ( bReset ) {
+#if TF2_OG
+					if (bDefaultToGC)
+					{
+						uItemId = m_RealTFLoadoutItems[iClass][iSlot];
+						CEconItemView* pItem = GetInventoryItemByItemID(uItemId);
+						if (!pItem || !CheckExtraEquipRules(iClass, iSlot, pItem))
+						{
+							uItemId = 0;
+						}
+					}
+					else
+					{
+						uItemId = 0;
+					}
+#else
+					uItemId = bDefaultToGC ? m_RealTFLoadoutItems[iClass][iSlot] : 0;
+#endif
 				}
 
 				pClassKV->SetUint64(szSlot, uItemId);
@@ -1068,7 +1174,8 @@ void CTFPlayerInventory::EquipLocal(uint64 ulItemID, equipped_class_t unClass, e
 	int activePreset = m_ActivePreset[unClass];
 	m_PresetItems[activePreset][unClass][unSlot] = ulItemID;
 
-	GTFGCClientSystem()->LocalInventoryChanged();
+	//GTFGCClientSystem()->LocalInventoryChanged();
+	//TFInventoryManager()->QueueGCInventoryChangeNotification();
 #endif
 }
 
@@ -1200,7 +1307,7 @@ void CTFPlayerInventory::ValidateInventoryPositions( void )
 			bInvalidSlot = (TFInventoryManager()->GetBackpackPositionFromBackend(iPosition) > iMaxItems);
 		}
 
-		if ( bInvalidSlot  )
+		if ( bInvalidSlot )
 		{
 			// The item is NOT hidden and is in an invalid slot. Move it back to the backpack.
 			if ( pEconItemView->GetItemDefinition() && !pEconItemView->GetItemDefinition()->IsHidden() && !TFInventoryManager()->SetItemBackpackPosition( pEconItemView, 0, true ) )
@@ -1219,6 +1326,7 @@ void CTFPlayerInventory::ValidateInventoryPositions( void )
 			{
 				// Unequip this item from this class.
 				InventoryManager()->UpdateInventoryEquippedState( this, INVALID_ITEM_ID, j, pEconItemView->GetEquippedPositionForClass( j ) );
+				TFInventoryManager()->QueueGCInventoryChangeNotification();
 			}
 		}
 	}
@@ -1587,7 +1695,7 @@ bool CTFPlayerInventory::ClearLoadoutSlot( int iClass, int iSlot )
 
 	// TODO: Prediction
 	// It's been moved to the backpack, so clear out loadout entry
-	//m_LoadoutItems[iClass][iSlot] = LOADOUT_SLOT_USE_BASE_ITEM;
+	m_LoadoutItems[iClass][iSlot] = LOADOUT_SLOT_USE_BASE_ITEM;
 	return true;
 }
 
@@ -1639,7 +1747,8 @@ void CTFPlayerInventory::UpdateWeaponSkinRequest()
 			mdl.SetMDL( req.m_hModel );
 			mdl.m_pProxyData = static_cast<IClientRenderable*>( pItem );
 
-			pItem->SetWeaponSkinUseLowRes( true );
+			// TODO: mcoms: don't use low res!
+			//pItem->SetWeaponSkinUseLowRes( true );
 			int nRestoreTeam = pItem->GetTeamNumber();
 			pItem->SetTeamNumber( req.m_nTeam );
 
@@ -1656,7 +1765,7 @@ void CTFPlayerInventory::UpdateWeaponSkinRequest()
 				modelrender->ForcedMaterialOverride( NULL );
 
 			pItem->SetTeamNumber( nRestoreTeam );
-			pItem->SetWeaponSkinUseLowRes( false );
+			//pItem->SetWeaponSkinUseLowRes( false );
 		}
 
 		// Don't remove until it's complete. 
@@ -1824,7 +1933,7 @@ void CTFPlayerInventory::VerifyLoadoutItemsAreValid( int iClass )
 	// If later we want the order in which slots claim their equip regions to change, we'll want to change
 	// the iteration order here and also change GenerateEquipRegionMaskUpToSlot(), which is used for
 	// filling out the UI.
-	equip_region_mask_t unCumulativeRegionMask = 0;
+	equip_region_mask_t unCumulativeRegionMask = TFInventoryManager()->GetDefaultEquippedRegionMask();
 	for ( int i = 0; i < CLASS_LOADOUT_POSITION_COUNT; i++ )
 	{
 		CEconItemView *pEquippedItemView = GetItemInLoadout( iClass, i );
@@ -1833,11 +1942,12 @@ void CTFPlayerInventory::VerifyLoadoutItemsAreValid( int iClass )
 
 		// Does this item use the same regions as some item that we already have equipped?
 		equip_region_mask_t unItemEquipMask = pEquippedItemView->GetItemDefinition()->GetEquipRegionMask();
-		if ( unItemEquipMask & unCumulativeRegionMask )
+		if ( unCumulativeRegionMask & unItemEquipMask )
 		{
 			// Unequip this item. This will wind up calling into ::ItemHasBeenUpdated() once the
 			// unequip makes it to the GC and back.
 			InventoryManager()->UpdateInventoryEquippedState( this, INVALID_ITEM_ID, iClass, pEquippedItemView->GetEquippedPositionForClass( iClass ) );
+			TFInventoryManager()->QueueGCInventoryChangeNotification();
 		}
 		else
 		{
@@ -2000,13 +2110,18 @@ CON_COMMAND( load_itempreset, "Equip all items for a given preset on the player.
 	equipped_preset_t unPreset = atoi( args[1] );
 	if ( TFInventoryManager()->LoadPreset( unClass, unPreset ) )
 	{
+#ifndef INVENTORY_VIA_WEBAPI
+		// UNDONE: we always do this to notify players of their loadout change. respawn is now checked server-side.
 		// Tell the GC to tell server that we should respawn if we're in a respawn room
-		extern ConVar tf_respawn_on_loadoutchanges;
-		if ( tf_respawn_on_loadoutchanges.GetBool() )
+		//extern ConVar tf_respawn_on_loadoutchanges;
+		//if ( tf_respawn_on_loadoutchanges.GetBool() )
 		{
 			GCSDK::CGCMsg< ::MsgGCEmpty_t > msg( k_EMsgGCRespawnPostLoadoutChange );
 			GCClientSystem()->BSendMessage( msg );
 		}
+#else
+		TFInventoryManager()->QueueGCInventoryChangeNotification();
+#endif
 	}
 }
 #endif	// TF_CLIENT_DLL

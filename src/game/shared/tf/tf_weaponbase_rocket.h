@@ -57,6 +57,10 @@ public:
 	void			ResetDeflected( void ) { m_iDeflected = 0; }
 	int				GetDeflected( void ) { return m_iDeflected; }
 
+#ifdef GAME_DLL
+	bool ShouldIgnoreTrace(trace_t* pTrace) OVERRIDE;
+#endif
+
 protected:
 
 	// Networked.
@@ -74,13 +78,15 @@ public:
 	virtual int		DrawModel( int flags );
 	virtual void	PostDataUpdate( DataUpdateType_t type );
 	virtual void	OnDataChanged(DataUpdateType_t updateType);
+	void ClientPredictThink();
+	void ClientThink() OVERRIDE;
 	virtual void	CreateTrails( void ) { }
-	CBaseEntity		*GetLauncher( void ) { return m_hLauncher; }
 
 protected:
-
-	float	 m_flSpawnTime;
 	int		m_iCachedDeflect;
+	Vector m_vecSpawnLoc;
+	Vector m_vecPredLoc;
+	bool m_bPredicting;
 	CNetworkHandle( CBaseEntity, m_hLauncher );
 
 //=============================================================================
@@ -120,9 +126,6 @@ public:
 
 	void			SetHomingTarget( CBaseEntity *pHomingTarget );
 
-	virtual void	SetLauncher( CBaseEntity *pLauncher ) OVERRIDE { m_hLauncher = pLauncher; BaseClass::SetLauncher( pLauncher ); }
-	CBaseEntity		*GetLauncher( void ) { return m_hLauncher; }
-
 	virtual bool	IsDestroyable( bool bOrbAttack = false ) OVERRIDE { return ( !bOrbAttack ? ( gpGlobals->curtime > m_flDestroyableTime ) : true ); }
 
 	CBaseEntity		*GetOwnerPlayer( void ) const;
@@ -131,8 +134,6 @@ protected:
 
 	// Not networked.
 	float					m_flDamage;
-
-	CNetworkHandle( CBaseEntity, m_hLauncher );
 
 	float					m_flDestroyableTime;
 	bool					m_bCritical;

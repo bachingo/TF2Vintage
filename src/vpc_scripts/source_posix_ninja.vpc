@@ -22,7 +22,7 @@ $Macro NINJA_WARN_FLAGS_C \
     "-Wno-float-equal -Werror=return-type " \
     "-Wformat -Wformat-security"
 
-$Macro NINJA_WARN_FLAGS_CXX "-Wno-overloaded-virtual -Wno-placement-new -Wno-c++20-compat -Wno-mismatched-new-delete -Wno-class-memaccess -Wno-conversion-null -Wno-invalid-offsetof -Wno-reorder "
+$Macro NINJA_WARN_FLAGS_CXX "-Wno-overloaded-virtual -Wno-placement-new -Wno-c++20-compat -Wno-class-memaccess -Wno-conversion-null -Wno-invalid-offsetof -Wno-reorder "
 
 $Macro NINJA_C_DEV_FLAGS			"-fstack-protector -fcf-protection"	[$DEVELOPMENT_ONLY && $LINUX64]
 
@@ -34,7 +34,7 @@ $Macro NINJA_C_FLAGS				"$NINJA_ARCH_FLAGS $NINJA_WARN_FLAGS_C $NINJA_C_DEV_FLAG
 // TODO:
 // Consider -fno-plt?
 
-$Macro NINJA_CXX_FLAGS				"$NINJA_C_FLAGS $NINJA_WARN_FLAGS_CXX -std=c++11 -I/usr/include/freetype2"
+$Macro NINJA_CXX_FLAGS				"$NINJA_C_FLAGS $NINJA_WARN_FLAGS_CXX -std=c++17 -I/usr/include/freetype2"
 
 $Macro NINJA_EXTRA_C_FLAGS			"-Usprintf -Ustrncpy -UPROTECTED_THINGS_ENABLE"
 $Macro NINJA_EXTRA_CXX_FLAGS		"$NINJA_EXTRA_C_FLAGS"

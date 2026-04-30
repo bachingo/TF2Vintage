@@ -11,6 +11,7 @@
 #pragma once
 #endif
 
+#define OLD_TICK_INTERVAL		(0.015f)
 #define TICK_INTERVAL			(gpGlobals->interval_per_tick)
 
 
@@ -103,13 +104,13 @@ public:
 #define MAX_CLIMB_SPEED		200
 
 #if defined(TF_DLL) || defined(TF_CLIENT_DLL)
-	#define TIME_TO_DUCK		0.2
+	#define TIME_TO_DUCK		0.2f
 	#define TIME_TO_DUCK_MS		200.0f
 #else
-	#define TIME_TO_DUCK		0.4
+	#define TIME_TO_DUCK		0.4f
 	#define TIME_TO_DUCK_MS		400.0f
 #endif 
-#define TIME_TO_UNDUCK		0.2
+#define TIME_TO_UNDUCK		0.2f
 #define TIME_TO_UNDUCK_MS	200.0f
 
 #define MAX_WEAPON_SLOTS		6	// hud item selection slots
@@ -178,7 +179,7 @@ enum
 #define MAX_VOTE_DETAILS_LENGTH 64
 #define INVALID_ISSUE			-1
 #define MAX_VOTE_OPTIONS		5
-#define DEDICATED_SERVER		99
+#define DEDICATED_SERVER		0
 
 enum CastVote
 {
@@ -258,7 +259,7 @@ enum CastVote
 	#define MAX_PLAYERS				33  // Absolute max players supported
 #endif
 */
-#define MAX_PLAYERS				25  // Absolute max players supported
+#define MAX_PLAYERS				65  // Absolute max players supported
 
 // Josh: Accounts for code that may index this array by an entindex
 // of player rather than the player index... :s

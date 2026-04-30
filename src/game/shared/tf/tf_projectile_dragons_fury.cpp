@@ -34,7 +34,7 @@ ConVar tf_fireball_distance( "tf_fireball_distance", "500", FCVAR_REPLICATED | F
 ConVar tf_fireball_speed( "tf_fireball_speed", "3000", FCVAR_REPLICATED | FCVAR_CHEAT );
 ConVar tf_fireball_damage( "tf_fireball_damage", "25", FCVAR_REPLICATED | FCVAR_CHEAT );
 ConVar tf_fireball_burn_duration( "tf_fireball_burn_duration", "2", FCVAR_REPLICATED | FCVAR_CHEAT );
-ConVar tf_fireball_radius( "tf_fireball_radius", "22.5", FCVAR_REPLICATED | FCVAR_CHEAT );
+ConVar tf_fireball_radius( "tf_fireball_radius", "30", FCVAR_REPLICATED | FCVAR_CHEAT );
 ConVar tf_fireball_draw_debug_radius( "tf_fireball_draw_debug_radius", "0", FCVAR_REPLICATED | FCVAR_CHEAT );
 ConVar tf_fireball_burning_bonus( "tf_fireball_burning_bonus", "3", FCVAR_REPLICATED | FCVAR_CHEAT );
 ConVar tf_fireball_max_lifetime( "tf_fireball_max_lifetime", "0.5", FCVAR_REPLICATED | FCVAR_CHEAT );
@@ -138,10 +138,9 @@ public:
 				m_bFizzling = true;
 				SetAbsVelocity( vec3_origin );
 
-				// Put the projectile to sleep while we wait for the cl_interp window to expire (keeps the dlight effect in sync)
-				CBaseEntity *pOwner = GetOwnerEntity();
-				float flLerpAmount = Q_atof( engine->GetClientConVarValue( pOwner->entindex(), "cl_interp" ) );
-				SetContextThink( &CTFProjectile_BallOfFire::ExpireDelayThink, gpGlobals->curtime + flLerpAmount, "ExpireDelayThink" );
+				// Put the projectile to sleep while we wait for the client interp window to expire (keeps the dlight effect in sync)
+				CTFPlayer* pTFOwner = ToTFPlayer(GetOwnerPlayer());
+				SetContextThink( &CTFProjectile_BallOfFire::ExpireDelayThink, gpGlobals->curtime + Max(pTFOwner->m_fLerpTime, 0.1f), "ExpireDelayThink" );
 			}
 			else
 			{
@@ -289,6 +288,12 @@ public:
 		if ( !IsEntityVisible( pTarget ) )
 			return;
 
+		// don't let radius extend range.
+		const Vector& vMySpawn = m_vecSpawnOrigin;
+		const Vector& vTargetOrigin = pTarget->GetAbsOrigin();
+		if (vTargetOrigin.DistTo(vMySpawn) > tf_fireball_distance.GetFloat())
+			return;
+
 		CTakeDamageInfo info;
 		info.SetAttacker( pOwner );
 		info.SetInflictor( this ); 
@@ -341,8 +346,29 @@ public:
 
 			float flBurnDuration = tf_fireball_burn_duration.GetFloat();
 
+			bool bVictimIsImmunePyro = pTFPlayer->IsPlayerClass( TF_CLASS_PYRO );
+
+			// Check sniper shields (e.g. Darwin's)
+			if ( !bVictimIsImmunePyro && pTFPlayer->IsPlayerClass( TF_CLASS_SNIPER ) )
+			{
+				for ( int i = 0; i < pTFPlayer->GetNumWearables(); ++i )
+				{
+					CTFWearable* pWearableItem = dynamic_cast<CTFWearable*>(pTFPlayer->GetWearable(i));
+					if (!pWearableItem)
+						continue;
+
+					int nAfterburnImmunity = 0;
+					CALL_ATTRIB_HOOK_INT_ON_OTHER(pWearableItem, nAfterburnImmunity, afterburn_immunity);
+					if (nAfterburnImmunity)
+					{
+						bVictimIsImmunePyro = true;
+						break;
+					}
+				}
+			}
+
 			// This burn affects pyros, too, but only half as long
-			if ( pTFPlayer->IsPlayerClass( TF_CLASS_PYRO ) )
+			if ( bVictimIsImmunePyro )
 			{
 				pTFPlayer->m_Shared.AddCond( TF_COND_BURNING_PYRO, ( flBurnDuration * 0.5f ), pOwner );
 			}

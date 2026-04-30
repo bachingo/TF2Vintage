@@ -82,6 +82,8 @@ public:
 	virtual bool	Holster( CBaseCombatWeapon *pSwitchingTo );
 	virtual void	Precache( void );
 
+	virtual Activity TranslateViewmodelHandActivityInternal(Activity actBase) OVERRIDE;
+
 	void			Push( void );
 
 #ifdef CLIENT_DLL
@@ -90,6 +92,7 @@ public:
 
 private:
 	float			m_flPushTime;
+	bool			m_bReadyToPush;
 };
 
 class CTFPistol_ScoutSecondary : public CTFPistol_Scout

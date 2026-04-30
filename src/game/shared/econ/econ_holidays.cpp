@@ -469,7 +469,7 @@ static IIsHolidayActive *s_HolidayChecks[] =
 COMPILE_TIME_ASSERT( ARRAYSIZE( s_HolidayChecks ) == kHolidayCount );
 
 #include "tf_gamerules.h"
-ConVar tf2v_override_holiday( "tf2v_override_holiday", "1", FCVAR_REPLICATED | FCVAR_NOTIFY | FCVAR_ARCHIVE, "Determines if we use the system clock or the internal TF2V date for Holiday calculations.", true, 0.f, false, 1.f );
+ConVar tf2v_override_date( "tf2v_override_date", "1", FCVAR_REPLICATED | FCVAR_NOTIFY | FCVAR_ARCHIVE, "Determines if we use the system clock or the internal TF2V date for Holiday calculations.", true, 0.f, false, 1.f );
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -484,7 +484,7 @@ bool EconHolidays_IsHolidayActive( int iHolidayIndex, const CRTime& timeCurrent 
 	
 	uint32_t timeHolidayTest;
 	
-	if ( ( TFGameRules() && TFGameRules()->GetTF2VEra() ) && tf2v_override_holiday.GetBool() )
+	if ( ( TFGameRules() && TFGameRules()->GetTF2VEra() ) && tf2v_override_date.GetBool() )
 	{
 		// Make our own faked current time based off the day TF2V is set as.
 		// Since the Era function is saved as days from 09/16/2007, we simply offset it.

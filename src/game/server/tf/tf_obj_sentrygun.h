@@ -104,7 +104,7 @@ public:
 
 	void			SetShieldLevel( int nLevel, float flDuration ) { m_nShieldLevel = nLevel; m_flShieldFadeTime = gpGlobals->curtime + flDuration; }
 
-	virtual int		GetMaxUpgradeLevel( void ) OVERRIDE;
+	virtual int		GetMaxUpgradeLevel( void ) const OVERRIDE;
 
 	virtual int		GetMiniBuildingStartingHealth( void ) OVERRIDE { return SENTRYGUN_MINI_MAX_HEALTH; }
 
@@ -151,6 +151,9 @@ private:
 	virtual void ModifyFireBulletsDamage( CTakeDamageInfo* dmgInfo );
 
 	int GetBaseTurnRate( void );
+	float GetBaseFireRate( void );
+
+	void CalcFireRate( void );
 	
 	virtual void	MakeDisposableBuilding( CTFPlayer *pPlayer );
 
@@ -236,6 +239,10 @@ public:
 	CTFProjectile_SentryRocket();
 
 	virtual int GetProjectileType() const OVERRIDE { return TF_PROJECTILE_SENTRY_ROCKET; }
+
+#if defined(MCOMS_BALANCE_PACK_TEAMMATE_COLLIDE_SENTRY) && 0
+	virtual bool CanCollideWithTeammates() const OVERRIDE { return false; }
+#endif
 
 	// Creation.
 	static CTFProjectile_SentryRocket *Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL );	

@@ -355,12 +355,17 @@ public:
 	// CAutoGameSystemPerFrame
 	virtual bool Init() OVERRIDE;
 	virtual void LevelInitPreEntity() OVERRIDE;
+	virtual void LevelInitPostEntity() OVERRIDE;
 	virtual void LevelShutdownPostEntity() OVERRIDE;
 	virtual void Shutdown() OVERRIDE;
 	virtual void PreClientUpdate() OVERRIDE;
 
 	void SetHibernation( bool bHibernating );
 	bool ShouldHideServer();
+
+	void UpdateServerDataAndRefresh();
+	void UpdateServerData( bool bShutdown = false );
+	void OnServerDataUpdated( GCSDK::CWebAPIValues* pResponse );
 
 	// ISharedObjectListener
 	virtual void	SOCreated( const CSteamID & steamIDOwner, const GCSDK::CSharedObject *pObject, GCSDK::ESOCacheEvent eEvent ) OVERRIDE;
@@ -590,6 +595,15 @@ private:
 	float m_flWaitingForNewMatchTime;
 	bool m_bCreatingVoteKick = false;
 
+	uint32				m_iServerIP;
+	uint32              m_iServerPort;
+	char				m_pzServerIP[MAX_PATH];
+	char				m_pzHostName[MAX_PATH];
+	int                 m_iLastNumBots;
+	int                 m_iLastNumHumans;
+	double              m_flNextGameServerDataUpdate;
+	bool                m_bInSteamServerFrame;
+
 	CMvMVictoryInfo m_mvmVictoryInfo;
 
 	// Check for match players who have been disconnected for long enough to warrant an abandon and do so.
@@ -638,6 +652,8 @@ private:
 		// Note that we will only request new items and assume that any existing items are up-to-date
 		// and unchanged, since sdk games cannot mutate the user's actual inventory.
 		KeyValues* m_pKVNextRequest = nullptr;
+
+		int32 iPartsReceived = 0;
 
 		// Backoff
 		RTime32 m_rtNextRequest = 0;

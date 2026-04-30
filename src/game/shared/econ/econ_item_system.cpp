@@ -138,7 +138,11 @@ void CEconItemSystem::Shutdown( void )
 extern ConVar mp_tournament;
 
 #ifdef GAME_DLL
-ConVar mp_tournament_whitelist( "mp_tournament_whitelist", "item_whitelist.txt", FCVAR_NONE, "Specifies the item whitelist file to use." );
+void CC_WhitelistChanged( IConVar* var, const char* pOld, float flOldValue )
+{
+	ItemSystem()->ReloadWhitelist();
+}
+ConVar mp_tournament_whitelist( "mp_tournament_whitelist", "item_whitelist.txt", FCVAR_NONE, "Specifies the item whitelist file to use.", CC_WhitelistChanged );
 #endif
 
 //-----------------------------------------------------------------------------
@@ -153,7 +157,7 @@ void CEconItemSystem::ReloadWhitelist( void )
 	KeyValues *pWhitelistKV = new KeyValues( "item_whitelist" );
 
 #ifdef GAME_DLL
-	if ( mp_tournament.GetBool() && mp_tournament_whitelist.GetString() )
+	if ( mp_tournament_whitelist.GetString() )
 	{
 		const char *pszWhitelistFile = mp_tournament_whitelist.GetString();
 		if ( pWhitelistKV->LoadFromFile( filesystem, pszWhitelistFile ) )
@@ -315,12 +319,24 @@ item_definition_index_t CEconItemSystem::GenerateRandomItem( CItemSelectionCrite
 	CUtlVector<item_definition_index_t> vecMatches;
 	const CEconItemSchema::ItemDefinitionMap_t &mapDefs = m_itemSchema.GetItemDefinitionMap();
 
+	CEconItemDefinition* pSingleCandidateDefinition = pCriteria->GetCandidateDefinition();
+
 HackMakeValidList:
-	FOR_EACH_MAP_FAST( mapDefs, i )
+	if ( pSingleCandidateDefinition )
 	{
-		if ( pCriteria->BEvaluate( mapDefs[i] ) )
+		if ( pCriteria->BEvaluate( pSingleCandidateDefinition ) )
 		{
-			vecMatches.AddToTail( mapDefs.Key( i ) );
+			vecMatches.AddToTail( pSingleCandidateDefinition->GetDefinitionIndex() );
+		}
+	}
+	else
+	{
+		FOR_EACH_MAP_FAST( mapDefs, i )
+		{
+			if ( pCriteria->BEvaluate( mapDefs[i] ) )
+			{
+				vecMatches.AddToTail( mapDefs.Key( i ) );
+			}
 		}
 	}
 
@@ -338,10 +354,10 @@ HackMakeValidList:
 	}
 
 	// Choose a random match
-	int iChosenIdx = RandomInt( 0, (iValidItems-1) );
+	int iChosenIdx = iValidItems == 1 ? 0 : RandomInt( 0, (iValidItems-1) );
 	item_definition_index_t iChosenItem = vecMatches[iChosenIdx];
 
-	const CEconItemDefinition *pItemDef = m_itemSchema.GetItemDefinition( iChosenItem );
+	const CEconItemDefinition *pItemDef = pSingleCandidateDefinition ? pSingleCandidateDefinition : m_itemSchema.GetItemDefinition( iChosenItem );
 	if ( !pItemDef )
 		return INVALID_ITEM_DEF_INDEX;
 

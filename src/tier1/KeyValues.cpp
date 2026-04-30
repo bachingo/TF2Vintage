@@ -461,9 +461,9 @@ void KeyValues::Init()
 	
 	m_bHasEscapeSequences = false;
 	m_bEvaluateConditionals = true;
-
-	// for future proof
-	memset( unused, 0, sizeof(unused) );
+	m_bLocalStorage = false;
+	
+	m_pStringTable = NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -528,7 +528,10 @@ void KeyValues::ChainKeyValue( KeyValues* pChain )
 //-----------------------------------------------------------------------------
 const char *KeyValues::GetName( void ) const
 {
-	return s_pfGetStringForSymbol( m_iKeyName );
+	if ( m_bLocalStorage )
+		return m_pStringTable->GetStringForSymbol( m_iKeyName );
+	else	
+		return s_pfGetStringForSymbol( m_iKeyName );
 }
 
 //-----------------------------------------------------------------------------
@@ -927,11 +930,7 @@ void KeyValues::SaveKeyToFile( KeyValues *dat, IBaseFileSystem *filesystem, File
 
 				char buf[32];
 				// write "0x" + 16 char 0-padded hex encoded 64 bit value
-#ifdef WIN32
-				Q_snprintf( buf, sizeof( buf ), "0x%016I64X", *( (uint64 *)dat->m_sValue ) );
-#else
 				Q_snprintf( buf, sizeof( buf ), "0x%016llX", *( (uint64 *)dat->m_sValue ) );
-#endif
 
 				INTERNALWRITE(buf, Q_strlen(buf));
 				INTERNALWRITE("\"\n", 2);
@@ -1001,7 +1000,15 @@ KeyValues *KeyValues::FindKey(const char *keyName, bool bCreate)
 	}
 
 	// lookup the symbol for the search string
-	HKeySymbol iSearchStr = s_pfGetSymbolForString( searchStr, bCreate );
+	HKeySymbol iSearchStr = m_bLocalStorage 
+							? m_pStringTable->GetSymbolForString( searchStr, bCreate ) 
+							: s_pfGetSymbolForString( searchStr, bCreate );
+
+	// if it's not included in our local storage string table, just fallback to the standard one
+	if ( m_bLocalStorage && iSearchStr == INVALID_KEY_SYMBOL )
+	{
+		iSearchStr = s_pfGetSymbolForString( searchStr, bCreate );
+	}
 
 	if ( iSearchStr == INVALID_KEY_SYMBOL )
 	{
@@ -1730,7 +1737,18 @@ void KeyValues::SetFloat( const char *keyName, float value )
 
 void KeyValues::SetName( const char * setName )
 {
-	m_iKeyName = s_pfGetSymbolForString( setName, true );
+	if ( m_bLocalStorage )
+		m_iKeyName = m_pStringTable->GetSymbolForString( setName );
+	else
+		m_iKeyName = s_pfGetSymbolForString( setName, true );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool KeyValues::IsUsingLocalStorage() const 
+{
+	return m_bLocalStorage != 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -2673,7 +2691,7 @@ bool KeyValues::WriteAsBinary( CUtlBuffer &buffer )
 
 		case TYPE_UINT64:
 			{
-				buffer.PutDouble( *((double *)dat->m_sValue) );
+				buffer.PutInt64( *((int64 *)dat->m_sValue) );
 				break;
 			}
 
@@ -3261,5 +3279,11 @@ bool CKeyValuesDumpContextAsDevMsg::KvWriteText( char const *szText )
 	{
 		Msg( "%s", szText );
 	}
+	return true;
+}
+
+bool CKeyValuesDumpContextAsString::KvWriteText( char const* szText )
+{
+	m_strBuf->append(szText);
 	return true;
 }

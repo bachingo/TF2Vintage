@@ -693,6 +693,8 @@ const char		   *UTIL_GetActiveOperationString();
 
 const char *GetCleanMapName( const char *pszUnCleanMapName, char (&pszTmp)[256] );
 
+uint32 UTIL_GetEmulatedAppID();
+
 inline bool	MapHasPrefix( const char *pszUnCleanMapName, const char *prefix )
 {
 	char maptmp[ 256 ];
@@ -700,4 +702,5 @@ inline bool	MapHasPrefix( const char *pszUnCleanMapName, const char *prefix )
 
 	return StringHasPrefix( pszCleanMapName, prefix );
 }
+
 #endif // UTIL_SHARED_H

@@ -27,7 +27,8 @@ BEGIN_VS_SHADER_FLAGS( ParticleSphere_DX8, "Help for BumpmappedEnvMap", SHADER_N
 
 	bool UsePixelShaders( IMaterialVar **params ) const
 	{
-		return  (!params || params[BUMPMAP]->IsDefined()) && g_pHardwareConfig->SupportsVertexAndPixelShaders();
+		//return  (!params || params[BUMPMAP]->IsDefined()) && g_pHardwareConfig->SupportsVertexAndPixelShaders();
+		return true;
 	}
 
 	SHADER_INIT
@@ -41,10 +42,6 @@ BEGIN_VS_SHADER_FLAGS( ParticleSphere_DX8, "Help for BumpmappedEnvMap", SHADER_N
 
 	SHADER_FALLBACK
 	{
-		if ( IsPC() && !UsePixelShaders(params) )
-		{
-			return "UnlitGeneric_DX6";
-		}
 		return 0;
 	}
 

@@ -20,6 +20,7 @@
 #endif
 
 ConVar tf_use_fixed_weaponspreads( "tf_use_fixed_weaponspreads", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "If set to 1, weapons that fire multiple pellets per shot will use a non-random pellet distribution." );
+ConVar tf_use_circular_weaponspreads("tf_use_circular_weaponspreads", "1", FCVAR_REPLICATED | FCVAR_NOTIFY, "If set to 1, weapons that fire multiple pellets per shot will use a true circular pellet distribution (for both random and fixed spread).");
 
 // Client specific.
 #ifdef CLIENT_DLL
@@ -116,11 +117,24 @@ Vector g_vecFixedWpnSpreadPellets[] =
 	Vector( -1,0,0 ),	
 	Vector( 0,-1,0 ),	
 	Vector( 0,1,0 ),	
-	Vector( 0.85,-0.85,0 ),	
-	Vector( 0.85,0.85,0 ),	
-	Vector( -0.85,-0.85,0 ),	
-	Vector( -0.85,0.85,0 ),	
-	Vector( 0,0,0 ),	// last pellet goes down the middle as well to reward fine aim
+	Vector( 0.85f,-0.85f,0 ),	
+	Vector( 0.85f,0.85f,0 ),	
+	Vector( -0.85f,-0.85f,0 ),	
+	Vector( -0.85f,0.85f,0 ),	
+};
+
+// 9, Circle
+Vector g_vecFixedWpnSpreadPelletsCircular[] =
+{
+	Vector(0,0,0),	// First and last pellet goes down the middle to reward fine aim
+	Vector(1,0,0),
+	Vector(-1,0,0),
+	Vector(0,-1,0),
+	Vector(0,1,0),
+	Vector(0.707f,-0.707f,0),
+	Vector(0.707f,0.707f,0),
+	Vector(-0.707f,-0.707f,0),
+	Vector(-0.707f,0.707f,0),
 };
 
 // 15, Rectangle - slight noise applied below (+/- 0.07)
@@ -280,11 +294,6 @@ void FX_FireBullets( CTFWeaponBase *pWpn, int iPlayer, const Vector &vecOrigin, 
 		nCustomDamageType = pWeapon->GetCustomDamageType();
 	}
 
-	if ( iWeapon != TF_WEAPON_MINIGUN )
-	{
-		fireInfo.m_iTracerFreq = 2;
-	}
-
 	// Reset multi-damage structures.
 	ClearMultiDamage();
 
@@ -298,8 +307,29 @@ void FX_FireBullets( CTFWeaponBase *pWpn, int iPlayer, const Vector &vecOrigin, 
 	}
 #endif // !CLIENT
 
+	float curtime = gpGlobals->curtime;
+
+	const float flTimeBetweenShots = pWeaponInfo->GetWeaponData(iMode).m_flTimeFireDelay;
+
 	int nBulletsPerShot = pWeaponInfo->GetWeaponData( iMode ).m_nBulletsPerShot;
-	bool bFixedSpread = ( nDamageType & DMG_BUCKSHOT ) && ( nBulletsPerShot > 1 ) && IsFixedWeaponSpreadEnabled( pWpn );
+	const bool bMultiShot = nBulletsPerShot > 1;
+
+	float flTimeSinceLastShot = pWpn ? (curtime - pWpn->m_flLastFireTime) : flTimeBetweenShots;
+
+	if ( iWeapon != TF_WEAPON_MINIGUN )
+	{
+		if (flTimeSinceLastShot >= 0.25f && !bMultiShot)
+		{
+			fireInfo.m_iTracerFreq = 1;
+		}
+		else
+		{
+			fireInfo.m_iTracerFreq = 2;
+		}
+	}
+
+	bool bShotgun = nDamageType & DMG_BUCKSHOT;
+	bool bFixedSpread = bShotgun && ( bMultiShot ) && IsFixedWeaponSpreadEnabled( pWpn );
 	if ( pWeapon )
 	{
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, nBulletsPerShot, mult_bullets_per_shot );
@@ -333,26 +363,56 @@ void FX_FireBullets( CTFWeaponBase *pWpn, int iPlayer, const Vector &vecOrigin, 
 					iSpread -= ARRAYSIZE( g_vecFixedWpnSpreadPellets );
 				}
 				float flScalar = 0.5f;
-				x = g_vecFixedWpnSpreadPellets[iSpread].x * flScalar;
-				y = g_vecFixedWpnSpreadPellets[iSpread].y * flScalar;
+				if (tf_use_circular_weaponspreads.GetBool())
+				{
+					x = g_vecFixedWpnSpreadPelletsCircular[iSpread].x * flScalar;
+					y = g_vecFixedWpnSpreadPelletsCircular[iSpread].y * flScalar;
+				}
+				else
+				{
+					x = g_vecFixedWpnSpreadPellets[iSpread].x * flScalar;
+					y = g_vecFixedWpnSpreadPellets[iSpread].y * flScalar;
+				}
 			}
 		}
 		else
 		{
 			float flVariance = 0.5f;
 
-			if ( iBullet == 0 && pWpn )
+			// two bullets down the crosshair for shotguns, like fixed spread.
+			const bool bAccurateBullet = bShotgun ? iBullet == 0 || iBullet == 1 : iBullet == 0;
+
+			if ( bAccurateBullet && pWpn )
 			{
 				bool bAccuracyBonus = false;
-				float flTimeSinceLastShot = ( gpGlobals->curtime - pWpn->m_flLastFireTime );
-
-				if ( nBulletsPerShot > 1 && flTimeSinceLastShot > 0.25f )
+				float flTimeSinceLastAccurateShot = ( curtime - pWpn->m_flLastAccurateFireTime );
+				const float flMinAccuracyCooldown = 0.25f;
+				const float flMaxAccuracyCooldown = nBulletsPerShot == 1 ? 1.25f : flMinAccuracyCooldown;
+				if ( nBulletsPerShot > 1 )
 				{
-					bAccuracyBonus = true;
+#if defined(MCOMS_BALANCE_PACK_SPREAD_CHANGES) || 1
+					const bool bAccurateShot = bShotgun || !bMultiShot ? flTimeSinceLastShot > flMinAccuracyCooldown : flTimeSinceLastAccurateShot > flMinAccuracyCooldown;
+#else
+					const bool bAccurateShot = flTimeSinceLastShot > flMinAccuracyCooldown;
+#endif
+					if (bAccurateShot)
+					{
+						bAccuracyBonus = true;
+					}
 				}
-				else if ( nBulletsPerShot == 1 && flTimeSinceLastShot > 1.25f )
+				else
 				{
-					bAccuracyBonus = true;
+#if defined(MCOMS_BALANCE_PACK_SPREAD_CHANGES)
+					// Give players control over accuracy vs. speed on their revolvers / pistols
+					constexpr float flShotTimeCooldown = 1.0f / 0.4f;
+					const float flAccuracyCooldown = clamp(flTimeBetweenShots * flShotTimeCooldown, flMinAccuracyCooldown, flMaxAccuracyCooldown);
+#else
+					const float flAccuracyCooldown = flMaxAccuracyCooldown;
+#endif
+					if (flTimeSinceLastShot > flAccuracyCooldown)
+					{
+						bAccuracyBonus = true;
+					}
 				}
 
 				if ( bAccuracyBonus )
@@ -366,15 +426,36 @@ void FX_FireBullets( CTFWeaponBase *pWpn, int iPlayer, const Vector &vecOrigin, 
 				}
 			}
 
-			if ( flVariance != 0.f )
+			if ( flVariance != 0.f && flSpread != 0.f )
 			{
-				x = RandomFloat( -flVariance, flVariance ) + RandomFloat( -flVariance, flVariance );
-				y = RandomFloat( -flVariance, flVariance ) + RandomFloat( -flVariance, flVariance );
+				float flScalar = 1.0f;
+				if (tf_use_circular_weaponspreads.GetBool())
+				{
+					float angle = M_PI * 2.0f * RandomFloat();
+					float radius = flScalar * FastSqrt(RandomFloat());
+					float s, c;
+					FastSinCos(angle, &s, &c);
+					x = radius * s;
+					y = radius * c;
+				}
+				else
+				{
+					x = RandomFloat(-0.5, 0.5) + RandomFloat(-0.5, 0.5);
+					y = RandomFloat(-0.5, 0.5) + RandomFloat(-0.5, 0.5);
+					x *= flScalar;
+					y *= flScalar;
+				}
 			}
+#if !defined (CLIENT_DLL)
+			else if (pWpn && flVariance == 0.0f)
+			{
+				pWpn->m_flLastAccurateFireTime = curtime;
+			}
+#endif
 		}
 
 		// Initialize the variable firing information.
-		fireInfo.m_vecDirShooting = vecShootForward + ( x *  flSpread * vecShootRight ) + ( y * flSpread * vecShootUp );
+		fireInfo.m_vecDirShooting = vecShootForward + ( x * flSpread * vecShootRight ) + ( y * flSpread * vecShootUp );
 		fireInfo.m_vecDirShooting.NormalizeInPlace();
 		fireInfo.m_bUseServerRandomSeed = pWpn && pWpn->UseServerRandomSeed();
 

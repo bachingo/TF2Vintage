@@ -36,6 +36,8 @@
 #include "tf_gc_shared.h"
 #include "tf_party.h"
 #include "iserver.h"
+#include "hltvdirector.h"
+#include "team.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -1251,6 +1253,14 @@ public:
 };
 GC_REG_JOB( GCSDK::CGCClient, CGCKickPlayerFromLobbyJob, "CGCKickPlayerFromLobbyJob", k_EMsgGC_KickPlayerFromLobby, GCSDK::k_EServerTypeGCClient );
 
+ConVar sv_debug_game_server_update( "sv_debug_game_server_update", "0", FCVAR_HIDDEN );
+
+#define MsgGameServerUpdate( ... )					 \
+	do												 \
+	{												 \
+		if ( sv_debug_game_server_update.GetBool() ) \
+			::Msg( __VA_ARGS__ );					 \
+	} while ( false )
 
 //-----------------------------------------------------------------------------
 CTFGCServerSystem::CTFGCServerSystem()
@@ -1280,6 +1290,15 @@ CTFGCServerSystem::CTFGCServerSystem()
 	m_timeLastConnectedToGC = 0.f;
 	m_pMatchInfo = NULL;
 
+	m_iServerIP = 0;
+	m_iServerPort = 0;
+	memset( m_pzServerIP, 0, ARRAYSIZE(m_pzServerIP) );
+	memset( m_pzHostName, 0, ARRAYSIZE(m_pzHostName) );
+	m_iLastNumBots = 0;
+	m_iLastNumHumans = 0;
+	m_flNextGameServerDataUpdate = 0.0;
+	m_bInSteamServerFrame = false;
+
 	g_bWarnedAboutMaxplayersInMVM = false;
 }
 
@@ -1300,6 +1319,8 @@ bool CTFGCServerSystem::Init()
 {
 	ListenForGameEvent( "player_disconnect" );
 	ListenForGameEvent( "player_score_changed" );
+	ListenForGameEvent( "server_spawn" );
+	ListenForGameEvent( "server_shutdown" );
 
 	g_bWarnedAboutMaxplayersInMVM = false;
 	return true;
@@ -1365,6 +1386,17 @@ void CTFGCServerSystem::LevelInitPreEntity()
 //	m_nUploadingMatchStats = EDOTA_MATCH_STATS_IDLE;
 }
 
+void CTFGCServerSystem::LevelInitPostEntity()
+{
+	BaseClass::LevelInitPostEntity();
+
+	// if this is the first time we are updating, then update after 5 seconds of level init
+	if ( m_flNextGameServerDataUpdate == -1.0 )
+	{
+		m_flNextGameServerDataUpdate = CRTime::RTime32TimeCur() + 5.0;
+		MsgGameServerUpdate( "[GameServerUpdate] LevelInitPostEntity: Update Queued: %f (in %f)\n", m_flNextGameServerDataUpdate, m_flNextGameServerDataUpdate - CRTime::RTime32TimeCur() );
+	}
+}
 
 //-----------------------------------------------------------------------------
 void CTFGCServerSystem::ClientActive( CSteamID steamIDClient )
@@ -1378,6 +1410,8 @@ void CTFGCServerSystem::ClientActive( CSteamID steamIDClient )
 		}
 		return;
 	}
+	
+	UpdateServerDataAndRefresh();
 
 	CMatchInfo *pMatch = GetMatch();
 	CMatchInfo::PlayerMatchData_t *pMatchPlayer = pMatch ? pMatch->GetMatchDataForPlayer( steamIDClient ) : NULL;
@@ -1485,6 +1519,13 @@ void CTFGCServerSystem::PreClientUpdate( )
 	CRTime::UpdateRealTime();
 
 	WebapiEquipmentThink();
+
+	if ( m_flNextGameServerDataUpdate > 0 && m_flNextGameServerDataUpdate <= CRTime::RTime32TimeCur() )
+	{
+		MsgGameServerUpdate( "[GameServerUpdate] PreClientUpdate: Doing game server data update\n");
+		m_flNextGameServerDataUpdate = 0.0;
+		UpdateServerDataAndRefresh();
+	}
 
 	if ( GCClientSystem()->BConnectedtoGC() )
 	{
@@ -1600,8 +1641,58 @@ void CTFGCServerSystem::PreClientUpdate( )
 	}
 	else
 	{
+		int iRedTeamSize = TFGameRules()->GetTeamSize(TF_TEAM_RED);
+		int iBluTeamSize = TFGameRules()->GetTeamSize(TF_TEAM_BLUE);
+
+		bool bOverridingMaxPlayers = iRedTeamSize > 0 && iBluTeamSize > 0;
+
 		// Not in MvM.  Check for restoring sv_visiblemaxplayers
-		if ( m_bOverridingVisibleMaxPlayers )
+		if ( bOverridingMaxPlayers )
+		{
+			// This changes what the server browser displays
+			// count only non-bot spectators
+			CUtlVector<CTFPlayer*> spectatorVector;
+			CollectPlayers( &spectatorVector, TEAM_SPECTATOR );
+			int spectatorCount = 0;
+			FOR_EACH_VEC( spectatorVector, iIndex )
+			{
+				if ( !spectatorVector[iIndex]->IsBot() && !spectatorVector[iIndex]->IsReplay() && !spectatorVector[iIndex]->IsHLTV() )
+				{
+					spectatorCount++;
+				}
+			}
+
+			int iRedNumPlayers = GetGlobalTeam(TF_TEAM_RED)->GetNumPlayers();
+			int iBluNumPlayers = GetGlobalTeam(TF_TEAM_BLUE)->GetNumPlayers();
+
+			// if we have a full server of players, we want to add one more slot for a connecting player to be able to spectate, instead of advertising as full.
+			int totalPlayers = iRedTeamSize + iBluTeamSize + spectatorCount; // how many slots we have
+			int actualPlayers = iRedNumPlayers + iBluNumPlayers + spectatorCount + 2; // how many slots we occupy, plus 2 for the connecting players
+
+			// we want at least 24 players since we want to retain the legacy default max player count if we can.
+			int playerCount = Max( Max( totalPlayers, actualPlayers ), 24);
+			// cannot be more than maxplayers.
+			if ( playerCount > gpGlobals->maxClients )
+			{
+				playerCount = gpGlobals->maxClients;
+			}
+			if ( sv_visiblemaxplayers.GetInt() != 0 && sv_visiblemaxplayers.GetInt() != playerCount )
+			{
+				MMLog( "Setting sv_visiblemaxplayers to %d\n", playerCount );
+
+				// save off visible players
+				if ( !m_bOverridingVisibleMaxPlayers )
+				{
+					m_bOverridingVisibleMaxPlayers = true;
+					m_iSavedVisibleMaxPlayers = sv_visiblemaxplayers.GetInt();
+				}
+
+				sv_visiblemaxplayers.SetValue( playerCount );
+			}
+		}
+
+		// Not in MvM.  Check for restoring sv_visiblemaxplayers
+		if ( !bOverridingMaxPlayers && m_bOverridingVisibleMaxPlayers )
 		{
 			MMLog( "Restoring sv_visiblemaxplayers to %d\n", m_iSavedVisibleMaxPlayers );
 			sv_visiblemaxplayers.SetValue( m_iSavedVisibleMaxPlayers );
@@ -2341,6 +2432,87 @@ void CTFGCServerSystem::FireGameEvent( IGameEvent *event )
 		// Add to this player's score XP
 		pMatch->GiveXPRewardToPlayerForAction( steamId, CMsgTFXPSource_XPSourceType_SOURCE_SCORE, event->GetInt( "delta", 0 ) );
 	}
+	else if ( FStrEq( event->GetName(), "server_spawn" ) )
+	{
+		bool bFirstTime = m_iServerIP == 0;
+		
+		{
+			const char *pzAddress = event->GetString( "address" );
+			if ( pzAddress )
+			{
+				m_iServerPort = event->GetInt( "port" );
+				V_snprintf( m_pzServerIP, ARRAYSIZE(m_pzServerIP), "%s:%d", pzAddress, event->GetInt( "port" ) );
+				CUtlStringList IPs;
+				V_SplitString( m_pzServerIP, ".", IPs );
+
+				if ( IPs.Count() < 4 )
+				{
+					m_iServerIP = 0;
+				}
+				else
+				{
+					byte ip[4];
+					m_iServerIP = 0;
+					for ( int i = 0; i < IPs.Count() && i < 4; ++i )
+					{
+						ip[i] = ( byte )Q_atoi( IPs[i] );
+					}
+					m_iServerIP = ( ip[0] << 24 ) + ( ip[1] << 16 ) + ( ip[2] << 8 ) + ip[3];
+				}
+			}
+			else
+			{
+				V_strncpy( m_pzServerIP, "No Server Address", sizeof( m_pzServerIP ) );
+				m_iServerIP = 0;
+			}
+			MsgGameServerUpdate( "[GameServerUpdate] server_spawn: set IP & port %s %d %d\n", m_pzServerIP, m_iServerIP, m_iServerPort );
+		}
+
+		{
+			const char *pzHostname = event->GetString( "hostname" );
+			if ( pzHostname )
+			{
+				V_strncpy( m_pzHostName, pzHostname, sizeof( m_pzHostName ) );
+			}
+			else
+			{
+				V_strncpy( m_pzHostName, "No Host Name", sizeof( m_pzHostName ) );
+			}
+			MsgGameServerUpdate( "[GameServerUpdate] server_spawn: hostname %s\n", m_pzHostName );
+		}
+
+		// Override with fake IP
+		IServer* pGameServer = engine->GetIServer();
+		netadr_t netAdrFakeIP;
+		if ( pGameServer && pGameServer->IsUsingFakeIP() )
+		{
+			netAdrFakeIP = pGameServer->GetPublicAddress();
+			if ( netAdrFakeIP.IsValid() )
+			{
+				m_iServerIP = netAdrFakeIP.GetIPHostByteOrder();
+				m_iServerPort = netAdrFakeIP.GetPort();
+				MsgGameServerUpdate( "[GameServerUpdate] server_spawn: updated IP & port %d %d\n", m_iServerIP, m_iServerPort );
+			}
+		}
+
+		if ( bFirstTime )
+		{
+			MsgGameServerUpdate( "[GameServerUpdate] server_spawn: first time\n" );
+			// mark this as first time
+			m_flNextGameServerDataUpdate = -1.0;
+		}
+		else
+		{
+			MsgGameServerUpdate( "[GameServerUpdate] server_spawn\n" );
+			UpdateServerData();
+		}
+	}
+	else if ( FStrEq( event->GetName(), "server_shutdown" ) )
+	{
+		MsgGameServerUpdate( "[GameServerUpdate] server_shutdown\n" );
+		// TODO(mcoms): this doesn't really work :/
+		UpdateServerData( true );
+	}
 }
 
 CTFParty* CTFGCServerSystem::GetPartyForPlayer( CSteamID steamID ) const
@@ -2648,7 +2820,140 @@ bool CTFGCServerSystem::ShouldHideServer()
 // browser wil not list us.
 //	if ( m_bMMServerMode && tf_mm_strict.GetBool() )
 //		return true;
+	m_bInSteamServerFrame = true;
 	return false;
+}
+
+void CTFGCServerSystem::UpdateServerDataAndRefresh()
+{
+	// TODO(mcoms): this is a very ELEGANT solution to detect when our steam server is in frame vs. refreshing on an event.
+	if ( m_bInSteamServerFrame )
+	{
+		m_bInSteamServerFrame = false;
+		return;
+	}
+	// if this isn't an early update, then fulfill the update.
+	// we want this to act as a queue, so we don't want to fulfill too early.
+	if ( m_flNextGameServerDataUpdate > CRTime::RTime32TimeCur() )
+	{
+		MsgGameServerUpdate( "[GameServerUpdate] UpdateServerDataAndRefresh: not ready\n" );
+		return;
+	}
+	MsgGameServerUpdate( "[GameServerUpdate] UpdateServerDataAndRefresh: ready\n" );
+	m_flNextGameServerDataUpdate = 0.0;
+	IServer* pGameServer = engine->GetIServer();
+	netadr_t netAdrIP;
+	if ( pGameServer )
+	{
+		MsgGameServerUpdate( "[GameServerUpdate] UpdateServerDataAndRefresh: updated port\n" );
+		m_iServerPort = pGameServer->GetLocalUDPPort();
+		netAdrIP = pGameServer->GetPublicAddress();
+		if ( netAdrIP.IsValid() )
+		{
+			m_iServerIP = netAdrIP.GetIPHostByteOrder();
+			m_iServerPort = netAdrIP.GetPort();
+			MsgGameServerUpdate( "[GameServerUpdate] UpdateServerDataAndRefresh: updated IP & port\n" );
+		}
+	}
+	UpdateServerData();
+}
+
+void CTFGCServerSystem::UpdateServerData( bool bShutdown )
+{
+	const uint64 iSteamId = SteamGameServer() ? SteamGameServer()->GetSteamID().ConvertToUint64() : 0;
+	const bool bNotReady = m_iServerIP == 0 || m_iServerPort == 0 || iSteamId <= 1;
+	MsgGameServerUpdate( "[GameServerUpdate] UpdateServerData: ready conds: %d %d %lld\n", m_iServerIP, m_iServerPort, iSteamId );
+	if ( bNotReady && !bShutdown )
+	{
+		m_flNextGameServerDataUpdate = Max( m_flNextGameServerDataUpdate, CRTime::RTime32TimeCur() + 1.0);
+		return;
+	}
+
+	MsgGameServerUpdate( "[GameServerUpdate] UpdateServerData: posting message\n");
+
+	GCSDK::CProtoBufMsg<CMsgGameServerData> msg( k_EMsgGC_GameServer_UpdateData );
+	msg.Body().set_revision( 1 );
+
+	const ConVar* hostname = cvar->FindVar( "hostname" );
+	msg.Body().set_server_name( hostname->GetString() );
+
+	msg.Body().set_fake_ip( m_iServerIP );
+	msg.Body().set_game_port( m_iServerPort );
+
+#if defined( _WIN32 )
+		msg.Body().set_os( "w" );
+#elif defined( OSX )
+		msg.Body()
+			.set_os( "m" );
+#else
+		msg.Body()
+			.set_os( "l" );
+#endif
+
+	msg.Body().set_server_steamid( iSteamId );
+	msg.Body().set_secure( SteamGameServer() ? SteamGameServer()->BSecure() : false );
+	msg.Body().set_dedicated( engine->IsDedicatedServer() );
+	msg.Body().set_map( bShutdown ? "" : gpGlobals->mapname.ToCStr() );
+	msg.Body().set_app_id( engine->GetAppID() );
+	msg.Body().set_gamedir( "tc2" );
+	static ConVarRef sv_region( "sv_region" );
+	msg.Body().set_region( sv_region.GetString() );
+	static ConVarRef sv_password( "sv_password" );
+	msg.Body().set_password( *sv_password.GetString() != '\0' );
+	static ConVarRef sv_tags( "sv_tags" );
+	msg.Body().set_game_type( sv_tags.GetString() );
+	// TODO(mcoms): this isn't really the right version, but we can make do.
+	msg.Body().set_version( UTIL_VarArgs( "%d", engine->GetServerVersion() ) );
+
+	// players
+	for ( int i = 1; i <= gpGlobals->maxClients; i++ )
+	{
+		CBasePlayer* pPlayer = UTIL_PlayerByIndex( i );
+		if ( !pPlayer || !pPlayer->IsConnected() || pPlayer->IsFakeClient() )
+			continue;
+
+		CSteamID steamId;
+		pPlayer->GetSteamID( &steamId );
+		// shouldn't happen, but other system will handle asserting for it
+		if ( !steamId.IsValid() )
+			continue;
+
+		CMsgGameServerData_Player* pPlayerData = msg.Body().add_players();
+		pPlayerData->set_steam_id( steamId.ConvertToUint64() );
+	}
+
+	// max players
+	int iMaxPlayers = gpGlobals->maxClients;
+	static ConVarRef sv_visiblemaxplayers( "sv_visiblemaxplayers" );
+	if ( sv_visiblemaxplayers.GetInt() > 0 && sv_visiblemaxplayers.GetInt() < iMaxPlayers )
+	{
+		iMaxPlayers = sv_visiblemaxplayers.GetInt();
+	}
+	msg.Body().set_max_players( iMaxPlayers );
+	msg.Body().set_bot_count( TheNextBots().GetNextBotCount() );
+
+	BSendMessageComtress( msg, UtlMakeDelegate( this, &CTFGCServerSystem::OnServerDataUpdated ) );
+}
+
+void CTFGCServerSystem::OnServerDataUpdated( GCSDK::CWebAPIValues* pResponse )
+{
+	static ConVarRef sv_private_token( "sv_private_token" );
+	if ( sv_private_token.GetString() && sv_private_token.GetString()[0] != '\0' && engine->IsDedicatedServer() )
+	{
+		return;
+	}
+	if ( GCSDK::CWebAPIValues* pData = pResponse->FindChild( "data" ) )
+	{
+		if ( pData->FindChild( "token" ) )
+		{
+			CUtlString sValue;
+			pData->GetChildStringValue( sValue, "token", "" );
+			if ( !sValue.IsEmpty() )
+			{
+				sv_private_token.SetValue( sValue.String() );
+			}
+		}
+	}
 }
 
 bool CTFGCServerSystem::SteamIDAllowedToConnect(const CSteamID &steamID) const
@@ -3303,7 +3608,6 @@ void CTFGCServerSystem::UpdateConnectedPlayersAndServerInfo( CMsgGameServerMatch
 		nBotCountToSend = -1;
 		sGameServerInfoMap = STRING( gpGlobals->mapname );
 		sGameServerInfoTags = sv_tags.GetString();
-		sGameServerInfoTags.Clear();
 
 		// Set the "map" to the current challenge, if in MvM
 		if ( TFGameRules()->IsMannVsMachineMode() )
@@ -3748,18 +4052,21 @@ void CTFGCServerSystem::SendPlayerLeftMatch( CSteamID targetPlayer, TFMatchLeave
 void CTFGCServerSystem::SendCompetitiveMatchResult( GCSDK::CProtoBufMsg< CMsgGC_Match_Result > *pMatchResultMsg )
 {
 	// We should have matchinfo when completing a ladder match
+	// We should have matchinfo when completing a ladder match
 	if ( !m_pMatchInfo )
 	{
 		Warning( "Sending competitive match results without match info!\n" );
 		Assert( false );
 	}
 
-	if ( m_pMatchInfo->m_bSentResult )
+	if ( m_pMatchInfo && m_pMatchInfo->m_bSentResult )
 	{
 		Warning( "Sending competitive match results without an ended match\n" );
 		Assert( false );
 	}
 
+	// TODO(mcoms)
+#if 0
 	ReliableMsgMatchResult *pReliable = new ReliableMsgMatchResult;
 	auto &msg = pReliable->Msg().Body();
 	/// XXX(JohnS): With refactor this is now kinda silly. Callers should really just be giving us a CMsgGC_Match_Result
@@ -3768,6 +4075,9 @@ void CTFGCServerSystem::SendCompetitiveMatchResult( GCSDK::CProtoBufMsg< CMsgGC_
 	ReliableMsgQueue().Enqueue( pReliable );
 
 	m_pMatchInfo->m_bSentResult = true;
+#else
+	BSendMessageComtress( *pMatchResultMsg );
+#endif
 }
 
 // **************************************************************************************************
@@ -4093,7 +4403,7 @@ void CTFGCServerSystem::WebapiEquipmentThinkRequest( CSteamID steamID, WebapiEqu
 
 		if ( state.m_hEquipmentRequest != INVALID_HTTPREQUEST_HANDLE )
 		{
-			SteamHTTP()->ReleaseHTTPRequest( state.m_hEquipmentRequest );
+			SteamGameServerHTTP()->ReleaseHTTPRequest( state.m_hEquipmentRequest );
 			state.m_hEquipmentRequest = INVALID_HTTPREQUEST_HANDLE;
 		}
 
@@ -4103,10 +4413,12 @@ void CTFGCServerSystem::WebapiEquipmentThinkRequest( CSteamID steamID, WebapiEqu
 	case kWebapiEquipmentState_WaitingForClientRequest:
 	{
 		Assert( state.m_pKVCurrentRequest == nullptr );
-		if ( state.m_pKVNextRequest == nullptr )
+		constexpr int iMaxPart = ( 1 << ( TF_LAST_NORMAL_CLASS - 1 ) ) - 1;
+		if ( state.m_pKVNextRequest == nullptr || state.iPartsReceived < iMaxPart )
 			return;
 
 		V_swap( state.m_pKVCurrentRequest, state.m_pKVNextRequest );
+		state.iPartsReceived = 0;
 
 		state.m_eState = kWebapiEquipmentState_RequestInventory;
 		// fallthrough
@@ -4117,14 +4429,14 @@ void CTFGCServerSystem::WebapiEquipmentThinkRequest( CSteamID steamID, WebapiEqu
 		Assert( state.m_pKVCurrentRequest != nullptr );
 		KeyValues* pKV = state.m_pKVCurrentRequest;
 
-		if ( !SteamHTTP() )
+		if ( !SteamGameServerHTTP() )
 			return;
 
 		// Request inventory from teamfortress.com webapi
 		CFmtStr strUrl( "%swebapi/ISDK/GetEquipment/v0001", GetWebBaseUrl() );
 
 		state.m_EquipmentRequestCompleted.Cancel();
-		state.m_hEquipmentRequest = SteamHTTP()->CreateHTTPRequest( k_EHTTPMethodGET, strUrl.Get() );
+		state.m_hEquipmentRequest = SteamGameServerHTTP()->CreateHTTPRequest( k_EHTTPMethodGET, strUrl.Get() );
 		if ( state.m_hEquipmentRequest == INVALID_HTTPREQUEST_HANDLE )
 		{
 			// try again next frame
@@ -4132,18 +4444,18 @@ void CTFGCServerSystem::WebapiEquipmentThinkRequest( CSteamID steamID, WebapiEqu
 		}
 
 		// This mod's appid (NOT tf2's appid)
-		SteamHTTP()->SetHTTPRequestGetOrPostParameter( state.m_hEquipmentRequest, "appid", CNumStr( engine->GetAppID() ) );
+		SteamGameServerHTTP()->SetHTTPRequestGetOrPostParameter( state.m_hEquipmentRequest, "appid", CNumStr( engine->GetAppID() ) );
 
 		// Item list
-		SteamHTTP()->SetHTTPRequestGetOrPostParameter( state.m_hEquipmentRequest, "msg", pKV->GetString( "msg", nullptr ) );
+		SteamGameServerHTTP()->SetHTTPRequestGetOrPostParameter( state.m_hEquipmentRequest, "msg", pKV->GetString( "msg", nullptr ) );
 
 		// Authentication token
-		SteamHTTP()->SetHTTPRequestGetOrPostParameter( state.m_hEquipmentRequest, "ticket", pKV->GetString( "ticket", nullptr ) );
+		SteamGameServerHTTP()->SetHTTPRequestGetOrPostParameter( state.m_hEquipmentRequest, "ticket", pKV->GetString( "ticket", nullptr ) );
 
 		if ( GetUniverse() != k_EUniversePublic )
 		{
 			// use beta tf2 appid on non public universes
-			SteamHTTP()->SetHTTPRequestGetOrPostParameter( state.m_hEquipmentRequest, "game_appid", "810" );
+			SteamGameServerHTTP()->SetHTTPRequestGetOrPostParameter( state.m_hEquipmentRequest, "game_appid", "810" );
 		}
 
 		// Is there a way we can validate the existing so cache?  We could only request the new items.
@@ -4160,8 +4472,9 @@ void CTFGCServerSystem::WebapiEquipmentThinkRequest( CSteamID steamID, WebapiEqu
 		//}
 
 		SteamAPICall_t callResult;
-		if ( !SteamHTTP()->SendHTTPRequest( state.m_hEquipmentRequest, &callResult ) )
+		if ( !SteamGameServerHTTP()->SendHTTPRequest( state.m_hEquipmentRequest, &callResult ) )
 		{
+			DevWarning("Equipment request failed.\n");
 			state.Backoff();
 			return;
 		}
@@ -4186,6 +4499,7 @@ void CTFGCServerSystem::WebapiEquipmentThinkRequest( CSteamID steamID, WebapiEqu
 		// Don't allow spamming this api -- wait 20 seconds before we ask gc for items again
 		state.RequestSucceeded();
 		state.Backoff();
+		DevMsg("Inventory received: backing off before another request.\n");
 		state.m_eState = kWebapiEquipmentState_WaitingForClientRequest;
 		break;
 
@@ -4204,14 +4518,61 @@ void CTFGCServerSystem::ProcessPlayerInventoryRequest( CSteamID steamID, KeyValu
 	WebapiEquipmentState_t& state = FindOrCreateWebapiEquipmentState( steamID );
 
 	// If they have a pending request we haven't acted on, it's now stale.
-	if( state.m_pKVNextRequest )
+	if ( !pKVRequest->GetString("msg", nullptr) )
+	{
+		return;
+	}
+
+	if ( !pKVRequest->GetString("ticket", nullptr) )
+	{
+		return;
+	}
+
+	const int iRequestPart = pKVRequest->GetInt("part", 0);	
+	if ( iRequestPart < TF_FIRST_NORMAL_CLASS || iRequestPart >= TF_LAST_NORMAL_CLASS )
+	{
+		return;
+	}
+	const int iPart = iRequestPart - 1;
+
+	int bit = 1 << iPart;
+
+	// If they have a pending request we haven't acted on, it's now stale.
+	if ( state.iPartsReceived != 0 && ( state.iPartsReceived & bit || V_stricmp( state.m_pKVNextRequest->GetString( "ticket" ), pKVRequest->GetString( "ticket" ) ) ) )
 	{
 		state.m_pKVNextRequest->deleteThis();
 		state.m_pKVNextRequest = nullptr;
+		state.iPartsReceived = 0;
 	}
 
 	// Clone off their existing request for processing
-	state.m_pKVNextRequest = pKVRequest->MakeCopy();
+	if ( state.iPartsReceived )
+	{
+		state.m_pKVNextRequest->RecursiveMergeKeyValues( pKVRequest->MakeCopy() );
+	}
+	else
+	{
+		state.m_pKVNextRequest = pKVRequest->MakeCopy();
+	}
+
+	state.iPartsReceived |= bit;
+
+	RTime32 iSecsLeft = state.m_rtNextRequest > CRTime::RTime32TimeCur() ? state.m_rtNextRequest - CRTime::RTime32TimeCur() : 0;
+	if ( state.m_rtNextRequest > 0 && iSecsLeft > 5 && iPart == 0 )
+	{
+		CTFPlayer* pTFPlayer = ToTFPlayer( GetPlayerBySteamID( steamID ) );
+		if ( pTFPlayer )
+		{
+			IGameEvent * event = gameeventmanager->CreateEvent( "sdk_inventory_cooldown" );
+			if ( event )
+			{
+				event->SetInt( "userid", pTFPlayer->GetUserID() );
+				event->SetInt( "time", iSecsLeft );
+
+				gameeventmanager->FireEvent( event );
+			}
+		}
+	}
 }
 
 void CTFGCServerSystem::WebapiEquipmentState_t::OnWebapiEquipmentReceived( HTTPRequestCompleted_t* pInfo, bool bIOFailure )
@@ -4229,36 +4590,41 @@ void CTFGCServerSystem::OnWebapiEquipmentReceived( CSteamID steamID, HTTPRequest
 	state.Backoff();
 	state.m_eState = kWebapiEquipmentState_RequestInventory;
 
-	if ( !SteamHTTP() )
+	if ( !SteamGameServerHTTP() )
+	{
+		DevWarning("Could not access HTTP API.\n");
 		return;
+	}
 
 	if( bIOFailure || !pInfo || state.m_hEquipmentRequest != pInfo->m_hRequest )
 	{
 		Assert( false );
 		if( state.m_hEquipmentRequest != INVALID_HTTPREQUEST_HANDLE )
 		{
-			SteamHTTP()->ReleaseHTTPRequest( state.m_hEquipmentRequest );
+			SteamGameServerHTTP()->ReleaseHTTPRequest( state.m_hEquipmentRequest );
 		}
+		DevWarning("Equipment state request invalid.\n");
 		return;
 	}
 
 	// request failed -- backoff and retry
 	if ( !pInfo->m_bRequestSuccessful || pInfo->m_eStatusCode != k_EHTTPStatusCode200OK )
 	{
-		SteamHTTP()->ReleaseHTTPRequest( state.m_hEquipmentRequest );
+		SteamGameServerHTTP()->ReleaseHTTPRequest( state.m_hEquipmentRequest );
+		DevWarning("Equipment state request failed.\n");
 		return;
 	}
 
 	// Extract the result
 	uint32 unBytes;
-	Verify( SteamHTTP()->GetHTTPResponseBodySize( pInfo->m_hRequest, &unBytes ) );
+	Verify( SteamGameServerHTTP()->GetHTTPResponseBodySize( pInfo->m_hRequest, &unBytes ) );
 	CUtlBuffer bufInventory;
 	bufInventory.EnsureCapacity( unBytes );
 	bufInventory.SeekPut( CUtlBuffer::SEEK_HEAD, unBytes );
-	Verify( SteamHTTP()->GetHTTPResponseBodyData( pInfo->m_hRequest, ( uint8* )bufInventory.Base(), unBytes ) );
+	Verify( SteamGameServerHTTP()->GetHTTPResponseBodyData( pInfo->m_hRequest, ( uint8* )bufInventory.Base(), unBytes ) );
 
 	// We're done with the request now
-	SteamHTTP()->ReleaseHTTPRequest( pInfo->m_hRequest );
+	SteamGameServerHTTP()->ReleaseHTTPRequest( pInfo->m_hRequest );
 
 	// Parse it to json and extract the data
 	GCSDK::CWebAPIValues* pValues = GCSDK::CWebAPIValues::ParseJSON( bufInventory );
@@ -4275,17 +4641,26 @@ void CTFGCServerSystem::OnWebapiEquipmentReceived( CSteamID steamID, HTTPRequest
 		break;
 
 	case k_EResultFail:
+	{
+		DevWarning("Equipment response failed.\n");
 		return; // will retry after backoff timer expires
+	}
 
 	case k_EResultValueOutOfRange:
+	{
 		// client gave us garbage?  Let's give them the benefit of the doubt and try again.
+		DevWarning("Equipment request from client failed.\n");
 		state.m_eState = kWebapiEquipmentState_NotifyClientOfFailure;
 		return;
+	}
 
 	case k_EResultNotLoggedOn:
+	{
 		// Ticket didn't authenticate successfully, ask them to send us a new one
+		DevWarning("Equipment request authentication failed.\n");
 		state.m_eState = kWebapiEquipmentState_NotifyClientOfFailure;
 		return;
+	}
 
 	default:
 	{
@@ -4365,7 +4740,7 @@ void CTFGCServerSystem::SDK_ApplyLocalLoadout(CGCClientSharedObjectCache* pCache
 	}
 
 	// Extract loadout information from the keyvalues and apply it to each item.
-	KeyValues* pLoadoutKV = pKVRequest->FindKey("local_loadout");
+	KeyValues* pLoadoutKV = pKVRequest->FindKey("o");
 	if (!pLoadoutKV)
 	{
 		Warning("Failed to find a loadout in SDK inventory message.\n");
@@ -4380,9 +4755,16 @@ void CTFGCServerSystem::SDK_ApplyLocalLoadout(CGCClientSharedObjectCache* pCache
 		FOR_EACH_SUBKEY(pClassKey, pLoadoutEntry)
 		{
 			const int iSlot = V_atoi(pLoadoutEntry->GetName());
-			const itemid_t uItemId = pLoadoutEntry->GetUint64();
+#if 0
+			const uint32 iItemIDHigh = (uint32)pLoadoutEntry->GetInt("h");
+			const uint32 iItemIDLow = (uint32)pLoadoutEntry->GetInt("l");
+			const uint64 iTmp = (((int64)iItemIDHigh) << 32) | iItemIDLow;
+			const itemid_t uItemId = iTmp;
+#else
+			const itemid_t uItemId = V_strtoui64( pLoadoutEntry->GetString( "s" ), nullptr, 10 );
+#endif
 
-			if (uItemId == INVALID_ITEM_ID || uItemId == 0)
+			if ( uItemId == INVALID_ITEM_ID || uItemId == 0 )
 				continue;
 
 			CEconItem soIndex;
@@ -4394,6 +4776,27 @@ void CTFGCServerSystem::SDK_ApplyLocalLoadout(CGCClientSharedObjectCache* pCache
 			}
 			else {
 				Warning("Failed to find item %llu in shared object, but client says it should be equipped by [%i] in slot [%i].\n", uItemId, iClass, iSlot);
+			}
+		}
+	}
+
+	if ( pKVRequest->GetBool("changed", true) )
+	{
+		// Copied from CGC_RespawnPostLoadoutChange
+		// Find the player with this steamID
+		CSteamID tmpID;
+		for ( int i = 1; i <= gpGlobals->maxClients; i++ )
+		{
+			CTFPlayer* pPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
+			if ( !pPlayer )
+				continue;
+			if ( !pPlayer->GetSteamID( &tmpID ) )
+				continue;
+
+			if ( tmpID == playerSteamID )
+			{
+				pPlayer->CheckInstantLoadoutRespawn();
+				break;
 			}
 		}
 	}
