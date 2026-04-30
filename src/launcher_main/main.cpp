@@ -486,8 +486,41 @@ int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 		return 0;
 	}
 
+	char newCmdLine[8192];
+
+	// Build new command line with absolute path
+	_snprintf(
+		newCmdLine,
+		sizeof(newCmdLine),
+		"-game \"%s\" %s",
+		pRootDir,
+		lpCmdLine ? lpCmdLine : ""
+	);
+
+	newCmdLine[sizeof(newCmdLine) - 1] = '\0';
+
 	LauncherMain_t main = (LauncherMain_t)GetProcAddress( launcher, "LauncherMain" );
-	return main( hInstance, hPrevInstance, lpCmdLine, nCmdShow );
+
+	// Detect if user already supplied -game
+	bool hasGameArg = false;
+
+	if ( lpCmdLine )
+	{
+		if ( strstr( lpCmdLine, " -game " ) ||
+			 strstr( lpCmdLine, "-game " ) == lpCmdLine )
+		{
+			hasGameArg = true;
+		}
+	}
+
+	// Respect explicit user override
+	if ( hasGameArg )
+	{
+		return main( hInstance, hPrevInstance, lpCmdLine, nCmdShow );
+	}
+
+	// Otherwise inject absolute path
+	return main( hInstance, hPrevInstance, newCmdLine, nCmdShow );
 }
 
 #elif defined (POSIX)
