@@ -216,93 +216,88 @@ public:
 
 	virtual bool IsActive( const CRTime& timeCurrent )
 	{
-		// --- STATIC CONSTANTS (Calculated once per session) ---
+		// --- Static Constants (Scientific Calibration Data) ---
+		
+		// Anchor: Total Lunar Eclipse of June 26, 2029 (Peak Opposition).
+		// This serves as the 'Day 0' for the 7th-order calculation.
 		static const uint32 iEclipseEpochUTC = 1877138531;
+		
+		// Lunar Distance / Speed of Light: Time (in seconds) for light to travel 
+		// from the Moon to Earth. Used to sync visual state with physical position.
 		static const double fLightTimeSeconds = 1.282;
+		
+		// Solar Day Refinement: Accounts for the slight drift in the length 
+		// of a mean solar day over long historical periods.
 		static const float  flSecondsPerDay = 86400.002f;
+		
 		static const double fTwoPi = 2.0 * M_PI;
 		
-		// Orbital Period Constants
-		static const double fSynodicMonth = 2551442.890; // Mean time between full moons
-		static const double fAnomalisticMonth = 2380713.12; 
-		static const double fDraconicMonth = 2351135.0;
-
-		// --- PER-CALL CALCULATIONS ---
+		// --- ORBITAL PERIODS (Mean Values used for Fundamental Arguments) ---
+		static const double fSynodicMonth = 2551442.890;   // New Moon to New Moon (Phase Cycle)
+		static const double fAnomalisticMonth = 2380713.12; // Perigee to Perigee (Distance Cycle)
+		static const double fDraconicMonth = 2351135.0;     // Node to Node (Ecliptic Crossing)
+	
+		// --- LIGHT-TIME COMPENSATION ---
+		// We calculate the moon's position at (T - 1.282s) because that is 
+		// the lunar state currently visible to an observer on Earth's surface.
 		const double fElapsedSeconds = ((double)timeCurrent.GetRTime32() - (double)iEclipseEpochUTC) - fLightTimeSeconds;
+	
+		// 1. Fundamental Arguments (Radians)
+		// These represent the mean angular positions of the Moon and Sun.
+		const double D       = fmod(fElapsedSeconds, fSynodicMonth) / fSynodicMonth * fTwoPi; // Mean Elongation
+		const double M       = fmod(fElapsedSeconds, fAnomalisticMonth) / fAnomalisticMonth * fTwoPi; // Moon Mean Anomaly
+		const double M_prime = fmod(2.1 + (0.01720209895 * (fElapsedSeconds / (double)flSecondsPerDay)), fTwoPi); // Sun Mean Anomaly
+		const double F       = fmod(fElapsedSeconds, fDraconicMonth) / fDraconicMonth * fTwoPi; // Argument of Latitude
+	
+		// 2. 7th-Order Correction ("Wobble")
+		// This accounts for gravitational perturbations, primarily from the Sun and Earth's 
+		// oblateness, which cause the Moon to speed up and slow down in its orbit.
+		// Coefficients represent the amplitude (in days) of gravitational perturbations.
+		const double fWobble = 
+		// [ELLIPTICAL] Primary orbit correction (Moon speed changing via distance)
+		  0.47119 * sin(M)                    // Equation of Center
 
-		// 2. Fundamental Arguments
-		const double D       = fmod(fElapsedSeconds, fSynodicMonth) / fSynodicMonth * fTwoPi;
-		const double M       = fmod(fElapsedSeconds, fAnomalisticMonth) / fAnomalisticMonth * fTwoPi;
-		const double M_prime = fmod(2.1 + (0.01720209895 * (fElapsedSeconds / (double)flSecondsPerDay)), fTwoPi);
-		const double F       = fmod(fElapsedSeconds, fDraconicMonth) / fDraconicMonth * fTwoPi;
-
-		// 3. 7th-Order Correction (Values here remain const as they are coefficients)
-		const double fWobble = 0.47119 * sin(M) 
-							+ 0.16512 * sin(2 * D - M)
-							- 0.22513 * sin(M_prime)
-							+ 0.02106 * sin(2 * D)
-							- 0.03504 * sin(D)
-							+ 0.00702 * sin(2 * D + M)
-							+ 0.00401 * sin(2 * D - 2 * M_prime)
-							+ 0.00201 * sin(M - M_prime)
-							+ 0.00062 * sin(2 * M - 2 * M_prime)
-							+ 0.00021 * sin(M + M_prime)
-							+ 0.00063 * sin(2 * F)
-							+ 0.00035 * sin(M)
-							- 0.01140 * sin(2 * F);
-
-		const double fWobbleSeconds = fWobble * (double)flSecondsPerDay;
-
-		// 4. Corrected Cycle Position
+		// [SOLAR] The Sun's pull changing the shape and timing of the orbit
+		+ 0.16512 * sin(2 * D - M)            // Evection (Solar pull on eccentricity)
+		+ 0.02106 * sin(2 * D)                // Variation (Gravitational flux)
+		- 0.22513 * sin(M_prime)              // Annual Equation (Earth-Sun distance)
+		
+		// [PARALLACTIC] Corrections for the Sun's finite distance (not infinite)
+		- 0.03504 * sin(D)                    // Parallactic Equation (General Sun proximity)
+		+ 0.00032 * sin(D - M)                // Parallactic Inequality (Elliptical Sun proximity)
+		
+		// [PLANETARY] Tugs from other celestial bodies
+		+ 0.00702 * sin(2 * D + M)            // Venus/Jupiter resonance
+		+ 0.00401 * sin(2 * D - 2 * M_prime)  // Jupiter's long-term perturbation
+		
+		// [GEODETIC] Physical constraints of the Earth/Moon alignment
+		+ 0.00063 * sin(2 * F)                // Reduction to Ecliptic (Orbit tilt correction)
+		- 0.01140 * sin(F);                   // Nodal Precession (Earth's equatorial bulge / J2 effect)
+	
+		// 3. Corrected Cycle Position
+		// Translating the mean time into 'Actual' time by applying the gravitational wobble.
 		double fCurrentCycleSeconds = fmod(fElapsedSeconds, fSynodicMonth);
 		if (fCurrentCycleSeconds < 0) fCurrentCycleSeconds += fSynodicMonth;
-
-		double fCorrectedSeconds = fmod(fCurrentCycleSeconds - fWobbleSeconds, fSynodicMonth);
+	
+		double fCorrectedSeconds = fmod(fCurrentCycleSeconds - (fWobble * (double)flSecondsPerDay), fSynodicMonth);
 		if (fCorrectedSeconds < 0) fCorrectedSeconds += fSynodicMonth;
-
-		// 5. Visibility Window
-		const int iBufferTimeInSeconds = (int)(m_fBonusTimeInDays * flSecondsPerDay);
-		
-		return (fCorrectedSeconds < iBufferTimeInSeconds || fCorrectedSeconds > (fSynodicMonth - iBufferTimeInSeconds));
+	
+		// 4. Dynamic Phase Angle
+		// Convert corrected seconds into a degree-based position (0 to 360).
+		// 0.0 degrees represents the absolute center of the Full Moon peak.
+		double fCorrectedDegrees = (fCorrectedSeconds / fSynodicMonth) * 360.0;
+	
+		// Calculate the shortest angular distance from the Peak (handles the 360/0 wrap).
+		double fAngleFromPeak = fCorrectedDegrees;
+		if (fAngleFromPeak > 180.0) fAngleFromPeak = 360.0 - fAngleFromPeak;
+	
+		// Opposition Surge Threshold:
+		// 7.0 degrees phase angle defines the beginning of "Opposition Surge": the period where 
+		// lunar craters cast no visible shadows and the moon appears to glow.
+		static const float fOppositionSurgeThreshold = 7.0f;
+	
+		return (fAngleFromPeak <= fOppositionSurgeThreshold);
 	}
-		
-		// Extra code written to detect Blood Moons. We don't use it, but I left it here because it's neat.
-		/*
-		const double fDraconicMonth = 27.21222 * fSecondsPerDay;
-		bool bBloodMoon = false;
-
-		// Calculate distance from the nearest Node (0.0 to 1.0)
-		double fNodePhase = fmod(fElapsedSeconds, fDraconicMonth) / fDraconicMonth;
-
-		// If fNodePhase is near 0.0 or 0.5, the Moon is crossing the Earth's plane.
-		bool bAtNode = (fNodePhase < 0.04 || fNodePhase > 0.96 || (fNodePhase > 0.46 && fNodePhase < 0.54));
-
-		if (bAtNode && bIsFullMoon)
-			bBloodMoon = true;
-		*/
-		
-		// Extra code for Supermoons and Micromoons. Again, not used, but still neat to have.
-		/*
-		// 27.55455 days = Time between closest approaches (Perigee)
-		const float fAnomalisticMonth = 27.55455f * fSecondsPerDay;
-		bool bSuperMoon = false;
-		bool bMicroMoon = false;
-
-		// Calculate how far the moon is into its elliptical orbit (0.0 to 1.0)
-		// 0.0 = Perigee (Closest), 0.5 = Apogee (Farthest)
-		double fAnomalisticPhase = fmod(fElapsedSeconds, fAnomalisticMonth) / fAnomalisticMonth;
-
-		// A Supermoon is usually defined as being within ~1-2 days of perigee
-		bool bNearPerigee = (fAnomalisticPhase < 0.07 || fAnomalisticPhase > 0.93);
-		
-		// A Micromoon is usually defined as being within ~1-2 days of apogee
-		bool bNearApogee = (fAnomalisticPhase < 0.57 && fAnomalisticPhase > 0.43);
-
-		if (bIsFullMoon && bNearPerigee)
-			bSuperMoon = true;
-		if (bIsFullMoon && bNearApogee)
-			bMicroMoon = true;
-		*/
 
 private:
 	time_t m_timeInitial ;
