@@ -244,10 +244,11 @@ public:
 	
 		// 1. Fundamental Arguments (Radians)
 		// These represent the mean angular positions of the Moon and Sun.
-		const double D       = fmod(fElapsedSeconds, fSynodicMonth) / fSynodicMonth * fTwoPi; // Mean Elongation
-		const double M       = fmod(fElapsedSeconds, fAnomalisticMonth) / fAnomalisticMonth * fTwoPi; // Moon Mean Anomaly
-		const double M_prime = fmod(2.1 + (0.01720209895 * (fElapsedSeconds / (double)flSecondsPerDay)), fTwoPi); // Sun Mean Anomaly
-		const double F       = fmod(fElapsedSeconds, fDraconicMonth) / fDraconicMonth * fTwoPi; // Argument of Latitude
+		// Added phase offsets to align mean positions with the 2029 Epoch.
+		const double D       = fmod(fElapsedSeconds + (2.52 * 86400.0), fSynodicMonth) / fSynodicMonth * fTwoPi; 
+		const double M       = fmod(fElapsedSeconds + (0.11 * 86400.0), fAnomalisticMonth) / fAnomalisticMonth * fTwoPi; 
+		const double M_prime = fmod(2.1 + (0.01720209895 * (fElapsedSeconds / (double)flSecondsPerDay)), fTwoPi); 
+		const double F       = fmod(fElapsedSeconds + (1.85 * 86400.0), fDraconicMonth) / fDraconicMonth * fTwoPi;
 	
 		// 2. 7th-Order Correction ("Wobble")
 		// This accounts for gravitational perturbations, primarily from the Sun and Earth's 
