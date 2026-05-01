@@ -24871,12 +24871,9 @@ bool CTFPlayer::ItemQualityIsAllowedTimePeriod( int iQuality )
 
 		case AE_VINTAGE:
 		case AE_DEVELOPER:
-		case AE_VALVE: // Valve quality
 		case AE_UNUSUAL: // Unusuals		
-		case AE_RARITY4:
 			return iCurrentEra >= TF2V_ERA_DAY_MANNCONOMY; // Mann-Conomy Update (Our namesake)	
 			
-		case AE_GENUINE:
 		case AE_RARITY1:
 			return iCurrentEra >= TF2V_ERA_DAY_RIFTPROMO; // Promotional items
 			
