@@ -5659,7 +5659,7 @@ void CTFPlayer::ValidateWeapons( TFPlayerClassData_t *pData, bool bResetWeapons 
 		int iLoadoutSlot = pWeapon->GetAttributeContainer()->GetItem()->GetStaticData()->GetLoadoutSlot( GetPlayerClass()->GetClassIndex() );
 		
 		// TF2V: Skip cosmetic and taunt slots on XL servers to save us entities
-		if ( IsWearableSlot(iLoadoutSlot) && IsXLSizeSession() )
+		if ( IsWearableSlot(iLoadoutSlot) && gpGlobals->maxClients > 32 )
 			continue;
 		
 		CEconItemView *pItem = GetLoadoutItem( GetPlayerClass()->GetClassIndex(), iLoadoutSlot );

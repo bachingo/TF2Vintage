@@ -1003,8 +1003,6 @@ struct collidelist_t
 };
 
 
-inline bool IsXLSizeSession( void ) { return gpGlobals->maxClients > 32; }
-
 // TF2V Era classification:
 // Epoch number is based on 09/17/2007 (the PC beta release) as Day 1.
 // Quicker to save as a precalculated integer than strings.
