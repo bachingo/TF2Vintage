@@ -88,7 +88,6 @@ public:
 	}
 #endif // ENABLE_ATTRIBUTE_CURRENCY_TRACKING
 
-private:
 	void					NotifyManagerOfAttributeValueChanges();
 
 	// Attribute accessing
@@ -96,6 +95,7 @@ private:
 	CEconItemAttribute		*GetAttribute( int iIndex ) { Assert( iIndex >= 0 && iIndex < m_Attributes.Count()); return &m_Attributes[iIndex]; }
 	const CEconItemAttribute *GetAttribute( int iIndex ) const { Assert( iIndex >= 0 && iIndex < m_Attributes.Count()); return &m_Attributes[iIndex]; }
 
+private:
 	// Our list of attributes
 	CUtlVector<CEconItemAttribute>		m_Attributes;
 
