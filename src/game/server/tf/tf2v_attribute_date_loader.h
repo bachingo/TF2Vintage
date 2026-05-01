@@ -42,11 +42,15 @@ private:
 
 	// Helper: Convert date string "YYYY/MM/DD" to integer YYYYMMDD
 	int ParseDateString( const char *pszDate );
+	
+	int ConvertDateToDaysSinceLaunch( int iYear, int iMonth, int iDay );
 
+protected:
 	// Storage maps: key -> date
 	CUtlMap<int, int> m_PaintDates;			// RGB -> Date
 	CUtlMap<int, int> m_UnusualEffectDates;	// Effect Index -> Date
 	CUtlMap<int, int> m_WarPaintDates;		// Proto Def Index -> Date
+private:
 
 	bool m_bInitialized;
 };
