@@ -80,6 +80,14 @@ private:
 extern CTF2VAttributeDateManager *g_pTF2VAttributeDateManager;
 
 // Accessor functions (for backwards compatibility with existing code)
+inline CEconItemView GetTimePeriodCompliantItem( CEconItemView *pOriginalItem, int iClass, int iSlot )
+{
+	if ( g_pTF2VAttributeDateManager )
+		return g_pTF2VAttributeDateManager->GetTimePeriodCompliantItem( CEconItemView *pOriginalItem, int iClass, int iSlot );
+	return pOriginalItem;
+}
+
+// Accessor functions (for backwards compatibility with existing code)
 inline int GetItemIntroductionDate( int iRGB )
 {
 	if ( g_pTF2VAttributeDateManager )
