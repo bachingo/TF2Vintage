@@ -24938,7 +24938,7 @@ bool CTFPlayer::StripAnachronisticAttributes( CEconItemView *pItem )
 			{
 				// Investigate the permutation further.
 				float flAttribValue = pAttrib->GetValue( &value );
-				int iRGB = (int)value.asInt;
+				int iRGB = (int)flAttribValue.asInt;
 				if ( iCurrentEra < GetPaintIntroductionDate( iRGB ) )
 					bShouldRemove = true;
 			}
@@ -24956,7 +24956,7 @@ bool CTFPlayer::StripAnachronisticAttributes( CEconItemView *pItem )
 			{
 				// Investigate the permutation further.
 				float flAttribValue = pAttrib->GetValue( &value );
-				int iEffectIndex = (int)value.asInt;
+				int iEffectIndex = (int)flAttribValue.asInt;
 				if ( iCurrentEra < GetUnusualEffectIntroductionDate( iEffectIndex ) )
 					bShouldRemove = true;
 			}
@@ -25020,7 +25020,7 @@ bool CTFPlayer::StripAnachronisticAttributes( CEconItemView *pItem )
 			{
 				float flAttribValue = pAttrib->GetValue( &value );
 			
-				int iProtoDefIndex = (int)value.asInt;
+				int iProtoDefIndex = (int)flAttribValue.asInt;
 				int iWarPaintIntroDate = GetWarPaintIntroductionDate( iProtoDefIndex );
 			
 				if ( iCurrentEra < iWarPaintIntroDate )
@@ -25195,7 +25195,7 @@ bool CTFPlayer::HasAnachronisticAttributes( CEconItemView *pItem )
 			{
 				// Investigate the permutation further.
 				float flAttribValue = pAttrib->GetValue( &value );
-				int iRGB = (int)value.asInt;
+				int iRGB = (int)flAttribValue.asInt;
 				if ( iCurrentEra < GetPaintIntroductionDate( iRGB ) )
 					return true;
 			}
@@ -25211,7 +25211,7 @@ bool CTFPlayer::HasAnachronisticAttributes( CEconItemView *pItem )
 			{
 				// Investigate the permutation further.
 				float flAttribValue = pAttrib->GetValue( &value );
-				int iEffectIndex = (int)value.asInt;
+				int iEffectIndex = (int)flAttribValue.asInt;
 				if ( iCurrentEra < GetUnusualEffectIntroductionDate( iEffectIndex ) )
 					return true;
 			}
@@ -25253,7 +25253,7 @@ bool CTFPlayer::HasAnachronisticAttributes( CEconItemView *pItem )
 			{
 				float flAttribValue = pAttrib->GetValue( &value );
 			
-				int iProtoDefIndex = (int)value.asInt;
+				int iProtoDefIndex = (int)flAttribValue.asInt;
 				int iWarPaintIntroDate = GetWarPaintIntroductionDate( iProtoDefIndex );
 			
 				if ( iCurrentEra < iWarPaintIntroDate )
