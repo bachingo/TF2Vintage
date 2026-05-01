@@ -88,10 +88,10 @@ inline CEconItemView *GetTimePeriodCompliantItem( CEconItemView *pOriginalItem, 
 }
 
 // Accessor functions (for backwards compatibility with existing code)
-inline int GetItemIntroductionDate( int iRGB )
+inline int GetItemIntroductionDate( int iDefindex )
 {
 	if ( g_pTF2VAttributeDateManager )
-		return g_pTF2VAttributeDateManager->GetItemIntroductionDate( iRGB );
+		return g_pTF2VAttributeDateManager->GetItemIntroductionDate( iDefindex );
 	return 99999999;
 }
 
