@@ -440,7 +440,7 @@ bool CTF2VAttributeDateManager::ItemIsAllowedTimePeriod( CEconItemView *pItem )
 	if ( !pItem || !pItem->GetStaticData() || !TFGameRules() )
 		return false;
 	
-	return GetItemIntroductionDate(iDefindex) < TFGameRules()->GetTF2VEra();
+	return GetItemIntroductionDate(pItem->GetItemDefIndex()) < TFGameRules()->GetTF2VEra();
 	
 	return false;
 }
