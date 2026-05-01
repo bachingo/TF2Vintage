@@ -24794,7 +24794,7 @@ bool CTFPlayer::IsItemMedal( CEconItemView *pItem )
 		return false;
  
 	// Check if item is in tournament medal range
-	if ( pItemDef->GetEquipRegionMask() & pItemDef->GetItemSchema()->GetEquipRegionBitMaskByName( "medal" ) )
+	if ( pItemDef->GetEquipRegionMask() & pItemDef->GetEquipRegionBitMaskByName( "medal" ) )
 	{
 		return true;
 	}
@@ -24810,13 +24810,8 @@ bool CTFPlayer::IsPaintPlayerApplied( CEconItemView *pItem, const CEconItemAttri
 	if ( !pItem || !pPaintAttrib )
 		return false;
  
-	// If the item has tint in its SCHEMA definition, it's not player-applied
-	CEconItemDefinition *pItemDef = pItem->GetStaticData();
-	if ( !pItemDef )
-		return true; // Assume player-applied if we can't check
- 
 	// Check if this item definition has tint in its schema
-	const CAttributeList *pSchemaAttribs = pItemDef->GetAttributeList();
+	const CAttributeList *pSchemaAttribs = pItem->GetAttributeList();
 	if ( pSchemaAttribs )
 	{
 		for ( int i = 0; i < pSchemaAttribs->GetNumAttributes(); i++ )
