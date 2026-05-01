@@ -27,6 +27,8 @@ public:
 
 	// Query functions - return introduction date in YYYYMMDD format
 	// Returns 99999999 if not found (future date = blocked by default)
+	
+	int GetItemIntroductionDate( int iDefindex );
 	int GetPaintIntroductionDate( int iRGB );
 	int GetUnusualEffectIntroductionDate( int iEffectIndex );
 	int GetWarPaintIntroductionDate( int iProtoDefIndex );
@@ -36,6 +38,7 @@ public:
 
 private:
 	// Load individual files
+	bool LoadItemDates( const char *pszFilename );
 	bool LoadPaintDates( const char *pszFilename );
 	bool LoadUnusualDates( const char *pszFilename );
 	bool LoadWarPaintDates( const char *pszFilename );
@@ -45,8 +48,26 @@ private:
 	
 	int ConvertDateToDaysSinceLaunch( int iYear, int iMonth, int iDay );
 
+public:
+	// TF2V Item checks
+	// Tournament medals first
+	bool 				IsItemMedal( CEconItemView *pItem );
+	bool 				IsPaintPlayerApplied( CEconItemView *pItem, const CEconItemAttribute *pPaintAttrib );
+	
+	// Anachronistic modifiers
+	bool 				ItemIsAllowedTimePeriod( CEconItemView *pItem );
+	bool 				ItemQualityIsAllowedTimePeriod( int iQuality );
+	bool 				HasAnachronisticAttributes( CEconItemView *pItem );
+
+	bool 				StripAnachronisticAttributes( CEconItemView *pItem );
+	
+	
+	// Item is allowed
+	CEconItemView 		*GetTimePeriodCompliantItem( CEconItemView *pOriginalItem, int iClass, int iSlot );
+
 private:
 	// Storage maps: key -> date
+	CUtlMap<int, int> m_ItemDates;			// First appearance
 	CUtlMap<int, int> m_PaintDates;			// RGB -> Date
 	CUtlMap<int, int> m_UnusualEffectDates;	// Effect Index -> Date
 	CUtlMap<int, int> m_WarPaintDates;		// Proto Def Index -> Date
@@ -57,6 +78,14 @@ private:
 
 // Global instance
 extern CTF2VAttributeDateManager *g_pTF2VAttributeDateManager;
+
+// Accessor functions (for backwards compatibility with existing code)
+inline int GetItemIntroductionDate( int iRGB )
+{
+	if ( g_pTF2VAttributeDateManager )
+		return g_pTF2VAttributeDateManager->GetPaintIntroductionDate( iRGB );
+	return 99999999;
+}
 
 // Accessor functions (for backwards compatibility with existing code)
 inline int GetPaintIntroductionDate( int iRGB )

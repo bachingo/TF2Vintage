@@ -745,20 +745,7 @@ public:
 	virtual CBaseEntity *GiveNamedItem( const char *pszClassName, int iSubType = 0, const CEconItemView* pScriptItem = NULL, bool bForce = false );
 	void				PostInventoryApplication( void );
 	bool				ItemIsAllowed( CEconItemView *pItem );
-	
-	// TF2V Item checks
-	// Tournament medals first
-	bool 				IsItemMedal( CEconItemView *pItem );
-	bool 				IsPaintPlayerApplied( CEconItemView *pItem, const CEconItemAttribute *pPaintAttrib );
-	
-	// Anachronistic modifiers
-	bool 				ItemQualityIsAllowedTimePeriod( int iQuality );
-	bool 				StripAnachronisticAttributes( CEconItemView *pItem );
-	CEconItemView 		*GetTimePeriodCompliantItem( CEconItemView *pOriginalItem, int iClass, int iSlot );
-	bool 				HasAnachronisticAttributes( CEconItemView *pItem );
-	
-	// Item is allowed
-	bool 				ItemIsAllowedTimePeriod( CEconItemView *pItem );
+
 	
 	void				RemovePlayerAttributes( bool bSetBonuses );
 	void				ApplySetBonuses( void );
