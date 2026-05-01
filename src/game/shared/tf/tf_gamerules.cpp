@@ -8794,10 +8794,12 @@ CTFGameRules::~CTFGameRules()
 	{
 		mp_tournament.SetValue( 0 );
 	}
-	
+
+#ifdef GAME_DLL
 	g_pTF2VAttributeDateManager->Shutdown();
 	delete g_pTF2VAttributeDateManager;
 	g_pTF2VAttributeDateManager = NULL;
+#endif
 }
 
 //-----------------------------------------------------------------------------
