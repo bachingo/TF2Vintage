@@ -83,7 +83,7 @@ extern CTF2VAttributeDateManager *g_pTF2VAttributeDateManager;
 inline int GetItemIntroductionDate( int iRGB )
 {
 	if ( g_pTF2VAttributeDateManager )
-		return g_pTF2VAttributeDateManager->GetPaintIntroductionDate( iRGB );
+		return g_pTF2VAttributeDateManager->GetItemIntroductionDate( iRGB );
 	return 99999999;
 }
 
