@@ -24937,9 +24937,8 @@ bool CTFPlayer::StripAnachronisticAttributes( CEconItemView *pItem )
 			else if ( !bIsMedal && IsPaintPlayerApplied( pItem, pAttrib ) )
 			{
 				// Investigate the permutation further.
-				attribute_data_union_t value;
-				pAttrib->GetValue( &value );
-				int iRGB = (int)value.asFloat;
+				float flAttribValue = pAttrib->GetValue( &value );
+				int iRGB = (int)value.asInt;
 				if ( iCurrentEra < GetPaintIntroductionDate( iRGB ) )
 					bShouldRemove = true;
 			}
@@ -24956,9 +24955,8 @@ bool CTFPlayer::StripAnachronisticAttributes( CEconItemView *pItem )
 			else
 			{
 				// Investigate the permutation further.
-				attribute_data_union_t value;
-				pAttrib->GetValue( &value );
-				int iEffectIndex = (int)value.asFloat;
+				float flAttribValue = pAttrib->GetValue( &value );
+				int iEffectIndex = (int)value.asInt;
 				if ( iCurrentEra < GetUnusualEffectIntroductionDate( iEffectIndex ) )
 					bShouldRemove = true;
 			}
@@ -25020,10 +25018,9 @@ bool CTFPlayer::StripAnachronisticAttributes( CEconItemView *pItem )
 			}
 			else
 			{
-				attribute_data_union_t value;
-				pAttrib->GetValue( &value );
+				float flAttribValue = pAttrib->GetValue( &value );
 			
-				int iProtoDefIndex = (int)value.asFloat;
+				int iProtoDefIndex = (int)value.asInt;
 				int iWarPaintIntroDate = GetWarPaintIntroductionDate( iProtoDefIndex );
 			
 				if ( iCurrentEra < iWarPaintIntroDate )
@@ -25197,9 +25194,8 @@ bool CTFPlayer::HasAnachronisticAttributes( CEconItemView *pItem )
 			else
 			{
 				// Investigate the permutation further.
-				attribute_data_union_t value;
-				pAttrib->GetValue( &value );
-				int iRGB = (int)value.asFloat;
+				float flAttribValue = pAttrib->GetValue( &value );
+				int iRGB = (int)value.asInt;
 				if ( iCurrentEra < GetPaintIntroductionDate( iRGB ) )
 					return true;
 			}
@@ -25214,9 +25210,8 @@ bool CTFPlayer::HasAnachronisticAttributes( CEconItemView *pItem )
 			else
 			{
 				// Investigate the permutation further.
-				attribute_data_union_t value;
-				pAttrib->GetValue( &value );
-				int iEffectIndex = (int)value.asFloat;
+				float flAttribValue = pAttrib->GetValue( &value );
+				int iEffectIndex = (int)value.asInt;
 				if ( iCurrentEra < GetUnusualEffectIntroductionDate( iEffectIndex ) )
 					return true;
 			}
@@ -25256,10 +25251,9 @@ bool CTFPlayer::HasAnachronisticAttributes( CEconItemView *pItem )
 			}
 			else
 			{
-				attribute_data_union_t value;
-				pAttrib->GetValue( &value );
+				float flAttribValue = pAttrib->GetValue( &value );
 			
-				int iProtoDefIndex = (int)value.asFloat;
+				int iProtoDefIndex = (int)value.asInt;
 				int iWarPaintIntroDate = GetWarPaintIntroductionDate( iProtoDefIndex );
 			
 				if ( iCurrentEra < iWarPaintIntroDate )
