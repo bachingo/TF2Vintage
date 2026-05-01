@@ -24859,33 +24859,24 @@ bool CTFPlayer::ItemQualityIsAllowedTimePeriod( int iQuality )
 	{
 		case AE_NORMAL:
 			return true; // Stock items (Always available)
-		
 		case AE_UNIQUE:
 			return iCurrentEra >= TF2V_ERA_DAY_GOLDRUSH; // Regular items (If this errors, we have a problem)
-			
 		case AE_COMMUNITY:
 			return iCurrentEra >= TF2V_ERA_DAY_WAR; // Community items
-			
 		case AE_SELFMADE:
 			return iCurrentEra >= TF2V_ERA_DAY_FIRSTCONT; // Self Made
-
 		case AE_VINTAGE:
 		case AE_DEVELOPER:
 		case AE_UNUSUAL: // Unusuals		
 			return iCurrentEra >= TF2V_ERA_DAY_MANNCONOMY; // Mann-Conomy Update (Our namesake)	
-			
 		case AE_RARITY1:
 			return iCurrentEra >= TF2V_ERA_DAY_RIFTPROMO; // Promotional items
-			
 		case AE_STRANGE:
 			return iCurrentEra >= TF2V_ERA_DAY_UBER_F2P; // Strange weapons
-			
 		case AE_HAUNTED:
 			return iCurrentEra >= TF2V_ERA_DAY_HALLOWEEN_2011; // Halloween items
-			
 		case AE_COLLECTORS:
 			return iCurrentEra >= 2249; // 9 days before TF2V_ERA_DAY_TWOCITIES
-
 		case AE_PAINTKITWEAPON:
 		case AE_RARITY_DEFAULT:
 		case AE_RARITY_COMMON:
@@ -24894,8 +24885,7 @@ bool CTFPlayer::ItemQualityIsAllowedTimePeriod( int iQuality )
 		case AE_RARITY_MYTHICAL:
 		case AE_RARITY_LEGENDARY:
 		case AE_RARITY_ANCIENT:
-			return iCurrentEra >= TF2V_ERA_DAY_GUNMETTLE; // Warpaint items
-			
+			return iCurrentEra >= TF2V_ERA_DAY_GUNMETTLE; // Warpaint items	
 		default:
 			return false; // Unknown qualities blocked by default
 	}
@@ -25036,7 +25026,7 @@ bool CTFPlayer::StripAnachronisticAttributes( CEconItemView *pItem )
 				int iProtoDefIndex = (int)value.asFloat;
 				int iWarPaintIntroDate = GetWarPaintIntroductionDate( iProtoDefIndex );
 			
-				if ( iCurrentEra < iWarPaintIntroDate >  )
+				if ( iCurrentEra < iWarPaintIntroDate )
 				{
 					bShouldRemove = true;
 				}
