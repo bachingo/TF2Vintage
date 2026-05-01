@@ -667,40 +667,30 @@ CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemV
 	// Cosmetics as a whole did not exist before Sniper vs. Spy
 	if ( ( iCurrentEra < TF2V_ERA_DAY_SNIPSPY ) && IsWearableSlot(iSlot) )
 	{
-		ClientPrint( this, HUD_PRINTNOTIFY, "#Item_AnachronisticCosmeticSlot", 
-					 pOriginalItem->GetStaticData()->GetItemBaseName() );
 		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
 	}
 	
 	// Misc slots did not exist prior to Classless
 	if ( ( iCurrentEra < TF2V_ERA_DAY_CLASSLESS ) && ( iSlot == LOADOUT_POSITION_MISC ) )
 	{
-		ClientPrint( this, HUD_PRINTNOTIFY, "#Item_AnachronisticMiscSlots", 
-					 pOriginalItem->GetStaticData()->GetItemBaseName() );
 		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
 	}
 	
 	// Misc2 did not exist prior to Engineer Update
 	if ( ( iCurrentEra < TF2V_ERA_DAY_ENGINEER ) && ( iSlot == LOADOUT_POSITION_MISC2 ) )
 	{
-		ClientPrint( this, HUD_PRINTNOTIFY, "#Item_AnachronisticMisc2Slot", 
-					 pOriginalItem->GetStaticData()->GetItemBaseName() );
 		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
 	}
 	
 	// Action slots were not used prior to Mannconomy
 	if ( ( iCurrentEra < TF2V_ERA_DAY_MANNCONOMY ) && ( iSlot == LOADOUT_POSITION_ACTION ) )
 	{
-		ClientPrint( this, HUD_PRINTNOTIFY, "#Item_AnachronisticActionSlot", 
-					 pOriginalItem->GetStaticData()->GetItemBaseName() );
 		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
 	}
 	
 	// Taunts were not an item slot prior to the Replay Update
 	if ( ( iCurrentEra < TF2V_ERA_DAY_REPLAY ) && IsTauntSlot(iSlot) )
 	{
-		ClientPrint( this, HUD_PRINTNOTIFY, "#Item_AnachronisticTauntSlot", 
-					 pOriginalItem->GetStaticData()->GetItemBaseName() );
 		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
 	}
 
@@ -710,8 +700,6 @@ CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemV
 	if ( !ItemIsAllowedTimePeriod( pOriginalItem ) )
 	{
 		// Base item is too new - replace entirely with stock
-		ClientPrint( this, HUD_PRINTNOTIFY, "#Item_AnachronisticItem", 
-					 pOriginalItem->GetStaticData()->GetItemBaseName() );
 		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
 	}
 
@@ -743,16 +731,11 @@ CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemV
 	if ( bQualityTooNew )
 	{
 		pModifiedItem->SetItemQuality( AE_UNIQUE );
-		ClientPrint( this, HUD_PRINTNOTIFY, "#Item_QualityDowngraded", 
-					 pModifiedItem->GetStaticData()->GetItemBaseName() );
 	}
 
+	
 	// STEP 6: Strip anachronistic attributes
-	if ( StripAnachronisticAttributes( pModifiedItem ) )
-	{
-		ClientPrint( this, HUD_PRINTNOTIFY, "#Item_AttributesStripped", 
-					 pModifiedItem->GetStaticData()->GetItemBaseName() );
-	}
+	StripAnachronisticAttributes( pModifiedItem );
 
 	return pModifiedItem;
 }
