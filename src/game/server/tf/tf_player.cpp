@@ -137,6 +137,8 @@
 
 #include "gc_clientsystem.h"
 
+#include "tf2v_attribute_date_loader.h"
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -5655,6 +5657,11 @@ void CTFPlayer::ValidateWeapons( TFPlayerClassData_t *pData, bool bResetWeapons 
 			continue;
 
 		int iLoadoutSlot = pWeapon->GetAttributeContainer()->GetItem()->GetStaticData()->GetLoadoutSlot( GetPlayerClass()->GetClassIndex() );
+		
+		// TF2V: Skip cosmetic and taunt slots on XL servers to save us entities
+		if ( iLoadoutSlot == IsWearableSlot() && gpGlobals->maxClients > 32 )
+			continue;
+		
 		CEconItemView *pItem = GetLoadoutItem( GetPlayerClass()->GetClassIndex(), iLoadoutSlot );
 
 		// See if gamerules says this item isn't allowed right now
@@ -25302,64 +25309,6 @@ bool CTFPlayer::ItemIsAllowedTimePeriod( CEconItemView *pItem )
 // Purpose: TF2V: Fine-grained attribute value filtering
 // Handle specific paint colors, unusual effects, etc. by their individual dates
 //-----------------------------------------------------------------------------
-
-//-----------------------------------------------------------------------------
-// Get introduction date for a specific paint color
-//-----------------------------------------------------------------------------
-int CTFPlayer::GetPaintIntroductionDate( int iRGB )
-{
-	for ( int i = 0; i < ARRAYSIZE( g_PaintIntroductionDates ); i++ )
-	{
-		if ( g_PaintIntroductionDates[i].iRGB == iRGB )
-		{
-			return g_PaintIntroductionDates[i].iIntroductionDate;
-		}
-	}
-	
-	// Unknown paint - assume it's from a later update we haven't catalogued
-	// Default to blocking it
-	return 1;
-}
-
-//-----------------------------------------------------------------------------
-// Get introduction date for a specific unusual effect
-//-----------------------------------------------------------------------------
-int CTFPlayer::GetUnusualEffectIntroductionDate( int iEffectIndex )
-{
-	for ( int i = 0; i < ARRAYSIZE( g_UnusualEffectIntroductionDates ); i++ )
-	{
-		if ( g_UnusualEffectIntroductionDates[i].iEffectIndex == iEffectIndex )
-		{
-			return g_UnusualEffectIntroductionDates[i].iIntroductionDate;
-		}
-	}
-	
-	// Unknown effect - assume it's new, block by default
-	return 1;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: TF2V: War Paint value-specific filtering
-// War Paints were introduced in Gun Mettle (July 2015) and continued through
-// subsequent updates with new collections
-//-----------------------------------------------------------------------------
-
-//-----------------------------------------------------------------------------
-// Get introduction date for a specific war paint
-//-----------------------------------------------------------------------------
-int CTFPlayer::GetWarPaintIntroductionDate( int iProtoDefIndex )
-{
-	for ( int i = 0; i < ARRAYSIZE( g_WarPaintIntroductionDates ); i++ )
-	{
-		if ( g_WarPaintIntroductionDates[i].iProtoDefIndex == iProtoDefIndex )
-		{
-			return g_WarPaintIntroductionDates[i].iIntroductionDate;
-		}
-	}
-	
-	// Unknown war paint - assume it's new, block by default
-	return 99999999;
-}
 
 //-----------------------------------------------------------------------------
 // Check if a war paint attribute value is allowed
