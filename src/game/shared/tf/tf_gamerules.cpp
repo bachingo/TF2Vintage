@@ -132,6 +132,7 @@
 	#include "tf_autobalance.h"
 	#include "player_voice_listener.h"
 	#include "func_respawnroom.h"
+	#include "tf2v_attribute_date_loader.h"
 #endif
 
 #include "tf_mann_vs_machine_stats.h"
@@ -153,7 +154,7 @@
 
 #include "passtime_convars.h"
 
-#include "tf2v_attribute_date_loader.h"
+
 
 #include "tier3/tier3.h"
 // memdbgon must be the last include file in a .cpp file!!!
