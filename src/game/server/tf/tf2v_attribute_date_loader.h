@@ -67,10 +67,10 @@ public:
 
 private:
 	// Storage maps: key -> date
-	CUtlMap<int, int> m_ItemDates;			// First appearance
-	CUtlMap<int, int> m_PaintDates;			// RGB -> Date
-	CUtlMap<int, int> m_UnusualEffectDates;	// Effect Index -> Date
-	CUtlMap<int, int> m_WarPaintDates;		// Proto Def Index -> Date
+	CUtlMap<int, int> m_ItemDates;			// Definition Index -> Era Date
+	CUtlMap<int, int> m_PaintDates;			// RGB -> Era Date
+	CUtlMap<int, int> m_UnusualEffectDates;	// Effect Index -> Era Date
+	CUtlMap<int, int> m_WarPaintDates;		// Proto Def Index -> Era Date
 
 
 	bool m_bInitialized;
