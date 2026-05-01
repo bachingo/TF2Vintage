@@ -24794,7 +24794,7 @@ bool CTFPlayer::IsItemMedal( CEconItemView *pItem )
 		return false;
  
 	// Check if item is in tournament medal range
-	if ( pItemDef->GetEquipRegionMask() & pItemDef->GetEquipRegionBitMaskByName( "medal" ) )
+	if ( pItemDef->GetEquipRegionMask() & GetItemSchema()->GetEquipRegionBitMaskByName( "medal" ) )
 	{
 		return true;
 	}
@@ -24932,7 +24932,7 @@ bool CTFPlayer::StripAnachronisticAttributes( CEconItemView *pItem )
 			else if ( !bIsMedal && IsPaintPlayerApplied( pItem, pAttrib ) )
 			{
 				// Investigate the permutation further.
-				float flAttribValue = pAttrib->GetValue( &value );
+				float flAttribValue = pAttrib->GetValue();
 				int iRGB = (int)flAttribValue.asInt;
 				if ( iCurrentEra < GetPaintIntroductionDate( iRGB ) )
 					bShouldRemove = true;
@@ -24950,7 +24950,7 @@ bool CTFPlayer::StripAnachronisticAttributes( CEconItemView *pItem )
 			else
 			{
 				// Investigate the permutation further.
-				float flAttribValue = pAttrib->GetValue( &value );
+				float flAttribValue = pAttrib->GetValue();
 				int iEffectIndex = (int)flAttribValue.asInt;
 				if ( iCurrentEra < GetUnusualEffectIntroductionDate( iEffectIndex ) )
 					bShouldRemove = true;
@@ -25013,7 +25013,7 @@ bool CTFPlayer::StripAnachronisticAttributes( CEconItemView *pItem )
 			}
 			else
 			{
-				float flAttribValue = pAttrib->GetValue( &value );
+				float flAttribValue = pAttrib->GetValue();
 			
 				int iProtoDefIndex = (int)flAttribValue.asInt;
 				int iWarPaintIntroDate = GetWarPaintIntroductionDate( iProtoDefIndex );
@@ -25189,7 +25189,7 @@ bool CTFPlayer::HasAnachronisticAttributes( CEconItemView *pItem )
 			else
 			{
 				// Investigate the permutation further.
-				float flAttribValue = pAttrib->GetValue( &value );
+				float flAttribValue = pAttrib->GetValue();
 				int iRGB = (int)flAttribValue.asInt;
 				if ( iCurrentEra < GetPaintIntroductionDate( iRGB ) )
 					return true;
@@ -25205,7 +25205,7 @@ bool CTFPlayer::HasAnachronisticAttributes( CEconItemView *pItem )
 			else
 			{
 				// Investigate the permutation further.
-				float flAttribValue = pAttrib->GetValue( &value );
+				float flAttribValue = pAttrib->GetValue();
 				int iEffectIndex = (int)flAttribValue.asInt;
 				if ( iCurrentEra < GetUnusualEffectIntroductionDate( iEffectIndex ) )
 					return true;
@@ -25246,7 +25246,7 @@ bool CTFPlayer::HasAnachronisticAttributes( CEconItemView *pItem )
 			}
 			else
 			{
-				float flAttribValue = pAttrib->GetValue( &value );
+				float flAttribValue = pAttrib->GetValue();
 			
 				int iProtoDefIndex = (int)flAttribValue.asInt;
 				int iWarPaintIntroDate = GetWarPaintIntroductionDate( iProtoDefIndex );
