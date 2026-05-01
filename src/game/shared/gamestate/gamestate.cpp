@@ -11,7 +11,7 @@
 #define CROW_STATIC_DIRECTORY ""
 #define CROW_STATIC_ENDPOINT "/<path>"
 
-#include <crow.h>
+#include "crow.h"
 #include <unordered_set>
 
 #undef _WIN32_WINNT
