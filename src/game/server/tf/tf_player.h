@@ -756,11 +756,9 @@ public:
 	bool 				StripAnachronisticAttributes( CEconItemView *pItem );
 	CEconItemView 		*GetTimePeriodCompliantItem( CEconItemView *pOriginalItem, int iClass, int iSlot );
 	bool 				HasAnachronisticAttributes( CEconItemView *pItem );
-	bool 				ItemIsAllowedTimePeriod( CEconItemView *pItem );
 	
-	// Era to date conversions.
-	int 				TF2VGetEraIntFromStr(const char* dateStr) ;
-	const char* 		TF2VGetStrFromEraInt(int dayOffset);
+	// Item is allowed
+	bool 				ItemIsAllowedTimePeriod( CEconItemView *pItem );
 	
 	void				RemovePlayerAttributes( bool bSetBonuses );
 	void				ApplySetBonuses( void );
