@@ -25075,7 +25075,7 @@ CEconItemView *CTFPlayer::GetTimePeriodCompliantItem( CEconItemView *pOriginalIt
 	}
 	
 	// Misc slots did not exist prior to Classless
-	if ( ( iCurrentEra < TF2V_ERA_DAY_CLASSLESS ) && ( IiSlot == LOADOUT_POSITION_MISC ) )
+	if ( ( iCurrentEra < TF2V_ERA_DAY_CLASSLESS ) && ( iSlot == LOADOUT_POSITION_MISC ) )
 	{
 		ClientPrint( this, HUD_PRINTNOTIFY, "#Item_AnachronisticMiscSlots", 
 					 pOriginalItem->GetStaticData()->GetItemBaseName() );
@@ -25292,109 +25292,4 @@ bool CTFPlayer::ItemIsAllowedTimePeriod( CEconItemView *pItem )
 	return false;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: TF2V: Fine-grained attribute value filtering
-// Handle specific paint colors, unusual effects, etc. by their individual dates
-//-----------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------
-// Check if a war paint attribute value is allowed
-//-----------------------------------------------------------------------------
-bool CTFPlayer::WarPaintValueIsAllowedTimePeriod( const CEconItemAttribute *pAttrib )
-{
-	if ( !pAttrib || !TFGameRules() )
-		return false;
-
-	const CEconItemAttributeDefinition *pAttrDef = pAttrib->GetStaticData();
-	if ( !pAttrDef )
-		return false;
-
-	const char *pszAttrName = pAttrDef->GetDefinitionName();
-	int iCurrentEra = TFGameRules()->GetTF2VEra();
-	
-	// Check war paint proto_def_index
-	if ( V_stristr( pszAttrName, "paintkit_proto_def_index" ) ||
-		 V_stristr( pszAttrName, "paint_kit_proto_def_index" ) )
-	{
-		// Get the proto_def_index from the attribute
-		attribute_data_union_t value;
-		pAttrib->GetValue( &value );
-		
-		// War paint index is typically stored as an integer
-		int iProtoDefIndex = (int)value.asFloat; // Or value.m_Int
-		
-		int iWarPaintIntroDate = GetWarPaintIntroductionDate( iProtoDefIndex );
-		
-		if ( iWarPaintIntroDate > iCurrentEra )
-		{
-			// This specific war paint is too new
-			return false;
-		}
-	}
-	
-	return true; // Value is allowed
-}
-
-//-----------------------------------------------------------------------------
-// Translates the YYYY/MM/DD string into a usable form for TF2VEra.
-//-----------------------------------------------------------------------------
-int CTFPlayer::TF2VGetEraIntFromStr(const char* dateStr) 
-{
-    int y, m, d;
-    
-    // Parse the input string
-    if (sscanf(dateStr, "%d/%d/%d", &y, &m, &d) != 3) {
-        return -1; // Return error if format is wrong
-    }
-
-    // Adjustment: Treat Jan/Feb as months 13/14 of the previous year
-    // This allows the leap year math to remain consistent.
-    if (m <= 2) {
-        m += 12;
-        y -= 1;
-    }
-
-    // 1. Calculate days contributed by years (including leap days)
-    long yearDays = (365L * y) + (y / 4) - (y / 100) + (y / 400);
-
-    // 2. Calculate days contributed by months
-    // 153/5 is the magic ratio for month lengths (31, 30, 31, 30, 31...)
-    long monthDays = (153 * m + 8) / 5;
-
-    // 3. Total fixed days
-    long totalDays = yearDays + monthDays + d;
-
-    // 4. Subtract the Sept 16, 2007 baseline (733300)
-    return totalDays - 733300;
-}
-
-//-----------------------------------------------------------------------------
-// Translates the TF2V era integer value into a YYYY/MM/DD string.
-//-----------------------------------------------------------------------------
-const char* CTFPlayer::TF2VGetStrFromEraInt(int dayOffset) 
-{
-    // Static buffer persists in memory for the life of the program
-    static char buffer[11]; 
-    
-    // 1. Restore the absolute day count (Sept 16, 2007 baseline)
-    long z = (long)dayOffset + 733300;
-    
-    // 2. Algorithm to convert fixed days to Gregorian Y/M/D
-    z -= 428; 
-    long y = (10000L * z + 14780) / 3652425;
-    long ddp = z - (365 * y + y / 4 - y / 100 + y / 400);
-    if (ddp < 0) {
-        y--;
-        ddp = z - (365 * y + y / 4 - y / 100 + y / 400);
-    }
-    
-    long mi = (100 * ddp + 52) / 3060;
-    int month = (mi + 2) % 12 + 1;
-    int year = (int)(y + (mi + 2) / 12);
-    int day = (int)(ddp - (mi * 306 + 5) / 10 + 1);
-
-    // 3. Format into the buffer
-    sprintf(buffer, "%04d/%02d/%02d", year, month, day);
-    
-    return buffer; 
-}
