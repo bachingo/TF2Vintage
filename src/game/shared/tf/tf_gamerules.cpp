@@ -153,6 +153,8 @@
 
 #include "passtime_convars.h"
 
+#include "tf2v_attribute_date_loader.h"
+
 #include "tier3/tier3.h"
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -3888,6 +3890,12 @@ CTFGameRules::CTFGameRules()
 
 	m_hRequiredObserverTarget = NULL;
 	m_bStopWatchWinner.Set( false );
+	
+	if ( !g_pTF2VAttributeDateManager )
+	{
+		g_pTF2VAttributeDateManager = new CTF2VAttributeDateManager();
+		g_pTF2VAttributeDateManager->Init();
+	}
 
 #else // GAME_DLL
 
@@ -8785,6 +8793,10 @@ CTFGameRules::~CTFGameRules()
 	{
 		mp_tournament.SetValue( 0 );
 	}
+	
+	g_pTF2VAttributeDateManager->Shutdown();
+	delete g_pTF2VAttributeDateManager;
+	g_pTF2VAttributeDateManager = NULL;
 }
 
 //-----------------------------------------------------------------------------
