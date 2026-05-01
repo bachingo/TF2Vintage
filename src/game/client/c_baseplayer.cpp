@@ -2465,18 +2465,19 @@ const QAngle& C_BasePlayer::GetPunchAngle()
 
 const QAngle& C_BasePlayer::Weapon_PunchAngle()
 {
-	QAngle vecCurPunch = GetPunchAngle();
+	static QAngle vecReturnPunch; // We use this for BOTH paths now
+    if ( !IsInPostThink() || m_flInterpolationTime >= 1.0f )
+    {
+        vecReturnPunch = GetPunchAngle();
+        return vecReturnPunch;
+    }
 
-	if ( !IsInPostThink() || m_flInterpolationTime >= 1.0f )
-	{
-		return vecCurPunch;
-	}
-
-	static QAngle vecReturnPunch;
-	vecReturnPunch.x = m_Local.m_vecPreTickPunchAngle.x + AngleDiff( vecCurPunch.x, m_Local.m_vecPreTickPunchAngle.x ) * m_flInterpolationTime;
-	vecReturnPunch.y = m_Local.m_vecPreTickPunchAngle.y + AngleDiff( vecCurPunch.y, m_Local.m_vecPreTickPunchAngle.y ) * m_flInterpolationTime;
+    QAngle vecCurPunch = GetPunchAngle();
+    vecReturnPunch.x = m_Local.m_vecPreTickPunchAngle.x + AngleDiff( vecCurPunch.x, m_Local.m_vecPreTickPunchAngle.x ) * m_flInterpolationTime;
+    vecReturnPunch.y = m_Local.m_vecPreTickPunchAngle.y + AngleDiff( vecCurPunch.y, m_Local.m_vecPreTickPunchAngle.y ) * m_flInterpolationTime;
 	vecReturnPunch.z = m_Local.m_vecPreTickPunchAngle.z + AngleDiff( vecCurPunch.z, m_Local.m_vecPreTickPunchAngle.z ) * m_flInterpolationTime;
-	return vecReturnPunch;
+    return vecReturnPunch;
+
 }
 
 void C_BasePlayer::SetPunchAngle( const QAngle &angle )
