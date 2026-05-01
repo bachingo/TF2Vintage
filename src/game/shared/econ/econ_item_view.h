@@ -128,7 +128,7 @@ public:
 	const CEconItemAttributeDefinition *GetStaticData( void ) const;
 
 	// Get the float value of this attribute.
-	//float			GetValue( void ) const;
+	float			GetValue( void ) const { return m_flValue; }
 
 #if ENABLE_ATTRIBUTE_CURRENCY_TRACKING
 	int				GetRefundableCurrency( void ) const { return m_nRefundableCurrency; }
