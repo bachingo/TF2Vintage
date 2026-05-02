@@ -1,6 +1,7 @@
 tf_damage_disablespread 0
 tf_fall_damage_disablespread 0
 tf_use_fixed_weaponspreads 0
+tf_pipebomb_disable_random_launch 0
 tf_weapon_criticals 1
 tf_weapon_criticals_melee 1
 mp_disable_respawn_times 0
