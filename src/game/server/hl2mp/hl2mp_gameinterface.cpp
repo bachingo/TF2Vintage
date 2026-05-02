@@ -34,7 +34,10 @@ void CServerGameClients::GetPlayerLimits( int& minplayers, int& maxplayers, int 
 		maxplayers = MAX_PLAYERS;
 	}
 	else
-		maxplayers = 33;
+#ifdef MAX_PLAYERS > 33
+		maxplayers = 32;
+#else
+		maxplayers = 24;
 #endif
 	defaultMaxPlayers = 16; // misyl: Was 2... but why would the default be 2?! Is there some very intimate HL2DM going on?
 }
