@@ -978,7 +978,7 @@ bool IsCreepWaveMode( void ) const;
 
 	virtual const char *GetGameDescription( void )
 	{
-		return "Team Comtress";
+		return "Team Fortress 2 Vintage";
 	}
 
 	virtual void Status( void (*print) (PRINTF_FORMAT_STRING const char *fmt, ...) );
