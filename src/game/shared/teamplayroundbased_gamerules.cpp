@@ -732,7 +732,7 @@ float CTeamplayRoundBasedRules::GetRespawnTimeScalar( int iTeam )
 	if ( gpGlobals->maxClients > 32 )
 		flScale = RemapValClamped( iNumPlayers, 1, iOptimalPlayers, 0.25, 1.0 ); // Use the original TF2 spawn formula for XL servers, for absolute chaos.
 	else
-		flScale = RemapVal( iNumPlayers, 2, iOptimalPlayers, 0.25, 1.0 ); // TF2V specific: Remove the Clamped to increase spawn times on >16 player servers. Also Decreases spawn time on <16 player servers.
+		flScale = (float)(iNumPlayers)/iOptimalPlayers; // TF2V specific: Remove the Clamped to increase spawn times on >16 player servers. Also Decreases spawn time on <16 player servers.
 	
 	
 	return flScale;
