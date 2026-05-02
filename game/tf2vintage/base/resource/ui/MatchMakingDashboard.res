@@ -781,7 +781,7 @@
 			"brighttext"	"0"
 			"Command"		"play_community"
 			"proportionaltoparent"	"1"
-			"labeltext"		"#MMenu_BrowseServers"
+			"labeltext"		"#MMenu_FindAGame"
 			"mouseinputenabled"	"1"
 			"keyboardinputenabled"	"0"
 			"actionsignallevel"	"2"
