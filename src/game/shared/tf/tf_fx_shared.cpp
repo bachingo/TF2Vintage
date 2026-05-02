@@ -20,7 +20,7 @@
 #endif
 
 ConVar tf_use_fixed_weaponspreads( "tf_use_fixed_weaponspreads", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "If set to 1, weapons that fire multiple pellets per shot will use a non-random pellet distribution." );
-ConVar tf_use_circular_weaponspreads("tf_use_circular_weaponspreads", "1", FCVAR_REPLICATED | FCVAR_NOTIFY, "If set to 1, weapons that fire multiple pellets per shot will use a true circular pellet distribution (for both random and fixed spread).");
+ConVar tf_use_circular_weaponspreads("tf_use_circular_weaponspreads", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "If set to 1, weapons that fire multiple pellets per shot will use a true circular pellet distribution (for both random and fixed spread).");
 
 // Client specific.
 #ifdef CLIENT_DLL
