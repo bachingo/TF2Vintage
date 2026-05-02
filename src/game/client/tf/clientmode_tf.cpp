@@ -78,7 +78,6 @@
 #include "client_virtualreality.h"
 
 #include "econ_gcmessages.h"
-#include "gamestate/gamestate.h"
 
 #if defined( _X360 )
 #include "tf_clientscoreboard.h"
@@ -2279,7 +2278,6 @@ void ClientModeTFNormal::OnConnectStateChanged()
 		}
 	}
 
-	GetGameStateManager()->QueueEvent( "ingame", m_eConnectState == k_eConnectState_Connected ? "1" : "0" );
 }
 
 //----------------------------------------------------------------------------

@@ -63,7 +63,6 @@
 #include "ienginevgui.h"
 
 #include "tf_playermodelpanel.h"
-#include "gamestate/gamestate.h"
 
 #include "c_tf_gamestats.h"
 
@@ -356,34 +355,6 @@ void CHudMainMenuOverride::OnTick()
 		else
 		{
 			OnGameUIHidden();
-		}
-	}
-
-	if ( bInGame || bInReplay || bIsConnected || bBackgroundLevel )
-	{
-		if ( m_pMainMenuWebUi )
-		{
-			if ( GetGameStateManager()->IsReady() )
-			{
-				m_pMainMenuWebUi->LoadInteractivePanel();
-			}
-
-			if ( m_pMainMenuWebUi->IsVisible() != bGameUIVisible )
-			{
-				if ( GetGameStateManager()->IsReady() )
-				{
-					if ( !bGameUIVisible )
-					{
-						GetGameStateManager()->QueueEvent( "closedmenu", "" );
-					}
-					else
-					{
-						GetGameStateManager()->QueueEvent( "openedmenu", "" );
-						m_pMainMenuWebUi->ForceFullTextureUpload();
-					}
-					m_pMainMenuWebUi->SetVisible( bGameUIVisible );
-				}
-			}
 		}
 	}
 
@@ -1475,11 +1446,6 @@ void CHudMainMenuOverride::OnUpdateMenu( void )
 		}
 		if ( m_pMainMenuWebUi )
 		{
-			if ( GetGameStateManager()->IsReady() )
-			{
-				GetGameStateManager()->MarkUIReady();
-				m_pMainMenuWebUi->LoadInteractivePanel();
-			}
 			if ( !m_pMainMenuWebUi->IsVisible() )
 			{
 				m_pMainMenuWebUi->SetVisible( true );
