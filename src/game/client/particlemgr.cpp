@@ -1902,7 +1902,7 @@ void CParticleMgr::UpdateNewEffects( float flTimeDelta )
 	}
 
 	// UNDONE: detect changes is now thread safe
-#if 0
+
 
 	// now, run non-reentrant part for updating changes
 	for( int i=0; i<nCount; i++)
@@ -1910,7 +1910,7 @@ void CParticleMgr::UpdateNewEffects( float flTimeDelta )
 		// this one can call into random entity code which may not be thread-safe
 		particlesToSimulate[i].m_pNewParticleEffect->DetectChanges();
 	}
-#endif
+
 
 	EndSimulateParticles();
 
