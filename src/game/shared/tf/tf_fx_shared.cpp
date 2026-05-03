@@ -381,11 +381,7 @@ void FX_FireBullets( CTFWeaponBase *pWpn, int iPlayer, const Vector &vecOrigin, 
 				const float flMaxAccuracyCooldown = nBulletsPerShot == 1 ? 1.25f : flMinAccuracyCooldown;
 				if ( nBulletsPerShot > 1 )
 				{
-#if defined(MCOMS_BALANCE_PACK_SPREAD_CHANGES) || 1
-					const bool bAccurateShot = bShotgun || !bMultiShot ? flTimeSinceLastShot > flMinAccuracyCooldown : flTimeSinceLastAccurateShot > flMinAccuracyCooldown;
-#else
 					const bool bAccurateShot = flTimeSinceLastShot > flMinAccuracyCooldown;
-#endif
 					if (bAccurateShot)
 					{
 						bAccuracyBonus = true;
@@ -393,13 +389,7 @@ void FX_FireBullets( CTFWeaponBase *pWpn, int iPlayer, const Vector &vecOrigin, 
 				}
 				else
 				{
-#if defined(MCOMS_BALANCE_PACK_SPREAD_CHANGES)
-					// Give players control over accuracy vs. speed on their revolvers / pistols
-					constexpr float flShotTimeCooldown = 1.0f / 0.4f;
-					const float flAccuracyCooldown = clamp(flTimeBetweenShots * flShotTimeCooldown, flMinAccuracyCooldown, flMaxAccuracyCooldown);
-#else
 					const float flAccuracyCooldown = flMaxAccuracyCooldown;
-#endif
 					if (flTimeSinceLastShot > flAccuracyCooldown)
 					{
 						bAccuracyBonus = true;

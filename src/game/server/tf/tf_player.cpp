@@ -1854,14 +1854,6 @@ void CTFPlayer::TFPlayerThink()
 		}
 	}
 
-#if defined(MCOMS_BALANCE_PACK)
-	// maintain soda popper hype buff mark for death
-	if ( m_Shared.IsHypeBuffed() )
-	{
-		m_Shared.AddCond(TF_COND_MARKEDFORDEATH_SILENT, 2.0f);
-	}
-#endif
-
 	// You can't touch a hooked target, so transmit plague when you get as close as you can
 	if ( GetGrapplingHookTarget() && GetGrapplingHookTarget()->IsPlayer() && m_Shared.GetCarryingRuneType() == RUNE_PLAGUE )
 	{
@@ -11747,15 +11739,6 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pAttribWeapon, flBleedingTime, bleeding_duration );
 		}
 
-#if defined(MCOMS_BALANCE_PACK)
-		// sniper head trauma
-		if ( IsHeadshot( info.GetDamageCustom() ) && pTFAttackerWeapon && WeaponID_IsSniperRifle( pTFAttackerWeapon->GetWeaponID() ) )
-		{
-			const float fHeadshotBleedTime = 2.0f;
-			m_Shared.MakeBleed( pTFAttacker, pTFAttackerWeapon, fHeadshotBleedTime, TF_BLEEDING_DMG * 2 );
-		}
-#endif
-
 		// Take damage - round to the nearest integer.
 		int iOldHealth = m_iHealth;
 		m_iHealth -= ( realDamage + 0.5f );
@@ -11837,18 +11820,6 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 	{
 		m_Shared.MakeBleed( pTFAttacker, pTFAttackerWeapon, flBleedingTime );
 	}
-
-#if defined(MCOMS_BALANCE_PACK) && 0
-	if ( pTFAttacker && !( info.GetDamageType() & DMG_BLAST ) )
-	{
-		int iSapperCrits = 0;
-		CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFAttackerWeapon, iSapperCrits, sapper_kills_collect_crits );
-		if (iSapperCrits != 0)
-		{
-			m_Shared.AddStuckJet( pTFAttacker, pTFAttackerWeapon, pTFAttacker->m_Shared.GetRevengeCrits() + 2 );
-		}
-	}
-#endif
 
 	// Don't recieve reflected damage if you are carrying Reflect (prevents a loop in a game with two Reflect players)
 	if ( ( info.GetDamageType() & TF_DMG_CUSTOM_RUNE_REFLECT ) && m_Shared.GetCarryingRuneType() == RUNE_REFLECT )
@@ -17387,20 +17358,6 @@ void CTFPlayer::RemoveInvisibility( bool bOnAttack )
 	if ( !m_Shared.IsStealthed() )
 		return;
 
-#if defined(MCOMS_BALANCE_PACK)
-	if ( bOnAttack && GetActiveTFWeapon() )
-	{
-		// L'Etranger can attack while invis but flash a little
-		int iAddCloakOnHit = 0;
-		CALL_ATTRIB_HOOK_INT_ON_OTHER(GetActiveTFWeapon(), iAddCloakOnHit, add_cloak_on_hit);
-		if (iAddCloakOnHit != 0)
-		{
-			m_Shared.OnSpyTouchedByEnemy();
-			return;
-		}
-	}
-#endif
-
 	// remove quickly
 	CTFPlayer *pProvider = ToTFPlayer( m_Shared.GetConditionProvider( TF_COND_STEALTHED_USER_BUFF ) );
 	bool bAEStealth = ( m_Shared.InCond( TF_COND_STEALTHED_USER_BUFF ) && 
@@ -19337,11 +19294,6 @@ void CTFPlayer::Taunt( taunts_t iTauntIndex, int iTauntConcept )
 				{
 					// Time for crits!
 					m_Shared.ActivateRageBuff( pActiveWeapon, iBuffType );
-
-#if defined(MCOMS_BALANCE_PACK) || 1
-					// Don't allow the taunt to be cancelled
-					m_bAllowMoveDuringTaunt = true;
-#endif
 
 					// Pyro needs high defense while he's taunting
 					//m_Shared.AddCond( TF_COND_DEFENSEBUFF_HIGH, 3.0f );

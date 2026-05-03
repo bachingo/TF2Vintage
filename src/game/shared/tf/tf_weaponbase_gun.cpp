@@ -973,23 +973,6 @@ float CTFWeaponBaseGun::GetProjectileDamage( void )
 		}
 	}
 
-#if defined(MCOMS_BALANCE_PACK)
-	// Medic Uber
-	if (GetWeaponID() == TF_WEAPON_SYRINGEGUN_MEDIC && pPlayer)
-	{
-		int iModHealthOnHit = 0;
-		CALL_ATTRIB_HOOK_INT(iModHealthOnHit, add_onhit_addhealth);
-		if (iModHealthOnHit)
-		{
-			CWeaponMedigun* pMedigun = dynamic_cast<CWeaponMedigun*>(pPlayer->Weapon_OwnsThisID(TF_WEAPON_MEDIGUN));
-			if (pMedigun)
-			{
-				flDamage *= RemapValClamped(pMedigun->GetChargeLevel(), 0.f, 1.f, 1.f, 1.7f);
-			}
-		}
-	}
-#endif
-
 	if ( GetWeaponProjectileType() == TF_PROJECTILE_BULLET )
 	{
 		float flScaleDamage = 1.f;

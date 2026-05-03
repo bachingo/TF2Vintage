@@ -2127,12 +2127,6 @@ bool CTFWeaponBase::ReloadSingly( void )
 			if ( SendWeaponAnim( ACT_RELOAD_START ) )
 			{
 				float SeqDuration = SequenceDuration();
-#if defined(MCOMS_BALANCE_PACK)
-				if ( GetWeaponID() == TF_WEAPON_PARTICLE_CANNON )
-				{
-					SeqDuration *= 1.15f;
-				}
-#endif
 				SetReloadTimer( SeqDuration );
 			}
 			else
@@ -6046,22 +6040,6 @@ QAngle CTFWeaponBase::GetSpreadAngles( void )
 		angEyes += angSpread;
 	}
 
-#if defined(MCOMS_BALANCE_PACK)
-	// Airstrike gets accuracy penalty while in air
-	if ( pOwner && pOwner->m_Shared.InCond(TF_COND_BLASTJUMPING) )
-	{
-		// Using this attr to key in the AirStrike
-		float flRocketJumpAttackBonus = 1.0f;
-		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pOwner, flRocketJumpAttackBonus, rocketjump_attackrate_bonus );
-		if ( flRocketJumpAttackBonus != 1.0f )
-		{
-			QAngle angSpread = RandomAngle( -4.0f, 4.0f );
-			angSpread.z = 0.0f;
-			angEyes += angSpread;
-		}
-	}
-#endif
-
 	return angEyes;
 }
 
@@ -6875,12 +6853,10 @@ bool CTFWeaponBase::CanBeCritBoosted( void )
 
 bool CTFWeaponBase::CanHaveRevengeCrits( void )
 {
-#if !defined(MCOMS_BALANCE_PACK)
 	int iSapperCrits = 0;
 	CALL_ATTRIB_HOOK_INT( iSapperCrits, sapper_kills_collect_crits );
 	if ( iSapperCrits != 0 )
 		return true;
-#endif
 
 	int iExtinguishCrits = 0;
 	CALL_ATTRIB_HOOK_INT( iExtinguishCrits, extinguish_revenge );

@@ -7423,11 +7423,7 @@ bool CTFGameRules::ApplyOnDamageModifyRules( CTakeDamageInfo &info, CBaseEntity 
 	// Use defense buffs if it's not a backstab or direct crush damage (telefrage, etc.)
 	if ( pVictim && info.GetDamageCustom() != TF_DMG_CUSTOM_BACKSTAB && ( info.GetDamageType() & DMG_CRUSH ) == 0 )
 	{
-#if defined(MCOMS_BALANCE_PACK)
-		if ( !iAttackIgnoresResists && pVictim->m_Shared.InCond( TF_COND_DEFENSEBUFF ) )
-#else
 		if ( pVictim->m_Shared.InCond( TF_COND_DEFENSEBUFF ) )
-#endif
 		{
 			// We take no crits of any kind...
 			if( eBonusEffect == kBonusEffect_MiniCrit || eBonusEffect == kBonusEffect_Crit )
@@ -7484,35 +7480,7 @@ bool CTFGameRules::ApplyOnDamageModifyRules( CTakeDamageInfo &info, CBaseEntity 
 		int iForceCritDmgFalloff = 0;
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, iForceCritDmgFalloff, crit_dmg_falloff );
 
-#if defined(MCOMS_BALANCE_PACK)
-		// SMG headshots falloff
-		if ( bCrit && pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_SMG )
-		{
-			iForceCritDmgFalloff = 1;
-			flDamage *= 0.5f;
-		}
-#endif
-
 		bool bIsPrecisionRevolver = false;
-
-#if defined(MCOMS_BALANCE_PACK)
-		// All revolver headshots falloff
-		if ( bCrit && pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_REVOLVER )
-		{
-			iForceCritDmgFalloff = 1;
-			int iMode = 0;
-			CALL_ATTRIB_HOOK_INT_ON_OTHER(pWeapon, iMode, set_weapon_mode);
-			if ( iMode == 1 )
-			{
-				bIsPrecisionRevolver = true;
-			}
-			else if ( !pWeapon->CanHaveRevengeCrits() )
-			{
-				// 30% damage penalty on crits
-				flDamage *= 0.7f;
-			}
-		}
-#endif
 
 		// Minicrits still get short range damage bonus
 		bool bForceCritFalloff = ( bitsDamage & DMG_USEDISTANCEMOD ) && 
@@ -7860,23 +7828,7 @@ bool CTFGameRules::ApplyOnDamageModifyRules( CTakeDamageInfo &info, CBaseEntity 
 			flDamage *= flDmgMult;
 		}
 
-		#if defined(MCOMS_BALANCE_PACK)
-		float fBaseDamage = flDamage;
-		#endif
-
 		flDamage += flCritDamage;
-
-		#if defined(MCOMS_BALANCE_PACK)
-		if (fBaseDamage < 150.0f && flCritDamage > 0 && pWeapon && WeaponID_IsSniperRifle(pWeapon->GetWeaponID()) && IsHeadshot(info.GetDamageCustom()))
-		{
-			// Check for headshot damage modifiers
-			float flHeadshotModifier = 1.0f;
-			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pAttacker, flHeadshotModifier, headshot_damage_modify);
-
-			// last 25 headshot damage goes into bleed now
-			flDamage -= MIN(fBaseDamage, 25.0f * flHeadshotModifier);
-		}
-		#endif
 	}
 
 	if ( pTFAttacker && pTFAttacker->IsPlayerClass( TF_CLASS_SPY ) )
@@ -8376,53 +8328,6 @@ float CTFGameRules::ApplyOnDamageAliveModifyRules( const CTakeDamageInfo &info, 
 					pVictim->PlayDamageResistSound( flOriginalDamage, flDamageBase );
 				}
 			}
-
-#if defined(MCOMS_BALANCE_PACK)
-			if ( pVictim->GetActiveWeapon() && pVictim->GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_SHOVEL && gpGlobals->curtime >= pVictim->GetActiveTFWeapon()->GetLastReadyTime() )
-			{
-				CTFShovel* pShovel = static_cast<CTFShovel*>( pVictim->GetActiveTFWeapon() );
-				if ( pShovel->HasDamageBoost() )
-				{
-					float flOriginalDamage = flDamageBase;
-					float flVictimHealthRatio = ( pVictim->GetHealth() - flRealDamage ) / pVictim->GetMaxHealth();
-					if ( flVictimHealthRatio <= 0.5f )
-					{
-						flDamageBase *= RemapValClamped( flVictimHealthRatio, 0.5f, 0.1f, 0.8f, 0.5f );
-					}
-					if ( flOriginalDamage != flDamageBase )
-					{
-						pVictim->PlayDamageResistSound(flOriginalDamage, flDamageBase);
-					}
-				}
-			}
-#endif
-
-#if defined(MCOMS_BALANCE_PACK)
-			if ( pVictim->GetActiveTFWeapon() && pVictim->GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_SYRINGEGUN_MEDIC)
-			{
-				bool bShouldResist = true;
-				float flClassResourceLevelMod = 1.0f;
-				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pVictim->GetActiveTFWeapon(), flClassResourceLevelMod, mult_player_movespeed_resource_level);
-				if (flClassResourceLevelMod != 1.0f)
-				{
-					bShouldResist = false;
-				}
-				int iModHealthOnHit = 0;
-				CALL_ATTRIB_HOOK_INT_ON_OTHER(pVictim->GetActiveTFWeapon(), iModHealthOnHit, add_onhit_addhealth);
-				if (iModHealthOnHit)
-				{
-					bShouldResist = false;
-				}
-				if (bShouldResist)
-				{
-					CWeaponMedigun* pMedigun = dynamic_cast<CWeaponMedigun*>(pVictim->Weapon_OwnsThisID(TF_WEAPON_MEDIGUN));
-					if (pMedigun)
-					{
-						flDamageBase *= RemapValClamped(pMedigun->GetChargeLevel(), 0.f, 1.f, 1.f, 0.65f);
-					}
-				}
-			}
-#endif
 		}
 
 		// If the damage changed at all play the resist sound
@@ -18903,12 +18808,7 @@ bool CTFGameRules::PlayerMayBlockPoint( CBasePlayer *pPlayer, int iPointIndex, c
 #endif
 #endif
 
-	// Invuln players can block points
-#if defined(MCOMS_BALANCE_PACK)
-	if ( pTFPlayer->m_Shared.IsInvulnerable() || pTFPlayer->m_Shared.InCond( TF_COND_MEGAHEAL ) )
-#else
 	if ( pTFPlayer->m_Shared.IsInvulnerable() )
-#endif
 	{
 		if ( pszReason )
 		{

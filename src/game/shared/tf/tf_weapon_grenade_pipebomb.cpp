@@ -811,20 +811,6 @@ void CTFGrenadePipebombProjectile::PipebombTouch( CBaseEntity *pOther )
 	Vector vecSpot = vOrigin - velDir * 32;
 	UTIL_TraceLine( vecSpot, vecSpot + velDir * 64, MASK_SOLID, this, COLLISION_GROUP_NONE, &pTrace );
 
-#if defined(MCOMS_BALANCE_PACK_CYLINDERS)
-	// radius bbox filter
-	if ( pOther && pOther->IsPlayer() )
-	{
-		// TODO: endpos here is incorrect
-		const float flDistSq = (pOther->WorldSpaceCenter() - pTrace.endpos).Length2DSqr();
-		const float flRadius = pOther->WorldAlignSize().x * 0.5f * 1.2f; // not the full box radius
-		if (flDistSq > flRadius * flRadius)
-		{
-			return;
-		}
-	}
-#endif
-
 	if ( pTrace.fraction < 1.0 && pTrace.surface.flags & SURF_SKY )
 	{
 		UTIL_Remove( this );

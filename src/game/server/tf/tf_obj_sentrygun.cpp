@@ -2110,11 +2110,7 @@ int CObjectSentrygun::OnTakeDamage( const CTakeDamageInfo &info )
 	// Check to see if we are being sapped.
 #if !defined(TF2_OG) || 1
 	// Check to see if we are being sapped.
-#if defined(MCOMS_BALANCE_PACK)
-	if ( !iAttackIgnoresResists && HasSapper() )
-#else
 	if ( HasSapper() )
-#endif
 	{
 		// Get the sapper owner.
 		CBaseObject *pSapper = GetObjectOfTypeOnMe( OBJ_ATTACHMENT_SAPPER );

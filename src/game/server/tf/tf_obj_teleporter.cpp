@@ -1054,29 +1054,6 @@ void CObjectTeleporter::RecieveTeleportingPlayer( CTFPlayer* pTeleportingPlayer 
 
 void CObjectTeleporter::TeleporterUpgradeThink()
 {
-#ifdef MCOMS_BALANCE_PACK
-	if (IsCarried())
-		return;
-
-	if (m_iUpgradeLevel < 10)
-	{
-		static ConVarRef tf_obj_upgrade_per_hit("tf_obj_upgrade_per_hit");
-		int iAmountToAdd = tf_obj_upgrade_per_hit.GetInt() * 2;
-
-		if (iAmountToAdd > (m_iUpgradeMetalRequired - m_iUpgradeMetal))
-			iAmountToAdd = (m_iUpgradeMetalRequired - m_iUpgradeMetal);
-
-		m_iUpgradeMetal += iAmountToAdd;
-
-		if (m_iUpgradeMetal >= m_iUpgradeMetalRequired)
-		{
-			StartUpgrading();
-			m_iUpgradeMetal = 0;
-		}
-	}
-
-	SetContextThink(&CObjectTeleporter::TeleporterUpgradeThink, gpGlobals->curtime + 5.0f, TELEPORTER_UPGRADE_THINK_CONTEXT);
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1154,26 +1131,11 @@ void CObjectTeleporter::TeleporterThink( void )
 			{
 				m_flCurrentRechargeDuration *= pow(0.9f, iUpgradeLevel - iBaseUpgradeLevel);
 			}
-#ifdef MCOMS_BALANCE_PACK
-			if (m_flTeleportCooldownTime <= gpGlobals->curtime)
-			{
-				m_iTeleportCooldownUsers = 0;
-			}
-			m_iTeleportCooldownUsers++;
-			// 0.5 second penalty on recharge for multiple teleports
-			float flTeleportCooldownPenalty = m_iTeleportCooldownUsers * 0.5f;
-			// half a respawn wave
-			m_flTeleportCooldownTime = gpGlobals->curtime + 5.0f;
-#endif
 
 			if ( !m_bWasMapPlaced )
 			{
 				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetBuilder(), m_flCurrentRechargeDuration, mult_teleporter_recharge_rate );
 			}
-
-#ifdef MCOMS_BALANCE_PACK
-			m_flCurrentRechargeDuration += flTeleportCooldownPenalty;
-#endif
 
 			m_flRechargeTime = gpGlobals->curtime + ( BUILD_TELEPORTER_FADEOUT_TIME + BUILD_TELEPORTER_FADEIN_TIME + m_flCurrentRechargeDuration );
 		

@@ -38,10 +38,6 @@ void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
 #define TF_WEAPON_SNIPERRIFLE_RELOAD_TIME		1.5f
 #define TF_WEAPON_SNIPERRIFLE_ZOOM_TIME			0.3f
 
-#if defined(MCOMS_BALANCE_PACK)
-#define TF_WEAPON_SNIPERRIFLE_NO_CRIT_AFTER_ZOOM_TIME	0.07f
-#endif
-
 ConVar tf_weapon_sniperrifle_no_crit_after_zoom_time("tf_weapon_sniperrifle_no_crit_after_zoom_time", "0.2", FCVAR_REPLICATED | FCVAR_HIDDEN);
 
 #ifdef GAME_DLL
@@ -1215,14 +1211,7 @@ void CTFSniperRifle::ExplosiveHeadShot( CTFPlayer *pAttacker, CTFPlayer *pVictim
 		flStunAmt = pTFPlayer->IsMiniBoss() ? 0.5f : RemapValClamped( iExplosiveShot, 1, 3, 0.5f, 0.8f );
 		pTFPlayer->m_Shared.StunPlayer( flStunDuration, flStunAmt, TF_STUN_MOVEMENT, pAttacker );
 
-#if defined(MCOMS_BALANCE_PACK)
-		// Radial damage
-		CTakeDamageInfo info( this, pAttacker, NULL, flDmg, DMG_BULLET );
-		info.SetDamageCustom( TF_DMG_CUSTOM_NONE );
-		pTFPlayer->TakeDamage( info );
-#else
 		pTFPlayer->m_Shared.MakeBleed(pAttacker, this, 0.1f, flDmg);
-#endif
 
 		// Shoot a beam at them
 		CPVSFilter filter( pTFPlayer->WorldSpaceCenter() );

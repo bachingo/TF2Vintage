@@ -406,24 +406,6 @@ CTFBaseRocket *CTFBaseRocket::Create( CBaseEntity *pLauncher, const char *pszCla
 		{
 			flLaunchSpeed = 3000.f;
 		}
-
-#if defined(MCOMS_BALANCE_PACK)
-		// Airstrike gets launch speed bonus
-		if ( pTFOwner && pTFOwner->m_Shared.InCond( TF_COND_BLASTJUMPING ) )
-		{
-			// Using this attr to key in the AirStrike
-			float flRocketJumpAttackBonus = 1.0f;
-			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pTFOwner, flRocketJumpAttackBonus, rocketjump_attackrate_bonus );
-			if ( flRocketJumpAttackBonus != 1.0f )
-			{
-				flLaunchSpeed *= 2.0f;
-				if ( flLaunchSpeed > 3000.0f )
-				{
-					flLaunchSpeed = 3000.0f;
-				}
-			}
-		}
-#endif
 	}
 
 	Vector vecVelocity = vecForward * flLaunchSpeed;
@@ -467,18 +449,6 @@ void CTFBaseRocket::RocketTouch( CBaseEntity *pOther )
 
 bool CTFBaseRocket::ShouldIgnoreTrace(trace_t* pTrace)
 {
-#if defined(MCOMS_BALANCE_PACK_CYLINDERS)
-	// radius bbox filter
-	if (pTrace->m_pEnt && pTrace->m_pEnt->IsPlayer())
-	{
-		const float flDistSq = (pTrace->m_pEnt->WorldSpaceCenter() - pTrace->endpos).Length2DSqr();
-		const float flRadius = pTrace->m_pEnt->WorldAlignSize().x * 0.5f * 1.2f; // not the full box radius
-		if (flDistSq > flRadius * flRadius)
-		{
-			return true;
-		}
-	}
-#endif
 	return false;
 }
 
