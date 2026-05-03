@@ -26762,12 +26762,6 @@
 			"image_inventory_size_w"		"128"
 			"image_inventory_size_h"		"82"
 			"inspect_panel_dist" 				"55"			
-			"model_player_per_class"
-			{
-				"soldier"	"models/workshop/weapons/c_models/c_paintrain/c_paintrain.mdl"
-				"demoman"	"models/workshop/weapons/c_models/c_paintrain/c_paintrain.mdl"
-				"pyro"		"models/workshop/weapons/c_models/c_paintrain/c_paintrain_pyro.mdl"
-			}
 			"model_player"	"models/workshop/weapons/c_models/c_paintrain/c_paintrain.mdl"
 			"attach_to_hands"	"1"
 			"item_quality"	"unique"
@@ -26778,7 +26772,6 @@
 			{
 				"demoman"	"1"
 				"soldier"	"1"
-				"pyro"	"1"
 			}
 			"static_attrs"
 			{
