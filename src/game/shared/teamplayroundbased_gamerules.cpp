@@ -4279,14 +4279,6 @@ float CTeamplayRoundBasedRules::GetRespawnWaveMaxLength( int iTeam, bool bScaleW
 	if ( IsInTournamentMode() == true && IsInPreMatch() == true )
 		return 0.0f;
 
-#if defined( TF_DLL ) || defined( TF_CLIENT_DLL )
-	static ConVarRef tf_tc2_mode( "tf_tc2_mode" );
-	if ( tf_tc2_mode.GetBool() && bScaleWithNumPlayers )
-	{
-		return 1.0f;
-	}
-#endif
-
 	float flTime = ( ( m_TeamRespawnWaveTimes[iTeam] >= 0 ) ? m_TeamRespawnWaveTimes[iTeam] : mp_respawnwavetime.GetFloat() );
 
 	// For long respawn times, scale the time as the number of players drops

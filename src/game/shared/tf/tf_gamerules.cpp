@@ -2254,13 +2254,6 @@ bool CTFGameRules::GameModeUsesUpgrades( void )
 	if ( IsMannVsMachineMode() || IsBountyMode() )
 		return true;
 
-	// TODO(mcoms): no upgrades for now
-#if 0
-	static ConVarRef tf_tc2_mode( "tf_tc2_mode" );
-	if ( tf_tc2_mode.GetBool() )
-		return true;
-#endif
-
 	return false;
 }
 
@@ -3175,16 +3168,11 @@ bool CTFGameRules::StopWatchShouldBeTimedWin( bool bSkipForMultiSeries )
 //-----------------------------------------------------------------------------
 bool CTFGameRules::IsAttackDefenseMode( void )
 {
-#ifdef GAME_DLL
-	CTeamControlPointMaster* pMaster = g_hControlPointMasters.Count() ? g_hControlPointMasters[0] : NULL;
-	bool                     bRetVal = !tf_tc2_mode.GetBool() && !HasMultipleTrains() && ( tf_gamemode_payload.GetBool() || ( pMaster && ( pMaster->PlayingMiniRounds() || pMaster->ShouldSwitchTeamsOnRoundWin() ) ) );
+	CTeamControlPointMaster *pMaster = g_hControlPointMasters.Count() ? g_hControlPointMasters[0] : NULL;
+	bool bRetVal = !HasMultipleTrains() && ( tf_gamemode_payload.GetBool() || ( pMaster && ( pMaster->PlayingMiniRounds() || pMaster->ShouldSwitchTeamsOnRoundWin() ) ) );
 
 	tf_attack_defend_map.SetValue( bRetVal );
-
 	return bRetVal;
-#else
-	return tf_attack_defend_map.GetBool();
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -4176,14 +4164,7 @@ void CTFGameRules::LevelInitPostEntity( void )
 
 	if ( GetVoiceGameMgr() )
 	{
-		if ( tf_tc2_mode.GetBool() )
-		{
-			GetVoiceGameMgr()->SetProximityDistance( 256 );
-		}
-		else
-		{
-			GetVoiceGameMgr()->SetProximityDistance( -1 );
-		}
+		GetVoiceGameMgr()->SetProximityDistance( -1 );
 	}
 #endif // GAME_DLL
 }
@@ -5167,15 +5148,6 @@ void CTFGameRules::Activate()
 	if ( GameModeUsesUpgrades() && g_pPopulationManager == NULL )
 	{
 		(CPopulationManager *)CreateEntityByName( "info_populator" );
-	}
-
-	if ( tf_tc2_mode.GetBool() && GameModeUsesUpgrades() && !g_hUpgradeEntity )
-	{
-		CUpgrades* pUpgrades = ( CUpgrades* )CreateEntityByName( "func_upgradestation" );
-		if ( pUpgrades )
-		{
-			pUpgrades->Spawn();
-		}
 	}
 
 	if ( tf_gamemode_tc.GetBool() || tf_gamemode_sd.GetBool() || tf_gamemode_pd.GetBool() || m_bPlayingMedieval )
@@ -11357,22 +11329,6 @@ void cc_ShowRespawnTimes()
 
 ConCommand mp_showrespawntimes( "mp_showrespawntimes", cc_ShowRespawnTimes, "Show the min respawn times for the teams", FCVAR_CHEAT );
 
-// TC2 (Territorial Control 2): Experimental Large-Scale Territorial Control Mode
-// When enabled: 
-//  * All territorial control points start unlocked (handled in team_control_point_master.cpp)
-//  * Spawn point validation is relaxed (disabled spawn entities are still considered valid)
-//  * Allow selecting any team spawn / teleporter exit on redeploy
-ConVar tf_tc2_mode( "tf_tc2_mode", "0",
-	FCVAR_REPLICATED | FCVAR_NOTIFY,
-	"Territorial Control 2: Experimental mode - unlock all control points at round start and relax spawn restrictions (redeploy anywhere)." );
-
-#ifdef GAME_DLL
-// TC2 spawn-anywhere server tunables
-ConVar tf_tc2_redeploy_cooldown( "tf_tc2_redeploy_cooldown", "10", FCVAR_NOTIFY, "Territorial Control 2: Seconds between redeploy spawn selections." );
-ConVar tf_tc2_spawn_enemy_block_radius( "tf_tc2_spawn_enemy_block_radius", "512", FCVAR_NOTIFY, "Territorial Control 2: Radius in which nearby enemies will block a spawn node from being available." );
-#endif
-
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -11508,182 +11464,6 @@ bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, 
 }
 
 #ifdef GAME_DLL
-//-----------------------------------------------------------------------------
-// Purpose: Collect all valid spawn nodes for the Territorial Control 2 spawn-anywhere system
-//-----------------------------------------------------------------------------
-void CTFGameRules::CollectSpawnNodesForPlayer( CTFPlayer *pPlayer, CUtlVector<TCSpawnNode_t> &spawnNodes )
-{
-	if ( !pPlayer || !tf_tc2_mode.GetBool() )
-		return;
-
-	spawnNodes.RemoveAll();
-	int iTeam = pPlayer->GetTeamNumber();
-
-	const int k_MaxNodes = 12;
-	CBaseEntity* pSpot = NULL;
-
-	// Collect control points (owned by team or capturable)
-	while ( spawnNodes.Count() <= k_MaxNodes && ( pSpot = gEntList.FindEntityByClassname( pSpot, "team_control_point" ) ) != NULL )
-	{
-		CTeamControlPoint *pCP = dynamic_cast<CTeamControlPoint*>( pSpot );
-		if ( !pCP )
-			continue;
-
-		// Skip if not visible or not active
-		if ( !pCP->PointIsVisible() || !pCP->IsActive() )
-			continue;
-
-		int iCPOwner = pCP->GetOwner();
-
-		// Allow spawning on owned or neutral CPs
-		if ( iCPOwner != iTeam && iCPOwner != TEAM_UNASSIGNED )
-			continue;
-
-		TCSpawnNode_t node;
-		node.vecPosition = pCP->GetAbsOrigin();
-		node.angAngles = pCP->GetAbsAngles();
-		node.eType = TCSPAWN_CONTROLPOINT;
-		node.iTeam = iTeam;
-		node.bAvailable = true;
-		node.hEntity = pCP;
-		spawnNodes.AddToTail( node );
-	}
-
-	// Collect friendly teleporter exits
-	pSpot = NULL;
-	while ( spawnNodes.Count() <= k_MaxNodes && ( pSpot = gEntList.FindEntityByClassname( pSpot, "obj_teleporter" ) ) != NULL )
-	{
-		CObjectTeleporter* pTele = dynamic_cast<CObjectTeleporter*>( pSpot );
-		if ( !pTele )
-			continue;
-
-		// Only exits from player's team
-		if ( pTele->GetTeamNumber() != iTeam )
-			continue;
-
-		// Must be an exit (not entrance)
-		if ( !pTele->IsExit() )
-			continue;
-
-		// Must be built and functional
-		if ( !pTele->IsReady() )
-			continue;
-
-		TCSpawnNode_t node;
-		node.vecPosition = pTele->GetAbsOrigin();
-		node.angAngles = pTele->GetAbsAngles();
-		node.eType = TCSPAWN_TELEPORTER;
-		node.iTeam = iTeam;
-		node.bAvailable = true;
-		node.hEntity = pTele;
-		spawnNodes.AddToTail( node );
-	}
-
-	// Collect team spawn points
-#if 0
-	while ( spawnNodes.Count() <= k_MaxNodes && ( pSpot = gEntList.FindEntityByClassname( pSpot, "info_player_teamspawn" ) ) != NULL )
-	{
-		CTFTeamSpawn *pTFSpawn = dynamic_cast<CTFTeamSpawn*>( pSpot );
-		if ( !pTFSpawn )
-			continue;
-
-		if ( !IsSpawnPointValid( pTFSpawn, pPlayer, true ) )
-			continue;
-
-		TCSpawnNode_t node;
-		node.vecPosition = pTFSpawn->GetAbsOrigin();
-		node.angAngles = pTFSpawn->GetAbsAngles();
-		node.eType = TCSPAWN_TEAMSPAWN;
-		node.iTeam = iTeam;
-		node.bAvailable = true;
-		node.hEntity = pTFSpawn;
-		spawnNodes.AddToTail( node );
-	}
-#endif
-
-	// Apply simple enemy proximity blocking (server only)
-#ifdef GAME_DLL
-	if ( spawnNodes.Count() > 0 )
-	{
-		const float flBlockRadius = tf_tc2_spawn_enemy_block_radius.GetFloat();
-		const float flBlockRadiusSqr = flBlockRadius * flBlockRadius;
-		const int iEnemyTeam = ( iTeam == TF_TEAM_RED ) ? TF_TEAM_BLUE : TF_TEAM_RED;
-
-		for ( int i = 0; i < spawnNodes.Count(); ++i )
-		{
-			if ( !spawnNodes[i].bAvailable )
-				continue;
-
-			for ( int idx = 1; idx <= gpGlobals->maxClients; ++idx )
-			{
-				CTFPlayer *pOther = ToTFPlayer( UTIL_PlayerByIndex( idx ) );
-				if ( !pOther || !pOther->IsAlive() || pOther->GetTeamNumber() != iEnemyTeam )
-					continue;
-
-				if ( spawnNodes[i].vecPosition.DistToSqr( pOther->GetAbsOrigin() ) <= flBlockRadiusSqr )
-				{
-					spawnNodes[i].bAvailable = false;
-					break;
-				}
-			}
-		}
-	}
-#endif
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Send spawn node list to a specific player client
-//-----------------------------------------------------------------------------
-void CTFGameRules::SendSpawnNodesToClient( CTFPlayer *pPlayer )
-{
-	if ( !pPlayer || !tf_tc2_mode.GetBool() || pPlayer->IsBot() )
-		return;
-
-	CUtlVector<TCSpawnNode_t> spawnNodes;
-	CollectSpawnNodesForPlayer( pPlayer, spawnNodes );
-
-	// Send via user message
-	CSingleUserRecipientFilter filter( pPlayer );
-	UserMessageBegin( filter, "TC2SpawnNodeList" );
-		WRITE_SHORT( spawnNodes.Count() );
-		
-		for ( int i = 0; i < spawnNodes.Count(); ++i )
-		{
-			const TCSpawnNode_t &node = spawnNodes[i];
-			WRITE_BYTE( (byte)node.eType );
-			WRITE_COORD( node.vecPosition.x );
-			WRITE_COORD( node.vecPosition.y );
-			WRITE_COORD( node.vecPosition.z );
-			WRITE_ANGLES( node.angAngles );
-			WRITE_BYTE( node.iTeam );
-			WRITE_BYTE( node.bAvailable ? 1 : 0 );
-			WRITE_LONG( node.hEntity.IsValid() ? node.hEntity.GetEntryIndex() : -1 );
-		}
-	MessageEnd();
-}
-#endif // GAME_DLL
-
-Vector CTFGameRules::VecItemRespawnSpot( CItem *pItem )
-{
-	return pItem->GetOriginalSpawnOrigin();
-}
-
-QAngle CTFGameRules::VecItemRespawnAngles( CItem *pItem )
-{
-	return pItem->GetOriginalSpawnAngles();
-}
-
-int CTFGameRules::ItemShouldRespawn( CItem *pItem )
-{
-	return BaseClass::ItemShouldRespawn( pItem );
-}
-
-float CTFGameRules::FlItemRespawnTime( CItem *pItem )
-{
-	return ITEM_RESPAWN_TIME;
-}
-
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -15792,25 +15572,6 @@ void CTFGameRules::SetupSpawnPointsForRound( void )
 	if ( !g_hControlPointMasters.Count() || !g_hControlPointMasters[0] )
 		return;
 
-#if defined ( TF_DLL )
-	if ( tf_tc2_mode.GetBool() )
-	{
-		for ( int i=0; i<ITFTeamSpawnAutoList::AutoList().Count(); ++i )
-		{
-			CTFTeamSpawn *pTFSpawn = static_cast< CTFTeamSpawn* >( ITFTeamSpawnAutoList::AutoList()[i] );
-
-			CHandle<CTeamControlPoint> hControlPoint = pTFSpawn->GetControlPoint();
-
-			if ( hControlPoint )
-			{
-				pTFSpawn->SetDisabled( false );
-				pTFSpawn->ChangeTeam( hControlPoint->GetOwner() );
-			}
-		}
-		return;
-	}
-#endif
-
 	if ( !g_hControlPointMasters[0]->PlayingMiniRounds() )
 		return;
 
@@ -17249,10 +17010,6 @@ void CTFGameRules::ClientCommandKeyValues( edict_t *pEntity, KeyValues *pKeyValu
 				pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_MVM_UPGRADE_COMPLETE );
 			}
 
-			if ( tf_tc2_mode.GetBool() && GameModeUsesUpgrades() )
-			{
-				pTFPlayer->m_Shared.SetInUpgradeZone( false );
-			}
 		}
 		else if ( FStrEq( pszCommand, "MVM_Revive_Response" ) )
 		{
@@ -17300,11 +17057,6 @@ void CTFGameRules::ClientCommandKeyValues( edict_t *pEntity, KeyValues *pKeyValu
 					pTFPlayer->ForceRespawn();
 					pTFPlayer->SetInstantClassSpawn(false);
 				}
-			}
-
-			if ( tf_tc2_mode.GetBool() && GameModeUsesUpgrades() )
-			{
-				pTFPlayer->m_Shared.SetInUpgradeZone( false );
 			}
 		}
 		else if ( FStrEq( pszCommand, "use_action_slot_item_server" ) )

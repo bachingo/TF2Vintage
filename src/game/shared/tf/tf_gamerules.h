@@ -74,7 +74,6 @@ extern ConVar	tf_arena_change_limit;
 extern ConVar	tf_ctf_bonus_time;
 extern ConVar	tf_mvm_respec_enabled;
 extern ConVar	tf_spawn_glows_duration;
-extern ConVar	tf_tc2_mode;
 extern ConVar 	tf2v_era;
 
 #ifdef GAME_DLL
@@ -948,11 +947,6 @@ bool IsCreepWaveMode( void ) const;
 	// Spawning rules.
 	CBaseEntity *GetPlayerSpawnSpot( CBasePlayer *pPlayer );
 	bool IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, bool bIgnorePlayers, PlayerTeamSpawnMode_t nSpawndMode = PlayerTeamSpawnMode_Normal );
-
-#ifdef GAME_DLL
-	void CollectSpawnNodesForPlayer( CTFPlayer *pPlayer, CUtlVector<TCSpawnNode_t> &spawnNodes );
-	void SendSpawnNodesToClient( CTFPlayer *pPlayer );
-#endif // GAME_DLL
 
 	virtual int ItemShouldRespawn( CItem *pItem );
 	virtual float FlItemRespawnTime( CItem *pItem );

@@ -9113,11 +9113,6 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 					return true;
 			}
 
-			if ( !tf_tc2_mode.GetBool() )
-			{
-				return true;
-			}
-
 			m_Shared.SetInUpgradeZone(true);
 			return true;
 		}
@@ -12982,12 +12977,6 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 
 	StateTransition( TF_STATE_DYING );	// Transition into the dying state.
 
-	if ( tf_tc2_mode.GetBool() && TFGameRules()->GameModeUsesUpgrades() )
-	{
-		// lose all upgrades on death
-		GrantOrRemoveAllUpgrades( true, false );
-	}
-
 	if ( pPlayerAttacker )
 	{
 		if ( TFGameRules()->IsIT( this ) )
@@ -15356,12 +15345,6 @@ void CTFPlayer::StateThinkDYING( void )
 
 		IncrementInterpolationFrame();
 
-		// TODO(mcoms): do this a bit sooner
-		// TC2: If active, send spawn node list to client
-		if ( tf_tc2_mode.GetBool() && TFGameRules() )
-		{
-			TFGameRules()->SendSpawnNodesToClient( this );
-		}
 
 		if ( bStrictMode && m_hObserverTarget && m_hObserverTarget->GetTeamNumber() >= FIRST_GAME_TEAM && m_hObserverTarget->GetTeamNumber() != GetTeamNumber() )
 		{
@@ -24710,69 +24693,4 @@ void CTFPlayer::ScriptEquipWearableViewModel( HSCRIPT hWearableViewModel )
 void CTFPlayer::ScriptStunPlayer( float flTime, float flReductionAmount, int iStunFlags /* = TF_STUN_MOVEMENT */, HSCRIPT hAttacker /* = NULL */ )
 {
 	m_Shared.StunPlayer( flTime, flReductionAmount, iStunFlags, ScriptToEntClass< CTFPlayer >( hAttacker ) );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Client command to select a spawn location (TC2 spawn-anywhere)
-//-----------------------------------------------------------------------------
-CON_COMMAND_F( tc2_select_spawn, "Select a spawn location by node index.", FCVAR_NONE )
-{
-	CTFPlayer* pPlayer = ToTFPlayer( UTIL_GetCommandClient() );
-	if ( !pPlayer || !tf_tc2_mode.GetBool() )
-		return;
-
-	// Enforce redeploy cooldown
-	static ConVarRef tf_tc2_redeploy_cooldown( "tf_tc2_redeploy_cooldown" );
-	float flCooldown = tf_tc2_redeploy_cooldown.GetFloat();
-	if ( gpGlobals->curtime - pPlayer->GetLastRedeployTime() < flCooldown )
-	{
-		ClientPrint( pPlayer, HUD_PRINTCENTER, "#TC2_RedeployCooldown" );
-		//Warning( "tc2_select_spawn: Redeploy on cooldown for player %s\n", pPlayer->GetPlayerName() );
-		return;
-	}
-
-	if ( args.ArgC() < 4 )
-	{
-		//Warning( "tc2_select_spawn: Requires 3 arguments (x y z)\n" );
-		return;
-	}
-
-	// Parse spawn position from command
-	Vector vecSpawnPos;
-	vecSpawnPos.x = atof( args[1] );
-	vecSpawnPos.y = atof( args[2] );
-	vecSpawnPos.z = atof( args[3] );
-
-	// Validate the spawn position is in the list of available nodes
-	CUtlVector<TCSpawnNode_t> spawnNodes;
-	TFGameRules()->CollectSpawnNodesForPlayer( pPlayer, spawnNodes );
-
-	bool bValidSpawn = false;
-	for ( int i = 0; i < spawnNodes.Count(); ++i )
-	{
-		const TCSpawnNode_t& node = spawnNodes[i];
-
-		// Check if position matches (with small tolerance for floating point)
-		if ( ( node.vecPosition - vecSpawnPos ).LengthSqr() < 1.0f )
-		{
-			if ( !node.bAvailable )
-			{
-				// Node currently unavailable
-				break;
-			}
-			// Use the validated node's exact position and angles
-			Vector vector = node.vecPosition;
-			vector.z += 13.0f;
-			pPlayer->SetSpawnPosOverride( vector, node.angAngles );
-			pPlayer->SetLastRedeployTime( gpGlobals->curtime );
-			bValidSpawn = true;
-			break;
-		}
-	}
-
-	if ( !bValidSpawn )
-	{
-		//Warning( "tc2_select_spawn: Invalid spawn position for player %s\n", pPlayer->GetPlayerName() );
-		ClientPrint( pPlayer, HUD_PRINTCENTER, "#TC2_SpawnLost" );
-	}
 }

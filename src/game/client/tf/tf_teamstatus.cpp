@@ -153,17 +153,7 @@ bool CTFTeamStatusPlayerPanel::Update( void )
 				{
 					if ( !bHasPlayer )
 					{
-						static ConVarRef tf_tc2_mode( "tf_tc2_mode" );
 						float flRespawnWaveTime = TFGameRules()->GetNextRespawnWave( m_iTeam, pLocalPlayer );
-						// show current player respawn time.
-						if ( tf_tc2_mode.GetBool() )
-						{
-							// TODO(mcoms): better check for this
-							// base player time to wave time
-							flRespawnWaveTime = gpGlobals->curtime + 6.0f;
-							// add the actual wave time
-							flRespawnWaveTime += TFGameRules()->GetRespawnWaveMaxLength( m_iTeam, false );
-						}
 						iRespawnWait = RoundFloatToNearestInt( flRespawnWaveTime - gpGlobals->curtime );
 					}
 					else
