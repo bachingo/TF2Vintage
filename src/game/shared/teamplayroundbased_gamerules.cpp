@@ -294,9 +294,6 @@ ConVar mp_match_end_at_timelimit( "mp_match_end_at_timelimit", "0", FCVAR_NOTIFY
 
 ConVar mp_holiday_nogifts( "mp_holiday_nogifts", "0", FCVAR_NOTIFY, "Set to 1 to prevent holiday gifts from spawning when players are killed." );
 
-
-ConVar tf2v_use_new_respawn_timers( "tf2v_use_new_respawn_timers", "0", FCVAR_NOTIFY, "Adjusts the respawn timers based on playercount more aggressively than the original. 0 - Original TF2, 1 - TF2V Concept", true, 0, true, 1 );
-
 const char *m_pszRoundStateStrings[] = 
 {
 	"GR_STATE_INIT",
@@ -731,14 +728,7 @@ float CTeamplayRoundBasedRules::GetRespawnTimeScalar( int iTeam )
 
 	int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
 
-	float flScale;
-	if ( tf2v_use_new_respawn_timers.GetBool() )
-		flScale = (float)(iNumPlayers)/iOptimalPlayers; // TF2V specific: Remove the Clamped to increase spawn times on >16 player servers. Also Decreases spawn time on <16 player servers.
-	else
-		flScale = RemapValClamped( iNumPlayers, 1, iOptimalPlayers, 0.25, 1.0 ); // Use the original TF2 spawn formula for XL servers, for absolute chaos.
-	
-
-	
+	float flScale = RemapValClamped( iNumPlayers, 1, iOptimalPlayers, 0.25, 1.0 );
 	return flScale;
 }
 
