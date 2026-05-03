@@ -1004,6 +1004,7 @@ struct collidelist_t
 // Epoch number is based on 09/17/2007 (the PC beta release) as Day 1.
 // Quicker to save as a precalculated integer than strings.
 // Calculate this by "September 16 2007 to <date>."
+#define TF2V_ERA_DAY_EPOCH        	0		// Sep 16 2007
 #define TF2V_ERA_DAY_BETA        	1		// Sep 17 2007
 #define TF2V_ERA_DAY_LAUNCH         24		// Oct 10 2007
 #define TF2V_ERA_DAY_GOLDRUSH       226		// Apr 29 2008
