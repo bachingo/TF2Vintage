@@ -53,7 +53,7 @@ ConVar tf_bot_always_full_reload( "tf_bot_always_full_reload", "0", FCVAR_CHEAT 
 ConVar tf_bot_fire_weapon_allowed( "tf_bot_fire_weapon_allowed", "1", FCVAR_CHEAT, "If zero, TFBots will not pull the trigger of their weapons (but will act like they did)" );
 ConVar tf_bot_reevaluate_class_in_spawnroom( "tf_bot_reevaluate_class_in_spawnroom", "1", FCVAR_CHEAT, "If set, bots will opportunisticly switch class while in spawnrooms if their current class is no longer their first choice." );
 
-ConVar tf_bot_random_items( "tf_bot_random_items", "1", FCVAR_NONE, "Bots will equip random loadout" );
+ConVar tf_bot_random_items( "tf_bot_random_items", "0", FCVAR_NONE, "Bots will equip random loadout" );
 ConVar tf_bot_random_items_dist( "tf_bot_random_items_dist", "1", FCVAR_CHEAT, "Don't force random items. Instead, apply a random distribution to also using stock." );
 
 //---------------------------------------------------------------------------------------------
