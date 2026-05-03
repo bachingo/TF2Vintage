@@ -283,8 +283,7 @@ void CTFWeaponBaseGrenadeProj::Spawn( void )
 	SetSolidFlags( FSOLID_NOT_STANDABLE );
 	SetSolid( SOLID_BBOX );	
 
-	// UNDONE(mcoms): adding shadows
-	//AddEffects( EF_NOSHADOW );
+	AddEffects( EF_NOSHADOW );
 
 	// Set the grenade size here.
 	UTIL_SetSize( this, TF_GRENADE_PROJECTILE_MINS, TF_GRENADE_PROJECTILE_MAXS );
