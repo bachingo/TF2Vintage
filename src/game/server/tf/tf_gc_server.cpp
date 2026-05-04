@@ -4518,61 +4518,14 @@ void CTFGCServerSystem::ProcessPlayerInventoryRequest( CSteamID steamID, KeyValu
 	WebapiEquipmentState_t& state = FindOrCreateWebapiEquipmentState( steamID );
 
 	// If they have a pending request we haven't acted on, it's now stale.
-	if ( !pKVRequest->GetString("msg", nullptr) )
-	{
-		return;
-	}
-
-	if ( !pKVRequest->GetString("ticket", nullptr) )
-	{
-		return;
-	}
-
-	const int iRequestPart = pKVRequest->GetInt("part", 0);	
-	if ( iRequestPart < TF_FIRST_NORMAL_CLASS || iRequestPart >= TF_LAST_NORMAL_CLASS )
-	{
-		return;
-	}
-	const int iPart = iRequestPart - 1;
-
-	int bit = 1 << iPart;
-
-	// If they have a pending request we haven't acted on, it's now stale.
-	if ( state.iPartsReceived != 0 && ( state.iPartsReceived & bit || V_stricmp( state.m_pKVNextRequest->GetString( "ticket" ), pKVRequest->GetString( "ticket" ) ) ) )
+	if( state.m_pKVNextRequest )
 	{
 		state.m_pKVNextRequest->deleteThis();
 		state.m_pKVNextRequest = nullptr;
-		state.iPartsReceived = 0;
 	}
 
 	// Clone off their existing request for processing
-	if ( state.iPartsReceived )
-	{
-		state.m_pKVNextRequest->RecursiveMergeKeyValues( pKVRequest->MakeCopy() );
-	}
-	else
-	{
-		state.m_pKVNextRequest = pKVRequest->MakeCopy();
-	}
-
-	state.iPartsReceived |= bit;
-
-	RTime32 iSecsLeft = state.m_rtNextRequest > CRTime::RTime32TimeCur() ? state.m_rtNextRequest - CRTime::RTime32TimeCur() : 0;
-	if ( state.m_rtNextRequest > 0 && iSecsLeft > 5 && iPart == 0 )
-	{
-		CTFPlayer* pTFPlayer = ToTFPlayer( GetPlayerBySteamID( steamID ) );
-		if ( pTFPlayer )
-		{
-			IGameEvent * event = gameeventmanager->CreateEvent( "sdk_inventory_cooldown" );
-			if ( event )
-			{
-				event->SetInt( "userid", pTFPlayer->GetUserID() );
-				event->SetInt( "time", iSecsLeft );
-
-				gameeventmanager->FireEvent( event );
-			}
-		}
-	}
+	state.m_pKVNextRequest = pKVRequest->MakeCopy();
 }
 
 void CTFGCServerSystem::WebapiEquipmentState_t::OnWebapiEquipmentReceived( HTTPRequestCompleted_t* pInfo, bool bIOFailure )
