@@ -345,7 +345,7 @@ void CTFGCClientSystem::InvalidatePingData()
 void CTFGCClientSystem::WebapiInventoryState_t::Backoff()
 {
 	if ( m_nBackoffSec == 0 )
-		m_nBackoffSec = 1;
+		m_nBackoffSec = 0;
 
 	m_rtNextRequest = CRTime::RTime32TimeCur() + m_nBackoffSec;
 }
