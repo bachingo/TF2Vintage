@@ -4340,7 +4340,7 @@ ConVar tf_mm_trusted( "tf_mm_trusted", "0", FCVAR_NOTIFY | FCVAR_HIDDEN,
 void CTFGCServerSystem::WebapiEquipmentState_t::Backoff()
 {
 	if ( m_nBackoffSec == 0 )
-		m_nBackoffSec = 1;
+		m_nBackoffSec = 0.5f;
 
 	m_rtNextRequest = CRTime::RTime32TimeCur() + m_nBackoffSec;
 }
