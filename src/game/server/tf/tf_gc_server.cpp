@@ -4340,9 +4340,7 @@ ConVar tf_mm_trusted( "tf_mm_trusted", "0", FCVAR_NOTIFY | FCVAR_HIDDEN,
 void CTFGCServerSystem::WebapiEquipmentState_t::Backoff()
 {
 	if ( m_nBackoffSec == 0 )
-		m_nBackoffSec = 20;
-	else
-		m_nBackoffSec = ( m_nBackoffSec * 12 + 9 ) / 10; // exponential backoff @ 1.2x factor, round up
+		m_nBackoffSec = 1;
 
 	m_rtNextRequest = CRTime::RTime32TimeCur() + m_nBackoffSec;
 }
@@ -4496,7 +4494,7 @@ void CTFGCServerSystem::WebapiEquipmentThinkRequest( CSteamID steamID, WebapiEqu
 			state.m_pKVCurrentRequest = nullptr;
 		}
 
-		// Don't allow spamming this api -- wait 20 seconds before we ask gc for items again
+		// Don't allow spamming this api -- wait m_nBackoffSec seconds before we ask gc for items again
 		state.RequestSucceeded();
 		state.Backoff();
 		DevMsg("Inventory received: backing off before another request.\n");
