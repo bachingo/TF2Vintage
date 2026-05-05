@@ -1167,7 +1167,7 @@ ConVar tf_gamemode_misc ( "tf_gamemode_misc", "0", FCVAR_REPLICATED | FCVAR_NOTI
 ConVar tf_bot_count( "tf_bot_count", "0", FCVAR_NOTIFY | FCVAR_DEVELOPMENTONLY );
 
 // Update TF2V_ERA_DAY_MAX when needed. Current value: 6559.
-ConVar tf2v_era ( "tf2v_era", "6559", FCVAR_REPLICATED | FCVAR_NOTIFY , "TF2V's Master Convar used to control the date of TF2V. Applies to server on round restarts.", true, 1, true, 6559 );
+ConVar tf2v_era ( "tf2v_era", TF2V_ERA_DAY_MAX, FCVAR_REPLICATED | FCVAR_NOTIFY , "TF2V's Master Convar used to control the date of TF2V. Applies to server on round restarts.", true, TF2V_ERA_DAY_MIN, true, TF2V_ERA_DAY_MAX );
 
 #ifdef _DEBUG
 ConVar tf_debug_ammo_and_health( "tf_debug_ammo_and_health", "0", FCVAR_CHEAT );
@@ -10944,6 +10944,9 @@ float CTFGameRules::GetPreMatchEndTime() const
 //-----------------------------------------------------------------------------
 void CTFGameRules::GoToIntermission( void )
 {
+	// Set the era
+	SetTF2VEra(tf2v_era.GetInt());
+	
 	// Tell the clients to recalculate the holiday
 	IGameEvent *event = gameeventmanager->CreateEvent( "recalculate_holidays" );
 	if ( event )
@@ -16705,7 +16708,19 @@ void CTFGameRules::RoundRespawn( void )
 	// reset player per-round stats
 	CTF_GameStats.ResetRoundStats();
 	
-	SetTF2VEra(tf2v_era.GetInt());
+	// Update the era
+	if ( GetTF2VEra() != tf2v_era.GetInt() )
+	{
+		SetTF2VEra(tf2v_era.GetInt());
+		
+		// Tell the clients to recalculate the holiday
+		IGameEvent *event = gameeventmanager->CreateEvent( "recalculate_holidays" );
+		if ( event )
+		{
+			gameeventmanager->FireEvent( event );
+		}
+		UTIL_CalculateHolidays();
+	}
 
 	BaseClass::RoundRespawn();
 
