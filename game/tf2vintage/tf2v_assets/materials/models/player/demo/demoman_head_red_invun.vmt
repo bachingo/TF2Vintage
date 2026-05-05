@@ -1,9 +1,20 @@
-Patch
+"Patch"
 {
-	include	"materials/models/player/shared/invuln/invuln_red_head.vmt"
+	include "materials/models/player/shared/red_invun_base.vmt"
+	
 	insert
 	{
-		$basetexture		"models/player/demo/demoman_head"
-		$bumpmap		"models/player/demo/hwm/demoman_head_phongmask"
+		"$baseTexture"					"models/player/demo/demoman_head"
+		"$detailblendfactor"			"0.3"
+		"$detailblendmode"				"1"
+		"$color2"						"[1.25 0.7 0.6]"
+		
+		"$EmissiveBlendEnabled"			"1"
+		"$EmissiveBlendStrength" 		"1"
+		"$EmissiveBlendTexture" 		"vgui/white"
+		"$EmissiveBlendBaseTexture"		"models/player/demo/demoman_head_eyeglow"
+		"$EmissiveBlendFlowTexture" 	"vgui/white"
+		"$EmissiveBlendTint" 			"[2.5 0.45 0.03]"
+		"$EmissiveBlendScrollVector"	"[ 0 0 ]" 
 	}
 }

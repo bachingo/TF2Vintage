@@ -1,20 +1,20 @@
-Patch
+"Patch"
 {
-	include	"materials/models/player/shared/invuln/invuln_blue_head.vmt"
+	include "materials/models/player/shared/blue_invun_base.vmt"
+	
 	insert
 	{
-		$basetexture		"models/player/engineer/engineer_head"
-		$bumpmap		"models/player/engineer/hwm/engineer_head_phongmask"
+		"$baseTexture"					"models/player/engineer/engineer_head"
+		"$detailblendfactor"			"0.15"
+		"$detailblendmode"				"1"
+		"$color2"						"[0.6 0.7 1.5]"
 		
-		// Emissive Blend
-		// This is used to provide illumination for the eyes, independent from the $selfillum used by the rest of the head/body.
-		// So glad this exists, b/c otherwise I think making the eyes glow a separate color from the rest of the body would be impossible!
-		$emissiveblendenabled	1
-		$emissiveblendstrength	1.0				// Must be float, or Clamp proxy won't save the value properly!
-		$emissiveBlendTexture	"dev/null"			// Dummy texture
-		$emissiveBlendBaseTexture	"models/player/engineer/engineer_head_invun_emissiveblend"
-		$emissiveBlendFlowTexture	"dev/null"			// Dummy texture
-		$emissiveBlendTint		"[1.0 1.0 0.0]"
-		$emissiveBlendScrollVector	"[0 0]"				// We're not actually scrolling anything, so [0 0]!
+		"$EmissiveBlendEnabled"			"1"
+		"$EmissiveBlendStrength" 		"1"
+		"$EmissiveBlendTexture" 		"vgui/white"
+		"$EmissiveBlendBaseTexture"		"models/player/engineer/engineer_head_eyeglow"
+		"$EmissiveBlendFlowTexture" 	"vgui/white"
+		"$EmissiveBlendTint" 			"[1 0.68 0]"
+		"$EmissiveBlendScrollVector"	"[ 0 0 ]"
 	}
 }

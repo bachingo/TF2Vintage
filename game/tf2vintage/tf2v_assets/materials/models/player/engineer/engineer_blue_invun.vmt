@@ -1,9 +1,12 @@
-Patch
+"Patch"
 {
-	include	"materials/models/player/shared/invuln/invuln_blue_body.vmt"
+	include "materials/models/player/shared/blue_invun_base.vmt"
+	
 	insert
 	{
-		$basetexture		"models/player/engineer/engineer_blue"
-		$bumpmap		"models/player/engineer/engineer_normal"
+		"$baseTexture"					"models/player/engineer/engineer_blue"
+		"$detailblendfactor"			"0.15"
+		"$detailblendmode"				"1"
+		"$color2"						"[0.6 0.7 1.5]"
 	}
 }

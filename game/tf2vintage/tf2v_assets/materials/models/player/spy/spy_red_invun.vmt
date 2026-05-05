@@ -1,9 +1,12 @@
-Patch
+"Patch"
 {
-	include	"materials/models/player/shared/invuln/invuln_red_body.vmt"
+	include "materials/models/player/shared/red_invun_base.vmt"
+	
 	insert
 	{
-		$basetexture		"models/player/spy/spy_red_zombie"
-		$bumpmap		"models/player/spy/spy_normal"
+		"$baseTexture"					"models/player/spy/spy_red"
+		"$detailblendfactor"			"0.3"
+		"$detailblendmode"				"1"
+		"$color2"						"[1.2 0.65 0.55]"
 	}
 }

@@ -1,0 +1,12 @@
+"Patch"
+{
+	include "materials/models/player/shared/red_invun_base.vmt"
+	
+	insert
+	{
+		"$baseTexture"					"models/effects/smiley"
+		"$detailblendfactor"			"0.3"
+		"$detailblendmode"				"1"
+		"$color2"						"[1.51 0.75 0.82]"
+	}
+}

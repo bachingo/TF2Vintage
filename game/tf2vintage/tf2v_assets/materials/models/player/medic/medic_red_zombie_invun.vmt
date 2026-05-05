@@ -1,9 +1,16 @@
-Patch
+"Patch"
 {
-	include	"materials/models/player/shared/invuln/invuln_zombie_red_body.vmt"
+	include "materials/models/player/shared/red_invun_base.vmt"
+	
 	insert
 	{
-		$basetexture		"models/player/medic/medic_red_zombie"
-		$bumpmap		"models/player/medic/medic_normal"
+		"$baseTexture"					"models/player/medic/medic_red_zombie"
+		"$alphatest"					"1"
+		"$detailblendfactor"			"1.5"
+		"$detailblendmode"				"1"
+		"$color2"						"[0.9 0.65 0.55]"
+		
+		"$selfillum"					"0"
+		"$selfIllumFresnel"				"0"
 	}
 }

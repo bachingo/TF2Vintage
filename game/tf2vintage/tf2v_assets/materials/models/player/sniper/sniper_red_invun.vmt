@@ -1,9 +1,12 @@
-Patch
+"Patch"
 {
-	include	"materials/models/player/shared/invuln/invuln_red_body.vmt"
+	include "materials/models/player/shared/red_invun_base.vmt"
+	
 	insert
 	{
-		$basetexture		"models/player/sniper/sniper_red"
-		$bumpmap		"models/player/sniper/sniper_normal"
+		"$baseTexture"					"models/player/sniper/sniper_red"
+		"$detailblendfactor"			"0.3"
+		"$detailblendmode"				"1"
+		"$color2"						"[1.10 0.66 0.58]"
 	}
 }

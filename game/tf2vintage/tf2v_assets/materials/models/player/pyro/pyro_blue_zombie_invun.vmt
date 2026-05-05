@@ -1,9 +1,16 @@
-Patch
+"Patch"
 {
-	include	"materials/models/player/shared/invuln/invuln_zombie_blue_body.vmt"
+	include "materials/models/player/shared/blue_invun_base.vmt"
+	
 	insert
 	{
-		$basetexture		"models/player/pyro/pyro_blue_zombie"
-		$bumpmap		"models/player/pyro/pyro_normal"
+		"$baseTexture"					"models/player/pyro/pyro_blue_zombie"
+		"$alphatest"					"1"
+		"$detailblendfactor"			"0.3"
+		"$detailblendmode"				"1"
+		"$color2"						"[0.55 0.6 0.9]"
+		
+		"$selfillum"					"0"
+		"$selfIllumFresnel"				"0"
 	}
 }

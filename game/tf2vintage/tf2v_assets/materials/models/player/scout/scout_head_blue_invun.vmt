@@ -1,9 +1,20 @@
-Patch
+"Patch"
 {
-	include	"materials/models/player/shared/invuln/invuln_blue_head.vmt"
+	include "materials/models/player/shared/blue_invun_base.vmt"
+	
 	insert
 	{
-		$basetexture		"models/player/scout/scout_head"
-		$bumpmap		"models/player/scout/hwm/scout_head_phongmask"
+		"$baseTexture"					"models/player/scout/scout_head"
+		"$detailblendfactor"			"0.25"
+		"$detailblendmode"				"1"
+		"$color2"						"[0.55 0.6 0.9]"
+		
+		"$EmissiveBlendEnabled"			"1"
+		"$EmissiveBlendStrength" 		"1"
+		"$EmissiveBlendTexture" 		"vgui/white"
+		"$EmissiveBlendBaseTexture"		"models/player/scout/scout_head_eyeglow"
+		"$EmissiveBlendFlowTexture" 	"vgui/white"
+		"$EmissiveBlendTint" 			"[1.6 0.15 2.5]"
+		"$EmissiveBlendScrollVector"	"[ 0 0 ]" 
 	}
 }

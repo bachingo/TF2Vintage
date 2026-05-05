@@ -1,9 +1,20 @@
-Patch
+"Patch"
 {
-	include	"materials/models/player/shared/invuln/invuln_red_head.vmt"
+	include "materials/models/player/shared/red_invun_base.vmt"
+	
 	insert
 	{
-		$basetexture		"models/player/medic/medic_head"
-		$bumpmap		"models/player/medic/hwm/medic_head_phongmask"
+		"$baseTexture"					"models/player/medic/medic_head"
+		"$detailblendfactor"			"1.5"
+		"$detailblendmode"				"1"
+		"$color2"						"[0.9 0.65 0.55]"
+		
+		"$EmissiveBlendEnabled"			"1"
+		"$EmissiveBlendStrength" 		"1"
+		"$EmissiveBlendTexture" 		"vgui/white"
+		"$EmissiveBlendBaseTexture"		"models/player/medic/medic_head_eyeglow"
+		"$EmissiveBlendFlowTexture" 	"vgui/white"
+		"$EmissiveBlendTint" 			"[2.5 0.45 0.03]"
+		"$EmissiveBlendScrollVector"	"[ 0 0 ]" 
 	}
 }

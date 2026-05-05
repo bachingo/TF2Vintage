@@ -1,9 +1,12 @@
-Patch
+"Patch"
 {
-	include	"materials/models/player/shared/invuln/invuln_red_body.vmt"
+	include "materials/models/player/shared/red_invun_base.vmt"
+	
 	insert
 	{
-		$basetexture		"models/player/soldier/soldier_red"
-		$bumpmap		"models/player/soldier/soldier_normal"
+		"$baseTexture"					"models/player/soldier/soldier_red"
+		"$detailblendfactor"			"0.3"
+		"$detailblendmode"				"1"
+		"$color2"						"[1.3 0.68 0.54]"
 	}
 }

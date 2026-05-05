@@ -1,9 +1,17 @@
-Patch
+"Patch"
 {
-	include	"materials/models/player/shared/invuln/invuln_zombie_red_head.vmt"
+	include "materials/models/player/shared/red_invun_base.vmt"
+	
 	insert
 	{
-		$basetexture		"models/player/spy/spy_head_red_zombie"
-		$bumpmap		"models/player/spy/hwm/spy_head_phongmask"
+		"$baseTexture"					"models/player/spy/spy_head_red_zombie"
+		"$alphatest"					"1"
+		"$nocull"						"1"
+		"$detailblendfactor"			"0.3"
+		"$detailblendmode"				"1"
+		"$color2"						"[1.2 0.65 0.55]"
+		
+		"$selfillum"					"0"
+		"$selfIllumFresnel"				"0"
 	}
 }

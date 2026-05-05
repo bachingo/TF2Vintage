@@ -1,0 +1,20 @@
+"Patch"
+{
+	include "materials/models/player/shared/red_invun_base.vmt"
+	
+	insert
+	{
+		"$baseTexture"					"models/player/pyro/pyro_head"
+		"$detailblendfactor"			"0.75"
+		"$detailblendmode"				"1"
+		"$color2"						"[1 0.67 0.6]"
+		
+		"$EmissiveBlendEnabled"			"1"
+		"$EmissiveBlendStrength" 		"1"
+		"$EmissiveBlendTexture" 		"vgui/white"
+		"$EmissiveBlendBaseTexture"		"models/player/pyro/pyro_head_eyeglow"
+		"$EmissiveBlendFlowTexture" 	"vgui/white"
+		"$EmissiveBlendTint" 			"[1 0.68 0]"
+		"$EmissiveBlendScrollVector"	"[ 0 0 ]" 
+	}
+}

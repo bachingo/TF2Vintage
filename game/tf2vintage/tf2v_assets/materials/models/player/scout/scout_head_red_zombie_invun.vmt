@@ -1,9 +1,20 @@
-Patch
+"Patch"
 {
-	include	"materials/models/player/shared/invuln/invuln_zombie_red_head.vmt"
+	include "materials/models/player/shared/red_invun_base.vmt"
+	
 	insert
 	{
-		$basetexture		"models/player/scout/scout_head_zombie"
-		$bumpmap		"models/player/scout/hwm/scout_head_phongmask"
+		"$baseTexture"					"models/player/scout/scout_head_zombie"
+		"$detailblendfactor"			"0.3"
+		"$detailblendmode"				"1"
+		"$color2"						"[1.25 0.66 0.58]"
+		
+		"$EmissiveBlendEnabled"			"1"
+		"$EmissiveBlendStrength" 		"1"
+		"$EmissiveBlendTexture" 		"vgui/white"
+		"$EmissiveBlendBaseTexture"		"models/player/scout/scout_head_eyeglow"
+		"$EmissiveBlendFlowTexture" 	"vgui/white"
+		"$EmissiveBlendTint" 			"[2.5 0.45 0.03]"
+		"$EmissiveBlendScrollVector"	"[ 0 0 ]" 
 	}
 }
