@@ -923,7 +923,7 @@ void CTFGCClientSystem::SDK_AddServerInventoryInfo( KeyValues* pKV, CGCClientSha
 		return;
 
 	// Extract our current loadout information and record it in the key values.
-	KeyValues *pLoadoutKV = new KeyValues("o");
+	KeyValues *pLoadoutKV = new KeyValues("local_loadout");
 	for ( int iClass = iPart; iClass <= iPart; iClass++ )
 	{
 		char szClass[256];

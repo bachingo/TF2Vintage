@@ -4738,7 +4738,7 @@ void CTFGCServerSystem::SDK_ApplyLocalLoadout(CGCClientSharedObjectCache* pCache
 	}
 
 	// Extract loadout information from the keyvalues and apply it to each item.
-	KeyValues* pLoadoutKV = pKVRequest->FindKey("o");
+	KeyValues* pLoadoutKV = pKVRequest->FindKey("local_loadout");
 	if (!pLoadoutKV)
 	{
 		Warning("Failed to find a loadout in SDK inventory message.\n");
