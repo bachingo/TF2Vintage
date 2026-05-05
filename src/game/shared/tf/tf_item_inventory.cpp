@@ -210,10 +210,8 @@ CTFInventoryManager *TFInventoryManager( void )
 // Purpose: 
 //-----------------------------------------------------------------------------
 CTFInventoryManager::CTFInventoryManager( void )
+
 {
-#ifdef CLIENT_DLL
-	m_flQueuedGCNotificationTime = 0.0f;
-#endif
 }
 
 CTFInventoryManager::~CTFInventoryManager( void )
@@ -585,26 +583,7 @@ void CTFInventoryManager::Update( float frametime )
 	TM_ZONE_DEFAULT( TELEMETRY_LEVEL0 );
 	m_LocalInventory.UpdateWeaponSkinRequest();
 
-	if ( m_flQueuedGCNotificationTime > 0.0f && m_flQueuedGCNotificationTime <= gpGlobals->realtime )
-	{
-		GTFGCClientSystem()->LocalInventoryChanged();
-		m_flQueuedGCNotificationTime = 0.0f;
-	}
-
 	BaseClass::Update( frametime );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFInventoryManager::QueueGCInventoryChangeNotification()
-{
-	// don't mark any "changes" when we haven't initialized our inventory to the server yet.
-	if ( !engine->IsConnected() || !engine->IsInGame() )
-		return;
-
-	// queue an inventory change notification after 0.5 seconds, to prevent some systems from spamming it over a few frames
-	m_flQueuedGCNotificationTime = gpGlobals->realtime + 0.5f;
 }
 
 //-----------------------------------------------------------------------------
