@@ -282,6 +282,10 @@ extern ConVar sv_vote_allow_spectators;
 ConVar sv_vote_late_join_time( "sv_vote_late_join_time", "90", FCVAR_NONE, "Grace period after the match starts before players who join the match receive a vote-creation cooldown" );
 ConVar sv_vote_late_join_cooldown( "sv_vote_late_join_cooldown", "300", FCVAR_NONE, "Length of the vote-creation cooldown when joining the server after the grace period has expired" );
 
+
+ConVar tf2v_disable_cosmetics( "tf2v_disable_cosmetics", "0", FCVAR_ARCHIVE, "Allows servers to opt out of the cosmetic system entirely.", true, 0, true, 1 );
+
+
 extern ConVar tf_voice_command_suspension_mode;
 extern ConVar tf_feign_death_duration;
 extern ConVar spec_freeze_time;
@@ -5651,7 +5655,7 @@ void CTFPlayer::ValidateWeapons( TFPlayerClassData_t *pData, bool bResetWeapons 
 		int iLoadoutSlot = pWeapon->GetAttributeContainer()->GetItem()->GetStaticData()->GetLoadoutSlot( GetPlayerClass()->GetClassIndex() );
 		
 		// TF2V: Skip cosmetic and taunt slots on XL servers to save us entities
-		if ( IsWearableSlot(iLoadoutSlot) && gpGlobals->maxClients > 32 )
+		if ( ( IsWearableSlot(iLoadoutSlot) && gpGlobals->maxClients > 32 ) || tf2v_disable_cosmetics.GetBool() )
 			continue;
 		
 		CEconItemView *pItem = GetLoadoutItem( GetPlayerClass()->GetClassIndex(), iLoadoutSlot );
