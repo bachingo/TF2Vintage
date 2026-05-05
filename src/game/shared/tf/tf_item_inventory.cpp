@@ -1063,8 +1063,8 @@ void CTFPlayerInventory::LoadLocalLoadout()
 
 	pLoadoutKV->deleteThis();
 
-	//GTFGCClientSystem()->LocalInventoryChanged();
-	TFInventoryManager()->QueueGCInventoryChangeNotification();
+	GTFGCClientSystem()->LocalInventoryChanged();
+	// TFInventoryManager()->QueueGCInventoryChangeNotification();
 }
 
 //-----------------------------------------------------------------------------
@@ -1174,7 +1174,7 @@ void CTFPlayerInventory::EquipLocal(uint64 ulItemID, equipped_class_t unClass, e
 	int activePreset = m_ActivePreset[unClass];
 	m_PresetItems[activePreset][unClass][unSlot] = ulItemID;
 
-	//GTFGCClientSystem()->LocalInventoryChanged();
+	GTFGCClientSystem()->LocalInventoryChanged();
 	//TFInventoryManager()->QueueGCInventoryChangeNotification();
 #endif
 }
@@ -1326,7 +1326,8 @@ void CTFPlayerInventory::ValidateInventoryPositions( void )
 			{
 				// Unequip this item from this class.
 				InventoryManager()->UpdateInventoryEquippedState( this, INVALID_ITEM_ID, j, pEconItemView->GetEquippedPositionForClass( j ) );
-				TFInventoryManager()->QueueGCInventoryChangeNotification();
+				GTFGCClientSystem()->LocalInventoryChanged();
+				// TFInventoryManager()->QueueGCInventoryChangeNotification();
 			}
 		}
 	}
@@ -1947,7 +1948,8 @@ void CTFPlayerInventory::VerifyLoadoutItemsAreValid( int iClass )
 			// Unequip this item. This will wind up calling into ::ItemHasBeenUpdated() once the
 			// unequip makes it to the GC and back.
 			InventoryManager()->UpdateInventoryEquippedState( this, INVALID_ITEM_ID, iClass, pEquippedItemView->GetEquippedPositionForClass( iClass ) );
-			TFInventoryManager()->QueueGCInventoryChangeNotification();
+			GTFGCClientSystem()->LocalInventoryChanged();
+			// TFInventoryManager()->QueueGCInventoryChangeNotification();
 		}
 		else
 		{
@@ -2120,7 +2122,8 @@ CON_COMMAND( load_itempreset, "Equip all items for a given preset on the player.
 			GCClientSystem()->BSendMessage( msg );
 		}
 #else
-		TFInventoryManager()->QueueGCInventoryChangeNotification();
+		GTFGCClientSystem()->LocalInventoryChanged();
+		// TFInventoryManager()->QueueGCInventoryChangeNotification();
 #endif
 	}
 }
