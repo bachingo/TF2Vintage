@@ -411,7 +411,9 @@ void CTFSniperRifle::ItemPostFrame( void )
 			if ( IsFullyCharged() && !m_bPlayedBell )
 			{
 				m_bPlayedBell = true;
-				if ( tf_sniper_fullcharge_bell.GetBool() )
+				// TF2V: Sniper Bells didn't exist until August 18, 2011. (Manno-Technology)
+				bool bSniperBellEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_CONTENT_MANNOTECHNOLOGY );
+				if ( tf_sniper_fullcharge_bell.GetBool() && !bSniperBellEarly)
 				{
 					C_TFPlayer::GetLocalTFPlayer()->EmitSound( "TFPlayer.ReCharged" );
 				}
@@ -1988,7 +1990,9 @@ void CTFSniperRifleClassic::ItemPostFrame( void )
 		if ( IsFullyCharged() && !m_bPlayedBell )
 		{
 			m_bPlayedBell = true;
-			if ( tf_sniper_fullcharge_bell.GetBool() )
+			// TF2V: Sniper Bells didn't exist until August 18, 2011. (Manno-Technology)
+			bool bSniperBellEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_CONTENT_MANNOTECHNOLOGY );
+			if ( tf_sniper_fullcharge_bell.GetBool() && !bSniperBellEarly)
 			{
 				C_TFPlayer::GetLocalTFPlayer()->EmitSound( "TFPlayer.ReCharged" );
 			}
