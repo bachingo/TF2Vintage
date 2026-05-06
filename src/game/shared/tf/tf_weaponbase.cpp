@@ -2634,7 +2634,9 @@ void CTFWeaponBase::ItemPostFrame( void )
 
 	// If we're not shooting, and we want to autoreload, press our reload key
 	// also check for frozen since this theory blocks our buttons
-	if ( !AutoFiresFullClip() && pOwner->ShouldAutoReload() && UsesClipsForAmmo1() && !(pOwner->m_nButtons & (IN_ATTACK|IN_ATTACK2)) && bNeedsReload && ( pOwner->GetFlags() & FL_FROZEN ) == 0 )
+	// TF2V: Block this behavior prior to Classless update.
+	bool bAutoReloadDenied = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_MAJOR_CLASSLESS );
+	if ( !AutoFiresFullClip() && ( pOwner->ShouldAutoReload() && !bAutoReloadDenied ) && UsesClipsForAmmo1() && !(pOwner->m_nButtons & (IN_ATTACK|IN_ATTACK2)) && bNeedsReload && ( pOwner->GetFlags() & FL_FROZEN ) == 0 )
 	{
 		pOwner->m_nButtons |= IN_RELOAD;
 	}
