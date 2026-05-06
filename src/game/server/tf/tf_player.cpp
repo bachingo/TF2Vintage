@@ -4074,7 +4074,7 @@ void CTFPlayer::Spawn()
 		m_Shared.RemoveAllCond(); // Remove conc'd, burning, rotting, hallucinating, etc.
 
 		// TF2V: We didn't get respawn glowing until Tough Break.
-		bool bRespawnTeamGlowsEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_MAJOR_TOUGH_BREAK );
+		bool bRespawnTeamGlowsEarly = TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK);
 		if ( !bRespawnTeamGlowsEarly )
 		{
 			// add team glows for a period of time after we respawn
@@ -5184,7 +5184,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 	{
 		bool bWepSwitched = false;
 		// TF2V: Feature didn't exist prior to Scout Update.
-		bool bActiveWeaponEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_MAJOR_SCOUT );
+		bool bActiveWeaponEarly = TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_SCOUT);
 		if ( ( m_bRememberActiveWeapon && !bActiveWeaponEarly ) && m_iActiveWeaponTypePriorToDeath )
 		{
 			CTFWeaponBase *pWeapon = Weapon_OwnsThisID( m_iActiveWeaponTypePriorToDeath );
@@ -22012,7 +22012,7 @@ void CTFPlayer::SaveLastWeaponSlot( void )
 {
 	
 	// TF2V: Feature did not exist prior to the Scout Update.
-	if ( TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_MAJOR_SCOUT );
+	if ( TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_MAJOR_SCOUT);
 		return;
 	
 	if( !m_bRememberLastWeapon && !m_bRememberActiveWeapon )

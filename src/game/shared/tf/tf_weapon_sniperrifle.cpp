@@ -412,7 +412,7 @@ void CTFSniperRifle::ItemPostFrame( void )
 			{
 				m_bPlayedBell = true;
 				// TF2V: Sniper Bells didn't exist until August 18, 2011. (Manno-Technology)
-				bool bSniperBellEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_CONTENT_MANNOTECHNOLOGY );
+				bool bSniperBellEarly = TFGameRules()->IsAnachronistic(TF2V_DAY_CONTENT_MANNOTECHNOLOGY);
 				if ( tf_sniper_fullcharge_bell.GetBool() && !bSniperBellEarly)
 				{
 					C_TFPlayer::GetLocalTFPlayer()->EmitSound( "TFPlayer.ReCharged" );
@@ -533,7 +533,7 @@ void CTFSniperRifle::ZoomOutIn( void )
 		ApplyScopeSpeedModifications( flRezoomDelay );
 	}
 	// TF2V: Feature didn't exist prior to January 14, 2008. (Day 120)
-	bool bAutoRezoomEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < 120 );
+	bool bAutoRezoomEarly = TFGameRules()->IsAnachronistic(120);
 	if ( pPlayer && ( pPlayer->ShouldAutoRezoom() && !bAutoRezoomEarly ) )
 	{
 		m_flRezoomTime = gpGlobals->curtime + flRezoomDelay;
@@ -1993,7 +1993,7 @@ void CTFSniperRifleClassic::ItemPostFrame( void )
 		{
 			m_bPlayedBell = true;
 			// TF2V: Sniper Bells didn't exist until August 18, 2011. (Manno-Technology)
-			bool bSniperBellEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_CONTENT_MANNOTECHNOLOGY );
+			bool bSniperBellEarly = TFGameRules()->IsAnachronistic(TF2V_DAY_CONTENT_MANNOTECHNOLOGY);
 			if ( tf_sniper_fullcharge_bell.GetBool() && !bSniperBellEarly)
 			{
 				C_TFPlayer::GetLocalTFPlayer()->EmitSound( "TFPlayer.ReCharged" );

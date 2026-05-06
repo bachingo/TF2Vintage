@@ -107,7 +107,7 @@ CTFHudPlayerClass::CTFHudPlayerClass( Panel *parent, const char *name ) : Editab
 	m_nKillStreak = 0;
 
 	// TF2V: Feature did not exist prior to August 27, 2013 (day 2172)
-	bool bAnimatedEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < 2172 );
+	bool bAnimatedEarly = TFGameRules()->IsAnachronistic(2172);
 	m_bUsePlayerModel = ( ShouldUsePlayerModel() && !bAnimatedEarly );
 
 	ListenForGameEvent( "localplayer_changedisguise" );
@@ -229,7 +229,7 @@ void CTFHudPlayerClass::OnThink()
 
 	bool bPlayerClassModeChange = false;
 	// TF2V: Feature did not exist prior to August 27, 2013 (day 2172)
-	bool bAnimatedEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < 2172 );
+	bool bAnimatedEarly = TFGameRules()->IsAnachronistic(2172);
 	if ( m_bUsePlayerModel != ( ShouldUsePlayerModel() && !bAnimatedEarly ) )
 	{
 		m_bUsePlayerModel = ( ShouldUsePlayerModel() && !bAnimatedEarly );

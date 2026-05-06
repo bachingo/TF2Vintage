@@ -497,7 +497,7 @@ void CHudMenuSpyDisguise::ToggleSelectionIcons( bool bGroup )
 #ifdef SIXENSE
 	if ( tf_simple_disguise_menu.GetBool() || g_pSixenseInput->IsEnabled() )
 #else
-	bool ConciseDisguiseEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_MAJOR_WAR );
+	bool ConciseDisguiseEarly = TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_WAR);
 	if ( tf_simple_disguise_menu.GetBool() && !ConciseDisguiseEarly )
 #endif
 	{

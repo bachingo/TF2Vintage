@@ -211,7 +211,7 @@ void CTFViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePosit
 		}
 		
 		// TF2V: Feature did not exist prior to Meet Your Match.
-		bool bMinViewEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_MAJOR_MEET_YOUR_MATCH );
+		bool bMinViewEarly = TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_MEET_YOUR_MATCH);
 
 		// we want to always enable this internally
 		bool bMinMode = tf_use_min_viewmodels.GetBool() && !bMinViewEarly;

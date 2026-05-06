@@ -2016,7 +2016,7 @@ void CTFClientScoreBoardDialog::UpdatePlayerDetails()
 	m_pImagePanelHorizLine->SetFillColor( clr );
 
 	// TF2V: Feature did not exist prior to August 27, 2013 (day 2172)
-	bool bAnimatedEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < 2172 );
+	bool bAnimatedEarly = TFGameRules()->IsAnachronistic(2172);
 	// update our image if our selected player or mode of display has changed
 	if ( ( m_hSelectedPlayer != pSelectedPlayer ) || ( m_bUsePlayerModel != ( ShouldUsePlayerModel() && !bAnimatedEarly ) ) )
 	{

@@ -110,10 +110,6 @@ static ConVar tf_demoman_charge_frametime_scaling( "tf_demoman_charge_frametime_
 static const float YAW_CAP_SCALE_MIN = 0.2f;
 static const float YAW_CAP_SCALE_MAX = 2.f;
 
-	// TF2V: Feature did not exist prior to February 2nd, 2009. (505 days)
-	//bool bMinModeEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < 505 );
-	//if ( cl_hud_minmode.GetBool() && !bMinModeEarly)
-
 #define TF_DAMAGE_CRITMOD_DAMAGE_NEW			"800"
 #define TF_DAMAGE_CRITMOD_MAXMULT_NEW			"6"
 
@@ -3685,7 +3681,7 @@ void CTFPlayerShared::OnAddUrine( void )
 {
 #ifdef CLIENT_DLL
 	// TF2V: Feature did not exist prior to Classless.
-	bool bColorblindEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_MAJOR_CLASSLESS );
+	bool bColorblindEarly = TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_CLASSLESS);
 	if ( tf_colorblindassist.GetBool() && !bColorblindEarly )
 	{
 		m_pOuter->AddOverheadEffect( "peejar_icon" );

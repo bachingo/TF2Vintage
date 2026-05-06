@@ -1803,7 +1803,7 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 		}
 
 		// get the total crit chance (ratio of total shots fired we want to be crits)
-		float flTotalCritChance = clamp( ( ( TFGameRules && TFGameRules()->GetTF2VEra() < 505 ) ? TF_DAMAGE_CRIT_CHANCE_RAPID_OLD : TF_DAMAGE_CRIT_CHANCE_RAPID_NEW ) * flPlayerCritMult, 0.01f, 0.99f );
+		float flTotalCritChance = clamp( ( TFGameRules()->IsAnachronistic(505) ? TF_DAMAGE_CRIT_CHANCE_RAPID_OLD : TF_DAMAGE_CRIT_CHANCE_RAPID_NEW ) * flPlayerCritMult, 0.01f, 0.99f );
 		// get the fixed amount of time that we start firing crit shots for	
 		float flCritDuration = TF_DAMAGE_CRIT_DURATION_RAPID;
 		// calculate the amount of time, on average, that we want to NOT fire crit shots for in order to achieve the total crit chance we want
@@ -1833,7 +1833,7 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 	else
 	{
 		// single-shot weapon, just use random pct per shot
-		flCritChance = ( ( TFGameRules && TFGameRules()->GetTF2VEra() && ( ( TFGameRules && TFGameRules()->GetTF2VEra() < 505 ) ? TF_DAMAGE_CRIT_CHANCE_OLD : TF_DAMAGE_CRIT_CHANCE_NEW ) * flPlayerCritMult;
+		flCritChance = ( TFGameRules()->IsAnachronistic(505) ? TF_DAMAGE_CRIT_CHANCE_OLD : TF_DAMAGE_CRIT_CHANCE_NEW ) * flPlayerCritMult;
 		CALL_ATTRIB_HOOK_FLOAT( flCritChance, mult_crit_chance );
 
 		// mess with the crit chance seed so it's not based solely on the prediction seed
@@ -2635,7 +2635,7 @@ void CTFWeaponBase::ItemPostFrame( void )
 	// If we're not shooting, and we want to autoreload, press our reload key
 	// also check for frozen since this theory blocks our buttons
 	// TF2V: Block this behavior prior to Classless update.
-	bool bAutoReloadDenied = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_MAJOR_CLASSLESS );
+	bool bAutoReloadDenied = TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_CLASSLESS);
 	if ( !AutoFiresFullClip() && ( pOwner->ShouldAutoReload() && !bAutoReloadDenied ) && UsesClipsForAmmo1() && !(pOwner->m_nButtons & (IN_ATTACK|IN_ATTACK2)) && bNeedsReload && ( pOwner->GetFlags() & FL_FROZEN ) == 0 )
 	{
 		pOwner->m_nButtons |= IN_RELOAD;

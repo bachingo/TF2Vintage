@@ -612,9 +612,9 @@ public:
 				g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "DamagedPlayer" );
 
 				// TF2V: Hitsounds added January 6, 2010. (Day 843)
-				bool bHitEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < 843 );
+				bool bHitEarly = TFGameRules()->IsAnachronistic(843);
 				// TF2V: Final Hitsound added Feb 29, 2016. (Day 3088)
-				bool bLastHitEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < 3088 );
+				bool bLastHitEarly = TFGameRules()->IsAnachronistic(3088);
 				
 				bool bHitEnabled = ( tf_dingalingaling.GetBool() ) && !bHitEarly;
 				bool bLastHitEnabled = ( tf_dingalingaling_lasthit.GetBool() ) && !bLastHitEarly;
@@ -684,7 +684,7 @@ public:
 #endif
 			}
 			// TF2V: Combat text added during WAR!
-			bool bCombatTextEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_MAJOR_WAR );
+			bool bCombatTextEarly = TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_WAR);
 			const bool bCombatText = hud_combattext.GetBool() && !bCombatTextEarly;
 
 			if ( bCombatText )
@@ -777,10 +777,10 @@ public:
 		else if ( FStrEq( event->GetName(), "player_healed" ) )
 		{
 			// TF2V: Combat text added during WAR!
-			bool bCombatTextEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_MAJOR_WAR );
+			bool bCombatTextEarly = TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_WAR);
 			const bool bCombatText = hud_combattext.GetBool() && !bCombatTextEarly;
 			// TF2V: Healing text added during Hatless
-			bool bHealingTextEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_MAJOR_HATLESS );
+			bool bHealingTextEarly = TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_HATLESS);
 			const bool HealingText = hud_combattext_healing.GetBool() && !bHealingTextEarly;
 			if ( bCombatText && HealingText )
 			{
@@ -820,7 +820,7 @@ public:
 		else if ( FStrEq( event->GetName(), "player_bonuspoints" ) )
 		{
 			// TF2V: Bonus points added in Hatless
-			bool bBonusTextEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_MAJOR_HATLESS );
+			bool bBonusTextEarly = TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_HATLESS);
 			const bool bCombatText = hud_combattext.GetBool() && !bBonusTextEarly;
 			if ( bCombatText )
 			{
@@ -861,10 +861,10 @@ public:
 		else if ( FStrEq( event->GetName(), "building_healed" ) )
 		{
 			// TF2V: Combat text added during WAR!
-			bool bCombatTextEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_MAJOR_WAR );
+			bool bCombatTextEarly = TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_WAR);
 			const bool bCombatText = hud_combattext.GetBool() && !bCombatTextEarly;
 			// TF2V: Healing text added during Hatless
-			bool bHealingTextEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_MAJOR_HATLESS );
+			bool bHealingTextEarly = TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_HATLESS);
 			const bool HealingText = hud_combattext_healing.GetBool() && !bHealingTextEarly;
 			if ( !bCombatText || !HealingText )
 				return;

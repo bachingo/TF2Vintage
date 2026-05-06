@@ -1587,7 +1587,7 @@ void CWeaponMedigun::ItemPostFrame( void )
 	// Try to start healing
 	m_bAttacking = false;
 	// TF2V: Feature didn't exist prior to January 14, 2008. (Day 120)
-	bool bAutoHealEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < 120 );
+	bool bAutoHealEarly = TFGameRules()->IsAnachronistic(120);
 	if ( ( pOwner->GetMedigunAutoHeal() && !bAutoHealEarly ) )
 	{
 		if ( pOwner->m_nButtons & IN_ATTACK )
@@ -2322,7 +2322,7 @@ void CWeaponMedigun::OnDataChanged( DataUpdateType_t updateType )
 		}
 
 		// TF2V: Feature did not exist prior to the WAR! update.
-		bool bAutoCallerEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_MAJOR_WAR );
+		bool bAutoCallerEarly = TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_WAR);
 		if ( pLocalPlayer == GetOwner() && ( hud_medicautocallers.GetBool() && !bAutoCallerEarly ) )
 		{
 			UpdateMedicAutoCallers();
@@ -2520,7 +2520,7 @@ void CWeaponMedigun::UpdateEffects( void )
 		bool bReviveMarker = m_hReviveMarker && m_hReviveMarker == m_hHealingTarget;	// Hack to avoid another dynamic_cast here
 		
 		// TF2V: Feature did not exist prior to the WAR! update.
-		bool bHealMarkerEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_MAJOR_WAR );
+		bool bHealMarkerEarly = TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_WAR);
 		bool bHealTargetMarker = ( hud_medichealtargetmarker.GetBool() && !bHealMarkerEarly ) && !bReviveMarker;
 
 		const char *pszEffectName;

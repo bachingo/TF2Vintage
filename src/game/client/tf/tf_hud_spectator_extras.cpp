@@ -129,7 +129,7 @@ void CTFHudSpectatorExtras::OnTick()
 	}
 
 	// TF2V: The ability to disable this was introduced one day after Tough Break: December 18 2015 (Day 3015)
-	bool bDisableRespawnGlowEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < 3015 );
+	bool bDisableRespawnGlowEarly = TFGameRules()->IsAnachronistic(3015);
 	// Weird to bool. Means we do this either with yes, or no-but-too-early-to-say-no. Considering this only exists one day, this is very specific behavior.
 	bool bEnableRespawnGlows = tf_enable_glows_after_respawn.GetBool() || (!tf_enable_glows_after_respawn.GetBool() && bDisableRespawnGlowEarly);
 
