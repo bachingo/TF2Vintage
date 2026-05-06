@@ -230,7 +230,7 @@ ConVar tf_afterburn_debug( "tf_afterburn_debug", "0", FCVAR_REPLICATED | FCVAR_C
 
 
 #ifdef CLIENT_DLL
-ConVar tf_colorblindassist( "tf_colorblindassist", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Setting this to 1 turns on colorblind mode." );
+ConVar tf_colorblindassist( "tf_colorblindassist", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Setting this to 1 turns on colorblind mode." );
 
 extern ConVar cam_idealdist;
 extern ConVar cam_idealdistright;
@@ -3699,7 +3699,9 @@ void CTFPlayerShared::OnRemovePhase( void )
 void CTFPlayerShared::OnAddUrine( void )
 {
 #ifdef CLIENT_DLL
-	if ( tf_colorblindassist.GetBool() )
+	// TF2V: Feature did not exist prior to Classless.
+	bool bColorblindEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_MAJOR_CLASSLESS );
+	if ( tf_colorblindassist.GetBool() && !bColorblindEarly )
 	{
 		m_pOuter->AddOverheadEffect( "peejar_icon" );
 	}
