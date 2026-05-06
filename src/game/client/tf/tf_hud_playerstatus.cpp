@@ -80,11 +80,7 @@ enum
 
 DECLARE_BUILD_FACTORY( CTFClassImage );
 
-#ifdef TF2_OG
-#define ShouldUsePlayerModel() false
-#else
 #define ShouldUsePlayerModel() cl_hud_playerclass_use_playermodel.GetBool()
-#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -110,7 +106,9 @@ CTFHudPlayerClass::CTFHudPlayerClass( Panel *parent, const char *name ) : Editab
 	m_flNextThink = 0.0f;
 	m_nKillStreak = 0;
 
-	m_bUsePlayerModel = ShouldUsePlayerModel();
+	// TF2V: Feature did not exist prior to August 27, 2013 (day 2172)
+	bool bAnimatedEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < 2172 );
+	m_bUsePlayerModel = ( ShouldUsePlayerModel() && !bAnimatedEarly );
 
 	ListenForGameEvent( "localplayer_changedisguise" );
 	ListenForGameEvent( "post_inventory_application" );
@@ -230,9 +228,11 @@ void CTFHudPlayerClass::OnThink()
 	}
 
 	bool bPlayerClassModeChange = false;
-	if ( m_bUsePlayerModel != ShouldUsePlayerModel() )
+	// TF2V: Feature did not exist prior to August 27, 2013 (day 2172)
+	bool bAnimatedEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < 2172 );
+	if ( m_bUsePlayerModel != ( ShouldUsePlayerModel() && !bAnimatedEarly ) )
 	{
-		m_bUsePlayerModel = ShouldUsePlayerModel();
+		m_bUsePlayerModel = ( ShouldUsePlayerModel() && !bAnimatedEarly );
 		bPlayerClassModeChange = true;
 	}
 

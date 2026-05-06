@@ -1836,11 +1836,7 @@ static void PopulateDuelPanel( CTFClientScoreBoardDialog::duel_panel_t &duelPane
 	duelPanel.m_pPanel->SetDialogVariable( "score", unScore );
 }
 
-#ifdef TF2_OG
-#define ShouldUsePlayerModel() false
-#else
 #define ShouldUsePlayerModel() cl_hud_playerclass_use_playermodel.GetBool()
-#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Updates details about a player
@@ -2019,11 +2015,13 @@ void CTFClientScoreBoardDialog::UpdatePlayerDetails()
 	m_pLabelPlayerName->SetFgColor( clr );
 	m_pImagePanelHorizLine->SetFillColor( clr );
 
+	// TF2V: Feature did not exist prior to August 27, 2013 (day 2172)
+	bool bAnimatedEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < 2172 );
 	// update our image if our selected player or mode of display has changed
-	if ( ( m_hSelectedPlayer != pSelectedPlayer ) || ( m_bUsePlayerModel != ShouldUsePlayerModel() ) )
+	if ( ( m_hSelectedPlayer != pSelectedPlayer ) || ( m_bUsePlayerModel != ( ShouldUsePlayerModel() && !bAnimatedEarly ) ) )
 	{
 		m_hSelectedPlayer = pSelectedPlayer;
-		m_bUsePlayerModel = ShouldUsePlayerModel();
+		m_bUsePlayerModel = ( ShouldUsePlayerModel() && !bAnimatedEarly );
 
 		int iClass = pSelectedPlayer->m_Shared.GetDesiredPlayerClassIndex();
 		int iTeam = pSelectedPlayer->GetTeamNumber();
