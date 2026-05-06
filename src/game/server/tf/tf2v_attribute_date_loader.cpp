@@ -461,23 +461,23 @@ bool CTF2VAttributeDateManager::ItemQualityIsAllowedTimePeriod( int iQuality )
 		case AE_NORMAL:
 			return true; // Stock items (Always available)
 		case AE_UNIQUE:
-			return iCurrentEra >= TF2V_ERA_DAY_GOLDRUSH; // Regular items (If this errors, we have a problem)
+			return iCurrentEra >= TF2V_DAY_MAJOR_GOLDRUSH; // Regular items (If this errors, we have a problem)
 		case AE_COMMUNITY:
-			return iCurrentEra >= TF2V_ERA_DAY_WAR; // Community items
+			return iCurrentEra >= TF2V_DAY_MAJOR_WAR; // Community items
 		case AE_SELFMADE:
-			return iCurrentEra >= TF2V_ERA_DAY_FIRSTCONT; // Self Made
+			return iCurrentEra >= TF2V_DAY_CONTENT_FIRST_CONTENT; // Self Made
 		case AE_VINTAGE:
 		case AE_DEVELOPER:
 		case AE_UNUSUAL: // Unusuals		
-			return iCurrentEra >= TF2V_ERA_DAY_MANNCONOMY; // Mann-Conomy Update (Our namesake)	
+			return iCurrentEra >= TF2V_DAY_MAJOR_MANNCONOMY; // Mann-Conomy Update (Our namesake)	
 		case AE_RARITY1:
-			return iCurrentEra >= TF2V_ERA_DAY_RIFTPROMO; // Promotional items
+			return iCurrentEra >= TF2V_DAY_PROMO_RIFT; // Promotional items
 		case AE_STRANGE:
-			return iCurrentEra >= TF2V_ERA_DAY_UBER_F2P; // Strange weapons
+			return iCurrentEra >= TF2V_DAY_MAJOR_UBER; // Strange weapons
 		case AE_HAUNTED:
-			return iCurrentEra >= TF2V_ERA_DAY_HALLOWEEN_2011; // Halloween items
+			return iCurrentEra >= TF2V_DAY_HALLOWEEN_2011; // Halloween items
 		case AE_COLLECTORS:
-			return iCurrentEra >= 2249; // 9 days before TF2V_ERA_DAY_TWOCITIES
+			return iCurrentEra >= 2249; // 9 days before TF2V_DAY_MAJOR_TWOCITIES
 		case AE_PAINTKITWEAPON:
 		case AE_RARITY_DEFAULT:
 		case AE_RARITY_COMMON:
@@ -486,7 +486,7 @@ bool CTF2VAttributeDateManager::ItemQualityIsAllowedTimePeriod( int iQuality )
 		case AE_RARITY_MYTHICAL:
 		case AE_RARITY_LEGENDARY:
 		case AE_RARITY_ANCIENT:
-			return iCurrentEra >= TF2V_ERA_DAY_GUNMETTLE; // Warpaint items	
+			return iCurrentEra >= TF2V_DAY_MAJOR_GUN_METTLE; // Warpaint items	
 		default:
 			return false; // Unknown qualities blocked by default
 	}
@@ -531,7 +531,7 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 			 V_stristr( pszAttrName, "item_tint_rgb" ) ||
 			 V_stristr( pszAttrName, "item_tint_rgb_2" ) )
 		{
-			if ( iCurrentEra < TF2V_ERA_DAY_MANNCONOMY )
+			if ( iCurrentEra < TF2V_DAY_MAJOR_MANNCONOMY )
 			{
 				bShouldRemove = true;
 			}
@@ -549,7 +549,7 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 		else if ( V_stristr( pszAttrName, "attach particle effect" ) ||
 				  V_stristr( pszAttrName, "unusual_effect" ) )
 		{
-			if ( iCurrentEra < TF2V_ERA_DAY_MANNCONOMY )
+			if ( iCurrentEra < TF2V_DAY_MAJOR_MANNCONOMY )
 			{
 				bShouldRemove = true;
 			}
@@ -566,7 +566,7 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 		// Stat tracking (Strange counters) - introduced with Mann-Conomy
 		else if ( V_stristr( pszAttrName, "kill eater" ) )
 		{
-			if ( iCurrentEra < TF2V_ERA_DAY_UBER_F2P )
+			if ( iCurrentEra < TF2V_DAY_MAJOR_UBER )
 			{
 				bShouldRemove = true;
 			}
@@ -576,7 +576,7 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 		else if ( V_stristr( pszAttrName, "halloween" ) ||
 				  V_stristr( pszAttrName, "haunted" ) )
 		{
-			if ( iCurrentEra < TF2V_ERA_DAY_HALLOWEEN_2011 )
+			if ( iCurrentEra < TF2V_DAY_HALLOWEEN_2011 )
 			{
 				bShouldRemove = true;
 			}
@@ -585,7 +585,7 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 		// Festive effects - introduced with Australian Christmas 2011
 		else if ( V_stristr( pszAttrName, "festive" ) )
 		{
-			if ( iCurrentEra < TF2V_ERA_DAY_AUSSIE2011 )
+			if ( iCurrentEra < TF2V_DAY_SMISSMAS_2011 )
 			{
 				bShouldRemove = true;
 			}
@@ -595,7 +595,7 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 		else if ( V_stristr( pszAttrName, "killstreak" ) ||
 				  V_stristr( pszAttrName, "kill streak" ) )
 		{
-			if ( iCurrentEra < TF2V_ERA_DAY_TWOCITIES )
+			if ( iCurrentEra < TF2V_DAY_MAJOR_TWOCITIES )
 			{
 				bShouldRemove = true;
 			}
@@ -604,7 +604,7 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 		// Australium - introduced with Two Cities
 		else if ( V_stristr( pszAttrName, "australium" ) )
 		{
-			if ( iCurrentEra < TF2V_ERA_DAY_TWOCITIES )
+			if ( iCurrentEra < TF2V_DAY_MAJOR_TWOCITIES )
 			{
 				bShouldRemove = true;
 			}
@@ -613,7 +613,7 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 		else if ( V_stristr( pszAttrName, "paintkit_proto_def_index" ) ||
 				  V_stristr( pszAttrName, "paint_kit_proto_def_index" ) )
 		{
-			if ( iCurrentEra < TF2V_ERA_DAY_GUNMETTLE )
+			if ( iCurrentEra < TF2V_DAY_MAJOR_GUN_METTLE )
 			{
 				bShouldRemove = true;
 			}
@@ -665,31 +665,31 @@ CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemV
 	// Check if this item is in a slot that doesn't exist yet.
 	
 	// Cosmetics as a whole did not exist before Sniper vs. Spy
-	if ( ( iCurrentEra < TF2V_ERA_DAY_SNIPSPY ) && IsWearableSlot(iSlot) )
+	if ( ( iCurrentEra < TF2V_DAY_MAJOR_SNIPER_SPY ) && IsWearableSlot(iSlot) )
 	{
 		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
 	}
 	
 	// Misc slots did not exist prior to Classless
-	if ( ( iCurrentEra < TF2V_ERA_DAY_CLASSLESS ) && ( iSlot == LOADOUT_POSITION_MISC ) )
+	if ( ( iCurrentEra < TF2V_DAY_MAJOR_CLASSLESS ) && ( iSlot == LOADOUT_POSITION_MISC ) )
 	{
 		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
 	}
 	
 	// Misc2 did not exist prior to Engineer Update
-	if ( ( iCurrentEra < TF2V_ERA_DAY_ENGINEER ) && ( iSlot == LOADOUT_POSITION_MISC2 ) )
+	if ( ( iCurrentEra < TF2V_DAY_MAJOR_ENGINEER ) && ( iSlot == LOADOUT_POSITION_MISC2 ) )
 	{
 		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
 	}
 	
 	// Action slots were not used prior to Mannconomy
-	if ( ( iCurrentEra < TF2V_ERA_DAY_MANNCONOMY ) && ( iSlot == LOADOUT_POSITION_ACTION ) )
+	if ( ( iCurrentEra < TF2V_DAY_MAJOR_MANNCONOMY ) && ( iSlot == LOADOUT_POSITION_ACTION ) )
 	{
 		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
 	}
 	
 	// Taunts were not an item slot prior to the Replay Update
-	if ( ( iCurrentEra < TF2V_ERA_DAY_REPLAY ) && IsTauntSlot(iSlot) )
+	if ( ( iCurrentEra < TF2V_DAY_MAJOR_REPLAY ) && IsTauntSlot(iSlot) )
 	{
 		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
 	}
@@ -773,7 +773,7 @@ bool CTF2VAttributeDateManager::HasAnachronisticAttributes( CEconItemView *pItem
 			 V_stristr( pszAttrName, "item_tint_rgb" ) ||
 			 V_stristr( pszAttrName, "item_tint_rgb_2" ) )
 		{
-			if ( iCurrentEra < TF2V_ERA_DAY_MANNCONOMY )
+			if ( iCurrentEra < TF2V_DAY_MAJOR_MANNCONOMY )
 				return true;
 			else
 			{
@@ -787,7 +787,7 @@ bool CTF2VAttributeDateManager::HasAnachronisticAttributes( CEconItemView *pItem
 		else if ( V_stristr( pszAttrName, "attach particle effect" ) ||
 				  V_stristr( pszAttrName, "unusual_effect" ) )
 		{
-			if ( iCurrentEra < TF2V_ERA_DAY_MANNCONOMY )
+			if ( iCurrentEra < TF2V_DAY_MAJOR_MANNCONOMY )
 			{
 				return true;
 			}
@@ -802,34 +802,34 @@ bool CTF2VAttributeDateManager::HasAnachronisticAttributes( CEconItemView *pItem
 		}
 		else if ( V_stristr( pszAttrName, "kill eater" ) )
 		{
-			if ( iCurrentEra < TF2V_ERA_DAY_UBER_F2P )
+			if ( iCurrentEra < TF2V_DAY_MAJOR_UBER )
 				return true;
 		}
 		else if ( V_stristr( pszAttrName, "halloween" ) ||
 				  V_stristr( pszAttrName, "haunted" ) )
 		{
-			if ( iCurrentEra < TF2V_ERA_DAY_HALLOWEEN_2011 )
+			if ( iCurrentEra < TF2V_DAY_HALLOWEEN_2011 )
 				return true;
 		}
 		else if ( V_stristr( pszAttrName, "festive" ) )
 		{
-			if ( iCurrentEra < TF2V_ERA_DAY_AUSSIE2011 )
+			if ( iCurrentEra < TF2V_DAY_SMISSMAS_2011 )
 				return true;
 		}
 		else if ( V_stristr( pszAttrName, "killstreak" ) || V_stristr( pszAttrName, "kill streak" ) )
 		{
-			if ( iCurrentEra < TF2V_ERA_DAY_TWOCITIES )
+			if ( iCurrentEra < TF2V_DAY_MAJOR_TWOCITIES )
 				return true;
 		}
 		else if ( V_stristr( pszAttrName, "australium" ) )
 		{
-			if ( iCurrentEra < TF2V_ERA_DAY_TWOCITIES )
+			if ( iCurrentEra < TF2V_DAY_MAJOR_TWOCITIES )
 				return true;
 		}
 		else if ( V_stristr( pszAttrName, "paintkit_proto_def_index" ) ||
 				  V_stristr( pszAttrName, "paint_kit_proto_def_index" ) )
 		{
-			if ( iCurrentEra < TF2V_ERA_DAY_GUNMETTLE )
+			if ( iCurrentEra < TF2V_DAY_MAJOR_GUN_METTLE )
 			{
 				return true;
 			}
