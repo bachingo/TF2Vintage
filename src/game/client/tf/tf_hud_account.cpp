@@ -611,13 +611,14 @@ public:
 			{
 				g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "DamagedPlayer" );
 
-#ifdef TF2_OG
-				bool bHitEnabled = false;
-				bool bLastHitEnabled = false;
-#else
-				bool bHitEnabled = ( tf_dingalingaling.GetBool() );
-				bool bLastHitEnabled = ( tf_dingalingaling_lasthit.GetBool() );
-#endif
+				// TF2V: Hitsounds added January 6, 2010. (Day 843)
+				bool bHitEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < 843 );
+				// TF2V: Final Hitsound added Feb 29, 2016. (Day 3088)
+				bool bLastHitEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < 3088 );
+				
+				bool bHitEnabled = ( tf_dingalingaling.GetBool() ) && !bHitEarly;
+				bool bLastHitEnabled = ( tf_dingalingaling_lasthit.GetBool() ) && !bLastHitEarly;
+				
 				bool bLastHit = ( iHealth <= 0 ) || bDeadRingerSpy;
 				const float flDingTime = bLastHit ? m_flLastKillDingTime : m_flLastDingTime;
 				const float flDingDelay = bLastHit ? tf_dingaling_lasthit_repeat_delay.GetFloat() : tf_dingalingaling_repeat_delay.GetFloat();
