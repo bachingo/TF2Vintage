@@ -2321,7 +2321,9 @@ void CWeaponMedigun::OnDataChanged( DataUpdateType_t updateType )
 			return;
 		}
 
-		if ( pLocalPlayer == GetOwner() && hud_medicautocallers.GetBool() )
+		// TF2V: Feature did not exist prior to the WAR! update.
+		bool bAutoCallerEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_MAJOR_WAR );
+		if ( pLocalPlayer == GetOwner() && ( hud_medicautocallers.GetBool() && !bAutoCallerEarly ) )
 		{
 			UpdateMedicAutoCallers();
 		}
