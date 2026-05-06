@@ -1407,6 +1407,7 @@ public:
 	bool ShouldStartMatchRoundImmediately() { return m_bStartMatchRoundImmediately; }
 	void SetStartMatchRoundImmediately( bool bStartImmediate ) { m_bStartMatchRoundImmediately = bStartImmediate; }
 
+	bool IsAnachronistic( int nEra ) { return ( GetTF2VEra() < nEra ); }
 	int GetTF2VEra( void ) { return m_nTF2VEra; }
 	void SetTF2VEra( int nEra = tf2v_era.GetInt() ) { m_nTF2VEra = clamp(nEra, TF2V_ERA_DAY_MIN, TF2V_ERA_DAY_MAX); }
 	
