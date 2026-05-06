@@ -819,9 +819,9 @@ public:
 		}
 		else if ( FStrEq( event->GetName(), "player_bonuspoints" ) )
 		{
-			// TF2V: Combat text added during WAR!
-			bool bCombatTextEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_MAJOR_WAR );
-			const bool bCombatText = hud_combattext.GetBool() && !bCombatTextEarly;
+			// TF2V: Bonus points added in Hatless
+			bool bBonusTextEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_MAJOR_HATLESS );
+			const bool bCombatText = hud_combattext.GetBool() && !bBonusTextEarly;
 			if ( bCombatText )
 			{
 				CTFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
