@@ -2517,7 +2517,10 @@ void CWeaponMedigun::UpdateEffects( void )
 			return;
 
 		bool bReviveMarker = m_hReviveMarker && m_hReviveMarker == m_hHealingTarget;	// Hack to avoid another dynamic_cast here
-		bool bHealTargetMarker = hud_medichealtargetmarker.GetBool() && !bReviveMarker;
+		
+		// TF2V: Feature did not exist prior to the WAR! update.
+		bool bHealMarkerEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_MAJOR_WAR );
+		bool bHealTargetMarker = ( hud_medichealtargetmarker.GetBool() && !bHealMarkerEarly ) && !bReviveMarker;
 
 		const char *pszEffectName;
 		if ( IsAttachedToBuilding() )
