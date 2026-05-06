@@ -22003,6 +22003,11 @@ void CTFPlayer::InventoryUpdated( CPlayerInventory *pInventory )
 //-----------------------------------------------------------------------------
 void CTFPlayer::SaveLastWeaponSlot( void )
 {
+	
+	// TF2V: Feature did not exist prior to the Scout Update.
+	if ( TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_MAJOR_SCOUT );
+		return;
+	
 	if( !m_bRememberLastWeapon && !m_bRememberActiveWeapon )
 	  return;
 	
