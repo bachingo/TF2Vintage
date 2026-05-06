@@ -1368,7 +1368,7 @@ bool CTFWeaponBase::Deploy( void )
 		float flDeployTimeMultiplier = 1.0f;
 		
 		// TF2V: Base swaps were 33% slower prior to Tough Break.
-		if ( TFGameRules->IsAnarchronistic(TF2V_DAY_MAJOR_TOUGH_BREAK) )
+		if ( TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK) )
 			flDeployTimeMultiplier = 1.34f;
 		
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flDeployTimeMultiplier, mult_deploy_time );
