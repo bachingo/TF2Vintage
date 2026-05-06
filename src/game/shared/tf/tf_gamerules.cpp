@@ -11542,7 +11542,7 @@ void CTFGameRules::ClientSettingsChanged( CBasePlayer *pPlayer )
 	pTFPlayer->SetMedigunAutoHeal( Q_atoi( engine->GetClientConVarValue( pPlayer->entindex(), "tf_medigun_autoheal" ) ) > 0 );
 
 	// keep track of their autocallers values
-	const bool bShouldAutoCallTransmit = Q_atoi( engine->GetClientConVarValue( pPlayer->entindex(), "hud_medicautocallers" ) ) > 0 && Q_atoi( engine->GetClientConVarValue( pPlayer->entindex(), "hud_medicautocallersglow" ) ) > 0;
+	const bool bShouldAutoCallTransmit = Q_atoi( engine->GetClientConVarValue( pPlayer->entindex(), "hud_medicautocallers" ) ) > 0;
 	if ( bShouldAutoCallTransmit )
 	{
 		pTFPlayer->SetMedicAutoCallersThreshold( Q_atoi( engine->GetClientConVarValue( pPlayer->entindex(), "hud_medicautocallersthreshold" ) ) );
