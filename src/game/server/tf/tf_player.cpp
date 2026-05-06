@@ -5178,7 +5178,9 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 	if ( m_bRegenerating == false )
 	{
 		bool bWepSwitched = false;
-		if ( m_bRememberActiveWeapon && m_iActiveWeaponTypePriorToDeath )
+		// TF2V: Feature didn't exist prior to Scout Update.
+		bool bActiveWeaponEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_MAJOR_SCOUT );
+		if ( ( m_bRememberActiveWeapon && !bActiveWeaponEarly ) && m_iActiveWeaponTypePriorToDeath )
 		{
 			CTFWeaponBase *pWeapon = Weapon_OwnsThisID( m_iActiveWeaponTypePriorToDeath );
 			if ( pWeapon && pWeapon->GetAttributeContainer()->GetItem()->GetEquippedPositionForClass( GetPlayerClass()->GetClassIndex() ) != LOADOUT_POSITION_ACTION )
