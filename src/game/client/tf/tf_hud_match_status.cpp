@@ -49,6 +49,10 @@ bool ShouldUseMatchHUD()
 	if ( !TFGameRules() )
 		return false;
 	
+	// TF2V: No Match HUD prior to Meet Your Match
+	if ( TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_MAJOR_MEET_YOUR_MATCH ) )
+		return false;
+	
 	// MvM uses its own HUD
 	if ( TFGameRules()->IsMannVsMachineMode() )
 		return false;
