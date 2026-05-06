@@ -128,10 +128,13 @@ void CTFHudSpectatorExtras::OnTick()
 		}
 	}
 
-	// TODO(mcoms): add helpme and auto caller xray
+	// TF2V: The ability to disable this was introduced December 18 2015 (Day 3015)
+	bool bDisableRespawnGlowEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < 3015 );
+	// Weird to bool. Means we do this either with yes, or no-but-too-early-to-say-no.
+	bool bEnableRespawnGlows = tf_enable_glows_after_respawn.GetBool() || (!tf_enable_glows_after_respawn.GetBool() && bDisableRespawnGlowEarly);
 
 	if ( bIsHLTV || 
-		( tf_spec_xray.GetBool() && ( ( nLocalPlayerTeam == TEAM_SPECTATOR ) || ( pLocalPlayer->GetObserverMode() > OBS_MODE_FREEZECAM ) || ( pLocalPlayer->m_Shared.InCond( TF_COND_TEAM_GLOWS ) && tf_enable_glows_after_respawn.GetBool() ) ) ) )
+		( tf_spec_xray.GetBool() && ( ( nLocalPlayerTeam == TEAM_SPECTATOR ) || ( pLocalPlayer->GetObserverMode() > OBS_MODE_FREEZECAM ) || ( pLocalPlayer->m_Shared.InCond( TF_COND_TEAM_GLOWS ) && bEnableRespawnGlows ) ) ) )
 	{
 		bool bShowEveryone = ( bIsHLTV || 
 							   ( ( nLocalPlayerTeam == TEAM_SPECTATOR ) && tf_spec_xray.GetBool() ) ||
