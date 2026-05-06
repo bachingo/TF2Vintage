@@ -4073,23 +4073,28 @@ void CTFPlayer::Spawn()
 		m_bRespawning = false;
 		m_Shared.RemoveAllCond(); // Remove conc'd, burning, rotting, hallucinating, etc.
 
-		// add team glows for a period of time after we respawn
-		int iSpawnGlowsDuration = tf_spawn_glows_duration.GetInt();
-		if ( iSpawnGlowsDuration == -10 )
+		// TF2V: We didn't get respawn glowing until Tough Break.
+		bool bRespawnTeamGlowsEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_MAJOR_TOUGH_BREAK );
+		if ( !bRespawnTeamGlowsEarly )
 		{
-			m_Shared.AddCond( TF_COND_TEAM_GLOWS );
-		}
-		else
-		{
-			if ( TFGameRules()->BInMatchStartCountdown() || gpGlobals->curtime < TFGameRules()->GetPreroundCountdownTime() )
+			// add team glows for a period of time after we respawn
+			int iSpawnGlowsDuration = tf_spawn_glows_duration.GetInt();
+			if ( iSpawnGlowsDuration == -10 )
 			{
-				iSpawnGlowsDuration += 10; // add some extra time to help us navigate during rollout
+				m_Shared.AddCond( TF_COND_TEAM_GLOWS );
 			}
-			else if ( TFGameRules()->State_Get() == GR_STATE_PREROUND )
+			else
 			{
-				iSpawnGlowsDuration += 5; // just a little time because standard prerounds are shorter
+				if ( TFGameRules()->BInMatchStartCountdown() || gpGlobals->curtime < TFGameRules()->GetPreroundCountdownTime() )
+				{
+					iSpawnGlowsDuration += 10; // add some extra time to help us navigate during rollout
+				}
+				else if ( TFGameRules()->State_Get() == GR_STATE_PREROUND )
+				{
+					iSpawnGlowsDuration += 5; // just a little time because standard prerounds are shorter
+				}
+				m_Shared.AddCond( TF_COND_TEAM_GLOWS, iSpawnGlowsDuration );
 			}
-			m_Shared.AddCond( TF_COND_TEAM_GLOWS, iSpawnGlowsDuration );
 		}
 
 		UpdateSkin( GetTeamNumber() );
