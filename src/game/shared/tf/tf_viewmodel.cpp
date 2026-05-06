@@ -209,9 +209,12 @@ void CTFViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePosit
 				vecNewOrigin += vOffset;
 			}
 		}
+		
+		// TF2V: Feature did not exist prior to Meet Your Match.
+		bool bMinViewEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_MAJOR_MEET_YOUR_MATCH );
 
 		// we want to always enable this internally
-		bool bMinMode = tf_use_min_viewmodels.GetBool();
+		bool bMinMode = tf_use_min_viewmodels.GetBool() && !bMinViewEarly;
 
 		// are we overriding vm offset?
 		const char *pszVMOffsetOverride = tf_viewmodels_offset_override.GetString();
