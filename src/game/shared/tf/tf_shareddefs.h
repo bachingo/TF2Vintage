@@ -143,7 +143,6 @@ enum
 //-----------------------------------------------------------------------------
 // CVar replacements
 //-----------------------------------------------------------------------------
-#ifdef TF2_OG
 #define TF_DAMAGE_CRIT_CHANCE_OLD				0.05f
 #define TF_DAMAGE_CRIT_CHANCE_RAPID_OLD			0.05f
 
