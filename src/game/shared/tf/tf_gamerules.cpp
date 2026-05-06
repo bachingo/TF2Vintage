@@ -11553,7 +11553,7 @@ void CTFGameRules::ClientSettingsChanged( CBasePlayer *pPlayer )
 	}
 
 	// keep track of their cl_autorezoom value
-	pTFPlayer->SetZoomMode( clamp( Q_atoi( engine->GetClientConVarValue( pPlayer->entindex(), "cl_autorezoom" ) ), 0, 2 ) );
+	pTFPlayer->SetZoomMode( clamp( Q_atoi( engine->GetClientConVarValue( pPlayer->entindex(), "cl_autorezoom" ) ), 0, 1 ) );
 	pTFPlayer->SetAutoReload( Q_atoi( engine->GetClientConVarValue( pPlayer->entindex(), "cl_autoreload" ) ) > 0 );
 
 	// keep track of their tf_remember_lastswitched value

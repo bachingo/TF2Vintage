@@ -532,7 +532,9 @@ void CTFSniperRifle::ZoomOutIn( void )
 		// Since sniper rifles don't actually use clips the fast reload hook also affects unzoom and zoom delays
 		ApplyScopeSpeedModifications( flRezoomDelay );
 	}
-	if ( pPlayer && pPlayer->ShouldAutoRezoom() )
+	// TF2V: Feature didn't exist prior to January 14, 2008. (Day 120)
+	bool bAutoRezoomEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < 120 );
+	if ( pPlayer && ( pPlayer->ShouldAutoRezoom() && !bAutoRezoomEarly ) )
 	{
 		m_flRezoomTime = gpGlobals->curtime + flRezoomDelay;
 	}
