@@ -933,9 +933,11 @@ private:
 	void OnAddHalloweenHellHeal( void );
 	void OnRemoveHalloweenHellHeal( void );
 
-	float GetCritMult( const bool bMelee );
+	float GetCritMult( void );
 
 #ifdef GAME_DLL
+	// TF2V: Crit behavior changes February 2 2009 (Day 505)
+	bool  TF2VOldCritModel( void ) { return TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < 505 ); }
 	void  UpdateCritMult( void );
 	void  RecordDamageEvent( const CTakeDamageInfo &info, bool bKill, int nVictimPrevHealth );
 	void  AddTempCritBonus( float flAmount );
@@ -1162,7 +1164,6 @@ private:
 
 
 	CNetworkVar( int, m_iCritMult );
-	CNetworkVar( int, m_iCritMultMelee );
 
 	CNetworkArray( bool, m_bPlayerDominated, MAX_PLAYERS_ARRAY_SAFE );		// array of state per other player whether player is dominating other players
 	CNetworkArray( bool, m_bPlayerDominatingMe, MAX_PLAYERS_ARRAY_SAFE );	// array of state per other player whether other players are dominating this player

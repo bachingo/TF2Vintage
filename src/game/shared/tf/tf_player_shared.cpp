@@ -110,27 +110,15 @@ static ConVar tf_demoman_charge_frametime_scaling( "tf_demoman_charge_frametime_
 static const float YAW_CAP_SCALE_MIN = 0.2f;
 static const float YAW_CAP_SCALE_MAX = 2.f;
 
-#ifdef TF2_OG
-#define DEFAULT_TF_DAMAGE_CRITMOD_DAMAGE			"1600"
-#define DEFAULT_TF_DAMAGE_CRITMOD_DAMAGE_MELEE		"1600"
-#else
-#define DEFAULT_TF_DAMAGE_CRITMOD_DAMAGE			"800"
-#define DEFAULT_TF_DAMAGE_CRITMOD_DAMAGE_MELEE		"1600"
-#endif
+	// TF2V: Feature did not exist prior to February 2nd, 2009. (505 days)
+	//bool bMinModeEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < 505 );
+	//if ( cl_hud_minmode.GetBool() && !bMinModeEarly)
 
-#ifdef TF2_OG
-#define DEFAULT_TF_DAMAGE_CRITMOD_MAXMULT			"4"
-#define DEFAULT_TF_DAMAGE_CRITMOD_MAXMULT_MELEE		"4"
-#else
-#define DEFAULT_TF_DAMAGE_CRITMOD_MAXMULT			"6"
-#define DEFAULT_TF_DAMAGE_CRITMOD_MAXMULT_MELEE		"4"
-#endif
+#define TF_DAMAGE_CRITMOD_DAMAGE_NEW			"800"
+#define TF_DAMAGE_CRITMOD_MAXMULT_NEW			"6"
 
-ConVar tf_damage_critmod_damage("tf_damage_critmod_damage", DEFAULT_TF_DAMAGE_CRITMOD_DAMAGE, FCVAR_CHEAT | FCVAR_REPLICATED);
-ConVar tf_damage_critmod_damage_melee("tf_damage_critmod_damage_melee", DEFAULT_TF_DAMAGE_CRITMOD_DAMAGE_MELEE, FCVAR_CHEAT | FCVAR_REPLICATED);
-ConVar tf_damage_critmod_maxmult("tf_damage_critmod_maxmult", DEFAULT_TF_DAMAGE_CRITMOD_MAXMULT, FCVAR_CHEAT | FCVAR_REPLICATED);
-ConVar tf_damage_critmod_maxmult_melee("tf_damage_critmod_maxmult_melee", DEFAULT_TF_DAMAGE_CRITMOD_MAXMULT_MELEE, FCVAR_CHEAT | FCVAR_REPLICATED);
-
+#define TF_DAMAGE_CRITMOD_DAMAGE_OLD			"1600"
+#define TF_DAMAGE_CRITMOD_MAXMULT_OLD			"4"
 
 ConVar tf_halloween_kart_boost_recharge( "tf_halloween_kart_boost_recharge", "5.0f", FCVAR_REPLICATED | FCVAR_CHEAT );
 ConVar tf_halloween_kart_boost_duration( "tf_halloween_kart_boost_duration", "1.5f", FCVAR_REPLICATED | FCVAR_CHEAT );
@@ -397,7 +385,6 @@ BEGIN_RECV_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	RecvPropInt( RECVINFO( m_bJumping) ),
 	RecvPropInt( RECVINFO( m_nNumHealers ) ),
 	RecvPropInt( RECVINFO( m_iCritMult ) ),
-	RecvPropInt( RECVINFO( m_iCritMultMelee ) ),
 	RecvPropInt( RECVINFO( m_iAirDash ) ),
 	RecvPropInt( RECVINFO( m_nAirDucked ) ),
 	RecvPropFloat( RECVINFO( m_flDuckTimer ) ),
@@ -576,7 +563,6 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	SendPropInt( SENDINFO( m_bJumping ), 1, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_nNumHealers ), 5, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iCritMult ), 8, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO( m_iCritMultMelee ), 8, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iAirDash ), -1, SPROP_VARINT | SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_nAirDucked ), 2, SPROP_UNSIGNED ),
 	SendPropFloat( SENDINFO( m_flDuckTimer )  ),
@@ -833,7 +819,6 @@ CTFPlayerShared::CTFPlayerShared()
 	m_flStealthNoAttackExpire = 0.0f;
 	m_flStealthNextChangeTime = 0.0f;
 	m_iCritMult = 0;
-	m_iCritMultMelee = 0;
 	m_flInvisibility = 0.0f;
 	m_flPrevInvisibility = 0.f;
 	m_flTmpDamageBonusAmount = 1.0f;
@@ -9647,10 +9632,10 @@ void CTFPlayerShared::SetAirDash( int iAirDash )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-float CTFPlayerShared::GetCritMult( const bool bMelee )
+float CTFPlayerShared::GetCritMult( void )
 {
-	const int iCritMult = bMelee ? m_iCritMultMelee.Get() : m_iCritMult.Get();
-	const float flMaxMult = bMelee ? tf_damage_critmod_maxmult_melee.GetFloat() : tf_damage_critmod_maxmult.GetFloat();
+	const int iCritMult m_iCritMult.Get();
+	const float flMaxMult = TF2VOldCritModel() ? (float)TF_DAMAGE_CRITMOD_DAMAGE_OLD : (float)TF_DAMAGE_CRITMOD_DAMAGE_NEW;
 	float flRemapCritMul = RemapValClamped( iCritMult, 0, 255, 1.0, flMaxMult );
 /*#ifdef CLIENT_DLL
 	Msg("CLIENT: Crit mult %.2f - %d\n",flRemapCritMul, iCritMult );
@@ -9668,13 +9653,11 @@ float CTFPlayerShared::GetCritMult( const bool bMelee )
 void CTFPlayerShared::UpdateCritMult( void )
 {
 	const float flMinMult = 1.0;
-	const float flMaxMult = tf_damage_critmod_maxmult.GetFloat();
-	const float flMaxMultMelee = tf_damage_critmod_maxmult_melee.GetFloat();
+	const float flMaxMult = TF2VOldCritModel() ? (float)TF_DAMAGE_CRITMOD_DAMAGE_OLD : (float)TF_DAMAGE_CRITMOD_DAMAGE_NEW;
 
 	if ( m_DamageEvents.Count() == 0 )
 	{
 		m_iCritMult = RemapValClamped( flMinMult, 1.0, flMaxMult, 0, 255 );
-		m_iCritMultMelee = RemapValClamped( flMinMult, 1.0, flMaxMultMelee, 0, 255 );
 		return;
 	}
 
@@ -9709,13 +9692,11 @@ void CTFPlayerShared::UpdateCritMult( void )
 		flTotalDamage += m_DamageEvents[i].flDamage * m_DamageEvents[i].flDamageCritScaleMultiplier;
 	}
 
-	float flMult = RemapValClamped( flTotalDamage, 0, tf_damage_critmod_damage.GetFloat(), flMinMult, flMaxMult );
-	float flMultMelee = RemapValClamped( flTotalDamage, 0, tf_damage_critmod_damage_melee.GetFloat(), flMinMult, flMaxMultMelee );
+	float flMult = RemapValClamped( flTotalDamage, 0, (TF2VOldCritModel() ? TF_DAMAGE_CRITMOD_DAMAGE_OLD : TF_DAMAGE_CRITMOD_DAMAGE_NEW), flMinMult, flMaxMult );
 
 //	Msg( "   TotalDamage: %.2f   -> Mult %.2f | Melee %.2f\n", flTotalDamage, flMult, flMultMelee );
 
 	m_iCritMult = (int)RemapValClamped( flMult, flMinMult, flMaxMult, 0, 255 );
-	m_iCritMultMelee = (int)RemapValClamped( flMultMelee, flMinMult, flMaxMultMelee, 0, 255 );
 }
 
 #define CRIT_DAMAGE_TIME		0.1f
@@ -9842,7 +9823,7 @@ void CTFPlayerShared::AddTempCritBonus( float flAmount )
 
 	int iIndex = m_DamageEvents.AddToTail();
 	// TODO(mcoms): do we need to be aware of scaling (max) here? what is the flAmount supposed to do?
-	m_DamageEvents[iIndex].flDamage = RemapValClamped( flAmount, 0, 1, 0, tf_damage_critmod_damage.GetFloat() ) / ( tf_damage_critmod_maxmult.GetFloat() - 1.0f);
+	m_DamageEvents[iIndex].flDamage = RemapValClamped( flAmount, 0, 1, 0, (TF2VOldCritModel() ? TF_DAMAGE_CRITMOD_DAMAGE_OLD : TF_DAMAGE_CRITMOD_DAMAGE_NEW) ) / ( TF2VOldCritModel() ? (float)TF_DAMAGE_CRITMOD_DAMAGE_OLD : (float)TF_DAMAGE_CRITMOD_DAMAGE_NEW - 1.0f);
 	m_DamageEvents[iIndex].flDamageCritScaleMultiplier = 1.0f;
 	m_DamageEvents[iIndex].nDamageType = DMG_GENERIC;
 	m_DamageEvents[iIndex].flTime = gpGlobals->curtime;

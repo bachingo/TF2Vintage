@@ -1746,7 +1746,7 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 		return false;
 
 	float flCritChance = 0.f;
-	float flPlayerCritMult = pPlayer->GetCritMult(false);
+	float flPlayerCritMult = pPlayer->GetCritMult();
 
 	if ( !CanFireCriticalShot() )
 		return false;
@@ -1803,7 +1803,7 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 		}
 
 		// get the total crit chance (ratio of total shots fired we want to be crits)
-		float flTotalCritChance = clamp( TF_DAMAGE_CRIT_CHANCE_RAPID * flPlayerCritMult, 0.01f, 0.99f );
+		float flTotalCritChance = clamp( ( ( TFGameRules && TFGameRules()->GetTF2VEra() < 505 ) ? TF_DAMAGE_CRIT_CHANCE_RAPID_OLD : TF_DAMAGE_CRIT_CHANCE_RAPID_NEW ) * flPlayerCritMult, 0.01f, 0.99f );
 		// get the fixed amount of time that we start firing crit shots for	
 		float flCritDuration = TF_DAMAGE_CRIT_DURATION_RAPID;
 		// calculate the amount of time, on average, that we want to NOT fire crit shots for in order to achieve the total crit chance we want
@@ -1833,7 +1833,7 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 	else
 	{
 		// single-shot weapon, just use random pct per shot
-		flCritChance = TF_DAMAGE_CRIT_CHANCE * flPlayerCritMult;
+		flCritChance = ( ( TFGameRules && TFGameRules()->GetTF2VEra() && ( ( TFGameRules && TFGameRules()->GetTF2VEra() < 505 ) ? TF_DAMAGE_CRIT_CHANCE_OLD : TF_DAMAGE_CRIT_CHANCE_NEW ) * flPlayerCritMult;
 		CALL_ATTRIB_HOOK_FLOAT( flCritChance, mult_crit_chance );
 
 		// mess with the crit chance seed so it's not based solely on the prediction seed
