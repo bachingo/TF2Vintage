@@ -1587,7 +1587,9 @@ void CWeaponMedigun::ItemPostFrame( void )
 
 	// Try to start healing
 	m_bAttacking = false;
-	if ( pOwner->GetMedigunAutoHeal() )
+	// TF2V: Feature didn't exist prior to January 14, 2008. (Day 120)
+	bool bAutoHealEarly = TFGameRules && TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < 120 );
+	if ( ( pOwner->GetMedigunAutoHeal() && !bAutoHealEarly ) )
 	{
 		if ( pOwner->m_nButtons & IN_ATTACK )
 		{
