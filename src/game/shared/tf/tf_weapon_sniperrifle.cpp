@@ -534,7 +534,7 @@ void CTFSniperRifle::ZoomOutIn( void )
 	}
 	// TF2V: Feature didn't exist prior to January 14, 2008. (Day 120)
 	bool bAutoRezoomEarly = TFGameRules()->IsAnachronistic(120);
-	if ( pPlayer && ( pPlayer->ShouldAutoRezoom() && !bAutoRezoomEarly ) )
+	if ( pPlayer && ( pPlayer->ShouldAutoRezoom() && !bAutoRezoomEarly ) )
 	{
 		m_flRezoomTime = gpGlobals->curtime + flRezoomDelay;
 	}
