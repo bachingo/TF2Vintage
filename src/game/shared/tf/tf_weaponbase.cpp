@@ -1367,7 +1367,7 @@ bool CTFWeaponBase::Deploy( void )
 		// Overrides the anim length for calculating ready time.
 		float flDeployTimeMultiplier = 1.0f;
 		
-		// TF2V: Base swaps were 33% slower prior to Tough Break.
+		// TF2V: Base swaps were 34% slower prior to Tough Break. (0.67s->0.5s)
 		if ( TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK) )
 			flDeployTimeMultiplier = 1.34f;
 		
@@ -1808,7 +1808,8 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 		}
 
 		// get the total crit chance (ratio of total shots fired we want to be crits)
-		float flTotalCritChance = clamp( ( TFGameRules()->IsAnachronistic(505) ? TF_DAMAGE_CRIT_CHANCE_RAPID_OLD : TF_DAMAGE_CRIT_CHANCE_RAPID_NEW ) * flPlayerCritMult, 0.01f, 0.99f );
+		float flBaseCritChanceRapid = TFGameRules()->IsAnachronistic(505) ? TF_DAMAGE_CRIT_CHANCE_RAPID_OLD : TF_DAMAGE_CRIT_CHANCE_RAPID_NEW;
+		float flTotalCritChance = clamp( flBaseCritChanceRapid * flPlayerCritMult, 0.01f, 0.99f );
 		// get the fixed amount of time that we start firing crit shots for	
 		float flCritDuration = TF_DAMAGE_CRIT_DURATION_RAPID;
 		// calculate the amount of time, on average, that we want to NOT fire crit shots for in order to achieve the total crit chance we want
@@ -1838,7 +1839,8 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 	else
 	{
 		// single-shot weapon, just use random pct per shot
-		flCritChance = ( TFGameRules()->IsAnachronistic(505) ? TF_DAMAGE_CRIT_CHANCE_OLD : TF_DAMAGE_CRIT_CHANCE_NEW ) * flPlayerCritMult;
+		float flBaseCritChance = TFGameRules()->IsAnachronistic(505) ? TF_DAMAGE_CRIT_CHANCE_OLD : TF_DAMAGE_CRIT_CHANCE_NEW ;
+		flCritChance = flBaseCritChance * flPlayerCritMult;
 		CALL_ATTRIB_HOOK_FLOAT( flCritChance, mult_crit_chance );
 
 		// mess with the crit chance seed so it's not based solely on the prediction seed
