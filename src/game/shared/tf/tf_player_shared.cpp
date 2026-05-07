@@ -9631,7 +9631,7 @@ void CTFPlayerShared::SetAirDash( int iAirDash )
 float CTFPlayerShared::GetCritMult( void )
 {
 	const int iCritMult m_iCritMult.Get();
-	const float flMaxMult = TF2VOldCritModel() ? (float)TF_DAMAGE_CRITMOD_DAMAGE_OLD : (float)TF_DAMAGE_CRITMOD_DAMAGE_NEW;
+	const float flMaxMult = (float)( TF2VOldCritModel() ? TF_DAMAGE_CRITMOD_DAMAGE_OLD : TF_DAMAGE_CRITMOD_DAMAGE_NEW );
 	float flRemapCritMul = RemapValClamped( iCritMult, 0, 255, 1.0, flMaxMult );
 /*#ifdef CLIENT_DLL
 	Msg("CLIENT: Crit mult %.2f - %d\n",flRemapCritMul, iCritMult );

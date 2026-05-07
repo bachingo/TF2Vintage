@@ -934,10 +934,10 @@ private:
 	void OnRemoveHalloweenHellHeal( void );
 
 	float GetCritMult( void );
-
-#ifdef GAME_DLL
 	// TF2V: Crit behavior changes February 2 2009 (Day 505)
 	bool  TF2VOldCritModel( void ) { return TFGameRules()->IsAnachronistic(505); }
+#ifdef GAME_DLL
+	
 	void  UpdateCritMult( void );
 	void  RecordDamageEvent( const CTakeDamageInfo &info, bool bKill, int nVictimPrevHealth );
 	void  AddTempCritBonus( float flAmount );
