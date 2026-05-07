@@ -522,7 +522,10 @@ CTFGrenadePipebombProjectile* CTFGrenadePipebombProjectile::Create( const Vector
 		DispatchSpawn( pGrenade );
 		if (iPipeBombType == -1)
 		{
-			pGrenade->InitGrenade(velocity, angVelocity, pOwner, 100.0f, 146.0f); // stickbomb hack
+			if ( TFGameRules->IsAnachronistic(TF2V_DAY_SMISSMAS_2014) )
+				pGrenade->InitGrenade(velocity, angVelocity, pOwner, 100.0f, 159.0f); // stickbomb hack
+			else
+				pGrenade->InitGrenade(velocity, angVelocity, pOwner, 100.0f, 146.0f); // stickbomb hack
 		}
 		else
 		{

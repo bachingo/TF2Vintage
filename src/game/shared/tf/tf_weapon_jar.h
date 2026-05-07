@@ -31,7 +31,7 @@ enum EThrowableTypes
 	EThrowableBase				= 0,
 };
 
-#define JAR_EXPLODE_RADIUS 200		// TF_ROCKET_RADIUS and grenade explosions is 146
+#define JAR_EXPLODE_RADIUS 200		// TF_ROCKET_RADIUS and grenade explosions is 159->146 post Smissmass 2014.
 #define TF_WEAPON_PEEJAR_EXPLODE_SOUND	"Jar.Explode"
 
 //=============================================================================

@@ -1097,7 +1097,7 @@ struct collidelist_t
 #define TF2V_DAY_SMISSMAS_2011               	 1551   // 2011-12-15 (Australian Christmas 2011)
 #define TF2V_DAY_SMISSMAS_2012                   1922   // 2012-12-20 (Smissmass)
 #define TF2V_DAY_SMISSMAS_2013                   2287   // 2013-12-20 (Smissmass 2013)
-#define TF2V_DAY_SMISSMAS_2014                   2651   // 2014-12-20 (Smissmass 2014)
+#define TF2V_DAY_SMISSMAS_2014                   2654   // 2014-12-22 (Smissmass 2014)
 #define TF2V_DAY_SMISSMAS_2015                   3014   // 2015-12-17 (Smissmass 2015) (overlaps with Tough Break)
 #define TF2V_DAY_SMISSMAS_2016                   3384   // 2016-12-21 (Smissmass 2016)
 #define TF2V_DAY_SMISSMAS_2017                   3749   // 2017-12-21 (Smissmass 2017)
