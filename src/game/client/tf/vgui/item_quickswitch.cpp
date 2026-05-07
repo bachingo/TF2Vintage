@@ -429,7 +429,7 @@ void CItemQuickSwitchPanel::CloseQS( void )
 	{
 
 #ifdef INVENTORY_VIA_WEBAPI
-		TFInventoryManager()->QueueGCInventoryChangeNotification();
+		GTFGCClientSystem()->LocalInventoryChanged();
 #else
 		// UNDONE: we always do this to notify players of their loadout change. respawn is now checked server-side.
 		//if ( tf_respawn_on_loadoutchanges.GetBool() )
