@@ -13315,10 +13315,41 @@ int	CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassIndex /*= -1*/ )
 	int iMax = ( iClassIndex == -1 ) ? m_PlayerClass.GetData()->m_aAmmoMax[iAmmoIndex] : GetPlayerClassData( iClassIndex )->m_aAmmoMax[iAmmoIndex];
 	if ( iAmmoIndex == TF_AMMO_PRIMARY )
 	{
+		// TF2V: Soldier's ammo count changed.
+		if ( iClassIndex == TF_CLASS_SOLDIER )
+		{
+			// Used to have 36 reserve ammo here before Feb 28 2008 (Day 165)
+			if ( TFGameRules->IsAnachronistic(165) )
+				iMax += 16;
+			
+			// Had 16 reserve ammo between Feb 28 2008 (Day 165) and Feb 2 2009 (Day 505)
+			if ( TFGameRules->IsAnachronistic(505) && !TFGameRules->IsAnachronistic(165) )
+				iMax -= 4;
+			
+			// Use default number (20).
+		}
+		else if ( iClassIndex == TF_CLASS_DEMOMAN )
+		{
+			// Used to have 30 reserve ammo here before Feb 28 2008 (Day 165)
+			if ( TFGameRules->IsAnachronistic(165) )
+				iMax += 14;
+			
+			// Use default number (16).
+		}
+		
 		CALL_ATTRIB_HOOK_INT( iMax, mult_maxammo_primary );
 	}
 	else if ( iAmmoIndex == TF_AMMO_SECONDARY )
 	{
+		if ( iClassIndex == TF_CLASS_DEMOMAN )
+		{
+			// Used to have 40 reserve ammo here before Feb 28 2008 (Day 165)
+			if ( TFGameRules->IsAnachronistic(165) )
+				iMax += 16;
+			
+			// Use default number (24).
+		}
+		
 		CALL_ATTRIB_HOOK_INT( iMax, mult_maxammo_secondary );
 	}
 	else if ( iAmmoIndex == TF_AMMO_METAL )
