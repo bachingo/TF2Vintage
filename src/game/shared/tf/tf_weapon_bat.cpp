@@ -886,18 +886,15 @@ void CTFStunBall::ApplyBallImpactEffectOnVictim( CBaseEntity *pOther )
 		// remove stun control if underwater
 		iStunFlags = iStunFlags & ~TF_STUN_CONTROLS;
 	}
-
-	{
 		pPlayer->m_Shared.StunPlayer( flStunDuration, flStunAmount, iStunFlags, pOwner );
 
-		if ( pPlayer->GetUserID() == m_iOriginalOwnerID )
+	if ( pPlayer->GetUserID() == m_iOriginalOwnerID )
+	{
+		// We just stunned a scout with their own ball.
+		// Give the player an achievement for this.
+		if ( pOwner->IsPlayerClass( TF_CLASS_SCOUT ) )
 		{
-			// We just stunned a scout with their own ball.
-			// Give the player an achievement for this.
-			if ( pOwner->IsPlayerClass( TF_CLASS_SCOUT ) )
-			{
-				pOwner->AwardAchievement( ACHIEVEMENT_TF_SCOUT_STUN_SCOUT_WITH_THEIR_BALL );
-			}
+			pOwner->AwardAchievement( ACHIEVEMENT_TF_SCOUT_STUN_SCOUT_WITH_THEIR_BALL );
 		}
 	}
 
@@ -1372,7 +1369,6 @@ void CTFBall_Ornament::ApplyBallImpactEffectOnVictim( CBaseEntity *pOther )
 
 	// just do the bleed effect directly since the bleed
 	// attribute comes from the inflictor, which is the bat.
-	// we do aoe bleed on crit, so don't do anything here
 	pPlayer->m_Shared.MakeBleed( pOwner, (CTFBat_Giftwrap *)GetOriginalLauncher(), flBleedTime );
 
 	// Apply particle effect to victim (the remaining effects happen inside Explode)
