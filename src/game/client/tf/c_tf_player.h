@@ -377,7 +377,7 @@ public:
 	C_TFItem		*GetItem( void ) const;
 	bool			HasTheFlag( ETFFlagType exceptionTypes[] = NULL, int nNumExceptions = 0 ) const;
 	virtual bool	IsAllowedToPickUpFlag( void ) const;
-	float			GetCritMult(const bool bMelee) { return m_Shared.GetCritMult(); }
+	float			GetCritMult( void ) { return m_Shared.GetCritMult(); }
 
 	virtual void	ItemPostFrame( void );
 
