@@ -728,9 +728,7 @@ float CTeamplayRoundBasedRules::GetRespawnTimeScalar( int iTeam )
 
 	int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
 
-	//float flScale = RemapValClamped( iNumPlayers, 1, iOptimalPlayers, 0.25, 1.0 );
-	// TF2V: I still hate this function.
-	float flScale = (float)iNumPlayers / (float)iOptimalPlayers;
+	float flScale = RemapValClamped( iNumPlayers, 1, iOptimalPlayers, 0.25, 1.0 );
 	return flScale;
 }
 
