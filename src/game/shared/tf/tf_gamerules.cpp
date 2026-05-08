@@ -8483,7 +8483,9 @@ float CTFGameRules::ApplyOnDamageAliveModifyRules( const CTakeDamageInfo &info, 
 			// Standard Stealth gives small damage reduction
 			else if ( pVictim->m_Shared.InCond( TF_COND_STEALTHED ) )
 			{
-				flRealDamage *= tf_stealth_damage_reduction.GetFloat();
+				// TF2V: Flat cloak damage resist added in Gun Mettle.
+				if ( !( TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) ) )
+					flRealDamage *= tf_stealth_damage_reduction.GetFloat();
 			}
 		}
 
