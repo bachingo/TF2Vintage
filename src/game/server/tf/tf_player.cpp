@@ -1963,15 +1963,17 @@ void CTFPlayer::RegenThink( void )
 		float flScale = RemapValClamped( flTimeSinceDamage, 5.0f, 10.0f, 1.0f, TF_REGEN_BOOST );
 		float flRegenAmt = TF_REGEN_AMOUNT;
 
-#ifndef TF2_OG
-		// If you are healing a hurt patient, increase your base regen
-		CTFPlayer *pPatient = ToTFPlayer( MedicGetHealTarget() );
-		if ( pPatient && pPatient->GetHealth() < pPatient->GetMaxHealth() )
+		// TF2V: Medic Self-Healing when healing was added in Tough Break.
+		if ( !(TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK)) )
 		{
-			// Double regen amount
-			flRegenAmt += TF_REGEN_AMOUNT;
+			// If you are healing a hurt patient, increase your base regen
+			CTFPlayer *pPatient = ToTFPlayer( MedicGetHealTarget() );
+			if ( pPatient && pPatient->GetHealth() < pPatient->GetMaxHealth() )
+			{
+				// Double regen amount
+				flRegenAmt += TF_REGEN_AMOUNT;
+			}
 		}
-#endif
 
 		flRegenAmt *= flScale;
 
