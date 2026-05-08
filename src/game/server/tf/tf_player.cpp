@@ -1960,8 +1960,14 @@ void CTFPlayer::RegenThink( void )
 	{
 		// Heal faster if we haven't been in combat for a while.
 		float flTimeSinceDamage = gpGlobals->curtime - GetLastDamageReceivedTime();
-		float flScale = RemapValClamped( flTimeSinceDamage, 5.0f, 10.0f, 1.0f, TF_REGEN_BOOST );
-		float flRegenAmt = TF_REGEN_AMOUNT;
+		
+		// TF2V: Medic Heal rate changed September 15, 2009 (Day 730)
+		float flRegenAmt = TFGameRules->IsAnachronistic(730) ? TF_REGEN_AMOUNT_OLD : TF_REGEN_AMOUNT_NEW;
+		float flRegenBoost = TFGameRules->IsAnachronistic(730) ? TF_REGEN_AMOUNT_OLD : TF_REGEN_AMOUNT_NEW;
+		
+		
+		float flScale = RemapValClamped( flTimeSinceDamage, 5.0f, 10.0f, 1.0f, flRegenBoost );
+		
 
 		// TF2V: Medic Self-Healing when healing was added in Tough Break.
 		if ( !(TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK)) )
@@ -1971,7 +1977,7 @@ void CTFPlayer::RegenThink( void )
 			if ( pPatient && pPatient->GetHealth() < pPatient->GetMaxHealth() )
 			{
 				// Double regen amount
-				flRegenAmt += TF_REGEN_AMOUNT;
+				flRegenAmt *= 2.0f;;
 			}
 		}
 
