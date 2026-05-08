@@ -11068,7 +11068,7 @@ float CTFPlayer::TeamFortress_CalculateMaxSpeed( bool bIgnoreSpecialAbility /*= 
 		{
 			// TF2V: Spy had a very slightly slower move speed prior to Meet Your Match. (300Hu/s->320Hu/s)
 			if ( TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_MEET_YOUR_MATCH) )
-				default_speed *= 0.9375;
+				default_speed *= 0.9375f;
 			
 			default_speed *= tf_move_speed_scale_spy.GetFloat();
 			break;
@@ -11209,7 +11209,10 @@ float CTFPlayer::TeamFortress_CalculateMaxSpeed( bool bIgnoreSpecialAbility /*= 
 	if ( m_Shared.IsCarryingObject() && bCarryPenalty && bAllowSlowing )
 	{
 		// STAGING_ENGY
-		maxfbspeed *= 0.90f;
+		if ( TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) )
+			maxfbspeed *= 0.75f;
+		else
+			maxfbspeed *= 0.90f;
 	}
 
 	if ( m_Shared.IsLoserStateStunned() && bAllowSlowing )

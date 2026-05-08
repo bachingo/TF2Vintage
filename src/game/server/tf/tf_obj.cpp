@@ -3006,10 +3006,10 @@ int CBaseObject::Command_Repair( CTFPlayer *pActivator, float flAmount, float fl
 {
 	if ( !CanBeRepaired() )
 		return false;
-
-#ifdef TF2_OG
-	flRepairToMetalRatio = 5.f;
-#endif
+	
+	// TF2V: Repair to metal ratio was higher prior to Gun Mettle. Do this ugly conversion to preserve mults.
+	if ( TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) )
+		flRepairToMetalRatio *= ( (float) 5/ (float) 3);
 
 	float flRepairAmountMax = flAmount * flRepairMod;
 	int iRepairAmount = Min( RoundFloatToInt( flRepairAmountMax ), GetMaxHealth() - Floor2Int( GetHealth() ) );
