@@ -2302,12 +2302,14 @@ void CBaseObject::CreateObjectGibs( void )
 	}
 #endif
 	int iCost = pObjectInfo->m_Cost;
-#ifdef TF2_OG
-	if (GetType() == OBJ_TELEPORTER)
+	// TF2V: Teleporters were more expensive prior to Meet Your Match
+	if ( (TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_MEET_YOUR_MATCH)) )
 	{
-		iCost = 125;
+		if (GetType() == OBJ_TELEPORTER)
+		{
+			iCost = 125;
+		}
 	}
-#endif
 	const int nTotalMetal = pObjectInfo->m_iMetalToDropInGibs == 0 ? iCost * flMetalCostPercentage : pObjectInfo->m_iMetalToDropInGibs;
 
 	
