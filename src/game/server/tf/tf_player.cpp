@@ -13672,14 +13672,16 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	
 	SetGibbedOnLastDeath( bGib );
 
-#ifndef TF2_OG
-	bool bIsMvMRobot = TFGameRules()->IsMannVsMachineMode() && IsBot();
-	if ( bGib && !bIsMvMRobot && IsPlayerClass( TF_CLASS_SCOUT ) && RandomInt( 1, 100 ) <= SCOUT_ADD_BIRD_ON_GIB_CHANCE )
+	// TF2V: This behavior was added June 17, 2011. (Day 1370)
+	if ( !(TFGameRules->IsAnachronistic(1370) ) )
 	{
-		Vector vecPos = WorldSpaceCenter();
-		SpawnClientsideFlyingBird( vecPos );
+		bool bIsMvMRobot = TFGameRules()->IsMannVsMachineMode() && IsBot();
+		if ( bGib && !bIsMvMRobot && IsPlayerClass( TF_CLASS_SCOUT ) && RandomInt( 1, 100 ) <= SCOUT_ADD_BIRD_ON_GIB_CHANCE )
+		{
+			Vector vecPos = WorldSpaceCenter();
+			SpawnClientsideFlyingBird( vecPos );
+		}
 	}
-#endif
 
 	// show killer in death cam mode
 	// chopped down version of SetObserverTarget without the team check
