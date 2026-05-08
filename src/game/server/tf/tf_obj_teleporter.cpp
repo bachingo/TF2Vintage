@@ -1495,7 +1495,10 @@ void CObjectTeleporter::InputDisable( inputdata_t &inputdata )
 
 void CObjectTeleporter::SpawnBread( const CTFPlayer* pTeleportingPlayer )
 {
-#ifndef TF2_OG
+	// TF2V: Bread was not spawned prior to June 11, 2014. (Day 2460, Expiration Date; one week before Love & War)
+	if ( (TFGameRules->IsAnachronistic(2460)) )
+		return;
+
 	if( !pTeleportingPlayer )
 		return;
 
@@ -1554,7 +1557,6 @@ void CObjectTeleporter::SpawnBread( const CTFPlayer* pTeleportingPlayer )
 
 		mdlcache->Release( h ); // counterbalance addref from within FindMDL
 	}
-#endif
 }
 
 void CObjectTeleporter::FireGameEvent( IGameEvent *event )
