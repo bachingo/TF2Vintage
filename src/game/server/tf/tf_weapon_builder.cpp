@@ -396,25 +396,27 @@ void CTFWeaponBuilder::PrimaryAttack( void )
 					for( int i=0; i<playerVector.Count(); ++i )
 						playerVector[i]->OnSapperPlaced( pBuiltOnObject );
 
-#ifndef TF2_OG
-					// if we just placed a sapper on a teleporter...try to sap the match, too?
-					if ( pBuiltOnObject )
-					{
-						CObjectTeleporter *pTeleporter = dynamic_cast<CObjectTeleporter*>( pBuiltOnObject );
-						if ( pTeleporter && pTeleporter->GetMatchingTeleporter() && !pTeleporter->GetMatchingTeleporter()->HasSapper() )
+					// TF2V: Sapping the opposite side of a teleporter was added in Classless.
+					if ( !(TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_CLASSLESS)) )
+					{	
+						// if we just placed a sapper on a teleporter...try to sap the match, too?
+						if ( pBuiltOnObject )
 						{
-							// Start placing another
-							SetCurrentState( BS_PLACING );
-							StartPlacement(); 
-	
-							if ( m_hObjectBeingBuilt.Get() )
+							CObjectTeleporter *pTeleporter = dynamic_cast<CObjectTeleporter*>( pBuiltOnObject );
+							if ( pTeleporter && pTeleporter->GetMatchingTeleporter() && !pTeleporter->GetMatchingTeleporter()->HasSapper() )
 							{
-								m_hObjectBeingBuilt->UpdateAttachmentPlacement( pTeleporter->GetMatchingTeleporter() );
-								StartBuilding();
+								// Start placing another
+								SetCurrentState( BS_PLACING );
+								StartPlacement(); 
+		
+								if ( m_hObjectBeingBuilt.Get() )
+								{
+									m_hObjectBeingBuilt->UpdateAttachmentPlacement( pTeleporter->GetMatchingTeleporter() );
+									StartBuilding();
+								}
 							}
 						}
 					}
-#endif
 				}
 
 				// Should we switch away?
