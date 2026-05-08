@@ -3843,12 +3843,14 @@ int	CBaseObject::GetUpgradeAmountPerHit( void )
 {
 	int nAmount = tf_obj_upgrade_per_hit.GetInt();
 
-#ifndef TF2_OG
-	if ( TFGameRules()->InSetup() || TFGameRules()->IsPowerupMode() )
+	// TF2V: Double Metal per swing added in The Engineer Update.
+	if ( !(TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_ENGINEER)) )
 	{
-		nAmount *= 2;
+		if ( TFGameRules()->InSetup() || TFGameRules()->IsPowerupMode() )
+		{
+			nAmount *= 2;
+		}
 	}
-#endif
 
 	return nAmount;
 }
