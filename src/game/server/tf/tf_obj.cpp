@@ -2294,13 +2294,16 @@ void CBaseObject::CreateObjectGibs( void )
 
 	// grant some percentage of the cost to build if number of metal to drop is not specified
 	float flMetalCostPercentage = 0.5f;
-#ifdef TF2_OG
-	if (GetType() != OBJ_DISPENSER)
+
+	if ( (TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE)) )
 	{
-		// slightly lower metal cost for sentries and teleporters
-		flMetalCostPercentage = 0.48f;
+		if (GetType() != OBJ_DISPENSER)
+		{
+			// slightly lower metal cost for sentries and teleporters
+			flMetalCostPercentage = 0.48f;
+		}
 	}
-#endif
+
 	int iCost = pObjectInfo->m_Cost;
 	// TF2V: Teleporters were more expensive prior to Meet Your Match
 	if ( (TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_MEET_YOUR_MATCH)) )
