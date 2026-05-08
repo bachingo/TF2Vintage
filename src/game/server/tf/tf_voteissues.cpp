@@ -1823,8 +1823,7 @@ const char *CPauseGameIssue::GetDetailsString( void )
 //-----------------------------------------------------------------------------
 // Purpose: Enable/Disable random crits
 //-----------------------------------------------------------------------------
-ConVar sv_vote_issue_randomcrits_allowed( "sv_vote_issue_randomcrits_allowed", "1", FCVAR_NONE, "Can players call votes to enable or disable random crits?" );
-ConVar sv_vote_issue_randomcrits_allowed_mvm( "sv_vote_issue_randomcrits_allowed_mvm", "0", FCVAR_NONE, "Can players call votes in Mann-Vs-Machine to enable or disable random crits?" );
+ConVar sv_vote_issue_randomcrits_allowed( "sv_vote_issue_randomcrits_allowed", "1", FCVAR_NONE, "Can players call votes to swap between Casual/Competitive mode?" );
 ConVar sv_vote_issue_randomcrits_cooldown( "sv_vote_issue_randomcrits_cooldown", "300", FCVAR_NONE, "Minimum time before another randomcrits vote can occur (in seconds)." );
 
 //-----------------------------------------------------------------------------
@@ -1854,12 +1853,22 @@ void CRandomCritsIssue::ExecuteCommand( void )
 	// Disable
 	if ( tf_weapon_criticals.GetBool() )
 	{
+		engine->ServerCommand( "tf_damage_disablespread 1;" );
+		engine->ServerCommand( "tf_fall_damage_disablespread 1;" );
+		engine->ServerCommand( "tf_use_fixed_weaponspreads 1;" );
+		engine->ServerCommand( "tf_pipebomb_disable_random_launch 1;" );
 		engine->ServerCommand( "tf_weapon_criticals 0;" );
+		engine->ServerCommand( "tf_weapon_criticals_melee 0;" );
 	}
 	// Enable
 	else
 	{
+		engine->ServerCommand( "tf_damage_disablespread 0;" );
+		engine->ServerCommand( "tf_fall_damage_disablespread 0;" );
+		engine->ServerCommand( "tf_use_fixed_weaponspreads 0;" );
+		engine->ServerCommand( "tf_pipebomb_disable_random_launch 0;" );
 		engine->ServerCommand( "tf_weapon_criticals 1;" );
+		engine->ServerCommand( "tf_weapon_criticals_melee 1;" );
 	}
 }
 
@@ -1871,7 +1880,7 @@ bool CRandomCritsIssue::IsEnabled( void )
 	if ( TFGameRules() )
 	{
 		if ( TFGameRules()->IsMannVsMachineMode() )
-			return sv_vote_issue_randomcrits_allowed_mvm.GetBool();
+			return false;
 
 		// Manages random crits already
 		if ( TFGameRules()->IsCompetitiveGame() )
@@ -1929,7 +1938,7 @@ const char *CRandomCritsIssue::GetVotePassedString( void )
 //-----------------------------------------------------------------------------
 void CRandomCritsIssue::ListIssueDetails( CBasePlayer *pForWhom )
 {
-	if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() && !sv_vote_issue_randomcrits_allowed_mvm.GetBool() )
+	if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() )
 		return;
 
 	if ( !sv_vote_issue_randomcrits_allowed.GetBool() )
