@@ -268,12 +268,14 @@ void CHudMenuEngyBuild::ApplySchemeSettings( IScheme *pScheme )
 		else
 		{
 			iCost = GetObjectInfo(iBuilding)->m_Cost;
-#ifdef TF2_OG
-			if (iBuilding == OBJ_TELEPORTER)
+			// TF2V: Teleporters cost more prior to Meet Your Match.
+			if ( (TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_MEET_YOUR_MATCH)) )
 			{
-				iCost = 125;
+				if (iBuilding == OBJ_TELEPORTER)
+				{
+					iCost = 125;
+				}
 			}
-#endif
 		}
 
 		m_pAvailableObjects[i]->SetDialogVariable( "metal", iCost );
