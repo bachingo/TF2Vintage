@@ -21473,22 +21473,28 @@ void CTFPlayer::NoteSpokeVoiceCommand( const char *pszScenePlayed )
 {
 	Assert( pszScenePlayed );
 
-#ifndef TF2_OG
-	float flTimeSinceAllowedVoice = gpGlobals->curtime - m_flNextVoiceCommandTime;
-
-	// if its longer than 5 seconds, reset the counter
-	if ( flTimeSinceAllowedVoice > 5.0f )
+	// Voice Spam prevention was added in Jungle Inferno.
+	if ( !(TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_JUNGLE_INFERNO)) )
 	{
-		m_iVoiceSpamCounter = 0;
-	}
-	// if its less than a second past the allowed time, player is spamming
-	else if ( flTimeSinceAllowedVoice < 1.0f )
-	{
-		m_iVoiceSpamCounter++;
-	}
-#endif
+		float flTimeSinceAllowedVoice = gpGlobals->curtime - m_flNextVoiceCommandTime;
 
-	m_flNextVoiceCommandTime = gpGlobals->curtime + MIN( GetSceneDuration( pszScenePlayed ), tf_max_voice_speak_delay.GetFloat() );
+		// if its longer than 5 seconds, reset the counter
+		if ( flTimeSinceAllowedVoice > 5.0f )
+		{
+			m_iVoiceSpamCounter = 0;
+		}
+		// if its less than a second past the allowed time, player is spamming
+		else if ( flTimeSinceAllowedVoice < 1.0f )
+		{
+			m_iVoiceSpamCounter++;
+		}
+	}
+
+	// Early voice spam was added October 25, 2007 (Day 39)
+	if ( (TFGameRules->IsAnachronistic(39)) )
+		m_flNextVoiceCommandTime = gpGlobals->curtime + GetSceneDuration( pszScenePlayed );
+	else
+		m_flNextVoiceCommandTime = gpGlobals->curtime + MIN( GetSceneDuration( pszScenePlayed ), tf_max_voice_speak_delay.GetFloat() );
 
 	if ( m_iVoiceSpamCounter > 0 )
 	{
