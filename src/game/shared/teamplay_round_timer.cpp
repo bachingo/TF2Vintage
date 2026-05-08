@@ -83,7 +83,7 @@ enum
 extern bool IsInCommentaryMode();
 
 #if defined( GAME_DLL ) && defined( TF_DLL )
-ConVar tf_overtime_nag( "tf_overtime_nag", 1, FCVAR_NOTIFY, "Announcer overtime nag." ); // TF2V: Defaulted to 1 in older TF2, 0 in newer TF2. Another Convar better on than off. OVERTIME OVERTIME OVERTIME
+ConVar tf_overtime_nag( "tf_overtime_nag", 0, FCVAR_NOTIFY, "Announcer overtime nag." ); // Era Gated in TF2V.
 #endif
 
 #ifdef CLIENT_DLL
@@ -1018,7 +1018,8 @@ void CTeamRoundTimer::RoundTimerThink( void )
 #if defined( TF_DLL )
 				else
 				{
-					if ( tf_overtime_nag.GetBool() && ( gpGlobals->curtime > m_flNextOvertimeNag ) )
+					// TF2V: Overtime nag was always on prior to August 14, 2009. (Day 698)
+					if ( ( tf_overtime_nag.GetBool() || TFGameRules->IsAnachronistic(698) ) && ( gpGlobals->curtime > m_flNextOvertimeNag ) )
 					{
 						m_flNextOvertimeNag = gpGlobals->curtime + 1.0f;
 
