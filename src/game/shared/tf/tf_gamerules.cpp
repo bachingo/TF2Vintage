@@ -7046,6 +7046,7 @@ bool CTFGameRules::ApplyOnDamageModifyRules( CTakeDamageInfo &info, CBaseEntity 
 	// But we never minicrit ourselves.
 	if ( pAttacker != pVictimBaseEntity )
 	{
+		// TF2V TODO: Work on the dumpster that is the Axtinguisher variants.
 		// attack_minicrits_and_consumes_burning
 		if ( pWeapon && pTFAttacker && pVictim && pVictim->m_Shared.InCond( TF_COND_BURNING ) )
 		{
@@ -7053,7 +7054,8 @@ bool CTFGameRules::ApplyOnDamageModifyRules( CTakeDamageInfo &info, CBaseEntity 
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFAttacker->GetActiveWeapon(), iConsumeFlames, attack_minicrits_and_consumes_burning );
 			if ( iConsumeFlames && pWeapon == pTFAttacker->GetActiveWeapon() && ( info.GetDamageType() & DMG_MELEE ) )
 			{
-				float flConsumeBonus = RemapValClamped( pVictim->m_Shared.GetAfterburnDuration(), 0.5f, (float)TF_BURNING_FLAME_LIFE, 20.f, (float)( TF_BURNING_DMG * 20 ) );
+				float flBurnDmg = TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_JUNGLE_INFERNO) ? TF_BURNING_DMG_OLD : TF_BURNING_DMG_NEW;
+				float flConsumeBonus = RemapValClamped( pVictim->m_Shared.GetAfterburnDuration(), 0.5f, (float)TF_BURNING_FLAME_LIFE, 20.f, (float)( flBurnDmg * 20 ) );
 				flDamage += flConsumeBonus;
 				pVictim->m_Shared.RemoveCond( TF_COND_BURNING );
 				pVictim->EmitSound( "TFPlayer.FlameOut" );

@@ -68,11 +68,7 @@ const float	tf_flamethrower_airblast_cone_angle = 35.0f;
 #include "tf_pumpkin_bomb.h"
 
 const float	tf_flamethrower_new_flame_fire_delay = 0.02f;
-#ifdef TF2_OG
-const float	tf_flamethrower_damage_per_tick = 14.f;
-#else
-const float	tf_flamethrower_damage_per_tick = 13.f;
-#endif
+
 ConVar  tf_flamethrower_burstammo("tf_flamethrower_burstammo", "20", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "How much ammo does the air burst use per shot." );
 ConVar  tf_flamethrower_flametime("tf_flamethrower_flametime", "0.5", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Time to live of flame damage entities." );
 
@@ -869,7 +865,8 @@ void CTFFlameThrower::PrimaryAttack()
 		int iDamagePerSec = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
 		float flDamage = (float)iDamagePerSec * flFiringInterval;
 		{
-			flDamage = tf_flamethrower_damage_per_tick;
+			// TF2V: Added during Blue Moon.
+			flDamage = TFGameRules->IsAnachronistic(TF2V_DAY_SPRING_2018) ? 14.f : 13.f; // tf_flamethrower_damage_per_tick
 		}
 #ifdef WATERFALL_FLAMETHROWER_TEST
 		int iWaterfallMode = 0;
@@ -1905,7 +1902,8 @@ void CTFFlameThrower::PlayDeflectionSound( bool bPlayer )
 //-----------------------------------------------------------------------------
 float CTFFlameThrower::GetInitialAfterburnDuration() const
 {
-	return tf_flamethrower_initial_afterburn_duration.GetFloat();
+	 // TF2V: Prior to Jungle Inferno, this was always 10 seconds. JI added 3s min.
+	return TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_JUNGLE_INFERNO) ? TF_AFTERBURN_BASE_DURATION_OLD : tf_flamethrower_initial_afterburn_duration.GetFloat();
 }
 
 //-----------------------------------------------------------------------------

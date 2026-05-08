@@ -709,11 +709,8 @@ float CTFMinigun::GetInitialAfterburnDuration() const
 	CALL_ATTRIB_HOOK_INT( nRingOfFireWhileAiming, ring_of_fire_while_aiming );
 	if ( nRingOfFireWhileAiming != 0 )
 	{
-#ifdef TF2_OG
-		return TF_AFTERBURN_BASE_DURATION;
-#else
-		return 8.f;
-#endif
+		// TF2V: Changed in Jungle Inferno. Oddly, this was specifically 8 seconds, not the regular 7.5s like the others.
+		return TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_JUNGLE_INFERNO) ? TF_AFTERBURN_BASE_DURATION_OLD : 8.f;
 	}
 
 	return BaseClass::GetInitialAfterburnDuration();

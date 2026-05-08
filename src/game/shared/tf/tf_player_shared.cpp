@@ -203,7 +203,7 @@ ConVar tf_allow_taunt_switch( "tf_allow_taunt_switch", "0", FCVAR_REPLICATED, "0
 ConVar tf_allow_all_team_partner_taunt( "tf_allow_all_team_partner_taunt", "1", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 
 // AFTERBURN
-const float tf_afterburn_max_duration = 10.f;
+const float tf_afterburn_max_duration = 10.f; // Same as TF_AFTERBURN_BASE_DURATION_OLD
 const float tf_afterburn_duration_ratio_second_degree = 0.4f;
 const float tf_afterburn_duration_ratio_third_degree = 0.8f;
 const float tf_afterburn_mult_second_degree = 1.f;
@@ -2966,7 +2966,7 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 			// Burn the player (if not pyro, who does not take persistent burning damage)
 			if ( !bVictimIsImmunePyro || InCond( TF_COND_BURNING_PYRO ) )
 			{
-				float flBurnDamage = TF_BURNING_DMG;
+				float flBurnDamage = TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_JUNGLE_INFERNO) ? TF_BURNING_DMG_OLD : TF_BURNING_DMG_NEW;
 				int nKillType = TF_DMG_CUSTOM_BURNING;
 
 				if ( m_hBurnWeapon )
@@ -6860,12 +6860,12 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon, float 
 	}
 	else if ( flBurningTime > 0 )
 	{
-		
-#ifdef TF2_OG
-		flFlameLife = TF_AFTERBURN_BASE_DURATION;
-#else
-		flFlameLife = flBurningTime;
-#endif
+		// TF2V: Afterburn calculations were changed in Jungle Inferno. 
+		// We do this twice in the event this is made into a convar in the future.
+		if (TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_JUNGLE_INFERNO))
+			flFlameLife = TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_JUNGLE_INFERNO) ? TF_AFTERBURN_BASE_DURATION_OLD : TF_AFTERBURN_BASE_DURATION_NEW;
+		else
+			flFlameLife = flBurningTime;
 	}
 	
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flFlameLife, mult_wpn_burntime );

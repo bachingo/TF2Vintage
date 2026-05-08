@@ -611,7 +611,8 @@ float CTFCompoundBow::GetInitialAfterburnDuration() const
 {
 	// if the bow is lighting someone on fire it must have
 	// been the arrow was lit before it was fired
-	return TF_AFTERBURN_BASE_DURATION;
+	// TF2V: These were changed in Jungle Inferno.
+	return TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_JUNGLE_INFERNO) ? TF_AFTERBURN_BASE_DURATION_OLD : TF_AFTERBURN_BASE_DURATION_NEW;
 }
 #endif
 

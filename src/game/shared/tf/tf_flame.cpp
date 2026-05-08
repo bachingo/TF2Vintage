@@ -49,24 +49,7 @@ float tf_flame_particle_min_density = 0.01f;
 
 #else // CLIENT_DLL
 
-#ifdef TF2_OG
-const float tf_flame_min_damage_scale = 0.725f;
-#else
-const float tf_flame_min_damage_scale = 0.5f;
-#endif
-#ifdef TF2_OG
-const float tf_flame_maxdamagedist = 125.f;
-#else
-const float tf_flame_maxdamagedist = 150.f;
-#endif
-#ifdef TF2_OG
-const float tf_flame_mindamagedist = 175.f;
-#else
-const float tf_flame_mindamagedist = 300.f;
-#endif
 const float tf_flame_min_damage_scale_time = 0.5f;
-const float tf_flame_min_damage_scale_time_cap = ( tf_flame_mindamagedist / 2450.0f ) / 0.5f; // time it takes for us to reach tf_flame_mindamagedist, as a function of lifetime. longer life does more damage at the same distance.
-const float tf_flame_damage_scale_time_min = tf_flame_maxdamagedist / 2450.0f;                // time it takes to reach tf_flame_maxdamagedist
 #endif
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFFlameManager, DT_TFFlameManager );
@@ -539,20 +522,30 @@ float CTFFlameManager::GetFlameDamageScale( const tf_point_t* pPoint, CTFPlayer 
 		if ( iFlameDmgMode == 1 )
 		{
 			float flDistSqr = pFlame->m_vecPosition.DistToSqr(pFlame->m_vecInitialPos);
-			float flMaxDamageDistSqr = Square(tf_flame_maxdamagedist);
-			float flMinDamageDistSqr = Square(tf_flame_mindamagedist);
-			flDamageScale = RemapValClamped(flDistSqr, flMaxDamageDistSqr, flMinDamageDistSqr, 1.0f, tf_flame_min_damage_scale);
+			
+			// TF2V: Values changed on Blue Moon.
+			float flFlameMaxDist = TFGameRules->IsAnachronistic(TF2V_DAY_SPRING_2018) ? 125.f : 150.f; // tf_flame_maxdamagedist
+			float flFlameMinDist = TFGameRules->IsAnachronistic(TF2V_DAY_SPRING_2018) ? 175.f : 300.f; // tf_flame_mindamagedist
+			
+			float flMaxDamageDistSqr = Square(flFlameMaxDist);
+			float flMinDamageDistSqr = Square(flFlameMinDist);
+			
+			// TF2V: Values changed on Blue Moon.
+			float flFlameMinScale = TFGameRules->IsAnachronistic(TF2V_DAY_SPRING_2018) ? 0.725f : 0.5f; // tf_flame_min_damage_scale
+
+			flDamageScale = RemapValClamped(flDistSqr, flMaxDamageDistSqr, flMinDamageDistSqr, 1.0f, flFlameMinScale);
 		}
 		// Lifetime-based
 		else
 		{
 			float flTimeAlive = gpGlobals->curtime - pFlame->m_flSpawnTime;
-			float flLifeMax = pFlame->m_flLifeTime * tf_flame_min_damage_scale_time_cap;
-			flDamageScale = RemapValClamped(flTimeAlive, tf_flame_damage_scale_time_min, flLifeMax, 1.f, tf_flame_min_damage_scale_time);
+			float flFlameMinDamageTimeCap = ( (TFGameRules->IsAnachronistic(TF2V_DAY_SPRING_2018) ? 175.f : 300.f) / 2450.0f ) / 0.5f; // time it takes for us to reach tf_flame_mindamagedist, as a function of lifetime. longer life does more damage at the same distance. tf_flame_min_damage_scale_time_cap
+			float flFlameMinDamageTime = (TFGameRules->IsAnachronistic(TF2V_DAY_SPRING_2018) ? 125.f : 150.f) / 2450.0f;                // time it takes to reach tf_flame_maxdamagedist. tf_flame_damage_scale_time_min
+			float flLifeMax = pFlame->m_flLifeTime * flFlameMinDamageTimeCap;
+			flDamageScale = RemapValClamped(flTimeAlive, flFlameMinDamageTime, flLifeMax, 1.f, tf_flame_min_damage_scale_time);
 		}
 	}
 
-#if !defined( TF2_OG )
 	if ( pTFTarget )
 	{
 		auto iEntIndex = m_mapEntitiesBurnt.Find( pTFTarget );
@@ -569,9 +562,10 @@ float CTFFlameManager::GetFlameDamageScale( const tf_point_t* pPoint, CTFPlayer 
 			flWarmup = 0.5f;
 		}
 
-		flDamageScale *= RemapValClamped( flHeat, tf_flame_burn_index_per_collide_remap_x, tf_flame_burn_index_per_collide_remap_y, tf_flame_burn_index_damage_scale_min, 1.f ) * flWarmup;
+		// TF2V: Damage scaling was added in Blue Moon.
+		if ( !(TFGameRules->IsAnachronistic(TF2V_DAY_SPRING_2018) )
+			flDamageScale *= RemapValClamped( flHeat, tf_flame_burn_index_per_collide_remap_x, tf_flame_burn_index_per_collide_remap_y, tf_flame_burn_index_damage_scale_min, 1.f ) * flWarmup;
 	}
-#endif
 
 	// should we reduce damage based on reflection?
 	for ( int i = 0; i<pPoint->m_nHitWall; ++i )
@@ -798,10 +792,10 @@ void CTFFlameManager::OnCollide( CBaseEntity *pEnt, int iPointIndex )
 							pPlayerAttacker->AwardAchievement( ACHIEVEMENT_TF_PYRO_IGNITE_PLAYER_BEING_FLIPPED );
 						}
 					}
-
-#ifndef TF2_OG
-					pVictim->m_Shared.AddCond( TF_COND_HEALING_DEBUFF, 2.f, pAttacker );
-#endif
+					
+					// TF2V: Healing debuff added during Meet Your Match.
+					if ( !(TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_MEET_YOUR_MATCH)) )
+						pVictim->m_Shared.AddCond( TF_COND_HEALING_DEBUFF, 2.f, pAttacker );
 				}
 			}
 		}
