@@ -6797,10 +6797,12 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon, float 
 		m_flFlameBurnTime = gpGlobals->curtime + TF_BURNING_FREQUENCY;
 		m_flAfterburnDuration = pWeapon ? pWeapon->GetInitialAfterburnDuration() : 0.f;
 
-#ifndef TF2_OG
-		// Reduces direct healing effectiveness
-		AddCond( TF_COND_HEALING_DEBUFF, m_flAfterburnDuration, pAttacker );
-#endif
+		// TF2V: Debuff added during Meet Your Match.
+		if !(TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_MEET_YOUR_MATCH))
+		{
+			// Reduces direct healing effectiveness
+			AddCond( TF_COND_HEALING_DEBUFF, m_flAfterburnDuration, pAttacker );
+		}
 
 		// let the attacker know he burned me
 		if ( pAttacker && !bVictimIsImmunePyro )
@@ -11240,8 +11242,7 @@ float CTFPlayer::TeamFortress_CalculateMaxSpeed( bool bIgnoreSpecialAbility /*= 
 	constexpr float flFlatHealSpeedAdd = 40.0f;
 	if ( playerclass == TF_CLASS_MEDIC )
 	{
-#ifndef TF2_OG
-		if ( pWeapon )
+		if ( pWeapon && !(TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_UBER)) )
 		{
 			CWeaponMedigun *pMedigun = dynamic_cast< CWeaponMedigun* >( pWeapon );
 			if ( pMedigun )
@@ -11250,15 +11251,31 @@ float CTFPlayer::TeamFortress_CalculateMaxSpeed( bool bIgnoreSpecialAbility /*= 
 				CTFPlayer *pHealTarget = ToTFPlayer( pMedigun->GetHealTarget() );
 				if ( pHealTarget )
 				{
-					// The Quick-Fix attaches to charging demos
-					bool bCharge = ( pMedigun->GetMedigunType() == MEDIGUN_QUICKFIX && pHealTarget->m_Shared.InCond( TF_COND_SHIELD_CHARGE ) );
-
-					const float flHealTargetMaxSpeed = ( bCharge ) ? tf_max_charge_speed.GetFloat() : pHealTarget->TeamFortress_CalculateMaxSpeed( true );
-					maxfbspeed = Max(maxfbspeed, flHealTargetMaxSpeed);
+					bool bQuickFix = pMedigun->GetMedigunType() == MEDIGUN_QUICKFIX;
+					bool bCharge = ( bQuickFix && pHealTarget->m_Shared.InCond( TF_COND_SHIELD_CHARGE ) );
+					// TF2V: This one changed behaviors a few times.
+					
+					// Uber to Pyromania: Quick Fix only matches speed, does not honor charges
+					if ( bQuickFix && ( !(TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_UBER)) && (TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_PYROMANIA)) ) )
+					{
+						const float flHealTargetMaxSpeed = pHealTarget->TeamFortress_CalculateMaxSpeed( true );
+						maxfbspeed = Max(maxfbspeed, flHealTargetMaxSpeed);
+					}
+					// Pyromania to Meet Your Match: Quick Fix only matches speed, honors charges
+					else if ( bQuickFix && ( !(TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_PYROMANIA)) && (TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_MEET_YOUR_MATCH)) ) )
+					{
+						const float flHealTargetMaxSpeed = ( bCharge ) ? tf_max_charge_speed.GetFloat() : pHealTarget->TeamFortress_CalculateMaxSpeed( true );
+						maxfbspeed = Max(maxfbspeed, flHealTargetMaxSpeed);
+					}
+					// Meet Your Match: All mediguns match speed, but only Quick Fix honors charges
+					else if ( !(TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_MEET_YOUR_MATCH)) )
+					{
+						const float flHealTargetMaxSpeed = ( bCharge ) ? tf_max_charge_speed.GetFloat() : pHealTarget->TeamFortress_CalculateMaxSpeed( true );
+						maxfbspeed = Max(maxfbspeed, flHealTargetMaxSpeed);
+					}
 				}
 			}
 		}
-#endif
 
 		// Special bone saw
 		int iTakeHeads = 0;
@@ -14569,42 +14586,45 @@ void CTFPlayerShared::UpdateCloakMeter( void )
 			FadeInvis( 1.0f );
 		}
 
-		// Update Debuffs
-		// Decrease duration if cloaked
+
 #ifdef GAME_DLL
-#ifndef TF2_OG
-		// staging_spy
-		float flReduction = gpGlobals->frametime * 0.75f;
-		for ( int i = 0; g_aDebuffConditions[i] != TF_COND_LAST; i++ )
+		// TF2V: Debuff timer added in Gun Mettle.
+		if ( !( TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) ) )
 		{
-			if ( InCond( g_aDebuffConditions[i] ) )
+			// Update Debuffs
+			// Decrease duration if cloaked
+			// staging_spy
+			float flReduction = gpGlobals->frametime * 0.75f;
+			for ( int i = 0; g_aDebuffConditions[i] != TF_COND_LAST; i++ )
 			{
-				if ( m_ConditionData[g_aDebuffConditions[i]].m_flExpireTime != PERMANENT_CONDITION )
-				{			
-					m_ConditionData[g_aDebuffConditions[i]].m_flExpireTime = MAX( m_ConditionData[g_aDebuffConditions[i]].m_flExpireTime - flReduction, 0 );
-				}
-				// Burning and Bleeding and extra timers
-				if ( g_aDebuffConditions[i] == TF_COND_BURNING )
+				if ( InCond( g_aDebuffConditions[i] ) )
 				{
-					// Reduce the duration of this burn
-					m_flAfterburnDuration -= flReduction;
-					if ( m_flAfterburnDuration < 0.0f )
-					{
-						m_flAfterburnDuration = 0.0f;
+					if ( m_ConditionData[g_aDebuffConditions[i]].m_flExpireTime != PERMANENT_CONDITION )
+					{			
+						m_ConditionData[g_aDebuffConditions[i]].m_flExpireTime = MAX( m_ConditionData[g_aDebuffConditions[i]].m_flExpireTime - flReduction, 0 );
 					}
-				}
-				else if ( g_aDebuffConditions[i] == TF_COND_BLEEDING )
-				{
-					// Reduce the duration of this bleeding 
-					FOR_EACH_VEC( m_PlayerBleeds, i )
+					// Burning and Bleeding and extra timers
+					if ( g_aDebuffConditions[i] == TF_COND_BURNING )
 					{
-						// TODO(mcoms): should sniper head trauma really also be reduced here? sniper vs spy?
-						m_PlayerBleeds[i].flBleedingRemoveTime -= flReduction;
+						// Reduce the duration of this burn
+						m_flAfterburnDuration -= flReduction;
+						if ( m_flAfterburnDuration < 0.0f )
+						{
+							m_flAfterburnDuration = 0.0f;
+						}
+					}
+					else if ( g_aDebuffConditions[i] == TF_COND_BLEEDING )
+					{
+						// Reduce the duration of this bleeding 
+						FOR_EACH_VEC( m_PlayerBleeds, i )
+						{
+							// TODO(mcoms): should sniper head trauma really also be reduced here? sniper vs spy?
+							m_PlayerBleeds[i].flBleedingRemoveTime -= flReduction;
+						}
 					}
 				}
 			}
 		}
-#endif
 #endif
 	} 
 	else

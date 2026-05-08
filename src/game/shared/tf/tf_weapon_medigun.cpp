@@ -1379,10 +1379,12 @@ bool CWeaponMedigun::FindAndHealTargets( void )
 						flChargeAmount *= 4.f;
 					}
 					else if ( TFGameRules()->InSetup() && TFGameRules()->GetActiveRoundTimer() )
-					{
-#ifndef TF2_OG
-						flChargeAmount *= 3.f;
-#endif
+					{		
+						// TF2V: 2x Added December 20, 2007 (Day 95), 3x added during Tough Break.
+						if ( !(TFGameRules->IsAnachronistic(95)) && TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK) )
+							flChargeAmount *= 2.f;
+						else if ( !(TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK) ) )
+							flChargeAmount *= 3.f;
 					}
 				}
 #endif
@@ -1480,17 +1482,21 @@ void CWeaponMedigun::DrainCharge( void )
 		float flChargeAmount = gpGlobals->frametime / flUberTime;
 		float flExtraPlayerCost = flChargeAmount * 0.5;
 
-		// Drain faster the more targets we're applying to. Extra targets count for 50% drain to still reward juggling somewhat.
-		for ( int i = m_DetachedTargets.Count()-1; i >= 0; i-- )
+		// TF2V: Uber Juggle penalty added April 1 2008 (Day 198)
+		if ( !(TFGameRules->IsAnachronistic(198)) )
 		{
-			if ( m_DetachedTargets[i].hTarget == NULL || m_DetachedTargets[i].hTarget.Get() == m_hHealingTarget.Get() || 
-				!m_DetachedTargets[i].hTarget->IsAlive() || m_DetachedTargets[i].flTime < (gpGlobals->curtime - tf_invuln_time.GetFloat()) )
+			// Drain faster the more targets we're applying to. Extra targets count for 50% drain to still reward juggling somewhat.
+			for ( int i = m_DetachedTargets.Count()-1; i >= 0; i-- )
 			{
-				m_DetachedTargets.Remove(i);
-			}
-			else
-			{
-				flChargeAmount += flExtraPlayerCost;
+				if ( m_DetachedTargets[i].hTarget == NULL || m_DetachedTargets[i].hTarget.Get() == m_hHealingTarget.Get() || 
+					!m_DetachedTargets[i].hTarget->IsAlive() || m_DetachedTargets[i].flTime < (gpGlobals->curtime - tf_invuln_time.GetFloat()) )
+				{
+					m_DetachedTargets.Remove(i);
+				}
+				else
+				{
+					flChargeAmount += flExtraPlayerCost;
+				}
 			}
 		}
 
