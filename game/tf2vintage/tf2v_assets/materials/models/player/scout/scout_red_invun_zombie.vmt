@@ -1,6 +1,6 @@
 "VertexLitGeneric"
 {
-	"$basetexture"	"models/player/scout/scout_red_zombie"
+	"$basetexture"	"effects/red"
 	<dx90
 	{
 		 	"$bumpmap" "water/dx80_tfwater001_normal"
@@ -10,10 +10,10 @@
 	"$surfaceprop" "metal"
 	"$halflambert" "1"
 
-//	"$selfillum" "1"
-//	"$selfIllumFresnel" "1"
-//	"$selfIllumFresnelMinMaxExp" "[0 18 13]" // 0.0 1.0 1.0 is the default
-
+	"$selfillum" "1"
+	"$selfIllumFresnel" "1"
+	"$selfIllumFresnelMinMaxExp" "[0 18 13]" // 0.0 1.0 1.0 is the default
+	
 	"$alphatest" 1
 
 	"$invulnlevel" "0"
@@ -47,15 +47,8 @@
 	"$rimlightexponent" "11"
 	"$rimlightboost" "5"	
 	
-	"$cloakPassEnabled" "1"
 	"Proxies"
 	{
-		"spy_invis" //wmodel and team color cloak support
-		{
-		}
-		"invis" //vmodel cloak support
-		{
-		}
 		"AnimatedTexture"
 		{
 			"animatedtexturevar" "$bumpmap"
