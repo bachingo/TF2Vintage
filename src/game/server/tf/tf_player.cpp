@@ -14357,20 +14357,24 @@ void CTFPlayer::DropAmmoPack( const CTakeDamageInfo &info, bool bEmpty, bool bDi
 	CEconItemView *pItem = pDropWeaponProps->GetAttributeContainer()->GetItem();
 	bool bIsSuicide = info.GetAttacker() ? info.GetAttacker()->GetTeamNumber() == GetTeamNumber() : false;
 
-#ifndef TF2_OG
-	CTFDroppedWeapon *pDroppedWeapon = CTFDroppedWeapon::Create( this, vecPackOrigin, vecPackAngles, pszWorldModel, pItem );
-	if ( pDroppedWeapon )
+	// TF2V: Behavior is different Pre and Post Gun Mettle.
+	if ( TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) );
 	{
-		pDroppedWeapon->InitDroppedWeapon( this, pDropWeaponProps, false, bIsSuicide );
+		// Create the ammo pack.
+		CTFAmmoPack* pAmmoPack = CTFAmmoPack::Create(vecPackOrigin, vecPackAngles, this, pszWorldModel);
 	}
-#endif
-
-	// Create the ammo pack.
-#ifdef TF2_OG
-	CTFAmmoPack* pAmmoPack = CTFAmmoPack::Create(vecPackOrigin, vecPackAngles, this, pszWorldModel);
-#else
-	CTFAmmoPack *pAmmoPack = CTFAmmoPack::Create( vecPackOrigin, vecPackAngles, this, "models/items/ammopack_medium.mdl" );
-#endif
+	else
+	{
+		// Create the dropped weapon.
+		CTFDroppedWeapon *pDroppedWeapon = CTFDroppedWeapon::Create( this, vecPackOrigin, vecPackAngles, pszWorldModel, pItem );
+		if ( pDroppedWeapon )
+		{
+			pDroppedWeapon->InitDroppedWeapon( this, pDropWeaponProps, false, bIsSuicide );
+		}
+		// Create the ammo pack.
+		CTFAmmoPack *pAmmoPack = CTFAmmoPack::Create( vecPackOrigin, vecPackAngles, this, "models/items/ammopack_medium.mdl" );
+	}
+	
 	Assert( pAmmoPack );
 	if ( pAmmoPack )
 	{
@@ -22012,7 +22016,7 @@ void CTFPlayer::SaveLastWeaponSlot( void )
 {
 	
 	// TF2V: Feature did not exist prior to the Scout Update.
-	if ( TFGameRules()->GetTF2VEra() && ( TFGameRules()->GetTF2VEra() < TF2V_DAY_MAJOR_SCOUT);
+	if ( TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_SCOUT) );
 		return;
 	
 	if( !m_bRememberLastWeapon && !m_bRememberActiveWeapon )
