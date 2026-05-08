@@ -9304,20 +9304,18 @@ float CTFPlayer::GetObjectBuildSpeedMultiplier( int iObjectType, bool bIsRedeplo
 
 	case OBJ_TELEPORTER:
 		CALL_ATTRIB_HOOK_FLOAT( flBuildRate, teleporter_build_rate_multiplier );
-#ifdef TF2_OG
-		flBuildRate += bIsRedeploy ? 2.0 : 0.0f;
-#else
-		flBuildRate += bIsRedeploy ? 3.0 : 0.0f;
-#endif
+		if ( TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) )
+			flBuildRate += bIsRedeploy ? 2.0 : 0.0f;
+		else
+			flBuildRate += bIsRedeploy ? 3.0 : 0.0f;
 		break;
 
 	case OBJ_DISPENSER:
 		CALL_ATTRIB_HOOK_FLOAT( flBuildRate, teleporter_build_rate_multiplier );
-#ifdef TF2_OG
-		flBuildRate += bIsRedeploy ? 2.0 : 0.0f;
-#else
-		flBuildRate += bIsRedeploy ? 3.0 : 0.0f;
-#endif
+		if ( TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) )
+			flBuildRate += bIsRedeploy ? 2.0 : 0.0f;
+		else
+			flBuildRate += bIsRedeploy ? 3.0 : 0.0f;
 		break;
 	}
 
