@@ -11776,6 +11776,11 @@ int CTFPlayerShared::CalculateObjectCost( CTFPlayer* pBuilder, int iObjectType )
 	if ( iObjectType == OBJ_TELEPORTER )
 	{
 		float flCostMod = 1.f;
+		
+		// TF2V: Teleporters were more expensive prior to Meet Your Match (125 metal compared to 50)
+		if ( TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_MEET_YOUR_MATCH) )
+			flCostMod *= 2.5f;
+		
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pBuilder, flCostMod, mod_teleporter_cost );
 		if ( flCostMod != 1.f )
 		{
