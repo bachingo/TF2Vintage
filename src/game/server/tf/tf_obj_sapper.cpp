@@ -647,13 +647,15 @@ void CObjectSapper::Killed( const CTakeDamageInfo &info )
 		}
 	}
 
-#ifndef TF2_OG
-	CBaseObject *pParent = GetParentObject();
-	if ( pParent )
+	// TF2V: Sappers prior to Tough Break did not disable the sentry.
+	if ( !(TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK)) )
 	{
-		pParent->SetPlasmaDisabled( SAPPER_REMOVE_DISABLE_TIME );
+		CBaseObject *pParent = GetParentObject();
+		if ( pParent )
+		{
+			pParent->SetPlasmaDisabled( SAPPER_REMOVE_DISABLE_TIME );
+		}
 	}
-#endif
 
 	BaseClass::Killed( info );
 }
