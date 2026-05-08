@@ -11066,6 +11066,10 @@ float CTFPlayer::TeamFortress_CalculateMaxSpeed( bool bIgnoreSpecialAbility /*= 
 	{
 		case TF_CLASS_SPY:
 		{
+			// TF2V: Spy had a very slightly slower move speed prior to Meet Your Match. (300Hu/s->320Hu/s)
+			if ( TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_MEET_YOUR_MATCH) )
+				default_speed *= 0.9375;
+			
 			default_speed *= tf_move_speed_scale_spy.GetFloat();
 			break;
 		}
