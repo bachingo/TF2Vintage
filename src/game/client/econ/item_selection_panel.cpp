@@ -900,12 +900,10 @@ CEquippableItemsForSlotGenerator::CEquippableItemsForSlotGenerator( int iClass, 
 			eDisplayType = kSlotDisplay_Disabled_EquipRegionConflict;
 		}
 
-#if TF2_OG
-		if ( !IsWearableSlot( iSearchSlot ) )
-		{
-			eDisplayType = kSlotDisplay_Disabled_EquipRegionConflict;
-		}
-#endif
+		//if ( !IsWearableSlot( iSearchSlot ) )
+		//{
+		//	eDisplayType = kSlotDisplay_Disabled_EquipRegionConflict;
+		//}
 
 		// If we're listing *all* items, including duplicates, we just add everything to the list at once and
 		// move on. We still do the above equipped-item specialcasing.

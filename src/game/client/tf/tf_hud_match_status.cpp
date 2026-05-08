@@ -43,9 +43,6 @@ bool IsTakingAFreezecamScreenshot();
 //-----------------------------------------------------------------------------
 bool ShouldUseMatchHUD()
 {
-#ifdef TF2_OG
-	return false;
-#else
 	if ( !TFGameRules() )
 		return false;
 	

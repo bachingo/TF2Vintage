@@ -256,46 +256,10 @@ void CTFInventoryManager::GenerateBaseItems( void )
 void CTFInventoryManager::GenerateDefaultEquippedRegionMask(void)
 {
 	m_iDefaultRegionMask = 0;
-#ifdef TF2_OG
-	CUtlVector<const char*> vecRegionNames;
-	vecRegionNames.AddToTail("pants");
-	vecRegionNames.AddToTail("shirt");
-	vecRegionNames.AddToTail("arms");
-	vecRegionNames.AddToTail("back");
-	vecRegionNames.AddToTail("feet");
-	vecRegionNames.AddToTail("left_shoulder");
-	vecRegionNames.AddToTail("disconnected_floating_item");
-	vecRegionNames.AddToTail("zombie_body");
-	vecRegionNames.AddToTail("sleeves");
-	vecRegionNames.AddToTail("right_shoulder");
-	//vecRegionNames.AddToTail("scout_bandages");
-	//vecRegionNames.AddToTail("scout_backpack");
-	vecRegionNames.AddToTail("soldier_coat");
-	vecRegionNames.AddToTail("sniper_legs");
-	vecRegionNames.AddToTail("pyro_head_replacement");
-	//vecRegionNames.AddToTail("scout_pants");
-	vecRegionNames.AddToTail("spy_coat");
-	for (auto& sRegionName : vecRegionNames)
-	{
-		// TODO mask or bit mask? seems looser to only restrict by exact region
-		m_iDefaultRegionMask |= GetItemSchema()->GetEquipRegionBitMaskByName(sRegionName);
-	}
-#endif
 }
 
 bool CheckExtraEquipRules(int iClass, int iSlot, CEconItemView* pItem)
 {
-#ifdef TF2_OG
-	if (!IsWearableSlot(iSlot))
-	{
-		return false;
-	}
-
-	if (TFInventoryManager()->GetDefaultEquippedRegionMask() & pItem->GetItemDefinition()->GetEquipRegionMask())
-	{
-		return false;
-	}
-#endif
 
 	return true;
 }
