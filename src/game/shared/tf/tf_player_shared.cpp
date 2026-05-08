@@ -8414,14 +8414,15 @@ void CTFPlayerShared::Disguise( int nTeam, int nClass, CTFPlayer* pDesiredTarget
 	float flTimeToDisguise = TF_TIME_TO_DISGUISE;
 	//CALL_ATTRIB_HOOK_INT_ON_OTHER( m_pOuter, iTimeToDisguise, disguise_speed_penalty ); // Unused Attr
 
-#ifndef TF2_OG
-	// STAGING_SPY
-	// Quick disguise if you already disguised
-	if ( InCond( TF_COND_DISGUISED ) )
+	// TF2V: Quick Redisguising added after Gun Mettle.
+	if ( !( TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) ) )
 	{
-		flTimeToDisguise = TF_TIME_TO_QUICK_DISGUISE;
+		// Quick disguise if you already disguised
+		if ( InCond( TF_COND_DISGUISED ) )
+		{
+			flTimeToDisguise = TF_TIME_TO_QUICK_DISGUISE;
+		}
 	}
-#endif
 
 	if ( pDesiredTarget )
 	{
