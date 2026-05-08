@@ -1055,23 +1055,7 @@ void CTFPlayerInventory::SaveLocalLoadout( bool bReset, bool bDefaultToGC )
 				itemid_t uItemId = m_PresetItems[iPreset][iClass][iSlot];
 				//itemid_t uItemId = m_LoadoutItems[iClass][iSlot];
 				if ( bReset ) {
-#if TF2_OG
-					if (bDefaultToGC)
-					{
-						uItemId = m_RealTFLoadoutItems[iClass][iSlot];
-						CEconItemView* pItem = GetInventoryItemByItemID(uItemId);
-						if (!pItem || !CheckExtraEquipRules(iClass, iSlot, pItem))
-						{
-							uItemId = 0;
-						}
-					}
-					else
-					{
-						uItemId = 0;
-					}
-#else
 					uItemId = bDefaultToGC ? m_RealTFLoadoutItems[iClass][iSlot] : 0;
-#endif
 				}
 
 				pClassKV->SetUint64(szSlot, uItemId);
