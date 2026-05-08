@@ -70,12 +70,14 @@ void CBlueprintPanel::SetObjectInfo( const CObjectInfo* pNewInfo )
 		if ( m_pObjectInfo )
 		{
 			int iCost = m_pObjectInfo->m_Cost;
-#ifdef TF2_OG
-			if (V_strcmp(m_pObjectInfo->m_pClassName, "obj_teleporter"))
+			// TF2V: Teleporters more expensive before Meet Your Match
+			if ( (TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_MEET_YOUR_MATCH)) )
 			{
-				iCost = 125;
+				if (V_strcmp(m_pObjectInfo->m_pClassName, "obj_teleporter"))
+				{
+					iCost = 125;
+				}
 			}
-#endif
 			V_snprintf( m_pszCost, sizeof( m_pszCost ), "%i", iCost );
 			m_pItemCostLabel->SetText( m_pszCost );
 		}
