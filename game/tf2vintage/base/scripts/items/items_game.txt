@@ -20004,8 +20004,10 @@
 			"image_inventory_size_h"		"82"
 			"used_by_classes"
 			{
-				"soldier"	"1"
-				"pyro"		"1"
+				"engineer"	"primary"
+				"pyro" "secondary"
+				"soldier" "secondary"
+				"heavy" "secondary"
 			}
 			"static_attrs"
 			{
@@ -20177,7 +20179,10 @@
 			"inspect_panel_dist" "45"
 			"used_by_classes"
 			{
-				"heavy"	"1"
+				"engineer"	"primary"
+				"pyro" "secondary"
+				"soldier" "secondary"
+				"heavy" "secondary"
 			}
 			"static_attrs"
 			{
@@ -21495,6 +21500,7 @@
 			"used_by_classes"
 			{
 				"scout"	"1"
+				"engineer"	"1"
 			}
 			"static_attrs"
 			{
@@ -49285,6 +49291,7 @@
 			"used_by_classes"
 			{
 				"scout"	"1"
+				"engineer"	"1"
 			}
 			"static_attrs"
 			{
