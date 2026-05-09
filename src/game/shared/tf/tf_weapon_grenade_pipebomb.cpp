@@ -845,9 +845,21 @@ void CTFGrenadePipebombProjectile::PipebombTouch( CBaseEntity *pOther )
 		return;
 	}
 
-	//If we already touched a surface then we're not exploding on contact anymore.
-	if ( m_bTouched == true )
+	
+	// TF2V: Before Sept 28, 2007 (Day 12), the touch mechanic didn't exist yet.
+	if ( !(TFGameRules->IsAnachronistic(12)) )
+	{
+		//If we already touched a surface then we're not exploding on contact anymore.
+		if ( m_bTouched == true )
+			return;
+	}
+	
+	// Prior to October 25, 2007 (Day 39), this behavior often glitched and failed to notice valid touches.
+	if ( !(TFGameRules->IsAnachronistic(12)) && (TFGameRules->IsAnachronistic(39)) )
+	{
+		// Simulate this behavior by always bailing out even on a good hit.
 		return;
+	}
 
 	bool bExploded = false;
 
