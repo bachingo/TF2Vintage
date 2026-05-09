@@ -697,6 +697,17 @@ int	CTFWeaponBase::GetMaxClip1( void ) const
 	{
 		CALL_ATTRIB_HOOK_INT( flClip, mult_clipsize );
 	}
+	
+	// TF2V: This is the earliest change in the entire mod.
+	// No information of when this was changed seems to exist.
+	// Based off June 2007 builds, this might have been a shipping error.
+	// I'm assuming this was undocumented patched, but the first patch is September 20th (Day 4).
+	if ( (TFGameRules->IsAnachronistic(4)) )
+	{
+		// This is a hacky way of making sure Demoman has a 6 shot grenade launcher.
+		if ( GetWeaponID() == TF_WEAPON_GRENADELAUNCHER )
+			flClip += 2;	
+	}
 
 	// Now handle in-game sources, otherwise we get weird numbers on things like the FAN
 	if ( flClip >= 0 )
