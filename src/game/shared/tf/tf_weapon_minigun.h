@@ -96,6 +96,8 @@ public:
 
 	float			GetFiringDuration( void ) { return ( m_flStartedFiringAt >= 0.f ) ? ( gpGlobals->curtime - m_flStartedFiringAt ) : 0.f; }
 	float			GetWindUpDuration( void ) { return ( m_flStartedWindUpAt >= 0.f ) ? ( gpGlobals->curtime - m_flStartedWindUpAt ) : 0.f; }
+	float			GetSpinningUpAtDuration( void ) { return ( m_flStartedSpinningUpAt >= 0.f ) ? ( gpGlobals->curtime - m_flStartedSpinningUpAt ) : 0.f; }
+	
 
 	float			GetProgress( void );
 	bool			IsRageFull( void ); // same as GetProgress() without the division by 100.0f

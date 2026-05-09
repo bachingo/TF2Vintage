@@ -33,15 +33,12 @@
 
 #define MAX_BARREL_SPIN_VELOCITY	20
 
-#define DEFAULT_TF_MINIGUN_SPINUP_TIME "0.75f"
+#define DEFAULT_TF_MINIGUN_SPINUP_TIME "0.75f" // TF2V note: This was decreased by 25% before April 28 2010.
 ConVar tf_minigun_spinup_time("tf_minigun_spinup_time", DEFAULT_TF_MINIGUN_SPINUP_TIME, FCVAR_REPLICATED | FCVAR_HIDDEN);
 
 #define TF_MINIGUN_SPINUP_TIME tf_minigun_spinup_time.GetFloat()
 
 #define DEFAULT_TF_MINIGUN_PENALTY_TIME "1"
-
-ConVar tf_minigun_penalty_time("tf_minigun_penalty_time", DEFAULT_TF_MINIGUN_PENALTY_TIME, FCVAR_REPLICATED | FCVAR_HIDDEN);
-#define TF_MINIGUN_PENALTY_PERIOD tf_minigun_penalty_time.GetFloat()
 
 //=============================================================================
 //
@@ -147,6 +144,7 @@ void CTFMinigun::WeaponReset( void )
 	m_bCritShot = false;
 	m_flStartedFiringAt = -1.0f;
 	m_flStartedWindUpAt = -1.f;
+	m_flStartedSpinningUpAt = -1.f;
 	m_flNextFiringSpeech = 0.0f;
 
 	m_flBarrelAngle = 0.0f;
@@ -912,6 +910,7 @@ void CTFMinigun::WindDown( void )
 #endif
 
 	m_flStartedWindUpAt = -1.f;
+	m_flStartedSpinningUpAt = -1.f;
 }
 
 //-----------------------------------------------------------------------------
@@ -1018,17 +1017,40 @@ float CTFMinigun::GetProjectileDamage( void )
 {
 	float flDamage = BaseClass::GetProjectileDamage();
 
-	// How long have we been spun up - sans the min period required to fire
-	float flPreFireWindUp = GetWindUpDuration() - TF_MINIGUN_SPINUP_TIME;
-	float flSpinTime = Max( flPreFireWindUp, GetFiringDuration() );
-	// DevMsg( "PreFireTime: %.2f\n", flPreFireWindUp );
-
-	if ( flSpinTime < TF_MINIGUN_PENALTY_PERIOD )
+	// TF2V: This didn't exist prior to Love and War.
+	if ( !(TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_LOVE_AND_WAR)) )
 	{
-		float flMod = 1.f;
-		flMod = RemapValClamped( flSpinTime, 0.2f, TF_MINIGUN_PENALTY_PERIOD, 0.5f, 1.f );
-		flDamage *= flMod;
-		//DevMsg( "DmgMod: %.2f\n", flMod );
+		// How long have we been spun up - sans the min period required to fire
+		float flPreFireWindUp;
+		float flSpinTime;
+		
+		if !(TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_LOVE_AND_WAR) && (TFGameRules->IsAnachronistic(2487) )
+		{
+			// Love and War: Based on firing time exclusively.
+			flSpinTime = GetFiringDuration();
+		}
+		else if ( !(TFGameRules->IsAnachronistic(2487)) && (TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_JUNGLE_INFERNO)) )
+		{
+			// July 8 2014 (Day 2487): Spinning on secondary counts towards reducing the penalty. Resets when stopping fire.
+			flPreFireWindUp = GetSpinningUpAtDuration();
+			flSpinTime = Max( flPreFireWindUp, GetFiringDuration() );
+		}
+		if !(TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_JUNGLE_INFERNO))
+		{
+			// Jungle Inferno: Only counts the first spin up time, so Heavy can now burst fire.
+			flPreFireWindUp = GetWindUpDuration() - TF_MINIGUN_SPINUP_TIME;
+			flSpinTime = Max( flPreFireWindUp, GetFiringDuration() );
+		}
+		// DevMsg( "PreFireTime: %.2f\n", flPreFireWindUp );
+		
+
+		if ( flSpinTime < TF_MINIGUN_PENALTY_PERIOD )
+		{
+			float flMod = 1.f;
+			flMod = RemapValClamped( flSpinTime, 0.2f, TF_MINIGUN_PENALTY_PERIOD, 0.5f, 1.f );
+			flDamage *= flMod;
+			//DevMsg( "DmgMod: %.2f\n", flMod );
+		}
 	}
 	
 	return flDamage;
@@ -1041,18 +1063,41 @@ float CTFMinigun::GetWeaponSpread( void )
 {
 	float flSpread = BaseClass::GetWeaponSpread();
 
-	// How long have we been spun up - sans the min period required to fire
-	float flPreFireWindUp = GetWindUpDuration() - TF_MINIGUN_SPINUP_TIME;
-	float flSpinTime = Max( flPreFireWindUp, GetFiringDuration() );
-	//DevMsg( "PreFireTime: %.2f\n", flPreFireWindUp );
-
-	if ( flSpinTime < TF_MINIGUN_PENALTY_PERIOD )
+	// TF2V: This didn't exist prior to Love and War.
+	if ( !(TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_LOVE_AND_WAR)) )
 	{
-		const float flMaxSpread = 1.5f;
-		float flMod = RemapValClamped( flSpinTime, 0.f, TF_MINIGUN_PENALTY_PERIOD, flMaxSpread, 1.f );
-		//DevMsg( "SpreadMod: %.2f\n", flMod );
+		// How long have we been spun up - sans the min period required to fire
+		float flPreFireWindUp;
+		float flSpinTime;
+		
+		if !(TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_LOVE_AND_WAR) && (TFGameRules->IsAnachronistic(2487) )
+		{
+			// Love and War: Based on firing time exclusively.
+			flSpinTime = GetFiringDuration();
+		}
+		else if ( !(TFGameRules->IsAnachronistic(2487)) && (TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_JUNGLE_INFERNO)) )
+		{
+			// July 8 2014 (Day 2487): Spinning on secondary counts towards reducing the penalty. Resets when stopping fire.
+			flPreFireWindUp = GetSpinningUpAtDuration();
+			flSpinTime = Max( flPreFireWindUp, GetFiringDuration() );
+		}
+		if !(TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_JUNGLE_INFERNO))
+		{
+			// Jungle Inferno: Only counts the first spin up time, so Heavy can now burst fire.
+			flPreFireWindUp = GetWindUpDuration() - TF_MINIGUN_SPINUP_TIME;
+			flSpinTime = Max( flPreFireWindUp, GetFiringDuration() );
+		}
+		// DevMsg( "PreFireTime: %.2f\n", flPreFireWindUp );
+		
 
-		flSpread *= flMod;
+		if ( flSpinTime < TF_MINIGUN_PENALTY_PERIOD )
+		{
+			const float flMaxSpread = 1.5f;
+			float flMod = RemapValClamped( flSpinTime, 0.f, TF_MINIGUN_PENALTY_PERIOD, flMaxSpread, 1.f );
+			//DevMsg( "SpreadMod: %.2f\n", flMod );
+
+			flSpread *= flMod;
+		}
 	}
 	
 	return flSpread;
