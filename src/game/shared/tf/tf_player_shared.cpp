@@ -11037,8 +11037,6 @@ bool CTFPlayer::CanPlayerMove() const
 ConVar tf_move_speed_scale_spy("tf_move_speed_scale_spy", "1.0", FCVAR_REPLICATED | FCVAR_HIDDEN);
 ConVar tf_move_speed_scale_pyro("tf_move_speed_scale_pyro", "1.0", FCVAR_REPLICATED | FCVAR_HIDDEN);
 
-ConVar tf_move_speed_heavy_aiming("tf_move_speed_heavy_aiming", "110", FCVAR_REPLICATED | FCVAR_HIDDEN);
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -11123,8 +11121,14 @@ float CTFPlayer::TeamFortress_CalculateMaxSpeed( bool bIgnoreSpecialAbility /*= 
 			// Heavies are allowed to move slightly faster than a sniper when spun-up
 			if ( playerclass == TF_CLASS_HEAVYWEAPONS )
 			{
+				// TF2V: This was 80Hu/s before April 28 2010. Changed to 110Hu/s. (Day 955)
+				if ( (TFGameRules->IsAnachronistic(955) )
 				{
-					flAimMax = tf_move_speed_heavy_aiming.GetFloat();
+					flAimMax = 80;
+				}
+				else
+				{
+					flAimMax = 110;
 				}
 			}
 			else
