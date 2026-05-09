@@ -65,7 +65,9 @@ bool CTFRevolver::DefaultReload( int iClipSize1, int iClipSize2, int iActivity )
 	{
 		if ( pPlayer->m_Shared.InCond( TF_COND_STEALTHED ) )
 		{
-			return false;
+			// TF2V: Spies could reload their revolver while cloaked prior to October 9, 2007 (Day 23)
+			if ( !(TFGameRules->IsAnachronistic(23)) )
+				return false;
 		}
 	}
 
