@@ -160,6 +160,15 @@ int	CTFGrenadePipebombProjectile::GetDamageType( void )
 			iDmgType |= DMG_USEDISTANCEMOD;
 		}
 	}
+	
+	// TF2V: Pipebombs before February 16 2009 (Day 519) didn't have the No Close Distance Modifier.
+	if ( m_iType == TF_GL_MODE_REMOTE_DETONATE )
+	{
+		if ( !(TFGameRules->IsAnachronistic(519)) )
+		{
+			iDmgType |= DMG_NOCLOSEDISTANCEMOD;
+		}
+	}
 
 	return iDmgType;
 }

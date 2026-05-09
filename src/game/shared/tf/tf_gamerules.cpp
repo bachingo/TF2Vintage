@@ -7648,6 +7648,7 @@ bool CTFGameRules::ApplyOnDamageModifyRules( CTakeDamageInfo &info, CBaseEntity 
 				if ( ( !bNoDamageSpread && !bHasDistanceMod ) || ( flRandomRangeVal > 0.5 ) && !( bitsDamage & DMG_NOCLOSEDISTANCEMOD ) )
 				{
 					// TF2V: Damage variance was 10% prior to Smissmass 2014.
+					// Also reading the notes above, .2f must equate to 2%, therefore 1.0f is 10%.
 					if ( (IsAnachronistic(TF2V_DAY_SMISSMAS_2014)) )
 						flRandomDamage *= 1.0f;
 					else
