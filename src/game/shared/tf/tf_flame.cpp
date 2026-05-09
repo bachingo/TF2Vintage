@@ -29,7 +29,6 @@ const float tf_flame_burn_index_damage_scale_min = 0.5f; // max damage penalty f
 const float tf_flame_warmup_ticks = 90; // number of ticks needed to warmup fully
 const float tf_flame_warmup_inc = 1.0f / tf_flame_warmup_ticks; // increment per tick
 
-ConVar tf_flame_dmg_mode_dist( "tf_flame_dmg_mode_dist", "0", FCVAR_REPLICATED | FCVAR_HIDDEN );
 
 #ifdef WATERFALL_FLAMETHROWER_TEST
 ConVar tf_flame_waterfall_speed_override( "tf_flame_waterfall_speed_override", "0", FCVAR_REPLICATED );
@@ -515,23 +514,33 @@ float CTFFlameManager::GetFlameDamageScale( const tf_point_t* pPoint, CTFPlayer 
 	
 	float flDamageScale = 1.f;
 
-	int iFlameDmgMode = tf_flame_dmg_mode_dist.GetInt();
-	if ( iFlameDmgMode >= 0 )
+	int iFlameDmgMode = 0;
+	
+	// TF2V: Flames had distance falloff prior to the Pyro Update.
+	// Falloff readded Jul 1 2008 (Day 289) as lifetime based, values updated in Tough Break
+	if ( (TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_PYRO)) )
+		iFlameDmgMode = 1;
+	
+	// TF2V: Briefly, no distance falloff between Pyro Update and Jul 1 2008 (Day 289)
+	bool bNoFalloff =  ( !(TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_PYRO)) && TFGameRules->IsAnachronistic(289) ) ? true : false ;
+
+	
+	if ( iFlameDmgMode >= 0 && !bNoFalloff )
 	{
 		// Distance-based calculation is what we shipped with
 		if ( iFlameDmgMode == 1 )
 		{
 			float flDistSqr = pFlame->m_vecPosition.DistToSqr(pFlame->m_vecInitialPos);
 			
-			// TF2V: Values changed on Blue Moon.
-			float flFlameMaxDist = TFGameRules->IsAnachronistic(TF2V_DAY_SPRING_2018) ? 125.f : 150.f; // tf_flame_maxdamagedist
-			float flFlameMinDist = TFGameRules->IsAnachronistic(TF2V_DAY_SPRING_2018) ? 175.f : 300.f; // tf_flame_mindamagedist
+			// TF2V: Values changed on Tough Break.
+			float flFlameMaxDist = TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK) ? 125.f : 150.f; // tf_flame_maxdamagedist
+			float flFlameMinDist = TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK) ? 175.f : 300.f; // tf_flame_mindamagedist
 			
 			float flMaxDamageDistSqr = Square(flFlameMaxDist);
 			float flMinDamageDistSqr = Square(flFlameMinDist);
 			
-			// TF2V: Values changed on Blue Moon.
-			float flFlameMinScale = TFGameRules->IsAnachronistic(TF2V_DAY_SPRING_2018) ? 0.725f : 0.5f; // tf_flame_min_damage_scale
+			// TF2V: Values changed on Tough Break.
+			float flFlameMinScale = TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK) ? 0.725f : 0.5f; // tf_flame_min_damage_scale
 
 			flDamageScale = RemapValClamped(flDistSqr, flMaxDamageDistSqr, flMinDamageDistSqr, 1.0f, flFlameMinScale);
 		}
@@ -539,8 +548,8 @@ float CTFFlameManager::GetFlameDamageScale( const tf_point_t* pPoint, CTFPlayer 
 		else
 		{
 			float flTimeAlive = gpGlobals->curtime - pFlame->m_flSpawnTime;
-			float flFlameMinDamageTimeCap = ( (TFGameRules->IsAnachronistic(TF2V_DAY_SPRING_2018) ? 175.f : 300.f) / 2450.0f ) / 0.5f; // time it takes for us to reach tf_flame_mindamagedist, as a function of lifetime. longer life does more damage at the same distance. tf_flame_min_damage_scale_time_cap
-			float flFlameMinDamageTime = (TFGameRules->IsAnachronistic(TF2V_DAY_SPRING_2018) ? 125.f : 150.f) / 2450.0f;                // time it takes to reach tf_flame_maxdamagedist. tf_flame_damage_scale_time_min
+			float flFlameMinDamageTimeCap = ( (TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK) ? 175.f : 300.f) / 2450.0f ) / 0.5f; // time it takes for us to reach tf_flame_mindamagedist, as a function of lifetime. longer life does more damage at the same distance. tf_flame_min_damage_scale_time_cap
+			float flFlameMinDamageTime = (TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK) ? 125.f : 150.f) / 2450.0f;                // time it takes to reach tf_flame_maxdamagedist. tf_flame_damage_scale_time_min
 			float flLifeMax = pFlame->m_flLifeTime * flFlameMinDamageTimeCap;
 			flDamageScale = RemapValClamped(flTimeAlive, flFlameMinDamageTime, flLifeMax, 1.f, tf_flame_min_damage_scale_time);
 		}
