@@ -33,7 +33,7 @@
 
 #define MAX_BARREL_SPIN_VELOCITY	20
 
-#define DEFAULT_TF_MINIGUN_SPINUP_TIME "0.75f" // TF2V note: This was decreased by 25% before April 28 2010.
+#define DEFAULT_TF_MINIGUN_SPINUP_TIME "0.75f"
 ConVar tf_minigun_spinup_time("tf_minigun_spinup_time", DEFAULT_TF_MINIGUN_SPINUP_TIME, FCVAR_REPLICATED | FCVAR_HIDDEN);
 
 #define TF_MINIGUN_SPINUP_TIME tf_minigun_spinup_time.GetFloat()
@@ -270,6 +270,10 @@ void CTFMinigun::SharedAttack()
 
 			float flSpinUpTime = TF_MINIGUN_SPINUP_TIME;
 			CALL_ATTRIB_HOOK_FLOAT( flSpinUpTime, mult_minigun_spinup_time );
+			
+			// TF2V: This was decreased by 25% before April 28 2010. (Day 955)
+			if ( (TFGameRules->IsAnachronistic(955) )
+				flSpinTimeMultiplier*= (float)(4/3);
 
 			float flSpinTimeMultiplier = Max( flSpinUpTime, 0.00001f );
 			if ( pPlayer->GetViewModel( 0 ) )
@@ -425,6 +429,7 @@ void CTFMinigun::SharedAttack()
 	case AC_STATE_SPINNING:
 		{
 			m_flStartedFiringAt = -1.f;
+			m_flStartedSpinningUpAt = gpGlobals->curtime;
 
 			if ( m_iWeaponMode == TF_WEAPON_PRIMARY_MODE )
 			{
