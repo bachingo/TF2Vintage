@@ -12880,6 +12880,10 @@ bool CTFPlayer::CanPickupBuilding( CBaseObject *pPickupObject )
 //-----------------------------------------------------------------------------
 bool CTFPlayer::TryToPickupBuilding()
 {
+	// TF2V: Not added until the Engineer Update.
+	if ( (TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_ENGINEER) ) 
+		return false;
+	
 	if ( m_Shared.IsCarryingObject() )
 		return false;
 
