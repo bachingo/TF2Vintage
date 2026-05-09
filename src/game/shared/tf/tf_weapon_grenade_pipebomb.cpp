@@ -854,7 +854,7 @@ void CTFGrenadePipebombProjectile::PipebombTouch( CBaseEntity *pOther )
 			return;
 	}
 	
-	// Prior to October 25, 2007 (Day 39), this behavior often glitched and failed to notice valid touches.
+	// TF2V: Prior to October 25, 2007 (Day 39), this behavior often glitched and failed to notice valid touches.
 	if ( !(TFGameRules->IsAnachronistic(12)) && (TFGameRules->IsAnachronistic(39)) )
 	{
 		// Simulate this behavior by always bailing out even on a good hit.
