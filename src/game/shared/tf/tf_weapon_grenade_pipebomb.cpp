@@ -734,6 +734,14 @@ bool CTFGrenadePipebombProjectile::DetonateStickies()
 		UTIL_TraceLine( vecOrigin, pGrenade->GetAbsOrigin(), MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr );
 		if ( tr.fraction < 1.0 )
 			continue; // No line of sight to the bomb.
+		
+		// TF2V: Stickies in Love and War had damage ramp up. Reverted five days later on June 23, 2014. (Day 2472)
+		if ( !(TFGameRules->IsAnachronistic(TF2V_DAY_SMISSMAS_2014)) && (TFGameRules->IsAnachronistic(2472)) )
+		{
+			// 50% damage at arm time, 100% at 2 seconds later
+			float flDamageRamp = RemapValClamped( gpGlobals->curtime - m_flCreationTime, flArmTime, flArmTime + tf_sticky_radius_ramp_time.GetFloat(), 0.5f, 1.0f );
+			pGrenade->SetDamage( pGrenade->GetDamage() * flDamageRamp );
+		}
 
 		pGrenade->Fizzle();
 		pGrenade->Detonate();
@@ -1529,14 +1537,18 @@ float CTFGrenadePipebombProjectile::GetDamageRadius()
 	float flRadiusMod = 1.0f;
 
 #ifdef GAME_DLL
-	// winbomb prevention.
-	// Air Det
-	if ( m_iType == TF_GL_MODE_REMOTE_DETONATE && tf_sticky_airdet_radius.GetFloat() != 1.0f && tf_sticky_radius_ramp_time.GetFloat() > 0.0f )
+	// TF2V: Not added until after Smissmass 2014.
+	if ( !(TFGameRules->IsAnachronistic(TF2V_DAY_SMISSMAS_2014)) )
 	{
-		if ( m_bTouched == false )
+		// winbomb prevention.
+		// Air Det
+		if ( m_iType == TF_GL_MODE_REMOTE_DETONATE && tf_sticky_airdet_radius.GetFloat() != 1.0f && tf_sticky_radius_ramp_time.GetFloat() > 0.0f )
 		{
-			float flArmTime = tf_grenadelauncher_livetime.GetFloat();
-			flRadiusMod *= RemapValClamped( gpGlobals->curtime - m_flCreationTime, flArmTime, flArmTime + tf_sticky_radius_ramp_time.GetFloat(), tf_sticky_airdet_radius.GetFloat(), 1.0f );
+			if ( m_bTouched == false )
+			{
+				float flArmTime = tf_grenadelauncher_livetime.GetFloat();
+				flRadiusMod *= RemapValClamped( gpGlobals->curtime - m_flCreationTime, flArmTime, flArmTime + tf_sticky_radius_ramp_time.GetFloat(), tf_sticky_airdet_radius.GetFloat(), 1.0f );
+			}
 		}
 	}
 #endif // GAME_DLL

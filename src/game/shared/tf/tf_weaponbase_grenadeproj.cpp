@@ -138,6 +138,9 @@ void CTFWeaponBaseGrenadeProj::BounceOff( IPhysicsObject *pPhysics )
 float CTFWeaponBaseGrenadeProj::GetDamageRadius() 
 { 
 	float flRadius = m_DmgRadius;
+	// TF2V: Pipebombs and Grenades had a 159 damage radius prior to Smissmass 2014.
+	if ( (TFGameRules->IsAnachronistic(TF2V_DAY_SMISSMAS_2014)) )
+		flRadius = 159;
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetOriginalLauncher(), flRadius, mult_explosion_radius );
 	return flRadius; 
 }	
@@ -398,6 +401,7 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType )
 	// Use the thrower's position as the reported position
 	Vector vecReported = GetThrower() ? GetThrower()->GetAbsOrigin() : vec3_origin;
 	int nCustomDamage = GetDamageCustom();
+	
 	CTakeDamageInfo info( this, GetThrower(), GetOriginalLauncher(), GetBlastForce(), GetAbsOrigin(), m_flDamage, bitsDamageType, nCustomDamage, &vecReported );
 
 	float flRadius = GetDamageRadius();
