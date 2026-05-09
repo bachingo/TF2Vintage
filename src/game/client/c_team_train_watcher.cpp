@@ -82,12 +82,16 @@ void C_TeamTrainWatcher::UpdateGlowEffect( void )
 		DestroyGlowEffect();
 	}
 
-	// create a new effect if we have a cart
-	if ( m_hGlowEnt )
+	// TF2V: Cart glow added in the Engineer update.
+	if ( !(TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_ENGINEER)) )
 	{
-		float r, g, b;
-		TeamplayRoundBasedRules()->GetTeamGlowColor( GetTeamNumber(), r, g, b );
-		m_pGlowEffect = new CGlowObject( m_hGlowEnt, Vector( r, g, b ), 1.0, true );
+		// create a new effect if we have a cart
+		if ( m_hGlowEnt )
+		{
+			float r, g, b;
+			TeamplayRoundBasedRules()->GetTeamGlowColor( GetTeamNumber(), r, g, b );
+			m_pGlowEffect = new CGlowObject( m_hGlowEnt, Vector( r, g, b ), 1.0, true );
+		}
 	}
 }
 
