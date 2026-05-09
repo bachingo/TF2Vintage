@@ -511,7 +511,7 @@ static FeaturedWorkshopMap_t s_FeaturedWorkshopMaps[] = {
 	{ "koth_probed",           454139808 },
 	{ "pd_watergate",          456016898 },
 	{ "arena_byre",            454142123 },
-	{ "ctf_2fort_invasion",    FIXME     }, // No public workshop entry yet
+	{ "ctf_2fort_invasion",    3537794716},
 
 	// Halloween 2015
 	{ "cp_sunshine_event",     532473747 },
@@ -7647,7 +7647,11 @@ bool CTFGameRules::ApplyOnDamageModifyRules( CTakeDamageInfo &info, CBaseEntity 
 				// We also apply it for cases where we're ramping up damage on the projectiles.
 				if ( ( !bNoDamageSpread && !bHasDistanceMod ) || ( flRandomRangeVal > 0.5 ) && !( bitsDamage & DMG_NOCLOSEDISTANCEMOD ) )
 				{
-					flRandomDamage *= 0.2f;
+					// TF2V: Damage variance was 10% prior to Smissmass 2014.
+					if ( (IsAnachronistic(TF2V_DAY_SMISSMAS_2014)) )
+						flRandomDamage *= 1.0f;
+					else
+						flRandomDamage *= 0.2f;
 				}
 				break;
 			case TF_WEAPON_SCATTERGUN :
