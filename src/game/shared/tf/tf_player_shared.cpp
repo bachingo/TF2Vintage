@@ -8852,10 +8852,14 @@ void CTFPlayerShared::ProcessDisguiseImpulse( CTFPlayer *pPlayer )
 		bool bSwitchWeaponOnly = false;
 		if ( pPlayer->CanDisguise_OnKill() && pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) )
 		{
-			// Only trying to change the disguise weapon via 'lastdisguise'
-			if ( Q_atoi( szClass ) == pPlayer->m_Shared.GetDisguiseClass() && Q_atoi( szTeam ) == pPlayer->m_Shared.GetDisguiseTeam() )
+			// TF2V: Changing weapons while disguised added March 5, 2009. (Day 536)
+			if ( !(TFGameRules->IsAnachronistic(536)) )
 			{
-				bSwitchWeaponOnly = true;
+				// Only trying to change the disguise weapon via 'lastdisguise'
+				if ( Q_atoi( szClass ) == pPlayer->m_Shared.GetDisguiseClass() && Q_atoi( szTeam ) == pPlayer->m_Shared.GetDisguiseTeam() )
+				{
+					bSwitchWeaponOnly = true;
+				}
 			}
 		}
 
