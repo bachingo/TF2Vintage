@@ -408,6 +408,10 @@ ConVar tf_dropped_weapon_glows("tf_dropped_weapon_glows", "1", FCVAR_ARCHIVE, "T
 //-----------------------------------------------------------------------------
 void CTFDroppedWeapon::ClientThink()
 {
+	// TF2V: This was implemented in Gun Mettle. Don't bother if we're earlier.
+	if ( (TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) )
+		return;
+	
 	// don't do all this extra work if we don't support glows.
 	static ConVarRef glow_outline_effect_enable("glow_outline_effect_enable");
 	if ( !tf_dropped_weapon_glows.GetBool() || !g_pMaterialSystemHardwareConfig->SupportsPixelShaders_2_0() || !glow_outline_effect_enable.IsValid() || !glow_outline_effect_enable.GetBool() )
