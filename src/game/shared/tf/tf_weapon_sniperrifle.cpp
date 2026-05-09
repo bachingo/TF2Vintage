@@ -38,8 +38,6 @@ void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
 #define TF_WEAPON_SNIPERRIFLE_RELOAD_TIME		1.5f
 #define TF_WEAPON_SNIPERRIFLE_ZOOM_TIME			0.3f
 
-ConVar tf_weapon_sniperrifle_no_crit_after_zoom_time("tf_weapon_sniperrifle_no_crit_after_zoom_time", "0.2", FCVAR_REPLICATED | FCVAR_HIDDEN);
-
 #ifdef GAME_DLL
 ConVar tf_weapon_sniperrifle_disable_jump_delay("tf_weapon_sniperrifle_disable_jump_delay", "0", FCVAR_HIDDEN);
 #endif
@@ -316,16 +314,6 @@ void CTFSniperRifle::HandleZooms( void )
 	{
 		if ( pPlayer->m_nButtons & IN_ATTACK2 )
 		{
-			bShouldZoom = true;
-			if ( pPlayer->GetZoomMode() == 2 && pPlayer->GetFOV() < 75 )
-			{
-				// if we're zoomed, don't toggle out when we're in hold mode.
-				bShouldZoom = false;
-			}
-		}
-		else if ( pPlayer->GetZoomMode() == 2 && pPlayer->GetFOV() < 75 )
-		{
-			// when we let go, do the zoom out.
 			bShouldZoom = true;
 		}
 	}
@@ -1076,10 +1064,14 @@ bool CTFSniperRifle::CanFireCriticalShot( bool bIsHeadshot, CBaseEntity *pTarget
 				return false;
 			}
 
-			// no crits for 0.2 seconds after starting to zoom
-			if ( ( gpGlobals->curtime - pPlayer->GetFOVTime() ) < tf_weapon_sniperrifle_no_crit_after_zoom_time.GetFloat() )
+			// TF2V: Added Feb 14 2008 (Day 151)
+			if ( !(TFGameRules->IsAnachronistic(151)) )
 			{
-				return false;
+				// no crits for 0.2 seconds after starting to zoom
+				if ( ( gpGlobals->curtime - pPlayer->GetFOVTime() ) < 0.2f )
+				{
+					return false;
+				}
 			}
 		}
 	}
@@ -1894,16 +1886,6 @@ void CTFSniperRifleClassic::HandleZooms( void )
 	{
 		if ( pPlayer->m_nButtons & IN_ATTACK2 )
 		{
-			bShouldZoom = true;
-			if ( pPlayer->GetZoomMode() == 2 && pPlayer->GetFOV() < 75 )
-			{
-				// if we're zoomed, don't toggle out when we're in hold mode.
-				bShouldZoom = false;
-			}
-		}
-		else if ( pPlayer->GetZoomMode() == 2 && pPlayer->GetFOV() < 75 )
-		{
-			// when we let go, do the zoom out.
 			bShouldZoom = true;
 		}
 	}
