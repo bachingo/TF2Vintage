@@ -84,6 +84,12 @@ $Configuration
 		$CommandLine		"$BASE" "copy $QUOTE$SRCDIR\thirdparty\discord_game_sdk\lib\x86_64\discord_game_sdk.dll$QUOTE $OUTBINDIR\discord_game_sdk.dll" "\n" \
 							"if ERRORLEVEL 1 goto BuildEventFailed" "\n"
 	}
+
+	$PostBuildEvent [!$ANALYZE && $LINUX64]
+	{
+		$CommandLine		"$BASE" "cp $QUOTE$SRCDIR/thirdparty/discord_game_sdk/lib/x86_64/discord_game_sdk.so$QUOTE $OUTBINDIR/discord_game_sdk.so" "\n" \
+							"if ERRORLEVEL 1 goto BuildEventFailed" "\n"
+	}
 }
 
 $Project
@@ -445,7 +451,7 @@ $Project
 		$File	"recvproxy.cpp"
 		$File	"basepresence.cpp"			[$WINDOWS||$POSIX]
 		$File	"basepresence_xbox.cpp"		[$X360]
-		$File	"basediscordpresence.cpp"	[$WINDOWS]
+		$File	"basediscordpresence.cpp"	
 		$File	"basediscordpresence.h"
 		$File	"irichpresenceclient.h"
 		$File	"$SRCDIR\game\shared\rope_helpers.cpp"
@@ -685,7 +691,7 @@ $Project
 
 	}
 
-	$Folder "Discord SDK" [$WINDOWS]
+	$Folder "Discord SDK"
 		{
 			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\achievement_manager.cpp"
 			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\achievement_manager.h"
@@ -1346,6 +1352,7 @@ $Project
 		$ImpLibexternal steam_api	[!$WIN64]
 		$ImpLibexternal steam_api64	[$WIN64]
 		$ImpLib 	"$SRCDIR\thirdparty\discord_game_sdk\lib\x86_64\discord_game_sdk.dll"	[$WIN64]
+		$ImpLib 	"$SRCDIR\thirdparty\discord_game_sdk\lib\x86_64\discord_game_sdk.so"	[$LINUX64]
 		
 		$Libexternal $LIBCOMMON/libcrypto [$OSXALL]
 		$Libexternal "$SRCDIR\lib\common\$CRYPTOPPDIR\libcryptopp" [$LINUXALL&&!$SOURCESDK]

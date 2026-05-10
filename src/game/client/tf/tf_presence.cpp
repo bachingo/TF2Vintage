@@ -7,9 +7,7 @@
 //=====================================================================================//
 
 #include "cbase.h"
-#ifndef POSIX
 #include "discord.h"
-#endif
 #include "tf_presence.h"
 #include "c_team_objectiveresource.h"
 #include "tf_gamerules.h"
@@ -572,7 +570,6 @@ void CTF_Presence::UploadStats()
 #endif
 }
 
-#ifndef POSIX
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 static CTFDiscordPresence s_drp;
@@ -1238,5 +1235,3 @@ void CTFDiscordPresence::UpdatePresence( bool bIsDead )
 
 	g_pDiscord->ActivityManager().UpdateActivity( m_Activity, &OnActivityUpdate );
 }
-
-#endif // !POSIX

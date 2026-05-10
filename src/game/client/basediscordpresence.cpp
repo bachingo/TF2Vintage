@@ -2,15 +2,12 @@
 #include "tier1/utlstring.h"
 #include "basediscordpresence.h"
 
-#ifndef POSIX
 #include "discord.h"
 discord::Core *g_pDiscord = NULL;
-#endif
+
 
 ConVar cl_discord_appid( "cl_discord_appid", "451227888230858752", FCVAR_DEVELOPMENTONLY | FCVAR_PROTECTED, "This is for your Client ID for Discord Applications and is unique per sourcemod." );
 ConVar cl_discord_presence_enabled( "cl_discord_presence_enabled", "1", FCVAR_ARCHIVE | FCVAR_NOT_CONNECTED );
-
-#ifndef POSIX
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -78,4 +75,3 @@ void CBaseDiscordPresence::Update( float frametime )
 	if ( gpGlobals->tickcount % 2 )
 		g_pDiscord->RunCallbacks();
 }
-#endif // !POSIX
