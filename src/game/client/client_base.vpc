@@ -74,10 +74,12 @@ $Configuration
 		$SystemLibraries				"iconv" [$OSXALL]
 		$SystemFrameworks				"Carbon" [$OSXALL]
 		$SystemLibraries				"rt;z" [$LINUXALL]
+		$SystemLibraries				"discord_game_sdk" [$LINUX64]
+		$AdditionalLibraryDirectories	"$BASE;$SRCDIR/thirdparty/discord_game_sdk/lib/x86_64" [$LINUX64]
 		$IgnoreImportLibrary			"TRUE"
 		$AdditionalDependencies			"$BASE winmm.lib"	[$WINDOWS]
 		$AdditionalDependencies			"$BASE wsock32.lib Ws2_32.lib" [$BUILD_REPLAY&&$WINDOWS]
-		$AdditionalDependencies			"$BASE $SRCDIR/thirdparty/discord_game_sdk/lib/x86_64/libdiscord_game_sdk.so -Wl,-rpath,$$ORIGIN" [$LINUX64]
+		$AdditionalDependencies			"$BASE -Wl,-rpath,$$ORIGIN" [$LINUX64]
 	}
 
 	$PostBuildEvent [!$ANALYZE && $WIN32]
