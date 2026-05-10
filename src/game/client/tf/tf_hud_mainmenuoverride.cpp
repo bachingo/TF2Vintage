@@ -1441,11 +1441,6 @@ void CHudMainMenuOverride::OnUpdateMenu( void )
 		}
 		if ( m_pMainMenuWebUi )
 		{
-			if ( GetGameStateManager()->IsReady() )
-			{
-				GetGameStateManager()->MarkUIReady();
-				m_pMainMenuWebUi->LoadInteractivePanel();
-			}
 			if ( !m_pMainMenuWebUi->IsVisible() )
 			{
 				m_pMainMenuWebUi->SetVisible( true );
