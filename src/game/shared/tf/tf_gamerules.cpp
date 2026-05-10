@@ -19895,7 +19895,7 @@ void CTFGameRules::UpdatePeriodicEvent( CTFPlayer *pPlayer, eEconPeriodicScoreEv
 	GCClientSystem()->BSendMessage( msg );
 }
 
-#endif // GAME_DLL
+
 
 #ifndef CLIENT_DLL
 
@@ -24756,5 +24756,3 @@ void CTFGameRules::RegisterScriptFunctions()
 
 	g_pScriptVM->RegisterInstance( &PlayerVoiceListener(), "PlayerVoiceListener" );
 }
-
-#endif // GAME_DLL

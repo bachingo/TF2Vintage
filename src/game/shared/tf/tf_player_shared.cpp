@@ -110,11 +110,11 @@ static ConVar tf_demoman_charge_frametime_scaling( "tf_demoman_charge_frametime_
 static const float YAW_CAP_SCALE_MIN = 0.2f;
 static const float YAW_CAP_SCALE_MAX = 2.f;
 
-#define TF_DAMAGE_CRITMOD_DAMAGE_NEW			"800"
-#define TF_DAMAGE_CRITMOD_MAXMULT_NEW			"6"
+#define TF_DAMAGE_CRITMOD_DAMAGE_NEW			800
+#define TF_DAMAGE_CRITMOD_MAXMULT_NEW			6
 
-#define TF_DAMAGE_CRITMOD_DAMAGE_OLD			"1600"
-#define TF_DAMAGE_CRITMOD_MAXMULT_OLD			"4"
+#define TF_DAMAGE_CRITMOD_DAMAGE_OLD			1600
+#define TF_DAMAGE_CRITMOD_MAXMULT_OLD			4
 
 ConVar tf_halloween_kart_boost_recharge( "tf_halloween_kart_boost_recharge", "5.0f", FCVAR_REPLICATED | FCVAR_CHEAT );
 ConVar tf_halloween_kart_boost_duration( "tf_halloween_kart_boost_duration", "1.5f", FCVAR_REPLICATED | FCVAR_CHEAT );
@@ -6798,7 +6798,7 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon, float 
 		m_flAfterburnDuration = pWeapon ? pWeapon->GetInitialAfterburnDuration() : 0.f;
 
 		// TF2V: Debuff added during Meet Your Match.
-		if !(TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_MEET_YOUR_MATCH))
+		if ( !(TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_MEET_YOUR_MATCH)) )
 		{
 			// Reduces direct healing effectiveness
 			AddCond( TF_COND_HEALING_DEBUFF, m_flAfterburnDuration, pAttacker );
@@ -9652,7 +9652,7 @@ float CTFPlayerShared::GetCritMult( void )
 //-----------------------------------------------------------------------------
 // Purpose: Selects between the pre and post 2009 critical rampup.
 //-----------------------------------------------------------------------------
-bool CTFPlayerShared::TF2VOldCritModel( void );
+bool CTFPlayerShared::TF2VOldCritModel( void )
 {	
 	// TF2V: Crit behavior changes February 2 2009 (Day 505)
 	 return (TFGameRules()->IsAnachronistic(505));
@@ -12894,7 +12894,7 @@ bool CTFPlayer::CanPickupBuilding( CBaseObject *pPickupObject )
 bool CTFPlayer::TryToPickupBuilding()
 {
 	// TF2V: Not added until the Engineer Update.
-	if ( (TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_ENGINEER) ) 
+	if ( (TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_ENGINEER)) ) 
 		return false;
 	
 	if ( m_Shared.IsCarryingObject() )

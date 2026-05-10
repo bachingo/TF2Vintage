@@ -15,6 +15,7 @@
 #include "ienginevgui.h"
 #include "VGuiMatSurface/IMatSystemSurface.h"
 #include "renderparm.h"
+#include "tf_gamerules.h"
 
 DECLARE_BUILD_FACTORY( CBlueprintPanel );
 

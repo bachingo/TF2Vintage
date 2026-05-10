@@ -14366,10 +14366,11 @@ void CTFPlayer::DropAmmoPack( const CTakeDamageInfo &info, bool bEmpty, bool bDi
 	bool bIsSuicide = info.GetAttacker() ? info.GetAttacker()->GetTeamNumber() == GetTeamNumber() : false;
 
 	// TF2V: Behavior is different Pre and Post Gun Mettle.
-	if ( TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) );
+	CTFAmmoPack* pAmmoPack;
+	if ( TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) )
 	{
 		// Create the ammo pack.
-		CTFAmmoPack* pAmmoPack = CTFAmmoPack::Create(vecPackOrigin, vecPackAngles, this, pszWorldModel);
+		pAmmoPack = CTFAmmoPack::Create(vecPackOrigin, vecPackAngles, this, pszWorldModel);
 	}
 	else
 	{
@@ -14380,7 +14381,7 @@ void CTFPlayer::DropAmmoPack( const CTakeDamageInfo &info, bool bEmpty, bool bDi
 			pDroppedWeapon->InitDroppedWeapon( this, pDropWeaponProps, false, bIsSuicide );
 		}
 		// Create the ammo pack.
-		CTFAmmoPack *pAmmoPack = CTFAmmoPack::Create( vecPackOrigin, vecPackAngles, this, "models/items/ammopack_medium.mdl" );
+		pAmmoPack = CTFAmmoPack::Create( vecPackOrigin, vecPackAngles, this, "models/items/ammopack_medium.mdl" );
 	}
 	
 	Assert( pAmmoPack );

@@ -6,6 +6,7 @@
 
 #include "cbase.h"
 #include "tf_weapon_fireaxe.h"
+#include "tf_gamerules.h"
 
 //=============================================================================
 //

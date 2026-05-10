@@ -337,11 +337,6 @@ void CHudMainMenuOverride::OnTick()
 	bool bBackgroundLevel = engine->IsLevelMainMenuBackground();
 	bool bInGame = engine->IsInGame() && !bBackgroundLevel;
 	bool bIsConnected = engine->IsConnected() && !bBackgroundLevel;
-#if defined( REPLAY_ENABLED )
-	bool bInReplay = g_pEngineClientReplay->IsPlayingReplayDemo();
-#else
-	bool bInReplay = false;
-#endif
 
 	const bool bGameUIVisible = ( bInGame && !bBackgroundLevel ) ? enginevgui->IsGameUIVisible() : ( !bIsConnected || bBackgroundLevel );
 	if ( m_bGameUIVisible != bGameUIVisible )
@@ -1446,6 +1441,11 @@ void CHudMainMenuOverride::OnUpdateMenu( void )
 		}
 		if ( m_pMainMenuWebUi )
 		{
+			if ( GetGameStateManager()->IsReady() )
+			{
+				GetGameStateManager()->MarkUIReady();
+				m_pMainMenuWebUi->LoadInteractivePanel();
+			}
 			if ( !m_pMainMenuWebUi->IsVisible() )
 			{
 				m_pMainMenuWebUi->SetVisible( true );
