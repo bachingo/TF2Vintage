@@ -77,6 +77,7 @@ $Configuration
 		$IgnoreImportLibrary			"TRUE"
 		$AdditionalDependencies			"$BASE winmm.lib"	[$WINDOWS]
 		$AdditionalDependencies			"$BASE wsock32.lib Ws2_32.lib" [$BUILD_REPLAY&&$WINDOWS]
+		$AdditionalDependencies			"$BASE $SRCDIR/thirdparty/discord_game_sdk/lib/x86_64/libdiscord_game_sdk.so -Wl,-rpath,$$ORIGIN" [$LINUX64]
 	}
 
 	$PostBuildEvent [!$ANALYZE && $WIN32]
@@ -1355,7 +1356,6 @@ $Project
 		
 		$Libexternal $LIBCOMMON/libcrypto [$OSXALL]
 		$Libexternal "$SRCDIR\lib\common\$CRYPTOPPDIR\libcryptopp" [$LINUXALL&&!$SOURCESDK]
-		$Libexternal "$SRCDIR/thirdparty/discord_game_sdk/lib/x86_64/libdiscord_game_sdk.so" [$LINUX64]
 		$Lib   "libz" [$WINDOWS]
 
 		//$Libexternal	libz [$LINUXALL]
