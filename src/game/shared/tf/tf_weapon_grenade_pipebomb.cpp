@@ -1091,7 +1091,9 @@ int CTFGrenadePipebombProjectile::OnTakeDamage( const CTakeDamageInfo &info )
 			if ( info.GetDamageType() & (DMG_BULLET|DMG_MELEE) )
 			{
 				vecForce *= tf_grenade_forcefrom_bullet.GetFloat();
-				bBreakPipes = true;
+				// TF2V: This was added December 11, 2008. (Day 452)
+				if ( !(TFGameRules->IsAnachronistic(452)) )
+					bBreakPipes = true;
 			}
 			if ( info.GetDamageType() & DMG_SONIC )
 			{
@@ -1100,7 +1102,9 @@ int CTFGrenadePipebombProjectile::OnTakeDamage( const CTakeDamageInfo &info )
 			else if ( info.GetDamageType() & DMG_BUCKSHOT )
 			{
 				vecForce *= tf_grenade_forcefrom_buckshot.GetFloat();
-				bBreakPipes = true;
+				// TF2V: This was added December 11, 2008. (Day 452)
+				if ( !(TFGameRules->IsAnachronistic(452)) )
+					bBreakPipes = true;
 			}
 			else if ( info.GetDamageType() & DMG_BLAST )
 			{
