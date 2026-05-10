@@ -77,7 +77,8 @@ $Configuration
 		$IgnoreImportLibrary			"TRUE"
 		$AdditionalDependencies			"$BASE winmm.lib"	[$WINDOWS]
 		$AdditionalDependencies			"$BASE wsock32.lib Ws2_32.lib" [$BUILD_REPLAY&&$WINDOWS]
-		$AdditionalDependencies			"$BASE $SRCDIR/thirdparty/discord_game_sdk/lib/x86_64/discord_game_sdk.so" [$LINUX64]
+		$AdditionalDependencies			"$BASE -L$SRCDIR/thirdparty/discord_game_sdk/lib/x86_64 -ldiscord_game_sdk" [$LINUX64]
+		$AdditionalDependencies			"$BASE -Wl,-rpath,$$ORIGIN" [$LINUX64]
 	}
 
 	$PostBuildEvent [!$ANALYZE && $WIN32]
