@@ -4,6 +4,7 @@
 #pragma once
 #endif
 
+#include <cstdint>  // Required for Discord SDK on Linux - provides std::int64_t, std::uint32_t, etc.
 #include "irichpresenceclient.h"
 
 // The maximum length for string fields in Discord's API
