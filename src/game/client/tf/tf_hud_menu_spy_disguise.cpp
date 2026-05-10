@@ -16,6 +16,7 @@
 #include <vgui/IVGui.h>
 #include "c_baseobject.h"
 #include "inputsystem/iinputsystem.h"
+#include "tf_gamerules.h"
 
 #ifdef SIXENSE
 #include "sixense/in_sixense.h"
