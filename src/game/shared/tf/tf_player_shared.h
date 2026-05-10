@@ -11,7 +11,7 @@
 
 #include "networkvar.h"
 #include "tf_shareddefs.h"
-#include "tf_weaponbase.h"
+#include "tf_aponbase.h"
 #include "basegrenade_shared.h"
 #include "SpriteTrail.h"
 #include "tf_condition.h"
@@ -934,8 +934,7 @@ private:
 	void OnRemoveHalloweenHellHeal( void );
 
 	float GetCritMult( void );
-	// TF2V: Crit behavior changes February 2 2009 (Day 505)
-	bool  TF2VOldCritModel( void ) { return TFGameRules()->IsAnachronistic(505); }
+	bool  TF2VOldCritModel( void ) {;
 #ifdef GAME_DLL
 	
 	void  UpdateCritMult( void );

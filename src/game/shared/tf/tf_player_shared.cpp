@@ -9649,6 +9649,15 @@ float CTFPlayerShared::GetCritMult( void )
 	return flRemapCritMul;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Selects between the pre and post 2009 critical rampup.
+//-----------------------------------------------------------------------------
+bool CTFPlayerShared::TF2VOldCritModel( void );
+{	
+	// TF2V: Crit behavior changes February 2 2009 (Day 505)
+	 return (TFGameRules()->IsAnachronistic(505));
+}
+
 #ifdef GAME_DLL
 //-----------------------------------------------------------------------------
 // Purpose: 
