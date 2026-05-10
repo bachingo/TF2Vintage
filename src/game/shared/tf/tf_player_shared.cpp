@@ -9638,7 +9638,7 @@ void CTFPlayerShared::SetAirDash( int iAirDash )
 float CTFPlayerShared::GetCritMult( void )
 {
 	const int iCritMult = m_iCritMult.Get();
-	const float flMaxMult = (float)( TF2VOldCritModel() ? TF_DAMAGE_CRITMOD_DAMAGE_OLD : TF_DAMAGE_CRITMOD_DAMAGE_NEW );
+	const float flMaxMult = TF2VOldCritModel() ? TF_DAMAGE_CRITMOD_DAMAGE_OLD : TF_DAMAGE_CRITMOD_DAMAGE_NEW;
 	float flRemapCritMul = RemapValClamped( iCritMult, 0, 255, 1.0, flMaxMult );
 /*#ifdef CLIENT_DLL
 	Msg("CLIENT: Crit mult %.2f - %d\n",flRemapCritMul, iCritMult );
@@ -11126,7 +11126,7 @@ float CTFPlayer::TeamFortress_CalculateMaxSpeed( bool bIgnoreSpecialAbility /*= 
 			if ( playerclass == TF_CLASS_HEAVYWEAPONS )
 			{
 				// TF2V: This was 80Hu/s before April 28 2010. Changed to 110Hu/s. (Day 955)
-				if ( (TFGameRules->IsAnachronistic(955) )
+				if ( (TFGameRules->IsAnachronistic(955) ) )
 				{
 					flAimMax = 80;
 				}
