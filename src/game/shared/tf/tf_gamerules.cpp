@@ -11388,7 +11388,30 @@ bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, 
 	return false;
 }
 
-#ifdef GAME_DLL
+
+
+
+Vector CTFGameRules::VecItemRespawnSpot( CItem *pItem )
+{
+	return pItem->GetOriginalSpawnOrigin();
+}
+
+QAngle CTFGameRules::VecItemRespawnAngles( CItem *pItem )
+{
+	return pItem->GetOriginalSpawnAngles();
+}
+
+int CTFGameRules::ItemShouldRespawn( CItem *pItem )
+{
+	return BaseClass::ItemShouldRespawn( pItem );
+}
+
+float CTFGameRules::FlItemRespawnTime( CItem *pItem )
+{
+	return ITEM_RESPAWN_TIME;
+}
+
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -19895,7 +19918,7 @@ void CTFGameRules::UpdatePeriodicEvent( CTFPlayer *pPlayer, eEconPeriodicScoreEv
 	GCClientSystem()->BSendMessage( msg );
 }
 
-
+#endif // GAME_DLL
 
 #ifndef CLIENT_DLL
 
