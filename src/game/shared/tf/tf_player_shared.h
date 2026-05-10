@@ -11,7 +11,6 @@
 
 #include "networkvar.h"
 #include "tf_shareddefs.h"
-#include "tf_gamerules.h"
 #include "tf_weaponbase.h"
 #include "basegrenade_shared.h"
 #include "SpriteTrail.h"
