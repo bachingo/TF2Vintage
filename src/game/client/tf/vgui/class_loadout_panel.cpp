@@ -23,7 +23,7 @@
 
 #include "tf_gamerules.h"
 
-//extern ConVar tf_respawn_on_loadoutchanges;
+extern ConVar tf_respawn_on_loadoutchanges;
 
 ConVar tf_show_preset_explanation_in_class_loadout( "tf_show_preset_explanation_in_class_loadout", "1", FCVAR_HIDDEN | FCVAR_CLIENTDLL | FCVAR_ARCHIVE );
 ConVar tf_show_taunt_explanation_in_class_loadout( "tf_show_taunt_explanation_in_class_loadout", "1", FCVAR_HIDDEN | FCVAR_CLIENTDLL | FCVAR_ARCHIVE );
@@ -1021,17 +1021,12 @@ void CClassLoadoutPanel::OnCancelSelection( void )
 //-----------------------------------------------------------------------------
 void CClassLoadoutPanel::RespawnPlayer()
 {
-#ifdef INVENTORY_VIA_WEBAPI
-	GTFGCClientSystem()->LocalInventoryChanged();
-#else
-	// UNDONE: we always do this to notify players of their loadout change. respawn is now checked server-side.
-	//if ( tf_respawn_on_loadoutchanges.GetBool() )
+	if ( tf_respawn_on_loadoutchanges.GetBool() )
 	{
 		// Tell the GC to tell server that we should respawn if we're in a respawn room
 		GCSDK::CGCMsg< MsgGCEmpty_t > msg( k_EMsgGCRespawnPostLoadoutChange );
 		GCClientSystem()->BSendMessage( msg );
 	}
-#endif
 }
 
 //-----------------------------------------------------------------------------
