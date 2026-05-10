@@ -748,6 +748,7 @@ bool CTFGrenadePipebombProjectile::DetonateStickies()
 		if ( !(TFGameRules->IsAnachronistic(TF2V_DAY_SMISSMAS_2014)) && (TFGameRules->IsAnachronistic(2472)) )
 		{
 			// 50% damage at arm time, 100% at 2 seconds later
+			float flArmTime = tf_grenadelauncher_livetime.GetFloat();
 			float flDamageRamp = RemapValClamped( gpGlobals->curtime - m_flCreationTime, flArmTime, flArmTime + tf_sticky_radius_ramp_time.GetFloat(), 0.5f, 1.0f );
 			pGrenade->SetDamage( pGrenade->GetDamage() * flDamageRamp );
 		}
