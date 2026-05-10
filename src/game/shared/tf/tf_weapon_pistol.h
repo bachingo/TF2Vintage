@@ -45,10 +45,14 @@ public:
 	DECLARE_DATADESC();
 #endif
 
-	CTFPistol() {}
+	CTFPistol();
 	~CTFPistol() {}
 
+	virtual void	ItemPostFrame( void );
+	virtual void	PrimaryAttack( void );
+
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_PISTOL; }
+	CNetworkVar( float,	m_flSoonestPrimaryAttack );
 
 private:
 	CTFPistol( const CTFPistol & ) {}

@@ -26,6 +26,11 @@
 IMPLEMENT_NETWORKCLASS_ALIASED( TFPistol, DT_WeaponPistol )
 
 BEGIN_NETWORK_TABLE( CTFPistol, DT_WeaponPistol )
+#if !defined( CLIENT_DLL )
+	SendPropTime( SENDINFO( m_flSoonestPrimaryAttack ) ),
+#else
+	RecvPropTime( RECVINFO( m_flSoonestPrimaryAttack ) ),
+#endif
 END_NETWORK_TABLE()
 
 BEGIN_PREDICTION_DATA( CTFPistol )
@@ -65,6 +70,61 @@ END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_handgun_scout_primary, CTFPistol_ScoutPrimary );
 PRECACHE_WEAPON_REGISTER( tf_weapon_handgun_scout_primary );
+
+// TF2V: Live TF2 doesn't use these anymore as they purely pull from the baseclasses, but we do:
+// We need to emulate the pre-Classless firing rate.
+
+//=============================================================================
+//
+// Weapon Pistol functions.
+//
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CTFPistol::CTFPistol( void )
+{
+	m_flSoonestPrimaryAttack = gpGlobals->curtime;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Allows firing as fast as button is pressed
+//-----------------------------------------------------------------------------
+void CTFPistol::ItemPostFrame( void )
+{
+	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
+	if ( pOwner == NULL )
+		return;
+
+	BaseClass::ItemPostFrame();
+
+	if ( m_bInReload )
+		return;
+
+	// TF2V: And here's the special part we had to copy the functions over for.
+	// This feature was patched in the Classless update.
+	if ( (TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_CLASSLESS) ) )
+	{
+		//Allow a refire as fast as the player can click
+		if ( ( ( pOwner->m_nButtons & IN_ATTACK ) == false ) && ( m_flSoonestPrimaryAttack < gpGlobals->curtime ) )
+		{
+			m_flNextPrimaryAttack = gpGlobals->curtime - 0.1f;
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFPistol::PrimaryAttack( void )
+{
+	m_flSoonestPrimaryAttack = gpGlobals->curtime + PISTOL_FASTEST_REFIRE_TIME;
+
+	if ( !CanAttack() )
+		return;
+
+	BaseClass::PrimaryAttack();
+}
 
 
 //-----------------------------------------------------------------------------
