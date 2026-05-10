@@ -1,9 +1,0 @@
-SpriteCard
-{
-	$basetexture		"effects/softglow"
-	$vertexcolor		1
-	$vertexalpha		1
-	$additive			1
-
-	$depthblend		0
-}
