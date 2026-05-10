@@ -934,7 +934,7 @@ private:
 	void OnRemoveHalloweenHellHeal( void );
 
 	float GetCritMult( void );
-	bool  TF2VOldCritModel( void ) {;
+	bool  TF2VOldCritModel( void );
 #ifdef GAME_DLL
 	
 	void  UpdateCritMult( void );
