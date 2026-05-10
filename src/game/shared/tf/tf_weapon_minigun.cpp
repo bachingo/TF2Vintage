@@ -1027,8 +1027,8 @@ float CTFMinigun::GetProjectileDamage( void )
 	if ( !(TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_LOVE_AND_WAR)) )
 	{
 		// How long have we been spun up - sans the min period required to fire
-		float flPreFireWindUp;
-		float flSpinTime;
+		float flPreFireWindUp = 0;
+		float flSpinTime = 0.f;
 		
 		if ( !(TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_LOVE_AND_WAR)) && (TFGameRules()->IsAnachronistic(2487)) )
 		{
@@ -1041,7 +1041,7 @@ float CTFMinigun::GetProjectileDamage( void )
 			flPreFireWindUp = GetSpinningUpAtDuration();
 			flSpinTime = Max( flPreFireWindUp, GetFiringDuration() );
 		}
-		else if ( !(TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_JUNGLE_INFERNO)) )
+		else // if ( !(TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_JUNGLE_INFERNO)) )
 		{
 			// Jungle Inferno: Only counts the first spin up time, so Heavy can now burst fire.
 			flPreFireWindUp = GetWindUpDuration() - TF_MINIGUN_SPINUP_TIME;
@@ -1087,7 +1087,7 @@ float CTFMinigun::GetWeaponSpread( void )
 			flPreFireWindUp = GetSpinningUpAtDuration();
 			flSpinTime = Max( flPreFireWindUp, GetFiringDuration() );
 		}
-		if ( !(TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_JUNGLE_INFERNO)) )
+		else // if ( !(TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_JUNGLE_INFERNO)) )
 		{
 			// Jungle Inferno: Only counts the first spin up time, so Heavy can now burst fire.
 			flPreFireWindUp = GetWindUpDuration() - TF_MINIGUN_SPINUP_TIME;
