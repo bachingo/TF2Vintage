@@ -38,7 +38,7 @@ ConVar tf_minigun_spinup_time("tf_minigun_spinup_time", DEFAULT_TF_MINIGUN_SPINU
 
 #define TF_MINIGUN_SPINUP_TIME tf_minigun_spinup_time.GetFloat()
 
-#define TF_MINIGUN_PENALTY_PERIOD "1"
+#define TF_MINIGUN_PENALTY_PERIOD 1.f
 
 //=============================================================================
 //
@@ -1041,7 +1041,7 @@ float CTFMinigun::GetProjectileDamage( void )
 			flPreFireWindUp = GetSpinningUpAtDuration();
 			flSpinTime = Max( flPreFireWindUp, GetFiringDuration() );
 		}
-		if !(TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_JUNGLE_INFERNO))
+		else if ( !(TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_JUNGLE_INFERNO)) )
 		{
 			// Jungle Inferno: Only counts the first spin up time, so Heavy can now burst fire.
 			flPreFireWindUp = GetWindUpDuration() - TF_MINIGUN_SPINUP_TIME;
