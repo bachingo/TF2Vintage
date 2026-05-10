@@ -8,6 +8,7 @@
 #include "cbase.h"
 #include "teamplay_round_timer.h"
 #include "teamplayroundbased_gamerules.h"
+#include "tf_gamerules.h"
 
 #ifdef CLIENT_DLL
 #include "iclientmode.h"
@@ -15,7 +16,6 @@
 #include "c_playerresource.h"
 #include "c_team_objectiveresource.h"
 #if defined( TF_CLIENT_DLL )
-#include "tf_gamerules.h"
 #include "c_tf_player.h"
 #endif // TF_CLIENT_DLL
 #else
@@ -1019,7 +1019,7 @@ void CTeamRoundTimer::RoundTimerThink( void )
 				else
 				{
 					// TF2V: Overtime nag was always on prior to August 14, 2009. (Day 698)
-					if ( ( tf_overtime_nag.GetBool() || TFGameRules->IsAnachronistic(698) ) && ( gpGlobals->curtime > m_flNextOvertimeNag ) )
+					if ( ( tf_overtime_nag.GetBool() || (TFGameRules->IsAnachronistic(698)) ) && ( gpGlobals->curtime > m_flNextOvertimeNag ) )
 					{
 						m_flNextOvertimeNag = gpGlobals->curtime + 1.0f;
 

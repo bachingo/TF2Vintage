@@ -18,6 +18,7 @@
 #include "tools/bonelist.h"
 #include <KeyValues.h>
 #include "hltvcamera.h"
+#include "tf_gamerules.h"
 #ifdef TF_CLIENT_DLL
 	#include "c_tf_player.h"
 	#include "tf_weaponbase.h"

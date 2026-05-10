@@ -9,6 +9,7 @@
 #include "shot_manipulator.h"
 #include "tf_weapon_flamethrower.h"
 
+
 #ifdef GAME_DLL
 #include "tf_player.h"
 #include "tf_weapon_compound_bow.h"
@@ -572,7 +573,7 @@ float CTFFlameManager::GetFlameDamageScale( const tf_point_t* pPoint, CTFPlayer 
 		}
 
 		// TF2V: Damage scaling was added in Blue Moon.
-		if ( !(TFGameRules->IsAnachronistic(TF2V_DAY_SPRING_2018) )
+		if ( !(TFGameRules->IsAnachronistic(TF2V_DAY_SPRING_2018)) )
 			flDamageScale *= RemapValClamped( flHeat, tf_flame_burn_index_per_collide_remap_x, tf_flame_burn_index_per_collide_remap_y, tf_flame_burn_index_damage_scale_min, 1.f ) * flWarmup;
 	}
 

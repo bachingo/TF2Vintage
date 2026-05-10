@@ -8,6 +8,7 @@
 #include "c_team_train_watcher.h"
 #include "igameevents.h"
 #include "c_team_objectiveresource.h"
+#include "tf_gamerules.h"
 
 #ifdef TF_CLIENT_DLL
 #include "tf_shareddefs.h"

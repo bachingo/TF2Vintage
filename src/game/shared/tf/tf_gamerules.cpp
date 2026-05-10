@@ -1167,7 +1167,7 @@ ConVar tf_gamemode_misc ( "tf_gamemode_misc", "0", FCVAR_REPLICATED | FCVAR_NOTI
 ConVar tf_bot_count( "tf_bot_count", "0", FCVAR_NOTIFY | FCVAR_DEVELOPMENTONLY );
 
 // Update TF2V_ERA_DAY_MAX when needed. Current value: 6559.
-ConVar tf2v_era ( "tf2v_era", TF2V_ERA_DAY_MAX, FCVAR_REPLICATED | FCVAR_NOTIFY , "TF2V's Master Convar used to control the date of TF2V. Applies to server on round restarts.", true, TF2V_ERA_DAY_MIN, true, TF2V_ERA_DAY_MAX );
+ConVar tf2v_era ( "tf2v_era", 6559, FCVAR_REPLICATED | FCVAR_NOTIFY , "TF2V's Master Convar used to control the date of TF2V. Applies to server on round restarts.", true, 1, true, 6659 );
 
 #ifdef _DEBUG
 ConVar tf_debug_ammo_and_health( "tf_debug_ammo_and_health", "0", FCVAR_CHEAT );
@@ -3169,7 +3169,7 @@ bool CTFGameRules::StopWatchShouldBeTimedWin( bool bSkipForMultiSeries )
 bool CTFGameRules::IsAttackDefenseMode( void )
 {
 #ifdef GAME_DLL
-	CTeamControlPointMaster *pMaster = g_hControlPointMasters.Count() ? g_hControlPointMasters[0] : NULL;
+	CTeamControlPointMaster* pMaster = g_hControlPointMasters.Count() ? g_hControlPointMasters[0] : NULL;
 	bool bRetVal = !HasMultipleTrains() && ( tf_gamemode_payload.GetBool() || ( pMaster && ( pMaster->PlayingMiniRounds() || pMaster->ShouldSwitchTeamsOnRoundWin() ) ) );
 
 	tf_attack_defend_map.SetValue( bRetVal );
@@ -16946,7 +16946,6 @@ void CTFGameRules::ClientCommandKeyValues( edict_t *pEntity, KeyValues *pKeyValu
 			{
 				pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_MVM_UPGRADE_COMPLETE );
 			}
-
 		}
 		else if ( FStrEq( pszCommand, "MVM_Revive_Response" ) )
 		{
