@@ -8,6 +8,7 @@
 #include "cbase.h"
 
 #include "tf_dropped_weapon.h"
+#include "tf_gamerules.h"
 
 #ifdef CLIENT_DLL
 #include "c_tf_player.h"
