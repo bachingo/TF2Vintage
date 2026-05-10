@@ -105,6 +105,9 @@ jobs:
 
           # client.so / server.so — build copies these to game/mod_tf/bin/linux64/
           find game/mod_tf/bin/linux64/ -maxdepth 1 -name "*.so"             -exec cp {} game/tf2vintage/bin/linux64/ \;
+          
+          # discord_game_sdk.so — take from src\thirdparty\discord_game_sdk\lib\x86_64
+          find src/thirdparty/discord_game_sdk/lib/x86_64/ -maxdepth 1 -name "*.so"             -exec cp {} game/tf2vintage/bin/linux64/ \;
 
           # The launcher links to ../game/tf2vintage_linux64 (relative to src/),
           # so it lands at the repo root as game/tf2vintage_linux64 — not inside
