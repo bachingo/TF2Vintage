@@ -73,7 +73,6 @@ bool ShouldUseMatchHUD()
 		return true;
 
 	return tf_use_match_hud.GetBool();
-#endif
 }
 
 const int g_nMaxSupportedRounds = 5;
