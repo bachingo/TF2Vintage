@@ -153,8 +153,12 @@ jobs:
           copy /Y src\game\server\%CFG%_mod_tf\server.pdb game\tf2vintage\bin\x64\ 2>nul
 
           :: crash_handler.dll
-          copy /Y src\thirdparty\crash_handler\%CFG%tf2vintage\x64\crash_handler.dll game\tf2vintage\bin\x64\
-          copy /Y src\thirdparty\crash_handler\%CFG%tf2vintage\x64\crash_handler.pdb game\tf2vintage\bin\x64\ 2>nul
+          :: copy /Y src\thirdparty\crash_handler\%CFG%tf2vintage\x64\crash_handler.dll game\tf2vintage\bin\x64\
+          :: copy /Y src\thirdparty\crash_handler\%CFG%tf2vintage\x64\crash_handler.pdb game\tf2vintage\bin\x64\ 2>nul
+          
+          :: discord_game_sdk.dll
+          copy /Y src\thirdparty\discord_game_sdk\lib\x86_64\discord_game_sdk.dll game\tf2vintage\bin\x64\
+          
 
           :: launcher_main post-build copies the .exe to game\ (repo root).
           :: Move it into game\tf2vintage\ where the upload step expects it.

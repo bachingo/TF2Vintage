@@ -10,7 +10,6 @@
 
 $Group "gamedlls"
 {
-	"crash_handler"
 	"client"
 	"server"
 }
