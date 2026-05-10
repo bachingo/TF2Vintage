@@ -928,6 +928,12 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 		CommandLine()->AppendParm( "-insecure", nullptr );
 	}
 	
+	// Append -novic since we don't ship with media.
+	if ( !CommandLine()->FindParm( "-novid" ) )
+	{
+		CommandLine()->AppendParm( "-novid", nullptr );
+	}
+	
 	InitCRTMemDebug();
 	MathLib_Init( 2.2f, 2.2f, 0.0f, 2.0f );
 
