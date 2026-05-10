@@ -176,6 +176,7 @@ bool CTFKnife::DecreaseRegenerationTime( float value, bool bForce )
 //-----------------------------------------------------------------------------
 CTFPlayer* CTFKnife::TraceBackstab(CTFPlayer* pOwner)
 {
+	
 	trace_t trace;
 	if ( DoSwingTrace(trace) )
 	{
@@ -237,6 +238,14 @@ void CTFKnife::PrimaryAttack( void )
 				{
 					// store the victim to compare when we do the damage
 					m_hBackstabVictim.Set( pTarget );
+
+					// TF2V: Backstab logic changed Feb 19 2008. (Day 156)
+					if ( (TFGameRules->IsAnachronistic(156)) )
+					{
+						// this will be a backstab, do the strong anim
+						m_iWeaponMode = TF_WEAPON_SECONDARY_MODE;
+					}
+
 					iBackstabVictimHealth = Max( m_hBackstabVictim->GetHealth(), 75 );
 					nBackStabVictimRuneType = m_hBackstabVictim->m_Shared.GetCarryingRuneType();
 				}
@@ -462,9 +471,19 @@ bool CTFKnife::CanPerformBackstabAgainstTarget( CTFPlayer *pTarget, bool bInAtta
 		}
 	}
 	
-	// Behind and facing target's back?
-	if ( IsBehindAndFacingTarget( pTarget, bInAttack ) )
-		return true;
+	// TF2V: Backstab logic changed Feb 19 2008. (Day 156)
+	if ( (TFGameRules->IsAnachronistic(156)) )
+	{
+		// Old logic: Behind target?
+		if ( IsBehindTarget( trace.m_pEnt ) )
+			return true;
+	}
+	else
+	{
+		// New logic: Behind and facing target's back?
+		if ( IsBehindAndFacingTarget( pTarget, bInAttack ) )
+			return true;
+	}
 
 	// Is target (bot) disabled via a sapper?
 	if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() && pTarget->GetTeamNumber() == TF_TEAM_PVE_INVADERS )
@@ -477,6 +496,31 @@ bool CTFKnife::CanPerformBackstabAgainstTarget( CTFPlayer *pTarget, bool bInAtta
 	}
 
 	return false;
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Determine if we are behind our target. Pre-2008 backstab logic.
+//-----------------------------------------------------------------------------
+bool CTFKnife::IsBehindTarget( CBaseEntity *pTarget )
+{
+	Assert( pTarget );
+
+	// Get the forward view vector of the target, ignore Z
+	Vector vecVictimForward;
+	AngleVectors( pTarget->EyeAngles(), &vecVictimForward, NULL, NULL );
+	vecVictimForward.z = 0.0f;
+	vecVictimForward.NormalizeInPlace();
+
+	// Get a vector from my origin to my targets origin
+	Vector vecToTarget;
+	vecToTarget = pTarget->WorldSpaceCenter() - GetOwner()->WorldSpaceCenter();
+	vecToTarget.z = 0.0f;
+	vecToTarget.NormalizeInPlace();
+
+	float flDot = DotProduct( vecVictimForward, vecToTarget );
+
+	return ( flDot > -0.1 );
 }
 
 //-----------------------------------------------------------------------------
@@ -636,6 +680,11 @@ void CTFKnife::ProcessDisguiseImpulse( void )
 //-----------------------------------------------------------------------------
 void CTFKnife::BackstabVMThink( void )
 {
+	// TF2V: Backstab logic changed Feb 19 2008. (Day 156)
+	// We don't have raising/lowering the knife prior.
+	if ( (TFGameRules->IsAnachronistic(156)) )
+		return;
+
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
 	if ( !pPlayer )
 		return;

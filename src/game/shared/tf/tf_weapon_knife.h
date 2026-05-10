@@ -54,6 +54,7 @@ public:
 
 	bool				SendWeaponAnim( int iActivity );
 
+	bool				IsBehindTarget( CBaseEntity *pTarget );	// This is the OG backstab code.
 	bool				CanPerformBackstabAgainstTarget( CTFPlayer *pTarget, bool bInAttack = false );		// "backstab" sometimes means "frontstab"
 	bool				IsBackstab( void ) { return (m_hBackstabVictim.Get() != NULL); }
 	void				BackstabBlocked( void );
