@@ -162,6 +162,7 @@ private:
 	float			m_flNextFiringSpeech;
 	float			m_flStartedFiringAt;
 	float			m_flStartedWindUpAt;
+	float			m_flStartedSpinningUpAt;
 	float	m_flBarrelCurrentVelocity;
 	float	m_flBarrelTargetVelocity;
 	int		m_iBarrelBone;
