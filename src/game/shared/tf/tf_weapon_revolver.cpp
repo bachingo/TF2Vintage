@@ -7,6 +7,7 @@
 #include "tf_fx_shared.h"
 #include "datamap.h"
 #include "tf_weaponbase_gun.h"
+#include "tf_gamerules.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
