@@ -283,9 +283,8 @@ ConVar sv_vote_late_join_time( "sv_vote_late_join_time", "90", FCVAR_NONE, "Grac
 ConVar sv_vote_late_join_cooldown( "sv_vote_late_join_cooldown", "300", FCVAR_NONE, "Length of the vote-creation cooldown when joining the server after the grace period has expired" );
 
 
-ConVar tf2v_disable_cosmetics( "tf2v_disable_cosmetics", "0", FCVAR_ARCHIVE, "Allows servers to opt out of the cosmetic system entirely.", true, 0, true, 1 );
-ConVar tf2v_alternate_war_result( "tf2v_alternate_war_result", "0", FCVAR_ARCHIVE, "Affects who receives the Gunboats for use. 0 - Soldier Only (canon), 1 - Demoman Only (alternate), 2 - Both Soldier and Demoman", true, 0, true, 2 );
-
+ConVar tf2v_disable_cosmetics( "tf2v_disable_cosmetics", "0", FCVAR_ARCHIVE, "Allows servers to opt out of the cosmetic system entirely. 0 - Cosmetics on, 1 - Cosmetics off. Default: 0", true, 0, true, 1 );
+ConVar tf2v_alternate_war_result( "tf2v_alternate_war_result", "0", FCVAR_ARCHIVE | FCVAR_HIDDEN, "Affects who receives the Gunboats for use. 0 - Soldier Only (canon), 1 - Demoman Only (alternate), 2 - Both Soldier and Demoman. Default: 0", true, 0, true, 2 );
 
 
 extern ConVar tf_voice_command_suspension_mode;
@@ -5401,7 +5400,7 @@ CEconItemView *CTFPlayer::GetLoadoutItem( int iClass, int iSlot, bool bReportWhi
 	if ( pItem && pItem->IsValid() )
 	{
 		// TF2V: Special condition for the Gunboats.
-		if ( ( pItem->GetItemDefIndex() == 133 )
+		if ( pItem->GetItemDefIndex() == 133 )
 		{
 			// Consider a cleaner way of doing this later.
 			if ( iClass == TF_CLASS_DEMOMAN && !tf2v_alternate_war_result.GetInt() )
