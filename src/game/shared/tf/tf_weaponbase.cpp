@@ -702,7 +702,7 @@ int	CTFWeaponBase::GetMaxClip1( void ) const
 	// No information of when this was changed seems to exist.
 	// Based off June 2007 builds, this might have been a shipping error.
 	// I'm assuming this was undocumented patched, but the first patch is September 20th (Day 4).
-	if ( (TFGameRules->IsAnachronistic(4)) )
+	if ( (TFGameRules()->IsAnachronistic(4)) )
 	{
 		// This is a hacky way of making sure Demoman has a 6 shot grenade launcher.
 		if ( GetWeaponID() == TF_WEAPON_GRENADELAUNCHER )
@@ -1379,7 +1379,7 @@ bool CTFWeaponBase::Deploy( void )
 		float flDeployTimeMultiplier = 1.0f;
 		
 		// TF2V: Base swaps were 34% slower prior to Tough Break. (0.67s->0.5s)
-		if ( TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK) )
+		if ( TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK) )
 			flDeployTimeMultiplier = 1.34f;
 		
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flDeployTimeMultiplier, mult_deploy_time );

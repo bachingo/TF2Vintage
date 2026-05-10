@@ -269,7 +269,7 @@ void CHudMenuEngyBuild::ApplySchemeSettings( IScheme *pScheme )
 		{
 			iCost = GetObjectInfo(iBuilding)->m_Cost;
 			// TF2V: Teleporters cost more prior to Meet Your Match.
-			if ( (TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_MEET_YOUR_MATCH)) )
+			if ( (TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_MEET_YOUR_MATCH)) )
 			{
 				if (iBuilding == OBJ_TELEPORTER)
 				{

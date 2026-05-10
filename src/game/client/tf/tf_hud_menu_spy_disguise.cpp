@@ -308,7 +308,7 @@ int	CHudMenuSpyDisguise::HudElementKeyInput( int down, ButtonCode_t keynum, cons
 		if ( pszCurrentBinding && ( FStrEq( pszCurrentBinding, "disguiseteam" ) || FStrEq( pszCurrentBinding, "+reload" ) ) )
 		{
 			// TF2V: This button didn't work prior to Feb 28 2008. (Day 165)
-			if ( !(TFGameRules->IsAnachronistic(165)) )
+			if ( !(TFGameRules()->IsAnachronistic(165)) )
 				ToggleDisguiseTeam();
 			return 0;
 		}

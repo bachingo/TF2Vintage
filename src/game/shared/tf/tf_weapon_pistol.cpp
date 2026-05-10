@@ -103,7 +103,7 @@ void CTFPistol::ItemPostFrame( void )
 
 	// TF2V: And here's the special part we had to copy the functions over for.
 	// This feature was patched in the Classless update.
-	if ( (TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_CLASSLESS) ) )
+	if ( (TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_CLASSLESS) ) )
 	{
 		//Allow a refire as fast as the player can click
 		if ( ( ( pOwner->m_nButtons & IN_ATTACK ) == false ) && ( m_flSoonestPrimaryAttack < gpGlobals->curtime ) )

@@ -1065,7 +1065,7 @@ bool CTFSniperRifle::CanFireCriticalShot( bool bIsHeadshot, CBaseEntity *pTarget
 			}
 
 			// TF2V: Added Feb 14 2008 (Day 151)
-			if ( !(TFGameRules->IsAnachronistic(151)) )
+			if ( !(TFGameRules()->IsAnachronistic(151)) )
 			{
 				// no crits for 0.2 seconds after starting to zoom
 				if ( ( gpGlobals->curtime - pPlayer->GetFOVTime() ) < 0.2f )

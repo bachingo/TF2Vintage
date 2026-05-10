@@ -397,7 +397,7 @@ void CTFWeaponBuilder::PrimaryAttack( void )
 						playerVector[i]->OnSapperPlaced( pBuiltOnObject );
 
 					// TF2V: Sapping the opposite side of a teleporter was added in Classless.
-					if ( !(TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_CLASSLESS)) )
+					if ( !(TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_CLASSLESS)) )
 					{	
 						// if we just placed a sapper on a teleporter...try to sap the match, too?
 						if ( pBuiltOnObject )

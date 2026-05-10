@@ -106,7 +106,7 @@ bool TeamFortress_ShouldFlipClientViewModel( void )
 		}
 	}
 	// TF2V: Added June 23, 2009 (Day 646)
-	if ( TFGameRules->IsAnachronistic(646) )
+	if ( TFGameRules()->IsAnachronistic(646) )
 		return false;
 	return cl_flipviewmodels.GetBool();
 }
@@ -234,7 +234,7 @@ bool C_BaseViewModel::ShouldFlipViewModel()
 		return pWeapon->m_bFlipViewModel != TeamFortress_ShouldFlipClientViewModel();
 	}
 	// TF2V: Added June 23, 2009 (Day 646)
-	if ( TFGameRules->IsAnachronistic(646) )
+	if ( TFGameRules()->IsAnachronistic(646) )
 		return false;
 	return cl_flipviewmodels.GetBool(); // Some viewmodels don't have a weapon associated, and are thus default to non-flipped.
 #endif

@@ -164,7 +164,7 @@ int	CTFGrenadePipebombProjectile::GetDamageType( void )
 	// TF2V: Pipebombs before February 16 2009 (Day 519) didn't have the No Close Distance Modifier.
 	if ( m_iType == TF_GL_MODE_REMOTE_DETONATE )
 	{
-		if ( !(TFGameRules->IsAnachronistic(519)) )
+		if ( !(TFGameRules()->IsAnachronistic(519)) )
 		{
 			iDmgType |= DMG_NOCLOSEDISTANCEMOD;
 		}
@@ -531,7 +531,7 @@ CTFGrenadePipebombProjectile* CTFGrenadePipebombProjectile::Create( const Vector
 		DispatchSpawn( pGrenade );
 		if (iPipeBombType == -1)
 		{
-			if ( TFGameRules->IsAnachronistic(TF2V_DAY_SMISSMAS_2014) )
+			if ( TFGameRules()->IsAnachronistic(TF2V_DAY_SMISSMAS_2014) )
 				pGrenade->InitGrenade(velocity, angVelocity, pOwner, 100.0f, 159.0f); // stickbomb hack
 			else
 				pGrenade->InitGrenade(velocity, angVelocity, pOwner, 100.0f, 146.0f); // stickbomb hack
@@ -745,7 +745,7 @@ bool CTFGrenadePipebombProjectile::DetonateStickies()
 			continue; // No line of sight to the bomb.
 		
 		// TF2V: Stickies in Love and War had damage ramp up. Reverted five days later on June 23, 2014. (Day 2472)
-		if ( !(TFGameRules->IsAnachronistic(TF2V_DAY_SMISSMAS_2014)) && (TFGameRules->IsAnachronistic(2472)) )
+		if ( !(TFGameRules()->IsAnachronistic(TF2V_DAY_SMISSMAS_2014)) && (TFGameRules()->IsAnachronistic(2472)) )
 		{
 			// 50% damage at arm time, 100% at 2 seconds later
 			float flArmTime = tf_grenadelauncher_livetime.GetFloat();
@@ -848,7 +848,7 @@ void CTFGrenadePipebombProjectile::PipebombTouch( CBaseEntity *pOther )
 
 	
 	// TF2V: Before Sept 28, 2007 (Day 12), the touch mechanic didn't exist yet.
-	if ( !(TFGameRules->IsAnachronistic(12)) )
+	if ( !(TFGameRules()->IsAnachronistic(12)) )
 	{
 		//If we already touched a surface then we're not exploding on contact anymore.
 		if ( m_bTouched == true )
@@ -856,7 +856,7 @@ void CTFGrenadePipebombProjectile::PipebombTouch( CBaseEntity *pOther )
 	}
 	
 	// TF2V: Prior to October 25, 2007 (Day 39), this behavior often glitched and failed to notice valid touches.
-	if ( !(TFGameRules->IsAnachronistic(12)) && (TFGameRules->IsAnachronistic(39)) )
+	if ( !(TFGameRules()->IsAnachronistic(12)) && (TFGameRules()->IsAnachronistic(39)) )
 	{
 		// Simulate this behavior by always bailing out even on a good hit.
 		return;
@@ -1093,7 +1093,7 @@ int CTFGrenadePipebombProjectile::OnTakeDamage( const CTakeDamageInfo &info )
 			{
 				vecForce *= tf_grenade_forcefrom_bullet.GetFloat();
 				// TF2V: This was added December 11, 2008. (Day 452)
-				if ( !(TFGameRules->IsAnachronistic(452)) )
+				if ( !(TFGameRules()->IsAnachronistic(452)) )
 					bBreakPipes = true;
 			}
 			if ( info.GetDamageType() & DMG_SONIC )
@@ -1104,7 +1104,7 @@ int CTFGrenadePipebombProjectile::OnTakeDamage( const CTakeDamageInfo &info )
 			{
 				vecForce *= tf_grenade_forcefrom_buckshot.GetFloat();
 				// TF2V: This was added December 11, 2008. (Day 452)
-				if ( !(TFGameRules->IsAnachronistic(452)) )
+				if ( !(TFGameRules()->IsAnachronistic(452)) )
 					bBreakPipes = true;
 			}
 			else if ( info.GetDamageType() & DMG_BLAST )
@@ -1564,7 +1564,7 @@ float CTFGrenadePipebombProjectile::GetDamageRadius()
 
 #ifdef GAME_DLL
 	// TF2V: Not added until after Smissmass 2014.
-	if ( !(TFGameRules->IsAnachronistic(TF2V_DAY_SMISSMAS_2014)) )
+	if ( !(TFGameRules()->IsAnachronistic(TF2V_DAY_SMISSMAS_2014)) )
 	{
 		// winbomb prevention.
 		// Air Det

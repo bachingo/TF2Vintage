@@ -557,7 +557,7 @@ void CObjectSentrygun::StartUpgrading( void )
 	case 2:
 		SetModel( SENTRY_MODEL_LEVEL_2_UPGRADE );
 		// TF2V: Resistance changed during Gun Mettle (20%->15%)
-		m_flHeavyBulletResist = TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) ? 0.2f : 0.15f; // SENTRYGUN_MINIGUN_RESIST_LVL_2
+		m_flHeavyBulletResist = TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) ? 0.2f : 0.15f; // SENTRYGUN_MINIGUN_RESIST_LVL_2
 		SetViewOffset( SENTRYGUN_EYE_OFFSET_LEVEL_2 );
 		m_iMaxAmmoShells = SENTRYGUN_MAX_SHELLS_2 * flMaxAmmoMult;
 		break;
@@ -568,7 +568,7 @@ void CObjectSentrygun::StartUpgrading( void )
 			m_iAmmoRockets = SENTRYGUN_MAX_ROCKETS;
 		}
 		// TF2V: Resistance changed during Gun Mettle (33%->20%)
-		m_flHeavyBulletResist = TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) ? 0.33f : 0.2f; // SENTRYGUN_MINIGUN_RESIST_LVL_3
+		m_flHeavyBulletResist = TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) ? 0.33f : 0.2f; // SENTRYGUN_MINIGUN_RESIST_LVL_3
 		SetViewOffset( SENTRYGUN_EYE_OFFSET_LEVEL_3 );
 		m_iMaxAmmoShells = SENTRYGUN_MAX_SHELLS_3 * flMaxAmmoMult;
 		break;
@@ -2094,7 +2094,7 @@ int CObjectSentrygun::OnTakeDamage( const CTakeDamageInfo &info )
 	}
 
 	// TF2V: This was added December 20, 2007 (Day 95)
-	if ( !(TFGameRules->IsAnachronistic(95)) )
+	if ( !(TFGameRules()->IsAnachronistic(95)) )
 	{
 		// Check to see if we are being sapped.
 		if ( HasSapper() )
@@ -2106,7 +2106,7 @@ int CObjectSentrygun::OnTakeDamage( const CTakeDamageInfo &info )
 			if ( pSapper && ( info.GetAttacker() == pSapper->GetOwner() ) )
 			{
 				// TF2V: This was changed in Gun Mettle (66%->33% damage resist)
-				float flSentryDamageModifier = TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) ? 0.33f : 0.66f; // SENTRYGUN_SAPPER_OWNER_DAMAGE_MODIFIER
+				float flSentryDamageModifier = TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) ? 0.33f : 0.66f; // SENTRYGUN_SAPPER_OWNER_DAMAGE_MODIFIER
 				float flDamage = newInfo.GetDamage() * flSentryDamageModifier;
 				newInfo.SetDamage( flDamage );
 			}

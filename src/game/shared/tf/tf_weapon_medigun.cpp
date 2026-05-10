@@ -1381,9 +1381,9 @@ bool CWeaponMedigun::FindAndHealTargets( void )
 					else if ( TFGameRules()->InSetup() && TFGameRules()->GetActiveRoundTimer() )
 					{		
 						// TF2V: 2x Added December 20, 2007 (Day 95), 3x added during Tough Break.
-						if ( !(TFGameRules->IsAnachronistic(95)) && TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK) )
+						if ( !(TFGameRules()->IsAnachronistic(95)) && TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK) )
 							flChargeAmount *= 2.f;
-						else if ( !(TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK) ) )
+						else if ( !(TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK) ) )
 							flChargeAmount *= 3.f;
 					}
 				}
@@ -1483,7 +1483,7 @@ void CWeaponMedigun::DrainCharge( void )
 		float flExtraPlayerCost = flChargeAmount * 0.5;
 
 		// TF2V: Uber Juggle penalty added April 1 2008 (Day 198)
-		if ( !(TFGameRules->IsAnachronistic(198)) )
+		if ( !(TFGameRules()->IsAnachronistic(198)) )
 		{
 			// Drain faster the more targets we're applying to. Extra targets count for 50% drain to still reward juggling somewhat.
 			for ( int i = m_DetachedTargets.Count()-1; i >= 0; i-- )

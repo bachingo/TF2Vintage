@@ -318,7 +318,7 @@ ConVar tf_obj_teleporter_max_level("tf_obj_teleporter_max_level", V_STRINGIFY(OB
 int CObjectTeleporter::GetMaxUpgradeLevel() const
 {
 	// TF2V: Dispensers and Teleporters only had level one before December 11, 2008 (Day 452)
-	if ( TFGameRules->IsAnachronistic(452) )
+	if ( TFGameRules()->IsAnachronistic(452) )
 		return 1;
 	
 	return Clamp( tf_obj_teleporter_max_level.GetInt(), 1, BaseClass::GetMaxUpgradeLevel() );
@@ -1496,7 +1496,7 @@ void CObjectTeleporter::InputDisable( inputdata_t &inputdata )
 void CObjectTeleporter::SpawnBread( const CTFPlayer* pTeleportingPlayer )
 {
 	// TF2V: Bread was not spawned prior to June 11, 2014. (Day 2460, Expiration Date; one week before Love & War)
-	if ( (TFGameRules->IsAnachronistic(2460)) )
+	if ( (TFGameRules()->IsAnachronistic(2460)) )
 		return;
 
 	if( !pTeleportingPlayer )

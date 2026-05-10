@@ -34,7 +34,7 @@ float CTFFireAxe::GetInitialAfterburnDuration() const
 	if ( iAddBurningDamageType )
 	{
 		// TF2V: These were changed in Jungle Inferno.
-		return TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_JUNGLE_INFERNO) ? TF_AFTERBURN_BASE_DURATION_OLD : TF_AFTERBURN_BASE_DURATION_NEW;
+		return TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_JUNGLE_INFERNO) ? TF_AFTERBURN_BASE_DURATION_OLD : TF_AFTERBURN_BASE_DURATION_NEW;
 	}
 
 	return BaseClass::GetInitialAfterburnDuration();

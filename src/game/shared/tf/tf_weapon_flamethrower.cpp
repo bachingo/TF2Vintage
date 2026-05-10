@@ -361,7 +361,7 @@ bool CTFFlameThrower::CanAirBlast() const
 		return false;
 	
 	// TF2V: Pyro didn't have airblast prior to the Pyro update.
-	if ( (TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_PYRO)) )
+	if ( (TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_PYRO)) )
 		return false;
 
 	int iAirblastDisabled = 0;
@@ -659,7 +659,7 @@ void CTFFlameThrower::ItemPostFrame()
 				CALL_ATTRIB_HOOK_FLOAT( flMultAmmoPerShot, mult_airblast_cost );
 				int iAmmoPerShot = tf_flamethrower_burstammo.GetInt() * flMultAmmoPerShot;
 				// TF2V: Airblast cost 20% more prior to April 28, 2010 (Day 955)
-				if ( (TFGameRules->IsAnachronistic(955)) )
+				if ( (TFGameRules()->IsAnachronistic(955)) )
 					iAmmoPerShot *= 1.2;
 				FireAirBlast( iAmmoPerShot );
 			}
@@ -873,7 +873,7 @@ void CTFFlameThrower::PrimaryAttack()
 		float flDamage = (float)iDamagePerSec * flFiringInterval;
 		{
 			// TF2V: Added during Blue Moon.
-			flDamage = TFGameRules->IsAnachronistic(TF2V_DAY_SPRING_2018) ? 14.f : 13.f; // tf_flamethrower_damage_per_tick
+			flDamage = TFGameRules()->IsAnachronistic(TF2V_DAY_SPRING_2018) ? 14.f : 13.f; // tf_flamethrower_damage_per_tick
 		}
 #ifdef WATERFALL_FLAMETHROWER_TEST
 		int iWaterfallMode = 0;
@@ -1210,7 +1210,7 @@ void CTFFlameThrower::SecondaryAttack()
 	int iAmmoPerShot = tf_flamethrower_burstammo.GetInt() * flMultAmmoPerShot;
 	
 	// TF2V: Airblast cost 20% more prior to April 28, 2010 (Day 955)
-	if ( (TFGameRules->IsAnachronistic(955)) )
+	if ( (TFGameRules()->IsAnachronistic(955)) )
 		iAmmoPerShot *= 1.2;
 
 	if ( iBuffType != 0 )
@@ -1644,7 +1644,7 @@ bool CTFFlameThrower::DeflectPlayer( CTFPlayer *pTarget, CTFPlayer *pOwner, Vect
 			// Return health to the Pyro. 
 			// We may want to cap the amount of health per extinguish but for now lets test this
 			// TF2V: This feature added in Tough Break.
-			if ( !(TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK)) )
+			if ( !(TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK)) )
 			{
 				int iRestoreHealthOnExtinguish = 0;
 				CALL_ATTRIB_HOOK_INT( iRestoreHealthOnExtinguish, extinguish_restores_health );
@@ -1919,13 +1919,13 @@ float CTFFlameThrower::GetInitialAfterburnDuration() const
 {
 	// TF2V: More complicated than originally seemed.
 	// Launch to April 28, 2010 (Day 955): 10 second afterburn
-	if (TFGameRules->IsAnachronistic(955))
+	if (TFGameRules()->IsAnachronistic(955))
 		return TF_AFTERBURN_BASE_DURATION_OLD;
 	// Between April 28 2010 and May 19 2010 (Day 976): 6 seconds
-	else if ( !(TFGameRules->IsAnachronistic(955)) && (TFGameRules->IsAnachronistic(976)) )
+	else if ( !(TFGameRules()->IsAnachronistic(955)) && (TFGameRules()->IsAnachronistic(976)) )
 		return 6.f;
 	// After May 19 2010 to Jungle Inferno: Back to 10 seconds.
-	else if ( !(TFGameRules->IsAnachronistic(976)) && ( TFGameRules->IsAnachronistic(TF2V_DAY_MAJOR_JUNGLE_INFERNO)) )
+	else if ( !(TFGameRules()->IsAnachronistic(976)) && ( TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_JUNGLE_INFERNO)) )
 	// TF2V: Airblast cost 20% more prior to 
 		return TF_AFTERBURN_BASE_DURATION_OLD;
 	
