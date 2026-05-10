@@ -284,6 +284,8 @@ ConVar sv_vote_late_join_cooldown( "sv_vote_late_join_cooldown", "300", FCVAR_NO
 
 
 ConVar tf2v_disable_cosmetics( "tf2v_disable_cosmetics", "0", FCVAR_ARCHIVE, "Allows servers to opt out of the cosmetic system entirely.", true, 0, true, 1 );
+ConVar tf2v_alternate_war_result( "tf2v_alternate_war_result", "0", FCVAR_ARCHIVE, "Affects who receives the Gunboats for use. 0 - Soldier Only (canon), 1 - Demoman Only (alternate), 2 - Both Soldier and Demoman", true, 0, true, 2 );
+
 
 
 extern ConVar tf_voice_command_suspension_mode;
@@ -5398,6 +5400,27 @@ CEconItemView *CTFPlayer::GetLoadoutItem( int iClass, int iSlot, bool bReportWhi
 	// Items failing the time period get downgraded or replaced.
 	if ( pItem && pItem->IsValid() )
 	{
+		// TF2V: Special condition for the Gunboats.
+		if ( ( pItem->GetItemDefIndex() == 133 )
+		{
+			// Consider a cleaner way of doing this later.
+			if ( iClass == TF_CLASS_DEMOMAN && !tf2v_alternate_war_result.GetInt() )
+			{
+				// Canon timeline: Demoman did not win the war.
+				pItem = TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+				ClientPrint( this, HUD_PRINTNOTIFY, "#Item_WARResultCanon" );
+				return pItem;
+			}
+			if ( iClass == TF_CLASS_SOLDIER && tf2v_alternate_war_result.GetInt() == 1 )
+			{
+				// Alternative timeline: Soldier did not win the war.
+				pItem = TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+				ClientPrint( this, HUD_PRINTNOTIFY, "#Item_WARResultAlternate" );
+				return pItem;
+			}
+			// On tf2v_alternate_war_result == 2, both Soldier and Demoman get it.
+		}
+		
 		pItem = GetTimePeriodCompliantItem( pItem, iClass, iSlot );
 	}
 
