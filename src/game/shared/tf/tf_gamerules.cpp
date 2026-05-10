@@ -24756,3 +24756,5 @@ void CTFGameRules::RegisterScriptFunctions()
 
 	g_pScriptVM->RegisterInstance( &PlayerVoiceListener(), "PlayerVoiceListener" );
 }
+
+#endif // GAME_DLL
