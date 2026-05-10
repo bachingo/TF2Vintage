@@ -475,7 +475,7 @@ bool CTFKnife::CanPerformBackstabAgainstTarget( CTFPlayer *pTarget, bool bInAtta
 	if ( (TFGameRules->IsAnachronistic(156)) )
 	{
 		// Old logic: Behind target?
-		if ( IsBehindTarget( trace.m_pEnt ) )
+		if ( IsBehindTarget( pTarget ) )
 			return true;
 	}
 	else
@@ -502,7 +502,7 @@ bool CTFKnife::CanPerformBackstabAgainstTarget( CTFPlayer *pTarget, bool bInAtta
 //-----------------------------------------------------------------------------
 // Purpose: Determine if we are behind our target. Pre-2008 backstab logic.
 //-----------------------------------------------------------------------------
-bool CTFKnife::IsBehindTarget( CBaseEntity *pTarget )
+bool CTFKnife::IsBehindTarget( CTFPlayer *pTarget )
 {
 	Assert( pTarget );
 
