@@ -284,7 +284,7 @@ ConVar mp_restartround( "mp_restartround", "0", FCVAR_GAMEDLL, "If non-zero, the
 ConVar mp_stalemate_timelimit( "mp_stalemate_timelimit", "240", FCVAR_REPLICATED, "Timelimit (in seconds) of the stalemate round." );
 ConVar mp_autoteambalance( "mp_autoteambalance", "2", FCVAR_NOTIFY, "Automatically balance the teams based on mp_teams_unbalance_limit. 0 = off, 1 = legacy system, 2 = new system", true, 0, true, 2 );
 
-ConVar mp_stalemate_enable( "mp_stalemate_enable", 1, FCVAR_NOTIFY, "Enable/Disable stalemate mode." ); // TF2V: Defaulted to 0 in newer TF2, but was defaulted to 1 in older TF2. Plus nobody really plays this anymore.
+ConVar mp_stalemate_enable( "mp_stalemate_enable", 0, FCVAR_NOTIFY, "Enable/Disable stalemate mode." );
 ConVar mp_match_end_at_timelimit( "mp_match_end_at_timelimit", "0", FCVAR_NOTIFY, "Allow the match to end when mp_timelimit hits instead of waiting for the end of the current round." );
 
 ConVar mp_holiday_nogifts( "mp_holiday_nogifts", "0", FCVAR_NOTIFY, "Set to 1 to prevent holiday gifts from spawning when players are killed." );
@@ -1280,10 +1280,15 @@ bool CTeamplayRoundBasedRules::CheckTimeLimit( bool bAllowEnd /*= true*/ )
 
 	if ( ( mp_timelimit.GetInt() > 0 && CanChangelevelBecauseOfTimeLimit() ) || m_bChangelevelAfterStalemate )
 	{
-		// If there's less than 5 minutes to go, just switch now. This avoids the problem
-		// of sudden death modes starting shortly after a new round starts.
-		const int iMinTime = 5;
-		bool bSwitchDueToTime = ( mp_timelimit.GetInt() > iMinTime && GetTimeLeft() < (iMinTime * 60) );
+		bool bSwitchDueToTime = false;
+		// TF2V: Feature added September 26, 2007 (Day 10)
+		if ( !(TFGameRules->IsAnachronisitc(10)) )
+		{
+			// If there's less than 5 minutes to go, just switch now. This avoids the problem
+			// of sudden death modes starting shortly after a new round starts.
+			const int iMinTime = 5;
+			bSwitchDueToTime = ( mp_timelimit.GetInt() > iMinTime && GetTimeLeft() < (iMinTime * 60) );
+		}
 
 		if ( IsInTournamentMode() == true  )
 		{
@@ -3017,7 +3022,8 @@ void CTeamplayRoundBasedRules::SetStalemate( int iReason, bool bForceMapReset /*
 	if ( IsInTournamentMode() == true && IsInPreMatch() == true )
 		return;
 
-	if ( !mp_stalemate_enable.GetBool() )
+	// TF2V: Stalemate automatic until December 20, 2007 (Day 95)
+	if ( !mp_stalemate_enable.GetBool() && !(TFGameRules->IsAnachronisitc(95)) )
 	{
 		SetWinningTeam( TEAM_UNASSIGNED, WINREASON_STALEMATE, bForceMapReset, bSwitchTeams );
 		return;

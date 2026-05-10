@@ -4792,19 +4792,23 @@ bool CTFGameRules::CanChangelevelBecauseOfTimeLimit( void )
 //-----------------------------------------------------------------------------
 bool CTFGameRules::CanGoToStalemate( void )
 {
-	// In CTF, don't go to stalemate if one of the flags isn't at home
-	if ( m_nGameType == TF_GAMETYPE_CTF )
+	// TF2V: Added October 8, 2007 (Day 22)
+	if ( !(TFGameRules->IsAnachronistic(22)) )
 	{
-		for ( int i=0; i<ICaptureFlagAutoList::AutoList().Count(); ++i )
+		// In CTF, don't go to stalemate if one of the flags isn't at home
+		if ( m_nGameType == TF_GAMETYPE_CTF )
 		{
-			CCaptureFlag *pFlag = static_cast< CCaptureFlag* >( ICaptureFlagAutoList::AutoList()[i] );
-			if ( pFlag->IsDropped() || pFlag->IsStolen() )
+			for ( int i=0; i<ICaptureFlagAutoList::AutoList().Count(); ++i )
+			{
+				CCaptureFlag *pFlag = static_cast< CCaptureFlag* >( ICaptureFlagAutoList::AutoList()[i] );
+				if ( pFlag->IsDropped() || pFlag->IsStolen() )
+					return false;
+			}
+
+			// check that one team hasn't won by capping
+			if ( CheckCapsPerRound() )
 				return false;
 		}
-
-		// check that one team hasn't won by capping
-		if ( CheckCapsPerRound() )
-			return false;
 	}
 
 	return BaseClass::CanGoToStalemate();
