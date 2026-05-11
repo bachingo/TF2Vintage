@@ -22484,7 +22484,7 @@ void CTFGameRules::OnRemoveCoach( uint32 unCoachAccountID )
 void CTFGameRules::HandleCTFCaptureBonus( int nTeam )
 {
 	// TF2V: Didn't exist prior to Classless.
-	if ( (TF2VIsContemporary(TF2V_DAY_MAJOR_CLASSLESS)) )
+	if ( TF2VIsAnachronistic(TF2V_DAY_MAJOR_CLASSLESS) )
 		return;
 	
 	float flBonusTime = GetCTFCaptureBonusTime();
