@@ -261,7 +261,7 @@ CCaptureFlag::CCaptureFlag()
 	m_bUseShotClockMode = false;
 	
 	// TF2V: Glows did not exist prior to Jan 19 2011. (Day 1221)
-	if ( (TF2VIsAnachronistic( 1221)) )
+	if ( TF2VIsAnachronistic( 1221 ) )
 		m_bGlowEnabled = false;
 	else
 		m_bGlowEnabled = true;
