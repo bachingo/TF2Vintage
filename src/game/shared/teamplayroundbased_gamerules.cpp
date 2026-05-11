@@ -1282,7 +1282,7 @@ bool CTeamplayRoundBasedRules::CheckTimeLimit( bool bAllowEnd /*= true*/ )
 	{
 		bool bSwitchDueToTime = false;
 		// TF2V: Feature added September 26, 2007 (Day 10)
-		if ( (TF2VIsContemporary(10)) )
+		if ( TF2VIsContemporary( 10 ) )
 		{
 			// If there's less than 5 minutes to go, just switch now. This avoids the problem
 			// of sudden death modes starting shortly after a new round starts.
@@ -3023,7 +3023,7 @@ void CTeamplayRoundBasedRules::SetStalemate( int iReason, bool bForceMapReset /*
 		return;
 
 	// TF2V: Stalemate automatic until December 20, 2007 (Day 95)
-	if ( !mp_stalemate_enable.GetBool() && (TF2VIsContemporary(95)) )
+	if ( !mp_stalemate_enable.GetBool() && TF2VIsContemporary( 95 ) )
 	{
 		SetWinningTeam( TEAM_UNASSIGNED, WINREASON_STALEMATE, bForceMapReset, bSwitchTeams );
 		return;

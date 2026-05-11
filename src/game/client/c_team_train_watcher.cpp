@@ -84,7 +84,7 @@ void C_TeamTrainWatcher::UpdateGlowEffect( void )
 	}
 
 	// TF2V: Cart glow added in the Engineer update.
-	if ( (TF2VIsContemporary(TF2V_DAY_MAJOR_ENGINEER)) )
+	if ( TF2VIsContemporary( TF2V_DAY_MAJOR_ENGINEER ) )
 	{
 		// create a new effect if we have a cart
 		if ( m_hGlowEnt )

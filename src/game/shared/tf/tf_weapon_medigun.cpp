@@ -1381,9 +1381,9 @@ bool CWeaponMedigun::FindAndHealTargets( void )
 					else if ( TFGameRules()->InSetup() && TFGameRules()->GetActiveRoundTimer() )
 					{		
 						// TF2V: 2x Added December 20, 2007 (Day 95), 3x added during Tough Break.
-						if ( (TF2VIsContemporary(95)) && TF2VIsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK) )
+						if ( TF2VIsBetween( 95, TF2V_DAY_MAJOR_TOUGH_BREAK ) )
 							flChargeAmount *= 2.f;
-						else if ( (TF2VIsContemporary(TF2V_DAY_MAJOR_TOUGH_BREAK) ) )
+						else if ( TF2VIsContemporary( TF2V_DAY_MAJOR_TOUGH_BREAK ) )
 							flChargeAmount *= 3.f;
 					}
 				}
@@ -1483,7 +1483,7 @@ void CWeaponMedigun::DrainCharge( void )
 		float flExtraPlayerCost = flChargeAmount * 0.5;
 
 		// TF2V: Uber Juggle penalty added April 1 2008 (Day 198)
-		if ( (TF2VIsContemporary(198)) )
+		if ( TF2VIsContemporary( 198 ) )
 		{
 			// Drain faster the more targets we're applying to. Extra targets count for 50% drain to still reward juggling somewhat.
 			for ( int i = m_DetachedTargets.Count()-1; i >= 0; i-- )
@@ -1592,9 +1592,8 @@ void CWeaponMedigun::ItemPostFrame( void )
 
 	// Try to start healing
 	m_bAttacking = false;
-	// TF2V: Feature didn't exist prior to January 14, 2008. (Day 120)
-	bool bAutoHealEarly = TF2VIsAnachronistic(120);
-	if ( ( pOwner->GetMedigunAutoHeal() && !bAutoHealEarly ) )
+	// TF2V: Feature added in January 14, 2008. (Day 120)
+	if ( pOwner->GetMedigunAutoHeal() && TF2VIsContemporary( 120 ) ) 
 	{
 		if ( pOwner->m_nButtons & IN_ATTACK )
 		{
@@ -2327,9 +2326,8 @@ void CWeaponMedigun::OnDataChanged( DataUpdateType_t updateType )
 			return;
 		}
 
-		// TF2V: Feature did not exist prior to the WAR! update.
-		bool bAutoCallerEarly = TF2VIsAnachronistic(TF2V_DAY_MAJOR_WAR);
-		if ( pLocalPlayer == GetOwner() && ( hud_medicautocallers.GetBool() && !bAutoCallerEarly ) )
+		// TF2V: Feature was added in the WAR! update.
+		if ( pLocalPlayer == GetOwner() && ( hud_medicautocallers.GetBool() && TF2VIsContemporary( TF2V_DAY_MAJOR_WAR ) ) )
 		{
 			UpdateMedicAutoCallers();
 		}
@@ -2525,9 +2523,8 @@ void CWeaponMedigun::UpdateEffects( void )
 
 		bool bReviveMarker = m_hReviveMarker && m_hReviveMarker == m_hHealingTarget;	// Hack to avoid another dynamic_cast here
 		
-		// TF2V: Feature did not exist prior to the WAR! update.
-		bool bHealMarkerEarly = TF2VIsAnachronistic(TF2V_DAY_MAJOR_WAR);
-		bool bHealTargetMarker = ( hud_medichealtargetmarker.GetBool() && !bHealMarkerEarly ) && !bReviveMarker;
+		// TF2V: Feature added in the WAR! update.
+		bool bHealTargetMarker = ( hud_medichealtargetmarker.GetBool() && TF2VIsContemporary( TF2V_DAY_MAJOR_WAR ) ) && !bReviveMarker;
 
 		const char *pszEffectName;
 		if ( IsAttachedToBuilding() )

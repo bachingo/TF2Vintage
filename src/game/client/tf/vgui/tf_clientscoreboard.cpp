@@ -2015,13 +2015,12 @@ void CTFClientScoreBoardDialog::UpdatePlayerDetails()
 	m_pLabelPlayerName->SetFgColor( clr );
 	m_pImagePanelHorizLine->SetFillColor( clr );
 
-	// TF2V: Feature did not exist prior to August 27, 2013 (day 2172)
-	bool bAnimatedEarly = TF2VIsAnachronistic(2172);
+	// TF2V: Feature added in August 27, 2013 (day 2172)
 	// update our image if our selected player or mode of display has changed
-	if ( ( m_hSelectedPlayer != pSelectedPlayer ) || ( m_bUsePlayerModel != ( ShouldUsePlayerModel() && !bAnimatedEarly ) ) )
+	if ( ( m_hSelectedPlayer != pSelectedPlayer ) || ( m_bUsePlayerModel != ( ShouldUsePlayerModel() && TF2VIsContemporary( 2172 ) ) ) )
 	{
 		m_hSelectedPlayer = pSelectedPlayer;
-		m_bUsePlayerModel = ( ShouldUsePlayerModel() && !bAnimatedEarly );
+		m_bUsePlayerModel = ( ShouldUsePlayerModel() && TF2VIsContemporary( 2172 ) );
 
 		int iClass = pSelectedPlayer->m_Shared.GetDesiredPlayerClassIndex();
 		int iTeam = pSelectedPlayer->GetTeamNumber();

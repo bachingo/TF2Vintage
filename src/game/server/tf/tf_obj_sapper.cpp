@@ -648,7 +648,7 @@ void CObjectSapper::Killed( const CTakeDamageInfo &info )
 	}
 
 	// TF2V: Sappers prior to Tough Break did not disable the sentry.
-	if ( (TF2VIsContemporary(TF2V_DAY_MAJOR_TOUGH_BREAK)) )
+	if ( TF2VIsContemporary( TF2V_DAY_MAJOR_TOUGH_BREAK ) )
 	{
 		CBaseObject *pParent = GetParentObject();
 		if ( pParent )

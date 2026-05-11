@@ -2966,7 +2966,7 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 			// Burn the player (if not pyro, who does not take persistent burning damage)
 			if ( !bVictimIsImmunePyro || InCond( TF_COND_BURNING_PYRO ) )
 			{
-				float flBurnDamage = TF2VIsAnachronistic(TF2V_DAY_MAJOR_JUNGLE_INFERNO) ? TF_BURNING_DMG_OLD : TF_BURNING_DMG_NEW;
+				float flBurnDamage = TF2VIsAnachronistic( TF2V_DAY_MAJOR_JUNGLE_INFERNO ) ? TF_BURNING_DMG_OLD : TF_BURNING_DMG_NEW;
 				int nKillType = TF_DMG_CUSTOM_BURNING;
 
 				if ( m_hBurnWeapon )
@@ -3681,7 +3681,7 @@ void CTFPlayerShared::OnAddUrine( void )
 {
 #ifdef CLIENT_DLL
 	// TF2V: Feature did not exist prior to Classless.
-	bool bColorblindEarly = TF2VIsAnachronistic(TF2V_DAY_MAJOR_CLASSLESS);
+	bool bColorblindEarly = TF2VIsAnachronistic( TF2V_DAY_MAJOR_CLASSLESS );
 	if ( tf_colorblindassist.GetBool() && !bColorblindEarly )
 	{
 		m_pOuter->AddOverheadEffect( "peejar_icon" );
@@ -6798,7 +6798,7 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon, float 
 		m_flAfterburnDuration = pWeapon ? pWeapon->GetInitialAfterburnDuration() : 0.f;
 
 		// TF2V: Debuff added during Meet Your Match.
-		if ( (TF2VIsContemporary(TF2V_DAY_MAJOR_MEET_YOUR_MATCH)) )
+		if ( TF2VIsContemporary( TF2V_DAY_MAJOR_MEET_YOUR_MATCH ) )
 		{
 			// Reduces direct healing effectiveness
 			AddCond( TF_COND_HEALING_DEBUFF, m_flAfterburnDuration, pAttacker );
@@ -6862,8 +6862,8 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon, float 
 	{
 		// TF2V: Afterburn calculations were changed in Jungle Inferno. 
 		// We do this twice in the event this is made into a convar in the future.
-		if (TF2VIsAnachronistic(TF2V_DAY_MAJOR_JUNGLE_INFERNO))
-			flFlameLife = TF2VIsAnachronistic(TF2V_DAY_MAJOR_JUNGLE_INFERNO) ? TF_AFTERBURN_BASE_DURATION_OLD : TF_AFTERBURN_BASE_DURATION_NEW;
+		if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_JUNGLE_INFERNO ) )
+			flFlameLife = TF2VIsAnachronistic( TF2V_DAY_MAJOR_JUNGLE_INFERNO ) ? TF_AFTERBURN_BASE_DURATION_OLD : TF_AFTERBURN_BASE_DURATION_NEW;
 		else
 			flFlameLife = flBurningTime;
 	}
@@ -8417,7 +8417,7 @@ void CTFPlayerShared::Disguise( int nTeam, int nClass, CTFPlayer* pDesiredTarget
 	//CALL_ATTRIB_HOOK_INT_ON_OTHER( m_pOuter, iTimeToDisguise, disguise_speed_penalty ); // Unused Attr
 
 	// TF2V: Quick Redisguising added after Gun Mettle.
-	if ( !( TF2VIsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) ) )
+	if ( TF2VIsContemporary( TF2V_DAY_MAJOR_GUN_METTLE ) )
 	{
 		// Quick disguise if you already disguised
 		if ( InCond( TF_COND_DISGUISED ) )
@@ -8853,7 +8853,7 @@ void CTFPlayerShared::ProcessDisguiseImpulse( CTFPlayer *pPlayer )
 		if ( pPlayer->CanDisguise_OnKill() && pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) )
 		{
 			// TF2V: Changing weapons while disguised added March 5, 2009. (Day 536)
-			if ( (TF2VIsContemporary(536)) )
+			if ( TF2VIsContemporary( 536 ) )
 			{
 				// Only trying to change the disguise weapon via 'lastdisguise'
 				if ( Q_atoi( szClass ) == pPlayer->m_Shared.GetDisguiseClass() && Q_atoi( szTeam ) == pPlayer->m_Shared.GetDisguiseTeam() )
@@ -9655,7 +9655,7 @@ float CTFPlayerShared::GetCritMult( void )
 bool CTFPlayerShared::TF2VOldCritModel( void )
 {	
 	// TF2V: Crit behavior changes February 2 2009 (Day 505)
-	 return (TF2VIsAnachronistic(505));
+	 return TF2VIsAnachronistic( 505 );
 }
 
 #ifdef GAME_DLL
@@ -11081,7 +11081,7 @@ float CTFPlayer::TeamFortress_CalculateMaxSpeed( bool bIgnoreSpecialAbility /*= 
 		case TF_CLASS_SPY:
 		{
 			// TF2V: Spy had a very slightly slower move speed prior to Meet Your Match. (300Hu/s->320Hu/s)
-			if ( TF2VIsAnachronistic(TF2V_DAY_MAJOR_MEET_YOUR_MATCH) )
+			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_MEET_YOUR_MATCH ) )
 				default_speed *= 0.9375f;
 			
 			default_speed *= tf_move_speed_scale_spy.GetFloat();
@@ -11135,7 +11135,7 @@ float CTFPlayer::TeamFortress_CalculateMaxSpeed( bool bIgnoreSpecialAbility /*= 
 			if ( playerclass == TF_CLASS_HEAVYWEAPONS )
 			{
 				// TF2V: This was 80Hu/s before April 28 2010. Changed to 110Hu/s. (Day 955)
-				if ( (TF2VIsAnachronistic(955) ) )
+				if ( TF2VIsAnachronistic( 955 ) )
 				{
 					flAimMax = 80;
 				}
@@ -11229,7 +11229,7 @@ float CTFPlayer::TeamFortress_CalculateMaxSpeed( bool bIgnoreSpecialAbility /*= 
 	if ( m_Shared.IsCarryingObject() && bCarryPenalty && bAllowSlowing )
 	{
 		// STAGING_ENGY
-		if ( TF2VIsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) )
+		if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_GUN_METTLE ) )
 			maxfbspeed *= 0.75f;
 		else
 			maxfbspeed *= 0.90f;
@@ -11259,7 +11259,7 @@ float CTFPlayer::TeamFortress_CalculateMaxSpeed( bool bIgnoreSpecialAbility /*= 
 	constexpr float flFlatHealSpeedAdd = 40.0f;
 	if ( playerclass == TF_CLASS_MEDIC )
 	{
-		if ( pWeapon && (TF2VIsContemporary(TF2V_DAY_MAJOR_UBER)) )
+		if ( pWeapon && TF2VIsContemporary( TF2V_DAY_MAJOR_UBER ) )
 		{
 			CWeaponMedigun *pMedigun = dynamic_cast< CWeaponMedigun* >( pWeapon );
 			if ( pMedigun )
@@ -11273,19 +11273,19 @@ float CTFPlayer::TeamFortress_CalculateMaxSpeed( bool bIgnoreSpecialAbility /*= 
 					// TF2V: This one changed behaviors a few times.
 					
 					// Uber to Pyromania: Quick Fix only matches speed, does not honor charges
-					if ( bQuickFix && ( (TF2VIsContemporary(TF2V_DAY_MAJOR_UBER)) && (TF2VIsAnachronistic(TF2V_DAY_MAJOR_PYROMANIA)) ) )
+					if ( bQuickFix && ( TF2VIsBetween( TF2V_DAY_MAJOR_UBER, TF2V_DAY_MAJOR_PYROMANIA ) )
 					{
 						const float flHealTargetMaxSpeed = pHealTarget->TeamFortress_CalculateMaxSpeed( true );
 						maxfbspeed = Max(maxfbspeed, flHealTargetMaxSpeed);
 					}
 					// Pyromania to Meet Your Match: Quick Fix only matches speed, honors charges
-					else if ( bQuickFix && ( (TF2VIsContemporary(TF2V_DAY_MAJOR_PYROMANIA)) && (TF2VIsAnachronistic(TF2V_DAY_MAJOR_MEET_YOUR_MATCH)) ) )
+					else if ( bQuickFix && ( TF2VIsBetween( TF2V_DAY_MAJOR_PYROMANIA, TF2V_DAY_MAJOR_MEET_YOUR_MATCH ) ) )
 					{
 						const float flHealTargetMaxSpeed = ( bCharge ) ? tf_max_charge_speed.GetFloat() : pHealTarget->TeamFortress_CalculateMaxSpeed( true );
 						maxfbspeed = Max(maxfbspeed, flHealTargetMaxSpeed);
 					}
 					// Meet Your Match: All mediguns match speed, but only Quick Fix honors charges
-					else if ( (TF2VIsContemporary(TF2V_DAY_MAJOR_MEET_YOUR_MATCH)) )
+					else if ( TF2VIsContemporary( TF2V_DAY_MAJOR_MEET_YOUR_MATCH ) )
 					{
 						const float flHealTargetMaxSpeed = ( bCharge ) ? tf_max_charge_speed.GetFloat() : pHealTarget->TeamFortress_CalculateMaxSpeed( true );
 						maxfbspeed = Max(maxfbspeed, flHealTargetMaxSpeed);
@@ -11813,7 +11813,7 @@ int CTFPlayerShared::CalculateObjectCost( CTFPlayer* pBuilder, int iObjectType )
 		float flCostMod = 1.f;
 		
 		// TF2V: Teleporters were more expensive prior to Meet Your Match (125 metal compared to 50)
-		if ( TF2VIsAnachronistic(TF2V_DAY_MAJOR_MEET_YOUR_MATCH) )
+		if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_MEET_YOUR_MATCH ) )
 			nCost += 75;
 		
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pBuilder, flCostMod, mod_teleporter_cost );
@@ -12894,7 +12894,7 @@ bool CTFPlayer::CanPickupBuilding( CBaseObject *pPickupObject )
 bool CTFPlayer::TryToPickupBuilding()
 {
 	// TF2V: Not added until the Engineer Update.
-	if ( (TF2VIsAnachronistic(TF2V_DAY_MAJOR_ENGINEER)) ) 
+	if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_ENGINEER) ) 
 		return false;
 	
 	if ( m_Shared.IsCarryingObject() )
@@ -13370,10 +13370,10 @@ int	CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassIndex /*= -1*/ )
 		if ( iClassIndex == TF_CLASS_SOLDIER )
 		{
 			// Used to have 36 reserve ammo here before Feb 28 2008 (Day 165)
-			if ( TF2VIsAnachronistic(165) )
+			if ( TF2VIsAnachronistic( 165 ) )
 				iMax = 36;
 			// Had 16 reserve ammo between Feb 28 2008 (Day 165) and Feb 2 2009 (Day 505)
-			else if ( TF2VIsContemporary(165) && TF2VIsAnachronistic(505) )
+			else if ( TF2VIsBetween( 165, 505 ) )
 				iMax = 16;
 
 			// Use default number (20).
@@ -13381,7 +13381,7 @@ int	CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassIndex /*= -1*/ )
 		else if ( iClassIndex == TF_CLASS_DEMOMAN )
 		{
 			// Used to have 30 reserve ammo here before Feb 28 2008 (Day 165)
-			if ( TF2VIsAnachronistic(165) )
+			if ( TF2VIsAnachronistic( 165 ) )
 				iMax = 30;
 
 			// Use default number (16).
@@ -13394,7 +13394,7 @@ int	CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassIndex /*= -1*/ )
 		if ( iClassIndex == TF_CLASS_DEMOMAN )
 		{
 			// Used to have 40 reserve ammo here before Feb 28 2008 (Day 165)
-			if ( TF2VIsAnachronistic(165) )
+			if ( TF2VIsAnachronistic( 165 ) )
 				iMax = 40;
 
 			// Use default number (24).
@@ -14609,7 +14609,7 @@ void CTFPlayerShared::UpdateCloakMeter( void )
 
 #ifdef GAME_DLL
 		// TF2V: Debuff timer added in Gun Mettle.
-		if ( !( TF2VIsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) ) )
+		if ( !( TF2VIsAnachronistic( TF2V_DAY_MAJOR_GUN_METTLE) ) )
 		{
 			// Update Debuffs
 			// Decrease duration if cloaked

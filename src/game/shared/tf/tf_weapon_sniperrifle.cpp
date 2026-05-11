@@ -399,9 +399,8 @@ void CTFSniperRifle::ItemPostFrame( void )
 			if ( IsFullyCharged() && !m_bPlayedBell )
 			{
 				m_bPlayedBell = true;
-				// TF2V: Sniper Bells didn't exist until August 18, 2011. (Manno-Technology)
-				bool bSniperBellEarly = TF2VIsAnachronistic(TF2V_DAY_CONTENT_MANNOTECHNOLOGY);
-				if ( tf_sniper_fullcharge_bell.GetBool() && !bSniperBellEarly)
+				// TF2V: Sniper Bell added in August 18, 2011. (Manno-Technology)
+				if ( tf_sniper_fullcharge_bell.GetBool() && TF2VIsContemporary( TF2V_DAY_CONTENT_MANNOTECHNOLOGY ) )
 				{
 					C_TFPlayer::GetLocalTFPlayer()->EmitSound( "TFPlayer.ReCharged" );
 				}
@@ -520,9 +519,8 @@ void CTFSniperRifle::ZoomOutIn( void )
 		// Since sniper rifles don't actually use clips the fast reload hook also affects unzoom and zoom delays
 		ApplyScopeSpeedModifications( flRezoomDelay );
 	}
-	// TF2V: Feature didn't exist prior to January 14, 2008. (Day 120)
-	bool bAutoRezoomEarly = TF2VIsAnachronistic(120);
-	if ( pPlayer && ( pPlayer->ShouldAutoRezoom() && !bAutoRezoomEarly ) )
+	// TF2V: Feature added in January 14, 2008. (Day 120)
+	if ( pPlayer && ( pPlayer->ShouldAutoRezoom() && TF2VIsContemporary( 120 ) ) )
 	{
 		m_flRezoomTime = gpGlobals->curtime + flRezoomDelay;
 	}
@@ -1065,7 +1063,7 @@ bool CTFSniperRifle::CanFireCriticalShot( bool bIsHeadshot, CBaseEntity *pTarget
 			}
 
 			// TF2V: Added Feb 14 2008 (Day 151)
-			if ( (TF2VIsContemporary(151)) )
+			if ( TF2VIsContemporary( 151 ) )
 			{
 				// no crits for 0.2 seconds after starting to zoom
 				if ( ( gpGlobals->curtime - pPlayer->GetFOVTime() ) < 0.2f )
@@ -1974,9 +1972,8 @@ void CTFSniperRifleClassic::ItemPostFrame( void )
 		if ( IsFullyCharged() && !m_bPlayedBell )
 		{
 			m_bPlayedBell = true;
-			// TF2V: Sniper Bells didn't exist until August 18, 2011. (Manno-Technology)
-			bool bSniperBellEarly = TF2VIsAnachronistic(TF2V_DAY_CONTENT_MANNOTECHNOLOGY);
-			if ( tf_sniper_fullcharge_bell.GetBool() && !bSniperBellEarly)
+			// TF2V: Sniper Bell added in August 18, 2011. (Manno-Technology)
+			if ( tf_sniper_fullcharge_bell.GetBool() && TF2VIsContemporary(TF2V_DAY_CONTENT_MANNOTECHNOLOGY ) )
 			{
 				C_TFPlayer::GetLocalTFPlayer()->EmitSound( "TFPlayer.ReCharged" );
 			}

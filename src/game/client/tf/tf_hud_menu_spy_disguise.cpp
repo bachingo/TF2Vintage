@@ -309,7 +309,7 @@ int	CHudMenuSpyDisguise::HudElementKeyInput( int down, ButtonCode_t keynum, cons
 		if ( pszCurrentBinding && ( FStrEq( pszCurrentBinding, "disguiseteam" ) || FStrEq( pszCurrentBinding, "+reload" ) ) )
 		{
 			// TF2V: This button didn't work prior to Feb 28 2008. (Day 165)
-			if ( (TF2VIsContemporary(165)) )
+			if ( TF2VIsContemporary( 165 ) )
 				ToggleDisguiseTeam();
 			return 0;
 		}
@@ -500,7 +500,7 @@ void CHudMenuSpyDisguise::ToggleSelectionIcons( bool bGroup )
 #ifdef SIXENSE
 	if ( tf_simple_disguise_menu.GetBool() || g_pSixenseInput->IsEnabled() )
 #else
-	if ( tf_simple_disguise_menu.GetBool() && (TF2VIsContemporary(TF2V_DAY_MAJOR_WAR)) )
+	if ( tf_simple_disguise_menu.GetBool() && TF2VIsContemporary( TF2V_DAY_MAJOR_WAR ) )
 #endif
 	{
 		for ( int i=0; i<3; ++i )

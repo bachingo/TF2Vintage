@@ -387,7 +387,7 @@ ConVar tf_obj_dispenser_max_level("tf_obj_dispenser_max_level", V_STRINGIFY(OBJ_
 int CObjectDispenser::GetMaxUpgradeLevel() const
 {
 	// TF2V: Dispensers and Teleporters only had level one before December 11, 2008 (Day 452)
-	if ( TF2VIsAnachronistic(452) )
+	if ( TF2VIsAnachronistic( 452 ) )
 		return 1;
 	
 	return Clamp( tf_obj_dispenser_max_level.GetInt(), 1, BaseClass::GetMaxUpgradeLevel() );

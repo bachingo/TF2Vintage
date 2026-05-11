@@ -111,7 +111,7 @@ void CTFHudSpectatorExtras::OnTick()
 	bool bIsHLTV = engine->IsHLTV();
 
 	// TF2V: Spectator glows added in Tough Break.
-	if ( ( tf_spec_xray_disable.GetBool() || TF2VIsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK) ) || ( !bIsHLTV && ( nLocalPlayerTeam < TEAM_SPECTATOR ) ) )
+	if ( ( tf_spec_xray_disable.GetBool() || TF2VIsAnachronistic( TF2V_DAY_MAJOR_TOUGH_BREAK ) ) || ( !bIsHLTV && ( nLocalPlayerTeam < TEAM_SPECTATOR ) ) )
 	{
 		Reset();
 		return;
@@ -130,7 +130,7 @@ void CTFHudSpectatorExtras::OnTick()
 	}
 
 	// TF2V: The ability to disable this was introduced one day after Tough Break: December 18 2015 (Day 3015)
-	bool bEnableRespawnGlows = TF2VIsContemporary(3015) ? tf_enable_glows_after_respawn.GetBool() : true;
+	bool bEnableRespawnGlows = TF2VIsContemporary( 3015 ) ? tf_enable_glows_after_respawn.GetBool() : true;
 
 	if ( bIsHLTV || 
 		( tf_spec_xray.GetBool() && ( ( nLocalPlayerTeam == TEAM_SPECTATOR ) || ( pLocalPlayer->GetObserverMode() > OBS_MODE_FREEZECAM ) || ( pLocalPlayer->m_Shared.InCond( TF_COND_TEAM_GLOWS ) && bEnableRespawnGlows ) ) ) )

@@ -410,7 +410,7 @@ ConVar tf_dropped_weapon_glows("tf_dropped_weapon_glows", "1", FCVAR_ARCHIVE, "T
 void CTFDroppedWeapon::ClientThink()
 {
 	// TF2V: This was implemented in Gun Mettle. Don't bother if we're earlier.
-	if ( (TF2VIsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE)) )
+	if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_GUN_METTLE ) )
 		return;
 	
 	// don't do all this extra work if we don't support glows.

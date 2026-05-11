@@ -261,7 +261,7 @@ CCaptureFlag::CCaptureFlag()
 	m_bUseShotClockMode = false;
 	
 	// TF2V: Glows did not exist prior to Jan 19 2011. (Day 1221)
-	if ( (TF2VIsAnachronistic(1221)) )
+	if ( (TF2VIsAnachronistic( 1221)) )
 		m_bGlowEnabled = false;
 	else
 		m_bGlowEnabled = true;
@@ -448,7 +448,7 @@ bool CCaptureFlag::IsVisibleToTargetID() const
 void CCaptureFlag::OnPreDataChanged( DataUpdateType_t updateType )
 {
 	m_nOldTeamNumber = GetTeamNumber();
-	if ( (TF2VIsContemporary(1221)) )
+	if ( TF2VIsContemporary( 1221 ) )
 		m_bOldGlowEnabled = m_bGlowEnabled;
 }
 
@@ -468,7 +468,7 @@ void CCaptureFlag::OnDataChanged( DataUpdateType_t updateType )
 		bUpdateGlow = true;
 		m_hOldOwner = GetOwnerEntity();
 	}
-	else if ( (TF2VIsContemporary(1221)) && ( m_bOldGlowEnabled != m_bGlowEnabled ) )
+	else if ( TF2VIsContemporary( 1221 ) && ( m_bOldGlowEnabled != m_bGlowEnabled ) )
 	{
 		bUpdateGlow = true;
 	}
@@ -592,7 +592,7 @@ bool CCaptureFlag::ShouldHideGlowEffect( void )
 	}
 	
 	// TF2V: Hide this even for friendlies prior to Pyromania
-	if ( (TF2VIsAnachronistic(TF2V_DAY_MAJOR_PYROMANIA)) )
+	if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_PYROMANIA ) )
 		bIsHiddenTeam = true;
 
 	bool bHide = IsStolen() && bIsHiddenTeam;

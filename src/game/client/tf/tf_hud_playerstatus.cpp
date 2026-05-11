@@ -106,9 +106,8 @@ CTFHudPlayerClass::CTFHudPlayerClass( Panel *parent, const char *name ) : Editab
 	m_flNextThink = 0.0f;
 	m_nKillStreak = 0;
 
-	// TF2V: Feature did not exist prior to August 27, 2013 (day 2172)
-	bool bAnimatedEarly = TF2VIsAnachronistic(2172);
-	m_bUsePlayerModel = ( ShouldUsePlayerModel() && !bAnimatedEarly );
+	// TF2V: Feature added in August 27, 2013 (day 2172)
+	m_bUsePlayerModel = ( ShouldUsePlayerModel() && TF2VIsContemporary( 2172 ) );
 
 	ListenForGameEvent( "localplayer_changedisguise" );
 	ListenForGameEvent( "post_inventory_application" );
@@ -228,11 +227,10 @@ void CTFHudPlayerClass::OnThink()
 	}
 
 	bool bPlayerClassModeChange = false;
-	// TF2V: Feature did not exist prior to August 27, 2013 (day 2172)
-	bool bAnimatedEarly = TF2VIsAnachronistic(2172);
-	if ( m_bUsePlayerModel != ( ShouldUsePlayerModel() && !bAnimatedEarly ) )
+	// TF2V: Feature added in August 27, 2013 (day 2172)
+	if ( m_bUsePlayerModel != ( ShouldUsePlayerModel() && TF2VIsContemporary( 2172 ) ) )
 	{
-		m_bUsePlayerModel = ( ShouldUsePlayerModel() && !bAnimatedEarly );
+		m_bUsePlayerModel = ( ShouldUsePlayerModel() && TF2VIsContemporary( 2172 ) );
 		bPlayerClassModeChange = true;
 	}
 

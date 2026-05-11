@@ -240,7 +240,7 @@ void CTFKnife::PrimaryAttack( void )
 					m_hBackstabVictim.Set( pTarget );
 
 					// TF2V: Backstab logic changed Feb 19 2008. (Day 156)
-					if ( (TF2VIsAnachronistic(156)) )
+					if ( TF2VIsAnachronistic( 156 ) )
 					{
 						// this will be a backstab, do the strong anim
 						m_iWeaponMode = TF_WEAPON_SECONDARY_MODE;
@@ -472,7 +472,7 @@ bool CTFKnife::CanPerformBackstabAgainstTarget( CTFPlayer *pTarget, bool bInAtta
 	}
 	
 	// TF2V: Backstab logic changed Feb 19 2008. (Day 156)
-	if ( (TF2VIsAnachronistic(156)) )
+	if ( TF2VIsAnachronistic( 156 ) )
 	{
 		// Old logic: Behind target?
 		if ( IsBehindTarget( pTarget ) )
@@ -682,7 +682,7 @@ void CTFKnife::BackstabVMThink( void )
 {
 	// TF2V: Backstab logic changed Feb 19 2008. (Day 156)
 	// We don't have raising/lowering the knife prior.
-	if ( (TF2VIsAnachronistic(156)) )
+	if ( TF2VIsAnachronistic( 156 ) )
 		return;
 
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
