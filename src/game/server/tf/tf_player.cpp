@@ -7981,7 +7981,7 @@ void CTFPlayer::CheckInstantLoadoutRespawn( void )
 	if ( bNotify )
 	{		
 		// We print here because this is where the player can take action.
-		ClientPrint(this, HUD_PRINTTALK, "#TF_LoadoutChangeReady" );
+		// ClientPrint(this, HUD_PRINTTALK, "#TF_LoadoutChangeReady" );
 		return;
 	}
 
