@@ -13371,20 +13371,19 @@ int	CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassIndex /*= -1*/ )
 		{
 			// Used to have 36 reserve ammo here before Feb 28 2008 (Day 165)
 			if ( TF2VIsAnachronistic(165) )
-				iMax += 16;
-			
+				iMax = 36;
 			// Had 16 reserve ammo between Feb 28 2008 (Day 165) and Feb 2 2009 (Day 505)
-			if ( TF2VIsAnachronistic(505) && !TF2VIsAnachronistic(165) )
-				iMax -= 4;
-			
+			else if ( TF2VIsContemporary(165) && TF2VIsAnachronistic(505) )
+				iMax = 16;
+
 			// Use default number (20).
 		}
 		else if ( iClassIndex == TF_CLASS_DEMOMAN )
 		{
 			// Used to have 30 reserve ammo here before Feb 28 2008 (Day 165)
 			if ( TF2VIsAnachronistic(165) )
-				iMax += 14;
-			
+				iMax = 30;
+
 			// Use default number (16).
 		}
 		
@@ -13396,8 +13395,8 @@ int	CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassIndex /*= -1*/ )
 		{
 			// Used to have 40 reserve ammo here before Feb 28 2008 (Day 165)
 			if ( TF2VIsAnachronistic(165) )
-				iMax += 16;
-			
+				iMax = 40;
+
 			// Use default number (24).
 		}
 		
