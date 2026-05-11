@@ -55,6 +55,10 @@ public:
 		{
 			return TF_MEDKIT_LARGE_BDAY;
 		}
+		else if (IsHolidayActive(kHoliday_Halloween))
+		{
+			return TF_MEDKIT_LARGE_HALLOWEEN;
+		}
 		
 		return "models/items/medkit_large.mdl";
 	}
@@ -95,6 +99,10 @@ public:
 		{
 			return TF_MEDKIT_SMALL_BDAY;
 		}
+		else if (IsHolidayActive(kHoliday_Halloween))
+		{
+			return TF_MEDKIT_SMALL_HALLOWEEN;
+		}
 
 		return "models/items/medkit_small.mdl"; 
 	}
@@ -129,6 +137,10 @@ public:
 		if (IsHolidayActive(kHoliday_TFBirthday))
 		{
 			return TF_MEDKIT_MEDIUM_BDAY;
+		}
+		else if (IsHolidayActive(kHoliday_Halloween))
+		{
+			return TF_MEDKIT_MEDIUM_HALLOWEEN;
 		}
 
 		return "models/items/medkit_medium.mdl"; 
@@ -176,6 +188,10 @@ public:
 		if (IsHolidayActive(kHoliday_TFBirthday))
 		{
 			return TF_MEDKIT_MEDIUM_BDAY;
+		}
+		else if (IsHolidayActive(kHoliday_Halloween))
+		{
+			return TF_MEDKIT_MEDIUM_HALLOWEEN;
 		}
 
 		return "models/items/medkit_medium.mdl";
