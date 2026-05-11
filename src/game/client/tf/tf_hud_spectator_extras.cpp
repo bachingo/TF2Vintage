@@ -110,7 +110,8 @@ void CTFHudSpectatorExtras::OnTick()
 	int nLocalPlayerTeam = pLocalPlayer->GetTeamNumber();
 	bool bIsHLTV = engine->IsHLTV();
 
-	if ( tf_spec_xray_disable.GetBool() || ( !bIsHLTV && ( nLocalPlayerTeam < TEAM_SPECTATOR ) ) )
+	// TF2V: Spectator glows added in Tough Break.
+	if ( ( tf_spec_xray_disable.GetBool() || TF2VIsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK ) ) || ( !bIsHLTV && ( nLocalPlayerTeam < TEAM_SPECTATOR ) ) )
 	{
 		Reset();
 		return;
@@ -129,9 +130,7 @@ void CTFHudSpectatorExtras::OnTick()
 	}
 
 	// TF2V: The ability to disable this was introduced one day after Tough Break: December 18 2015 (Day 3015)
-	bool bDisableRespawnGlowEarly = TF2VIsAnachronistic(3015);
-	// Weird to bool. Means we do this either with yes, or no-but-too-early-to-say-no. Considering this only exists one day, this is very specific behavior. Also, we have to be up to Tough Break to have glows exist in the first place.
-	bool bEnableRespawnGlows = (TF2VIsContemporary(TF2V_DAY_MAJOR_TOUGH_BREAK)) && ( tf_enable_glows_after_respawn.GetBool() || ( !tf_enable_glows_after_respawn.GetBool() && bDisableRespawnGlowEarly ) ) ;
+	bool bEnableRespawnGlows = TF2VIsContemporary(3015) ? tf_enable_glows_after_respawn.GetBool() : true;
 
 	if ( bIsHLTV || 
 		( tf_spec_xray.GetBool() && ( ( nLocalPlayerTeam == TEAM_SPECTATOR ) || ( pLocalPlayer->GetObserverMode() > OBS_MODE_FREEZECAM ) || ( pLocalPlayer->m_Shared.InCond( TF_COND_TEAM_GLOWS ) && bEnableRespawnGlows ) ) ) )
