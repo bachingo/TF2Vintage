@@ -6097,8 +6097,8 @@ bool CTFWeaponBase::AreRandomCritsEnabled( void )
 			return false;
 	}
 
-	
-	return tf_weapon_criticals.GetBool() || ;
+	// TF2V: Disabling random crits option was added after Feb 28 2008. Random crits is always on prior. (Day 165)
+	return TF2VIsContemporary( 165 ) ? tf_weapon_criticals.GetBool() : true ;
 }
 
 
