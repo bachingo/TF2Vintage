@@ -324,7 +324,7 @@ void CTFGameMovement::ProcessMovement( CBasePlayer *pBasePlayer, CMoveData *pMov
 	mv = pMove;
 
 	// The max speed is currently set to the scout - if this changes we need to change this!
-	// TF2V: Scout speed is 400. This originally was 450, but Pyro update changed it to 520 (400 + 30%)
+	// TF2V: Scout speed is 400. This originally was capped at 450, but Pyro update changed it to 520 (400 + 30%)
 	mv->m_flMaxSpeed = TF2VIsContemporary( TF2V_DAY_MAJOR_PYROMANIA ) ? 520 : 450 ; // TF_MAX_SPEED   (400 * 1.3)	// 400 is Scout max speed, and we allow up to 30% movement bonus.
 
 	// reset jump peaks for this simulation frame
