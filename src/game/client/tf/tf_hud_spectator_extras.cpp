@@ -111,7 +111,7 @@ void CTFHudSpectatorExtras::OnTick()
 	bool bIsHLTV = engine->IsHLTV();
 
 	// TF2V: Spectator glows added in Tough Break.
-	if ( ( tf_spec_xray_disable.GetBool() || TF2VIsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK ) ) || ( !bIsHLTV && ( nLocalPlayerTeam < TEAM_SPECTATOR ) ) )
+	if ( ( tf_spec_xray_disable.GetBool() || TF2VIsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK) ) || ( !bIsHLTV && ( nLocalPlayerTeam < TEAM_SPECTATOR ) ) )
 	{
 		Reset();
 		return;
