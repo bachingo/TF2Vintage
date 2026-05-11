@@ -1410,10 +1410,12 @@ public:
 	// TF2V era calls.
 	bool IsAnachronistic( int nEra ) { return ( GetTF2VEra() < nEra ); }	// "This happened before X update!"
 	bool IsContemporary( int nEra ) { return ( GetTF2VEra() >= nEra ); }	// "This happened after X update!"
-	bool IsBetween( int nEra1, int nEra2 ) { 								// "This happened between X and Y update!"
-	if ( nEra1 > nEra2 ) // Small redundancy in case we made the first number later than the second.
-		return ( ( GetTF2VEra() >= nEra2 ) && ( GetTF2VEra() < nEra1 ) ); }
-	return ( ( GetTF2VEra() >= nEra1 ) && ( GetTF2VEra() < nEra2 ) ); }
+	bool IsBetween( int nEra1, int nEra2 ) 									// "This happened between X and Y updates!"
+	{ 								
+		if ( nEra1 > nEra2 ) // Small redundancy in case we have the first number bigger/later than the second.
+			return ( ( GetTF2VEra() >= nEra2 ) && ( GetTF2VEra() < nEra1 ) );
+		return ( ( GetTF2VEra() >= nEra1 ) && ( GetTF2VEra() < nEra2 ) ); 
+	}
 	
 	int GetTF2VEra( void ) { return m_nTF2VEra; }							// "What date is the server set to?"
 	void SetTF2VEra( int nEra = tf2v_era.GetInt() ) { m_nTF2VEra = clamp(nEra, TF2V_ERA_DAY_MIN, TF2V_ERA_DAY_MAX); } // "What date do we want to change the server to?"
