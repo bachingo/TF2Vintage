@@ -47,7 +47,7 @@ bool ShouldUseMatchHUD()
 		return false;
 	
 	// TF2V: No Match HUD prior to Meet Your Match
-	if ( TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_MEET_YOUR_MATCH) )
+	if ( TF2VIsAnachronistic(TF2V_DAY_MAJOR_MEET_YOUR_MATCH) )
 		return false;
 	
 	// MvM uses its own HUD

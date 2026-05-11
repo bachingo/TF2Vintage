@@ -139,7 +139,7 @@ float CTFWeaponBaseGrenadeProj::GetDamageRadius()
 { 
 	float flRadius = m_DmgRadius;
 	// TF2V: Pipebombs and Grenades had a 159 damage radius prior to Smissmass 2014.
-	if ( (TFGameRules()->IsAnachronistic(TF2V_DAY_SMISSMAS_2014)) )
+	if ( (TF2VIsAnachronistic(TF2V_DAY_SMISSMAS_2014)) )
 		flRadius = 159;
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetOriginalLauncher(), flRadius, mult_explosion_radius );
 	return flRadius; 

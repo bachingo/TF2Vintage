@@ -72,7 +72,7 @@ void CBlueprintPanel::SetObjectInfo( const CObjectInfo* pNewInfo )
 		{
 			int iCost = m_pObjectInfo->m_Cost;
 			// TF2V: Teleporters more expensive before Meet Your Match
-			if ( (TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_MEET_YOUR_MATCH)) )
+			if ( (TF2VIsAnachronistic(TF2V_DAY_MAJOR_MEET_YOUR_MATCH)) )
 			{
 				if (V_strcmp(m_pObjectInfo->m_pClassName, "obj_teleporter"))
 				{

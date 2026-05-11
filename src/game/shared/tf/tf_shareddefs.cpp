@@ -1573,7 +1573,7 @@ int InternalCalculateObjectCost( int iObjectType )
 	int iCost = GetObjectInfo( iObjectType )->m_Cost;
 
 	// TF2V: Teleporters cost more prior to Meet Your Match.
-	if ( (TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_MEET_YOUR_MATCH)) )
+	if ( (TF2VIsAnachronistic(TF2V_DAY_MAJOR_MEET_YOUR_MATCH)) )
 	{
 		if ( iObjectType == OBJ_TELEPORTER )
 		{

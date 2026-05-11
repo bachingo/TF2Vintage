@@ -1019,7 +1019,7 @@ void CTeamRoundTimer::RoundTimerThink( void )
 				else
 				{
 					// TF2V: Overtime nag was always on prior to August 14, 2009. (Day 698)
-					if ( ( tf_overtime_nag.GetBool() || (TFGameRules()->IsAnachronistic(698)) ) && ( gpGlobals->curtime > m_flNextOvertimeNag ) )
+					if ( ( tf_overtime_nag.GetBool() || (TF2VIsAnachronistic(698)) ) && ( gpGlobals->curtime > m_flNextOvertimeNag ) )
 					{
 						m_flNextOvertimeNag = gpGlobals->curtime + 1.0f;
 

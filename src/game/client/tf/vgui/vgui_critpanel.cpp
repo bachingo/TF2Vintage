@@ -195,7 +195,7 @@ void CCriticalPanel::OnThink()
 	if ( cl_showcrit.GetInt() )
 	{
 		// Get the current critical multiplier.
-		float flCritMult = pPlayer->GetCritMult() * ( TFGameRules()->IsAnachronistic(505) ? TF_DAMAGE_CRIT_CHANCE_OLD : TF_DAMAGE_CRIT_CHANCE_NEW ) ;
+		float flCritMult = pPlayer->GetCritMult() * ( TF2VIsAnachronistic(505) ? TF_DAMAGE_CRIT_CHANCE_OLD : TF_DAMAGE_CRIT_CHANCE_NEW ) ;
 		flCritMult *= 100.0f;
 
 		if ( m_CritData.m_flAverage < 0.0f )

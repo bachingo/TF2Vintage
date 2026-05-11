@@ -702,7 +702,7 @@ int	CTFWeaponBase::GetMaxClip1( void ) const
 	// No information of when this was changed seems to exist.
 	// Based off June 2007 builds, this might have been a shipping error.
 	// I'm assuming this was undocumented patched, but the first patch is September 20th (Day 4).
-	if ( (TFGameRules()->IsAnachronistic(4)) )
+	if ( (TF2VIsAnachronistic(4)) )
 	{
 		// This is a hacky way of making sure Demoman has a 6 shot grenade launcher.
 		if ( GetWeaponID() == TF_WEAPON_GRENADELAUNCHER )
@@ -1379,7 +1379,7 @@ bool CTFWeaponBase::Deploy( void )
 		float flDeployTimeMultiplier = 1.0f;
 		
 		// TF2V: Base swaps were 34% slower prior to Tough Break. (0.67s->0.5s)
-		if ( TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK) )
+		if ( TF2VIsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK) )
 			flDeployTimeMultiplier = 1.34f;
 		
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flDeployTimeMultiplier, mult_deploy_time );
@@ -1819,7 +1819,7 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 		}
 
 		// get the total crit chance (ratio of total shots fired we want to be crits)
-		float flBaseCritChanceRapid = TFGameRules()->IsAnachronistic(505) ? TF_DAMAGE_CRIT_CHANCE_RAPID_OLD : TF_DAMAGE_CRIT_CHANCE_RAPID_NEW;
+		float flBaseCritChanceRapid = TF2VIsAnachronistic(505) ? TF_DAMAGE_CRIT_CHANCE_RAPID_OLD : TF_DAMAGE_CRIT_CHANCE_RAPID_NEW;
 		float flTotalCritChance = clamp( flBaseCritChanceRapid * flPlayerCritMult, 0.01f, 0.99f );
 		// get the fixed amount of time that we start firing crit shots for	
 		float flCritDuration = TF_DAMAGE_CRIT_DURATION_RAPID;
@@ -1850,7 +1850,7 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 	else
 	{
 		// single-shot weapon, just use random pct per shot
-		float flBaseCritChance = TFGameRules()->IsAnachronistic(505) ? TF_DAMAGE_CRIT_CHANCE_OLD : TF_DAMAGE_CRIT_CHANCE_NEW ;
+		float flBaseCritChance = TF2VIsAnachronistic(505) ? TF_DAMAGE_CRIT_CHANCE_OLD : TF_DAMAGE_CRIT_CHANCE_NEW ;
 		flCritChance = flBaseCritChance * flPlayerCritMult;
 		CALL_ATTRIB_HOOK_FLOAT( flCritChance, mult_crit_chance );
 
@@ -2653,7 +2653,7 @@ void CTFWeaponBase::ItemPostFrame( void )
 	// If we're not shooting, and we want to autoreload, press our reload key
 	// also check for frozen since this theory blocks our buttons
 	// TF2V: Block this behavior prior to Classless update.
-	bool bAutoReloadDenied = TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_CLASSLESS);
+	bool bAutoReloadDenied = TF2VIsAnachronistic(TF2V_DAY_MAJOR_CLASSLESS);
 	if ( !AutoFiresFullClip() && ( pOwner->ShouldAutoReload() && !bAutoReloadDenied ) && UsesClipsForAmmo1() && !(pOwner->m_nButtons & (IN_ATTACK|IN_ATTACK2)) && bNeedsReload && ( pOwner->GetFlags() & FL_FROZEN ) == 0 )
 	{
 		pOwner->m_nButtons |= IN_RELOAD;

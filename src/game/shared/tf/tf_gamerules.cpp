@@ -4793,7 +4793,7 @@ bool CTFGameRules::CanChangelevelBecauseOfTimeLimit( void )
 bool CTFGameRules::CanGoToStalemate( void )
 {
 	// TF2V: Added October 8, 2007 (Day 22)
-	if ( !(TFGameRules()->IsAnachronistic(22)) )
+	if ( (TF2VIsContemporary(22)) )
 	{
 		// In CTF, don't go to stalemate if one of the flags isn't at home
 		if ( m_nGameType == TF_GAMETYPE_CTF )
@@ -7058,7 +7058,7 @@ bool CTFGameRules::ApplyOnDamageModifyRules( CTakeDamageInfo &info, CBaseEntity 
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFAttacker->GetActiveWeapon(), iConsumeFlames, attack_minicrits_and_consumes_burning );
 			if ( iConsumeFlames && pWeapon == pTFAttacker->GetActiveWeapon() && ( info.GetDamageType() & DMG_MELEE ) )
 			{
-				float flBurnDmg = TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_JUNGLE_INFERNO) ? TF_BURNING_DMG_OLD : TF_BURNING_DMG_NEW;
+				float flBurnDmg = TF2VIsAnachronistic(TF2V_DAY_MAJOR_JUNGLE_INFERNO) ? TF_BURNING_DMG_OLD : TF_BURNING_DMG_NEW;
 				float flConsumeBonus = RemapValClamped( pVictim->m_Shared.GetAfterburnDuration(), 0.5f, (float)TF_BURNING_FLAME_LIFE, 20.f, (float)( flBurnDmg * 20 ) );
 				flDamage += flConsumeBonus;
 				pVictim->m_Shared.RemoveCond( TF_COND_BURNING );
@@ -8495,7 +8495,7 @@ float CTFGameRules::ApplyOnDamageAliveModifyRules( const CTakeDamageInfo &info, 
 			else if ( pVictim->m_Shared.InCond( TF_COND_STEALTHED ) )
 			{
 				// TF2V: Flat cloak damage resist added in Gun Mettle.
-				if ( !( TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) ) )
+				if ( !( TF2VIsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) ) )
 					flRealDamage *= tf_stealth_damage_reduction.GetFloat();
 			}
 		}
@@ -22484,7 +22484,7 @@ void CTFGameRules::OnRemoveCoach( uint32 unCoachAccountID )
 void CTFGameRules::HandleCTFCaptureBonus( int nTeam )
 {
 	// TF2V: Didn't exist prior to Classless.
-	if ( !(TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_CLASSLESS)) )
+	if ( (TF2VIsContemporary(TF2V_DAY_MAJOR_CLASSLESS)) )
 		return;
 	
 	float flBonusTime = GetCTFCaptureBonusTime();

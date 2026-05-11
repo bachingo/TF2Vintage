@@ -1963,15 +1963,15 @@ void CTFPlayer::RegenThink( void )
 		float flTimeSinceDamage = gpGlobals->curtime - GetLastDamageReceivedTime();
 		
 		// TF2V: Medic Heal rate changed September 15, 2009 (Day 730)
-		float flRegenAmt = TFGameRules()->IsAnachronistic(730) ? TF_REGEN_AMOUNT_OLD : TF_REGEN_AMOUNT_NEW;
-		float flRegenBoost = TFGameRules()->IsAnachronistic(730) ? TF_REGEN_AMOUNT_OLD : TF_REGEN_AMOUNT_NEW;
+		float flRegenAmt = TF2VIsAnachronistic(730) ? TF_REGEN_AMOUNT_OLD : TF_REGEN_AMOUNT_NEW;
+		float flRegenBoost = TF2VIsAnachronistic(730) ? TF_REGEN_AMOUNT_OLD : TF_REGEN_AMOUNT_NEW;
 		
 		
 		float flScale = RemapValClamped( flTimeSinceDamage, 5.0f, 10.0f, 1.0f, flRegenBoost );
 		
 
 		// TF2V: Medic Self-Healing when healing was added in Tough Break.
-		if ( !(TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK)) )
+		if ( (TF2VIsContemporary(TF2V_DAY_MAJOR_TOUGH_BREAK)) )
 		{
 			// If you are healing a hurt patient, increase your base regen
 			CTFPlayer *pPatient = ToTFPlayer( MedicGetHealTarget() );
@@ -4083,7 +4083,7 @@ void CTFPlayer::Spawn()
 		m_Shared.RemoveAllCond(); // Remove conc'd, burning, rotting, hallucinating, etc.
 
 		// TF2V: We didn't get respawn glowing until Tough Break.
-		bool bRespawnTeamGlowsEarly = TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK);
+		bool bRespawnTeamGlowsEarly = TF2VIsAnachronistic(TF2V_DAY_MAJOR_TOUGH_BREAK);
 		if ( !bRespawnTeamGlowsEarly )
 		{
 			// add team glows for a period of time after we respawn
@@ -5193,7 +5193,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 	{
 		bool bWepSwitched = false;
 		// TF2V: Feature didn't exist prior to Scout Update.
-		bool bActiveWeaponEarly = TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_SCOUT);
+		bool bActiveWeaponEarly = TF2VIsAnachronistic(TF2V_DAY_MAJOR_SCOUT);
 		if ( ( m_bRememberActiveWeapon && !bActiveWeaponEarly ) && m_iActiveWeaponTypePriorToDeath )
 		{
 			CTFWeaponBase *pWeapon = Weapon_OwnsThisID( m_iActiveWeaponTypePriorToDeath );
@@ -9334,7 +9334,7 @@ float CTFPlayer::GetObjectBuildSpeedMultiplier( int iObjectType, bool bIsRedeplo
 
 	case OBJ_TELEPORTER:
 		CALL_ATTRIB_HOOK_FLOAT( flBuildRate, teleporter_build_rate_multiplier );
-		if ( TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) )
+		if ( TF2VIsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) )
 			flBuildRate += bIsRedeploy ? 2.0 : 0.0f;
 		else
 			flBuildRate += bIsRedeploy ? 3.0 : 0.0f;
@@ -9342,7 +9342,7 @@ float CTFPlayer::GetObjectBuildSpeedMultiplier( int iObjectType, bool bIsRedeplo
 
 	case OBJ_DISPENSER:
 		CALL_ATTRIB_HOOK_FLOAT( flBuildRate, teleporter_build_rate_multiplier );
-		if ( TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) )
+		if ( TF2VIsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) )
 			flBuildRate += bIsRedeploy ? 2.0 : 0.0f;
 		else
 			flBuildRate += bIsRedeploy ? 3.0 : 0.0f;
@@ -13701,7 +13701,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	SetGibbedOnLastDeath( bGib );
 
 	// TF2V: This behavior was added June 17, 2011. (Day 1370)
-	if ( !(TFGameRules()->IsAnachronistic(1370) ) )
+	if ( (TF2VIsContemporary(1370) ) )
 	{
 		bool bIsMvMRobot = TFGameRules()->IsMannVsMachineMode() && IsBot();
 		if ( bGib && !bIsMvMRobot && IsPlayerClass( TF_CLASS_SCOUT ) && RandomInt( 1, 100 ) <= SCOUT_ADD_BIRD_ON_GIB_CHANCE )
@@ -14389,7 +14389,7 @@ void CTFPlayer::DropAmmoPack( const CTakeDamageInfo &info, bool bEmpty, bool bDi
 
 	// TF2V: Behavior is different Pre and Post Gun Mettle.
 	CTFAmmoPack* pAmmoPack;
-	if ( TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) )
+	if ( TF2VIsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) )
 	{
 		// Create the ammo pack.
 		pAmmoPack = CTFAmmoPack::Create(vecPackOrigin, vecPackAngles, this, pszWorldModel);
@@ -21505,7 +21505,7 @@ void CTFPlayer::NoteSpokeVoiceCommand( const char *pszScenePlayed )
 	Assert( pszScenePlayed );
 
 	// Voice Spam prevention was added in Jungle Inferno.
-	if ( !(TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_JUNGLE_INFERNO)) )
+	if ( (TF2VIsContemporary(TF2V_DAY_MAJOR_JUNGLE_INFERNO)) )
 	{
 		float flTimeSinceAllowedVoice = gpGlobals->curtime - m_flNextVoiceCommandTime;
 
@@ -21522,7 +21522,7 @@ void CTFPlayer::NoteSpokeVoiceCommand( const char *pszScenePlayed )
 	}
 
 	// Early voice spam was added October 25, 2007 (Day 39)
-	if ( (TFGameRules()->IsAnachronistic(39)) )
+	if ( (TF2VIsAnachronistic(39)) )
 		m_flNextVoiceCommandTime = gpGlobals->curtime + GetSceneDuration( pszScenePlayed );
 	else
 		m_flNextVoiceCommandTime = gpGlobals->curtime + MIN( GetSceneDuration( pszScenePlayed ), tf_max_voice_speak_delay.GetFloat() );
@@ -22053,7 +22053,7 @@ void CTFPlayer::SaveLastWeaponSlot( void )
 {
 	
 	// TF2V: Feature did not exist prior to the Scout Update.
-	if ( TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_SCOUT) )
+	if ( TF2VIsAnachronistic(TF2V_DAY_MAJOR_SCOUT) )
 		return;
 	
 	if( !m_bRememberLastWeapon && !m_bRememberActiveWeapon )

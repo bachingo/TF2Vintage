@@ -1408,6 +1408,7 @@ public:
 	void SetStartMatchRoundImmediately( bool bStartImmediate ) { m_bStartMatchRoundImmediately = bStartImmediate; }
 
 	bool IsAnachronistic( int nEra ) { return ( GetTF2VEra() < nEra ); }
+	bool IsContemporary( int nEra ) { return ( GetTF2VEra() >= nEra ); }
 	int GetTF2VEra( void ) { return m_nTF2VEra; }
 	void SetTF2VEra( int nEra = tf2v_era.GetInt() ) { m_nTF2VEra = clamp(nEra, TF2V_ERA_DAY_MIN, TF2V_ERA_DAY_MAX); }
 	
@@ -1669,6 +1670,22 @@ public:
 inline CTFGameRules* TFGameRules()
 {
 	return static_cast<CTFGameRules*>(g_pGameRules);
+}
+
+inline bool TF2VIsAnachronistic( int nEra )
+{
+    if ( !TFGameRules() )
+        return false; 
+
+    return TFGameRules()->IsAnachronistic( nEra );
+}
+
+inline bool TF2VIsContemporary( int nEra )
+{
+    if ( !TFGameRules() )
+        return false; 
+
+    return TFGameRules()->IsContemporary( nEra );
 }
 
 inline float CTFGameRules::ItemTesting_GetBotAnimSpeed( void ) 

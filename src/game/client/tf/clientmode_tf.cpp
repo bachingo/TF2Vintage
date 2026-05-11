@@ -743,7 +743,7 @@ bool ClientModeTFNormal::ShouldDrawCrosshair()
 		return false;
 
 	// TF2V: Feature didn't exist prior to April 17, 2012. (Day 1675)
-	bool bNoCrosshairEarly = ( TFGameRules()->IsAnachronistic(1675) );
+	bool bNoCrosshairEarly = ( TF2VIsAnachronistic(1675) );
 
 	if ( pPlayer->GetPlayerClass() &&
 		 pPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_SNIPER &&

@@ -82,7 +82,7 @@ bool ShouldHealthBarBeVisible( CBaseEntity *pTarget, CTFPlayer *pLocalPlayer )
 		return false;
 	
 	// TF2V: This feature didn't exist prior to Halloween 2014.
-	if ( TFGameRules()->IsAnachronistic(TF2V_DAY_HALLOWEEN_2014) )
+	if ( TF2VIsAnachronistic(TF2V_DAY_HALLOWEEN_2014) )
 		return false;
 
 	const int iDisableFloatingHealth = tf_hud_target_id_disable_floating_health.GetInt();

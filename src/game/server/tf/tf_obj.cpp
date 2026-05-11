@@ -2295,7 +2295,7 @@ void CBaseObject::CreateObjectGibs( void )
 	// grant some percentage of the cost to build if number of metal to drop is not specified
 	float flMetalCostPercentage = 0.5f;
 
-	if ( (TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE)) )
+	if ( (TF2VIsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE)) )
 	{
 		if (GetType() != OBJ_DISPENSER)
 		{
@@ -2306,7 +2306,7 @@ void CBaseObject::CreateObjectGibs( void )
 
 	int iCost = pObjectInfo->m_Cost;
 	// TF2V: Teleporters were more expensive prior to Meet Your Match
-	if ( (TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_MEET_YOUR_MATCH)) )
+	if ( (TF2VIsAnachronistic(TF2V_DAY_MAJOR_MEET_YOUR_MATCH)) )
 	{
 		if (GetType() == OBJ_TELEPORTER)
 		{
@@ -3013,7 +3013,7 @@ int CBaseObject::Command_Repair( CTFPlayer *pActivator, float flAmount, float fl
 		return false;
 	
 	// TF2V: Repair to metal ratio was higher prior to Gun Mettle. Do this ugly conversion to preserve mults.
-	if ( TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) )
+	if ( TF2VIsAnachronistic(TF2V_DAY_MAJOR_GUN_METTLE) )
 		flRepairToMetalRatio *= ( (float) 5/ (float) 3);
 
 	float flRepairAmountMax = flAmount * flRepairMod;
@@ -3844,7 +3844,7 @@ int	CBaseObject::GetUpgradeAmountPerHit( void )
 	int nAmount = tf_obj_upgrade_per_hit.GetInt();
 
 	// TF2V: Double Metal per swing added in The Engineer Update.
-	if ( !(TFGameRules()->IsAnachronistic(TF2V_DAY_MAJOR_ENGINEER)) )
+	if ( (TF2VIsContemporary(TF2V_DAY_MAJOR_ENGINEER)) )
 	{
 		if ( TFGameRules()->InSetup() || TFGameRules()->IsPowerupMode() )
 		{
