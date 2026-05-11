@@ -284,7 +284,7 @@ ConVar sv_vote_late_join_cooldown( "sv_vote_late_join_cooldown", "300", FCVAR_NO
 
 
 ConVar tf2v_disable_cosmetics( "tf2v_disable_cosmetics", "0", FCVAR_ARCHIVE, "Allows servers to opt out of the cosmetic system entirely. 0 - Cosmetics on, 1 - Cosmetics off. Default: 0", true, 0, true, 1 );
-ConVar tf2v_alternate_war_result( "tf2v_alternate_war_result", "0", FCVAR_ARCHIVE | FCVAR_HIDDEN, "Affects who receives the Gunboats for use. 0 - Soldier Only (canon), 1 - Demoman Only (alternate), 2 - Both Soldier and Demoman. Default: 0", true, 0, true, 2 );
+ConVar tf2v_alternate_war_result( "tf2v_alternate_war_result", "2", FCVAR_ARCHIVE, "Affects who receives the Gunboats for use. 0 - Soldier Only (historical), 1 - Demoman Only (alternate), 2 - Both Soldier and Demoman. Default: 2", true, 0, true, 2 );
 
 
 extern ConVar tf_voice_command_suspension_mode;
