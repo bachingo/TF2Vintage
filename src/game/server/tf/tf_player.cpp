@@ -5006,7 +5006,8 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 		GiveAmmo( GetMaxAmmo(iAmmo), iAmmo, true, kAmmoSource_Resupply );
 	}
 
-	if ( IsX360() )
+	// TF2V: No items until Gold Rush.
+	if ( IsX360() || TF2VIsAnachronistic( TF2V_DAY_MAJOR_GOLDRUSH ) )
 	{
 		ManageRegularWeaponsLegacy( pData );
 	}
