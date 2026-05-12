@@ -1819,7 +1819,7 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 		}
 
 		// get the total crit chance (ratio of total shots fired we want to be crits)
-		float flBaseCritChanceRapid = TF2VIsAnachronistic( 505 ) ? TF_DAMAGE_CRIT_CHANCE_RAPID_OLD : TF_DAMAGE_CRIT_CHANCE_RAPID_NEW;
+		float flBaseCritChanceRapid = TF2VIsContemporary( 505 ) ? TF_DAMAGE_CRIT_CHANCE_RAPID_NEW : TF_DAMAGE_CRIT_CHANCE_RAPID_OLD;
 		float flTotalCritChance = clamp( flBaseCritChanceRapid * flPlayerCritMult, 0.01f, 0.99f );
 		// get the fixed amount of time that we start firing crit shots for	
 		float flCritDuration = TF_DAMAGE_CRIT_DURATION_RAPID;
@@ -1850,7 +1850,7 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 	else
 	{
 		// single-shot weapon, just use random pct per shot
-		float flBaseCritChance = TF2VIsAnachronistic( 505 ) ? TF_DAMAGE_CRIT_CHANCE_OLD : TF_DAMAGE_CRIT_CHANCE_NEW ;
+		float flBaseCritChance = TF2VIsContemporary( 505 ) ? TF_DAMAGE_CRIT_CHANCE_NEW : TF_DAMAGE_CRIT_CHANCE_OLD ;
 		flCritChance = flBaseCritChance * flPlayerCritMult;
 		CALL_ATTRIB_HOOK_FLOAT( flCritChance, mult_crit_chance );
 

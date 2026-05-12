@@ -9638,7 +9638,7 @@ void CTFPlayerShared::SetAirDash( int iAirDash )
 float CTFPlayerShared::GetCritMult( void )
 {
 	const int iCritMult = m_iCritMult.Get();
-	const float flMaxMult = TF2VOldCritModel() ? TF_DAMAGE_CRITMOD_DAMAGE_OLD : TF_DAMAGE_CRITMOD_DAMAGE_NEW;
+	const float flMaxMult = TF2VNewCritModel() ? TF_DAMAGE_CRITMOD_MAXMULT_NEW : TF_DAMAGE_CRITMOD_MAXMULT_OLD ;
 	float flRemapCritMul = RemapValClamped( iCritMult, 0, 255, 1.0, flMaxMult );
 /*#ifdef CLIENT_DLL
 	Msg("CLIENT: Crit mult %.2f - %d\n",flRemapCritMul, iCritMult );
@@ -9652,10 +9652,10 @@ float CTFPlayerShared::GetCritMult( void )
 //-----------------------------------------------------------------------------
 // Purpose: Selects between the pre and post 2009 critical rampup.
 //-----------------------------------------------------------------------------
-bool CTFPlayerShared::TF2VOldCritModel( void )
+bool CTFPlayerShared::TF2VNewCritModel( void )
 {	
 	// TF2V: Crit behavior changes February 2 2009 (Day 505)
-	 return TF2VIsAnachronistic( 505 );
+	 return TF2VIsContemporary( 505 );
 }
 
 #ifdef GAME_DLL
@@ -9665,7 +9665,7 @@ bool CTFPlayerShared::TF2VOldCritModel( void )
 void CTFPlayerShared::UpdateCritMult( void )
 {
 	const float flMinMult = 1.0;
-	const float flMaxMult = TF2VOldCritModel() ? (float)TF_DAMAGE_CRITMOD_DAMAGE_OLD : (float)TF_DAMAGE_CRITMOD_DAMAGE_NEW;
+	const float flMaxMult = TF2VNewCritModel() ? TF_DAMAGE_CRITMOD_MAXMULT_NEW : TF_DAMAGE_CRITMOD_MAXMULT_OLD ;
 
 	if ( m_DamageEvents.Count() == 0 )
 	{
@@ -9703,8 +9703,10 @@ void CTFPlayerShared::UpdateCritMult( void )
 
 		flTotalDamage += m_DamageEvents[i].flDamage * m_DamageEvents[i].flDamageCritScaleMultiplier;
 	}
+	
+	const float flCritModDamage = TF2VNewCritModel() ? TF_DAMAGE_CRITMOD_DAMAGE_NEW : TF_DAMAGE_CRITMOD_DAMAGE_OLD;
 
-	float flMult = RemapValClamped( flTotalDamage, 0, (TF2VOldCritModel() ? TF_DAMAGE_CRITMOD_DAMAGE_OLD : TF_DAMAGE_CRITMOD_DAMAGE_NEW), flMinMult, flMaxMult );
+	float flMult = RemapValClamped( flTotalDamage, 0, flCritModDamage, flMinMult, flMaxMult );
 
 //	Msg( "   TotalDamage: %.2f   -> Mult %.2f | Melee %.2f\n", flTotalDamage, flMult, flMultMelee );
 
@@ -9835,7 +9837,9 @@ void CTFPlayerShared::AddTempCritBonus( float flAmount )
 
 	int iIndex = m_DamageEvents.AddToTail();
 	// TODO(mcoms): do we need to be aware of scaling (max) here? what is the flAmount supposed to do?
-	m_DamageEvents[iIndex].flDamage = RemapValClamped( flAmount, 0, 1, 0, (TF2VOldCritModel() ? TF_DAMAGE_CRITMOD_DAMAGE_OLD : TF_DAMAGE_CRITMOD_DAMAGE_NEW) ) / ( TF2VOldCritModel() ? (float)TF_DAMAGE_CRITMOD_DAMAGE_OLD : (float)TF_DAMAGE_CRITMOD_DAMAGE_NEW - 1.0f);
+	const float flCritModDamage = TF2VNewCritModel() ? TF_DAMAGE_CRITMOD_DAMAGE_NEW : TF_DAMAGE_CRITMOD_DAMAGE_OLD;
+	const float flMaxMult = TF2VNewCritModel() ? TF_DAMAGE_CRITMOD_MAXMULT_NEW : TF_DAMAGE_CRITMOD_MAXMULT_OLD ;
+	m_DamageEvents[iIndex].flDamage = RemapValClamped( flAmount, 0, 1, 0, flCritModDamage ) / (flMaxMult - 1.0);
 	m_DamageEvents[iIndex].flDamageCritScaleMultiplier = 1.0f;
 	m_DamageEvents[iIndex].nDamageType = DMG_GENERIC;
 	m_DamageEvents[iIndex].flTime = gpGlobals->curtime;
