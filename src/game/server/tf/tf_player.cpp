@@ -14416,8 +14416,12 @@ void CTFPlayer::DropAmmoPack( const CTakeDamageInfo &info, bool bEmpty, bool bDi
 	Assert( pAmmoPack );
 	if ( pAmmoPack )
 	{
-		pAmmoPack->InitAmmoPack( this, pWeapon, nSkin, bEmpty, bIsSuicide );
-	
+		// TF2V: These by default give half ammo.
+		if ( TF2VIsContemporary( 165 ) )
+			pAmmoPack->InitAmmoPack( this, pWeapon, nSkin, bEmpty, bIsSuicide );
+		else // Before February 28 2008 (Day 165) these gave 100% ammo.
+			pAmmoPack->InitAmmoPack( this, pWeapon, nSkin, bEmpty, bIsSuicide, 1.f );
+		
 		// Clean up old ammo packs if they exist in the world
 		AmmoPackCleanUp();	
 	}
