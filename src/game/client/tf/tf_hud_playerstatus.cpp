@@ -851,7 +851,8 @@ void CTFHudPlayerHealth::SetHealth( int iNewHealth, int iMaxHealth, int	iMaxBuff
 	{
 		SetDialogVariable( "Health", m_nHealth );
 
-		if ( m_nMaxHealth - m_nHealth >= 5 )
+		// TF2V: This feature was added in Meet Your Match.
+		if ( TF2VIsContemporary( TF2V_DAY_MAJOR_MEET_YOUR_MATCH ) && ( m_nMaxHealth - m_nHealth >= 5 ) )
 		{
 			SetDialogVariable( "MaxHealth", m_nMaxHealth );
 		}
