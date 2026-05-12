@@ -5876,6 +5876,14 @@ void CTFPlayer::PostInventoryApplication( void )
 	{
 		RemoveDisguise();
 	}
+	
+	// Notify the client.
+	IGameEvent *event = gameeventmanager->CreateEvent( "post_inventory_application" );
+	if ( event )
+	{
+		event->SetInt( "userid", GetUserID() );
+		gameeventmanager->FireEvent( event ); 
+	}
 
 	// Iterate over all of our wearables
 	int iPlayerSkinOverride = 0;
