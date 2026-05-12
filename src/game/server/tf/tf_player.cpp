@@ -5006,8 +5006,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 		GiveAmmo( GetMaxAmmo(iAmmo), iAmmo, true, kAmmoSource_Resupply );
 	}
 
-	// TF2V: No items until Gold Rush.
-	if ( IsX360() || TF2VIsAnachronistic( TF2V_DAY_MAJOR_GOLDRUSH ) )
+	if ( IsX360() )
 	{
 		ManageRegularWeaponsLegacy( pData );
 	}
@@ -5694,7 +5693,8 @@ void CTFPlayer::ValidateWeapons( TFPlayerClassData_t *pData, bool bResetWeapons 
 		if ( ( IsWearableSlot(iLoadoutSlot) && gpGlobals->maxClients > 32 ) || tf2v_disable_cosmetics.GetBool() )
 			continue;
 		
-		CEconItemView *pItem = GetLoadoutItem( GetPlayerClass()->GetClassIndex(), iLoadoutSlot );
+		// TF2V: Always force stock items prior to the Gold Rush update.
+		CEconItemView *pItem = TF2VIsContemporary( TF2V_DAY_MAJOR_GOLDRUSH ) ? GetLoadoutItem( GetPlayerClass()->GetClassIndex(), iLoadoutSlot ) : TFInventoryManager()->GetBaseItemForClass( GetPlayerClass()->GetClassIndex(), iLoadoutSlot );
 
 		// See if gamerules says this item isn't allowed right now
 		bool bForceRemoved = bOverrideRemoval || !ItemIsAllowed( pItem );
