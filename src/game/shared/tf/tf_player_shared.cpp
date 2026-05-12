@@ -13373,7 +13373,6 @@ int	CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassIndex /*= -1*/ )
 	int iClassIndexTemp = iClassIndex != -1 ? iClassIndex : GetPlayerClass()->GetClassIndex();
 	if ( iAmmoIndex == TF_AMMO_PRIMARY )
 	{
-		
 		// TF2V: Soldier's ammo count changed.
 		if ( iClassIndexTemp == TF_CLASS_SOLDIER )
 		{
