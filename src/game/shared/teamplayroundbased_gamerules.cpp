@@ -271,6 +271,8 @@ ConVar mp_pause_same_team_resume_time_disconnected( "mp_pause_same_team_resume_t
 // TODO(mcoms)
 ConVar mp_unpause_mass_disconnect_cooldown( "mp_unpause_mass_disconnect_cooldown", "86400", FCVAR_REPLICATED, "" );
 
+ConVar tf2v_use_alternate_respawn_scaling( "tf2v_use_alternate_respawn_scaling", "1", FCVAR_REPLICATED | FCVAR_ARCHIVE | FCVAR_NOTIFY, "Adjusts respawn scaling more aggressively based on playercounts. 0 - Original TF2 (25 percent with 1 player per team, 100 percent at 8 players per team, upper cap at 100 percent), 1 - TF2V Variant (12 percent with 1 player per team, 100 percent at 8 players per team, no upper cap); Default: 1", true, 0, true, 1 );
+
 #if defined( _DEBUG ) || defined( STAGING_ONLY )
 ConVar mp_developer( "mp_developer", "0", FCVAR_ARCHIVE | FCVAR_REPLICATED | FCVAR_NOTIFY, "1: basic conveniences (instant respawn and class change, etc).  2: add combat conveniences (infinite ammo, buddha, etc)" );
 #endif // _DEBUG || STAGING_ONLY
@@ -723,9 +725,13 @@ float CTeamplayRoundBasedRules::GetRespawnTimeScalar( int iTeam )
 
 	int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
 
-	//float flScale = RemapValClamped( iNumPlayers, 1, iOptimalPlayers, 0.25, 1.0 );
-	// TF2V: I still hate this function.
-	float flScale = (float)iNumPlayers / (float)iOptimalPlayers;
+	
+	float flScale;
+	if ( tf2v_use_alternate_respawn_scaling.GetBool() )
+		flScale = (float)iNumPlayers / (float)iOptimalPlayers;	// TF2V's variant: Shorter respawns on smaller playercounts, longer respawns on larger playercounts. Action flow is consistent between low pop and high pop.
+	else
+		flScale = RemapValClamped( iNumPlayers, 1, iOptimalPlayers, 0.25, 1.0 ); // Original scale: longer respawns on smaller playercounts, but stays the same respawn time even with larger playercounts. Emptier on low pop, more chaotic on higher pop.
+
 	return flScale;
 }
 
