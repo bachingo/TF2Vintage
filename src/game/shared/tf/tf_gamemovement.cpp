@@ -1978,7 +1978,7 @@ void CTFGameMovement::WalkMove( void )
 	// Now reduce their backwards speed to some percent of max, if they are traveling backwards
 	// unless they are under some minimum, to not penalize deployed snipers or heavies
 	// TF2V: This was added October 9 2007. (Day 23)
-	if ( ( tf_clamp_back_speed.GetFloat() < 1.0 && VectorLength( mv->m_vecVelocity ) > tf_clamp_back_speed_min.GetFloat() ) && TF2VIsContemporary( 23 );
+	if ( ( tf_clamp_back_speed.GetFloat() < 1.0 && VectorLength( mv->m_vecVelocity ) > tf_clamp_back_speed_min.GetFloat() ) && TF2VIsContemporary( 23 ) ) ;
 	{
 		float flDot = DotProduct( vecForward, mv->m_vecVelocity );
 
