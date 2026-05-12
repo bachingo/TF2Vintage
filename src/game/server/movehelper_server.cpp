@@ -369,8 +369,10 @@ bool CMoveHelperServer::PlayerFallingDamage( void )
 			// TF2V: Fall sound changed in Jungle Inferno.	
 			if ( TF2VIsContemporary( TF2V_DAY_MAJOR_JUNGLE_INFERNO ) )
 				StartSound( m_pHostPlayer->GetAbsOrigin(), "Player.FallDamage" );
-			else	
+			else if ( TF2VIsBetween( TF2V_DAY_MAJOR_HEAVY, TF2V_DAY_MAJOR_JUNGLE_INFERNO ) ) // Between Heavy and Jungle Inferno: The old, classic fall sound.
 				StartSound( m_pHostPlayer->GetAbsOrigin(), "Player.FallDamageOld" );
+			else	// Prior to Heavy update: The original fall sound with generic grunts.
+				StartSound( m_pHostPlayer->GetAbsOrigin(), "Player.FallDamageOriginal" );
 		}
 
         //=============================================================================

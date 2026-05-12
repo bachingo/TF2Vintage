@@ -855,7 +855,10 @@ void CBasePlayer::DeathSound( const CTakeDamageInfo &info )
 	if ( m_bitsDamageType & DMG_FALL )
 	{
 		// They died in the fall. Play a splat sound.
-		EmitSound( "Player.FallGib" );
+		if ( TF2VIsContemporary( TF2V_DAY_MAJOR_HEAVY ) )
+			EmitSound( "Player.FallGib" );
+		else	// Prior to Heavy update: The original fall sound with generic grunts.
+			EmitSound( "Player.FallGibOriginal" );
 	}
 	else
 	{
@@ -5263,6 +5266,7 @@ void CBasePlayer::Precache( void )
 
 
 	PrecacheScriptSound( "Player.FallGib" );
+	PrecacheScriptSound( "Player.FallGibOriginal" );
 	PrecacheScriptSound( "Player.Death" );
 	PrecacheScriptSound( "Player.PlasmaDamage" );
 	PrecacheScriptSound( "Player.SonicDamage" );

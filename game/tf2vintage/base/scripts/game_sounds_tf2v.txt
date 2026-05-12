@@ -45,8 +45,50 @@
 
 "Player.FallDamageOld"
 {
-	"channel"	"CHAN_STATIC"
-	"volume"	"1"
+	"channel"	"CHAN_ITEM"
+	"volume"	"0.75"
+	"pitch"		"92,96"
 	"soundlevel"	"SNDLVL_NORM"
-	"wave"		"player/pl_fallpainold.wav"
+	"wave"		"player/pl_fallpain2.wav"
+}
+
+"Player.FallDamageOriginal"
+{
+	"channel"	"CHAN_ITEM"
+	"volume"	"0.75"
+	"pitch"		"92,96"
+	"soundlevel"	"SNDLVL_NORM"
+
+	"rndwave"
+	{
+		"wave"		"player/pl_fallpain3.wav"
+		"wave"		"player/pl_fallpain4.wav"
+		"wave"		"player/pl_fallpain5.wav"
+		"wave"		"player/pl_fallpain6.wav"
+		"wave"		"player/pl_fallpain7.wav"
+		"wave"		"player/pl_fallpain8.wav"
+		"wave"		"player/pl_fallpain9.wav"
+		"wave"		"player/pl_fallpain10.wav"
+		"wave"		"player/pl_fallpain11.wav"
+		"wave"		"player/pl_fallpain12.wav"
+		"wave"		"player/pl_fallpain13.wav"
+	}
+}
+
+"Player.FallGibOriginal"
+{
+	"channel"	"CHAN_ITEM"
+	"volume"	"VOL_NORM"
+	"pitch"		"92,96"
+	"soundlevel"	"SNDLVL_NORM"
+
+	"rndwave"
+	{
+		"wave"		"player/pl_fleshbreak1.wav"
+		"wave"		"player/pl_fleshbreak2.wav"
+		"wave"		"player/pl_fleshbreak3.wav"
+		"wave"		"player/pl_fleshbreak4.wav"
+		"wave"		"player/pl_fleshbreak5.wav"
+		"wave"		"player/pl_fleshbreak8.wav"
+	}
 }

@@ -16694,7 +16694,10 @@ void CTFPlayer::DeathSound( const CTakeDamageInfo &info )
 	if ( m_LastDamageType & DMG_FALL ) // Did we die from falling?
 	{
 		// They died in the fall. Play a splat sound.
-		EmitSound( "Player.FallGib" );
+		if ( TF2VIsContemporary( TF2V_DAY_MAJOR_HEAVY ) )
+			EmitSound( "Player.FallGib" );
+		else	// Prior to Heavy update: The original fall sound with generic grunts.
+			EmitSound( "Player.FallGibOriginal" );
 	}
 	else if ( m_LastDamageType & DMG_BLAST )
 	{
