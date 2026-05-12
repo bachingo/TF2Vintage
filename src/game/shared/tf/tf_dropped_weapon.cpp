@@ -618,7 +618,9 @@ void CTFDroppedWeapon::InitDroppedWeapon( CTFPlayer *pPlayer, CTFWeaponBase *pWe
 				{
 					m_bChargeRelease.Set( bReleasingCharge );
 				}
-				SetContextThink(&CTFDroppedWeapon::ChargeLevelDegradeThink, gpGlobals->curtime + 0.1f, "ChargeLevelDegradeThink");
+				// TF2V: Uber Degrading added in Meet Your Match
+				if ( TF2VIsContemporary( TF2V_DAY_MAJOR_MEET_YOUR_MATCH ) )
+					SetContextThink(&CTFDroppedWeapon::ChargeLevelDegradeThink, gpGlobals->curtime + 0.1f, "ChargeLevelDegradeThink");
 			}
 		}
 	}
