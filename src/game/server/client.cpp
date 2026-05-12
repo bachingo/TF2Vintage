@@ -35,10 +35,10 @@
 #include "datacache/imdlcache.h"
 #include "basemultiplayerplayer.h"
 #include "voice_gamemgr.h"
+#include "tf_gamerules.h"
 
 #ifdef TF_DLL
 #include "tf_player.h"
-#include "tf_gamerules.h"
 #endif
 
 #ifdef HL2_DLL
