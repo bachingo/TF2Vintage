@@ -16561,6 +16561,10 @@ void CTFPlayer::PainSound( const CTakeDamageInfo &info )
 
 	if ( m_flNextPainSoundTime > gpGlobals->curtime )
 		return;
+	
+	// TF2V: Pain sounds for falls were added after Jungle Inferno.
+	if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_JUNGLE_INFERNO ) && ( info.GetDamageType() & DMG_FALL ) )
+		return;
 
 	// play death sound as if we're taking huge damage when we landed on the ground
 	if ( info.GetDamageType() & DMG_FALL )

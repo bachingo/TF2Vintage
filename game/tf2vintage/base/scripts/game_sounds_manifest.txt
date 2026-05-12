@@ -26,6 +26,6 @@ game_sounds_manifest
 
 	"precache_file"  	"scripts/game_sounds_passtime.txt"
 
-  "precache_file"  	"scripts/game_sounds_mod.txt"
+	"precache_file"  	"scripts/game_sounds_mod.txt"
 	
 }

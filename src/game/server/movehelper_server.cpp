@@ -13,6 +13,7 @@
 #include "movehelper_server.h"
 #include "shake.h"				// For screen fade constants
 #include "engine/IEngineSound.h"
+#include "tf_gamerules.h"
 
 //=============================================================================
 // HPE_BEGIN
@@ -365,7 +366,11 @@ bool CMoveHelperServer::PlayerFallingDamage( void )
 		int iDamageTaken = m_pHostPlayer->TakeDamage( CTakeDamageInfo( GetContainingEntity(INDEXENT(0)), GetContainingEntity(INDEXENT(0)), flFallDamage, DMG_FALL ) ); 
 		if ( iDamageTaken > 0 )
 		{
-			StartSound( m_pHostPlayer->GetAbsOrigin(), "Player.FallDamage" );
+			// TF2V: Fall sound changed in Jungle Inferno.	
+			if ( TF2VIsContemporary( TF2V_DAY_MAJOR_JUNGLE_INFERNO ) )
+				StartSound( m_pHostPlayer->GetAbsOrigin(), "Player.FallDamage" );
+			else	
+				StartSound( m_pHostPlayer->GetAbsOrigin(), "Player.FallDamageOld" );
 		}
 
         //=============================================================================
