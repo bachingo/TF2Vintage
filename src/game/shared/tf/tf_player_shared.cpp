@@ -11277,7 +11277,7 @@ float CTFPlayer::TeamFortress_CalculateMaxSpeed( bool bIgnoreSpecialAbility /*= 
 					// TF2V: This one changed behaviors a few times.
 					
 					// Uber to Pyromania: Quick Fix only matches speed, does not honor charges
-					if ( bQuickFix && ( TF2VIsBetween( TF2V_DAY_MAJOR_UBER, TF2V_DAY_MAJOR_PYROMANIA ) )
+					if ( bQuickFix && TF2VIsBetween( TF2V_DAY_MAJOR_UBER, TF2V_DAY_MAJOR_PYROMANIA ) )
 					{
 						const float flHealTargetMaxSpeed = pHealTarget->TeamFortress_CalculateMaxSpeed( true );
 						maxfbspeed = Max(maxfbspeed, flHealTargetMaxSpeed);
