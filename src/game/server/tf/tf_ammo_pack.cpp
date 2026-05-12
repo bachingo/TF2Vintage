@@ -363,7 +363,8 @@ void CTFAmmoPack::PackTouch( CBaseEntity *pOther )
 	}
 
 	// give them a chunk of cloak power
-	if ( pPlayer->m_Shared.AddToSpyCloakMeter( 100.0f * m_flAmmoRatio ) )
+	// TF2V: Added in Sniper vs Spy
+	if ( TF2VIsContemporary( TF2V_DAY_MAJOR_SNIPER_SPY ) && ( pPlayer->m_Shared.AddToSpyCloakMeter( 100.0f * m_flAmmoRatio ) ) )
 	{
 		iAmmoTaken++;
 	}

@@ -272,7 +272,8 @@ bool CHealthAmmoKit::MyTouch( CBasePlayer *pPlayer )
 					bAmmoSuccess = true;
 				}
 
-				if ( pTFPlayer->m_Shared.AddToSpyCloakMeter( 100.0f * flPackRatio ) )
+				// TF2V: Added in Sniper vs Spy
+				if ( TF2VIsContemporary( TF2V_DAY_MAJOR_SNIPER_SPY ) && ( pTFPlayer->m_Shared.AddToSpyCloakMeter( 100.0f * flPackRatio ) ) )
 				{
 					bAmmoSuccess = true;
 				}
