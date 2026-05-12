@@ -1977,7 +1977,8 @@ void CTFGameMovement::WalkMove( void )
 
 	// Now reduce their backwards speed to some percent of max, if they are traveling backwards
 	// unless they are under some minimum, to not penalize deployed snipers or heavies
-	if ( tf_clamp_back_speed.GetFloat() < 1.0 && VectorLength( mv->m_vecVelocity ) > tf_clamp_back_speed_min.GetFloat() )
+	// TF2V: This was added October 9 2007. (Day 23)
+	if ( ( tf_clamp_back_speed.GetFloat() < 1.0 && VectorLength( mv->m_vecVelocity ) > tf_clamp_back_speed_min.GetFloat() ) && TF2VIsContemporary( 23 );
 	{
 		float flDot = DotProduct( vecForward, mv->m_vecVelocity );
 
@@ -3409,7 +3410,8 @@ void CTFGameMovement::DuckOverrides()
 		mv->m_nButtons &= ~IN_DUCK;
 	}
 
-	if ( !tf_clamp_airducks.GetBool() )
+	// TF2V: Added April 1st, 2008 (Day 198)
+	if ( !tf_clamp_airducks.GetBool() || TF2VIsAnachronistic( 198 ) )
 		return;
 
 	// Check the duck timer and disable the duck button.
