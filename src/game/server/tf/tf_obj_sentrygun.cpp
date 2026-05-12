@@ -557,7 +557,7 @@ void CObjectSentrygun::StartUpgrading( void )
 	case 2:
 		SetModel( SENTRY_MODEL_LEVEL_2_UPGRADE );
 		// TF2V: Resistance changed during Gun Mettle (20%->15%)
-		m_flHeavyBulletResist = TF2VIsAnachronistic( TF2V_DAY_MAJOR_GUN_METTLE ) ? 0.2f : 0.15f; // SENTRYGUN_MINIGUN_RESIST_LVL_2
+		m_flHeavyBulletResist = TF2VIsContemporary( TF2V_DAY_MAJOR_GUN_METTLE ) ? 0.12f : 0.2f; // SENTRYGUN_MINIGUN_RESIST_LVL_2
 		SetViewOffset( SENTRYGUN_EYE_OFFSET_LEVEL_2 );
 		m_iMaxAmmoShells = SENTRYGUN_MAX_SHELLS_2 * flMaxAmmoMult;
 		break;
@@ -568,7 +568,7 @@ void CObjectSentrygun::StartUpgrading( void )
 			m_iAmmoRockets = SENTRYGUN_MAX_ROCKETS;
 		}
 		// TF2V: Resistance changed during Gun Mettle (33%->20%)
-		m_flHeavyBulletResist = TF2VIsAnachronistic( TF2V_DAY_MAJOR_GUN_METTLE ) ? 0.33f : 0.2f; // SENTRYGUN_MINIGUN_RESIST_LVL_3
+		m_flHeavyBulletResist = TF2VIsContemporary( TF2V_DAY_MAJOR_GUN_METTLE ) ? 0.2f : 0.33f; // SENTRYGUN_MINIGUN_RESIST_LVL_3
 		SetViewOffset( SENTRYGUN_EYE_OFFSET_LEVEL_3 );
 		m_iMaxAmmoShells = SENTRYGUN_MAX_SHELLS_3 * flMaxAmmoMult;
 		break;
@@ -1907,14 +1907,15 @@ float CObjectSentrygun::GetBaseFireRate(void)
 {
 	float flFireRate;
 
+	// TF2V: These were changed in the Engineer update to be slightly slower.
 	if ( m_iUpgradeLevel == 1 )
 	{
 		// Level 1 sentries fire slower
-		flFireRate = 0.225f;
+		flFireRate = TF2VIsContemporary( TF2V_DAY_MAJOR_ENGINEER ) ? 0.225f : .2f;
 	}
 	else
 	{
-		flFireRate = 0.135f;
+		flFireRate = TF2VIsContemporary( TF2V_DAY_MAJOR_ENGINEER ) ? 0.135f : .1f;
 	}
 
 	if ( IsMiniBuilding() && !IsDisposableBuilding() )
