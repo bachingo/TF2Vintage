@@ -2482,7 +2482,7 @@ void HudAspectChanged( IConVar* var, const char* pOldString, float flOldValue )
 {
 	engine->ClientCmd_Unrestricted("hud_reloadscheme");
 }
-ConVar cl_hud_aspect( "cl_hud_aspect", "0", FCVAR_ARCHIVE, "Force the aspect ratio of the hud. 0 to disable.", HudAspectChanged );
+ConVar cl_hud_aspect( "cl_hud_aspect", "1", FCVAR_ARCHIVE, "Force the aspect ratio of the hud. 0 to disable.", HudAspectChanged );
 
 bool ConstrainAspect( int& nXOffset, int& nYOffset )
 {
