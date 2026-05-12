@@ -13368,10 +13368,14 @@ bool CTFPlayer::CanDisguise_OnKill( void )
 int	CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassIndex /*= -1*/ )
 {
 	int iMax = ( iClassIndex == -1 ) ? m_PlayerClass.GetData()->m_aAmmoMax[iAmmoIndex] : GetPlayerClassData( iClassIndex )->m_aAmmoMax[iAmmoIndex];
+	// TF2V: What's interesting is we don't always pull the class data.
+	// We can try to pull it.
+	int iClassIndexTemp = iClassIndex != -1 ? iClassIndex : GetPlayerClass()->GetClassIndex();
 	if ( iAmmoIndex == TF_AMMO_PRIMARY )
 	{
+		
 		// TF2V: Soldier's ammo count changed.
-		if ( iClassIndex == TF_CLASS_SOLDIER )
+		if ( iClassIndexTemp == TF_CLASS_SOLDIER )
 		{
 			// Used to have 36 reserve ammo here before Feb 28 2008 (Day 165)
 			if ( TF2VIsAnachronistic( 165 ) )
@@ -13382,7 +13386,7 @@ int	CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassIndex /*= -1*/ )
 
 			// Use default number (20).
 		}
-		else if ( iClassIndex == TF_CLASS_DEMOMAN )
+		else if ( iClassIndexTemp == TF_CLASS_DEMOMAN )
 		{
 			// Used to have 30 reserve ammo here before Feb 28 2008 (Day 165)
 			if ( TF2VIsAnachronistic( 165 ) )
@@ -13395,7 +13399,7 @@ int	CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassIndex /*= -1*/ )
 	}
 	else if ( iAmmoIndex == TF_AMMO_SECONDARY )
 	{
-		if ( iClassIndex == TF_CLASS_DEMOMAN )
+		if ( iClassIndexTemp == TF_CLASS_DEMOMAN )
 		{
 			// Used to have 40 reserve ammo here before Feb 28 2008 (Day 165)
 			if ( TF2VIsAnachronistic( 165 ) )
