@@ -5398,8 +5398,6 @@ CEconItemView *CTFPlayer::GetLoadoutItem( int iClass, int iSlot, bool bReportWhi
 		CTFInventoryManager *pInventoryManager = TFInventoryManager();
 		return pInventoryManager->GetBaseItemForClass( iClass, iSlot );
 	}
-	
-		return pInventoryManager->GetBaseItemForClass( iClass, iSlot );
 
 	CEconItemView *pItem = m_Inventory.GetItemInLoadout( iClass, iSlot );
 	
