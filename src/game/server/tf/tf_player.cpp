@@ -4915,7 +4915,7 @@ bool CTFPlayer::ItemIsAllowed( CEconItemView *pItem )
 	int iSlot = pItem->GetStaticData()->GetLoadoutSlot(iClass);
 	
 	// TF2V: Skip cosmetic and taunt slots on XL servers to save us entities
-	if ( ( IsWearableSlot(iSlot) && gpGlobals->maxClients > 32 ) || ( tf2v_disable_cosmetics.GetBool() && IsWearableSlot(iSlot) ) ) 
+	if ( IsWearableSlot(iSlot) && ( ( gpGlobals->maxClients > 32 ) || tf2v_disable_cosmetics.GetBool() ) ) 
 		return false;
 
 	// Passtime hack to allow passtime gun
@@ -5394,13 +5394,15 @@ CEconItemView *CTFPlayer::GetLoadoutItem( int iClass, int iSlot, bool bReportWhi
 	}
 
 	// TF2V: All items were stock prior to Gold Rush.
-	// Also skip cosmetic and taunt slots on XL servers to save us entities
-	if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_GOLDRUSH ) || ( TFGameRules()->IsInTraining() || TFGameRules()->IsInItemTestingMode() ) ||
-		( IsWearableSlot(iSlot) && gpGlobals->maxClients > 32 ) || ( tf2v_disable_cosmetics.GetBool() && IsWearableSlot(iSlot) ) )
+	if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_GOLDRUSH ) || ( TFGameRules()->IsInTraining() || TFGameRules()->IsInItemTestingMode() ) )
 	{
 		CTFInventoryManager *pInventoryManager = TFInventoryManager();
 		return pInventoryManager->GetBaseItemForClass( iClass, iSlot );
 	}
+	
+	// TF2V: Also skip cosmetic and taunt slots on XL servers to save us entities
+	if ( IsWearableSlot(iSlot) && ( ( gpGlobals->maxClients > 32 ) || tf2v_disable_cosmetics.GetBool() ) )
+		return nullptr;
 
 	CEconItemView *pItem = m_Inventory.GetItemInLoadout( iClass, iSlot );
 	
