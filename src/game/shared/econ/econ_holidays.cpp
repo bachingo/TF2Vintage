@@ -497,7 +497,7 @@ bool EconHolidays_IsHolidayActive( int iHolidayIndex, const CRTime& timeCurrent 
 			return false;
 		
 		// Halloween first appeared Oct 29, 2009
-		if (iHolidayIndex == kHoliday_Halloween && nCurrentEra < TF2V_ERA_DAY_HALLOWEEN_2009)
+		if (iHolidayIndex == kHoliday_Halloween && nCurrentEra < TF2V_DAY_HALLOWEEN_2009)
 			return false;
 		
 		// Christmas first appeared Dec 17, 2010 (Australian Christmas 2010)
@@ -505,7 +505,7 @@ bool EconHolidays_IsHolidayActive( int iHolidayIndex, const CRTime& timeCurrent 
 			return false;
 		
 		// Full Moon first appeared Oct 27, 2011 (Halloween 2011)
-		if (iHolidayIndex == kHoliday_FullMoon && nCurrentEra < TF2V_ERA_DAY_HALLOWEEN_2011)
+		if (iHolidayIndex == kHoliday_FullMoon && nCurrentEra < TF2V_DAY_HALLOWEEN_2011)
 			return false;
 		
 		// Valentine's first appeared Feb 14, 2012
@@ -513,7 +513,7 @@ bool EconHolidays_IsHolidayActive( int iHolidayIndex, const CRTime& timeCurrent 
 			return false;
 		
 		// Meet the Pyro is explicitly 2012 (Pyromania Update)
-		if (iHolidayIndex == kHoliday_MeetThePyro && nCurrentEra < TF2V_ERA_DAY_PYROMANIA)
+		if (iHolidayIndex == kHoliday_MeetThePyro && nCurrentEra < TF2V_DAY_MAJOR_PYROMANIA)
 			return false;
 		
 		// April Fool's first appeared Apr 1, 2014
