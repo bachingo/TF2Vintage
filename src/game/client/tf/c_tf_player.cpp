@@ -8433,9 +8433,10 @@ int C_TFPlayer::GetVisionFilterFlags( bool bWeaponsCheck /*= false */  )
 	}
 
 	// opt-in for romevision?
+	// TF2V: Romevision added August 20, 2013 (Day 2165)
 	if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() && 
 		 TFSharedContentManager() && TFSharedContentManager()->IsSharedVisionAvailable( TF_VISION_FILTER_ROME ) && 
-		 tf_romevision_opt_in.GetBool() )
+		 ( tf_romevision_opt_in.GetBool() && TF2VIsContemporary( 2165 ) ) )
 	{
 		nVisionOptInFlags |= TF_VISION_FILTER_ROME;
 	}
