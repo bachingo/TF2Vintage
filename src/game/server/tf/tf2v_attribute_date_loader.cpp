@@ -703,14 +703,12 @@ CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemV
 		if ( iClass == TF_CLASS_DEMOMAN && !tf2v_alternate_war_result.GetInt() )
 		{
 			// Canon timeline: Demoman did not win the war.
-			pItem = TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
 			// ClientPrint( this, HUD_PRINTNOTIFY, "#Item_WARResultCanon" );
-			return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );;
+			return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
 		}
 		if ( iClass == TF_CLASS_SOLDIER && tf2v_alternate_war_result.GetInt() == 1 )
 		{
 			// Alternative timeline: Soldier did not win the war.
-			pItem = TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
 			// ClientPrint( this, HUD_PRINTNOTIFY, "#Item_WARResultAlternate" );
 			return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
 		}
@@ -721,7 +719,7 @@ CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemV
 	if ( pOriginalItem->GetItemDefIndex() == 415 )
 	{
 		// Pyro didn't get the Reserve Shooter until Manniversary.
-		if ( iClass == TF_CLASS_PYRO && TF2VIsBetween( TF2V_DAY_MAJOR_UBER, TF2V_DAY_MAJOR_MANNIVERSARY )
+		if ( iClass == TF_CLASS_PYRO && TF2VIsBetween( TF2V_DAY_MAJOR_UBER, TF2V_DAY_MAJOR_MANNIVERSARY ) )
 			return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
 	}
 	
