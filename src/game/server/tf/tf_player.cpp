@@ -4913,6 +4913,10 @@ bool CTFPlayer::ItemIsAllowed( CEconItemView *pItem )
 
 	int iClass = GetPlayerClass()->GetClassIndex();
 	int iSlot = pItem->GetStaticData()->GetLoadoutSlot(iClass);
+	
+	// TF2V: Skip cosmetic and taunt slots on XL servers to save us entities
+	if ( ( IsWearableSlot(iSlot) && gpGlobals->maxClients > 32 ) || tf2v_disable_cosmetics.GetBool() )
+		return false;
 
 	// Passtime hack to allow passtime gun
 	if ( V_stristr( pItem->GetItemDefinition()->GetDefinitionName(), "passtime" ) )
@@ -4978,7 +4982,8 @@ bool CTFPlayer::ItemIsAllowed( CEconItemView *pItem )
 		}
 	}
 
-	return true;
+	// TF2V: Check this item again. It should be exactly the one we are comparing.
+	return ( pItem == GetTimePeriodCompliantItem( pItem, iClass, iSlot ) );
 }
 
 //-----------------------------------------------------------------------------
@@ -5385,11 +5390,16 @@ CEconItemView *CTFPlayer::GetLoadoutItem( int iClass, int iSlot, bool bReportWhi
 			return pItem;
 	}
 
-	if ( TFGameRules()->IsInTraining() || TFGameRules()->IsInItemTestingMode() )
+	// TF2V: All items were stock prior to Gold Rush.
+	// Also skip cosmetic and taunt slots on XL servers to save us entities
+	if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_GOLDRUSH ) || ( TFGameRules()->IsInTraining() || TFGameRules()->IsInItemTestingMode() ) ||
+		( ( IsWearableSlot(iSlot) && gpGlobals->maxClients > 32 ) || tf2v_disable_cosmetics.GetBool() ) )
 	{
 		CTFInventoryManager *pInventoryManager = TFInventoryManager();
 		return pInventoryManager->GetBaseItemForClass( iClass, iSlot );
 	}
+	
+		return pInventoryManager->GetBaseItemForClass( iClass, iSlot );
 
 	CEconItemView *pItem = m_Inventory.GetItemInLoadout( iClass, iSlot );
 	
@@ -5689,12 +5699,7 @@ void CTFPlayer::ValidateWeapons( TFPlayerClassData_t *pData, bool bResetWeapons 
 
 		int iLoadoutSlot = pWeapon->GetAttributeContainer()->GetItem()->GetStaticData()->GetLoadoutSlot( GetPlayerClass()->GetClassIndex() );
 		
-		// TF2V: Skip cosmetic and taunt slots on XL servers to save us entities
-		if ( ( IsWearableSlot(iLoadoutSlot) && gpGlobals->maxClients > 32 ) || tf2v_disable_cosmetics.GetBool() )
-			continue;
-		
-		// TF2V: Always force stock items prior to the Gold Rush update.
-		CEconItemView *pItem = TF2VIsContemporary( TF2V_DAY_MAJOR_GOLDRUSH ) ? GetLoadoutItem( GetPlayerClass()->GetClassIndex(), iLoadoutSlot ) : TFInventoryManager()->GetBaseItemForClass( GetPlayerClass()->GetClassIndex(), iLoadoutSlot );
+		CEconItemView *pItem = GetLoadoutItem( GetPlayerClass()->GetClassIndex(), iLoadoutSlot );
 
 		// See if gamerules says this item isn't allowed right now
 		bool bForceRemoved = bOverrideRemoval || !ItemIsAllowed( pItem );
