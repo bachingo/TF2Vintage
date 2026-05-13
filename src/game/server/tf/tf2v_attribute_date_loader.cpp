@@ -667,31 +667,31 @@ CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemV
 	// Cosmetics as a whole did not exist before Sniper vs. Spy
 	if ( ( iCurrentEra < TF2V_DAY_MAJOR_SNIPER_SPY ) && IsWearableSlot(iSlot) )
 	{
-		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+		return nullptr;
 	}
 	
 	// Misc slots did not exist prior to Classless
 	if ( ( iCurrentEra < TF2V_DAY_MAJOR_CLASSLESS ) && ( iSlot == LOADOUT_POSITION_MISC ) )
 	{
-		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+		return nullptr;
 	}
 	
 	// Misc2 did not exist prior to Engineer Update
 	if ( ( iCurrentEra < TF2V_DAY_MAJOR_ENGINEER ) && ( iSlot == LOADOUT_POSITION_MISC2 ) )
 	{
-		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+		return nullptr;
 	}
 	
 	// Action slots were not used prior to Mannconomy
 	if ( ( iCurrentEra < TF2V_DAY_MAJOR_MANNCONOMY ) && ( iSlot == LOADOUT_POSITION_ACTION ) )
 	{
-		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+		return nullptr;
 	}
 	
 	// Taunts were not an item slot prior to the Replay Update
 	if ( ( iCurrentEra < TF2V_DAY_MAJOR_REPLAY ) && IsTauntSlot(iSlot) )
 	{
-		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+		return nullptr;
 	}
 
 	
@@ -700,7 +700,10 @@ CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemV
 	if ( !ItemIsAllowedTimePeriod( pOriginalItem ) )
 	{
 		// Base item is too new - replace entirely with stock
-		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+		if ( IsWearableSlot( iSlot ) )
+			return nullptr;
+		else
+			return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
 	}
 
 	// Base item is allowed, now check for modifications needed

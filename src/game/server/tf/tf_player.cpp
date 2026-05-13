@@ -4983,7 +4983,10 @@ bool CTFPlayer::ItemIsAllowed( CEconItemView *pItem )
 	}
 
 	// TF2V: Check this item again. It should be exactly the one we are comparing.
-	return ( pItem == GetTimePeriodCompliantItem( pItem, iClass, iSlot ) );
+	CEconItemView *pModified = GetTimePeriodCompliantItem( pItem, iClass, iSlot );
+	if ( !pModified || !pModified->GetStaticData() )
+		return false;
+	return pItem == pModified;
 }
 
 //-----------------------------------------------------------------------------
@@ -5427,6 +5430,8 @@ CEconItemView *CTFPlayer::GetLoadoutItem( int iClass, int iSlot, bool bReportWhi
 		}
 		
 		pItem = GetTimePeriodCompliantItem( pItem, iClass, iSlot );
+		if ( !pItem || !pItem->GetStaticData() )
+			return nullptr;
 	}
 
 	// Check to see if this item passes the tournament rules (in whitelist/or normal quality).
