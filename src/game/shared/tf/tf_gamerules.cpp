@@ -5552,8 +5552,7 @@ void CTFGameRules::SetupOnRoundStart( void )
 
 	m_hRedKothTimer.Set( NULL );
 	m_hBlueKothTimer.Set( NULL );
-	
-	SetTF2VEra(tf2v_era.GetInt());
+
 
 	// Let all entities know that a new round is starting
 	CBaseEntity *pEnt = gEntList.FirstEnt();
@@ -5648,6 +5647,8 @@ void CTFGameRules::SetupOnRoundStart( void )
 	m_bluePayloadToPush = NULL;
 	m_redPayloadToBlock = NULL;
 	m_bluePayloadToBlock = NULL;
+	
+	SetTF2VEra(tf2v_era.GetInt());
 
 	// Tell the clients to recalculate the holiday
 	IGameEvent *event = gameeventmanager->CreateEvent( "recalculate_holidays" );
