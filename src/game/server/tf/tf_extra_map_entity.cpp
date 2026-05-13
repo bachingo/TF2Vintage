@@ -7,6 +7,7 @@
 #include "tf_extra_map_entity.h"
 #include "KeyValues.h"
 #include "filesystem.h"
+#include "tf_gamerules.h"
 
 struct EntityWhiteList_t
 {
@@ -163,7 +164,21 @@ void CExtraMapEntity::SpawnExtraModel( void )
 						}
 					}
 				}
-
+				
+				// TF2V: Only show the extra models when relevant to the update we have.
+				// Also, one of the few times we actually check for the opposite of TF2VIsBetween so slightly messier syntax.
+				// Rockets show up from July 18 2011 (1401, Two days before Dr. Grordbort) to Australian Christmas 2011
+				if ( !Q_strcmp( "rocket", szModelName ) && ( TF2VIsAnachronistic( 1401 ) || TF2VIsContemporary( TF2V_DAY_SMISSMAS_2011 ) ) )
+					flChance = 0.f;
+				// Carriers show up August 10, 2012 (1790, Five days before Mann vs Machine)
+				if ( !Q_strcmp( "carrier", szModelName ) && TF2VIsAnachronistic( 1790 ) )
+					flChance = 0.f;
+					
+				// Saucers show up from September 10, 2015 (Day 2916) to November 25, 2015 (Day 2992)
+				if ( !Q_strcmp( "saucer", szModelName ) && ( TF2VIsAnachronistic( 2916 ) || TF2VIsContemporary( 2992 ) ) )
+					flChance = 0.f;
+					
+				
 				if ( ( flChance > 0.0f ) && ( RandomFloat( 0, 1 ) < flChance ) )
 				{
 					CExtraMapEntity *pExtraMapEntity = static_cast< CExtraMapEntity* >( CBaseEntity::CreateNoSpawn( pszEntName, loc, rot ) );
