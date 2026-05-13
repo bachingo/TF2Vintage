@@ -1,0 +1,12 @@
+"Patch"
+{
+	include "materials/models/player/shared/red_invun_base.vmt"
+	
+	insert
+	{
+		"$baseTexture"					"models/player/sniper/sniperrifle_shell_red"
+		"$detailblendfactor"			"0.3"
+		"$detailblendmode"				"1"
+		"$color2"						"[1.10 0.66 0.58]"
+	}
+}

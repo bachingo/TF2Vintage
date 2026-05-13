@@ -1,0 +1,24 @@
+"VertexlitGeneric"
+{
+	"$baseTexture" "models/vgui/competitive_badge_sparkle_warp"
+//	"$baseTexture" "models/player/items/engineer/hwn_engineer_hat"
+
+	"$phong" "1"
+	"$phongexponent" "15"
+	"$phongboost" "3"
+	"$lightwarptexture" "models/vgui/competitive_badge_sparkle_warp_clamped"	
+	"$phongfresnelranges"	"[1 1 1]"
+	"$phongwarptexture" "models/vgui/competitive_badge_sparkle_warp"	
+
+	"$selfIllum" "1"
+
+	"$envmap" "cubemaps/cubemap_gold001"	
+	"$envmaptint" "[2.5 2.5 1.15]"
+
+	// Rim lighting parameters
+	"$rimlight" "1"												// To enable rim lighting (requires phong)
+	"$rimlightexponent" "15"										// Exponent for phong component of rim lighting	
+	"$rimlightboost" "4"										// Boost for ambient cube component of rim lighting
+
+}
+

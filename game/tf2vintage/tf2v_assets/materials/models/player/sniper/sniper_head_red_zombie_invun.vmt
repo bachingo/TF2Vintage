@@ -1,0 +1,24 @@
+"Patch"
+{
+	include "materials/models/player/shared/red_invun_base.vmt"
+	
+	insert
+	{
+		"$baseTexture"					"models/player/sniper/sniper_head_zombie"
+		"$alphatest"					"1"
+		"$detailblendfactor"			"0.3"
+		"$detailblendmode"				"1"
+		"$color2"						"[1.10 0.66 0.58]"
+		
+		"$EmissiveBlendEnabled"			"1"
+		"$EmissiveBlendStrength" 		"1"
+		"$EmissiveBlendTexture" 		"vgui/white"
+		"$EmissiveBlendBaseTexture"		"models/player/sniper/sniper_head_eyeglow"
+		"$EmissiveBlendFlowTexture" 	"vgui/white"
+		"$EmissiveBlendTint" 			"[2.5 0.45 0.03]"
+		"$EmissiveBlendScrollVector"	"[ 0 0 ]"
+		
+		"$selfillum"					"0"
+		"$selfIllumFresnel"				"0"
+	}
+}

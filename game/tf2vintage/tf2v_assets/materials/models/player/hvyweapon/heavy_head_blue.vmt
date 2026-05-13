@@ -1,0 +1,71 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "models/player/hvyweapon/heavy_head"
+	// Replaced default bumpmap with HWM phongmask
+//	"$bumpmap"     "models/player/shared/shared_normal"
+	"$bumpmap"     "models/player/hvyweapon/hwm/heavy_head_phongmask"
+	"$detail" "effects/tiledfire/fireLayeredSlowTiled512.vtf"	
+	"$detailscale" 1
+//	"$detailblendfactor" .01						// Old value
+	"$detailblendfactor" 0.00						// New value, though I don't think this change is of much significance
+//	"$detailblendmode" 6	//Old value
+	"$detailblendmode" 5
+
+
+	"$yellow" "0"
+	"$one" "1"
+
+
+	"$phong" "1"
+
+	// Below: disabled constant phong exponent & old phong boost; replaced with exponent texture & new phong boost
+//	"$phongexponent" "20"
+//	"$phongboost" ".3"	
+	"$phongexponenttexture" "models/player/hvyweapon/hwm/heavy_head_exponent"
+	"$phongboost" "1"
+	"$rimmask" "1"                  // Use the alpha channel of the $phongexponenttexture as a rim mask.
+
+	"$lightwarptexture" "models/player/pyro/pyro_lightwarp"
+	"$phongfresnelranges"	"[.3 1 8]"
+	"$halflambert" "0"
+
+	// Rim lighting parameters
+	"$rimlight" "1"												// To enable rim lighting (requires phong)
+	"$rimlightexponent" "4"										// Exponent for phong component of rim lighting	
+	"$rimlightboost" "2"										// Boost for ambient cube component of rim lighting
+
+	// Cloaking
+	"$cloakPassEnabled" "1"
+
+	"Proxies"
+	{
+		"spy_invis"
+		{
+		}
+		"AnimatedTexture"
+		{
+			"animatedtexturevar" "$detail"
+			"animatedtextureframenumvar" "$detailframe"
+			"animatedtextureframerate" 30
+		}
+		"TextureScroll"							// Newly added proxy; makes the fire texture continually scroll
+		{
+			"texturescrollvar" "$detailtexturetransform"
+			"texturescrollrate" "0.45"
+			"texturescrollangle" "90"
+		}
+		"BurnLevel"
+		{
+			"resultVar" "$detailblendfactor"
+		}
+		"YellowLevel"
+		{
+			"resultVar" "$yellow"
+		}
+		"Equals"
+		{
+			"srcVar1" "$yellow"
+			"resultVar" "$color2"
+		}
+	}
+}

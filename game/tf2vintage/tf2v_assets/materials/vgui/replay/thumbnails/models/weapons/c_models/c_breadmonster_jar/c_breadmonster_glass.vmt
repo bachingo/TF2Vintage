@@ -1,0 +1,74 @@
+"VertexLitGeneric"
+{
+	"$basetexture"	"models/weapons/c_items/c_breadmonster_jar"
+	"$bumpmap" "models/player/shared/shared_normal"
+
+	"$normalmapalphaenvmapmask" "1"
+	"$envmap" "env_cubemap"
+	"$envmaptint" "[2 2 2]"
+	"$envmapfresnel" "1"
+
+//	"$nocull" "1"
+//	"$translucent"	1
+//	"$additive" "1"
+	"$alphatest" "1"
+	"$alphatestreference" "0.5"
+	"$allowalphatocoverage" "1"
+
+	//phong properties
+	"$phong" "1"
+	"$phongboost" "6"
+	"$phongexponent" "65"
+	"$phongfresnelranges" "[1 2 8]"
+	"$lightwarptexture" "models\lightwarps\weapon_lightwarp"
+	"$halflambert" "1"
+
+	"$rimlight" "1"
+	"$rimlightexponent" "20"
+	"$rimlightboost" "6"
+
+	"$glowcolor" "1"
+	"$yellow" "0"
+
+	// Cloaking
+	"$cloakPassEnabled" "1"
+	"$sheenPassEnabled" "1"
+
+	"$sheenmap" 		"cubemaps\cubemap_sheen001"
+	"$sheenmapmask" 		"Effects\AnimatedSheen\animatedsheen0"
+	"$sheenmaptint" 		"[ 1 1 1 ]"
+	"$sheenmapmaskframe" 	"0"
+	"$sheenindex" 		"0"
+
+	"Proxies"
+	{
+		"invis"
+		{
+		}
+		"AnimatedWeaponSheen"
+		{
+			"animatedtexturevar" 		"$sheenmapmask"
+			"animatedtextureframenumvar" 	"$sheenmapmaskframe"
+			"animatedtextureframerate" 		"40"
+		}
+		"ModelGlowColor"
+		{
+			"resultVar" "$glowcolor"
+		}
+		"Equals"
+		{
+			"srcVar1"  "$glowcolor"
+			"resultVar" "$color2"
+		}
+		"YellowLevel"
+		{
+			"resultVar" "$yellow"
+		}
+		"Multiply"
+		{
+			"srcVar1" "$color2"
+			"srcVar2" "$yellow"
+			"resultVar" "$color2"
+		}
+	}
+}

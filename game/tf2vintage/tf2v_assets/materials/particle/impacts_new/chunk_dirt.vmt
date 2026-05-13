@@ -1,0 +1,13 @@
+SpriteCard
+{
+	$basetexture	"effects/debris/shaded_chunks/shaded_chunks_noise_soft"
+//	$alphatest	1	// Not sure if this works with SpriteCard??? Would be nice if it did since it should be cheaper/faster to render than $translucent.
+	$translucent	1
+
+	$vertexcolor 	1
+	$vertexalpha	1
+
+//	$overbrightfactor	1.25
+	$overbrightfactor	1.625
+	$depthblend	0
+}

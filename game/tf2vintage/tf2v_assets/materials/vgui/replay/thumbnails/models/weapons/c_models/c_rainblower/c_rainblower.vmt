@@ -1,0 +1,66 @@
+"VertexLitGeneric"
+{
+	"$basetexture"	"models/weapons/c_items/c_rainblower"
+	"$bumpmap" "vgui\replay\thumbnails\models\weapons\c_models\c_rainblower/c_rainblower_normal"
+	"$halflambert" "1"
+
+	"$envmap" "effects/saxxy/saxxy_gold"
+	"$envmaptint" "[.7 .7 .7]"
+
+	"$normalmapalphaenvmapmask" "1"
+
+	"$phong" "1"
+	"$phongexponent" "36"
+	"$phongboost" ".8"	
+	"$lightwarptexture" "vgui\replay\thumbnails\models\lightwarps\rainblower_lightwarp"	
+	"$phongfresnelranges"	"[.3 1 8]"
+
+	"$rimlight" "1"						
+	"$rimlightexponent" "15"				
+	"$rimlightboost" "0.25"
+	
+	"$yellow" "0"
+	"$glowcolor" "1"
+
+	// Cloaking
+	"$cloakPassEnabled" "1"
+	"$sheenPassEnabled" "1"
+
+	"$sheenmap" 		"cubemaps\cubemap_sheen001"
+	"$sheenmapmask" 		"Effects\AnimatedSheen\animatedsheen0"
+	"$sheenmaptint" 		"[ 1 1 1 ]"
+	"$sheenmapmaskframe" 	"0"
+	"$sheenindex" 		"0"
+
+	"Proxies"
+	{
+		"invis"
+		{
+		}
+		"AnimatedWeaponSheen"
+		{
+			"animatedtexturevar" 		"$sheenmapmask"
+			"animatedtextureframenumvar" 	"$sheenmapmaskframe"
+			"animatedtextureframerate" 		"40"
+		}
+		"ModelGlowColor"
+		{
+			"resultVar" "$glowcolor"
+		}
+		"Equals"
+		{
+			"srcVar1"  "$glowcolor"
+			"resultVar" "$color2"
+		}
+		"YellowLevel"
+		{
+			"resultVar" "$yellow"
+		}
+		"Multiply"
+		{
+			"srcVar1" "$color2"
+			"srcVar2" "$yellow"
+			"resultVar" "$color2"
+		}
+	}
+}

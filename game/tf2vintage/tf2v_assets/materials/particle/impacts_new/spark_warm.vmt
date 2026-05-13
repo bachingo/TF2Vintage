@@ -1,0 +1,8 @@
+UnlitGeneric
+{
+//	$basetexture		"effects/spark_warm"
+	$basetexture		"effects/spark_warm_alt"
+	$vertexcolor		1
+	$vertexalpha		1
+	$additive			1
+}

@@ -1,0 +1,26 @@
+Refract
+{
+	$normalmap	"decals/glass/shot2_normal"
+	$basetexture	"decals/glass/glass_basetexture"
+	// Base texture must be noisy; a solid color will make the refraction effect undetectable.
+	$vertexalpha	1
+	$vertexcolor	1	// Not sure if either of these really do anything with Refract???
+
+	$refracttint	"[0.85 0.85 0.85]"
+	$refractamount	1.00
+	$bluramount	0
+
+	$decal		1
+	$decalscale 	0.0950
+
+	Proxies
+	{
+		UniformNoise			// Each tick, this proxy passes randomized value to $decalscale. This effectively gives the decals a random size.
+						// Note: seems to work less consistently for model decals(???)
+		{
+			minVal			"00.070"
+			maxVal			"00.120"
+			resultvar			$decalscale
+		}
+	}
+}

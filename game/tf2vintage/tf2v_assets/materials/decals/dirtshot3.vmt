@@ -1,0 +1,17 @@
+DecalModulate
+{
+	$basetexture	"decals/dirt/dirtshot3"
+	$translucent	1
+	$decalscale 	00.080
+
+	Proxies
+	{
+		UniformNoise			// Each tick, this proxy passes randomized value to $decalscale. This effectively gives the decals a random size.
+						// Note: seems to work less consistently for model decals(???)
+		{
+			minVal			"00.060"
+			maxVal			"00.100"
+			resultvar			$decalscale
+		}
+	}
+}

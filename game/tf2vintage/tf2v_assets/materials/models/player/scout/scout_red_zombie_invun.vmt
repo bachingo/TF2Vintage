@@ -1,0 +1,16 @@
+"Patch"
+{
+	include "materials/models/player/shared/red_invun_base.vmt"
+	
+	insert
+	{
+		"$baseTexture"					"models/player/scout/scout_red_zombie"
+		"$alphatest"					"1"
+		"$detailblendfactor"			"0.3"
+		"$detailblendmode"				"1"
+		"$color2"						"[1.25 0.66 0.58]"
+		
+		"$selfillum"					"0"
+		"$selfIllumFresnel"				"0"
+	}
+}

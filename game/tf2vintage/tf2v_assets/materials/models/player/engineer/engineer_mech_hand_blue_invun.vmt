@@ -1,0 +1,12 @@
+"Patch"
+{
+	include "materials/models/player/shared/blue_invun_base.vmt"
+	
+	insert
+	{
+		"$baseTexture"					"models/player/engineer/engineer_mech_hand_blue"
+		"$detailblendfactor"			"0.15"
+		"$detailblendmode"				"1"
+		"$color2"						"[0.6 0.7 1.5]"
+	}
+}

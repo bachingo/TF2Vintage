@@ -1,0 +1,10 @@
+SpriteCard
+{
+	$basetexture		"effects/hardglow"
+	$vertexcolor		1
+	$vertexalpha		1
+	$additive			1
+
+	$depthblend		0
+	$maxsize			0.00625
+}

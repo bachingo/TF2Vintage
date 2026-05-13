@@ -1,0 +1,11 @@
+SpriteCard
+{
+	$basetexture		"effects/softglow_translucent"
+	$vertexcolor		1
+	$vertexalpha		1
+	$translucent		1
+
+	$overbrightfactor		1.5
+	$depthblend		1
+	$depthblendscale		50
+}

@@ -1,0 +1,15 @@
+//SpriteCard
+	// Changed to UnlitGeneric for better interaction with fog
+UnlitGeneric
+{
+	"$baseTexture" "particle/blood2/electricity_cloud_highalpha"
+	$translucent 1
+	$vertexcolor 1
+	$vertexalpha 1
+//	"$addself" 0
+	"blendframes" 0
+
+//	$depthblend 1
+//	$depthblendscale 25
+	// $depthblend doesn't work with UnlitGeneric; these are holdovers from when this material used Spritecard
+}

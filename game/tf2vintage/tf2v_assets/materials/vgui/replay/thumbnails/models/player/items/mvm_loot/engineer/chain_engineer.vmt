@@ -1,0 +1,38 @@
+"VertexLitGeneric"
+{
+	"$basetexture"	"models/player/items/mvm_loot/engineer/chain_engineer"
+	"$halflambert" "1"
+	"$basemapalphaphongmask" "1"
+
+	"$nocull" "1"
+
+	"$phong" "1"
+	"$phongexponent" "25"
+	"$phongboost" "1.5"	
+	"$lightwarptexture" "models/lightwarps/softened_weapon_lightwarp"
+	"$phongfresnelranges"	"[.25 .25 .25]"
+	
+	"$rimlight" "1"						
+	"$rimlightexponent" "4"				
+	"$rimlightboost" "1"								// Boost for ambient cube component of rim lighting
+	
+	// Cloaking
+	"$cloakPassEnabled" "1"
+	"$yellow" "0"
+
+	"Proxies"
+	{
+		"invis"
+		{
+		}
+		"YellowLevel"
+		{
+			"resultVar" "$yellow"
+		}
+		"Equals"
+		{
+			"srcVar1" "$yellow"
+			"resultVar" "$color2"
+		}
+	}
+}

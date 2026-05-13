@@ -1,0 +1,8 @@
+UnlitGeneric
+{
+	$basetexture	"effects/spotlight_single"
+	$basetexturetransform	"center 0.5 0.5 scale 1 0.75 rotate 0 translate 0 -0.2"	// base texture is centered & scaled awkwardly for use as a trail particle. This gives it more "normal" positioning/proportions.
+	$translucent	1
+	$vertexalpha	1
+	$vertexcolor	1
+}

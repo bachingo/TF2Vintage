@@ -1,0 +1,12 @@
+SpriteCard
+{
+	$basetexture		"effects/camera_flash/camera_flash_warm"
+	$vertexcolor		1
+	$vertexalpha		1
+	$additive			1
+
+//	$overbrightfactor		1.5
+	$depthblend		0
+
+//	$maxsize			0.15
+}
