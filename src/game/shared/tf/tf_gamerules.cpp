@@ -3169,7 +3169,7 @@ bool CTFGameRules::StopWatchShouldBeTimedWin( bool bSkipForMultiSeries )
 bool CTFGameRules::IsAttackDefenseMode( void )
 {
 #ifdef GAME_DLL
-	CTeamControlPointMaster* pMaster = g_hControlPointMasters.Count() ? g_hControlPointMasters[0] : NULL;
+	CTeamControlPointMaster *pMaster = g_hControlPointMasters.Count() ? g_hControlPointMasters[0] : NULL;
 	bool bRetVal = !HasMultipleTrains() && ( tf_gamemode_payload.GetBool() || ( pMaster && ( pMaster->PlayingMiniRounds() || pMaster->ShouldSwitchTeamsOnRoundWin() ) ) );
 
 	tf_attack_defend_map.SetValue( bRetVal );
