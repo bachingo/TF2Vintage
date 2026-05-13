@@ -717,6 +717,13 @@ CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemV
 		// On tf2v_alternate_war_result == 2, both Soldier and Demoman get it.
 	}
 
+	// TF2V: Edge case for the Reserve Shooter.
+	if ( pOriginalItem->GetItemDefIndex() == 415 )
+	{
+		// Pyro didn't get the Reserve Shooter until Manniversary.
+		if ( iClass == TF_CLASS_PYRO && TF2VIsBetween( TF2V_DAY_MAJOR_UBER, TF2V_DAY_MAJOR_MANNIVERSARY )
+			return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+	}
 	
 	// Passes the slot check. Now we have to look into the item's details.
 	// STEP 1: Check if base item is allowed at all by comparing the release date to the ingame date
