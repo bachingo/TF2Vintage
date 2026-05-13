@@ -16750,18 +16750,15 @@ void CTFGameRules::RoundRespawn( void )
 	CTF_GameStats.ResetRoundStats();
 	
 	// Update the era
-	if ( GetTF2VEra() != tf2v_era.GetInt() )
-	{
-		SetTF2VEra(tf2v_era.GetInt());
+	SetTF2VEra(tf2v_era.GetInt());
 		
-		// Tell the clients to recalculate the holiday
-		IGameEvent *event = gameeventmanager->CreateEvent( "recalculate_holidays" );
-		if ( event )
-		{
-			gameeventmanager->FireEvent( event );
-		}
-		UTIL_CalculateHolidays();
+	// Tell the clients to recalculate the holiday
+	IGameEvent *event = gameeventmanager->CreateEvent( "recalculate_holidays" );
+	if ( event )
+	{
+		gameeventmanager->FireEvent( event );
 	}
+	UTIL_CalculateHolidays();
 
 	BaseClass::RoundRespawn();
 
