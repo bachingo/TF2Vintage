@@ -485,6 +485,97 @@ bool EconHolidays_IsHolidayActive( int iHolidayIndex, const CRTime& timeCurrent 
 	
 	if ( TFGameRules() && TFGameRules()->GetTF2VEra() )
 	{
+		// We check this twice: once with the Era, the second below with the timestamp.
+		int nCurrentEra = TFGameRules()->GetTF2VEra();
+		// We already have the IsAnachronistic, IsContemporary, and IsBetween, but this saves us some time checking.
+		
+		
+		// TF2V: Prevent cyclic holidays firing off earlier than they were added.
+
+		// TF2 Birthday first appeared on Aug 24, 2009
+		if (iHolidayIndex == kHoliday_TFBirthday && nCurrentEra < 708))
+			return false;
+		
+		// Halloween first appeared Oct 29, 2009
+		if (iHolidayIndex == kHoliday_Halloween && nCurrentEra < TF2V_ERA_DAY_HALLOWEEN_2009))
+			return false;
+		
+		// Christmas first appeared Dec 17, 2010 (Australian Christmas 2010)
+		if (iHolidayIndex == kHoliday_Christmas && nCurrentEra < TF2V_DAY_SMISSMAS_2010))
+			return false;
+		
+		// Full Moon first appeared Oct 27, 2011 (Halloween 2011)
+		if (iHolidayIndex == kHoliday_FullMoon && nCurrentEra < TF2V_ERA_DAY_HALLOWEEN_2011))
+			return false;
+		
+		// Valentine's first appeared Feb 14, 2012
+		if (iHolidayIndex == kHoliday_Valentines && nCurrentEra < 1608))
+			return false;
+		
+		// Meet the Pyro is explicitly 2012 (Pyromania Update)
+		if (iHolidayIndex == kHoliday_MeetThePyro && nCurrentEra < TF2V_ERA_DAY_PYROMANIA))
+			return false;
+		
+		// April Fool's first appeared Apr 1, 2014
+		if (iHolidayIndex == kHoliday_AprilFools && nCurrentEra < 2389))
+			return false;
+		
+		// End of the Line is explicitly 2014
+		if (iHolidayIndex == kHoliday_EOTL && nCurrentEra < TF2V_DAY_MAJOR_END_OF_THE_LINE))
+			return false;
+		
+		// Soldier holiday (Rick May tribute) first appeared Apr 12, 2020
+		if (iHolidayIndex == kHoliday_Soldier && nCurrentEra < 4609))
+			return false;
+		
+		// Summer events first appeared Jul 12, 2023
+		if (iHolidayIndex == kHoliday_Summer && nCurrentEra < TF2V_DAY_SUMMER_2023))
+			return false;
+			
+		// Special case: Halloween events before they were hardcoded in 2019
+		// These have specific start/end dates each year
+		if ( iHolidayIndex == kHoliday_Halloween )
+		{
+			// Manually check the dates for Halloween by year prior to the hardcoding in 2019.
+			// Each event lasts approximately 13-14 days
+			if ( 
+			(nCurrentEra >= 774)  && nCurrentEra < 788))  || // 2009 (Oct 29 - Nov 11)
+			(nCurrentEra >= 1137) && nCurrentEra < 1150)) || // 2010 (Oct 27 - Nov 9)
+			(nCurrentEra >= 1502) && nCurrentEra < 1516)) || // 2011 (Oct 27 - Nov 10)
+			(nCurrentEra >= 1867) && nCurrentEra < 1881)) || // 2012 (Oct 26 - Nov 9)
+			(nCurrentEra >= 2235) && nCurrentEra < 2249)) || // 2013 (Oct 29 - Nov 12)
+			(nCurrentEra >= 2600) && nCurrentEra < 2615)) || // 2014 (Oct 29 - Nov 13)
+			(nCurrentEra >= 2964) && nCurrentEra < 2980)) || // 2015 (Oct 28 - Nov 13)
+			(nCurrentEra >= 3323) && nCurrentEra < 3352)) || // 2016 (Oct 21 - Nov 19)
+			(nCurrentEra >= 3687) && nCurrentEra < 3701)) || // 2017 (Oct 20 - Nov 3)
+			(nCurrentEra >= 4051) && nCurrentEra < 4077)) )  // 2018 (Oct 19 - Nov 14)
+			{
+				return true;
+			}
+		}
+		else if ( iHolidayIndex == kHoliday_FullMoon ) 
+		{
+			// Strange instance where Full Moon was active for a week straight in September 2014.
+			// Sept 17-24, 2014 = Days 2558-2565
+			if (nCurrentEra >= 2558) && nCurrentEra < 2566))
+			{
+				return true;
+			}
+		}
+		else if ( iHolidayIndex == kHoliday_Summer )
+		{
+			// Summer events with specific date ranges
+			// Each event lasts from mid-July to mid-September
+			if (
+			(nCurrentEra >= 5778) && nCurrentEra < 5843)) || // 2023 (Jul 12 - Sep 15)
+			(nCurrentEra >= 6142) && nCurrentEra < 6209)) || // 2024 (Jul 10 - Sep 15)
+			(nCurrentEra >= 6510) && nCurrentEra < 6573)) )  // 2025 (Jul 16 - Sep 17)
+			{
+				return true;
+			}
+		}
+		
+		
 		// Make our own faked current time based off the day TF2V is set as.
 		// Since the Era function is saved as days from 09/16/2007, we simply replace our own YY/MM/DD with it.
 		
