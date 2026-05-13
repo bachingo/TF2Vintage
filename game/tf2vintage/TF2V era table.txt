@@ -1,5 +1,6 @@
 TF2V defaults to the latest update if you don't select something.
 Use tf2v_era <number> as server host to pick the date to set TF2V to.
+Value changes only on next round or round restart.
 
 Current default = Smissmass 2025: tf2v_era 6658
 
