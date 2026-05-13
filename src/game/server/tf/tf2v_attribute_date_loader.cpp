@@ -12,6 +12,9 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+
+ConVar tf2v_alternate_war_result( "tf2v_alternate_war_result", "2", FCVAR_ARCHIVE, "Affects who receives the Gunboats for use. 0 - Soldier Only (historical), 1 - Demoman Only (alternate), 2 - Both Soldier and Demoman. Default: 2", true, 0, true, 2 );
+
 // Global instance
 CTF2VAttributeDateManager *g_pTF2VAttributeDateManager = NULL;
 
@@ -692,6 +695,26 @@ CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemV
 	if ( ( iCurrentEra < TF2V_DAY_MAJOR_REPLAY ) && IsTauntSlot(iSlot) )
 	{
 		return nullptr;
+	}
+	
+	// TF2V: Special condition for the Gunboats.
+	if ( pOriginalItem->GetItemDefIndex() == 133 )
+	{
+		if ( iClass == TF_CLASS_DEMOMAN && !tf2v_alternate_war_result.GetInt() )
+		{
+			// Canon timeline: Demoman did not win the war.
+			pItem = TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+			// ClientPrint( this, HUD_PRINTNOTIFY, "#Item_WARResultCanon" );
+			return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );;
+		}
+		if ( iClass == TF_CLASS_SOLDIER && tf2v_alternate_war_result.GetInt() == 1 )
+		{
+			// Alternative timeline: Soldier did not win the war.
+			pItem = TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+			// ClientPrint( this, HUD_PRINTNOTIFY, "#Item_WARResultAlternate" );
+			return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+		}
+		// On tf2v_alternate_war_result == 2, both Soldier and Demoman get it.
 	}
 
 	
