@@ -903,11 +903,18 @@ CEquippableItemsForSlotGenerator::CEquippableItemsForSlotGenerator( int iClass, 
 		}
 
 		// TF2V: Use the same function from the server uses for era enforcement to check items here.
-		if ( TFGameRules() && !TV2VItemIsAllowedTimePeriod( pItem, iClass, iSlot ) )
+		if ( TFGameRules() )
 		{
-			eDisplayType = kSlotDisplay_Disabled_EquipRegionConflict;
+			// If the item is too new, flag it with an outright region conflict.
+			if ( !TV2VItemIsAllowedTimePeriod( pItem, iClass, iSlot ) )
+			{
+				eDisplayType = kSlotDisplay_Disabled_EquipRegionConflict;
+			}
+			// else if ( !TV2VItemAttributesAllowedTimePeriod(pItem) )
+				// To do: Make a flag for when a base item is correct, but our version will be downgraded when spawning.
+				
 		}
-
+		
 		// If we're listing *all* items, including duplicates, we just add everything to the list at once and
 		// move on. We still do the above equipped-item specialcasing.
 		if ( unFlags & kSlotGenerator_ShowDuplicates )

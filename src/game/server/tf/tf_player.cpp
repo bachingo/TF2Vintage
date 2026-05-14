@@ -137,7 +137,7 @@
 
 #include "gc_clientsystem.h"
 
-#include "tf2v_attribute_date_loader.h"
+#include "tf2v/tf2v_attribute_date_loader.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"

@@ -498,7 +498,7 @@ bool CTF2VAttributeDateManager::ItemQualityIsAllowedTimePeriod( int iQuality )
 		case AE_VINTAGE:
 		case AE_DEVELOPER:
 		case AE_UNUSUAL: // Unusuals		
-			return iCurrentEra >= TF2V_DAY_MAJOR_MANNCONOMY; // Mann-Conomy Update (Our namesake)	
+			return iCurrentEra >= TF2V_DAY_MAJOR_MANNCONOMY; // Mann-Conomy Update
 		case AE_RARITY1:
 			return iCurrentEra >= TF2V_DAY_PROMO_RIFT; // Promotional items
 		case AE_STRANGE:

@@ -88,11 +88,21 @@ inline CEconItemView *TV2VGetTimePeriodCompliantItem( CEconItemView *pOriginalIt
 }
 
 // Accessor functions (for backwards compatibility with existing code)
-inline bool TV2VItemIsAllowedTimePeriod( CEconItemView *pItem, int iClass = -1, int iSlot = -1)
+inline bool TV2VItemIsAllowedTimePeriod( CEconItemView *pItem, int iClass = -1, int iSlot = -1 )
 {
 	if ( g_pTF2VAttributeDateManager )
 		return g_pTF2VAttributeDateManager->ItemIsAllowedTimePeriod( pItem, iClass, iSlot );
-	return pOriginalItem;
+	return false;
+}
+
+// Accessor functions (for backwards compatibility with existing code)
+inline bool TV2VItemAttributesAllowedTimePeriod( CEconItemView *pOriginalItem, int iClass, int iSlot )
+{
+	if ( g_pTF2VAttributeDateManager )
+	{
+		return ( ItemQualityIsAllowedTimePeriod( pOriginalItem->GetItemQuality() ) && !HasAnachronisticAttributes( pOriginalItem ) );
+	}
+	return false;
 }
 
 // Accessor functions (for backwards compatibility with existing code)
