@@ -24,6 +24,7 @@
 #include "tf_hud_inspectpanel.h"
 #include "clientmode_tf.h"
 #include "vguicenterprint.h"
+#include "tf_gamerules.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -40,7 +41,11 @@ void InspectDown()
 	{
 		return;
 	}
-
+	
+	// TF2V: Weapon inspecting added after Gun Mettle.
+	if TF2VIsAnachronistic( TF2V_DAY_MAJOR_GUN_METTLE )
+		return;
+		
 	s_flLastInspectDownTime = gpGlobals->curtime;
 
 	KeyValues *kv = new KeyValues( "+inspect_server" );
