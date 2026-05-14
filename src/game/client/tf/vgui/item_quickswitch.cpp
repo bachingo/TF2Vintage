@@ -430,6 +430,8 @@ void CItemQuickSwitchPanel::CloseQS( void )
 		if ( tf_respawn_on_loadoutchanges.GetBool() )
 		{
 			// Tell the GC to tell server that we should respawn if we're in a respawn room
+			GCSDK::CGCMsg< MsgGCEmpty_t > msg(k_EMsgGCRespawnPostLoadoutChange);
+			GCClientSystem()->BSendMessage(msg);
 		}
 
 		// Send the preset panel a msg so it can save the change
