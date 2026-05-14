@@ -55,7 +55,7 @@ public:
 	bool 				IsPaintPlayerApplied( CEconItemView *pItem, const CEconItemAttribute *pPaintAttrib );
 	
 	// Anachronistic modifiers
-	bool 				ItemIsAllowedTimePeriod( CEconItemView *pItem );
+	bool 				ItemIsAllowedTimePeriod( CEconItemView *pItem, int iClass == -1, int iSlot == -1);
 	bool 				ItemQualityIsAllowedTimePeriod( int iQuality );
 	bool 				HasAnachronisticAttributes( CEconItemView *pItem );
 

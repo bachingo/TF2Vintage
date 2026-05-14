@@ -438,10 +438,36 @@ bool CTF2VAttributeDateManager::IsPaintPlayerApplied( CEconItemView *pItem, cons
 //-----------------------------------------------------------------------------
 // Checks to see if item passes base item check
 //-----------------------------------------------------------------------------
-bool CTF2VAttributeDateManager::ItemIsAllowedTimePeriod( CEconItemView *pItem )
+bool CTF2VAttributeDateManager::ItemIsAllowedTimePeriod( CEconItemView *pItem, int iClass, int iSlot )
 {
 	if ( !pItem || !pItem->GetStaticData() || !TFGameRules() )
 		return false;
+	
+	// TF2V: Special condition for the Gunboats.
+	if ( pItem->GetItemDefIndex() == 133 )
+	{
+		if ( iClass == TF_CLASS_DEMOMAN && !tf2v_alternate_war_result.GetInt() )
+		{
+			// Canon timeline: Demoman did not win the war.
+			// ClientPrint( this, HUD_PRINTNOTIFY, "#Item_WARResultCanon" );
+			return false;
+		}
+		if ( iClass == TF_CLASS_SOLDIER && tf2v_alternate_war_result.GetInt() == 1 )
+		{
+			// Alternative timeline: Soldier did not win the war.
+			// ClientPrint( this, HUD_PRINTNOTIFY, "#Item_WARResultAlternate" );
+			return false;
+		}
+		// On tf2v_alternate_war_result == 2, both Soldier and Demoman get it.
+	}
+
+	// TF2V: Edge case for the Reserve Shooter.
+	if ( pItem->GetItemDefIndex() == 415 )
+	{
+		// Pyro didn't get the Reserve Shooter until Manniversary.
+		if ( iClass == TF_CLASS_PYRO && TF2VIsBetween( TF2V_DAY_MAJOR_UBER, TF2V_DAY_MAJOR_MANNIVERSARY ) )
+			return false;
+	}
 	
 	return GetItemIntroductionDate(pItem->GetItemDefIndex()) < TFGameRules()->GetTF2VEra();
 	
@@ -697,35 +723,9 @@ CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemV
 		return nullptr;
 	}
 	
-	// TF2V: Special condition for the Gunboats.
-	if ( pOriginalItem->GetItemDefIndex() == 133 )
-	{
-		if ( iClass == TF_CLASS_DEMOMAN && !tf2v_alternate_war_result.GetInt() )
-		{
-			// Canon timeline: Demoman did not win the war.
-			// ClientPrint( this, HUD_PRINTNOTIFY, "#Item_WARResultCanon" );
-			return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
-		}
-		if ( iClass == TF_CLASS_SOLDIER && tf2v_alternate_war_result.GetInt() == 1 )
-		{
-			// Alternative timeline: Soldier did not win the war.
-			// ClientPrint( this, HUD_PRINTNOTIFY, "#Item_WARResultAlternate" );
-			return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
-		}
-		// On tf2v_alternate_war_result == 2, both Soldier and Demoman get it.
-	}
-
-	// TF2V: Edge case for the Reserve Shooter.
-	if ( pOriginalItem->GetItemDefIndex() == 415 )
-	{
-		// Pyro didn't get the Reserve Shooter until Manniversary.
-		if ( iClass == TF_CLASS_PYRO && TF2VIsBetween( TF2V_DAY_MAJOR_UBER, TF2V_DAY_MAJOR_MANNIVERSARY ) )
-			return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
-	}
-	
 	// Passes the slot check. Now we have to look into the item's details.
 	// STEP 1: Check if base item is allowed at all by comparing the release date to the ingame date
-	if ( !ItemIsAllowedTimePeriod( pOriginalItem ) )
+	if ( !ItemIsAllowedTimePeriod( pOriginalItem, iClass, iSlot ) )
 	{
 		// Base item is too new - replace entirely with stock
 		if ( IsWearableSlot( iSlot ) )
