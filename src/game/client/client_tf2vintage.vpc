@@ -24,6 +24,8 @@ $Project "Client (TF2V)"
 {
 		$Folder	"TF2Vintage"
 		{
-			// Era Enforcement
+			// Era Information and Enforcement
+			$File	"$SRCDIR\game\shared\tf2v\tf2v_attribute_date_loader.cpp"
+			$File	"$SRCDIR\game\shared\tf2v\tf2v_attribute_date_loader.h"
 		}
 }

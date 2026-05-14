@@ -22,6 +22,8 @@
 #include "econ_item_constants.h"
 #include "econ_item_system.h"
 #include "econ_item_description.h"
+#include "tf_gamerules.h"
+#include "tf2v_attribute_date_loader.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include <tier0/memdbgon.h>
@@ -900,10 +902,11 @@ CEquippableItemsForSlotGenerator::CEquippableItemsForSlotGenerator( int iClass, 
 			eDisplayType = kSlotDisplay_Disabled_EquipRegionConflict;
 		}
 
-		//if ( !IsWearableSlot( iSearchSlot ) )
-		//{
-		//	eDisplayType = kSlotDisplay_Disabled_EquipRegionConflict;
-		//}
+		// TF2V: Use the same function from the server uses for era enforcement to check items here.
+		if ( TFGameRules() && !ItemIsAllowedTimePeriod( pItem, iClass, iSlot ) )
+		{
+			eDisplayType = kSlotDisplay_Disabled_EquipRegionConflict;
+		}
 
 		// If we're listing *all* items, including duplicates, we just add everything to the list at once and
 		// move on. We still do the above equipped-item specialcasing.

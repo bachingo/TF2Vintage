@@ -88,6 +88,14 @@ inline CEconItemView *GetTimePeriodCompliantItem( CEconItemView *pOriginalItem, 
 }
 
 // Accessor functions (for backwards compatibility with existing code)
+inline bool ItemIsAllowedTimePeriod( CEconItemView *pItem, int iClass == -1, int iSlot == -1)
+{
+	if ( g_pTF2VAttributeDateManager )
+		return g_pTF2VAttributeDateManager->ItemIsAllowedTimePeriod( CEconItemView *pItem, int iClass, int iSlot;
+	return pOriginalItem;
+}
+
+// Accessor functions (for backwards compatibility with existing code)
 inline int GetItemIntroductionDate( int iDefindex )
 {
 	if ( g_pTF2VAttributeDateManager )
