@@ -43,7 +43,7 @@ void InspectDown()
 	}
 	
 	// TF2V: Weapon inspecting added after Gun Mettle.
-	if TF2VIsAnachronistic( TF2V_DAY_MAJOR_GUN_METTLE )
+	if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_GUN_METTLE ) )
 		return;
 		
 	s_flLastInspectDownTime = gpGlobals->curtime;
