@@ -55,7 +55,7 @@ public:
 	bool 				IsPaintPlayerApplied( CEconItemView *pItem, const CEconItemAttribute *pPaintAttrib );
 	
 	// Anachronistic modifiers
-	bool 				ItemIsAllowedTimePeriod( CEconItemView *pItem, int iClass == -1, int iSlot == -1);
+	bool 				ItemIsAllowedTimePeriod( CEconItemView *pItem, int iClass = -1, int iSlot = -1);
 	bool 				ItemQualityIsAllowedTimePeriod( int iQuality );
 	bool 				HasAnachronisticAttributes( CEconItemView *pItem );
 
@@ -80,7 +80,7 @@ private:
 extern CTF2VAttributeDateManager *g_pTF2VAttributeDateManager;
 
 // Accessor functions (for backwards compatibility with existing code)
-inline CEconItemView *GetTimePeriodCompliantItem( CEconItemView *pOriginalItem, int iClass, int iSlot )
+inline CEconItemView *TV2VGetTimePeriodCompliantItem( CEconItemView *pOriginalItem, int iClass, int iSlot )
 {
 	if ( g_pTF2VAttributeDateManager )
 		return g_pTF2VAttributeDateManager->GetTimePeriodCompliantItem( pOriginalItem, iClass, iSlot );
@@ -88,15 +88,15 @@ inline CEconItemView *GetTimePeriodCompliantItem( CEconItemView *pOriginalItem, 
 }
 
 // Accessor functions (for backwards compatibility with existing code)
-inline bool ItemIsAllowedTimePeriod( CEconItemView *pItem, int iClass == -1, int iSlot == -1)
+inline bool TV2VItemIsAllowedTimePeriod( CEconItemView *pItem, int iClass = -1, int iSlot = -1)
 {
 	if ( g_pTF2VAttributeDateManager )
-		return g_pTF2VAttributeDateManager->ItemIsAllowedTimePeriod( CEconItemView *pItem, int iClass, int iSlot;
+		return g_pTF2VAttributeDateManager->ItemIsAllowedTimePeriod( pItem, iClass, iSlot );
 	return pOriginalItem;
 }
 
 // Accessor functions (for backwards compatibility with existing code)
-inline int GetItemIntroductionDate( int iDefindex )
+inline int TV2VGetItemIntroductionDate( int iDefindex )
 {
 	if ( g_pTF2VAttributeDateManager )
 		return g_pTF2VAttributeDateManager->GetItemIntroductionDate( iDefindex );
@@ -104,21 +104,21 @@ inline int GetItemIntroductionDate( int iDefindex )
 }
 
 // Accessor functions (for backwards compatibility with existing code)
-inline int GetPaintIntroductionDate( int iRGB )
+inline int TV2VGetPaintIntroductionDate( int iRGB )
 {
 	if ( g_pTF2VAttributeDateManager )
 		return g_pTF2VAttributeDateManager->GetPaintIntroductionDate( iRGB );
 	return 99999999;
 }
 
-inline int GetUnusualEffectIntroductionDate( int iEffectIndex )
+inline int TV2VGetUnusualEffectIntroductionDate( int iEffectIndex )
 {
 	if ( g_pTF2VAttributeDateManager )
 		return g_pTF2VAttributeDateManager->GetUnusualEffectIntroductionDate( iEffectIndex );
 	return 99999999;
 }
 
-inline int GetWarPaintIntroductionDate( int iProtoDefIndex )
+inline int TV2VGetWarPaintIntroductionDate( int iProtoDefIndex )
 {
 	if ( g_pTF2VAttributeDateManager )
 		return g_pTF2VAttributeDateManager->GetWarPaintIntroductionDate( iProtoDefIndex );

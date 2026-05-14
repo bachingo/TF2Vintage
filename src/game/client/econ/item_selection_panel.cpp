@@ -23,7 +23,7 @@
 #include "econ_item_system.h"
 #include "econ_item_description.h"
 #include "tf_gamerules.h"
-#include "tf2v_attribute_date_loader.h"
+#include "tf2v/tf2v_attribute_date_loader.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include <tier0/memdbgon.h>
@@ -903,7 +903,7 @@ CEquippableItemsForSlotGenerator::CEquippableItemsForSlotGenerator( int iClass, 
 		}
 
 		// TF2V: Use the same function from the server uses for era enforcement to check items here.
-		if ( TFGameRules() && !ItemIsAllowedTimePeriod( pItem, iClass, iSlot ) )
+		if ( TFGameRules() && !TV2VItemIsAllowedTimePeriod( pItem, iClass, iSlot ) )
 		{
 			eDisplayType = kSlotDisplay_Disabled_EquipRegionConflict;
 		}

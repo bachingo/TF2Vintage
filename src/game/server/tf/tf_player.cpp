@@ -4981,7 +4981,7 @@ bool CTFPlayer::ItemIsAllowed( CEconItemView *pItem )
 	}
 
 	// TF2V: Check this item again. It should be exactly the one we are comparing.
-	CEconItemView *pModified = GetTimePeriodCompliantItem( pItem, iClass, iSlot );
+	CEconItemView *pModified = TF2VGetTimePeriodCompliantItem( pItem, iClass, iSlot );
 	if ( !pModified || !pModified->GetStaticData() )
 		return false;
 	return pItem == pModified;
@@ -5408,7 +5408,7 @@ CEconItemView *CTFPlayer::GetLoadoutItem( int iClass, int iSlot, bool bReportWhi
 	// Items failing the time period get downgraded or replaced.
 	if ( pItem && pItem->IsValid() )
 	{
-		pItem = GetTimePeriodCompliantItem( pItem, iClass, iSlot );
+		pItem = TF2VGetTimePeriodCompliantItem( pItem, iClass, iSlot );
 		if ( !pItem || !pItem->GetStaticData() )
 			return nullptr;
 	}

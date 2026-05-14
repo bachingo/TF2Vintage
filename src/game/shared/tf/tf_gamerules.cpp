@@ -19,6 +19,7 @@
 #include "tf_logic_player_destruction.h"
 #include "tf_matchmaking_shared.h"
 #include "tf_progression_description.h"
+#include "tf2v/tf2v_attribute_date_loader.h"
 
 #ifdef CLIENT_DLL
 	#include <game/client/iviewport.h>
@@ -132,7 +133,6 @@
 	#include "tf_autobalance.h"
 	#include "player_voice_listener.h"
 	#include "func_respawnroom.h"
-	#include "tf2v_attribute_date_loader.h"
 #endif
 
 #include "tf_mann_vs_machine_stats.h"

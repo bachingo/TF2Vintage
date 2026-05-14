@@ -684,7 +684,7 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 // Get time-period compliant version of item
 // Returns: Modified item, base item if too new, or original if compliant
 //-----------------------------------------------------------------------------
-CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemView *pOriginalItem, int iClass, int iSlot )
+CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemView *pOriginalItem, int iClass /*= -1*/, int iSlot /*= -1*/)
 {
 	if ( !pOriginalItem || !pOriginalItem->IsValid() )
 		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
