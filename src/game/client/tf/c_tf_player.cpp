@@ -5755,59 +5755,119 @@ void C_TFPlayer::HandleTaunting( void )
 	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
 	// This code is only for the local player.
 	Assert( pLocalPlayer == NULL || pLocalPlayer == this );
-
-	// Clear the taunt slot.
-	if (	!m_bWasTaunting &&
-			(	
-				m_Shared.InCond( TF_COND_TAUNTING ) ||
-				m_Shared.IsControlStunned() ||
-				m_Shared.IsLoser() ||
-				m_bIsReadyToHighFive ||
-				m_nForceTauntCam ||
-				m_Shared.InCond( TF_COND_HALLOWEEN_BOMB_HEAD ) ||
-				m_Shared.InCond( TF_COND_HALLOWEEN_GIANT ) ||
-				m_Shared.InCond( TF_COND_HALLOWEEN_TINY ) ||
-				m_Shared.InCond( TF_COND_HALLOWEEN_GHOST_MODE ) ||
-				m_Shared.InCond( TF_COND_HALLOWEEN_KART ) ||
-				m_Shared.InCond( TF_COND_MELEE_ONLY ) ||
-				m_Shared.InCond( TF_COND_SWIMMING_CURSE )
-			)
-		) 
+	
+	// TF2V: Third person camera on losing added in Classless.
+	if ( TF2VIsContemporary( TF2V_DAY_MAJOR_CLASSLESS ) )
 	{
-		m_bWasTaunting = true;
-
-		// Handle the camera for the local player.
-		if ( pLocalPlayer )
+		// Clear the taunt slot.
+		if (	!m_bWasTaunting &&
+				(	
+					m_Shared.InCond( TF_COND_TAUNTING ) ||
+					m_Shared.IsControlStunned() ||
+					m_Shared.IsLoser() ||
+					m_bIsReadyToHighFive ||
+					m_nForceTauntCam ||
+					m_Shared.InCond( TF_COND_HALLOWEEN_BOMB_HEAD ) ||
+					m_Shared.InCond( TF_COND_HALLOWEEN_GIANT ) ||
+					m_Shared.InCond( TF_COND_HALLOWEEN_TINY ) ||
+					m_Shared.InCond( TF_COND_HALLOWEEN_GHOST_MODE ) ||
+					m_Shared.InCond( TF_COND_HALLOWEEN_KART ) ||
+					m_Shared.InCond( TF_COND_MELEE_ONLY ) ||
+					m_Shared.InCond( TF_COND_SWIMMING_CURSE )
+				)
+			) 
 		{
+			m_bWasTaunting = true;
 
-			TurnOnTauntCam();
+			// Handle the camera for the local player.
+			if ( pLocalPlayer )
+			{
+
+				TurnOnTauntCam();
+			}
+		}
+
+		if (	( !IsAlive() && m_nForceTauntCam < 2 ) || 
+				(
+					m_bWasTaunting && !m_Shared.InCond( TF_COND_TAUNTING ) && !m_Shared.IsControlStunned() && 
+					!m_Shared.InCond( TF_COND_PHASE ) && !m_Shared.IsLoser() && !m_bIsReadyToHighFive &&
+					!m_nForceTauntCam && !m_Shared.InCond( TF_COND_HALLOWEEN_BOMB_HEAD ) &&
+					!m_Shared.InCond( TF_COND_HALLOWEEN_THRILLER ) &&
+					!m_Shared.InCond( TF_COND_HALLOWEEN_GIANT ) &&
+					!m_Shared.InCond( TF_COND_HALLOWEEN_TINY ) &&
+					!m_Shared.InCond( TF_COND_HALLOWEEN_GHOST_MODE ) &&
+					!m_Shared.InCond( TF_COND_HALLOWEEN_KART ) &&
+					!m_Shared.InCond( TF_COND_MELEE_ONLY ) &&
+					!m_Shared.InCond( TF_COND_SWIMMING_CURSE )
+				)
+			)
+		{
+			m_bWasTaunting = false;
+
+			// Clear the vcd slot.
+			m_PlayerAnimState->ResetGestureSlot( GESTURE_SLOT_VCD );
+
+			// Handle the camera for the local player.
+			if ( pLocalPlayer )
+			{
+				TurnOffTauntCam();
+			}
 		}
 	}
-
-	if (	( !IsAlive() && m_nForceTauntCam < 2 ) || 
-			(
-				m_bWasTaunting && !m_Shared.InCond( TF_COND_TAUNTING ) && !m_Shared.IsControlStunned() && 
-				!m_Shared.InCond( TF_COND_PHASE ) && !m_Shared.IsLoser() && !m_bIsReadyToHighFive &&
-				!m_nForceTauntCam && !m_Shared.InCond( TF_COND_HALLOWEEN_BOMB_HEAD ) &&
-				!m_Shared.InCond( TF_COND_HALLOWEEN_THRILLER ) &&
-				!m_Shared.InCond( TF_COND_HALLOWEEN_GIANT ) &&
-				!m_Shared.InCond( TF_COND_HALLOWEEN_TINY ) &&
-				!m_Shared.InCond( TF_COND_HALLOWEEN_GHOST_MODE ) &&
-				!m_Shared.InCond( TF_COND_HALLOWEEN_KART ) &&
-				!m_Shared.InCond( TF_COND_MELEE_ONLY ) &&
-				!m_Shared.InCond( TF_COND_SWIMMING_CURSE )
-			)
-		)
+	else	// Same functions, we don't check loser state though.
 	{
-		m_bWasTaunting = false;
-
-		// Clear the vcd slot.
-		m_PlayerAnimState->ResetGestureSlot( GESTURE_SLOT_VCD );
-
-		// Handle the camera for the local player.
-		if ( pLocalPlayer )
+		// Clear the taunt slot.
+		if (	!m_bWasTaunting &&
+				(	
+					m_Shared.InCond( TF_COND_TAUNTING ) ||
+					m_Shared.IsControlStunned() ||
+					m_bIsReadyToHighFive ||
+					m_nForceTauntCam ||
+					m_Shared.InCond( TF_COND_HALLOWEEN_BOMB_HEAD ) ||
+					m_Shared.InCond( TF_COND_HALLOWEEN_GIANT ) ||
+					m_Shared.InCond( TF_COND_HALLOWEEN_TINY ) ||
+					m_Shared.InCond( TF_COND_HALLOWEEN_GHOST_MODE ) ||
+					m_Shared.InCond( TF_COND_HALLOWEEN_KART ) ||
+					m_Shared.InCond( TF_COND_MELEE_ONLY ) ||
+					m_Shared.InCond( TF_COND_SWIMMING_CURSE )
+				)
+			) 
 		{
-			TurnOffTauntCam();
+			m_bWasTaunting = true;
+
+			// Handle the camera for the local player.
+			if ( pLocalPlayer )
+			{
+
+				TurnOnTauntCam();
+			}
+		}
+
+		if (	( !IsAlive() && m_nForceTauntCam < 2 ) || 
+				(
+					m_bWasTaunting && !m_Shared.InCond( TF_COND_TAUNTING ) && !m_Shared.IsControlStunned() && 
+					!m_Shared.InCond( TF_COND_PHASE ) && !m_bIsReadyToHighFive &&
+					!m_nForceTauntCam && !m_Shared.InCond( TF_COND_HALLOWEEN_BOMB_HEAD ) &&
+					!m_Shared.InCond( TF_COND_HALLOWEEN_THRILLER ) &&
+					!m_Shared.InCond( TF_COND_HALLOWEEN_GIANT ) &&
+					!m_Shared.InCond( TF_COND_HALLOWEEN_TINY ) &&
+					!m_Shared.InCond( TF_COND_HALLOWEEN_GHOST_MODE ) &&
+					!m_Shared.InCond( TF_COND_HALLOWEEN_KART ) &&
+					!m_Shared.InCond( TF_COND_MELEE_ONLY ) &&
+					!m_Shared.InCond( TF_COND_SWIMMING_CURSE )
+				)
+			)
+		{
+			m_bWasTaunting = false;
+
+			// Clear the vcd slot.
+			m_PlayerAnimState->ResetGestureSlot( GESTURE_SLOT_VCD );
+
+			// Handle the camera for the local player.
+			if ( pLocalPlayer )
+			{
+				TurnOffTauntCam();
+			}
 		}
 	}
 
