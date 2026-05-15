@@ -376,7 +376,7 @@
 	
     // ── Multi-Class ──────────────────────────────────────────────
 	// ── Secondary ───────────────────────────────────────────────
-	"294"  // Lugermorph (secondary)
+	"160"  // Lugermorph (secondary)
 	"30666"  // C.A.P.P.E.R (secondary)
 	"415"  // Reserve Shooter (secondary)
 	{
