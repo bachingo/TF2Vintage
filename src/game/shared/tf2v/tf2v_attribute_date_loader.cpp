@@ -29,6 +29,7 @@ CTF2VAttributeDateManager::CTF2VAttributeDateManager()
 	m_PaintDates.SetLessFunc( DefLessFunc( int ) );
 	m_UnusualEffectDates.SetLessFunc( DefLessFunc( int ) );
 	m_WarPaintDates.SetLessFunc( DefLessFunc( int ) );
+	m_WeaponAttributeVersions.SetLessFunc( DefLessFunc( int ) );
 }
 
 //-----------------------------------------------------------------------------
@@ -53,7 +54,8 @@ void CTF2VAttributeDateManager::Init()
 	bool bPaintSuccess = LoadPaintDates( "scripts/items/tf2v_paint_dates.txt" );
 	bool bUnusualSuccess = LoadUnusualDates( "scripts/items/tf2v_unusual_dates.txt" );
 	bool bWarPaintSuccess = LoadWarPaintDates( "scripts/items/tf2v_warpaint_dates.txt" );
-
+	bool bWeaponSuccess = LoadWeaponAttributeVersions( "scripts/items/tf2v_weapon_attributes.txt" );
+	
 	if ( bItemSuccess )
 		Msg( "[TF2V] Loaded %d items\n", m_ItemDates.Count() );
 	else
@@ -74,6 +76,16 @@ void CTF2VAttributeDateManager::Init()
 	else
 		Warning( "[TF2V] Failed to load war paint dates!\n" );
 
+	if ( bWeaponSuccess )
+	{
+		Msg( "[TF2V] Loaded attribute versions for %d weapons\n", m_WeaponAttributeVersions.Count() );
+	}
+	else
+	{
+		Warning( "[TF2V] Failed to load weapon attribute versions!\n" );
+	}
+
+
 	m_bInitialized = true;
 }
 
@@ -86,6 +98,12 @@ void CTF2VAttributeDateManager::Shutdown()
 	m_PaintDates.Purge();
 	m_UnusualEffectDates.Purge();
 	m_WarPaintDates.Purge();
+	FOR_EACH_MAP_FAST( m_WeaponAttributeVersions, i )
+	{
+		delete m_WeaponAttributeVersions[i];
+	}
+	
+	m_WeaponAttributeVersions.Purge();
 	m_bInitialized = false;
 }
 
@@ -317,10 +335,120 @@ bool CTF2VAttributeDateManager::LoadWarPaintDates( const char *pszFilename )
 }
 
 //-----------------------------------------------------------------------------
-// Query functions - return DAYS since launch (not YYYYMMDD!)
+// Load weapon attribute versions
 //-----------------------------------------------------------------------------
+bool CTF2VAttributeDateManager::LoadWeaponAttributeVersions( const char *pszFilename )
+{
+	KeyValues *pKV = new KeyValues( "tf2v_weapon_attributes" );
+	if ( !pKV->LoadFromFile( filesystem, pszFilename, "MOD" ) )
+	{
+		Warning( "[TF2V] Failed to load %s\n", pszFilename );
+		pKV->deleteThis();
+		return false;
+	}
+
+	// Clear existing data
+	FOR_EACH_MAP_FAST( m_WeaponAttributeVersions, i )
+	{
+		delete m_WeaponAttributeVersions[i];
+	}
+	m_WeaponAttributeVersions.Purge();
+
+	// Parse each weapon entry
+	for ( KeyValues *pWeapon = pKV->GetFirstSubKey(); pWeapon; pWeapon = pWeapon->GetNextKey() )
+	{
+		int iItemDef = atoi( pWeapon->GetName() );
+		
+		if ( iItemDef <= 0 )
+		{
+			Warning( "[TF2V] Invalid item def: %s\n", pWeapon->GetName() );
+			continue;
+		}
+
+		CUtlVector<WeaponAttributeVersion_t> *pVersions = new CUtlVector<WeaponAttributeVersion_t>();
+
+		// Parse each date block
+		for ( KeyValues *pDateBlock = pWeapon->GetFirstSubKey(); pDateBlock; pDateBlock = pDateBlock->GetNextKey() )
+		{
+			int iDate = ParseDateString( pDateBlock->GetName() );
+			
+			if ( iDate < 0 )
+			{
+				Warning( "[TF2V] Invalid date '%s' for item %d\n", pDateBlock->GetName(), iItemDef );
+				continue;
+			}
+
+			WeaponAttributeVersion_t version;
+			version.iStartDate = iDate;
+			
+			if ( !ParseAttributeBlock( pDateBlock, version.attributes ) )
+			{
+				Warning( "[TF2V] Failed to parse attributes for item %d date %s\n", iItemDef, pDateBlock->GetName() );
+				continue;
+			}
+
+			pVersions->AddToTail( version );
+		}
+
+		// Sort by date
+		pVersions->Sort( []( const WeaponAttributeVersion_t *a, const WeaponAttributeVersion_t *b ) -> int {
+			return a->iStartDate - b->iStartDate;
+		});
+
+		m_WeaponAttributeVersions.Insert( iItemDef, pVersions );
+		
+		DevMsg( "[TF2V] Loaded %d versions for item %d\n", pVersions->Count(), iItemDef );
+	}
+
+	pKV->deleteThis();
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Parse attribute block
+//-----------------------------------------------------------------------------
+bool CTF2VWeaponAttributeManager::ParseAttributeBlock( KeyValues *pKV, CUtlVector<CEconItemAttribute> &attributes )
+{
+	if ( !pKV )
+		return false;
+
+	attributes.Purge();
+
+	for ( KeyValues *pAttrib = pKV->GetFirstSubKey(); pAttrib; pAttrib = pAttrib->GetNextKey() )
+	{
+		const char *pszAttributeClass = pAttrib->GetString( "attribute_class", NULL );
+		const char *pszValue = pAttrib->GetString( "value", NULL );
+
+		if ( !pszAttributeClass || !pszValue )
+		{
+			Warning( "[TF2V] Attribute '%s' missing attribute_class or value\n", pAttrib->GetName() );
+			continue;
+		}
+
+		CEconItemAttributeDefinition *pAttrDef = GetItemSchema()->GetAttributeDefinitionByName( pszAttributeClass );
+		if ( !pAttrDef )
+		{
+			Warning( "[TF2V] Unknown attribute class: %s\n", pszAttributeClass );
+			continue;
+		}
+
+		CEconItemAttribute attribute;
+		attribute.SetAttributeDefinition( pAttrDef );
+		
+		attribute_data_union_t value;
+		value.asFloat = atof( pszValue );
+		attribute.SetValue( value );
+		
+		attributes.AddToTail( attribute );
+	}
+
+	return attributes.Count() > 0;
+}
 
 
+//-----------------------------------------------------------------------------
+// Query functions - return Days since TF2V Epoch (2007/09/16)
+//-----------------------------------------------------------------------------
 int CTF2VAttributeDateManager::GetItemIntroductionDate( int iDefindex )
 {
 	if ( !m_bInitialized )
@@ -433,6 +561,50 @@ bool CTF2VAttributeDateManager::IsPaintPlayerApplied( CEconItemView *pItem, cons
 	}
  
 	return true; // No schema tint found - must be player-applied
+}
+
+//-----------------------------------------------------------------------------
+// Attribute category helper
+//-----------------------------------------------------------------------------
+enum AttributeCategory_t
+{
+	ATTRIB_CAT_WEAPON_STAT,		// Replace with era version
+	ATTRIB_CAT_MODIFIER,		// Strip if anachronistic (done elsewhere)
+	ATTRIB_CAT_COSMETIC,		// Always preserve
+};
+
+static AttributeCategory_t GetAttributeCategory( const char *pszAttrClass )
+{
+	if ( !pszAttrClass )
+		return ATTRIB_CAT_WEAPON_STAT;
+
+	// Cosmetic attributes - ALWAYS preserve
+	if ( V_stristr( pszAttrClass, "min_viewmodel" ) ||
+		 V_stristr( pszAttrClass, "custom_projectile_model" ) ||
+		 V_stristr( pszAttrClass, "custom_paintjob" ) ||
+		 V_stristr( pszAttrClass, "unusual_description" ) ||
+		 V_stristr( pszAttrClass, "tournament_item" ) ||
+		 V_stristr( pszAttrClass, "item_name" ) ||
+		 V_stristr( pszAttrClass, "item_description" ) )
+	{
+		return ATTRIB_CAT_COSMETIC;
+	}
+
+	// Modifier attributes - preserve for now, will be filtered later
+	if ( V_stristr( pszAttrClass, "tint_rgb" ) ||
+		 V_stristr( pszAttrClass, "particle" ) ||
+		 V_stristr( pszAttrClass, "killstreak" ) ||
+		 V_stristr( pszAttrClass, "kill_eater" ) ||
+		 V_stristr( pszAttrClass, "paintkit" ) ||
+		 V_stristr( pszAttrClass, "australium" ) ||
+		 V_stristr( pszAttrClass, "festive" ) ||
+		 V_stristr( pszAttrClass, "halloween" ) )
+	{
+		return ATTRIB_CAT_MODIFIER;
+	}
+
+	// Everything else is a weapon stat
+	return ATTRIB_CAT_WEAPON_STAT;
 }
 
 //-----------------------------------------------------------------------------
@@ -681,6 +853,92 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 }
 
 //-----------------------------------------------------------------------------
+// Apply era-appropriate weapon attributes
+// This OVERRIDES static_attrs by applying runtime attributes
+// Returns if any attributes were stripped
+//-----------------------------------------------------------------------------
+bool CTF2VAttributeDateManager::ApplyWeaponAttributesToItem( CEconItemView *pOriginalItem, int iCurrentEra )
+{
+	if ( !pOriginalItem || !pOriginalItem->IsValid() || !m_bInitialized )
+		return false;
+
+	int iItemDef = pOriginalItem->GetItemDefIndex();
+	
+	// Check if we have versioned attributes for this item
+	int idx = m_WeaponAttributeVersions.Find( iItemDef );
+	if ( !m_WeaponAttributeVersions.IsValidIndex( idx ) )
+	{
+		// No versioned attributes - keep default behavior
+		return false;
+	}
+
+	CUtlVector<WeaponAttributeVersion_t> *pVersions = m_WeaponAttributeVersions[idx];
+	if ( !pVersions || pVersions->Count() == 0 )
+		return false;
+
+	// Find correct version for current era
+	WeaponAttributeVersion_t *pCorrectVersion = NULL;
+	
+	for ( int i = pVersions->Count() - 1; i >= 0; i-- )
+	{
+		if ( (*pVersions)[i].iStartDate <= iCurrentEra )
+		{
+			pCorrectVersion = &(*pVersions)[i];
+			break;
+		}
+	}
+
+	if ( !pCorrectVersion )
+	{
+		pCorrectVersion = &(*pVersions)[0];
+	}
+
+	CAttributeList *pAttribList = pOriginalItem->GetAttributeList();
+	if ( !pAttribList )
+		return false;
+
+	// CRITICAL: Save modifier and cosmetic attributes
+	CUtlVector<CEconItemAttribute> preservedAttributes;
+	
+	for ( int i = 0; i < pAttribList->GetNumAttributes(); i++ )
+	{
+		const CEconItemAttribute *pAttrib = pAttribList->GetAttribute( i );
+		if ( !pAttrib )
+			continue;
+
+		const CEconItemAttributeDefinition *pAttrDef = pAttrib->GetStaticData();
+		if ( !pAttrDef )
+			continue;
+
+		const char *pszAttrClass = pAttrDef->GetDefinitionName();
+		AttributeCategory_t category = GetAttributeCategory( pszAttrClass );
+		
+		// Preserve modifiers and cosmetics
+		if ( category == ATTRIB_CAT_MODIFIER || category == ATTRIB_CAT_COSMETIC )
+		{
+			preservedAttributes.AddToTail( *pAttrib );
+		}
+	}
+
+	// Clear all attributes (this clears weapon stats but we saved modifiers)
+	pAttribList->RemoveAllAttributes();
+
+	// Apply era-appropriate weapon stats
+	for ( int i = 0; i < pCorrectVersion->attributes.Count(); i++ )
+	{
+		pAttribList->AddAttribute( &pCorrectVersion->attributes[i] );
+	}
+
+	// Restore preserved modifiers and cosmetics
+	for ( int i = 0; i < preservedAttributes.Count(); i++ )
+	{
+		pAttribList->AddAttribute( &preservedAttributes[i] );
+	}
+
+	return true;
+}
+
+//-----------------------------------------------------------------------------
 // Get time-period compliant version of item
 // Returns: Modified item, base item if too new, or original if compliant
 //-----------------------------------------------------------------------------
@@ -745,10 +1003,24 @@ CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemV
 		bNeedsModification = true;
 	}
 
+	// Check if any of our cosmetic applications (paints, killstreaks, war paints) are too new.
+	bool bCosmeticAttributesTooNew = HasAnachronisticAttributes( pOriginalItem );
+	if ( bCosmeticAttributesTooNew )
+	{
+		bNeedsModification = true;
+	}
+	
+	// Check if our weapons need adjusting.
+	// We do this based on whether or not the date is after the most recent balance patch.
+	bool bWeaponAttributesTooNew = IsValidWeaponSlot( iSlot ) && ( iCurrentEra < TF2V_DAY_LAST_WEAPON_BALANCE );
+	if ( bWeaponAttributesTooNew )
+	{
+		bNeedsModification = true;
+	}	
+
 	// STEP 3: Check if any attributes need stripping
 	// We'll check this on the copy to avoid modifying original
-	
-	if ( !bNeedsModification && !HasAnachronisticAttributes( pOriginalItem ) )
+	if ( !bNeedsModification )
 	{
 		// Item is completely compliant - return as-is
 		return pOriginalItem;
@@ -764,9 +1036,18 @@ CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemV
 		pModifiedItem->SetItemQuality( AE_UNIQUE );
 	}
 
+	// STEP 6: Strip anachronistic cosmetic attributes
+	if ( bCosmeticAttributesTooNew )
+	{
+		StripAnachronisticAttributes( pModifiedItem );
+	}
 	
-	// STEP 6: Strip anachronistic attributes
-	StripAnachronisticAttributes( pModifiedItem );
+	// STEP 7: Weapons get their attributes changed.
+	// Preserve cosmetic and essential attributes.
+	if ( bWeaponAttributesTooNew )
+	{
+		ApplyWeaponAttributesToItem( pModifiedItem, iCurrentEra )
+	}
 
 	return pModifiedItem;
 }

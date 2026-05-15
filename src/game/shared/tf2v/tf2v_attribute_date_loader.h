@@ -12,6 +12,33 @@
 #include "tier1/KeyValues.h"
 #include "filesystem.h"
 
+// Forward declarations
+class CEconItemView;
+class CEconItemAttribute;
+class CEconItemAttributeDefinition;
+
+//-----------------------------------------------------------------------------
+// Structure to hold a set of attributes for a specific time period
+//-----------------------------------------------------------------------------
+struct WeaponAttributeVersion_t
+{
+	int iStartDate;									// Start date (days since launch)
+	CUtlVector<CEconItemAttribute> attributes;		// Attributes active during this period
+	
+	WeaponAttributeVersion_t() { iStartDate = 0; }
+};
+
+//-----------------------------------------------------------------------------
+// Attribute categories for filtering
+//-----------------------------------------------------------------------------
+enum AttributeCategory_t
+{
+	ATTRIB_CAT_WEAPON_STAT,		// Gameplay stats - replace with era version
+	ATTRIB_CAT_MODIFIER,		// Player mods - era filter
+	ATTRIB_CAT_COSMETIC,		// Visual only - always preserve
+	ATTRIB_CAT_CLERICAL,		// System metadata - NEVER touch
+};
+
 //-----------------------------------------------------------------------------
 // Class to manage attribute introduction dates loaded from files
 //-----------------------------------------------------------------------------
@@ -42,6 +69,7 @@ private:
 	bool LoadPaintDates( const char *pszFilename );
 	bool LoadUnusualDates( const char *pszFilename );
 	bool LoadWarPaintDates( const char *pszFilename );
+	bool LoadWeaponAttributeVersions( const char *pszFilename );
 
 	// Helper: Convert date string "YYYY/MM/DD" to integer YYYYMMDD
 	int ParseDateString( const char *pszDate );
@@ -60,6 +88,8 @@ public:
 	bool 				HasAnachronisticAttributes( CEconItemView *pItem );
 
 	bool 				StripAnachronisticAttributes( CEconItemView *pItem );
+	
+	bool 				ApplyWeaponAttributesToItem( CEconItemView *pOriginalItem, int iCurrentEra );
 	
 	
 	// Item is allowed
