@@ -165,4 +165,18 @@ inline int TV2VGetWarPaintIntroductionDate( int iProtoDefIndex )
 	return TF2V_DAY_UNKNOWN;
 }
 
+inline int TV2VParseDateString( const char *pszDate )
+{
+	if ( g_pTF2VAttributeDateManager )
+		return g_pTF2VAttributeDateManager->ParseDateString( pszDate );
+	return TF2V_DAY_UNKNOWN;
+}
+
+inline int TV2VConvertDateToDaysSinceLaunch( int iYear, int iMonth, int iDay )
+{
+	if ( g_pTF2VAttributeDateManager )
+		return g_pTF2VAttributeDateManager->ConvertDateToDaysSinceLaunch( iYear, iMonth, iDay );
+	return TF2V_DAY_UNKNOWN;
+}
+
 #endif // TF2V_ATTRIBUTE_DATE_LOADER_H
