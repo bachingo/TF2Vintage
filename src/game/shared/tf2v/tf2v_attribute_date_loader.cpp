@@ -13,7 +13,7 @@
 #include "tier0/memdbgon.h"
 
 
-ConVar tf2v_alternate_war_result( "tf2v_alternate_war_result", "2", FCVAR_ARCHIVE, "Affects who receives the Gunboats for use. 0 - Soldier Only (historical), 1 - Demoman Only (alternate), 2 - Both Soldier and Demoman. Default: 2", true, 0, true, 2 );
+ConVar tf2v_alternate_war_result( "tf2v_alternate_war_result", "2", FCVAR_ARCHIVE, "Affects who receives the Gunboats for use. 0 - Soldier Only (canon), 1 - Demoman Only (alternate), 2 - Both Soldier and Demoman. Historical: 0. Default: 2", true, 0, true, 2 );
 
 // Global instance
 CTF2VAttributeDateManager *g_pTF2VAttributeDateManager = NULL;
