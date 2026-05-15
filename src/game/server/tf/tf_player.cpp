@@ -284,6 +284,7 @@ ConVar sv_vote_late_join_cooldown( "sv_vote_late_join_cooldown", "300", FCVAR_NO
 
 
 ConVar tf2v_disable_cosmetics( "tf2v_disable_cosmetics", "0", FCVAR_ARCHIVE, "Allows servers to opt out of the cosmetic system entirely. 0 - Cosmetics on, 1 - Cosmetics off. Default: 0", true, 0, true, 1 );
+ConVar tf2v_australium_statues( "tf2v_australium_statues", "1", FCVAR_ARCHIVE, "When enabled, any Australium item can also turn ragdolls into statues. Historical: 0. Default: 1", true, 0, true, 1 );
 
 extern ConVar tf_voice_command_suspension_mode;
 extern ConVar tf_feign_death_duration;
@@ -14003,7 +14004,13 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	{
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pKillerWeapon, iGoldRagdoll, set_turn_to_gold );
 	}
-
+	
+	// TF2V: Never a feature in TF2, but we allow Australiums to also check for statues if enabled.
+	if ( pKillerWeapon && !iGoldRagdoll && tf2v_australium_statues.GetBool() )
+	{
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pKillerWeapon, iGoldRagdoll, is_australium_item );
+	}
+	
 	int iRagdollsBecomeAsh = 0;
 	if ( pKillerWeapon )
 	{
@@ -17247,7 +17254,8 @@ void CTFPlayer::CreateFeignDeathRagdoll( const CTakeDamageInfo& info, bool bGib,
 			{
 				 CALL_ATTRIB_HOOK_INT_ON_OTHER( info.GetWeapon(), iGoldRagdoll, set_turn_to_gold );
 			}
-			if ( info.GetWeapon() && !iGoldRagdoll )
+			// TF2V: Never a feature in TF2, but we allow Australiums to also check for statues if enabled.
+			if ( info.GetWeapon() && !iGoldRagdoll && tf2v_australium_statues.GetBool() )
 			{
 				CALL_ATTRIB_HOOK_INT_ON_OTHER( info.GetWeapon(), iGoldRagdoll, is_australium_item );
 			}
