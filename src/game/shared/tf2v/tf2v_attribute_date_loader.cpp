@@ -102,8 +102,8 @@ void CTF2VAttributeDateManager::Shutdown()
 	{
 		delete m_WeaponAttributeVersions[i];
 	}
-	
 	m_WeaponAttributeVersions.Purge();
+	
 	m_bInitialized = false;
 }
 
@@ -452,49 +452,49 @@ bool CTF2VWeaponAttributeManager::ParseAttributeBlock( KeyValues *pKV, CUtlVecto
 int CTF2VAttributeDateManager::GetItemIntroductionDate( int iDefindex )
 {
 	if ( !m_bInitialized )
-		return 99999;
+		return TF2V_DAY_UNKNOWN;
 
 	int idx = m_ItemDates.Find( iDefindex );
 	if ( m_ItemDates.IsValidIndex( idx ) )
 		return m_ItemDates[idx];
 
-	return 99999;
+	return TF2V_DAY_UNKNOWN;
 }
 
 int CTF2VAttributeDateManager::GetPaintIntroductionDate( int iRGB )
 {
 	if ( !m_bInitialized )
-		return 99999;
+		return TF2V_DAY_UNKNOWN;
 
 	int idx = m_PaintDates.Find( iRGB );
 	if ( m_PaintDates.IsValidIndex( idx ) )
 		return m_PaintDates[idx];
 
-	return 99999; // Unknown = blocked
+	return TF2V_DAY_UNKNOWN; // Unknown = blocked
 }
 
 int CTF2VAttributeDateManager::GetUnusualEffectIntroductionDate( int iEffectIndex )
 {
 	if ( !m_bInitialized )
-		return 99999;
+		return TF2V_DAY_UNKNOWN;
 
 	int idx = m_UnusualEffectDates.Find( iEffectIndex );
 	if ( m_UnusualEffectDates.IsValidIndex( idx ) )
 		return m_UnusualEffectDates[idx];
 
-	return 99999;
+	return TF2V_DAY_UNKNOWN;
 }
 
 int CTF2VAttributeDateManager::GetWarPaintIntroductionDate( int iProtoDefIndex )
 {
 	if ( !m_bInitialized )
-		return 99999;
+		return TF2V_DAY_UNKNOWN;
 
 	int idx = m_WarPaintDates.Find( iProtoDefIndex );
 	if ( m_WarPaintDates.IsValidIndex( idx ) )
 		return m_WarPaintDates[idx];
 
-	return 99999;
+	return TF2V_DAY_UNKNOWN;
 }
 
 

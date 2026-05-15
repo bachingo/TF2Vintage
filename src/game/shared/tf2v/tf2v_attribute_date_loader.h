@@ -140,7 +140,7 @@ inline int TV2VGetItemIntroductionDate( int iDefindex )
 {
 	if ( g_pTF2VAttributeDateManager )
 		return g_pTF2VAttributeDateManager->GetItemIntroductionDate( iDefindex );
-	return 99999999;
+	return TF2V_DAY_UNKNOWN;
 }
 
 // Accessor functions (for backwards compatibility with existing code)
@@ -148,21 +148,21 @@ inline int TV2VGetPaintIntroductionDate( int iRGB )
 {
 	if ( g_pTF2VAttributeDateManager )
 		return g_pTF2VAttributeDateManager->GetPaintIntroductionDate( iRGB );
-	return 99999999;
+	return TF2V_DAY_UNKNOWN;
 }
 
 inline int TV2VGetUnusualEffectIntroductionDate( int iEffectIndex )
 {
 	if ( g_pTF2VAttributeDateManager )
 		return g_pTF2VAttributeDateManager->GetUnusualEffectIntroductionDate( iEffectIndex );
-	return 99999999;
+	return TF2V_DAY_UNKNOWN;
 }
 
 inline int TV2VGetWarPaintIntroductionDate( int iProtoDefIndex )
 {
 	if ( g_pTF2VAttributeDateManager )
 		return g_pTF2VAttributeDateManager->GetWarPaintIntroductionDate( iProtoDefIndex );
-	return 99999999;
+	return TF2V_DAY_UNKNOWN;
 }
 
 #endif // TF2V_ATTRIBUTE_DATE_LOADER_H

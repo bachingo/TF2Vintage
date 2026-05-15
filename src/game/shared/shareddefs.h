@@ -1172,6 +1172,8 @@ struct collidelist_t
 #define TF2V_DAY_LAST_WEAPON_BALANCE			 TF2V_DAY_SPRING_2018 	  // 2018/03/28 (Blue Moon - Most recent weapon balancing)
 #define TF2V_DAY_LATEST                          TF2V_DAY_SMISSMAS_2025   // 2025/12/09 (Smissmas 2025 - most recent content update)
 
+#define TF2V_DAY_UNKNOWN                         11083   // 2038/01/19 (Y2K38 date - TF2 uses 32 bit time integers)
+
 #define TF2V_ERA_DAY_MIN                         TF2V_DAY_BETA
 #define TF2V_ERA_DAY_MAX                         TF2V_DAY_LATEST
 
