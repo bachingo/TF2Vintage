@@ -11288,8 +11288,14 @@ float CTFPlayer::TeamFortress_CalculateMaxSpeed( bool bIgnoreSpecialAbility /*= 
 						const float flHealTargetMaxSpeed = ( bCharge ) ? tf_max_charge_speed.GetFloat() : pHealTarget->TeamFortress_CalculateMaxSpeed( true );
 						maxfbspeed = Max(maxfbspeed, flHealTargetMaxSpeed);
 					}
-					// Meet Your Match: All mediguns match speed, but only Quick Fix honors charges
-					else if ( TF2VIsContemporary( TF2V_DAY_MAJOR_MEET_YOUR_MATCH ) )
+					// Meet Your Match to Sept 12 2016 (Day 3284): All mediguns match speed including charges
+					if ( TF2VIsBetween( TF2V_DAY_MAJOR_MEET_YOUR_MATCH, 3284 ) )
+					{
+						const float flHealTargetMaxSpeed = ( pHealTarget->m_Shared.InCond( TF_COND_SHIELD_CHARGE ) ) ? tf_max_charge_speed.GetFloat() : pHealTarget->TeamFortress_CalculateMaxSpeed( true );
+						maxfbspeed = Max(maxfbspeed, flHealTargetMaxSpeed);
+					}
+					// Sept 12 2016 (Day 3284): All mediguns match speed, but only Quick Fix honors charges
+					else if ( TF2VIsContemporary( 3284 ) )
 					{
 						const float flHealTargetMaxSpeed = ( bCharge ) ? tf_max_charge_speed.GetFloat() : pHealTarget->TeamFortress_CalculateMaxSpeed( true );
 						maxfbspeed = Max(maxfbspeed, flHealTargetMaxSpeed);
