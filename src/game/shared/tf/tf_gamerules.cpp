@@ -800,6 +800,8 @@ ConVar tf_tournament_prematch_warmup("tf_tournament_prematch_warmup", "1", FCVAR
 
 ConVar tf_allow_pause_in_match( "tf_allow_pause_in_match", "1", FCVAR_REPLICATED );
 
+ConVar tf2v_humiliation_undisguise( "tf2v_humiliation_undisguise", "1", FCVAR_REPLICATED | FCVAR_ARCHIVE, "When enabled, spies on losing team also lose their active disguise. Historical: 0. Default: 1", true, 0, true, 1);
+
 static float g_fEternaweenAutodisableTime = 0.0f;
 
 ConVar tf_spec_xray( "tf_spec_xray", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows spectators to see player glows. 1 = same team, 2 = both teams" );
@@ -17625,7 +17627,10 @@ void CTFGameRules::InternalHandleTeamWin( int iWinningTeam )
 				if ( pPlayer->GetTeamNumber() != iWinningTeam )
 				{
 					pPlayer->RemoveInvisibility(false);
-//					pPlayer->RemoveDisguise();
+					
+					// TF2V: This doesn't happen in any version of TF2, but it's interesting to set.
+					if ( tf2v_humiliation_undisguise.GetBool() )
+						pPlayer->RemoveDisguise();
 
 					if ( pPlayer->HasTheFlag() )
 					{
