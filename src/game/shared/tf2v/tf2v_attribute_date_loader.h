@@ -70,6 +70,7 @@ private:
 	bool LoadUnusualDates( const char *pszFilename );
 	bool LoadWarPaintDates( const char *pszFilename );
 	bool LoadWeaponAttributeVersions( const char *pszFilename );
+	bool LoadCommonDefIndex( const char *pszFilename );
 
 	// Helper: Convert date string "YYYY/MM/DD" to integer YYYYMMDD
 	int ParseDateString( const char *pszDate );
@@ -91,6 +92,8 @@ public:
 	
 	bool 				ApplyWeaponAttributesToItem( CEconItemView *pOriginalItem, int iCurrentEra );
 	
+	int					GetCommonItemDef(int iDefIndex);
+	
 	
 	// Item is allowed
 	CEconItemView 		*GetTimePeriodCompliantItem( CEconItemView *pOriginalItem, int iClass, int iSlot );
@@ -101,6 +104,7 @@ private:
 	CUtlMap<int, int> m_PaintDates;			// RGB -> Era Date
 	CUtlMap<int, int> m_UnusualEffectDates;	// Effect Index -> Era Date
 	CUtlMap<int, int> m_WarPaintDates;		// Proto Def Index -> Era Date
+	CUtlMap<int, int> m_CommonDefIndex;		// Def Index Variant -> Common Denominator
 
 
 	bool m_bInitialized;

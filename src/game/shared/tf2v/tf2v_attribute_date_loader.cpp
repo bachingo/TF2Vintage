@@ -30,6 +30,7 @@ CTF2VAttributeDateManager::CTF2VAttributeDateManager()
 	m_UnusualEffectDates.SetLessFunc( DefLessFunc( int ) );
 	m_WarPaintDates.SetLessFunc( DefLessFunc( int ) );
 	m_WeaponAttributeVersions.SetLessFunc( DefLessFunc( int ) );
+	m_CommonDefIndex.SetLessFunc( DefLessFunc( int ) );
 }
 
 //-----------------------------------------------------------------------------
@@ -55,6 +56,7 @@ void CTF2VAttributeDateManager::Init()
 	bool bUnusualSuccess = LoadUnusualDates( "scripts/items/tf2v_unusual_dates.txt" );
 	bool bWarPaintSuccess = LoadWarPaintDates( "scripts/items/tf2v_warpaint_dates.txt" );
 	bool bWeaponSuccess = LoadWeaponAttributeVersions( "scripts/items/tf2v_weapon_attributes.txt" );
+	bool bCommonDefSuccess = LoadCommonDefIndex( "scripts/items/tf2v_common_defindex.txt" );
 	
 	if ( bItemSuccess )
 		Msg( "[TF2V] Loaded %d items\n", m_ItemDates.Count() );
@@ -84,6 +86,11 @@ void CTF2VAttributeDateManager::Init()
 	{
 		Warning( "[TF2V] Failed to load weapon attribute versions!\n" );
 	}
+	
+	if ( bCommonDefSuccess )
+		Msg( "[TF2V] Loaded %d common defindex mappings\n", m_CommonDefIndex.Count() );
+	else
+		Warning( "[TF2V] Failed to load common defindex mappings!\n" );
 
 
 	m_bInitialized = true;
@@ -103,6 +110,7 @@ void CTF2VAttributeDateManager::Shutdown()
 		delete m_WeaponAttributeVersions[i];
 	}
 	m_WeaponAttributeVersions.Purge();
+	m_CommonDefIndex.Purge();
 	
 	m_bInitialized = false;
 }
@@ -445,6 +453,39 @@ bool CTF2VWeaponAttributeManager::ParseAttributeBlock( KeyValues *pKV, CUtlVecto
 	return attributes.Count() > 0;
 }
 
+//-----------------------------------------------------------------------------
+// Load common defindex mappings
+// Maps variant item definitions to their base/common definition
+//-----------------------------------------------------------------------------
+bool CTF2VAttributeDateManager::LoadCommonDefIndex( const char *pszFilename )
+{
+	KeyValues *pKV = new KeyValues( "tf2v_common_defindex" );
+	if ( !pKV->LoadFromFile( filesystem, pszFilename, "MOD" ) )
+	{
+		Warning( "[TF2V] Failed to load %s\n", pszFilename );
+		pKV->deleteThis();
+		return false;
+	}
+ 
+	m_CommonDefIndex.Purge();
+ 
+	// Iterate through all key-value pairs
+	// Format: "variant_defindex" "base_defindex"
+	// Example: "200" "13"  (Festive Scattergun -> Scattergun)
+	for ( KeyValues *pSub = pKV->GetFirstValue(); pSub; pSub = pSub->GetNextValue() )
+	{
+		int iVariantDefIndex = atoi( pSub->GetName() );
+		int iBaseDefIndex = atoi( pSub->GetString() );
+ 
+		if ( iVariantDefIndex >= 0 && iBaseDefIndex >= 0 )
+		{
+			m_CommonDefIndex.Insert( iVariantDefIndex, iBaseDefIndex );
+		}
+	}
+ 
+	pKV->deleteThis();
+	return true;
+}
 
 //-----------------------------------------------------------------------------
 // Query functions - return Days since TF2V Epoch (2007/09/16)
@@ -862,10 +903,11 @@ bool CTF2VAttributeDateManager::ApplyWeaponAttributesToItem( CEconItemView *pOri
 	if ( !pOriginalItem || !pOriginalItem->IsValid() || !m_bInitialized )
 		return false;
 
+	// Get the Itemdef for this weapon, along with its base variant.
 	int iItemDef = pOriginalItem->GetItemDefIndex();
 	
 	// Check if we have versioned attributes for this item
-	int idx = m_WeaponAttributeVersions.Find( iItemDef );
+	int idx = m_WeaponAttributeVersions.Find( GetCommonItemDef(iItemDef) );
 	if ( !m_WeaponAttributeVersions.IsValidIndex( idx ) )
 	{
 		// No versioned attributes - keep default behavior
@@ -1166,4 +1208,23 @@ bool CTF2VAttributeDateManager::HasAnachronisticAttributes( CEconItemView *pItem
 	}
 
 	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Checks if we're a weird variant of an item definition (such as Botkiller)
+// And points our attribute table at the common item.
+//-----------------------------------------------------------------------------
+int CTF2VAttributeDateManager::GetCommonItemDef( int iDefIndex )
+{
+	// Look up in the map
+	int iIndex = m_CommonDefIndex.Find( iDefIndex );
+	
+	// If found, return the mapped base defindex
+	if ( iIndex != m_CommonDefIndex.InvalidIndex() )
+	{
+		return m_CommonDefIndex[iIndex];
+	}
+	
+	// If not found in map, this item has no variants - return as-is
+	return iDefIndex;
 }
