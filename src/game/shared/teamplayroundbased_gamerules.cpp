@@ -271,8 +271,6 @@ ConVar mp_pause_same_team_resume_time_disconnected( "mp_pause_same_team_resume_t
 // TODO(mcoms)
 ConVar mp_unpause_mass_disconnect_cooldown( "mp_unpause_mass_disconnect_cooldown", "86400", FCVAR_REPLICATED, "" );
 
-ConVar tf2v_unclamp_respawn_scaling( "tf2v_unclamp_respawn_scaling", "1", FCVAR_REPLICATED | FCVAR_ARCHIVE | FCVAR_NOTIFY, "Removes the cap on respawn time scaling when more than 8 players join a single team. Historical: 0. Default: 1", true, 0, true, 1 );
-
 #if defined( _DEBUG ) || defined( STAGING_ONLY )
 ConVar mp_developer( "mp_developer", "0", FCVAR_ARCHIVE | FCVAR_REPLICATED | FCVAR_NOTIFY, "1: basic conveniences (instant respawn and class change, etc).  2: add combat conveniences (infinite ammo, buddha, etc)" );
 #endif // _DEBUG || STAGING_ONLY
@@ -725,12 +723,7 @@ float CTeamplayRoundBasedRules::GetRespawnTimeScalar( int iTeam )
 
 	int iNumPlayers = GetGlobalTeam(iTeam)->GetNumPlayers();
 
-	float flScale;
-	if ( tf2v_unclamp_respawn_scaling.GetBool() )
-		flScale = RemapVal( iNumPlayers, 1, iOptimalPlayers, 0.25, 1.0 ); // Unclamped scale
-	else
-		flScale = RemapValClamped( iNumPlayers, 1, iOptimalPlayers, 0.25, 1.0 ); // Original scale
-
+	float flScale = RemapValClamped( iNumPlayers, 1, iOptimalPlayers, 0.25, 1.0 );
 	return flScale;
 }
 

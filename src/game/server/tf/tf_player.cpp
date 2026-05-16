@@ -282,10 +282,6 @@ extern ConVar sv_vote_allow_spectators;
 ConVar sv_vote_late_join_time( "sv_vote_late_join_time", "90", FCVAR_NONE, "Grace period after the match starts before players who join the match receive a vote-creation cooldown" );
 ConVar sv_vote_late_join_cooldown( "sv_vote_late_join_cooldown", "300", FCVAR_NONE, "Length of the vote-creation cooldown when joining the server after the grace period has expired" );
 
-
-ConVar tf2v_disable_cosmetics( "tf2v_disable_cosmetics", "0", FCVAR_ARCHIVE, "Allows servers to opt out of the cosmetic system entirely. 0 - Cosmetics on, 1 - Cosmetics off. Default: 0", true, 0, true, 1 );
-ConVar tf2v_australium_statues( "tf2v_australium_statues", "1", FCVAR_ARCHIVE, "When enabled, any Australium item can also turn ragdolls into statues. Historical: 0. Default: 1", true, 0, true, 1 );
-
 extern ConVar tf_voice_command_suspension_mode;
 extern ConVar tf_feign_death_duration;
 extern ConVar spec_freeze_time;
@@ -4914,7 +4910,7 @@ bool CTFPlayer::ItemIsAllowed( CEconItemView *pItem )
 	int iSlot = pItem->GetStaticData()->GetLoadoutSlot(iClass);
 	
 	// TF2V: Skip cosmetic and taunt slots on XL servers to save us entities
-	if ( IsWearableSlot(iSlot) && ( ( gpGlobals->maxClients > 32 ) || tf2v_disable_cosmetics.GetBool() ) ) 
+	if ( IsWearableSlot(iSlot) && ( gpGlobals->maxClients > 32 ) ) 
 		return false;
 
 	// Passtime hack to allow passtime gun
@@ -5400,7 +5396,7 @@ CEconItemView *CTFPlayer::GetLoadoutItem( int iClass, int iSlot, bool bReportWhi
 	}
 	
 	// TF2V: Also skip cosmetic and taunt slots on XL servers to save us entities
-	if ( IsWearableSlot(iSlot) && ( ( gpGlobals->maxClients > 32 ) || tf2v_disable_cosmetics.GetBool() ) )
+	if ( IsWearableSlot(iSlot) && ( gpGlobals->maxClients > 32 ) )
 		return nullptr;
 
 	CEconItemView *pItem = m_Inventory.GetItemInLoadout( iClass, iSlot );
@@ -14005,12 +14001,6 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pKillerWeapon, iGoldRagdoll, set_turn_to_gold );
 	}
 	
-	// TF2V: Never a feature in TF2, but we allow Australiums to also check for statues if enabled.
-	if ( pKillerWeapon && !iGoldRagdoll && tf2v_australium_statues.GetBool() )
-	{
-		CALL_ATTRIB_HOOK_INT_ON_OTHER( pKillerWeapon, iGoldRagdoll, is_australium_item );
-	}
-	
 	int iRagdollsBecomeAsh = 0;
 	if ( pKillerWeapon )
 	{
@@ -17253,11 +17243,6 @@ void CTFPlayer::CreateFeignDeathRagdoll( const CTakeDamageInfo& info, bool bGib,
 			if ( info.GetWeapon() )
 			{
 				 CALL_ATTRIB_HOOK_INT_ON_OTHER( info.GetWeapon(), iGoldRagdoll, set_turn_to_gold );
-			}
-			// TF2V: Never a feature in TF2, but we allow Australiums to also check for statues if enabled.
-			if ( info.GetWeapon() && !iGoldRagdoll && tf2v_australium_statues.GetBool() )
-			{
-				CALL_ATTRIB_HOOK_INT_ON_OTHER( info.GetWeapon(), iGoldRagdoll, is_australium_item );
 			}
 			pRagdoll->m_bGoldRagdoll = iGoldRagdoll != 0;
 

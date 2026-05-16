@@ -13,7 +13,7 @@
 #include "tier0/memdbgon.h"
 
 
-ConVar tf2v_alternate_war_result( "tf2v_alternate_war_result", "2", FCVAR_ARCHIVE, "Affects who receives the Gunboats for use. 0 - Soldier Only (canon), 1 - Demoman Only (alternate), 2 - Both Soldier and Demoman. Historical: 0. Default: 2", true, 0, true, 2 );
+ConVar tf_war_result( "tf_war_result", "0", FCVAR_NOTIFY | FCVAR_ARCHIVE | FCVAR_REPLICATED, "Distribution of the Gunboats reward. 0: Soldier, 1: Demoman, 2: Both.", true, 0, true, 2 );
 
 // Global instance
 CTF2VAttributeDateManager *g_pTF2VAttributeDateManager = NULL;
@@ -659,26 +659,26 @@ bool CTF2VAttributeDateManager::ItemIsAllowedTimePeriod( CEconItemView *pItem, i
 	// TF2V: Special condition for the Gunboats.
 	if ( pItem->GetItemDefIndex() == 133 )
 	{
-		if ( iClass == TF_CLASS_DEMOMAN && !tf2v_alternate_war_result.GetInt() )
+		if ( iClass == TF_CLASS_DEMOMAN && !tf_war_result.GetInt() )
 		{
 			// Canon timeline: Demoman did not win the war.
 			// ClientPrint( this, HUD_PRINTNOTIFY, "#Item_WARResultCanon" );
 			return false;
 		}
-		if ( iClass == TF_CLASS_SOLDIER && tf2v_alternate_war_result.GetInt() == 1 )
+		if ( iClass == TF_CLASS_SOLDIER && tf_war_result.GetInt() == 1 )
 		{
 			// Alternative timeline: Soldier did not win the war.
 			// ClientPrint( this, HUD_PRINTNOTIFY, "#Item_WARResultAlternate" );
 			return false;
 		}
-		// On tf2v_alternate_war_result == 2, both Soldier and Demoman get it.
+		// On tf_war_result == 2, both Soldier and Demoman get it.
 	}
 
 	// TF2V: Edge case for the Reserve Shooter.
 	if ( pItem->GetItemDefIndex() == 415 )
 	{
 		// Pyro didn't get the Reserve Shooter until Manniversary.
-		if ( iClass == TF_CLASS_PYRO && TF2VIsBetween( TF2V_DAY_MAJOR_UBER, TF2V_DAY_MAJOR_MANNIVERSARY ) )
+		if ( iClass == TF_CLASS_PYRO && TF2VIsAnachronistic( TF2V_DAY_MAJOR_MANNIVERSARY ) )
 			return false;
 	}
 	

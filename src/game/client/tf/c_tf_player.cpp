@@ -230,9 +230,6 @@ ConVar tf_romevision_opt_in( "tf_romevision_opt_in", "0", FCVAR_ARCHIVE, "Enable
 ConVar tf_romevision_skip_prompt( "tf_romevision_skip_prompt", "0", FCVAR_ARCHIVE, "If nonzero, skip the prompt about sharing Romevision." );
 
 
-ConVar tf2v_humiliation_undisguise;
-
-
 #define BDAY_HAT_MODEL		"models/effects/bday_hat.mdl"
 #define BOMB_HAT_MODEL		"models/props_lakeside_event/bomb_temp_hat.mdl"
 #define BOMBONOMICON_MODEL  "models/props_halloween/bombonomicon.mdl"
@@ -10147,18 +10144,6 @@ static void cc_tf_player_disguise( const CCommand &args )
 
 	if ( pPlayer == NULL )
 		return;
-	
-	// TF2V: Technically this exploit has always existed in TF2.
-	// We ConVar this to our humiliation bool so make sure Spies can't simply redisguise.
-	if ( TFGameRules() && tf2v_humiliation_undisguise.GetBool() ) 
-	{
-		// Disable this input during humiliation.
-		CTFGameRules *pRules = TFGameRules();
-		if ( pRules->State_Get() == GR_STATE_TEAM_WIN ) && ( pRules->GetWinningTeam() != GetTeamNumber() ) )
-		{
-			return;
-		}
-	}
 
 	if ( args.ArgC() >= 3 )
 	{
