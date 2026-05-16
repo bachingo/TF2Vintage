@@ -27,10 +27,10 @@
 
 "1078" "45" // Festive Force-A-Nature // tf_weapon_scattergun
 
-// "1103 // The Back Scatter // tf_weapon_scattergun
+// "1103" // The Back Scatter // tf_weapon_scattergun
 
 "15002" "13" // Night Terror // tf_weapon_scattergun
-"15015 "13" // tartan Torpedo // tf_weapon_scattergun
+"15015" "13" // Tartan Torpedo // tf_weapon_scattergun
 "15021" "13" // Country Crusher // tf_weapon_scattergun
 "15029" "13" // Backcountry Blaster // tf_weapon_scattergun
 "15036" "13" // Spruce Deuce // tf_weapon_scattergun
@@ -90,7 +90,7 @@
 
 // "44" // The Sandman // tf_weapon_bat_wood
 // "221" // The Holy Mackerel // tf_weapon_bat_fish
-// "264" // Frying Pan" // saxxy
+// "264" // Frying Pan // saxxy
 // "317" // The Candy Cane // tf_weapon_bat
 // "325" // The Boston Basher // tf_weapon_bat
 // "349" // Sun-on-a-Stick // tf_weapon_bat
@@ -311,7 +311,7 @@
 "15091" "19" // Rainbow // tf_weapon_grenadelauncher
 "15092" "19" // Sweet Dreams // tf_weapon_grenadelauncher
 "15116" "19" // Coffin Nail // tf_weapon_grenadelauncher
-"15117 "19" // Top Shelf // tf_weapon_grenadelauncher
+"15117" "19" // Top Shelf // tf_weapon_grenadelauncher
 "15142" "19" // Warhawk // tf_weapon_grenadelauncher
 "15158" "19" // Butcher Bird // tf_weapon_grenadelauncher
 
@@ -450,7 +450,7 @@
 
 "1084" "239" // Festive Gloves of Running Urgently (G.R.U.) // tf_weapon_fists
 
-"1100" // The Bread Bite // tf_weapon_fists
+// "1100" // The Bread Bite // tf_weapon_fists
 
 // "1184" // Gloves of Running Urgently MvM // tf_weapon_fists
 
@@ -651,8 +651,8 @@
 "1149" "16" // Festive SMG // tf_weapon_smg
 "15001" "16" // Woodsy Widowmaker // tf_weapon_smg
 "15022" "16" // Plaid Potshotter // tf_weapon_smg
-"15032" "16" // treadplate Tormenter // tf_weapon_smg
-"15037" "16" // team Sprayer // tf_weapon_smg
+"15032" "16" // Treadplate Tormenter // tf_weapon_smg
+"15037" "16" // Team Sprayer // tf_weapon_smg
 "15058" "16" // Low Profile // tf_weapon_smg
 "15076" "16" // Wildwood // tf_weapon_smg
 "15110" "16" // Blue Mew // tf_weapon_smg
