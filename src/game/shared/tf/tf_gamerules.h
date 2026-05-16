@@ -1418,7 +1418,12 @@ public:
 	}
 	
 	int GetTF2VEra( void ) { return m_nTF2VEra; }							// "What date is the server set to?"
-	void SetTF2VEra( int nEra = tf2v_era.GetInt() ) { m_nTF2VEra = clamp(nEra, TF2V_ERA_DAY_MIN, TF2V_ERA_DAY_MAX); } // "What date do we want to change the server to?"
+	void SetTF2VEra( int nEra = tf2v_era.GetInt() ) // "What date do we want to change the server to?"
+	{ 
+		if ( IsPVEModeActive() )
+			m_nTF2VEra =clamp( nEra, TF2V_DAY_MAJOR_MVM, TF2V_ERA_DAY_MAX ) // PVE Added in Mann Vs Machine
+		m_nTF2VEra = clamp( nEra, TF2V_ERA_DAY_MIN, TF2V_ERA_DAY_MAX ); 	// PVP available since base
+	} 
 	
 #ifdef GAME_DLL
 
