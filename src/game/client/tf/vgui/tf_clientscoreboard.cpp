@@ -946,7 +946,8 @@ void CTFClientScoreBoardDialog::InitPlayerList( SectionedListPanel *pPlayerList 
 	pPlayerList->AddColumnToSection( 0, "score", "#TF_Scoreboard_Score", SectionedListPanel::COLUMN_RIGHT, m_iScoreWidth );
 	pPlayerList->AddColumnToSection( 0, "class", "", SectionedListPanel::COLUMN_IMAGE | SectionedListPanel::COLUMN_RIGHT, m_iClassWidth );
 
-	if ( tf_scoreboard_ping_as_text.GetBool() )
+	// TF2V: Ping was numbers up to Tough Break.
+	if ( tf_scoreboard_ping_as_text.GetBool() || TF2VIsAnachronistic( TF2V_DAY_MAJOR_TOUGH_BREAK ) )
 	{
 		pPlayerList->AddColumnToSection( 0, "ping", "#TF_Scoreboard_Ping", SectionedListPanel::COLUMN_RIGHT, m_iPingWidth );
 	}
@@ -1436,7 +1437,8 @@ void CTFClientScoreBoardDialog::UpdatePlayerList()
 			// check for bots first, so malicious server operators can't fake a ping and stuff their server with bots that look like players
 			if ( g_PR->IsFakePlayer( playerIndex ) )
 			{
-				if ( tf_scoreboard_ping_as_text.GetBool() )
+				// TF2V: Ping was numbers up to Tough Break.
+				if ( tf_scoreboard_ping_as_text.GetBool() || TF2VIsAnachronistic( TF2V_DAY_MAJOR_TOUGH_BREAK ) )
 				{
 					pKeyValues->SetString( "ping", "#TF_Scoreboard_Bot" );
 				}
@@ -1452,7 +1454,8 @@ void CTFClientScoreBoardDialog::UpdatePlayerList()
 
  				if ( nPing < 1 )
  				{
-					if ( tf_scoreboard_ping_as_text.GetBool() )
+					// TF2V: Ping was numbers up to Tough Break.
+					if ( tf_scoreboard_ping_as_text.GetBool() || TF2VIsAnachronistic( TF2V_DAY_MAJOR_TOUGH_BREAK ) )
 					{
 						pKeyValues->SetString( "ping", "" );
 					}
@@ -1463,7 +1466,8 @@ void CTFClientScoreBoardDialog::UpdatePlayerList()
  				}
  				else
 				{
-					if ( tf_scoreboard_ping_as_text.GetBool() )
+					// TF2V: Ping was numbers up to Tough Break.
+					if ( tf_scoreboard_ping_as_text.GetBool() || TF2VIsAnachronistic( TF2V_DAY_MAJOR_TOUGH_BREAK ) )
 					{
 						pKeyValues->SetInt( "ping", nPing );
 					}
@@ -1471,15 +1475,15 @@ void CTFClientScoreBoardDialog::UpdatePlayerList()
 					{
 						int iIndex;
 
-						if ( nPing <= 24 )
+						if ( nPing <= 125 )
 						{
 							iIndex = PING_LOW;
 						}
-						else if ( nPing < 50 )
+						else if ( nPing < 200 )
 						{
 							iIndex = PING_MED;
 						}
-						else if ( nPing < 150 )
+						else if ( nPing < 275 )
 						{
 							iIndex = PING_HIGH;
 						}
