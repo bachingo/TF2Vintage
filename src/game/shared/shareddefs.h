@@ -1039,7 +1039,7 @@ struct collidelist_t
 #define TF2V_DAY_MAJOR_INVASION                  2942   // 2015/10/06 (Invasion)
 #define TF2V_DAY_MAJOR_TOUGH_BREAK               3014   // 2015/12/17 (Tough Break)
 #define TF2V_DAY_MAJOR_MEET_YOUR_MATCH           3217   // 2016/07/07 (Meet Your Match)
-#define TF2V_DAY_MAJOR_JUNGLE_INFERNO            3686   // 2017/10/20 (Jungle Inferno)
+#define TF2V_DAY_MAJOR_JUNGLE_INFERNO            3687   // 2017/10/20 (Jungle Inferno)
 // Last of the official patches.
 #define TF2V_DAY_MAJOR_64BIT                     6059   // 2024/04/18 (64-bit Update)
 #define TF2V_DAY_MAJOR_SDK                       6114   // 2024/06/12 (Source SDK Update)
