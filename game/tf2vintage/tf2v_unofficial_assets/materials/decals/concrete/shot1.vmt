@@ -1,7 +1,0 @@
-DecalModulate
-{
-	$basetexture	"decals/concrete/shot1"
-	$translucent	1
-	// Edit $decalscale through the respective Subrect VMT
-//	$decal		1			// Not needed for DecalModulate
-}

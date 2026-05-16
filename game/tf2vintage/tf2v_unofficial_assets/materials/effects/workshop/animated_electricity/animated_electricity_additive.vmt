@@ -1,9 +1,0 @@
-"Spritecard"
-{
-//	$baseTexture "effects/animated_electricity/animated_electricity"		// Old directory
-	$baseTexture "effects/workshop/animated_electricity/animated_electricity"
-	$translucent 1
-	$additive 1
-//	$addself 0
-	$depthblend 0
-}

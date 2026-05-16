@@ -1,1 +1,0 @@
-Ramp texture VTFs should generally have their Clamp S flag checked. Otherwise, the left & right ends of the texture will bleed into each other a bit, possibly making the final appearance not how you intend it.
