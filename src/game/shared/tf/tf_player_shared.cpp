@@ -9054,13 +9054,27 @@ void CTFPlayerShared::RecalculateChargeEffects( bool bInstantRemove )
 	{
 		aCharges[MEDIGUN_CHARGE_INVULN].bActive = false;
 	}
-
+	
+	// TF2V: We already era gate the Mediguns, but this logic is needed for commands that might call this function.
+	
+	// Standard Medigun Ubercharge: Included in base.
 	SetChargeEffect( MEDIGUN_CHARGE_INVULN,			aCharges[MEDIGUN_CHARGE_INVULN].bActive,		bInstantRemove, g_MedigunEffects[ MEDIGUN_CHARGE_INVULN ],			tf_invuln_time.GetFloat(),	aCharges[MEDIGUN_CHARGE_INVULN].pProvider );
-	SetChargeEffect( MEDIGUN_CHARGE_CRITICALBOOST,	aCharges[MEDIGUN_CHARGE_CRITICALBOOST].bActive, bInstantRemove, g_MedigunEffects[ MEDIGUN_CHARGE_CRITICALBOOST ],	0.0f,						aCharges[MEDIGUN_CHARGE_CRITICALBOOST].pProvider );
-	SetChargeEffect( MEDIGUN_CHARGE_MEGAHEAL,		aCharges[MEDIGUN_CHARGE_MEGAHEAL].bActive,		bInstantRemove, g_MedigunEffects[ MEDIGUN_CHARGE_MEGAHEAL ],		0.0f,						aCharges[MEDIGUN_CHARGE_MEGAHEAL].pProvider );
-	SetChargeEffect( MEDIGUN_CHARGE_BULLET_RESIST,	aCharges[MEDIGUN_CHARGE_BULLET_RESIST].bActive,	bInstantRemove, g_MedigunEffects[ MEDIGUN_CHARGE_BULLET_RESIST ],	0.0f,						aCharges[MEDIGUN_CHARGE_BULLET_RESIST].pProvider );
-	SetChargeEffect( MEDIGUN_CHARGE_BLAST_RESIST,	aCharges[MEDIGUN_CHARGE_BLAST_RESIST].bActive,	bInstantRemove, g_MedigunEffects[ MEDIGUN_CHARGE_BLAST_RESIST ],	0.0f,						aCharges[MEDIGUN_CHARGE_BLAST_RESIST].pProvider );
-	SetChargeEffect( MEDIGUN_CHARGE_FIRE_RESIST,	aCharges[MEDIGUN_CHARGE_FIRE_RESIST].bActive,	bInstantRemove, g_MedigunEffects[ MEDIGUN_CHARGE_FIRE_RESIST ],		0.0f,						aCharges[MEDIGUN_CHARGE_FIRE_RESIST].pProvider );
+	
+	// Kritzkrieg Boost Ubercharge: Included in Gold Rush.
+	if ( TF2VIsContemporary( TF2V_DAY_MAJOR_GOLDRUSH ) )
+		SetChargeEffect( MEDIGUN_CHARGE_CRITICALBOOST,	aCharges[MEDIGUN_CHARGE_CRITICALBOOST].bActive, bInstantRemove, g_MedigunEffects[ MEDIGUN_CHARGE_CRITICALBOOST ],	0.0f,						aCharges[MEDIGUN_CHARGE_CRITICALBOOST].pProvider );
+	
+	// Quick-Fix Megaheal Ubercharge: Included in Uber Update.
+	if ( TF2VIsContemporary( TF2V_DAY_MAJOR_UBER ) )
+		SetChargeEffect( MEDIGUN_CHARGE_MEGAHEAL,		aCharges[MEDIGUN_CHARGE_MEGAHEAL].bActive,		bInstantRemove, g_MedigunEffects[ MEDIGUN_CHARGE_MEGAHEAL ],		0.0f,						aCharges[MEDIGUN_CHARGE_MEGAHEAL].pProvider );
+	
+	// Vaccinator Resists Ubercharge: Included in Mecha Update.
+	if ( TF2VIsContemporary( TF2V_DAY_MAJOR_MECHA ) )
+	{
+		SetChargeEffect( MEDIGUN_CHARGE_BULLET_RESIST,	aCharges[MEDIGUN_CHARGE_BULLET_RESIST].bActive,	bInstantRemove, g_MedigunEffects[ MEDIGUN_CHARGE_BULLET_RESIST ],	0.0f,						aCharges[MEDIGUN_CHARGE_BULLET_RESIST].pProvider );
+		SetChargeEffect( MEDIGUN_CHARGE_BLAST_RESIST,	aCharges[MEDIGUN_CHARGE_BLAST_RESIST].bActive,	bInstantRemove, g_MedigunEffects[ MEDIGUN_CHARGE_BLAST_RESIST ],	0.0f,						aCharges[MEDIGUN_CHARGE_BLAST_RESIST].pProvider );
+		SetChargeEffect( MEDIGUN_CHARGE_FIRE_RESIST,	aCharges[MEDIGUN_CHARGE_FIRE_RESIST].bActive,	bInstantRemove, g_MedigunEffects[ MEDIGUN_CHARGE_FIRE_RESIST ],		0.0f,						aCharges[MEDIGUN_CHARGE_FIRE_RESIST].pProvider );
+	}
 }
 
 //-----------------------------------------------------------------------------
