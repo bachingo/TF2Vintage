@@ -7063,7 +7063,7 @@ bool CTFGameRules::ApplyOnDamageModifyRules( CTakeDamageInfo &info, CBaseEntity 
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFAttacker->GetActiveWeapon(), iConsumeFlames, attack_minicrits_and_consumes_burning );
 			if ( iConsumeFlames && pWeapon == pTFAttacker->GetActiveWeapon() && ( info.GetDamageType() & DMG_MELEE ) )
 			{
-				float flBurnDmg = TF2VIsAnachronistic( TF2V_DAY_MAJOR_JUNGLE_INFERNO ) ? TF_BURNING_DMG_OLD : TF_BURNING_DMG_NEW;
+				float flBurnDmg = TF2VIsContemporary( TF2V_DAY_MAJOR_JUNGLE_INFERNO ) ? TF_BURNING_DMG_NEW: TF_BURNING_DMG_OLD ;
 				float flConsumeBonus = RemapValClamped( pVictim->m_Shared.GetAfterburnDuration(), 0.5f, (float)TF_BURNING_FLAME_LIFE, 20.f, (float)( flBurnDmg * 20 ) );
 				flDamage += flConsumeBonus;
 				pVictim->m_Shared.RemoveCond( TF_COND_BURNING );
