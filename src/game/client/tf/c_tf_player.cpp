@@ -12031,68 +12031,31 @@ void C_TFPlayer::GetGlowEffectColor( float *r, float *g, float *b, float *a )
 
 	int nTeam = GetTeamNumber();
 
-	C_TFPlayer* pLocalPlayer = GetLocalTFPlayer();
-
-	bool bShowHealthGlow = false;
-	bool bMedic = pLocalPlayer && pLocalPlayer->IsPlayerClass( TF_CLASS_MEDIC );
-	if ( TFGameRules() && ( TFGameRules()->GetGameType() == TF_GAMETYPE_CTF ) && HasTheFlag() )
+	C_TFPlayer *pLocalPlayer = GetLocalTFPlayer();
+	// In CTF, show health color glow for alive player
+	// TF2V: Health Glow implemented Meet Your Match
+	if ( TF2VIsContemporary( TF2V_DAY_MAJOR_MEET_YOUR_MATCH ) && ( pLocalPlayer && pLocalPlayer->IsAlive() && TFGameRules() && ( TFGameRules()->GetGameType() == TF_GAMETYPE_CTF ) && HasTheFlag() ) )
 	{
-		// In CTF, show health for allied flag carrier
-		bShowHealthGlow = ( GetLocalPlayerTeam() >= FIRST_GAME_TEAM ) ? nTeam == GetLocalPlayerTeam() : true;
-	}
-	else if ( m_pSaveMeEffect && bMedic )
-	{
-		// injured players get glow effect
-		bShowHealthGlow = true;
-	}
-	else if ( pLocalPlayer && ToTFPlayer( pLocalPlayer->MedicGetHealTarget() ) == this )
-	{
-		// if you're healing, always show.
-		bShowHealthGlow = true;
-	}
+		float flHealth = (float)GetHealth() / (float)GetMaxHealth();
 
-	if ( bShowHealthGlow )
-	{
-		const float flHealth = (float)GetHealth() / (float)GetMaxHealth();
-
-		Color healthOverheal(191, 231, 182);
-		Color healthGood(84, 191, 58);
-		Color healthOkay(191, 184, 58);
-		Color healthBad(191, 58, 58);
-
-		const float flAutoCallersThreshold = Clamp( static_cast<float>( hud_medicautocallersthreshold.GetInt() ) / 100.0f, 0.31f, 0.74f );
-
-		const float flGoodThreshold = bMedic ? 1.0f : 0.75f;
-		const float flOkayThreshold = bMedic ? flAutoCallersThreshold : 0.6f;
-		const float flBadThreshold = 0.3f;
-
-		Color glowColor;
-		if ( flHealth > 1.0f )
+		if ( flHealth > 0.6 )
 		{
-			const float t = RemapValClamped(flHealth, 0.9f, 1.5f, 0.0f, 1.0f);
-			glowColor = LerpColor(healthGood, healthOverheal, t);
+			*r = 0.33f;
+			*g = 0.75f;
+			*b = 0.23f;
 		}
-		else if ( flHealth >= flGoodThreshold )
+		else if( flHealth > 0.3 )
 		{
-			glowColor = healthGood;
-		}
-		else if ( flHealth > flOkayThreshold )
-		{
-			const float t = RemapValClamped(flHealth, flOkayThreshold, flGoodThreshold, 0.0f, 1.0f);
-			glowColor = LerpColor(healthOkay, healthGood, t);
-		}
-		else if( flHealth > flBadThreshold )
-		{
-			const float t = RemapValClamped(flHealth, flBadThreshold, flOkayThreshold, 0.0f, 1.0f);
-			glowColor = LerpColor(healthBad, healthOkay, t);
+			*r = 0.75f;
+			*g = 0.72f;
+			*b = 0.23f;
 		}
 		else
 		{
-			glowColor = healthBad;
+			*r = 0.75f;
+			*g = 0.23f;
+			*b = 0.23f;
 		}
-		*r = glowColor.r() / 255.0f;
-		*g = glowColor.g() / 255.0f;
-		*b = glowColor.b() / 255.0f;
 		return;
 	}
 
