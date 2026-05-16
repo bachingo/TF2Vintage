@@ -11933,15 +11933,6 @@ void C_TFPlayer::UpdateGlowEffect( void )
 
 	BaseClass::UpdateGlowEffect();
 
-	if ( ( GetGlowSources() & CLIENTSIDE_GLOW_HEALER ) || ( GetGlowSources() & CLIENTSIDE_GLOW_SAVEME ) )
-	{
-		SetGlowRenderFlags( true, true );
-	}
-	else
-	{
-		SetGlowRenderFlags( true, false );
-	}
-
 	// create a new effect if we have a coach
 	if ( m_hCoach && m_hCoach->IsLocalPlayer() && m_hCoach->m_bIsCoaching )
 	{
