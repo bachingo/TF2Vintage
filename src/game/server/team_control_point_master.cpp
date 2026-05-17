@@ -8,13 +8,10 @@
 #include "cbase.h"
 #include "team_objectiveresource.h"
 #include "team_control_point_master.h"
-#include "teamplay_round_timer.h"
 #include "teamplayroundbased_gamerules.h"
 
 #if defined ( TF_DLL )
 #include "tf_gamerules.h"
-#include "filesystem.h"
-#include "tf_team.h"
 #endif
 
 BEGIN_DATADESC( CTeamControlPointMaster )
@@ -58,8 +55,7 @@ END_DATADESC()
 
 LINK_ENTITY_TO_CLASS( team_control_point_master, CTeamControlPointMaster );
 
-// TODO(mcoms): what is this?
-//ConVar mp_time_between_capscoring( "mp_time_between_capscoring", "30", FCVAR_GAMEDLL, "Delay between scoring of owned capture points.", true, 1, false, 0 );
+ConVar mp_time_between_capscoring( "mp_time_between_capscoring", "30", FCVAR_GAMEDLL, "Delay between scoring of owned capture points.", true, 1, false, 0 );
 
 // sort function for the list of control_point_rounds (we're sorting them by priority...highest first)
 int ControlPointRoundSort( CTeamControlPointRound* const *p1, CTeamControlPointRound* const *p2 )
@@ -97,8 +93,6 @@ void CTeamControlPointMaster::Spawn( void )
 	m_iCurrentRoundIndex = -1;
   	m_bFirstRoundAfterRestart = true;
 	m_flLastOwnershipChangeTime = -1;
-	m_hBaseDefenseTimer = NULL;
-	memset( m_bInBaseDefense, 0, sizeof( m_bInBaseDefense ) );
 
 	BaseClass::Spawn();
 
@@ -169,7 +163,6 @@ void CTeamControlPointMaster::Activate( void )
 	FindControlPointRounds();
 
 	SetBaseControlPoints();
-
 }
 
 //-----------------------------------------------------------------------------
@@ -344,7 +337,6 @@ bool CTeamControlPointMaster::FindControlPointRounds( void )
 		g_pObjectiveResource->SetPlayingMiniRounds( bFoundRounds );
 		g_pObjectiveResource->SetCapLayoutInHUD( STRING(m_iszCapLayoutInHUD) );
 		g_pObjectiveResource->SetCapLayoutCustomPosition( m_flCustomPositionX, m_flCustomPositionY );
-		g_pObjectiveResource->SetScorePerCap( m_bScorePerCapture );
 	}
 
 	return bFoundRounds;
@@ -635,9 +627,6 @@ void CTeamControlPointMaster::CPMThink( void )
 	// If we call this from team_control_point, this function should never 
 	// trigger a win. but we'll leave it here just in case.
 	CheckWinConditions();
-
-	// the next time we 'think'
-	UpdateBaseDefenseTimer();
 
 	// the next time we 'think'
 	SetContextThink( &CTeamControlPointMaster::CPMThink, gpGlobals->curtime + 0.2, CPM_THINK );
@@ -1059,11 +1048,6 @@ int CTeamControlPointMaster::TeamOwnsAllPoints( CTeamControlPoint *pOverridePoin
 //-----------------------------------------------------------------------------
 bool CTeamControlPointMaster::WouldNewCPOwnerWinGame( CTeamControlPoint *pPoint, int iNewOwner )
 {
-	if ( m_iInvalidCapWinner == 1 || m_iInvalidCapWinner == iNewOwner )
-	{
-		return false;
-	}
-
 	return ( TeamOwnsAllPoints( pPoint, iNewOwner ) == iNewOwner );
 }
 
@@ -1284,93 +1268,6 @@ int CTeamControlPointMaster::CalcNumRoundsRemaining( int iTeam )
 float CTeamControlPointMaster::GetPartialCapturePointRate( void )
 {
 	return m_flPartialCapturePointsRate;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Called to update our timers for the base defense mechanic
-//-----------------------------------------------------------------------------
-void CTeamControlPointMaster::UpdateBaseDefenseTimer( void )
-{
-#if defined( TF_DLL )
-
-	int iTeamInDefense = TEAM_UNASSIGNED;
-
-	for ( int iTeam = FIRST_GAME_TEAM; iTeam < GetNumberOfTeams(); iTeam++ )
-	{
-		int iNumPointsOwned = GetNumPointsOwnedByTeam( iTeam );
-		if ( iNumPointsOwned == 1 )
-		{
-			// Find the point they own
-			for ( unsigned int i = 0; i < m_ControlPoints.Count(); i++ )
-			{
-				if ( m_ControlPoints[i]->GetOwner() == iTeam && IsBaseControlPoint( m_ControlPoints[i]->GetPointIndex() ) )
-				{
-					iTeamInDefense = iTeam;
-					break;
-				}
-			}
-		}
-	}
-
-	// if no team is pushed back or multiple somehow, kill timer
-	if ( iTeamInDefense == TEAM_UNASSIGNED )
-	{
-		if ( m_hBaseDefenseTimer )
-		{
-			m_hBaseDefenseTimer->AcceptInput( "Kill", NULL, NULL, variant_t(), 0 );
-			m_hBaseDefenseTimer = NULL;
-		}
-		for ( int i = 0; i < MAX_TEAMS; i++ )
-			m_bInBaseDefense[i] = false;
-		return;
-	}
-
-	if ( !m_bInBaseDefense[iTeamInDefense] )
-	{
-		// They just got pushed back, spawn the timer
-		if ( !m_hBaseDefenseTimer )
-		{
-			m_hBaseDefenseTimer = ( CTeamRoundTimer* )CBaseEntity::Create( "team_round_timer", vec3_origin, vec3_angle );
-			if ( m_hBaseDefenseTimer )
-			{
-				m_hBaseDefenseTimer->SetName( MAKE_STRING( "zz_base_defense_timer" ) );
-				m_hBaseDefenseTimer->SetShowInHud( true );
-
-				variant_t sVariant;
-				sVariant.SetInt( 360 ); // 6 minutes
-				m_hBaseDefenseTimer->AcceptInput( "SetTime", NULL, NULL, sVariant, 0 );
-				m_hBaseDefenseTimer->AcceptInput( "Resume", NULL, NULL, variant_t(), 0 );
-
-				if ( ObjectiveResource() )
-				{
-					ObjectiveResource()->SetTimerInHUD( m_hBaseDefenseTimer );
-				}
-			}
-		}
-
-		m_bInBaseDefense[iTeamInDefense] = true;
-	}
-
-	// Wait for the timer to expire
-	if ( m_hBaseDefenseTimer && m_hBaseDefenseTimer->GetTimeRemaining() <= 0.0f )
-	{
-		// They survived! Time to award them the two middle points
-		m_hBaseDefenseTimer->AcceptInput( "Kill", NULL, NULL, variant_t(), 0 );
-		m_hBaseDefenseTimer = NULL;
-		m_bInBaseDefense[iTeamInDefense] = false;
-
-		// Find the two middle points belonging to the enemy team and set their owner to the defending team
-		int iEnemyTeam = ( iTeamInDefense == TF_TEAM_RED ) ? TF_TEAM_BLUE : TF_TEAM_RED;
-
-		for ( unsigned int i = 0; i < m_ControlPoints.Count(); i++ )
-		{
-			if ( !IsBaseControlPoint( m_ControlPoints[i]->GetPointIndex() ) && m_ControlPoints[i]->GetOwner() == iEnemyTeam && m_ControlPoints[i]->GetDefaultOwner() == iTeamInDefense )
-			{
-				m_ControlPoints[i]->ForceOwner( iTeamInDefense );
-			}
-		}
-	}
-#endif
 }
 
 //-----------------------------------------------------------------------------
