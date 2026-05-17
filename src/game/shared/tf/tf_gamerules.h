@@ -1424,8 +1424,11 @@ public:
 			m_nTF2VEra =clamp( nEra, TF2V_DAY_MAJOR_MVM, TF2V_ERA_DAY_MAX ) // PVE Added in Mann Vs Machine
 		m_nTF2VEra = clamp( nEra, TF2V_ERA_DAY_MIN, TF2V_ERA_DAY_MAX ); 	// PVP available since base
 		if ( m_nTF2VEra != nEra )
+		{
 			tf2v_era.SetValue( m_nTF2VEra ); // Set tf2v_era to our new clamped value
-	} 
+			m_bMapCycleNeedsUpdate = true; // Also tell the game our mapcycle is stale and needs to be refreshed
+		}
+	}
 	
 #ifdef GAME_DLL
 

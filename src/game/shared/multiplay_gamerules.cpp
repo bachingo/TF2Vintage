@@ -137,6 +137,7 @@ ConVar mp_waitingforplayers_cancel( "mp_waitingforplayers_cancel", "0", FCVAR_GA
 ConVar mp_clan_readyrestart( "mp_clan_readyrestart", "0", FCVAR_GAMEDLL, "If non-zero, game will restart once someone from each team gives the ready signal" );
 ConVar mp_clan_ready_signal( "mp_clan_ready_signal", "ready", FCVAR_GAMEDLL, "Text that team leader from each team must speak for the match to begin" );
 
+
 ConVar nextlevel( "nextlevel", 
 				  "", 
 				  FCVAR_GAMEDLL | FCVAR_NOTIFY,
@@ -1263,73 +1264,186 @@ ConVarRef suitcharger( "sk_suitcharger" );
 		Q_strncpy( pszNextMap, m_MapList[m_nMapCycleindex], bufsize);
 	}
 
-	void CMultiplayRules::DetermineMapCycleFilename( char *pszResult, int nSizeResult, bool bForceSpew )
+void CTFGameRules::DetermineMapCycleFilename( char *pszResult, int nSizeResult, bool bForceSpew )
+{
+	static char szLastResult[ MAX_PATH ];
+ 
+	// ====================================================================
+	// INSERT PRESET SYSTEM HERE - PART 1: Check if preset mode is enabled
+	// ====================================================================
+	if ( tf2v_force_era_mapcycle.GetBool() && TFGameRules() )
 	{
-		static char szLastResult[ MAX_PATH ];
-
-		const char *pszVar = mapcyclefile.GetString();
-		if ( *pszVar == '\0' )
+		// Get current era day number
+		int nCurrentEraDay = TFGameRules()->GetTF2VEra();
+		
+		// Get game mode suffix (pvp or pve)
+		const char *pszModeSuffix = TFGameRules()->IsMannVsMachineMode() ? "pve" : "pvp" ;
+		
+		// Get the base path for mapcycle files
+		const char *pszBasePath = "scripts/maps";
+		
+		// Debug output
+		if ( bForceSpew )
 		{
-			if ( bForceSpew || V_stricmp( szLastResult, "__novar") )
-			{
-				Msg( "mapcyclefile convar not set.\n" );
-				V_strcpy_safe( szLastResult, "__novar" );
-			}
-			*pszResult = '\0';
-			return;
+			Msg( "[MapCycle] Current Era Day: %d, Mode: %s\n", nCurrentEraDay, pszModeSuffix );
 		}
-
-		// Check cfg/foo first.  Resolve dot-slashes only on the concatonated path, since "../foo" is valid if it
-		// matches "cfg/../foo".
-		//
-		// XXX Everything is awful bonus, V_RemoveDotSlashes("a/../b") returns false and the invalid "/b" parse, and the
-		//     comment there says "for backwards compat".  So we do "/cfg/%s" and then trim the first character on
-		//     success because why not.
-		char szRecommendedNameWithSlash[ MAX_PATH ] = { 0 };
-		V_sprintf_safe( szRecommendedNameWithSlash, "/cfg/%s", pszVar );
-		char *pszRecommendedName = szRecommendedNameWithSlash + 1;
-		if ( !V_RemoveDotSlashes( szRecommendedNameWithSlash ) ||
-		     szRecommendedNameWithSlash[0] != CORRECT_PATH_SEPARATOR || !*pszRecommendedName )
+		
+		// Era milestone array - all major TF2 updates in descending order
+		static const int s_nEraMilestones[] = {
+			6658, 6598, 6521, 6296, 6233, 6114, 6071, 6059, 5926, 5867,
+			5778, 5560, 5498, 5337, 5205, 5133, 4981, 4840, 4764, 4617,
+			4474, 4406, 4260, 4112, 4051, 3845, 3749, 3687, 3528, 3384,
+			3323, 3217, 3159, 3014, 2964, 2730, 2654, 2600, 2395, 2336,
+			2287, 2235, 2124, 2047, 1922, 1867, 1832, 1817, 1794, 1758,
+			1719, 1705, 1649, 1591, 1551, 1502, 1403, 1383, 1367, 1297,
+			1271, 1234, 1187, 1144, 1137, 1116, 1074, 1037, 977, 942,
+			914, 884, 856, 774, 730, 625, 531, 409, 388, 271, 162, 146, 139, 0
+		};
+		
+		// Find the best matching era
+		char szBestMapcycle[MAX_PATH] = "";
+		int nSelectedEra = -1;
+		
+		// Try each era milestone (highest to lowest) that's <= current era
+		for ( int i = 0; i < ARRAYSIZE(s_nEraMilestones); i++ )
 		{
-			if ( bForceSpew || V_stricmp( szLastResult, "__novar") )
+			if ( s_nEraMilestones[i] <= nCurrentEraDay )
 			{
-				Msg( "mapcyclefile convar is not a valid path.\n" );
-				V_strcpy_safe( szLastResult, "__novar" );
+				// Construct the potential mapcycle filename
+				char szTestMapcycle[MAX_PATH];
+				V_snprintf( szTestMapcycle, sizeof(szTestMapcycle), 
+						   "%s/mapcycle_era_%d_%s.txt", 
+						   pszBasePath, s_nEraMilestones[i], pszModeSuffix );
+				
+				if ( nDebugLevel >= 2 )
+				{
+					Msg( "[MapCycle] Testing: %s... ", szTestMapcycle );
+				}
+				
+				// Check if this file exists
+				if ( filesystem->FileExists( szTestMapcycle, "MOD" ) )
+				{
+					V_strncpy( szBestMapcycle, szTestMapcycle, sizeof(szBestMapcycle) );
+					nSelectedEra = s_nEraMilestones[i];
+					
+					if ( nDebugLevel >= 2 )
+					{
+						Msg( "FOUND!\n" );
+					}
+					break;
+				}
+				else if ( nDebugLevel >= 2 )
+				{
+					Msg( "not found\n" );
+				}
 			}
-			*pszResult = '\0';
-			return;
 		}
-
-		// First, look for a mapcycle file in the cfg directory, which is preferred
-		V_strncpy( pszResult, pszRecommendedName, nSizeResult );
-		if ( filesystem->FileExists( pszResult, "MOD" ) )
+		
+		// Use the best match we found
+		if ( szBestMapcycle[0] != '\0' )
 		{
-			if ( bForceSpew || V_stricmp( szLastResult, pszResult) )
+			// Success! Use the preset mapcycle file
+			V_strncpy( pszResult, szBestMapcycle, nSizeResult );
+			
+			if ( bForceSpew || nDebugLevel >= 1 )
 			{
-				Msg( "Using map cycle file '%s'.\n", pszResult );
-				V_strcpy_safe( szLastResult, pszResult );
+				Msg( "[MapCycle Preset] Using '%s'\n", pszResult );
+				Msg( "                  (Current Era: %d, Selected Era: %d, Mode: %s)\n", 
+					 nCurrentEraDay, nSelectedEra, pszModeSuffix );
 			}
-			return;
+			
+			// Update the last result cache
+			V_strcpy_safe( szLastResult, pszResult );
+			return;  // EXIT HERE - We found a preset file
 		}
-
-		// Nope?  Try the root.  Resolve dot-slashes in the path in isolation since "../foo" is now not allowed from
-		// there.  Same note as above about V_RemoveDotSlashes being actually broken.
-		char szCleanPathWithSlash[ MAX_PATH ] = { 0 };
-		V_sprintf_safe( szCleanPathWithSlash, "/%s", pszVar );
-		char *pszCleanPath = szCleanPathWithSlash + 1;
-		if ( !V_RemoveDotSlashes( szCleanPathWithSlash ) || szCleanPathWithSlash[0] != CORRECT_PATH_SEPARATOR || !pszCleanPath )
+		else
 		{
-			if ( bForceSpew || V_stricmp( szLastResult, "__novar") )
-			{
-				Msg( "mapcyclefile convar is not a valid path.\n" );
-				V_strcpy_safe( szLastResult, "__novar" );
-			}
-			*pszResult = '\0';
-			return;
+			// No suitable preset file found - fall through to default behavior
+			Warning( "[MapCycle Preset] No suitable mapcycle file found for era %d (mode: %s)\n", 
+					 nCurrentEraDay, pszModeSuffix );
+			Warning( "[MapCycle Preset] Falling back to mapcyclefile convar.\n" );
+			// FALL THROUGH - continue with normal mapcyclefile convar logic below
 		}
-
-
-		V_strncpy( pszResult, pszCleanPath, nSizeResult );
+	}
+ 
+	// Original function continues here unchanged...
+	const char *pszVar = mapcyclefile.GetString();
+	if ( *pszVar == '\0' )
+	{
+		if ( bForceSpew || V_stricmp( szLastResult, "__novar") )
+		{
+			Msg( "mapcyclefile convar not set.\n" );
+			V_strcpy_safe( szLastResult, "__novar" );
+		}
+		*pszResult = '\0';
+		return;
+	}
+ 
+	// Check cfg/foo first.  Resolve dot-slashes only on the concatonated path, since "../foo" is valid if it
+	// matches "cfg/../foo".
+	//
+	// XXX Everything is awful bonus, V_RemoveDotSlashes("a/../b") returns false and the invalid "/b" parse, and the
+	//     comment there says "for backwards compat".  So we do "/cfg/%s" and then trim the first character on
+	//     success because why not.
+	char szRecommendedNameWithSlash[ MAX_PATH ] = { 0 };
+	V_sprintf_safe( szRecommendedNameWithSlash, "/cfg/%s", pszVar );
+	char *pszRecommendedName = szRecommendedNameWithSlash + 1;
+	if ( !V_RemoveDotSlashes( szRecommendedNameWithSlash ) ||
+		 szRecommendedNameWithSlash[0] != CORRECT_PATH_SEPARATOR || !*pszRecommendedName )
+	{
+		if ( bForceSpew || V_stricmp( szLastResult, "__novar") )
+		{
+			Msg( "mapcyclefile convar is not a valid path.\n" );
+			V_strcpy_safe( szLastResult, "__novar" );
+		}
+		*pszResult = '\0';
+		return;
+	}
+ 
+	// First, look for a mapcycle file in the cfg directory, which is preferred
+	V_strncpy( pszResult, pszRecommendedName, nSizeResult );
+	if ( filesystem->FileExists( pszResult, "MOD" ) )
+	{
+		if ( bForceSpew || V_stricmp( szLastResult, pszResult) )
+		{
+			Msg( "Using map cycle file '%s'.\n", pszResult );
+			V_strcpy_safe( szLastResult, pszResult );
+		}
+		return;
+	}
+ 
+	// Nope?  Try the root.  Resolve dot-slashes in the path in isolation since "../foo" is now not allowed from
+	// there.  Same note as above about V_RemoveDotSlashes being actually broken.
+	char szCleanPathWithSlash[ MAX_PATH ] = { 0 };
+	V_sprintf_safe( szCleanPathWithSlash, "/%s", pszVar );
+	char *pszCleanPath = szCleanPathWithSlash + 1;
+	if ( !V_RemoveDotSlashes( szCleanPathWithSlash ) || szCleanPathWithSlash[0] != CORRECT_PATH_SEPARATOR || !pszCleanPath )
+	{
+		if ( bForceSpew || V_stricmp( szLastResult, "__novar") )
+		{
+			Msg( "mapcyclefile convar is not a valid path.\n" );
+			V_strcpy_safe( szLastResult, "__novar" );
+		}
+		*pszResult = '\0';
+		return;
+	}
+ 
+ 
+	V_strncpy( pszResult, pszCleanPath, nSizeResult );
+	if ( filesystem->FileExists( pszResult, "MOD" ) )
+	{
+		if ( bForceSpew || V_stricmp( szLastResult, pszResult) )
+		{
+			Msg( "Using map cycle file '%s'.  ('%s' was not found.)\n", pszResult, pszRecommendedName );
+			V_strcpy_safe( szLastResult, pszResult );
+		}
+		return;
+	}
+ 
+	// Nope?  Use the default.
+	if ( !V_stricmp( pszCleanPath, "mapcycle.txt" ) )
+	{
+		V_strncpy( pszResult, "cfg/mapcycle_default.txt", nSizeResult );
 		if ( filesystem->FileExists( pszResult, "MOD" ) )
 		{
 			if ( bForceSpew || V_stricmp( szLastResult, pszResult) )
@@ -1339,30 +1453,16 @@ ConVarRef suitcharger( "sk_suitcharger" );
 			}
 			return;
 		}
-
-		// Nope?  Use the default.
-		if ( !V_stricmp( pszCleanPath, "mapcycle.txt" ) )
-		{
-			V_strncpy( pszResult, "cfg/mapcycle_default.txt", nSizeResult );
-			if ( filesystem->FileExists( pszResult, "MOD" ) )
-			{
-				if ( bForceSpew || V_stricmp( szLastResult, pszResult) )
-				{
-					Msg( "Using map cycle file '%s'.  ('%s' was not found.)\n", pszResult, pszRecommendedName );
-					V_strcpy_safe( szLastResult, pszResult );
-				}
-				return;
-			}
-		}
-
-		// Failed
-		*pszResult = '\0';
-		if ( bForceSpew || V_stricmp( szLastResult, "__notfound") )
-		{
-			Msg( "Map cycle file '%s' was not found.\n", pszRecommendedName );
-			V_strcpy_safe( szLastResult, "__notfound" );
-		}
 	}
+ 
+	// Failed
+	*pszResult = '\0';
+	if ( bForceSpew || V_stricmp( szLastResult, "__notfound") )
+	{
+		Msg( "Map cycle file '%s' was not found.\n", pszRecommendedName );
+		V_strcpy_safe( szLastResult, "__notfound" );
+	}
+}
 
 	void CMultiplayRules::LoadMapCycleFileIntoVector( const char *pszMapCycleFile, CUtlVector<char *> &mapList )
 	{
