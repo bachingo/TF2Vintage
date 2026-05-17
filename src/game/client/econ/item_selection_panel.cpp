@@ -906,11 +906,11 @@ CEquippableItemsForSlotGenerator::CEquippableItemsForSlotGenerator( int iClass, 
 		if ( TFGameRules() )
 		{
 			// If the item is too new, flag it with an outright region conflict.
-			if ( !TV2VItemIsAllowedTimePeriod( pItem, iClass, iSlot ) )
+			if ( !TF2VItemIsAllowedTimePeriod( pItem, iClass, iSlot ) )
 			{
 				eDisplayType = kSlotDisplay_Disabled_EquipRegionConflict;
 			}
-			// else if ( !TV2VItemAttributesAllowedTimePeriod(pItem) )
+			// else if ( !TF2VItemAttributesAllowedTimePeriod(pItem) )
 				// To do: Make a flag for when a base item is correct, but our version will be downgraded when spawning.
 				
 		}

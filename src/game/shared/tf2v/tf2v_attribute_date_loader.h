@@ -72,12 +72,13 @@ private:
 	bool LoadWeaponAttributeVersions( const char *pszFilename );
 	bool LoadCommonDefIndex( const char *pszFilename );
 
+public:
+
 	// Helper: Convert date string "YYYY/MM/DD" to integer YYYYMMDD
 	int ParseDateString( const char *pszDate );
 	
 	int ConvertDateToDaysSinceLaunch( int iYear, int iMonth, int iDay );
 
-public:
 	// TF2V Item checks
 	// Tournament medals first
 	bool 				IsItemMedal( CEconItemView *pItem );
@@ -114,7 +115,7 @@ private:
 extern CTF2VAttributeDateManager *g_pTF2VAttributeDateManager;
 
 // Accessor functions (for backwards compatibility with existing code)
-inline CEconItemView *TV2VGetTimePeriodCompliantItem( CEconItemView *pOriginalItem, int iClass, int iSlot )
+inline CEconItemView *TF2VGetTimePeriodCompliantItem( CEconItemView *pOriginalItem, int iClass, int iSlot )
 {
 	if ( g_pTF2VAttributeDateManager )
 		return g_pTF2VAttributeDateManager->GetTimePeriodCompliantItem( pOriginalItem, iClass, iSlot );
@@ -122,7 +123,7 @@ inline CEconItemView *TV2VGetTimePeriodCompliantItem( CEconItemView *pOriginalIt
 }
 
 // Accessor functions (for backwards compatibility with existing code)
-inline bool TV2VItemIsAllowedTimePeriod( CEconItemView *pItem, int iClass = -1, int iSlot = -1 )
+inline bool TF2VItemIsAllowedTimePeriod( CEconItemView *pItem, int iClass = -1, int iSlot = -1 )
 {
 	if ( g_pTF2VAttributeDateManager )
 		return g_pTF2VAttributeDateManager->ItemIsAllowedTimePeriod( pItem, iClass, iSlot );
@@ -130,7 +131,7 @@ inline bool TV2VItemIsAllowedTimePeriod( CEconItemView *pItem, int iClass = -1, 
 }
 
 // Accessor functions (for backwards compatibility with existing code)
-inline bool TV2VItemAttributesAllowedTimePeriod( CEconItemView *pOriginalItem, int iClass, int iSlot )
+inline bool TF2VItemAttributesAllowedTimePeriod( CEconItemView *pOriginalItem, int iClass, int iSlot )
 {
 	if ( g_pTF2VAttributeDateManager )
 	{
@@ -140,7 +141,7 @@ inline bool TV2VItemAttributesAllowedTimePeriod( CEconItemView *pOriginalItem, i
 }
 
 // Accessor functions (for backwards compatibility with existing code)
-inline int TV2VGetItemIntroductionDate( int iDefindex )
+inline int TF2VGetItemIntroductionDate( int iDefindex )
 {
 	if ( g_pTF2VAttributeDateManager )
 		return g_pTF2VAttributeDateManager->GetItemIntroductionDate( iDefindex );
@@ -148,35 +149,35 @@ inline int TV2VGetItemIntroductionDate( int iDefindex )
 }
 
 // Accessor functions (for backwards compatibility with existing code)
-inline int TV2VGetPaintIntroductionDate( int iRGB )
+inline int TF2VGetPaintIntroductionDate( int iRGB )
 {
 	if ( g_pTF2VAttributeDateManager )
 		return g_pTF2VAttributeDateManager->GetPaintIntroductionDate( iRGB );
 	return TF2V_DAY_UNKNOWN;
 }
 
-inline int TV2VGetUnusualEffectIntroductionDate( int iEffectIndex )
+inline int TF2VGetUnusualEffectIntroductionDate( int iEffectIndex )
 {
 	if ( g_pTF2VAttributeDateManager )
 		return g_pTF2VAttributeDateManager->GetUnusualEffectIntroductionDate( iEffectIndex );
 	return TF2V_DAY_UNKNOWN;
 }
 
-inline int TV2VGetWarPaintIntroductionDate( int iProtoDefIndex )
+inline int TF2VGetWarPaintIntroductionDate( int iProtoDefIndex )
 {
 	if ( g_pTF2VAttributeDateManager )
 		return g_pTF2VAttributeDateManager->GetWarPaintIntroductionDate( iProtoDefIndex );
 	return TF2V_DAY_UNKNOWN;
 }
 
-inline int TV2VParseDateString( const char *pszDate )
+inline int TF2VParseDateString( const char *pszDate )
 {
 	if ( g_pTF2VAttributeDateManager )
 		return g_pTF2VAttributeDateManager->ParseDateString( pszDate );
 	return TF2V_DAY_UNKNOWN;
 }
 
-inline int TV2VConvertDateToDaysSinceLaunch( int iYear, int iMonth, int iDay )
+inline int TF2VConvertDateToDaysSinceLaunch( int iYear, int iMonth, int iDay )
 {
 	if ( g_pTF2VAttributeDateManager )
 		return g_pTF2VAttributeDateManager->ConvertDateToDaysSinceLaunch( iYear, iMonth, iDay );
