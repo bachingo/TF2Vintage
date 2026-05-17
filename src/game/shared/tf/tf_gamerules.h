@@ -1418,11 +1418,11 @@ public:
 	}
 	
 	int GetTF2VEra( void ) { return m_nTF2VEra; }							// "What date is the server set to?"
-	
-	extern ConVar tf2v_force_era_gamemode;
+
 	void SetTF2VEra( int nEra = tf2v_era.GetInt() ) // "What date do we want to change the server to?"
 	{ 
 		int iEraMin = TF2V_ERA_DAY_MIN;
+#ifdef GAME_DLL
 		if ( tf2v_force_era_gamemode.GetBool() )
 		{
 			// Gamemode check.
@@ -1478,12 +1478,15 @@ public:
 			if ( IsCustomGameMode() )
 				iEraMin = TF2V_DAY_SUMMER_2023; // Community modes added Summer 2023
 		}
+#endif
 
 		m_nTF2VEra = clamp( nEra, iEraMin, TF2V_ERA_DAY_MAX );
 		if ( m_nTF2VEra != nEra )
 		{
 			tf2v_era.SetValue( m_nTF2VEra ); // Set tf2v_era to our new clamped value
+#ifdef GAME_DLL
 			m_bMapCycleNeedsUpdate = true; // Also tell the game our mapcycle is stale and needs to be refreshed
+#endif
 		}
 	}
 	

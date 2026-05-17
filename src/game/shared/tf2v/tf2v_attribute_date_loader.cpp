@@ -1088,7 +1088,7 @@ CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemV
 	// Preserve cosmetic and essential attributes.
 	if ( bWeaponAttributesTooNew )
 	{
-		ApplyWeaponAttributesToItem( pModifiedItem, iCurrentEra )
+		ApplyWeaponAttributesToItem( pModifiedItem, iCurrentEra );
 	}
 
 	return pModifiedItem;
