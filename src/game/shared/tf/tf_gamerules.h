@@ -1422,44 +1422,60 @@ public:
 	extern ConVar tf2v_force_era_gamemode;
 	void SetTF2VEra( int nEra = tf2v_era.GetInt() ) // "What date do we want to change the server to?"
 	{ 
-		// Todo: make a nicer system for this
 		int iEraMin = TF2V_ERA_DAY_MIN;
 		if ( tf2v_force_era_gamemode.GetBool() )
 		{
 			// Gamemode check.
+			// This is sloppy.
 			if ( tf_gamemode_ctf.GetBool() )
 				iEraMin = TF2V_ERA_DAY_MIN; // Capture the Flag added in launch
-			else if ( tf_gamemode_cp.GetBool() )
+			
+			if ( tf_gamemode_cp.GetBool() )
 				iEraMin = TF2V_ERA_DAY_MIN; // Control Point added in launch
-			else if ( tf_gamemode_tc.GetBool() )
+			
+			if ( tf_gamemode_tc.GetBool() )
 				iEraMin = TF2V_ERA_DAY_MIN; // Territory Control added in launch
-			else if ( tf_gamemode_misc.GetBool() )
+			
+			if ( tf_gamemode_misc.GetBool() )
 				iEraMin = TF2V_ERA_DAY_MIN; // Unknown: just revert to launch.
-			else if ( tf_gamemode_payload.GetBool() && !HasMultipleTrains() )
+			
+			if ( tf_gamemode_payload.GetBool() && !HasMultipleTrains() )
 				iEraMin = TF2V_DAY_MAJOR_GOLDRUSH; // Payload added in Gold Rush
-			else if ( tf_gamemode_arena.GetBool() )
+			
+			if ( tf_gamemode_arena.GetBool() )
 				iEraMin = TF2V_DAY_MAJOR_HEAVY; // Arena added in Heavy Update
-			else if ( tf_gamemode_payload.GetBool() && HasMultipleTrains() )
+			
+			if ( tf_gamemode_payload.GetBool() && HasMultipleTrains() )
 				iEraMin = TF2V_DAY_MAJOR_SNIPER_SPY; // Payload Race added in Sniper vs Spy
-			else if ( m_bPlayingKoth )
+			
+			if ( m_bPlayingKoth )
 				iEraMin = TF2V_DAY_MAJOR_CLASSLESS; // King of the Hill added in Classless
-			else if ( m_bIsInTraining )
+			
+			if ( m_bIsInTraining )
 				iEraMin = TF2V_DAY_MAJOR_MAC; // Training Mode added in the Mac Update
-			else if ( m_bPlayingMedieval )
-				iEraMin = TF2V_DAY_SMISSMAS_2010; // Medieval mode added in Australian Christmas		
-			else if ( tf_gamemode_sd.GetBool() )
+			
+			if ( m_bPlayingMedieval )
+				iEraMin = TF2V_DAY_SMISSMAS_2010; // Medieval mode added in Australian Christmas	
+			
+			if ( tf_gamemode_sd.GetBool() )
 				iEraMin = TF2V_DAY_MAJOR_PYROMANIA; // Special Delivery added in Pyromania
-			else if ( tf_gamemode_mvm.GetBool() )
+			
+			if ( tf_gamemode_mvm.GetBool() )
 				iEraMin = TF2V_DAY_MAJOR_MVM; // PVE Added in Mann Vs Machine
-			else if ( tf_gamemode_rd.GetBool() )
+			
+			if ( tf_gamemode_rd.GetBool() )
 				iEraMin = 2487; // Robot Destruction added July 8 2014 (Day 2487)
-			else if ( m_bPowerupMode )
+			
+			if ( m_bPowerupMode )
 				iEraMin = TF2V_DAY_SMISSMAS_2014; // Mannpower added in Smissmass 2014
-			else if ( tf_gamemode_passtime.GetBool() )
+			
+			if ( tf_gamemode_passtime.GetBool() )
 				iEraMin = 2890; // PASS Time added August 15 2015 (Day 2890) 
-			else if ( tf_gamemode_pd.GetBool() )
+			
+			if ( tf_gamemode_pd.GetBool() )
 				iEraMin = TF2V_DAY_MAJOR_INVASION; // Player Destruction added in Invasion
-			else if ( IsCustomGameMode() )
+			
+			if ( IsCustomGameMode() )
 				iEraMin = TF2V_DAY_SUMMER_2023; // Community modes added Summer 2023
 		}
 
