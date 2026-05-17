@@ -137,6 +137,7 @@ ConVar mp_waitingforplayers_cancel( "mp_waitingforplayers_cancel", "0", FCVAR_GA
 ConVar mp_clan_readyrestart( "mp_clan_readyrestart", "0", FCVAR_GAMEDLL, "If non-zero, game will restart once someone from each team gives the ready signal" );
 ConVar mp_clan_ready_signal( "mp_clan_ready_signal", "ready", FCVAR_GAMEDLL, "Text that team leader from each team must speak for the match to begin" );
 
+ConVar tf2v_force_era_mapcycle( "tf2v_force_era_mapcycle", "1", FCVAR_REPLICATED, "If enabled, server overrides the mapcycle file with the most historically appropriate mapcycle file for the era. Disable to allow custom mapcycle files. Default: 1.", true, 0, true, 1);
 
 ConVar nextlevel( "nextlevel", 
 				  "", 
