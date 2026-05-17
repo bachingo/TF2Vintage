@@ -308,9 +308,7 @@ int	CHudMenuSpyDisguise::HudElementKeyInput( int down, ButtonCode_t keynum, cons
 
 		if ( pszCurrentBinding && ( FStrEq( pszCurrentBinding, "disguiseteam" ) || FStrEq( pszCurrentBinding, "+reload" ) ) )
 		{
-			// TF2V: This button didn't work prior to Feb 28 2008. (Day 165)
-			if ( TF2VIsContemporary( 165 ) )
-				ToggleDisguiseTeam();
+			ToggleDisguiseTeam();
 			return 0;
 		}
 		else if ( pszCurrentBinding && FStrEq( pszCurrentBinding, "next_disguise" ) )
@@ -571,17 +569,28 @@ void CHudMenuSpyDisguise::SelectDisguise( int iClass, int iTeam )
 //-----------------------------------------------------------------------------
 void CHudMenuSpyDisguise::ToggleDisguiseTeam( void )
 {
-	// flip the teams
-	m_iShowingTeam = ( m_iShowingTeam == TF_TEAM_BLUE ) ? TF_TEAM_RED : TF_TEAM_BLUE;
-
-	// show / hide the class items
-	bool bShowBlue = ( m_iShowingTeam == TF_TEAM_BLUE );
-
-	for ( int i=0; i<9; i++ )
+	// TF2V: This button didn't work prior to Feb 28 2008. (Day 165)
+	if ( TF2VIsContemporary( 165 ) )
 	{
-		m_pClassItems_Red[i]->SetVisible( !bShowBlue );
-		m_pClassItems_Blue[i]->SetVisible( bShowBlue );
+		// flip the teams
+		m_iShowingTeam = ( m_iShowingTeam == TF_TEAM_BLUE ) ? TF_TEAM_RED : TF_TEAM_BLUE;
 	}
+	else
+	{
+		// Display the opposite team.
+		CTFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+		if ( pPlayer )
+			m_iShowingTeam = ( pPlayer->GetTeamNumber() == TF_TEAM_RED ) ? TF_TEAM_RED : TF_TEAM_BLUE;
+	}
+	
+		// show / hide the class items
+		bool bShowBlue = ( m_iShowingTeam == TF_TEAM_BLUE );
+
+		for ( int i=0; i<9; i++ )
+		{
+			m_pClassItems_Red[i]->SetVisible( !bShowBlue );
+			m_pClassItems_Blue[i]->SetVisible( bShowBlue );
+		}
 }
 
 //-----------------------------------------------------------------------------
