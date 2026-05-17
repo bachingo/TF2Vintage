@@ -83,7 +83,7 @@ enum
 extern bool IsInCommentaryMode();
 
 #if defined( GAME_DLL ) && defined( TF_DLL )
-ConVar tf_overtime_nag( "tf_overtime_nag", 0, FCVAR_NOTIFY, "Announcer overtime nag." ); // Era Gated in TF2V.
+ConVar tf_overtime_nag( "tf_overtime_nag", "0", FCVAR_NOTIFY, "Announcer overtime nag." ); // Era Gated in TF2V.
 #endif
 
 #ifdef CLIENT_DLL
