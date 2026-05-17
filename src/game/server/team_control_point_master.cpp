@@ -756,20 +756,13 @@ void CTeamControlPointMaster::InternalSetWinner( int iTeam )
 	}
 	else
 	{
-		int iWinReason = WINREASON_ALL_POINTS_CAPTURED;
-		if ( GetGlobalTFTeam( iTeam ) && GetGlobalTFTeam( iTeam )->GetRole() == TEAM_ROLE_DEFENDERS )
-		{
-			// TODO(mcoms): also handle stopwatch case
-			iWinReason = WINREASON_DEFEND_UNTIL_TIME_LIMIT;
-		}
-
 		if ( !bForceMapReset )
 		{
-			TeamplayGameRules()->SetWinningTeam( iTeam, iWinReason, bForceMapReset );
+			TeamplayGameRules()->SetWinningTeam( iTeam, WINREASON_ALL_POINTS_CAPTURED, bForceMapReset );
 		}
 		else
 		{
-			TeamplayGameRules()->SetWinningTeam( iTeam, iWinReason, bForceMapReset, m_bSwitchTeamsOnWin );
+			TeamplayGameRules()->SetWinningTeam( iTeam, WINREASON_ALL_POINTS_CAPTURED, bForceMapReset, m_bSwitchTeamsOnWin );
 		}
 
 		FireTeamWinOutput( iTeam );
