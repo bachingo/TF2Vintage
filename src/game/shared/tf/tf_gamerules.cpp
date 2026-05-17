@@ -733,7 +733,7 @@ extern ConVar mp_idlemaxtime;
 extern ConVar tf_mm_strict;
 extern ConVar mp_autoteambalance;
 
-extern ConVar tf_war_result;
+extern ConVar tf2v_war_result;
 
 // STAGING_SPY
 ConVar tf_feign_death_activate_damage_scale( "tf_feign_death_activate_damage_scale", "0.25", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
@@ -20734,7 +20734,7 @@ convar_tags_t convars_to_check_for_tags[] =
 	{ "tf_tournament_classlimit_pyro", "classlimits", NULL },
 	{ "tf_tournament_classlimit_spy", "classlimits", NULL },
 	{ "tf_tournament_classlimit_engineer", "classlimits", NULL },
-	{ "tf_war_result", "rocketboots_demo", NULL },
+	{ "tf2v_war_result", "rocketboots_demo", NULL },
 	
 };
 

@@ -13,7 +13,7 @@
 #include "tier0/memdbgon.h"
 
 
-ConVar tf_war_result( "tf_war_result", "0", FCVAR_NOTIFY | FCVAR_ARCHIVE | FCVAR_REPLICATED, "Distribution of the Gunboats reward. 0: Soldier, 1: Demoman, 2: Both.", true, 0, true, 2 );
+ConVar tf2v_war_result( "tf2v_war_result", "0", FCVAR_NOTIFY | FCVAR_ARCHIVE | FCVAR_REPLICATED, "Distribution of the Gunboats reward. 0: Soldier, 1: Demoman, 2: Both.", true, 0, true, 2 );
 
 // Global instance
 CTF2VAttributeDateManager *g_pTF2VAttributeDateManager = NULL;
@@ -659,19 +659,19 @@ bool CTF2VAttributeDateManager::ItemIsAllowedTimePeriod( CEconItemView *pItem, i
 	// TF2V: Special condition for the Gunboats.
 	if ( pItem->GetItemDefIndex() == 133 )
 	{
-		if ( iClass == TF_CLASS_DEMOMAN && !tf_war_result.GetInt() )
+		if ( iClass == TF_CLASS_DEMOMAN && !tf2v_war_result.GetInt() )
 		{
 			// Canon timeline: Demoman did not win the war.
 			// ClientPrint( this, HUD_PRINTNOTIFY, "#Item_WARResultCanon" );
 			return false;
 		}
-		if ( iClass == TF_CLASS_SOLDIER && tf_war_result.GetInt() == 1 )
+		if ( iClass == TF_CLASS_SOLDIER && tf2v_war_result.GetInt() == 1 )
 		{
 			// Alternative timeline: Soldier did not win the war.
 			// ClientPrint( this, HUD_PRINTNOTIFY, "#Item_WARResultAlternate" );
 			return false;
 		}
-		// On tf_war_result == 2, both Soldier and Demoman get it.
+		// On tf2v_war_result == 2, both Soldier and Demoman get it.
 	}
 
 	// TF2V: Edge case for the Reserve Shooter.
