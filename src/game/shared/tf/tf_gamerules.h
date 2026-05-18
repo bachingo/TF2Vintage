@@ -1488,16 +1488,16 @@ public:
 			if ( tf_gamemode_pd.GetBool() )
 				iEraMin = TF2V_DAY_MAJOR_INVASION; // Player Destruction added in Invasion
 	
-			if ( MapHasPrefix( gpGlobals->mapname, "vsh_" ) )
+			if ( MapHasPrefix( STRING(gpGlobals->mapname)), "vsh_" ) )
 				iEraMin = TF2V_DAY_SUMMER_2023; // Versus Saxton Hale added Summer 2023
 			
-			if ( MapHasPrefix( gpGlobals->mapname, "zi_" ) )
+			if ( MapHasPrefix( STRING(gpGlobals->mapname)), "zi_" ) )
 				iEraMin = TF2V_DAY_HALLOWEEN_2023; // Zombie Infection added Halloween 2023
 			
-			if ( MapHasPrefix( gpGlobals->mapname, "tow_" ) )
+			if ( MapHasPrefix( STRING(gpGlobals->mapname)), "tow_" ) )
 				iEraMin = TF2V_DAY_HALLOWEEN_2024; // Tug of War added Halloween 2024
 			
-			if ( MapHasPrefix( gpGlobals->mapname, "htf_" ) )
+			if ( MapHasPrefix( STRING(gpGlobals->mapname)), "htf_" ) )
 				iEraMin = TF2V_DAY_HALLOWEEN_2025; // Hold the Flag added Halloween 2024
 		}
 
