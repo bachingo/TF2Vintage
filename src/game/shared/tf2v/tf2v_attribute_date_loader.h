@@ -9,6 +9,7 @@
 #pragma once
 
 #include "tier1/utlmap.h"
+#include "tier1/utlvector.h"
 #include "tier1/KeyValues.h"
 #include "filesystem.h"
 
@@ -52,8 +53,8 @@ public:
 	void Init();
 	void Shutdown();
 
-	// Query functions - return introduction date in YYYYMMDD format
-	// Returns 99999999 if not found (future date = blocked by default)
+	// Query functions - return introduction date as days since Sept 16, 2007
+	// Returns TF2V_DAY_UNKNOWN if not found (future date = blocked by default)
 	
 	int GetItemIntroductionDate( int iDefindex );
 	int GetPaintIntroductionDate( int iRGB );
@@ -62,6 +63,30 @@ public:
 
 	// Reload files (useful for testing/updates)
 	void ReloadAllDates();
+
+	// Helper: Convert date string "YYYY/MM/DD" to days since launch
+	int ParseDateString( const char *pszDate );
+	int ConvertDateToDaysSinceLaunch( int iYear, int iMonth, int iDay );
+
+	// TF2V Item checks
+	// Tournament medals first
+	bool IsItemMedal( CEconItemView *pItem );
+	bool IsPaintPlayerApplied( CEconItemView *pItem, const CEconItemAttribute *pPaintAttrib );
+	
+	// Anachronistic modifiers
+	bool ItemIsAllowedTimePeriod( CEconItemView *pItem, int iClass = -1, int iSlot = -1);
+	bool ItemQualityIsAllowedTimePeriod( int iQuality );
+	bool HasAnachronisticAttributes( CEconItemView *pItem );
+	bool StripAnachronisticAttributes( CEconItemView *pItem );
+	
+	// Weapon attribute versioning
+	bool ApplyWeaponAttributesToItem( CEconItemView *pOriginalItem, int iCurrentEra );
+	
+	// Common item def lookup
+	int GetCommonItemDef( int iDefIndex );
+	
+	// Item is allowed - main entry point
+	CEconItemView *GetTimePeriodCompliantItem( CEconItemView *pOriginalItem, int iClass, int iSlot );
 
 private:
 	// Load individual files
@@ -73,41 +98,21 @@ private:
 	bool ParseAttributeBlock( KeyValues *pKV, CUtlVector<CEconItemAttribute> &attributes );
 	bool LoadCommonDefIndex( const char *pszFilename );
 
-public:
+	// Attribute categorization
+	AttributeCategory_t GetAttributeCategory( const char *pszAttrClass );
 
-	// Helper: Convert date string "YYYY/MM/DD" to integer YYYYMMDD
-	int ParseDateString( const char *pszDate );
-	
-	int ConvertDateToDaysSinceLaunch( int iYear, int iMonth, int iDay );
+	// Modifier value checking
+	bool PaintValueIsAllowedTimePeriod( const CEconItemAttribute *pAttrib );
+	bool UnusualValueIsAllowedTimePeriod( const CEconItemAttribute *pAttrib );
+	bool WarPaintValueIsAllowedTimePeriod( const CEconItemAttribute *pAttrib );
 
-	// TF2V Item checks
-	// Tournament medals first
-	bool 				IsItemMedal( CEconItemView *pItem );
-	bool 				IsPaintPlayerApplied( CEconItemView *pItem, const CEconItemAttribute *pPaintAttrib );
-	
-	// Anachronistic modifiers
-	bool 				ItemIsAllowedTimePeriod( CEconItemView *pItem, int iClass = -1, int iSlot = -1);
-	bool 				ItemQualityIsAllowedTimePeriod( int iQuality );
-	bool 				HasAnachronisticAttributes( CEconItemView *pItem );
-
-	bool 				StripAnachronisticAttributes( CEconItemView *pItem );
-	
-	bool 				ApplyWeaponAttributesToItem( CEconItemView *pOriginalItem, int iCurrentEra );
-	
-	int					GetCommonItemDef(int iDefIndex);
-	
-	
-	// Item is allowed
-	CEconItemView 		*GetTimePeriodCompliantItem( CEconItemView *pOriginalItem, int iClass, int iSlot );
-
-private:
-	// Storage maps: key -> date
+	// Storage maps: key -> date (days since Sept 16, 2007)
 	CUtlMap<int, int> m_ItemDates;			// Definition Index -> Era Date
 	CUtlMap<int, int> m_PaintDates;			// RGB -> Era Date
 	CUtlMap<int, int> m_UnusualEffectDates;	// Effect Index -> Era Date
 	CUtlMap<int, int> m_WarPaintDates;		// Proto Def Index -> Era Date
 	CUtlMap<int, int> m_CommonDefIndex;		// Def Index Variant -> Common Denominator
-
+	CUtlMap<int, CUtlVector<WeaponAttributeVersion_t>*> m_WeaponAttributeVersions;
 
 	bool m_bInitialized;
 };
@@ -123,7 +128,6 @@ inline CEconItemView *TF2VGetTimePeriodCompliantItem( CEconItemView *pOriginalIt
 	return pOriginalItem;
 }
 
-// Accessor functions (for backwards compatibility with existing code)
 inline bool TF2VItemIsAllowedTimePeriod( CEconItemView *pItem, int iClass = -1, int iSlot = -1 )
 {
 	if ( g_pTF2VAttributeDateManager )
@@ -131,17 +135,16 @@ inline bool TF2VItemIsAllowedTimePeriod( CEconItemView *pItem, int iClass = -1, 
 	return false;
 }
 
-// Accessor functions (for backwards compatibility with existing code)
 inline bool TF2VItemAttributesAllowedTimePeriod( CEconItemView *pOriginalItem, int iClass, int iSlot )
 {
 	if ( g_pTF2VAttributeDateManager )
 	{
-		return ( g_pTF2VAttributeDateManager->ItemQualityIsAllowedTimePeriod( pOriginalItem->GetItemQuality() ) && !g_pTF2VAttributeDateManager->HasAnachronisticAttributes( pOriginalItem ) );
+		return ( g_pTF2VAttributeDateManager->ItemQualityIsAllowedTimePeriod( pOriginalItem->GetItemQuality() ) 
+				 && !g_pTF2VAttributeDateManager->HasAnachronisticAttributes( pOriginalItem ) );
 	}
 	return false;
 }
 
-// Accessor functions (for backwards compatibility with existing code)
 inline int TF2VGetItemIntroductionDate( int iDefindex )
 {
 	if ( g_pTF2VAttributeDateManager )
@@ -149,7 +152,6 @@ inline int TF2VGetItemIntroductionDate( int iDefindex )
 	return TF2V_DAY_UNKNOWN;
 }
 
-// Accessor functions (for backwards compatibility with existing code)
 inline int TF2VGetPaintIntroductionDate( int iRGB )
 {
 	if ( g_pTF2VAttributeDateManager )
