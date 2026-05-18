@@ -415,7 +415,7 @@ bool CTF2VAttributeDateManager::LoadWeaponAttributeVersions( const char *pszFile
 //-----------------------------------------------------------------------------
 // Parse attribute block
 //-----------------------------------------------------------------------------
-bool CTF2VWeaponAttributeManager::ParseAttributeBlock( KeyValues *pKV, CUtlVector<CEconItemAttribute> &attributes )
+bool CTF2VAttributeDateManager::ParseAttributeBlock( KeyValues *pKV, CUtlVector<CEconItemAttribute> &attributes )
 {
 	if ( !pKV )
 		return false;
