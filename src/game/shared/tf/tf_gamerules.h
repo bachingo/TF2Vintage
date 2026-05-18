@@ -75,7 +75,20 @@ extern ConVar	tf_ctf_bonus_time;
 extern ConVar	tf_mvm_respec_enabled;
 extern ConVar	tf_spawn_glows_duration;
 extern ConVar 	tf2v_era;
+
 extern ConVar 	tf2v_force_era_gamemode;
+extern ConVar 	tf_gamemode_arena;
+extern ConVar 	tf_gamemode_cp;
+extern ConVar 	tf_gamemode_ctf;
+extern ConVar 	tf_gamemode_sd;
+extern ConVar 	tf_gamemode_rd;
+extern ConVar 	tf_gamemode_pd;
+extern ConVar 	tf_gamemode_tc;
+extern ConVar 	tf_gamemode_payload;
+extern ConVar 	tf_gamemode_mvm;
+extern ConVar 	tf_gamemode_passtime;
+extern ConVar 	tf_gamemode_misc;
+
 
 #ifdef GAME_DLL
 extern ConVar mp_tournament_prevent_team_switch_on_readyup;
