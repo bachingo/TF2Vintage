@@ -70,6 +70,7 @@ private:
 	bool LoadUnusualDates( const char *pszFilename );
 	bool LoadWarPaintDates( const char *pszFilename );
 	bool LoadWeaponAttributeVersions( const char *pszFilename );
+	bool ParseAttributeBlock( KeyValues *pKV, CUtlVector<CEconItemAttribute> &attributes );
 	bool LoadCommonDefIndex( const char *pszFilename );
 
 public:
@@ -135,7 +136,7 @@ inline bool TF2VItemAttributesAllowedTimePeriod( CEconItemView *pOriginalItem, i
 {
 	if ( g_pTF2VAttributeDateManager )
 	{
-		return ( ItemQualityIsAllowedTimePeriod( pOriginalItem->GetItemQuality() ) && !HasAnachronisticAttributes( pOriginalItem ) );
+		return ( g_pTF2VAttributeDateManager->ItemQualityIsAllowedTimePeriod( pOriginalItem->GetItemQuality() ) && !g_pTF2VAttributeDateManager->HasAnachronisticAttributes( pOriginalItem ) );
 	}
 	return false;
 }
