@@ -407,7 +407,7 @@ CON_COMMAND_F( mp_forcewin, "Forces team to win", FCVAR_CHEAT )
 	CTeamplayRoundBasedRules *pRules = dynamic_cast<CTeamplayRoundBasedRules*>( GameRules() );
 	if ( pRules )
 	{
-		int iTeam;		
+		int iTeam = TEAM_UNASSIGNED;		
 		if ( args.ArgC() == 1 )
 		{
 			// if no team specified, use player 1's team
@@ -418,11 +418,11 @@ CON_COMMAND_F( mp_forcewin, "Forces team to win", FCVAR_CHEAT )
 			}
 			else
 			{
-				Msg( "Unable to determine default team. Usage: mp_forcewin <opt: team#> <opt: reason>\n" );
+				Msg( "Unable to determine default team. Usage: mp_forcewin <opt: team#>\n" );
 				return;
 			}
 		}
-		else if ( args.ArgC() == 2 || args.ArgC() == 3 )
+		else if ( args.ArgC() == 2 )
 		{
 			// if team # specified, use that
 			iTeam = atoi( args[1] );
@@ -433,23 +433,7 @@ CON_COMMAND_F( mp_forcewin, "Forces team to win", FCVAR_CHEAT )
 			return;
 		}
 
-		int iWinReason;
-		if ( iTeam == TEAM_UNASSIGNED )
-		{
-			iWinReason = WINREASON_STALEMATE;
-		}
-		else
-		{
-			iWinReason = WINREASON_ALL_POINTS_CAPTURED;
-			if ( args.ArgC() == 3 )
-			{
-				int iSpecifiedReason = atoi( args[2] );
-				if ( iSpecifiedReason < WINREASON_COUNT )
-				{
-					iWinReason = iSpecifiedReason;
-				}
-			}
-		}
+		int iWinReason = ( TEAM_UNASSIGNED == iTeam ? WINREASON_STALEMATE : WINREASON_ALL_POINTS_CAPTURED );
 		pRules->SetWinningTeam( iTeam, iWinReason );
 	}
 }
@@ -1180,7 +1164,7 @@ void CTeamplayRoundBasedRules::CheckRestartRound( void )
 #ifdef TF_DLL
 		if ( TFGameRules() && ( TFGameRules()->IsMannVsMachineMode() || TFGameRules()->IsCompetitiveMode() || TFGameRules()->IsEmulatingMatch() || TFGameRules()->UsePlayerReadyStatusMode() ) )
 		{
-			iDelayMax = 150;
+			iDelayMax = 180;
 		}
 #endif // #if defined(TF_CLIENT_DLL) || defined(TF_DLL)
 
