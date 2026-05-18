@@ -76,6 +76,9 @@ extern ConVar	tf_mvm_respec_enabled;
 extern ConVar	tf_spawn_glows_duration;
 extern ConVar 	tf2v_era;
 
+#ifdef GAME_DLL
+extern ConVar mp_tournament_prevent_team_switch_on_readyup;
+
 extern ConVar 	tf2v_force_era_gamemode;
 extern ConVar 	tf_gamemode_arena;
 extern ConVar 	tf_gamemode_cp;
@@ -89,9 +92,6 @@ extern ConVar 	tf_gamemode_mvm;
 extern ConVar 	tf_gamemode_passtime;
 extern ConVar 	tf_gamemode_misc;
 
-
-#ifdef GAME_DLL
-extern ConVar mp_tournament_prevent_team_switch_on_readyup;
 #endif
 
 #ifdef TF_RAID_MODE
@@ -1436,6 +1436,7 @@ public:
 	void SetTF2VEra( int nEra = tf2v_era.GetInt() ) // "What date do we want to change the server to?"
 	{ 
 		int iEraMin = TF2V_ERA_DAY_MIN;
+#ifdef GAME_DLL
 		if ( tf2v_force_era_gamemode.GetBool() )
 		{
 			// Gamemode check.
@@ -1500,6 +1501,7 @@ public:
 			if ( MapHasPrefix( STRING(gpGlobals->mapname), "htf_" ) )
 				iEraMin = TF2V_DAY_HALLOWEEN_2025; // Hold the Flag added Halloween 2024
 		}
+#endif
 
 		m_nTF2VEra = clamp( nEra, iEraMin, TF2V_ERA_DAY_MAX );
 		if ( m_nTF2VEra != nEra )
