@@ -1265,7 +1265,7 @@ ConVarRef suitcharger( "sk_suitcharger" );
 		Q_strncpy( pszNextMap, m_MapList[m_nMapCycleindex], bufsize);
 	}
 
-void CTFGameRules::DetermineMapCycleFilename( char *pszResult, int nSizeResult, bool bForceSpew )
+void CMultiplayRules::DetermineMapCycleFilename( char *pszResult, int nSizeResult, bool bForceSpew )
 {
 	static char szLastResult[ MAX_PATH ];
  
