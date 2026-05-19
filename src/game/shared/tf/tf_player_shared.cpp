@@ -12806,6 +12806,10 @@ ConVar tf_obj_disable_pickup("tf_obj_disable_pickup", "0", FCVAR_REPLICATED);
 //-----------------------------------------------------------------------------
 bool CTFPlayer::CanPickupBuilding( CBaseObject *pPickupObject )
 {
+	// TF2V: Not added until the Engineer Update.
+	if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_ENGINEER) ) 
+		return false;
+		
 	if ( tf_obj_disable_pickup.GetBool() )
 		return false;
 
@@ -12905,10 +12909,6 @@ bool CTFPlayer::CanPickupBuilding( CBaseObject *pPickupObject )
 //-----------------------------------------------------------------------------
 bool CTFPlayer::TryToPickupBuilding()
 {
-	// TF2V: Not added until the Engineer Update.
-	if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_ENGINEER) ) 
-		return false;
-	
 	if ( m_Shared.IsCarryingObject() )
 		return false;
 
