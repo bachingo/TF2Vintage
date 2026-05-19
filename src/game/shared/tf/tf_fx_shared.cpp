@@ -120,20 +120,7 @@ Vector g_vecFixedWpnSpreadPellets[] =
 	Vector( 0.85f,0.85f,0 ),	
 	Vector( -0.85f,-0.85f,0 ),	
 	Vector( -0.85f,0.85f,0 ),	
-};
-
-// 9, Circle
-Vector g_vecFixedWpnSpreadPelletsCircular[] =
-{
-	Vector(0,0,0),	// First and last pellet goes down the middle to reward fine aim
-	Vector(1,0,0),
-	Vector(-1,0,0),
-	Vector(0,-1,0),
-	Vector(0,1,0),
-	Vector(0.707f,-0.707f,0),
-	Vector(0.707f,0.707f,0),
-	Vector(-0.707f,-0.707f,0),
-	Vector(-0.707f,0.707f,0),
+	Vector( 0,0,0 ),	// last pellet goes down the middle as well to reward fine aim
 };
 
 // 15, Rectangle - slight noise applied below (+/- 0.07)
@@ -409,8 +396,8 @@ void FX_FireBullets( CTFWeaponBase *pWpn, int iPlayer, const Vector &vecOrigin, 
 			if ( flVariance != 0.f && flSpread != 0.f )
 			{
 				float flScalar = 1.0f;
-				x = RandomFloat(-0.5, 0.5) + RandomFloat(-0.5, 0.5);
-				y = RandomFloat(-0.5, 0.5) + RandomFloat(-0.5, 0.5);
+				x = RandomFloat( -flVariance, flVariance ) + RandomFloat( -flVariance, flVariance );
+				y = RandomFloat( -flVariance, flVariance ) + RandomFloat( -flVariance, flVariance );
 				x *= flScalar;
 				y *= flScalar;
 			}
@@ -423,7 +410,7 @@ void FX_FireBullets( CTFWeaponBase *pWpn, int iPlayer, const Vector &vecOrigin, 
 		}
 
 		// Initialize the variable firing information.
-		fireInfo.m_vecDirShooting = vecShootForward + ( x * flSpread * vecShootRight ) + ( y * flSpread * vecShootUp );
+		fireInfo.m_vecDirShooting = vecShootForward + ( x *  flSpread * vecShootRight ) + ( y * flSpread * vecShootUp );
 		fireInfo.m_vecDirShooting.NormalizeInPlace();
 		fireInfo.m_bUseServerRandomSeed = pWpn && pWpn->UseServerRandomSeed();
 
