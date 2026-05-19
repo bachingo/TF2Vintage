@@ -6931,7 +6931,6 @@ void CTFPlayerShared::MakeBleed( CTFPlayer *pPlayer, CTFWeaponBase *pWeapon, flo
 	if ( !pPlayer && !pWeapon )
 		return;
 
-	const bool bIsHeadTrauma = false;
 	const float flExpireTime = gpGlobals->curtime + flBleedingTime;
 
 	// See if this weapon has already applied a bleed and extend the time
@@ -6942,12 +6941,6 @@ void CTFPlayerShared::MakeBleed( CTFPlayer *pPlayer, CTFWeaponBase *pWeapon, flo
 		{
 			if (gpGlobals->curtime <= m_PlayerBleeds[i].flBleedingRemoveTime)
 			{
-				if (bIsHeadTrauma)
-				{
-					// Sniper bleeds stack.
-					m_PlayerBleeds[i].flBleedingRemoveTime += flBleedingTime;
-					return;
-				}
 				if (flExpireTime > m_PlayerBleeds[i].flBleedingRemoveTime)
 				{
 					m_PlayerBleeds[i].flBleedingRemoveTime = flExpireTime;
