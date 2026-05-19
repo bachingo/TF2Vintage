@@ -2061,6 +2061,10 @@ class CProxyModelGlowColor : public CResultProxy
 public:
 	void OnBind( void *pC_BaseEntity )
 	{
+		// TF2V: Feature added in the Heavy Update.
+		if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_HEAVY ) )
+			return;
+		
 		Assert( m_pResult );
 
 		C_TFPlayer *pPlayer = NULL;
