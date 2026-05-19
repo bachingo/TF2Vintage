@@ -156,17 +156,6 @@ inline bool IsValidPickupWeaponSlot( int iSlot )
 		|| iSlot == LOADOUT_POSITION_MELEE;
 }
 
-inline bool IsValidWeaponSlot( int iSlot )
-{
-	return iSlot == LOADOUT_POSITION_PRIMARY
-		|| iSlot == LOADOUT_POSITION_SECONDARY
-		|| iSlot == LOADOUT_POSITION_MELEE
-		|| iSlot == LOADOUT_POSITION_UTILITY
-		|| iSlot == LOADOUT_POSITION_BUILDING
-		|| iSlot == LOADOUT_POSITION_PDA
-		|| iSlot == LOADOUT_POSITION_PDA2;
-}
-
 
 // The total number of loadouts to track for each player.
 // Right now, hardcoded to match TF's 10 classes.

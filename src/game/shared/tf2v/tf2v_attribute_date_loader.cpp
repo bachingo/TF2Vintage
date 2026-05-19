@@ -1054,7 +1054,14 @@ CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemV
 	
 	// Check if our weapons need adjusting.
 	// We do this based on whether or not the date is after the most recent balance patch.
-	bool bWeaponAttributesTooNew = IsValidWeaponSlot( iSlot ) && ( iCurrentEra < TF2V_DAY_LAST_WEAPON_BALANCE );
+	bool bWeaponAttributesTooNew = ( ( iSlot == LOADOUT_POSITION_PRIMARY
+									|| iSlot == LOADOUT_POSITION_SECONDARY
+									|| iSlot == LOADOUT_POSITION_MELEE
+									|| iSlot == LOADOUT_POSITION_UTILITY
+									|| iSlot == LOADOUT_POSITION_BUILDING
+									|| iSlot == LOADOUT_POSITION_PDA
+									|| iSlot == LOADOUT_POSITION_PDA2 )
+								&& ( iCurrentEra < TF2V_DAY_LAST_WEAPON_BALANCE ) );
 	if ( bWeaponAttributesTooNew )
 	{
 		bNeedsModification = true;
