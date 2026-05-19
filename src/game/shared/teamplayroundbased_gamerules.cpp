@@ -1674,27 +1674,7 @@ void CTeamplayRoundBasedRules::State_Enter_PREROUND( void )
 
 	m_flStartBalancingTeamsAt = gpGlobals->curtime + 60.0f;
 
-	bool bDoRoundRespawn = true;
-#ifdef TF_DLL
-	if ( ( TFGameRules()->IsCompetitiveMode() || TFGameRules()->IsEmulatingMatch() ) && GetRoundsPlayed() == 0 && !m_bAllowBetweenRounds )
-	{
-		CTeamControlPointMaster* pMaster = g_hControlPointMasters.Count() ? g_hControlPointMasters[0] : NULL;
-		if ( !pMaster || !pMaster->PlayingMiniRounds() || ( pMaster->GetCurrentRoundIndex() == 0 ) )
-		{
-			// we already did a round respawn in this case.
-			bDoRoundRespawn = false;
-		}
-	}
-#endif
-	if ( bDoRoundRespawn )
-	{
-		RoundRespawn();
-	}
-	else if ( GetActiveRoundTimer() && GetActiveRoundTimer()->GetSetupTimeLength() > 0 )
-	{
-		// if we have setup time, then we need to activate it here, because BetweenRounds_End ends setup.
-		SetSetup( true );
-	}
+	RoundRespawn();
 
 	IGameEvent *event = gameeventmanager->CreateEvent( "teamplay_round_start" );
 	if ( event )
