@@ -13,7 +13,7 @@
 #include "tier0/memdbgon.h"
 
 
-ConVar tf2v_war_result( "tf2v_war_result", "0", FCVAR_NOTIFY | FCVAR_ARCHIVE | FCVAR_REPLICATED, "Distribution of the Gunboats reward. 0: Soldier, 1: Demoman, 2: Both.", true, 0, true, 2 );
+ConVar tf2v_war_result( "tf2v_war_result", "0", FCVAR_NOTIFY | FCVAR_ARCHIVE | FCVAR_REPLICATED | FCVAR_CHEAT, "Distribution of the Gunboats reward. 0: Soldier, 1: Demoman, 2: Both.", true, 0, true, 2 );
 
 // Global instance
 CTF2VAttributeDateManager *g_pTF2VAttributeDateManager = NULL;
