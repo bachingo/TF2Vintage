@@ -27,6 +27,14 @@
 
 #include "tier0/basetypes.h"
 
+#if defined(_WIN64)
+    #define PLATFORM_BIN_DIR "bin\\x64"
+#elif defined(__x86_64__) || defined(__amd64__)
+    #define PLATFORM_BIN_DIR "bin/linux64"
+#else
+    #define PLATFORM_BIN_DIR "bin"
+#endif
+
 #ifdef WIN32
 typedef int (*LauncherMain_t)( HINSTANCE hInstance, HINSTANCE hPrevInstance, 
 							  LPSTR lpCmdLine, int nCmdShow );
