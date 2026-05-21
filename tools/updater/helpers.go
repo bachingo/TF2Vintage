@@ -204,24 +204,23 @@ func extractZipRouted(src, modDir, stagingRoot string) error {
 		}
 
 		var target string
-		switch {
-		case strings.HasPrefix(rel, "bin/"):
-			// Bin subtree → stagingRoot so atomicSwapDir can move it into place
-			// without touching the live modDir during the update.
-			// Exception: launcher executables (tf2vintage_win64.exe, launcher_tf2vintage)
-			// live in the mod root, not in bin/, so they are routed to modDir directly.
-			name := strings.TrimPrefix(rel, "bin/")
-			// Strip any platform subdirectory (x64/ or linux64/) to get the bare filename
-			if parts := strings.SplitN(name, "/", 2); len(parts) == 2 {
-				name = parts[1]
-			}
-			if name == "tf2vintage_win64.exe" || name == "launcher_tf2vintage" {
-				target = filepath.Join(modDir, name)
-			} else {
-				target = filepath.Join(stagingRoot, filepath.FromSlash(rel))
-			}
-		default:
-			// Game assets and base-manifest.json → modDir
+
+		// Root-level executables and game assets (everything except bin/)
+		if strings.HasPrefix(rel, "bin/") {
+			// Bin subtree goes to stagingRoot/bin/
+			target = filepath.Join(stagingRoot, filepath.FromSlash(rel))
+		} else {
+			// Everything else goes to modDir (staging root)
+			// This includes:
+			// - tf2vintage_win64.exe
+			// - launcher_tf2vintage  
+			// - tf2vintage-updater.exe
+			// - tf2vintage-updater
+			// - gameinfo.txt
+			// - base-manifest.json
+			// - base/ directory
+			// - cfg/ directory
+			// - etc.
 			target = filepath.Join(modDir, filepath.FromSlash(rel))
 		}
 

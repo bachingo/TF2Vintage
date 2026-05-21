@@ -78,3 +78,40 @@ func copyDir(src, dst string) error {
 		return copyFile(path, target)
 	})
 }
+
+// validateModRoot checks that critical files exist in the mod root after extraction
+func validateModRoot(modDir string) error {
+    var criticalFiles []string
+    
+    // Files that must exist on all platforms
+    criticalFiles = append(criticalFiles,
+        filepath.Join(modDir, "gameinfo.txt"),
+        filepath.Join(modDir, "base-manifest.json"),
+    )
+    
+    // Platform-specific executables
+    if runtime.GOOS == "windows" {
+        criticalFiles = append(criticalFiles,
+            filepath.Join(modDir, "tf2vintage_win64.exe"),
+            filepath.Join(modDir, "tf2vintage-updater.exe"),
+        )
+    } else {
+        criticalFiles = append(criticalFiles,
+            filepath.Join(modDir, "launcher_tf2vintage"),
+            filepath.Join(modDir, "tf2vintage-updater"),
+        )
+    }
+    
+    var missing []string
+    for _, path := range criticalFiles {
+        if _, err := os.Stat(path); os.IsNotExist(err) {
+            missing = append(missing, filepath.Base(path))
+        }
+    }
+    
+    if len(missing) > 0 {
+        return fmt.Errorf("critical files missing after extraction: %s", strings.Join(missing, ", "))
+    }
+    
+    return nil
+}
