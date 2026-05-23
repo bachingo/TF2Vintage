@@ -1011,8 +1011,7 @@ bool CTF2VAttributeDateManager::ItemNeedsModification( CEconItemView *pItem, int
 		return false;
 
 	// Check 1: Quality too new?
-	int iOriginalQuality = pItem->GetItemQuality();
-	if ( !ItemQualityIsAllowedTimePeriod( iOriginalQuality ) )
+	if ( !ItemQualityIsAllowedTimePeriod( pItem->GetItemQuality() ) )
 		return true;
 	
 	// Check 2: Cosmetic attributes too new?
@@ -1054,7 +1053,7 @@ CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemV
 	}
 
 	// STEP 2: Check if item needs modification
-	bool bQualityModify = !ItemQualityIsAllowedTimePeriod( iOriginalQuality );
+	bool bQualityModify = !ItemQualityIsAllowedTimePeriod( pItem->GetItemQuality() );
 	bool bCosmeticsModify = HasAnachronisticAttributes( pOriginalItem );
 	bool bWeaponModify = ( ( iSlot == LOADOUT_POSITION_PRIMARY
 		|| iSlot == LOADOUT_POSITION_SECONDARY
@@ -1077,7 +1076,6 @@ CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemV
 	CEconItemView *pModifiedItem = new CEconItemView( *pOriginalItem );
 	
 	// STEP 4: Downgrade quality if needed
-	int iOriginalQuality = pOriginalItem->GetItemQuality();
 	if ( bQualityModify )
 	{
 		pModifiedItem->SetItemQuality( AE_UNIQUE );
