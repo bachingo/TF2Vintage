@@ -604,7 +604,7 @@ bool CTF2VAttributeDateManager::IsPaintPlayerApplied( CEconItemView *pItem, cons
 //-----------------------------------------------------------------------------
 // Attribute category helper - Get category for filtering
 //-----------------------------------------------------------------------------
-static AttributeCategory_t GetAttributeCategory( const char *pszAttrClass )
+static AttributeCategory_t CTF2VAttributeDateManager::GetAttributeCategory( const char *pszAttrClass )
 {
 	if ( !pszAttrClass )
 		return ATTRIB_CAT_WEAPON_STAT;
