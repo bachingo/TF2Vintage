@@ -1274,6 +1274,13 @@ void CMultiplayRules::DetermineMapCycleFilename( char *pszResult, int nSizeResul
 	// ====================================================================
 	if ( tf2v_force_era_mapcycle.GetBool() && TFGameRules() )
 	{
+		int nDebugLevel
+#ifdef DEBUG
+		= 2;
+#else
+		= 0;
+#endif
+
 		// Get current era day number
 		int nCurrentEraDay = TFGameRules()->GetTF2VEra();
 		
