@@ -31,20 +31,31 @@ struct WeaponAttributeVersion_t
 		iStartDate = 0; 
 	}
 
-	// Add an explicit copy constructor so V_swap can shuffle it during sorting
+	// Explicit copy constructor using a manual element copy loop
 	WeaponAttributeVersion_t( const WeaponAttributeVersion_t &other )
 	{
 		iStartDate = other.iStartDate;
-		attributes.CopyFrom( other.attributes );
+		
+		// Clear existing items and copy over the new ones manually
+		attributes.Purge();
+		for ( int i = 0; i < other.attributes.Count(); ++i )
+		{
+			attributes.AddToTail( other.attributes[i] );
+		}
 	}
 
-	// Add an explicit assignment operator as well
+	// Explicit assignment operator using the same manual copy loop
 	WeaponAttributeVersion_t& operator=( const WeaponAttributeVersion_t &other )
 	{
 		if ( this != &other )
 		{
 			iStartDate = other.iStartDate;
-			attributes.CopyFrom( other.attributes );
+			
+			attributes.Purge();
+			for ( int i = 0; i < other.attributes.Count(); ++i )
+			{
+				attributes.AddToTail( other.attributes[i] );
+			}
 		}
 		return *this;
 	}
