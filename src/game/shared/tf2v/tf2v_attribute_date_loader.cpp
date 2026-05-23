@@ -649,31 +649,31 @@ bool CTF2VAttributeDateManager::ItemIsAllowedTimePeriod( CEconItemView *pItem, i
 	// Check if this item is in a slot that doesn't exist yet.
 	
 	// Cosmetics as a whole did not exist before Sniper vs. Spy
-	if ( ( iCurrentEra < TF2V_DAY_MAJOR_SNIPER_SPY ) && IsWearableSlot(iSlot) )
+	if ( ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_SNIPER_SPY ) ) && IsWearableSlot(iSlot) )
 	{
 		return false;
 	}
 	
 	// Misc slots did not exist prior to Classless
-	if ( ( iCurrentEra < TF2V_DAY_MAJOR_CLASSLESS ) && ( iSlot == LOADOUT_POSITION_MISC ) )
+	if ( ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_CLASSLESS ) ) && ( iSlot == LOADOUT_POSITION_MISC ) )
 	{
 		return false;
 	}
 	
 	// Misc2 did not exist prior to Engineer Update
-	if ( ( iCurrentEra < TF2V_DAY_MAJOR_ENGINEER ) && ( iSlot == LOADOUT_POSITION_MISC2 ) )
+	if ( ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_ENGINEER ) ) && ( iSlot == LOADOUT_POSITION_MISC2 ) )
 	{
 		return false;
 	}
 	
 	// Action slots were not used prior to Mannconomy
-	if ( ( iCurrentEra < TF2V_DAY_MAJOR_MANNCONOMY ) && ( iSlot == LOADOUT_POSITION_ACTION ) )
+	if ( ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_MANNCONOMY ) ) && ( iSlot == LOADOUT_POSITION_ACTION ) )
 	{
 		return false;
 	}
 	
 	// Taunts were not an item slot prior to the Replay Update
-	if ( ( iCurrentEra < TF2V_DAY_MAJOR_REPLAY ) && IsTauntSlot(iSlot) )
+	if ( ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_REPLAY ) ) && IsTauntSlot(iSlot) )
 	{
 		return false;
 	}
@@ -704,7 +704,7 @@ bool CTF2VAttributeDateManager::ItemIsAllowedTimePeriod( CEconItemView *pItem, i
 			return false;
 	}
 	
-	return GetItemIntroductionDate(pItem->GetItemDefIndex()) < TFGameRules()->GetTF2VEra();
+	return TF2VIsContemporary( GetItemIntroductionDate( pItem->GetItemDefIndex() ) );
 
 }
 
@@ -716,31 +716,29 @@ bool CTF2VAttributeDateManager::ItemQualityIsAllowedTimePeriod( int iQuality )
 	if ( !TFGameRules() )
 		return false;
 
-	int iCurrentEra = TFGameRules()->GetTF2VEra();
-	
 	// Map qualities to their introduction eras
 	switch ( iQuality )
 	{
 		case AE_NORMAL:
 			return true; // Stock items (Always available)
 		case AE_UNIQUE:
-			return iCurrentEra >= TF2V_DAY_MAJOR_GOLDRUSH; // Regular items (If this errors, we have a problem)
+			return TF2VIsContemporary( TF2V_DAY_MAJOR_GOLDRUSH ); // Regular items (If this errors, we have a problem)
 		case AE_COMMUNITY:
-			return iCurrentEra >= TF2V_DAY_MAJOR_WAR; // Community items
+			return TF2VIsContemporary( TF2V_DAY_MAJOR_WAR ); // Community items
 		case AE_SELFMADE:
-			return iCurrentEra >= TF2V_DAY_CONTENT_FIRST_CONTENT; // Self Made
+			return TF2VIsContemporary( TF2V_DAY_CONTENT_FIRST_CONTENT ); // Self Made
 		case AE_VINTAGE:
 		case AE_DEVELOPER:
 		case AE_UNUSUAL: // Unusuals		
-			return iCurrentEra >= TF2V_DAY_MAJOR_MANNCONOMY; // Mann-Conomy Update
+			return TF2VIsContemporary( TF2V_DAY_MAJOR_MANNCONOMY ); // Mann-Conomy Update
 		case AE_RARITY1:
-			return iCurrentEra >= TF2V_DAY_PROMO_RIFT; // Promotional items
+			return TF2VIsContemporary( TF2V_DAY_PROMO_RIFT ); // Promotional items
 		case AE_STRANGE:
-			return iCurrentEra >= TF2V_DAY_MAJOR_UBER; // Strange weapons
+			return TF2VIsContemporary( TF2V_DAY_MAJOR_UBER ); // Strange weapons
 		case AE_HAUNTED:
-			return iCurrentEra >= TF2V_DAY_HALLOWEEN_2011; // Halloween items
+			return TF2VIsContemporary( TF2V_DAY_HALLOWEEN_2011 ); // Halloween items
 		case AE_COLLECTORS:
-			return iCurrentEra >= 2249; // 9 days before TF2V_DAY_MAJOR_TWOCITIES
+			return TF2VIsContemporary( 2249 ); // 9 days before TF2V_DAY_MAJOR_TWOCITIES
 		case AE_PAINTKITWEAPON:
 		case AE_RARITY_DEFAULT:
 		case AE_RARITY_COMMON:
@@ -749,7 +747,7 @@ bool CTF2VAttributeDateManager::ItemQualityIsAllowedTimePeriod( int iQuality )
 		case AE_RARITY_MYTHICAL:
 		case AE_RARITY_LEGENDARY:
 		case AE_RARITY_ANCIENT:
-			return iCurrentEra >= TF2V_DAY_MAJOR_GUN_METTLE; // Warpaint items	
+			return TF2VIsContemporary( TF2V_DAY_MAJOR_GUN_METTLE ); // Warpaint items	
 		default:
 			return false; // Unknown qualities blocked by default
 	}
@@ -769,7 +767,6 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 		return false;
 
 	bool bModified = false;
-	int iCurrentEra = TFGameRules()->GetTF2VEra();
 
 	// Tournament medal check
 	bool bIsMedal = IsItemMedal( pItem );
@@ -794,7 +791,7 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 			 V_stristr( pszAttrName, "item_tint_rgb" ) ||
 			 V_stristr( pszAttrName, "item_tint_rgb_2" ) )
 		{
-			if ( iCurrentEra < TF2V_DAY_MAJOR_MANNCONOMY )
+			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_MANNCONOMY ) )
 			{
 				bShouldRemove = true;
 			}
@@ -803,7 +800,7 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 				// Investigate the permutation further.
 				float flAttribValue = pAttrib->GetValue();
 				int iRGB = (int)flAttribValue;
-				if ( iCurrentEra < GetPaintIntroductionDate( iRGB ) )
+				if ( TF2VIsAnachronistic( GetPaintIntroductionDate( iRGB ) ) )
 					bShouldRemove = true;
 			}
 		}
@@ -812,7 +809,7 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 		else if ( V_stristr( pszAttrName, "attach particle effect" ) ||
 				  V_stristr( pszAttrName, "unusual_effect" ) )
 		{
-			if ( iCurrentEra < TF2V_DAY_MAJOR_MANNCONOMY )
+			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_MANNCONOMY ) )
 			{
 				bShouldRemove = true;
 			}
@@ -821,7 +818,7 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 				// Investigate the permutation further.
 				float flAttribValue = pAttrib->GetValue();
 				int iEffectIndex = (int)flAttribValue;
-				if ( iCurrentEra < GetUnusualEffectIntroductionDate( iEffectIndex ) )
+				if ( TF2VIsAnachronistic( GetUnusualEffectIntroductionDate( iEffectIndex ) ) )
 					bShouldRemove = true;
 			}
 		}
@@ -829,7 +826,7 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 		// Stat tracking (Strange counters) - introduced with Mann-Conomy
 		else if ( V_stristr( pszAttrName, "kill eater" ) )
 		{
-			if ( iCurrentEra < TF2V_DAY_MAJOR_UBER )
+			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_UBER ) )
 			{
 				bShouldRemove = true;
 			}
@@ -839,7 +836,7 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 		else if ( V_stristr( pszAttrName, "halloween" ) ||
 				  V_stristr( pszAttrName, "haunted" ) )
 		{
-			if ( iCurrentEra < TF2V_DAY_HALLOWEEN_2011 )
+			if ( TF2VIsAnachronistic( TF2V_DAY_HALLOWEEN_2011 ) )
 			{
 				bShouldRemove = true;
 			}
@@ -848,7 +845,7 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 		// Festive effects - introduced with Australian Christmas 2011
 		else if ( V_stristr( pszAttrName, "festive" ) )
 		{
-			if ( iCurrentEra < TF2V_DAY_SMISSMAS_2011 )
+			if ( TF2VIsAnachronistic( TF2V_DAY_SMISSMAS_2011 ) )
 			{
 				bShouldRemove = true;
 			}
@@ -858,7 +855,7 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 		else if ( V_stristr( pszAttrName, "killstreak" ) ||
 				  V_stristr( pszAttrName, "kill streak" ) )
 		{
-			if ( iCurrentEra < TF2V_DAY_MAJOR_TWOCITIES )
+			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_TWOCITIES ) )
 			{
 				bShouldRemove = true;
 			}
@@ -867,7 +864,7 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 		// Australium - introduced with Two Cities
 		else if ( V_stristr( pszAttrName, "australium" ) )
 		{
-			if ( iCurrentEra < TF2V_DAY_MAJOR_TWOCITIES )
+			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_TWOCITIES ) )
 			{
 				bShouldRemove = true;
 			}
@@ -876,7 +873,7 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 		else if ( V_stristr( pszAttrName, "paintkit_proto_def_index" ) ||
 				  V_stristr( pszAttrName, "paint_kit_proto_def_index" ) )
 		{
-			if ( iCurrentEra < TF2V_DAY_MAJOR_GUN_METTLE )
+			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_GUN_METTLE ) )
 			{
 				bShouldRemove = true;
 			}
@@ -887,7 +884,7 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 				int iProtoDefIndex = (int)flAttribValue;
 				int iWarPaintIntroDate = GetWarPaintIntroductionDate( iProtoDefIndex );
 			
-				if ( iCurrentEra < iWarPaintIntroDate )
+				if ( TF2VIsAnachronistic( iWarPaintIntroDate ) )
 				{
 					bShouldRemove = true;
 				}
@@ -897,7 +894,7 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 		// Stat clock: February 29 2016 (post Tough Break)
 		else if ( V_stristr( pszAttrName, "stat_" ) )
 		{
-			if ( iCurrentEra < 3088 ) 
+			if ( TF2VIsAnachronistic( 3088 ) )
 			{
 				bShouldRemove = true;
 			}
@@ -919,9 +916,9 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 // This OVERRIDES static_attrs by applying runtime attributes
 // Returns if any attributes were stripped
 //-----------------------------------------------------------------------------
-bool CTF2VAttributeDateManager::ApplyWeaponAttributesToItem( CEconItemView *pOriginalItem, int iCurrentEra )
+bool CTF2VAttributeDateManager::ApplyWeaponAttributesToItem( CEconItemView *pOriginalItem )
 {
-	if ( !pOriginalItem || !pOriginalItem->IsValid() || !m_bInitialized )
+	if ( !pOriginalItem || !pOriginalItem->IsValid() || !m_bInitialized || !TFGameRules() )
 		return false;
 
 	// Get the Itemdef for this weapon, along with its base variant.
@@ -942,6 +939,8 @@ bool CTF2VAttributeDateManager::ApplyWeaponAttributesToItem( CEconItemView *pOri
 	// Find correct version for current era
 	WeaponAttributeVersion_t *pCorrectVersion = NULL;
 	
+	// Easier to call era here once than every time in the loop.
+	int iCurrentEra = TF2VGetEra();
 	for ( int i = pVersions->Count() - 1; i >= 0; i-- )
 	{
 		if ( (*pVersions)[i].iStartDate <= iCurrentEra )
@@ -1010,9 +1009,7 @@ bool CTF2VAttributeDateManager::ItemNeedsModification( CEconItemView *pItem, int
 {
 	if ( !pItem || !pItem->IsValid() || !TFGameRules() )
 		return false;
-	
-	int iCurrentEra = TFGameRules()->GetTF2VEra();
-	
+
 	// Check 1: Quality too new?
 	int iOriginalQuality = pItem->GetItemQuality();
 	if ( !ItemQualityIsAllowedTimePeriod( iOriginalQuality ) )
@@ -1031,7 +1028,7 @@ bool CTF2VAttributeDateManager::ItemNeedsModification( CEconItemView *pItem, int
 		|| iSlot == LOADOUT_POSITION_BUILDING
 		|| iSlot == LOADOUT_POSITION_PDA
 		|| iSlot == LOADOUT_POSITION_PDA2 )
-		&& ( iCurrentEra < TF2V_DAY_LAST_WEAPON_BALANCE ) )
+		&& ( TF2VIsAnachronistic( TF2V_DAY_LAST_WEAPON_BALANCE ) ) )
 	{
 		return true;
 	}
@@ -1048,8 +1045,6 @@ CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemV
 {
 	if ( !pOriginalItem || !pOriginalItem->IsValid() )
 		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
-	
-	int iCurrentEra = TFGameRules()->GetTF2VEra();
 
 	// STEP 1: Check if base item is allowed at all by comparing the release date to the ingame date
 	if ( !ItemIsAllowedTimePeriod( pOriginalItem, iClass, iSlot ) )
@@ -1068,7 +1063,7 @@ CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemV
 		|| iSlot == LOADOUT_POSITION_BUILDING
 		|| iSlot == LOADOUT_POSITION_PDA
 		|| iSlot == LOADOUT_POSITION_PDA2 )
-		&& ( iCurrentEra < TF2V_DAY_LAST_WEAPON_BALANCE ) );
+		&& ( TF2VIsAnachronistic( TF2V_DAY_LAST_WEAPON_BALANCE ) ) );
 	
 	
 	if ( !bQualityModify && !bCosmeticsModify && !bWeaponModify )
@@ -1097,7 +1092,7 @@ CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemV
 	// STEP 6: Weapons get their attributes changed to match the era
 	if ( bWeaponModify )
 	{
-		ApplyWeaponAttributesToItem( pModifiedItem, iCurrentEra );
+		ApplyWeaponAttributesToItem( pModifiedItem );
 	}
 
 	return pModifiedItem;
@@ -1116,8 +1111,6 @@ bool CTF2VAttributeDateManager::HasAnachronisticAttributes( CEconItemView *pItem
 	if ( !pAttribList )
 		return false;
 
-	int iCurrentEra = TFGameRules()->GetTF2VEra();
-	
 	for ( int i = 0; i < pAttribList->GetNumAttributes(); i++ )
 	{
 		const CEconItemAttribute *pAttrib = pAttribList->GetAttribute( i );
@@ -1136,21 +1129,21 @@ bool CTF2VAttributeDateManager::HasAnachronisticAttributes( CEconItemView *pItem
 			 V_stristr( pszAttrName, "item_tint_rgb" ) ||
 			 V_stristr( pszAttrName, "item_tint_rgb_2" ) )
 		{
-			if ( iCurrentEra < TF2V_DAY_MAJOR_MANNCONOMY )
+			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_MANNCONOMY ) )
 				return true;
 			else
 			{
 				// Investigate the permutation further.
 				float flAttribValue = pAttrib->GetValue();
 				int iRGB = (int)flAttribValue;
-				if ( iCurrentEra < GetPaintIntroductionDate( iRGB ) )
+				if ( TF2VIsAnachronistic( GetPaintIntroductionDate( iRGB ) ) )
 					return true;
 			}
 		}
 		else if ( V_stristr( pszAttrName, "attach particle effect" ) ||
 				  V_stristr( pszAttrName, "unusual_effect" ) )
 		{
-			if ( iCurrentEra < TF2V_DAY_MAJOR_MANNCONOMY )
+			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_MANNCONOMY ) )
 			{
 				return true;
 			}
@@ -1159,40 +1152,40 @@ bool CTF2VAttributeDateManager::HasAnachronisticAttributes( CEconItemView *pItem
 				// Investigate the permutation further.
 				float flAttribValue = pAttrib->GetValue();
 				int iEffectIndex = (int)flAttribValue;
-				if ( iCurrentEra < GetUnusualEffectIntroductionDate( iEffectIndex ) )
+				if ( TF2VIsAnachronistic( GetUnusualEffectIntroductionDate( iEffectIndex ) ) )
 					return true;
 			}
 		}
 		else if ( V_stristr( pszAttrName, "kill eater" ) )
 		{
-			if ( iCurrentEra < TF2V_DAY_MAJOR_UBER )
+			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_UBER ) )
 				return true;
 		}
 		else if ( V_stristr( pszAttrName, "halloween" ) ||
 				  V_stristr( pszAttrName, "haunted" ) )
 		{
-			if ( iCurrentEra < TF2V_DAY_HALLOWEEN_2011 )
+			if ( TF2VIsAnachronistic( TF2V_DAY_HALLOWEEN_2011 ) )
 				return true;
 		}
 		else if ( V_stristr( pszAttrName, "festive" ) )
 		{
-			if ( iCurrentEra < TF2V_DAY_SMISSMAS_2011 )
+			if ( TF2VIsAnachronistic( TF2V_DAY_SMISSMAS_2011 ) )
 				return true;
 		}
 		else if ( V_stristr( pszAttrName, "killstreak" ) || V_stristr( pszAttrName, "kill streak" ) )
 		{
-			if ( iCurrentEra < TF2V_DAY_MAJOR_TWOCITIES )
+			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_TWOCITIES ) )
 				return true;
 		}
 		else if ( V_stristr( pszAttrName, "australium" ) )
 		{
-			if ( iCurrentEra < TF2V_DAY_MAJOR_TWOCITIES )
+			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_TWOCITIES ) )
 				return true;
 		}
 		else if ( V_stristr( pszAttrName, "paintkit_proto_def_index" ) ||
 				  V_stristr( pszAttrName, "paint_kit_proto_def_index" ) )
 		{
-			if ( iCurrentEra < TF2V_DAY_MAJOR_GUN_METTLE )
+			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_GUN_METTLE ) )
 			{
 				return true;
 			}
@@ -1203,7 +1196,7 @@ bool CTF2VAttributeDateManager::HasAnachronisticAttributes( CEconItemView *pItem
 				int iProtoDefIndex = (int)flAttribValue;
 				int iWarPaintIntroDate = GetWarPaintIntroductionDate( iProtoDefIndex );
 			
-				if ( iCurrentEra < iWarPaintIntroDate )
+				if ( TF2VIsAnachronistic( iWarPaintIntroDate ) )
 				{
 					return true;
 				}
@@ -1211,7 +1204,7 @@ bool CTF2VAttributeDateManager::HasAnachronisticAttributes( CEconItemView *pItem
 		}
 		else if ( V_stristr( pszAttrName, "stat_" ) )
 		{
-			if ( iCurrentEra < 3088 )
+			if ( TF2VIsAnachronistic( 3088 ) )
 				return true;
 		}
 	}
