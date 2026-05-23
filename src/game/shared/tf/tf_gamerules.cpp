@@ -6528,7 +6528,7 @@ void CTFGameRules::RadiusDamage( CTFRadiusDamageInfo &info )
 					float flScale;
 					// TF2V: Clamped in Gun Mettle. Scale Health mod with damage dealt, input being the maximum amount of health possible
 					if ( TF2VIsContemporary( TF2V_DAY_MAJOR_GUN_METTLE ) )
-						flScale = Clamp( nDamageDealt / flBaseDamage, 0.f, 1.0f )
+						flScale = Clamp( nDamageDealt / flBaseDamage, 0.f, 1.0f );
 					else // Before Gun Mettle: Scale health mod with number of enemies hit, input being constant.
 						flScale = (float)iDamageEnemies;
 					iModHealthOnHit = (int)( (float)iModHealthOnHit * flScale );
