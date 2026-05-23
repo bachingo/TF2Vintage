@@ -26,7 +26,28 @@ struct WeaponAttributeVersion_t
 	int iStartDate;									// Start date (days since launch)
 	CUtlVector<CEconItemAttribute> attributes;		// Attributes active during this period
 	
-	WeaponAttributeVersion_t() { iStartDate = 0; }
+	WeaponAttributeVersion_t() 
+	{ 
+		iStartDate = 0; 
+	}
+
+	// Add an explicit copy constructor so V_swap can shuffle it during sorting
+	WeaponAttributeVersion_t( const WeaponAttributeVersion_t &other )
+	{
+		iStartDate = other.iStartDate;
+		attributes.CopyFrom( other.attributes );
+	}
+
+	// Add an explicit assignment operator as well
+	WeaponAttributeVersion_t& operator=( const WeaponAttributeVersion_t &other )
+	{
+		if ( this != &other )
+		{
+			iStartDate = other.iStartDate;
+			attributes.CopyFrom( other.attributes );
+		}
+		return *this;
+	}
 };
 
 //-----------------------------------------------------------------------------
