@@ -1038,7 +1038,7 @@ bool CTF2VAttributeDateManager::ItemNeedsModification( CEconItemView *pItem, int
 
 //-----------------------------------------------------------------------------
 // Get time-period compliant version of item
-// Returns: Modified item, base item if too new, or o      riginal if compliant
+// Returns: Modified item, base item if too new, or original if compliant
 //-----------------------------------------------------------------------------
 CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemView *pOriginalItem, int iClass /*= -1*/, int iSlot /*= -1*/)
 {
