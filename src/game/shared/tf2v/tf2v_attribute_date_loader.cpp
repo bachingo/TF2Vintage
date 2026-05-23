@@ -1038,7 +1038,7 @@ bool CTF2VAttributeDateManager::ItemNeedsModification( CEconItemView *pItem, int
 
 //-----------------------------------------------------------------------------
 // Get time-period compliant version of item
-// Returns: Modified item, base item if too new, or original if compliant
+// Returns: Modified item, base item if too new, or o      riginal if compliant
 //-----------------------------------------------------------------------------
 CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemView *pOriginalItem, int iClass /*= -1*/, int iSlot /*= -1*/)
 {
@@ -1053,7 +1053,7 @@ CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemV
 	}
 
 	// STEP 2: Check if item needs modification
-	bool bQualityModify = !ItemQualityIsAllowedTimePeriod( pItem->GetItemQuality() );
+	bool bQualityModify = !ItemQualityIsAllowedTimePeriod( pOriginalItem->GetItemQuality() );
 	bool bCosmeticsModify = HasAnachronisticAttributes( pOriginalItem );
 	bool bWeaponModify = ( ( iSlot == LOADOUT_POSITION_PRIMARY
 		|| iSlot == LOADOUT_POSITION_SECONDARY
