@@ -79,6 +79,9 @@ public:
 	bool HasAnachronisticAttributes( CEconItemView *pItem );
 	bool StripAnachronisticAttributes( CEconItemView *pItem );
 	
+	// Quick validation check - returns true if item needs modification
+	bool ItemNeedsModification( CEconItemView *pItem, int iSlot );
+	
 	// Weapon attribute versioning
 	bool ApplyWeaponAttributesToItem( CEconItemView *pOriginalItem, int iCurrentEra );
 	

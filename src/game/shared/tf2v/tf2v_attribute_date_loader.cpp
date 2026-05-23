@@ -440,12 +440,9 @@ bool CTF2VAttributeDateManager::ParseAttributeBlock( KeyValues *pKV, CUtlVector<
 			continue;
 		}
 
-		CEconItemAttribute attribute;
-		attribute.SetAttributeDefinition( pAttrDef );
-		
-		attribute_data_union_t value;
-		value.asFloat = atof( pszValue );
-		attribute.SetValue( value );
+		// Create attribute using the constructor that takes index and value
+		float flValue = atof( pszValue );
+		CEconItemAttribute attribute( pAttrDef->GetDefinitionIndex(), flValue );
 		
 		attributes.AddToTail( attribute );
 	}
@@ -605,15 +602,8 @@ bool CTF2VAttributeDateManager::IsPaintPlayerApplied( CEconItemView *pItem, cons
 }
 
 //-----------------------------------------------------------------------------
-// Attribute category helper
+// Attribute category helper - Get category for filtering
 //-----------------------------------------------------------------------------
-enum AttributeCategory_t
-{
-	ATTRIB_CAT_WEAPON_STAT,		// Replace with era version
-	ATTRIB_CAT_MODIFIER,		// Strip if anachronistic (done elsewhere)
-	ATTRIB_CAT_COSMETIC,		// Always preserve
-};
-
 static AttributeCategory_t GetAttributeCategory( const char *pszAttrClass )
 {
 	if ( !pszAttrClass )
@@ -656,6 +646,38 @@ bool CTF2VAttributeDateManager::ItemIsAllowedTimePeriod( CEconItemView *pItem, i
 	if ( !pItem || !pItem->GetStaticData() || !TFGameRules() )
 		return false;
 	
+	// Check if this item is in a slot that doesn't exist yet.
+	
+	// Cosmetics as a whole did not exist before Sniper vs. Spy
+	if ( ( iCurrentEra < TF2V_DAY_MAJOR_SNIPER_SPY ) && IsWearableSlot(iSlot) )
+	{
+		return false;
+	}
+	
+	// Misc slots did not exist prior to Classless
+	if ( ( iCurrentEra < TF2V_DAY_MAJOR_CLASSLESS ) && ( iSlot == LOADOUT_POSITION_MISC ) )
+	{
+		return false;
+	}
+	
+	// Misc2 did not exist prior to Engineer Update
+	if ( ( iCurrentEra < TF2V_DAY_MAJOR_ENGINEER ) && ( iSlot == LOADOUT_POSITION_MISC2 ) )
+	{
+		return false;
+	}
+	
+	// Action slots were not used prior to Mannconomy
+	if ( ( iCurrentEra < TF2V_DAY_MAJOR_MANNCONOMY ) && ( iSlot == LOADOUT_POSITION_ACTION ) )
+	{
+		return false;
+	}
+	
+	// Taunts were not an item slot prior to the Replay Update
+	if ( ( iCurrentEra < TF2V_DAY_MAJOR_REPLAY ) && IsTauntSlot(iSlot) )
+	{
+		return false;
+	}
+	
 	// TF2V: Special condition for the Gunboats.
 	if ( pItem->GetItemDefIndex() == 133 )
 	{
@@ -683,8 +705,7 @@ bool CTF2VAttributeDateManager::ItemIsAllowedTimePeriod( CEconItemView *pItem, i
 	}
 	
 	return GetItemIntroductionDate(pItem->GetItemDefIndex()) < TFGameRules()->GetTF2VEra();
-	
-	return false;
+
 }
 
 //-----------------------------------------------------------------------------
@@ -963,7 +984,7 @@ bool CTF2VAttributeDateManager::ApplyWeaponAttributesToItem( CEconItemView *pOri
 	}
 
 	// Clear all attributes (this clears weapon stats but we saved modifiers)
-	pAttribList->RemoveAllAttributes();
+	pAttribList->DestroyAllAttributes();
 
 	// Apply era-appropriate weapon stats
 	for ( int i = 0; i < pCorrectVersion->attributes.Count(); i++ )
@@ -981,6 +1002,45 @@ bool CTF2VAttributeDateManager::ApplyWeaponAttributesToItem( CEconItemView *pOri
 }
 
 //-----------------------------------------------------------------------------
+// Quick check if item needs modification for current era
+// Returns true if item needs modification (without creating a copy)
+// This is a fast validation path to avoid unnecessary item copies
+//-----------------------------------------------------------------------------
+bool CTF2VAttributeDateManager::ItemNeedsModification( CEconItemView *pItem, int iSlot )
+{
+	if ( !pItem || !pItem->IsValid() || !TFGameRules() )
+		return false;
+	
+	int iCurrentEra = TFGameRules()->GetTF2VEra();
+	
+	// Check 1: Quality too new?
+	int iOriginalQuality = pItem->GetItemQuality();
+	if ( !ItemQualityIsAllowedTimePeriod( iOriginalQuality ) )
+		return true;
+	
+	// Check 2: Cosmetic attributes too new?
+	if ( HasAnachronisticAttributes( pItem ) )
+		return true;
+	
+	// Check 3: Weapon attributes need era adjustment?
+	// Weapons need attribute versioning if we're before the last balance patch
+	if ( ( iSlot == LOADOUT_POSITION_PRIMARY
+		|| iSlot == LOADOUT_POSITION_SECONDARY
+		|| iSlot == LOADOUT_POSITION_MELEE
+		|| iSlot == LOADOUT_POSITION_UTILITY
+		|| iSlot == LOADOUT_POSITION_BUILDING
+		|| iSlot == LOADOUT_POSITION_PDA
+		|| iSlot == LOADOUT_POSITION_PDA2 )
+		&& ( iCurrentEra < TF2V_DAY_LAST_WEAPON_BALANCE ) )
+	{
+		return true;
+	}
+	
+	// Item is compliant - no modification needed
+	return false;
+}
+
+//-----------------------------------------------------------------------------
 // Get time-period compliant version of item
 // Returns: Modified item, base item if too new, or original if compliant
 //-----------------------------------------------------------------------------
@@ -990,110 +1050,52 @@ CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemV
 		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
 	
 	int iCurrentEra = TFGameRules()->GetTF2VEra();
-	
-	// Check if this item is in a slot that doesn't exist yet.
-	
-	// Cosmetics as a whole did not exist before Sniper vs. Spy
-	if ( ( iCurrentEra < TF2V_DAY_MAJOR_SNIPER_SPY ) && IsWearableSlot(iSlot) )
-	{
-		return nullptr;
-	}
-	
-	// Misc slots did not exist prior to Classless
-	if ( ( iCurrentEra < TF2V_DAY_MAJOR_CLASSLESS ) && ( iSlot == LOADOUT_POSITION_MISC ) )
-	{
-		return nullptr;
-	}
-	
-	// Misc2 did not exist prior to Engineer Update
-	if ( ( iCurrentEra < TF2V_DAY_MAJOR_ENGINEER ) && ( iSlot == LOADOUT_POSITION_MISC2 ) )
-	{
-		return nullptr;
-	}
-	
-	// Action slots were not used prior to Mannconomy
-	if ( ( iCurrentEra < TF2V_DAY_MAJOR_MANNCONOMY ) && ( iSlot == LOADOUT_POSITION_ACTION ) )
-	{
-		return nullptr;
-	}
-	
-	// Taunts were not an item slot prior to the Replay Update
-	if ( ( iCurrentEra < TF2V_DAY_MAJOR_REPLAY ) && IsTauntSlot(iSlot) )
-	{
-		return nullptr;
-	}
-	
-	// Passes the slot check. Now we have to look into the item's details.
+
 	// STEP 1: Check if base item is allowed at all by comparing the release date to the ingame date
 	if ( !ItemIsAllowedTimePeriod( pOriginalItem, iClass, iSlot ) )
 	{
 		// Base item is too new - replace entirely with stock
-		if ( IsWearableSlot( iSlot ) )
-			return nullptr;
-		else
-			return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
 	}
 
-	// Base item is allowed, now check for modifications needed
-	bool bNeedsModification = false;
+	// STEP 2: Check if item needs modification
+	bool bQualityModify = !ItemQualityIsAllowedTimePeriod( iOriginalQuality );
+	bool bCosmeticsModify = HasAnachronisticAttributes( pOriginalItem );
+	bool bWeaponModify = ( ( iSlot == LOADOUT_POSITION_PRIMARY
+		|| iSlot == LOADOUT_POSITION_SECONDARY
+		|| iSlot == LOADOUT_POSITION_MELEE
+		|| iSlot == LOADOUT_POSITION_UTILITY
+		|| iSlot == LOADOUT_POSITION_BUILDING
+		|| iSlot == LOADOUT_POSITION_PDA
+		|| iSlot == LOADOUT_POSITION_PDA2 )
+		&& ( iCurrentEra < TF2V_DAY_LAST_WEAPON_BALANCE ) );
 	
-	// STEP 2: Check quality
-	int iOriginalQuality = pOriginalItem->GetItemQuality();
-	bool bQualityTooNew = !ItemQualityIsAllowedTimePeriod( iOriginalQuality );
-	if ( bQualityTooNew )
-	{
-		bNeedsModification = true;
-	}
-
-	// Check if any of our cosmetic applications (paints, killstreaks, war paints) are too new.
-	bool bCosmeticAttributesTooNew = HasAnachronisticAttributes( pOriginalItem );
-	if ( bCosmeticAttributesTooNew )
-	{
-		bNeedsModification = true;
-	}
 	
-	// Check if our weapons need adjusting.
-	// We do this based on whether or not the date is after the most recent balance patch.
-	bool bWeaponAttributesTooNew = ( ( iSlot == LOADOUT_POSITION_PRIMARY
-									|| iSlot == LOADOUT_POSITION_SECONDARY
-									|| iSlot == LOADOUT_POSITION_MELEE
-									|| iSlot == LOADOUT_POSITION_UTILITY
-									|| iSlot == LOADOUT_POSITION_BUILDING
-									|| iSlot == LOADOUT_POSITION_PDA
-									|| iSlot == LOADOUT_POSITION_PDA2 )
-								&& ( iCurrentEra < TF2V_DAY_LAST_WEAPON_BALANCE ) );
-	if ( bWeaponAttributesTooNew )
+	if ( !bQualityModify && !bCosmeticsModify && !bWeaponModify )
 	{
-		bNeedsModification = true;
-	}	
-
-	// STEP 3: Check if any attributes need stripping
-	// We'll check this on the copy to avoid modifying original
-	if ( !bNeedsModification )
-	{
-		// Item is completely compliant - return as-is
+		// Item is completely compliant, return as-is
 		return pOriginalItem;
 	}
 
-	// STEP 4: Create a modified copy
+	// STEP 3: Item needs modification: create a copy and apply changes
 	// Note: You may want to cache this instead of creating new every time
 	CEconItemView *pModifiedItem = new CEconItemView( *pOriginalItem );
 	
-	// STEP 5: Downgrade quality if needed
-	if ( bQualityTooNew )
+	// STEP 4: Downgrade quality if needed
+	int iOriginalQuality = pOriginalItem->GetItemQuality();
+	if ( bQualityModify )
 	{
 		pModifiedItem->SetItemQuality( AE_UNIQUE );
 	}
 
-	// STEP 6: Strip anachronistic cosmetic attributes
-	if ( bCosmeticAttributesTooNew )
+	// STEP 5: Strip anachronistic cosmetic attributes
+	if ( bCosmeticsModify )
 	{
 		StripAnachronisticAttributes( pModifiedItem );
 	}
 	
-	// STEP 7: Weapons get their attributes changed.
-	// Preserve cosmetic and essential attributes.
-	if ( bWeaponAttributesTooNew )
+	// STEP 6: Weapons get their attributes changed to match the era
+	if ( bWeaponModify )
 	{
 		ApplyWeaponAttributesToItem( pModifiedItem, iCurrentEra );
 	}
