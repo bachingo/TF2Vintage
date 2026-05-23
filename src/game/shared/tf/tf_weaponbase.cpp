@@ -5362,7 +5362,8 @@ void CTFWeaponBase::ApplyOnHitAttributes( CBaseEntity *pVictimBaseEntity, CTFPla
 	if ( iModHealthOnHit )
 	{
 		// Scale Health mod with damage dealt, input being the maximum amount of health possible
-		float flScale = Clamp( info.GetDamage() / info.GetBaseDamage(), 0.f, 1.0f );
+		// TF2V: No scaling done before Gun Mettle.
+		float flScale = TF2VIsContemporary( TF2V_DAY_MAJOR_GUN_METTLE ) ? Clamp( info.GetDamage() / info.GetBaseDamage(), 0.f, 1.0f ) : 1.0f;
 		iModHealthOnHit = Max( 3, (int)( (float)iModHealthOnHit * flScale ) );
 	}
 
