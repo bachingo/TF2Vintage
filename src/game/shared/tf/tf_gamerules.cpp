@@ -7673,31 +7673,21 @@ bool CTFGameRules::ApplyOnDamageModifyRules( CTakeDamageInfo &info, CBaseEntity 
 			case TF_WEAPON_SCATTERGUN :
 			case TF_WEAPON_SODA_POPPER :
 			case TF_WEAPON_PEP_BRAWLER_BLASTER :
-			//case TF_WEAPON_HANDGUN_SCOUT_PRIMARY :		// Shortstop
+			case TF_WEAPON_HANDGUN_SCOUT_PRIMARY :		// Shortstop
 				// Scattergun gets 50% bonus at short range
 				if ( flRandomRangeVal > 0.5f )
 				{
 					flRandomDamage *= 1.5f;
 				}
 				break;
-#if defined(MCOMS_BALACNE_PACK)
-			case TF_WEAPON_REVOLVER:
-				// Revolvers falloff more harshly at long range
-				if (flRandomRangeVal < 0.5f && bCrit)
+			case TF_WEAPON_NAILGUN :
+			case TF_WEAPON_SYRINGEGUN_MEDIC :
+				// Nailguns: Get 50% bonus rampup at short range
+				if ( flRandomRangeVal > 0.5f )
 				{
-					if (flRandomRangeVal < 0.1f)
-					{
-						flRandomDamage *= bIsPrecisionRevolver ? 1.2f : 1.5f;
-					}
-					else
-					{
-						flRandomDamage *= bIsPrecisionRevolver ? 1.0f : 1.2f;
-					}
-					// can't reduce the crit below the actual damage
-					flRandomDamage = min(flRandomDamage, flDamage * 0.666666f);
+					flRandomDamage *= 1.5f;
 				}
 				break;
-#endif
 			}
 		}
 
