@@ -6167,11 +6167,6 @@ void C_TFPlayer::ClientThink()
 		StopSaveMeEffect( true );
 	}
 
-	C_TFPlayer* pLocalPlayer = GetLocalTFPlayer();
-	C_TFPlayer* pTFHealTarget = pLocalPlayer ? ToTFPlayer( pLocalPlayer->MedicGetHealTarget() ) : nullptr;
-	const bool bHealingThisPlayer = pTFHealTarget && pTFHealTarget == this;
-	SetClientSideGlowEnabled( bHealingThisPlayer, CLIENTSIDE_GLOW_HEALER );
-
 	if ( ShouldTauntHintIconBeVisible() )
 	{
 		CreateTauntWithMeEffect();
@@ -8586,11 +8581,6 @@ void C_TFPlayer::CreateSaveMeEffect( MedicCallerType nType /*= CALLER_TYPE_NORMA
 		m_pSaveMeEffect = ParticleProp()->Create( "speech_mediccall", PATTACH_POINT_FOLLOW, "head" );
 	}
 
-	if ( pLocalPlayer->IsPlayerClass( TF_CLASS_MEDIC ) )
-	{
-		SetClientSideGlowEnabled( true, CLIENTSIDE_GLOW_SAVEME );
-	}
-
 	if ( m_pSaveMeEffect )
 	{
 		m_pSaveMeEffect->SetControlPoint( 1, vHealth );
@@ -8662,8 +8652,6 @@ void C_TFPlayer::StopSaveMeEffect( bool bForceRemoveInstantly /*= false*/ )
 		{
 			ParticleProp()->StopEmission( m_pSaveMeEffect );
 		}
-		
-		SetClientSideGlowEnabled( false, CLIENTSIDE_GLOW_SAVEME );
 		
 		m_pSaveMeEffect = NULL;
 	}
