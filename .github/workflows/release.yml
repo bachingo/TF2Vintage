@@ -2,14 +2,14 @@ name: Release
 
 on:
   schedule:
-    # Every Tuesday at 6 PM EST (UTC-5) = 23:00 UTC — active Nov–Mar
-    - cron: '0 23 * * 2'
-    # Every Tuesday at 6 PM EDT (UTC-4) = 22:00 UTC — active Mar–Nov
-    - cron: '0 22 * * 2'
-    # Both crons fire every Tuesday year-round (one per timezone window).
-    # classify checks the 84-day threshold to decide: release or nightly.
-    # 84 days = exactly 12 weeks, fitting within a 90-day release window.
-    # If a build fails on day 84 the next Tuesday (day 91) is the failsafe.
+    # First Wednesday of odd months at 4 AM UTC (mid-week, lowest internet traffic)
+    # This is Tuesday 11 PM EST / 8 PM PST in North America
+    - cron: '0 4 1-7 1,3,5,7,9,11 3'
+    # Runs on the first Wednesday of odd months (Jan, Mar, May, Jul, Sep, Nov).
+    # 4 AM UTC is during the global internet traffic minimum (weekday early morning).
+    # Day range 1-7 ensures we catch the first week when Wednesday occurs.
+    # Mid-week timing avoids disrupting players during weekend gaming sessions.
+    # classify will determine whether to build a release or nightly based on the 84-day threshold.
   workflow_dispatch:
     inputs:
       release_type:
