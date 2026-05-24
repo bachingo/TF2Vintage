@@ -7673,21 +7673,21 @@ bool CTFGameRules::ApplyOnDamageModifyRules( CTakeDamageInfo &info, CBaseEntity 
 			case TF_WEAPON_SCATTERGUN :
 			case TF_WEAPON_SODA_POPPER :
 			case TF_WEAPON_PEP_BRAWLER_BLASTER :
-			case TF_WEAPON_HANDGUN_SCOUT_PRIMARY :		// Shortstop
+			//case TF_WEAPON_HANDGUN_SCOUT_PRIMARY :		// Shortstop
 				// Scattergun gets 50% bonus at short range
 				if ( flRandomRangeVal > 0.5f )
 				{
 					flRandomDamage *= 1.5f;
 				}
 				break;
-			case TF_WEAPON_NAILGUN :
-			case TF_WEAPON_SYRINGEGUN_MEDIC :
+			//case TF_WEAPON_NAILGUN :
+			//case TF_WEAPON_SYRINGEGUN_MEDIC :
 				// Nailguns: Get 50% bonus rampup at short range
-				if ( flRandomRangeVal > 0.5f )
-				{
-					flRandomDamage *= 1.5f;
-				}
-				break;
+				//if ( flRandomRangeVal > 0.5f )
+				//{
+				//	flRandomDamage *= 1.5f;
+				//}
+				//break;
 			}
 		}
 
