@@ -616,7 +616,9 @@ AttributeCategory_t CTF2VAttributeDateManager::GetAttributeCategory( const char 
 		 V_stristr( pszAttrClass, "unusual_description" ) ||
 		 V_stristr( pszAttrClass, "tournament_item" ) ||
 		 V_stristr( pszAttrClass, "item_name" ) ||
-		 V_stristr( pszAttrClass, "item_description" ) )
+		 V_stristr( pszAttrClass, "item_description" ) ||
+		 V_stristr( pszAttrClass, "disable_fancy_class_select_anim" ) )
+		 
 	{
 		return ATTRIB_CAT_COSMETIC;
 	}
