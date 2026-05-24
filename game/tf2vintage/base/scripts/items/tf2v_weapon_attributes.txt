@@ -166,6 +166,34 @@
     "513"  // Original     (primary)
     "127"  // Direct Hit     (primary)
     "228"  // Black Box     (primary)
+	{
+		"2010/09/30" // Mann-Conomy
+		{
+				"health on radius damage"
+				{
+					"attribute_class"	"add_health_on_radius_damage"
+					"value"	"15"
+				}
+				"clip size penalty"
+				{
+					"attribute_class"	"mult_clipsize"
+					"value" "0.75"
+				}
+		}
+		"2015/07/02" // Gun Mettle
+		{
+				"health on radius damage"
+				{
+					"attribute_class"	"add_health_on_radius_damage"
+					"value"	"20"
+				}
+				"clip size penalty"
+				{
+					"attribute_class"	"mult_clipsize"
+					"value" "0.75"
+				}
+		}
+	}
     "237"  // Rocket Jumper     (primary)
     "414"  // Liberty Launcher    (primary)
     "441"  // Cow Mangler 5000    (primary)
