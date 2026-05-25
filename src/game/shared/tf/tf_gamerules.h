@@ -1781,9 +1781,6 @@ inline int TF2VGetEra( void )
 {
     if ( !TFGameRules() )
         return 0; // Not initialized yet, return 0.
-	
-	if ( !m_nTF2VEra )
-		return 0; // No value established yet, return 0.
 
     return TFGameRules()->GetTF2VEra();
 }
