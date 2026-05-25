@@ -1529,24 +1529,8 @@ void CHudStopWatch::OnTick( void )
 		{
 			m_pTimePanel->SetVisible( true );
 			m_pStopWatchLabel->SetVisible( false );
-
-			// TODO(mcoms): should we hide in the capped all points case?
-#if 0
-			const bool bCappedAllPoints = TFGameRules() && TFGameRules()->StopWatchShouldBeTimedWin();
-#else
-			const bool bCappedAllPoints = false;
-#endif
-			const bool bScorePerRound = !ObjectiveResource()->ShouldScorePerCapture();
-			if ( bCappedAllPoints || bScorePerRound )
-			{
-				m_pStopWatchScore->SetVisible( false );
-				m_pStopWatchPointsLabel->SetVisible( false );
-			}
-			else
-			{
-				m_pStopWatchScore->SetVisible( true );
-				m_pStopWatchPointsLabel->SetVisible( true );
-			}
+			m_pStopWatchScore->SetVisible( true );
+			m_pStopWatchPointsLabel->SetVisible( true );
 
 			m_pStopWatchImage->SetImage( "../hud/ico_time_10" );
 
@@ -1562,14 +1546,7 @@ void CHudStopWatch::OnTick( void )
 				}
 				else
 				{
-					int iDefenderScore = pDefender->Get_Score();
-					int iAttackerScore = pAttacker->Get_Score();
-					// if the attackers didn't win a round, adjust the defender score since they got a point
-					if ( !ObjectiveResource()->ShouldScorePerCapture() && iDefenderScore == 0 )
-					{
-						iAttackerScore -= 1;
-					}
-					iPoints = iDefenderScore - iAttackerScore;
+					iPoints = pDefender->Get_Score() - pAttacker->Get_Score();
 				}
 			}
 
@@ -1641,20 +1618,11 @@ void CHudStopWatch::OnTick( void )
 
 			wchar_t wzScoreVal[128];
 
-			int iDefenderScore = pDefender->Get_Score();
-			int iAttackerScore = pAttacker->Get_Score();
-			// if the attackers didn't win a round, adjust the defender score since they got a point
-			if ( !ObjectiveResource()->ShouldScorePerCapture() && iDefenderScore == 0 )
-			{
-				iAttackerScore -= 1;
-			}	
-			int iPoints = ( iDefenderScore - iAttackerScore ) + 1;
-			iPoints = Max( iPoints, 0 );
+			int iPoints = (pDefender->Get_Score() - pAttacker->Get_Score()) + 1;
 			wchar_t wzVal[16];
 
 			swprintf( wzVal, ARRAYSIZE( wzVal ), L"%d", iPoints );
 			
-			// TODO(mcoms): what to do for score per round?
 			if ( pPlayer->GetTeam() == pAttacker )
 			{
 				g_pVGuiLocalize->ConstructString_safe( wzScoreVal, g_pVGuiLocalize->Find( CFmtStr( "Tournament_StopWatchPointCaptureAttacker%s", bMultiSeries ? "_Series" : "" ) ), 2, wzVal, iPoints == 1 ? g_pVGuiLocalize->Find( "#Tournament_StopWatch_Point" ) : g_pVGuiLocalize->Find( "#Tournament_StopWatch_Points" ) );
