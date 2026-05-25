@@ -645,7 +645,7 @@ AttributeCategory_t CTF2VAttributeDateManager::GetAttributeCategory( const char 
 //-----------------------------------------------------------------------------
 bool CTF2VAttributeDateManager::ItemIsAllowedTimePeriod( CEconItemView *pItem, int iClass, int iSlot )
 {
-	if ( !pItem || !pItem->GetStaticData() || !TFGameRules() )
+	if ( !pItem || !pItem->GetStaticData() || !m_bInitialized || !TFGameRules() || !TF2VGetEra() )
 		return false;
 	
 	// Check if this item is in a slot that doesn't exist yet.
@@ -680,8 +680,9 @@ bool CTF2VAttributeDateManager::ItemIsAllowedTimePeriod( CEconItemView *pItem, i
 		return false;
 	}
 	
+	int iDefIndex = pItem->GetItemDefIndex();
 	// TF2V: Special condition for the Gunboats.
-	if ( pItem->GetItemDefIndex() == 133 )
+	if ( iDefIndex == 133 )
 	{
 		if ( iClass == TF_CLASS_DEMOMAN && !tf2v_war_result.GetInt() )
 		{
@@ -699,14 +700,18 @@ bool CTF2VAttributeDateManager::ItemIsAllowedTimePeriod( CEconItemView *pItem, i
 	}
 
 	// TF2V: Edge case for the Reserve Shooter.
-	if ( pItem->GetItemDefIndex() == 415 )
+	if ( iDefIndex == 415 )
 	{
 		// Pyro didn't get the Reserve Shooter until Manniversary.
 		if ( iClass == TF_CLASS_PYRO && TF2VIsAnachronistic( TF2V_DAY_MAJOR_MANNIVERSARY ) )
 			return false;
 	}
 	
-	return TF2VIsContemporary( GetItemIntroductionDate( pItem->GetItemDefIndex() ) );
+	// Get the specific date it released as an integer.
+	int iItemDate = GetItemIntroductionDate( pItem->GetItemDefIndex() );
+	
+	// True when the current date is equal or later than its introduction date.
+	return TF2VIsContemporary( iItemDate );
 
 }
 
@@ -715,7 +720,7 @@ bool CTF2VAttributeDateManager::ItemIsAllowedTimePeriod( CEconItemView *pItem, i
 //-----------------------------------------------------------------------------
 bool CTF2VAttributeDateManager::ItemQualityIsAllowedTimePeriod( int iQuality )
 {
-	if ( !TFGameRules() )
+	if ( !TFGameRules() || !TF2VGetEra() )
 		return false;
 
 	// Map qualities to their introduction eras
@@ -761,7 +766,7 @@ bool CTF2VAttributeDateManager::ItemQualityIsAllowedTimePeriod( int iQuality )
 //-----------------------------------------------------------------------------
 bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pItem )
 {
-	if ( !pItem || !pItem->IsValid() || !TFGameRules() )
+	if ( !pItem || !pItem->IsValid() || !m_bInitialized || !TFGameRules() || !TF2VGetEra() )
 		return false;
 
 	CAttributeList *pAttribList = pItem->GetAttributeList();
@@ -920,7 +925,7 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 //-----------------------------------------------------------------------------
 bool CTF2VAttributeDateManager::ApplyWeaponAttributesToItem( CEconItemView *pOriginalItem )
 {
-	if ( !pOriginalItem || !pOriginalItem->IsValid() || !m_bInitialized || !TFGameRules() )
+	if ( !pOriginalItem || !pOriginalItem->IsValid() || !m_bInitialized || !TFGameRules() || !TF2VGetEra() )
 		return false;
 
 	// Get the Itemdef for this weapon, along with its base variant.
@@ -1009,7 +1014,7 @@ bool CTF2VAttributeDateManager::ApplyWeaponAttributesToItem( CEconItemView *pOri
 //-----------------------------------------------------------------------------
 bool CTF2VAttributeDateManager::ItemNeedsModification( CEconItemView *pItem, int iSlot )
 {
-	if ( !pItem || !pItem->IsValid() || !TFGameRules() )
+	if ( !pItem || !pItem->IsValid() || !TFGameRules() || !TF2VGetEra() )
 		return false;
 
 	// Check 1: Quality too new?
@@ -1044,7 +1049,7 @@ bool CTF2VAttributeDateManager::ItemNeedsModification( CEconItemView *pItem, int
 //-----------------------------------------------------------------------------
 CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemView *pOriginalItem, int iClass /*= -1*/, int iSlot /*= -1*/)
 {
-	if ( !pOriginalItem || !pOriginalItem->IsValid() )
+	if ( !pOriginalItem || !pOriginalItem->IsValid() || !TFGameRules() || !TF2VGetEra() )
 		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
 
 	// STEP 1: Check if base item is allowed at all by comparing the release date to the ingame date
@@ -1104,7 +1109,7 @@ CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemV
 //-----------------------------------------------------------------------------
 bool CTF2VAttributeDateManager::HasAnachronisticAttributes( CEconItemView *pItem )
 {
-	if ( !pItem || !pItem->IsValid() || !TFGameRules() )
+	if ( !pItem || !pItem->IsValid() || !TFGameRules() || !TF2VGetEra() )
 		return false;
 
 	CAttributeList *pAttribList = pItem->GetAttributeList();

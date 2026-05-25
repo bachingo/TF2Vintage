@@ -896,23 +896,27 @@ CEquippableItemsForSlotGenerator::CEquippableItemsForSlotGenerator( int iClass, 
 		// If this item conflicts with items we already have equipped, we note that so that it shows up
 		// differently.
 		CEquippableItemsForSlotGenerator::EItemDisplayType eDisplayType = kSlotDisplay_Normal;
-
-		if ( pItem->GetItemDefinition()->GetEquipRegionMask() & unUsedEquipRegionMask )
-		{
-			eDisplayType = kSlotDisplay_Disabled_EquipRegionConflict;
-		}
-
+		
 		// TF2V: Use the same function from the server uses for era enforcement to check items here.
-		if ( TFGameRules() )
+		// Do this only when we're in a time period that has items to block and we actually have values to check.
+		if ( TFGameRules() && TF2VGetEra() && TF2VIsAnachronistic( TF2V_DAY_LATEST ) )
 		{
 			// If the item is too new, flag it with an outright region conflict.
 			if ( !TF2VItemIsAllowedTimePeriod( pItem, iClass, iSlot ) )
 			{
 				eDisplayType = kSlotDisplay_Disabled_EquipRegionConflict;
 			}
-			// else if ( !TF2VItemAttributesAllowedTimePeriod(pItem) )
-				// To do: Make a flag for when a base item is correct, but our version will be downgraded when spawning.
-				
+			else
+				eDisplayType = kSlotDisplay_Normal; // Have to do tell the slot it's fine again here in case we overrode it previously
+				// Do it before we actually check the equip region conflicts below.
+			
+			// else if ( TF2VItemNeedsModification( pItem, iSlot ) )
+			// To do: Make a variant to show when a base item is correct, but our version will be modified when spawning.
+		}
+
+		if ( pItem->GetItemDefinition()->GetEquipRegionMask() & unUsedEquipRegionMask )
+		{
+			eDisplayType = kSlotDisplay_Disabled_EquipRegionConflict;
 		}
 		
 		// If we're listing *all* items, including duplicates, we just add everything to the list at once and

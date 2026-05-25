@@ -163,6 +163,13 @@ inline CEconItemView *TF2VGetTimePeriodCompliantItem( CEconItemView *pOriginalIt
 	return pOriginalItem;
 }
 
+inline bool TF2VItemNeedsModification( CEconItemView *pItem, int iSlot )
+{
+	if ( g_pTF2VAttributeDateManager )
+		return g_pTF2VAttributeDateManager->ItemNeedsModification( pItem, iSlot );
+	return false;
+}
+
 inline bool TF2VItemIsAllowedTimePeriod( CEconItemView *pItem, int iClass = -1, int iSlot = -1 )
 {
 	if ( g_pTF2VAttributeDateManager )

@@ -1776,10 +1776,14 @@ inline CTFGameRules* TFGameRules()
 // Inline calls for TF2V era code.
 // These are made so when GameRules isn't initialized yet but we call GameRules,
 // we don't crash the game accidentally. HUD era code is a great example.
+// Unlike other calls where we use TF2V_DAY_UNKNOWN, we use 0 when uninitialized
 inline int TF2VGetEra( void )
 {
     if ( !TFGameRules() )
-        return 0; 
+        return 0; // Not initialized yet, return 0.
+	
+	if ( !m_nTF2VEra )
+		return 0; // No value established yet, return 0.
 
     return TFGameRules()->GetTF2VEra();
 }

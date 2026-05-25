@@ -4934,6 +4934,7 @@ void CTFGameRules::Activate()
 	m_nForceUpgrades = 0;
 	m_nForceEscortPushLogic = 0;
 
+	m_nTF2VEra = 0;
 	SetTF2VEra(tf2v_era.GetInt());
 
 	m_CPTimerEnts.RemoveAll();
