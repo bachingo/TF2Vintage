@@ -45,6 +45,13 @@ PRECACHE_REGISTER_FN(PrecacheSyringe);
 //-----------------------------------------------------------------------------
 #define SYRINGE_GRAVITY		0.3f
 #define SYRINGE_VELOCITY	1000.0f
+//-----------------------------------------------------------------------------
+// CTFProjectile_Nail (Unused)
+//-----------------------------------------------------------------------------
+#define NAIL_MODEL				"models/weapons/w_models/w_nail.mdl"
+#define NAIL_GRAVITY		0.2f
+#define NAIL_VELOCITY	2000.0f
+
 // Purpose:
 //-----------------------------------------------------------------------------
 CTFBaseProjectile *CTFProjectile_Syringe::Create( 
