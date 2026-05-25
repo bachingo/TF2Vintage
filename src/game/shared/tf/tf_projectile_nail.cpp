@@ -44,7 +44,7 @@ PRECACHE_REGISTER_FN(PrecacheSyringe);
 // CTFProjectile_Syringe
 //-----------------------------------------------------------------------------
 #define SYRINGE_GRAVITY		0.3f
-#define SYRINGE_VELOCITY	1000.0f
+#define SYRINGE_VELOCITY	2000.0f
 //-----------------------------------------------------------------------------
 // CTFProjectile_Nail (Unused)
 //-----------------------------------------------------------------------------
