@@ -1,130 +1,112 @@
 "tf2v_warpaint_dates"
 {
-	//-------------------------------------------------------------------------
-	// Gun Mettle Update - July 2" "2015
-	//-------------------------------------------------------------------------
-	"1" "2015/07/02" // "Alien Tech // "Craftsmann Collection"
-	"2" "2015/07/02" // "Anodized Aloha // "Concealed Killer Collection"
-	"3" "2015/07/02" // "Bamboo Brushed // "Teufort Collection"
-	"4" "2015/07/02" // "Barn Burner // "Powerhouse Collection"
-	"5" "2015/07/02" // "Blue Mew // "Concealed Killer Collection"
-	"6" "2015/07/02" // "Brain Candy // "Craftsmann Collection"
-	"7" "2015/07/02" // "Brick House // "Powerhouse Collection"
-	"8" "2015/07/02" // "Cardboard Boxed // "Teufort Collection"
-	"9" "2015/07/02" // "Citizen Pain // "Craftsmann Collection"
-	"10" "2015/07/02" // "Cold Blooded // "Concealed Killer Collection"
-	"11" "2015/07/02" // "Coffin Nail // "Concealed Killer Collection"
-	"12" "2015/07/02" // "Craftsmann // "Craftsmann Collection"
-	"13" "2015/07/02" // "Damascus & Mahogany // "Powerhouse Collection"
-	"14" "2015/07/02" // "Flash Fryer // "Powerhouse Collection"
-	"15" "2015/07/02" // "Flower Power // "Craftsmann Collection"
-	"16" "2015/07/02" // "Gentlemanne's Service Medal // "Teufort Collection"
-	"17" "2015/07/02" // "Hana // "Concealed Killer Collection"
-	"18" "2015/07/02" // "Kill Covered // "Concealed Killer Collection"
-	"19" "2015/07/02" // "Lightning Rod // "Powerhouse Collection"
-	"20" "2015/07/02" // "Lumbered // "Teufort Collection"
-	"21" "2015/07/02" // "Macabre Web // "Craftsmann Collection"
-	"22" "2015/07/02" // "Masked Mender // "Concealed Killer Collection"
-	"23" "2015/07/02" // "Mayor // "Teufort Collection"
-	"24" "2015/07/02" // "Merc Stained // "Teufort Collection"
-	"25" "2015/07/02" // "Night Owl // "Craftsmann Collection"
-	"26" "2015/07/02" // "Nutcracker // "Craftsmann Collection"
-	"27" "2015/07/02" // "Old Country // "Teufort Collection"
-	"28" "2015/07/02" // "Plaid Potshotter // "Teufort Collection"
-	"29" "2015/07/02" // "Rooftop Wrangler // "Powerhouse Collection"
-	"30" "2015/07/02" // "Rustic Ruiner // "Teufort Collection"
-	"31" "2015/07/02" // "Shot to Hell // "Craftsmann Collection"
-	"32" "2015/07/02" // "Spark of Life // "Powerhouse Collection"
-	"33" "2015/07/02" // "Star Crossed // "Craftsmann Collection"
-	"34" "2015/07/02" // "Tartan Torpedo // "Teufort Collection"
-	"35" "2015/07/02" // "Thermal Tracker // "Powerhouse Collection"
-	"36" "2015/07/02" // "Thunderbolt // "Powerhouse Collection"
-	"37" "2015/07/02" // "Torqued to Hell // "Craftsmann Collection"
-	"38" "2015/07/02" // "Totally Boned // "Craftsmann Collection"
-	"39" "2015/07/02" // "Warhawk // "Concealed Killer Collection"
-	"40" "2015/07/02" // "Warbird // "Concealed Killer Collection"
-	"41" "2015/07/02" // "Wrapped Reviver // "Concealed Killer Collection"
+	// Gun Mettle Update - July 2, 2015
+	"1"		"2015/07/02"	// Alien Tech
+	"2"		"2015/07/02"	// Anodized Aloha
+	"3"		"2015/07/02"	// Bamboo Brushed
+	"4"		"2015/07/02"	// Barn Burner
+	"5"		"2015/07/02"	// Blue Mew
+	"6"		"2015/07/02"	// Brain Candy
+	"7"		"2015/07/02"	// Brick House
+	"8"		"2015/07/02"	// Cardboard Boxed
+	"9"		"2015/07/02"	// Citizen Pain
+	"10"	"2015/07/02"	// Cold Blooded
+	"11"	"2015/07/02"	// Coffin Nail
+	"12"	"2015/07/02"	// Craftsmann
+	"13"	"2015/07/02"	// Damascus & Mahogany
+	"14"	"2015/07/02"	// Flash Fryer
+	"15"	"2015/07/02"	// Flower Power
+	"16"	"2015/07/02"	// Gentlemanne's Service Medal
+	"17"	"2015/07/02"	// Hana
+	"18"	"2015/07/02"	// Kill Covered
+	"19"	"2015/07/02"	// Lightning Rod
+	"20"	"2015/07/02"	// Lumbered
+	"21"	"2015/07/02"	// Macabre Web
+	"22"	"2015/07/02"	// Masked Mender
+	"23"	"2015/07/02"	// Mayor
+	"24"	"2015/07/02"	// Merc Stained
+	"25"	"2015/07/02"	// Night Owl
+	"26"	"2015/07/02"	// Nutcracker
+	"27"	"2015/07/02"	// Old Country
+	"28"	"2015/07/02"	// Plaid Potshotter
+	"29"	"2015/07/02"	// Rooftop Wrangler
+	"30"	"2015/07/02"	// Rustic Ruiner
+	"31"	"2015/07/02"	// Shot to Hell
+	"32"	"2015/07/02"	// Spark of Life
+	"33"	"2015/07/02"	// Star Crossed
+	"34"	"2015/07/02"	// Tartan Torpedo
+	"35"	"2015/07/02"	// Thermal Tracker
+	"36"	"2015/07/02"	// Thunderbolt
+	"37"	"2015/07/02"	// Torqued to Hell
+	"38"	"2015/07/02"	// Totally Boned
+	"39"	"2015/07/02"	// Warhawk
+	"40"	"2015/07/02"	// Warbird
+	"41"	"2015/07/02"	// Wrapped Reviver
 	
-	//-------------------------------------------------------------------------
-	// Tough Break Update - December 17" "2015
-	//-------------------------------------------------------------------------
-	"100" "2015/12/17" // "Antique Annihilator // "Gentlemanne's Collection"
-	"101" "2015/12/17" // "Bank Rolled // "Gentlemanne's Collection"
-	"102" "2015/12/17" // "Blitzkrieg // "Mercenary Grade Collection"
-	"103" "2015/12/17" // "Bomber Soul // "Pyroland Collection"
-	"104" "2015/12/17" // "Civic Duty // "Gentlemanne's Collection"
-	"105" "2015/12/17" // "Civil Servant // "Gentlemanne's Collection"
-	"106" "2015/12/17" // "Cookie Fortress // "Pyroland Collection"
-	"107" "2015/12/17" // "Dressed to Kill // "Gentlemanne's Collection"
-	"108" "2015/12/17" // "Freedom Wrapped // "Mercenary Grade Collection"
-	"109" "2015/12/17" // "Gator Skin // "Mercenary Grade Collection"
-	"110" "2015/12/17" // "Gift Wrapped // "Pyroland Collection"
-	"111" "2015/12/17" // "Glacial Glazed // "Pyroland Collection"
-	"112" "2015/12/17" // "High Roller's // "Gentlemanne's Collection"
-	"113" "2015/12/17" // "Lollipop // "Pyroland Collection"
-	"114" "2015/12/17" // "Merc Wrapped // "Mercenary Grade Collection"
-	"115" "2015/12/17" // "Mister Cuddles // "Pyroland Collection"
-	"116" "2015/12/17" // "Nut n' Bolt // "Mercenary Grade Collection"
-	"117" "2015/12/17" // "Pumpkin Patch // "Pyroland Collection"
-	"118" "2015/12/17" // "Rainbow // "Pyroland Collection"
-	"119" "2015/12/17" // "Sleighin' Style // "Pyroland Collection"
-	"120" "2015/12/17" // "Smalltown Bringdown // "Gentlemanne's Collection"
-	"121" "2015/12/17" // "Star Spangled // "Mercenary Grade Collection"
-	"122" "2015/12/17" // "Sudden Flurry // "Pyroland Collection"
-	"123" "2015/12/17" // "Sweet Dreams // "Pyroland Collection"
-	"124" "2015/12/17" // "Tumble Tech // "Mercenary Grade Collection"
+	// Tough Break Update - December 17, 2015
+	"100"	"2015/12/17"	// Antique Annihilator
+	"101"	"2015/12/17"	// Bank Rolled
+	"102"	"2015/12/17"	// Blitzkrieg
+	"103"	"2015/12/17"	// Bomber Soul
+	"104"	"2015/12/17"	// Civic Duty
+	"105"	"2015/12/17"	// Civil Servant
+	"106"	"2015/12/17"	// Cookie Fortress
+	"107"	"2015/12/17"	// Dressed to Kill
+	"108"	"2015/12/17"	// Freedom Wrapped
+	"109"	"2015/12/17"	// Gator Skin
+	"110"	"2015/12/17"	// Gift Wrapped
+	"111"	"2015/12/17"	// Glacial Glazed
+	"112"	"2015/12/17"	// High Roller's
+	"113"	"2015/12/17"	// Lollipop
+	"114"	"2015/12/17"	// Merc Wrapped
+	"115"	"2015/12/17"	// Mister Cuddles
+	"116"	"2015/12/17"	// Nut n' Bolt
+	"117"	"2015/12/17"	// Pumpkin Patch
+	"118"	"2015/12/17"	// Rainbow
+	"119"	"2015/12/17"	// Sleighin' Style
+	"120"	"2015/12/17"	// Smalltown Bringdown
+	"121"	"2015/12/17"	// Star Spangled
+	"122"	"2015/12/17"	// Sudden Flurry
+	"123"	"2015/12/17"	// Sweet Dreams
+	"124"	"2015/12/17"	// Tumble Tech
 	
-	//-------------------------------------------------------------------------
-	// Mayflower Update - April 21" "2016
-	//-------------------------------------------------------------------------
-	"200" "2016/04/21" // "Boneyard // "Harvest Collection"
-	"201" "2016/04/21" // "Macabre Web II // "Harvest Collection"
-	"202" "2016/04/21" // "Pumpkin Patch II // "Harvest Collection"
-	"203" "2016/04/21" // "Spectral Shimmered // "Harvest Collection"
+	// Mayflower Update - April 21, 2016
+	"200"	"2016/04/21"	// Boneyard
+	"201"	"2016/04/21"	// Macabre Web II
+	"202"	"2016/04/21"	// Pumpkin Patch II
+	"203"	"2016/04/21"	// Spectral Shimmered
 	
-	//-------------------------------------------------------------------------
-	// Jungle Inferno Update - October 20" "2017
-	//-------------------------------------------------------------------------
-	"300" "2017/10/20" // "Dragon Slayer // "Jungle Jackpot Collection"
-	"301" "2017/10/20" // "Forest Fire // "Infernal Reward Collection"
-	"302" "2017/10/20" // "Liquid Asset // "Infernal Reward Collection"
-	"303" "2017/10/20" // "Mannana Peeled // "Jungle Jackpot Collection"
-	"304" "2017/10/20" // "Mossy Coating // "Jungle Jackpot Collection"
-	"305" "2017/10/20" // "Night Terror // "Infernal Reward Collection"
-	"306" "2017/10/20" // "Piña Polished // "Jungle Jackpot Collection"
-	"307" "2017/10/20" // "Sax Waxed // "Jungle Jackpot Collection"
-	"308" "2017/10/20" // "Skull Study // "Infernal Reward Collection"
-	"309" "2017/10/20" // "Smissmas Sweater // "Infernal Reward Collection"
-	"310" "2017/10/20" // "Speed Demon // "Jungle Jackpot Collection"
-	"311" "2017/10/20" // "Tiger Buffed // "Jungle Jackpot Collection"
-	"312" "2017/10/20" // "Totally Boned II // "Infernal Reward Collection"
-	"313" "2017/10/20" // "Uranium // "Infernal Reward Collection"
+	// Jungle Inferno Update - October 20, 2017
+	"300"	"2017/10/20"	// Dragon Slayer
+	"301"	"2017/10/20"	// Forest Fire
+	"302"	"2017/10/20"	// Liquid Asset
+	"303"	"2017/10/20"	// Mannana Peeled
+	"304"	"2017/10/20"	// Mossy Coating
+	"305"	"2017/10/20"	// Night Terror
+	"306"	"2017/10/20"	// Piña Polished
+	"307"	"2017/10/20"	// Sax Waxed
+	"308"	"2017/10/20"	// Skull Study
+	"309"	"2017/10/20"	// Smissmas Sweater
+	"310"	"2017/10/20"	// Speed Demon
+	"311"	"2017/10/20"	// Tiger Buffed
+	"312"	"2017/10/20"	// Totally Boned II
+	"313"	"2017/10/20"	// Uranium
 	
-	//-------------------------------------------------------------------------
-	// Blue Moon Update - October 5" "2018
-	//-------------------------------------------------------------------------
-	"400" "2018/10/05" // "Bonk Varnish // "Spooky Spoils Collection"
-	"401" "2018/10/05" // "Macabre Web III // "Spooky Spoils Collection"
-	"402" "2018/10/05" // "Cosmic Calamity // "Spooky Spoils Collection"
-	"403" "2018/10/05" // "Haunted Phantasm Jr. // "Spooky Spoils Collection"
+	// Blue Moon Update - October 5, 2018
+	"400"	"2018/10/05"	// Bonk Varnish
+	"401"	"2018/10/05"	// Macabre Web III
+	"402"	"2018/10/05"	// Cosmic Calamity
+	"403"	"2018/10/05"	// Haunted Phantasm Jr.
 	
-	//-------------------------------------------------------------------------
-	// Scream Fortress 2019 - October 10" "2019
-	//-------------------------------------------------------------------------
-	"500" "2019/10/10" // "Spectral Shimmered II // "Scream Fortress XI Collection"
-	"501" "2019/10/10" // "Haunted Ghosts Jr. // "Scream Fortress XI Collection"
+	// Scream Fortress 2019 - October 10, 2019
+	"500"	"2019/10/10"	// Spectral Shimmered II
+	"501"	"2019/10/10"	// Haunted Ghosts Jr.
 	
-	//-------------------------------------------------------------------------
-	// Scream Fortress 2020 - October 1" "2020
-	//-------------------------------------------------------------------------
-	"600" "2020/10/01" // "Spectral Shimmered III // "Scream Fortress XII Collection"
-	"601" "2020/10/01" // "Bonk Varnish II // "Scream Fortress XII Collection"
+	// Scream Fortress 2020 - October 1, 2020
+	"600"	"2020/10/01"	// Spectral Shimmered III
+	"601"	"2020/10/01"	// Bonk Varnish II
 	
-	//-------------------------------------------------------------------------
-	// Scream Fortress 2021 - October 5" "2021
-	//-------------------------------------------------------------------------
-	"700" "2021/10/05" // "Woodland Warrior // "Scream Fortress XIII Collection"
-	"701" "2021/10/05" // "Wrapped Reviver II // "Scream Fortress XIII Collection"
-	
-	// Add more as needed for later collections
+	// Scream Fortress 2021 - October 5, 2021
+	"700"	"2021/10/05"	// Woodland Warrior
+	"701"	"2021/10/05"	// Wrapped Reviver II
 }

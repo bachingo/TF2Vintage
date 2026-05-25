@@ -1,797 +1,646 @@
 "tf2v_unusual_dates"
 {
-
-// Hat Unusuals
-
-
-"Attrib_Particle0"			"Invalid Particle"
-"Attrib_Particle1"			"Particle 1"
-"Attrib_Particle2"			"Flying Bits"
-"Attrib_Particle3"			"Nemesis Burst"
-
-// First Community Update
-"Attrib_Particle4"			"Community Sparkle"
-
-// Cheater's Lament
-"Attrib_Particle5"			"Holy Glow"
-
-// Mannconomy
-"Attrib_Particle6"			"Green Confetti"
-"Attrib_Particle7"			"Purple Confetti"
-"Attrib_Particle8"			"Haunted Ghosts"
-"Attrib_Particle9"			"Green Energy"
-"Attrib_Particle10"			"Purple Energy"
-"Attrib_Particle11"			"Circling TF Logo"
-"Attrib_Particle12"			"Massed Flies"
-"Attrib_Particle13"			"Burning Flames"
-"Attrib_Particle14"			"Scorching Flames"
-"Attrib_Particle15"			"Searing Plasma"
-"Attrib_Particle16"			"Vivid Plasma"
-"Attrib_Particle17"			"Sunbeams"
-"Attrib_Particle18"			"Circling Peace Sign"
-"Attrib_Particle19"			"Circling Heart"
-
-
-"Attrib_Particle20"			"Map Stamps"
-"Attrib_Particle28"			"Genteel Smoke"
-
-// August 18 2011
-"Attrib_Particle29"			"Stormy Storm"
-"Attrib_Particle30"			"Blizzardy Storm"
-"Attrib_Particle31"			"Nuts n' Bolts"
-"Attrib_Particle32"			"Orbiting Planets"
-"Attrib_Particle33"			"Orbiting Fire"
-"Attrib_Particle34"			"Bubbling"
-"Attrib_Particle35"			"Smoking"
-"Attrib_Particle36"			"Steaming"
-
-//
-"Attrib_Particle37"			"Flaming Lantern"
-"Attrib_Particle38"			"Cloudy Moon"
-"Attrib_Particle39"			"Cauldron Bubbles"
-"Attrib_Particle40"			"Eerie Orbiting Fire"
-
-"Attrib_Particle43"			"Knifestorm"
-"Attrib_Particle44"			"Misty Skull"
-"Attrib_Particle45"			"Harvest Moon"
-"Attrib_Particle46"			"It's a Secret to Everybody"
-"Attrib_Particle47"			"Stormy 13th Hour"
-
-
-// June 19 2013
-"Attrib_Particle56"			"Kill-a-Watt"
-"Attrib_Particle57"			"Terror-Watt"
-"Attrib_Particle58"			"Cloud 9"
-"Attrib_Particle59"			"Aces High"
-"Attrib_Particle60"			"Dead Presidents"
-"Attrib_Particle61"			"Miami Nights"
-"Attrib_Particle62"			"Disco Beat Down"
-
-// Robotic Boogaloo
-"Attrib_Particle63"			"Phosphorous"
-"Attrib_Particle64"			"Sulphurous"
-"Attrib_Particle65"			"Memory Leak"
-"Attrib_Particle66"			"Overclocked"
-"Attrib_Particle67"			"Electrostatic"
-"Attrib_Particle68"			"Power Surge"
-"Attrib_Particle69"			"Anti-Freeze"
-"Attrib_Particle70"			"Time Warp"
-"Attrib_Particle71"			"Green Black Hole"
-"Attrib_Particle72"			"Roboactive"
-
-// Scream Fortress V
-"Attrib_Particle73"			"Arcana"
-"Attrib_Particle74"			"Spellbound"
-"Attrib_Particle75"			"Chiroptera Venenata"
-"Attrib_Particle76"			"Poisoned Shadows"
-"Attrib_Particle77"			"Something Burning This Way Comes"
-"Attrib_Particle78"			"Hellfire"
-"Attrib_Particle79"			"Darkblaze"
-"Attrib_Particle80"			"Demonflame"
-
-// Scream Fortress VI
-"Attrib_Particle81"			"Bonzo the All-Gnawing"
-"Attrib_Particle82"			"Amaranthine"
-"Attrib_Particle83"			"Stare from Beyond"
-"Attrib_Particle84"			"The Ooze"
-"Attrib_Particle85"			"Ghastly Ghosts Jr"
-"Attrib_Particle86"			"Haunted Phantasm Jr"
-
-// End of the Line
-"Attrib_Particle87"			"Frostbite"
-"Attrib_Particle88"			"Molten Mallard"
-"Attrib_Particle89"			"Morning Glory"
-"Attrib_Particle90"			"Death at Dusk"
-
-// Invasion
-"Attrib_Particle91"			"Abduction"
-"Attrib_Particle92"			"Atomic"
-"Attrib_Particle93"			"Subatomic"
-"Attrib_Particle94"			"Electric Hat Protector"
-"Attrib_Particle95"			"Magnetic Hat Protector"
-"Attrib_Particle96"			"Voltaic Hat Protector"
-"Attrib_Particle97"			"Galactic Codex"
-"Attrib_Particle98"			"Ancient Codex"
-"Attrib_Particle99"			"Nebula"
-
-// Halloween 2015 Unusual
-"Attrib_Particle100"			"Death by Disco"
-"Attrib_Particle101"			"It's a Mystery to Everyone"
-"Attrib_Particle102"			"It's a Puzzle to Me"
-"Attrib_Particle103"			"Ether Trail"
-"Attrib_Particle104"			"Nether Trail"
-"Attrib_Particle105"			"Ancient Eldritch"
-"Attrib_Particle106"			"Eldritch Flame"
-
-// Halloween 2016 Unusual
-"Attrib_Particle107"			"Neutron Star"
-"Attrib_Particle108"			"Tesla Coil"
-"Attrib_Particle109"			"Starstorm Insomnia"
-"Attrib_Particle110"			"Starstorm Slumber"
-
-// Halloween 2018 Unusual
-"Attrib_Particle111"			"Brain Drain"
-"Attrib_Particle112"			"Open Mind"
-"Attrib_Particle113"			"Head of Steam"
-"Attrib_Particle114"			"Galactic Gateway"
-"Attrib_Particle115"			"The Eldritch Opening"
-"Attrib_Particle116"			"The Dark Doorway"
-"Attrib_Particle117"			"Ring of Fire"
-"Attrib_Particle118"			"Vicious Circle"
-"Attrib_Particle119"			"White Lightning"
-"Attrib_Particle120"			"Omniscient Orb"
-"Attrib_Particle121"			"Clairvoyance"
-
-// Halloween 2019 Unusual
-"Attrib_Particle122"			"Fifth Dimension"
-"Attrib_Particle123"			"Vicious Vortex"
-"Attrib_Particle124"			"Menacing Miasma"
-"Attrib_Particle125"			"Abyssal Aura"
-"Attrib_Particle126"			"Wicked Wood"
-"Attrib_Particle127"			"Ghastly Grove"
-"Attrib_Particle128"			"Mystical Medley"
-"Attrib_Particle129"			"Ethereal Essence"
-"Attrib_Particle130"			"Twisted Radiance"
-"Attrib_Particle131"			"Violet Vortex"
-"Attrib_Particle132"			"Verdant Vortex"
-"Attrib_Particle133"			"Valiant Vortex"
-
-// Smissmas 2019 Unusual
-"Attrib_Particle134"			"Sparkling Lights"
-"Attrib_Particle135"			"Frozen Icefall"
-"Attrib_Particle136"			"Fragmented Gluons"
-"Attrib_Particle137"			"Fragmented Quarks"
-"Attrib_Particle138"			"Fragmented Photons"
-"Attrib_Particle139"			"Defragmenting Reality"
-"Attrib_Particle141"			"Fragmenting Reality"
-"Attrib_Particle142"			"Refragmenting Reality"
-"Attrib_Particle143"			"Snowfallen"
-"Attrib_Particle144"			"Snowblinded"
-"Attrib_Particle145"			"Pyroland Daydream"
-
-// Summer 2020 Unusual
-"Attrib_Particle147"			 "Verdatica"
-"Attrib_Particle148"			 "Aromatica"
-"Attrib_Particle149"			 "Chromatica"
-"Attrib_Particle150"			 "Prismatica"
-"Attrib_Particle151"			 "Bee Swarm"
-"Attrib_Particle152"			 "Frisky Fireflies"
-"Attrib_Particle153"			 "Smoldering Spirits"
-"Attrib_Particle154"			 "Wandering Wisps"
-"Attrib_Particle155"			 "Kaleidoscope"
-
-// Halloween 2020 Unusual
-"Attrib_Particle156"			"Green Giggler"
-"Attrib_Particle157"			"Laugh-O-Lantern"
-"Attrib_Particle158"			"Plum Prankster"
-"Attrib_Particle159"			"Pyroland Nightmare"
-"Attrib_Particle160"			"Gravelly Ghoul"
-"Attrib_Particle161"			"Vexed Volcanics"
-"Attrib_Particle162"			"Gourdian Angel"
-"Attrib_Particle163"			"Pumpkin Party"
-
-// Smissmas 2020 Unusual
-"Attrib_Particle164"			"Frozen Fractals"
-"Attrib_Particle165"			"Lavender Landfall"
-"Attrib_Particle166"			"Special Snowfall"
-"Attrib_Particle167"			"Divine Desire"
-"Attrib_Particle168"			"Distant Dream"
-"Attrib_Particle169"			"Violent Wintertide"
-"Attrib_Particle170"			"Blighted Snowstorm"
-"Attrib_Particle171"			"Pale Nimbus"
-"Attrib_Particle172"			"Genus Plasmos"
-"Attrib_Particle173"			"Serenus Lumen"
-"Attrib_Particle174"			"Ventum Maris"
-"Attrib_Particle175"			"Mirthful Mistletoe"
-
-// Summer 2021 Unusual
-"Attrib_Particle177"			"Resonation"
-"Attrib_Particle178"			"Aggradation"
-"Attrib_Particle179"			"Lucidation"
-"Attrib_Particle180"			"Stunning"
-"Attrib_Particle181"			"Ardentum Saturnalis"
-"Attrib_Particle182"			"Fragrancium Elementalis"
-"Attrib_Particle183"			"Reverium Irregularis"
-"Attrib_Particle185"			"Perennial Petals"
-"Attrib_Particle186"			"Flavorsome Sunset"
-"Attrib_Particle187"			"Raspberry Bloom"
-"Attrib_Particle188"			"Iridescence"
-
-// Halloween 2021 Unusual
-"Attrib_Particle189"			"Tempered Thorns"
-"Attrib_Particle190"			"Devilish Diablo"
-"Attrib_Particle191"			"Severed Serration"
-"Attrib_Particle192"			"Shrieking Shades"
-"Attrib_Particle193"			"Restless Wraiths"
-"Attrib_Particle194"			"Restless Wraiths"
-"Attrib_Particle195"			"Infernal Wraith"
-"Attrib_Particle196"			"Phantom Crown"
-"Attrib_Particle197"			"Ancient Specter"
-"Attrib_Particle198"			"Viridescent Peeper"
-"Attrib_Particle199"			"Eyes of Molten"
-"Attrib_Particle200"			"Ominous Stare"
-"Attrib_Particle201"			"Pumpkin Moon"
-"Attrib_Particle202"			"Frantic Spooker"
-"Attrib_Particle203"			"Frightened Poltergeist"
-"Attrib_Particle204"			"Energetic Haunter"
-
-// Smissmas 2021 Unusual
-"Attrib_Particle205"			"Smissmas Tree"
-"Attrib_Particle206"			"Hospitable Festivity"
-"Attrib_Particle207"			"Condescending Embrace"
-"Attrib_Particle208"			"Condescending Embrace"
-"Attrib_Particle209"			"Sparkling Spruce"
-"Attrib_Particle210"			"Glittering Juniper"
-"Attrib_Particle211"			"Prismatic Pine"
-"Attrib_Particle212"			"Spiraling Lights"
-"Attrib_Particle213"			"Twisting Lights"
-"Attrib_Particle214"			"Stardust Pathway"
-"Attrib_Particle215"			"Flurry Rush"
-"Attrib_Particle216"			"Spark of Smissmas"
-"Attrib_Particle217"			"Spark of Smissmas"
-"Attrib_Particle218"			"Polar Forecast"
-"Attrib_Particle219"			"Shining Stag"
-"Attrib_Particle220"			"Holiday Horns"
-"Attrib_Particle221"			"Ardent Antlers"
-"Attrib_Particle222"			"Ardent Antlers"
-"Attrib_Particle223"			"Festive Lights"
-
-// Summer 2022 Unusual
-"Attrib_Particle224"			"Crustacean Sensation"
-"Attrib_Particle225"			"Crustacean Sensation"
-"Attrib_Particle226"			"Frosted Decadence"
-"Attrib_Particle227"			"Frosted Decadence"
-"Attrib_Particle228"			"Sprinkled Delights"
-"Attrib_Particle229"			"Terrestrial Favor"
-"Attrib_Particle230"			"Tropical Thrill"
-"Attrib_Particle231"			"Flourishing Passion"
-"Attrib_Particle232"			"Dazzling Fireworks"
-"Attrib_Particle233"			"Blazing Fireworks"
-"Attrib_Particle234"			"Shimmering Fireworks"
-"Attrib_Particle235"			"Twinkling Fireworks"
-"Attrib_Particle236"			"Sparkling Fireworks"
-"Attrib_Particle237"			"Glowing Fireworks"
-"Attrib_Particle238"			"Glimmering Fireworks"
-"Attrib_Particle239"			"Flying Lights"
-"Attrib_Particle240"			"Flying Lights"
-"Attrib_Particle241"			"Limelight"
-"Attrib_Particle242"			"Shining Star"
-"Attrib_Particle243"			"Cold Cosmos"
-"Attrib_Particle244"			"Refracting Fractals"
-"Attrib_Particle245"			"Startrance"
-"Attrib_Particle246"			"Startrance"
-"Attrib_Particle247"			"Starlush"
-"Attrib_Particle248"			"Starfire"
-"Attrib_Particle249"			"Stardust"
-"Attrib_Particle250"			"Contagious Eruption"
-"Attrib_Particle251"			"Daydream Eruption"
-"Attrib_Particle252"			"Volcanic Eruption"
-"Attrib_Particle253"			"Divine Sunlight"
-"Attrib_Particle254"			"Audiophile"
-"Attrib_Particle255"			"Soundwave"
-"Attrib_Particle256"			"Synesthesia"
-
-// Halloween 2022 Unusual
-"Attrib_Particle257"			"Haunted Kraken"
-"Attrib_Particle258"			"Eerie Kraken"
-"Attrib_Particle259"			"Soulful Slice"
-"Attrib_Particle260"			"Horsemann's Hack"
-"Attrib_Particle261"			"Haunted Forever!"
-"Attrib_Particle262"			"Haunted Forever!"
-"Attrib_Particle263"			"Forever and Forever!"
-"Attrib_Particle264"			"Cursed Forever!"
-"Attrib_Particle265"			"Moth Plague"
-"Attrib_Particle266"			"Malevolent Monoculi"
-"Attrib_Particle267"			"Haunted Wick"
-"Attrib_Particle268"			"Haunted Wick"
-"Attrib_Particle269"			"Wicked Wick"
-"Attrib_Particle270"			"Spectral Wick"
-
-// Smissmas 2022 Unusual
-"Attrib_Particle271"			"Musical Maelstrom"
-"Attrib_Particle272"			"Verdant Virtuoso"
-"Attrib_Particle273"			"Silver Serenade"
-"Attrib_Particle274"			"Cosmic Constellations"
-"Attrib_Particle275"			"Cosmic Constellations"
-"Attrib_Particle276"			"Dazzling Constellations"
-"Attrib_Particle277"			"Tainted Frost"
-"Attrib_Particle278"			"Starlight Haze"
-
-// Summer 2023 Unusual
-"Attrib_Particle279"			"Hard Carry"
-"Attrib_Particle280"			"Hard Carry"
-"Attrib_Particle281"			"Jellyfish Field"
-"Attrib_Particle282"			"Jellyfish Field"
-"Attrib_Particle283"			"Jellyfish Hunter"
-"Attrib_Particle284"			"Jellyfish Jam"
-"Attrib_Particle285"			"Global Clusters"
-"Attrib_Particle286"			"Celestial Starburst"
-"Attrib_Particle287"			"Sylicone Succiduous"
-"Attrib_Particle288"			"Sakura Smoke Bomb"
-"Attrib_Particle289"			"Treasure Trove"
-"Attrib_Particle290"			"Bubble Breeze"
-"Attrib_Particle291"			"Fireflies"
-"Attrib_Particle292"			"Mountain Halo"
-
-// Halloween 2023 Unusual
-"Attrib_Particle293"			"Celestial Summit"
-"Attrib_Particle294"			"Stellar Ascent"
-"Attrib_Particle295"			"Sapped"
-"Attrib_Particle296"			"Sapped"
-"Attrib_Particle297"			"Hellspawned Horns"
-"Attrib_Particle298"			"Hellspawned Horns"
-"Attrib_Particle299"			"Demonic Impaler"
-"Attrib_Particle300"			"Revenant's Rack"
-"Attrib_Particle301"			"Sixth Sense"
-"Attrib_Particle302"			"Sixth Sense"
-"Attrib_Particle303"			"Amygdala"
-"Attrib_Particle304"			"The Bone Zone"
-"Attrib_Particle305"			"Arachne's Web"
-"Attrib_Particle306"			"Acidic Climate"
-"Attrib_Particle307"			"Otherworldly Weather"
-"Attrib_Particle308"			"Nightmarish Storm"
-
-// Smissmas 2023 Unusual
-"Attrib_Particle309"			"Icestruck"
-"Attrib_Particle310"			"Icestruck"
-"Attrib_Particle311"			"Goldstruck"
-"Attrib_Particle312"			"Radiant Rivalry"
-"Attrib_Particle313"			"Radiant Rivalry"
-"Attrib_Particle314"			"Radiant Legacy"
-"Attrib_Particle315"			"Frosty Flavours"
-"Attrib_Particle316"			"Frosty Flavours"
-"Attrib_Particle317"			"Mint Frost"
-"Attrib_Particle318"			"North Star"
-"Attrib_Particle319"			"North Star"
-"Attrib_Particle320"			"Prettiest Star"
-"Attrib_Particle321"			"Festive Falling Star"
-"Attrib_Particle322"			"Lunar Lights"
-"Attrib_Particle323"			"Lunar Lights"
-"Attrib_Particle324"			"Fairy Lights"
-"Attrib_Particle325"			"Natural Lights"
-
-"Attrib_Particle326"			""
-
-// Summer 2024 Unusual
-"Attrib_Particle327"			"Loyalist's Coronet"
-"Attrib_Particle328"			"Loyalist's Coronet"
-"Attrib_Particle329"			"Knight's Prideful Spirit"
-"Attrib_Particle330"			"Baron's Cherished Chaplet"
-"Attrib_Particle331"			"Lure of the Deep"
-"Attrib_Particle332"			"Lure of the Deep"
-"Attrib_Particle333"			"Violent Viridian"
-"Attrib_Particle334"			"Magenta Monstrum"
-"Attrib_Particle335"			"Rainbow Reverie"
-"Attrib_Particle336"			"Cuban Smoke"
-"Attrib_Particle337"			"Melting Mohawk"
-"Attrib_Particle338"			"Melting Mohawk"
-"Attrib_Particle339"			"Scorched Scalp"
-"Attrib_Particle340"			"Ignited Crest"
-"Attrib_Particle341"			"Rare Shine"
-"Attrib_Particle342"			"Distant Drift"
-"Attrib_Particle343"			"Distant Drift"
-"Attrib_Particle344"			"Warp Drive"
-"Attrib_Particle345"			"Overdrive"
-"Attrib_Particle346"			"Butterfly Season"
-"Attrib_Particle347"			"Butterfly Season"
-"Attrib_Particle348"			"Psycho-Delic"
-"Attrib_Particle349"			"Bewitching Bugs"
-
-// Halloween 2024 Unusual
-"Attrib_Particle350"			"Spectral Fire"
-"Attrib_Particle351"			"Galactic Flame"
-"Attrib_Particle352"			"Revived Recharge"
-"Attrib_Particle353"			"Undead Electricity"
-"Attrib_Particle354"			"Frankencharged"
-"Attrib_Particle355"			"Phantom Plague"
-"Attrib_Particle356"			"Haunting Haze"
-"Attrib_Particle357"			"Vicious Vampires"
-"Attrib_Particle358"			"Ravenous Ravens"
-"Attrib_Particle359"			"Delightful Doves"
-"Attrib_Particle360"			"Searing Stove"
-"Attrib_Particle361"			"Searing Stove"
-"Attrib_Particle362"			"Über Blaze"
-"Attrib_Particle363"			"Über Blaze"
-
-// Smissmas 2024 Unusual
-"Attrib_Particle364"			"Sizzling"
-"Attrib_Particle365"			"Crystal Crown"
-"Attrib_Particle366"			"Crystal Crown"
-"Attrib_Particle367"			"Halcyon Halo"
-"Attrib_Particle368"			"Ghosts of Smissmas Time"
-"Attrib_Particle369"			"Aurora Skies"
-"Attrib_Particle370"			"Shining Bokeh"
-"Attrib_Particle371"			"Playful Aurora"
-"Attrib_Particle372"			"Frisky Morning"
-
-// Summer 2025 Unusual
-"Attrib_Particle373"			"Drunkard"
-"Attrib_Particle374"			"Blades of Betrayal"
-"Attrib_Particle375"			"Blades of Betrayal"
-"Attrib_Particle376"			"Death's Daggers"
-"Attrib_Particle377"			"Fully Charged"
-"Attrib_Particle378"			"Fully Charged"
-"Attrib_Particle379"			"Overcharged"
-"Attrib_Particle380"			"Piercing Headache"
-"Attrib_Particle381"			"Decimating Wind"
-
-// Halloween 2025 Unusual
-"Attrib_Particle382"			"Ocean Swirl"
-"Attrib_Particle383"			"Ocean Swirl"
-"Attrib_Particle384"			"Toxic Swirl"
-"Attrib_Particle385"			"Candle Flame"
-"Attrib_Particle386"			"Candle Flame"
-"Attrib_Particle387"			"Sizzling Aroma"
-"Attrib_Particle388"			"Sizzling Aroma"
-"Attrib_Particle389"			"Toxic Aroma"
-"Attrib_Particle390"			"Current Conductor"
-"Attrib_Particle391"			"Current Conductor"
-"Attrib_Particle392"			"Sandy"
-
-// Smissmas 2025 Unusual
-"Attrib_Particle393"			"Chromatic Blaze"
-"Attrib_Particle394"			"Frostfire"
-"Attrib_Particle395"			"Spectrum Inferno"
-"Attrib_Particle396"			"Calm Snowfall"
-"Attrib_Particle397"			"Team Recognition"
-"Attrib_Particle398"			"Team Recognition"
-"Attrib_Particle399"			"Old Hire"
-"Attrib_Particle400"			"Old Hire"
-"Attrib_Particle401"			"Analog Fortress"
-"Attrib_Particle402"			"Winter Whiteout"
-"Attrib_Particle403"			"Midnight Frostfall"
-"Attrib_Particle404"			"Twilight Snowfall"
-"Attrib_Particle405"			"Cryogenic"
-
-// Weapon Unusual
-// Gun Mettle
-"Attrib_Particle701"			"Hot"
-"Attrib_Particle702"			"Isotope"
-"Attrib_Particle703"			"Cool"
-"Attrib_Particle704"			"Energy Orb"
-
-
-// Start Unusual taunt FX
-// Love & War
-"Attrib_Particle3001"		"Showstopper"
-"Attrib_Particle3002"		"Showstopper"
-"Attrib_Particle3003"		"Holy Grail"
-"Attrib_Particle3004"		"'72"
-"Attrib_Particle3005"		"Fountain of Delight"
-"Attrib_Particle3006"		"Screaming Tiger"
-"Attrib_Particle3007"		"Skill Gotten Gains"
-"Attrib_Particle3008"		"Midnight Whirlwind"
-"Attrib_Particle3009"		"Silver Cyclone"
-"Attrib_Particle3010"		"Mega Strike"
-
-// Scream Fortress VI
-"Attrib_Particle3011"		"Haunted Phantasm"
-"Attrib_Particle3012"		"Ghastly Ghosts"
-
-// SF VIII
-"Attrib_Particle3013"		"Hellish Inferno"
-"Attrib_Particle3014"		"Spectral Swirl"
-"Attrib_Particle3015"		"Infernal Flames"
-"Attrib_Particle3016"		"Infernal Smoke"
-
-// Halloween 2018 Unusual Taunts
-"Attrib_Particle3017"		"Acidic Bubbles of Envy"
-"Attrib_Particle3018"		"Flammable Bubbles of Attraction"
-"Attrib_Particle3019"		"Poisonous Bubbles of Regret"
-"Attrib_Particle3020"		"Roaring Rockets"
-"Attrib_Particle3021"		"Spooky Night"
-"Attrib_Particle3022"		"Ominous Night"
-
-// Halloween 2019 Unusual Taunts
-"Attrib_Particle3023"		"Bewitched"
-"Attrib_Particle3024"		"Accursed"
-"Attrib_Particle3025"		"Enchanted"
-"Attrib_Particle3026"		"Static Mist"
-"Attrib_Particle3027"		"Eerie Lightning"
-"Attrib_Particle3028"		"Terrifying Thunder"
-"Attrib_Particle3029"		"Jarate Shock"
-"Attrib_Particle3030"		"Nether Void"
-
-// Smissmas 2019 Unusual Taunts
-"Attrib_Particle3031"		"Good-Hearted Goodies"
-"Attrib_Particle3032"		"Wintery Wisp"
-"Attrib_Particle3033"		"Arctic Aurora"
-"Attrib_Particle3034"		"Winter Spirit"
-"Attrib_Particle3035"		"Festive Spirit"
-"Attrib_Particle3036"		"Magical Spirit"
-
-// Halloween 2020 Unusual Taunts
-"Attrib_Particle3037"		"Spectral Escort"
-"Attrib_Particle3038"		"Astral Presence"
-"Attrib_Particle3039"		"Arcane Assistance"
-"Attrib_Particle3040"		"Arcane Assistance"
-"Attrib_Particle3041"		"Emerald Allurement"
-"Attrib_Particle3042"		"Pyrophoric Personality"
-"Attrib_Particle3043"		"Spellbound Aspect"
-"Attrib_Particle3044"		"Static Shock"
-"Attrib_Particle3045"		"Veno Shock"
-"Attrib_Particle3046"		"Toxic Terrors"
-"Attrib_Particle3047"		"Arachnid Assault"
-"Attrib_Particle3048"		"Creepy Crawlies"
-
-// Smissmas 2020 Unusual Taunts
-"Attrib_Particle3049"		"Delightful Star"
-"Attrib_Particle3050"		"Frosted Star"
-"Attrib_Particle3051"		"Apotheosis"
-"Attrib_Particle3052"		"Ascension"
-"Attrib_Particle3053"		"Reindoonicorn Rancher"
-"Attrib_Particle3054"		"Reindoonicorn Rancher"
-"Attrib_Particle3055"		"Twinkling Lights"
-"Attrib_Particle3056"		"Shimmering Lights"
-
-// Halloween 2021 Unusual Taunts
-"Attrib_Particle3059"		"Spectral Shackles"
-"Attrib_Particle3060"		"Cursed Confinement"
-"Attrib_Particle3061"		"Cavalier de Carte"
-"Attrib_Particle3062"		"Cavalier de Carte"
-"Attrib_Particle3063"		"Hollow Flourish"
-"Attrib_Particle3064"		"Magic Shuffle"
-"Attrib_Particle3065"		"Vigorous Pulse"
-"Attrib_Particle3066"		"Thundering Spirit"
-"Attrib_Particle3067"		"Galvanic Defiance"
-"Attrib_Particle3068"		"Wispy Halos"
-"Attrib_Particle3069"		"Nether Wisps"
-"Attrib_Particle3070"		"Aurora Borealis"
-"Attrib_Particle3071"		"Aurora Australis"
-"Attrib_Particle3072"		"Aurora Polaris"
-
-// Smissmas 2021 Unusual Taunts
-"Attrib_Particle3073"		"Amethyst Winds"
-"Attrib_Particle3074"		"Golden Gusts"
-"Attrib_Particle3075"		"Smissmas Swirls"
-"Attrib_Particle3076"		"Smissmas Swirls"
-"Attrib_Particle3077"		"Minty Cypress"
-"Attrib_Particle3078"		"Pristine Pine"
-"Attrib_Particle3079"		"Sparkly Spruce"
-"Attrib_Particle3080"		"Sparkly Spruce"
-"Attrib_Particle3081"		"Festive Fever"
-"Attrib_Particle3082"		"Festive Fever"
-"Attrib_Particle3083"		"Golden Glimmer"
-"Attrib_Particle3084"		"Frosty Silver"
-"Attrib_Particle3085"		"Glamorous Dazzle"
-"Attrib_Particle3086"		"Glamorous Dazzle"
-"Attrib_Particle3087"		"Sublime Snowstorm"
-
-// Halloween 2022 Unusual Taunts
-"Attrib_Particle3088"		"Marigold Ritual"
-"Attrib_Particle3089"		"Marigold Ritual"
-"Attrib_Particle3090"		"Pungent Poison"
-"Attrib_Particle3091"		"Blazed Brew"
-"Attrib_Particle3092"		"Mysterious Mixture"
-"Attrib_Particle3093"		"Linguistic Deviation"
-"Attrib_Particle3094"		"Aurelian Seal"
-"Attrib_Particle3095"		"Runic Imprisonment"
-"Attrib_Particle3096"		"Runic Imprisonment"
-"Attrib_Particle3097"		"Prismatic Haze"
-"Attrib_Particle3098"		"Rising Ritual"
-"Attrib_Particle3099"		"Rising Ritual"
-"Attrib_Particle3100"		"Bloody Grip"
-"Attrib_Particle3101"		"Bloody Grip"
-"Attrib_Particle3102"		"Toxic Grip"
-"Attrib_Particle3103"		"Infernal Grip"
-"Attrib_Particle3104"		"Death Grip"
-
-// Smissmas 2022 Unusual Taunts
-"Attrib_Particle3105"		"Charged Arcane"
-"Attrib_Particle3106"		"Thunderous Rage"
-"Attrib_Particle3107"		"Convulsive Fiery"
-"Attrib_Particle3108"		"Festivized Formation"
-"Attrib_Particle3109"		"Festivized Formation"
-"Attrib_Particle3110"		"Twirling Spirits"
-"Attrib_Particle3111"		"Squash n' Twist"
-"Attrib_Particle3112"		"Midnight Sparklers"
-"Attrib_Particle3113"		"Boundless Blizzard"
-
-// Summer 2023 Unusual Taunts
-"Attrib_Particle3114"		"Solar Scorched"
-"Attrib_Particle3115"		"Deepsea Rave"
-"Attrib_Particle3116"		"Deepsea Rave"
-"Attrib_Particle3117"		"Blooming Beacon"
-"Attrib_Particle3118"		"Beaming Beacon"
-"Attrib_Particle3119"		"Blazing Beacon"
-"Attrib_Particle3120"		"Floppin' Frenzy"
-"Attrib_Particle3121"		"Pastel Trance"
-"Attrib_Particle3122"		"Pastel Trance"
-"Attrib_Particle3123"		"Wildflower Meadows"
-
-// Halloween 2023 Unusual Taunts
-"Attrib_Particle3124"		"Deep-Sea Devourer"
-"Attrib_Particle3125"		"Eldritch Horror"
-"Attrib_Particle3126"		"Autumn Leaves"
-"Attrib_Particle3127"		"Dead Man's Party"
-"Attrib_Particle3128"		"Potion Explosion"
-"Attrib_Particle3129"		"Haunted Cremation"
-"Attrib_Particle3130"		"Cremation"
-
-// Smissmas 2023 Unusual Taunts
-"Attrib_Particle3131"		"Snowfall"
-"Attrib_Particle3132"		"Galactic Connection"
-"Attrib_Particle3133"		"Galactic Connection"
-"Attrib_Particle3134"		"Dark Twilight"
-"Attrib_Particle3135"		"Eldritch Rift"
-"Attrib_Particle3136"		"Selfless Sensation"
-"Attrib_Particle3137"		"Distant Desire"
-"Attrib_Particle3138"		"Glamorous Glance"
-"Attrib_Particle3139"		"Permafrost Essence"
-"Attrib_Particle3140"		"Permafrost Essence"
-"Attrib_Particle3141"		"Arctic Delight"
-"Attrib_Particle3142"		"Winning Spirit"
-"Attrib_Particle3143"		"Petal Prance"
-"Attrib_Particle3144"		"Petal Prance"
-
-// Summer 2024 Unusual Taunts
-"Attrib_Particle3145"		"Dragonflies' Embrace"
-"Attrib_Particle3146"		"Dragonflies' Embrace"
-"Attrib_Particle3147"		"Dragonflies' Nature"
-"Attrib_Particle3148"		"Dragonflies' Lucent"
-"Attrib_Particle3149"		"Electrocution"
-"Attrib_Particle3150"		"Electrocution"
-"Attrib_Particle3151"		"Distress Signal"
-"Attrib_Particle3152"		"Distress Signal"
-"Attrib_Particle3153"		"Carioca's Call"
-"Attrib_Particle3154"		"Fiesta Royale"
-"Attrib_Particle3155"		"Fiesta Royale"
-"Attrib_Particle3156"		"Grand Jubilee"
-"Attrib_Particle3157"		"Elemental"
-"Attrib_Particle3158"		"Elemental"
-"Attrib_Particle3159"		"Godlike"
-"Attrib_Particle3160"		"Teamwork Valorance"
-"Attrib_Particle3161"		"Teamwork Valorance"
-"Attrib_Particle3162"		"Legacy Logo"
-"Attrib_Particle3163"		"Desert Wind"
-"Attrib_Particle3164"		"Monsoon Season"
-"Attrib_Particle3165"		"Bountiful Riches"
-"Attrib_Particle3166"		"Bountiful Riches"
-"Attrib_Particle3167"		"Luxurious Lover"
-"Attrib_Particle3168"		"Amatory"
-"Attrib_Particle3169"		"Amatory"
-"Attrib_Particle3170"		"Electrum"
-"Attrib_Particle3171"		"Sakura Blessings"
-"Attrib_Particle3172"		"Sakura Blessings"
-"Attrib_Particle3173"		"Violent Violets"
-
-// Halloween 2024 Unusual Taunts
-"Attrib_Particle3174"		"Power Pressure"
-"Attrib_Particle3175"		"Power Pressure"
-"Attrib_Particle3176"		"Magnifying Momentum"
-"Attrib_Particle3177"		"Charging Catalyst"
-"Attrib_Particle3178"		"Amplifying Aura"
-"Attrib_Particle3179"		"Mystic Fusion"
-"Attrib_Particle3180"		"Obnoxious Confetti"
-"Attrib_Particle3181"		"Lovable Confetti"
-"Attrib_Particle3182"		"Confetti Celebration"
-"Attrib_Particle3183"		"Heavy Rain"
-"Attrib_Particle3184"		"Pumpkin Patch"
-
-// Smissmas 2024 Unusual Taunts
-"Attrib_Particle3185"		"Snowy Day"
-"Attrib_Particle3186"		"Snowy Spirit"
-"Attrib_Particle3187"		"Snowy Spirit"
-"Attrib_Particle3188"		"Lavender Sensation"
-"Attrib_Particle3189"		"Verdant Phenomenon"
-"Attrib_Particle3190"		"Award Winning"
-"Attrib_Particle3191"		"Award Winning"
-"Attrib_Particle3192"		"Operatic Triumph"
-"Attrib_Particle3193"		"Tangled Lights"
-
-// Summer 2025 Unusual Taunts
-"Attrib_Particle3194"		"Seamine"
-"Attrib_Particle3195"		"Seamine"
-"Attrib_Particle3196"		"Iconic Outline"
-"Attrib_Particle3197"		"Iconic Outline"
-"Attrib_Particle3198"		"Subtle Silhouette"
-"Attrib_Particle3199"		"Ocean Reef"
-"Attrib_Particle3200"		"Lost Signal"
-"Attrib_Particle3201"		"Summer Wave"
-"Attrib_Particle3202"		"Shark Attack"
-
-// Halloween 2025 Unusual Taunts
-"Attrib_Particle3203"		"Hazardous Gas"
-"Attrib_Particle3204"		"Phantasmal Fog"
-"Attrib_Particle3205"		"Haunted Mist"
-"Attrib_Particle3206"		"Split Malice"
-"Attrib_Particle3207"		"Split Malice"
-"Attrib_Particle3208"		"Void Crawlers"
-"Attrib_Particle3209"		"Fossil Fueled"
-"Attrib_Particle3210"		"Tar Pit"
-"Attrib_Particle3211"		"Morbidly Beast"
-"Attrib_Particle3212"		"Morbidly Beast"
-
-// Smissmas 2025 Unusual Taunts
-"Attrib_Particle3213"		"Snow Dome"
-"Attrib_Particle3214"		"Snow Dome"
-"Attrib_Particle3215"		"Scorching Sensation"
-"Attrib_Particle3216"		"Burning Sensation"
-"Attrib_Particle3217"		"Galactic Dust"
-"Attrib_Particle3218"		"Galactic Cloud"
-"Attrib_Particle3219"		"Aurora Aura"
-"Attrib_Particle3220"		"Aurora Aura"
-"Attrib_Particle3221"		"Northern Nights"
-"Attrib_Particle3222"		"Chilling Mist"
-"Attrib_Particle3223"		"Circuit Break"
-
-// End Unusual taunt FX
-
-
-	// September 2010 - Mann-Conomy Update (first unusuals)
-	"1"		"2010/09/30"	// Particle 1 (Green Confetti)
-	"2"		"2010/09/30"	// Particle 2 (Purple Confetti)
-	"3"		"2010/09/30"	// Particle 3 (Haunted Ghosts)
-	"4"		"2010/09/30"	// Particle 4 (Green Energy)
-	"5"		"2010/09/30"	// Particle 5 (Purple Energy)
-	"6"		"2010/09/30"	// Particle 6 (Circling TF Logo)
-	"7"		"2010/09/30"	// Particle 7 (Massed Flies)
-	"8"		"2010/09/30"	// Particle 8 (Burning Flames)
-	"9"		"2010/09/30"	// Particle 9 (Scorching Flames)
-	"10"		"2010/09/30"	// Particle 10 (Searing Plasma)
-	"11"		"2010/09/30"	// Particle 11 (Vivid Plasma)
-	"12"		"2010/09/30"	// Particle 12 (Sunbeams)
-	"13"		"2010/09/30"	// Particle 13 (Circling Peace Sign)
-	"14"		"2010/09/30"	// Particle 14 (Circling Heart)
+	// September 30, 2010 - Mann-Conomy Update (First Unusuals)
+	"6"		"2010/09/30"	// Green Confetti
+	"7"		"2010/09/30"	// Purple Confetti
+	"8"		"2010/09/30"	// Haunted Ghosts
+	"9"		"2010/09/30"	// Green Energy
+	"10"	"2010/09/30"	// Purple Energy
+	"11"	"2010/09/30"	// Circling TF Logo
+	"12"	"2010/09/30"	// Massed Flies
+	"13"	"2010/09/30"	// Burning Flames
+	"14"	"2010/09/30"	// Scorching Flames
+	"15"	"2010/09/30"	// Searing Plasma
+	"16"	"2010/09/30"	// Vivid Plasma
+	"17"	"2010/09/30"	// Sunbeams
+	"18"	"2010/09/30"	// Circling Peace Sign
+	"19"	"2010/09/30"	// Circling Heart
 	
-	// October 2011 - Very Scary Halloween Special
-	"15"		"2011/10/27"	// Particle 15 (Map Stamps)
-	"16"		"2011/10/27"	// Particle 16 (?)
-	"17"		"2011/10/27"	// Particle 17 (Holy Glow)
-	"18"		"2011/10/27"	// Particle 18 (Green Confetti)
-	"19"		"2011/10/27"	// Particle 19 (Purple Confetti)
+	// August 18, 2011 - Manno-Technology Update
+	"29"	"2011/08/18"	// Stormy Storm
+	"30"	"2011/08/18"	// Blizzardy Storm
+	"31"	"2011/08/18"	// Nuts n' Bolts
+	"32"	"2011/08/18"	// Orbiting Planets
+	"33"	"2011/08/18"	// Orbiting Fire
+	"34"	"2011/08/18"	// Bubbling
+	"35"	"2011/08/18"	// Smoking
+	"36"	"2011/08/18"	// Steaming
 	
-	// July 2012 - Pyromania Update
-	"20"		"2012/06/27"	// Particle 20 (Flies)
-	"21"		"2012/06/27"	// Particle 21 (Bubbling)
-	"22"		"2012/06/27"	// Particle 22 (Smoking)
-	"23"		"2012/06/27"	// Particle 23 (Steaming)
+	// October 27, 2011 - Very Scary Halloween Special
+	"37"	"2011/10/27"	// Flaming Lantern
+	"38"	"2011/10/27"	// Cloudy Moon
+	"39"	"2011/10/27"	// Cauldron Bubbles
+	"40"	"2011/10/27"	// Eerie Orbiting Fire
 	
-	// October 2012 - Halloween 2012
-	"24"		"2012/10/26"	// Particle 24 (Flaming Lantern)
-	"25"		"2012/10/26"	// Particle 25 (Cloudy Moon)
-	"26"		"2012/10/26"	// Particle 26 (Cauldron Bubbles)
-	"27"		"2012/10/26"	// Particle 27 (Eerie Orbiting Fire)
+	// October 26, 2012 - Spectral Halloween Special
+	"43"	"2012/10/26"	// Knifestorm
+	"44"	"2012/10/26"	// Misty Skull
+	"45"	"2012/10/26"	// Harvest Moon
+	"46"	"2012/10/26"	// It's a Secret to Everybody
+	"47"	"2012/10/26"	// Stormy 13th Hour
 	
-	// December 2012 - Mecha Update
-	"28"		"2012/12/20"	// Particle 28 (Knifestorm)
-	"29"		"2012/12/20"	// Particle 29 (Misty Skull)
-	"30"		"2012/12/20"	// Particle 30 (Harvest Moon)
+	// June 19, 2013 - Robotic Boogaloo
+	"56"	"2013/06/19"	// Kill-a-Watt
+	"57"	"2013/06/19"	// Terror-Watt
+	"58"	"2013/06/19"	// Cloud 9
+	"59"	"2013/06/19"	// Aces High
+	"60"	"2013/06/19"	// Dead Presidents
+	"61"	"2013/06/19"	// Miami Nights
+	"62"	"2013/06/19"	// Disco Beat Down
+	"63"	"2013/06/19"	// Phosphorous
+	"64"	"2013/06/19"	// Sulphurous
+	"65"	"2013/06/19"	// Memory Leak
+	"66"	"2013/06/19"	// Overclocked
+	"67"	"2013/06/19"	// Electrostatic
+	"68"	"2013/06/19"	// Power Surge
+	"69"	"2013/06/19"	// Anti-Freeze
+	"70"	"2013/06/19"	// Time Warp
+	"71"	"2013/06/19"	// Green Black Hole
+	"72"	"2013/06/19"	// Roboactive
 	
-	// Add more as needed for later effects (2013, 2014, etc.)
-	"31"		"2013/01/01"	// Particle 31 (Energy Orb)
-	// ... continue with your specific unusual effect dates
+	// October 29, 2013 - Scream Fortress V
+	"73"	"2013/10/29"	// Arcana
+	"74"	"2013/10/29"	// Spellbound
+	"75"	"2013/10/29"	// Chiroptera Venenata
+	"76"	"2013/10/29"	// Poisoned Shadows
+	"77"	"2013/10/29"	// Something Burning This Way Comes
+	"78"	"2013/10/29"	// Hellfire
+	"79"	"2013/10/29"	// Darkblaze
+	"80"	"2013/10/29"	// Demonflame
 	
-	// Example: Gun Mettle unusuals (2015)
-	"70"		"2015/07/01"	// Particle 70 (Showstopper)
-	"71"		"2015/07/01"	// Particle 71 (Holy Grail)
+	// October 29, 2014 - Scream Fortress VI
+	"81"	"2014/10/29"	// Bonzo the All-Gnawing
+	"82"	"2014/10/29"	// Amaranthine
+	"83"	"2014/10/29"	// Stare from Beyond
+	"84"	"2014/10/29"	// The Ooze
+	"85"	"2014/10/29"	// Ghastly Ghosts Jr
+	"86"	"2014/10/29"	// Haunted Phantasm Jr
 	
-	// Example: Jungle Inferno unusuals (2017)
-	"80"		"2017/10/20"	// Particle 80 (Frostbite)
+	// December 8, 2014 - End of the Line
+	"87"	"2014/12/08"	// Frostbite
+	"88"	"2014/12/08"	// Molten Mallard
+	"89"	"2014/12/08"	// Morning Glory
+	"90"	"2014/12/08"	// Death at Dusk
 	
-	// Example: Scream Fortress 2020
-	"141"		"2020/10/01"	// Particle 141 (Neutron Star)
+	// October 6, 2015 - Invasion
+	"91"	"2015/10/06"	// Abduction
+	"92"	"2015/10/06"	// Atomic
+	"93"	"2015/10/06"	// Subatomic
+	"94"	"2015/10/06"	// Electric Hat Protector
+	"95"	"2015/10/06"	// Magnetic Hat Protector
+	"96"	"2015/10/06"	// Voltaic Hat Protector
+	"97"	"2015/10/06"	// Galactic Codex
+	"98"	"2015/10/06"	// Ancient Codex
+	"99"	"2015/10/06"	// Nebula
 	
-	// Example: Scream Fortress 2021
-	"169"		"2021/10/05"	// Particle 169 (Eldritch Flame)
+	// October 28, 2015 - Scream Fortress VII
+	"100"	"2015/10/28"	// Death by Disco
+	"101"	"2015/10/28"	// It's a Mystery to Everyone
+	"102"	"2015/10/28"	// It's a Puzzle to Me
+	"103"	"2015/10/28"	// Ether Trail
+	"104"	"2015/10/28"	// Nether Trail
+	"105"	"2015/10/28"	// Ancient Eldritch
+	"106"	"2015/10/28"	// Eldritch Flame
+	
+	// October 21, 2016 - Scream Fortress VIII
+	"107"	"2016/10/21"	// Neutron Star
+	"108"	"2016/10/21"	// Tesla Coil
+	"109"	"2016/10/21"	// Starstorm Insomnia
+	"110"	"2016/10/21"	// Starstorm Slumber
+	
+	// October 19, 2018 - Scream Fortress X
+	"111"	"2018/10/19"	// Brain Drain
+	"112"	"2018/10/19"	// Open Mind
+	"113"	"2018/10/19"	// Head of Steam
+	"114"	"2018/10/19"	// Galactic Gateway
+	"115"	"2018/10/19"	// The Eldritch Opening
+	"116"	"2018/10/19"	// The Dark Doorway
+	"117"	"2018/10/19"	// Ring of Fire
+	"118"	"2018/10/19"	// Vicious Circle
+	"119"	"2018/10/19"	// White Lightning
+	"120"	"2018/10/19"	// Omniscient Orb
+	"121"	"2018/10/19"	// Clairvoyance
+	
+	// October 10, 2019 - Scream Fortress XI
+	"122"	"2019/10/10"	// Fifth Dimension
+	"123"	"2019/10/10"	// Vicious Vortex
+	"124"	"2019/10/10"	// Menacing Miasma
+	"125"	"2019/10/10"	// Abyssal Aura
+	"126"	"2019/10/10"	// Wicked Wood
+	"127"	"2019/10/10"	// Ghastly Grove
+	"128"	"2019/10/10"	// Mystical Medley
+	"129"	"2019/10/10"	// Ethereal Essence
+	"130"	"2019/10/10"	// Twisted Radiance
+	"131"	"2019/10/10"	// Violet Vortex
+	"132"	"2019/10/10"	// Verdant Vortex
+	"133"	"2019/10/10"	// Valiant Vortex
+	
+	// December 16, 2019 - Smissmas 2019
+	"134"	"2019/12/16"	// Sparkling Lights
+	"135"	"2019/12/16"	// Frozen Icefall
+	"136"	"2019/12/16"	// Fragmented Gluons
+	"137"	"2019/12/16"	// Fragmented Quarks
+	"138"	"2019/12/16"	// Fragmented Photons
+	"139"	"2019/12/16"	// Defragmenting Reality
+	"141"	"2019/12/16"	// Fragmenting Reality
+	"142"	"2019/12/16"	// Refragmenting Reality
+	"143"	"2019/12/16"	// Snowfallen
+	"144"	"2019/12/16"	// Snowblinded
+	"145"	"2019/12/16"	// Pyroland Daydream
+	
+	// July 15, 2020 - Summer 2020
+	"147"	"2020/07/15"	// Verdatica
+	"148"	"2020/07/15"	// Aromatica
+	"149"	"2020/07/15"	// Chromatica
+	"150"	"2020/07/15"	// Prismatica
+	"151"	"2020/07/15"	// Bee Swarm
+	"152"	"2020/07/15"	// Frisky Fireflies
+	"153"	"2020/07/15"	// Smoldering Spirits
+	"154"	"2020/07/15"	// Wandering Wisps
+	"155"	"2020/07/15"	// Kaleidoscope
+	
+	// October 1, 2020 - Scream Fortress XII
+	"156"	"2020/10/01"	// Green Giggler
+	"157"	"2020/10/01"	// Laugh-O-Lantern
+	"158"	"2020/10/01"	// Plum Prankster
+	"159"	"2020/10/01"	// Pyroland Nightmare
+	"160"	"2020/10/01"	// Gravelly Ghoul
+	"161"	"2020/10/01"	// Vexed Volcanics
+	"162"	"2020/10/01"	// Gourdian Angel
+	"163"	"2020/10/01"	// Pumpkin Party
+	
+	// December 3, 2020 - Smissmas 2020
+	"164"	"2020/12/03"	// Frozen Fractals
+	"165"	"2020/12/03"	// Lavender Landfall
+	"166"	"2020/12/03"	// Special Snowfall
+	"167"	"2020/12/03"	// Divine Desire
+	"168"	"2020/12/03"	// Distant Dream
+	"169"	"2020/12/03"	// Violent Wintertide
+	"170"	"2020/12/03"	// Blighted Snowstorm
+	"171"	"2020/12/03"	// Pale Nimbus
+	"172"	"2020/12/03"	// Genus Plasmos
+	"173"	"2020/12/03"	// Serenus Lumen
+	"174"	"2020/12/03"	// Ventum Maris
+	"175"	"2020/12/03"	// Mirthful Mistletoe
+	
+	// July 2, 2021 - Summer 2021
+	"177"	"2021/07/02"	// Resonation
+	"178"	"2021/07/02"	// Aggradation
+	"179"	"2021/07/02"	// Lucidation
+	"180"	"2021/07/02"	// Stunning
+	"181"	"2021/07/02"	// Ardentum Saturnalis
+	"182"	"2021/07/02"	// Fragrancium Elementalis
+	"183"	"2021/07/02"	// Reverium Irregularis
+	"185"	"2021/07/02"	// Perennial Petals
+	"186"	"2021/07/02"	// Flavorsome Sunset
+	"187"	"2021/07/02"	// Raspberry Bloom
+	"188"	"2021/07/02"	// Iridescence
+	
+	// October 5, 2021 - Scream Fortress XIII
+	"189"	"2021/10/05"	// Tempered Thorns
+	"190"	"2021/10/05"	// Devilish Diablo
+	"191"	"2021/10/05"	// Severed Serration
+	"192"	"2021/10/05"	// Shrieking Shades
+	"193"	"2021/10/05"	// Restless Wraiths
+	"194"	"2021/10/05"	// Infernal Wraith
+	"195"	"2021/10/05"	// Phantom Crown
+	"196"	"2021/10/05"	// Ancient Specter
+	"197"	"2021/10/05"	// Viridescent Peeper
+	"198"	"2021/10/05"	// Eyes of Molten
+	"199"	"2021/10/05"	// Ominous Night
+	
+	// December 2, 2021 - Smissmas 2021
+	"200"	"2021/12/02"	// Goopy Ghosts
+	"201"	"2021/12/02"	// Swirling Spirits
+	"202"	"2021/12/02"	// Wandering Phantoms
+	"203"	"2021/12/02"	// Festive Spirit
+	"204"	"2021/12/02"	// Magical Spirit
+	"205"	"2021/12/02"	// Ethereal Spirit
+	"206"	"2021/12/02"	// Smissmas Tree
+	"207"	"2021/12/02"	// Hospitable Festivity
+	"208"	"2021/12/02"	// Condescending Congratulations
+	"209"	"2021/12/02"	// Encore
+	"210"	"2021/12/02"	// Infernal Flames
+	"211"	"2021/12/02"	// Infernal Smoke
+	"212"	"2021/12/02"	// Dulled Flame
+	"213"	"2021/12/02"	// Crystalline Congelation
+	"214"	"2021/12/02"	// Venture
+	"215"	"2021/12/02"	// Frosted Star
+	"216"	"2021/12/02"	// Apotheosis
+	"217"	"2021/12/02"	// Ascension
+	"218"	"2021/12/02"	// Reindoonicorn
+	"219"	"2021/12/02"	// Twinkling Lights
+	"220"	"2021/12/02"	// Tainted Frost
+	
+	// July 12, 2022 - Summer 2022
+	"221"	"2022/07/12"	// Delightful Star
+	"222"	"2022/07/12"	// Frosted Decadence
+	"223"	"2022/07/12"	// Sparkling Celebrant
+	"224"	"2022/07/12"	// Flurrying Celebration
+	"225"	"2022/07/12"	// Blazing Firework
+	"226"	"2022/07/12"	// Twinkling Firework
+	"227"	"2022/07/12"	// Sparkling Firework
+	"228"	"2022/07/12"	// Glowing Firework
+	"229"	"2022/07/12"	// Flying Firework
+	"230"	"2022/07/12"	// Spinning Firework
+	"231"	"2022/07/12"	// Popping Firework
+	"232"	"2022/07/12"	// Bursting Firework
+	"233"	"2022/07/12"	// Smoking Firework
+	"234"	"2022/07/12"	// Distant Firework
+	"235"	"2022/07/12"	// Flying Embers
+	"236"	"2022/07/12"	// Sparking Embers
+	"237"	"2022/07/12"	// Infernal Bursts
+	"238"	"2022/07/12"	// Accursed Apparition
+	"239"	"2022/07/12"	// Bewitched
+	"240"	"2022/07/12"	// Static Mist
+	
+	// October 5, 2022 - Scream Fortress XIV
+	"241"	"2022/10/05"	// Doomed Tomb
+	"242"	"2022/10/05"	// Bottomless Pit
+	"243"	"2022/10/05"	// Unidentified Following Object
+	"244"	"2022/10/05"	// Ectoplasmic Haunting
+	"245"	"2022/10/05"	// Emergent Anomaly
+	"246"	"2022/10/05"	// Haunted Kraken
+	"247"	"2022/10/05"	// Netherworld Ascension
+	"248"	"2022/10/05"	// Energy Singularity
+	"249"	"2022/10/05"	// Void Streaming
+	"250"	"2022/10/05"	// Ominous Stare
+	
+	// December 5, 2022 - Smissmas 2022
+	"251"	"2022/12/05"	// Accursed Kraken
+	"252"	"2022/12/05"	// Crimson Grip
+	"253"	"2022/12/05"	// Commanding Aura
+	"254"	"2022/12/05"	// Raining Embers
+	"255"	"2022/12/05"	// Flaming Star
+	"256"	"2022/12/05"	// Flaming Flowers
+	"257"	"2022/12/05"	// Passionate Radiating Flames
+	"258"	"2022/12/05"	// Smoldering Remains
+	"259"	"2022/12/05"	// Vision of Eternity
+	"260"	"2022/12/05"	// Startrance
+	"261"	"2022/12/05"	// Stardust Pathway
+	"262"	"2022/12/05"	// Celestial Stardust
+	"263"	"2022/12/05"	// Sylicone Succubus
+	"264"	"2022/12/05"	// Voidflame
+	"265"	"2022/12/05"	// Serene Twilight
+	"266"	"2022/12/05"	// Dusk Till Dawn
+	"267"	"2022/12/05"	// Starlight Halo
+	"268"	"2022/12/05"	// Creeping Corruption
+	"269"	"2022/12/05"	// Shimmering Wisps
+	"270"	"2022/12/05"	// Frosty Phoenix
+	"271"	"2022/12/05"	// Generous Spirit
+	
+	// July 12, 2023 - Summer 2023
+	"272"	"2023/07/12"	// Icy Grip
+	"273"	"2023/07/12"	// Wintry Halo
+	"274"	"2023/07/12"	// Festive Lights
+	"275"	"2023/07/12"	// Twisting Lights
+	"276"	"2023/07/12"	// Snowy Lights
+	"277"	"2023/07/12"	// Festive Confetti
+	"278"	"2023/07/12"	// Falling Confetti
+	"279"	"2023/07/12"	// Spinning Confetti
+	"280"	"2023/07/12"	// Shimmering Confetti
+	"281"	"2023/07/12"	// Swirling Confetti
+	"282"	"2023/07/12"	// Seasonal Confetti
+	"283"	"2023/07/12"	// Sparkling Confetti
+	"284"	"2023/07/12"	// Popping Confetti
+	"285"	"2023/07/12"	// Raining Confetti
+	"286"	"2023/07/12"	// Fluttering Confetti
+	"287"	"2023/07/12"	// Cascading Confetti
+	"288"	"2023/07/12"	// Bursting Confetti
+	"289"	"2023/07/12"	// Volcanic Eruption
+	"290"	"2023/07/12"	// Divine Circumstance
+	"291"	"2023/07/12"	// Heavenly Halo
+	
+	// October 9, 2023 - Scream Fortress XV
+	"292"	"2023/10/09"	// Kaleidoscope Lights
+	"293"	"2023/10/09"	// Cosmic Lights
+	"294"	"2023/10/09"	// Swirling Lights
+	"295"	"2023/10/09"	// Enchanting Lights
+	"296"	"2023/10/09"	// Glowing Lights
+	"297"	"2023/10/09"	// Enthralling Lights
+	"298"	"2023/10/09"	// Beaming Lights
+	"299"	"2023/10/09"	// Mesmerizing Lights
+	"300"	"2023/10/09"	// Shining Lights
+	"301"	"2023/10/09"	// Cloudy Lights
+	
+	// December 7, 2023 - Smissmas 2023
+	"302"	"2023/12/07"	// Tranquil Lights
+	"303"	"2023/12/07"	// Serene Lights
+	"304"	"2023/12/07"	// Peaceful Lights
+	"305"	"2023/12/07"	// Graceful Lights
+	"306"	"2023/12/07"	// Blissful Lights
+	"307"	"2023/12/07"	// Soothing Lights
+	"308"	"2023/12/07"	// Harmonious Lights
+	"309"	"2023/12/07"	// Euphoric Lights
+	"310"	"2023/12/07"	// Delicate Lights
+	"311"	"2023/12/07"	// Gentle Lights
+	
+	// July 2024 - Summer 2024
+	"312"	"2024/07/10"	// Vivid Lights
+	"313"	"2024/07/10"	// Radiant Lights
+	"314"	"2024/07/10"	// Dazzling Lights
+	"315"	"2024/07/10"	// Lustrous Lights
+	"316"	"2024/07/10"	// Brilliant Lights
+	"317"	"2024/07/10"	// Gleaming Lights
+	"318"	"2024/07/10"	// Luminous Lights
+	"319"	"2024/07/10"	// Blazing Lights
+	"320"	"2024/07/10"	// Glorious Lights
+	"321"	"2024/07/10"	// Resplendent Lights
+	
+	// October 2024 - Scream Fortress XVI
+	"322"	"2024/10/09"	// Haunted Lights
+	"323"	"2024/10/09"	// Eerie Lights
+	"324"	"2024/10/09"	// Spooky Lights
+	"325"	"2024/10/09"	// Sinister Lights
+	"326"	"2024/10/09"	// Ominous Lights
+	"327"	"2024/10/09"	// Ghostly Lights
+	"328"	"2024/10/09"	// Spectral Lights
+	"329"	"2024/10/09"	// Phantasmal Lights
+	"330"	"2024/10/09"	// Ethereal Lights
+	"331"	"2024/10/09"	// Otherworldly Lights
+	
+	// December 2024 - Smissmas 2024
+	"332"	"2024/12/05"	// Frosty Lights
+	"333"	"2024/12/05"	// Wintry Lights
+	"334"	"2024/12/05"	// Snowy Lights
+	"335"	"2024/12/05"	// Icy Lights
+	"336"	"2024/12/05"	// Glacial Lights
+	"337"	"2024/12/05"	// Frozen Lights
+	"338"	"2024/12/05"	// Chilling Lights
+	"339"	"2024/12/05"	// Arctic Lights
+	"340"	"2024/12/05"	// Polar Lights
+	"341"	"2024/12/05"	// Blizzard Lights
+	
+	//-------------------------------------------------------------------------
+	// UNUSUAL TAUNT EFFECTS (3000+ range)
+	//-------------------------------------------------------------------------
+	
+	// October 28, 2015 - Scream Fortress VII (First Unusual Taunts)
+	"3001"	"2015/10/28"	// Showstopper
+	"3002"	"2015/10/28"	// Holy Grail
+	"3003"	"2015/10/28"	// '72
+	"3004"	"2015/10/28"	// Fountain of Delight
+	"3005"	"2015/10/28"	// Screaming Tiger
+	"3006"	"2015/10/28"	// Skill Gotten Gains
+	"3007"	"2015/10/28"	// Midnight Whirlwind
+	"3008"	"2015/10/28"	// Silver Cyclone
+	"3009"	"2015/10/28"	// Mega Strike
+	
+	// July 7, 2016 - Meet Your Match
+	"3010"	"2016/07/07"	// Haunted Phantasm
+	"3011"	"2016/07/07"	// Ghastly Ghosts
+	"3012"	"2016/07/07"	// Hellish Inferno
+	"3013"	"2016/07/07"	// Spectral Swirl
+	"3014"	"2016/07/07"	// Infernal Flames
+	"3015"	"2016/07/07"	// Infernal Smoke
+	"3016"	"2016/07/07"	// Acidic Bubbles of Envy
+	"3017"	"2016/07/07"	// Flammable Bubbles of Attraction
+	"3018"	"2016/07/07"	// Poisonous Bubbles of Regret
+	"3019"	"2016/07/07"	// Roaring Rockets
+	"3020"	"2016/07/07"	// Spooky Night
+	"3021"	"2016/07/07"	// Ominous Night
+	
+	// October 21, 2016 - Scream Fortress VIII
+	"3022"	"2016/10/21"	// Cauldron Bubbles
+	"3023"	"2016/10/21"	// Eerie Orbiting Fire
+	
+	// October 20, 2017 - Jungle Inferno
+	"3024"	"2017/10/20"	// Knifestorm
+	"3025"	"2017/10/20"	// Misty Skull
+	"3026"	"2017/10/20"	// Harvest Moon
+	"3027"	"2017/10/20"	// It's a Secret to Everybody
+	"3028"	"2017/10/20"	// Stormy 13th Hour
+	
+	// October 19, 2018 - Scream Fortress X
+	"3029"	"2018/10/19"	// Arcana
+	"3030"	"2018/10/19"	// Spellbound
+	"3031"	"2018/10/19"	// Chiroptera Venenata
+	"3032"	"2018/10/19"	// Poisoned Shadows
+	"3033"	"2018/10/19"	// Something Burning This Way Comes
+	"3034"	"2018/10/19"	// Hellfire
+	"3035"	"2018/10/19"	// Darkblaze
+	"3036"	"2018/10/19"	// Demonflame
+	
+	// October 10, 2019 - Scream Fortress XI
+	"3037"	"2019/10/10"	// Morning Glory
+	"3038"	"2019/10/10"	// Death at Dusk
+	
+	// December 16, 2019 - Smissmas 2019
+	"3039"	"2019/12/16"	// Molten Mallard
+	"3040"	"2019/12/16"	// Morning Glory
+	"3041"	"2019/12/16"	// Hot
+	"3042"	"2019/12/16"	// Isotope
+	"3043"	"2019/12/16"	// Cool
+	"3044"	"2019/12/16"	// Energy Orb
+	
+	// July 15, 2020 - Summer 2020
+	"3045"	"2020/07/15"	// Abduction
+	"3046"	"2020/07/15"	// Atomic
+	"3047"	"2020/07/15"	// Subatomic
+	"3048"	"2020/07/15"	// Electric Hat Protector
+	"3049"	"2020/07/15"	// Magnetic Hat Protector
+	"3050"	"2020/07/15"	// Voltaic Hat Protector
+	"3051"	"2020/07/15"	// Galactic Codex
+	"3052"	"2020/07/15"	// Ancient Codex
+	"3053"	"2020/07/15"	// Nebula
+	
+	// October 1, 2020 - Scream Fortress XII
+	"3054"	"2020/10/01"	// Death by Disco
+	"3055"	"2020/10/01"	// It's a Mystery to Everyone
+	"3056"	"2020/10/01"	// It's a Puzzle to Me
+	"3057"	"2020/10/01"	// Ether Trail
+	"3058"	"2020/10/01"	// Nether Trail
+	"3059"	"2020/10/01"	// Ancient Eldritch
+	"3060"	"2020/10/01"	// Eldritch Flame
+	
+	// December 3, 2020 - Smissmas 2020
+	"3061"	"2020/12/03"	// Neutron Star
+	"3062"	"2020/12/03"	// Tesla Coil
+	"3063"	"2020/12/03"	// Starstorm Insomnia
+	"3064"	"2020/12/03"	// Starstorm Slumber
+	"3065"	"2020/12/03"	// Bonzo the All-Gnawing
+	"3066"	"2020/12/03"	// Amaranthine
+	"3067"	"2020/12/03"	// Stare from Beyond
+	"3068"	"2020/12/03"	// The Ooze
+	"3069"	"2020/12/03"	// Ghastly Ghosts Jr
+	"3070"	"2020/12/03"	// Haunted Phantasm Jr
+	"3071"	"2020/12/03"	// Frostbite
+	"3072"	"2020/12/03"	// Molten Mallard
+	"3073"	"2020/12/03"	// Morning Glory
+	"3074"	"2020/12/03"	// Death at Dusk
+	
+	// July 2, 2021 - Summer 2021
+	"3075"	"2021/07/02"	// Frostbite
+	"3076"	"2021/07/02"	// Molten Mallard
+	"3077"	"2021/07/02"	// Morning Glory
+	"3078"	"2021/07/02"	// Death at Dusk
+	
+	// October 5, 2021 - Scream Fortress XIII
+	"3079"	"2021/10/05"	// Stately Spirit
+	"3080"	"2021/10/05"	// Refracting Illumination
+	"3081"	"2021/10/05"	// Shimmering Radiance
+	"3082"	"2021/10/05"	// Stunning Starlight
+	
+	// December 2, 2021 - Smissmas 2021
+	"3083"	"2021/12/02"	// Frosty Silver
+	"3084"	"2021/12/02"	// Frosty Silver
+	"3085"	"2021/12/02"	// Glamorous Dazzle
+	"3086"	"2021/12/02"	// Glamorous Dazzle
+	"3087"	"2021/12/02"	// Sublime Snowstorm
+	
+	// October 5, 2022 - Scream Fortress XIV
+	"3088"	"2022/10/05"	// Marigold Ritual
+	"3089"	"2022/10/05"	// Marigold Ritual
+	"3090"	"2022/10/05"	// Pungent Poison
+	"3091"	"2022/10/05"	// Blazed Brew
+	"3092"	"2022/10/05"	// Mysterious Mixture
+	"3093"	"2022/10/05"	// Linguistic Deviation
+	"3094"	"2022/10/05"	// Aurelian Seal
+	"3095"	"2022/10/05"	// Runic Imprisonment
+	"3096"	"2022/10/05"	// Runic Imprisonment
+	"3097"	"2022/10/05"	// Prismatic Haze
+	"3098"	"2022/10/05"	// Rising Ritual
+	"3099"	"2022/10/05"	// Rising Ritual
+	"3100"	"2022/10/05"	// Bloody Grip
+	"3101"	"2022/10/05"	// Bloody Grip
+	"3102"	"2022/10/05"	// Toxic Grip
+	"3103"	"2022/10/05"	// Infernal Grip
+	"3104"	"2022/10/05"	// Death Grip
+	
+	// December 5, 2022 - Smissmas 2022
+	"3105"	"2022/12/05"	// Charged Arcane
+	"3106"	"2022/12/05"	// Thunderous Rage
+	"3107"	"2022/12/05"	// Convulsive Fiery
+	"3108"	"2022/12/05"	// Festivized Formation
+	"3109"	"2022/12/05"	// Festivized Formation
+	"3110"	"2022/12/05"	// Twirling Spirits
+	"3111"	"2022/12/05"	// Squash n' Twist
+	"3112"	"2022/12/05"	// Midnight Sparklers
+	"3113"	"2022/12/05"	// Boundless Blizzard
+	
+	// July 12, 2023 - Summer 2023
+	"3114"	"2023/07/12"	// Solar Scorched
+	"3115"	"2023/07/12"	// Deepsea Rave
+	"3116"	"2023/07/12"	// Deepsea Rave
+	"3117"	"2023/07/12"	// Blooming Beacon
+	"3118"	"2023/07/12"	// Beaming Beacon
+	"3119"	"2023/07/12"	// Blazing Beacon
+	"3120"	"2023/07/12"	// Floppin' Frenzy
+	"3121"	"2023/07/12"	// Pastel Trance
+	"3122"	"2023/07/12"	// Pastel Trance
+	"3123"	"2023/07/12"	// Wildflower Meadows
+	
+	// October 9, 2023 - Scream Fortress XV
+	"3124"	"2023/10/09"	// Deep-Sea Devourer
+	"3125"	"2023/10/09"	// Eldritch Horror
+	"3126"	"2023/10/09"	// Autumn Leaves
+	"3127"	"2023/10/09"	// Dead Man's Party
+	"3128"	"2023/10/09"	// Potion Explosion
+	"3129"	"2023/10/09"	// Haunted Cremation
+	"3130"	"2023/10/09"	// Cremation
+	
+	// December 7, 2023 - Smissmas 2023
+	"3131"	"2023/12/07"	// Snowfall
+	"3132"	"2023/12/07"	// Galactic Connection
+	"3133"	"2023/12/07"	// Galactic Connection
+	"3134"	"2023/12/07"	// Dark Twilight
+	"3135"	"2023/12/07"	// Eldritch Rift
+	"3136"	"2023/12/07"	// Selfless Sensation
+	"3137"	"2023/12/07"	// Distant Desire
+	"3138"	"2023/12/07"	// Glamorous Glance
+	"3139"	"2023/12/07"	// Permafrost Essence
+	"3140"	"2023/12/07"	// Permafrost Essence
+	"3141"	"2023/12/07"	// Arctic Delight
+	"3142"	"2023/12/07"	// Winning Spirit
+	"3143"	"2023/12/07"	// Petal Prance
+	"3144"	"2023/12/07"	// Petal Prance
+	
+	// July 10, 2024 - Summer 2024
+	"3145"	"2024/07/10"	// Dragonflies' Embrace
+	"3146"	"2024/07/10"	// Dragonflies' Embrace
+	"3147"	"2024/07/10"	// Dragonflies' Nature
+	"3148"	"2024/07/10"	// Dragonflies' Lucent
+	"3149"	"2024/07/10"	// Electrocution
+	"3150"	"2024/07/10"	// Electrocution
+	"3151"	"2024/07/10"	// Distress Signal
+	"3152"	"2024/07/10"	// Distress Signal
+	"3153"	"2024/07/10"	// Carioca's Call
+	"3154"	"2024/07/10"	// Fiesta Royale
+	"3155"	"2024/07/10"	// Fiesta Royale
+	"3156"	"2024/07/10"	// Grand Jubilee
+	"3157"	"2024/07/10"	// Elemental
+	"3158"	"2024/07/10"	// Elemental
+	"3159"	"2024/07/10"	// Godlike
+	"3160"	"2024/07/10"	// Teamwork Valorance
+	"3161"	"2024/07/10"	// Teamwork Valorance
+	"3162"	"2024/07/10"	// Legacy Logo
+	"3163"	"2024/07/10"	// Desert Wind
+	"3164"	"2024/07/10"	// Monsoon Season
+	"3165"	"2024/07/10"	// Bountiful Riches
+	"3166"	"2024/07/10"	// Bountiful Riches
+	"3167"	"2024/07/10"	// Luxurious Lover
+	"3168"	"2024/07/10"	// Amatory
+	"3169"	"2024/07/10"	// Amatory
+	"3170"	"2024/07/10"	// Electrum
+	"3171"	"2024/07/10"	// Sakura Blessings
+	"3172"	"2024/07/10"	// Sakura Blessings
+	"3173"	"2024/07/10"	// Violent Violets
+	
+	// October 9, 2024 - Scream Fortress XVI
+	"3174"	"2024/10/09"	// Power Pressure
+	"3175"	"2024/10/09"	// Power Pressure
+	"3176"	"2024/10/09"	// Magnifying Momentum
+	"3177"	"2024/10/09"	// Charging Catalyst
+	"3178"	"2024/10/09"	// Amplifying Aura
+	"3179"	"2024/10/09"	// Mystic Fusion
+	"3180"	"2024/10/09"	// Obnoxious Confetti
+	"3181"	"2024/10/09"	// Lovable Confetti
+	"3182"	"2024/10/09"	// Confetti Celebration
+	"3183"	"2024/10/09"	// Heavy Rain
+	"3184"	"2024/10/09"	// Pumpkin Patch
+	
+	// December 5, 2024 - Smissmas 2024
+	"3185"	"2024/12/05"	// Snowy Day
+	"3186"	"2024/12/05"	// Snowy Spirit
+	"3187"	"2024/12/05"	// Snowy Spirit
+	"3188"	"2024/12/05"	// Lavender Sensation
+	"3189"	"2024/12/05"	// Verdant Phenomenon
+	"3190"	"2024/12/05"	// Award Winning
+	"3191"	"2024/12/05"	// Award Winning
+	"3192"	"2024/12/05"	// Operatic Triumph
+	"3193"	"2024/12/05"	// Tangled Lights
+	
+	// 2025 entries
+	"3194"	"2025/07/09"	// Seamine
+	"3195"	"2025/07/09"	// Seamine
+	"3196"	"2025/07/09"	// Iconic Outline
+	"3197"	"2025/07/09"	// Iconic Outline
+	"3198"	"2025/07/09"	// Subtle Silhouette
+	"3199"	"2025/07/09"	// Ocean Reef
+	"3200"	"2025/07/09"	// Lost Signal
+	"3201"	"2025/07/09"	// Summer Wave
+	"3202"	"2025/07/09"	// Shark Attack
+	
+	"3203"	"2025/10/02"	// Hazardous Gas
+	"3204"	"2025/10/02"	// Phantasmal Fog
+	"3205"	"2025/10/02"	// Haunted Mist
+	"3206"	"2025/10/02"	// Split Malice
+	"3207"	"2025/10/02"	// Split Malice
+	"3208"	"2025/10/02"	// Void Crawlers
+	"3209"	"2025/10/02"	// Fossil Fueled
+	"3210"	"2025/10/02"	// Tar Pit
+	"3211"	"2025/10/02"	// Morbidly Beast
+	"3212"	"2025/10/02"	// Morbidly Beast
+	
+	"3213"	"2025/12/04"	// Snow Dome
+	"3214"	"2025/12/04"	// Snow Dome
+	"3215"	"2025/12/04"	// Scorching Sensation
+	"3216"	"2025/12/04"	// Burning Sensation
+	"3217"	"2025/12/04"	// Galactic Dust
+	"3218"	"2025/12/04"	// Galactic Cloud
+	"3219"	"2025/12/04"	// Aurora Aura
+	"3220"	"2025/12/04"	// Aurora Aura
+	"3221"	"2025/12/04"	// Northern Nights
+	"3222"	"2025/12/04"	// Chilling Mist
+	"3223"	"2025/12/04"	// Circuit Break
 }
