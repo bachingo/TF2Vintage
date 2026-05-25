@@ -7680,14 +7680,14 @@ bool CTFGameRules::ApplyOnDamageModifyRules( CTakeDamageInfo &info, CBaseEntity 
 					flRandomDamage *= 1.5f;
 				}
 				break;
-			case TF_WEAPON_NAILGUN :
-			case TF_WEAPON_SYRINGEGUN_MEDIC :
+			//case TF_WEAPON_NAILGUN :
+			//case TF_WEAPON_SYRINGEGUN_MEDIC :
 				// Nailguns: Get 50% bonus rampup at short range
-				if ( flRandomRangeVal > 0.5f )
-				{
-					flRandomDamage *= 1.5f;
-				}
-				break;
+				//if ( flRandomRangeVal > 0.5f )
+				//{
+				//	flRandomDamage *= 1.5f;
+				//}
+				//break;
 			}
 		}
 
