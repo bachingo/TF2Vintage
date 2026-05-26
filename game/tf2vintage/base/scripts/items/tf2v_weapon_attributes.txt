@@ -154,6 +154,21 @@
 	"44"  // Sandman            (melee)
     "317"  // Candy Cane            (melee)
 	"325"  // Boston Basher            (melee)
+	{
+		"2010/12/17" // Australian Christmas
+		{
+			"bleeding duration"
+			{
+				"attribute_class"	"bleeding_duration"
+				"value" "5"
+			}
+			"hit self on miss"
+			{
+				"attribute_class"	"hit_self_on_miss"
+				"value"	"1"
+			}
+		}
+	}
     "452"  // Three-Rune Blade            (melee)
 	"349"  // Sun-on-a-Stick            (melee)
     "355"  // Fan O'War            (melee)
