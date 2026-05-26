@@ -925,84 +925,100 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 //-----------------------------------------------------------------------------
 bool CTF2VAttributeDateManager::ApplyWeaponAttributesToItem( CEconItemView *pOriginalItem )
 {
-	if ( !pOriginalItem || !pOriginalItem->IsValid() || !m_bInitialized || !TFGameRules() || !TF2VGetEra() )
+	if ( !pOriginalItem || !pOriginalItem->IsValid() )
 		return false;
-
-	// Get the Itemdef for this weapon, along with its base variant.
-	int iItemDef = pOriginalItem->GetItemDefIndex();
+ 
+	if ( !TFGameRules() || !TF2VGetEra() )
+		return false;
+ 
+	// Get the common defindex (handles variants like Botkiller)
+	int iDefIndex = GetCommonItemDef( pOriginalItem->GetItemDefIndex() );
 	
-	// Check if we have versioned attributes for this item
-	int idx = m_WeaponAttributeVersions.Find( GetCommonItemDef(iItemDef) );
-	if ( !m_WeaponAttributeVersions.IsValidIndex( idx ) )
+	// Check if we have version data BEFORE doing anything
+	int iMapIndex = m_WeaponAttributeVersions.Find( iDefIndex );
+	if ( iMapIndex == m_WeaponAttributeVersions.InvalidIndex() )
 	{
-		// No versioned attributes - keep default behavior
+		// No version data exists for this weapon - leave it alone
+		// This is NOT an error - many items don't have versioned attributes
+		return false; // Indicates no modification was made
+	}
+ 
+	CUtlVector<WeaponAttributeVersion_t> *pVersionList = m_WeaponAttributeVersions[iMapIndex];
+	
+	if ( !pVersionList || pVersionList->Count() == 0 )
+	{
+		Warning( "[TF2V] Invalid or empty version list for weapon defindex %d!\n", iDefIndex );
 		return false;
 	}
 
-	CUtlVector<WeaponAttributeVersion_t> *pVersions = m_WeaponAttributeVersions[idx];
-	if ( !pVersions || pVersions->Count() == 0 )
-		return false;
+	int iCurrentDay = TF2VGetEra()->GetCurrentDay();
+	int iVersionIndex = -1;
 
-	// Find correct version for current era
-	WeaponAttributeVersion_t *pCorrectVersion = NULL;
-	
-	// Easier to call era here once than every time in the loop.
-	int iCurrentEra = TF2VGetEra();
-	for ( int i = pVersions->Count() - 1; i >= 0; i-- )
+	for ( int i = pVersionList->Count() - 1; i >= 0; i-- )
 	{
-		if ( (*pVersions)[i].iStartDate <= iCurrentEra )
+		if ( pVersionList->Element(i).iStartDate <= iCurrentDay )
 		{
-			pCorrectVersion = &(*pVersions)[i];
+			iVersionIndex = i;
 			break;
 		}
 	}
 
+	if ( iVersionIndex == -1 )
+	{
+		// Every version for this weapon is newer than the current era.
+		// The weapon existed but had no versioned attributes this early —
+		// keep whatever the schema says. This is different from an explicit
+		// empty block: we have no authored intent for this period at all.
+		DevMsg( "[TF2V] Weapon %d: all versions post-date era day %d, keeping schema attrs\n",
+				iDefIndex, iCurrentDay );
+		return false;
+	}
+
+	WeaponAttributeVersion_t *pCorrectVersion = &pVersionList->Element( iVersionIndex );
 	if ( !pCorrectVersion )
 	{
-		pCorrectVersion = &(*pVersions)[0];
+		Warning( "[TF2V] Null version element for weapon %d index %d\n", iDefIndex, iVersionIndex );
+		return false;
 	}
 
 	CAttributeList *pAttribList = pOriginalItem->GetAttributeList();
 	if ( !pAttribList )
 		return false;
 
-	// CRITICAL: Save modifier and cosmetic attributes
+	// Preserve non-weapon-stat attributes (paint, unusual, killstreak, clerical).
 	CUtlVector<CEconItemAttribute> preservedAttributes;
-	
 	for ( int i = 0; i < pAttribList->GetNumAttributes(); i++ )
 	{
 		const CEconItemAttribute *pAttrib = pAttribList->GetAttribute( i );
-		if ( !pAttrib )
-			continue;
+		if ( !pAttrib ) continue;
 
 		const CEconItemAttributeDefinition *pAttrDef = pAttrib->GetStaticData();
-		if ( !pAttrDef )
-			continue;
+		if ( !pAttrDef ) continue;
 
-		const char *pszAttrClass = pAttrDef->GetDefinitionName();
-		AttributeCategory_t category = GetAttributeCategory( pszAttrClass );
-		
-		// Preserve modifiers and cosmetics
-		if ( category == ATTRIB_CAT_MODIFIER || category == ATTRIB_CAT_COSMETIC )
-		{
+		if ( GetAttributeCategory( pAttrDef->GetAttributeClass() ) != ATTRIB_CAT_WEAPON_STAT )
 			preservedAttributes.AddToTail( *pAttrib );
-		}
 	}
 
-	// Clear all attributes (this clears weapon stats but we saved modifiers)
+	// Safe to destroy now — we have a valid (possibly empty) version and
+	// have saved everything we want to keep.
 	pAttribList->DestroyAllAttributes();
 
-	// Apply era-appropriate weapon stats
+	// Apply era weapon stats.
+	// If pCorrectVersion->attributes is empty, this loop does nothing —
+	// that is INTENTIONAL. An empty block means "no stats this period"
 	for ( int i = 0; i < pCorrectVersion->attributes.Count(); i++ )
 	{
 		pAttribList->AddAttribute( &pCorrectVersion->attributes[i] );
 	}
 
-	// Restore preserved modifiers and cosmetics
+	// Restore cosmetics/modifiers regardless of whether stats were empty.
 	for ( int i = 0; i < preservedAttributes.Count(); i++ )
 	{
 		pAttribList->AddAttribute( &preservedAttributes[i] );
 	}
+
+	DevMsg( "[TF2V] Weapon %d: applied version %d (%d stats) for era day %d\n",
+			iDefIndex, iVersionIndex, pCorrectVersion->attributes.Count(), iCurrentDay );
 
 	return true;
 }
