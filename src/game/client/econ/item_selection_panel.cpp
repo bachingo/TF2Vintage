@@ -897,6 +897,8 @@ CEquippableItemsForSlotGenerator::CEquippableItemsForSlotGenerator( int iClass, 
 		// differently.
 		CEquippableItemsForSlotGenerator::EItemDisplayType eDisplayType = kSlotDisplay_Normal;
 		
+		// TF2V: Undone until I can figure out why this consistently fails to refresh.
+		/*
 		// TF2V: Use the same function from the server uses for era enforcement to check items here.
 		// Do this only when we're in a time period that has items to block and we actually have values to check.
 		if ( TFGameRules() && TF2VGetEra() && TF2VIsAnachronistic( TF2V_DAY_LATEST ) )
@@ -913,7 +915,8 @@ CEquippableItemsForSlotGenerator::CEquippableItemsForSlotGenerator( int iClass, 
 			// else if ( TF2VItemNeedsModification( pItem, iSlot ) )
 			// To do: Make a variant to show when a base item is correct, but our version will be modified when spawning.
 		}
-
+		*/
+		
 		if ( pItem->GetItemDefinition()->GetEquipRegionMask() & unUsedEquipRegionMask )
 		{
 			eDisplayType = kSlotDisplay_Disabled_EquipRegionConflict;
