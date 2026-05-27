@@ -951,7 +951,7 @@ bool CTF2VAttributeDateManager::ApplyWeaponAttributesToItem( CEconItemView *pOri
 		return false;
 	}
 
-	int iCurrentDay = TF2VGetEra()->GetCurrentDay();
+	int iCurrentDay = TF2VGetEra();
 	int iVersionIndex = -1;
 
 	for ( int i = pVersionList->Count() - 1; i >= 0; i-- )
