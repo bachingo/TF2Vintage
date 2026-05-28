@@ -947,7 +947,7 @@ void CTFClientScoreBoardDialog::InitPlayerList( SectionedListPanel *pPlayerList 
 	pPlayerList->AddColumnToSection( 0, "class", "", SectionedListPanel::COLUMN_IMAGE | SectionedListPanel::COLUMN_RIGHT, m_iClassWidth );
 
 	// TF2V: Ping was numbers up to Tough Break.
-	if ( tf_scoreboard_ping_as_text.GetBool() || TF2VIsAnachronistic( TF2V_DAY_MAJOR_TOUGH_BREAK ) )
+	if ( tf_scoreboard_ping_as_text.GetBool() || ( TFGameRules() && TF2VIsAnachronistic( TF2V_DAY_MAJOR_TOUGH_BREAK ) ) )
 	{
 		pPlayerList->AddColumnToSection( 0, "ping", "#TF_Scoreboard_Ping", SectionedListPanel::COLUMN_RIGHT, m_iPingWidth );
 	}
@@ -1438,7 +1438,7 @@ void CTFClientScoreBoardDialog::UpdatePlayerList()
 			if ( g_PR->IsFakePlayer( playerIndex ) )
 			{
 				// TF2V: Ping was numbers up to Tough Break.
-				if ( tf_scoreboard_ping_as_text.GetBool() || TF2VIsAnachronistic( TF2V_DAY_MAJOR_TOUGH_BREAK ) )
+				if ( tf_scoreboard_ping_as_text.GetBool() || ( TFGameRules() && TF2VIsAnachronistic( TF2V_DAY_MAJOR_TOUGH_BREAK ) ) )
 				{
 					pKeyValues->SetString( "ping", "#TF_Scoreboard_Bot" );
 				}
@@ -1455,7 +1455,7 @@ void CTFClientScoreBoardDialog::UpdatePlayerList()
  				if ( nPing < 1 )
  				{
 					// TF2V: Ping was numbers up to Tough Break.
-					if ( tf_scoreboard_ping_as_text.GetBool() || TF2VIsAnachronistic( TF2V_DAY_MAJOR_TOUGH_BREAK ) )
+					if ( tf_scoreboard_ping_as_text.GetBool() || ( TFGameRules() && TF2VIsAnachronistic( TF2V_DAY_MAJOR_TOUGH_BREAK ) ) )
 					{
 						pKeyValues->SetString( "ping", "" );
 					}
@@ -1467,7 +1467,7 @@ void CTFClientScoreBoardDialog::UpdatePlayerList()
  				else
 				{
 					// TF2V: Ping was numbers up to Tough Break.
-					if ( tf_scoreboard_ping_as_text.GetBool() || TF2VIsAnachronistic( TF2V_DAY_MAJOR_TOUGH_BREAK ) )
+					if ( tf_scoreboard_ping_as_text.GetBool() || ( TFGameRules() && TF2VIsAnachronistic( TF2V_DAY_MAJOR_TOUGH_BREAK ) ) )
 					{
 						pKeyValues->SetInt( "ping", nPing );
 					}
