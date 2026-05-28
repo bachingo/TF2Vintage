@@ -171,6 +171,52 @@
 	}
     "452"  // Three-Rune Blade            (melee)
 	"349"  // Sun-on-a-Stick            (melee)
+	{
+			"2011/02/03"	// RIFT Promo
+			{
+				"minicrit vs burning player"
+				{
+					"attribute_class"	"or_minicrit_vs_playercond_burning"
+					"value"	"1"
+				}
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0.85"
+				}
+			}
+			"2011/04/11"	// Hatless
+			{
+				"crit vs burning players"
+				{
+					"attribute_class"	"or_crit_vs_playercond"
+					"value"	"1"
+				}
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0.75"
+				}
+			}
+			"2016/07/06"	// Meet Your Match
+			{
+				"crit vs burning players"
+				{
+					"attribute_class"	"or_crit_vs_playercond"
+					"value"	"1"44
+				}
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0.75"
+				}
+				"dmg taken from fire reduced on active"
+				{
+					"attribute_class"	"mult_dmgtaken_from_fire_active"
+					"value"			"0.75"
+				}
+			}
+	}
     "355"  // Fan O'War            (melee)
 	"450"  // Atomizer            (melee)
     "648"  // Wrap Assassin            (melee)
