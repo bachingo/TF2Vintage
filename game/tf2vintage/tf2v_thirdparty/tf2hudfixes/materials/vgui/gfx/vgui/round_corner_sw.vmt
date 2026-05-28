@@ -1,0 +1,12 @@
+"UnlitGeneric"
+{
+	// Original shader: BaseTimesVertexColorAlphaBlendNoOverbright
+	"$basetexture"			"vgui/gfx/vgui/round_corner_sw"
+	"$vertexcolor"			"1"
+	"$vertexalpha"			"1"
+	"$no_fullbright"		"1"
+	"$alphatest"			"1"
+	"$allowAlphaToCoverage"	"1"
+	"$ignorez"				"1"
+	//"$translucent"		"1"
+}

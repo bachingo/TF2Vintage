@@ -29,7 +29,7 @@ ConVar cl_crosshairalpha( "cl_crosshairalpha", "255", FCVAR_CLIENTDLL | FCVAR_AR
 ConVar cl_crosshair_file( "cl_crosshair_file", "", FCVAR_ARCHIVE );
 ConVar cl_hitmarker_file( "cl_hitmarker_file", "crosshair4", FCVAR_ARCHIVE );
 
-ConVar cl_crosshair_scale( "cl_crosshair_scale", "32.0", FCVAR_ARCHIVE );
+ConVar cl_crosshair_scale( "cl_crosshair_scale", "32.0", FCVAR_ARCHIVE ); // Normally 32. We do a calculation of diving by 51 later to account for better crosshairs. (1080/51 = 21)
 
 ConVar cl_crosshair_gap( "cl_crosshair_gap", "0", FCVAR_ARCHIVE );
 
@@ -245,7 +245,7 @@ void CHudTFCrosshair::Paint()
 	float flPlayerScale = cl_crosshair_scale.GetFloat() / 32.0f;  // the player can change the scale in the options/multiplayer tab
 	Color clr( cl_crosshair_red.GetInt(), cl_crosshair_green.GetInt(), cl_crosshair_blue.GetInt(), cl_crosshairalpha.GetInt() );
 
-	const float flCrosshairScale = flWeaponScale * flPlayerScale;
+	const float flCrosshairScale = flWeaponScale * flPlayerScale * ( ScreenHeight() / 51.f );
 
 	if ( cl_hitmarker.GetBool() && m_iDamaged > 0 )
 	{

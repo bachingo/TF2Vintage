@@ -1,0 +1,2 @@
+"resource/ui/hudobjectivestatus.res"
+{	}
