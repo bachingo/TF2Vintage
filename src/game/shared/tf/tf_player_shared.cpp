@@ -11844,7 +11844,6 @@ int CTFPlayerShared::CalculateObjectCost( CTFPlayer* pBuilder, int iObjectType )
 	if ( iObjectType == OBJ_TELEPORTER )
 	{
 		float flCostMod = 1.f;
-		
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pBuilder, flCostMod, mod_teleporter_cost );
 		if ( flCostMod != 1.f )
 		{

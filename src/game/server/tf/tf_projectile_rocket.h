@@ -30,6 +30,9 @@ public:
 	virtual void Precache();
 	virtual void RocketTouch( CBaseEntity *pOther ) OVERRIDE;
 
+	// TF2V: Not standard TF2, but useful change from TC.
+	virtual bool CanCollideWithTeammates() const OVERRIDE { return false; }
+
 	// IScorer interface
 	virtual CBasePlayer *GetScorer( void );
 	virtual CBasePlayer *GetAssistant( void ) { return NULL; }

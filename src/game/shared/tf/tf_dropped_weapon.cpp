@@ -299,7 +299,7 @@ bool CTFDroppedWeapon::OnInternalDrawModel( ClientModelRenderInfo_t *pInfo )
 		modelrender->GetMaterialOverride(&pMaterialOverride, &nMaterialOverrideType);
 		modelrender->ForcedMaterialOverride(NULL, nMaterialOverrideType);
 	}
-	
+
 	// Draw Attached Models
 	// Draw our attached models as well
 	for ( int i = 0; i < m_vecAttachedModels.Size(); i++ )

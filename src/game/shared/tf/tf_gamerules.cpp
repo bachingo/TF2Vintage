@@ -3179,6 +3179,7 @@ bool CTFGameRules::IsAttackDefenseMode( void )
 	bool bRetVal = !HasMultipleTrains() && ( tf_gamemode_payload.GetBool() || ( pMaster && ( pMaster->PlayingMiniRounds() || pMaster->ShouldSwitchTeamsOnRoundWin() ) ) );
 
 	tf_attack_defend_map.SetValue( bRetVal );
+
 	return bRetVal;
 #else
 	return tf_attack_defend_map.GetBool();

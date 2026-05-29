@@ -504,7 +504,6 @@ CPixelVisibilitySystem::CPixelVisibilitySystem() : CAutoGameSystem( "CPixelVisib
 // Level init, shutdown
 void CPixelVisibilitySystem::LevelInitPreEntity()
 {
-	bool fastqueries = HasFastQueries();
 	// printf("\n ** fast queries: %s **", fastqueries?"true":"false" );
 	
 	m_hwCanTestGlows = engine->GetDXSupportLevel() >= 80;

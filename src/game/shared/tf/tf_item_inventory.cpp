@@ -210,8 +210,10 @@ CTFInventoryManager *TFInventoryManager( void )
 // Purpose: 
 //-----------------------------------------------------------------------------
 CTFInventoryManager::CTFInventoryManager( void )
-
 {
+#ifdef CLIENT_DLL
+	m_flQueuedGCNotificationTime = 0.0f;
+#endif
 }
 
 CTFInventoryManager::~CTFInventoryManager( void )
@@ -547,7 +549,26 @@ void CTFInventoryManager::Update( float frametime )
 	TM_ZONE_DEFAULT( TELEMETRY_LEVEL0 );
 	m_LocalInventory.UpdateWeaponSkinRequest();
 
+	if ( m_flQueuedGCNotificationTime > 0.0f && m_flQueuedGCNotificationTime <= gpGlobals->realtime )
+	{
+		GTFGCClientSystem()->LocalInventoryChanged();
+		m_flQueuedGCNotificationTime = 0.0f;
+	}
+
 	BaseClass::Update( frametime );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFInventoryManager::QueueGCInventoryChangeNotification()
+{
+	// don't mark any "changes" when we haven't initialized our inventory to the server yet.
+	if ( !engine->IsConnected() || !engine->IsInGame() )
+		return;
+
+	// queue an inventory change notification
+	m_flQueuedGCNotificationTime = gpGlobals->realtime + 0.01f;
 }
 
 //-----------------------------------------------------------------------------
@@ -1006,8 +1027,8 @@ void CTFPlayerInventory::LoadLocalLoadout()
 
 	pLoadoutKV->deleteThis();
 
-	GTFGCClientSystem()->LocalInventoryChanged();
-	
+	//GTFGCClientSystem()->LocalInventoryChanged();
+	TFInventoryManager()->QueueGCInventoryChangeNotification();
 }
 
 //-----------------------------------------------------------------------------
@@ -1101,7 +1122,8 @@ void CTFPlayerInventory::EquipLocal(uint64 ulItemID, equipped_class_t unClass, e
 	int activePreset = m_ActivePreset[unClass];
 	m_PresetItems[activePreset][unClass][unSlot] = ulItemID;
 
-	GTFGCClientSystem()->LocalInventoryChanged();
+	//GTFGCClientSystem()->LocalInventoryChanged();
+	//TFInventoryManager()->QueueGCInventoryChangeNotification();
 #endif
 }
 
@@ -1252,8 +1274,7 @@ void CTFPlayerInventory::ValidateInventoryPositions( void )
 			{
 				// Unequip this item from this class.
 				InventoryManager()->UpdateInventoryEquippedState( this, INVALID_ITEM_ID, j, pEconItemView->GetEquippedPositionForClass( j ) );
-				GTFGCClientSystem()->LocalInventoryChanged();
-				
+				TFInventoryManager()->QueueGCInventoryChangeNotification();
 			}
 		}
 	}
@@ -1874,8 +1895,7 @@ void CTFPlayerInventory::VerifyLoadoutItemsAreValid( int iClass )
 			// Unequip this item. This will wind up calling into ::ItemHasBeenUpdated() once the
 			// unequip makes it to the GC and back.
 			InventoryManager()->UpdateInventoryEquippedState( this, INVALID_ITEM_ID, iClass, pEquippedItemView->GetEquippedPositionForClass( iClass ) );
-			GTFGCClientSystem()->LocalInventoryChanged();
-			
+			TFInventoryManager()->QueueGCInventoryChangeNotification();
 		}
 		else
 		{
@@ -2048,8 +2068,7 @@ CON_COMMAND( load_itempreset, "Equip all items for a given preset on the player.
 			GCClientSystem()->BSendMessage( msg );
 		}
 #else
-		GTFGCClientSystem()->LocalInventoryChanged();
-		
+		TFInventoryManager()->QueueGCInventoryChangeNotification();
 #endif
 	}
 }

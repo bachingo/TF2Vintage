@@ -110,6 +110,9 @@ public:
 	virtual void	Spawn();
 	virtual void	Precache();
 
+	// TF2V: Not standard TF2, but useful change from TC.
+	virtual bool CanCollideWithTeammates() const OVERRIDE { return false; }
+
 	virtual void	BounceSound( void );
 	virtual float	GetDetonationTime(void);
 	virtual void	Detonate();

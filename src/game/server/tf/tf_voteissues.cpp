@@ -357,7 +357,7 @@ bool CKickIssue::RequestCallVote( int iEntIndex, const char *pszDetails, vote_cr
 		if ( sv_vote_issue_kick_spectators_mvm.GetBool() && !m_hPlayerTarget->IsBot() && m_hPlayerTarget->GetTeamNumber() == TEAM_SPECTATOR )
 				return true;
 	}
-
+	
 	if ( GTFGCClientSystem()->GetLiveMatch() )
 	{
 		const int iVoteCallerTeam = g_pPlayerResource->GetTeam( pTFVoteCaller->entindex() );

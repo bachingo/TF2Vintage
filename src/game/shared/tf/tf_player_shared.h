@@ -936,7 +936,6 @@ private:
 	float GetCritMult( void );
 	bool  TF2VNewCritModel( void );
 #ifdef GAME_DLL
-	
 	void  UpdateCritMult( void );
 	void  RecordDamageEvent( const CTakeDamageInfo &info, bool bKill, int nVictimPrevHealth );
 	void  AddTempCritBonus( float flAmount );

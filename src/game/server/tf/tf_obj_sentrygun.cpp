@@ -2107,7 +2107,7 @@ int CObjectSentrygun::OnTakeDamage( const CTakeDamageInfo &info )
 			if ( pSapper && ( info.GetAttacker() == pSapper->GetOwner() ) )
 			{
 				// TF2V: This was changed in Gun Mettle (66%->33% damage resist)
-				float flSentryDamageModifier = TF2VIsAnachronistic( TF2V_DAY_MAJOR_GUN_METTLE ) ? 0.33f : 0.66f; // SENTRYGUN_SAPPER_OWNER_DAMAGE_MODIFIER
+				float flSentryDamageModifier = TF2VIsContemporary( TF2V_DAY_MAJOR_GUN_METTLE ) ? 0.66f : 0.33f; // SENTRYGUN_SAPPER_OWNER_DAMAGE_MODIFIER
 				float flDamage = newInfo.GetDamage() * flSentryDamageModifier;
 				newInfo.SetDamage( flDamage );
 			}

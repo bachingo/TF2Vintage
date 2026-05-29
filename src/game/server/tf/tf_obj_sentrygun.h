@@ -240,6 +240,9 @@ public:
 
 	virtual int GetProjectileType() const OVERRIDE { return TF_PROJECTILE_SENTRY_ROCKET; }
 
+	// TF2V: Not standard TF2, but useful change from TC.
+	virtual bool CanCollideWithTeammates() const OVERRIDE { return false; }
+
 	// Creation.
 	static CTFProjectile_SentryRocket *Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL );	
 

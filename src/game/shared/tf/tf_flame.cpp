@@ -9,7 +9,6 @@
 #include "shot_manipulator.h"
 #include "tf_weapon_flamethrower.h"
 
-
 #ifdef GAME_DLL
 #include "tf_player.h"
 #include "tf_weapon_compound_bow.h"

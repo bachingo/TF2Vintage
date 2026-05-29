@@ -745,8 +745,6 @@ public:
 	virtual CBaseEntity *GiveNamedItem( const char *pszClassName, int iSubType = 0, const CEconItemView* pScriptItem = NULL, bool bForce = false );
 	void				PostInventoryApplication( void );
 	bool				ItemIsAllowed( CEconItemView *pItem );
-
-	
 	void				RemovePlayerAttributes( bool bSetBonuses );
 	void				ApplySetBonuses( void );
 	void				GetActiveSets( CUtlVector<const CEconItemSetDefinition *> *pItemSets );

@@ -5677,7 +5677,6 @@ void CTFPlayer::ValidateWeapons( TFPlayerClassData_t *pData, bool bResetWeapons 
 			continue;
 
 		int iLoadoutSlot = pWeapon->GetAttributeContainer()->GetItem()->GetStaticData()->GetLoadoutSlot( GetPlayerClass()->GetClassIndex() );
-		
 		CEconItemView *pItem = GetLoadoutItem( GetPlayerClass()->GetClassIndex(), iLoadoutSlot );
 
 		// See if gamerules says this item isn't allowed right now
@@ -5859,14 +5858,6 @@ void CTFPlayer::PostInventoryApplication( void )
 	if ( !CanDisguise() )
 	{
 		RemoveDisguise();
-	}
-	
-	// Notify the client.
-	IGameEvent *event = gameeventmanager->CreateEvent( "post_inventory_application" );
-	if ( event )
-	{
-		event->SetInt( "userid", GetUserID() );
-		gameeventmanager->FireEvent( event ); 
 	}
 
 	// Iterate over all of our wearables
@@ -9325,6 +9316,7 @@ float CTFPlayer::GetObjectBuildSpeedMultiplier( int iObjectType, bool bIsRedeplo
 
 	case OBJ_TELEPORTER:
 		CALL_ATTRIB_HOOK_FLOAT( flBuildRate, teleporter_build_rate_multiplier );
+		// TF2V: Gun Mettle changes the build speed.
 		if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_GUN_METTLE ) )
 			flBuildRate += bIsRedeploy ? 2.0 : 0.0f;
 		else
@@ -13691,7 +13683,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	
 	SetGibbedOnLastDeath( bGib );
 
-	// TF2V: This behavior was added June 17, 2011. (Day 1370)
+	// TF2V: Scout Bird Meet The Medic Easter Egg was added June 17, 2011. (Day 1370)
 	if ( TF2VIsContemporary( 1370 ) )
 	{
 		bool bIsMvMRobot = TFGameRules()->IsMannVsMachineMode() && IsBot();
@@ -14000,7 +13992,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	{
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pKillerWeapon, iGoldRagdoll, set_turn_to_gold );
 	}
-	
+
 	int iRagdollsBecomeAsh = 0;
 	if ( pKillerWeapon )
 	{

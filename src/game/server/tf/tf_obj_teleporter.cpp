@@ -314,7 +314,6 @@ void CObjectTeleporter::SetObjectMode( int iVal )
 
 ConVar tf_obj_teleporter_max_level("tf_obj_teleporter_max_level", V_STRINGIFY(OBJ_MAX_UPGRADE_LEVEL), FCVAR_REPLICATED);
 
-
 int CObjectTeleporter::GetMaxUpgradeLevel() const
 {
 	// TF2V: Dispensers and Teleporters only had level one before December 11, 2008 (Day 452)

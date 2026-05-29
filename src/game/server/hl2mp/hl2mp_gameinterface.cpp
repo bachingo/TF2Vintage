@@ -20,6 +20,9 @@
 void CServerGameClients::GetPlayerLimits( int& minplayers, int& maxplayers, int &defaultMaxPlayers ) const
 {
 	minplayers = 2;
+#ifdef PLATFORM_64BITS
+	maxplayers = MAX_PLAYERS;
+#else
 	if ( CommandLine()->HasParm("-unrestricted_maxplayers") )
 	{
 		static bool s_bWarned = false;
@@ -31,8 +34,8 @@ void CServerGameClients::GetPlayerLimits( int& minplayers, int& maxplayers, int 
 		maxplayers = MAX_PLAYERS;
 	}
 	else
-		maxplayers = 32;
-	
+		maxplayers = 33;
+#endif
 	defaultMaxPlayers = 16; // misyl: Was 2... but why would the default be 2?! Is there some very intimate HL2DM going on?
 }
 
