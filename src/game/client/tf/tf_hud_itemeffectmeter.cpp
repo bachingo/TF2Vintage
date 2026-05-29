@@ -241,10 +241,10 @@ void CHudItemEffectMeter::CreateHudElementsForClass( C_TFPlayer* pPlayer, CUtlVe
 
 		
 			if ( !FindAttribute( pItem, attrMeterType, &retval ) )
-				continue;
+				return;
 
 			if ( retval == ATTRIBUTE_METER_TYPE_NONE )
-				continue;
+				return;
 		
 			const char *pszLabelText = "";
 			CAttribute_String attrModule;
@@ -265,7 +265,7 @@ void CHudItemEffectMeter::CreateHudElementsForClass( C_TFPlayer* pPlayer, CUtlVe
 				hNewMeter->SetVisible( false );
 			}
 
-			continue;
+			return;
 		}
 	};
 
