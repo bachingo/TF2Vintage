@@ -2048,6 +2048,12 @@ extern ConVar sv_vote_issue_kick_spectators_mvm;
 bool CTFGCServerSystem::CanKickPlayer( CTFPlayer *pVoterPlayer, CTFPlayer *pTargetPlayer )
 {
 	Assert( pVoterPlayer->GetTeamVoteController() == pTargetPlayer->GetTeamVoteController() );
+	
+	if ( pVoterPlayer->GetTeamNumber() >= FIRST_GAME_TEAM && pTargetPlayer->GetTeamNumber() == TEAM_UNASSIGNED )
+	{
+		// skip team vote controller check if kicking unassigned -- we already check for matching teams for this case in CKickIssue::RequestCallVote
+		return true;
+	}
 
 	if ( pVoterPlayer->GetTeamVoteController() != pTargetPlayer->GetTeamVoteController() )
 	{
