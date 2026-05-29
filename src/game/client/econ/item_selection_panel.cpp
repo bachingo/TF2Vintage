@@ -1173,7 +1173,6 @@ const char *CEquipSlotItemSelectionPanel::GetItemNotSelectableReason( const CEco
 	if ( pItemData->GetEquipRegionMask() & unUsedEquipRegionMask )
 		return "#Econ_GreyOutReason_EquipRegionConflict";
 	
-	/*
 	// TF2V: Use the same function from the server uses for era enforcement to check items here.
 	// Do this only when we're in a time period that has items to block and we actually have values to check.
 	if ( TFGameRules() && TF2VGetEra() && TF2VIsAnachronistic( TF2V_DAY_LATEST ) )
@@ -1184,7 +1183,6 @@ const char *CEquipSlotItemSelectionPanel::GetItemNotSelectableReason( const CEco
 			return "#Econ_GreyOutReason_Anachronistic";
 		}
 	}
-	*/
 
 	return NULL;
 }
