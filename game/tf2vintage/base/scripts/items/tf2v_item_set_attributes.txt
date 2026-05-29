@@ -15,7 +15,6 @@
 				"value"	"1.1"
 			}
 		}
-			
 		"2013/07/10"
 		{
 			"SET BONUS: calling card on kill"
@@ -118,7 +117,6 @@
 		}
 		"2013/07/10"
 		{}
-		
 	}
 	"hibernating_bear"
 	{
