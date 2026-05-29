@@ -1,0 +1,149 @@
+"tf2v_item_set_attributes"
+{
+	"polycount_pyro"
+	{
+		"2010/09/30"
+		{
+			"move speed set bonus"
+			{
+				"attribute_class"	"mult_player_movespeed"
+				"value"	"1.1"
+			}
+			"dmg taken from bullets increased"
+			{
+				"attribute_class"	"mult_dmgtaken_from_bullets"
+				"value"	"1.1"
+			}
+		}
+			
+		"2013/07/10"
+		{
+			"SET BONUS: calling card on kill"
+			{
+				"attribute_class"	"calling_card_on_kill"
+				"value"	"4"	
+			}
+		}
+	}
+	"polycount_spy"
+	{
+		"2010/09/30"
+		{
+			"quiet unstealth"
+			{
+				"attribute_class"	"set_quiet_unstealth"
+				"value" "1"
+			}
+			"cloak blink time penalty"
+			{
+				"attribute_class"	"cloak_blink_time_penalty"
+				"value" "0.5"
+			}
+		}
+		"2013/07/10"
+		{
+			"SET BONUS: custom taunt particle attr"
+			{
+				"attribute_class"	"custom_taunt_particle_attr"
+				"value"	"1"
+			}
+		}
+	}
+	"polycount_soldier"
+	{
+		"2010/09/30"
+		{
+			"dmg from sentry reduced"
+			{
+				"attribute_class"	"dmg_from_sentry_reduced"
+				"value"	"0.8"
+			}
+		}
+		"2013/07/10"
+		{
+			"SET BONUS: calling card on kill"
+			{
+				"attribute_class"	"calling_card_on_kill"
+				"value"	"3" 
+			}
+		}
+	}
+	"polycount_sniper"
+	{
+		"2010/09/30"
+		{
+			"no death from headshots"
+			{
+				"attribute_class"	"no_death_from_headshots"
+				"value" "1"
+			}
+		}
+		"2013/07/10"
+		{
+			"SET BONUS: calling card on kill"
+			{
+				"attribute_class"	"calling_card_on_kill"
+				"value"	"2" 
+			}
+		}
+	}
+	"polycount_scout"
+	{
+		"2010/09/30"
+		{
+			"max health additive bonus"
+			{
+				"attribute_class"	"add_maxhealth"
+				"value" "25"
+			}
+		}	
+		"2013/07/10"
+		{
+			"SET BONUS: calling card on kill"
+			{
+				"attribute_class"	"calling_card_on_kill"
+				"value"	"1" 
+			}
+		}
+	}
+	"medieval_medic"
+	{
+		"2010/12/17"
+		{
+			"health regen set bonus"
+			{
+				"attribute_class"	"add_health_regen"
+				"value" "1"
+			}
+		}
+		"2013/07/10"
+		{}
+		
+	}
+	"hibernating_bear"
+	{
+		"2010/12/17"
+		{
+			"dmg taken from crit reduced set bonus"
+			{
+				"attribute_class"	"mult_dmgtaken_from_crit"
+				"value"			"0.95"
+			}
+		}
+		"2013/07/10"
+		{}
+	}
+	"experts_ordnance"
+	{
+		"2010/12/17"
+		{
+			"dmg taken from fire reduced set bonus"
+			{
+				"attribute_class"	"mult_dmgtaken_from_fire"
+				"value"			"0.9"
+			}
+		}
+		"2013/07/10"
+		{}
+	}
+}
