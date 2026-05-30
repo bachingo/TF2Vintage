@@ -1168,8 +1168,14 @@ ConVar tf_gamemode_misc ( "tf_gamemode_misc", "0", FCVAR_REPLICATED | FCVAR_NOTI
 
 ConVar tf_bot_count( "tf_bot_count", "0", FCVAR_NOTIFY | FCVAR_DEVELOPMENTONLY );
 
-// Update TF2V_ERA_DAY_MAX when needed. Current value: 6559.
-ConVar tf2v_era ( "tf2v_era", "6659", FCVAR_REPLICATED | FCVAR_NOTIFY, "TF2V's Master Convar used to control the date of TF2V. Applies to server on round restarts. Default: 6659 (Smissmass 2025)", true, 1, true, 6659 );
+// TF2V's era code. We use a string to define it so we don't have to update it each iteration.
+#define TF2V_STRINGIFY_INNER(x) #x
+#define TF2V_STRINGIFY(x) TF2V_STRINGIFY_INNER(x)
+
+ConVar tf2v_era( "tf2v_era", TF2V_STRINGIFY( TF2V_ERA_DAY_MAX ), 
+    FCVAR_REPLICATED | FCVAR_NOTIFY,
+    "TF2V's Master Convar used to control the date of TF2V. Applies to server on round restarts.",
+    true, 1, true, TF2V_ERA_DAY_MAX );
 
 #ifdef GAME_DLL
 ConVar tf2v_force_era_gamemode ( "tf2v_force_era_gamemode", "1", FCVAR_REPLICATED | FCVAR_NOTIFY, "If enabled, prevents the era from being set earlier than the gamemode's minimum era. Default: 1", true, 0, true, 1 );
