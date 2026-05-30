@@ -1113,14 +1113,7 @@ bool CTF2VAttributeDateManager::ItemNeedsModification( CEconItemView *pItem, int
 	
 	// Check 3: Weapon attributes need era adjustment?
 	// Weapons need attribute versioning if we're before the last balance patch
-	if ( ( iSlot == LOADOUT_POSITION_PRIMARY
-		|| iSlot == LOADOUT_POSITION_SECONDARY
-		|| iSlot == LOADOUT_POSITION_MELEE
-		|| iSlot == LOADOUT_POSITION_UTILITY
-		|| iSlot == LOADOUT_POSITION_BUILDING
-		|| iSlot == LOADOUT_POSITION_PDA
-		|| iSlot == LOADOUT_POSITION_PDA2 )
-		&& ( TF2VIsAnachronistic( TF2V_DAY_LAST_WEAPON_BALANCE ) ) )
+	if ( IsWeaponSlot(iSlot) && ( TF2VIsAnachronistic( TF2V_DAY_LAST_WEAPON_BALANCE ) ) )
 	{
 		return true;
 	}
@@ -1148,14 +1141,7 @@ bool CTF2VAttributeDateManager::GetTimePeriodCompliantItem(
 
     bool bQualityModify   = !ItemQualityIsAllowedTimePeriod( pOriginalItem->GetItemQuality() );
     bool bCosmeticsModify = HasAnachronisticAttributes( const_cast<CEconItemView*>( pOriginalItem ) );
-    bool bWeaponModify    = ( ( iSlot == LOADOUT_POSITION_PRIMARY
-        || iSlot == LOADOUT_POSITION_SECONDARY
-        || iSlot == LOADOUT_POSITION_MELEE
-        || iSlot == LOADOUT_POSITION_UTILITY
-        || iSlot == LOADOUT_POSITION_BUILDING
-        || iSlot == LOADOUT_POSITION_PDA
-        || iSlot == LOADOUT_POSITION_PDA2 )
-        && TF2VIsAnachronistic( TF2V_DAY_LAST_WEAPON_BALANCE ) );
+    bool bWeaponModify    = ( IsWeaponSlot(iSlot) && TF2VIsAnachronistic( TF2V_DAY_LAST_WEAPON_BALANCE ) );
 
     if ( !bQualityModify && !bCosmeticsModify && !bWeaponModify )
         return false; // Compliant as-is
