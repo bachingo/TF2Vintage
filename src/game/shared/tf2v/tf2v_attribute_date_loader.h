@@ -106,7 +106,7 @@ public:
 	bool IsPaintPlayerApplied( CEconItemView *pItem, const CEconItemAttribute *pPaintAttrib );
 	
 	// Anachronistic modifiers
-	bool ItemIsAllowedTimePeriod( CEconItemView *pItem, int iClass = -1, int iSlot = -1);
+	bool ItemIsAllowedTimePeriod( const CEconItemView *pItem, int iClass = -1, int iSlot = -1 );
 	bool ItemQualityIsAllowedTimePeriod( int iQuality );
 	bool HasAnachronisticAttributes( CEconItemView *pItem );
 	bool StripAnachronisticAttributes( CEconItemView *pItem );
@@ -161,7 +161,7 @@ inline bool TF2VItemNeedsModification( CEconItemView *pItem, int iSlot )
 	return false;
 }
 
-inline bool TF2VItemIsAllowedTimePeriod( CEconItemView *pItem, int iClass = -1, int iSlot = -1 )
+inline bool TF2VItemIsAllowedTimePeriod( const CEconItemView *pItem, int iClass = -1, int iSlot = -1 )
 {
 	if ( g_pTF2VAttributeDateManager )
 		return g_pTF2VAttributeDateManager->ItemIsAllowedTimePeriod( pItem, iClass, iSlot );

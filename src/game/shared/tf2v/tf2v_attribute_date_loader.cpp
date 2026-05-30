@@ -1087,7 +1087,7 @@ bool CTF2VAttributeDateManager::ApplyWeaponAttributesToItem( CEconItemView *pIte
 
         // Write into instance list — this shadows the schema value via
         // the deduplication wrapper. Only adds/updates, never destroys.
-        pAttribList->SetOrAddAttributeValueByDefIndex( schemaAttr.iDefIndex, flEraValue );
+        pAttribList->SetRuntimeAttributeValue( pAttrDef, flEraValue );
     }
 
     return true;
@@ -1147,7 +1147,7 @@ bool CTF2VAttributeDateManager::GetTimePeriodCompliantItem(
         return false; // Compliant as-is
 
     // Populate the caller's copy
-    pOutItem->CopyFrom( *pOriginalItem );
+    *pOutItem = *pOriginalItem;
 
     if ( bQualityModify )
         pOutItem->SetItemQuality( AE_UNIQUE );
