@@ -750,7 +750,7 @@ bool CTF2VAttributeDateManager::ItemIsAllowedTimePeriod( CEconItemView *pItem, i
 	// Check if this item is in a slot that doesn't exist yet.
 	
 	// Cosmetics as a whole did not exist before Sniper vs. Spy
-	if ( ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_SNIPER_SPY ) ) && IsWearableSlot(iSlot) )
+	if ( ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_SNIPER_SPY ) ) && IsWearableSlot( iSlot ) )
 	{
 		return false;
 	}
@@ -1113,7 +1113,7 @@ bool CTF2VAttributeDateManager::ItemNeedsModification( CEconItemView *pItem, int
 	
 	// Check 3: Weapon attributes need era adjustment?
 	// Weapons need attribute versioning if we're before the last balance patch
-	if ( IsWeaponSlot(iSlot) && ( TF2VIsAnachronistic( TF2V_DAY_LAST_WEAPON_BALANCE ) ) )
+	if ( IsWeaponSlot( iSlot ) && ( TF2VIsAnachronistic( TF2V_DAY_LAST_WEAPON_BALANCE ) ) )
 	{
 		return true;
 	}
@@ -1141,7 +1141,7 @@ bool CTF2VAttributeDateManager::GetTimePeriodCompliantItem(
 
     bool bQualityModify   = !ItemQualityIsAllowedTimePeriod( pOriginalItem->GetItemQuality() );
     bool bCosmeticsModify = HasAnachronisticAttributes( const_cast<CEconItemView*>( pOriginalItem ) );
-    bool bWeaponModify    = ( IsWeaponSlot(iSlot) && TF2VIsAnachronistic( TF2V_DAY_LAST_WEAPON_BALANCE ) );
+    bool bWeaponModify    = IsWeaponSlot( iSlot ) && TF2VIsAnachronistic( TF2V_DAY_LAST_WEAPON_BALANCE );
 
     if ( !bQualityModify && !bCosmeticsModify && !bWeaponModify )
         return false; // Compliant as-is
