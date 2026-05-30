@@ -6125,27 +6125,55 @@ void CTFPlayer::RemovePlayerAttributes( bool bSetBonuses )
 //-----------------------------------------------------------------------------
 void CTFPlayer::ApplySetBonuses( void )
 {
-	RemovePlayerAttributes( true );
+    RemovePlayerAttributes( true );
 
-	CUtlVector<const CEconItemSetDefinition *> pActiveSets;
-	GetActiveSets( &pActiveSets );
+    CUtlVector<const CEconItemSetDefinition *> pActiveSets;
+    GetActiveSets( &pActiveSets );
 
-	FOR_EACH_VEC( pActiveSets, set )
-	{
-		for ( int i = 0; i < pActiveSets[set]->m_iAttributes.Count(); i++ )
-		{
-			const CEconItemAttributeDefinition *pAttrDef = GetItemSchema()->GetAttributeDefinition( pActiveSets[set]->m_iAttributes[i].m_iAttribDefIndex );	
-			if ( pAttrDef )
-			{
-				Assert( pAttrDef->GetAttributeType() );
-				Assert( pAttrDef->GetAttributeType()->BSupportsGameplayModificationAndNetworking() );		// is an assert instead of a check because we're in client code here -- this means someone set up a set with bad data
-				Assert( pAttrDef->BIsSetBonusAttribute() );
+    FOR_EACH_VEC( pActiveSets, set )
+    {
+        const CEconItemSetDefinition *pSetDef = pActiveSets[set];
 
-				float flAttrValue = pActiveSets[set]->m_iAttributes[i].m_flValue;
-				GetAttributeList()->SetRuntimeAttributeValue( pAttrDef, flAttrValue );
-			}
-		}
-	}
+        // TF2V: Check for era-versioned override for this set
+        const CUtlVector<CEconItemAttribute> *pTF2VAttribs = 
+            TF2VGetItemSetAttributesForEra( pSetDef->m_strName.Get() );
+
+        if ( pTF2VAttribs != NULL )
+        {
+            // Era override exists — use it. An empty vector means
+            // "no set bonus existed yet"; we simply apply nothing.
+            for ( int i = 0; i < pTF2VAttribs->Count(); i++ )
+            {
+                const CEconItemAttribute &eraAttr = pTF2VAttribs->Element(i);
+                const CEconItemAttributeDefinition *pAttrDef = eraAttr.GetStaticData();
+                if ( !pAttrDef )
+                    continue;
+
+                Assert( pAttrDef->GetAttributeType() );
+                Assert( pAttrDef->GetAttributeType()->BSupportsGameplayModificationAndNetworking() );
+                Assert( pAttrDef->BIsSetBonusAttribute() );
+
+                GetAttributeList()->SetRuntimeAttributeValue( pAttrDef, eraAttr.GetValue() );
+            }
+        }
+        else
+        {
+            // No TF2V override — use schema default, original loop unchanged
+            for ( int i = 0; i < pSetDef->m_iAttributes.Count(); i++ )
+            {
+                const CEconItemAttributeDefinition *pAttrDef = GetItemSchema()->GetAttributeDefinition( pSetDef->m_iAttributes[i].m_iAttribDefIndex );
+                if ( pAttrDef )
+                {
+                    Assert( pAttrDef->GetAttributeType() );
+                    Assert( pAttrDef->GetAttributeType()->BSupportsGameplayModificationAndNetworking() );
+                    Assert( pAttrDef->BIsSetBonusAttribute() );
+
+                    float flAttrValue = pSetDef->m_iAttributes[i].m_flValue;
+                    GetAttributeList()->SetRuntimeAttributeValue( pAttrDef, flAttrValue );
+                }
+            }
+        }
+    }
 }
 
 #ifdef TF_RAID_MODE
