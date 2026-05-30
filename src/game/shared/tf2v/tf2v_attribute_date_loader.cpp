@@ -1069,104 +1069,77 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 // This OVERRIDES static_attrs by applying runtime attributes
 // Returns if any attributes were stripped
 //-----------------------------------------------------------------------------
-bool CTF2VAttributeDateManager::ApplyWeaponAttributesToItem( CEconItemView *pOriginalItem )
+bool CTF2VAttributeDateManager::ApplyWeaponAttributesToItem( CEconItemView *pItem )
 {
-	if ( !pOriginalItem || !pOriginalItem->IsValid() )
-		return false;
- 
-	if ( !TFGameRules() || !TF2VGetEra() )
-		return false;
- 
-	// Get the common defindex (handles variants like Botkiller)
-	int iDefIndex = GetCommonItemDef( pOriginalItem->GetItemDefIndex() );
-	
-	// Check if we have version data BEFORE doing anything
-	int iMapIndex = m_WeaponAttributeVersions.Find( iDefIndex );
-	if ( iMapIndex == m_WeaponAttributeVersions.InvalidIndex() )
-	{
-		// No version data exists for this weapon - leave it alone
-		// This is NOT an error - many items don't have versioned attributes
-		return false; // Indicates no modification was made
-	}
- 
-	CUtlVector<WeaponAttributeVersion_t> *pVersionList = m_WeaponAttributeVersions[iMapIndex];
-	
-	if ( !pVersionList || pVersionList->Count() == 0 )
-	{
-		Warning( "[TF2V] Invalid or empty version list for weapon defindex %d!\n", iDefIndex );
-		return false;
-	}
+    if ( !pItem || !pItem->IsValid() || !TFGameRules() || !TF2VGetEra() )
+        return false;
 
-	int iCurrentDay = TF2VGetEra();
-	int iVersionIndex = -1;
+    int iDefIndex = GetCommonItemDef( pItem->GetItemDefIndex() );
 
-	for ( int i = pVersionList->Count() - 1; i >= 0; i-- )
-	{
-		if ( pVersionList->Element(i).iStartDate <= iCurrentDay )
-		{
-			iVersionIndex = i;
-			break;
-		}
-	}
+    int iMapIndex = m_WeaponAttributeVersions.Find( iDefIndex );
+    if ( iMapIndex == m_WeaponAttributeVersions.InvalidIndex() )
+        return false;
 
-	if ( iVersionIndex == -1 )
-	{
-		// Every version for this weapon is newer than the current era.
-		// The weapon existed but had no versioned attributes this early —
-		// keep whatever the schema says. This is different from an explicit
-		// empty block: we have no authored intent for this period at all.
-		DevMsg( "[TF2V] Weapon %d: all versions post-date era day %d, keeping schema attrs\n",
-				iDefIndex, iCurrentDay );
-		return false;
-	}
+    CUtlVector<WeaponAttributeVersion_t> *pVersionList = m_WeaponAttributeVersions[iMapIndex];
+    if ( !pVersionList || pVersionList->Count() == 0 )
+        return false;
 
-	WeaponAttributeVersion_t *pCorrectVersion = &pVersionList->Element( iVersionIndex );
-	if ( !pCorrectVersion )
-	{
-		Warning( "[TF2V] Null version element for weapon %d index %d\n", iDefIndex, iVersionIndex );
-		return false;
-	}
+    int iCurrentDay = TF2VGetEra();
+    int iVersionIndex = -1;
+    for ( int i = pVersionList->Count() - 1; i >= 0; i-- )
+    {
+        if ( pVersionList->Element(i).iStartDate <= iCurrentDay )
+        {
+            iVersionIndex = i;
+            break;
+        }
+    }
+    if ( iVersionIndex == -1 )
+        return false;
 
-	CAttributeList *pAttribList = pOriginalItem->GetAttributeList();
-	if ( !pAttribList )
-		return false;
+    WeaponAttributeVersion_t *pCorrectVersion = &pVersionList->Element( iVersionIndex );
+    CAttributeList *pAttribList = pItem->GetAttributeList();
+    if ( !pAttribList )
+        return false;
 
-	// Preserve non-weapon-stat attributes (paint, unusual, killstreak, clerical).
-	CUtlVector<CEconItemAttribute> preservedAttributes;
-	for ( int i = 0; i < pAttribList->GetNumAttributes(); i++ )
-	{
-		const CEconItemAttribute *pAttrib = pAttribList->GetAttribute( i );
-		if ( !pAttrib ) continue;
+    // Strategy: write every schema static attribute into the instance list
+    // with its era-correct value. The deduplication wrapper in
+    // CEconItemView::IterateAttributes will then block the schema from
+    // re-emitting any of these, since they now exist in the instance list.
+    // Cosmetic instance attributes (paint, unusual, etc.) are never touched.
 
-		const CEconItemAttributeDefinition *pAttrDef = pAttrib->GetStaticData();
-		if ( !pAttrDef ) continue;
+    const CEconItemDefinition *pDef = pItem->GetStaticData();
+    if ( !pDef )
+        return false;
 
-		if ( GetAttributeCategory( pAttrDef->GetAttributeClass() ) != ATTRIB_CAT_WEAPON_STAT )
-			preservedAttributes.AddToTail( *pAttrib );
-	}
+    for ( int i = 0; i < pDef->GetStaticAttributes().Count(); i++ )
+    {
+        const static_attrib_t &schemaAttr = pDef->GetStaticAttributes()[i];
+        const CEconItemAttributeDefinition *pAttrDef =
+            GetItemSchema()->GetAttributeDefinition( schemaAttr.iDefIndex );
+        if ( !pAttrDef )
+            continue;
 
-	// Safe to destroy now — we have a valid (possibly empty) version and
-	// have saved everything we want to keep.
-	pAttribList->DestroyAllAttributes();
+        // Find the era-correct value for this attribute
+        float flEraValue = schemaAttr.m_value.asFloat; // default: schema value
+        for ( int j = 0; j < pCorrectVersion->attributes.Count(); j++ )
+        {
+            const CEconItemAttribute &eraAttr = pCorrectVersion->attributes[j];
+            if ( eraAttr.GetStaticData() == pAttrDef )
+            {
+                flEraValue = eraAttr.GetValue();
+                break;
+            }
+        }
 
-	// Apply era weapon stats.
-	// If pCorrectVersion->attributes is empty, this loop does nothing —
-	// that is INTENTIONAL. An empty block means "no stats this period"
-	for ( int i = 0; i < pCorrectVersion->attributes.Count(); i++ )
-	{
-		pAttribList->AddAttribute( &pCorrectVersion->attributes[i] );
-	}
+        // Write into instance list — this shadows the schema value via
+        // the deduplication wrapper. Only adds/updates, never destroys.
+        CEconItemAttribute instanceAttr;
+        instanceAttr.Init( schemaAttr.iDefIndex, flEraValue );
+        pAttribList->SetOrAddAttributeValueByDefIndex( schemaAttr.iDefIndex, flEraValue );
+    }
 
-	// Restore cosmetics/modifiers regardless of whether stats were empty.
-	for ( int i = 0; i < preservedAttributes.Count(); i++ )
-	{
-		pAttribList->AddAttribute( &preservedAttributes[i] );
-	}
-
-	DevMsg( "[TF2V] Weapon %d: applied version %d (%d stats) for era day %d\n",
-			iDefIndex, iVersionIndex, pCorrectVersion->attributes.Count(), iCurrentDay );
-
-	return true;
+    return true;
 }
 
 //-----------------------------------------------------------------------------

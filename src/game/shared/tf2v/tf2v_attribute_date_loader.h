@@ -115,7 +115,7 @@ public:
 	bool ItemNeedsModification( CEconItemView *pItem, int iSlot );
 	
 	// Weapon attribute versioning
-	bool ApplyWeaponAttributesToItem( CEconItemView *pOriginalItem );
+	bool ApplyWeaponAttributesToItem( CEconItemView *pItem );
 	
 	// Common item def lookup
 	int GetCommonItemDef( int iDefIndex );
