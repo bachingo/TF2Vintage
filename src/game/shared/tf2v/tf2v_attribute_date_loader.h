@@ -121,7 +121,7 @@ public:
 	int GetCommonItemDef( int iDefIndex );
 	
 	// Item is allowed - main entry point
-	CEconItemView *GetTimePeriodCompliantItem( CEconItemView *pOriginalItem, int iClass, int iSlot );
+	bool GetTimePeriodCompliantItem( const CEconItemView *pOriginalItem, CEconItemView *pOutItem, int iClass, int iSlot );
 
 	// Item Sets
 	const CUtlVector<CEconItemAttribute> *GetItemSetAttributesForEra( const char *pszSetName );
@@ -137,14 +137,6 @@ private:
 	bool ParseAttributeBlock( KeyValues *pKV, CUtlVector<CEconItemAttribute> &attributes );
 	bool LoadCommonDefIndex( const char *pszFilename );
 	bool LoadItemSetAttributeVersions( const char *pszFilename );
-
-	// Attribute categorization
-	AttributeCategory_t GetAttributeCategory( const char *pszAttrClass );
-
-	// Modifier value checking
-	bool PaintValueIsAllowedTimePeriod( const CEconItemAttribute *pAttrib );
-	bool UnusualValueIsAllowedTimePeriod( const CEconItemAttribute *pAttrib );
-	bool WarPaintValueIsAllowedTimePeriod( const CEconItemAttribute *pAttrib );
 
 	// Storage maps: key -> date (days since Sept 16, 2007)
 	CUtlMap<int, int> m_ItemDates;			// Definition Index -> Era Date
@@ -162,13 +154,6 @@ private:
 extern CTF2VAttributeDateManager *g_pTF2VAttributeDateManager;
 
 // Accessor functions (for backwards compatibility with existing code)
-inline CEconItemView *TF2VGetTimePeriodCompliantItem( CEconItemView *pOriginalItem, int iClass, int iSlot )
-{
-	if ( g_pTF2VAttributeDateManager )
-		return g_pTF2VAttributeDateManager->GetTimePeriodCompliantItem( pOriginalItem, iClass, iSlot );
-	return pOriginalItem;
-}
-
 inline bool TF2VItemNeedsModification( CEconItemView *pItem, int iSlot )
 {
 	if ( g_pTF2VAttributeDateManager )

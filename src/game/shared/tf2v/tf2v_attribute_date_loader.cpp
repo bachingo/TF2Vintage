@@ -144,7 +144,7 @@ void CTF2VAttributeDateManager::ReloadAllDates()
 int CTF2VAttributeDateManager::ParseDateString( const char *pszDate )
 {
 	if ( !pszDate || !pszDate[0] )
-		return 0;
+		return TF2V_DAY_UNKNOWN;
 
 	int iYear = 0, iMonth = 0, iDay = 0;
 
@@ -162,13 +162,13 @@ int CTF2VAttributeDateManager::ParseDateString( const char *pszDate )
 
 	// Try direct day number
 	int iDays = atoi( pszDate );
-	if ( iDays >= 0 && iDays <= 99999 )
+	if ( iDays >= 0 && iDays < TF2V_DAY_UNKNOWN )
 	{
 		return iDays;
 	}
 
 	Warning( "[TF2V] Failed to parse date: %s\n", pszDate );
-	return 0;
+	return TF2V_DAY_UNKNOWN;
 }
 
 //-----------------------------------------------------------------------------
@@ -462,11 +462,12 @@ bool CTF2VAttributeDateManager::LoadItemSetAttributeVersions( const char *pszFil
             continue;
 
         // Validate that this set actually exists in the schema
-        if ( !GetItemSchema()->GetItemSetByName( pszSetName ) )
-        {
-            Warning( "[TF2V] Item set '%s' not found in schema, skipping\n", pszSetName );
-            continue;
-        }
+		const CEconItemSchema::ItemSetMap_t &itemSets = GetItemSchema()->GetItemSets();
+		if ( itemSets.Find( pszSetName ) == itemSets.InvalidIndex() )
+		{
+			Warning( "[TF2V] Item set '%s' not found in schema, skipping\n", pszSetName );
+			continue;
+		}
 
         CUtlVector<WeaponAttributeVersion_t> *pVersions = new CUtlVector<WeaponAttributeVersion_t>();
 
@@ -524,7 +525,7 @@ bool CTF2VAttributeDateManager::LoadItemSetAttributeVersions( const char *pszFil
 //-----------------------------------------------------------------------------
 const CUtlVector<CEconItemAttribute> *CTF2VAttributeDateManager::GetItemSetAttributesForEra( const char *pszSetName )
 {
-    if ( !m_bInitialized || !pszSetName || !TFGameRules() || !TF2VGetEra() )
+    if ( !m_bInitialized || !pszSetName || !TFGameRules() )
         return NULL;
 
     int iMapIndex = m_ItemSetAttributeVersions.Find( CUtlString( pszSetName ) );
@@ -535,12 +536,10 @@ const CUtlVector<CEconItemAttribute> *CTF2VAttributeDateManager::GetItemSetAttri
     if ( !pVersionList || pVersionList->Count() == 0 )
         return NULL;
 
-    int iCurrentDay = TF2VGetEra();
-
     // Walk backwards: find latest version that has started by now
     for ( int i = pVersionList->Count() - 1; i >= 0; i-- )
     {
-        if ( pVersionList->Element(i).iStartDate <= iCurrentDay )
+        if ( TF2VIsContemporary( pVersionList->Element(i).iStartDate ) )
         {
             return &pVersionList->Element(i).attributes;
         }
@@ -716,74 +715,28 @@ bool CTF2VAttributeDateManager::IsItemMedal( CEconItemView *pItem )
 //-----------------------------------------------------------------------------
 bool CTF2VAttributeDateManager::IsPaintPlayerApplied( CEconItemView *pItem, const CEconItemAttribute *pPaintAttrib )
 {
-	if ( !pItem || !pPaintAttrib )
-		return false;
- 
-	// Check if this item definition has tint in its schema
-	const CAttributeList *pSchemaAttribs = pItem->GetAttributeList();
-	if ( pSchemaAttribs )
-	{
-		for ( int i = 0; i < pSchemaAttribs->GetNumAttributes(); i++ )
-		{
-			const CEconItemAttribute *pSchemaAttrib = pSchemaAttribs->GetAttribute( i );
-			if ( !pSchemaAttrib )
-				continue;
- 
-			const CEconItemAttributeDefinition *pSchemaAttrDef = pSchemaAttrib->GetStaticData();
-			if ( !pSchemaAttrDef )
-				continue;
- 
-			// If schema has tint attribute, this is built-in, not player-applied
-			if ( V_stristr( pSchemaAttrDef->GetDefinitionName(), "paint" ) ||
-			V_stristr( pSchemaAttrDef->GetDefinitionName(), "item" ) ||
-			V_stristr( pSchemaAttrDef->GetDefinitionName(), "set_item_tint_rgb" ) ||
-			V_stristr( pSchemaAttrDef->GetDefinitionName(), "item_tint_rgb_2" ) )
-			{
-				return false; // Schema tint - don't filter!
-			}
-		}
-	}
- 
-	return true; // No schema tint found - must be player-applied
-}
+    if ( !pItem || !pPaintAttrib || !pItem->GetStaticData() )
+        return false;
 
-//-----------------------------------------------------------------------------
-// Attribute category helper - Get category for filtering
-//-----------------------------------------------------------------------------
-AttributeCategory_t CTF2VAttributeDateManager::GetAttributeCategory( const char *pszAttrClass )
-{
-	if ( !pszAttrClass )
-		return ATTRIB_CAT_WEAPON_STAT;
+    // Check schema static attributes for a built-in tint — if found, this is
+    // a schema-defined color (e.g. stock item with built-in tint), not player-applied.
+    const CEconItemDefinition *pDef = pItem->GetStaticData();
+    for ( int i = 0; i < pDef->GetStaticAttributes().Count(); i++ )
+    {
+        const static_attrib_t &schemaAttr = pDef->GetStaticAttributes()[i];
+        const CEconItemAttributeDefinition *pAttrDef =
+            GetItemSchema()->GetAttributeDefinition( schemaAttr.iDefIndex );
+        if ( !pAttrDef )
+            continue;
 
-	// Cosmetic attributes - ALWAYS preserve
-	if ( V_stristr( pszAttrClass, "min_viewmodel" ) ||
-		 V_stristr( pszAttrClass, "custom_projectile_model" ) ||
-		 V_stristr( pszAttrClass, "custom_paintjob" ) ||
-		 V_stristr( pszAttrClass, "unusual_description" ) ||
-		 V_stristr( pszAttrClass, "tournament_item" ) ||
-		 V_stristr( pszAttrClass, "item_name" ) ||
-		 V_stristr( pszAttrClass, "item_description" ) ||
-		 V_stristr( pszAttrClass, "disable_fancy_class_select_anim" ) )
-		 
-	{
-		return ATTRIB_CAT_COSMETIC;
-	}
+        const char *pszName = pAttrDef->GetDefinitionName();
+        if ( V_stristr( pszName, "paint" ) ||
+             V_stristr( pszName, "set_item_tint_rgb" ) ||
+             V_stristr( pszName, "item_tint_rgb" ) )
+            return false; // schema-defined tint, not player-applied
+    }
 
-	// Modifier attributes - preserve for now, will be filtered later
-	if ( V_stristr( pszAttrClass, "tint_rgb" ) ||
-		 V_stristr( pszAttrClass, "particle" ) ||
-		 V_stristr( pszAttrClass, "killstreak" ) ||
-		 V_stristr( pszAttrClass, "kill_eater" ) ||
-		 V_stristr( pszAttrClass, "paintkit" ) ||
-		 V_stristr( pszAttrClass, "australium" ) ||
-		 V_stristr( pszAttrClass, "festive" ) ||
-		 V_stristr( pszAttrClass, "halloween" ) )
-	{
-		return ATTRIB_CAT_MODIFIER;
-	}
-
-	// Everything else is a weapon stat
-	return ATTRIB_CAT_WEAPON_STAT;
+    return true; // no schema tint found, must be player-applied
 }
 
 //-----------------------------------------------------------------------------
@@ -791,7 +744,7 @@ AttributeCategory_t CTF2VAttributeDateManager::GetAttributeCategory( const char 
 //-----------------------------------------------------------------------------
 bool CTF2VAttributeDateManager::ItemIsAllowedTimePeriod( CEconItemView *pItem, int iClass, int iSlot )
 {
-	if ( !pItem || !pItem->GetStaticData() || !m_bInitialized || !TFGameRules() || !TF2VGetEra() )
+	if ( !pItem || !pItem->GetStaticData() || !m_bInitialized || !TFGameRules() )
 		return false;
 	
 	// Check if this item is in a slot that doesn't exist yet.
@@ -821,7 +774,7 @@ bool CTF2VAttributeDateManager::ItemIsAllowedTimePeriod( CEconItemView *pItem, i
 	}
 	
 	// Taunts were not an item slot prior to the Replay Update
-	if ( ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_REPLAY ) ) && IsTauntSlot(iSlot) )
+	if ( ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_REPLAY ) ) && IsTauntSlot( iSlot ) )
 	{
 		return false;
 	}
@@ -866,7 +819,7 @@ bool CTF2VAttributeDateManager::ItemIsAllowedTimePeriod( CEconItemView *pItem, i
 //-----------------------------------------------------------------------------
 bool CTF2VAttributeDateManager::ItemQualityIsAllowedTimePeriod( int iQuality )
 {
-	if ( !TFGameRules() || !TF2VGetEra() )
+	if ( !TFGameRules() || !m_bInitialized  )
 		return false;
 
 	// Map qualities to their introduction eras
@@ -912,7 +865,7 @@ bool CTF2VAttributeDateManager::ItemQualityIsAllowedTimePeriod( int iQuality )
 //-----------------------------------------------------------------------------
 bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pItem )
 {
-	if ( !pItem || !pItem->IsValid() || !m_bInitialized || !TFGameRules() || !TF2VGetEra() )
+	if ( !pItem || !pItem->IsValid() || !m_bInitialized || !TFGameRules() )
 		return false;
 
 	CAttributeList *pAttribList = pItem->GetAttributeList();
@@ -1071,7 +1024,7 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 //-----------------------------------------------------------------------------
 bool CTF2VAttributeDateManager::ApplyWeaponAttributesToItem( CEconItemView *pItem )
 {
-    if ( !pItem || !pItem->IsValid() || !TFGameRules() || !TF2VGetEra() )
+    if ( !pItem || !pItem->IsValid() || !TFGameRules() || !m_bInitialized )
         return false;
 
     int iDefIndex = GetCommonItemDef( pItem->GetItemDefIndex() );
@@ -1134,8 +1087,6 @@ bool CTF2VAttributeDateManager::ApplyWeaponAttributesToItem( CEconItemView *pIte
 
         // Write into instance list — this shadows the schema value via
         // the deduplication wrapper. Only adds/updates, never destroys.
-        CEconItemAttribute instanceAttr;
-        instanceAttr.Init( schemaAttr.iDefIndex, flEraValue );
         pAttribList->SetOrAddAttributeValueByDefIndex( schemaAttr.iDefIndex, flEraValue );
     }
 
@@ -1149,7 +1100,7 @@ bool CTF2VAttributeDateManager::ApplyWeaponAttributesToItem( CEconItemView *pIte
 //-----------------------------------------------------------------------------
 bool CTF2VAttributeDateManager::ItemNeedsModification( CEconItemView *pItem, int iSlot )
 {
-	if ( !pItem || !pItem->IsValid() || !TFGameRules() || !TF2VGetEra() )
+	if ( !pItem || !pItem->IsValid() || !TFGameRules() || !m_bInitialized )
 		return false;
 
 	// Check 1: Quality too new?
@@ -1189,7 +1140,7 @@ bool CTF2VAttributeDateManager::GetTimePeriodCompliantItem(
     CEconItemView *pOutItem,        // caller-owned, pre-constructed copy
     int iClass, int iSlot )
 {
-    if ( !pOriginalItem || !pOriginalItem->IsValid() || !TFGameRules() || !TF2VGetEra() )
+    if ( !pOriginalItem || !pOriginalItem->IsValid() || !TFGameRules() || !m_bInitialized )
         return false;
 
     if ( !ItemIsAllowedTimePeriod( pOriginalItem, iClass, iSlot ) )
@@ -1230,7 +1181,7 @@ bool CTF2VAttributeDateManager::GetTimePeriodCompliantItem(
 //-----------------------------------------------------------------------------
 bool CTF2VAttributeDateManager::HasAnachronisticAttributes( CEconItemView *pItem )
 {
-	if ( !pItem || !pItem->IsValid() || !TFGameRules() || !TF2VGetEra() )
+	if ( !pItem || !pItem->IsValid() || !TFGameRules() || !m_bInitialized )
 		return false;
 
 	CAttributeList *pAttribList = pItem->GetAttributeList();
