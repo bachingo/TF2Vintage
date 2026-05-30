@@ -1182,60 +1182,46 @@ bool CTF2VAttributeDateManager::ItemNeedsModification( CEconItemView *pItem, int
 // Get time-period compliant version of item
 // Returns: Modified item, base item if too new, or original if compliant
 //-----------------------------------------------------------------------------
-CEconItemView *CTF2VAttributeDateManager::GetTimePeriodCompliantItem( CEconItemView *pOriginalItem, int iClass /*= -1*/, int iSlot /*= -1*/)
+// Returns true if the item needed modification (pOutItem is populated).
+// Returns false if the item is compliant as-is (pOutItem is untouched).
+bool CTF2VAttributeDateManager::GetTimePeriodCompliantItem( 
+    const CEconItemView *pOriginalItem, 
+    CEconItemView *pOutItem,        // caller-owned, pre-constructed copy
+    int iClass, int iSlot )
 {
-	if ( !pOriginalItem || !pOriginalItem->IsValid() || !TFGameRules() || !TF2VGetEra() )
-		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+    if ( !pOriginalItem || !pOriginalItem->IsValid() || !TFGameRules() || !TF2VGetEra() )
+        return false;
 
-	// STEP 1: Check if base item is allowed at all by comparing the release date to the ingame date
-	if ( !ItemIsAllowedTimePeriod( pOriginalItem, iClass, iSlot ) )
-	{
-		// Base item is too new - replace entirely with stock
-		return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
-	}
+    if ( !ItemIsAllowedTimePeriod( pOriginalItem, iClass, iSlot ) )
+        return false; // Caller handles stock fallback — not our job
 
-	// STEP 2: Check if item needs modification
-	bool bQualityModify = !ItemQualityIsAllowedTimePeriod( pOriginalItem->GetItemQuality() );
-	bool bCosmeticsModify = HasAnachronisticAttributes( pOriginalItem );
-	bool bWeaponModify = ( ( iSlot == LOADOUT_POSITION_PRIMARY
-		|| iSlot == LOADOUT_POSITION_SECONDARY
-		|| iSlot == LOADOUT_POSITION_MELEE
-		|| iSlot == LOADOUT_POSITION_UTILITY
-		|| iSlot == LOADOUT_POSITION_BUILDING
-		|| iSlot == LOADOUT_POSITION_PDA
-		|| iSlot == LOADOUT_POSITION_PDA2 )
-		&& ( TF2VIsAnachronistic( TF2V_DAY_LAST_WEAPON_BALANCE ) ) );
-	
-	
-	if ( !bQualityModify && !bCosmeticsModify && !bWeaponModify )
-	{
-		// Item is completely compliant, return as-is
-		return pOriginalItem;
-	}
+    bool bQualityModify   = !ItemQualityIsAllowedTimePeriod( pOriginalItem->GetItemQuality() );
+    bool bCosmeticsModify = HasAnachronisticAttributes( const_cast<CEconItemView*>( pOriginalItem ) );
+    bool bWeaponModify    = ( ( iSlot == LOADOUT_POSITION_PRIMARY
+        || iSlot == LOADOUT_POSITION_SECONDARY
+        || iSlot == LOADOUT_POSITION_MELEE
+        || iSlot == LOADOUT_POSITION_UTILITY
+        || iSlot == LOADOUT_POSITION_BUILDING
+        || iSlot == LOADOUT_POSITION_PDA
+        || iSlot == LOADOUT_POSITION_PDA2 )
+        && TF2VIsAnachronistic( TF2V_DAY_LAST_WEAPON_BALANCE ) );
 
-	// STEP 3: Item needs modification: create a copy and apply changes
-	// Note: You may want to cache this instead of creating new every time
-	CEconItemView *pModifiedItem = new CEconItemView( *pOriginalItem );
-	
-	// STEP 4: Downgrade quality if needed
-	if ( bQualityModify )
-	{
-		pModifiedItem->SetItemQuality( AE_UNIQUE );
-	}
+    if ( !bQualityModify && !bCosmeticsModify && !bWeaponModify )
+        return false; // Compliant as-is
 
-	// STEP 5: Strip anachronistic cosmetic attributes
-	if ( bCosmeticsModify )
-	{
-		StripAnachronisticAttributes( pModifiedItem );
-	}
-	
-	// STEP 6: Weapons get their attributes changed to match the era
-	if ( bWeaponModify )
-	{
-		ApplyWeaponAttributesToItem( pModifiedItem );
-	}
+    // Populate the caller's copy
+    pOutItem->CopyFrom( *pOriginalItem );
 
-	return pModifiedItem;
+    if ( bQualityModify )
+        pOutItem->SetItemQuality( AE_UNIQUE );
+
+    if ( bCosmeticsModify )
+        StripAnachronisticAttributes( pOutItem );
+
+    if ( bWeaponModify )
+        ApplyWeaponAttributesToItem( pOutItem );
+
+    return true;
 }
 
 //-----------------------------------------------------------------------------

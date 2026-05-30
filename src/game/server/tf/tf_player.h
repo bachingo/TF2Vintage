@@ -750,7 +750,21 @@ public:
 	void				GetActiveSets( CUtlVector<const CEconItemSetDefinition *> *pItemSets );
 	void				ValidateWeapons(  TFPlayerClassData_t *pData, bool bResetWeapons );
 	void				ValidateWearables( TFPlayerClassData_t *pData );
-	CEconItemView* GetLoadoutItem( int iClass, int iSlot, bool bReportWhitelistFails = false );
+	CEconItemView* 		GetLoadoutItem( int iClass, int iSlot, bool bReportWhitelistFails = false );
+
+	// TF2V: Era-compliance item cache — one entry per loadout slot
+	struct TF2VItemCacheEntry_t
+	{
+		int             iInventoryItemID;
+		int             iEraAtCompute;
+		bool            bModified;
+		CEconItemView   ModifiedItem;
+
+		TF2VItemCacheEntry_t() : iInventoryItemID( -1 ), iEraAtCompute( -1 ), bModified( false ) {}
+	};
+	TF2VItemCacheEntry_t    m_TF2VItemCache[ CLASS_LOADOUT_POSITION_COUNT ];
+	void                    TF2VInvalidateItemCache();  // call on era change or inventory change
+
 	void				UseActionSlotItemPressed( void );
 	void				UseActionSlotItemReleased( void );
 

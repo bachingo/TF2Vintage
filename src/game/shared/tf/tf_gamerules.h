@@ -1509,6 +1509,14 @@ public:
 			tf2v_era.SetValue( m_nTF2VEra ); // Set tf2v_era to our new clamped value
 #ifdef GAME_DLL
 			m_bMapCycleNeedsUpdate = true; // Also tell the game our mapcycle is stale and needs to be refreshed
+
+			// invalidate all players' item caches so GetLoadoutItem recomputes era-correct modifications on next spawn.
+			for ( int i = 1; i <= gpGlobals->maxClients; i++ )
+			{
+				CTFPlayer *pPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
+				if ( pPlayer )
+					pPlayer->TF2VInvalidateItemCache();
+			}
 #endif
 		}
 	}

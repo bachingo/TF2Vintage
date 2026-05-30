@@ -4978,11 +4978,6 @@ bool CTFPlayer::ItemIsAllowed( CEconItemView *pItem )
 	}
 
 	return true;
-	// TF2V: Undone. Too computationally expensive to build the item a second time and often doesn't match exactly.
-	//CEconItemView *pModified = TF2VGetTimePeriodCompliantItem( pItem, iClass, iSlot );
-	// if ( !pModified || !pModified->GetStaticData() )
-	//	return false;
-	// return pItem == pModified;
 }
 
 //-----------------------------------------------------------------------------
@@ -5382,48 +5377,71 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 //-----------------------------------------------------------------------------
 CEconItemView *CTFPlayer::GetLoadoutItem( int iClass, int iSlot, bool bReportWhitelistFails )
 {
-	if ( TFGameRules()->IsInItemTestingMode() )
-	{
-		CEconItemView *pItem = ItemTesting_GetTestItem( iClass, iSlot );
-		if ( pItem )
-			return pItem;
-	}
+    if ( TFGameRules()->IsInItemTestingMode() )
+    {
+        CEconItemView *pItem = ItemTesting_GetTestItem( iClass, iSlot );
+        if ( pItem )
+            return pItem;
+    }
 
-	// TF2V: All items were stock prior to Gold Rush.
-	if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_GOLDRUSH ) || ( TFGameRules()->IsInTraining() || TFGameRules()->IsInItemTestingMode() ) )
-	{
-		CTFInventoryManager *pInventoryManager = TFInventoryManager();
-		return pInventoryManager->GetBaseItemForClass( iClass, iSlot );
-	}
-	
-	// TF2V: Also skip cosmetic and taunt slots on XL servers to save us entities
-	if ( IsWearableSlot(iSlot) && ( gpGlobals->maxClients > 32 ) )
-		return nullptr;
+    if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_GOLDRUSH ) 
+        || TFGameRules()->IsInTraining() 
+        || TFGameRules()->IsInItemTestingMode() )
+    {
+        return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+    }
 
-	CEconItemView *pItem = m_Inventory.GetItemInLoadout( iClass, iSlot );
-	
-	// TF2V: This is where our era gate should kick in.
-	// Items failing the time period get downgraded or replaced.
+    if ( IsWearableSlot( iSlot ) && gpGlobals->maxClients > 32 )
+        return nullptr;
+
+    CEconItemView *pItem = m_Inventory.GetItemInLoadout( iClass, iSlot );
+
+    if ( pItem && pItem->IsValid() 
+        && pItem->GetItemQuality() != AE_NORMAL 
+        && !pItem->GetStaticData()->IsAllowedInMatch() )
+    {
+        if ( bReportWhitelistFails )
+            ClientPrint( this, HUD_PRINTNOTIFY, "#Item_BlacklistedInMatch", 
+                         pItem->GetStaticData()->GetItemBaseName() );
+        return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
+    }
+
+	// TF2V: If the item isn't compliant with the current time period, replace it with a compliant item (which could be the base item or a modified version of the original item).
 	if ( pItem && pItem->IsValid() )
-	{
-		pItem = TF2VGetTimePeriodCompliantItem( pItem, iClass, iSlot );
-		if ( !pItem || !pItem->GetStaticData() )
-			return nullptr;
-	}
+    {
+        if ( !g_pTF2VAttributeDateManager->ItemIsAllowedTimePeriod( pItem, iClass, iSlot ) )
+            return TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
 
-	// Check to see if this item passes the tournament rules (in whitelist/or normal quality).
-	// If it doesn't, we fall back to the base item for the loadout slot.
-	if ( (pItem && pItem->IsValid()) && (pItem->GetItemQuality() != AE_NORMAL) && !pItem->GetStaticData()->IsAllowedInMatch() )
-	{
-		if ( bReportWhitelistFails )
-		{
-			ClientPrint( this, HUD_PRINTNOTIFY, "#Item_BlacklistedInMatch", pItem->GetStaticData()->GetItemBaseName() );
-		}
+        TF2VItemCacheEntry_t &entry = m_TF2VItemCache[iSlot];
+        int iCurrentEra  = TF2VGetEra();
+        int iItemID      = (int)pItem->GetItemID();
 
-		pItem = TFInventoryManager()->GetBaseItemForClass( iClass, iSlot );
-	}
+        if ( entry.iInventoryItemID != iItemID || entry.iEraAtCompute != iCurrentEra )
+        {
+            entry.iInventoryItemID = iItemID;
+            entry.iEraAtCompute    = iCurrentEra;
+            entry.bModified        = g_pTF2VAttributeDateManager->GetTimePeriodCompliantItem(
+                pItem, &entry.ModifiedItem, iClass, iSlot );
+        }
 
-	return pItem;
+        if ( entry.bModified )
+            pItem = &entry.ModifiedItem;
+    }
+
+    return pItem;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Invalidate the TF2V item cache for this player. This should be called whenever we know the player's inventory has changed in a way that might make cached items out of date, such as equipping a new item or unequipping an old one.
+//-----------------------------------------------------------------------------
+void CTFPlayer::TF2VInvalidateItemCache()
+{
+    for ( int i = 0; i < CLASS_LOADOUT_POSITION_COUNT; i++ )
+    {
+        m_TF2VItemCache[i].iInventoryItemID = -1;
+        m_TF2VItemCache[i].iEraAtCompute    = -1;
+        m_TF2VItemCache[i].bModified        = false;
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -22063,6 +22081,7 @@ void CTFPlayer::ResetPerRoundStats( void )
 void CTFPlayer::InventoryUpdated( CPlayerInventory *pInventory )
 {
 	m_Shared.SetLoadoutUnavailable( false );
+	TF2VInvalidateItemCache(); // inventory changed, era-modified copies are stale
 }
 
 //-----------------------------------------------------------------------------
