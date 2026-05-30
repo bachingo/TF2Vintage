@@ -4977,11 +4977,12 @@ bool CTFPlayer::ItemIsAllowed( CEconItemView *pItem )
 		}
 	}
 
-	// TF2V: Check this item again. It should be exactly the one we are comparing.
-	CEconItemView *pModified = TF2VGetTimePeriodCompliantItem( pItem, iClass, iSlot );
-	if ( !pModified || !pModified->GetStaticData() )
-		return false;
-	return pItem == pModified;
+	return true;
+	// TF2V: Undone. Too computationally expensive to build the item a second time and often doesn't match exactly.
+	//CEconItemView *pModified = TF2VGetTimePeriodCompliantItem( pItem, iClass, iSlot );
+	// if ( !pModified || !pModified->GetStaticData() )
+	//	return false;
+	// return pItem == pModified;
 }
 
 //-----------------------------------------------------------------------------

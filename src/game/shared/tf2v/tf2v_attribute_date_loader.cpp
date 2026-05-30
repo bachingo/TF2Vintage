@@ -31,6 +31,8 @@ CTF2VAttributeDateManager::CTF2VAttributeDateManager()
 	m_WarPaintDates.SetLessFunc( DefLessFunc( int ) );
 	m_WeaponAttributeVersions.SetLessFunc( DefLessFunc( int ) );
 	m_CommonDefIndex.SetLessFunc( DefLessFunc( int ) );
+	m_ItemSetAttributeVersions.SetLessFunc( []( const CUtlString &a, const CUtlString &b ) {
+    return V_stricmp( a.Get(), b.Get() ) < 0; });
 }
 
 //-----------------------------------------------------------------------------
@@ -57,6 +59,7 @@ void CTF2VAttributeDateManager::Init()
 	bool bWarPaintSuccess = LoadWarPaintDates( "scripts/items/tf2v_warpaint_dates.txt" );
 	bool bWeaponSuccess = LoadWeaponAttributeVersions( "scripts/items/tf2v_weapon_attributes.txt" );
 	bool bCommonDefSuccess = LoadCommonDefIndex( "scripts/items/tf2v_common_defindex.txt" );
+	bool bItemSetSuccess = LoadItemSetAttributeVersions( "scripts/items/tf2v_item_set_attributes.txt" );
 	
 	if ( bItemSuccess )
 		Msg( "[TF2V] Loaded %d items\n", m_ItemDates.Count() );
@@ -92,6 +95,10 @@ void CTF2VAttributeDateManager::Init()
 	else
 		Warning( "[TF2V] Failed to load common defindex mappings!\n" );
 
+	if ( bItemSetSuccess )
+    	Msg( "[TF2V] Loaded attribute versions for %d item sets\n", m_ItemSetAttributeVersions.Count() );
+	else
+    	Warning( "[TF2V] Failed to load item set attribute versions!\n" );
 
 	m_bInitialized = true;
 }
@@ -111,6 +118,11 @@ void CTF2VAttributeDateManager::Shutdown()
 	}
 	m_WeaponAttributeVersions.Purge();
 	m_CommonDefIndex.Purge();
+	FOR_EACH_MAP_FAST( m_ItemSetAttributeVersions, i )
+	{
+		delete m_ItemSetAttributeVersions[i];
+	}
+	m_ItemSetAttributeVersions.Purge();
 	
 	m_bInitialized = false;
 }
@@ -403,6 +415,16 @@ bool CTF2VAttributeDateManager::LoadWeaponAttributeVersions( const char *pszFile
 			return a->iStartDate - b->iStartDate;
 		});
 
+		// After building pVersions, before inserting:
+		if ( pVersions->Count() == 0 )
+		{
+			// Bare entry with no date blocks — not useful, skip it.
+			// (These are probably placeholder comments in the data file.)
+			Warning( "[TF2V] Item %d has no date blocks, skipping\n", iItemDef );
+			delete pVersions;
+			continue;
+		}
+
 		m_WeaponAttributeVersions.Insert( iItemDef, pVersions );
 		
 		DevMsg( "[TF2V] Loaded %d versions for item %d\n", pVersions->Count(), iItemDef );
@@ -410,6 +432,130 @@ bool CTF2VAttributeDateManager::LoadWeaponAttributeVersions( const char *pszFile
 
 	pKV->deleteThis();
 	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Load item set attribute versions from file
+// Format mirrors tf2v_weapon_attributes.txt but keyed by set name string
+//-----------------------------------------------------------------------------
+bool CTF2VAttributeDateManager::LoadItemSetAttributeVersions( const char *pszFilename )
+{
+    KeyValues *pKV = new KeyValues( "tf2v_item_set_attributes" );
+    if ( !pKV->LoadFromFile( filesystem, pszFilename, "MOD" ) )
+    {
+        Warning( "[TF2V] Failed to load %s\n", pszFilename );
+        pKV->deleteThis();
+        return false;
+    }
+
+    // Clear existing
+    FOR_EACH_MAP_FAST( m_ItemSetAttributeVersions, i )
+    {
+        delete m_ItemSetAttributeVersions[i];
+    }
+    m_ItemSetAttributeVersions.Purge();
+
+    for ( KeyValues *pSetKV = pKV->GetFirstSubKey(); pSetKV; pSetKV = pSetKV->GetNextKey() )
+    {
+        const char *pszSetName = pSetKV->GetName();
+        if ( !pszSetName || !pszSetName[0] )
+            continue;
+
+        // Validate that this set actually exists in the schema
+        if ( !GetItemSchema()->GetItemSetByName( pszSetName ) )
+        {
+            Warning( "[TF2V] Item set '%s' not found in schema, skipping\n", pszSetName );
+            continue;
+        }
+
+        CUtlVector<WeaponAttributeVersion_t> *pVersions = new CUtlVector<WeaponAttributeVersion_t>();
+
+        for ( KeyValues *pDateBlock = pSetKV->GetFirstSubKey(); pDateBlock; pDateBlock = pDateBlock->GetNextKey() )
+        {
+            int iDate = ParseDateString( pDateBlock->GetName() );
+            if ( iDate < 0 )
+            {
+                Warning( "[TF2V] Invalid date '%s' for item set '%s'\n", pDateBlock->GetName(), pszSetName );
+                continue;
+            }
+
+            WeaponAttributeVersion_t version;
+            version.iStartDate = iDate;
+
+            // Empty blocks are valid — means "no set bonus this era"
+            // ParseAttributeBlock returns false for empty blocks, so handle that case:
+            KeyValues *pFirstAttrib = pDateBlock->GetFirstSubKey();
+            if ( pFirstAttrib )
+            {
+                if ( !ParseAttributeBlock( pDateBlock, version.attributes ) )
+                {
+                    Warning( "[TF2V] Failed to parse attributes for set '%s' date '%s'\n",
+                             pszSetName, pDateBlock->GetName() );
+                    // Still add the version with empty attributes rather than skipping,
+                    // so the "no bonus in this era" intent is preserved.
+                }
+            }
+            // else: no subkeys = intentionally empty block, version.attributes stays empty
+
+            pVersions->AddToTail( version );
+        }
+
+        // Sort ascending by date so binary/linear search works correctly
+        pVersions->Sort( []( const WeaponAttributeVersion_t *a, const WeaponAttributeVersion_t *b ) -> int {
+            return a->iStartDate - b->iStartDate;
+        });
+
+        m_ItemSetAttributeVersions.Insert( CUtlString( pszSetName ), pVersions );
+
+        DevMsg( "[TF2V] Loaded %d versions for item set '%s'\n", pVersions->Count(), pszSetName );
+    }
+
+    pKV->deleteThis();
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+// Returns the era-appropriate attribute list for a named item set.
+// Returns NULL if:
+//   - No versioned data exists for this set (caller should use schema default)
+//   - No version predates the current era (set didn't exist yet; caller blocks bonus)
+// Returns a pointer to an EMPTY vector if the set existed but had no bonus at
+// this era — caller must treat that as "no bonus", not "use schema default".
+//-----------------------------------------------------------------------------
+const CUtlVector<CEconItemAttribute> *CTF2VAttributeDateManager::GetItemSetAttributesForEra( const char *pszSetName )
+{
+    if ( !m_bInitialized || !pszSetName || !TFGameRules() || !TF2VGetEra() )
+        return NULL;
+
+    int iMapIndex = m_ItemSetAttributeVersions.Find( CUtlString( pszSetName ) );
+    if ( iMapIndex == m_ItemSetAttributeVersions.InvalidIndex() )
+        return NULL; // No override — caller uses schema default
+
+    CUtlVector<WeaponAttributeVersion_t> *pVersionList = m_ItemSetAttributeVersions[iMapIndex];
+    if ( !pVersionList || pVersionList->Count() == 0 )
+        return NULL;
+
+    int iCurrentDay = TF2VGetEra();
+
+    // Walk backwards: find latest version that has started by now
+    for ( int i = pVersionList->Count() - 1; i >= 0; i-- )
+    {
+        if ( pVersionList->Element(i).iStartDate <= iCurrentDay )
+        {
+            return &pVersionList->Element(i).attributes;
+        }
+    }
+
+    // All versions post-date current era — set bonus didn't exist yet.
+    // Return NULL so caller knows to suppress the bonus entirely.
+    return NULL;
+}
+
+bool CTF2VAttributeDateManager::ItemSetHasVersionedAttributes( const char *pszSetName )
+{
+    if ( !m_bInitialized || !pszSetName )
+        return false;
+    return m_ItemSetAttributeVersions.Find( CUtlString( pszSetName ) ) != m_ItemSetAttributeVersions.InvalidIndex();
 }
 
 //-----------------------------------------------------------------------------

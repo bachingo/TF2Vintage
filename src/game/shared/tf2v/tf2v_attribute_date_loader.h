@@ -123,6 +123,10 @@ public:
 	// Item is allowed - main entry point
 	CEconItemView *GetTimePeriodCompliantItem( CEconItemView *pOriginalItem, int iClass, int iSlot );
 
+	// Item Sets
+	const CUtlVector<CEconItemAttribute> *GetItemSetAttributesForEra( const char *pszSetName );
+	bool ItemSetHasVersionedAttributes( const char *pszSetName );
+
 private:
 	// Load individual files
 	bool LoadItemDates( const char *pszFilename );
@@ -132,6 +136,7 @@ private:
 	bool LoadWeaponAttributeVersions( const char *pszFilename );
 	bool ParseAttributeBlock( KeyValues *pKV, CUtlVector<CEconItemAttribute> &attributes );
 	bool LoadCommonDefIndex( const char *pszFilename );
+	bool LoadItemSetAttributeVersions( const char *pszFilename );
 
 	// Attribute categorization
 	AttributeCategory_t GetAttributeCategory( const char *pszAttrClass );
@@ -148,6 +153,7 @@ private:
 	CUtlMap<int, int> m_WarPaintDates;		// Proto Def Index -> Era Date
 	CUtlMap<int, int> m_CommonDefIndex;		// Def Index Variant -> Common Denominator
 	CUtlMap<int, CUtlVector<WeaponAttributeVersion_t>*> m_WeaponAttributeVersions;
+	CUtlMap<CUtlString, CUtlVector<WeaponAttributeVersion_t>*> m_ItemSetAttributeVersions;
 
 	bool m_bInitialized;
 };
@@ -185,6 +191,13 @@ inline bool TF2VItemAttributesAllowedTimePeriod( CEconItemView *pOriginalItem, i
 				 && !g_pTF2VAttributeDateManager->HasAnachronisticAttributes( pOriginalItem ) );
 	}
 	return false;
+}
+
+inline const CUtlVector<CEconItemAttribute> *TF2VGetItemSetAttributesForEra( const char *pszSetName )
+{
+    if ( g_pTF2VAttributeDateManager )
+        return g_pTF2VAttributeDateManager->GetItemSetAttributesForEra( pszSetName );
+    return NULL;
 }
 
 inline int TF2VGetItemIntroductionDate( int iDefindex )
