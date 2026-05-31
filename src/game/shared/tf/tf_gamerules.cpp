@@ -19,7 +19,6 @@
 #include "tf_logic_player_destruction.h"
 #include "tf_matchmaking_shared.h"
 #include "tf_progression_description.h"
-#include "tf2v/tf2v_attribute_date_loader.h"
 
 #ifdef CLIENT_DLL
 	#include <game/client/iviewport.h>
@@ -3894,12 +3893,6 @@ CTFGameRules::CTFGameRules()
 
 	m_hRequiredObserverTarget = NULL;
 	m_bStopWatchWinner.Set( false );
-	
-	if ( !g_pTF2VAttributeDateManager )
-	{
-		g_pTF2VAttributeDateManager = new CTF2VAttributeDateManager();
-		g_pTF2VAttributeDateManager->Init();
-	}
 
 #else // GAME_DLL
 
@@ -8695,12 +8688,6 @@ CTFGameRules::~CTFGameRules()
 	{
 		mp_tournament.SetValue( 0 );
 	}
-
-#ifdef GAME_DLL
-	g_pTF2VAttributeDateManager->Shutdown();
-	delete g_pTF2VAttributeDateManager;
-	g_pTF2VAttributeDateManager = NULL;
-#endif
 }
 
 //-----------------------------------------------------------------------------

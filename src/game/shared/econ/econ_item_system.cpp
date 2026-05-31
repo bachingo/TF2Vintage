@@ -16,6 +16,7 @@
 #include "filesystem.h"
 #include "steam/isteamhttp.h"
 
+#include "tf2v/tf2v_attribute_date_loader.h"
 
 #if defined(CLIENT_DLL) || defined(GAME_DLL)
 #include "gamestringpool.h"
@@ -116,6 +117,12 @@ void CEconItemSystem::PostInit( void )
 			Warning( "%s\n", vecErrors[nError].String() );
 		}
 	}
+	
+	if ( !g_pTF2VAttributeDateManager )
+	{
+		g_pTF2VAttributeDateManager = new CTF2VAttributeDateManager();
+		g_pTF2VAttributeDateManager->Init();
+	}
 #endif // USES_ECON_ITEMS
 
 #ifdef CLIENT_DLL
@@ -133,6 +140,14 @@ void CEconItemSystem::PostInit( void )
 //-----------------------------------------------------------------------------
 void CEconItemSystem::Shutdown( void )
 {
+#ifdef USES_ECON_ITEMS
+    if ( g_pTF2VAttributeDateManager )
+    {
+        g_pTF2VAttributeDateManager->Shutdown();
+        delete g_pTF2VAttributeDateManager;
+        g_pTF2VAttributeDateManager = NULL;
+    }
+#endif
 }
 
 extern ConVar mp_tournament;
