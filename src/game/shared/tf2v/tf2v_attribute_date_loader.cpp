@@ -31,8 +31,12 @@ CTF2VAttributeDateManager::CTF2VAttributeDateManager()
 	m_WarPaintDates.SetLessFunc( DefLessFunc( int ) );
 	m_WeaponAttributeVersions.SetLessFunc( DefLessFunc( int ) );
 	m_CommonDefIndex.SetLessFunc( DefLessFunc( int ) );
+	m_FestivizedDates.SetLessFunc( DefLessFunc( int ) );
+	m_AustraliumDates.SetLessFunc( DefLessFunc( int ) );
 	m_ItemSetAttributeVersions.SetLessFunc( []( const CUtlString &a, const CUtlString &b ) {
     return V_stricmp( a.Get(), b.Get() ) < 0; });
+	
+	
 }
 
 //-----------------------------------------------------------------------------
@@ -60,6 +64,8 @@ void CTF2VAttributeDateManager::Init()
 	bool bWeaponSuccess = LoadWeaponAttributeVersions( "scripts/items/tf2v_weapon_attributes.txt" );
 	bool bCommonDefSuccess = LoadCommonDefIndex( "scripts/items/tf2v_common_defindex.txt" );
 	bool bItemSetSuccess = LoadItemSetAttributeVersions( "scripts/items/tf2v_item_set_attributes.txt" );
+	bool bFestivizedSuccess = LoadFestivizedDates( "scripts/items/tf2v_festivized_dates.txt" );
+	bool bAustraliumSuccess = LoadAustraliumDates( "scripts/items/tf2v_australium_dates.txt" );
 	
 	if ( bItemSuccess )
 		Msg( "[TF2V] Loaded %d items\n", m_ItemDates.Count() );
@@ -99,6 +105,16 @@ void CTF2VAttributeDateManager::Init()
     	Msg( "[TF2V] Loaded attribute versions for %d item sets\n", m_ItemSetAttributeVersions.Count() );
 	else
     	Warning( "[TF2V] Failed to load item set attribute versions!\n" );
+	
+	if ( bFestivizedSuccess )
+		Msg( "[TF2V] Loaded festivized dates for %d items\n", m_FestivizedDates.Count() );
+	else
+		Warning( "[TF2V] Failed to load festivized dates!\n" );
+	
+	if ( bAustraliumSuccess )
+		Msg( "[TF2V] Loaded australium dates for %d items\n", m_AustraliumDates.Count() );
+	else
+		Warning( "[TF2V] Failed to load australium dates!\n" );
 
 	m_bInitialized = true;
 }
@@ -123,7 +139,9 @@ void CTF2VAttributeDateManager::Shutdown()
 		delete m_ItemSetAttributeVersions[i];
 	}
 	m_ItemSetAttributeVersions.Purge();
-	
+	m_FestivizedDates.Purge();
+	m_AustraliumDates.Purge();
+
 	m_bInitialized = false;
 }
 
@@ -613,7 +631,6 @@ bool CTF2VAttributeDateManager::LoadCommonDefIndex( const char *pszFilename )
  
 	// Iterate through all key-value pairs
 	// Format: "variant_defindex" "base_defindex"
-	// Example: "200" "13"  (Festive Scattergun -> Scattergun)
 	for ( KeyValues *pSub = pKV->GetFirstValue(); pSub; pSub = pSub->GetNextValue() )
 	{
 		int iVariantDefIndex = atoi( pSub->GetName() );
@@ -627,6 +644,82 @@ bool CTF2VAttributeDateManager::LoadCommonDefIndex( const char *pszFilename )
  
 	pKV->deleteThis();
 	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Load Festivized dates
+//-----------------------------------------------------------------------------
+bool CTF2VAttributeDateManager::LoadFestivizedDates( const char *pszFilename )
+{
+	KeyValues *pKV = new KeyValues( "tf2v_festivized_dates" );
+	if ( !pKV->LoadFromFile( filesystem, pszFilename, "MOD" ) )
+	{
+		Warning( "[TF2V] Failed to load %s\n", pszFilename );
+		pKV->deleteThis();
+		return false;
+	}
+
+	m_FestivizedDates.Purge();
+
+	for ( KeyValues *pSub = pKV->GetFirstValue(); pSub; pSub = pSub->GetNextValue() )
+	{
+		int iItemDefIndex = atoi( pSub->GetName() );
+		int iDays = ParseDateString( pSub->GetString() );
+
+		if ( iItemDefIndex >= 0 && iDays >= 0 )
+		{
+			m_FestivizedDates.Insert( iItemDefIndex, iDays );
+		}
+	}
+
+	pKV->deleteThis();
+	return true;
+}
+
+int CTF2VAttributeDateManager::GetFestivizedIntroductionDate( int iDefIndex )
+{
+    int iMapIndex = m_FestivizedDates.Find( iDefIndex );
+    if ( iMapIndex == m_FestivizedDates.InvalidIndex() )
+        return TF2V_DAY_UNKNOWN; // Not festivizable — strip always
+    return m_FestivizedDates[iMapIndex];
+}
+
+//-----------------------------------------------------------------------------
+// Load Australium dates
+//-----------------------------------------------------------------------------
+bool CTF2VAttributeDateManager::LoadAustraliumDates( const char *pszFilename )
+{
+	KeyValues *pKV = new KeyValues( "tf2v_australium_dates" );
+	if ( !pKV->LoadFromFile( filesystem, pszFilename, "MOD" ) )
+	{
+		Warning( "[TF2V] Failed to load %s\n", pszFilename );
+		pKV->deleteThis();
+		return false;
+	}
+
+	m_AustraliumDates.Purge();
+
+	for ( KeyValues *pSub = pKV->GetFirstValue(); pSub; pSub = pSub->GetNextValue() )
+	{
+		int iItemDefIndex = atoi( pSub->GetName() );
+		int iDays = ParseDateString( pSub->GetString() );
+
+		if ( iItemDefIndex >= 0 && iDays >= 0 )
+		{
+			m_AustraliumDates.Insert( iItemDefIndex, iDays );
+		}
+	}
+
+	pKV->deleteThis();
+	return true;
+}
+
+int CTF2VAttributeDateManager::GetAustraliumIntroductionDate( int iDefIndex )
+{
+    int iMapIndex = m_AustraliumDates.Find( iDefIndex );
+    if ( iMapIndex == m_AustraliumDates.InvalidIndex() )
+        return TF2V_DAY_UNKNOWN; // Not festivizable — strip always
+    return m_AustraliumDates[iMapIndex];
 }
 
 //-----------------------------------------------------------------------------
@@ -806,11 +899,27 @@ bool CTF2VAttributeDateManager::ItemIsAllowedTimePeriod( const CEconItemView *pI
 			return false;
 	}
 	
-	// Get the specific date it released as an integer.
-	int iItemDate = GetItemIntroductionDate( pItem->GetItemDefIndex() );
-	
-	// True when the current date is equal or later than its introduction date.
-	return TF2VIsContemporary( iItemDate );
+	int iDefIndex = pItem->GetItemDefIndex();
+	int iItemDate = GetItemIntroductionDate( iDefIndex );
+
+	if ( TF2VIsContemporary( iItemDate ) )
+		return true; // Specific variant exists in this era
+
+	// Variant is too new: check if the base weapon exists in this era.
+	// Only applicable to weapon slots: a Festive is valid as a past base,
+	// but a future cosmetic has no valid base fallback.
+	if ( IsWeaponSlot( iSlot ) )
+	{
+		int iCommonDef = GetCommonItemDef( iDefIndex );
+		if ( iCommonDef != iDefIndex ) // Has a common base that differs from itself
+		{
+			int iCommonDate = GetItemIntroductionDate( iCommonDef );
+			if ( TF2VIsContemporary( iCommonDate ) )
+				return true; // Base weapon exists — allow, will use base attrs
+		}
+	}
+
+	return false;
 
 }
 
@@ -946,14 +1055,29 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 			{
 				bShouldRemove = true;
 			}
-		}
+		}	
 		
-		// Festive effects - introduced with Australian Christmas 2011
+		// Festive items - introduced with Australian Christmas 2011
+		// Festivized - introduced in Smissmas 2015
 		else if ( V_stristr( pszAttrName, "festive" ) )
 		{
-			if ( TF2VIsAnachronistic( TF2V_DAY_SMISSMAS_2011 ) )
+			// Festive and Festivized get picked up here. Differentiate.
+			if ( V_stristr( pszAttrName, "is_festivized" ) ) // Festivized
 			{
-				bShouldRemove = true;
+				if ( TF2VIsAnachronistic( TF2V_DAY_SMISSMAS_2015 ) )
+					bShouldRemove = true;
+				else
+				{
+					int iCommonDef = GetCommonItemDef( pItem->GetItemDefIndex() );
+					int iFestivizedDate = GetFestivizedIntroductionDate( iCommonDef );
+					if ( TF2VIsAnachronistic( iFestivizedDate ) )
+						bShouldRemove = true;
+				}
+			}
+			else											 // Festive
+			{
+				if ( TF2VIsAnachronistic( TF2V_DAY_SMISSMAS_2011 ) )
+					bShouldRemove = true;
 			}
 		}
 		
@@ -973,6 +1097,13 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_TWOCITIES ) )
 			{
 				bShouldRemove = true;
+			}
+			else
+			{
+				int iCommonDef = GetCommonItemDef( pItem->GetItemDefIndex() );
+				int iAustraliumDate = GetAustraliumIntroductionDate( iCommonDef );
+				if ( TF2VIsAnachronistic( iAustraliumDate ) )
+					bShouldRemove = true;
 			}
 		}
 		
@@ -1128,31 +1259,89 @@ bool CTF2VAttributeDateManager::ItemNeedsModification( const CEconItemView *pIte
 // Returns false if the item is compliant as-is (pOutItem is untouched).
 //-----------------------------------------------------------------------------
 bool CTF2VAttributeDateManager::GetTimePeriodCompliantItem( 
-    const CEconItemView *pOriginalItem, 
-    CEconItemView *pOutItem,        // caller-owned, pre-constructed copy
-    int iClass, int iSlot )
+    const CEconItemView *pOriginalItem, CEconItemView *pOutItem, int iClass, int iSlot )
 {
-    if ( !pOriginalItem || !pOriginalItem->IsValid() || !TFGameRules() || !m_bInitialized )
+    if ( !pOriginalItem || !pOriginalItem->IsValid() || !m_bInitialized || !TFGameRules() )
         return false;
 
     if ( !ItemIsAllowedTimePeriod( pOriginalItem, iClass, iSlot ) )
-        return false; // Caller handles stock fallback — not our job
+        return false;
 
-    bool bQualityModify   = !ItemQualityIsAllowedTimePeriod( pOriginalItem->GetItemQuality() );
+    int iDefIndex    = pOriginalItem->GetItemDefIndex();
+    int iCommonDef   = GetCommonItemDef( iDefIndex );
+    bool bDefModify  = ( iCommonDef != iDefIndex );
+
     bool bCosmeticsModify = HasAnachronisticAttributes( pOriginalItem );
-    bool bWeaponModify    = IsWeaponSlot( iSlot ) && TF2VIsAnachronistic( TF2V_DAY_LAST_WEAPON_BALANCE );
+    bool bQualityModify  = !ItemQualityIsAllowedTimePeriod( pOriginalItem->GetItemQuality() );
+    bool bWeaponModify   = IsWeaponSlot( iSlot ) && TF2VIsAnachronistic( TF2V_DAY_LAST_WEAPON_BALANCE );
 
-    if ( !bQualityModify && !bCosmeticsModify && !bWeaponModify )
-        return false; // Compliant as-is
+    if ( !bDefModify && !bQualityModify && !bCosmeticsModify && !bWeaponModify )
+        return false;
 
-    // Populate the caller's copy
     *pOutItem = *pOriginalItem;
 
-    if ( bQualityModify )
-        pOutItem->SetItemQuality( AE_UNIQUE );
+    if ( bDefModify )
+    {
+        // Swap to the base item definition — this changes the model, name,
+        // and static attributes to the base weapon while preserving instance
+        // attributes (paint, killstreak, etc.) that survive the era check.
+        const CEconItemDefinition *pCommonDef = GetItemSchema()->GetItemDefinition( iCommonDef );
+        if ( pCommonDef )
+        {
+            pOutItem->SetItemDefIndex( iCommonDef );
+            // Re-run cosmetics check against the new defindex — the base item
+            // may have different static attributes that pass where the variant failed.
+            bCosmeticsModify = HasAnachronisticAttributes( pOutItem );
+        }
+    }
 
     if ( bCosmeticsModify )
         StripAnachronisticAttributes( pOutItem );
+	
+    if ( bQualityModify )
+        pOutItem->SetItemQuality( AE_UNIQUE );
+	else
+	{
+		int iQuality = pOutItem->GetItemQuality();
+		bool bNeedsDowngrade = false;
+		const CAttributeList *pAttribList = pOutItem->GetAttributeList();
+
+		switch ( iQuality )
+		{
+			case AE_STRANGE:
+				// Strange is justified by kill eaters (Botkillers, Strangifiers)
+				// OR by Australium tint. If both are gone, downgrade.
+				bNeedsDowngrade = !AttribListJustifiesStrange( pAttribList )
+							   && !AttribListJustifiesAustralium( pAttribList );
+				break;
+
+			case AE_UNUSUAL:
+			case AE_COMMUNITY:
+			case AE_SELFMADE:
+				// These qualities require a particle effect to be present.
+				bNeedsDowngrade = !AttribListJustifiesParticleQuality( pAttribList );
+				break;
+
+			case AE_PAINTKITWEAPON:
+			case AE_RARITY_DEFAULT:
+			case AE_RARITY_COMMON:
+			case AE_RARITY_UNCOMMON:
+			case AE_RARITY_RARE:
+			case AE_RARITY_MYTHICAL:
+			case AE_RARITY_LEGENDARY:
+			case AE_RARITY_ANCIENT:
+				// Decorated quality IS the war paint. If the paint was stripped,
+				// the quality is meaningless — downgrade to Unique.
+				bNeedsDowngrade = !AttribListJustifiesWarPaint( pAttribList );
+				break;
+
+			default:
+				break;
+		}
+
+		if ( bNeedsDowngrade )
+			pOutItem->SetItemQuality( AE_UNIQUE );
+	}
 
     if ( bWeaponModify )
         ApplyWeaponAttributesToItem( pOutItem );
@@ -1231,8 +1420,24 @@ bool CTF2VAttributeDateManager::HasAnachronisticAttributes( const CEconItemView 
 		}
 		else if ( V_stristr( pszAttrName, "festive" ) )
 		{
-			if ( TF2VIsAnachronistic( TF2V_DAY_SMISSMAS_2011 ) )
-				return true;
+			// Festive and Festivized get picked up here. Differentiate.
+			if ( V_stristr( pszAttrName, "is_festivized" ) ) // Festivized
+			{
+				if ( TF2VIsAnachronistic( TF2V_DAY_SMISSMAS_2015 ) )
+					return true;
+				else
+				{
+					int iCommonDef = GetCommonItemDef( pItem->GetItemDefIndex() );
+					int iFestivizedDate = GetFestivizedIntroductionDate( iCommonDef );
+					if ( TF2VIsAnachronistic( iFestivizedDate ) )
+						return true;
+				}
+			}
+			else											 // Festive
+			{
+				if ( TF2VIsAnachronistic( TF2V_DAY_SMISSMAS_2011 ) )
+					return true;
+			}
 		}
 		else if ( V_stristr( pszAttrName, "killstreak" ) || V_stristr( pszAttrName, "kill streak" ) )
 		{
@@ -1243,6 +1448,13 @@ bool CTF2VAttributeDateManager::HasAnachronisticAttributes( const CEconItemView 
 		{
 			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_TWOCITIES ) )
 				return true;
+			else
+			{
+				int iCommonDef = GetCommonItemDef( pItem->GetItemDefIndex() );
+				int iAustraliumDate = GetAustraliumIntroductionDate( iCommonDef );
+				if ( TF2VIsAnachronistic( iAustraliumDate ) )
+					return true;
+			}
 		}
 		else if ( V_stristr( pszAttrName, "paintkit_proto_def_index" ) ||
 				  V_stristr( pszAttrName, "paint_kit_proto_def_index" ) )
@@ -1274,21 +1486,87 @@ bool CTF2VAttributeDateManager::HasAnachronisticAttributes( const CEconItemView 
 	return false;
 }
 
+// Returns true if the instance attribute list still contains attributes
+// that justify Strange quality (i.e. at least one kill eater counter remains)
+static bool AttribListJustifiesStrange( const CAttributeList *pAttribList )
+{
+    for ( int i = 0; i < pAttribList->GetNumAttributes(); i++ )
+    {
+        const CEconItemAttribute *pAttrib = pAttribList->GetAttribute( i );
+        if ( !pAttrib || !pAttrib->GetStaticData() )
+            continue;
+        if ( V_stristr( pAttrib->GetStaticData()->GetDefinitionName(), "kill eater" ) )
+            return true;
+    }
+    return false;
+}
+
+// Returns true if the instance attribute list still contains attributes
+// that justify Unusual/Community/Self-Made quality (particle effect present)
+static bool AttribListJustifiesParticleQuality( const CAttributeList *pAttribList )
+{
+    for ( int i = 0; i < pAttribList->GetNumAttributes(); i++ )
+    {
+        const CEconItemAttribute *pAttrib = pAttribList->GetAttribute( i );
+        if ( !pAttrib || !pAttrib->GetStaticData() )
+            continue;
+        const char *pszName = pAttrib->GetStaticData()->GetDefinitionName();
+        if ( V_stristr( pszName, "attach particle effect" ) ||
+             V_stristr( pszName, "unusual_effect" ) )
+            return true;
+    }
+    return false;
+}
+
+static bool AttribListJustifiesAustralium( const CAttributeList *pAttribList )
+{
+    for ( int i = 0; i < pAttribList->GetNumAttributes(); i++ )
+    {
+        const CEconItemAttribute *pAttrib = pAttribList->GetAttribute( i );
+        if ( !pAttrib || !pAttrib->GetStaticData() )
+            continue;
+        if ( V_stristr( pAttrib->GetStaticData()->GetDefinitionName(), "australium" ) )
+            return true;
+    }
+    return false;
+}
+
+static bool AttribListJustifiesWarPaint( const CAttributeList *pAttribList )
+{
+    for ( int i = 0; i < pAttribList->GetNumAttributes(); i++ )
+    {
+        const CEconItemAttribute *pAttrib = pAttribList->GetAttribute( i );
+        if ( !pAttrib || !pAttrib->GetStaticData() )
+            continue;
+        const char *pszName = pAttrib->GetStaticData()->GetDefinitionName();
+        if ( V_stristr( pszName, "paintkit_proto_def_index" ) ||
+             V_stristr( pszName, "paint_kit_proto_def_index" ) )
+            return true;
+    }
+    return false;
+}
+
 //-----------------------------------------------------------------------------
 // Checks if we're a weird variant of an item definition (such as Botkiller)
 // And points our attribute table at the common item.
 //-----------------------------------------------------------------------------
 int CTF2VAttributeDateManager::GetCommonItemDef( int iDefIndex )
 {
-	// Look up in the map
-	int iIndex = m_CommonDefIndex.Find( iDefIndex );
-	
-	// If found, return the mapped base defindex
-	if ( iIndex != m_CommonDefIndex.InvalidIndex() )
-	{
-		return m_CommonDefIndex[iIndex];
-	}
-	
-	// If not found in map, this item has no variants - return as-is
-	return iDefIndex;
+    // Check schema's set_item_remap first — this covers all Festive weapons
+    // and any other variants the schema explicitly remaps to a base item.
+    const CEconItemDefinition *pDef = GetItemSchema()->GetItemDefinition( iDefIndex );
+    if ( pDef )
+    {
+        item_definition_index_t iRemap = pDef->GetSetItemRemap();
+        if ( iRemap != INVALID_ITEM_DEF_INDEX && iRemap != (item_definition_index_t)iDefIndex )
+            return (int)iRemap; // Schema-declared base weapon
+    }
+
+    // Fall through to manual common defindex table for cases the schema
+    // doesn't cover (reskins, renamed variants, etc.)
+    int iMapIndex = m_CommonDefIndex.Find( iDefIndex );
+    if ( iMapIndex != m_CommonDefIndex.InvalidIndex() )
+        return m_CommonDefIndex[iMapIndex];
+
+    return iDefIndex; // No mapping — item is its own common base
 }

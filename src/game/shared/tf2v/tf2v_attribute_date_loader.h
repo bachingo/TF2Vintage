@@ -92,6 +92,8 @@ public:
 	int GetPaintIntroductionDate( int iRGB );
 	int GetUnusualEffectIntroductionDate( int iEffectIndex );
 	int GetWarPaintIntroductionDate( int iProtoDefIndex );
+	int GetFestivizedIntroductionDate( int iDefIndex );
+	int GetAustraliumIntroductionDate( int iDefIndex );
 
 	// Reload files (useful for testing/updates)
 	void ReloadAllDates();
@@ -137,6 +139,8 @@ private:
 	bool ParseAttributeBlock( KeyValues *pKV, CUtlVector<CEconItemAttribute> &attributes );
 	bool LoadCommonDefIndex( const char *pszFilename );
 	bool LoadItemSetAttributeVersions( const char *pszFilename );
+	bool LoadFestivizedDates( const char *pszFilename );
+	bool LoadAustraliumDates( const char *pszFilename );
 
 	// Storage maps: key -> date (days since Sept 16, 2007)
 	CUtlMap<int, int> m_ItemDates;			// Definition Index -> Era Date
@@ -146,6 +150,8 @@ private:
 	CUtlMap<int, int> m_CommonDefIndex;		// Def Index Variant -> Common Denominator
 	CUtlMap<int, CUtlVector<WeaponAttributeVersion_t>*> m_WeaponAttributeVersions;
 	CUtlMap<CUtlString, CUtlVector<WeaponAttributeVersion_t>*> m_ItemSetAttributeVersions;
+	CUtlMap<int, int> m_FestivizedDates;    // Common Def Index -> Festivized intro date
+	CUtlMap<int, int> m_AustraliumDates;    // Common Def Index -> Australium intro date
 
 	bool m_bInitialized;
 };
