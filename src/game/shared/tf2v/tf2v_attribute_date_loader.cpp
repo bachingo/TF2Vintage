@@ -1098,7 +1098,7 @@ bool CTF2VAttributeDateManager::ApplyWeaponAttributesToItem( CEconItemView *pIte
 // Returns true if item needs modification (without creating a copy)
 // This is a fast validation path to avoid unnecessary item copies
 //-----------------------------------------------------------------------------
-bool CTF2VAttributeDateManager::ItemNeedsModification( CEconItemView *pItem, int iSlot )
+bool CTF2VAttributeDateManager::ItemNeedsModification( const CEconItemView *pItem, int iSlot )
 {
 	if ( !pItem || !pItem->IsValid() || !TFGameRules() || !m_bInitialized )
 		return false;
@@ -1165,12 +1165,12 @@ bool CTF2VAttributeDateManager::GetTimePeriodCompliantItem(
 // Quick check if item has attributes that would be stripped
 // Used to avoid unnecessary copying
 //-----------------------------------------------------------------------------
-bool CTF2VAttributeDateManager::HasAnachronisticAttributes( CEconItemView *pItem )
+bool CTF2VAttributeDateManager::HasAnachronisticAttributes( const CEconItemView *pItem )
 {
 	if ( !pItem || !pItem->IsValid() || !TFGameRules() || !m_bInitialized )
 		return false;
 
-	CAttributeList *pAttribList = pItem->GetAttributeList();
+	const CAttributeList *pAttribList = pItem->GetAttributeList();
 	if ( !pAttribList )
 		return false;
 
