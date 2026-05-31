@@ -1124,10 +1124,9 @@ bool CTF2VAttributeDateManager::ItemNeedsModification( const CEconItemView *pIte
 
 //-----------------------------------------------------------------------------
 // Get time-period compliant version of item
-// Returns: Modified item, base item if too new, or original if compliant
-//-----------------------------------------------------------------------------
 // Returns true if the item needed modification (pOutItem is populated).
 // Returns false if the item is compliant as-is (pOutItem is untouched).
+//-----------------------------------------------------------------------------
 bool CTF2VAttributeDateManager::GetTimePeriodCompliantItem( 
     const CEconItemView *pOriginalItem, 
     CEconItemView *pOutItem,        // caller-owned, pre-constructed copy
