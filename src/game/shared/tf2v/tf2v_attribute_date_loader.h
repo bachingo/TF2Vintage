@@ -102,17 +102,17 @@ public:
 
 	// TF2V Item checks
 	// Tournament medals first
-	bool IsItemMedal( CEconItemView *pItem );
-	bool IsPaintPlayerApplied( CEconItemView *pItem, const CEconItemAttribute *pPaintAttrib );
+	bool IsItemMedal( const CEconItemView *pItem );
+	bool IsPaintPlayerApplied( const CEconItemView *pItem, const CEconItemAttribute *pPaintAttrib );
 	
 	// Anachronistic modifiers
 	bool ItemIsAllowedTimePeriod( const CEconItemView *pItem, int iClass = -1, int iSlot = -1 );
 	bool ItemQualityIsAllowedTimePeriod( int iQuality );
-	bool HasAnachronisticAttributes( CEconItemView *pItem );
+	bool HasAnachronisticAttributes( const CEconItemView *pItem );
 	bool StripAnachronisticAttributes( CEconItemView *pItem );
 	
 	// Quick validation check - returns true if item needs modification
-	bool ItemNeedsModification( CEconItemView *pItem, int iSlot );
+	bool ItemNeedsModification( const CEconItemView *pItem, int iSlot );
 	
 	// Weapon attribute versioning
 	bool ApplyWeaponAttributesToItem( CEconItemView *pItem );
@@ -154,7 +154,7 @@ private:
 extern CTF2VAttributeDateManager *g_pTF2VAttributeDateManager;
 
 // Accessor functions (for backwards compatibility with existing code)
-inline bool TF2VItemNeedsModification( CEconItemView *pItem, int iSlot )
+inline bool TF2VItemNeedsModification( const CEconItemView *pItem, int iSlot )
 {
 	if ( g_pTF2VAttributeDateManager )
 		return g_pTF2VAttributeDateManager->ItemNeedsModification( pItem, iSlot );

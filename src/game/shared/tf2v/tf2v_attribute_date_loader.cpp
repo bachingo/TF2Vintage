@@ -692,7 +692,7 @@ int CTF2VAttributeDateManager::GetWarPaintIntroductionDate( int iProtoDefIndex )
 //-----------------------------------------------------------------------------
 // Check medals.
 //-----------------------------------------------------------------------------
-bool CTF2VAttributeDateManager::IsItemMedal( CEconItemView *pItem )
+bool CTF2VAttributeDateManager::IsItemMedal( const CEconItemView *pItem )
 {
 	if ( !pItem || !pItem->IsValid() )
 		return false;
@@ -713,7 +713,7 @@ bool CTF2VAttributeDateManager::IsItemMedal( CEconItemView *pItem )
 //-----------------------------------------------------------------------------
 // Distinguish schema tints from player-applied tints
 //-----------------------------------------------------------------------------
-bool CTF2VAttributeDateManager::IsPaintPlayerApplied( CEconItemView *pItem, const CEconItemAttribute *pPaintAttrib )
+bool CTF2VAttributeDateManager::IsPaintPlayerApplied( const CEconItemView *pItem, const CEconItemAttribute *pPaintAttrib )
 {
     if ( !pItem || !pPaintAttrib || !pItem->GetStaticData() )
         return false;
@@ -742,7 +742,7 @@ bool CTF2VAttributeDateManager::IsPaintPlayerApplied( CEconItemView *pItem, cons
 //-----------------------------------------------------------------------------
 // Checks to see if item passes base item check
 //-----------------------------------------------------------------------------
-bool CTF2VAttributeDateManager::ItemIsAllowedTimePeriod( CEconItemView *pItem, int iClass, int iSlot )
+bool CTF2VAttributeDateManager::ItemIsAllowedTimePeriod( const CEconItemView *pItem, int iClass, int iSlot )
 {
 	if ( !pItem || !pItem->GetStaticData() || !m_bInitialized || !TFGameRules() )
 		return false;
@@ -1140,7 +1140,7 @@ bool CTF2VAttributeDateManager::GetTimePeriodCompliantItem(
         return false; // Caller handles stock fallback — not our job
 
     bool bQualityModify   = !ItemQualityIsAllowedTimePeriod( pOriginalItem->GetItemQuality() );
-    bool bCosmeticsModify = HasAnachronisticAttributes( const_cast<CEconItemView*>( pOriginalItem ) );
+    bool bCosmeticsModify = HasAnachronisticAttributes( pOriginalItem );
     bool bWeaponModify    = IsWeaponSlot( iSlot ) && TF2VIsAnachronistic( TF2V_DAY_LAST_WEAPON_BALANCE );
 
     if ( !bQualityModify && !bCosmeticsModify && !bWeaponModify )
