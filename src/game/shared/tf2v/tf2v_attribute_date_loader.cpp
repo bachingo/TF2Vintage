@@ -88,13 +88,9 @@ void CTF2VAttributeDateManager::Init()
 		Warning( "[TF2V] Failed to load war paint dates!\n" );
 
 	if ( bWeaponSuccess )
-	{
 		Msg( "[TF2V] Loaded attribute versions for %d weapons\n", m_WeaponAttributeVersions.Count() );
-	}
 	else
-	{
 		Warning( "[TF2V] Failed to load weapon attribute versions!\n" );
-	}
 	
 	if ( bCommonDefSuccess )
 		Msg( "[TF2V] Loaded %d common defindex mappings\n", m_CommonDefIndex.Count() );
@@ -1037,25 +1033,53 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 					bShouldRemove = true;
 			}
 		}
-		
-		// Stat tracking (Strange counters) - introduced with Mann-Conomy
+
+		// Custom name - introduced with Mann-Conomy
+		else if ( V_stristr( pszAttrName, "custom_name_attr" ) )
+		{
+			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_MANNCONOMY ) )
+				bShouldRemove = true;
+		}
+
+		// Stat tracking (Strange counters) - introduced Mannconomy
+		// This grabs everything related to stat tracking.
 		else if ( V_stristr( pszAttrName, "kill eater" ) )
 		{
-			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_UBER ) )
-			{
+			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_MANNCONOMY ) )
 				bShouldRemove = true;
-			}
+		}
+		
+		// Custom description - introduced with Scream Fortress 2010
+		else if ( V_stristr( pszAttrName, "custom_desc_attr" ) )
+		{
+			if ( TF2VIsAnachronistic( TF2V_DAY_HALLOWEEN_2010 ) )
+				bShouldRemove = true;
+		}
+		
+		// Decal tool - introduced in Manniversary
+		else if ( V_stristr( pszAttrName, "paint_decal" ) )
+		{
+			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_MANNIVERSARY ) )
+				bShouldRemove = true;
 		}
 		
 		// Halloween/Haunted effects
 		else if ( V_stristr( pszAttrName, "halloween" ) ||
 				  V_stristr( pszAttrName, "haunted" ) )
 		{
-			if ( TF2VIsAnachronistic( TF2V_DAY_HALLOWEEN_2011 ) )
+			if ( V_stristr( pszAttrName, "SPELL:" ) )
 			{
-				bShouldRemove = true;
+				// Halloween spells come later. Check specifically.
+				if ( TF2VIsAnachronistic( TF2V_DAY_HALLOWEEN_2012 ) )
+					return true;
 			}
-		}	
+			else
+			{
+				// All other Haunted/Halloween.
+				if ( TF2VIsAnachronistic( TF2V_DAY_HALLOWEEN_2011 ) )
+					return true;
+			}
+		}
 		
 		// Festive items - introduced with Australian Christmas 2011
 		// Festivized - introduced in Smissmas 2015
@@ -1079,6 +1103,13 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 				if ( TF2VIsAnachronistic( TF2V_DAY_SMISSMAS_2011 ) )
 					bShouldRemove = true;
 			}
+		}
+		
+		// Strange Parts - introduced March 22, 2012 (Warhammer Promo)
+		else if ( V_stristr( pszAttrName, "strange_part_new_counter" ) )
+		{
+			if ( TF2VIsAnachronistic( TF2V_DAY_PROMO_WARHAMMER ) )
+				bShouldRemove = true;
 		}
 		
 		// Killstreak effects - introduced with Two Cities
@@ -1128,13 +1159,20 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 			}
 		}
 		
-		// Stat clock: February 29 2016 (post Tough Break)
+		// Civilian Stat clock - introduced February 29 2016 (post Tough Break)
 		else if ( V_stristr( pszAttrName, "stat_" ) )
 		{
 			if ( TF2VIsAnachronistic( 3088 ) )
 			{
 				bShouldRemove = true;
 			}
+		}
+		
+		// Unusualifier - introduced Scream Fortress 2016
+		else if ( V_stristr( pszAttrName, "unusualifier" ) )
+		{
+			if ( TF2VIsAnachronistic( TF2V_DAY_HALLOWEEN_2016 ) )
+				bShouldRemove = true;
 		}
 		
 
@@ -1296,10 +1334,10 @@ bool CTF2VAttributeDateManager::GetTimePeriodCompliantItem(
     }
 
     if ( bCosmeticsModify )
-        StripAnachronisticAttributes( pOutItem );
+		StripAnachronisticAttributes( pOutItem );
 	
     if ( bQualityModify )
-        pOutItem->SetItemQuality( AE_UNIQUE );
+		pOutItem->SetItemQuality( GetDowngradeQuality( pOutItem ) );
 	else
 	{
 		int iQuality = pOutItem->GetItemQuality();
@@ -1340,13 +1378,39 @@ bool CTF2VAttributeDateManager::GetTimePeriodCompliantItem(
 		}
 
 		if ( bNeedsDowngrade )
-			pOutItem->SetItemQuality( AE_UNIQUE );
+			pOutItem->SetItemQuality( GetDowngradeQuality( pOutItem ) );
 	}
 
     if ( bWeaponModify )
         ApplyWeaponAttributesToItem( pOutItem );
 
     return true;
+}
+
+// Determines the correct downgrade target quality for an item after stripping.
+// Base items with no name/desc tags should be AE_NORMAL.
+// Everything else becomes AE_UNIQUE.
+static int GetDowngradeQuality( const CEconItemView *pItem )
+{
+    const CEconItemDefinition *pDef = pItem->GetStaticData();
+    if ( !pDef || !pDef->IsBaseItem() )
+        return AE_UNIQUE;
+
+    // Base item — check if a name or description tag survives.
+    // If so, it's been customized and should be Unique, not Normal.
+    const CAttributeList *pAttribList = pItem->GetAttributeList();
+    for ( int i = 0; i < pAttribList->GetNumAttributes(); i++ )
+    {
+        const CEconItemAttribute *pAttrib = pAttribList->GetAttribute( i );
+        if ( !pAttrib || !pAttrib->GetStaticData() )
+            continue;
+        const char *pszName = pAttrib->GetStaticData()->GetDefinitionName();
+        if ( V_stristr( pszName, "custom_name_attr" ) ||
+             V_stristr( pszName, "custom_desc_attr" ) )
+            return AE_UNIQUE; // Has a custom name/desc, stays Unique
+    }
+
+    return AE_NORMAL; // True base item with no customization
 }
 
 //-----------------------------------------------------------------------------
@@ -1407,16 +1471,39 @@ bool CTF2VAttributeDateManager::HasAnachronisticAttributes( const CEconItemView 
 					return true;
 			}
 		}
+		else if ( V_stristr( pszAttrName, "custom_name_attr" ) )
+		{
+			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_MANNCONOMY ) )
+				return true;
+		}
 		else if ( V_stristr( pszAttrName, "kill eater" ) )
 		{
-			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_UBER ) )
+			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_MANNCONOMY ) )
+				return true;
+		}
+		else if ( V_stristr( pszAttrName, "custom_desc_attr" ) )
+		{
+			if ( TF2VIsAnachronistic( TF2V_DAY_HALLOWEEN_2010 ) )
+				return true;
+		}
+		else if ( V_stristr( pszAttrName, "paint_decal" ) )
+		{
+			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_MANNIVERSARY ) )
 				return true;
 		}
 		else if ( V_stristr( pszAttrName, "halloween" ) ||
 				  V_stristr( pszAttrName, "haunted" ) )
 		{
-			if ( TF2VIsAnachronistic( TF2V_DAY_HALLOWEEN_2011 ) )
-				return true;
+			if ( V_stristr( pszAttrName, "SPELL:" ) )
+			{
+				if ( TF2VIsAnachronistic( TF2V_DAY_HALLOWEEN_2012 ) )
+					return true;
+			}
+			else
+			{
+				if ( TF2VIsAnachronistic( TF2V_DAY_HALLOWEEN_2011 ) )
+					return true;
+			}
 		}
 		else if ( V_stristr( pszAttrName, "festive" ) )
 		{
@@ -1438,6 +1525,11 @@ bool CTF2VAttributeDateManager::HasAnachronisticAttributes( const CEconItemView 
 				if ( TF2VIsAnachronistic( TF2V_DAY_SMISSMAS_2011 ) )
 					return true;
 			}
+		}
+		else if ( V_stristr( pszAttrName, "strange_part_new_counter" ) )
+		{
+			if ( TF2VIsAnachronistic( TF2V_DAY_PROMO_WARHAMMER ) )
+				return true;
 		}
 		else if ( V_stristr( pszAttrName, "killstreak" ) || V_stristr( pszAttrName, "kill streak" ) )
 		{
@@ -1479,6 +1571,11 @@ bool CTF2VAttributeDateManager::HasAnachronisticAttributes( const CEconItemView 
 		else if ( V_stristr( pszAttrName, "stat_" ) )
 		{
 			if ( TF2VIsAnachronistic( 3088 ) )
+				return true;
+		}
+		else if ( V_stristr( pszAttrName, "unusualifier" ) )
+		{
+			if ( TF2VIsAnachronistic( TF2V_DAY_HALLOWEEN_2016 ) )
 				return true;
 		}
 	}
