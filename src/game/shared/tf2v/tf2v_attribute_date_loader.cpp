@@ -995,186 +995,8 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 
 		const char *pszAttrName = pAttrDef->GetDefinitionName();
 		bool bShouldRemove = false;
-		
-		// Paint attributes - introduced with Mann-Conomy
-		if ( V_stristr( pszAttrName, "paint" ) || 
-			 V_stristr( pszAttrName, "set item tint" ) ||
-			 V_stristr( pszAttrName, "item_tint_rgb" ) ||
-			 V_stristr( pszAttrName, "item_tint_rgb_2" ) )
-		{
-			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_MANNCONOMY ) )
-			{
-				bShouldRemove = true;
-			}
-			else if ( !bIsMedal && IsPaintPlayerApplied( pItem, pAttrib ) )
-			{
-				// Investigate the permutation further.
-				float flAttribValue = pAttrib->GetValue();
-				int iRGB = (int)flAttribValue;
-				if ( TF2VIsAnachronistic( GetPaintIntroductionDate( iRGB ) ) )
-					bShouldRemove = true;
-			}
-		}
-		
-		// Unusual effects - introduced with Mann-Conomy
-		else if ( V_stristr( pszAttrName, "attach particle effect" ) ||
-				  V_stristr( pszAttrName, "unusual_effect" ) )
-		{
-			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_MANNCONOMY ) )
-			{
-				bShouldRemove = true;
-			}
-			else
-			{
-				// Investigate the permutation further.
-				float flAttribValue = pAttrib->GetValue();
-				int iEffectIndex = (int)flAttribValue;
-				if ( TF2VIsAnachronistic( GetUnusualEffectIntroductionDate( iEffectIndex ) ) )
-					bShouldRemove = true;
-			}
-		}
 
-		// Custom name - introduced with Mann-Conomy
-		else if ( V_stristr( pszAttrName, "custom_name_attr" ) )
-		{
-			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_MANNCONOMY ) )
-				bShouldRemove = true;
-		}
-
-		// Stat tracking (Strange counters) - introduced Mannconomy
-		// This grabs everything related to stat tracking.
-		else if ( V_stristr( pszAttrName, "kill eater" ) )
-		{
-			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_MANNCONOMY ) )
-				bShouldRemove = true;
-		}
-		
-		// Custom description - introduced with Scream Fortress 2010
-		else if ( V_stristr( pszAttrName, "custom_desc_attr" ) )
-		{
-			if ( TF2VIsAnachronistic( TF2V_DAY_HALLOWEEN_2010 ) )
-				bShouldRemove = true;
-		}
-		
-		// Decal tool - introduced in Manniversary
-		else if ( V_stristr( pszAttrName, "paint_decal" ) )
-		{
-			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_MANNIVERSARY ) )
-				bShouldRemove = true;
-		}
-		
-		// Halloween/Haunted effects
-		else if ( V_stristr( pszAttrName, "halloween" ) ||
-				  V_stristr( pszAttrName, "haunted" ) )
-		{
-			if ( V_stristr( pszAttrName, "SPELL:" ) )
-			{
-				// Halloween spells come later. Check specifically.
-				if ( TF2VIsAnachronistic( TF2V_DAY_HALLOWEEN_2012 ) )
-					return true;
-			}
-			else
-			{
-				// All other Haunted/Halloween.
-				if ( TF2VIsAnachronistic( TF2V_DAY_HALLOWEEN_2011 ) )
-					return true;
-			}
-		}
-		
-		// Festive items - introduced with Australian Christmas 2011
-		// Festivized - introduced in Smissmas 2015
-		else if ( V_stristr( pszAttrName, "festive" ) )
-		{
-			// Festive and Festivized get picked up here. Differentiate.
-			if ( V_stristr( pszAttrName, "is_festivized" ) ) // Festivized
-			{
-				if ( TF2VIsAnachronistic( TF2V_DAY_SMISSMAS_2015 ) )
-					bShouldRemove = true;
-				else
-				{
-					int iCommonDef = GetCommonItemDef( pItem->GetItemDefIndex() );
-					int iFestivizedDate = GetFestivizedIntroductionDate( iCommonDef );
-					if ( TF2VIsAnachronistic( iFestivizedDate ) )
-						bShouldRemove = true;
-				}
-			}
-			else											 // Festive
-			{
-				if ( TF2VIsAnachronistic( TF2V_DAY_SMISSMAS_2011 ) )
-					bShouldRemove = true;
-			}
-		}
-		
-		// Strange Parts - introduced March 22, 2012 (Warhammer Promo)
-		else if ( V_stristr( pszAttrName, "strange_part_new_counter" ) )
-		{
-			if ( TF2VIsAnachronistic( TF2V_DAY_PROMO_WARHAMMER ) )
-				bShouldRemove = true;
-		}
-		
-		// Killstreak effects - introduced with Two Cities
-		else if ( V_stristr( pszAttrName, "killstreak" ) ||
-				  V_stristr( pszAttrName, "kill streak" ) )
-		{
-			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_TWOCITIES ) )
-			{
-				bShouldRemove = true;
-			}
-		}
-		
-		// Australium - introduced with Two Cities
-		else if ( V_stristr( pszAttrName, "australium" ) )
-		{
-			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_TWOCITIES ) )
-			{
-				bShouldRemove = true;
-			}
-			else
-			{
-				int iCommonDef = GetCommonItemDef( pItem->GetItemDefIndex() );
-				int iAustraliumDate = GetAustraliumIntroductionDate( iCommonDef );
-				if ( TF2VIsAnachronistic( iAustraliumDate ) )
-					bShouldRemove = true;
-			}
-		}
-		
-		else if ( V_stristr( pszAttrName, "paintkit_proto_def_index" ) ||
-				  V_stristr( pszAttrName, "paint_kit_proto_def_index" ) )
-		{
-			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_GUN_METTLE ) )
-			{
-				bShouldRemove = true;
-			}
-			else
-			{
-				float flAttribValue = pAttrib->GetValue();
-			
-				int iProtoDefIndex = (int)flAttribValue;
-				int iWarPaintIntroDate = GetWarPaintIntroductionDate( iProtoDefIndex );
-			
-				if ( TF2VIsAnachronistic( iWarPaintIntroDate ) )
-				{
-					bShouldRemove = true;
-				}
-			}
-		}
-		
-		// Civilian Stat clock - introduced February 29 2016 (post Tough Break)
-		else if ( V_stristr( pszAttrName, "stat_" ) )
-		{
-			if ( TF2VIsAnachronistic( 3088 ) )
-			{
-				bShouldRemove = true;
-			}
-		}
-		
-		// Unusualifier - introduced Scream Fortress 2016
-		else if ( V_stristr( pszAttrName, "unusualifier" ) )
-		{
-			if ( TF2VIsAnachronistic( TF2V_DAY_HALLOWEEN_2016 ) )
-				bShouldRemove = true;
-		}
-		
+		bShouldRemove = CheckIfAttributeAnachronistic( pszAttrName );
 
 		if ( bShouldRemove )
 		{
@@ -1438,148 +1260,198 @@ bool CTF2VAttributeDateManager::HasAnachronisticAttributes( const CEconItemView 
 
 		const char *pszAttrName = pAttrDef->GetDefinitionName();
 
-		// Check each category
-		if ( V_stristr( pszAttrName, "paint" ) || 
-			 V_stristr( pszAttrName, "set item tint" ) ||
-			 V_stristr( pszAttrName, "item_tint_rgb" ) ||
-			 V_stristr( pszAttrName, "item_tint_rgb_2" ) )
+		if ( CheckIfAttributeAnachronistic( pszAttrName ) )
+			return true;
+	}
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Unified check to find era gated attributes.
+// Returns true if the attribute is anachronistic to the era gate.
+//-----------------------------------------------------------------------------
+static bool CheckIfAttributeAnachronistic( const char *pszAttrName )
+{
+	// Paint attributes - introduced with Mann-Conomy
+	if ( V_stristr( pszAttrName, "paint" ) || 
+		 V_stristr( pszAttrName, "set item tint" ) ||
+		 V_stristr( pszAttrName, "item_tint_rgb" ) ||
+		 V_stristr( pszAttrName, "item_tint_rgb_2" ) )
+	{
+		if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_MANNCONOMY ) )
 		{
-			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_MANNCONOMY ) )
-				return true;
-			else
-			{
-				// Investigate the permutation further.
-				float flAttribValue = pAttrib->GetValue();
-				int iRGB = (int)flAttribValue;
-				if ( TF2VIsAnachronistic( GetPaintIntroductionDate( iRGB ) ) )
-					return true;
-			}
+			return true;
 		}
-		else if ( V_stristr( pszAttrName, "attach particle effect" ) ||
-				  V_stristr( pszAttrName, "unusual_effect" ) )
+		else if ( !bIsMedal && IsPaintPlayerApplied( pItem, pAttrib ) )
 		{
-			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_MANNCONOMY ) )
-			{
-				return true;
-			}
-			else
-			{
-				// Investigate the permutation further.
-				float flAttribValue = pAttrib->GetValue();
-				int iEffectIndex = (int)flAttribValue;
-				if ( TF2VIsAnachronistic( GetUnusualEffectIntroductionDate( iEffectIndex ) ) )
-					return true;
-			}
-		}
-		else if ( V_stristr( pszAttrName, "custom_name_attr" ) )
-		{
-			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_MANNCONOMY ) )
-				return true;
-		}
-		else if ( V_stristr( pszAttrName, "kill eater" ) )
-		{
-			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_MANNCONOMY ) )
-				return true;
-		}
-		else if ( V_stristr( pszAttrName, "custom_desc_attr" ) )
-		{
-			if ( TF2VIsAnachronistic( TF2V_DAY_HALLOWEEN_2010 ) )
-				return true;
-		}
-		else if ( V_stristr( pszAttrName, "paint_decal" ) )
-		{
-			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_MANNIVERSARY ) )
-				return true;
-		}
-		else if ( V_stristr( pszAttrName, "halloween" ) ||
-				  V_stristr( pszAttrName, "haunted" ) )
-		{
-			if ( V_stristr( pszAttrName, "SPELL:" ) )
-			{
-				if ( TF2VIsAnachronistic( TF2V_DAY_HALLOWEEN_2012 ) )
-					return true;
-			}
-			else
-			{
-				if ( TF2VIsAnachronistic( TF2V_DAY_HALLOWEEN_2011 ) )
-					return true;
-			}
-		}
-		else if ( V_stristr( pszAttrName, "festive" ) )
-		{
-			// Festive and Festivized get picked up here. Differentiate.
-			if ( V_stristr( pszAttrName, "is_festivized" ) ) // Festivized
-			{
-				if ( TF2VIsAnachronistic( TF2V_DAY_SMISSMAS_2015 ) )
-					return true;
-				else
-				{
-					int iCommonDef = GetCommonItemDef( pItem->GetItemDefIndex() );
-					int iFestivizedDate = GetFestivizedIntroductionDate( iCommonDef );
-					if ( TF2VIsAnachronistic( iFestivizedDate ) )
-						return true;
-				}
-			}
-			else											 // Festive
-			{
-				if ( TF2VIsAnachronistic( TF2V_DAY_SMISSMAS_2011 ) )
-					return true;
-			}
-		}
-		else if ( V_stristr( pszAttrName, "strange_part_new_counter" ) )
-		{
-			if ( TF2VIsAnachronistic( TF2V_DAY_PROMO_WARHAMMER ) )
-				return true;
-		}
-		else if ( V_stristr( pszAttrName, "killstreak" ) || V_stristr( pszAttrName, "kill streak" ) )
-		{
-			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_TWOCITIES ) )
-				return true;
-		}
-		else if ( V_stristr( pszAttrName, "australium" ) )
-		{
-			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_TWOCITIES ) )
-				return true;
-			else
-			{
-				int iCommonDef = GetCommonItemDef( pItem->GetItemDefIndex() );
-				int iAustraliumDate = GetAustraliumIntroductionDate( iCommonDef );
-				if ( TF2VIsAnachronistic( iAustraliumDate ) )
-					return true;
-			}
-		}
-		else if ( V_stristr( pszAttrName, "paintkit_proto_def_index" ) ||
-				  V_stristr( pszAttrName, "paint_kit_proto_def_index" ) )
-		{
-			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_GUN_METTLE ) )
-			{
-				return true;
-			}
-			else
-			{
-				float flAttribValue = pAttrib->GetValue();
-			
-				int iProtoDefIndex = (int)flAttribValue;
-				int iWarPaintIntroDate = GetWarPaintIntroductionDate( iProtoDefIndex );
-			
-				if ( TF2VIsAnachronistic( iWarPaintIntroDate ) )
-				{
-					return true;
-				}
-			}
-		}
-		else if ( V_stristr( pszAttrName, "stat_" ) )
-		{
-			if ( TF2VIsAnachronistic( 3088 ) )
-				return true;
-		}
-		else if ( V_stristr( pszAttrName, "unusualifier" ) )
-		{
-			if ( TF2VIsAnachronistic( TF2V_DAY_HALLOWEEN_2016 ) )
+			// Investigate the permutation further.
+			float flAttribValue = pAttrib->GetValue();
+			int iRGB = (int)flAttribValue;
+			if ( TF2VIsAnachronistic( GetPaintIntroductionDate( iRGB ) ) )
 				return true;
 		}
 	}
 
+	// Unusual effects - introduced with Mann-Conomy
+	else if ( V_stristr( pszAttrName, "attach particle effect" ) ||
+			  V_stristr( pszAttrName, "unusual_effect" ) )
+	{
+		if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_MANNCONOMY ) )
+		{
+			return true;
+		}
+		else
+		{
+			// Investigate the permutation further.
+			float flAttribValue = pAttrib->GetValue();
+			int iEffectIndex = (int)flAttribValue;
+			if ( TF2VIsAnachronistic( GetUnusualEffectIntroductionDate( iEffectIndex ) ) )
+				return true;
+		}
+	}
+
+	// Custom name - introduced with Mann-Conomy
+	else if ( V_stristr( pszAttrName, "custom_name_attr" ) )
+	{
+		if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_MANNCONOMY ) )
+			return true;
+	}
+
+	// Stat tracking (Strange counters) - introduced Mannconomy
+	// This grabs everything related to stat tracking.
+	else if ( V_stristr( pszAttrName, "kill eater" ) )
+	{
+		if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_MANNCONOMY ) )
+			return true;
+	}
+		
+	// Custom description - introduced with Scream Fortress 2010
+	else if ( V_stristr( pszAttrName, "custom_desc_attr" ) )
+	{
+		if ( TF2VIsAnachronistic( TF2V_DAY_HALLOWEEN_2010 ) )
+			return true;
+	}
+
+	// Decal tool - introduced in Manniversary
+	else if ( V_stristr( pszAttrName, "paint_decal" ) )
+	{
+		if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_MANNIVERSARY ) )
+			return true;
+	}
+		
+	// Halloween/Haunted effects
+	else if ( V_stristr( pszAttrName, "halloween" ) ||
+			  V_stristr( pszAttrName, "haunted" ) )
+	{
+		if ( V_stristr( pszAttrName, "SPELL:" ) )
+		{
+			// Halloween spells come later. Check specifically.
+			if ( TF2VIsAnachronistic( TF2V_DAY_HALLOWEEN_2012 ) )
+				return true;
+		}
+		else
+		{
+			// All other Haunted/Halloween.
+			if ( TF2VIsAnachronistic( TF2V_DAY_HALLOWEEN_2011 ) )
+				return true;
+		}
+	}
+		
+	// Festive items - introduced with Australian Christmas 2011
+	// Festivized - introduced in Smissmas 2015
+	else if ( V_stristr( pszAttrName, "festive" ) )
+	{
+		// Festive and Festivized get picked up here. Differentiate.
+		if ( V_stristr( pszAttrName, "is_festivized" ) ) // Festivized
+		{
+			if ( TF2VIsAnachronistic( TF2V_DAY_SMISSMAS_2015 ) )
+				return true;
+			else
+			{
+				int iCommonDef = GetCommonItemDef( pItem->GetItemDefIndex() );
+				int iFestivizedDate = GetFestivizedIntroductionDate( iCommonDef );
+				if ( TF2VIsAnachronistic( iFestivizedDate ) )
+					return true;
+			}
+		}
+		else											 // Festive
+		{
+			if ( TF2VIsAnachronistic( TF2V_DAY_SMISSMAS_2011 ) )
+				return true;
+		}
+	}
+		
+	// Strange Parts - introduced March 22, 2012 (Warhammer Promo)
+	else if ( V_stristr( pszAttrName, "strange_part_new_counter" ) )
+	{
+		if ( TF2VIsAnachronistic( TF2V_DAY_PROMO_WARHAMMER ) )
+			return true;
+	}
+		
+	// Killstreak effects - introduced with Two Cities
+	else if ( V_stristr( pszAttrName, "killstreak" ) ||
+			  V_stristr( pszAttrName, "kill streak" ) )
+	{
+		if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_TWOCITIES ) )
+		{
+			return true;
+		}
+	}
+		
+	// Australium - introduced with Two Cities
+	else if ( V_stristr( pszAttrName, "australium" ) )
+	{
+		if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_TWOCITIES ) )
+		{
+			return true;
+		}
+		else
+		{
+			int iCommonDef = GetCommonItemDef( pItem->GetItemDefIndex() );
+			int iAustraliumDate = GetAustraliumIntroductionDate( iCommonDef );
+			if ( TF2VIsAnachronistic( iAustraliumDate ) )
+				return true;
+		}
+	}
+		
+	else if ( V_stristr( pszAttrName, "paintkit_proto_def_index" ) ||
+			  V_stristr( pszAttrName, "paint_kit_proto_def_index" ) )
+	{
+		if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_GUN_METTLE ) )
+		{
+			return true;
+		}
+		else
+		{
+			float flAttribValue = pAttrib->GetValue();
+
+			int iProtoDefIndex = (int)flAttribValue;
+			int iWarPaintIntroDate = GetWarPaintIntroductionDate( iProtoDefIndex );
+
+			if ( TF2VIsAnachronistic( iWarPaintIntroDate ) )
+			{
+				return true;
+			}
+		}
+	}
+		
+	// Civilian Stat clock - introduced February 29 2016 (post Tough Break)
+	else if ( V_stristr( pszAttrName, "stat_" ) )
+	{
+		if ( TF2VIsAnachronistic( 3088 ) )
+		{
+			return true;
+		}
+	}
+		
+	// Unusualifier - introduced Scream Fortress 2016
+	else if ( V_stristr( pszAttrName, "unusualifier" ) )
+	{
+		if ( TF2VIsAnachronistic( TF2V_DAY_HALLOWEEN_2016 ) )
+			return true;
+	}
+	
 	return false;
 }
 
