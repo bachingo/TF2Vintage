@@ -237,37 +237,6 @@ const char *GetRandomBotName( void )
 		"Kill Me",
 		"Glorified Toaster with Legs",
 
-		"No Man",
-		"That Thing",
-		"Freak",
-		"Dreams of Cruelty",
-		
-		"ROBOT!",
-
-		"6th Witness",
-		"Fried Chicken Tramp",
-		"Stink Lines",
-		"Seduce Me!",
-		"I TELEPORTED BREAD!",
-
-		"Please Let There Be Pants",
-		"The Deadliest Animal on Earth",
-		"YETI PUNCH!",
-		"Lunatic",
-
-		"The Bomb",
-
-		"BOT Arnold",
-		"Gabe",
-		"Leroy",
-
-		"Rattletrap",
-		"An Enigma",
-		"Snotty",
-
-		"Abrams",
-		"Ivy",
-
 		NULL
 	};
 	static int nameCount = 0;
