@@ -978,9 +978,6 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 		return false;
 
 	bool bModified = false;
-
-	// Tournament medal check
-	bool bIsMedal = IsItemMedal( pItem );
 	
 	// Iterate backwards so we can safely remove attributes
 	for ( int i = pAttribList->GetNumAttributes() - 1; i >= 0; i-- )
@@ -1262,6 +1259,7 @@ bool CTF2VAttributeDateManager::HasAnachronisticAttributes( const CEconItemView 
 //-----------------------------------------------------------------------------
 static bool CheckIfAttributeAnachronistic( const CEconItemAttribute *pAttrib, const CEconItemView *pItem )
 {
+
 	// Find out more information about our attribute.
 	const CEconItemAttributeDefinition *pAttrDef = pAttrib->GetStaticData();
 	if ( !pAttrDef )
@@ -1281,7 +1279,7 @@ static bool CheckIfAttributeAnachronistic( const CEconItemAttribute *pAttrib, co
 		{
 			return true;
 		}
-		else if ( !bIsMedal && IsPaintPlayerApplied( pItem, pAttrib ) )
+		else if ( !IsItemMedal( pItem ) && IsPaintPlayerApplied( pItem, pAttrib ) )
 		{
 			// Investigate the permutation further.
 			float flAttribValue = pAttrib->GetValue();
