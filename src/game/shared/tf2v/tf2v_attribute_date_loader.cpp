@@ -988,15 +988,10 @@ bool CTF2VAttributeDateManager::StripAnachronisticAttributes( CEconItemView *pIt
 		const CEconItemAttribute *pAttrib = pAttribList->GetAttribute( i );
 		if ( !pAttrib )
 			continue;
-
-		const CEconItemAttributeDefinition *pAttrDef = pAttrib->GetStaticData();
-		if ( !pAttrDef )
-			continue;
-
-		const char *pszAttrName = pAttrDef->GetDefinitionName();
+		
 		bool bShouldRemove = false;
 
-		bShouldRemove = CheckIfAttributeAnachronistic( pszAttrName );
+		bShouldRemove = CheckIfAttributeAnachronistic( pAttrib, pItem );
 
 		if ( bShouldRemove )
 		{
@@ -1253,14 +1248,8 @@ bool CTF2VAttributeDateManager::HasAnachronisticAttributes( const CEconItemView 
 		const CEconItemAttribute *pAttrib = pAttribList->GetAttribute( i );
 		if ( !pAttrib )
 			continue;
-
-		const CEconItemAttributeDefinition *pAttrDef = pAttrib->GetStaticData();
-		if ( !pAttrDef )
-			continue;
-
-		const char *pszAttrName = pAttrDef->GetDefinitionName();
-
-		if ( CheckIfAttributeAnachronistic( pszAttrName ) )
+		
+		if ( CheckIfAttributeAnachronistic( pAttrib, pItem ) )
 			return true;
 	}
 
@@ -1271,8 +1260,17 @@ bool CTF2VAttributeDateManager::HasAnachronisticAttributes( const CEconItemView 
 // Unified check to find era gated attributes.
 // Returns true if the attribute is anachronistic to the era gate.
 //-----------------------------------------------------------------------------
-static bool CheckIfAttributeAnachronistic( const char *pszAttrName )
+static bool CheckIfAttributeAnachronistic( const CEconItemAttribute *pAttrib, const CEconItemView *pItem )
 {
+	// Find out more information about our attribute.
+	const CEconItemAttributeDefinition *pAttrDef = pAttrib->GetStaticData();
+	if ( !pAttrDef )
+		return false;
+		
+	const char *pszAttrName = pAttrDef->GetDefinitionName();
+		if ( !pszAttrName )
+			return false;
+			
 	// Paint attributes - introduced with Mann-Conomy
 	if ( V_stristr( pszAttrName, "paint" ) || 
 		 V_stristr( pszAttrName, "set item tint" ) ||
