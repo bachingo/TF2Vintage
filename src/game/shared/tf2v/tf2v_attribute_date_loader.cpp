@@ -446,8 +446,6 @@ bool CTF2VAttributeDateManager::LoadWeaponAttributeVersions( const char *pszFile
 		m_WeaponAttributeVersions.Insert( iItemDef, pVersions );
 		m_WeaponLastBalanceDates.Insert( iItemDef, iLastBalance );
 
-		m_WeaponAttributeVersions.Insert( iItemDef, pVersions );
-		
 		DevMsg( "[TF2V] Loaded %d versions for item %d\n", pVersions->Count(), iItemDef );
 	}
 
