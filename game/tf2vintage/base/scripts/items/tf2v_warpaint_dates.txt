@@ -92,11 +92,11 @@
 	"312"	"2017/10/20"	// Totally Boned II
 	"313"	"2017/10/20"	// Uranium
 	
-	// Blue Moon Update - October 5, 2018
-	"400"	"2018/10/05"	// Bonk Varnish
-	"401"	"2018/10/05"	// Macabre Web III
-	"402"	"2018/10/05"	// Cosmic Calamity
-	"403"	"2018/10/05"	// Haunted Phantasm Jr.
+	// Blue Moon Update - March 28, 2018
+	"400"	"2018/03/28"	// Bonk Varnish
+	"401"	"2018/03/28"	// Macabre Web III
+	"402"	"2018/03/28"	// Cosmic Calamity
+	"403"	"2018/03/28"	// Haunted Phantasm Jr.
 	
 	// Scream Fortress 2019 - October 10, 2019
 	"500"	"2019/10/10"	// Spectral Shimmered II
