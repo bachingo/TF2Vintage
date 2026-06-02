@@ -1,766 +1,149 @@
 "tf2v_festivized_dates"
 {
-// ──  Scout
-
-//  Primary [Slot 0]
-
-// "13" // Scattergun // tf_weapon_scattergun
-
-"200" "13" // Scattergun (Renamed/Strange) // tf_weapon_scattergun
-
-// "45" // Force-A-Nature // tf_weapon_scattergun
-// "220" // The Shortstop // tf_weapon_handgun_scout_primary
-// "448" // The Soda Popper // tf_weapon_soda_popper
-
-"669" "13" // Festive Scattergun // tf_weapon_scattergun
-
-// "772" // Baby Face's Blaster // tf_weapon_pep_brawler_blaster
-
-"799" "13" // Silver Botkiller Scattergun Mk.I // tf_weapon_scattergun
-"808" "13" // Gold Botkiller Scattergun Mk.I // tf_weapon_scattergun
-"888" "13" // Rust Botkiller Scattergun Mk.I // tf_weapon_scattergun
-"897" "13" // Blood Botkiller Scattergun Mk.I // tf_weapon_scattergun
-"906" "13" // Carbonado Botkiller Scattergun Mk.I // tf_weapon_scattergun
-"915" "13" // Diamond Botkiller Scattergun Mk.I // tf_weapon_scattergun
-"964" "13" // Silver Botkiller Scattergun Mk.II // tf_weapon_scattergun
-"973" "13" // Gold Botkiller Scattergun Mk.II // tf_weapon_scattergun
-
-"1078" "45" // Festive Force-A-Nature // tf_weapon_scattergun
-
-// "1103" // The Back Scatter // tf_weapon_scattergun
-
-"15002" "13" // Night Terror // tf_weapon_scattergun
-"15015" "13" // Tartan Torpedo // tf_weapon_scattergun
-"15021" "13" // Country Crusher // tf_weapon_scattergun
-"15029" "13" // Backcountry Blaster // tf_weapon_scattergun
-"15036" "13" // Spruce Deuce // tf_weapon_scattergun
-"15053" "13" // Current Event // tf_weapon_scattergun
-"15065" "13" // Macabre Web // tf_weapon_scattergun
-"15069" "13" // Nutcracker // tf_weapon_scattergun
-"15106" "13" // Blue Mew // tf_weapon_scattergun
-"15107" "13" // Flower Power // tf_weapon_scattergun
-"15108" "13" // Shot to Hell // tf_weapon_scattergun
-"15131" "13" // Coffin Nail // tf_weapon_scattergun
-"15151" "13" // Killer Bee // tf_weapon_scattergun
-"15157" "13" // Corsair // tf_weapon_scattergun
-
-//  Secondary [Slot 1]
-
-// "23" // Scout's Pistol // tf_weapon_pistol
-
-"209" "23" // Pistol (Renamed/Strange) // tf_weapon_pistol
-
-// "46" // Bonk! Atomic Punch // tf_weapon_lunchbox_drink
-// "160" // Vintage Lugermorph // tf_weapon_pistol
-// "163" // Crit-a-Cola // tf_weapon_lunchbox_drink
-// "222" // Mad Milk // tf_weapon_jar_milk
-
-"294" "160" // Lugermorph // tf_weapon_pistol
-
-// "449" // The Winger // tf_weapon_handgun_scout_secondary
-// "773" // Pretty Boy's Pocket Pistol // tf_weapon_handgun_scout_secondary
-// "812" // The Flying Guillotine // tf_weapon_cleaver
-
-"833" "812" // The Flying Guillotine (Genuine) // tf_weapon_cleaver
-
-// "1121" // Mutated Milk // tf_weapon_jar_milk
-
-"1145" "46" // Festive Bonk! // tf_weapon_lunchbox_drink
-"15013" "23" // Red Rock Roscoe // tf_weapon_pistol
-"15018" "23" // Homemade Heater // tf_weapon_pistol
-"15035" "23" // Hickory Holepuncher // tf_weapon_pistol
-"15041" "23" // Local Hero // tf_weapon_pistol
-"15046" "23" // Black Dahlia // tf_weapon_pistol
-"15056" "23" // Sandstone Special // tf_weapon_pistol
-"15060" "23" // Macabre Web // tf_weapon_pistol
-"15061" "23" // Nutcracker // tf_weapon_pistol
-"15100" "23" // Blue Mew // tf_weapon_pistol
-"15101" "23" // Brain Candy // tf_weapon_pistol
-"15102" "23" // Shot to Hell // tf_weapon_pistol
-"15126" "23" // Dressed To Kill // tf_weapon_pistol
-"15148" "23" // Blitzkrieg // tf_weapon_pistol
-
-// "30666" // The C.A.P.P.E.R. // tf_weapon_pistol
-
-//  Melee [Slot 2]
-
-// "0" // Bat // tf_weapon_bat
-
-"190" "0" // Bat (Renamed/Strange) // tf_weapon_bat
-
-// "44" // The Sandman // tf_weapon_bat_wood
-// "221" // The Holy Mackerel // tf_weapon_bat_fish
-// "264" // Frying Pan // saxxy
-// "317" // The Candy Cane // tf_weapon_bat
-// "325" // The Boston Basher // tf_weapon_bat
-// "349" // Sun-on-a-Stick // tf_weapon_bat
-// "355" // The Fan O'War // tf_weapon_bat
-// "423" // Saxxy" // saxxy
-// "450" // The Atomizer // tf_weapon_bat
-// "452" // Three-Rune Blade // tf_weapon_bat
-// "474" // The Conscientious Objector" // saxxy
-// "572" // Unarmed Combat // tf_weapon_bat_fish
-// "648" // The Wrap Assassin // tf_weapon_bat_giftwrap
-
-"660" "0" // Festive Bat // tf_weapon_bat
-
-// "880" // The Freedom Staff" // saxxy
-// "939" // The Bat Outta Hell" // saxxy
-// "954" // The Memory Maker" // saxxy
-
-"999" "221" // Festive Holy Mackerel // tf_weapon_bat_fish
-
-// "1013" // The Ham Shank" // saxxy
-// "1071" // Gold Frying Pan" // saxxy
-// "1123" // The Necro Smasher" // saxxy
-// "1127" // The Crossing Guard" // saxxy
-// "30667" // Batsaber // tf_weapon_bat
-// "30758" // Prinny Machete" // saxxy
-
-// ──  Soldier
-
-//  Primary [Slot 0]
-
-// "18" // Rocket Launcher // tf_weapon_rocketlauncher
-
-"205" "18" // Rocket Launcher (Renamed/Strange) // tf_weapon_rocketlauncher
-
-// "127" // The Direct Hit // tf_weapon_rocketlauncher_directhit
-// "228" // The Black Box // tf_weapon_rocketlauncher
-// "237" // Rocket Jumper // tf_weapon_rocketlauncher
-// "414" // The Liberty Launcher // tf_weapon_rocketlauncher
-// "441" // The Cow Mangler 5000 // tf_weapon_particle_cannon
-// "513" // The Original // tf_weapon_rocketlauncher
-
-"658" "18" // Festive Rocket Launcher // tf_weapon_rocketlauncher
-
-// "730" // The Beggar's Bazooka // tf_weapon_rocketlauncher
-
-"800" "18" // Silver Botkiller Rocket Launcher Mk.I // tf_weapon_rocketlauncher
-"809" "18" // Gold Botkiller Rocket Launcher Mk.I // tf_weapon_rocketlauncher
-"889" "18" // Rust Botkiller Rocket Launcher Mk.I // tf_weapon_rocketlauncher
-"898" "18" // Blood Botkiller Rocket Launcher Mk.I // tf_weapon_rocketlauncher
-"907" "18" // Carbonado Botkiller Rocket Launcher Mk.I // tf_weapon_rocketlauncher
-"916" "18" // Diamond Botkiller Rocket Launcher Mk.I // tf_weapon_rocketlauncher
-"965" "18" // Silver Botkiller Rocket Launcher Mk.II // tf_weapon_rocketlauncher
-"974" "18" // Gold Botkiller Rocket Launcher Mk.II // tf_weapon_rocketlauncher
-"1085" "228" // Festive Black Box // tf_weapon_rocketlauncher
-
-// "1104" // The Air Strike // tf_weapon_rocketlauncher_airstrike
-
-"15006" "18" // Woodland Warrior // tf_weapon_rocketlauncher
-"15014" "18" // Sand Cannon // tf_weapon_rocketlauncher
-"15028" "18" // American Pastoral // tf_weapon_rocketlauncher
-"15043" "18" // Smalltown Bringdown // tf_weapon_rocketlauncher
-"15052" "18" // Shell Shocker // tf_weapon_rocketlauncher
-"15057" "18" // Aqua Marine // tf_weapon_rocketlauncher
-"15081" "18" // Autumn // tf_weapon_rocketlauncher
-"15104" "18" // Blue Mew // tf_weapon_rocketlauncher
-"15105" "18" // Brain Candy // tf_weapon_rocketlauncher
-"15129" "18" // Coffin Nail // tf_weapon_rocketlauncher
-"15130" "18" // High Roller's // tf_weapon_rocketlauncher
-"15150" "18" // Warhawk // tf_weapon_rocketlauncher
-
-//  Secondary [Slot 1]
-
-// "10" // Soldier's Shotgun // tf_weapon_shotgun_soldier
-
-"199" "10" // Shotgun (Renamed/Strange) // tf_weapon_shotgun
-
-// "129" // The Buff Banner // tf_weapon_buff_item
-// "133" // Gunboats // tf_wearable
-// "226" // The Battalion's Backup // tf_weapon_buff_item
-// "354" // The Concheror // tf_weapon_buff_item
-// "415" // The Reserve Shooter // tf_weapon_shotgun
-// "442" // The Righteous Bison // tf_weapon_raygun
-// "444" // The Mantreads // tf_wearable
-
-"1001" "129" // Festive Buff Banner // tf_weapon_buff_item
-
-// "1101" // The B.A.S.E. Jumper // tf_weapon_parachute
-
-"1141" "10" // Festive Shotgun // tf_weapon_shotgun
-
-// "1153" // Panic Attack // tf_weapon_shotgun
-
-"15003" "10" // Backwoods Boomstick // tf_weapon_shotgun
-"15016" "10" // Rustic Ruiner // tf_weapon_shotgun
-"15044" "10" // Civic Duty // tf_weapon_shotgun
-"15047" "10" // Lightning Rod // tf_weapon_shotgun
-"15085" "10" // Autumn // tf_weapon_shotgun
-"15109" "10" // Flower Power // tf_weapon_shotgun
-"15132" "10" // Coffin Nail // tf_weapon_shotgun
-"15133" "10" // Dressed to Kill // tf_weapon_shotgun
-"15152" "10" // Red Bear // tf_weapon_shotgun
-
-//  Melee [Slot 2]
-
-// "6" // Shovel // tf_weapon_shovel
-
-"196" "6" // Shovel (Renamed/Strange) // tf_weapon_shovel
-
-// "128" // The Equalizer // tf_weapon_shovel
-// "154" // The Pain Train // tf_weapon_shovel
-// "357" // The Half-Zatoichi // tf_weapon_katana
-// "416" // The Market Gardener // tf_weapon_shovel
-// "447" // The Disciplinary Action // tf_weapon_shovel
-// "775" // The Escape Plan // tf_weapon_shovel
-
-// ──  Pyro
-
-//  Primary [Slot 0]
-
-// "21" // Flame Thrower // tf_weapon_flamethrower
-
-"208" "21" // Flame Thrower (Renamed/Strange) // tf_weapon_flamethrower
-
-// "40" // The Backburner // tf_weapon_flamethrower
-// "215" // The Degreaser // tf_weapon_flamethrower
-// "594" // The Phlogistinator // tf_weapon_flamethrower
-
-"659" "21" // Festive Flame Thrower // tf_weapon_flamethrower
-
-// "741 // The Rainblower // tf_weapon_flamethrower
-
-"798" "21" // Silver Botkiller Flame Thrower Mk.I // tf_weapon_flamethrower
-"807" "21" // Gold Botkiller Flame Thrower Mk.I // tf_weapon_flamethrower
-"887" "21" // Rust Botkiller Flame Thrower Mk.I // tf_weapon_flamethrower
-"896" "21" // Blood Botkiller Flame Thrower Mk.I // tf_weapon_flamethrower
-"905" "21" // Carbonado Botkiller Flame Thrower Mk.I // tf_weapon_flamethrower
-"914" "21" // Diamond Botkiller Flame Thrower Mk.I // tf_weapon_flamethrower
-"963" "21" // Silver Botkiller Flame Thrower Mk.II // tf_weapon_flamethrower
-"972" "21" // Gold Botkiller Flame Thrower Mk.II // tf_weapon_flamethrower
-
-"1146" "40" // Festive Backburner // tf_weapon_flamethrower
-
-//"1178" // Dragon's Fury // tf_weapon_rocketlauncher_fireball
-
-"15005" "21" // Forest Fire // tf_weapon_flamethrower
-"15017" "21" // Barn Burner // tf_weapon_flamethrower
-"15030" "21" // Bovine Blazemaker // tf_weapon_flamethrower
-"15034" "21" // Earth, Sky and Fire // tf_weapon_flamethrower
-"15049" "21" // Flash Fryer // tf_weapon_flamethrower
-"15054" "21" // turbine Torcher // tf_weapon_flamethrower
-"15066" "21" // Autumn // tf_weapon_flamethrower
-"15067" "21" // Pumpkin Patch // tf_weapon_flamethrower
-"15068" "21" // Nutcracker // tf_weapon_flamethrower
-"15089" "21" // Balloonicorn // tf_weapon_flamethrower
-"15090" "21" // Rainbow // tf_weapon_flamethrower
-"15115" "21" // Coffin Nail // tf_weapon_flamethrower
-"15141" "21" // Warhawk // tf_weapon_flamethrower
-
-// "30474" // Nostromo Napalmer // tf_weapon_flamethrower
-
-//  Secondary [Slot 1]
-
-// "12" // Pyro's Shotgun // tf_weapon_shotgun_pyro
-
-// "39" // The Flare Gun // tf_weapon_flaregun
-// "351" // The Detonator // tf_weapon_flaregun
-// "595" // The Manmelter // tf_weapon_flaregun_revenge
-// "740" // The Scorch Shot // tf_weapon_flaregun
-
-"1081" "39" // Festive Flare Gun // tf_weapon_flaregun
-
-//"1179" // Thermal Thruster // tf_weapon_rocketpack
-//"1180" // Gas Passer // tf_weapon_jar_gas
-
-//  Melee [Slot 2]
-
-// "2" // Fire Axe // tf_weapon_fireaxe
-
-"192" "2" // Fire Axe (Renamed/Strange) // tf_weapon_fireaxe
-
-// "38" // The Axtinguisher // tf_weapon_fireaxe
-// "153" // Homewrecker // tf_weapon_fireaxe
-// "214" // The Powerjack // tf_weapon_fireaxe
-// "326" // The Back Scratcher // tf_weapon_fireaxe
-// "348" // Sharpened Volcano Fragment // tf_weapon_fireaxe
-// "457" // The Postal Pummeler // tf_weapon_fireaxe
-// "466" // The Maul // tf_weapon_fireaxe
-// "593" // The Third Degree // tf_weapon_fireaxe
-// "739" // The Lollichop // tf_weapon_fireaxe
-
-// "813" // Neon Annihilator // tf_weapon_breakable_sign
-
-"834" "813" // Neon Annihilator (Genuine) // tf_weapon_breakable_sign
-
-"1000" "38" // The Festive Axtinguisher // tf_weapon_fireaxe
-
-// "1181" // Hot Hand // tf_weapon_slap
-
-// ──  Demoman
-
-//  Primary [Slot 0]
-
-// "19" // Grenade Launcher // tf_weapon_grenadelauncher
-
-"206" "19" // Grenade Launcher (Renamed/Strange) // tf_weapon_grenadelauncher
-
-// "308" // The Loch-n-Load // tf_weapon_grenadelauncher
-// "405" // Ali Baba's Wee Booties // tf_wearable
-// "608" // The Bootlegger // tf_wearable
-// "996" // The Loose Cannon // tf_weapon_cannon
-
-"1007" "19" // Festive Grenade Launcher // tf_weapon_grenadelauncher
-
-// "1151" // The Iron Bomber // tf_weapon_grenadelauncher
-
-"15077" "19" // Autumn // tf_weapon_grenadelauncher
-"15079" "19" // Macabre Web // tf_weapon_grenadelauncher
-"15091" "19" // Rainbow // tf_weapon_grenadelauncher
-"15092" "19" // Sweet Dreams // tf_weapon_grenadelauncher
-"15116" "19" // Coffin Nail // tf_weapon_grenadelauncher
-"15117" "19" // Top Shelf // tf_weapon_grenadelauncher
-"15142" "19" // Warhawk // tf_weapon_grenadelauncher
-"15158" "19" // Butcher Bird // tf_weapon_grenadelauncher
-
-//  Secondary [Slot 1]
-
-// "20" // Stickybomb Launcher // tf_weapon_pipebomblauncher
-
-"207" "20" // Stickybomb Launcher (Renamed/Strange) // tf_weapon_pipebomblauncher
-
-// "130" // The Scottish Resistance // tf_weapon_pipebomblauncher
-// "131" // The Chargin' Targe // tf_wearable_demoshield
-// "265" // Sticky Jumper // tf_weapon_pipebomblauncher
-// "406" // The Splendid Screen // tf_wearable_demoshield
-
-"661" "20" // Festive Stickybomb Launcher // tf_weapon_pipebomblauncher
-"797" "20" // Silver Botkiller Stickybomb Launcher Mk.I // tf_weapon_pipebomblauncher
-"806" "20" // Gold Botkiller Stickybomb Launcher Mk.I // tf_weapon_pipebomblauncher
-"886" "20" // Rust Botkiller Stickybomb Launcher Mk.I // tf_weapon_pipebomblauncher
-"895" "20" // Blood Botkiller Stickybomb Launcher Mk.I // tf_weapon_pipebomblauncher
-"904" "20" // Carbonado Botkiller Stickybomb Launcher Mk.I // tf_weapon_pipebomblauncher
-"913" "20" // Diamond Botkiller Stickybomb Launcher Mk.I // tf_weapon_pipebomblauncher
-"962" "20" // Silver Botkiller Stickybomb Launcher Mk.II // tf_weapon_pipebomblauncher
-"971" "20" // Gold Botkiller Stickybomb Launcher Mk.II // tf_weapon_pipebomblauncher
-
-// "1099" // The Tide Turner // tf_wearable_demoshield
-
-"1144" "131" // Festive Targe // tf_wearable_demoshield
-
-// "1150" // The Quickiebomb Launcher // tf_weapon_pipebomblauncher
-
-"15009" "20" // Sudden Flurry // tf_weapon_pipebomblauncher
-"15012" "20" // Carpet Bomber // tf_weapon_pipebomblauncher
-"15024" "20" // Blasted Bombardier // tf_weapon_pipebomblauncher
-"15038" "20" // Rooftop Wrangler // tf_weapon_pipebomblauncher
-"15045" "20" // Liquid Asset // tf_weapon_pipebomblauncher
-"15048" "20" // Pink Elephant // tf_weapon_pipebomblauncher
-"15082" "20" // Autumn // tf_weapon_pipebomblauncher
-"15083" "20" // Pumpkin Patch // tf_weapon_pipebomblauncher
-"15084" "20" // Macabre Web // tf_weapon_pipebomblauncher
-"15113" "20" // Sweet Dreams // tf_weapon_pipebomblauncher
-"15137" "20" // Coffin Nail // tf_weapon_pipebomblauncher
-"15138" "20" // Dressed to Kill // tf_weapon_pipebomblauncher
-"15155" "20" // Blitzkrieg // tf_weapon_pipebomblauncher
-
-//  Melee [Slot 2]
-
-// "1" // Bottle // tf_weapon_bottle
-
-"191" "1" // Bottle (Renamed/Strange) // tf_weapon_bottle
-
-// "132" // The Eyelander // tf_weapon_sword
-// "172" // The Scotsman's Skullcutter // tf_weapon_sword
-// "266" // Horseless Headless Horsemann's Headtaker // tf_weapon_sword
-// "307" // Ullapool Caber // tf_weapon_stickbomb
-// "327" // The Claidheamh Mòr // tf_weapon_sword
-// "404" // The Persian Persuader // tf_weapon_sword
-// "482" // Nessie's Nine Iron // tf_weapon_sword
-// "609" // The Scottish Handshake // tf_weapon_bottle
-
-"1082" "132" // Festive Eyelander // tf_weapon_sword
-
-// ──  Heavy
-
-//  Primary [Slot 0]
-
-// "15" // Minigun // tf_weapon_minigun
-
-"202" "15" // Minigun (Renamed/Strange) // tf_weapon_minigun
-
-// "41" // Natascha // tf_weapon_minigun
-// "298" // Iron Curtain // tf_weapon_minigun
-// "312" // The Brass Beast // tf_weapon_minigun
-// "424" // Tomislav // tf_weapon_minigun
-
-"654" "15" // Festive Minigun // tf_weapon_minigun
-"793" "15" // Silver Botkiller Minigun Mk.I // tf_weapon_minigun
-"802" "15" // Gold Botkiller Minigun Mk.I // tf_weapon_minigun
-
-// "811" // The Huo-Long Heater // tf_weapon_minigun
-
-"832" "811" // The Huo-Long Heater (Genuine) // tf_weapon_minigun
-
-// "850" // Deflector (MvM only?) // tf_weapon_minigun
-
-"882" "15" // Rust Botkiller Minigun Mk.I // tf_weapon_minigun
-"891" "15" // Blood Botkiller Minigun Mk.I // tf_weapon_minigun
-"900" "15" // Carbonado Botkiller Minigun Mk.I // tf_weapon_minigun
-"909" "15" // Diamond Botkiller Minigun Mk.I // tf_weapon_minigun
-"958" "15" // Silver Botkiller Minigun Mk.II // tf_weapon_minigun
-"967" "15" // Gold Botkiller Minigun Mk.II // tf_weapon_minigun
-"15004" "15" // King of the Jungle // tf_weapon_minigun
-"15020" "15" // Iron Wood // tf_weapon_minigun
-"15026" "15" // Antique Annihilator // tf_weapon_minigun
-"15031" "15" // War Room // tf_weapon_minigun
-"15040" "15" // Citizen Pain // tf_weapon_minigun
-"15055" "15" // Brick House // tf_weapon_minigun
-"15086" "15" // Macabre Web // tf_weapon_minigun
-"15087" "15" // Pumpkin Patch // tf_weapon_minigun
-"15088" "15" // Nutcracker // tf_weapon_minigun
-"15098" "15" // Brain Candy // tf_weapon_minigun
-"15099" "15" // Mister Cuddles // tf_weapon_minigun
-"15123" "15" // Coffin Nail // tf_weapon_minigun
-"15124" "15" // Dressed to Kill // tf_weapon_minigun
-"15125" "15" // Top Shelf // tf_weapon_minigun
-"15147" "15" // Butcher Bird // tf_weapon_minigun
-
-//  Secondary [Slot 1]
-
-// "11" // Heavy's Shotgun // tf_weapon_shotgun_hwg
-
-// "42" // Sandvich // tf_weapon_lunchbox
-
-// "159" // The Dalokohs Bar // tf_weapon_lunchbox
-// "311" // The Buffalo Steak Sandvich // tf_weapon_lunchbox
-// "425" // The Family Business // tf_weapon_shotgun_hwg
-// "433" // Fishcake // tf_weapon_lunchbox
-// "863" // Robo-Sandvich // tf_weapon_lunchbox
-
-"1002" "42" // Festive Sandvich // tf_weapon_lunchbox
-
-// "1190" // Second Banana // tf_weapon_lunchbox
-
-//  Melee [Slot 2]
-
-// "5" // Fists // tf_weapon_fists
-
-"195" "5" // Fists (Renamed/Strange) // tf_weapon_fists
-
-// "43" // The Killing Gloves of Boxing // tf_weapon_fists
-// "239" // Gloves of Running Urgently // tf_weapon_fists
-// "310" // Warrior's Spirit // tf_weapon_fists
-// "331" // Fists of Steel // tf_weapon_fists
-// "426" // The Eviction Notice // tf_weapon_fists
-// "587" // Apoco-Fists // tf_weapon_fists
-// "656" // The Holiday Punch // tf_weapon_fists
-
-"1084" "239" // Festive Gloves of Running Urgently (G.R.U.) // tf_weapon_fists
-
-// "1100" // The Bread Bite // tf_weapon_fists
-
-// "1184" // Gloves of Running Urgently MvM // tf_weapon_fists
-
-// ──  Engineer
-
-//  Primary [Slot 0]
-
-// "9" // Engineer's Shotgun // tf_weapon_shotgun_primary
-
-// "141" // The Frontier Justice // tf_weapon_sentry_revenge
-// "527" // The Widowmaker // tf_weapon_shotgun_primary
-// "588" // The Pomson 6000 // tf_weapon_drg_pomson
-// "997" // The Rescue Ranger // tf_weapon_shotgun_building_rescue
-
-"1004" "141" // Festive Frontier Justice // tf_weapon_sentry_revenge
-
-//  Secondary [Slot 1]
-
-// "22" // Engineer's Pistol // tf_weapon_pistol
-// "140" // The Wrangler // tf_weapon_laser_pointer
-// "528" // The Short Circuit // tf_weapon_mechanical_arm
-// "1086" // Festive Wrangler // tf_weapon_laser_pointer
-// "30668" // The Gigar Counter // tf_weapon_laser_pointer
-
-//  Melee [Slot 2]
-
-// "7" // Wrench // tf_weapon_wrench
-
-"197" "7" // Wrench (Renamed/Strange) // tf_weapon_wrench
-
-// "142" // The Gunslinger // tf_weapon_robot_arm
-// "155" // The Southern Hospitality // tf_weapon_wrench
-// "169" // Golden Wrench // tf_weapon_wrench
-// "329" // The Jag // tf_weapon_wrench
-// "589" // The Eureka Effect // tf_weapon_wrench
-
-"662" "7" // Festive Wrench // tf_weapon_wrench
-"795" "7" // Silver Botkiller Wrench Mk.I // tf_weapon_wrench
-"804" "7" // Gold Botkiller Wrench Mk.I // tf_weapon_wrench
-"884" "7" // Rust Botkiller Wrench Mk.I // tf_weapon_wrench
-"893" "7" // Blood Botkiller Wrench Mk.I // tf_weapon_wrench
-"902" "7" // Carbonado Botkiller Wrench Mk.I // tf_weapon_wrench
-"911" "7" // Diamond Botkiller Wrench Mk.I // tf_weapon_wrench
-"960" "7" // Silver Botkiller Wrench Mk.II // tf_weapon_wrench
-"969" "7" // Gold Botkiller Wrench Mk.II // tf_weapon_wrench
-"15073" "7" // Nutcracker // tf_weapon_wrench
-"15074" "7" // Autumn // tf_weapon_wrench
-"15075" "7" // Boneyard // tf_weapon_wrench
-"15139" "7" // Dressed to Kill // tf_weapon_wrench
-"15140" "7" // Top Shelf // tf_weapon_wrench
-"15114" "7" // Torqued to Hell // tf_weapon_wrench
-"15156" "7" // Airwolf // tf_weapon_wrench
-
-//  PDA [Slot 3]
-
-// "25" // Construction PDA // tf_weapon_pda_engineer_build
-
-"737" "25" // Construction PDA (Renamed/Strange) // tf_weapon_pda_engineer_build
-
-//  PDA2 (not in loadout) [Slot 4]
-
-// "26" // Destruction PDA // tf_weapon_pda_engineer_destroy
-
-//  Building (not in loadout) [Slot 5]
-
-// "28" // PDA (ed: Toolbox) // tf_weapon_builder
-
-// ──  Medic
-
-//  Primary [Slot 0]
-
-// "17" // Syringe Gun // tf_weapon_syringegun_medic
-
-"204" "17" // Syringe Gun (Renamed/Strange) // tf_weapon_syringegun_medic
-
-// "36" // The Blutsauger // tf_weapon_syringegun_medic
-// "305" // Crusader's Crossbow // tf_weapon_crossbow
-// "412" // The Overdose // tf_weapon_syringegun_medic
-
-"1079" "305" // Festive Crusader's Crossbow // tf_weapon_crossbow
-
-//  Secondary [Slot 1]
-
-// "29" // Medi Gun // tf_weapon_medigun
-
-"211" "29" // Medi Gun(Renamed/Strange) // tf_weapon_medigun
-
-// "35" // The Kritzkrieg // tf_weapon_medigun
-// "411" // The Quick-Fix // tf_weapon_medigun
-
-"663" "29" // Festive Medi Gun // tf_weapon_medigun
-"796" "29" // Silver Botkiller Medi Gun Mk.I // tf_weapon_medigun
-"805" "29" // Gold Botkiller Medi Gun Mk.I // tf_weapon_medigun
-"885" "29" // Rust Botkiller Medi Gun Mk.I // tf_weapon_medigun
-"894" "29" // Blood Botkiller Medi Gun Mk.I // tf_weapon_medigun
-"903" "29" // Carbonado Botkiller Medi Gun Mk.I // tf_weapon_medigun
-"912" "29" // Diamond Botkiller Medi Gun Mk.I // tf_weapon_medigun
-"961" "29" // Silver Botkiller Medi Gun Mk.II // tf_weapon_medigun
-"970" "29" // Gold Botkiller Medi Gun Mk.II // tf_weapon_medigun
-
-// "998" // The Vaccinator // tf_weapon_medigun
-
-"15008" "29" // Masked Mender // tf_weapon_medigun
-"15010" "29" // Wrapped Reviver // tf_weapon_medigun
-"15025" "29" // Reclaimed Reanimator // tf_weapon_medigun
-"15039" "29" // Civil Servant // tf_weapon_medigun
-"15050" "29" // Spark of Life // tf_weapon_medigun
-"15078" "29" // Wildwood // tf_weapon_medigun
-"15097" "29" // Flower Power // tf_weapon_medigun
-"15121" "29" // Dressed To Kill // tf_weapon_medigun
-"15122" "29" // High Roller's // tf_weapon_medigun
-"15123" "29" // Coffin Nail // tf_weapon_medigun
-"15145" "29" // Blitzkrieg // tf_weapon_medigun
-"15146" "29" // Corsair // tf_weapon_medigun
-
-//  Melee [Slot 2]
-
-// "8" // Bonesaw // tf_weapon_bonesaw
-
-"198" "8" // Bonesaw (Renamed/Strange) // tf_weapon_bonesaw
-
-// "37" // The Ubersaw // tf_weapon_bonesaw
-// "173" // The Vita-Saw // tf_weapon_bonesaw
-// "304" // Amputator // tf_weapon_bonesaw
-// "413" // The Solemn Vow // tf_weapon_bonesaw
-
-"1003" "37" // Festive Ubersaw // tf_weapon_bonesaw
-
-"1143" "8" // Festive Bonesaw // tf_weapon_bonesaw
-
-// ──  Sniper
-
-//  Primary [Slot 0]
-
-// "14" // Sniper Rifle // tf_weapon_sniperrifle
-
-"201" "14" // Sniper Rifle (Renamed/Strange) // tf_weapon_sniperrifle
-
-// "56" // The Huntsman // tf_weapon_compound_bow
-// "230" // The Sydney Sleeper // tf_weapon_sniperrifle
-// "402" // The Bazaar Bargain // tf_weapon_sniperrifle_decap
-// "526" // The Machina // tf_weapon_sniperrifle
-
-"664" "14" // Festive Sniper Rifle // tf_weapon_sniperrifle
-
-// "752" // The Hitman's Heatmaker // tf_weapon_sniperrifle
-
-"792" "14" // Silver Botkiller Sniper Rifle Mk.I // tf_weapon_sniperrifle
-"801" "14" // Gold Botkiller Sniper Rifle Mk.I // tf_weapon_sniperrifle
-
-// "851" // The AWPer Hand // tf_weapon_sniperrifle
-
-"881" "14" // Rust Botkiller Sniper Rifle Mk.I // tf_weapon_sniperrifle
-"890" "14" // Blood Botkiller Sniper Rifle Mk.I // tf_weapon_sniperrifle
-"899" "14" // Carbonado Botkiller Sniper Rifle Mk.I // tf_weapon_sniperrifle
-"908" "14" // Diamond Botkiller Sniper Rifle Mk.I // tf_weapon_sniperrifle
-"957" "14" // Silver Botkiller Sniper Rifle Mk.II // tf_weapon_sniperrifle
-"966" "14" // Gold Botkiller Sniper Rifle Mk.II // tf_weapon_sniperrifle
-
-"1005" "56" // Festive Huntsman // tf_weapon_compound_bow
-
-// "1092" // The Fortified Compound // tf_weapon_compound_bow
-// "1098" // The Classic // tf_weapon_sniperrifle_classic
-
-"15000" "14" // Night Owl // tf_weapon_sniperrifle
-"15007" "14" // Purple Range // tf_weapon_sniperrifle
-"15019" "14" // Lumber From Down Under // tf_weapon_sniperrifle
-"15023" "14" // Shot in the Dark // tf_weapon_sniperrifle
-"15033" "14" // Bogtrotter // tf_weapon_sniperrifle
-"15059" "14" // Thunderbolt // tf_weapon_sniperrifle
-"15070" "14" // Pumpkin Patch // tf_weapon_sniperrifle
-"15071" "14" // Boneyard // tf_weapon_sniperrifle
-"15072" "14" // Wildwood // tf_weapon_sniperrifle
-"15111" "14" // Balloonicorn // tf_weapon_sniperrifle
-"15112" "14" // Rainbow // tf_weapon_sniperrifle
-"15135" "14" // Coffin Nail // tf_weapon_sniperrifle
-"15136" "14" // Dressed to Kill // tf_weapon_sniperrifle
-"15154" "14" // Airwolf // tf_weapon_sniperrifle
-
-// "30665" // Shooting Star // tf_weapon_sniperrifle
-
-//  Secondary [Slot 1]
-
-// "16" // SMG // tf_weapon_smg
-
-"203" "16" // SMG (Renamed/Strange) // tf_weapon_smg
-
-// "57" // The Razorback // tf_wearable_razorback
-// "58" // Jarate // tf_weapon_jar
-// "231" // Darwin's Danger Shield // tf_wearable
-// "642" // Cozy Camper // tf_wearable
-// "751" // The Cleaner's Carbine // tf_weapon_charged_smg
-
-"1083" "58" // Festive Jarate // tf_weapon_jar
-
-// "1105" // The Self-Aware Beauty Mark // tf_weapon_jar
-
-"1149" "16" // Festive SMG // tf_weapon_smg
-"15001" "16" // Woodsy Widowmaker // tf_weapon_smg
-"15022" "16" // Plaid Potshotter // tf_weapon_smg
-"15032" "16" // Treadplate Tormenter // tf_weapon_smg
-"15037" "16" // Team Sprayer // tf_weapon_smg
-"15058" "16" // Low Profile // tf_weapon_smg
-"15076" "16" // Wildwood // tf_weapon_smg
-"15110" "16" // Blue Mew // tf_weapon_smg
-"15134" "16" // High Roller's // tf_weapon_smg
-"15153" "16" // Blitzkrieg // tf_weapon_smg
-
-//  Melee [Slot 2]
-
-// "3" // Kukri // tf_weapon_club
-
-"193" "3" // Kukri (Renamed/Strange) // tf_weapon_club
-
-// "171" // The Tribalman's Shiv // tf_weapon_club
-// "232" // The Bushwacka // tf_weapon_club
-// "401" // The Shahanshah // tf_weapon_club
-
-// ──  Spy
-
-//  Secondary [Slot 0]
-
-// "24" // Revolver // tf_weapon_revolver
-
-"210" "24" // Revolver (Renamed/Strange) // tf_weapon_revolver
-
-// "61" // The Ambassador // tf_weapon_revolver
-// "161" // Big Kill // tf_weapon_revolver
-// "224" // L'Etranger // tf_weapon_revolver
-// "460" // The Enforcer // tf_weapon_revolver
-// "525" // The Diamondback // tf_weapon_revolver
-
-"1006" "61" // Festive Ambassador // tf_weapon_revolver
-
-"1142" "24" // Festive Revolver // tf_weapon_revolver
-"15011" "24" // Psychedelic Slugger // tf_weapon_revolver
-"15027" "24" // Old Country // tf_weapon_revolver
-"15042" "24" // Mayor // tf_weapon_revolver
-"15051" "24" // Dead Reckoner // tf_weapon_revolver
-"15062" "24" // Boneyard // tf_weapon_revolver
-"15063" "24" // Wildwood // tf_weapon_revolver
-"15064" "24" // Macabre Web // tf_weapon_revolver
-"15103" "24" // Flower Power // tf_weapon_revolver
-"15128" "24" // Top Shelf // tf_weapon_revolver
-"15127" "24" // Coffin Nail // tf_weapon_revolver
-"15149" "24" // Blitzkrieg // tf_weapon_revolver
-
-//  Building [Slot 1]
-
-// "735" // Sapper // tf_weapon_builder
-
-"736" "735" // Sapper (Renamed/Strange) // tf_weapon_builder
-
-// "810" // The Red-Tape Recorder // tf_weapon_sapper
-
-"831" "810" // The Red-Tape Recorder (Genuine) // tf_weapon_sapper
-
-// "933" // The Ap-Sap (Genuine) // tf_weapon_sapper
-
-"1080" "735" // Festive Sapper // tf_weapon_sapper
-
-// "1102" // The Snack Attack // tf_weapon_sapper
-
-//  Melee [Slot 2]
-
-// "4" // Knife // tf_weapon_knife
-
-"194" "4" // Knife (Renamed/Strange) // tf_weapon_knife
-
-// "225" // Your Eternal Reward // tf_weapon_knife
-// "356" // Conniver's Kunai // tf_weapon_knife
-// "461" // The Big Earner // tf_weapon_knife
-// "574" // The Wanga Prick // tf_weapon_knife
-// "638" // The Sharp Dresser // tf_weapon_knife
-// "649" // The Spy-cicle // tf_weapon_knife
-
-"665" "4" // Festive Knife // tf_weapon_knife
-
-// "727" // The Black Rose // tf_weapon_knife
-
-"794" "4" // Silver Botkiller Knife Mk.I // tf_weapon_knife
-"803" "4" // Gold Botkiller Knife Mk.I // tf_weapon_knife
-"883" "4" // Rust Botkiller Knife Mk.I // tf_weapon_knife
-"892" "4" // Blood Botkiller Knife Mk.I // tf_weapon_knife
-"901" "4" // Carbonado Botkiller Knife Mk.I // tf_weapon_knife
-"910" "4" // Diamond Botkiller Knife Mk.I // tf_weapon_knife
-"959" "4" // Silver Botkiller Knife Mk.II // tf_weapon_knife
-"968" "4" // Gold Botkiller Knife Mk.II // tf_weapon_knife
-"15062" "4" // Boneyard // tf_weapon_knife
-"15094" "4" // Blue Mew // tf_weapon_knife
-"15095" "4" // Brain Candy // tf_weapon_knife
-"15096" "4" // Stabbed to Hell // tf_weapon_knife
-"15118" "4" // Dressed to Kill // tf_weapon_knife
-"15119" "4" // Top Shelf // tf_weapon_knife
-"15143" "4" // Blitzkrieg // tf_weapon_knife
-"15144" "4" // Airwolf // tf_weapon_knife
-
-//  PDA (not in loadout) [Slot 3]
-
-// "27" // Disguise Kit PDA // tf_weapon_pda_spy
-
-//  PDA2 [Slot 4]
-
-// "30" // Invis Watch // tf_weapon_invis
-
-"212" "30" // Invis Watch (Renamed/Strange) // tf_weapon_invis
-
-// "59" // The Dead Ringer // tf_weapon_invis
-// "60" // The Cloak and Dagger // tf_weapon_invis
-// "297" // Enthusiast's Timepiece // tf_weapon_invis
-// "947" // The Quackenbirdt // tf_weapon_invis
-
+	// ── December 22, 2015 - Smissmas 2015 (Festivizer introduced) ──────────────
+	// Original eligible set from Gun Mettle + Tough Break campaign weapons
+	"13"	"2015/12/22"	// Scattergun
+	"18"	"2015/12/22"	// Rocket Launcher
+	"21"	"2015/12/22"	// Flame Thrower
+	"19"	"2015/12/22"	// Grenade Launcher
+	"20"	"2015/12/22"	// Stickybomb Launcher
+	"15"	"2015/12/22"	// Minigun
+	"424"	"2015/12/22"	// Tomislav
+	"7"		"2015/12/22"	// Wrench
+	"29"	"2015/12/22"	// Medi Gun
+	"14"	"2015/12/22"	// Sniper Rifle
+	"16"	"2015/12/22"	// SMG
+	"4"		"2015/12/22"	// Knife
+	"24"	"2015/12/22"	// Revolver
+	"228"	"2015/12/22"	// Black Box
+	"1104"	"2015/12/22"	// Air Strike
+	"305"	"2015/12/22"	// Crusader's Crossbow
+	"36"	"2015/12/22"	// Blutsauger
+	"411"	"2015/12/22"	// Quick-Fix
+	"402"	"2015/12/22"	// Bazaar Bargain
+	"172"	"2015/12/22"	// Scotsman's Skullcutter
+	"327"	"2015/12/22"	// Claidheamh Mòr
+	"404"	"2015/12/22"	// Persian Persuader
+	"308"	"2015/12/22"	// Loch-n-Load
+	"996"	"2015/12/22"	// Loose Cannon
+	"1151"	"2015/12/22"	// Iron Bomber
+	"351"	"2015/12/22"	// Detonator
+	"740"	"2015/12/22"	// Scorch Shot
+	"215"	"2015/12/22"	// Degreaser
+	"326"	"2015/12/22"	// Back Scratcher
+	"214"	"2015/12/22"	// Powerjack
+	"425"	"2015/12/22"	// Family Business
+	"312"	"2015/12/22"	// Brass Beast
+	"997"	"2015/12/22"	// Rescue Ranger
+	"527"	"2015/12/22"	// Widowmaker
+	"1153"	"2015/12/22"	// Panic Attack
+	"221"	"2015/12/22"	// Holy Mackerel
+	"220"	"2015/12/22"	// Shortstop
+	"448"	"2015/12/22"	// Soda Popper
+	"449"	"2015/12/22"	// Winger
+	"447"	"2015/12/22"	// Disciplinary Action
+
+	// ── December 21, 2016 - Smissmas 2016 ─────────────────────────────────────
+	"2"		"2016/12/21"	// Fire Axe
+	"329"	"2016/12/21"	// Jag
+	"35"	"2016/12/21"	// Kritzkrieg
+	"23"	"2016/12/21"	// Pistol
+	"41"	"2016/12/21"	// Natascha
+	"44"	"2016/12/21"	// Sandman
+	"649"	"2016/12/21"	// Spy-Cicle
+	"3"		"2016/12/21"	// Kukri
+	"6"		"2016/12/21"	// Shovel
+	"130"	"2016/12/21"	// Scottish Resistance
+
+	// ── December 21, 2017 - Smissmas 2017 ─────────────────────────────────────
+	"37"	"2017/12/21"	// Übersaw
+	"1178"	"2017/12/21"	// Dragon's Fury
+	"304"	"2017/12/21"	// Amputator
+	"401"	"2017/12/21"	// Shahanshah
+	"752"	"2017/12/21"	// Hitman's Heatmaker
+	"526"	"2017/12/21"	// Machina
+
+	// ── December 9, 2025 - Smissmas 2025 ──────────────────────────────────────
+	"45"	"2025/12/09"	// Force-a-Nature
+	"772"	"2025/12/09"	// Baby Face's Blaster
+	"1103"	"2025/12/09"	// Back Scatter
+	"0"		"2025/12/09"	// Bat
+	"572"	"2025/12/09"	// Unarmed Combat
+	"317"	"2025/12/09"	// Candy Cane
+	"355"	"2025/12/09"	// Fan O'War
+	"648"	"2025/12/09"	// Wrap Assassin
+	"325"	"2025/12/09"	// Boston Basher
+	"452"	"2025/12/09"	// Three-Rune Blade
+	"349"	"2025/12/09"	// Sun-on-a-Stick
+	"513"	"2025/12/09"	// The Original
+	"127"	"2025/12/09"	// Direct Hit
+	"441"	"2025/12/09"	// Cow Mangler 5000
+	"730"	"2025/12/09"	// Beggar's Bazooka
+	"414"	"2025/12/09"	// Liberty Launcher
+	"237"	"2025/12/09"	// Rocket Jumper
+	"442"	"2025/12/09"	// Righteous Bison
+	"416"	"2025/12/09"	// Market Gardener
+	"128"	"2025/12/09"	// Equalizer
+	"775"	"2025/12/09"	// Escape Plan
+	"30474"	"2025/12/09"	// Nostromo Napalmer
+	"594"	"2025/12/09"	// Phlogistinator
+	"39"	"2025/12/09"	// Flare Gun
+	"595"	"2025/12/09"	// Manmelter
+	"593"	"2025/12/09"	// Third Degree
+	"38"	"2025/12/09"	// Axtinguisher
+	"457"	"2025/12/09"	// Postal Pummeler
+	"153"	"2025/12/09"	// Homewrecker
+	"466"	"2025/12/09"	// Maul
+	"348"	"2025/12/09"	// Sharpened Volcano Fragment
+	"813"	"2025/12/09"	// Neon Annihilator
+	"1150"	"2025/12/09"	// Quickiebomb Launcher
+	"265"	"2025/12/09"	// Sticky Jumper
+	"1"		"2025/12/09"	// Bottle
+	"609"	"2025/12/09"	// Scottish Handshake
+	"307"	"2025/12/09"	// Ullapool Caber
+	"132"	"2025/12/09"	// Eyelander
+	"482"	"2025/12/09"	// Nessie's Nine Iron
+	"298"	"2025/12/09"	// Iron Curtain
+	"811"	"2025/12/09"	// Huo-Long Heater
+	"43"	"2025/12/09"	// Killing Gloves of Boxing
+	"239"	"2025/12/09"	// Gloves of Running Urgently
+	"331"	"2025/12/09"	// Fists of Steel
+	"587"	"2025/12/09"	// Apoco-Fists
+	"140"	"2025/12/09"	// Wrangler
+	"155"	"2025/12/09"	// Southern Hospitality
+	"589"	"2025/12/09"	// Eureka Effect
+	"412"	"2025/12/09"	// Overdose
+	"998"	"2025/12/09"	// Vaccinator
+	"8"		"2025/12/09"	// Bonesaw
+	"173"	"2025/12/09"	// Vita-Saw
+	"413"	"2025/12/09"	// Solemn Vow
+	"230"	"2025/12/09"	// Sydney Sleeper
+	"1098"	"2025/12/09"	// Classic
+	"56"	"2025/12/09"	// Huntsman
+	"1092"	"2025/12/09"	// Fortified Compound
+	"851"	"2025/12/09"	// AWPer Hand
+	"751"	"2025/12/09"	// Cleaner's Carbine
+	"171"	"2025/12/09"	// Tribalman's Shiv
+	"232"	"2025/12/09"	// Bushwacka
+	"61"	"2025/12/09"	// Ambassador
+	"224"	"2025/12/09"	// L'Etranger
+	"460"	"2025/12/09"	// Enforcer
+	"525"	"2025/12/09"	// Diamondback
+	"727"	"2025/12/09"	// Black Rose
+	"638"	"2025/12/09"	// Sharp Dresser
+	"225"	"2025/12/09"	// Your Eternal Reward
+	"574"	"2025/12/09"	// Wanga Prick
+	"461"	"2025/12/09"	// Big Earner
+	"356"	"2025/12/09"	// Conniver's Kunai
+	"264"	"2025/12/09"	// Frying Pan
+	"1071"	"2025/12/09"	// Golden Frying Pan
+	"423"	"2025/12/09"	// Saxxy
+	"1123"	"2025/12/09"	// Necro Smasher
+	"1127"	"2025/12/09"	// Crossing Guard
+	"1013"	"2025/12/09"	// Ham Shank
+	"154"	"2025/12/09"	// Pain Train
+	"474"	"2025/12/09"	// Conscientious Objector
+	"939"	"2025/12/09"	// Bat Outta Hell
+	"30758"	"2025/12/09"	// Prinny Machete
+	"880"	"2025/12/09"	// Freedom Staff
 }
