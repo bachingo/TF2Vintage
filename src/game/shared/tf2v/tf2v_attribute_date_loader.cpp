@@ -30,6 +30,7 @@ CTF2VAttributeDateManager::CTF2VAttributeDateManager()
 	m_UnusualEffectDates.SetLessFunc( DefLessFunc( int ) );
 	m_WarPaintDates.SetLessFunc( DefLessFunc( int ) );
 	m_WeaponAttributeVersions.SetLessFunc( DefLessFunc( int ) );
+	m_WeaponLastBalanceDates.SetLessFunc( DefLessFunc( int ) );
 	m_CommonDefIndex.SetLessFunc( DefLessFunc( int ) );
 	m_FestivizedDates.SetLessFunc( DefLessFunc( int ) );
 	m_AustraliumDates.SetLessFunc( DefLessFunc( int ) );
@@ -129,6 +130,7 @@ void CTF2VAttributeDateManager::Shutdown()
 		delete m_WeaponAttributeVersions[i];
 	}
 	m_WeaponAttributeVersions.Purge();
+	m_WeaponLastBalanceDates.Purge();
 	m_CommonDefIndex.Purge();
 	FOR_EACH_MAP_FAST( m_ItemSetAttributeVersions, i )
 	{
@@ -438,6 +440,11 @@ bool CTF2VAttributeDateManager::LoadWeaponAttributeVersions( const char *pszFile
 			delete pVersions;
 			continue;
 		}
+		
+		// Save the last (most recent) block's date as our most recent stat balance date
+		int iLastBalance = pVersions->Last().iStartDate;
+		m_WeaponAttributeVersions.Insert( iItemDef, pVersions );
+		m_WeaponLastBalanceDates.Insert( iItemDef, iLastBalance );
 
 		m_WeaponAttributeVersions.Insert( iItemDef, pVersions );
 		
@@ -446,6 +453,17 @@ bool CTF2VAttributeDateManager::LoadWeaponAttributeVersions( const char *pszFile
 
 	pKV->deleteThis();
 	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Load the date of the most recent balance patch for this weapon
+//-----------------------------------------------------------------------------
+int CTF2VAttributeDateManager::GetWeaponLastBalanceDate( int iDefIndex )
+{
+    int iMapIndex = m_WeaponLastBalanceDates.Find( iDefIndex );
+    if ( iMapIndex == m_WeaponLastBalanceDates.InvalidIndex() )
+        return TF2V_DAY_UNKNOWN; // Not in table — fall back to global gate
+    return m_WeaponLastBalanceDates[iMapIndex];
 }
 
 //-----------------------------------------------------------------------------
@@ -1098,7 +1116,11 @@ bool CTF2VAttributeDateManager::ItemNeedsModification( const CEconItemView *pIte
 	// Weapons need attribute versioning if we're before the last balance patch
 	if ( IsWeaponSlot( iSlot ) && ( TF2VIsAnachronistic( TF2V_DAY_LAST_WEAPON_BALANCE ) ) )
 	{
-		return true;
+		// Find the date of the most recent stat rework for the item.
+		int iCommonDef = GetCommonItemDef( pItem->GetItemDefIndex() );
+		int iLastBalance = GetWeaponLastBalanceDate( iCommonDef );
+		if ( iLastBalance != TF2V_DAY_UNKNOWN && TF2VIsAnachronistic( iLastBalance ) )
+			return true;
 	}
 	
 	// Item is compliant - no modification needed
@@ -1125,7 +1147,12 @@ bool CTF2VAttributeDateManager::GetTimePeriodCompliantItem(
 
     bool bCosmeticsModify = HasAnachronisticAttributes( pOriginalItem );
     bool bQualityModify  = !ItemQualityIsAllowedTimePeriod( pOriginalItem->GetItemQuality() );
-    bool bWeaponModify   = IsWeaponSlot( iSlot ) && TF2VIsAnachronistic( TF2V_DAY_LAST_WEAPON_BALANCE );
+	bool bWeaponModify = false;
+	if ( IsWeaponSlot( iSlot ) && TF2VIsAnachronistic( TF2V_DAY_LAST_WEAPON_BALANCE ) )
+	{
+		int iLastBalance = GetWeaponLastBalanceDate( iCommonDef );
+		bWeaponModify = ( iLastBalance != TF2V_DAY_UNKNOWN ) && TF2VIsAnachronistic( iLastBalance );
+	}
 
     if ( !bDefModify && !bQualityModify && !bCosmeticsModify && !bWeaponModify )
         return false;

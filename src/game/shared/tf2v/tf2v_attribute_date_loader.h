@@ -94,6 +94,7 @@ public:
 	int GetWarPaintIntroductionDate( int iProtoDefIndex );
 	int GetFestivizedIntroductionDate( int iDefIndex );
 	int GetAustraliumIntroductionDate( int iDefIndex );
+	int GetWeaponLastBalanceDate( int iDefIndex );
 
 	// Reload files (useful for testing/updates)
 	void ReloadAllDates();
@@ -150,6 +151,7 @@ private:
 	CUtlMap<int, int> m_CommonDefIndex;		// Def Index Variant -> Common Denominator
 	CUtlMap<int, CUtlVector<WeaponAttributeVersion_t>*> m_WeaponAttributeVersions;
 	CUtlMap<CUtlString, CUtlVector<WeaponAttributeVersion_t>*> m_ItemSetAttributeVersions;
+	CUtlMap<int, int> m_WeaponLastBalanceDates; // Def Index -> date of final balance block
 	CUtlMap<int, int> m_FestivizedDates;    // Common Def Index -> Festivized intro date
 	CUtlMap<int, int> m_AustraliumDates;    // Common Def Index -> Australium intro date
 
