@@ -203,7 +203,7 @@
 				"crit vs burning players"
 				{
 					"attribute_class"	"or_crit_vs_playercond"
-					"value"	"1"44
+					"value"	"1"
 				}
 				"damage penalty"
 				{
