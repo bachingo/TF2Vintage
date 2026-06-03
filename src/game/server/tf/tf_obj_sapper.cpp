@@ -575,7 +575,8 @@ int CObjectSapper::OnTakeDamage( const CTakeDamageInfo &info )
 	}
 
 	// Is the damage from something other than another sapper? (which might be on our matching teleporter)
-	if ( !( info.GetDamageType() & DMG_FROM_OTHER_SAPPER ) )
+	// TF2V: Damaging the opposite sapper introduced in Classless.
+	if ( !( info.GetDamageType() & DMG_FROM_OTHER_SAPPER ) && TF2VIsContemporary( TF2V_DAY_MAJOR_CLASSLESS ) )
 	{
 		if ( GetParentObject() )
 		{

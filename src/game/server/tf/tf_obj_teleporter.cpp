@@ -687,13 +687,15 @@ int CObjectTeleporter::Command_Repair( CTFPlayer *pActivator, float flAmount, fl
 {
 	// Teleporter-specific: 5 health costs 1 metal
 	flRepairToMetalRatio = 5.f;
+	
+	// TF2V: Repairing the opposite side of a teleporter was added in Classless.
 
 	int iRepairAmount = BaseClass::Command_Repair( pActivator, flAmount, flRepairMod, flRepairToMetalRatio, bSendEvent );
 	if ( iRepairAmount > 0 )
 	{
 		// add the same amount of health to our match
 		CObjectTeleporter *pMatch = GetMatchingTeleporter();
-		if ( pMatch )
+		if ( pMatch && TF2VIsContemporary( TF2V_DAY_MAJOR_CLASSLESS ) )
 		{
 			pMatch->AddHealth( iRepairAmount );
 		}
@@ -704,7 +706,7 @@ int CObjectTeleporter::Command_Repair( CTFPlayer *pActivator, float flAmount, fl
 	else
 	{
 		CObjectTeleporter *pMatch = GetMatchingTeleporter();
-		if ( pMatch && !pMatch->IsBuilding() )
+		if ( pMatch && !pMatch->IsBuilding() && TF2VIsContemporary( TF2V_DAY_MAJOR_CLASSLESS ) )
 		{
 			float flRepairAmountMax = flAmount * flRepairMod;
 			int iRepairAmount = Min( flRepairAmountMax, pMatch->GetMaxHealth() - pMatch->GetHealth() );
