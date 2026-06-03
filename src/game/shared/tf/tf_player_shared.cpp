@@ -13424,8 +13424,8 @@ int	CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassIndex /*= -1*/ )
 		// TF2V Experimental: Significantly reduce Medic's ammo pool if we don't readjust it.
 		if ( ( iMax == iMaxTemp ) && ( iClassIndexTemp == TF_CLASS_MEDIC ) )
 		{
-			// Reduced from 150 to 48.
-			iMax = 48;
+			// Reduced from 150 to 60.
+			iMax = 60;
 		}
 
 	}
