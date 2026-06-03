@@ -7681,14 +7681,17 @@ bool CTFGameRules::ApplyOnDamageModifyRules( CTakeDamageInfo &info, CBaseEntity 
 					flRandomDamage *= 1.5f;
 				}
 				break;
-			//case TF_WEAPON_NAILGUN :
-			//case TF_WEAPON_SYRINGEGUN_MEDIC :
-			//	// Nailguns: Get 50% bonus rampup at short range
-			//	if ( flRandomRangeVal > 0.5f )
-			//	{
-			//		flRandomDamage *= 1.5f;
-			//	}
-			//	break;
+			// TF2V: This is extremely inaccurate but I want to test this concept.
+			// This is because this was originally balanced as the Scout Primary, but Scout's Primary was changed to Scattergun. Means Nailgun = Scattergun in ramp.
+			// Syringe Gun is here because it's the Super Nailgun.
+			case TF_WEAPON_NAILGUN :
+			case TF_WEAPON_SYRINGEGUN_MEDIC :
+				// Nailguns: Get 50% bonus rampup at short range
+				if ( flRandomRangeVal > 0.5f )
+				{
+					flRandomDamage *= 1.5f;
+				}
+				break;
 			}
 		}
 

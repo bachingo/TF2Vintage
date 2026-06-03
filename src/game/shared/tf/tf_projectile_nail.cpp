@@ -44,7 +44,7 @@ PRECACHE_REGISTER_FN(PrecacheSyringe);
 // CTFProjectile_Syringe
 //-----------------------------------------------------------------------------
 #define SYRINGE_GRAVITY		0.3f
-#define SYRINGE_VELOCITY	1000.0f
+#define SYRINGE_VELOCITY	2000.0f	// Holdover content from TFC. Regular nails = 1000, Super nails = 2000. Medics got super nails while everyone else got regular nails. Reflected here by the increased speed.
 // Purpose:
 //-----------------------------------------------------------------------------
 CTFBaseProjectile *CTFProjectile_Syringe::Create( 
