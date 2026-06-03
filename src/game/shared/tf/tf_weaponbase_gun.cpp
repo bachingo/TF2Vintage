@@ -623,7 +623,8 @@ CBaseEntity *CTFWeaponBaseGun::FireNail( CTFPlayer *pPlayer, int iSpecificNail )
 	QAngle angForward;
 	
 	// Add some spread
-	float flSpread = 1.5;
+	// TF2V Experimental: Doubled, because the projectile also moves double speed.
+	float flSpread = 3.0;
 	flSpread += GetProjectileSpread();
 
 	CTFBaseProjectile *pProjectile = NULL;
