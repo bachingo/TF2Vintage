@@ -708,12 +708,7 @@ int	CTFWeaponBase::GetMaxClip1( void ) const
 		if ( GetWeaponID() == TF_WEAPON_GRENADELAUNCHER )
 			flClip += 2;	
 	}
-	
-	// TF2V Experimental: Cut Syringe Gun magazines to 30% capacity. (40->12)
-	// Coincidentally, this also makes them visually consistent with the model.
-	if ( GetWeaponID() == TF_WEAPON_SYRINGEGUN_MEDIC )
-		flClip = 12;	
-	
+
 	// Now handle in-game sources, otherwise we get weird numbers on things like the FAN
 	if ( flClip >= 0 )
 	{

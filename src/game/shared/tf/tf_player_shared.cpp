@@ -13418,16 +13418,7 @@ int	CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassIndex /*= -1*/ )
 			// Use default number (16).
 		}
 		
-		int iMaxTemp = iMax;
 		CALL_ATTRIB_HOOK_INT( iMax, mult_maxammo_primary );
-		
-		// TF2V Experimental: Significantly reduce Medic's ammo pool if we don't readjust it.
-		if ( ( iMax == iMaxTemp ) && ( iClassIndexTemp == TF_CLASS_MEDIC ) )
-		{
-			// Reduced from 150 to 60.
-			iMax = 60;
-		}
-
 	}
 	else if ( iAmmoIndex == TF_AMMO_SECONDARY )
 	{
