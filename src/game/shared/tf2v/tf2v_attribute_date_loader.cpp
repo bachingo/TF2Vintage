@@ -1436,6 +1436,7 @@ static bool CheckIfAttributeAnachronistic( const CEconItemAttribute *pAttrib, co
 		}
 	}
 		
+	// War Paints - Introduced in Gun Mettle
 	else if ( V_stristr( pszAttrName, "paintkit_proto_def_index" ) ||
 			  V_stristr( pszAttrName, "paint_kit_proto_def_index" ) )
 	{
@@ -1455,6 +1456,13 @@ static bool CheckIfAttributeAnachronistic( const CEconItemAttribute *pAttrib, co
 				return true;
 			}
 		}
+	}
+	
+	// Texture Wear - Introduced in Gun Mettle
+	else if ( V_stristr( pszAttrName, "set_item_texture_wear" ) )
+	{
+		if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_GUN_METTLE ) )
+			return true;
 	}
 		
 	// Civilian Stat clock - introduced February 29 2016 (post Tough Break)
