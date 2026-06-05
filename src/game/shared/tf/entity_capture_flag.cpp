@@ -1582,11 +1582,13 @@ void CCaptureFlag::Capture( CTFPlayer *pPlayer, int nCapturePoint )
 
 		int nAmount = TFGameRules()->CalculateCurrencyAmount_ByType( TF_CURRENCY_CAPTURED_OBJECTIVE );
 		TFGameRules()->DistributeCurrencyAmount( nAmount, pPlayer );
-
+		
+		// TF2V: Credit share added March 20, 2008 (Day 186)
 		// if someone else stole the flag, give them credit, too
 		if ( m_hInitialPlayer.Get() && m_hInitialPlayer.Get() != pPlayer )
 		{
-			CTF_GameStats.Event_PlayerCapturedPoint( ToTFPlayer( m_hInitialPlayer.Get() ) );
+			if ( TF2VIsContemporary( 186 ) ))
+				CTF_GameStats.Event_PlayerCapturedPoint( ToTFPlayer( m_hInitialPlayer.Get() ) );
 			m_hInitialPlayer = NULL;
 		}
 
@@ -1696,10 +1698,12 @@ void CCaptureFlag::Capture( CTFPlayer *pPlayer, int nCapturePoint )
 		// Reward the player
 		CTF_GameStats.Event_PlayerCapturedPoint( pPlayer );
 
+		// TF2V: Credit share added March 20, 2008 (Day 186)
 		// if someone else stole the flag, give them credit, too
 		if ( m_hInitialPlayer.Get() && m_hInitialPlayer.Get() != pPlayer )
 		{
-			CTF_GameStats.Event_PlayerCapturedPoint( ToTFPlayer( m_hInitialPlayer.Get() ) );
+			if ( TF2VIsContemporary( 186 ) ))
+				CTF_GameStats.Event_PlayerCapturedPoint( ToTFPlayer( m_hInitialPlayer.Get() ) );
 			m_hInitialPlayer = NULL;
 		}
 
