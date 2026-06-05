@@ -20126,7 +20126,8 @@ void CTFPlayer::DoTauntAttack( void )
 				{
 					m_Shared.AddCond( TF_COND_PHASE, flDropDeadTime );
 
-					if ( HasTheFlag() )
+					// TF2V: Removing flag off phasing Scouts added April 20, 2009 (Day 582)
+					if ( HasTheFlag() && TF2VIsContemporary( 582 ) )
 					{
 						bool bShouldDrop = true;
 
