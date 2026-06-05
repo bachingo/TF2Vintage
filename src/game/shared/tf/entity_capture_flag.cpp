@@ -1131,8 +1131,9 @@ void CCaptureFlag::FlagTouch( CBaseEntity *pOther )
 	}
 #endif
 
+	// TF2V: Exploit patched November 7, 2007 (Day 52)
 	// Is the touching player about to teleport?
-	if ( pPlayer->m_Shared.InCond( TF_COND_SELECTED_TO_TELEPORT ) )
+	if ( TF2VIsContemporary( 52 ) && pPlayer->m_Shared.InCond( TF_COND_SELECTED_TO_TELEPORT ) )
 		return;
 
 	// Don't let invulnerable players pickup flags, except in PD
