@@ -1083,7 +1083,8 @@ bool CObjectSentrygun::FindTarget()
 bool CObjectSentrygun::ValidTargetPlayer( CTFPlayer *pPlayer, const Vector &vecStart, const Vector &vecEnd )
 {
 	// Keep shooting at spies that go invisible after we acquire them as a target.
-	if ( pPlayer->m_Shared.GetPercentInvisible() > 0.5f )
+	// TF2V: Patched April 28, 2010 (Day 955; one day before The 119th Patch)
+	if ( TF2VIsContemporary( 955 ) && pPlayer->m_Shared.GetPercentInvisible() > 0.5f )
 		return false;
 
 	// Keep shooting at spies that disguise after we acquire them as at a target.
