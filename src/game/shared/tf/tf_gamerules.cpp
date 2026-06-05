@@ -7522,11 +7522,12 @@ bool CTFGameRules::ApplyOnDamageModifyRules( CTakeDamageInfo &info, CBaseEntity 
 
 		// default values center, and the subsequence min and max.
 		// TF2V: Random Damage Spread decreased from 25% to 10% February 2 2009 (Day 505)
+		// TF2V: Damage Spread disabling [tf_damage_disablespread] was also added same date.
 		constexpr float flRandomDamageSpread = TF2VIsContemporary( 505 ) ? 0.10f : 0.25f;
 		float flCenter = 0.5f;
 		float flMin = flCenter - flRandomDamageSpread;
 		float flMax = flCenter + flRandomDamageSpread;
-		const bool bNoDamageSpread = tf_damage_disablespread.GetBool() || IsCompetitiveGame() || ( pTFAttacker && pTFAttacker->m_Shared.GetCarryingRuneType() == RUNE_PRECISION );
+		const bool bNoDamageSpread = ( TF2VIsContemporary( 505 ) && tf_damage_disablespread.GetBool() ) || IsCompetitiveGame() || ( pTFAttacker && pTFAttacker->m_Shared.GetCarryingRuneType() == RUNE_PRECISION );
 		const bool bHasDistanceMod = bitsDamage & DMG_USEDISTANCEMOD;
 		const bool bIsSniperRifle = pWeapon && WeaponID_IsSniperRifle( pWeapon->GetWeaponID() ) && bitsDamage & DMG_BULLET;
 		const bool bApplySpreadToRampup = IsBetaActive() ? ( bNoDamageSpread && !bHasDistanceMod && ( bIsSniperRifle || pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_GRENADELAUNCHER ) ) : false;
