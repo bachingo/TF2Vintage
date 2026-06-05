@@ -6041,7 +6041,8 @@ void CTFGameRules::ManageStopwatchTimer( bool bInSetup )
 	if ( IsInTournamentMode() == false )
 		return;
 
-	if ( mp_tournament_stopwatch.GetBool() == false )
+	// TF2V: Stopwatch added in the Gold Rush Update.
+	if ( mp_tournament_stopwatch.GetBool() == false || TF2VIsAnachronistic( TF2V_DAY_MAJOR_GOLDRUSH ) )
 		return;
 
 	if ( State_Get() == GR_STATE_BETWEEN_RNDS )
