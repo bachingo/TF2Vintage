@@ -6705,12 +6705,14 @@ void CTFPlayerShared::OnRemoveTeleported( void )
 //-----------------------------------------------------------------------------
 bool CTFPlayerShared::ShouldShowRecentlyTeleported( void )
 {
-	if ( IsStealthed() || !m_pOuter->GetCompetitiveVisibility() )
+	// TF2V: These effects get added to stealthed Spies before the Gold Rush update.
+	if ( TF2VIsContemporary( TF2V_DAY_MAJOR_GOLDRUSH ) && ( IsStealthed() || !m_pOuter->GetCompetitiveVisibility() ) )
 	{
 		return false;
 	}
 
-	if ( m_pOuter->IsPlayerClass( TF_CLASS_SPY ) )
+	// TF2V: Teleporter effects also get added to disguised Spies before the Gold Rush update.
+	if ( TF2VIsContemporary( TF2V_DAY_MAJOR_GOLDRUSH ) && m_pOuter->IsPlayerClass( TF_CLASS_SPY ) )
 	{
 		// disguised as an enemy
 		if ( InCond( TF_COND_DISGUISED ) && GetDisguiseTeam() != m_pOuter->GetTeamNumber() )
