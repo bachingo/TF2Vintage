@@ -1025,8 +1025,9 @@ bool CTFSniperRifle::CanFireCriticalShot( bool bIsHeadshot, CBaseEntity *pTarget
 	if ( !BaseClass::CanFireCriticalShot( bIsHeadshot, pTarget ) )
 		return false;
 
+	// TF2V: Ability for Sniper to Crit while Critboosted was added in February 2, 2009 (Day 505)
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
-	if ( pPlayer && pPlayer->m_Shared.IsCritBoosted() )
+	if ( TF2VIsContemporary( 505 ) && ( pPlayer && pPlayer->m_Shared.IsCritBoosted() ) )
 	{
 		m_bCurrentShotIsHeadshot = bIsHeadshot;
 		return true;
