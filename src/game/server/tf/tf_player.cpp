@@ -10310,6 +10310,17 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			SetBlastJumpState( nJumpType, bPlaySound );
 		}
 	}
+	// TF2V: Soldier Rocket Resistance on self was unconditional before the Pyro Update.
+	else if ( !bIsSoldierRocketJumping && TF2VIsAnachronistic( TF2V_DAY_MAJOR_PYRO ) )
+	{
+		// Check if we're a Soldier shooting ourselves with a rocket
+		if ( IsPlayerClass( TF_CLASS_SOLDIER ) && (pAttacker == this) && (inputInfo.GetDamageType() & DMG_BLAST) )
+		{
+			// Scale the damage down like we're rocket jumping, even though we're not
+			float flDamage = info.GetDamage() * tf_damagescale_self_soldier.GetFloat();
+			info.SetDamage( flDamage );
+		}
+	}
 
 	if ( TFGameRules()->IsMannVsMachineMode() && GetTeamNumber() == TF_TEAM_PVE_INVADERS )
 	{
