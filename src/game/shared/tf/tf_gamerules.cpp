@@ -7537,9 +7537,13 @@ bool CTFGameRules::ApplyOnDamageModifyRules( CTakeDamageInfo &info, CBaseEntity 
 			CObjectSentrygun *pSentry = GetSentryGunInflictor( info.GetInflictor() );
 			if ( pSentry )
 			{
-				vAttackerPos = pSentry->WorldSpaceCenter();
-				// Sentries have a much further optimal distance
-				flOptimalDistance = SENTRY_MAX_RANGE;
+				// TF2V: Sentry bullet damage distance change implemented in Love and War.
+				if ( TF2VIsContemporary( TF2V_DAY_MAJOR_LOVE_AND_WAR ) )
+				{
+					vAttackerPos = pSentry->WorldSpaceCenter();
+					// Sentries have a much further optimal distance
+					flOptimalDistance = SENTRY_MAX_RANGE;
+				}
 			}
 			// The base sniper rifle doesn't have DMG_USEDISTANCEMOD, so this isn't used. Unlockable rifle had it for a bit.
 			else if ( bIsSniperRifle )
