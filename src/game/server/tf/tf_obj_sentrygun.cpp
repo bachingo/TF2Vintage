@@ -624,10 +624,14 @@ void CObjectSentrygun::FinishUpgrading( void )
 //-----------------------------------------------------------------------------
 bool CObjectSentrygun::OnWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vector hitLoc )
 {
+	// TF2V: "Wrenching" (doing all of these repair/upgrade/resupply at once) was added in the Engineer Update.
+	// We have to immediately skip later steps if we did one of these beforehand.
+	
 	if ( IsDisposableBuilding() )
 		return false;
 
 	bool bDidWork = false;
+	bool bSkipWork = false;
 
 	// If the player repairs it at all, we're done
 	if ( GetHealth() < GetMaxHealth() )
@@ -644,20 +648,24 @@ bool CObjectSentrygun::OnWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vect
 		{
 			DoWrenchHitEffect( hitLoc, true, false );
 			bDidWork = true;
+			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_ENGINEER ) )
+				bSkipWork = true;
 		}
 	}
 
 	// Don't put in upgrade metal until the sentry is fully healed
-	if ( !bDidWork )
+	if ( !bDidWork && !bSkipWork )
 	{
 		if ( CheckUpgradeOnHit( pPlayer ) )
 		{
 			DoWrenchHitEffect( hitLoc, false, true );
 			bDidWork = true;
+			if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_ENGINEER ) )
+				bSkipWork = true;
 		}
 	}
 
-	if ( !IsUpgrading() )
+	if ( !IsUpgrading() && !bSkipWork )
 	{
 		// player ammo into rockets
 		//	1 ammo = 1 shell
