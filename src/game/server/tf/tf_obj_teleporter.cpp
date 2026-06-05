@@ -543,7 +543,8 @@ bool CObjectTeleporter::PlayerCanBeTeleported( CTFPlayer *pPlayer )
 	if ( !pBuilder && m_bWasMapPlaced == false )
 		return false;
 
-	if ( pPlayer->IsPlayerClass( TF_CLASS_SPY ) )
+	// TF2V: Spies could use enemy teleporters starting in Sniper Vs. Spy.
+	if ( pPlayer->IsPlayerClass( TF_CLASS_SPY ) && TF2VIsContemporary( TF2V_DAY_MAJOR_SNIPER_SPY ) )
 		return true;
 
 	if ( pBuilder && pBuilder->GetTeamNumber() != pPlayer->GetTeamNumber() )
