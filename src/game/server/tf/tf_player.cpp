@@ -14093,7 +14093,8 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	m_pSpawnPoint = NULL;
 
 	// If we died in sudden death and we're an engineer, explode our buildings
-	if ( IsPlayerClass( TF_CLASS_ENGINEER ) && TFGameRules()->InStalemate() && TFGameRules()->IsInArenaMode() == false )
+	// TF2V: This was added October 25, 2007 (Day 39)
+	if ( TF2VIsContemporary( 39 ) && ( IsPlayerClass( TF_CLASS_ENGINEER ) && TFGameRules()->InStalemate() && TFGameRules()->IsInArenaMode() == false ) )
 	{
 		for (int i = GetObjectCount()-1; i >= 0; i--)
 		{
