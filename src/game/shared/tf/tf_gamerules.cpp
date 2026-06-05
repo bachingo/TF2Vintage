@@ -11409,7 +11409,12 @@ int CTFGameRules::ItemShouldRespawn( CItem *pItem )
 
 float CTFGameRules::FlItemRespawnTime( CItem *pItem )
 {
-	return ITEM_RESPAWN_TIME;
+	const float flItemRespawnTime = ITEM_RESPAWN_TIME;
+	// TF2V: Arena had a 2x respawn time on items before the Scout update.
+	if ( IsInArenaMode() && TF2VIsAnachronistic( TF2V_DAY_MAJOR_SCOUT ) )
+		return flItemRespawnTime *= 2.f;
+
+	return flItemRespawnTime;
 }
 
 
@@ -14349,7 +14354,9 @@ void CTFGameRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &inf
 					}
 					else
 					{
-						pScorer->m_Shared.AddCond( TF_COND_CRITBOOSTED_FIRST_BLOOD, TF_ARENA_MODE_FIRST_BLOOD_CRIT_TIME );
+						// TF2V: First blood added in the Scout Update.
+						if ( TF2VIsContemporary( TF2V_DAY_MAJOR_SCOUT ) )
+							pScorer->m_Shared.AddCond( TF_COND_CRITBOOSTED_FIRST_BLOOD, TF_ARENA_MODE_FIRST_BLOOD_CRIT_TIME );
 					}
 				}
 			}
