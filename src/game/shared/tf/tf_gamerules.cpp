@@ -6748,7 +6748,14 @@ int CTFRadiusDamageInfo::ApplyToEntity( CBaseEntity *pEntity )
 		flDistanceToEntity = ( vecSrc - tr.endpos ).Length();
 	}
 
-	flAdjustedDamage = RemapValClamped( flDistanceToEntity, 0, flRadius, dmgInfo->GetDamage(), dmgInfo->GetDamage() * flFalloff );
+	// TF2V: Bounding calculation is slightly different after September 15, 2009. (Day 730)
+	if ( TF2VIsContemporary( 730 ) )
+		flAdjustedDamage = RemapValClamped( flDistanceToEntity, 0, flRadius, dmgInfo->GetDamage(), dmgInfo->GetDamage() * flFalloff );
+	else
+	{
+			flAdjustedDamage = flDistanceToEntity * flFalloff;
+			flAdjustedDamage = dmgInfo->GetDamage() - flAdjustedDamage;
+	}
 
 	CTFWeaponBase *pWeapon = dynamic_cast<CTFWeaponBase *>(dmgInfo->GetWeapon());
 	
