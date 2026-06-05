@@ -6616,7 +6616,7 @@ int CTFRadiusDamageInfo::ApplyToEntity( CBaseEntity *pEntity )
 	// Check that the explosion can 'see' this entity.
 	Vector vecMainSpot = pEntity->BodyTarget(vecSrc, false);
 	std::vector<Vector> vecSpots{ vecMainSpot };
-	static const float flInnerRadiusPct = 0.04f * TF_ROCKET_RADIUS * 0.5f;
+	static const float flInnerRadiusPct = 0.04f * ( TF2VIsContemporary( 730 ) ? TF_ROCKET_RADIUS : TF_ROCKET_RADIUS_FOR_RJS ) * 0.5f;
 	CTraceFilterIgnorePlayers filterPlayers( pInflictor, COLLISION_GROUP_PROJECTILE );
 	CTraceFilterIgnoreProjectiles filterProjectiles( pInflictor, COLLISION_GROUP_PROJECTILE );
 	CTraceFilterIgnoreFriendlyCombatItems filterCombatItems( pInflictor, COLLISION_GROUP_PROJECTILE, pInflictor->GetTeamNumber() );

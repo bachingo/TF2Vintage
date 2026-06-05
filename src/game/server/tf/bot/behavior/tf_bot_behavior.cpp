@@ -1471,7 +1471,7 @@ void CTFBotMainAction::FireWeaponAtEnemy( CTFBot *me )
 					// Don't hit ourselves if the explosion will do a noticeable amount of our health
 					bool bTooMuchSelfDamage = flExplosiveDamage > 0.3f * flCurrentHealth;
 
-					if ( bTooMuchSelfDamage && hitRange < TF_ROCKET_RADIUS )
+					if ( bTooMuchSelfDamage && hitRange < ( TF2VIsContemporary( 730 ) ? TF_ROCKET_RADIUS : TF_ROCKET_RADIUS_FOR_RJS ) )
 					{
 						// shot will impact very near us
 						if ( !trace.m_pEnt || ( trace.m_pEnt && !trace.m_pEnt->MyCombatCharacterPointer() ) )

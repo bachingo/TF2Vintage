@@ -23,7 +23,7 @@
 #endif
 
 #define TF_ROCKET_RADIUS_FOR_RJS	(110.0f * 1.1f)	// radius * TF scale up factor (121) - Used when applying damage to attacker. Original Rocket Radius.
-#define TF_ROCKET_RADIUS			(146)			// Radius used when applying damage to others // TF_ROCKET_RADIUS and grenade explosions is 159->146 post Smissmass 2014, and (110.0f * 1.1f) before September 15, 2009.
+#define TF_ROCKET_RADIUS			(146)			// Radius used when applying damage to others // Grenade explosions is 159->146 post Smissmass 2014 to match rockets, and rockets are (110.0f * 1.1f) before September 15, 2009 (Day 730); This matches TF_ROCKET_RADIUS_FOR_RJS exactly.
 #define TF_FLARE_DET_RADIUS			(110)			// Special version of the flare that can be detonated by the player
 #define TF_FLARE_RADIUS_FOR_FJS		(100.0f)
 #define TF_ROCKET_DESTROYABLE_TIMER	(0.25)
