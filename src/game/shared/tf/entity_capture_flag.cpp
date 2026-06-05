@@ -1587,7 +1587,7 @@ void CCaptureFlag::Capture( CTFPlayer *pPlayer, int nCapturePoint )
 		// if someone else stole the flag, give them credit, too
 		if ( m_hInitialPlayer.Get() && m_hInitialPlayer.Get() != pPlayer )
 		{
-			if ( TF2VIsContemporary( 186 ) ))
+			if ( TF2VIsContemporary( 186 ) )
 				CTF_GameStats.Event_PlayerCapturedPoint( ToTFPlayer( m_hInitialPlayer.Get() ) );
 			m_hInitialPlayer = NULL;
 		}
@@ -1702,7 +1702,7 @@ void CCaptureFlag::Capture( CTFPlayer *pPlayer, int nCapturePoint )
 		// if someone else stole the flag, give them credit, too
 		if ( m_hInitialPlayer.Get() && m_hInitialPlayer.Get() != pPlayer )
 		{
-			if ( TF2VIsContemporary( 186 ) ))
+			if ( TF2VIsContemporary( 186 ) )
 				CTF_GameStats.Event_PlayerCapturedPoint( ToTFPlayer( m_hInitialPlayer.Get() ) );
 			m_hInitialPlayer = NULL;
 		}
