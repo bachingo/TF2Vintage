@@ -285,7 +285,9 @@ void CTFKnife::PrimaryAttack( void )
 	bool bSuccessfulBackstab = IsBackstab() && ( !m_hBackstabVictim->IsAlive() || m_hBackstabVictim->m_Shared.InCond( TF_COND_HALLOWEEN_GHOST_MODE ) );
 
 	ETFFlagType ignoreTypes[] = { TF_FLAGTYPE_PLAYER_DESTRUCTION };
-	if ( ShouldDisguiseOnBackstab() && bSuccessfulBackstab && !pPlayer->HasTheFlag( ignoreTypes, ARRAYSIZE( ignoreTypes ) ) )
+	// TF2V: Spies can't disguise with Your Eternal Reward starting October 6, 2010 (Day 1116). Force override false to simplify before era gate.
+	bool bSpyCarryingFlag = TF2VIsContemporary( 1116 ) ? pPlayer->HasTheFlag( ignoreTypes, ARRAYSIZE( ignoreTypes ) ) : false;
+	if ( ShouldDisguiseOnBackstab() && bSuccessfulBackstab && !bSpyCarryingFlag )
 	{
 		// Different rules in MvM when stabbing bots
 		bool bDropDisguise = m_hBackstabVictim->IsBot() && ( ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() ) 
