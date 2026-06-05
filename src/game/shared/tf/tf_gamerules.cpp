@@ -7520,7 +7520,8 @@ bool CTFGameRules::ApplyOnDamageModifyRules( CTakeDamageInfo &info, CBaseEntity 
 		float flRandomDamage = info.GetDamage() * tf_damage_range.GetFloat();
 
 		// default values center, and the subsequence min and max.
-		constexpr float flRandomDamageSpread = 0.10f;
+		// TF2V: Random Damage Spread decreased from 25% to 10% February 2 2009 (Day 505)
+		constexpr float flRandomDamageSpread = TF2VIsContemporary( 505 ) ? 0.10f : 0.25f;
 		float flCenter = 0.5f;
 		float flMin = flCenter - flRandomDamageSpread;
 		float flMax = flCenter + flRandomDamageSpread;
