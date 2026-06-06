@@ -2761,7 +2761,7 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 			// Items exist that get us over max health, without ever being healed, in which case our m_flBestOverhealDecayMult will still be -1.
 			float flDrainMult = ( m_flBestOverhealDecayMult == -1.f ) ? 1.f : m_flBestOverhealDecayMult;
 			float flBoostMaxAmount = flOverheal - m_pOuter->GetMaxHealth();
-			float flDrain = flBoostMaxAmount / (tf_boost_drain_time.GetFloat() * flDrainMult);
+			float flDrain = (flBoostMaxAmount / tf_boost_drain_time.GetFloat()) * flDrainMult;
 			m_flHealFraction += (gpGlobals->frametime * flDrain);
 
 			// Vampires have generous overheal on damage, so we decay it quickly
