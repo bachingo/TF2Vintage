@@ -868,7 +868,9 @@ void CObjectDispenser::StartHealing( CBaseEntity *pOther )
 	{
 		float flHealRate = GetHealRate();
 		float flOverhealBonus = 1.f;
-		pPlayer->m_Shared.Heal( this, flHealRate, flOverhealBonus, 1.f, true, GetBuilder() );
+		// TF2V: Dispensers maintained overheal prior to April 17, 2012 (Day 1675)
+		float flOverHealDecay = TF2VIsContemporary( 1675 ) ? 1.f : 0.f;
+		pPlayer->m_Shared.Heal( this, flHealRate, flOverhealBonus, flOverHealDecay, true, GetBuilder() );
 	}
 }
 
