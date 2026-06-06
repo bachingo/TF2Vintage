@@ -557,7 +557,8 @@ void CTFProjectile_Jar::PipebombTouch( CBaseEntity *pOther )
 		return;
 
 	// Don't collide with teammate if we're still in the grace period.
-	if ( pOther->IsPlayer() && pOther->GetTeamNumber() == GetTeamNumber() && !CanCollideWithTeammates() )
+	// TF2V: Grace period added in the Invasion update.
+	if ( TF2VIsContemporary( TF2V_DAY_MAJOR_INVASION ) && ( pOther->IsPlayer() && pOther->GetTeamNumber() == GetTeamNumber() && !CanCollideWithTeammates() ) )
 	{
 		// Exception to this rule - if we're a jar or milk, and our potential victim is on fire, then allow collision after all.
 		// If we're a jar or milk, then still allow collision if our potential victim is on fire.
