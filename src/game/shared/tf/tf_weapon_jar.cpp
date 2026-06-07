@@ -563,12 +563,13 @@ void CTFProjectile_Jar::PipebombTouch( CBaseEntity *pOther )
 		// Exception to this rule - if we're a jar or milk, and our potential victim is on fire, then allow collision after all.
 		// If we're a jar or milk, then still allow collision if our potential victim is on fire.
 		// TODO(mcoms): this could use a virtual function instead
+		// TF2V: This exception was added in two days after Invasion on October 8th. (Day 2944)
 		if ( m_iProjectileType != TF_PROJECTILE_CLEAVER &&
 			 m_iProjectileType != TF_PROJECTILE_SPELL &&
 			 m_iProjectileType != TF_PROJECTILE_THROWABLE )
 		{
 			auto victim = ToTFPlayer(pOther);
-			if (!victim->m_Shared.InCond(TF_COND_BURNING))
+			if ( TF2VIsContemporary( 2944 ) && !victim->m_Shared.InCond(TF_COND_BURNING) )
 			{
 				return;
 			}
