@@ -855,7 +855,8 @@ void CTFStunBall::ApplyBallImpactEffectOnVictim( CBaseEntity *pOther )
 		return;
 
 	// Can't stun an invul player.
-	if ( pPlayer->m_Shared.IsInvulnerable() || pPlayer->m_Shared.InCond( TF_COND_INVULNERABLE_WEARINGOFF ) )
+	// TF2V: ...Unless it's before Classless.
+	if ( TF2VIsContemporary( TF2V_DAY_MAJOR_CLASSLESS ) && ( pPlayer->m_Shared.IsInvulnerable() || pPlayer->m_Shared.InCond( TF_COND_INVULNERABLE_WEARINGOFF ) ) )
 		return;
 
 	// We have a more intense stun based on our travel time.
