@@ -909,12 +909,12 @@ void CTFStunBall::ApplyBallImpactEffectOnVictim( CBaseEntity *pOther )
 		
 		// TF2V: These flags are more complicated than expected.
 		int iStunFlags;
-		// Originally, all stuns were TF_STUN_CONTROLS.
+		// Originally, all stuns were TF_STUN_BOTH.
 		if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_WAR ) )
-			iStunFlags = ( bMax ) ? TF_STUN_SPECIAL_SOUND | TF_STUN_CONTROLS : TF_STUN_SOUND | TF_STUN_CONTROLS;
-		// WAR made it so only Moonshots were TF_STUN_CONTROLS, and regular shots were TF_STUN_LOSER_STATE.
+			iStunFlags = ( bMax ) ? TF_STUN_SPECIAL_SOUND | TF_STUN_BOTH : TF_STUN_SOUND | TF_STUN_BOTH;
+		// WAR made it so only Moonshots added TF_STUN_CONTROLS to TF_STUN_MOVEMENT (identical to TF_STUN_BOTH), and regular shots were TF_STUN_LOSER_STATE and TF_STUN_MOVEMENT.
 		else if ( TF2VIsBetween( TF2V_DAY_MAJOR_WAR, TF2V_DAY_MAJOR_JUNGLE_INFERNO ) )
-			iStunFlags = ( bMax ) ? TF_STUN_SPECIAL_SOUND | TF_STUN_CONTROLS : TF_STUN_SOUND | TF_STUN_LOSER_STATE;
+			iStunFlags = ( bMax ) ? TF_STUN_SPECIAL_SOUND | TF_STUN_BOTH : TF_STUN_SOUND | TF_STUN_LOSER_STATE | TF_STUN_MOVEMENT;
 		// Jungle Inferno made it so both were changed to just TF_STUN_MOVEMENT.
 		else if ( TF2VIsContemporary( TF2V_DAY_MAJOR_JUNGLE_INFERNO ) )
 			iStunFlags = ( bMax ) ? TF_STUN_SPECIAL_SOUND | TF_STUN_MOVEMENT : TF_STUN_SOUND | TF_STUN_MOVEMENT;
