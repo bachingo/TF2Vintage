@@ -969,7 +969,11 @@ void CTFStunBall::ApplyBallImpactEffectOnVictim( CBaseEntity *pOther )
 	info.SetAttacker( GetThrower() );
 	info.SetInflictor( this ); 
 	info.SetWeapon( pInflictor );
-	info.SetDamage( ( flLifeTimeRatio >= 1.f ) ? GetDamage() * 1.5f : GetDamage() );
+	// TF2V: Damage boost for moonshots in Jungle Inferno
+	if ( TF2VIsContemporary( TF2V_DAY_MAJOR_JUNGLE_INFERNO ) )
+		info.SetDamage( ( flLifeTimeRatio >= 1.f ) ? GetDamage() * 1.5f : GetDamage() );
+	else
+		info.SetDamage( GetDamage() );
 	info.SetDamageCustom( TF_DMG_CUSTOM_BASEBALL );
 	info.SetDamageForce( GetDamageForce() );
 	info.SetDamagePosition( GetAbsOrigin() );
