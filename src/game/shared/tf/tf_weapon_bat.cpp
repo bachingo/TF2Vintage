@@ -896,67 +896,76 @@ void CTFStunBall::ApplyBallImpactEffectOnVictim( CBaseEntity *pOther )
 		// TF2V: Stun timers changed in Jungle Inferno.
 		flLifeTimeRatio = TF2VIsContemporary( TF2V_DAY_MAJOR_JUNGLE_INFERNO ) ? ( flLifeTime / FLIGHT_TIME_TO_MAX_STUN ) : ( flLifeTime / FLIGHT_TIME_TO_MAX_STUN_OLD );
 	}
-
-	const bool bMax = flLifeTimeRatio >= 1.f;
 	
-	// TF2V: These flags are more complicated than expected.
-	int iStunFlags;
-	// Originally, all stuns were TF_STUN_BOTH, which is TF_STUN_MOVEMENT and TF_STUN_CONTROLS combined.
-	if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_WAR ) )
-		iStunFlags = ( bMax ) ? TF_STUN_SPECIAL_SOUND | TF_STUN_BOTH : TF_STUN_SOUND | TF_STUN_BOTH;
-	// WAR made it so only Moonshots were TF_STUN_BOTH, and regular shots were TF_STUN_LOSER_STATE.
-	else if ( TF2VIsBetween( TF2V_DAY_MAJOR_WAR, TF2V_DAY_MAJOR_JUNGLE_INFERNO ) )
-		iStunFlags = ( bMax ) ? TF_STUN_SPECIAL_SOUND | TF_STUN_BOTH : TF_STUN_SOUND | TF_STUN_LOSER_STATE;
-	// Jungle Inferno made it so both were changed to just TF_STUN_MOVEMENT.
-	else if ( TF2VIsContemporary( TF2V_DAY_MAJOR_JUNGLE_INFERNO ) )
-		iStunFlags = ( bMax ) ? TF_STUN_SPECIAL_SOUND | TF_STUN_MOVEMENT : TF_STUN_SOUND | TF_STUN_MOVEMENT;
+	// TF2V: Balls before Jungle Inferno had a minimum flight time required in order to stun players.
+	bool bShouldStun = true;
 	
-	float flStunAmount = 0.5f;
-	float flStunDuration = Max( 2.f, tf_scout_stunball_base_duration.GetFloat() * flLifeTimeRatio );
-	if ( bMax )
+	 if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_JUNGLE_INFERNO ) && ( flLifeTimeRatio <= 0.1f ) )
+		 bShouldStun = false;
+	
+	if ( bShouldStun )
 	{
-		flStunDuration += 1.0f;
-	}
-	if ( bMax || IsCritical() )
-	{
-		pOwner->SpeakConceptIfAllowed(MP_CONCEPT_STUNNED_TARGET);
-	}
-
-	// do the old behavior if we should
-	if ( bActuallyUseOldBehavior )
-	{
-		const bool bBoss = TFGameRules() && TFGameRules()->GameModeUsesMiniBosses() && ( pPlayer->IsMiniBoss() || pPlayer->GetModelScale() > 1.0f );
-
-		// don't stun bosses.
-		if ( !bBoss )
-		{
-			// stunned taunt
-			iStunFlags |= TF_STUN_CONTROLS;
-		}
-
+		const bool bMax = flLifeTimeRatio >= 1.f;
+		
+		// TF2V: These flags are more complicated than expected.
+		int iStunFlags;
+		// Originally, all stuns were TF_STUN_CONTROLS.
+		if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_WAR ) )
+			iStunFlags = ( bMax ) ? TF_STUN_SPECIAL_SOUND | TF_STUN_CONTROLS : TF_STUN_SOUND | TF_STUN_CONTROLS;
+		// WAR made it so only Moonshots were TF_STUN_CONTROLS, and regular shots were TF_STUN_LOSER_STATE.
+		else if ( TF2VIsBetween( TF2V_DAY_MAJOR_WAR, TF2V_DAY_MAJOR_JUNGLE_INFERNO ) )
+			iStunFlags = ( bMax ) ? TF_STUN_SPECIAL_SOUND | TF_STUN_CONTROLS : TF_STUN_SOUND | TF_STUN_LOSER_STATE;
+		// Jungle Inferno made it so both were changed to just TF_STUN_MOVEMENT.
+		else if ( TF2VIsContemporary( TF2V_DAY_MAJOR_JUNGLE_INFERNO ) )
+			iStunFlags = ( bMax ) ? TF_STUN_SPECIAL_SOUND | TF_STUN_MOVEMENT : TF_STUN_SOUND | TF_STUN_MOVEMENT;
+		
+		float flStunAmount = 0.5f;
+		float flStunDuration = Max( 2.f, tf_scout_stunball_base_duration.GetFloat() * flLifeTimeRatio );
 		if ( bMax )
 		{
-			// full movement stun
-			flStunAmount = bBoss ? 0.75f : 1.0f;
+			flStunDuration += 1.0f;
 		}
-	}
-
-	CTF_GameStats.Event_PlayerStunBall( pOwner, ( bMax ) ? true : false );
-
-	if ( bActuallyUseOldBehavior && pPlayer->GetWaterLevel() >= WL_Eyes )
-	{
-		// remove stun control if underwater
-		iStunFlags = iStunFlags & ~TF_STUN_CONTROLS;
-	}
-		pPlayer->m_Shared.StunPlayer( flStunDuration, flStunAmount, iStunFlags, pOwner );
-
-	if ( pPlayer->GetUserID() == m_iOriginalOwnerID )
-	{
-		// We just stunned a scout with their own ball.
-		// Give the player an achievement for this.
-		if ( pOwner->IsPlayerClass( TF_CLASS_SCOUT ) )
+		if ( bMax || IsCritical() )
 		{
-			pOwner->AwardAchievement( ACHIEVEMENT_TF_SCOUT_STUN_SCOUT_WITH_THEIR_BALL );
+			pOwner->SpeakConceptIfAllowed(MP_CONCEPT_STUNNED_TARGET);
+		}
+
+		// do the old behavior if we should
+		if ( bActuallyUseOldBehavior )
+		{
+			const bool bBoss = TFGameRules() && TFGameRules()->GameModeUsesMiniBosses() && ( pPlayer->IsMiniBoss() || pPlayer->GetModelScale() > 1.0f );
+
+			// don't stun bosses.
+			if ( !bBoss )
+			{
+				// stunned taunt
+				iStunFlags |= TF_STUN_CONTROLS;
+			}
+
+			if ( bMax )
+			{
+				// full movement stun
+				flStunAmount = bBoss ? 0.75f : 1.0f;
+			}
+		}
+
+		CTF_GameStats.Event_PlayerStunBall( pOwner, ( bMax ) ? true : false );
+
+		if ( bActuallyUseOldBehavior && pPlayer->GetWaterLevel() >= WL_Eyes )
+		{
+			// remove stun control if underwater
+			iStunFlags = iStunFlags & ~TF_STUN_CONTROLS;
+		}
+			pPlayer->m_Shared.StunPlayer( flStunDuration, flStunAmount, iStunFlags, pOwner );
+
+		if ( pPlayer->GetUserID() == m_iOriginalOwnerID )
+		{
+			// We just stunned a scout with their own ball.
+			// Give the player an achievement for this.
+			if ( pOwner->IsPlayerClass( TF_CLASS_SCOUT ) )
+			{
+				pOwner->AwardAchievement( ACHIEVEMENT_TF_SCOUT_STUN_SCOUT_WITH_THEIR_BALL );
+			}
 		}
 	}
 
