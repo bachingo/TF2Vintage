@@ -862,9 +862,9 @@ void CTFStunBall::ApplyBallImpactEffectOnVictim( CBaseEntity *pOther )
 	// We have a more intense stun based on our travel time.
 	float flLifeTime = Min( gpGlobals->curtime - m_flCreationTime, FLIGHT_TIME_TO_MAX_STUN );
 
-	// we use the old sandman in MvM. This used to only be against bots, but now players can get stunned.
-	// TF2V: This was changed in the WAR Update to allow for partial stuns.
-	const bool bUseOldBehavior = TF2VIsAnachronistic( TF2V_DAY_MAJOR_WAR ) || ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() );
+	// we use the old sandman in MvM.
+	// TF2V: Easier to adjust the Sandman logic in a few other spots below than this one specifically.
+	const bool bUseOldBehavior = TFGameRules() && TFGameRules()->IsMannVsMachineMode();
 	bool bActuallyUseOldBehavior = bUseOldBehavior;
 
 	float flLifeTimeRatio;
@@ -872,8 +872,7 @@ void CTFStunBall::ApplyBallImpactEffectOnVictim( CBaseEntity *pOther )
 	if ( bUseOldBehavior )
 	{
 		flLifeTimeRatio = flLifeTime / FLIGHT_TIME_TO_MAX_STUN_OLD;
-		// TF2V: Era gate this part too, except after the WAR update since this shouldn't fire off.
-		if ( flLifeTimeRatio <= 0.1f && TF2VIsContemporary( TF2V_DAY_MAJOR_WAR ) )
+		if ( flLifeTimeRatio <= 0.1f )
 		{
 			flLifeTimeRatio = flLifeTime / FLIGHT_TIME_TO_MAX_STUN;
 			bActuallyUseOldBehavior = false;
@@ -881,11 +880,24 @@ void CTFStunBall::ApplyBallImpactEffectOnVictim( CBaseEntity *pOther )
 	}
 	else
 	{
-		flLifeTimeRatio = flLifeTime / FLIGHT_TIME_TO_MAX_STUN;
+		// TF2V: Stun timers changed in Jungle Inferno.
+		flLifeTimeRatio = TF2VIsContemporary( TF2V_DAY_MAJOR_JUNGLE_INFERNO ) ? ( flLifeTime / FLIGHT_TIME_TO_MAX_STUN ) : ( flLifeTime / FLIGHT_TIME_TO_MAX_STUN_OLD );
 	}
 
 	const bool bMax = flLifeTimeRatio >= 1.f;
-	int iStunFlags = ( bMax ) ? TF_STUN_SPECIAL_SOUND | TF_STUN_MOVEMENT : TF_STUN_SOUND | TF_STUN_MOVEMENT;
+	
+	// TF2V: These flags are more complicated than expected.
+	int iStunFlags;
+	// Originally, all stuns were TF_STUN_BOTH, which is TF_STUN_MOVEMENT and TF_STUN_CONTROLS combined.
+	if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_WAR ) )
+		iStunFlags = ( bMax ) ? TF_STUN_SPECIAL_SOUND | TF_STUN_BOTH : TF_STUN_SOUND | TF_STUN_BOTH;
+	// WAR made it so only Moonshots were TF_STUN_BOTH, and regular shots were TF_STUN_LOSER_STATE.
+	else if ( TF2VIsBetween( TF2V_DAY_MAJOR_WAR, TF2V_DAY_MAJOR_JUNGLE_INFERNO ) )
+		iStunFlags = ( bMax ) ? TF_STUN_SPECIAL_SOUND | TF_STUN_BOTH : TF_STUN_SOUND | TF_STUN_LOSER_STATE;
+	// Jungle Inferno made it so both were changed to just TF_STUN_MOVEMENT.
+	else if ( TF2VIsContemporary( TF2V_DAY_MAJOR_JUNGLE_INFERNO ) )
+		iStunFlags = ( bMax ) ? TF_STUN_SPECIAL_SOUND | TF_STUN_MOVEMENT : TF_STUN_SOUND | TF_STUN_MOVEMENT;
+	
 	float flStunAmount = 0.5f;
 	float flStunDuration = Max( 2.f, tf_scout_stunball_base_duration.GetFloat() * flLifeTimeRatio );
 	if ( bMax )
