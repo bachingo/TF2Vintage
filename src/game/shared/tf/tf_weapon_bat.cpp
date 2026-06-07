@@ -212,6 +212,14 @@ void CTFBat_Wood::LaunchBallThink( void )
 #endif
 }
 
+float CTFBat_Wood::InternalGetEffectBarRechargeTime( void )
+{ 
+	if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_JUNGLE_INFERNO ) )
+		return 15.f;
+
+	return 10.f;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
