@@ -873,7 +873,7 @@ void CTFStunBall::ApplyBallImpactEffectOnVictim( CBaseEntity *pOther )
 		return;
 
 	// We have a more intense stun based on our travel time.
-	float flLifeTime = Min( gpGlobals->curtime - m_flCreationTime, FLIGHT_TIME_TO_MAX_STUN );
+	float flLifeTime = TF2VIsContemporary( TF2V_DAY_MAJOR_JUNGLE_INFERNO ) ? Min( gpGlobals->curtime - m_flCreationTime, FLIGHT_TIME_TO_MAX_STUN ) : Min( gpGlobals->curtime - m_flCreationTime, FLIGHT_TIME_TO_MAX_STUN_OLD ) ;
 
 	// we use the old sandman in MvM.
 	// TF2V: Easier to adjust the Sandman logic in a few other spots below than this one specifically.
