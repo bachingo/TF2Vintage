@@ -246,6 +246,19 @@ void CTFMinigun::SharedAttack()
 	m_bRageDraining = pPlayer->m_Shared.IsRageDraining();
 #endif // CLIENT_DLL
 
+	// TF2V: Stunned Heavies had their minigun spin down automatically prior to Classless.
+	if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_CLASSLESS ) )
+	{
+		if ( pPlayer->m_Shared.InCond( TF_COND_STUNNED ) )
+		{
+			// Tell the minigun to wind down if we're spun up.
+			if ( m_iWeaponState != AC_STATE_IDLE )
+				WindDown();
+			// Prevent the rest of the attack logic from completing.
+			return;			
+		}
+	}
+
 	if ( pPlayer->m_nButtons & IN_ATTACK )
 	{
 		m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
