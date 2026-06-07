@@ -7493,6 +7493,24 @@ bool CTFGameRules::ApplyOnDamageModifyRules( CTakeDamageInfo &info, CBaseEntity 
 				}
 			}
 		}
+		
+		// TF2V: Add the TF_COND_STUNNED era gate here.
+		if ( pVictim->m_Shared.InCond( TF_COND_STUNNED ) && TF2VIsBetween( 544, TF2V_DAY_MAJOR_WAR ) )
+		{
+			// March 13 2009 (Day 544) added 50% damage reduction to stunned players. 
+			if ( TF2VIsBetween( 544, TF2V_DAY_MAJOR_CLASSLESS ) )
+			{
+				// 50% damage reduction.
+				flDamage *= 0.5f;
+			}
+			// Increased in Classless to 75%.
+			else if ( TF2VIsBetween( TF2V_DAY_MAJOR_CLASSLESS, TF2V_DAY_MAJOR_WAR ) )
+			{
+				// 75% damage reduction.
+				flDamage *= 0.25f;
+			}
+			// Removed after WAR update.
+		}
 	}
 
 	// A note about why crits now go through the randomness/variance code:
