@@ -212,11 +212,16 @@ void CTFBat_Wood::LaunchBallThink( void )
 #endif
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: TF2V: Pulled from out of header to era gate
+//-----------------------------------------------------------------------------
 float CTFBat_Wood::InternalGetEffectBarRechargeTime( void )
 { 
+	// TF2V: This was 15s before Jungle Inferno.
 	if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_JUNGLE_INFERNO ) )
 		return 15.f;
 
+	// After Jungle Inferno: 10 seconds.
 	return 10.f;
 }
 
