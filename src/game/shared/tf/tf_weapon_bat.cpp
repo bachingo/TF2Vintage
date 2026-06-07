@@ -254,6 +254,36 @@ void CTFBat_Wood::PrimaryAttack( void )
 	CTFPlayer* pPlayer = GetTFPlayerOwner();
 	if (!pPlayer)
 		return;
+	
+	// TF2V: We actually don't have a secondary fire before Classless. Do secondary here if it qualifies.
+	if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_CLASSLESS ) )
+	{
+		// If we can attack and have a ball, perform the ball launch logic instead.
+		if ( CanAttack() && ( m_flNextPrimaryAttack < gpGlobals->curtime ) && ( (iBallCount > 0) && CanCreateBall( pPlayer ) ) )
+		{
+			SecondaryAttackAnim( pPlayer );
+			SendWeaponAnim( ACT_VM_PRIMARYATTACK );
+
+			CalcIsAttackCritical();
+
+			const float fLaunchDelay = tf_scout_bat_launch_delay.GetFloat();
+
+			SetContextThink( &CTFBat_Wood::LaunchBallThink, gpGlobals->curtime + fLaunchDelay, "LAUNCH_BALL_THINK" );
+
+			m_flNextPrimaryAttack = gpGlobals->curtime + fLaunchDelay + 0.15f;
+
+#ifdef GAME_DLL
+			if ( pPlayer->m_Shared.IsStealthed() && ShouldRemoveInvisibilityOnPrimaryAttack() )
+			{
+				pPlayer->RemoveInvisibility();
+			}
+#endif // GAME_DLL
+
+			pPlayer->m_Shared.OnAttack();
+			// Return before we do the next batch of logic.
+			return;
+		}
+	}
 
 	if (m_bNextSwingIsCrit && CanAttack())
 	{
@@ -294,6 +324,10 @@ void CTFBat_Wood::SecondaryAttack( void )
 		return;
 
 	if ( m_flNextPrimaryAttack > gpGlobals->curtime )
+		return;
+	
+	// TF2V: This shouldn't function before Classless.
+	if ( TF2VIsAnachronistic( TF2V_DAY_MAJOR_CLASSLESS ) )
 		return;
 
 	// Do we have any balls? If so, use them.
@@ -828,7 +862,8 @@ void CTFStunBall::ApplyBallImpactEffectOnVictim( CBaseEntity *pOther )
 	float flLifeTime = Min( gpGlobals->curtime - m_flCreationTime, FLIGHT_TIME_TO_MAX_STUN );
 
 	// we use the old sandman in MvM. This used to only be against bots, but now players can get stunned.
-	const bool bUseOldBehavior = TFGameRules() && TFGameRules()->IsMannVsMachineMode();
+	// TF2V: This was changed in the WAR Update to allow for partial stuns.
+	const bool bUseOldBehavior = TF2VIsAnachronistic( TF2V_DAY_MAJOR_WAR ) || ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() );
 	bool bActuallyUseOldBehavior = bUseOldBehavior;
 
 	float flLifeTimeRatio;
@@ -836,7 +871,8 @@ void CTFStunBall::ApplyBallImpactEffectOnVictim( CBaseEntity *pOther )
 	if ( bUseOldBehavior )
 	{
 		flLifeTimeRatio = flLifeTime / FLIGHT_TIME_TO_MAX_STUN_OLD;
-		if ( flLifeTimeRatio <= 0.1f )
+		// TF2V: Era gate this part too, except after the WAR update since this shouldn't fire off.
+		if ( flLifeTimeRatio <= 0.1f && TF2VIsContemporary( TF2V_DAY_MAJOR_WAR ) )
 		{
 			flLifeTimeRatio = flLifeTime / FLIGHT_TIME_TO_MAX_STUN;
 			bActuallyUseOldBehavior = false;
