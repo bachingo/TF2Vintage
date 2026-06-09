@@ -7227,6 +7227,17 @@ bool CTFGameRules::ApplyOnDamageModifyRules( CTakeDamageInfo &info, CBaseEntity 
 					}
 				}
 			}
+			else if ( TF2VIsAnachronistic( 618 ) && ( pVictim && pTFAttacker && pTFAttacker->IsPlayerClass( TF_CLASS_SPY ) ) && ( pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_REVOLVER && pWeapon->CanHeadshot() ) )
+			{
+				// TF2V: Deal with the early Ambassador logic here of minicrits instead of fullcrits. Changed May 26 2009. (Day 618)
+				// This recycles the Sydney Sleeper's "Headshots become Minicrits" effect above, just replaced with the revolver headshot attribute for Ambassador.
+				// This is done by making both items actually not give us a critical hit on a headshot in their respective weapon files, just attribute gated for the rifle and era gated for the revolver.
+				if ( IsHeadshot( info.GetDamageCustom() ) || pVictim->LastHitGroup() == HITGROUP_HEAD )
+				{
+					info.SetCritType( CTakeDamageInfo::CRIT_MINI );
+					eBonusEffect = kBonusEffect_MiniCrit;
+				}
+			}
 			else
 			{
 				// Allow Attributes to shortcut out if found, no need to check all of them

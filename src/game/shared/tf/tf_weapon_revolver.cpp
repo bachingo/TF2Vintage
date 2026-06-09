@@ -86,7 +86,8 @@ bool CTFRevolver::DefaultReload( int iClipSize1, int iClipSize2, int iActivity )
 //-----------------------------------------------------------------------------
 int	CTFRevolver::GetDamageType( void ) const
 {
-	float flHeadshotCooldown = 1.0f;
+	// TF2V: Cooldown added June 23, 2009 (Day 646)
+	float flHeadshotCooldown = TF2VIsContemporary( 646 ) ? 1.0f : 0.0f;
 
 	if ( CanHeadshot() && (gpGlobals->curtime - m_flLastAccuracyCheck > flHeadshotCooldown ) )
 	{
@@ -110,8 +111,16 @@ bool CTFRevolver::CanFireCriticalShot( bool bIsHeadshot, CBaseEntity *pTarget /*
 		return true;
 
 	// Magic.
-	if ( pTarget && ( pPlayer->GetAbsOrigin() - pTarget->GetAbsOrigin() ).Length2DSqr() > Square( 1200.f ) )
+	// TF2V: Distance falloff added after Jungle Inferno.
+	if ( TF2VIsContemporary( TF2V_DAY_MAJOR_JUNGLE_INFERNO ) && ( pTarget && ( pPlayer->GetAbsOrigin() - pTarget->GetAbsOrigin() ).Length2DSqr() > Square( 1200.f ) ) )
 		return false;
+
+	// TF2V: For the first week of release of Sniper vs Spy, Ambassador had Minicrits instead of full crits on headshots. Changed May 26 2009. (Day 618)
+	// Like the Sydney Sleeper, this gets the minicrit logic added in on the damage function in tf_gamerules instead.
+	if ( TF2VIsAnachronistic( 618 ) && bIsHeadshot && CanHeadshot() )
+	{
+		return false;
+	}
 
 	// can only fire a crit shot if this is a headshot, unless we're critboosted
 	if ( !bIsHeadshot )
