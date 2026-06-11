@@ -619,7 +619,7 @@
 	"732"	"2012/06/27"	// The Helmet Without a Home
 	"733"	"2012/08/15"	// Pet Robro
 	"734"	"2012/03/01"	// The Teufort Tooth Kicker
-	"735"	"2013/10/25"	// TF_WEAPON_BUILDER_SPY
+	"735"	"2007/09/17"	// TF_WEAPON_BUILDER_SPY
 	"736"	"2010/09/29"	// Upgradeable TF_WEAPON_BUILDER_SPY
 	"737"	"2010/09/29"	// Upgradeable TF_WEAPON_PDA_ENGINEER_BUILD
 	"738"	"2012/06/27"	// Pet Balloonicorn
