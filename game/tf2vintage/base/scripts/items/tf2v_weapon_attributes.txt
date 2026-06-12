@@ -173,7 +173,7 @@
 				"value"	"1"
 			}
 		}
-		"2012/09/02" // First Workshop Content Pack
+		"2012/09/02" // First Workshop Pack
 		{
 			"scattergun has knockback"
 			{
@@ -258,7 +258,7 @@
 
 	"220"  // The Shortstop // tf_weapon_handgun_scout_primary
 	{
-		"2010/09/30" // Mann-Conomy Update
+		"2010/09/30" // Mannconomy Update
 		{
 			"slow enemy on hit major"
 			{
@@ -312,7 +312,7 @@
 				"value"	"1.2"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2014/02/07" // Strongbox Pack
 		{
 			"reload time increased hidden"
 			{
@@ -378,7 +378,7 @@
 				"value"	"1.2"
 			}
 		}
-		"2015/10/06" // Invasion Update
+		"2015/10/06" // Invasion
 		{
 			"provide on active"
 			{
@@ -539,7 +539,7 @@
 				"value"	"0"
 			}
 		}
-		"2012/09/02" // First Workshop Content Pack
+		"2012/09/02" // First Workshop Pack
 		{
 			"Reload time decreased"
 			{
@@ -567,7 +567,7 @@
 				"value"	"0"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2014/02/07" // Strongbox Pack
 		{
 			"Reload time decreased"
 			{
@@ -703,7 +703,7 @@
 				"value"	"1"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"move speed penalty"
 			{
@@ -801,7 +801,7 @@
 
 	"1103"  // The Back Scatter // tf_weapon_scattergun
 	{
-		"2014/06/18" // Love & War Update
+		"2014/06/18" // Love & War
 		{
 			"closerange backattack minicrits"
 			{
@@ -935,7 +935,7 @@
 				"value"	"1"
 			}
 		}
-		"2013/10/10" // Fall 2013
+		"2013/10/10" // Fall Event 2013
 		{
 			"kill eater score type"
 			{
@@ -943,7 +943,7 @@
 				"value"	"50"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"kill eater score type"
 			{
@@ -956,7 +956,7 @@
 				"value"	"1"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2014/02/07" // Strongbox Pack
 		{
 			"kill eater score type"
 			{
@@ -1037,7 +1037,7 @@
 				"value"	"2"
 			}
 		}
-		"2013/10/10" // Fall 2013
+		"2013/10/10" // Fall Event 2013
 		{
 			"kill eater score type"
 			{
@@ -1050,7 +1050,7 @@
 				"value"	"2"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"kill eater score type"
 			{
@@ -1068,7 +1068,7 @@
 				"value"	"1"
 			}
 		}
-		"2013/12/20" // 
+		"2013/12/20" // Smissmass 2013
 		{
 			"kill eater score type"
 			{
@@ -1101,7 +1101,7 @@
 				"value"	"0 0 -5"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2014/02/07" // Strongbox Pack
 		{
 			"kill eater score type"
 			{
@@ -1124,7 +1124,7 @@
 				"value"	"1"
 			}
 		}
-		"2016/07/07" // 
+		"2016/07/07" // Meet Your Match
 		{
 			"kill eater score type"
 			{
@@ -1199,6 +1199,9 @@
 
 	"222"  // Mad Milk // tf_weapon_jar_milk
 	{
+		"2010/09/30" // Mannconomy Update
+		{
+		}
 		"2011/10/13" // Manniversary Update
 		{
 			"kill eater score type"
@@ -1207,7 +1210,7 @@
 				"value"	"4"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2014/02/07" // Strongbox Pack
 		{
 			"kill eater score type"
 			{
@@ -1473,7 +1476,7 @@
 				"value"	"10 0 -10"
 			}
 		}
-		"2017/10/20" // Scream Fortress 2017
+		"2017/10/20" // Jungle Inferno
 		{
 			"provide on active"
 			{
@@ -1533,7 +1536,7 @@
 
 	"812"  // The Flying Guillotine // tf_weapon_cleaver
 	{
-		"2012/08/02" // Triad Update
+		"2012/08/02" // Pre-Triad Pack patch
 		{
 			"cleaver description"
 			{
@@ -1574,7 +1577,7 @@
 				"value"	"1"
 			}
 		}
-		"2012/08/14" // Triad Update
+		"2012/08/14" // Triad Pack
 		{
 			"cleaver description"
 			{
@@ -1592,7 +1595,7 @@
 				"value"	"65536"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2014/02/07" // Strongbox Pack
 		{
 			"cleaver description"
 			{
@@ -1670,7 +1673,7 @@
 
 	"1121"  // Mutated Milk // tf_weapon_jar_milk
 	{
-		"2014/06/18" // Love & War Update
+		"2014/06/18" // Love & War
 		{
 			"kill eater score type"
 			{
@@ -1819,7 +1822,7 @@
 
 	"30666"  // The C.A.P.P.E.R. // tf_weapon_pistol
 	{
-		"2015/10/06" // Invasion Update
+		"2015/10/06" // Invasion
 		{
 			"weapon_stattrak_module_scale"
 			{
@@ -1920,7 +1923,7 @@
 				"value"	"1"
 			}
 		}
-		"2009/08/13" // Classless
+		"2009/08/13" // Classless Update
 		{
 			"mod bat launches balls"
 			{
@@ -1946,7 +1949,7 @@
 				"value"	"-15"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"mod bat launches balls"
 			{
@@ -1991,6 +1994,9 @@
 
 	"221"  // The Holy Mackerel // tf_weapon_bat_fish
 	{
+		"2010/09/30" // Mannconomy Update
+		{
+		}
 		"2011/10/13" // Manniversary Update
 		{
 			"kill eater score type"
@@ -2067,7 +2073,7 @@
 
 	"264"  // Frying Pan // saxxy
 	{
-		"2010/09/30" // Mann-Conomy Update
+		"2010/09/30" // Introduction date
 		{
 			"cannot trade"
 			{
@@ -2100,7 +2106,7 @@
 
 	"317"  // The Candy Cane // tf_weapon_bat
 	{
-		"2010/12/16" // Australian Christmas 2010
+		"2010/12/16" // Introduction date
 		{
 			"drop health pack on kill"
 			{
@@ -2135,7 +2141,7 @@
 
 	"325"  // The Boston Basher // tf_weapon_bat
 	{
-		"2010/12/16" // Australian Christmas 2010
+		"2010/12/16" // Introduction date
 		{
 			"bleeding duration"
 			{
@@ -2254,7 +2260,7 @@
 				"value"	"1"
 			}
 		}
-		"2011/03/22" // Japan Charity DLC
+		"2011/03/22" // Japan Charity
 		{
 			"mark for death"
 			{
@@ -2325,7 +2331,7 @@
 				"value"	"1"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"turn to gold"
 			{
@@ -2388,7 +2394,7 @@
 				"value"	"0.8"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"air dash count"
 			{
@@ -2439,7 +2445,7 @@
 				"value"	"10 0 -7"
 			}
 		}
-		"2017/10/20" // Scream Fortress 2017
+		"2017/10/20" // Jungle Inferno
 		{
 			"air dash count"
 			{
@@ -2467,7 +2473,7 @@
 				"value"	"10 0 -7"
 			}
 		}
-		"2017/12/21" // Smissmas 2017
+		"2017/12/21" // Smissmass 2017
 		{
 			"air dash count"
 			{
@@ -2562,7 +2568,7 @@
 
 	"572"  // Unarmed Combat // tf_weapon_bat_fish
 	{
-		"2011/10/27" // Scream Fortress 2011
+		"2011/10/27" // Introduction date
 		{
 			"fish damage override"
 			{
@@ -2620,7 +2626,7 @@
 
 	"648"  // The Wrap Assassin // tf_weapon_bat_giftwrap
 	{
-		"2011/12/15" // Australian Christmas 2011
+		"2011/12/15" // Introduction date
 		{
 			"mod bat launches ornaments"
 			{
@@ -2729,7 +2735,7 @@
 		"2012/11/29" // Introduction date
 		{
 		}
-		"2012/12/20" // Mecha Update
+		"2012/12/20" // Mecha Update / Smissmass
 		{
 			"cannot trade"
 			{
@@ -2759,7 +2765,7 @@
 		"2013/10/29" // Introduction date
 		{
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"turn to gold"
 			{
@@ -2767,7 +2773,7 @@
 				"value"	"1"
 			}
 		}
-		"2013/12/20" // Smissmas 2013
+		"2013/12/20" // Smissmass 2013
 		{
 			"turn to gold"
 			{
@@ -2802,6 +2808,9 @@
 
 	"1123"  // The Necro Smasher" // saxxy
 	{
+		"2015/10/28" // Scream Fortress 2015
+		{
+		}
 		"2016/07/07" // Meet Your Match
 		{
 			"min_viewmodel_offset"
@@ -2827,6 +2836,9 @@
 
 	"1127"  // The Crossing Guard" // saxxy
 	{
+		"2014/12/08" // End of the Line
+		{
+		}
 		"2016/07/07" // Meet Your Match
 		{
 			"min_viewmodel_offset"
@@ -2852,7 +2864,7 @@
 
 	"30667"  // Batsaber // tf_weapon_bat
 	{
-		"2015/10/06" // Invasion Update
+		"2015/10/06" // Invasion
 		{
 			"is marketable"
 			{
@@ -3090,7 +3102,7 @@
 
 	"228"  // The Black Box // tf_weapon_rocketlauncher
 	{
-		"2010/09/30" // Mann-Conomy Update
+		"2010/09/30" // Mannconomy Update
 		{
 			"heal on hit for rapidfire"
 			{
@@ -3230,7 +3242,7 @@
 
 	"237"  // Rocket Jumper // tf_weapon_rocketlauncher
 	{
-		"2010/09/30" // Mann-Conomy Update
+		"2010/09/30" // Mannconomy Update
 		{
 			"damage penalty"
 			{
@@ -3304,7 +3316,7 @@
 				"value"	"2"
 			}
 		}
-		"2011/09/08" // Foundry Update (pre-release snapshot)
+		"2011/09/08" // Foundry Update (snapshot)
 		{
 			"damage penalty"
 			{
@@ -3494,7 +3506,7 @@
 				"value"	"0.75"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"Projectile speed increased"
 			{
@@ -3567,7 +3579,7 @@
 
 	"441"  // The Cow Mangler 5000 // tf_weapon_particle_cannon
 	{
-		"2011/07/20" // W+M1 Update
+		"2011/07/20" // Dr. Grordbort's Victory Pack
 		{
 			"crit mod disabled"
 			{
@@ -3590,7 +3602,7 @@
 				"value"	"1"
 			}
 		}
-		"2011/08/18" // Mann-tastic! Update
+		"2011/08/18" // Manno-Technology Bundle
 		{
 			"crit mod disabled"
 			{
@@ -3729,7 +3741,7 @@
 		"2011/08/09" // Introduction date
 		{
 		}
-		"2011/08/18" // Mann-tastic! Update
+		"2011/08/18" // Manno-Technology Bundle
 		{
 			"centerfire projectile"
 			{
@@ -3810,7 +3822,7 @@
 				"value"	"1"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2014/02/07" // Strongbox Pack
 		{
 			"fire rate bonus HIDDEN"
 			{
@@ -3943,7 +3955,7 @@
 
 	"1104"  // The Air Strike // tf_weapon_rocketlauncher_airstrike
 	{
-		"2014/06/18" // Love & War Update
+		"2014/06/18" // Love & War
 		{
 			"Blast radius decreased"
 			{
@@ -4147,7 +4159,7 @@
 				"value"	"1"
 			}
 		}
-		"2012/12/20" // Mecha Update
+		"2012/12/20" // Mecha Update / Smissmass
 		{
 			"kill eater score type"
 			{
@@ -4160,7 +4172,7 @@
 				"value"	"1"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2014/02/07" // Strongbox Pack
 		{
 			"kill eater score type"
 			{
@@ -4221,7 +4233,7 @@
 				"value"	"0.4"
 			}
 		}
-		"2014/06/18" // Love & War Update
+		"2014/06/18" // Love & War
 		{
 			"rocket jump damage reduction"
 			{
@@ -4238,7 +4250,7 @@
 
 	"226"  // The Battalion's Backup // tf_weapon_buff_item
 	{
-		"2010/09/30" // Mann-Conomy Update
+		"2010/09/30" // Mannconomy Update
 		{
 			"mod soldier buff type"
 			{
@@ -4246,7 +4258,7 @@
 				"value"	"2"
 			}
 		}
-		"2013/10/10" // Fall 2013
+		"2013/10/10" // Fall Event 2013
 		{
 			"kill eater score type"
 			{
@@ -4259,7 +4271,7 @@
 				"value"	"2"
 			}
 		}
-		"2013/12/20" // Smissmas 2013
+		"2013/12/20" // Smissmass 2013
 		{
 			"kill eater score type"
 			{
@@ -4277,7 +4289,7 @@
 				"value"	"20"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2014/02/07" // Strongbox Pack
 		{
 			"kill eater score type"
 			{
@@ -4345,7 +4357,7 @@
 				"value"	"1"
 			}
 		}
-		"2011/03/22" // Japan Charity DLC
+		"2011/03/22" // Japan Charity
 		{
 			"mod soldier buff type"
 			{
@@ -4353,7 +4365,7 @@
 				"value"	"3"
 			}
 		}
-		"2013/12/20" // Smissmas 2013
+		"2013/12/20" // Smissmass 2013
 		{
 			"kill eater score type"
 			{
@@ -4371,7 +4383,7 @@
 				"value"	"2"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2014/02/07" // Strongbox Pack
 		{
 			"kill eater score type"
 			{
@@ -4467,7 +4479,7 @@
 				"value"	"0.85"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"clip size penalty"
 			{
@@ -4490,7 +4502,7 @@
 				"value"	"1"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2014/02/07" // Strongbox Pack
 		{
 			"clip size penalty"
 			{
@@ -4611,7 +4623,7 @@
 
 	"442"  // The Righteous Bison // tf_weapon_raygun
 	{
-		"2011/07/20" // W+M1 Update
+		"2011/07/20" // Dr. Grordbort's Victory Pack
 		{
 			"energy weapon no ammo"
 			{
@@ -4702,7 +4714,7 @@
 				"value"	"26"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2014/02/07" // Strongbox Pack
 		{
 			"damage force reduction"
 			{
@@ -4730,7 +4742,7 @@
 				"value"	"1"
 			}
 		}
-		"2017/10/20" // Scream Fortress 2017
+		"2017/10/20" // Jungle Inferno
 		{
 			"damage force reduction"
 			{
@@ -4763,7 +4775,7 @@
 				"value"	"3.0"
 			}
 		}
-		"2017/12/21" // Smissmas 2017
+		"2017/12/21" // Smissmass 2017
 		{
 			"damage force reduction"
 			{
@@ -4805,7 +4817,7 @@
 
 	"1101"  // The B.A.S.E. Jumper // tf_weapon_parachute
 	{
-		"2014/06/18" // Love & War Update
+		"2014/06/18" // Love & War
 		{
 			"parachute attribute"
 			{
@@ -4827,7 +4839,7 @@
 
 	"1153"  // Panic Attack // tf_weapon_shotgun
 	{
-		"2014/12/22" // Smissmas 2014
+		"2014/12/22" // Smissmass 2014
 		{
 			"panic_attack"
 			{
@@ -5009,7 +5021,7 @@
 				"value"	"10 0 -11"
 			}
 		}
-		"2017/10/20" // Scream Fortress 2017
+		"2017/10/20" // Jungle Inferno
 		{
 			"damage penalty"
 			{
@@ -5145,7 +5157,7 @@
 				"value"	"1"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"mod shovel damage boost"
 			{
@@ -5276,7 +5288,7 @@
 				"value"	"1"
 			}
 		}
-		"2011/03/22" // Japan Charity DLC
+		"2011/03/22" // Japan Charity
 		{
 			"decapitate type"
 			{
@@ -5294,7 +5306,7 @@
 				"value"	"1"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"decapitate type"
 			{
@@ -5473,7 +5485,7 @@
 				"value"	"1.55"
 			}
 		}
-		"2013/10/10" // Fall 2013
+		"2013/10/10" // Fall Event 2013
 		{
 			"damage penalty"
 			{
@@ -5617,7 +5629,7 @@
 				"value"	"1"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"mod shovel speed boost"
 			{
@@ -5748,7 +5760,7 @@
 				"value"	"10 0 -10"
 			}
 		}
-		"2017/10/20" // Scream Fortress 2017
+		"2017/10/20" // Jungle Inferno
 		{
 			"flame_gravity"
 			{
@@ -5801,7 +5813,7 @@
 				"value"	"10 0 -10"
 			}
 		}
-		"2017/12/21" // Smissmas 2017
+		"2017/12/21" // Smissmass 2017
 		{
 			"flame_gravity"
 			{
@@ -6014,7 +6026,7 @@
 				"value"	"10 -3 -10"
 			}
 		}
-		"2017/10/20" // Scream Fortress 2017
+		"2017/10/20" // Jungle Inferno
 		{
 			"flame_gravity"
 			{
@@ -6077,7 +6089,7 @@
 				"value"	"0"
 			}
 		}
-		"2017/12/21" // Smissmas 2017
+		"2017/12/21" // Smissmass 2017
 		{
 			"flame_gravity"
 			{
@@ -6144,7 +6156,7 @@
 
 	"215"  // The Degreaser // tf_weapon_flamethrower
 	{
-		"2010/09/30" // Mann-Conomy Update
+		"2010/09/30" // Mannconomy Update
 		{
 			"deploy time decreased"
 			{
@@ -6259,7 +6271,7 @@
 				"value"	"10 0 -10"
 			}
 		}
-		"2017/10/20" // Scream Fortress 2017
+		"2017/10/20" // Jungle Inferno
 		{
 			"flame_gravity"
 			{
@@ -6337,7 +6349,7 @@
 				"value"	"1"
 			}
 		}
-		"2017/12/21" // Smissmas 2017
+		"2017/12/21" // Smissmass 2017
 		{
 			"flame_gravity"
 			{
@@ -6495,7 +6507,7 @@
 				"value"	"0"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"damage penalty"
 			{
@@ -6619,7 +6631,7 @@
 				"value"	"10 0 -12"
 			}
 		}
-		"2017/10/20" // Scream Fortress 2017
+		"2017/10/20" // Jungle Inferno
 		{
 			"burn damage earns rage"
 			{
@@ -6697,7 +6709,7 @@
 				"value"	"10 0 -12"
 			}
 		}
-		"2017/12/21" // Smissmas 2017
+		"2017/12/21" // Smissmass 2017
 		{
 			"burn damage earns rage"
 			{
@@ -6885,7 +6897,7 @@
 				"value"	"10 0 -10"
 			}
 		}
-		"2017/10/20" // Scream Fortress 2017
+		"2017/10/20" // Jungle Inferno
 		{
 			"flame_gravity"
 			{
@@ -6938,7 +6950,7 @@
 				"value"	"10 0 -10"
 			}
 		}
-		"2017/12/21" // Smissmas 2017
+		"2017/12/21" // Smissmass 2017
 		{
 			"flame_gravity"
 			{
@@ -7086,7 +7098,7 @@
 				"value"	"1"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"hidden secondary max ammo penalty"
 			{
@@ -7356,7 +7368,7 @@
 				"value"	"2"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"energy weapon no ammo"
 			{
@@ -7517,7 +7529,7 @@
 				"value"	"3"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"hidden secondary max ammo penalty"
 			{
@@ -7568,7 +7580,7 @@
 				"value"	"1"
 			}
 		}
-		"2015/10/06" // Invasion Update
+		"2015/10/06" // Invasion
 		{
 			"hidden secondary max ammo penalty"
 			{
@@ -7696,7 +7708,7 @@
 
 	"1179"  // Thermal Thruster // tf_weapon_rocketpack
 	{
-		"2017/10/20" // Scream Fortress 2017
+		"2017/10/20" // Jungle Inferno
 		{
 			"min_viewmodel_offset"
 			{
@@ -7881,7 +7893,7 @@
 				"value"	"1"
 			}
 		}
-		"2014/06/18" // Love & War Update
+		"2014/06/18" // Love & War
 		{
 			"dmg penalty vs nonburning"
 			{
@@ -8050,7 +8062,7 @@
 
 	"214"  // The Powerjack // tf_weapon_fireaxe
 	{
-		"2010/09/30" // Mann-Conomy Update
+		"2010/09/30" // Mannconomy Update
 		{
 			"heal on kill"
 			{
@@ -8202,7 +8214,7 @@
 
 	"326"  // The Back Scratcher // tf_weapon_fireaxe
 	{
-		"2010/12/16" // Australian Christmas 2010
+		"2010/12/16" // Introduction date
 		{
 			"damage bonus"
 			{
@@ -8320,7 +8332,7 @@
 
 	"457"  // The Postal Pummeler // tf_weapon_fireaxe
 	{
-		"2011/06/30" // Summer Camp 2011
+		"2011/06/30" // Introduction date
 		{
 			"crit vs burning players"
 			{
@@ -8338,7 +8350,7 @@
 				"value"	"1"
 			}
 		}
-		"2014/06/18" // Love & War Update
+		"2014/06/18" // Love & War
 		{
 			"dmg penalty vs nonburning"
 			{
@@ -8543,7 +8555,7 @@
 				"value"	"1"
 			}
 		}
-		"2012/09/02" // First Workshop Content Pack
+		"2012/09/02" // First Workshop Pack
 		{
 			"damage all connected"
 			{
@@ -8687,7 +8699,7 @@
 				"value"	"0"
 			}
 		}
-		"2012/08/14" // Triad Update
+		"2012/08/14" // Triad Pack
 		{
 			"damage penalty"
 			{
@@ -8775,7 +8787,7 @@
 
 	"1181"  // Hot Hand // tf_weapon_slap
 	{
-		"2017/10/20" // Scream Fortress 2017
+		"2017/10/20" // Jungle Inferno
 		{
 			"damage penalty"
 			{
@@ -8839,7 +8851,7 @@
 
 	"308"  // The Loch-n-Load // tf_weapon_grenadelauncher
 	{
-		"2010/12/16" // Australian Christmas 2010
+		"2010/12/16" // Introduction date
 		{
 			"clip size penalty"
 			{
@@ -8895,7 +8907,7 @@
 				"value"	"2"
 			}
 		}
-		"2012/09/02" // First Workshop Content Pack
+		"2012/09/02" // First Workshop Pack
 		{
 			"clip size penalty"
 			{
@@ -8923,7 +8935,7 @@
 				"value"	"2"
 			}
 		}
-		"2014/12/22" // Smissmas 2014
+		"2014/12/22" // Smissmass 2014
 		{
 			"clip size penalty"
 			{
@@ -9092,7 +9104,7 @@
 				"value"	"25"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2014/02/07" // Strongbox Pack
 		{
 			"mult charge turn control"
 			{
@@ -9110,7 +9122,7 @@
 				"value"	"1"
 			}
 		}
-		"2014/12/22" // Smissmas 2014
+		"2014/12/22" // Smissmass 2014
 		{
 			"mult charge turn control"
 			{
@@ -9237,7 +9249,7 @@
 				"value"	"25"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2014/02/07" // Strongbox Pack
 		{
 			"mult charge turn control"
 			{
@@ -9255,7 +9267,7 @@
 				"value"	"1"
 			}
 		}
-		"2014/12/22" // Smissmas 2014
+		"2014/12/22" // Smissmass 2014
 		{
 			"mult charge turn control"
 			{
@@ -9338,7 +9350,7 @@
 
 	"996"  // The Loose Cannon // tf_weapon_cannon
 	{
-		"2012/12/20" // Mecha Update
+		"2012/12/20" // Mecha Update / Smissmass
 		{
 			"override projectile type"
 			{
@@ -9409,7 +9421,7 @@
 				"value"	"1"
 			}
 		}
-		"2013/10/10" // Fall 2013
+		"2013/10/10" // Fall Event 2013
 		{
 			"override projectile type"
 			{
@@ -9447,7 +9459,7 @@
 				"value"	"65"
 			}
 		}
-		"2014/12/22" // Smissmas 2014
+		"2014/12/22" // Smissmass 2014
 		{
 			"override projectile type"
 			{
@@ -9603,7 +9615,7 @@
 
 	"1151"  // The Iron Bomber // tf_weapon_grenadelauncher
 	{
-		"2014/12/22" // Smissmas 2014
+		"2014/12/22" // Smissmass 2014
 		{
 			"Blast radius decreased"
 			{
@@ -9770,7 +9782,7 @@
 				"value"	"0.4"
 			}
 		}
-		"2010/09/30" // Mann-Conomy Update
+		"2010/09/30" // Mannconomy Update
 		{
 			"fire rate bonus"
 			{
@@ -9858,7 +9870,7 @@
 				"value"	"0.35"
 			}
 		}
-		"2010/01/13" // 1.0.8.0 Update
+		"2010/01/13" // v1080 (base)
 		{
 			"dmg taken from fire reduced"
 			{
@@ -9902,7 +9914,7 @@
 				"value"	"1"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2014/02/07" // Strongbox Pack
 		{
 			"dmg taken from fire reduced"
 			{
@@ -9970,7 +9982,7 @@
 				"value"	"-75"
 			}
 		}
-		"2010/12/16" // Australian Christmas 2010
+		"2010/12/16" // Australian Christmas
 		{
 			"damage penalty"
 			{
@@ -10026,7 +10038,7 @@
 				"value"	"2"
 			}
 		}
-		"2011/09/08" // Foundry Update (pre-release snapshot)
+		"2011/09/08" // Foundry Update (snapshot)
 		{
 			"damage penalty"
 			{
@@ -10148,7 +10160,7 @@
 				"value"	"1"
 			}
 		}
-		"2013/10/10" // Fall 2013
+		"2013/10/10" // Fall Event 2013
 		{
 			"damage penalty"
 			{
@@ -10256,7 +10268,7 @@
 				"value"	"0.8"
 			}
 		}
-		"2011/06/30" // Summer Camp 2011
+		"2011/06/30" // Summer Camp Sale
 		{
 			"no charge impact range"
 			{
@@ -10279,7 +10291,7 @@
 				"value"	"0.85"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2014/02/07" // Strongbox Pack
 		{
 			"no charge impact range"
 			{
@@ -10339,7 +10351,7 @@
 
 	"1099"  // The Tide Turner // tf_wearable_demoshield
 	{
-		"2014/06/18" // Love & War Update
+		"2014/06/18" // Love & War
 		{
 			"dmg taken from fire reduced"
 			{
@@ -10367,7 +10379,7 @@
 				"value"	"1"
 			}
 		}
-		"2014/12/22" // Smissmas 2014
+		"2014/12/22" // Smissmass 2014
 		{
 			"dmg taken from fire reduced"
 			{
@@ -10470,7 +10482,7 @@
 
 	"1150"  // The Quickiebomb Launcher // tf_weapon_pipebomblauncher
 	{
-		"2014/12/22" // Smissmas 2014
+		"2014/12/22" // Smissmass 2014
 		{
 			"sticky arm time bonus"
 			{
@@ -10723,7 +10735,7 @@
 				"value"	"1"
 			}
 		}
-		"2011/09/08" // Foundry Update (pre-release snapshot)
+		"2011/09/08" // Foundry Update (snapshot)
 		{
 			"crit mod disabled"
 			{
@@ -10815,7 +10827,7 @@
 				"value"	"6"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"crit mod disabled"
 			{
@@ -10946,7 +10958,7 @@
 				"value"	"0.85"
 			}
 		}
-		"2014/12/22" // Smissmas 2014
+		"2014/12/22" // Smissmass 2014
 		{
 			"provide on active"
 			{
@@ -11129,7 +11141,7 @@
 				"value"	"1"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"crit mod disabled"
 			{
@@ -11270,7 +11282,7 @@
 
 	"307"  // Ullapool Caber // tf_weapon_stickbomb
 	{
-		"2010/12/16" // Australian Christmas 2010
+		"2010/12/16" // Introduction date
 		{
 			"crit mod disabled"
 			{
@@ -11339,7 +11351,7 @@
 
 	"327"  // The Claidheamh Mòr // tf_weapon_sword
 	{
-		"2010/12/16" // Australian Christmas 2010
+		"2010/12/16" // Introduction date
 		{
 			"crit mod disabled"
 			{
@@ -11393,7 +11405,7 @@
 				"value"	"-15"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"crit mod disabled"
 			{
@@ -11416,7 +11428,7 @@
 				"value"	"1"
 			}
 		}
-		"2014/12/22" // Smissmas 2014
+		"2014/12/22" // Smissmass 2014
 		{
 			"crit mod disabled"
 			{
@@ -11605,7 +11617,7 @@
 				"value"	"0"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"charge recharge rate increased"
 			{
@@ -11771,7 +11783,7 @@
 
 	"482"  // Nessie's Nine Iron // tf_weapon_sword
 	{
-		"2011/06/30" // Summer Camp 2011
+		"2011/06/30" // Introduction date
 		{
 			"crit mod disabled"
 			{
@@ -11789,7 +11801,7 @@
 				"value"	"1"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"crit mod disabled"
 			{
@@ -11933,7 +11945,7 @@
 		"2011/09/07" // Introduction date
 		{
 		}
-		"2014/02/07" // Strongbox Update
+		"2014/02/07" // Strongbox Pack
 		{
 			"allowed in medieval mode"
 			{
@@ -12000,7 +12012,7 @@
 				"value"	"0.75"
 			}
 		}
-		"2010/12/16" // Australian Christmas 2010
+		"2010/12/16" // Australian Christmas
 		{
 			"slow enemy on hit"
 			{
@@ -12023,7 +12035,7 @@
 				"value"	"1"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2014/02/07" // Strongbox Pack
 		{
 			"slow enemy on hit"
 			{
@@ -12159,7 +12171,7 @@
 
 	"312"  // The Brass Beast // tf_weapon_minigun
 	{
-		"2010/12/16" // Australian Christmas 2010
+		"2010/12/16" // Introduction date
 		{
 			"damage bonus"
 			{
@@ -12288,7 +12300,7 @@
 				"value"	"1.2"
 			}
 		}
-		"2011/06/30" // Summer Camp 2011
+		"2011/06/30" // Summer Camp Sale
 		{
 			"minigun spinup time decreased"
 			{
@@ -12417,7 +12429,7 @@
 
 	"811"  // The Huo-Long Heater // tf_weapon_minigun
 	{
-		"2012/08/14" // Triad Update
+		"2012/08/14" // Introduction date
 		{
 			"ring of fire while aiming"
 			{
@@ -12462,6 +12474,9 @@
 
 	"850"  // Deflector (MvM only?) // tf_weapon_minigun
 	{
+		"2012/08/15" // Mann vs. Machine
+		{
+		}
 		"2015/07/02" // Gun Mettle
 		{
 			"weapon_stattrak_module_scale"
@@ -12520,7 +12535,7 @@
 				"value"	"1"
 			}
 		}
-		"2012/12/20" // Mecha Update
+		"2012/12/20" // Mecha Update / Smissmass
 		{
 			"kill eater score type"
 			{
@@ -12528,7 +12543,7 @@
 				"value"	"50"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"kill eater score type"
 			{
@@ -12541,7 +12556,7 @@
 				"value"	"1"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2014/02/07" // Strongbox Pack
 		{
 			"kill eater score type"
 			{
@@ -12632,7 +12647,7 @@
 				"value"	"1"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"lunchbox adds maxhealth bonus"
 			{
@@ -12645,7 +12660,7 @@
 				"value"	"1"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2014/02/07" // Strongbox Pack
 		{
 			"lunchbox adds maxhealth bonus"
 			{
@@ -12761,7 +12776,7 @@
 
 	"311"  // The Buffalo Steak Sandvich // tf_weapon_lunchbox
 	{
-		"2010/12/16" // Australian Christmas 2010
+		"2010/12/16" // Introduction date
 		{
 			"lunchbox adds minicrits"
 			{
@@ -12769,7 +12784,7 @@
 				"value"	"2"
 			}
 		}
-		"2012/12/20" // Mecha Update
+		"2012/12/20" // Mecha Update / Smissmass
 		{
 			"kill eater score type"
 			{
@@ -12782,7 +12797,7 @@
 				"value"	"2"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"kill eater score type"
 			{
@@ -12800,7 +12815,7 @@
 				"value"	"1"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2014/02/07" // Strongbox Pack
 		{
 			"kill eater score type"
 			{
@@ -12921,7 +12936,7 @@
 				"value"	"1.4"
 			}
 		}
-		"2012/09/02" // First Workshop Content Pack
+		"2012/09/02" // First Workshop Pack
 		{
 			"damage penalty"
 			{
@@ -12952,7 +12967,7 @@
 				"value"	"1.15"
 			}
 		}
-		"2015/10/06" // Invasion Update
+		"2015/10/06" // Invasion
 		{
 			"damage penalty"
 			{
@@ -13118,7 +13133,7 @@
 				"value"	"1"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"lunchbox adds maxhealth bonus"
 			{
@@ -13136,7 +13151,7 @@
 				"value"	"1"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2014/02/07" // Strongbox Pack
 		{
 			"lunchbox adds maxhealth bonus"
 			{
@@ -13159,7 +13174,7 @@
 				"value"	"1"
 			}
 		}
-		"2017/10/20" // Scream Fortress 2017
+		"2017/10/20" // Jungle Inferno
 		{
 			"lunchbox adds maxhealth bonus"
 			{
@@ -13202,7 +13217,7 @@
 				"value"	"#TF_Sandwich"
 			}
 		}
-		"2017/12/21" // Smissmas 2017
+		"2017/12/21" // Smissmass 2017
 		{
 			"lunchbox adds maxhealth bonus"
 			{
@@ -13260,7 +13275,7 @@
 				"value"	"3"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"lunchbox adds minicrits"
 			{
@@ -13273,7 +13288,7 @@
 				"value"	"1"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2014/02/07" // Strongbox Pack
 		{
 			"lunchbox adds minicrits"
 			{
@@ -13463,7 +13478,7 @@
 
 	"239"  // Gloves of Running Urgently // tf_weapon_fists
 	{
-		"2010/09/30" // Mann-Conomy Update
+		"2010/09/30" // Mannconomy Update
 		{
 			"move speed bonus"
 			{
@@ -13673,7 +13688,7 @@
 
 	"310"  // Warrior's Spirit // tf_weapon_fists
 	{
-		"2010/12/16" // Australian Christmas 2010
+		"2010/12/16" // Introduction date
 		{
 			"damage bonus"
 			{
@@ -13759,7 +13774,7 @@
 
 	"331"  // Fists of Steel // tf_weapon_fists
 	{
-		"2010/12/16" // Australian Christmas 2010
+		"2010/12/16" // Introduction date
 		{
 			"dmg from ranged reduced"
 			{
@@ -14018,7 +14033,7 @@
 				"value"	"1"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"crit kill will gib"
 			{
@@ -14053,7 +14068,7 @@
 
 	"656"  // The Holiday Punch // tf_weapon_fists
 	{
-		"2011/12/15" // Australian Christmas 2011
+		"2011/12/15" // Introduction date
 		{
 			"crit forces victim to laugh"
 			{
@@ -14109,7 +14124,7 @@
 				"value"	"0"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"crit forces victim to laugh"
 			{
@@ -14194,7 +14209,7 @@
 
 	"1100"  // The Bread Bite // tf_weapon_fists
 	{
-		"2014/06/18" // Love & War Update
+		"2014/06/18" // Love & War
 		{
 			"move speed bonus"
 			{
@@ -14535,7 +14550,7 @@
 				"value"	"0.5"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"mod sentry killed revenge"
 			{
@@ -14626,7 +14641,7 @@
 		"2011/08/11" // Introduction date
 		{
 		}
-		"2011/08/18" // Mann-tastic! Update
+		"2011/08/18" // Manno-Technology Bundle
 		{
 			"mod ammo per shot"
 			{
@@ -14878,7 +14893,7 @@
 
 	"997"  // The Rescue Ranger // tf_weapon_shotgun_building_rescue
 	{
-		"2012/12/20" // Mecha Update
+		"2012/12/20" // Mecha Update / Smissmass
 		{
 			"engineer building teleporting pickup"
 			{
@@ -15048,7 +15063,7 @@
 				"value"	"10 0 -10"
 			}
 		}
-		"2017/10/20" // Scream Fortress 2017
+		"2017/10/20" // Jungle Inferno
 		{
 			"engineer building teleporting pickup"
 			{
@@ -15191,7 +15206,10 @@
 
 	"140"  // The Wrangler // tf_weapon_laser_pointer
 	{
-		"2014/02/07" // Strongbox Update
+		"2010/07/08" // Engineer Update
+		{
+		}
+		"2014/02/07" // Strongbox Pack
 		{
 			"kill eater score type"
 			{
@@ -15219,7 +15237,7 @@
 		"2011/08/17" // Introduction date
 		{
 		}
-		"2011/08/18" // Mann-tastic! Update
+		"2011/08/18" // Manno-Technology Bundle
 		{
 			"mod ammo per shot"
 			{
@@ -15252,7 +15270,7 @@
 				"value"	"0"
 			}
 		}
-		"2011/09/08" // Foundry Update (pre-release snapshot)
+		"2011/09/08" // Foundry Update (snapshot)
 		{
 			"mod ammo per shot"
 			{
@@ -15333,7 +15351,7 @@
 				"value"	"0.75"
 			}
 		}
-		"2013/10/10" // Fall 2013
+		"2013/10/10" // Fall Event 2013
 		{
 			"mod ammo per shot"
 			{
@@ -15381,7 +15399,7 @@
 				"value"	"0.75"
 			}
 		}
-		"2013/12/20" // Smissmas 2013
+		"2013/12/20" // Smissmass 2013
 		{
 			"mod ammo per shot"
 			{
@@ -15419,7 +15437,7 @@
 				"value"	"1"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2014/02/07" // Strongbox Pack
 		{
 			"mod ammo per shot"
 			{
@@ -15547,14 +15565,6 @@
 
 	"1086"  // Festive Wrangler // tf_weapon_laser_pointer
 	{
-		"2014/02/07" // Strongbox Update
-		{
-			"kill eater score type"
-			{
-				"attribute_class"	"kill_eater_score_type"
-				"value"	"86"
-			}
-		}
 		"2014/10/29" // Scream Fortress 2014
 		{
 			"kill eater score type"
@@ -15590,7 +15600,7 @@
 
 	"30668"  // The Gigar Counter // tf_weapon_laser_pointer
 	{
-		"2015/10/06" // Invasion Update
+		"2015/10/06" // Invasion
 		{
 			"kill eater score type"
 			{
@@ -15834,7 +15844,7 @@
 				"value"	"0"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"mod wrench builds minisentry"
 			{
@@ -16054,7 +16064,7 @@
 				"value"	"1.20"
 			}
 		}
-		"2014/06/18" // Love & War Update
+		"2014/06/18" // Love & War
 		{
 			"crit mod disabled"
 			{
@@ -16127,7 +16137,7 @@
 				"value"	"1"
 			}
 		}
-		"2010/09/30" // Mann-Conomy Update
+		"2010/09/30" // Mannconomy Update
 		{
 			"turn to gold"
 			{
@@ -16185,7 +16195,7 @@
 
 	"329"  // The Jag // tf_weapon_wrench
 	{
-		"2010/12/16" // Australian Christmas 2010
+		"2010/12/16" // Introduction date
 		{
 			"Construction rate increased"
 			{
@@ -16198,7 +16208,7 @@
 				"value"	"0.75"
 			}
 		}
-		"2011/08/18" // Mann-tastic! Update
+		"2011/08/18" // Manno-Technology Bundle
 		{
 			"Construction rate increased"
 			{
@@ -16446,7 +16456,7 @@
 				"value"	"1"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"alt fire teleport to spawn"
 			{
@@ -16464,7 +16474,7 @@
 				"value"	"1"
 			}
 		}
-		"2014/06/18" // Love & War Update
+		"2014/06/18" // Love & War
 		{
 			"alt fire teleport to spawn"
 			{
@@ -16641,7 +16651,7 @@
 
 	"36"  // The Blutsauger // tf_weapon_syringegun_medic
 	{
-		"2008/04/29" // Gold Rush
+		"2008/04/29" // Gold Rush Update
 		{
 			"heal on hit for rapidfire"
 			{
@@ -16689,7 +16699,7 @@
 
 	"305"  // Crusader's Crossbow // tf_weapon_crossbow
 	{
-		"2010/12/16" // Australian Christmas 2010
+		"2010/12/16" // Introduction date
 		{
 			"fires healing bolts"
 			{
@@ -16748,7 +16758,7 @@
 				"value"	"0.25"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2014/02/07" // Strongbox Pack
 		{
 			"fires healing bolts"
 			{
@@ -16771,7 +16781,7 @@
 				"value"	"1"
 			}
 		}
-		"2014/12/22" // Smissmas 2014
+		"2014/12/22" // Smissmass 2014
 		{
 			"sniper no headshots"
 			{
@@ -16955,7 +16965,7 @@
 
 	"35"  // The Kritzkrieg // tf_weapon_medigun
 	{
-		"2008/04/29" // Gold Rush
+		"2008/04/29" // Gold Rush Update
 		{
 			"medigun charge is crit boost"
 			{
@@ -17040,7 +17050,7 @@
 				"value"	"1"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"medigun charge is crit boost"
 			{
@@ -17246,7 +17256,7 @@
 
 	"998"  // The Vaccinator // tf_weapon_medigun
 	{
-		"2012/12/20" // Mecha Update
+		"2012/12/20" // Mecha Update / Smissmass
 		{
 			"lunchbox adds minicrits"
 			{
@@ -17585,7 +17595,7 @@
 
 	"37"  // The Ubersaw // tf_weapon_bonesaw
 	{
-		"2008/04/29" // Gold Rush
+		"2008/04/29" // Gold Rush Update
 		{
 			"add uber charge on hit"
 			{
@@ -17616,7 +17626,7 @@
 				"value"	"1"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"add uber charge on hit"
 			{
@@ -17667,7 +17677,7 @@
 				"value"	"10 0 -12"
 			}
 		}
-		"2017/10/20" // Scream Fortress 2017
+		"2017/10/20" // Jungle Inferno
 		{
 			"add uber charge on hit"
 			{
@@ -17705,7 +17715,7 @@
 				"value"	"1"
 			}
 		}
-		"2017/12/21" // Smissmas 2017
+		"2017/12/21" // Smissmass 2017
 		{
 			"add uber charge on hit"
 			{
@@ -17752,7 +17762,7 @@
 
 	"173"  // The Vita-Saw // tf_weapon_bonesaw
 	{
-		"2010/09/30" // Mann-Conomy Update
+		"2010/09/30" // Mannconomy Update
 		{
 			"preserve ubercharge"
 			{
@@ -17833,7 +17843,7 @@
 
 	"304"  // Amputator // tf_weapon_bonesaw
 	{
-		"2010/12/16" // Australian Christmas 2010
+		"2010/12/16" // Introduction date
 		{
 			"enables aoe heal"
 			{
@@ -17854,7 +17864,7 @@
 				"value"	"3"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"provide on active"
 			{
@@ -18096,7 +18106,7 @@
 				"value"	"1"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"hidden primary max ammo bonus"
 			{
@@ -18114,7 +18124,7 @@
 				"value"	"1"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2014/02/07" // Strongbox Pack
 		{
 			"hidden primary max ammo bonus"
 			{
@@ -18169,7 +18179,7 @@
 
 	"230"  // The Sydney Sleeper // tf_weapon_sniperrifle
 	{
-		"2010/09/30" // Mann-Conomy Update
+		"2010/09/30" // Mannconomy Update
 		{
 			"sniper no headshots"
 			{
@@ -18367,7 +18377,7 @@
 				"value"	"1"
 			}
 		}
-		"2014/06/18" // Love & War Update
+		"2014/06/18" // Love & War
 		{
 			"sniper penetrate players when charged"
 			{
@@ -18595,7 +18605,7 @@
 
 	"1098"  // The Classic // tf_weapon_sniperrifle_classic
 	{
-		"2014/06/18" // Love & War Update
+		"2014/06/18" // Love & War
 		{
 			"crit on hard hit"
 			{
@@ -18670,7 +18680,7 @@
 
 	"30665"  // Shooting Star // tf_weapon_sniperrifle
 	{
-		"2015/10/06" // Invasion Update
+		"2015/10/06" // Invasion
 		{
 			"sniper penetrate players when charged"
 			{
@@ -18884,7 +18894,7 @@
 				"value"	"1"
 			}
 		}
-		"2011/08/18" // Mann-tastic! Update
+		"2011/08/18" // Manno-Technology Bundle
 		{
 			"jarate description"
 			{
@@ -18963,7 +18973,7 @@
 
 	"231"  // Darwin's Danger Shield // tf_wearable
 	{
-		"2010/09/30" // Mann-Conomy Update
+		"2010/09/30" // Mannconomy Update
 		{
 			"max health additive bonus"
 			{
@@ -18989,7 +18999,7 @@
 				"value"	"1.2"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2014/02/07" // Strongbox Pack
 		{
 			"max health additive bonus"
 			{
@@ -19204,7 +19214,7 @@
 				"value"	"0"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2014/02/07" // Strongbox Pack
 		{
 			"minicritboost on kill"
 			{
@@ -19292,7 +19302,7 @@
 
 	"1105"  // The Self-Aware Beauty Mark // tf_weapon_jar
 	{
-		"2014/06/18" // Love & War Update
+		"2014/06/18" // Love & War
 		{
 			"jarate description"
 			{
@@ -19514,7 +19524,7 @@
 
 	"232"  // The Bushwacka // tf_weapon_club
 	{
-		"2010/09/30" // Mann-Conomy Update
+		"2010/09/30" // Mannconomy Update
 		{
 			"minicrits become crits"
 			{
@@ -19527,7 +19537,7 @@
 				"value"	"1.2"
 			}
 		}
-		"2014/06/18" // Love & War Update
+		"2014/06/18" // Love & War
 		{
 			"minicrits become crits"
 			{
@@ -19872,7 +19882,7 @@
 
 	"224"  // L'Etranger // tf_weapon_revolver
 	{
-		"2010/09/30" // Mann-Conomy Update
+		"2010/09/30" // Mannconomy Update
 		{
 			"add cloak on hit"
 			{
@@ -20084,7 +20094,7 @@
 
 	"810"  // The Red-Tape Recorder // tf_weapon_sapper
 	{
-		"2012/08/02" // Triad Update
+		"2012/08/02" // Pre-Triad Pack patch
 		{
 			"sapper degenerates buildings"
 			{
@@ -20110,7 +20120,7 @@
 				"value"	"0.0"
 			}
 		}
-		"2012/08/14" // Triad Update
+		"2012/08/14" // Triad Pack
 		{
 			"sapper degenerates buildings"
 			{
@@ -20216,7 +20226,7 @@
 
 	"1102"  // The Snack Attack // tf_weapon_sapper
 	{
-		"2014/06/18" // Love & War Update
+		"2014/06/18" // Love & War
 		{
 			"kill eater score type"
 			{
@@ -20287,7 +20297,7 @@
 
 	"225"  // Your Eternal Reward // tf_weapon_knife
 	{
-		"2010/09/30" // Mann-Conomy Update
+		"2010/09/30" // Mannconomy Update
 		{
 			"disguise on backstab"
 			{
@@ -20305,7 +20315,7 @@
 				"value"	"1"
 			}
 		}
-		"2010/12/16" // Australian Christmas 2010
+		"2010/12/16" // Australian Christmas
 		{
 			"disguise on backstab"
 			{
@@ -20328,7 +20338,7 @@
 				"value"	"1"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"disguise on backstab"
 			{
@@ -20454,7 +20464,7 @@
 				"value"	"1"
 			}
 		}
-		"2011/03/22" // Japan Charity DLC
+		"2011/03/22" // Japan Charity
 		{
 			"sanguisuge"
 			{
@@ -20472,7 +20482,7 @@
 				"value"	"1"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"sanguisuge"
 			{
@@ -20558,7 +20568,7 @@
 				"value"	"-25"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"add cloak on kill"
 			{
@@ -20631,7 +20641,7 @@
 
 	"574"  // The Wanga Prick // tf_weapon_knife
 	{
-		"2011/10/27" // Scream Fortress 2011
+		"2011/10/27" // Introduction date
 		{
 			"disguise on backstab"
 			{
@@ -20654,7 +20664,7 @@
 				"value"	"1"
 			}
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"disguise on backstab"
 			{
@@ -20803,7 +20813,7 @@
 
 	"649"  // The Spy-cicle // tf_weapon_knife
 	{
-		"2011/12/15" // Australian Christmas 2011
+		"2011/12/15" // Introduction date
 		{
 			"freeze backstab victim"
 			{
@@ -20889,7 +20899,7 @@
 		"2012/02/14" // AVA Promo
 		{
 		}
-		"2013/11/21" // Two Cities Update
+		"2013/11/21" // Two Cities
 		{
 			"special taunt"
 			{
@@ -20988,7 +20998,7 @@
 
 	"59"  // The Dead Ringer // tf_weapon_invis
 	{
-		"2009/05/21" // Sniper Vs Spy
+		"2009/05/21" // Sniper vs Spy
 		{
 			"set cloak is feign death"
 			{
@@ -21430,7 +21440,7 @@
 				"value"	"10 0 -6"
 			}
 		}
-		"2016/12/21" // Smissmas 2016
+		"2016/12/21" // Smissmass 2016
 		{
 			"kill eater score type"
 			{
