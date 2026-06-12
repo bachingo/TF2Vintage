@@ -1054,6 +1054,8 @@ struct collidelist_t
 #define TF2V_DAY_CONTENT_GRORDBORT             	   1403   // 2011/07/20 (Dr. Grordbort's Victory Pack Update)
 #define TF2V_DAY_CONTENT_MANNOTECHNOLOGY           1432   // 2011/08/18 (Manno-Technology Bundle)
 #define TF2V_DAY_CONTENT_TRIAD                     1794   // 2012/08/14 (Triad Pack)
+#define TF2V_DAY_CONTENT_FIRST_WORKSHOP            1817   // 2012/09/02 (First Workshop Pack)
+#define TF2V_DAY_CONTENT_SECOND_WORKSOP            2097   // 2013/06/13 (Second Workshop Pack)
 #define TF2V_DAY_CONTENT_STRONGBOX          	   2336   // 2014/02/07 (Strongbox Pack)
 
 // Seasonal Updates
