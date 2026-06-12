@@ -1057,7 +1057,7 @@ struct collidelist_t
 #define TF2V_DAY_CONTENT_STRONGBOX          	   2336   // 2014/02/07 (Strongbox Pack)
 
 // Seasonal Updates
-#define TF2V_DAY_FALL_2013                		3749   // 2013/10/10 (Fall Event 2013)
+#define TF2V_DAY_FALL_2013                		2216   // 2013/10/10 (Fall Event 2013)
 #define TF2V_DAY_SPRING_2016                 	3159   // 2016/05/11 (Mayflower)
 #define TF2V_DAY_SPRING_2017                 	3528   // 2017/05/15 (Rainy Day)
 #define TF2V_DAY_SPRING_2018                 	3845   // 2018/03/28 (Blue Moon)
