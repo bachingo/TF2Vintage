@@ -31,10 +31,7 @@
 
 	"45"  // Force-A-Nature // tf_weapon_scattergun
 	{
-		"2009/02/24" // Introduction date
-		{
-		}
-		"2010/01/13" // v1080 (base)
+		"2009/02/24" // Scout Update
 		{
 			"scattergun has knockback"
 			{
@@ -961,31 +958,7 @@
 
 	"46"  // Bonk! Atomic Punch // tf_weapon_lunchbox_drink
 	{
-		"2009/02/24" // Introduction date
-		{
-		}
-		"2013/10/10" // Fall 2013
-		{
-			"kill eater score type"
-			{
-				"attribute_class"	"kill_eater_score_type"
-				"value"	"50"
-			}
-		}
-		"2013/11/21" // Two Cities Update
-		{
-			"kill eater score type"
-			{
-				"attribute_class"	"kill_eater_score_type"
-				"value"	"50"
-			}
-			"special taunt"
-			{
-				"attribute_class"	"special_taunt"
-				"value"	"1"
-			}
-		}
-		"2014/02/07" // Strongbox Update
+		"2009/02/24" // Scout Update
 		{
 			"kill eater score type"
 			{
@@ -1030,7 +1003,7 @@
 
 	"160"  // Vintage Lugermorph // tf_weapon_pistol
 	{
-		"2010/04/15" // Introduction date
+		"2010/04/15" // Sam and Max Promo
 		{
 		}
 		"2015/07/02" // Gun Mettle
@@ -1058,10 +1031,7 @@
 
 	"163"  // Crit-a-Cola // tf_weapon_lunchbox_drink
 	{
-		"2010/04/28" // Introduction date
-		{
-		}
-		"2010/04/29" // 119th Update
+		"2010/04/28" // April 28 2010
 		{
 			"lunchbox adds minicrits"
 			{
@@ -1123,7 +1093,7 @@
 				"value"	"1"
 			}
 		}
-		"2016/07/07" // Meet Your Match
+		"2013/12/20"	// Smissmas 2013
 		{
 			"kill eater score type"
 			{
@@ -1149,6 +1119,44 @@
 			{
 				"attribute_class"	"energy_buff_dmg_taken_multiplier"
 				"value"	"1.1"
+			}
+			"min_viewmodel_offset"
+			{
+				"attribute_class"	"min_viewmodel_offset"
+				"value"	"0 0 -5"
+			}
+		}
+		"2016/07/07"	// Meet Your Match
+		{
+			"kill eater score type"
+			{
+				"attribute_class"	"kill_eater_score_type"
+				"value"	"50"
+			}
+			"special taunt"
+			{
+				"attribute_class"	"special_taunt"
+				"value"	"1"
+			}
+			"allowed in medieval mode"
+			{
+				"attribute_class"	"allowed_in_medieval_mode"
+				"value"	"1"
+			}
+			"lunchbox adds minicrits"
+			{
+				"attribute_class"	"set_weapon_mode"
+				"value"	"2"
+			}
+			"energy buff dmg taken multiplier"
+			{
+				"attribute_class"	"energy_buff_dmg_taken_multiplier"
+				"value"	"1.1"
+			}
+			"mod_mark_attacker_for_death"
+			{
+				"attribute_class"	"mod_mark_attacker_for_death"
+				"value"	"5.0"
 			}
 			"min_viewmodel_offset"
 			{
@@ -1576,10 +1584,7 @@
 
 	"812"  // The Flying Guillotine // tf_weapon_cleaver
 	{
-		"2012/08/02" // Introduction date
-		{
-		}
-		"2012/08/14" // Triad Update
+		"2012/08/02" // Triad Update
 		{
 			"cleaver description"
 			{
@@ -1597,7 +1602,7 @@
 				"value"	"65536"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2012/08/03" // August 3 2012
 		{
 			"cleaver description"
 			{
@@ -1894,10 +1899,51 @@
 
 	"44"  // The Sandman // tf_weapon_bat_wood
 	{
-		"2009/02/24" // Introduction date
+		"2009/02/24" // Scout Update
 		{
+			"mod bat launches balls"
+			{
+				"attribute_class"	"set_weapon_mode"
+				"value"	"1"
+			}
+			"dmg penalty vs nonstunned"
+			{
+				"attribute_class"	"unimplemented_mod_dmg_vs_nonstunned"
+				"value"	"0.5"
+			}
+			"no double jump"
+			{
+				"attribute_class"	"set_scout_doublejump_disabled"
+				"value"	"1"
+			}
 		}
-		"2010/01/13" // v1080 (base)
+		"2009/02/25" // February 25
+		{
+			"mod bat launches balls"
+			{
+				"attribute_class"	"set_weapon_mode"
+				"value"	"1"
+			}
+			"no double jump"
+			{
+				"attribute_class"	"set_scout_doublejump_disabled"
+				"value"	"1"
+			}
+		}
+		"2009/08/13" // Classless
+		{
+			"mod bat launches balls"
+			{
+				"attribute_class"	"set_weapon_mode"
+				"value"	"1"
+			}
+			"max health additive penalty"
+			{
+				"attribute_class"	"add_maxhealth"
+				"value"	"-30"
+			}
+		}
+		"2010/01/06" // January 6 2010
 		{
 			"mod bat launches balls"
 			{
@@ -2142,10 +2188,20 @@
 
 	"349"  // Sun-on-a-Stick // tf_weapon_bat
 	{
-		"2011/02/03" // Introduction date
+		"2011/02/03" // RIFT Promo
 		{
+			"damage bonus"
+			{
+				"attribute_class"	"mult_dmg"
+				"value"	"1.35"
+			}		
+			"dmg penalty vs nonburning"
+			{
+				"attribute_class"	"mult_dmg_vs_nonburning"
+				"value"	"0.55"
+			}
 		}
-		"2011/03/10" // Shogun Pack
+		"2011/02/07" // February 7 2011
 		{
 			"minicrit vs burning player"
 			{
@@ -2275,9 +2331,6 @@
 	"423"  // Saxxy" // saxxy
 	{
 		"2011/06/08" // Introduction date
-		{
-		}
-		"2011/06/23" // Über Update
 		{
 			"turn to gold"
 			{
@@ -2510,10 +2563,7 @@
 
 	"452"  // Three-Rune Blade // tf_weapon_bat
 	{
-		"2011/05/12" // Introduction date
-		{
-		}
-		"2011/06/23" // Über Update
+		"2011/05/12" // Witcher 2 Promo
 		{
 			"bleeding duration"
 			{
@@ -6178,10 +6228,30 @@
 
 	"40"  // The Backburner // tf_weapon_flamethrower
 	{
-		"2008/06/19" // Introduction date
+		"2008/06/19" // Pyro Update
 		{
+			"mod flamethrower push"
+			{
+				"attribute_class"	"set_flamethrower_push_disabled"
+				"value"	"1"
+			}
+			"mod flamethrower back crit"
+			{
+				"attribute_class"	"set_flamethrower_back_crit"
+				"value"	"1"
+			}
+			"max health additive bonus"
+			{
+				"attribute_class"	"add_maxhealth"
+				"value" "50"
+			}			
+			"crit mod disabled hidden"
+			{
+				"attribute_class"	"mult_crit_chance"
+				"value"	"0"
+			}
 		}
-		"2010/01/13" // v1080 (base)
+		"2008/06/19" // Pyro Update
 		{
 			"mod flamethrower push"
 			{
@@ -7388,10 +7458,7 @@
 
 	"30474"  // Nostromo Napalmer // tf_weapon_flamethrower
 	{
-		"2014/09/17" // Introduction date
-		{
-		}
-		"2014/10/29" // Scream Fortress 2014
+		"2014/09/17" // Alien Isolation Promo
 		{
 			"cannot trade"
 			{
@@ -7399,7 +7466,7 @@
 				"value"	"1"
 			}
 		}
-		"2016/05/11" // Mayflower 2016
+		"2015/12/17" // Tough Break
 		{
 			"extinguish restores health"
 			{
@@ -8540,9 +8607,6 @@
 	{
 		"2008/06/19" // Introduction date
 		{
-		}
-		"2010/01/13" // v1080 (base)
-		{
 			"crit vs burning players"
 			{
 				"attribute_class"	"or_crit_vs_playercond"
@@ -9024,10 +9088,7 @@
 
 	"348"  // Sharpened Volcano Fragment // tf_weapon_fireaxe
 	{
-		"2011/02/03" // Introduction date
-		{
-		}
-		"2011/03/10" // Shogun Pack
+		"2011/02/03" // RIFT Promo
 		{
 			"Set DamageType Ignite"
 			{
@@ -9270,51 +9331,7 @@
 
 	"466"  // The Maul // tf_weapon_fireaxe
 	{
-		"2011/06/03" // Introduction date
-		{
-		}
-		"2011/06/23" // Über Update
-		{
-			"dmg bonus vs buildings"
-			{
-				"attribute_class"	"mult_dmg_vs_buildings"
-				"value"	"2.0"
-			}
-			"dmg penalty vs players"
-			{
-				"attribute_class"	"mult_dmg_vs_players"
-				"value"	"0.75"
-			}
-			"damage applies to sappers"
-			{
-				"attribute_class"	"set_dmg_apply_to_sapper"
-				"value"	"1"
-			}
-		}
-		"2011/11/18" // Saxxy Awards 2011
-		{
-			"dmg bonus vs buildings"
-			{
-				"attribute_class"	"mult_dmg_vs_buildings"
-				"value"	"2.0"
-			}
-			"dmg penalty vs players"
-			{
-				"attribute_class"	"mult_dmg_vs_players"
-				"value"	"0.75"
-			}
-			"damage applies to sappers"
-			{
-				"attribute_class"	"set_dmg_apply_to_sapper"
-				"value"	"1"
-			}
-			"cannot trade"
-			{
-				"attribute_class"	"cannot_trade"
-				"value"	"1"
-			}
-		}
-		"2011/12/15" // Australian Christmas 2011
+		"2011/06/03" // Red Faction Armageddon Promo
 		{
 			"dmg bonus vs buildings"
 			{
@@ -9460,10 +9477,7 @@
 
 	"813"  // Neon Annihilator // tf_weapon_breakable_sign
 	{
-		"2012/08/02" // Introduction date
-		{
-		}
-		"2012/08/14" // Triad Update
+		"2012/08/02" // Triad Pack
 		{
 			"damage penalty"
 			{
@@ -9486,7 +9500,7 @@
 				"value"	"0"
 			}
 		}
-		"2012/08/15" // Mann vs. Machine
+		"2012/08/10" // Aug 10 2012
 		{
 			"dmg penalty vs players"
 			{
@@ -10000,10 +10014,7 @@
 
 	"608"  // The Bootlegger // tf_wearable
 	{
-		"2011/09/07" // Introduction date
-		{
-		}
-		"2011/10/13" // Manniversary Update
+		"2011/09/07" // Manniversary
 		{
 			"mult charge turn control"
 			{
@@ -10016,20 +10027,7 @@
 				"value"	"25"
 			}
 		}
-		"2011/12/15" // Australian Christmas 2011
-		{
-			"mult charge turn control"
-			{
-				"attribute_class"	"charge_turn_control"
-				"value"	"2"
-			}
-			"max health additive bonus"
-			{
-				"attribute_class"	"add_maxhealth"
-				"value"	"25"
-			}
-		}
-		"2014/02/07" // Strongbox Update
+		"2011/11/07" // November 7 2011
 		{
 			"mult charge turn control"
 			{
@@ -12838,10 +12836,7 @@
 
 	"41"  // Natascha // tf_weapon_minigun
 	{
-		"2008/08/19" // Introduction date
-		{
-		}
-		"2010/01/13" // v1080 (base)
+		"2008/08/19" // Heavy Update
 		{
 			"slow enemy on hit"
 			{
@@ -12970,10 +12965,7 @@
 
 	"298"  // Iron Curtain // tf_weapon_minigun
 	{
-		"2010/11/19" // Introduction date
-		{
-		}
-		"2010/12/16" // Australian Christmas 2010
+		"2010/11/19" // Poker Night at the Inventory
 		{
 			"cannot trade"
 			{
@@ -13377,31 +13369,7 @@
 
 	"42"  // Sandvich // tf_weapon_lunchbox
 	{
-		"2008/08/19" // Introduction date
-		{
-		}
-		"2012/12/20" // Mecha Update
-		{
-			"kill eater score type"
-			{
-				"attribute_class"	"kill_eater_score_type"
-				"value"	"50"
-			}
-		}
-		"2013/11/21" // Two Cities Update
-		{
-			"kill eater score type"
-			{
-				"attribute_class"	"kill_eater_score_type"
-				"value"	"50"
-			}
-			"special taunt"
-			{
-				"attribute_class"	"special_taunt"
-				"value"	"1"
-			}
-		}
-		"2014/02/07" // Strongbox Update
+		"2008/08/19" // Heavy Update
 		{
 			"kill eater score type"
 			{
@@ -13908,52 +13876,7 @@
 
 	"433"  // Fishcake // tf_weapon_lunchbox
 	{
-		"2011/04/28" // Introduction date
-		{
-		}
-		"2011/05/05" // Replay Update
-		{
-			"lunchbox adds maxhealth bonus"
-			{
-				"attribute_class"	"set_weapon_mode"
-				"value"	"1"
-			}
-		}
-		"2011/06/23" // Über Update
-		{
-			"lunchbox adds maxhealth bonus"
-			{
-				"attribute_class"	"set_weapon_mode"
-				"value"	"1"
-			}
-			"always tradable"
-			{
-				"attribute_class"	"always_tradable"
-				"value"	"1"
-			}
-		}
-		"2011/11/18" // Saxxy Awards 2011
-		{
-			"lunchbox adds maxhealth bonus"
-			{
-				"attribute_class"	"set_weapon_mode"
-				"value"	"1"
-			}
-		}
-		"2011/12/15" // Australian Christmas 2011
-		{
-			"lunchbox adds maxhealth bonus"
-			{
-				"attribute_class"	"set_weapon_mode"
-				"value"	"1"
-			}
-			"always tradable"
-			{
-				"attribute_class"	"always_tradable"
-				"value"	"1"
-			}
-		}
-		"2013/11/21" // Two Cities Update
+		"2011/04/28" // SpaceChem promo
 		{
 			"lunchbox adds maxhealth bonus"
 			{
@@ -13971,7 +13894,7 @@
 				"value"	"1"
 			}
 		}
-		"2014/02/07" // Strongbox Update
+		"2011/05/25" // May 25 2011
 		{
 			"lunchbox adds maxhealth bonus"
 			{
@@ -17700,10 +17623,20 @@
 
 	"36"  // The Blutsauger // tf_weapon_syringegun_medic
 	{
-		"2008/04/29" // Introduction date
+		"2008/04/29" // Gold Rush
 		{
+			"heal on hit for rapidfire"
+			{
+				"attribute_class"	"add_onhit_addhealth"
+				"value"	"3"
+			}
+			"crit mod disabled"
+			{
+				"attribute_class"	"mult_crit_chance"
+				"value"	"0"
+			}
 		}
-		"2010/01/13" // v1080 (base)
+		"2009/09/15" // September 15 2009
 		{
 			"heal on hit for rapidfire"
 			{
@@ -18017,10 +17950,20 @@
 
 	"35"  // The Kritzkrieg // tf_weapon_medigun
 	{
-		"2008/04/29" // Introduction date
+		"2008/04/29" // Gold Rush
 		{
+			"medigun charge is crit boost"
+			{
+				"attribute_class"	"set_charge_type"
+				"value"	"1"
+			}
+			"ubercharge rate bonus"
+			{
+				"attribute_class"	"mult_medigun_uberchargerate"
+				"value"	"1.10"
+			}
 		}
-		"2010/01/13" // v1080 (base)
+		"2008/08/19" // Heavy Update
 		{
 			"medigun charge is crit boost"
 			{
@@ -18660,10 +18603,7 @@
 
 	"37"  // The Ubersaw // tf_weapon_bonesaw
 	{
-		"2008/04/29" // Introduction date
-		{
-		}
-		"2010/01/13" // v1080 (base)
+		"2008/04/29" // Gold Rush
 		{
 			"add uber charge on hit"
 			{
@@ -19168,70 +19108,7 @@
 
 	"56"  // The Huntsman // tf_weapon_compound_bow
 	{
-		"2009/05/21" // Introduction date
-		{
-		}
-		"2010/01/13" // v1080 (base)
-		{
-			"hidden primary max ammo bonus"
-			{
-				"attribute_class"	"mult_maxammo_primary"
-				"value"	"0.5"
-			}
-		}
-		"2011/10/13" // Manniversary Update
-		{
-			"hidden primary max ammo bonus"
-			{
-				"attribute_class"	"mult_maxammo_primary"
-				"value"	"0.5"
-			}
-			"disable fancy class select anim"
-			{
-				"attribute_class"	"disable_fancy_class_select_anim"
-				"value"	"1"
-			}
-		}
-		"2011/11/18" // Saxxy Awards 2011
-		{
-			"hidden primary max ammo bonus"
-			{
-				"attribute_class"	"mult_maxammo_primary"
-				"value"	"0.5"
-			}
-		}
-		"2011/12/15" // Australian Christmas 2011
-		{
-			"hidden primary max ammo bonus"
-			{
-				"attribute_class"	"mult_maxammo_primary"
-				"value"	"0.5"
-			}
-			"disable fancy class select anim"
-			{
-				"attribute_class"	"disable_fancy_class_select_anim"
-				"value"	"1"
-			}
-		}
-		"2013/11/21" // Two Cities Update
-		{
-			"hidden primary max ammo bonus"
-			{
-				"attribute_class"	"mult_maxammo_primary"
-				"value"	"0.5"
-			}
-			"disable fancy class select anim"
-			{
-				"attribute_class"	"disable_fancy_class_select_anim"
-				"value"	"1"
-			}
-			"special taunt"
-			{
-				"attribute_class"	"special_taunt"
-				"value"	"1"
-			}
-		}
-		"2014/02/07" // Strongbox Update
+		"2009/05/21" // Sniper vs Spy
 		{
 			"hidden primary max ammo bonus"
 			{
@@ -19525,33 +19402,7 @@
 
 	"526"  // The Machina // tf_weapon_sniperrifle
 	{
-		"2011/08/11" // Introduction date
-		{
-		}
-		"2011/08/18" // Mann-tastic! Update
-		{
-			"sniper penetrate players when charged"
-			{
-				"attribute_class"	"sniper_penetrate_players_when_charged"
-				"value"	"1"
-			}
-			"sniper only fire zoomed"
-			{
-				"attribute_class"	"sniper_only_fire_zoomed"
-				"value"	"1"
-			}
-			"sniper full charge damage bonus"
-			{
-				"attribute_class"	"sniper_full_charge_damage_bonus"
-				"value"	"1.15"
-			}
-			"sniper fires tracer DISPLAY ONLY"
-			{
-				"attribute_class"	"sniper_fires_tracer_DISPLAY_ONLY"
-				"value"	"1"
-			}
-		}
-		"2011/12/15" // Australian Christmas 2011
+		"2011/08/11" // Manno-Technology
 		{
 			"sniper penetrate players when charged"
 			{
@@ -19747,10 +19598,7 @@
 
 	"1092"  // The Fortified Compound // tf_weapon_compound_bow
 	{
-		"2014/02/11" // Introduction date
-		{
-		}
-		"2014/06/18" // Love & War Update
+		"2014/02/11" // Thief 4 Promo
 		{
 			"hidden primary max ammo bonus"
 			{
@@ -20108,10 +19956,7 @@
 
 	"58"  // Jarate // tf_weapon_jar
 	{
-		"2009/05/21" // Introduction date
-		{
-		}
-		"2010/01/13" // v1080 (base)
+		"2009/05/21" // Sniper vs Spy
 		{
 			"jarate description"
 			{
@@ -20120,27 +19965,6 @@
 			}
 		}
 		"2011/08/18" // Mann-tastic! Update
-		{
-			"jarate description"
-			{
-				"attribute_class"	"desc_jarate_description"
-				"value"	"1"
-			}
-			"kill eater score type"
-			{
-				"attribute_class"	"kill_eater_score_type"
-				"value"	"4"
-			}
-		}
-		"2011/11/18" // Saxxy Awards 2011
-		{
-			"jarate description"
-			{
-				"attribute_class"	"desc_jarate_description"
-				"value"	"1"
-			}
-		}
-		"2011/12/15" // Australian Christmas 2011
 		{
 			"jarate description"
 			{
@@ -20269,8 +20093,46 @@
 
 	"642"  // Cozy Camper // tf_wearable
 	{
-		"2012/03/15" // Introduction date
+		"2012/03/15" // March 15 2012
 		{
+			"aiming knockback resistance"
+			{
+				"attribute_class"	"mult_aiming_knockback_resistance"
+				"value"	"0.80"
+			}
+			"sniper aiming movespeed decreased"
+			{
+				"attribute_class"	"mult_player_aiming_movespeed"
+				"value"	"0.90"
+			}
+			"aiming no flinch"
+			{
+				"attribute_class"	"aiming_no_flinch"
+				"value"	"1"
+			}
+		}
+		"2012/03/22" // March 22 2012
+		{
+			"aiming knockback resistance"
+			{
+				"attribute_class"	"mult_aiming_knockback_resistance"
+				"value"	"0.80"
+			}
+			"sniper aiming movespeed decreased"
+			{
+				"attribute_class"	"mult_player_aiming_movespeed"
+				"value"	"0.90"
+			}
+			"aiming no flinch"
+			{
+				"attribute_class"	"aiming_no_flinch"
+				"value"	"1"
+			}
+			"allowed in medieval mode"
+			{
+				"attribute_class"	"allowed_in_medieval_mode"
+				"value"	"1"
+			}
 		}
 		"2012/06/27" // Pyromania Update
 		{
@@ -20292,6 +20154,11 @@
 			"aiming no flinch"
 			{
 				"attribute_class"	"aiming_no_flinch"
+				"value"	"1"
+			}
+			"allowed in medieval mode"
+			{
+				"attribute_class"	"allowed_in_medieval_mode"
 				"value"	"1"
 			}
 		}
@@ -20316,6 +20183,11 @@
 			{
 				"attribute_class"	"mult_dmgtaken"
 				"value"	"1.2"
+			}
+			"allowed in medieval mode"
+			{
+				"attribute_class"	"allowed_in_medieval_mode"
+				"value"	"1"
 			}
 		}
 		"2014/02/07" // Strongbox Update
@@ -20925,10 +20797,30 @@
 
 	"61"  // The Ambassador // tf_weapon_revolver
 	{
-		"2009/05/21" // Introduction date
+		"2009/05/21" // Sniper vs Spy
 		{
+			"revolver use hit locations"
+			{
+				"attribute_class"	"set_weapon_mode"
+				"value"	"1"
+			}
+			"shot penetrate all players"
+			{
+				"attribute_class"	"shot_penetrate_all_players"
+				"value"	"1"
+			}
+			"damage penalty"
+			{
+				"attribute_class"	"mult_dmg"
+				"value"	"0.85"
+			}
+			"fire rate penalty"
+			{
+				"attribute_class"	"mult_postfiredelay"
+				"value"	"1.2"
+			}
 		}
-		"2010/01/13" // v1080 (base)
+		"2009/06/23" // June 23 2009
 		{
 			"revolver use hit locations"
 			{
@@ -21034,7 +20926,7 @@
 
 	"161"  // Big Kill // tf_weapon_revolver
 	{
-		"2010/04/15" // Introduction date
+		"2010/04/15" // Sam and Max Promo
 		{
 		}
 		"2014/10/29" // Scream Fortress 2014
@@ -21232,28 +21124,7 @@
 
 	"525"  // The Diamondback // tf_weapon_revolver
 	{
-		"2011/08/11" // Introduction date
-		{
-		}
-		"2011/08/18" // Mann-tastic! Update
-		{
-			"sapper kills collect crits"
-			{
-				"attribute_class"	"sapper_kills_collect_crits"
-				"value"	"1"
-			}
-			"damage penalty"
-			{
-				"attribute_class"	"mult_dmg"
-				"value"	"0.85"
-			}
-			"crit mod disabled"
-			{
-				"attribute_class"	"mult_crit_chance"
-				"value"	"0"
-			}
-		}
-		"2011/12/15" // Australian Christmas 2011
+		"2011/08/11" // Manno-Technology Bundle
 		{
 			"sapper kills collect crits"
 			{
@@ -21326,10 +21197,7 @@
 
 	"810"  // The Red-Tape Recorder // tf_weapon_sapper
 	{
-		"2012/08/02" // Introduction date
-		{
-		}
-		"2012/08/14" // Triad Update
+		"2012/08/02" // Triad Update
 		{
 			"sapper degenerates buildings"
 			{
@@ -21342,7 +21210,7 @@
 				"value"	"0.0"
 			}
 		}
-		"2012/08/15" // Mann vs. Machine
+		"2012/08/03" // Aug 3 2012
 		{
 			"sapper degenerates buildings"
 			{
@@ -21400,10 +21268,7 @@
 
 	"933"  // The Ap-Sap (Genuine) // tf_weapon_sapper
 	{
-		"2013/03/12" // Introduction date
-		{
-		}
-		"2013/05/17" // Robotic Boogaloo
+		"2013/03/12" // What's in the Portal 2 Box Promo
 		{
 			"sapper voice pak"
 			{
@@ -22015,7 +21880,7 @@
 
 	"638"  // The Sharp Dresser // tf_weapon_knife
 	{
-		"2011/11/23" // Introduction date
+		"2011/11/23" // Assassin's Creed Revelations Promo
 		{
 		}
 		"2011/12/15" // Australian Christmas 2011
@@ -22144,7 +22009,7 @@
 
 	"727"  // The Black Rose // tf_weapon_knife
 	{
-		"2012/02/14" // Introduction date
+		"2012/02/14" // AVA Promo
 		{
 		}
 		"2013/11/21" // Two Cities Update
@@ -22246,10 +22111,20 @@
 
 	"59"  // The Dead Ringer // tf_weapon_invis
 	{
-		"2009/05/21" // Introduction date
+		"2009/05/21" // Sniper Vs Spy
 		{
+			"set cloak is feign death"
+			{
+				"attribute_class"	"set_weapon_mode"
+				"value"	"1"
+			}
+			"mult cloak meter regen rate"
+			{
+				"attribute_class"	"mult_cloak_meter_regen_rate"
+				"value"	"1.8"
+			}
 		}
-		"2010/01/13" // v1080 (base)
+		"2009/06/23" // June 23 2009
 		{
 			"set cloak is feign death"
 			{
@@ -22456,10 +22331,15 @@
 
 	"60"  // The Cloak and Dagger // tf_weapon_invis
 	{
-		"2009/05/21" // Introduction date
+		"2009/05/21" // Sniper vs Spy
 		{
+			"set cloak is movement based"
+			{
+				"attribute_class"	"set_weapon_mode"
+				"value"	"2"
+			}
 		}
-		"2010/01/13" // v1080 (base)
+		"2009/06/23" // June 23 2009
 		{
 			"set cloak is movement based"
 			{
@@ -22588,10 +22468,7 @@
 
 	"297"  // Enthusiast's Timepiece // tf_weapon_invis
 	{
-		"2010/11/19" // Introduction date
-		{
-		}
-		"2010/12/16" // Australian Christmas 2010
+		"2010/11/19" // Poker Night at the Inventory Promo
 		{
 			"cannot trade"
 			{
@@ -22652,7 +22529,7 @@
 
 	"947"  // The Quackenbirdt // tf_weapon_invis
 	{
-		"2012/11/16" // Introduction date
+		"2012/11/16" // Hitman Absolution Promo
 		{
 		}
 		"2015/07/02" // Gun Mettle
