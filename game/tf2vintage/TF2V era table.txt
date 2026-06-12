@@ -11,7 +11,7 @@ Example: February 28, 2008 - September 16, 2007 = 2008/02/28 - 2007/09/16 = 165
 On the todo list: Make this a function ingame.
 
 Major Updates
-1 : 2007/09/17 (PC Beta Pre-Release)
+1 : 2007/09/17 (PC Beta Pre-Release; date floor)
 24 : 2007/10/10 (Orange Box Release)
 226 : 2008/04/29 (Gold Rush Update)
 277 : 2008/06/19 (Pyro Update)
