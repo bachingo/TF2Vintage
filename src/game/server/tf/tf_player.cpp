@@ -2008,13 +2008,17 @@ void CTFPlayer::RegenThink( void )
 		{
 			flScale = 1.0f;
 		}
-		else if ( flTimeSinceDamage < 5.0f )
+		// TF2V: Time based scaling added in Tough Break
+		else if ( TF2VIsContemporary( TF2V_DAY_MAJOR_TOUGH_BREAK ) )
 		{
-			flScale = 0.25f;
-		}
-		else
-		{
-			flScale = RemapValClamped( flTimeSinceDamage, 5.0f, 10.0f, 0.5f, 1.0f );
+			else if ( flTimeSinceDamage < 5.0f )
+			{
+				flScale = 0.25f;
+			}
+			else
+			{
+				flScale = RemapValClamped( flTimeSinceDamage, 5.0f, 10.0f, 0.5f, 1.0f );
+			}
 		}
 		
 		flRegenAmount *= flScale;
