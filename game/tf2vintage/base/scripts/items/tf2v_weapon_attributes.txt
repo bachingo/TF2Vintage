@@ -3,6 +3,9 @@
 	// ── Scout ─────────────────────────────────────────────
 	"13"  // Scattergun // tf_weapon_scattergun
 	{
+		"2007/09/17" // Introduction date
+		{
+		}
 		"2015/07/02" // Gun Mettle
 		{
 			"weapon_stattrak_module_scale"
@@ -28,6 +31,9 @@
 
 	"45"  // Force-A-Nature // tf_weapon_scattergun
 	{
+		"2009/02/24" // Introduction date
+		{
+		}
 		"2010/01/13" // v1080 (base)
 		{
 			"scattergun has knockback"
@@ -927,6 +933,9 @@
 
 	"23"  // Scout's Pistol // tf_weapon_pistol
 	{
+		"2007/09/17" // Introduction date
+		{
+		}
 		"2015/12/17" // Tough Break
 		{
 			"weapon_stattrak_module_scale"
@@ -952,6 +961,9 @@
 
 	"46"  // Bonk! Atomic Punch // tf_weapon_lunchbox_drink
 	{
+		"2009/02/24" // Introduction date
+		{
+		}
 		"2013/10/10" // Fall 2013
 		{
 			"kill eater score type"
@@ -1018,6 +1030,9 @@
 
 	"160"  // Vintage Lugermorph // tf_weapon_pistol
 	{
+		"2010/04/15" // Introduction date
+		{
+		}
 		"2015/07/02" // Gun Mettle
 		{
 			"weapon_stattrak_module_scale"
@@ -1043,6 +1058,9 @@
 
 	"163"  // Crit-a-Cola // tf_weapon_lunchbox_drink
 	{
+		"2010/04/28" // Introduction date
+		{
+		}
 		"2010/04/29" // 119th Update
 		{
 			"lunchbox adds minicrits"
@@ -1204,7 +1222,7 @@
 				"value"	"1"
 			}
 		}
-		"2016/05/11" // Mayflower 2016
+		"2015/12/17" // Tough Break
 		{
 			"kill eater score type"
 			{
@@ -1558,6 +1576,9 @@
 
 	"812"  // The Flying Guillotine // tf_weapon_cleaver
 	{
+		"2012/08/02" // Introduction date
+		{
+		}
 		"2012/08/14" // Triad Update
 		{
 			"cleaver description"
@@ -1653,6 +1674,153 @@
 	}
 
 	"1121"  // Mutated Milk // tf_weapon_jar_milk
+	{
+		"2014/06/18" // Love & War Update
+		{
+			"kill eater score type"
+			{
+				"attribute_class"	"kill_eater_score_type"
+				"value"	"4"
+			}
+			"allowed in medieval mode"
+			{
+				"attribute_class"	"allowed_in_medieval_mode"
+				"value"	"1"
+			}
+			"override projectile type"
+			{
+				"attribute_class"	"override_projectile_type"
+				"value"	"25"
+			}
+			"righthand pose parameter"
+			{
+				"attribute_class"	"righthand_pose_parameter"
+				"value"	"13"
+			}
+		}
+		"2014/10/29" // Scream Fortress 2014
+		{
+			"kill eater score type"
+			{
+				"attribute_class"	"kill_eater_score_type"
+				"value"	"4"
+			}
+			"allowed in medieval mode"
+			{
+				"attribute_class"	"allowed_in_medieval_mode"
+				"value"	"1"
+			}
+			"override projectile type"
+			{
+				"attribute_class"	"override_projectile_type"
+				"value"	"25"
+			}
+			"righthand pose parameter"
+			{
+				"attribute_class"	"righthand_pose_parameter"
+				"value"	"13"
+			}
+			"limited quantity item"
+			{
+				"attribute_class"	"limited quantity item"
+				"value"	"1"
+			}
+		}
+		"2015/12/17" // Tough Break
+		{
+			"kill eater score type"
+			{
+				"attribute_class"	"kill_eater_score_type"
+				"value"	"4"
+			}
+			"allowed in medieval mode"
+			{
+				"attribute_class"	"allowed_in_medieval_mode"
+				"value"	"1"
+			}
+			"extinguish reduces cooldown"
+			{
+				"attribute_class"	"extinguish_reduces_cooldown"
+				"value"	"0.8"
+			}
+			"override projectile type"
+			{
+				"attribute_class"	"override_projectile_type"
+				"value"	"25"
+			}
+			"righthand pose parameter"
+			{
+				"attribute_class"	"righthand_pose_parameter"
+				"value"	"13"
+			}
+			"limited quantity item"
+			{
+				"attribute_class"	"limited quantity item"
+				"value"	"1"
+			}
+		}
+		"2016/07/07" // Meet Your Match
+		{
+			"kill eater score type"
+			{
+				"attribute_class"	"kill_eater_score_type"
+				"value"	"4"
+			}
+			"allowed in medieval mode"
+			{
+				"attribute_class"	"allowed_in_medieval_mode"
+				"value"	"1"
+			}
+			"extinguish reduces cooldown"
+			{
+				"attribute_class"	"extinguish_reduces_cooldown"
+				"value"	"0.8"
+			}
+			"override projectile type"
+			{
+				"attribute_class"	"override_projectile_type"
+				"value"	"25"
+			}
+			"righthand pose parameter"
+			{
+				"attribute_class"	"righthand_pose_parameter"
+				"value"	"13"
+			}
+			"min_viewmodel_offset"
+			{
+				"attribute_class"	"min_viewmodel_offset"
+				"value"	"10 4 -10"
+			}
+		}
+		"2017/10/20" // Jungle Inferno
+		{
+			"kill eater score type"
+			{
+				"attribute_class"	"kill_eater_score_type"
+				"value"	"4"
+			}
+			"allowed in medieval mode"
+			{
+				"attribute_class"	"allowed_in_medieval_mode"
+				"value"	"1"
+			}
+			"extinguish reduces cooldown"
+			{
+				"attribute_class"	"extinguish_reduces_cooldown"
+				"value"	"0.8"
+			}
+			"override projectile type"
+			{
+				"attribute_class"	"override_projectile_type"
+				"value"	"25"
+			}
+			"min_viewmodel_offset"
+			{
+				"attribute_class"	"min_viewmodel_offset"
+				"value"	"10 4 -10"
+			}
+		}
+	}
 
 	"30666"  // The C.A.P.P.E.R. // tf_weapon_pistol
 	{
@@ -1710,9 +1878,25 @@
 	}
 
 	"0"  // Bat // tf_weapon_bat
+	{
+		"2007/09/17" // Introduction date
+		{
+		}
+		"2016/07/07" // Meet Your Match
+		{
+			"min_viewmodel_offset"
+			{
+				"attribute_class"	"min_viewmodel_offset"
+				"value"	"10 0 -7"
+			}
+		}
+	}
 
 	"44"  // The Sandman // tf_weapon_bat_wood
 	{
+		"2009/02/24" // Introduction date
+		{
+		}
 		"2010/01/13" // v1080 (base)
 		{
 			"mod bat launches balls"
@@ -1958,6 +2142,9 @@
 
 	"349"  // Sun-on-a-Stick // tf_weapon_bat
 	{
+		"2011/02/03" // Introduction date
+		{
+		}
 		"2011/03/10" // Shogun Pack
 		{
 			"minicrit vs burning player"
@@ -2087,6 +2274,9 @@
 
 	"423"  // Saxxy" // saxxy
 	{
+		"2011/06/08" // Introduction date
+		{
+		}
 		"2011/06/23" // Über Update
 		{
 			"turn to gold"
@@ -2320,6 +2510,9 @@
 
 	"452"  // Three-Rune Blade // tf_weapon_bat
 	{
+		"2011/05/12" // Introduction date
+		{
+		}
 		"2011/06/23" // Über Update
 		{
 			"bleeding duration"
@@ -2355,6 +2548,9 @@
 
 	"474"  // The Conscientious Objector" // saxxy
 	{
+		"2011/09/07" // Introduction date
+		{
+		}
 		"2016/07/07" // Meet Your Match
 		{
 			"min_viewmodel_offset"
@@ -2509,6 +2705,9 @@
 
 	"880"  // The Freedom Staff" // saxxy
 	{
+		"2012/09/27" // Introduction date
+		{
+		}
 		"2016/07/07" // Meet Your Match
 		{
 			"min_viewmodel_offset"
@@ -2554,6 +2753,9 @@
 
 	"954"  // The Memory Maker" // saxxy
 	{
+		"2012/11/29" // Introduction date
+		{
+		}
 		"2012/12/20" // Mecha Update
 		{
 			"cannot trade"
@@ -2566,6 +2768,9 @@
 
 	"1013"  // The Ham Shank" // saxxy
 	{
+		"2013/03/12" // Introduction date
+		{
+		}
 		"2016/07/07" // Meet Your Match
 		{
 			"min_viewmodel_offset"
@@ -2578,6 +2783,9 @@
 
 	"1071"  // Gold Frying Pan" // saxxy
 	{
+		"2013/10/29" // Introduction date
+		{
+		}
 		"2013/11/21" // Two Cities Update
 		{
 			"turn to gold"
@@ -2742,6 +2950,9 @@
 	// ── Soldier ───────────────────────────────────────────
 	"18"  // Rocket Launcher // tf_weapon_rocketlauncher
 	{
+		"2007/09/17" // Introduction date
+		{
+		}
 		"2015/07/02" // Gun Mettle
 		{
 			"weapon_stattrak_module_scale"
@@ -2767,6 +2978,9 @@
 
 	"127"  // The Direct Hit // tf_weapon_rocketlauncher_directhit
 	{
+		"2009/12/17" // Introduction date
+		{
+		}
 		"2010/01/13" // v1080 (base)
 		{
 			"Blast radius decreased"
@@ -3593,6 +3807,9 @@
 
 	"513"  // The Original // tf_weapon_rocketlauncher
 	{
+		"2011/08/09" // Introduction date
+		{
+		}
 		"2011/08/18" // Mann-tastic! Update
 		{
 			"centerfire projectile"
@@ -4001,6 +4218,9 @@
 
 	"10"  // Soldier's Shotgun // tf_weapon_shotgun_soldier
 	{
+		"2007/09/17" // Introduction date
+		{
+		}
 		"2016/07/07" // Meet Your Match
 		{
 			"min_viewmodel_offset"
@@ -4013,6 +4233,9 @@
 
 	"129"  // The Buff Banner // tf_weapon_buff_item
 	{
+		"2009/12/17" // Introduction date
+		{
+		}
 		"2010/09/30" // Mann-Conomy Update
 		{
 			"mod soldier buff type"
@@ -4079,6 +4302,9 @@
 
 	"133"  // Gunboats // tf_wearable
 	{
+		"2009/12/17" // Introduction date
+		{
+		}
 		"2010/01/13" // v1080 (base)
 		{
 			"rocket jump damage reduction"
@@ -5123,6 +5349,9 @@
 
 	"6"  // Shovel // tf_weapon_shovel
 	{
+		"2007/09/17" // Introduction date
+		{
+		}
 		"2016/07/07" // Meet Your Match
 		{
 			"min_viewmodel_offset"
@@ -5135,6 +5364,9 @@
 
 	"128"  // The Equalizer // tf_weapon_shovel
 	{
+		"2009/12/17" // Introduction date
+		{
+		}
 		"2010/01/13" // v1080 (base)
 		{
 			"mod shovel damage boost"
@@ -5753,6 +5985,9 @@
 	// ── Pyro ──────────────────────────────────────────────
 	"21"  // Flame Thrower // tf_weapon_flamethrower
 	{
+		"2007/09/17" // Introduction date
+		{
+		}
 		"2015/07/02" // Gun Mettle
 		{
 			"weapon_stattrak_module_scale"
@@ -5955,6 +6190,9 @@
 
 	"40"  // The Backburner // tf_weapon_flamethrower
 	{
+		"2008/06/19" // Introduction date
+		{
+		}
 		"2010/01/13" // v1080 (base)
 		{
 			"mod flamethrower push"
@@ -7162,6 +7400,9 @@
 
 	"30474"  // Nostromo Napalmer // tf_weapon_flamethrower
 	{
+		"2014/09/17" // Introduction date
+		{
+		}
 		"2014/10/29" // Scream Fortress 2014
 		{
 			"cannot trade"
@@ -7364,6 +7605,9 @@
 
 	"12"  // Pyro's Shotgun // tf_weapon_shotgun_pyro
 	{
+		"2007/09/17" // Introduction date
+		{
+		}
 		"2016/07/07" // Meet Your Match
 		{
 			"min_viewmodel_offset"
@@ -7376,6 +7620,9 @@
 
 	"39"  // The Flare Gun // tf_weapon_flaregun
 	{
+		"2008/06/19" // Introduction date
+		{
+		}
 		"2010/01/13" // v1080 (base)
 		{
 			"hidden secondary max ammo penalty"
@@ -8288,6 +8535,9 @@
 
 	"2"  // Fire Axe // tf_weapon_fireaxe
 	{
+		"2007/09/17" // Introduction date
+		{
+		}
 		"2016/07/07" // Meet Your Match
 		{
 			"min_viewmodel_offset"
@@ -8300,6 +8550,9 @@
 
 	"38"  // The Axtinguisher // tf_weapon_fireaxe
 	{
+		"2008/06/19" // Introduction date
+		{
+		}
 		"2010/01/13" // v1080 (base)
 		{
 			"crit vs burning players"
@@ -8783,6 +9036,9 @@
 
 	"348"  // Sharpened Volcano Fragment // tf_weapon_fireaxe
 	{
+		"2011/02/03" // Introduction date
+		{
+		}
 		"2011/03/10" // Shogun Pack
 		{
 			"Set DamageType Ignite"
@@ -9026,6 +9282,9 @@
 
 	"466"  // The Maul // tf_weapon_fireaxe
 	{
+		"2011/06/03" // Introduction date
+		{
+		}
 		"2011/06/23" // Über Update
 		{
 			"dmg bonus vs buildings"
@@ -9213,6 +9472,9 @@
 
 	"813"  // Neon Annihilator // tf_weapon_breakable_sign
 	{
+		"2012/08/02" // Introduction date
+		{
+		}
 		"2012/08/14" // Triad Update
 		{
 			"damage penalty"
@@ -9355,6 +9617,9 @@
 	// ── Demoman ───────────────────────────────────────────
 	"19"  // Grenade Launcher // tf_weapon_grenadelauncher
 	{
+		"2007/09/17" // Introduction date
+		{
+		}
 		"2015/07/02" // Gun Mettle
 		{
 			"weapon_stattrak_module_scale"
@@ -9747,6 +10012,9 @@
 
 	"608"  // The Bootlegger // tf_wearable
 	{
+		"2011/09/07" // Introduction date
+		{
+		}
 		"2011/10/13" // Manniversary Update
 		{
 			"mult charge turn control"
@@ -10250,6 +10518,9 @@
 
 	"20"  // Stickybomb Launcher // tf_weapon_pipebomblauncher
 	{
+		"2007/09/17" // Introduction date
+		{
+		}
 		"2016/05/11" // Mayflower 2016
 		{
 			"weapon_stattrak_module_scale"
@@ -10275,6 +10546,9 @@
 
 	"130"  // The Scottish Resistance // tf_weapon_pipebomblauncher
 	{
+		"2009/12/17" // Introduction date
+		{
+		}
 		"2010/01/13" // v1080 (base)
 		{
 			"sticky detonate mode"
@@ -10378,6 +10652,9 @@
 
 	"131"  // The Chargin' Targe // tf_wearable_demoshield
 	{
+		"2009/12/17" // Introduction date
+		{
+		}
 		"2010/01/13" // v1080 (base)
 		{
 			"dmg taken from fire reduced"
@@ -11183,9 +11460,25 @@
 	}
 
 	"1"  // Bottle // tf_weapon_bottle
+	{
+		"2007/09/17" // Introduction date
+		{
+		}
+		"2016/07/07" // Meet Your Match
+		{
+			"min_viewmodel_offset"
+			{
+				"attribute_class"	"min_viewmodel_offset"
+				"value"	"10 0 -14"
+			}
+		}
+	}
 
 	"132"  // The Eyelander // tf_weapon_sword
 	{
+		"2009/12/17" // Introduction date
+		{
+		}
 		"2010/01/13" // v1080 (base)
 		{
 			"crit mod disabled"
@@ -12496,6 +12789,9 @@
 
 	"609"  // The Scottish Handshake // tf_weapon_bottle
 	{
+		"2011/09/07" // Introduction date
+		{
+		}
 		"2014/02/07" // Strongbox Update
 		{
 			"allowed in medieval mode"
@@ -12522,6 +12818,9 @@
 	// ── Heavy ─────────────────────────────────────────────
 	"15"  // Minigun // tf_weapon_minigun
 	{
+		"2007/09/17" // Introduction date
+		{
+		}
 		"2015/07/02" // Gun Mettle
 		{
 			"weapon_stattrak_module_scale"
@@ -12547,6 +12846,9 @@
 
 	"41"  // Natascha // tf_weapon_minigun
 	{
+		"2008/08/19" // Introduction date
+		{
+		}
 		"2010/01/13" // v1080 (base)
 		{
 			"slow enemy on hit"
@@ -12676,6 +12978,9 @@
 
 	"298"  // Iron Curtain // tf_weapon_minigun
 	{
+		"2010/11/19" // Introduction date
+		{
+		}
 		"2010/12/16" // Australian Christmas 2010
 		{
 			"cannot trade"
@@ -13065,6 +13370,9 @@
 
 	"11"  // Heavy's Shotgun // tf_weapon_shotgun_hwg
 	{
+		"2007/09/17" // Introduction date
+		{
+		}
 		"2016/07/07" // Meet Your Match
 		{
 			"min_viewmodel_offset"
@@ -13077,6 +13385,9 @@
 
 	"42"  // Sandvich // tf_weapon_lunchbox
 	{
+		"2008/08/19" // Introduction date
+		{
+		}
 		"2012/12/20" // Mecha Update
 		{
 			"kill eater score type"
@@ -13605,6 +13916,9 @@
 
 	"433"  // Fishcake // tf_weapon_lunchbox
 	{
+		"2011/04/28" // Introduction date
+		{
+		}
 		"2011/05/05" // Replay Update
 		{
 			"lunchbox adds maxhealth bonus"
@@ -13821,6 +14135,9 @@
 
 	"863"  // Robo-Sandvich // tf_weapon_lunchbox
 	{
+		"2012/09/21" // Introduction date
+		{
+		}
 		"2012/10/26" // Scream Fortress 2012
 		{
 			"lunchbox adds minicrits"
@@ -13982,6 +14299,9 @@
 
 	"5"  // Fists // tf_weapon_fists
 	{
+		"2007/09/17" // Introduction date
+		{
+		}
 		"2016/07/07" // Meet Your Match
 		{
 			"min_viewmodel_offset"
@@ -13994,6 +14314,9 @@
 
 	"43"  // The Killing Gloves of Boxing // tf_weapon_fists
 	{
+		"2008/08/19" // Introduction date
+		{
+		}
 		"2010/01/13" // v1080 (base)
 		{
 			"critboost on kill"
@@ -14586,6 +14909,9 @@
 
 	"587"  // Apoco-Fists // tf_weapon_fists
 	{
+		"2011/10/27" // Introduction date
+		{
+		}
 		"2011/12/15" // Australian Christmas 2011
 		{
 			"crit kill will gib"
@@ -15032,6 +15358,9 @@
 
 	"1184"  // Gloves of Running Urgently MvM // tf_weapon_fists
 	{
+		"2013/08/27" // Introduction date
+		{
+		}
 		"2017/10/20" // Jungle Inferno
 		{
 			"move speed bonus"
@@ -15075,15 +15404,10 @@
 	// ── Engineer ──────────────────────────────────────────
 	"9"  // Engineer's Shotgun // tf_weapon_shotgun_primary
 	{
-		"2016/07/07" // Meet Your Match
+		"2007/09/17" // Introduction date
 		{
-			"min_viewmodel_offset"
-			{
-				"attribute_class"	"min_viewmodel_offset"
-				"value"	"10 0 -9"
-			}
 		}
-		"2017/10/20" // Scream Fortress 2017
+		"2016/07/07" // Meet Your Match
 		{
 			"min_viewmodel_offset"
 			{
@@ -15201,6 +15525,9 @@
 
 	"527"  // The Widowmaker // tf_weapon_shotgun_primary
 	{
+		"2011/08/11" // Introduction date
+		{
+		}
 		"2011/08/18" // Mann-tastic! Update
 		{
 			"mod ammo per shot"
@@ -15365,7 +15692,35 @@
 
 	"588"  // The Pomson 6000 // tf_weapon_drg_pomson
 	{
-		"2013/10/29" // Scream Fortress 2013
+		"2011/12/15" // Australian Christmas 2011
+		{
+			"energy weapon no ammo"
+			{
+				"attribute_class"	"energy_weapon_no_ammo"
+				"value"	"1"
+			}
+			"energy weapon penetration"
+			{
+				"attribute_class"	"energy_weapon_penetration"
+				"value"	"1"
+			}
+			"energy weapon no deflect"
+			{
+				"attribute_class"	"energy_weapon_no_deflect"
+				"value"	"1"
+			}
+			"subtract victim medigun charge on hit"
+			{
+				"attribute_class"	"subtract_victim_medigun_charge_onhit"
+				"value"	"10"
+			}
+			"subtract victim cloak on hit"
+			{
+				"attribute_class"	"subtract_victim_cloak_on_hit"
+				"value"	"20"
+			}
+		}
+		"2012/08/15" // Mann vs. Machine
 		{
 			"energy weapon no ammo"
 			{
@@ -15796,6 +16151,9 @@
 
 	"22"  // Engineer's Pistol // tf_weapon_pistol
 	{
+		"2007/09/17" // Introduction date
+		{
+		}
 		"2015/12/17" // Tough Break
 		{
 			"weapon_stattrak_module_scale"
@@ -15846,6 +16204,9 @@
 
 	"528"  // The Short Circuit // tf_weapon_mechanical_arm
 	{
+		"2011/08/17" // Introduction date
+		{
+		}
 		"2011/08/18" // Mann-tastic! Update
 		{
 			"mod ammo per shot"
@@ -16310,6 +16671,9 @@
 
 	"7"  // Wrench // tf_weapon_wrench
 	{
+		"2007/09/17" // Introduction date
+		{
+		}
 		"2011/12/15" // Australian Christmas 2011
 		{
 			"kill eater score type"
@@ -17250,6 +17614,9 @@
 
 	"25"  // Construction PDA // tf_weapon_pda_engineer_build
 	{
+		"2007/09/17" // Introduction date
+		{
+		}
 		"2013/05/17" // Robotic Boogaloo
 		{
 			"kill eater score type"
@@ -17295,6 +17662,9 @@
 
 	"26"  // Destruction PDA // tf_weapon_pda_engineer_destroy
 	{
+		"2007/09/17" // Introduction date
+		{
+		}
 		"2016/07/07" // Meet Your Match
 		{
 			"min_viewmodel_offset"
@@ -17307,6 +17677,9 @@
 
 	"28"  // PDA (ed: Toolbox) // tf_weapon_builder
 	{
+		"2007/09/17" // Introduction date
+		{
+		}
 		"2016/07/07" // Meet Your Match
 		{
 			"min_viewmodel_offset"
@@ -17320,6 +17693,9 @@
 	// ── Medic ─────────────────────────────────────────────
 	"17"  // Syringe Gun // tf_weapon_syringegun_medic
 	{
+		"2007/09/17" // Introduction date
+		{
+		}
 		"2016/07/07" // Meet Your Match
 		{
 			"min_viewmodel_offset"
@@ -17332,6 +17708,9 @@
 
 	"36"  // The Blutsauger // tf_weapon_syringegun_medic
 	{
+		"2008/04/29" // Introduction date
+		{
+		}
 		"2010/01/13" // v1080 (base)
 		{
 			"heal on hit for rapidfire"
@@ -17585,6 +17964,9 @@
 
 	"29"  // Medi Gun // tf_weapon_medigun
 	{
+		"2007/09/17" // Introduction date
+		{
+		}
 		"2011/12/15" // Australian Christmas 2011
 		{
 			"kill eater score type"
@@ -17643,6 +18025,9 @@
 
 	"35"  // The Kritzkrieg // tf_weapon_medigun
 	{
+		"2008/04/29" // Introduction date
+		{
+		}
 		"2010/01/13" // v1080 (base)
 		{
 			"medigun charge is crit boost"
@@ -18268,15 +18653,10 @@
 
 	"8"  // Bonesaw // tf_weapon_bonesaw
 	{
-		"2016/07/07" // Meet Your Match
+		"2007/09/17" // Introduction date
 		{
-			"min_viewmodel_offset"
-			{
-				"attribute_class"	"min_viewmodel_offset"
-				"value"	"10 0 -12"
-			}
 		}
-		"2017/10/20" // Scream Fortress 2017
+		"2016/07/07" // Meet Your Match
 		{
 			"min_viewmodel_offset"
 			{
@@ -18288,6 +18668,9 @@
 
 	"37"  // The Ubersaw // tf_weapon_bonesaw
 	{
+		"2008/04/29" // Introduction date
+		{
+		}
 		"2010/01/13" // v1080 (base)
 		{
 			"add uber charge on hit"
@@ -18765,6 +19148,9 @@
 	// ── Sniper ────────────────────────────────────────────
 	"14"  // Sniper Rifle // tf_weapon_sniperrifle
 	{
+		"2007/09/17" // Introduction date
+		{
+		}
 		"2015/07/02" // Gun Mettle
 		{
 			"weapon_stattrak_module_scale"
@@ -18790,6 +19176,9 @@
 
 	"56"  // The Huntsman // tf_weapon_compound_bow
 	{
+		"2009/05/21" // Introduction date
+		{
+		}
 		"2010/01/13" // v1080 (base)
 		{
 			"hidden primary max ammo bonus"
@@ -19144,6 +19533,9 @@
 
 	"526"  // The Machina // tf_weapon_sniperrifle
 	{
+		"2011/08/11" // Introduction date
+		{
+		}
 		"2011/08/18" // Mann-tastic! Update
 		{
 			"sniper penetrate players when charged"
@@ -19363,6 +19755,9 @@
 
 	"1092"  // The Fortified Compound // tf_weapon_compound_bow
 	{
+		"2014/02/11" // Introduction date
+		{
+		}
 		"2014/06/18" // Love & War Update
 		{
 			"hidden primary max ammo bonus"
@@ -19588,6 +19983,9 @@
 
 	"16"  // SMG // tf_weapon_smg
 	{
+		"2007/09/17" // Introduction date
+		{
+		}
 		"2015/12/17" // Tough Break
 		{
 			"weapon_stattrak_module_scale"
@@ -19613,6 +20011,9 @@
 
 	"57"  // The Razorback // tf_wearable_razorback
 	{
+		"2009/05/21" // Introduction date
+		{
+		}
 		"2010/01/13" // v1080 (base)
 		{
 			"backstab shield"
@@ -19715,6 +20116,9 @@
 
 	"58"  // Jarate // tf_weapon_jar
 	{
+		"2009/05/21" // Introduction date
+		{
+		}
 		"2010/01/13" // v1080 (base)
 		{
 			"jarate description"
@@ -19757,7 +20161,7 @@
 				"value"	"4"
 			}
 		}
-		"2016/05/11" // Mayflower 2016
+		"2015/12/17" // Tough Break
 		{
 			"jarate description"
 			{
@@ -19873,6 +20277,9 @@
 
 	"642"  // Cozy Camper // tf_wearable
 	{
+		"2012/03/15" // Introduction date
+		{
+		}
 		"2012/06/27" // Pyromania Update
 		{
 			"health regen"
@@ -20107,8 +20514,178 @@
 	}
 
 	"1105"  // The Self-Aware Beauty Mark // tf_weapon_jar
+	{
+		"2014/06/18" // Love & War Update
+		{
+			"jarate description"
+			{
+				"attribute_class"	"desc_jarate_description"
+				"value"	"1"
+			}
+			"kill eater score type"
+			{
+				"attribute_class"	"kill_eater_score_type"
+				"value"	"4"
+			}
+			"override projectile type"
+			{
+				"attribute_class"	"override_projectile_type"
+				"value"	"24"
+			}
+			"righthand pose parameter"
+			{
+				"attribute_class"	"righthand_pose_parameter"
+				"value"	"13"
+			}
+		}
+		"2014/10/29" // Scream Fortress 2014
+		{
+			"jarate description"
+			{
+				"attribute_class"	"desc_jarate_description"
+				"value"	"1"
+			}
+			"kill eater score type"
+			{
+				"attribute_class"	"kill_eater_score_type"
+				"value"	"4"
+			}
+			"override projectile type"
+			{
+				"attribute_class"	"override_projectile_type"
+				"value"	"24"
+			}
+			"righthand pose parameter"
+			{
+				"attribute_class"	"righthand_pose_parameter"
+				"value"	"13"
+			}
+			"limited quantity item"
+			{
+				"attribute_class"	"limited quantity item"
+				"value"	"1"
+			}
+		}
+		"2015/12/17" // Tough Break
+		{
+			"jarate description"
+			{
+				"attribute_class"	"desc_jarate_description"
+				"value"	"1"
+			}
+			"kill eater score type"
+			{
+				"attribute_class"	"kill_eater_score_type"
+				"value"	"4"
+			}
+			"extinguish reduces cooldown"
+			{
+				"attribute_class"	"extinguish_reduces_cooldown"
+				"value"	"0.8"
+			}
+			"override projectile type"
+			{
+				"attribute_class"	"override_projectile_type"
+				"value"	"24"
+			}
+			"righthand pose parameter"
+			{
+				"attribute_class"	"righthand_pose_parameter"
+				"value"	"13"
+			}
+			"limited quantity item"
+			{
+				"attribute_class"	"limited quantity item"
+				"value"	"1"
+			}
+		}
+		"2016/07/07" // Meet Your Match
+		{
+			"jarate description"
+			{
+				"attribute_class"	"desc_jarate_description"
+				"value"	"1"
+			}
+			"kill eater score type"
+			{
+				"attribute_class"	"kill_eater_score_type"
+				"value"	"4"
+			}
+			"extinguish reduces cooldown"
+			{
+				"attribute_class"	"extinguish_reduces_cooldown"
+				"value"	"0.8"
+			}
+			"override projectile type"
+			{
+				"attribute_class"	"override_projectile_type"
+				"value"	"24"
+			}
+			"righthand pose parameter"
+			{
+				"attribute_class"	"righthand_pose_parameter"
+				"value"	"13"
+			}
+			"min_viewmodel_offset"
+			{
+				"attribute_class"	"min_viewmodel_offset"
+				"value"	"10 0 -10"
+			}
+			"limited quantity item"
+			{
+				"attribute_class"	"limited quantity item"
+				"value"	"1"
+			}
+		}
+		"2017/10/20" // Jungle Inferno
+		{
+			"jarate description"
+			{
+				"attribute_class"	"desc_jarate_description"
+				"value"	"1"
+			}
+			"kill eater score type"
+			{
+				"attribute_class"	"kill_eater_score_type"
+				"value"	"4"
+			}
+			"extinguish reduces cooldown"
+			{
+				"attribute_class"	"extinguish_reduces_cooldown"
+				"value"	"0.8"
+			}
+			"override projectile type"
+			{
+				"attribute_class"	"override_projectile_type"
+				"value"	"24"
+			}
+			"min_viewmodel_offset"
+			{
+				"attribute_class"	"min_viewmodel_offset"
+				"value"	"10 0 -10"
+			}
+			"limited quantity item"
+			{
+				"attribute_class"	"limited quantity item"
+				"value"	"1"
+			}
+		}
+	}
 
 	"3"  // Kukri // tf_weapon_club
+	{
+		"2007/09/17" // Introduction date
+		{
+		}
+		"2016/07/07" // Meet Your Match
+		{
+			"min_viewmodel_offset"
+			{
+				"attribute_class"	"min_viewmodel_offset"
+				"value"	"10 0 -6"
+			}
+		}
+	}
 
 	"171"  // The Tribalman's Shiv // tf_weapon_club
 	{
@@ -20328,6 +20905,9 @@
 	// ── Spy ───────────────────────────────────────────────
 	"24"  // Revolver // tf_weapon_revolver
 	{
+		"2007/09/17" // Introduction date
+		{
+		}
 		"2015/12/17" // Tough Break
 		{
 			"weapon_stattrak_module_scale"
@@ -20353,6 +20933,9 @@
 
 	"61"  // The Ambassador // tf_weapon_revolver
 	{
+		"2009/05/21" // Introduction date
+		{
+		}
 		"2010/01/13" // v1080 (base)
 		{
 			"revolver use hit locations"
@@ -20459,6 +21042,9 @@
 
 	"161"  // Big Kill // tf_weapon_revolver
 	{
+		"2010/04/15" // Introduction date
+		{
+		}
 		"2014/10/29" // Scream Fortress 2014
 		{
 			"limited quantity item"
@@ -20654,6 +21240,9 @@
 
 	"525"  // The Diamondback // tf_weapon_revolver
 	{
+		"2011/08/11" // Introduction date
+		{
+		}
 		"2011/08/18" // Mann-tastic! Update
 		{
 			"sapper kills collect crits"
@@ -20717,6 +21306,9 @@
 
 	"735"  // Sapper // tf_weapon_builder
 	{
+		"2007/09/17" // Introduction date
+		{
+		}
 		"2015/12/17" // Tough Break
 		{
 			"kill eater score type"
@@ -20742,6 +21334,9 @@
 
 	"810"  // The Red-Tape Recorder // tf_weapon_sapper
 	{
+		"2012/08/02" // Introduction date
+		{
+		}
 		"2012/08/14" // Triad Update
 		{
 			"sapper degenerates buildings"
@@ -20813,6 +21408,9 @@
 
 	"933"  // The Ap-Sap (Genuine) // tf_weapon_sapper
 	{
+		"2013/03/12" // Introduction date
+		{
+		}
 		"2013/05/17" // Robotic Boogaloo
 		{
 			"sapper voice pak"
@@ -20890,6 +21488,32 @@
 	}
 
 	"4"  // Knife // tf_weapon_knife
+	{
+		"2007/09/17" // Introduction date
+		{
+		}
+		"2015/12/17" // Tough Break
+		{
+			"weapon_stattrak_module_scale"
+			{
+				"attribute_class"	"weapon_stattrak_module_scale"
+				"value"	"0.455"
+			}
+		}
+		"2016/07/07" // Meet Your Match
+		{
+			"weapon_stattrak_module_scale"
+			{
+				"attribute_class"	"weapon_stattrak_module_scale"
+				"value"	"0.455"
+			}
+			"min_viewmodel_offset"
+			{
+				"attribute_class"	"min_viewmodel_offset"
+				"value"	"5 0 -4"
+			}
+		}
+	}
 
 	"225"  // Your Eternal Reward // tf_weapon_knife
 	{
@@ -21399,6 +22023,9 @@
 
 	"638"  // The Sharp Dresser // tf_weapon_knife
 	{
+		"2011/11/23" // Introduction date
+		{
+		}
 		"2011/12/15" // Australian Christmas 2011
 		{
 			"disable fancy class select anim"
@@ -21525,6 +22152,9 @@
 
 	"727"  // The Black Rose // tf_weapon_knife
 	{
+		"2012/02/14" // Introduction date
+		{
+		}
 		"2013/11/21" // Two Cities Update
 		{
 			"special taunt"
@@ -21568,6 +22198,9 @@
 
 	"27"  // Disguise Kit PDA // tf_weapon_pda_spy
 	{
+		"2007/09/17" // Introduction date
+		{
+		}
 		"2016/07/07" // Meet Your Match
 		{
 			"min_viewmodel_offset"
@@ -21580,6 +22213,9 @@
 
 	"30"  // Invis Watch // tf_weapon_invis
 	{
+		"2007/09/17" // Introduction date
+		{
+		}
 		"2013/05/17" // Robotic Boogaloo
 		{
 			"kill eater score type"
@@ -21618,6 +22254,9 @@
 
 	"59"  // The Dead Ringer // tf_weapon_invis
 	{
+		"2009/05/21" // Introduction date
+		{
+		}
 		"2010/01/13" // v1080 (base)
 		{
 			"set cloak is feign death"
@@ -21825,6 +22464,9 @@
 
 	"60"  // The Cloak and Dagger // tf_weapon_invis
 	{
+		"2009/05/21" // Introduction date
+		{
+		}
 		"2010/01/13" // v1080 (base)
 		{
 			"set cloak is movement based"
@@ -21954,6 +22596,9 @@
 
 	"297"  // Enthusiast's Timepiece // tf_weapon_invis
 	{
+		"2010/11/19" // Introduction date
+		{
+		}
 		"2010/12/16" // Australian Christmas 2010
 		{
 			"cannot trade"
@@ -22015,6 +22660,9 @@
 
 	"947"  // The Quackenbirdt // tf_weapon_invis
 	{
+		"2012/11/16" // Introduction date
+		{
+		}
 		"2015/07/02" // Gun Mettle
 		{
 			"kill eater score type"
