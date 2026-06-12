@@ -935,45 +935,6 @@
 				"value"	"1"
 			}
 		}
-		"2013/10/10" // Fall Event 2013
-		{
-			"kill eater score type"
-			{
-				"attribute_class"	"kill_eater_score_type"
-				"value"	"50"
-			}
-		}
-		"2013/11/21" // Two Cities
-		{
-			"kill eater score type"
-			{
-				"attribute_class"	"kill_eater_score_type"
-				"value"	"50"
-			}
-			"special taunt"
-			{
-				"attribute_class"	"special_taunt"
-				"value"	"1"
-			}
-		}
-		"2014/02/07" // Strongbox Pack
-		{
-			"kill eater score type"
-			{
-				"attribute_class"	"kill_eater_score_type"
-				"value"	"50"
-			}
-			"special taunt"
-			{
-				"attribute_class"	"special_taunt"
-				"value"	"1"
-			}
-			"allowed in medieval mode"
-			{
-				"attribute_class"	"allowed_in_medieval_mode"
-				"value"	"1"
-			}
-		}
 		"2016/07/07" // Meet Your Match
 		{
 			"kill eater score type"
@@ -1031,41 +992,58 @@
 	{
 		"2010/04/28" // April 28 2010
 		{
-			"lunchbox adds minicrits"
-			{
-				"attribute_class"	"set_weapon_mode"
-				"value"	"2"
-			}
-		}
-		"2013/10/10" // Fall Event 2013
-		{
 			"kill eater score type"
 			{
 				"attribute_class"	"kill_eater_score_type"
 				"value"	"50"
-			}
-			"lunchbox adds minicrits"
-			{
-				"attribute_class"	"set_weapon_mode"
-				"value"	"2"
-			}
-		}
-		"2013/11/21" // Two Cities
-		{
-			"kill eater score type"
-			{
-				"attribute_class"	"kill_eater_score_type"
-				"value"	"50"
-			}
-			"lunchbox adds minicrits"
-			{
-				"attribute_class"	"set_weapon_mode"
-				"value"	"2"
 			}
 			"special taunt"
 			{
 				"attribute_class"	"special_taunt"
 				"value"	"1"
+			}
+			"allowed in medieval mode"
+			{
+				"attribute_class"	"allowed_in_medieval_mode"
+				"value"	"1"
+			}
+			"lunchbox adds minicrits"
+			{
+				"attribute_class"	"set_weapon_mode"
+				"value"	"2"
+			}
+			"allowed in medieval mode"
+			{
+				"attribute_class"	"allowed_in_medieval_mode"
+				"value"	"1"
+			}
+		}
+		"2013/07/10" // July 10 2013
+		{
+			"kill eater score type"
+			{
+				"attribute_class"	"kill_eater_score_type"
+				"value"	"50"
+			}
+			"special taunt"
+			{
+				"attribute_class"	"special_taunt"
+				"value"	"1"
+			}
+			"allowed in medieval mode"
+			{
+				"attribute_class"	"allowed_in_medieval_mode"
+				"value"	"1"
+			}
+			"lunchbox adds minicrits"
+			{
+				"attribute_class"	"set_weapon_mode"
+				"value"	"2"
+			}
+			"energy buff dmg taken multiplier"
+			{
+				"attribute_class"	"energy_buff_dmg_taken_multiplier"
+				"value"	"1.25"
 			}
 		}
 		"2013/12/20" // Smissmass 2013
@@ -1095,34 +1073,6 @@
 				"attribute_class"	"energy_buff_dmg_taken_multiplier"
 				"value"	"1.1"
 			}
-			"min_viewmodel_offset"
-			{
-				"attribute_class"	"min_viewmodel_offset"
-				"value"	"0 0 -5"
-			}
-		}
-		"2014/02/07" // Strongbox Pack
-		{
-			"kill eater score type"
-			{
-				"attribute_class"	"kill_eater_score_type"
-				"value"	"50"
-			}
-			"lunchbox adds minicrits"
-			{
-				"attribute_class"	"set_weapon_mode"
-				"value"	"2"
-			}
-			"special taunt"
-			{
-				"attribute_class"	"special_taunt"
-				"value"	"1"
-			}
-			"allowed in medieval mode"
-			{
-				"attribute_class"	"allowed_in_medieval_mode"
-				"value"	"1"
-			}
 		}
 		"2016/07/07" // Meet Your Match
 		{
@@ -1150,11 +1100,6 @@
 			{
 				"attribute_class"	"energy_buff_dmg_taken_multiplier"
 				"value"	"1.1"
-			}
-			"mod_mark_attacker_for_death"
-			{
-				"attribute_class"	"mod_mark_attacker_for_death"
-				"value"	"5.0"
 			}
 			"min_viewmodel_offset"
 			{
@@ -1200,17 +1145,6 @@
 	"222"  // Mad Milk // tf_weapon_jar_milk
 	{
 		"2010/09/30" // Mannconomy Update
-		{
-		}
-		"2011/10/13" // Manniversary Update
-		{
-			"kill eater score type"
-			{
-				"attribute_class"	"kill_eater_score_type"
-				"value"	"4"
-			}
-		}
-		"2014/02/07" // Strongbox Pack
 		{
 			"kill eater score type"
 			{
@@ -1674,29 +1608,6 @@
 	"1121"  // Mutated Milk // tf_weapon_jar_milk
 	{
 		"2014/06/18" // Love & War
-		{
-			"kill eater score type"
-			{
-				"attribute_class"	"kill_eater_score_type"
-				"value"	"4"
-			}
-			"allowed in medieval mode"
-			{
-				"attribute_class"	"allowed_in_medieval_mode"
-				"value"	"1"
-			}
-			"override projectile type"
-			{
-				"attribute_class"	"override_projectile_type"
-				"value"	"25"
-			}
-			"righthand pose parameter"
-			{
-				"attribute_class"	"righthand_pose_parameter"
-				"value"	"13"
-			}
-		}
-		"2014/10/29" // Scream Fortress 2014
 		{
 			"kill eater score type"
 			{
@@ -4153,27 +4064,6 @@
 	{
 		"2009/12/17" // WAR! Update
 		{
-			"mod soldier buff type"
-			{
-				"attribute_class"	"set_buff_type"
-				"value"	"1"
-			}
-		}
-		"2012/12/20" // Mecha Update / Smissmass
-		{
-			"kill eater score type"
-			{
-				"attribute_class"	"kill_eater_score_type"
-				"value"	"51"
-			}
-			"mod soldier buff type"
-			{
-				"attribute_class"	"set_buff_type"
-				"value"	"1"
-			}
-		}
-		"2014/02/07" // Strongbox Pack
-		{
 			"kill eater score type"
 			{
 				"attribute_class"	"kill_eater_score_type"
@@ -4233,7 +4123,7 @@
 				"value"	"0.4"
 			}
 		}
-		"2014/06/18" // Love & War
+		"2014/04/01" // April Fool's 2014
 		{
 			"rocket jump damage reduction"
 			{
@@ -4257,6 +4147,11 @@
 				"attribute_class"	"set_buff_type"
 				"value"	"2"
 			}
+			"allowed in medieval mode"
+			{
+				"attribute_class"	"allowed_in_medieval_mode"
+				"value"	"1"
+			}
 		}
 		"2013/10/10" // Fall Event 2013
 		{
@@ -4270,26 +4165,13 @@
 				"attribute_class"	"set_buff_type"
 				"value"	"2"
 			}
+			"allowed in medieval mode"
+			{
+				"attribute_class"	"allowed_in_medieval_mode"
+				"value"	"1"
+			}
 		}
 		"2013/12/20" // Smissmass 2013
-		{
-			"kill eater score type"
-			{
-				"attribute_class"	"kill_eater_score_type"
-				"value"	"51"
-			}
-			"mod soldier buff type"
-			{
-				"attribute_class"	"set_buff_type"
-				"value"	"2"
-			}
-			"max health additive bonus"
-			{
-				"attribute_class"	"add_maxhealth"
-				"value"	"20"
-			}
-		}
-		"2014/02/07" // Strongbox Pack
 		{
 			"kill eater score type"
 			{
@@ -4346,6 +4228,11 @@
 	{
 		"2011/03/10" // Shogun Pack
 		{
+			"kill eater score type"
+			{
+				"attribute_class"	"kill_eater_score_type"
+				"value"	"51"
+			}
 			"mod soldier buff type"
 			{
 				"attribute_class"	"set_buff_type"
@@ -4357,15 +4244,7 @@
 				"value"	"1"
 			}
 		}
-		"2011/03/22" // Japan Charity
-		{
-			"mod soldier buff type"
-			{
-				"attribute_class"	"set_buff_type"
-				"value"	"3"
-			}
-		}
-		"2013/12/20" // Smissmass 2013
+		"2011/03/15" // March 15 2011
 		{
 			"kill eater score type"
 			{
@@ -4377,13 +4256,26 @@
 				"attribute_class"	"set_buff_type"
 				"value"	"3"
 			}
-			"health regen"
+		}
+		"2011/05/25" // May 25 2011
+		{
+			"kill eater score type"
 			{
-				"attribute_class"	"add_health_regen"
-				"value"	"2"
+				"attribute_class"	"kill_eater_score_type"
+				"value"	"51"
+			}
+			"mod soldier buff type"
+			{
+				"attribute_class"	"set_buff_type"
+				"value"	"3"
+			}
+			"allowed in medieval mode"
+			{
+				"attribute_class"	"allowed_in_medieval_mode"
+				"value"	"1"
 			}
 		}
-		"2014/02/07" // Strongbox Pack
+		"2013/12/20" // Smissmass 2013
 		{
 			"kill eater score type"
 			{
@@ -4690,19 +4582,6 @@
 				"attribute_class"	"boots_falling_stomp"
 				"value"	"1"
 			}
-		}
-		"2012/06/27" // Pyromania Update
-		{
-			"damage force reduction"
-			{
-				"attribute_class"	"damage_force_reduction"
-				"value"	"0.25"
-			}
-			"boots falling stomp"
-			{
-				"attribute_class"	"boots_falling_stomp"
-				"value"	"1"
-			}
 			"kill eater score type"
 			{
 				"attribute_class"	"kill_eater_score_type"
@@ -4714,7 +4593,7 @@
 				"value"	"26"
 			}
 		}
-		"2014/02/07" // Strongbox Pack
+		"2012/06/27" // Pyromania Update
 		{
 			"damage force reduction"
 			{
@@ -4743,39 +4622,6 @@
 			}
 		}
 		"2017/10/20" // Jungle Inferno
-		{
-			"damage force reduction"
-			{
-				"attribute_class"	"damage_force_reduction"
-				"value"	"0.25"
-			}
-			"boots falling stomp"
-			{
-				"attribute_class"	"boots_falling_stomp"
-				"value"	"1"
-			}
-			"kill eater score type"
-			{
-				"attribute_class"	"kill_eater_score_type"
-				"value"	"26"
-			}
-			"kill eater kill type"
-			{
-				"attribute_class"	"kill_eater_kill_type"
-				"value"	"26"
-			}
-			"allowed in medieval mode"
-			{
-				"attribute_class"	"allowed_in_medieval_mode"
-				"value"	"1"
-			}
-			"mod_air_control_blast_jump"
-			{
-				"attribute_class"	"mod_air_control_blast_jump"
-				"value"	"3.0"
-			}
-		}
-		"2017/12/21" // Smissmass 2017
 		{
 			"damage force reduction"
 			{
@@ -9104,7 +8950,7 @@
 				"value"	"25"
 			}
 		}
-		"2014/02/07" // Strongbox Pack
+		"2011/06/27" // June 27 2011
 		{
 			"mult charge turn control"
 			{
@@ -9219,37 +9065,6 @@
 			}
 		}
 		"2011/11/07" // November 7 2011
-		{
-			"mult charge turn control"
-			{
-				"attribute_class"	"charge_turn_control"
-				"value"	"2"
-			}
-			"max health additive bonus"
-			{
-				"attribute_class"	"add_maxhealth"
-				"value"	"25"
-			}
-			"allowed in medieval mode"
-			{
-				"attribute_class"	"allowed_in_medieval_mode"
-				"value"	"1"
-			}
-		}
-		"2011/12/15" // Australian Christmas 2011
-		{
-			"mult charge turn control"
-			{
-				"attribute_class"	"charge_turn_control"
-				"value"	"2"
-			}
-			"max health additive bonus"
-			{
-				"attribute_class"	"add_maxhealth"
-				"value"	"25"
-			}
-		}
-		"2014/02/07" // Strongbox Pack
 		{
 			"mult charge turn control"
 			{
@@ -9896,7 +9711,7 @@
 				"value"	"0.6"
 			}
 		}
-		"2013/07/10" // Summer Event 2013
+		"2010/12/17" // Australian Christmas
 		{
 			"dmg taken from fire reduced"
 			{
@@ -9908,13 +9723,13 @@
 				"attribute_class"	"mult_dmgtaken_from_explosions"
 				"value"	"0.6"
 			}
-			"afterburn immunity"
+			"allowed in medieval mode"
 			{
-				"attribute_class"	"afterburn_immunity"
+				"attribute_class"	"allowed_in_medieval_mode"
 				"value"	"1"
 			}
 		}
-		"2014/02/07" // Strongbox Pack
+		"2013/07/10" // Summer Event 2013
 		{
 			"dmg taken from fire reduced"
 			{
@@ -10268,7 +10083,35 @@
 				"value"	"0.8"
 			}
 		}
-		"2011/06/30" // Summer Camp Sale
+		"2011/06/23" // June 27 2011
+		{
+			"no charge impact range"
+			{
+				"attribute_class"	"no_charge_impact_range"
+				"value"	"1"
+			}
+			"charge impact damage increased"
+			{
+				"attribute_class"	"charge_impact_damage"
+				"value"	"1.7"
+			}
+			"dmg taken from fire reduced"
+			{
+				"attribute_class"	"mult_dmgtaken_from_fire"
+				"value"	"0.75"
+			}
+			"dmg taken from blast reduced"
+			{
+				"attribute_class"	"mult_dmgtaken_from_explosions"
+				"value"	"0.8"
+			}
+			"allowed in medieval mode"
+			{
+				"attribute_class"	"allowed_in_medieval_mode"
+				"value"	"1"
+			}
+		}
+		"2011/06/29" // Item Schema Update
 		{
 			"no charge impact range"
 			{
@@ -10289,6 +10132,11 @@
 			{
 				"attribute_class"	"mult_dmgtaken_from_explosions"
 				"value"	"0.85"
+			}
+			"allowed in medieval mode"
+			{
+				"attribute_class"	"allowed_in_medieval_mode"
+				"value"	"1"
 			}
 		}
 		"2014/02/07" // Strongbox Pack
@@ -12535,45 +12383,6 @@
 				"value"	"1"
 			}
 		}
-		"2012/12/20" // Mecha Update / Smissmass
-		{
-			"kill eater score type"
-			{
-				"attribute_class"	"kill_eater_score_type"
-				"value"	"50"
-			}
-		}
-		"2013/11/21" // Two Cities
-		{
-			"kill eater score type"
-			{
-				"attribute_class"	"kill_eater_score_type"
-				"value"	"50"
-			}
-			"special taunt"
-			{
-				"attribute_class"	"special_taunt"
-				"value"	"1"
-			}
-		}
-		"2014/02/07" // Strongbox Pack
-		{
-			"kill eater score type"
-			{
-				"attribute_class"	"kill_eater_score_type"
-				"value"	"50"
-			}
-			"special taunt"
-			{
-				"attribute_class"	"special_taunt"
-				"value"	"1"
-			}
-			"allowed in medieval mode"
-			{
-				"attribute_class"	"allowed_in_medieval_mode"
-				"value"	"1"
-			}
-		}
 		"2016/07/07" // Meet Your Match
 		{
 			"kill eater score type"
@@ -12640,27 +12449,6 @@
 	"159"  // The Dalokohs Bar // tf_weapon_lunchbox
 	{
 		"2010/03/18" // First Community Contribution
-		{
-			"lunchbox adds maxhealth bonus"
-			{
-				"attribute_class"	"set_weapon_mode"
-				"value"	"1"
-			}
-		}
-		"2013/11/21" // Two Cities
-		{
-			"lunchbox adds maxhealth bonus"
-			{
-				"attribute_class"	"set_weapon_mode"
-				"value"	"1"
-			}
-			"special taunt"
-			{
-				"attribute_class"	"special_taunt"
-				"value"	"1"
-			}
-		}
-		"2014/02/07" // Strongbox Pack
 		{
 			"lunchbox adds maxhealth bonus"
 			{
@@ -12776,46 +12564,7 @@
 
 	"311"  // The Buffalo Steak Sandvich // tf_weapon_lunchbox
 	{
-		"2010/12/16" // Introduction date
-		{
-			"lunchbox adds minicrits"
-			{
-				"attribute_class"	"set_weapon_mode"
-				"value"	"2"
-			}
-		}
-		"2012/12/20" // Mecha Update / Smissmass
-		{
-			"kill eater score type"
-			{
-				"attribute_class"	"kill_eater_score_type"
-				"value"	"50"
-			}
-			"lunchbox adds minicrits"
-			{
-				"attribute_class"	"set_weapon_mode"
-				"value"	"2"
-			}
-		}
-		"2013/11/21" // Two Cities
-		{
-			"kill eater score type"
-			{
-				"attribute_class"	"kill_eater_score_type"
-				"value"	"50"
-			}
-			"lunchbox adds minicrits"
-			{
-				"attribute_class"	"set_weapon_mode"
-				"value"	"2"
-			}
-			"special taunt"
-			{
-				"attribute_class"	"special_taunt"
-				"value"	"1"
-			}
-		}
-		"2014/02/07" // Strongbox Pack
+		"2010/12/17" // Australian Christmas
 		{
 			"kill eater score type"
 			{
@@ -13264,18 +13013,7 @@
 
 	"863"  // Robo-Sandvich // tf_weapon_lunchbox
 	{
-		"2012/09/21" // Introduction date
-		{
-		}
-		"2012/10/26" // Scream Fortress 2012
-		{
-			"lunchbox adds minicrits"
-			{
-				"attribute_class"	"set_weapon_mode"
-				"value"	"3"
-			}
-		}
-		"2013/11/21" // Two Cities
+		"2012/09/21" // What's in the Sandvich Box?
 		{
 			"lunchbox adds minicrits"
 			{
@@ -13288,7 +13026,7 @@
 				"value"	"1"
 			}
 		}
-		"2014/02/07" // Strongbox Pack
+		"2013/01/06" // Jan 6 2013
 		{
 			"lunchbox adds minicrits"
 			{
@@ -16699,7 +16437,7 @@
 
 	"305"  // Crusader's Crossbow // tf_weapon_crossbow
 	{
-		"2010/12/16" // Introduction date
+		"2010/12/17" // Australian Christmas
 		{
 			"fires healing bolts"
 			{
@@ -16715,6 +16453,11 @@
 			{
 				"attribute_class"	"mult_maxammo_primary"
 				"value"	"0.25"
+			}
+			"allowed in medieval mode"
+			{
+				"attribute_class"	"allowed_in_medieval_mode"
+				"value"	"1"
 			}
 		}
 		"2012/06/27" // Pyromania Update
@@ -16739,50 +16482,19 @@
 				"attribute_class"	"mult_reload_time"
 				"value"	"0.6"
 			}
-		}
-		"2013/07/10" // Summer Event 2013
-		{
-			"fires healing bolts"
-			{
-				"attribute_class"	"fires_healing_bolts"
-				"value"	"1"
-			}
-			"sniper no headshots"
-			{
-				"attribute_class"	"set_weapon_mode"
-				"value"	"1"
-			}
-			"maxammo primary reduced"
-			{
-				"attribute_class"	"mult_maxammo_primary"
-				"value"	"0.25"
-			}
-		}
-		"2014/02/07" // Strongbox Pack
-		{
-			"fires healing bolts"
-			{
-				"attribute_class"	"fires_healing_bolts"
-				"value"	"1"
-			}
-			"sniper no headshots"
-			{
-				"attribute_class"	"set_weapon_mode"
-				"value"	"1"
-			}
-			"maxammo primary reduced"
-			{
-				"attribute_class"	"mult_maxammo_primary"
-				"value"	"0.25"
-			}
 			"allowed in medieval mode"
 			{
 				"attribute_class"	"allowed_in_medieval_mode"
 				"value"	"1"
 			}
 		}
-		"2014/12/22" // Smissmass 2014
+		"2013/10/29" // Scream Fortress V
 		{
+			"fires healing bolts"
+			{
+				"attribute_class"	"fires_healing_bolts"
+				"value"	"1"
+			}
 			"sniper no headshots"
 			{
 				"attribute_class"	"set_weapon_mode"
@@ -16801,6 +16513,11 @@
 		}
 		"2016/07/07" // Meet Your Match
 		{
+			"fires healing bolts"
+			{
+				"attribute_class"	"fires_healing_bolts"
+				"value"	"1"
+			}
 			"sniper no headshots"
 			{
 				"attribute_class"	"set_weapon_mode"
@@ -16824,6 +16541,11 @@
 		}
 		"2017/10/20" // Jungle Inferno
 		{
+			"fires healing bolts"
+			{
+				"attribute_class"	"fires_healing_bolts"
+				"value"	"1"
+			}
 			"sniper no headshots"
 			{
 				"attribute_class"	"set_weapon_mode"
@@ -18072,81 +17794,6 @@
 				"value"	"1"
 			}
 		}
-		"2011/10/13" // Manniversary Update
-		{
-			"hidden primary max ammo bonus"
-			{
-				"attribute_class"	"mult_maxammo_primary"
-				"value"	"0.5"
-			}
-			"disable fancy class select anim"
-			{
-				"attribute_class"	"disable_fancy_class_select_anim"
-				"value"	"1"
-			}
-		}
-		"2011/11/18" // Saxxy Awards 2011
-		{
-			"hidden primary max ammo bonus"
-			{
-				"attribute_class"	"mult_maxammo_primary"
-				"value"	"0.5"
-			}
-		}
-		"2011/12/15" // Australian Christmas 2011
-		{
-			"hidden primary max ammo bonus"
-			{
-				"attribute_class"	"mult_maxammo_primary"
-				"value"	"0.5"
-			}
-			"disable fancy class select anim"
-			{
-				"attribute_class"	"disable_fancy_class_select_anim"
-				"value"	"1"
-			}
-		}
-		"2013/11/21" // Two Cities
-		{
-			"hidden primary max ammo bonus"
-			{
-				"attribute_class"	"mult_maxammo_primary"
-				"value"	"0.5"
-			}
-			"disable fancy class select anim"
-			{
-				"attribute_class"	"disable_fancy_class_select_anim"
-				"value"	"1"
-			}
-			"special taunt"
-			{
-				"attribute_class"	"special_taunt"
-				"value"	"1"
-			}
-		}
-		"2014/02/07" // Strongbox Pack
-		{
-			"hidden primary max ammo bonus"
-			{
-				"attribute_class"	"mult_maxammo_primary"
-				"value"	"0.5"
-			}
-			"disable fancy class select anim"
-			{
-				"attribute_class"	"disable_fancy_class_select_anim"
-				"value"	"1"
-			}
-			"special taunt"
-			{
-				"attribute_class"	"special_taunt"
-				"value"	"1"
-			}
-			"allowed in medieval mode"
-			{
-				"attribute_class"	"allowed_in_medieval_mode"
-				"value"	"1"
-			}
-		}
 		"2016/07/07" // Meet Your Match
 		{
 			"hidden primary max ammo bonus"
@@ -18980,6 +18627,11 @@
 				"attribute_class"	"add_maxhealth"
 				"value"	"25"
 			}
+			"allowed in medieval mode"
+			{
+				"attribute_class"	"allowed_in_medieval_mode"
+				"value"	"1"
+			}
 		}
 		"2013/07/10" // Summer Event 2013
 		{
@@ -18997,6 +18649,11 @@
 			{
 				"attribute_class"	"mult_dmgtaken_from_explosions"
 				"value"	"1.2"
+			}
+			"allowed in medieval mode"
+			{
+				"attribute_class"	"allowed_in_medieval_mode"
+				"value"	"1"
 			}
 		}
 		"2014/02/07" // Strongbox Pack
