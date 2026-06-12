@@ -27,7 +27,6 @@ Major Updates
 1306 : 2011/04/14 (Hatless Update)
 1327 : 2011/05/05 (Replay Update)
 1376 : 2011/06/23 (Über Update)
-1453 : 2011/09/08 (Foundry/Beta Update)
 1488 : 2011/10/13 (Manniversary Update)
 1746 : 2012/06/27 (Pyromania)
 1795 : 2012/08/15 (Mann vs Machine)
@@ -43,20 +42,20 @@ Major Updates
 3686 : 2017/10/20 (Jungle Inferno)
 
 Content Packs
-914  : 2010/03/18 (First Community Content)
-977  : 2010/05/20 (Second Community Content)
+914  : 2010/03/18 (First Community Contribution Update)
+977  : 2010/05/20 (Second Community Contribution Update)
 1257 : 2011/02/24 (Community Map Pack Update)
 1271 : 2011/03/10 (Shogun Pack)
 1283 : 2011/03/22 (Japan Charity)
-1299 : 2011/04/07 (Third Community Content)
+1299 : 2011/04/07 (Third Community Contribution Update)
 1403 : 2011/07/20 (Dr. Grordbort's Victory Pack Update)
 1432 : 2011/08/18 (Manno-Technology Bundle)
 1794 : 2012/08/14 (Triad Pack)
-1817 : 2012/09/02 (First Workshop Pack)
-2097 : 2013/06/13 (Second Workshop Pack)
 2336 : 2014/02/07 (Strongbox Pack)
 
 Seasonal Updates
+1817 : 2012/09/02 (First Workshop Pack)
+2097 : 2013/06/13 (Second Workshop Pack)
 2216 : 2013/10/10 (Fall Event 2013)
 3159 : 2016/05/11 (Mayflower)
 3528 : 2017/05/15 (Rainy Day)
@@ -65,6 +64,7 @@ Seasonal Updates
 Holiday: Summer
 1383 : 2011/06/30 (Summer Camp Sale)
 2124 : 2013/07/10 (Summer Event 2013)
+2566 : 2014/09/25 (Limited Late Summer Pack)
 4260 : 2019/05/16 
 4617 : 2020/05/07
 4981 : 2021/05/06

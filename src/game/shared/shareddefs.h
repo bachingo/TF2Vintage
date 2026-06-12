@@ -1026,7 +1026,6 @@ struct collidelist_t
 #define TF2V_DAY_MAJOR_HATLESS                   1306   // 2011/04/14 (Hatless Update)
 #define TF2V_DAY_MAJOR_REPLAY                    1327   // 2011/05/05 (Replay Update)
 #define TF2V_DAY_MAJOR_UBER                      1376   // 2011/06/23 (Über Update)
-#define TF2V_DAY_MAJOR_FOUNDRY                   1453   // 2011/09/08 (Foundry/Beta Update)
 #define TF2V_DAY_MAJOR_MANNIVERSARY              1488   // 2011/10/13 (Manniversary Update)
 #define TF2V_DAY_MAJOR_PYROMANIA                 1746   // 2012/06/27 (Pyromania)
 #define TF2V_DAY_MAJOR_MVM                       1795   // 2012/08/15 (Mann vs Machine)
@@ -1045,8 +1044,8 @@ struct collidelist_t
 #define TF2V_DAY_MAJOR_SDK                       6114   // 2024/06/12 (Source SDK Update)
 
 // Content Packs
-#define TF2V_DAY_CONTENT_FIRST_CONTENT             914    // 2010/03/18 (First Community Content)
-#define TF2V_DAY_CONTENT_SECOND_CONTENT            977    // 2010/05/20 (Second Community Content)
+#define TF2V_DAY_CONTENT_FIRST_CONTENT             914    // 2010/03/18 (First Community Contribution Update)
+#define TF2V_DAY_CONTENT_SECOND_CONTENT            977    // 2010/05/20 (Second Community Contribution Update)
 #define TF2V_DAY_CONTENT_COMMUNITY_MAP             1257   // 2011/02/24 (Community Map Pack Update)
 #define TF2V_DAY_CONTENT_SHOGUN                    1271   // 2011/03/10 (Shogun Pack)
 #define TF2V_DAY_CONTENT_CHARITY             	   1283   // 2011/03/22 (Japan Charity)
@@ -1054,11 +1053,11 @@ struct collidelist_t
 #define TF2V_DAY_CONTENT_GRORDBORT             	   1403   // 2011/07/20 (Dr. Grordbort's Victory Pack Update)
 #define TF2V_DAY_CONTENT_MANNOTECHNOLOGY           1432   // 2011/08/18 (Manno-Technology Bundle)
 #define TF2V_DAY_CONTENT_TRIAD                     1794   // 2012/08/14 (Triad Pack)
-#define TF2V_DAY_CONTENT_FIRST_WORKSHOP            1817   // 2012/09/02 (First Workshop Pack)
-#define TF2V_DAY_CONTENT_SECOND_WORKSOP            2097   // 2013/06/13 (Second Workshop Pack)
 #define TF2V_DAY_CONTENT_STRONGBOX          	   2336   // 2014/02/07 (Strongbox Pack)
 
 // Seasonal Updates
+#define TF2V_DAY_CONTENT_FIRST_WORKSHOP            1817   // 2012/09/02 (First Workshop Pack)
+#define TF2V_DAY_CONTENT_SECOND_WORKSOP            2097   // 2013/06/13 (Second Workshop Pack)
 #define TF2V_DAY_FALL_2013                		2216   // 2013/10/10 (Fall Event 2013)
 #define TF2V_DAY_SPRING_2016                 	3159   // 2016/05/11 (Mayflower)
 #define TF2V_DAY_SPRING_2017                 	3528   // 2017/05/15 (Rainy Day)
@@ -1067,6 +1066,7 @@ struct collidelist_t
 // Seasonal Updates / Summer
 #define TF2V_DAY_SUMMER_2011                     1383   // 2011/06/30 (Summer Camp Sale)
 #define TF2V_DAY_SUMMER_2013                     2124   // 2013/07/10 (Summer Event 2013)
+#define TF2V_DAY_SUMMER_2014                     2566   // 2014/09/25 (Limited Late Summer Pack)
 #define TF2V_DAY_SUMMER_2019                     4260   // 2019/05/16 
 #define TF2V_DAY_SUMMER_2020                     4617   // 2020/05/07
 #define TF2V_DAY_SUMMER_2021                     4981   // 2021/05/06
