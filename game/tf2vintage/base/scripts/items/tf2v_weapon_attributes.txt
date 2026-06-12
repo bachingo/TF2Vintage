@@ -2978,10 +2978,7 @@
 
 	"127"  // The Direct Hit // tf_weapon_rocketlauncher_directhit
 	{
-		"2009/12/17" // Introduction date
-		{
-		}
-		"2010/01/13" // v1080 (base)
+		"2009/12/17" // WAR! Update
 		{
 			"Blast radius decreased"
 			{
@@ -4233,10 +4230,7 @@
 
 	"129"  // The Buff Banner // tf_weapon_buff_item
 	{
-		"2009/12/17" // Introduction date
-		{
-		}
-		"2010/09/30" // Mann-Conomy Update
+		"2009/12/17" // WAR! Update
 		{
 			"mod soldier buff type"
 			{
@@ -4302,10 +4296,7 @@
 
 	"133"  // Gunboats // tf_wearable
 	{
-		"2009/12/17" // Introduction date
-		{
-		}
-		"2010/01/13" // v1080 (base)
+		"2009/12/17" // WAR! Update
 		{
 			"rocket jump damage reduction"
 			{
@@ -5364,10 +5355,7 @@
 
 	"128"  // The Equalizer // tf_weapon_shovel
 	{
-		"2009/12/17" // Introduction date
-		{
-		}
-		"2010/01/13" // v1080 (base)
+		"2009/12/17" // WAR! Update
 		{
 			"mod shovel damage boost"
 			{
@@ -10546,10 +10534,7 @@
 
 	"130"  // The Scottish Resistance // tf_weapon_pipebomblauncher
 	{
-		"2009/12/17" // Introduction date
-		{
-		}
-		"2010/01/13" // v1080 (base)
+		"2009/12/17" // WAR! Update
 		{
 			"sticky detonate mode"
 			{
@@ -10652,8 +10637,18 @@
 
 	"131"  // The Chargin' Targe // tf_wearable_demoshield
 	{
-		"2009/12/17" // Introduction date
+		"2009/12/17" // WAR! Update
 		{
+			"dmg taken from fire reduced"
+			{
+				"attribute_class"	"mult_dmgtaken_from_fire"
+				"value"	"0.5"
+			}
+			"dmg taken from blast reduced"
+			{
+				"attribute_class"	"mult_dmgtaken_from_explosions"
+				"value"	"0.35"
+			}
 		}
 		"2010/01/13" // v1080 (base)
 		{
@@ -11476,10 +11471,7 @@
 
 	"132"  // The Eyelander // tf_weapon_sword
 	{
-		"2009/12/17" // Introduction date
-		{
-		}
-		"2010/01/13" // v1080 (base)
+		"2009/12/17" // WAR! Update
 		{
 			"crit mod disabled"
 			{
