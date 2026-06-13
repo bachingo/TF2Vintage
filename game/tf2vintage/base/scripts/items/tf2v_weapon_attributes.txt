@@ -14254,10 +14254,7 @@
 
 	"527"  // The Widowmaker // tf_weapon_shotgun_primary
 	{
-		"2011/08/11" // Introduction date
-		{
-		}
-		"2011/08/18" // Manno-Technology Bundle
+		"2011/08/11" // Manno-Technology Bundle
 		{
 			"mod ammo per shot"
 			{
@@ -14318,44 +14315,6 @@
 			"damage bonus vs sentry target"
 			{
 				"attribute_class"	"mult_dmg_vs_sentry_target"
-				"value"	"1.1"
-			}
-			"mod ammo per shot"
-			{
-				"attribute_class"	"mod_ammo_per_shot"
-				"value"	"30"
-			}
-			"mod use metal ammo type"
-			{
-				"attribute_class"	"mod_use_metal_ammo_type"
-				"value"	"1"
-			}
-			"mod no reload DISPLAY ONLY"
-			{
-				"attribute_class"	"mod_no_reload_display_only"
-				"value"	"1"
-			}
-			"mod max primary clip override"
-			{
-				"attribute_class"	"mod_max_primary_clip_override"
-				"value"	"-1"
-			}
-			"add onhit addammo"
-			{
-				"attribute_class"	"add_onhit_addammo"
-				"value"	"100"
-			}
-			"min_viewmodel_offset"
-			{
-				"attribute_class"	"min_viewmodel_offset"
-				"value"	"10 0 -9"
-			}
-		}
-		"2017/05/15" // Rainy Day 2017
-		{
-			"damage bonus bullet vs sentry target"
-			{
-				"attribute_class"	"mult_dmg_bullet_vs_sentry_target"
 				"value"	"1.1"
 			}
 			"mod ammo per shot"
