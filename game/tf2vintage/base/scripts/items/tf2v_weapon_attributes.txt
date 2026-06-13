@@ -13371,7 +13371,7 @@
 
 	"310"  // Warrior's Spirit // tf_weapon_fists
 	{
-		"2010/12/16" // Introduction date
+		"2010/12/17" // Australian Christmas
 		{
 			"damage bonus"
 			{
@@ -13705,18 +13705,7 @@
 
 	"587"  // Apoco-Fists // tf_weapon_fists
 	{
-		"2011/10/27" // Introduction date
-		{
-		}
-		"2011/12/15" // Australian Christmas 2011
-		{
-			"crit kill will gib"
-			{
-				"attribute_class"	"crit_kill_will_gib"
-				"value"	"1"
-			}
-		}
-		"2013/11/21" // Two Cities
+		"2011/11/10" // Saints Row
 		{
 			"crit kill will gib"
 			{
@@ -13751,63 +13740,7 @@
 
 	"656"  // The Holiday Punch // tf_weapon_fists
 	{
-		"2011/12/15" // Introduction date
-		{
-			"crit forces victim to laugh"
-			{
-				"attribute_class"	"crit_forces_victim_to_laugh"
-				"value"	"1"
-			}
-			"crit from behind"
-			{
-				"attribute_class"	"crit_from_behind"
-				"value"	"1"
-			}
-			"crit does no damage"
-			{
-				"attribute_class"	"crit_does_no_damage"
-				"value"	"1"
-			}
-			"tickle enemies wielding same weapon"
-			{
-				"attribute_class"	"tickle_enemies_wielding_same_weapon"
-				"value"	"1"
-			}
-		}
-		"2012/06/27" // Pyromania Update
-		{
-			"crit forces victim to laugh"
-			{
-				"attribute_class"	"crit_forces_victim_to_laugh"
-				"value"	"1"
-			}
-			"crit from behind"
-			{
-				"attribute_class"	"crit_from_behind"
-				"value"	"1"
-			}
-			"crit does no damage"
-			{
-				"attribute_class"	"crit_does_no_damage"
-				"value"	"1"
-			}
-			"tickle enemies wielding same weapon"
-			{
-				"attribute_class"	"tickle_enemies_wielding_same_weapon"
-				"value"	"1"
-			}
-			"kill eater score type"
-			{
-				"attribute_class"	"kill_eater_score_type"
-				"value"	"25"
-			}
-			"kill eater score type 2"
-			{
-				"attribute_class"	"kill_eater_score_type_2"
-				"value"	"0"
-			}
-		}
-		"2013/11/21" // Two Cities
+		"2011/12/15" // Australian Christmas 2011
 		{
 			"crit forces victim to laugh"
 			{
