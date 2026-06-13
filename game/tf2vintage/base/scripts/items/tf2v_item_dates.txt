@@ -427,14 +427,14 @@
 	"518"	"2011/08/09"	// The Anger
 	"519"	"2011/08/09"	// Pip-Boy
 	"520"	"2011/08/09"	// Wingstick
-	"521"	"2011/08/12"	// Belltower Spec Ops
-	"522"	"2011/08/17"	// The Deus Specs
-	"523"	"2011/08/17"	// The Sarif Cap
-	"524"	"2011/08/17"	// The Purity Fist
-	"525"	"2011/08/11"	// The Diamondback
-	"526"	"2011/08/11"	// The Machina
-	"527"	"2011/08/11"	// The Widowmaker
-	"528"	"2011/08/17"	// The Short Circuit
+	"521"	"2011/08/18"	// Belltower Spec Ops
+	"522"	"2011/08/18"	// The Deus Specs
+	"523"	"2011/08/18"	// The Sarif Cap
+	"524"	"2011/08/18"	// The Purity Fist
+	"525"	"2011/08/18"	// The Diamondback
+	"526"	"2011/08/18"	// The Machina
+	"527"	"2011/08/18"	// The Widowmaker
+	"528"	"2011/08/18"	// The Short Circuit
 	"533"	"2012/07/10"	// Clockwerk's Helm
 	"534"	"2012/07/10"	// Sniper's Snipin' Glass
 	"535"	"2012/07/10"	// Storm Spirit's Jolly Hat
@@ -488,7 +488,7 @@
 	"584"	"2011/10/27"	// Ghastly Gibus 2011
 	"585"	"2011/10/27"	// Cold War Luchador
 	"586"	"2011/10/27"	// Mark of the Saint
-	"587"	"2011/10/27"	// Apoco-Fists
+	"587"	"2011/11/10"	// Apoco-Fists
 	"588"	"2011/12/15"	// The Pomson 6000
 	"589"	"2011/12/15"	// The Eureka Effect
 	"590"	"2011/12/15"	// The Brainiac Hairpiece
