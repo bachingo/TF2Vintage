@@ -1,0 +1,6 @@
+"UnlitGeneric"
+{
+	"$baseTexture" "backpack\weapons\c_models\c_reserve_shooter/c_reserve_shooter_pyro"
+	$translucent 1
+	"$vertexcolor" 1
+}

@@ -1,0 +1,6 @@
+"UnlitGeneric"
+{
+	"$basetexture"		"backpack/workshop/player/items/pyro/hw2013_mummy_eyes/hw2013_mummy_eyes"
+	"$translucent"		"1"
+	"$vertexcolor"		"1"
+}

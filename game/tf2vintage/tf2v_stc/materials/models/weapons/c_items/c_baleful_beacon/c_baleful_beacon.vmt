@@ -1,0 +1,38 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "models/weapons/c_items/c_baleful_beacon/c_baleful_beacon"
+	"$lightwarptexture" "models\player\pyro\pyro_lightwarp"
+	"$basemapalphaphongmask" "1"
+	"$bumpmap" "models\effects\flat_normal"
+
+	"$phong" "1"
+	"$phongexponent" "10"
+	"$phongboost" "0.2"	
+	"$phongfresnelranges"	"[1 2.5 5]"
+
+
+	"$yellow" "0"
+	"$glowcolor" "1"
+	// Cloaking
+	"$cloakPassEnabled" "1"
+	"Proxies"
+	{
+		"weapon_invis"
+		{
+		}
+		"ModelGlowColor"
+		{
+			"resultVar" "$glowcolor"
+		}
+		"Equals"
+		{
+			"srcVar1"  "$glowcolor"
+			"resultVar" "$selfillumtint"
+		}
+		"Equals"
+		{
+			"srcVar1"  "$glowcolor"
+			"resultVar" "$color2"
+		}
+	}
+}

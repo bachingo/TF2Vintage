@@ -1,0 +1,35 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "models/weapons/c_models/syringe_inside_blu"
+	"$bumpmap"     "models/player/shared/shared_normal"
+	"$basemapalphaphongmask" "1"
+	
+	"$phong" "1"
+	"$phongexponent" "25"
+	"$phongboost" "2"	
+	"$lightwarptexture" "models\lightwarps\weapon_lightwarp"
+	"$phongfresnelranges"	"[1.5 .5 3]"
+	"$halflambert" "1"
+
+	"$selfillum" "1"
+
+	"$glowcolor" "1"
+
+	// Cloaking
+	"$cloakPassEnabled" "1"
+	"Proxies"
+	{
+		"weapon_invis"
+		{
+		}
+		"ModelGlowColor"
+		{
+			"resultVar" "$glowcolor"
+		}
+		"Equals"
+		{
+			"srcVar1"  "$glowcolor"
+			"resultVar" "$color2"
+		}
+	}
+}

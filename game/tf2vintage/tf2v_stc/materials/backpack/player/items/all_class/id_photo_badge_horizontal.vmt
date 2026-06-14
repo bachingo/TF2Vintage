@@ -1,0 +1,6 @@
+"UnlitGeneric"
+{
+	"$baseTexture" "backpack\player\items\all_class\id_photo_badge_horizontal"
+	$translucent 1
+	$vertexcolor 1
+}

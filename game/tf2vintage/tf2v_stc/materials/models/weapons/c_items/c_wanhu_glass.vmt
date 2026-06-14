@@ -1,0 +1,48 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "models\weapons\c_items\c_wanhu"
+	"$bumpmap" "models\effects\flat_normal"
+	$basemapalphaphongmask 1
+
+	"$additive" 1
+	"$phong" "1"
+	"$phongexponent" "100"
+	"$phongboost" "100"	
+	"$lightwarptexture" "models\lightwarps\weapon_lightwarp"
+	"$phongfresnelranges"	"[0 .02 .75]"
+	"$envmap" "env_cubemap"
+	"$envmaptint" "[ 1 1 1.2 ]"
+	"$envmapfresnel" 1
+
+	"$rimlight" "1"
+	"$rimlightexponent" "4"	
+	"$rimlightboost" "1"
+
+	
+	"360?$color2" "[ 0.9 0.8 0.8 ]"
+
+	"$glowcolor" "1"
+
+	// Cloaking
+	"$cloakPassEnabled" "1"
+	"Proxies"
+	{
+		"weapon_invis"
+		{
+		}
+		"ModelGlowColor"
+		{
+			"resultVar" "$glowcolor"
+		}
+		"Equals"
+		{
+			"srcVar1"  "$glowcolor"
+			"resultVar" "$selfillumtint"
+		}
+		"Equals"
+		{
+			"srcVar1"  "$glowcolor"
+			"resultVar" "$color2"
+		}
+	}
+}

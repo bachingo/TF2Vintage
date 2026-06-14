@@ -1,0 +1,22 @@
+"VertexLitGeneric"
+{
+	"$basetexture"	"models\weapons\w_tranq\w_tranq"
+	"$bumpmap" "models\weapons\w_tranq\w_tranq_normal"
+	"$phong" "1"
+	"$phongexponenttexture" "models\weapons\w_tranq\w_tranq_exponent"
+//	"$phongexponent" "25"
+	
+	"$phongboost" "2.5"	
+	"$lightwarptexture" "models\weapons\w_tranq\w_tranq_lightwarp"
+	"$phongfresnelranges"	"[5 5.5 10]"
+	"$halflambert" "1"
+
+	// Cloaking
+	"$cloakPassEnabled" "1"
+	"Proxies"
+	{
+		"weapon_invis"
+		{
+		}
+	}
+}

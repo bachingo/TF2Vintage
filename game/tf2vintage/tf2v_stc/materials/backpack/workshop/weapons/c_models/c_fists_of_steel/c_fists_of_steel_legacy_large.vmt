@@ -1,0 +1,6 @@
+"UnlitGeneric"
+{
+	"$baseTexture" "backpack/workshop/weapons/c_models/c_fists_of_steel/c_fists_of_steel_legacy_large"
+	"$translucent" 1
+	"$vertexcolor" 1
+}

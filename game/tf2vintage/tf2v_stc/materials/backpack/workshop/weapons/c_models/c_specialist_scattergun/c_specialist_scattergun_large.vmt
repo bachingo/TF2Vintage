@@ -1,0 +1,6 @@
+"UnlitGeneric"
+{
+	"$baseTexture" "backpack/workshop/weapons/c_models/c_specialist_scattergun/c_specialist_scattergun_large"
+	$translucent 1
+	$vertexcolor 1
+}

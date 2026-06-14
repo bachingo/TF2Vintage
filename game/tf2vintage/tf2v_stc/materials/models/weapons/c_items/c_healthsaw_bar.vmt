@@ -1,0 +1,5 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "models/weapons/c_items/c_healthsaw_bar"
+	"$translucent" 1
+}

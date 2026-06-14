@@ -1,0 +1,6 @@
+"UnlitGeneric"
+{
+	"$baseTexture" "backpack/weapons/c_models/c_healthsaw/c_healthsaw_large"
+	"$translucent" 1
+	$vertexcolor 1
+}

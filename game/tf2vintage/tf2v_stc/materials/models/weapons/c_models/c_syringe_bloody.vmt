@@ -1,0 +1,31 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "models/weapons/c_models/c_syringe_bloody"
+	"$bumpmap" "models/weapons/c_models/c_syringe_normal"
+
+	"$phong" "1"
+	"$phongexponent" "1"
+	"$phongboost" "0.1"	
+	"$lightwarptexture" "models\weapons\w_syringe\w_syringe_lightwarp"
+	"$phongfresnelranges"	"[2 5 10]"
+
+	"$glowcolor" "1"
+
+	// Cloaking
+	"$cloakPassEnabled" "1"
+	"Proxies"
+	{
+		"weapon_invis"
+		{
+		}
+		"ModelGlowColor"
+		{
+			"resultVar" "$glowcolor"
+		}
+		"Equals"
+		{
+			"srcVar1"  "$glowcolor"
+			"resultVar" "$color2"
+		}
+	}
+}

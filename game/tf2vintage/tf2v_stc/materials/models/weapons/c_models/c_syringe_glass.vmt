@@ -1,0 +1,27 @@
+"VertexLitGeneric"
+{
+	"$basetexture"	"models/weapons/c_models/c_syringe_glass"
+	"$translucent" "1"
+	"$bumpmap"     "models/player/shared/shared_normal"
+	"$nocull" 1
+
+	"$glowcolor" "1"
+
+	// Cloaking
+	"$cloakPassEnabled" "1"
+	"Proxies"
+	{
+		"weapon_invis"
+		{
+		}
+		"ModelGlowColor"
+		{
+			"resultVar" "$glowcolor"
+		}
+		"Equals"
+		{
+			"srcVar1"  "$glowcolor"
+			"resultVar" "$color2"
+		}
+	}
+}

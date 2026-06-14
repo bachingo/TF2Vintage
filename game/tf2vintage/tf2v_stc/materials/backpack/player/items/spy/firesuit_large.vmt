@@ -1,0 +1,6 @@
+"UnlitGeneric"
+{
+	"$baseTexture" "backpack/player/items/spy/firesuit_large"
+	$translucent 1
+	$vertexcolor 1
+}

@@ -1,0 +1,40 @@
+"VertexlitGeneric"
+{
+	"$baseTexture" "models\weapons\c_items\kritzkrieg_backpack"
+	"$bumpmap"  "models\weapons\c_items\kritzkrieg_backpack_normal"
+
+
+
+	"$phong" "1"
+	"$phongexponent" "5"
+	"$phongboost" "3"	
+	"$lightwarptexture" "models\lightwarps\weapon_lightwarp"
+	"$phongfresnelranges"	"[.3 .5 3]"
+	"$halflambert" "1"
+	"$selfillum" "1"
+
+	// Rim lighting parameters
+	"$rimlight" "1"												// To enable rim lighting (requires phong)
+	"$rimlightexponent" "4"										// Exponent for phong component of rim lighting	
+	"$rimlightboost" "1"	
+
+	"$cloakPassEnabled" "1"
+
+	"Proxies"
+	{
+		"weapon_invis"
+		{
+		}
+		"Equals"
+		{
+			"srcVar1"  "$glowcolor"
+			"resultVar" "$selfillumtint"
+		}
+		"Equals"
+		{
+			"srcVar1"  "$glowcolor"
+			"resultVar" "$color2"
+		}
+
+	}
+}

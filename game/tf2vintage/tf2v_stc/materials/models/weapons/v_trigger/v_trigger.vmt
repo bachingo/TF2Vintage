@@ -1,0 +1,15 @@
+"VertexLitGeneric"
+{
+	"$baseTexture" "models\weapons\v_trigger/v_trigger"
+	"$normalmapalphaenvmapmask" 1
+	"$bumpmap" "models/weapons\v_trigger\v_trigger_normal"
+	
+	"$envmap" "env_cubemap"
+	"$envmaptint" "[.3 .3 .3]"
+
+	"$phong" "1"
+	"$phongexponent" "35"
+	"$phongboost" "10"	
+	"$lightwarptexture" "models\lightwarps\weapon_lightwarp"
+	"$phongfresnelranges"	"[.25 .5 1]"
+}

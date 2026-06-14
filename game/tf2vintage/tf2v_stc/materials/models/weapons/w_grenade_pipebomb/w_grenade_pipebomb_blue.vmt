@@ -1,0 +1,16 @@
+"VertexLitGeneric"
+{
+	"$baseTexture" "models\weapons\w_grenade_pipebomb/w_grenade_pipebomb_blue"
+	"$selfillum" "1"
+
+	"Proxies"
+	{
+		"Sine"
+		{
+			"resultVar" $selfillumtint
+			"sinemin" .1
+			"sinemax" 1.00
+			"sineperiod" 0.30
+		}
+	}
+}

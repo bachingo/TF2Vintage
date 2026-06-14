@@ -1,0 +1,11 @@
+"VertexLitGeneric"
+{
+	"$baseTexture" "models/weapons/w_dart\w_dartgun_red"
+	"$bumpmap" "models/weapons/w_dart/w_dartgun_phongmask"
+
+	"$phong" "1"
+	"$phongexponent" "30"
+	"$phongboost" "12"	
+	"$lightwarptexture" "models\lightwarps\weapon_lightwarp"
+	"$phongfresnelranges" "[0.5 0.75 1]"
+}
