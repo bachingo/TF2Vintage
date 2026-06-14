@@ -49,7 +49,7 @@
 			// that's used when writing to the "mod" path.
 			game+mod+vgui		|gameinfo_path|base
 			game+mod+vgui		|gameinfo_path|tf2v_stc
-			game+mod+vgui		|gameinfo_path|tf2v_maps
+			game+mod+vgui		|gameinfo_path|tf2v_maps/*
 			mod+mod_write		|gameinfo_path|.
 			game+game_write		|gameinfo_path|.
 			vgui				|gameinfo_path|.
