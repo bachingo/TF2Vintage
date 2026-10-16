@@ -371,6 +371,32 @@
 	"340"	"2024/12/05"	// Polar Lights
 	"341"	"2024/12/05"	// Blizzard Lights
 	
+	// July 7, 2026 - Summer 2026 (cosmetic effects; 342-405 are still undated in this file)
+	"407"	"2026/07/07"	// Umbral Lights
+	"408"	"2026/07/07"	// Polar Prism
+	"409"	"2026/07/07"	// Solar Singed
+	"410"	"2026/07/07"	// Floral Growth
+	"411"	"2026/07/07"	// Floral Growth
+	"412"	"2026/07/07"	// Stellar Orbit
+	"413"	"2026/07/07"	// Blissful Butterflies
+	"414"	"2026/07/07"	// Blissful Butterflies
+	"415"	"2026/07/07"	// Wispful Wings
+	
+	// October 1, 2026 - Scream Fortress XVIII
+	"416"	"2026/10/01"	// Flor de Muerto
+	"417"	"2026/10/01"	// Flor de Muerto
+	"418"	"2026/10/01"	// Autumn Breeze
+	"419"	"2026/10/01"	// Spirit Swirl
+	"420"	"2026/10/01"	// Ghost Swirl
+	"421"	"2026/10/01"	// Fable Feathers
+	"422"	"2026/10/01"	// Fable Feathers
+	"423"	"2026/10/01"	// Fable Quills
+	"424"	"2026/10/01"	// Grudge n' Drudge
+	"425"	"2026/10/01"	// Boil n' Toil
+	"426"	"2026/10/01"	// Screaming Soul
+	"427"	"2026/10/01"	// Screeching Soul
+	"428"	"2026/10/01"	// Shrieking Soul
+	
 	//-------------------------------------------------------------------------
 	// UNUSUAL TAUNT EFFECTS (3000+ range)
 	//-------------------------------------------------------------------------
@@ -643,4 +669,28 @@
 	"3221"	"2025/12/04"	// Northern Nights
 	"3222"	"2025/12/04"	// Chilling Mist
 	"3223"	"2025/12/04"	// Circuit Break
+	
+	// 2026 entries
+	// July 7, 2026 - Summer 2026
+	"3224"	"2026/07/07"	// Wheat Field
+	"3225"	"2026/07/07"	// Luminous Drift
+	"3226"	"2026/07/07"	// Luminous Drift
+	"3227"	"2026/07/07"	// Luminous Shift
+	"3228"	"2026/07/07"	// Showtime Spotlights
+	"3229"	"2026/07/07"	// Deep Dive
+	
+	// October 1, 2026 - Scream Fortress XVIII
+	"3230"	"2026/10/01"	// Electric Impulse
+	"3231"	"2026/10/01"	// Electric Impulse
+	"3232"	"2026/10/01"	// Primordial Ooze
+	"3233"	"2026/10/01"	// Geiger Breaker
+	"3234"	"2026/10/01"	// Sulfuric Acid
+	"3235"	"2026/10/01"	// Shroud of Darkness
+	"3236"	"2026/10/01"	// Gradient Gale
+	"3237"	"2026/10/01"	// Gradient Gale
+	"3238"	"2026/10/01"	// Amethyst Gale
+	"3239"	"2026/10/01"	// Gamma Rays
+	"3240"	"2026/10/01"	// Gamma Rays
+	"3241"	"2026/10/01"	// Meltdown
+	"3242"	"2026/10/01"	// Radioactive
 }

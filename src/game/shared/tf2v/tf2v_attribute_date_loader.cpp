@@ -13,7 +13,7 @@
 #include "tier0/memdbgon.h"
 
 
-ConVar tf2v_war_result( "tf2v_war_result", "0", FCVAR_NOTIFY | FCVAR_ARCHIVE | FCVAR_REPLICATED | FCVAR_CHEAT, "Distribution of the Gunboats reward. 0: Soldier, 1: Demoman, 2: Both.", true, 0, true, 2 );
+// ConVar tf2v_war_result( "tf2v_war_result", "0", FCVAR_NOTIFY | FCVAR_ARCHIVE | FCVAR_REPLICATED | FCVAR_CHEAT, "Distribution of the Gunboats reward. 0: Soldier, 1: Demoman, 2: Both.", true, 0, true, 2 );
 
 // Global instance
 CTF2VAttributeDateManager *g_pTF2VAttributeDateManager = NULL;
@@ -886,7 +886,7 @@ bool CTF2VAttributeDateManager::ItemIsAllowedTimePeriod( const CEconItemView *pI
 	
 	int iDefIndex = pItem->GetItemDefIndex();
 	// TF2V: Special condition for the Gunboats.
-	if ( iDefIndex == 133 )
+	/* if ( iDefIndex == 133 )
 	{
 		if ( iClass == TF_CLASS_DEMOMAN && !tf2v_war_result.GetInt() )
 		{
@@ -901,7 +901,7 @@ bool CTF2VAttributeDateManager::ItemIsAllowedTimePeriod( const CEconItemView *pI
 			return false;
 		}
 		// On tf2v_war_result == 2, both Soldier and Demoman get it.
-	}
+	} **/
 
 	// TF2V: Edge case for the Reserve Shooter.
 	if ( iDefIndex == 415 )

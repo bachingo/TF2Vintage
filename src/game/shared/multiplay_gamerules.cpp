@@ -1298,7 +1298,7 @@ void CMultiplayRules::DetermineMapCycleFilename( char *pszResult, int nSizeResul
 		
 		// Era milestone array - all major TF2 updates in descending order
 		static const int s_nEraMilestones[] = {
-			6659, 6598, 6521, 6296, 6234, 6150, 5926, 5867, 5778, 5559,
+			6954, 6868, 6659, 6598, 6521, 6296, 6234, 6150, 5926, 5867, 5778, 5559,
 			5498, 5191, 5133, 4827, 4764, 4407, 4051, 3687, 3323, 3217,
 			3014, 2992, 2964, 2942, 2893, 2846, 2734, 2654, 2600, 2487,
 			2258, 2235, 2124, 1922, 1867, 1795, 1790, 1746, 1551, 1502,

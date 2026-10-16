@@ -549,6 +549,8 @@ bool EconHolidays_IsHolidayActive( int iHolidayIndex, const CRTime& timeCurrent 
 			((nCurrentEra >= 3323) && (nCurrentEra < 3352)) || // 2016 (Oct 21 - Nov 19)
 			((nCurrentEra >= 3687) && (nCurrentEra < 3701)) || // 2017 (Oct 20 - Nov 3)
 			((nCurrentEra >= 4051) && (nCurrentEra < 4077)) )  // 2018 (Oct 19 - Nov 14)
+			// Consistent with rules from 2019-2025
+			((nCurrentEra >= 6954) && (nCurrentEra < 6985)) || // 2026 (Oct 1 - Nov 1)
 			{
 				return true;
 			}
@@ -570,6 +572,7 @@ bool EconHolidays_IsHolidayActive( int iHolidayIndex, const CRTime& timeCurrent 
 			((nCurrentEra >= 5778) && (nCurrentEra < 5843)) || // 2023 (Jul 12 - Sep 15)
 			((nCurrentEra >= 6142) && (nCurrentEra < 6209)) || // 2024 (Jul 10 - Sep 15)
 			((nCurrentEra >= 6510) && (nCurrentEra < 6573)) )  // 2025 (Jul 16 - Sep 17)
+			((nCurrentEra >= 6868) && (nCurrentEra < 6938)) )  // 2026 (Jul 17 - Sep 15)
 			{
 				return true;
 			}

@@ -1074,6 +1074,7 @@ struct collidelist_t
 #define TF2V_DAY_SUMMER_2023               		 5778   // 2023/07/12
 #define TF2V_DAY_SUMMER_2024                     6071   // 2024/04/30
 #define TF2V_DAY_SUMMER_2025                     6521   // 2025/07/24
+#define TF2V_DAY_SUMMER_2026                     6868   // 2026/07/07
 
 // Holiday: Halloween (Scream Fortress)
 #define TF2V_DAY_HALLOWEEN_2009                   774   // 2009/10/29 (Terrifying Team Fortress Haunted Hallowe'en Special)
@@ -1093,6 +1094,7 @@ struct collidelist_t
 #define TF2V_DAY_HALLOWEEN_2023                  5867   // 2023/10/09 (Scream Fortress XV)
 #define TF2V_DAY_HALLOWEEN_2024                  6233   // 2024/10/10 (Scream Fortress XVI)
 #define TF2V_DAY_HALLOWEEN_2025                  6598   // 2025/10/09 (Scream Fortress XVII)
+#define TF2V_DAY_HALLOWEEN_2026                  6954   // 2025/10/09 (Scream Fortress XVIII)
 
 // Holiday: Australian Christmas / Smissmas
 #define TF2V_DAY_SMISSMAS_2010               	 1187   // 2010/12/16 (Australian Christmas)
@@ -1172,7 +1174,7 @@ struct collidelist_t
 #define TF2V_DAY_PROMO_DISGAEA                    3214   // 2016/07/04
 
 #define TF2V_DAY_LAST_WEAPON_BALANCE			 TF2V_DAY_SPRING_2018 	  // 2018/03/28 (Blue Moon - Most recent weapon balancing)
-#define TF2V_DAY_LATEST                          TF2V_DAY_SMISSMAS_2025   // 2025/12/09 (Smissmas 2025 - most recent content update)
+#define TF2V_DAY_LATEST                          TF2V_DAY_HALLOWEEN_2026
 
 #define TF2V_DAY_UNKNOWN                         11083   // 2038/01/19 (Y2K38 date - TF2 uses 32 bit time integers)
 

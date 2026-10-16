@@ -1,4 +1,0 @@
-"resource/ui/layeredmappaneltooltip.res"
-{		
-	
-}

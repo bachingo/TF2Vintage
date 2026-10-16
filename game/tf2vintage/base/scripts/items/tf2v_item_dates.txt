@@ -1337,6 +1337,8 @@
 	"2177"	"2025/07/17"	// Map Token Bundle 28
 	"2178"	"2025/10/05"	// Map Token Bundle 29
 	"2179"	"2025/12/01"	// Map Token Bundle 30
+	"2180"	"2026/07/17"	// Map Token Bundle 31
+	"2181"	"2026/10/05"	// Map Token Bundle 32
 	"2500"	"2023/10/02"	// Map Token Perks
 	"2501"	"2023/10/02"	// Map Token Slime
 	"2502"	"2023/10/02"	// Map Token Lava Pit
@@ -1403,6 +1405,17 @@
 	"2563"	"2025/11/29"	// Map Token Abbey
 	"2564"	"2025/11/29"	// Map Token Winter Ridge
 	"2565"	"2025/11/29"	// Map Token Matterhorn
+	"2566"	"2026/07/15"	// Map Token Dryfield
+	"2567"	"2026/07/15"	// Map Token Camp Saxton
+	"2568"	"2026/07/15"	// Map Token Shorelight
+	"2569"	"2026/07/15"	// Map Token Redwood
+	"2570"	"2026/07/15"	// Map Token Premuda
+	"2571"	"2026/07/15"	// Map Token Mojave
+	"2572"	"2026/10/01"	// Map Token HolyHell
+	"2573"	"2026/10/01"	// Map Token Scarypass
+	"2574"	"2026/10/01"	// Map Token Trainsawlaser
+	"2575"	"2026/10/01"	// Map Token Medi-Evil
+	"2576"	"2026/10/01"	// Map Token Scaredy-Cat
 	"5000"	"2010/09/29"	// Craft Bar Level 1
 	"5001"	"2010/09/29"	// Craft Bar Level 2
 	"5002"	"2010/09/29"	// Craft Bar Level 3
@@ -1811,6 +1824,13 @@
 	"5974"	"2025/12/01"	// Self Gift - Stocking Stuffer 2025
 	"5975"	"2025/12/04"	// Winter 2025 Cosmetic Key
 	"5976"	"2025/12/04"	// Winter 2025 Cosmetic Case
+	"5977"	"2026/07/07"	// Summer 2026 Cosmetic Key
+	"5978"	"2026/07/07"	// Summer 2026 Cosmetic Case
+	"5979"	"2026/07/07"	// Summer 2026 War Paint Key
+	"5980"	"2026/07/07"	// Summer 2026 War Paint Case
+	"5981"	"2026/10/08"	// Halloween 2026 Case
+	"5982"	"2026/10/08"	// Halloween 2026 Key
+	"5983"	"2026/10/01"	// Halloween 2026 Collection Dummy
 	"5999"	"2012/03/22"	// Strange Part (Armory)
 	"6000"	"2012/03/22"	// Strange Part: Heavies Killed
 	"6001"	"2012/05/17"	// Strange Part: Demomen Killed
@@ -2045,6 +2065,17 @@
 	"6680"	"2025/11/28"	// Strange Filter: Abbey (Community)
 	"6681"	"2025/11/28"	// Strange Filter: Winter Ridge (Community)
 	"6682"	"2025/11/28"	// Strange Filter: Matterhorn (Community)
+	"6683"	"2026/07/14"	// Strange Filter: Dryfield (Community)
+	"6684"	"2026/07/14"	// Strange Filter: Camp Saxton (Community)
+	"6685"	"2026/07/14"	// Strange Filter: Shorelight (Community)
+	"6686"	"2026/07/14"	// Strange Filter: Redwood (Community)
+	"6687"	"2026/07/14"	// Strange Filter: Premuda (Community)
+	"6688"	"2026/07/14"	// Strange Filter: Mojave (Community)
+	"6689"	"2026/09/30"	// Strange Filter: HolyHell (Community)
+	"6690"	"2026/09/30"	// Strange Filter: Scarypass (Community)
+	"6691"	"2026/09/30"	// Strange Filter: Trainsawlaser (Community)
+	"6692"	"2026/09/30"	// Strange Filter: Medi-Evil (Community)
+	"6693"	"2026/09/30"	// Strange Filter: Scaredy-Cat (Community)
 	"8000"	"2012/02/03"	// UGC Highlander 1st Place North American Platinum Season 6
 	"8001"	"2012/02/03"	// UGC Highlander 2nd Place North American Platinum Season 6
 	"8002"	"2012/02/03"	// UGC Highlander 3rd Place North American Platinum Season 6
@@ -9296,6 +9327,16 @@
 	"17430"	"2025/10/01"	// Paintkit 430
 	"17431"	"2025/10/01"	// Paintkit 431
 	"17432"	"2025/10/01"	// Paintkit 432
+	"17433"	"2026/07/07"	// Paintkit 433
+	"17434"	"2026/07/07"	// Paintkit 434
+	"17435"	"2026/07/07"	// Paintkit 435
+	"17436"	"2026/07/07"	// Paintkit 436
+	"17437"	"2026/07/07"	// Paintkit 437
+	"17438"	"2026/07/07"	// Paintkit 438
+	"17439"	"2026/07/07"	// Paintkit 439
+	"17440"	"2026/07/07"	// Paintkit 440
+	"17441"	"2026/07/07"	// Paintkit 441
+	"17442"	"2026/07/07"	// Paintkit 442
 	"18000"	"2022/10/01"	// Warpaint Collection 1 Tier 1 Keyless Case
 	"18001"	"2022/10/01"	// Warpaint Collection 1 Tier 2 Keyless Case
 	"18002"	"2022/10/01"	// Warpaint Collection 1 Tier 3 Keyless Case
@@ -9635,10 +9676,10 @@
 	"18830"	"2026/03/06"	// RGLgg Highlander Invite 2nd Place Season 22
 	"18831"	"2026/03/06"	// RGLgg Highlander Invite 3rd Place Season 22
 	"18832"	"2026/03/06"	// RGLgg Highlander Invite Participant Season 22
-	"18833"	"2026/03/06"	// RGLgg Highlander Advanced Champions Season 22
-	"18834"	"2026/03/06"	// RGLgg Highlander Advanced 2nd Place Season 22
-	"18835"	"2026/03/06"	// RGLgg Highlander Advanced 3rd Place Season 22
-	"18836"	"2026/03/06"	// RGLgg Highlander Advanced Participant Season 22
+	"18833"	"2026/03/06"	// RGLgg Highlander Advanced1 Champions Season 22
+	"18834"	"2026/03/06"	// RGLgg Highlander Advanced1 2nd Place Season 22
+	"18835"	"2026/03/06"	// RGLgg Highlander Advanced1 3rd Place Season 22
+	"18836"	"2026/03/06"	// RGLgg Highlander Advanced1 Participant Season 22
 	"18837"	"2026/03/06"	// RGLgg Highlander Main Champions Season 22
 	"18838"	"2026/03/06"	// RGLgg Highlander Main 2nd Place Season 22
 	"18839"	"2026/03/06"	// RGLgg Highlander Main 3rd Place Season 22
@@ -9738,7 +9779,7 @@
 	"18933"	"2026/03/06"	// Gette it Onne Playoffs Season 2
 	"18934"	"2026/03/06"	// Gette it Onne Participant Season 2
 	"18935"	"2026/03/06"	// Gette it Onne Helper Season 2
-	"18936"	"2026/03/06"	// TFCL Alpha Season 1 Participant
+	"18936"	"2026/03/06"	// TFCL Alpha Participant Season 1
 	"18937"	"2026/03/06"	// ozfortress Summer Cup Sixes Division 1 1st Place 2026
 	"18938"	"2026/03/06"	// ozfortress Summer Cup Sixes Division 1 2nd Place 2026
 	"18939"	"2026/03/06"	// ozfortress Summer Cup Sixes Division 1 3rd Place 2026
@@ -9760,6 +9801,299 @@
 	"18955"	"2026/03/06"	// MGE.tf 1v1 World Championship 3rd Place 2026
 	"18956"	"2026/03/06"	// MGE.tf 1v1 World Championship Participant 2026
 	"18957"	"2026/03/06"	// MGE.tf 1v1 World Championship Helper 2026
+	// NOTE: 18958-19249 dated 2026/10/01 as a placeholder (upper bound = SF 2026 schema); confirm real batch dates
+	"18958"	"2026/10/01"	// RGLgg Highlander Advanced2 Champions Season 22
+	"18959"	"2026/10/01"	// RGLgg Highlander Advanced2 2nd Place Season 22
+	"18960"	"2026/10/01"	// RGLgg Highlander Advanced2 3rd Place Season 22
+	"18961"	"2026/10/01"	// RGLgg Highlander Advanced2 Participant Season 22
+	"18962"	"2026/10/01"	// UDL Season 1 Cup Gold Medal 2026
+	"18963"	"2026/10/01"	// UDL Season 1 Cup Silver Medal 2026
+	"18964"	"2026/10/01"	// UDL Season 1 Cup Bronze Medal 2026
+	"18965"	"2026/10/01"	// UDL Season 1 Cup Participant 2026
+	"18966"	"2026/10/01"	// UDL Season 1 Cup Supporter 2026
+	"18967"	"2026/10/01"	// TFCL Alpha Participant Season 2
+	"18968"	"2026/10/01"	// AsiaFortress Invite 1st Place Winter 2026
+	"18969"	"2026/10/01"	// AsiaFortress Invite 2nd Place Winter 2026
+	"18970"	"2026/10/01"	// AsiaFortress Invite 3rd Place Winter 2026
+	"18971"	"2026/10/01"	// AsiaFortress Main 1st Place Winter 2026
+	"18972"	"2026/10/01"	// AsiaFortress Main 2nd Place Winter 2026
+	"18973"	"2026/10/01"	// AsiaFortress Main 3rd Place Winter 2026
+	"18974"	"2026/10/01"	// AsiaFortress Invite Participant Winter 2026
+	"18975"	"2026/10/01"	// AsiaFortress Main Participant Winter 2026
+	"18976"	"2026/10/01"	// AsiaFortress Open Participant Winter 2026
+	"18977"	"2026/10/01"	// AsiaFortress Newbie 1st Place Cup 12
+	"18978"	"2026/10/01"	// AsiaFortress Newbie 2nd Place Cup 12
+	"18979"	"2026/10/01"	// AsiaFortress Newbie 3rd Place Cup 12
+	"18980"	"2026/10/01"	// AsiaFortress Newbie Participant Cup 12
+	"18981"	"2026/10/01"	// AsiaFortress Newbie Coach Cup 12
+	"18982"	"2026/10/01"	// AsiaFortress Highlander Cup 1st Place Winter 2026
+	"18983"	"2026/10/01"	// AsiaFortress Highlander Cup 2nd Place Winter 2026
+	"18984"	"2026/10/01"	// AsiaFortress Highlander Cup 3rd Place Winter 2026
+	"18985"	"2026/10/01"	// AsiaFortress Highlander Cup Participant Winter 2026
+	"18986"	"2026/10/01"	// Memes vs Machines: Re-Peeled Un-Peeled Potato 2026
+	"18987"	"2026/10/01"	// Memes vs Machines: Re-Peeled Giving Tanks 2026
+	"18988"	"2026/10/01"	// Memes vs Machines: Re-Peeled Equestrian Eosphorite 2026
+	"18989"	"2026/10/01"	// Memes vs Machines: Re-Peeled Soggy Sapphire 2026
+	"18990"	"2026/10/01"	// MGE.tf EU 2v2 Premier 1st Place Season 3
+	"18991"	"2026/10/01"	// MGE.tf EU 2v2 Premier 2nd Place Season 3
+	"18992"	"2026/10/01"	// MGE.tf EU 2v2 Premier 3rd Place Season 3
+	"18993"	"2026/10/01"	// MGE.tf EU 2v2 Premier Participant Season 3
+	"18994"	"2026/10/01"	// MGE.tf EU 2v2 Intermediate 1st Place Season 3
+	"18995"	"2026/10/01"	// MGE.tf EU 2v2 Intermediate 2nd Place Season 3
+	"18996"	"2026/10/01"	// MGE.tf EU 2v2 Intermediate 3rd Place Season 3
+	"18997"	"2026/10/01"	// MGE.tf EU 2v2 Intermediate Participant Season 3
+	"18998"	"2026/10/01"	// MGE.tf EU 2v2 Open 1st Place Season 3
+	"18999"	"2026/10/01"	// MGE.tf EU 2v2 Open 2nd Place Season 3
+	"19000"	"2026/10/01"	// MGE.tf EU 2v2 Open 3rd Place Season 3
+	"19001"	"2026/10/01"	// MGE.tf EU 2v2 Open Participant Season 3
+	"19002"	"2026/10/01"	// MGE.tf EU 2v2 Newcomer 1st Place Season 3
+	"19003"	"2026/10/01"	// MGE.tf EU 2v2 Newcomer 2nd Place Season 3
+	"19004"	"2026/10/01"	// MGE.tf EU 2v2 Newcomer Participant Season 3
+	"19005"	"2026/10/01"	// MGE.tf NA 2v2 Invite 1st Place Season 2
+	"19006"	"2026/10/01"	// MGE.tf NA 2v2 Invite 2nd Place Season 2
+	"19007"	"2026/10/01"	// MGE.tf NA 2v2 Invite 3rd Place Season 2
+	"19008"	"2026/10/01"	// MGE.tf NA 2v2 Invite Participant Season 2
+	"19009"	"2026/10/01"	// MGE.tf NA 2v2 Intermediate 1st Place Season 2
+	"19010"	"2026/10/01"	// MGE.tf NA 2v2 Intermediate 2nd Place Season 2
+	"19011"	"2026/10/01"	// MGE.tf NA 2v2 Intermediate 3rd Place Season 2
+	"19012"	"2026/10/01"	// MGE.tf NA 2v2 Intermediate Participant Season 2
+	"19013"	"2026/10/01"	// MGE.tf NA 2v2 Open 1st Place Season 2
+	"19014"	"2026/10/01"	// MGE.tf NA 2v2 Open 2nd Place Season 2
+	"19015"	"2026/10/01"	// MGE.tf NA 2v2 Open 3rd Place Season 2
+	"19016"	"2026/10/01"	// MGE.tf NA 2v2 Open Participant Season 2
+	"19017"	"2026/10/01"	// MGE.tf NA 2v2 Newcomer 1st Place Season 2
+	"19018"	"2026/10/01"	// MGE.tf NA 2v2 Newcomer 2nd Place Season 2
+	"19019"	"2026/10/01"	// MGE.tf NA 2v2 Newcomer Participant Season 2
+	"19020"	"2026/10/01"	// MGE.tf ASIA 2v2 Invite 1st Place Season 1
+	"19021"	"2026/10/01"	// MGE.tf ASIA 2v2 Invite 2nd Place Season 1
+	"19022"	"2026/10/01"	// MGE.tf ASIA 2v2 Invite 3rd Place Season 1
+	"19023"	"2026/10/01"	// MGE.tf ASIA 2v2 Invite Participant Season 1
+	"19024"	"2026/10/01"	// MGE.tf ASIA 2v2 Open 1st Place Season 1
+	"19025"	"2026/10/01"	// MGE.tf ASIA 2v2 Open 2nd Place Season 1
+	"19026"	"2026/10/01"	// MGE.tf ASIA 2v2 Open 3rd Place Season 1
+	"19027"	"2026/10/01"	// MGE.tf ASIA 2v2 Open Participant Season 1
+	"19028"	"2026/10/01"	// MGE.tf ASIA 2v2 Newcomer 1st Place Season 1
+	"19029"	"2026/10/01"	// MGE.tf ASIA 2v2 Newcomer 2nd Place Season 1
+	"19030"	"2026/10/01"	// MGE.tf ASIA 2v2 Newcomer Participant Season 1
+	"19031"	"2026/10/01"	// MGE.tf EU 1v1 Premier 1st Place Season 1
+	"19032"	"2026/10/01"	// MGE.tf EU 1v1 Premier 2nd Place Season 1
+	"19033"	"2026/10/01"	// MGE.tf EU 1v1 Premier 3rd Place Season 1
+	"19034"	"2026/10/01"	// MGE.tf EU 1v1 Premier Participant Season 1
+	"19035"	"2026/10/01"	// MGE.tf EU 1v1 Intermediate 1st Place Season 1
+	"19036"	"2026/10/01"	// MGE.tf EU 1v1 Intermediate 2nd Place Season 1
+	"19037"	"2026/10/01"	// MGE.tf EU 1v1 Intermediate 3rd Place Season 1
+	"19038"	"2026/10/01"	// MGE.tf EU 1v1 Intermediate Participant Season 1
+	"19039"	"2026/10/01"	// MGE.tf EU 1v1 Open 1st Place Season 1
+	"19040"	"2026/10/01"	// MGE.tf EU 1v1 Open 2nd Place Season 1
+	"19041"	"2026/10/01"	// MGE.tf EU 1v1 Open 3rd Place Season 1
+	"19042"	"2026/10/01"	// MGE.tf EU 1v1 Open Participant Season 1
+	"19043"	"2026/10/01"	// MGE.tf EU 1v1 Newcomer 1st Place Season 1
+	"19044"	"2026/10/01"	// MGE.tf EU 1v1 Newcomer 2nd Place Season 1
+	"19045"	"2026/10/01"	// MGE.tf EU 1v1 Newcomer Participant Season 1
+	"19046"	"2026/10/01"	// MGE.tf NA 1v1 Invite 1st Place Season 1
+	"19047"	"2026/10/01"	// MGE.tf NA 1v1 Invite 2nd Place Season 1
+	"19048"	"2026/10/01"	// MGE.tf NA 1v1 Invite 3rd Place Season 1
+	"19049"	"2026/10/01"	// MGE.tf NA 1v1 Invite Participant Season 1
+	"19050"	"2026/10/01"	// MGE.tf NA 1v1 Intermediate 1st Place Season 1
+	"19051"	"2026/10/01"	// MGE.tf NA 1v1 Intermediate 2nd Place Season 1
+	"19052"	"2026/10/01"	// MGE.tf NA 1v1 Intermediate 3rd Place Season 1
+	"19053"	"2026/10/01"	// MGE.tf NA 1v1 Intermediate Participant Season 1
+	"19054"	"2026/10/01"	// MGE.tf NA 1v1 Open 1st Place Season 1
+	"19055"	"2026/10/01"	// MGE.tf NA 1v1 Open 2nd Place Season 1
+	"19056"	"2026/10/01"	// MGE.tf NA 1v1 Open 3rd Place Season 1
+	"19057"	"2026/10/01"	// MGE.tf NA 1v1 Open Participant Season 1
+	"19058"	"2026/10/01"	// MGE.tf NA 1v1 Newcomer 1st Place Season 1
+	"19059"	"2026/10/01"	// MGE.tf NA 1v1 Newcomer 2nd Place Season 1
+	"19060"	"2026/10/01"	// MGE.tf NA 1v1 Newcomer Participant Season 1
+	"19061"	"2026/10/01"	// MGE.tf ASIA 1v1 Invite 1st Place Season 1
+	"19062"	"2026/10/01"	// MGE.tf ASIA 1v1 Invite 2nd Place Season 1
+	"19063"	"2026/10/01"	// MGE.tf ASIA 1v1 Invite 3rd Place Season 1
+	"19064"	"2026/10/01"	// MGE.tf ASIA 1v1 Invite Participant Season 1
+	"19065"	"2026/10/01"	// MGE.tf ASIA 1v1 Intermediate 1st Place Season 1
+	"19066"	"2026/10/01"	// MGE.tf ASIA 1v1 Intermediate 2nd Place Season 1
+	"19067"	"2026/10/01"	// MGE.tf ASIA 1v1 Intermediate 3rd Place Season 1
+	"19068"	"2026/10/01"	// MGE.tf ASIA 1v1 Intermediate Participant Season 1
+	"19069"	"2026/10/01"	// MGE.tf ASIA 1v1 Open 1st Place Season 1
+	"19070"	"2026/10/01"	// MGE.tf ASIA 1v1 Open 2nd Place Season 1
+	"19071"	"2026/10/01"	// MGE.tf ASIA 1v1 Open 3rd Place Season 1
+	"19072"	"2026/10/01"	// MGE.tf ASIA 1v1 Open Participant Season 1
+	"19073"	"2026/10/01"	// MGE.tf ASIA 1v1 Newcomer 1st Place Season 1
+	"19074"	"2026/10/01"	// MGE.tf ASIA 1v1 Newcomer 2nd Place Season 1
+	"19075"	"2026/10/01"	// MGE.tf ASIA 1v1 Newcomer Participant Season 1
+	"19076"	"2026/10/01"	// MGE.tf EU Helper Spring 2026
+	"19077"	"2026/10/01"	// MGE.tf NA Helper Spring 2026
+	"19078"	"2026/10/01"	// MGE.tf ASIA Helper Spring 2026
+	"19079"	"2026/10/01"	// ozfortress Premier 1st Place Season 44
+	"19080"	"2026/10/01"	// ozfortress Premier 2nd Place Season 44
+	"19081"	"2026/10/01"	// ozfortress Premier 3rd Place Season 44
+	"19082"	"2026/10/01"	// ozfortress Premier Participant Season 44
+	"19083"	"2026/10/01"	// ozfortress High 1st Place Season 44
+	"19084"	"2026/10/01"	// ozfortress High 2nd Place Season 44
+	"19085"	"2026/10/01"	// ozfortress High 3rd Place Season 44
+	"19086"	"2026/10/01"	// ozfortress High Participant Season 44
+	"19087"	"2026/10/01"	// ozfortress Intermediate 1st Place Season 44
+	"19088"	"2026/10/01"	// ozfortress Intermediate 2nd Place Season 44
+	"19089"	"2026/10/01"	// ozfortress Intermediate 3rd Place Season 44
+	"19090"	"2026/10/01"	// ozfortress Intermediate Participant Season 44
+	"19091"	"2026/10/01"	// ozfortress Main 1st Place Season 44
+	"19092"	"2026/10/01"	// ozfortress Main 2nd Place Season 44
+	"19093"	"2026/10/01"	// ozfortress Main 3rd Place Season 44
+	"19094"	"2026/10/01"	// ozfortress Main Participant Season 44
+	"19095"	"2026/10/01"	// ozfortress Open 1st Place Season 44
+	"19096"	"2026/10/01"	// ozfortress Open 2nd Place Season 44
+	"19097"	"2026/10/01"	// ozfortress Open 3rd Place Season 44
+	"19098"	"2026/10/01"	// ozfortress Open Participant Season 44
+	"19099"	"2026/10/01"	// ozfortress Highlander Premier First Place Season 11
+	"19100"	"2026/10/01"	// ozfortress Highlander Premier Second Place Season 11
+	"19101"	"2026/10/01"	// ozfortress Highlander Premier Third Place Season 11
+	"19102"	"2026/10/01"	// ozfortress Highlander Premier Participant Season 11
+	"19103"	"2026/10/01"	// ozfortress Highlander Intermediate First Place Season 11
+	"19104"	"2026/10/01"	// ozfortress Highlander Intermediate Second Place Season 11
+	"19105"	"2026/10/01"	// ozfortress Highlander Intermediate Third Place Season 11
+	"19106"	"2026/10/01"	// ozfortress Highlander Intermediate Participant Season 11
+	"19107"	"2026/10/01"	// ozfortress Highlander Open First Place Season 11
+	"19108"	"2026/10/01"	// ozfortress Highlander Open Second Place Season 11
+	"19109"	"2026/10/01"	// ozfortress Highlander Open Third Place Season 11
+	"19110"	"2026/10/01"	// ozfortress Highlander Open Participant Season 11
+	"19111"	"2026/10/01"	// ozfortress Premier 1st Place Season 45
+	"19112"	"2026/10/01"	// ozfortress Premier 2nd Place Season 45
+	"19113"	"2026/10/01"	// ozfortress Premier 3rd Place Season 45
+	"19114"	"2026/10/01"	// ozfortress Premier Participant Season 45
+	"19115"	"2026/10/01"	// ozfortress Intermediate 1st Place Season 45
+	"19116"	"2026/10/01"	// ozfortress Intermediate 2nd Place Season 45
+	"19117"	"2026/10/01"	// ozfortress Intermediate 3rd Place Season 45
+	"19118"	"2026/10/01"	// ozfortress Intermediate Participant Season 45
+	"19119"	"2026/10/01"	// ozfortress Main 1st Place Season 45
+	"19120"	"2026/10/01"	// ozfortress Main 2nd Place Season 45
+	"19121"	"2026/10/01"	// ozfortress Main 3rd Place Season 45
+	"19122"	"2026/10/01"	// ozfortress Main Participant Season 45
+	"19123"	"2026/10/01"	// ozfortress Open 1st Place Season 45
+	"19124"	"2026/10/01"	// ozfortress Open 2nd Place Season 45
+	"19125"	"2026/10/01"	// ozfortress Open 3rd Place Season 45
+	"19126"	"2026/10/01"	// ozfortress Open Participant Season 45
+	"19127"	"2026/10/01"	// ozfortress Highlander Premier First Place Season 12
+	"19128"	"2026/10/01"	// ozfortress Highlander Premier Second Place Season 12
+	"19129"	"2026/10/01"	// ozfortress Highlander Premier Third Place Season 12
+	"19130"	"2026/10/01"	// ozfortress Highlander Premier Participant Season 12
+	"19131"	"2026/10/01"	// ozfortress Highlander Main First Place Season 12
+	"19132"	"2026/10/01"	// ozfortress Highlander Main Second Place Season 12
+	"19133"	"2026/10/01"	// ozfortress Highlander Main Third Place Season 12
+	"19134"	"2026/10/01"	// ozfortress Highlander Main Participant Season 12
+	"19135"	"2026/10/01"	// TFCL Alpha First Place Season 2
+	"19136"	"2026/10/01"	// TFCL Alpha Second Place Season 2
+	"19137"	"2026/10/01"	// TFCL Alpha Third Place Season 2
+	"19138"	"2026/10/01"	// LBTF2 Highlander Elite 1st Place Season 9
+	"19139"	"2026/10/01"	// LBTF2 Highlander Elite 2nd Place Season 9
+	"19140"	"2026/10/01"	// LBTF2 Highlander Elite 3rd Place Season 9
+	"19141"	"2026/10/01"	// LBTF2 Highlander Elite Participant Season 9
+	"19142"	"2026/10/01"	// LBTF2 Highlander Central 1st Place Season 9
+	"19143"	"2026/10/01"	// LBTF2 Highlander Central 2nd Place Season 9
+	"19144"	"2026/10/01"	// LBTF2 Highlander Central 3rd Place Season 9
+	"19145"	"2026/10/01"	// LBTF2 Highlander Central Participant Season 9
+	"19146"	"2026/10/01"	// LBTF2 Highlander Open 1st Place Season 9
+	"19147"	"2026/10/01"	// LBTF2 Highlander Open 2nd Place Season 9
+	"19148"	"2026/10/01"	// LBTF2 Highlander Open 3rd Place Season 9
+	"19149"	"2026/10/01"	// LBTF2 Highlander Open Participant Season 9
+	"19150"	"2026/10/01"	// LBTF2 6v6 Central 1st Place Season 25
+	"19151"	"2026/10/01"	// LBTF2 6v6 Central 2nd Place Season 25
+	"19152"	"2026/10/01"	// LBTF2 6v6 Central 3rd Place Season 25
+	"19153"	"2026/10/01"	// LBTF2 6v6 Central Participant Season 25
+	"19154"	"2026/10/01"	// LBTF2 6v6 Open 1st Place Season 25
+	"19155"	"2026/10/01"	// LBTF2 6v6 Open 2nd Place Season 25
+	"19156"	"2026/10/01"	// LBTF2 6v6 Open 3rd Place Season 25
+	"19157"	"2026/10/01"	// LBTF2 6v6 Open Participant Season 25
+	"19158"	"2026/10/01"	// FBTF Conecta Supporter 2025
+	"19159"	"2026/10/01"	// FBTF Conecta Pass Time Participant 2025
+	"19160"	"2026/10/01"	// FBTF Conecta Pub vs Pro Participant 2025
+	"19161"	"2026/10/01"	// FBTF Conecta Jump Cup Participant 2025
+	"19162"	"2026/10/01"	// Jump Fortress Playoffs Soldier 1st Place Summer 2026
+	"19163"	"2026/10/01"	// Jump Fortress Playoffs Soldier 2nd Place Summer 2026
+	"19164"	"2026/10/01"	// Jump Fortress Playoffs Soldier 3rd Place Summer 2026
+	"19165"	"2026/10/01"	// Jump Fortress Playoffs Soldier Participant Summer 2026
+	"19166"	"2026/10/01"	// Jump Fortress Playoffs Demoman 1st Place Summer 2026
+	"19167"	"2026/10/01"	// Jump Fortress Playoffs Demoman 2nd Place Summer 2026
+	"19168"	"2026/10/01"	// Jump Fortress Playoffs Demoman 3rd Place Summer 2026
+	"19169"	"2026/10/01"	// Jump Fortress Playoffs Demoman Participant Summer 2026
+	"19170"	"2026/10/01"	// Jump Fortress Playoffs Contributor Summer 2026
+	"19171"	"2026/10/01"	// RGB 8 LAN 1st Place 2026
+	"19172"	"2026/10/01"	// RGB 8 LAN 2nd Place 2026
+	"19173"	"2026/10/01"	// RGB 8 LAN 3rd Place 2026
+	"19174"	"2026/10/01"	// RGB 8 LAN Participant 2026
+	"19175"	"2026/10/01"	// LAN Downunder 1st Place 2026
+	"19176"	"2026/10/01"	// LAN Downunder 2nd Place 2026
+	"19177"	"2026/10/01"	// LAN Downunder 3rd Place 2026
+	"19178"	"2026/10/01"	// LAN Downunder Participant 2026
+	"19179"	"2026/10/01"	// CappingTV Summer Brawl 1st Place 2026
+	"19180"	"2026/10/01"	// CappingTV Summer Brawl 2nd Place 2026
+	"19181"	"2026/10/01"	// CappingTV Summer Brawl 3rd Place 2026
+	"19182"	"2026/10/01"	// CappingTV Summer Brawl Participant 2026
+	"19183"	"2026/10/01"	// UBERFEST 1st Place 2026
+	"19184"	"2026/10/01"	// UBERFEST 2nd Place 2026
+	"19185"	"2026/10/01"	// UBERFEST 3rd Place 2026
+	"19186"	"2026/10/01"	// UBERFEST Participant 2026
+	"19187"	"2026/10/01"	// UBERFEST Staff 2026
+	"19188"	"2026/10/01"	// UBERFEST Spectator 2026
+	"19189"	"2026/10/01"	// Particle Mayhem 1 First Place
+	"19190"	"2026/10/01"	// Particle Mayhem 1 Second Place
+	"19191"	"2026/10/01"	// Particle Mayhem 1 Third Place
+	"19192"	"2026/10/01"	// Particle Mayhem 1 Participant
+	"19193"	"2026/10/01"	// Particle Mayhem 1 Staff
+	"19194"	"2026/10/01"	// Particle Mayhem 2 First Place
+	"19195"	"2026/10/01"	// Particle Mayhem 2 Second Place
+	"19196"	"2026/10/01"	// Particle Mayhem 2 Third Place
+	"19197"	"2026/10/01"	// Particle Mayhem 2 Participant
+	"19198"	"2026/10/01"	// Particle Mayhem 2 Staff
+	"19199"	"2026/10/01"	// Moscow LAN 1st Place Summer 2026
+	"19200"	"2026/10/01"	// Moscow LAN 2nd Place Summer 2026
+	"19201"	"2026/10/01"	// Moscow LAN 3rd Place Summer 2026
+	"19202"	"2026/10/01"	// Moscow LAN Participant Summer 2026
+	"19203"	"2026/10/01"	// Moscow LAN Helper Summer 2026
+	"19204"	"2026/10/01"	// Australian Hightower Highjinx Royalty 2026
+	"19205"	"2026/10/01"	// Australian Hightower Highjinx Participant 2026
+	"19206"	"2026/10/01"	// Australian Hightower Highjinx Donor 2026
+	"19207"	"2026/10/01"	// Australian Hightower Highjinx Helper 2026
+	"19208"	"2026/10/01"	// ozfortress Premier 1st Place Season 46
+	"19209"	"2026/10/01"	// ozfortress Premier 2nd Place Season 46
+	"19210"	"2026/10/01"	// ozfortress Premier 3rd Place Season 46
+	"19211"	"2026/10/01"	// ozfortress Premier Participant Season 46
+	"19212"	"2026/10/01"	// ozfortress High 1st Place Season 46
+	"19213"	"2026/10/01"	// ozfortress High 2nd Place Season 46
+	"19214"	"2026/10/01"	// ozfortress High 3rd Place Season 46
+	"19215"	"2026/10/01"	// ozfortress High Participant Season 46
+	"19216"	"2026/10/01"	// ozfortress Intermediate 1st Place Season 46
+	"19217"	"2026/10/01"	// ozfortress Intermediate 2nd Place Season 46
+	"19218"	"2026/10/01"	// ozfortress Intermediate 3rd Place Season 46
+	"19219"	"2026/10/01"	// ozfortress Intermediate Participant Season 46
+	"19220"	"2026/10/01"	// ozfortress Open 1st Place Season 46
+	"19221"	"2026/10/01"	// ozfortress Open 2nd Place Season 46
+	"19222"	"2026/10/01"	// ozfortress Open 3rd Place Season 46
+	"19223"	"2026/10/01"	// ozfortress Open Participant Season 46
+	"19224"	"2026/10/01"	// ozfortress Highlander Premier First Place Season 13
+	"19225"	"2026/10/01"	// ozfortress Highlander Premier Second Place Season 13
+	"19226"	"2026/10/01"	// ozfortress Highlander Premier Third Place Season 13
+	"19227"	"2026/10/01"	// ozfortress Highlander Premier Participant Season 13
+	"19228"	"2026/10/01"	// ozfortress Highlander Intermediate First Place Season 13
+	"19229"	"2026/10/01"	// ozfortress Highlander Intermediate Second Place Season 13
+	"19230"	"2026/10/01"	// ozfortress Highlander Intermediate Third Place Season 13
+	"19231"	"2026/10/01"	// ozfortress Highlander Intermediate Participant Season 13
+	"19232"	"2026/10/01"	// ozfortress Highlander Open First Place Season 13
+	"19233"	"2026/10/01"	// ozfortress Highlander Open Second Place Season 13
+	"19234"	"2026/10/01"	// ozfortress Highlander Open Third Place Season 13
+	"19235"	"2026/10/01"	// ozfortress Highlander Open Participant Season 13
+	"19236"	"2026/10/01"	// AsiaFortress Invite 1st Place Spring 2026
+	"19237"	"2026/10/01"	// AsiaFortress Invite 2nd Place Spring 2026
+	"19238"	"2026/10/01"	// AsiaFortress Invite 3rd Place Spring 2026
+	"19239"	"2026/10/01"	// AsiaFortress Open 1st Place Spring 2026
+	"19240"	"2026/10/01"	// AsiaFortress Open 2nd Place Spring 2026
+	"19241"	"2026/10/01"	// AsiaFortress Open 3rd Place Spring 2026
+	"19242"	"2026/10/01"	// AsiaFortress Invite Participant Spring 2026
+	"19243"	"2026/10/01"	// AsiaFortress Open Participant Spring 2026
+	"19244"	"2026/10/01"	// AsiaFortress Highlander Invite 1st Place Summer 2026
+	"19245"	"2026/10/01"	// AsiaFortress Highlander Invite 2nd Place Summer 2026
+	"19246"	"2026/10/01"	// AsiaFortress Highlander Invite 3rd Place Summer 2026
+	"19247"	"2026/10/01"	// AsiaFortress Highlander Invite Participant Summer 2026
+	"19248"	"2026/10/01"	// AsiaFortress Highlander Open 1st Place Summer 2026
+	"19249"	"2026/10/01"	// AsiaFortress Highlander Open Participant Summer 2026
 	"20000"	"2013/10/25"	// Cosmetic Strangifier Recipe 1
 	"20001"	"2013/10/25"	// Cosmetic Strangifier Recipe 1 Rare
 	"20002"	"2013/12/20"	// MvM Killstreak Recipe 1
@@ -11217,4 +11551,60 @@
 	"31599"	"2025/12/01"	// Flatline Flatcap
 	"31600"	"2025/12/01"	// Cardiologist's Cardigan
 	"31601"	"2025/12/01"	// Scrub Stompers
+	"31602"	"2026/07/07"	// Taunt: The Circuit Breaker
+	"31603"	"2026/07/07"	// Taunt: Buffoon's Bivouac
+	"31604"	"2026/07/07"	// Taunt: Faux-calization
+	"31605"	"2026/07/07"	// Taunt: Friendly Fire
+	"31606"	"2026/07/07"	// Hard Hearing
+	"31607"	"2026/07/07"	// Deadwave Communicator
+	"31608"	"2026/07/07"	// Beachcomber's Brim
+	"31609"	"2026/07/07"	// Chief Executor
+	"31610"	"2026/07/07"	// Vested Investor's Vest
+	"31611"	"2026/07/07"	// Standing Offer
+	"31612"	"2026/07/07"	// Tsar Athlete
+	"31613"	"2026/07/07"	// Barbeque Bacon Britches
+	"31614"	"2026/07/07"	// Unknown Warrior
+	"31615"	"2026/07/07"	// Tropical Torcher
+	"31616"	"2026/07/07"	// Pyro's Overalls
+	"31617"	"2026/07/07"	// Deadliest Match
+	"31618"	"2026/07/07"	// Bomb Blanket
+	"31619"	"2026/07/07"	// Handsome Ranger
+	"31620"	"2026/07/07"	// Long Shot
+	"31621"	"2026/07/07"	// Night Riders
+	"31622"	"2026/07/07"	// Atomic Bomber
+	"31623"	"2026/07/07"	// Bonk! Atomic Kicks
+	"31624"	"2026/07/07"	// Lieutenant's Cut
+	"31625"	"2026/07/07"	// Inglorious Patriot
+	"31626"	"2026/07/07"	// Delusions of Grandeur
+	"31627"	"2026/07/07"	// Unruly Ruler
+	"31628"	"2026/07/07"	// Bald Spotter
+	"31629"	"2026/07/07"	// Surgical Shroud
+	"31630"	"2026/10/01"	// Taunt: Hippocratic Hypocrite
+	"31631"	"2026/10/01"	// Taunt: One-Eyed Punt!
+	"31632"	"2026/10/01"	// Taunt: Showrunner's Spirit
+	"31633"	"2026/10/01"	// Taunt: Barrel Roll
+	"31634"	"2026/10/01"	// Taunt: Sear You Later
+	"31635"	"2026/10/01"	// Skeleton Crew
+	"31636"	"2026/10/01"	// Bone Chiller
+	"31637"	"2026/10/01"	// Royal Remains
+	"31638"	"2026/10/01"	// Mined Mind
+	"31639"	"2026/10/01"	// Damage Dealer
+	"31640"	"2026/10/01"	// High Caliber Earner
+	"31641"	"2026/10/01"	// Showdown Slacks
+	"31642"	"2026/10/01"	// Clowning Cowl
+	"31643"	"2026/10/01"	// Two Faced Terror
+	"31644"	"2026/10/01"	// Gunpowder Grin
+	"31645"	"2026/10/01"	// Vance's Vest
+	"31646"	"2026/10/01"	// Cogwork Cargos
+	"31647"	"2026/10/01"	// Wayward Wrap
+	"31648"	"2026/10/01"	// Rough Rider
+	"31649"	"2026/10/01"	// Hell-Bent Leather
+	"31650"	"2026/10/01"	// Batter's Jersey
+	"31651"	"2026/10/01"	// Grenadier's Goggles
+	"31652"	"2026/10/01"	// General's Greatcoat
+	"31653"	"2026/10/01"	// Bounty Hunter's Brim
+	"31654"	"2026/10/01"	// Desperado Disguise
+	"31655"	"2026/10/01"	// Crown of the Ye Olde Kingdom
+	"31656"	"2026/10/01"	// Scaled Surcoat
+	"31657"	"2026/10/01"	// Twain Tassets
 }

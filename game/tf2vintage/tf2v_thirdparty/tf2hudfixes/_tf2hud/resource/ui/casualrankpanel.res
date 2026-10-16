@@ -1,1 +1,0 @@
-#base "pvprankpanel.res"

@@ -1,6 +1,0 @@
-#base   "../../../../cfg/hud-fixes/hud_player_model.txt"
-#base   "../../../../cfg/hud-fixes/hud_spy_disguise.txt"
-#base	"../../_extras/_customizations/crosshair/crosshair.res"
-#base	"../../_extras/_customizations/speedometer/speedometer.res"
-#base	"../../_fixes/resource/ui/hudplayerclass.res"
-#base	"../../_tf2hud/resource/ui/hudplayerclass.res"
