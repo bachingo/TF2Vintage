@@ -198,6 +198,16 @@ private:
 //			Zeroed from the June 2029 lunar eclipse (Syzygy)
 //			Should have a 3s accuracy for the next 100 years.
 //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// Purpose: Full moon detection. Active while the Moon is within 7 degrees of
+//			opposition (the "opposition surge" window, craters shadowless).
+//
+//			Method: Meeus, "Astronomical Algorithms" ch. 49 (phases of the Moon).
+//			Predicts the true instant of each full moon directly, rather than
+//			counting mean months from one anchor. Good to about a minute for
+//			thousands of years, so it needs no epoch and will not drift.
+//			Only uses <cmath> (sin/cos/floor) and the existing CRTime.
+//-----------------------------------------------------------------------------
 class CCLunarHoliday : public IIsHolidayActive
 {
 public:
@@ -216,92 +226,111 @@ public:
 
 	virtual bool IsActive( const CRTime& timeCurrent )
 	{
-		// --- Static Constants (Scientific Calibration Data) ---
-		
-		// Anchor: Total Lunar Eclipse of June 26, 2029 (Peak Opposition).
-		// This serves as the 'Day 0' for the 7th-order calculation.
-		static const uint32 iEclipseEpochUTC = 1877138531;
-		
-		// Lunar Distance / Speed of Light: Time (in seconds) for light to travel 
-		// from the Moon to Earth. Used to sync visual state with physical position.
-		static const double fLightTimeSeconds = 1.282;
-		
-		// Solar Day Refinement: Accounts for the slight drift in the length 
-		// of a mean solar day over long historical periods.
-		static const float  flSecondsPerDay = 86400.002f;
-		
-		static const double fTwoPi = 2.0 * M_PI;
-		
-		// --- ORBITAL PERIODS (Mean Values used for Fundamental Arguments) ---
-		static const double fSynodicMonth = 2551442.890;   // New Moon to New Moon (Phase Cycle)
-		static const double fAnomalisticMonth = 2380713.12; // Perigee to Perigee (Distance Cycle)
-		static const double fDraconicMonth = 2351135.0;     // Node to Node (Ecliptic Crossing)
-	
-		// --- LIGHT-TIME COMPENSATION ---
-		// We calculate the moon's position at (T - 1.282s) because that is 
-		// the lunar state currently visible to an observer on Earth's surface.
-		const double fElapsedSeconds = ((double)timeCurrent.GetRTime32() - (double)iEclipseEpochUTC) - fLightTimeSeconds;
-	
-		// 1. Fundamental Arguments (Radians)
-		// These represent the mean angular positions of the Moon and Sun.
-		// Added phase offsets to align mean positions with the 2029 Epoch.
-		const double D       = fmod(fElapsedSeconds + (2.52 * 86400.0), fSynodicMonth) / fSynodicMonth * fTwoPi; 
-		const double M       = fmod(fElapsedSeconds + (0.11 * 86400.0), fAnomalisticMonth) / fAnomalisticMonth * fTwoPi; 
-		const double M_prime = fmod(2.1 + (0.01720209895 * (fElapsedSeconds / (double)flSecondsPerDay)), fTwoPi); 
-		const double F       = fmod(fElapsedSeconds + (1.85 * 86400.0), fDraconicMonth) / fDraconicMonth * fTwoPi;
-	
-		// 2. 7th-Order Correction ("Wobble")
-		// This accounts for gravitational perturbations, primarily from the Sun and Earth's 
-		// oblateness, which cause the Moon to speed up and slow down in its orbit.
-		// Coefficients represent the amplitude (in days) of gravitational perturbations.
-		const double fWobble = 
-		// [ELLIPTICAL] Primary orbit correction (Moon speed changing via distance)
-		  0.47119 * sin(M)                    // Equation of Center
+		static const double fSynodicDays      = 29.530588861;   // mean new moon to new moon
+		static const double fJDE_K0           = 2451550.09766;  // mean new moon nearest 2000-01-06 (k = 0)
+		static const double fUnixEpochJD      = 2440587.5;      // Julian Date of 1970-01-01 00:00 UTC
+		static const double fSurgeDegrees     = 7.0;            // phase angle where opposition surge begins
 
-		// [SOLAR] The Sun's pull changing the shape and timing of the orbit
-		+ 0.16512 * sin(2 * D - M)            // Evection (Solar pull on eccentricity)
-		+ 0.02106 * sin(2 * D)                // Variation (Gravitational flux)
-		- 0.22513 * sin(M_prime)              // Annual Equation (Earth-Sun distance)
-		
-		// [PARALLACTIC] Corrections for the Sun's finite distance (not infinite)
-		- 0.03504 * sin(D)                    // Parallactic Equation (General Sun proximity)
-		+ 0.00032 * sin(D - M)                // Parallactic Inequality (Elliptical Sun proximity)
-		
-		// [PLANETARY] Tugs from other celestial bodies
-		+ 0.00702 * sin(2 * D + M)            // Venus/Jupiter resonance
-		+ 0.00401 * sin(2 * D - 2 * M_prime)  // Jupiter's long-term perturbation
-		
-		// [GEODETIC] Physical constraints of the Earth/Moon alignment
-		+ 0.00063 * sin(2 * F)                // Reduction to Ecliptic (Orbit tilt correction)
-		- 0.01140 * sin(F);                   // Nodal Precession (Earth's equatorial bulge / J2 effect)
-	
-		// 3. Corrected Cycle Position
-		// Translating the mean time into 'Actual' time by applying the gravitational wobble.
-		double fCurrentCycleSeconds = fmod(fElapsedSeconds, fSynodicMonth);
-		if (fCurrentCycleSeconds < 0) fCurrentCycleSeconds += fSynodicMonth;
-	
-		double fCorrectedSeconds = fmod(fCurrentCycleSeconds - (fWobble * (double)flSecondsPerDay), fSynodicMonth);
-		if (fCorrectedSeconds < 0) fCorrectedSeconds += fSynodicMonth;
-	
-		// 4. Dynamic Phase Angle
-		// Convert corrected seconds into a degree-based position (0 to 360).
-		// 0.0 degrees represents the absolute center of the Full Moon peak.
-		double fCorrectedDegrees = (fCorrectedSeconds / fSynodicMonth) * 360.0;
-	
-		// Calculate the shortest angular distance from the Peak (handles the 360/0 wrap).
-		double fAngleFromPeak = fCorrectedDegrees;
-		if (fAngleFromPeak > 180.0) fAngleFromPeak = 360.0 - fAngleFromPeak;
-	
-		// Opposition Surge Threshold:
-		// 7.0 degrees phase angle defines the beginning of "Opposition Surge": the period where 
-		// lunar craters cast no visible shadows and the moon appears to glow.
-		static const float fOppositionSurgeThreshold = 7.0f;
-	
-		return (fAngleFromPeak <= fOppositionSurgeThreshold);
+		const double fNow = (double)timeCurrent.GetRTime32();
+		const double fJD  = fNow / 86400.0 + fUnixEpochJD;
+
+		// Full moons are k = n + 0.5. Start at the one at/after the mean estimate
+		// and also test its neighbours, since the true time can differ by ~14 hours.
+		const double fKBase = floor( ( fJD - fJDE_K0 ) / fSynodicDays ) + 0.5;
+
+		for ( int i = -1; i <= 1; i++ )
+		{
+			double fMoonAnomaly = 0.0;
+			const double fFullMoonTime = FullMoonUnixTime( fKBase + i, fMoonAnomaly );
+
+			// The Moon's apparent speed away from the Sun at full moon swings from
+			// ~10.8 to ~14.2 deg/day depending on its distance (anomaly). Convert
+			// the 7 degree threshold into a half-width in days using that speed.
+			const double fDegreesPerDay = 12.47 + 1.68 * cos( fMoonAnomaly );
+			const double fHalfWidthSeconds = ( fSurgeDegrees / fDegreesPerDay ) * 86400.0;
+
+			if ( fabs( fNow - fFullMoonTime ) <= fHalfWidthSeconds )
+				return true;
+		}
+
+		return false;
 	}
 
 private:
-	time_t m_timeInitial ;
+	// Returns the UTC unix time of the true full moon number k (k = n + 0.5),
+	// and the Moon's mean anomaly at that moment (radians).
+	static double FullMoonUnixTime( double k, double &fMoonAnomalyOut )
+	{
+		static const double fDegToRad = M_PI / 180.0;
+
+		const double T  = k / 1236.85;
+		const double T2 = T * T;
+
+		// Mean full moon (Terrestrial Time, Julian Ephemeris Day)
+		double fJDE = 2451550.09766 + 29.530588861 * k + 0.00015437 * T2;
+
+		const double E  = 1.0 - 0.002516 * T - 0.0000074 * T2;  // Earth orbit eccentricity factor
+
+		const double M  = fmod( 2.5534   + 29.10535670  * k, 360.0 ) * fDegToRad;  // Sun's mean anomaly
+		const double Mp = fmod( 201.5643 + 385.81693528 * k + 0.0107582 * T2, 360.0 ) * fDegToRad; // Moon's mean anomaly
+		const double F  = fmod( 160.7108 + 390.67050284 * k - 0.0016118 * T2, 360.0 ) * fDegToRad; // Moon's argument of latitude
+		const double Om = fmod( 124.7746 - 1.56375588   * k, 360.0 ) * fDegToRad;  // Longitude of ascending node
+
+		// Periodic corrections in days (Meeus Table 49.A, full moon column)
+		double fCorr =
+			  -0.40614 * sin( Mp )
+			+  0.17302 * E * sin( M )
+			+  0.01614 * sin( 2 * Mp )
+			+  0.01043 * sin( 2 * F )
+			+  0.00734 * E * sin( Mp - M )
+			-  0.00515 * E * sin( Mp + M )
+			+  0.00209 * E * E * sin( 2 * M )
+			-  0.00111 * sin( Mp - 2 * F )
+			-  0.00057 * sin( Mp + 2 * F )
+			+  0.00056 * E * sin( 2 * Mp + M )
+			-  0.00042 * sin( 3 * Mp )
+			+  0.00042 * E * sin( M + 2 * F )
+			+  0.00038 * E * sin( M - 2 * F )
+			-  0.00024 * E * sin( 2 * Mp - M )
+			-  0.00017 * sin( Om )
+			-  0.00007 * sin( Mp + 2 * M )
+			+  0.00004 * sin( 2 * Mp - 2 * F )
+			+  0.00004 * sin( 3 * M )
+			+  0.00003 * sin( Mp + M - 2 * F )
+			+  0.00003 * sin( 2 * Mp + 2 * F )
+			-  0.00003 * sin( Mp + M + 2 * F )
+			+  0.00003 * sin( Mp - M + 2 * F )
+			-  0.00002 * sin( Mp - M - 2 * F )
+			-  0.00002 * sin( 3 * Mp + M );
+
+		// Planetary arguments (Meeus: additional corrections, days)
+		static const double s_A[14][2] = {
+			{ 299.77,  0.107408 }, { 251.88,  0.016321 }, { 251.83, 26.651886 }, { 349.42, 36.412478 },
+			{  84.66, 18.206239 }, { 141.74, 53.303771 }, { 207.14,  2.453732 }, { 154.84,  7.306860 },
+			{  34.52, 27.261239 }, { 207.19,  0.121824 }, { 291.34,  1.844379 }, { 161.72, 24.198154 },
+			{ 239.56, 25.513099 }, { 331.55,  3.592518 } };
+		static const double s_Amp[14] = {
+			0.000325, 0.000165, 0.000164, 0.000126, 0.000110, 0.000062, 0.000060,
+			0.000056, 0.000047, 0.000042, 0.000040, 0.000037, 0.000035, 0.000023 };
+
+		for ( int i = 0; i < 14; i++ )
+		{
+			double fArg = s_A[i][0] + s_A[i][1] * k;
+			if ( i == 0 ) fArg -= 0.009173 * T2;
+			fCorr += s_Amp[i] * sin( fmod( fArg, 360.0 ) * fDegToRad );
+		}
+
+		fJDE += fCorr;
+
+		fMoonAnomalyOut = Mp;
+
+		// Terrestrial Time -> UTC (Delta-T ~ 69 s, drifts well under a second a year),
+		// then Julian Date -> unix seconds.
+		static const double fDeltaTSeconds = 69.2;
+		return ( fJDE - 2440587.5 ) * 86400.0 - fDeltaTSeconds;
+	}
+
+	time_t m_timeInitial;
 
 	float m_fCycleLengthInDays;
 	float m_fBonusTimeInDays;
