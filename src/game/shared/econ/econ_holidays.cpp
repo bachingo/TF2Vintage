@@ -194,19 +194,16 @@ private:
 };
 
 //-----------------------------------------------------------------------------
-// Purpose: A hilariously overkill, way over the top method of finding full moons.
-//			Zeroed from the June 2029 lunar eclipse (Syzygy)
-//			Should have a 3s accuracy for the next 100 years.
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
 // Purpose: Full moon detection. Active while the Moon is within 7 degrees of
 //			opposition (the "opposition surge" window, craters shadowless).
 //
-//			Method: Meeus, "Astronomical Algorithms" ch. 49 (phases of the Moon).
-//			Predicts the true instant of each full moon directly, rather than
-//			counting mean months from one anchor. Good to about a minute for
-//			thousands of years, so it needs no epoch and will not drift.
-//			Only uses <cmath> (sin/cos/floor) and the existing CRTime.
+//			Method: compute the Moon's and Sun's ecliptic longitudes for the exact
+//			moment asked about and test the angle between them directly.
+//			  Moon: Meeus, "Astronomical Algorithms" ch. 47 (59-term longitude series)
+//			  Sun:  Meeus ch. 25 (equation of center)
+//			There is no epoch, no month counting and no window-width approximation,
+//			so nothing can drift. Window edges are good to about a minute.
+//			Only uses <cmath> and the existing CRTime.
 //-----------------------------------------------------------------------------
 class CCLunarHoliday : public IIsHolidayActive
 {
@@ -226,108 +223,91 @@ public:
 
 	virtual bool IsActive( const CRTime& timeCurrent )
 	{
-		static const double fSynodicDays      = 29.530588861;   // mean new moon to new moon
-		static const double fJDE_K0           = 2451550.09766;  // mean new moon nearest 2000-01-06 (k = 0)
-		static const double fUnixEpochJD      = 2440587.5;      // Julian Date of 1970-01-01 00:00 UTC
-		static const double fSurgeDegrees     = 7.0;            // phase angle where opposition surge begins
+		// 0 = new moon, 180 = full moon.
+		const double fElongation = MoonSunElongationDegrees( (double)timeCurrent.GetRTime32() );
 
-		const double fNow = (double)timeCurrent.GetRTime32();
-		const double fJD  = fNow / 86400.0 + fUnixEpochJD;
-
-		// Full moons are k = n + 0.5. Start at the one at/after the mean estimate
-		// and also test its neighbours, since the true time can differ by ~14 hours.
-		const double fKBase = floor( ( fJD - fJDE_K0 ) / fSynodicDays ) + 0.5;
-
-		for ( int i = -1; i <= 1; i++ )
-		{
-			double fMoonAnomaly = 0.0;
-			const double fFullMoonTime = FullMoonUnixTime( fKBase + i, fMoonAnomaly );
-
-			// The Moon's apparent speed away from the Sun at full moon swings from
-			// ~10.8 to ~14.2 deg/day depending on its distance (anomaly). Convert
-			// the 7 degree threshold into a half-width in days using that speed.
-			const double fDegreesPerDay = 12.47 + 1.68 * cos( fMoonAnomaly );
-			const double fHalfWidthSeconds = ( fSurgeDegrees / fDegreesPerDay ) * 86400.0;
-
-			if ( fabs( fNow - fFullMoonTime ) <= fHalfWidthSeconds )
-				return true;
-		}
-
-		return false;
+		// Opposition surge: within 7 degrees of exact opposition the Moon's craters
+		// cast no visible shadows and it appears to glow.
+		static const double fOppositionSurgeDegrees = 7.0;
+		return fabs( fElongation - 180.0 ) <= fOppositionSurgeDegrees;
 	}
 
 private:
-	// Returns the UTC unix time of the true full moon number k (k = n + 0.5),
-	// and the Moon's mean anomaly at that moment (radians).
-	static double FullMoonUnixTime( double k, double &fMoonAnomalyOut )
+	static double Wrap360( double fDegrees )
 	{
-		static const double fDegToRad = M_PI / 180.0;
+		fDegrees = fmod( fDegrees, 360.0 );
+		return ( fDegrees < 0.0 ) ? fDegrees + 360.0 : fDegrees;
+	}
 
-		const double T  = k / 1236.85;
-		const double T2 = T * T;
+	// Ecliptic longitude of the Moon minus that of the Sun, 0..360 degrees,
+	// for a UTC unix time.
+	static double MoonSunElongationDegrees( double fUnixTime )
+	{
+		static const double fDegToRad    = M_PI / 180.0;
+		static const double fDeltaTSecs  = 68.0;     // TT - UTC; 66 s in 2011, ~70 s by 2030. 1 s is only 0.5 arcsec.
+		static const double fMoonLightTime = 1.28;   // seconds; we see the Moon where it was this long ago
 
-		// Mean full moon (Terrestrial Time, Julian Ephemeris Day)
-		double fJDE = 2451550.09766 + 29.530588861 * k + 0.00015437 * T2;
+		// Julian centuries since J2000.0 in Terrestrial Time
+		const double fJDE = fUnixTime / 86400.0 + 2440587.5 + fDeltaTSecs / 86400.0;
+		const double T    = ( fJDE - 2451545.0 ) / 36525.0;
+		const double Tm   = T - ( fMoonLightTime / 86400.0 ) / 36525.0;
 
-		const double E  = 1.0 - 0.002516 * T - 0.0000074 * T2;  // Earth orbit eccentricity factor
+		//---- Moon (Meeus ch. 47) ----
+		const double T2 = Tm * Tm, T3 = T2 * Tm, T4 = T3 * Tm;
+		const double Lp = Wrap360( 218.3164477 + 481267.88123421 * Tm - 0.0015786 * T2 + T3 / 538841.0 - T4 / 65194000.0 );
+		const double D  = Wrap360( 297.8501921 + 445267.1114034  * Tm - 0.0018819 * T2 + T3 / 545868.0 - T4 / 113065000.0 );
+		const double M  = Wrap360( 357.5291092 +  35999.0502909  * Tm - 0.0001536 * T2 + T3 / 24490000.0 );
+		const double Mp = Wrap360( 134.9633964 + 477198.8675055  * Tm + 0.0087414 * T2 + T3 / 69699.0 - T4 / 14712000.0 );
+		const double F  = Wrap360(  93.2720950 + 483202.0175233  * Tm - 0.0036539 * T2 - T3 / 3526000.0 + T4 / 863310000.0 );
+		const double E  = 1.0 - 0.002516 * Tm - 0.0000074 * T2;   // Earth orbit eccentricity factor
 
-		const double M  = fmod( 2.5534   + 29.10535670  * k, 360.0 ) * fDegToRad;  // Sun's mean anomaly
-		const double Mp = fmod( 201.5643 + 385.81693528 * k + 0.0107582 * T2, 360.0 ) * fDegToRad; // Moon's mean anomaly
-		const double F  = fmod( 160.7108 + 390.67050284 * k - 0.0016118 * T2, 360.0 ) * fDegToRad; // Moon's argument of latitude
-		const double Om = fmod( 124.7746 - 1.56375588   * k, 360.0 ) * fDegToRad;  // Longitude of ascending node
+		// Multiples of D, M, M', F and the longitude coefficient in 0.000001 degrees
+		static const int s_Terms[59][5] = {
+			{ 0, 0, 1, 0,  6288774}, { 2, 0,-1, 0,  1274027}, { 2, 0, 0, 0,   658314}, { 0, 0, 2, 0,   213618},
+			{ 0, 1, 0, 0,  -185116}, { 0, 0, 0, 2,  -114332}, { 2, 0,-2, 0,    58793}, { 2,-1,-1, 0,    57066},
+			{ 2, 0, 1, 0,    53322}, { 2,-1, 0, 0,    45758}, { 0, 1,-1, 0,   -40923}, { 1, 0, 0, 0,   -34720},
+			{ 0, 1, 1, 0,   -30383}, { 2, 0, 0,-2,    15327}, { 0, 0, 1, 2,   -12528}, { 0, 0, 1,-2,    10980},
+			{ 4, 0,-1, 0,    10675}, { 0, 0, 3, 0,    10034}, { 4, 0,-2, 0,     8548}, { 2, 1,-1, 0,    -7888},
+			{ 2, 1, 0, 0,    -6766}, { 1, 0,-1, 0,    -5163}, { 1, 1, 0, 0,     4987}, { 2,-1, 1, 0,     4036},
+			{ 2, 0, 2, 0,     3994}, { 4, 0, 0, 0,     3861}, { 2, 0,-3, 0,     3665}, { 0, 1,-2, 0,    -2689},
+			{ 2, 0,-1, 2,    -2602}, { 2,-1,-2, 0,     2390}, { 1, 0, 1, 0,    -2348}, { 2,-2, 0, 0,     2236},
+			{ 0, 1, 2, 0,    -2120}, { 0, 2, 0, 0,    -2069}, { 2,-2,-1, 0,     2048}, { 2, 0, 1,-2,    -1773},
+			{ 2, 0, 0, 2,    -1595}, { 4,-1,-1, 0,     1215}, { 0, 0, 2, 2,    -1110}, { 3, 0,-1, 0,     -892},
+			{ 2, 1, 1, 0,     -810}, { 4,-1,-2, 0,      759}, { 0, 2,-1, 0,     -713}, { 2, 2,-1, 0,     -700},
+			{ 2, 1,-2, 0,      691}, { 2,-1, 0,-2,      596}, { 4, 0, 1, 0,      549}, { 0, 0, 4, 0,      537},
+			{ 4,-1, 0, 0,      520}, { 1, 0,-2, 0,     -487}, { 2, 1, 0,-2,     -399}, { 0, 0, 2,-2,     -381},
+			{ 1, 1, 1, 0,      351}, { 3, 0,-2, 0,     -340}, { 4, 0,-3, 0,      330}, { 2,-1, 2, 0,      327},
+			{ 0, 2, 1, 0,     -323}, { 1, 1,-1, 0,      299}, { 2, 0, 3, 0,      294} };
 
-		// Periodic corrections in days (Meeus Table 49.A, full moon column)
-		double fCorr =
-			  -0.40614 * sin( Mp )
-			+  0.17302 * E * sin( M )
-			+  0.01614 * sin( 2 * Mp )
-			+  0.01043 * sin( 2 * F )
-			+  0.00734 * E * sin( Mp - M )
-			-  0.00515 * E * sin( Mp + M )
-			+  0.00209 * E * E * sin( 2 * M )
-			-  0.00111 * sin( Mp - 2 * F )
-			-  0.00057 * sin( Mp + 2 * F )
-			+  0.00056 * E * sin( 2 * Mp + M )
-			-  0.00042 * sin( 3 * Mp )
-			+  0.00042 * E * sin( M + 2 * F )
-			+  0.00038 * E * sin( M - 2 * F )
-			-  0.00024 * E * sin( 2 * Mp - M )
-			-  0.00017 * sin( Om )
-			-  0.00007 * sin( Mp + 2 * M )
-			+  0.00004 * sin( 2 * Mp - 2 * F )
-			+  0.00004 * sin( 3 * M )
-			+  0.00003 * sin( Mp + M - 2 * F )
-			+  0.00003 * sin( 2 * Mp + 2 * F )
-			-  0.00003 * sin( Mp + M + 2 * F )
-			+  0.00003 * sin( Mp - M + 2 * F )
-			-  0.00002 * sin( Mp - M - 2 * F )
-			-  0.00002 * sin( 3 * Mp + M );
-
-		// Planetary arguments (Meeus: additional corrections, days)
-		static const double s_A[14][2] = {
-			{ 299.77,  0.107408 }, { 251.88,  0.016321 }, { 251.83, 26.651886 }, { 349.42, 36.412478 },
-			{  84.66, 18.206239 }, { 141.74, 53.303771 }, { 207.14,  2.453732 }, { 154.84,  7.306860 },
-			{  34.52, 27.261239 }, { 207.19,  0.121824 }, { 291.34,  1.844379 }, { 161.72, 24.198154 },
-			{ 239.56, 25.513099 }, { 331.55,  3.592518 } };
-		static const double s_Amp[14] = {
-			0.000325, 0.000165, 0.000164, 0.000126, 0.000110, 0.000062, 0.000060,
-			0.000056, 0.000047, 0.000042, 0.000040, 0.000037, 0.000035, 0.000023 };
-
-		for ( int i = 0; i < 14; i++ )
+		double fSigmaL = 0.0;
+		for ( int i = 0; i < 59; i++ )
 		{
-			double fArg = s_A[i][0] + s_A[i][1] * k;
-			if ( i == 0 ) fArg -= 0.009173 * T2;
-			fCorr += s_Amp[i] * sin( fmod( fArg, 360.0 ) * fDegToRad );
+			const double fArg = ( s_Terms[i][0] * D + s_Terms[i][1] * M + s_Terms[i][2] * Mp + s_Terms[i][3] * F ) * fDegToRad;
+			double fCoef = (double)s_Terms[i][4];
+			const int nM = ( s_Terms[i][1] < 0 ) ? -s_Terms[i][1] : s_Terms[i][1];
+			if ( nM == 1 ) fCoef *= E;
+			else if ( nM == 2 ) fCoef *= E * E;
+			fSigmaL += fCoef * sin( fArg );
 		}
 
-		fJDE += fCorr;
+		// Venus, Jupiter and flattening of the Earth
+		const double A1 = Wrap360( 119.75 + 131.849 * Tm );
+		const double A2 = Wrap360(  53.09 + 479264.290 * Tm );
+		fSigmaL += 3958.0 * sin( A1 * fDegToRad ) + 1962.0 * sin( ( Lp - F ) * fDegToRad ) + 318.0 * sin( A2 * fDegToRad );
 
-		fMoonAnomalyOut = Mp;
+		const double fMoonLongitude = Lp + fSigmaL / 1000000.0;
 
-		// Terrestrial Time -> UTC (Delta-T ~ 69 s, drifts well under a second a year),
-		// then Julian Date -> unix seconds.
-		static const double fDeltaTSeconds = 69.2;
-		return ( fJDE - 2440587.5 ) * 86400.0 - fDeltaTSeconds;
+		//---- Sun (Meeus ch. 25) ----
+		const double Ts  = T * T;
+		const double L0  = 280.46646 + 36000.76983 * T + 0.0003032 * Ts;
+		const double Ms  = Wrap360( 357.52911 + 35999.05029 * T - 0.0001537 * Ts ) * fDegToRad;
+		const double C   = ( 1.914602 - 0.004817 * T - 0.000014 * Ts ) * sin( Ms )
+						 + ( 0.019993 - 0.000101 * T ) * sin( 2.0 * Ms )
+						 +   0.000289 * sin( 3.0 * Ms );
+		const double fSunLongitude = L0 + C - 0.00569;   // minus aberration (20.5")
+
+		// Nutation moves both longitudes equally, so it cancels in the difference.
+		return Wrap360( fMoonLongitude - fSunLongitude );
 	}
 
 	time_t m_timeInitial;
