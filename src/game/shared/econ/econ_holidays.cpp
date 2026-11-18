@@ -194,16 +194,20 @@ private:
 };
 
 //-----------------------------------------------------------------------------
-// Purpose: Full moon detection. Active while the Moon is within 7 degrees of
-//			opposition (the "opposition surge" window, craters shadowless).
+// Purpose: Full moon detection. Active for m_fBonusTimeInDays (0.575 = 13.8 hours,
+//			which is 7 degrees of lunar motion at its average speed) either side of
+//			the exact instant of full moon, giving the same fixed ~27.6 hour window
+//			every month, like the original game.
 //
-//			Method: compute the Moon's and Sun's ecliptic longitudes for the exact
-//			moment asked about and test the angle between them directly.
-//			  Moon: Meeus, "Astronomical Algorithms" ch. 47 (59-term longitude series)
-//			  Sun:  Meeus ch. 25 (equation of center)
-//			There is no epoch, no month counting and no window-width approximation,
-//			so nothing can drift. Window edges are good to about a minute.
-//			Only uses <cmath> and the existing CRTime.
+//			The instant of full moon is when the Moon's ecliptic longitude is exactly
+//			180 degrees from the Sun's. We compute both longitudes for any moment
+//			(Moon: Meeus, "Astronomical Algorithms" ch. 47, 59-term series; Sun:
+//			VSOP87D Earth series cut to its 20 largest terms), then home in on the
+//			nearest opposition by repeated correction.
+//			There is no epoch and no month counting, so nothing can drift.
+//			Full moon instant is typically within ~7 seconds (worst ~30 s) of JPL DE421;
+//			the Moon series is the limit. Leap seconds are handled for any date from 1970
+//			on. Only uses <cmath> and the existing CRTime.
 //-----------------------------------------------------------------------------
 class CCLunarHoliday : public IIsHolidayActive
 {
@@ -223,13 +227,23 @@ public:
 
 	virtual bool IsActive( const CRTime& timeCurrent )
 	{
-		// 0 = new moon, 180 = full moon.
-		const double fElongation = MoonSunElongationDegrees( (double)timeCurrent.GetRTime32() );
+		static const double fSynodicDays = 29.530588861;
+		static const double fMeanDegreesPerDay = 360.0 / fSynodicDays;   // average Moon-from-Sun speed
 
-		// Opposition surge: within 7 degrees of exact opposition the Moon's craters
-		// cast no visible shadows and it appears to glow.
-		static const double fOppositionSurgeDegrees = 7.0;
-		return fabs( fElongation - 180.0 ) <= fOppositionSurgeDegrees;
+		const double fNow = (double)timeCurrent.GetRTime32();
+
+		// Find the exact instant of the full moon nearest to now. Start from now, see how
+		// far the Moon is from opposition, and step by that angle at the average speed.
+		// The real speed is within ~17% of average, so each pass shrinks the error ~6x;
+		// 6 passes lands within a couple of seconds.
+		double fFullMoon = fNow;
+		for ( int i = 0; i < 6; i++ )
+		{
+			const double fDegreesFromFull = Wrap180( MoonSunElongationDegrees( fFullMoon ) - 180.0 );
+			fFullMoon -= ( fDegreesFromFull / fMeanDegreesPerDay ) * 86400.0;
+		}
+
+		return fabs( fNow - fFullMoon ) <= (double)m_fBonusTimeInDays * 86400.0;
 	}
 
 private:
@@ -239,16 +253,62 @@ private:
 		return ( fDegrees < 0.0 ) ? fDegrees + 360.0 : fDegrees;
 	}
 
+	// Wrap an angle to -180..180 degrees
+	static double Wrap180( double fDegrees )
+	{
+		fDegrees = fmod( fDegrees, 360.0 );
+		if ( fDegrees > 180.0 ) fDegrees -= 360.0;
+		else if ( fDegrees < -180.0 ) fDegrees += 360.0;
+		return fDegrees;
+	}
+
+	// Terrestrial Time minus UTC, in seconds, for a UTC unix time. The astronomy below runs
+	// on Terrestrial Time, which is steady, while UTC is stepped by leap seconds:
+	// TT - UTC = 32.184 + (TAI - UTC). One second of error here is 0.5 arcsec of Moon.
+	static double TerrestrialMinusUTCSeconds( double fUnixTime )
+	{
+		// Unix time each leap second took effect, and TAI - UTC in whole seconds from then on.
+		// IERS announced no leap second for end of December 2026, and UTC is scheduled to stop
+		// using them in 2027, so 37 is expected to be final. If one is ever added, add a row.
+		static const int s_LeapSeconds[28][2] = {
+			{   63072000, 10 }, {   78796800, 11 }, {   94694400, 12 },
+			{  126230400, 13 }, {  157766400, 14 }, {  189302400, 15 },
+			{  220924800, 16 }, {  252460800, 17 }, {  283996800, 18 },
+			{  315532800, 19 }, {  362793600, 20 }, {  394329600, 21 },
+			{  425865600, 22 }, {  489024000, 23 }, {  567993600, 24 },
+			{  631152000, 25 }, {  662688000, 26 }, {  709948800, 27 },
+			{  741484800, 28 }, {  773020800, 29 }, {  820454400, 30 },
+			{  867715200, 31 }, {  915148800, 32 }, { 1136073600, 33 },
+			{ 1230768000, 34 }, { 1341100800, 35 }, { 1435708800, 36 },
+			{ 1483228800, 37 }
+		};
+
+		double fTAIMinusUTC;
+		if ( fUnixTime < s_LeapSeconds[0][0] )
+		{
+			// Before 1972 UTC had no leap seconds; its rate was adjusted instead (8.0 s in 1970).
+			fTAIMinusUTC = 8.000082 + ( fUnixTime / 86400.0 ) * 0.002592;
+		}
+		else
+		{
+			int i = 27;
+			while ( i > 0 && fUnixTime < s_LeapSeconds[i][0] )
+				i--;
+			fTAIMinusUTC = (double)s_LeapSeconds[i][1];
+		}
+
+		return 32.184 + fTAIMinusUTC;
+	}
+
 	// Ecliptic longitude of the Moon minus that of the Sun, 0..360 degrees,
 	// for a UTC unix time.
 	static double MoonSunElongationDegrees( double fUnixTime )
 	{
 		static const double fDegToRad    = M_PI / 180.0;
-		static const double fDeltaTSecs  = 68.0;     // TT - UTC; 66 s in 2011, ~70 s by 2030. 1 s is only 0.5 arcsec.
 		static const double fMoonLightTime = 1.28;   // seconds; we see the Moon where it was this long ago
 
 		// Julian centuries since J2000.0 in Terrestrial Time
-		const double fJDE = fUnixTime / 86400.0 + 2440587.5 + fDeltaTSecs / 86400.0;
+		const double fJDE = fUnixTime / 86400.0 + 2440587.5 + TerrestrialMinusUTCSeconds( fUnixTime ) / 86400.0;
 		const double T    = ( fJDE - 2451545.0 ) / 36525.0;
 		const double Tm   = T - ( fMoonLightTime / 86400.0 ) / 36525.0;
 
@@ -297,14 +357,46 @@ private:
 
 		const double fMoonLongitude = Lp + fSigmaL / 1000000.0;
 
-		//---- Sun (Meeus ch. 25) ----
-		const double Ts  = T * T;
-		const double L0  = 280.46646 + 36000.76983 * T + 0.0003032 * Ts;
-		const double Ms  = Wrap360( 357.52911 + 35999.05029 * T - 0.0001537 * Ts ) * fDegToRad;
-		const double C   = ( 1.914602 - 0.004817 * T - 0.000014 * Ts ) * sin( Ms )
-						 + ( 0.019993 - 0.000101 * T ) * sin( 2.0 * Ms )
-						 +   0.000289 * sin( 3.0 * Ms );
-		const double fSunLongitude = L0 + C - 0.00569;   // minus aberration (20.5")
+		//---- Sun (VSOP87D, heliocentric longitude of the Earth, 20 largest terms) ----
+		// L = sum of A * cos( B + C * tau ), times tau for the k = 1 rows.
+		// tau = Julian millennia from J2000.0. L is in radians.
+		const double tau = T / 10.0;
+		static const double s_Earth[20][4] = {
+		//	  k        A            B           C
+			{ 0,  1.753470457, 0.0000000,     0.000000 },
+			{ 0,  0.033416565, 4.6692568,  6283.075850 },
+			{ 0,  0.000348943, 4.6261024, 12566.151700 },
+			{ 0,  0.000034971, 2.7441180,  5753.384885 },
+			{ 0,  0.000034176, 2.8288658,     3.523118 },
+			{ 0,  0.000031359, 3.6276704, 77713.771468 },
+			{ 0,  0.000026762, 4.4180835,  7860.419392 },
+			{ 0,  0.000023427, 6.1351624,  3930.209696 },
+			{ 0,  0.000013243, 0.7424636, 11506.769770 },
+			{ 0,  0.000012732, 2.0370966,   529.690965 },
+			{ 0,  0.000011992, 1.1096294,  1577.343542 },
+			{ 0,  0.000009903, 5.2326813,  5884.926847 },
+			{ 0,  0.000009019, 2.0450544,    26.298320 },
+			{ 0,  0.000008572, 3.5084916,   398.149003 },
+			{ 0,  0.000007798, 1.1788265,  5223.693920 },
+			{ 0,  0.000007531, 2.5333905,  5507.553239 },
+			{ 0,  0.000005053, 4.5829256, 18849.227550 },
+			{ 0,  0.000004924, 4.2050664,   775.522611 },
+			{ 1, 6283.319667475, 0.0000000,     0.000000 },
+			{ 1,  0.002060589, 2.6782346,  6283.075850 }
+		};
+
+		double fEarthL = 0.0;
+		for ( int i = 0; i < 20; i++ )
+			fEarthL += s_Earth[i][1] * cos( s_Earth[i][2] + s_Earth[i][3] * tau ) * ( s_Earth[i][0] > 0.5 ? tau : 1.0 );
+
+		// Earth-Sun distance in AU, only needed to size the aberration shift
+		const double fSunDistance = 1.00013989
+								  + 0.016707   * cos( 3.0984635 + 6283.07585 * tau )
+								  + 0.00013956 * cos( 3.0552461 + 12566.1517 * tau );
+
+		// The Sun is opposite the Earth as seen from the Sun. Apparent position is
+		// shifted back by annual aberration (20.4955 arcsec / distance).
+		const double fSunLongitude = fEarthL / fDegToRad + 180.0 - 0.0056932 / fSunDistance;
 
 		// Nutation moves both longitudes equally, so it cancels in the difference.
 		return Wrap360( fMoonLongitude - fSunLongitude );
